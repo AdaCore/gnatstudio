@@ -238,9 +238,23 @@ package body Completion_Module is
       Data   : access Hooks_Data'Class)
    is
       File_Data : File_Hooks_Args := File_Hooks_Args (Data.all);
+      File      : Structured_File_Access;
    begin
       if Get_Pref (Smart_Completion_Enabled) then
-         Update_Contents (Get_Construct_Database (Kernel), File_Data.File);
+         if Get_Language_From_File
+           (Get_Language_Handler (Kernel), File_Data.File)
+           = Ada_Lang
+         then
+            --  ??? This is a temporary kludge in order to avoid considering C
+            --  files
+
+            File := Get_Or_Create
+              (Get_Construct_Database (Kernel),
+               File_Data.File,
+               Ada_Tree_Lang);
+
+            Update_Contents (File);
+         end if;
       end if;
    end File_Saved;
 
