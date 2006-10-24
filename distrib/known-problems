@@ -1,4 +1,9 @@
 Known Problems fixed in GPS 4.1.0
+ 
+- FA24-013 Size of floating windows
+  Problem:    When making a window floating, its size is often calculated to
+              be small by default.
+  Workaround: Resize the floated window manually.
 
 - F925-005 Instability when commenting a folded block
   Problem:    Commenting a line that contains a folded block - such a line has
