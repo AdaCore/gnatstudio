@@ -33,17 +33,12 @@ package Language.Tree is
    -- Construct_Tree --
    --------------------
 
-   type Construct_Tree (<>) is private;
+   type Construct_Tree is private;
 
    Null_Construct_Tree : constant Construct_Tree;
 
-   type Construct_Tree_Access is access all Construct_Tree;
-
    procedure Free (Tree : in out Construct_Tree);
    --  Free the data associated to a construct tree.
-
-   procedure Free (Tree : in out Construct_Tree_Access);
-   --  Free the data associated to a construct tree access
 
    function To_Construct_Tree
      (List      : access Construct_List;
@@ -244,8 +239,8 @@ package Language.Tree is
 
    function Get_Parent_Tree
      (Lang       : access Tree_Language;
-      Left_Tree  : access Construct_Tree;
-      Right_Tree : access Construct_Tree)
+      Left_Tree  : Construct_Tree;
+      Right_Tree : Construct_Tree)
       return Get_Parent_Tree_Result is abstract;
    --  Return Left if Left if the parent of Right, Right if it's the parent
    --  of Left, None if no parent relationship can be estalished.
@@ -260,14 +255,14 @@ package Language.Tree is
 
    function Get_Unit_Construct
      (Lang : access Tree_Language;
-      Tree : access Construct_Tree) return Construct_Tree_Iterator is abstract;
+      Tree : Construct_Tree) return Construct_Tree_Iterator is abstract;
    --  Return the construct representing the unit of the file, if such a
    --  notion exists in the target language. Otherwise, return
    --  Null_Construct_Tree_Iterator.
 
    function Get_Unit_Name
      (Lang : access Tree_Language;
-      Tree : access Construct_Tree) return Composite_Identifier is abstract;
+      Tree : Construct_Tree) return Composite_Identifier is abstract;
    --  Return the identifier representing the unit of the file, if such a
    --  notion exists in the target language.
 
@@ -288,7 +283,7 @@ private
 
    type Node_Array is array (Natural range <>) of Construct_Tree_Node;
 
-   type Construct_Tree (Length : Natural) is record
+   type Construct_Tree_Record (Length : Natural) is record
       Contents : Node_Array (1 .. Length);
 
       Unit_Index : Integer := -1;
@@ -296,6 +291,8 @@ private
       --  These two fields may be set by the implementations of
       --  Get_Unit_Construct.
    end record;
+
+   type Construct_Tree is access all Construct_Tree_Record;
 
    type Construct_Tree_Iterator is record
       Node  : Construct_Tree_Node;
@@ -308,7 +305,9 @@ private
    Null_Construct_Tree_Iterator : constant Construct_Tree_Iterator :=
      (Null_Construct_Tree_Node, 0);
 
-   Null_Construct_Tree : constant Construct_Tree :=
+   Null_Construct_Tree : constant Construct_Tree := null;
+
+   Null_Construct_Tree_Record : constant Construct_Tree_Record :=
      (0,
       Contents    => (others => Null_Construct_Tree_Node),
       Unit_Index  => -1,
