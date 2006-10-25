@@ -20,6 +20,8 @@
 
 --  Provides a completer working on language constructs for Ada
 
+with Ada.Containers.Doubly_Linked_Lists; use Ada.Containers;
+
 with Language.Tree;          use Language.Tree;
 with Language.Tree.Database; use Language.Tree.Database;
 
@@ -50,10 +52,18 @@ package Completion.Ada.Constructs_Extractor is
 
 private
 
+   package Tree_List is new Doubly_Linked_Lists (Construct_Tree);
+
+   use Tree_List;
+
    type Construct_Completion_Resolver is new Completion_Resolver with record
-      Construct_Db   : Construct_Database_Access;
-      Current_File   : Structured_File_Access;
-      Current_Buffer : String_Access;
+      Construct_Db    : Construct_Database_Access;
+      Current_File    : Structured_File_Access;
+      Current_Buffer  : String_Access;
+
+      Tree_Collection : Tree_List.List;
+      --  This is the list of the tree that have to be freed when the resolver
+      --  is freed.
    end record;
 
    type Construct_Completion_Proposal is new Completion_Proposal with record
@@ -61,7 +71,7 @@ private
       File                 : Structured_File_Access;
       Is_All               : Boolean := False;
       Params_In_Expression : Integer := 0;
-      Tree                 : Construct_Tree_Access;
+      Tree                 : Construct_Tree;
       Filter               : Possibilities_Filter;
       Buffer               : String_Access;
    end record;
@@ -120,6 +130,9 @@ private
       Filter       : Possibilities_Filter;
    end record;
 
+   overriding
+   procedure Free (This : in out Construct_Db_Wrapper);
+
    type Iteration_Stage is (Initial_File, Parent_File, Database);
 
    type Construct_Tree_Iterator_Array_Access is
@@ -144,7 +157,7 @@ private
 
       First_File         : Structured_File_Access;
       First_Buffer       : String_Access;
-      Current_Tree       : Construct_Tree_Access;
+      Current_Tree       : Construct_Tree;
       Visible_Constructs : Construct_Tree_Iterator_Array_Access;
       Visible_Index      : Integer;
 
