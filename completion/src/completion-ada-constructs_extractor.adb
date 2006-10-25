@@ -183,7 +183,7 @@ package body Completion.Ada.Constructs_Extractor is
       Tree := Proposal.Tree;
 
       Ada_Tree := Generate_Ada_Construct_Tree
-        (Tree, Ada_Lang, Get_Buffer (Proposal.File).all);
+        (Proposal.Tree, Ada_Lang, Proposal.Buffer.all);
 
       case Get_Construct (Proposal.Tree_Node).Category is
          when Cat_Variable | Cat_Local_Variable | Cat_Field | Cat_Parameter
