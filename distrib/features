@@ -30,6 +30,12 @@ FA16-005 Better integration of AUnit in GPS (2006-10-17)
   * The dialogs used to generate the code have been enhanced with a better
     handling of required fields.
 
+FA12-010 Smart completion activates automatically on '.' (2006-10-25)
+
+   When the "Enable smart completion" preference is set, the Smart Completion
+   window will come up automatically after typing a '.' character in Ada
+   code.
+
 FA12-009 Enhanced completion engine (2006-10-19)
 
   * The completion engine doesn't rely anymore on the compilation output. The
