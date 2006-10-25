@@ -34,9 +34,9 @@ package body Language.Tree.Ada is
    -- Free --
    ----------
 
-   procedure Free (Ada_Tree : in out Ada_Construct_Tree_Access) is
+   procedure Free (Ada_Tree : in out Ada_Construct_Tree) is
       procedure Internal is new Unchecked_Deallocation
-        (Ada_Construct_Tree, Ada_Construct_Tree_Access);
+        (Ada_Construct_Tree_Record, Ada_Construct_Tree);
    begin
       Internal (Ada_Tree);
    end Free;
@@ -273,7 +273,8 @@ package body Language.Tree.Ada is
 
       end Compute_Scope;
 
-      Ada_Tree : Ada_Construct_Tree (Tree.Contents'Range);
+      Ada_Tree : Ada_Construct_Tree :=
+        new Ada_Construct_Tree_Record (Tree.Contents'Range);
       Iter  : Construct_Tree_Iterator;
    begin
       Iter := First (Tree);
@@ -977,8 +978,8 @@ package body Language.Tree.Ada is
 
    function Get_Parent_Tree
      (Lang       : access Ada_Tree_Language;
-      Left_Tree  : access Construct_Tree;
-      Right_Tree : access Construct_Tree) return Get_Parent_Tree_Result
+      Left_Tree  : Construct_Tree;
+      Right_Tree : Construct_Tree) return Get_Parent_Tree_Result
    is
       Left_It : constant Construct_Tree_Iterator :=
         Get_Unit_Construct (Lang, Left_Tree);
@@ -1054,7 +1055,7 @@ package body Language.Tree.Ada is
 
    function Get_Unit_Construct
      (Lang : access Ada_Tree_Language;
-      Tree : access Construct_Tree) return Construct_Tree_Iterator
+      Tree : Construct_Tree) return Construct_Tree_Iterator
    is
       pragma Unreferenced (Lang);
    begin
@@ -1064,7 +1065,7 @@ package body Language.Tree.Ada is
          return (Tree.Contents (Tree.Unit_Index), Tree.Unit_Index);
       else
          declare
-            It : Construct_Tree_Iterator := First (Tree.all);
+            It : Construct_Tree_Iterator := First (Tree);
          begin
             while It /= Null_Construct_Tree_Iterator loop
                declare
@@ -1081,7 +1082,7 @@ package body Language.Tree.Ada is
                   end if;
                end;
 
-               It := Next (Tree.all, It, Jump_Over);
+               It := Next (Tree, It, Jump_Over);
             end loop;
          end;
       end if;
@@ -1097,7 +1098,7 @@ package body Language.Tree.Ada is
 
    function Get_Unit_Name
      (Lang : access Ada_Tree_Language;
-      Tree : access Construct_Tree) return Composite_Identifier is
+      Tree : Construct_Tree) return Composite_Identifier is
    begin
       if Tree.Unit_Name = null then
          if Get_Unit_Construct (Lang, Tree)
@@ -1157,7 +1158,8 @@ package body Language.Tree.Ada is
    is
       pragma Unreferenced (Lang);
 
-      New_Tree : Construct_Tree (Full_Tree.Length);
+      New_Tree : Construct_Tree := new Construct_Tree_Record
+        (Full_Tree.all.Contents'Length);
 
       procedure Add_Scope
         (Scope           : Construct_Tree_Iterator;
@@ -1206,7 +1208,7 @@ package body Language.Tree.Ada is
                   --  If we are going to free the old tree, then we don't need
                   --  its name anymore.
 
-                  Full_Tree.Contents (It.Index).Construct.Name := null;
+                  Full_Tree.all.Contents (It.Index).Construct.Name := null;
                else
                   --  If we are not going to free the old tree, then we don't
                   --  want the two pointers to be on the same object, we have
@@ -1250,7 +1252,7 @@ package body Language.Tree.Ada is
 
       Index : Natural := 1;
    begin
-      if Full_Tree.Contents'Length = 0 then
+      if Full_Tree.all.Contents'Length = 0 then
          return Full_Tree.all;
       end if;
 
@@ -1260,10 +1262,16 @@ package body Language.Tree.Ada is
          Free (Full_Tree.all);
       end if;
 
-      return
-        (Length      => Index - 1,
-         Contents    => New_Tree.Contents (1 .. Index - 1),
-         others => <>);
+      declare
+         Returned_Tree : constant Construct_Tree := new Construct_Tree_Record'
+           (Length      => Index - 1,
+            Contents    => New_Tree.Contents (1 .. Index - 1),
+            others => <>);
+      begin
+         New_Tree.Contents := (others => Null_Construct_Tree_Node);
+         Free (New_Tree);
+         return Returned_Tree;
+      end;
    end Get_Public_Tree;
 
 end Language.Tree.Ada;
