@@ -1042,18 +1042,18 @@ package body Codefix.Text_Manager.Ada_Commands is
      (Current_Text    : Text_Navigator_Abstr'Class;
       Source_Position : File_Cursor'Class) return String
    is
-      Tree : constant Construct_Tree_Access :=
+      Tree : constant Construct_Tree :=
         Get_Tree (Current_Text, Source_Position);
       It   : Construct_Tree_Iterator :=
         Get_Iterator_At (Current_Text, Source_Position, After);
    begin
-      while Get_Parent_Scope (Tree.all, It)
+      while Get_Parent_Scope (Tree, It)
         /= Null_Construct_Tree_Iterator
       loop
-         It := Get_Parent_Scope (Tree.all, It);
+         It := Get_Parent_Scope (Tree, It);
       end loop;
 
-      return Get_Full_Name (Tree.all, It);
+      return Get_Full_Name (Tree, It);
    end Get_Package_To_Be_Withed;
 
    -------------
