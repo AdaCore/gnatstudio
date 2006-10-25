@@ -1387,6 +1387,27 @@ package body Src_Editor_Buffer is
          --  cursor on line 0.
       end if;
 
+      --  Emit the Character_Added hook. Do this only if we are appending only
+      --  one character. Eliminate the obvious cases when we are writing more
+      --  than one character, so as not to have to perform UTF8 computations
+      --  in these cases.
+
+      if Number = 0
+        and then Length < 4
+      then
+         declare
+            Index : Natural;
+         begin
+            Index := UTF8_Find_Next_Char (Text (1 .. Length), Text'First);
+
+            if Index > Length then
+               Character_Added
+                 (Source_Buffer (Buffer),
+                  UTF8_Get_Char (Text (1 .. Length)));
+            end if;
+         end;
+      end if;
+
    exception
       when E : others =>
          Trace (Exception_Handle,
