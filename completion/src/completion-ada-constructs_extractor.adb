@@ -759,12 +759,21 @@ package body Completion.Ada.Constructs_Extractor is
                            (It.Current_File), It.Current_It, Jump_Over);
                end if;
 
-               exit when It.Current_It /= Null_Construct_Tree_Iterator
-                 and then Get_Construct (It.Current_It).Name /= null
-                 and then Match
-                   (It.Name.all,
-                    Get_Construct (It.Current_It).Name.all,
-                    It.Is_Partial);
+               declare
+                  Constr : constant Simple_Construct_Information :=
+                    Get_Construct (It.Current_It);
+               begin
+                  exit when It.Current_It /= Null_Construct_Tree_Iterator
+                    and then Constr.Name /= null
+                    and then Constr.Category /= Cat_Use
+                    and then Constr.Category /= Cat_With
+                    and then Get_Parent_Scope (It.Current_Tree, It.Current_It)
+                       /= Null_Construct_Tree_Iterator
+                    and then Match
+                      (It.Name.all,
+                       Constr.Name.all,
+                       It.Is_Partial);
+               end;
             end loop;
 
             if It.Current_It = Null_Construct_Tree_Iterator then
