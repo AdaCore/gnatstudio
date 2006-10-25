@@ -40,24 +40,15 @@ package body Language.Tree is
    ----------
 
    procedure Free (Tree : in out Construct_Tree) is
-   begin
-      for J in Tree.Contents'Range loop
-         Free (Tree.Contents (J).Construct.Name);
-      end loop;
-
-      Free (Tree.Unit_Name);
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Tree : in out Construct_Tree_Access) is
       procedure Internal is new Ada.Unchecked_Deallocation
-        (Construct_Tree, Construct_Tree_Access);
+        (Construct_Tree_Record, Construct_Tree);
    begin
       if Tree /= null then
-         Free (Tree.all);
+         for J in Tree.Contents'Range loop
+            Free (Tree.Contents (J).Construct.Name);
+         end loop;
+
+         Free (Tree.Unit_Name);
          Internal (Tree);
       end if;
    end Free;
@@ -81,11 +72,12 @@ package body Language.Tree is
       end loop;
 
       if Size = 0 then
-         return Null_Construct_Tree;
+         return new Construct_Tree_Record (0);
       end if;
 
       declare
-         Tree       : Construct_Tree (Size);
+         Tree       : constant Construct_Tree :=
+           new Construct_Tree_Record (Size);
          Tree_Index : Positive := Size + 1;
 
          procedure Analyze_Construct;
@@ -120,12 +112,12 @@ package body Language.Tree is
                --  just get a handle on the name, and set null to the construct
                --  name since we are not going to need it anyway.
 
-               Tree.Contents (Tree_Index).Construct :=
-                 To_Simple_Construct_Information (Parent.all, False);
+               To_Simple_Construct_Information
+                 (Parent.all, Tree.Contents (Tree_Index).Construct, False);
                Parent.Name := null;
             else
-               Tree.Contents (Tree_Index).Construct :=
-                 To_Simple_Construct_Information (Parent.all, True);
+               To_Simple_Construct_Information
+                 (Parent.all, Tree.Contents (Tree_Index).Construct, True);
             end if;
 
             Tree.Contents (Tree_Index).Sub_Nodes_Length :=

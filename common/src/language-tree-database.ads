@@ -41,12 +41,12 @@ package Language.Tree.Database is
    --  Free the data associated to File.
 
    function Get_Full_Tree
-     (File : Structured_File_Access) return Construct_Tree_Access;
+     (File : Structured_File_Access) return Construct_Tree;
    --  Return the complete tree corresponding to this file. It the tree is not
    --  cached, then it will be computed.
 
    function Get_Public_Tree
-     (File : Structured_File_Access) return Construct_Tree_Access;
+     (File : Structured_File_Access) return Construct_Tree;
    --  Return the public tree corresponding to this file. The public tree is
    --  always in memory.
 
@@ -195,10 +195,10 @@ private
       Parent_File : Structured_File_Access;
       Lang        : Tree_Language_Access;
 
-      Public_Tree  : Construct_Tree_Access;
+      Public_Tree  : Construct_Tree;
       Db_Data_Tree : Construct_Db_Data_Access;
 
-      Cache_Tree   : Construct_Tree_Access;
+      Cache_Tree   : Construct_Tree;
       Cache_Buffer : String_Access;
 
       Db           : access Construct_Database;

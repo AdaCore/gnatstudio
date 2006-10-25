@@ -52,7 +52,7 @@ package body Language.Tree.Database is
    -------------------
 
    function Get_Full_Tree
-     (File : Structured_File_Access) return Construct_Tree_Access is
+     (File : Structured_File_Access) return Construct_Tree is
    begin
       if File.Cache_Tree = null then
          declare
@@ -60,8 +60,7 @@ package body Language.Tree.Database is
          begin
             Parse_Constructs
               (Get_Language (File.Lang), Get_Buffer (File).all, Constructs);
-            File.Cache_Tree := new Construct_Tree'
-              (To_Construct_Tree (Constructs'Access, True));
+            File.Cache_Tree := To_Construct_Tree (Constructs'Access, True);
          end;
       end if;
 
@@ -73,7 +72,7 @@ package body Language.Tree.Database is
    -------------------
 
    function Get_Public_Tree
-     (File : Structured_File_Access) return Construct_Tree_Access is
+     (File : Structured_File_Access) return Construct_Tree is
    begin
       return File.Public_Tree;
    end Get_Public_Tree;
@@ -136,7 +135,7 @@ package body Language.Tree.Database is
       function Is_Spec_Of
         (Supposed_Spec, Supposed_Body : Structured_File_Access) return Boolean
       is
-         Spec_Tree, Body_Tree : Construct_Tree_Access;
+         Spec_Tree, Body_Tree : Construct_Tree;
       begin
          if Supposed_Spec = null or else Supposed_Body = null then
             return False;
@@ -154,7 +153,7 @@ package body Language.Tree.Database is
       end Is_Spec_Of;
 
       Buffer     : GNAT.Strings.String_Access := Read_File (File.File);
-      Full_Tree  : Construct_Tree_Access;
+      Full_Tree  : aliased Construct_Tree;
       Constructs : aliased Construct_List;
    begin
       --  Phase 1 : remove previous construct information from the database
@@ -202,10 +201,8 @@ package body Language.Tree.Database is
       --  Phase 2 : analyze the file and add data in the database
 
       Parse_Constructs (Get_Language (File.Lang), Buffer.all, Constructs);
-      Full_Tree := new Construct_Tree'
-        (To_Construct_Tree (Constructs'Access, True));
-      File.Public_Tree := new Construct_Tree'
-        (Get_Public_Tree (File.Lang, Full_Tree, True));
+      Full_Tree := To_Construct_Tree (Constructs'Access, True);
+      File.Public_Tree := Get_Public_Tree (File.Lang, Full_Tree'Access, True);
       File.Db_Data_Tree := new Construct_Db_Data_Array
         (1 .. File.Public_Tree.Contents'Length);
 
