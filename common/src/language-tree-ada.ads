@@ -143,10 +143,10 @@ private
       --  full declaration in the private part.
    end record;
 
-   type Ada_Construct_Tree_Record is array
+   type Ada_Construct_Tree_Array is array
      (Positive range <>) of Ada_Construct_Tree_Information;
 
-   type Ada_Construct_Tree is access all Ada_Construct_Tree_Record;
+   type Ada_Construct_Tree is access all Ada_Construct_Tree_Array;
 
    type Ada_Tree_Language is new Tree_Language with null record;
 

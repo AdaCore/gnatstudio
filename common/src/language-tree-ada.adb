@@ -36,7 +36,7 @@ package body Language.Tree.Ada is
 
    procedure Free (Ada_Tree : in out Ada_Construct_Tree) is
       procedure Internal is new Unchecked_Deallocation
-        (Ada_Construct_Tree_Record, Ada_Construct_Tree);
+        (Ada_Construct_Tree_Array, Ada_Construct_Tree);
    begin
       Internal (Ada_Tree);
    end Free;
@@ -274,7 +274,7 @@ package body Language.Tree.Ada is
       end Compute_Scope;
 
       Ada_Tree : Ada_Construct_Tree :=
-        new Ada_Construct_Tree_Record (Tree.Contents'Range);
+        new Ada_Construct_Tree_Array (Tree.Contents'Range);
       Iter  : Construct_Tree_Iterator;
    begin
       Iter := First (Tree);
