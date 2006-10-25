@@ -24,11 +24,28 @@ package Src_Editor_Buffer.Hooks is
 
    Word_Added_Hook : constant String := "word_added";
 
+   ------------------------
+   -- File_Edition_Hooks --
+   ------------------------
+
+   File_Edition_Hook_Type : constant String := "file_edition_hooks";
+
+   type File_Edition_Hooks_Args is new File_Hooks_Args with record
+      Character : Gunichar;
+   end record;
+   type File_Edition_Hooks_Args_Access is access all
+     File_Edition_Hooks_Args'Class;
+
+   Character_Added_Hook : constant String := "character_added";
+
    procedure Location_Changed (Buffer : Source_Buffer);
    --  Emit the hook Cursor_Stopped_Hook
 
    procedure Word_Added (Buffer : Source_Buffer);
    --  Emit the hook Word_Added_Hook
+
+   procedure Character_Added (Buffer : Source_Buffer; Character : Gunichar);
+   --  Emit the Character_Added_Hook
 
    procedure Register_Editor_Hooks
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
