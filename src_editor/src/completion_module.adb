@@ -26,6 +26,8 @@ with Basic_Types;               use Basic_Types;
 
 with Gdk.Types.Keysyms;         use Gdk.Types, Gdk.Types.Keysyms;
 with Glib;                      use Glib;
+with Glib.Unicode;              use Glib.Unicode;
+with Gtk.Main;                  use Gtk.Main;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_Mark;             use Gtk.Text_Mark;
 with Gtk.Handlers;
@@ -46,6 +48,7 @@ with GPS.Intl;                  use GPS.Intl;
 with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
 with Src_Editor_Buffer;         use Src_Editor_Buffer;
+with Src_Editor_Buffer.Hooks;   use Src_Editor_Buffer.Hooks;
 with Src_Editor_Box;            use Src_Editor_Box;
 with Src_Editor_Module;         use Src_Editor_Module;
 with Src_Editor_View;           use Src_Editor_View;
@@ -84,6 +87,9 @@ package body Completion_Module is
    Smart_Completion_Enabled_Set : Param_Spec_Boolean;
 
    use String_List_Utils.String_List;
+
+   Trigger_Timeout : constant := 175;
+   --  The timeout for key triggers, in milliseconds.
 
    type Completion_Module_Record is new Module_ID_Record with record
       Prefix : GNAT.OS_Lib.String_Access;
@@ -139,6 +145,21 @@ package body Completion_Module is
       --  Whether the smart completion has been launched once.
 
       Previous_Smart_Completion_State : Boolean := False;
+      Previous_Smart_Completion_Trigger_State : Boolean := False;
+      --  Stores the state of the Smart Completion preference, to add/remove
+      --  the corresponding hook.
+
+      Has_Smart_Completion            : Boolean := False;
+      --   Whereas we are currently doing a Smart Completion
+
+      Completion_Triggers_Callback    : Function_With_Args_Access;
+      --  The hook callback corresponding to character triggers
+
+      Trigger_Timeout     : Timeout_Handler_Id;
+      --  The timeout associated to character triggers
+
+      Has_Trigger_Timeout : Boolean := False;
+      --  Whereas a character trigger timeout is currently registered.
    end record;
    type Completion_Module_Access is access all Completion_Module_Record'Class;
 
@@ -208,6 +229,18 @@ package body Completion_Module is
      (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File);
    --  Load the constructs from one file
 
+   function Trigger_Timeout_Callback return Boolean;
+   --  Timeout callback after a trigger character has been entered.
+
+   procedure Character_Added_Hook_Callback
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Hook callback on a character added.
+
+   function Smart_Complete
+     (Kernel : Kernel_Handle) return Command_Return_Type;
+   --  Execute Smart completion at the current location.
+
    -------------------------
    -- Preferences_Changed --
    -------------------------
@@ -223,6 +256,22 @@ package body Completion_Module is
         not Completion_Module.Previous_Smart_Completion_State
       then
          Load_Construct_Database (Kernel);
+      end if;
+
+      if Get_Pref (Smart_Completion_Enabled)
+        /= Completion_Module.Previous_Smart_Completion_Trigger_State
+      then
+         Completion_Module.Previous_Smart_Completion_Trigger_State :=
+           Get_Pref (Smart_Completion_Enabled);
+
+         if Completion_Module.Previous_Smart_Completion_Trigger_State then
+            Add_Hook (Kernel, Character_Added_Hook,
+                      Completion_Module.Completion_Triggers_Callback,
+                      Name => "completion_module.character_added");
+         else
+            Remove_Hook (Kernel, Character_Added_Hook,
+                         Completion_Module.Completion_Triggers_Callback);
+         end if;
       end if;
 
       Completion_Module.Previous_Smart_Completion_State :=
@@ -272,6 +321,8 @@ package body Completion_Module is
       Free (D.Constructs_Resolver);
       Free (D.Result);
       Free (D.The_Text);
+
+      Completion_Module.Has_Smart_Completion := False;
 
       End_Completion (Source_View (Win));
    exception
@@ -610,6 +661,175 @@ package body Completion_Module is
       end if;
    end Move_To_Next_Editor;
 
+   --------------------
+   -- Smart_Complete --
+   --------------------
+
+   function Smart_Complete
+     (Kernel : Kernel_Handle) return Command_Return_Type
+   is
+      Widget        : constant Gtk_Widget :=
+        Get_Current_Focus_Widget (Kernel);
+      View          : Source_View;
+      Buffer        : Source_Buffer;
+
+      Movement      : Boolean;
+      To_Replace    : Natural := 0;
+
+   begin
+      if Widget /= null
+        and then Widget.all in Source_View_Record'Class
+      then
+         View   := Source_View (Widget);
+         Buffer := Source_Buffer (Get_Buffer (View));
+      end if;
+
+      --  There can be only one smart completion at a time.
+
+      if Completion_Module.Has_Smart_Completion then
+         return Commands.Success;
+      end if;
+
+      if View /= null
+        and then not In_Completion (View)
+        and then Get_Language (Buffer) = Ada_Lang
+      --  ??? This is a short term solution. In the long term (as soon as
+      --  we have more than one language to handle), we want to have a
+      --  function returning the proper manager, taking a language in
+      --  parameter.
+      then
+         --  Display the dialog if necessary.
+
+         if not Completion_Module.Smart_Completion_Launched then
+            Set_Pref (Kernel, Smart_Completion_Enabled_Set, True);
+            Completion_Module.Smart_Completion_Launched := True;
+
+            declare
+               Buttons : Message_Dialog_Buttons;
+            begin
+               Buttons := Message_Dialog
+                 (Msg            =>
+                  -("You are using smart completion for the first time."
+                    & ASCII.LF & ASCII.LF
+                    & "To take full advantage of this, you need to enable"
+                    & " the full smart completion engine "
+                    & ASCII.LF
+                    & "The entity database will then be loaded at GPS "
+                    & " startup."
+                    & ASCII.LF & ASCII.LF
+                    & "Do you want to activate this now?"),
+                  Buttons        => Button_Yes or Button_No,
+                  Default_Button => Button_Yes,
+                  Justification  => Justify_Left);
+
+               if (Buttons and Button_Yes) /= 0 then
+                  Set_Pref (Kernel, Smart_Completion_Enabled, True);
+                  Preferences_Changed (Kernel);
+               end if;
+            end;
+         end if;
+
+         declare
+            Win  : Completion_Window_Access;
+            It   : Gtk_Text_Iter;
+            Data : Smart_Completion_Data;
+            Constructs : aliased Construct_List;
+
+         begin
+            Data.Manager := new Ada_Completion_Manager;
+            Data.The_Text := Get_String (Buffer);
+            Constructs := Get_Constructs (Buffer, Exact);
+
+            Set_Buffer
+              (Data.Manager.all,
+               GNAT.Strings.String_Access (Data.The_Text));
+
+            Data.Constructs_Resolver := new Construct_Completion_Resolver'
+              (New_Construct_Completion_Resolver
+                 (Get_Construct_Database (Kernel),
+                  Get_Filename (Buffer),
+                  GNAT.Strings.String_Access (Data.The_Text)));
+
+            Register_Resolver (Data.Manager, Data.Constructs_Resolver);
+
+            Get_Iter_At_Mark (Buffer, It, Get_Insert (Buffer));
+
+            --  The function Get_Initial_Completion_List requires the
+            --  offset of the cursor *in bytes* from the beginning of
+            --  Data.The_Text.all.
+            --  The Gtk functions can only allow retrieval of the cursor
+            --  position *in characters* from the beginning of the
+            --  buffer. Moreover, the Gtk functions cannot be used, since
+            --  inexact if there is block folding involved.
+            --  Therefore, in order to get the cursor position, we use the
+            --  mechanism below.
+            --  ??? This should be optimized somehow.
+
+            declare
+               Offset : Natural;
+               Lines  : Basic_Types.String_Access;
+            begin
+               Lines := Get_Buffer_Lines
+                 (Buffer, 1,
+                  Get_Editable_Line
+                    (Buffer,
+                     Buffer_Line_Type (Get_Line (It) + 1)) - 1);
+
+               Offset := Lines'Length
+                 + Natural (Get_Line_Index (It))
+                 + Data.The_Text.all'First - 1;
+
+               Free (Lines);
+
+               Trace (Me_Adv, "Getting completions ...");
+               Data.Result := Get_Initial_Completion_List
+                 (Manager      => Data.Manager.all,
+                  Buffer       => Data.The_Text.all,
+                  Start_Offset => Offset);
+               Trace (Me_Adv, "Getting completions done");
+            end;
+
+            --  If the completion list is empty, return without showing
+            --  the completions window.
+            if At_End (First (Data.Result)) then
+               Trace (Me_Adv, "No completions found");
+               On_Completion_Destroy (View, Data);
+               return Commands.Success;
+            end if;
+
+            Gtk_New (Win, Kernel);
+
+            Get_Iter_At_Mark
+              (Buffer, It, Get_Insert (Buffer));
+
+            To_Replace := Get_Completed_String (Data.Result)'Length;
+
+            if To_Replace /= 0 then
+               Backward_Chars (It, Gint (To_Replace), Movement);
+            end if;
+
+            Start_Completion (View, Win);
+
+            Completion_Module.Has_Smart_Completion := True;
+
+            Object_Connect
+              (Win, "destroy",
+               To_Marshaller (On_Completion_Destroy'Access),
+               View, Data);
+
+            Set_Completion_Iterator (Win, First (Data.Result));
+
+            Show
+              (Win, Gtk_Text_View (View),
+               Gtk_Text_Buffer (Buffer), It,
+               Get_Language_Context
+                 (Get_Language (Buffer)).Case_Sensitive);
+         end;
+      end if;
+
+      return Commands.Success;
+   end Smart_Complete;
+
    -------------
    -- Execute --
    -------------
@@ -629,9 +849,6 @@ package body Completion_Module is
       Text          : GNAT.OS_Lib.String_Access;
       Buffer        : Source_Buffer;
 
-      Movement      : Boolean;
-      To_Replace    : Natural := 0;
-
    begin
       if M = null then
          return Commands.Failure;
@@ -649,224 +866,90 @@ package body Completion_Module is
       end if;
 
       if Command.Smart_Completion then
-         if View /= null
-           and then not In_Completion (View)
-           and then Get_Language (Buffer) = Ada_Lang
-         --  ??? This is a short term solution. In the long term (as soon as
-         --  we have more than one language to handle), we want to have a
-         --  function returning the proper manager, taking a language in
-         --  parameter.
-         then
-            --  Display the dialog if necessary.
+         return Smart_Complete (Command.Kernel);
+      end if;
 
-            if not Completion_Module.Smart_Completion_Launched then
-               Set_Pref (Command.Kernel, Smart_Completion_Enabled_Set, True);
-               Completion_Module.Smart_Completion_Launched := True;
+      --  If we are not already in the middle of a completion:
 
-               declare
-                  Buttons : Message_Dialog_Buttons;
-               begin
-                  Buttons := Message_Dialog
-                    (Msg            =>
-                     -("You are using smart completion for the first time."
-                       & ASCII.LF & ASCII.LF
-                       & "To take full advantage of this, you need to enable"
-                       & " the full smart completion engine "
-                       & ASCII.LF
-                       & "The entity database will then be loaded at GPS "
-                       & " startup."
-                       & ASCII.LF & ASCII.LF
-                       & "Do you want to activate this now?"),
-                     Buttons        => Button_Yes or Button_No,
-                     Default_Button => Button_Yes,
-                     Justification  => Justify_Left);
+      if M.Mark = null or else Buffer /= M.Insert_Buffer then
+         --  If the completions list is empty, that means we have to
+         --  initiate the mark data and launch the first search.
+         --  End_Action calls Reset_Completion_Data, and therefore resets
+         --  the buffer to null
 
-                  if (Buttons and Button_Yes) /= 0 then
-                     Set_Pref (Command.Kernel, Smart_Completion_Enabled, True);
-                     Preferences_Changed (Command.Kernel);
-                  end if;
-               end;
-            end if;
+         End_Action (Buffer);
+         M.Insert_Buffer := Buffer;
 
-            declare
-               Win  : Completion_Window_Access;
-               It   : Gtk_Text_Iter;
-               Data : Smart_Completion_Data;
-               Constructs : aliased Construct_List;
-
-            begin
-               Data.Manager := new Ada_Completion_Manager;
-               Data.The_Text := Get_String (Buffer);
-               Constructs := Get_Constructs (Buffer, Exact);
-
-               Set_Buffer
-                 (Data.Manager.all,
-                  GNAT.Strings.String_Access (Data.The_Text));
-
-               Data.Constructs_Resolver := new Construct_Completion_Resolver'
-                 (New_Construct_Completion_Resolver
-                    (Get_Construct_Database (Command.Kernel),
-                     Get_Filename (Buffer),
-                     GNAT.Strings.String_Access (Data.The_Text)));
-
-               Register_Resolver (Data.Manager, Data.Constructs_Resolver);
-
-               Get_Iter_At_Mark (Buffer, It, Get_Insert (Buffer));
-
-               --  The function Get_Initial_Completion_List requires the
-               --  offset of the cursor *in bytes* from the beginning of
-               --  Data.The_Text.all.
-               --  The Gtk functions can only allow retrieval of the cursor
-               --  position *in characters* from the beginning of the
-               --  buffer. Moreover, the Gtk functions cannot be used, since
-               --  inexact if there is block folding involved.
-               --  Therefore, in order to get the cursor position, we use the
-               --  mechanism below.
-               --  ??? This should be optimized somehow.
-
-               declare
-                  Offset : Natural;
-                  Lines  : Basic_Types.String_Access;
-               begin
-                  Lines := Get_Buffer_Lines
-                    (Buffer, 1,
-                     Get_Editable_Line
-                       (Buffer,
-                        Buffer_Line_Type (Get_Line (It) + 1)) - 1);
-
-                  Offset := Lines'Length
-                    + Natural (Get_Line_Index (It))
-                    + Data.The_Text.all'First - 1;
-
-                  Free (Lines);
-
-                  Trace (Me_Adv, "Getting completions ...");
-                  Data.Result := Get_Initial_Completion_List
-                    (Manager      => Data.Manager.all,
-                     Buffer       => Data.The_Text.all,
-                     Start_Offset => Offset);
-                  Trace (Me_Adv, "Getting completions done");
-               end;
-
-               --  If the completion list is empty, return without showing
-               --  the completions window.
-               if At_End (First (Data.Result)) then
-                  Trace (Me_Adv, "No completions found");
-                  On_Completion_Destroy (View, Data);
-                  return Commands.Success;
-               end if;
-
-               Gtk_New (Win, Command.Kernel);
-
-               Get_Iter_At_Mark
-                 (Buffer, It, Get_Insert (Buffer));
-
-               To_Replace := Get_Completed_String (Data.Result)'Length;
-
-               if To_Replace /= 0 then
-                  Backward_Chars (It, Gint (To_Replace), Movement);
-               end if;
-
-               Start_Completion (View, Win);
-
-               Object_Connect
-                 (Win, "destroy",
-                  To_Marshaller (On_Completion_Destroy'Access),
-                  View, Data);
-
-               Set_Completion_Iterator (Win, First (Data.Result));
-
-               Show
-                 (Win, Gtk_Text_View (View),
-                  Gtk_Text_Buffer (Buffer), It,
-                  Get_Language_Context
-                    (Get_Language (Buffer)).Case_Sensitive);
-            end;
-         end if;
-
-      else
-         --  If we are not already in the middle of a completion:
-
-         if M.Mark = null or else Buffer /= M.Insert_Buffer then
-            --  If the completions list is empty, that means we have to
-            --  initiate the mark data and launch the first search.
-            --  End_Action calls Reset_Completion_Data, and therefore resets
-            --  the buffer to null
-
-            End_Action (Buffer);
-            M.Insert_Buffer := Buffer;
-
-            Get_Iter_At_Mark
-              (M.Insert_Buffer, Iter, Get_Insert (M.Insert_Buffer));
-            M.Mark            := Create_Mark (M.Insert_Buffer, "", Iter);
-
-            Copy (Iter, Prev);
-            Backward_Char (Prev, Success);
-
-            if not Success then
-               return Commands.Failure;
-            end if;
-
-            while Is_Entity_Letter (Get_Char (Prev)) loop
-               Backward_Char (Prev, Success);
-               exit when not Success;
-            end loop;
-
-            if Success then
-               Forward_Char (Prev, Success);
-            end if;
-
-            M.Word_Start_Mark := Create_Mark (M.Insert_Buffer, "", Prev);
-
-            --  Prepare the first editor in which we will be searching for
-            --  possible completions. Note that the call to First_Child ensures
-            --  that we also first look in the current editor, which is what
-            --  the user would expect anyway
-            M.Child := First_Child (Get_MDI (Get_Kernel (Context.Context)));
-            Move_To_Next_Editor;
-
-            --  At this point the completion data is reset.
-            --  Get the completion suffix.
-
-            declare
-               P : constant String := Get_Slice (Prev, Iter);
-            begin
-               if P /= "" then
-                  M.Prefix := new String'(P);
-                  Extend_Completions_List;
-               else
-                  Reset_Completion_Data;
-                  return Commands.Success;
-               end if;
-            end;
-         elsif M.Buffer /= null then
-            Extend_Completions_List;
-         end if;
-
-         if M.Node /= Null_Node then
-            Text := new String'(Data (M.Node));
-         else
-            Text := new String'(M.Prefix.all);
-         end if;
-
-         Get_Iter_At_Mark (M.Insert_Buffer, Prev, M.Word_Start_Mark);
          Get_Iter_At_Mark
            (M.Insert_Buffer, Iter, Get_Insert (M.Insert_Buffer));
-         Create
-           (Shell_Command,
-            M.Insert_Buffer,
-            Get_Editable_Line
-              (M.Insert_Buffer, Buffer_Line_Type (Get_Line (Prev) + 1)),
-            Character_Offset_Type (Get_Line_Offset (Prev) + 1),
-            Get_Editable_Line
-              (M.Insert_Buffer, Buffer_Line_Type (Get_Line (Iter) + 1)),
-            Character_Offset_Type (Get_Line_Offset (Iter) + 1),
-            Text.all,
-            True);
+         M.Mark            := Create_Mark (M.Insert_Buffer, "", Iter);
 
-         Enqueue (M.Insert_Buffer, Command_Access (Shell_Command));
-         GNAT.OS_Lib.Free (Text);
+         Copy (Iter, Prev);
+         Backward_Char (Prev, Success);
+
+         if not Success then
+            return Commands.Failure;
+         end if;
+
+         while Is_Entity_Letter (Get_Char (Prev)) loop
+            Backward_Char (Prev, Success);
+            exit when not Success;
+         end loop;
+
+         if Success then
+            Forward_Char (Prev, Success);
+         end if;
+
+         M.Word_Start_Mark := Create_Mark (M.Insert_Buffer, "", Prev);
+
+         --  Prepare the first editor in which we will be searching for
+         --  possible completions. Note that the call to First_Child ensures
+         --  that we also first look in the current editor, which is what
+         --  the user would expect anyway
+         M.Child := First_Child (Get_MDI (Get_Kernel (Context.Context)));
+         Move_To_Next_Editor;
+
+         --  At this point the completion data is reset.
+         --  Get the completion suffix.
+
+         declare
+            P : constant String := Get_Slice (Prev, Iter);
+         begin
+            if P /= "" then
+               M.Prefix := new String'(P);
+               Extend_Completions_List;
+            else
+               Reset_Completion_Data;
+               return Commands.Success;
+            end if;
+         end;
+      elsif M.Buffer /= null then
+         Extend_Completions_List;
       end if;
+
+      if M.Node /= Null_Node then
+         Text := new String'(Data (M.Node));
+      else
+         Text := new String'(M.Prefix.all);
+      end if;
+
+      Get_Iter_At_Mark (M.Insert_Buffer, Prev, M.Word_Start_Mark);
+      Get_Iter_At_Mark
+        (M.Insert_Buffer, Iter, Get_Insert (M.Insert_Buffer));
+      Create
+        (Shell_Command,
+         M.Insert_Buffer,
+         Get_Editable_Line
+           (M.Insert_Buffer, Buffer_Line_Type (Get_Line (Prev) + 1)),
+         Character_Offset_Type (Get_Line_Offset (Prev) + 1),
+         Get_Editable_Line
+           (M.Insert_Buffer, Buffer_Line_Type (Get_Line (Iter) + 1)),
+         Character_Offset_Type (Get_Line_Offset (Iter) + 1),
+         Text.all,
+         True);
+
+      Enqueue (M.Insert_Buffer, Command_Access (Shell_Command));
+      GNAT.OS_Lib.Free (Text);
 
       return Commands.Success;
    end Execute;
@@ -992,6 +1075,59 @@ package body Completion_Module is
       Register_Preferences (Kernel);
    end Register_Module;
 
+   ------------------------------
+   -- Trigger_Timeout_Callback --
+   ------------------------------
+
+   function Trigger_Timeout_Callback return Boolean is
+      Result : Command_Return_Type;
+      pragma Unreferenced (Result);
+   begin
+      Result := Smart_Complete (Get_Kernel (Completion_Module.all));
+      Completion_Module.Has_Trigger_Timeout := False;
+      return False;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+         return False;
+   end Trigger_Timeout_Callback;
+
+   -----------------------------------
+   -- Character_Added_Hook_Callback --
+   -----------------------------------
+
+   procedure Character_Added_Hook_Callback
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      pragma Unreferenced (Kernel);
+      Edition_Data : constant File_Edition_Hooks_Args :=
+        File_Edition_Hooks_Args (Data.all);
+      Buffer       : UTF8_String (1 .. 6);
+      Last         : Natural;
+   begin
+      --  Remove the previous timeout, if registered.
+      if Completion_Module.Has_Trigger_Timeout then
+         Timeout_Remove (Completion_Module.Trigger_Timeout);
+         Completion_Module.Has_Trigger_Timeout := False;
+      end if;
+
+      Unichar_To_UTF8 (Edition_Data.Character, Buffer, Last);
+
+      if Last = 1 and then Buffer (1) = '.' then
+         Completion_Module.Trigger_Timeout :=
+           Timeout_Add (Trigger_Timeout, Trigger_Timeout_Callback'Access);
+         Completion_Module.Has_Trigger_Timeout := True;
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end Character_Added_Hook_Callback;
+
    --------------------------
    -- Register_Preferences --
    --------------------------
@@ -1021,6 +1157,25 @@ package body Completion_Module is
       Register_Property
         (Kernel,
          Param_Spec (Smart_Completion_Enabled_Set), -"General");
+
+      --  ??? Deactivated code. This registers a preference to control the
+      --  "character triggers". We have decided for now to reuse the
+      --  Smart_Completion_Enabled_Set property.
+
+      --        Smart_Completion_Triggers := Param_Spec_Boolean
+      --          (Gnew_Boolean
+      --             (Name    => "Smart-Completion-Triggers",
+      --              Default => False,
+      --              Blurb   =>
+      --              -("Whether completion should activate automatically"
+      --                & " on appropriate characters"),
+      --              Nick    => "Smart completion triggers"));
+      --        Register_Property
+      --          (Kernel,
+      --           Param_Spec (Smart_Completion_Triggers), -"General");
+
+      Completion_Module.Completion_Triggers_Callback :=
+        Wrapper (Character_Added_Hook_Callback'Access);
 
       Completion_Module.Previous_Smart_Completion_State :=
         Get_Pref (Smart_Completion_Enabled);
