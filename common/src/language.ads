@@ -530,9 +530,11 @@ package Language is
    --  Same as above, but containing only the needed construct information, no
    --  list constructions.
 
-   function To_Simple_Construct_Information
-     (Construct : Construct_Information; Full_Copy : Boolean)
-      return Simple_Construct_Information;
+   procedure To_Simple_Construct_Information
+     (Construct : Construct_Information;
+      Simple    : out Simple_Construct_Information;
+      Full_Copy : Boolean);
+   --  Convert a Construct_Information into a simple construct information
 
    Null_Construct_Info : constant Construct_Information;
 

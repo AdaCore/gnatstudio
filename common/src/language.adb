@@ -356,11 +356,12 @@ package body Language is
    -- To_Simple_Construct_Information --
    -------------------------------------
 
-   function To_Simple_Construct_Information
-     (Construct : Construct_Information; Full_Copy : Boolean)
-      return Simple_Construct_Information
-   is
-      Simple : Simple_Construct_Information :=
+   procedure To_Simple_Construct_Information
+     (Construct : Construct_Information;
+      Simple    : out Simple_Construct_Information;
+      Full_Copy : Boolean) is
+   begin
+      Simple :=
         (Category       => Construct.Category,
          Is_Declaration => Construct.Is_Declaration,
          Visibility     => Construct.Visibility,
@@ -368,14 +369,12 @@ package body Language is
          Sloc_Start     => Construct.Sloc_Start,
          Sloc_Entity    => Construct.Sloc_Entity,
          Sloc_End       => Construct.Sloc_End);
-   begin
+
       if Full_Copy then
          if Construct.Name /= null then
             Simple.Name := new String'(Simple.Name.all);
          end if;
       end if;
-
-      return Simple;
    end To_Simple_Construct_Information;
 
    ------------------
