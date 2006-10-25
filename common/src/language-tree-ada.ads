@@ -20,15 +20,13 @@
 
 package Language.Tree.Ada is
 
-   type Ada_Construct_Tree (<>) is private;
+   type Ada_Construct_Tree is private;
    --  This type contains ada-specific information, extending a generic
    --  construct tree. This structure contains only the ada-specific part of
    --  the information, and has to be used with the construct tree from which
    --  it has been created.
 
-   type Ada_Construct_Tree_Access is access all Ada_Construct_Tree;
-
-   procedure Free (Ada_Tree : in out Ada_Construct_Tree_Access);
+   procedure Free (Ada_Tree : in out Ada_Construct_Tree);
    --  Free the data associated to an ada construct tree access.
 
    function Generate_Ada_Construct_Tree
@@ -103,8 +101,8 @@ package Language.Tree.Ada is
 
    function Get_Parent_Tree
      (Lang       : access Ada_Tree_Language;
-      Left_Tree  : access Construct_Tree;
-      Right_Tree : access Construct_Tree) return Get_Parent_Tree_Result;
+      Left_Tree  : Construct_Tree;
+      Right_Tree : Construct_Tree) return Get_Parent_Tree_Result;
    --  Return true if Child is a child unit of parent, false otherwise.
 
    function Get_Public_Tree
@@ -115,12 +113,12 @@ package Language.Tree.Ada is
 
    function Get_Unit_Construct
      (Lang : access Ada_Tree_Language;
-      Tree : access Construct_Tree) return Construct_Tree_Iterator;
+      Tree : Construct_Tree) return Construct_Tree_Iterator;
    --  Return the unit construct of the tree given in parameter
 
    function Get_Unit_Name
      (Lang : access Ada_Tree_Language;
-      Tree : access Construct_Tree) return Composite_Identifier;
+      Tree : Construct_Tree) return Composite_Identifier;
    --  See inherited documentation
 
    function Get_Name_Index
@@ -145,8 +143,10 @@ private
       --  full declaration in the private part.
    end record;
 
-   type Ada_Construct_Tree is array
+   type Ada_Construct_Tree_Record is array
      (Positive range <>) of Ada_Construct_Tree_Information;
+
+   type Ada_Construct_Tree is access all Ada_Construct_Tree_Record;
 
    type Ada_Tree_Language is new Tree_Language with null record;
 
