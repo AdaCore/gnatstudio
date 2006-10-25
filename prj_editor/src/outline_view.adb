@@ -106,7 +106,7 @@ package body Outline_View is
       Icon      : Gdk_Pixbuf;
       File_Icon : Gdk_Pixbuf;
 
-      Show_File_Node : Boolean := True;
+      Show_File_Node : Boolean := False;
       --  Whether the root node should show the file name. If set to False, no
       --  root node is used, which saves space on the display.
    end record;
@@ -977,8 +977,8 @@ package body Outline_View is
 
       Outline_View_Show_File_Node := Param_Spec_Boolean
         (Gnew_Boolean
-           (Name    => "Outline-View-Show-File-Node",
-            Default => True,
+           (Name    => "Outline-View-Display-File-Node",
+            Default => False,
             Blurb   => -("If true, the outline view's top line will indicate"
                          & " the name of the file currently shown in the"
                          & " outline. If false, the name of the file will not"
