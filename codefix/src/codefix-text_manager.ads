@@ -320,11 +320,11 @@ package Codefix.Text_Manager is
    --  Return the parsed strucutre of the text_interface.
 
    function Get_Tree
-     (This : access Text_Interface'Class) return Construct_Tree_Access;
+     (This : access Text_Interface'Class) return Construct_Tree;
    --  Return the tree associated to this text.
 
    function Get_Ada_Tree
-     (This : access Text_Interface'Class) return Ada_Construct_Tree_Access;
+     (This : access Text_Interface'Class) return Ada_Construct_Tree;
    --  Return the ada-specific tree asssociated to this text.
 
    procedure Constrain_Update (This : in out Text_Interface) is abstract;
@@ -557,13 +557,13 @@ package Codefix.Text_Manager is
 
    function Get_Tree
      (This : Text_Navigator_Abstr'Class; Cursor : File_Cursor'Class)
-      return Construct_Tree_Access;
+      return Construct_Tree;
    --  Return the construct tree corresponding to the file pointed by the given
    --  cursor.
 
    function Get_Ada_Tree
      (This : Text_Navigator_Abstr'Class; Cursor : File_Cursor'Class)
-      return Ada_Construct_Tree_Access;
+      return Ada_Construct_Tree;
    --  Return the ada-specific tree corresponding to the file pointed by the
    --  given cursor.
 
@@ -1310,8 +1310,8 @@ private
 
    type Text_Interface is abstract tagged record
       Structure            : Construct_List_Access := new Construct_List;
-      Tree                 : Construct_Tree_Access := null;
-      Ada_Tree             : Ada_Construct_Tree_Access := null;
+      Tree                 : Construct_Tree := Null_Construct_Tree;
+      Ada_Tree             : Ada_Construct_Tree;
       Buffer               : GNAT.OS_Lib.String_Access := null;
       File_Name            : VFS.Virtual_File;
       Structure_Up_To_Date : Ptr_Boolean := new Boolean'(False);
