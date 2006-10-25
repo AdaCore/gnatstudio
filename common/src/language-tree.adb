@@ -169,7 +169,11 @@ package body Language.Tree is
 
    function First (Tree : Construct_Tree) return Construct_Tree_Iterator is
    begin
-      return (Tree.Contents (1), 1);
+      if Tree.Contents'Length > 0 then
+         return (Tree.Contents (1), 1);
+      else
+         return Null_Construct_Tree_Iterator;
+      end if;
    end First;
 
    ----------
@@ -178,7 +182,11 @@ package body Language.Tree is
 
    function Last (Tree : Construct_Tree) return Construct_Tree_Iterator is
    begin
-      return (Tree.Contents (Tree.Contents'Last), Tree.Contents'Last);
+      if Tree.Contents'Length > 0 then
+         return (Tree.Contents (Tree.Contents'Last), Tree.Contents'Last);
+      else
+         return Null_Construct_Tree_Iterator;
+      end if;
    end Last;
 
    ----------------------
