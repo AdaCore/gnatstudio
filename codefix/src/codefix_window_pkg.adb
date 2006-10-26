@@ -22,6 +22,7 @@ with Gtk; use Gtk;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtk.Stock;       use Gtk.Stock;
+with Gtk.Tooltips;    use Gtk.Tooltips;
 with Gtkada.Handlers; use Gtkada.Handlers;
 with GPS.Intl;      use GPS.Intl;
 with Codefix_Window_Pkg.Callbacks; use Codefix_Window_Pkg.Callbacks;
