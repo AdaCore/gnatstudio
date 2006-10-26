@@ -25,7 +25,7 @@ with Gtk.Stock;       use Gtk.Stock;
 with GPS.Intl; use GPS.Intl;
 
 package body New_Variable_Editor_Pkg is
-pramga Suppress (Style_Checks);
+pragma Style_Checks (Off);
 
 procedure Gtk_New (New_Variable_Editor : out New_Variable_Editor_Access) is
 begin

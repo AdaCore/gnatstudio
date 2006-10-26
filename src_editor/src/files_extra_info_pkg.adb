@@ -27,7 +27,7 @@ with Files_Extra_Info_Pkg.Callbacks; use Files_Extra_Info_Pkg.Callbacks;
 with GPS.Kernel; use GPS.Kernel;
 
 package body Files_Extra_Info_Pkg is
-pragma Suppress (Style_Checks);
+pragma Style_Checks (Off);
 
 procedure Gtk_New
   (Files_Extra_Info : out Files_Extra_Info_Access;
