@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Window; use Gtk.Window;
 with Gtk.Box; use Gtk.Box;
 with Gtk.Label; use Gtk.Label;
 with Gtk.Notebook; use Gtk.Notebook;
@@ -26,8 +25,6 @@ with Gtk.Combo; use Gtk.Combo;
 with Gtk.GEntry; use Gtk.GEntry;
 with Gtk.Vbutton_Box; use Gtk.Vbutton_Box;
 with Gtk.Button; use Gtk.Button;
-with Gtk.Object; use Gtk.Object;
-with Gtk.Tooltips; use Gtk.Tooltips;
 package Codefix_Window_Pkg is
 
    type Codefix_Window_Record is new Gtk_Hbox_Record with record
