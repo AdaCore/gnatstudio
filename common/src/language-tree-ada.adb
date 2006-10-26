@@ -1253,7 +1253,7 @@ package body Language.Tree.Ada is
       Index : Natural := 1;
    begin
       if Full_Tree.all.Contents'Length = 0 then
-         return Full_Tree.all;
+         return new Construct_Tree_Record'(Full_Tree.all.all);
       end if;
 
       Add_Scope (Null_Construct_Tree_Iterator, Index);
