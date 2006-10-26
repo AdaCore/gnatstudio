@@ -371,6 +371,7 @@ package body Language.Tree.Database is
          C := Next (C);
       end loop;
 
+      Clear (Db.Entities_Db);
       Clear (Db.Files_Db);
       Clear (Db.Sorted_Files_Db);
    end Clear;
@@ -409,7 +410,7 @@ package body Language.Tree.Database is
    -- Free --
    ----------
 
-   procedure Free (This : in out  Construct_Db_Data_Access) is
+   procedure Free (This : in out Construct_Db_Data_Access) is
       procedure Internal is new Unchecked_Deallocation
         (Construct_Db_Data_Array, Construct_Db_Data_Access);
    begin
