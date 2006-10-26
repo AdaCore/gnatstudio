@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
---                            ACT-Europe                             --
+--                      Copyright (C) 2002-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,6 +25,7 @@ with Gtk.Stock;       use Gtk.Stock;
 with GPS.Intl; use GPS.Intl;
 
 package body New_Variable_Editor_Pkg is
+pramga Suppress (Style_Checks);
 
 procedure Gtk_New (New_Variable_Editor : out New_Variable_Editor_Access) is
 begin

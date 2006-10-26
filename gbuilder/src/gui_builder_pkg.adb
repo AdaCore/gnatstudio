@@ -10,6 +10,7 @@ with Gui_Builder_Pkg.Callbacks; use Gui_Builder_Pkg.Callbacks;
 with RAD.Pixmaps; use RAD.Pixmaps;
 
 package body Gui_Builder_Pkg is
+pragma Suppress (Style_Checks);
 
 procedure Gtk_New (Gui_Builder : out Gui_Builder_Access) is
 begin
