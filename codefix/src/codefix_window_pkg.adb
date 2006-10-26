@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
---                            ACT-Europe                             --
+--                      Copyright (C) 2002-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -30,6 +30,8 @@ with GPS.Intl;      use GPS.Intl;
 with Codefix_Window_Pkg.Callbacks; use Codefix_Window_Pkg.Callbacks;
 
 package body Codefix_Window_Pkg is
+
+pragma Style_Checks (Off);
 
 procedure Gtk_New (Codefix_Window : out Codefix_Window_Access) is
 begin
