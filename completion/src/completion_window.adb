@@ -939,7 +939,8 @@ package body Completion_Window is
       View           : Gtk_Text_View;
       Buffer         : Gtk_Text_Buffer;
       Iter           : Gtk_Text_Iter;
-      Case_Sensitive : Boolean)
+      Case_Sensitive : Boolean;
+      Complete       : Boolean)
    is
       Iter_Coords : Gdk_Rectangle;
       Window_X, Window_Y : Gint;
@@ -1098,7 +1099,10 @@ package body Completion_Window is
       end if;
 
       On_Selection_Changed (Window);
-      Dummy2 := Complete_Common_Prefix (Window);
+
+      if Complete then
+         Dummy2 := Complete_Common_Prefix (Window);
+      end if;
    end Show;
 
    -----------------

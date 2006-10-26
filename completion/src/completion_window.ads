@@ -79,7 +79,8 @@ package Completion_Window is
       View           : Gtk_Text_View;
       Buffer         : Gtk_Text_Buffer;
       Iter           : Gtk_Text_Iter;
-      Case_Sensitive : Boolean);
+      Case_Sensitive : Boolean;
+      Complete       : Boolean);
    --  Attach the completion window to a text view, and set the completion
    --  to start on the given mark.
    --  Show the window.
