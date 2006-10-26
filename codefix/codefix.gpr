@@ -18,11 +18,7 @@ project Codefix is
       for Default_Switches ("ada") use ("-lgmem", "-g");
    end Linker;
 
-   package Compiler is
-      for Default_Switches ("Ada") use Shared.Compiler'Default_Switches ("Ada");
-      for Switches ("codefix_window_pkg.adb") use ("-g", "-O2");
-      for Switches ("final_window_pkg.adb") use ("-g", "-O2");
-   end Compiler;
+   package Compiler renames Shared.Compiler;
 
    package Builder is
       for Default_Switches ("ada") use ("-g");

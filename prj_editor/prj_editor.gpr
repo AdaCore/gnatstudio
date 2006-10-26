@@ -27,12 +27,7 @@ project Prj_Editor is
       end case;
    end Builder;
 
-   package Compiler is
-      for Default_Switches ("Ada") use Shared.Compiler'Default_Switches ("Ada");
-      for Switches ("new_variable_editor_pkg.adb") use ("-g", "-O2");
-      for Switches ("switches_editor_pkg.adb") use ("-g", "-O2");
-      for Switches ("wizard_window_pkg.adb") use ("-g", "-O2");
-   end Compiler;
+   package Compiler renames Shared.Compiler;
 
    package Binder is
       for Default_Switches ("Ada") use ("-E");
