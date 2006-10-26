@@ -238,8 +238,11 @@ package body Completion_Module is
    --  Hook callback on a character added.
 
    function Smart_Complete
-     (Kernel : Kernel_Handle) return Command_Return_Type;
+     (Kernel   : Kernel_Handle;
+      Complete : Boolean) return Command_Return_Type;
    --  Execute Smart completion at the current location.
+   --  Complete indicates whether we should automatically complete to the
+   --  biggest common prefix.
 
    -------------------------
    -- Preferences_Changed --
@@ -666,7 +669,8 @@ package body Completion_Module is
    --------------------
 
    function Smart_Complete
-     (Kernel : Kernel_Handle) return Command_Return_Type
+     (Kernel   : Kernel_Handle;
+      Complete : Boolean) return Command_Return_Type
    is
       Widget        : constant Gtk_Widget :=
         Get_Current_Focus_Widget (Kernel);
@@ -823,7 +827,8 @@ package body Completion_Module is
               (Win, Gtk_Text_View (View),
                Gtk_Text_Buffer (Buffer), It,
                Get_Language_Context
-                 (Get_Language (Buffer)).Case_Sensitive);
+                 (Get_Language (Buffer)).Case_Sensitive,
+               Complete);
          end;
       end if;
 
@@ -866,7 +871,7 @@ package body Completion_Module is
       end if;
 
       if Command.Smart_Completion then
-         return Smart_Complete (Command.Kernel);
+         return Smart_Complete (Command.Kernel, Complete => True);
       end if;
 
       --  If we are not already in the middle of a completion:
@@ -1083,7 +1088,7 @@ package body Completion_Module is
       Result : Command_Return_Type;
       pragma Unreferenced (Result);
    begin
-      Result := Smart_Complete (Get_Kernel (Completion_Module.all));
+      Result := Smart_Complete (Get_Kernel (Completion_Module.all), False);
       Completion_Module.Has_Trigger_Timeout := False;
       return False;
 
