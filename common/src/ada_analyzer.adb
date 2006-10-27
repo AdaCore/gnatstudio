@@ -232,6 +232,23 @@ package body Ada_Analyzer is
    Max_Identifier : constant := 256;
    --  Maximum length of an identifier.
 
+   type Type_Attribute is
+     (Abstract_Attribute,
+      Access_Attribute,
+      Array_Attribute,
+      Delta_Attribute,
+      Digits_Attribute,
+      Interface_Attribute,
+      New_Attribute,
+      Range_Attribute,
+      Record_Attribute,
+      Tagged_Attribute);
+
+   type Type_Attribute_Array is array (Type_Attribute) of Boolean;
+   pragma Pack (Type_Attribute_Array);
+
+   No_Attribute : constant Type_Attribute_Array := (others => False);
+
    type Extended_Token is record
       Token         : Token_Type := No_Token;
       --  Enclosing token
@@ -255,12 +272,6 @@ package body Ada_Analyzer is
 
       --  ??? It would be nice to merge the fields Declaration,
       --  Type_Declaration and Package_Declaration at some point.
-
-      Record_Type         : Boolean := False;
-      --  Is it a record type definition ?
-
-      Tagged_Type         : Boolean := False;
-      --  Is it a tagged type definition ?
 
       Identifier          : String (1 .. Max_Identifier);
       --  Name of the enclosing token
@@ -298,6 +309,15 @@ package body Ada_Analyzer is
 
       Is_Parameter   : Boolean := False;
       --  Return True if this token is in the profile of its parent
+
+      Type_Definition_Section : Boolean := False;
+      --  Are we currently processing the type definition of the token ?
+
+      Is_In_Type_Definition : Boolean := False;
+      --  Is this token found in the type definition section of its parent ?
+
+      Attributes            : Type_Attribute_Array := No_Attribute;
+      --  Defines the attributes that have been found for the given token
    end record;
    --  Extended information for a token
 
@@ -327,10 +347,6 @@ package body Ada_Analyzer is
 
    function Is_Library_Level (Stack : Token_Stack.Simple_Stack) return Boolean;
    --  Return True if the current scope in Stack is a library level package.
-
-   function Is_Within_Composite (Stack : Token_Stack.Simple_Stack)
-                                 return Boolean;
-   --  Return True if the closest enclosing entity is a composite type
 
    ---------------
    -- Get_Token --
@@ -626,34 +642,6 @@ package body Ada_Analyzer is
 
       return True;
    end Is_Library_Level;
-
-   -------------------------
-   -- Is_Within_Composite --
-   -------------------------
-
-   function Is_Within_Composite
-     (Stack : Token_Stack.Simple_Stack) return Boolean
-   is
-      Tmp : Token_Stack.Simple_Stack;
-   begin
-      Tmp := Stack;
-
-      while Tmp /= null and then Tmp.Val.Token /= No_Token loop
-         case Tmp.Val.Token is
-            when Tok_Type | Tok_Protected =>
-               return True;
-            when Tok_Function | Tok_Package | Tok_Procedure | Tok_Entry |
-                 Tok_Task =>
-               return False;
-            when others =>
-               null;
-         end case;
-
-         Tmp := Tmp.Next;
-      end loop;
-
-      return False;
-   end Is_Within_Composite;
 
    ------------------------
    -- Analyze_Ada_Source --
@@ -1612,9 +1600,9 @@ package body Ada_Analyzer is
 
             Constructs.Current.Visibility := Value.Visibility;
 
-            if Value.Tagged_Type then
+            if Value.Attributes (Tagged_Attribute) then
                Constructs.Current.Category := Cat_Class;
-            elsif Value.Record_Type then
+            elsif Value.Attributes (Record_Attribute) then
                Constructs.Current.Category := Cat_Structure;
             else
                case Value.Token is
@@ -1642,8 +1630,14 @@ package body Ada_Analyzer is
                         Constructs.Current.Category := Cat_Variable;
                      elsif Value.Is_Parameter then
                         Constructs.Current.Category := Cat_Parameter;
-                     elsif Is_Within_Composite (Stack) then
-                        Constructs.Current.Category := Cat_Field;
+                     elsif Value.Is_In_Type_Definition then
+                        if Top (Stack).Type_Declaration
+                          or else Top (Stack).Attributes (Record_Attribute)
+                        then
+                           Constructs.Current.Category := Cat_Field;
+                        else
+                           Constructs.Current.Category := Cat_Literal;
+                        end if;
                      else
                         Constructs.Current.Category := Cat_Local_Variable;
                      end if;
@@ -1758,6 +1752,33 @@ package body Ada_Analyzer is
             end if;
          end if;
 
+         --  Computes Tok_Token.Type_Att
+
+         case Reserved is
+            when Tok_Abstract =>
+               Top_Token.Attributes (Abstract_Attribute) := True;
+            when Tok_Access =>
+               Top_Token.Attributes (Access_Attribute) := True;
+            when Tok_Array =>
+               Top_Token.Attributes (Array_Attribute) := True;
+            when Tok_Delta =>
+               Top_Token.Attributes (Delta_Attribute) := True;
+            when Tok_Digits =>
+               Top_Token.Attributes (Digits_Attribute) := True;
+            when Tok_Range =>
+               Top_Token.Attributes (Range_Attribute) := True;
+            when Tok_New =>
+               Top_Token.Attributes (New_Attribute) := True;
+            when Tok_Tagged =>
+               Top_Token.Attributes (Tagged_Attribute) := True;
+            when Tok_Interface =>
+               Top_Token.Attributes (Interface_Attribute) := True;
+            when Tok_Record =>
+               Top_Token.Attributes (Record_Attribute) := True;
+            when others =>
+               null;
+         end case;
+
          --  Note: the order of the following conditions is important
 
          if Reserved = Tok_Body then
@@ -1768,9 +1789,7 @@ package body Ada_Analyzer is
             end if;
 
          elsif Reserved = Tok_Tagged then
-            if Top_Token.Token = Tok_Type then
-               Top_Token.Tagged_Type := True;
-            end if;
+            null;
 
          elsif Prev_Token /= Tok_End and then Reserved = Tok_Case then
             if Align_On_Colons
@@ -1790,8 +1809,8 @@ package body Ada_Analyzer is
 
             --  If the case is in a record, then mark itself as a record so we
             --  will extract the corresponding fields.
-            if Top_Token.Record_Type then
-               Temp.Record_Type := True;
+            if Top_Token.Attributes (Record_Attribute) then
+               Temp.Attributes (Record_Attribute) := True;
             end if;
 
             Do_Indent (Prec, Num_Spaces);
@@ -2030,7 +2049,7 @@ package body Ada_Analyzer is
                   --  ??? is this correct for Ada 05 constructs:
                   --  task type foo is new A with entry A; end task;
 
-                  Top_Token.Tagged_Type := True;
+                  Top_Token.Attributes (Tagged_Attribute) := True;
                end if;
             end if;
 
@@ -2116,9 +2135,13 @@ package body Ada_Analyzer is
                if not In_Generic then
                   case Top_Token.Token is
                      when Tok_Case | Tok_When | Tok_Type | Tok_Subtype =>
-                        null;
+                        Top_Token.Type_Definition_Section := True;
 
                      when Tok_Task | Tok_Protected =>
+                        if Top_Token.Token = Tok_Protected then
+                           Top_Token.Type_Definition_Section := True;
+                        end if;
+
                         Subprogram_Decl := False;
 
                         if Align_On_Colons then
@@ -2179,8 +2202,10 @@ package body Ada_Analyzer is
                end if;
 
                if Top_Token.Token = Tok_Type then
-                  Top_Token.Record_Type := True;
-                  Temp.Record_Type := True;
+                  Top_Token.Attributes (Record_Attribute) := True;
+                  Temp.Attributes (Record_Attribute) := True;
+                  Temp.Type_Definition_Section :=
+                    Top_Token.Type_Definition_Section;
                   Num_Spaces := Num_Spaces + Indent_Level;
 
                   if Align_On_Colons then
@@ -2994,9 +3019,19 @@ package body Ada_Analyzer is
                when ')' =>
                   if (Top_Token.Token = Tok_Colon
                       or else Top_Token.Token = Tok_Identifier)
-                    and then Top_Token.Is_Parameter
+                    and then
+                      (Top_Token.Is_Parameter
+                       or else
+                         (Top_Token.Is_In_Type_Definition
+                          and then not Top_Token.Attributes (Record_Attribute)
+                          and then not Top_Token.Type_Declaration))
                   then
-                     if Top_Token.Token = Tok_Identifier then
+                     if Top_Token.Token = Tok_Identifier
+                       and then not (Top_Token.Is_In_Type_Definition
+                                     and then not
+                                       Top_Token.Attributes (Record_Attribute)
+                                     and then not Top_Token.Type_Declaration)
+                     then
                         --  This handles cases where we have a family entry.
                         --  For example:
                         --    entry E (Integer);
@@ -3518,17 +3553,24 @@ package body Ada_Analyzer is
 
             if (Top_Token.Declaration
                 or else Top_Token.Type_Declaration
-                or else Top_Token.Record_Type
-                or else Is_Parameter)
+                or else Top_Token.Attributes (Record_Attribute)
+                or else Is_Parameter
+                or else
+                  (Top_Token.Type_Definition_Section
+                   and then Top_Token.Token = Tok_Type
+                   and then Top_Token.Attributes = No_Attribute))
               and then not In_Generic
-              and then (Num_Parens = 0 or else Is_Parameter)
+              and then (Num_Parens = 0
+                        or else Is_Parameter
+                        or else Top_Token.Type_Definition_Section)
               and then (Prev_Token not in Reserved_Token_Type
                         or else Prev_Token = Tok_Declare
                         or else Prev_Token = Tok_Is
                         or else Prev_Token = Tok_Private
                         or else Prev_Token = Tok_Record)
             then
-               --  This is a variable or a field declaration
+               --  This is a variable, a field declaration or a enumeration
+               --  literal
 
                declare
                   Val : Extended_Token;
@@ -3543,6 +3585,8 @@ package body Ada_Analyzer is
                   Val.Declaration := True;
                   Val.Visibility  := Top_Token.Visibility_Section;
                   Val.Is_Parameter := Is_Parameter;
+                  Val.Is_In_Type_Definition :=
+                    Top_Token.Type_Definition_Section;
                   Push (Tokens, Val);
                end;
             end if;
