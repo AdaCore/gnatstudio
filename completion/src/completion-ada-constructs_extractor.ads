@@ -157,7 +157,7 @@ private
 
       First_File         : Structured_File_Access;
       First_Buffer       : String_Access;
-      Current_Tree       : Construct_Tree;
+      First_Tree         : Construct_Tree;
       Visible_Constructs : Construct_Tree_Iterator_Array_Access;
       Visible_Index      : Integer;
 
