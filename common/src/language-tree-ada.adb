@@ -428,10 +428,8 @@ package body Language.Tree.Ada is
       --  encolsed or enclosing scopes. When the seeked entity is found, it is
       --  added to the list if relevant.
 
-      procedure Add_If_Visible (It : Construct_Tree_Iterator);
-      --  Add the given iterator to Construct_Found if and only if the iterator
-      --  it visible even with the ones already in the list. If Last is false,
-      --  the iterator will be preempted instead of being appened.
+      function Is_Visible (It : Construct_Tree_Iterator) return Boolean;
+      --  Return True if the object at the iterator position is visible.
 
       procedure Analyze_Used_Package
         (Pckg     : Construct_Tree_Iterator;
@@ -466,6 +464,9 @@ package body Language.Tree.Ada is
       --  Handle the use clauses for the package given in parameter, in order
       --  to resolve visibile entities in it.
 
+      procedure Handle_Enumeration (Enum : Construct_Tree_Iterator);
+      --  Handle the contents of an enumeration.
+
       ----------
       -- Free --
       ----------
@@ -495,8 +496,9 @@ package body Language.Tree.Ada is
                  or else Get_Construct (It).Visibility = Visibility_Public)
               and then Get_Construct (It).Name /= null
               and then Name_Match (Get_Construct (It))
+              and then Is_Visible (It)
             then
-               Add_If_Visible (It);
+               Append (Constructs_Found, It);
             end if;
 
             It := Prev (Tree, It, Jump_Over);
@@ -517,7 +519,7 @@ package body Language.Tree.Ada is
       -- Add_If_Visible --
       --------------------
 
-      procedure Add_If_Visible (It : Construct_Tree_Iterator) is
+      function Is_Visible (It : Construct_Tree_Iterator) return Boolean is
          Node : Construct_Iterator_List_Pckg.List_Node :=
            First (Constructs_Found);
       begin
@@ -530,7 +532,7 @@ package body Language.Tree.Ada is
 
                if Get_Spec (Tree, Ada_Tree, Data (Node)) = It then
                   Set_Data (Node, It);
-                  return;
+                  return False;
                end if;
 
                --  If we found an other node wich is not a subprogram, then the
@@ -539,15 +541,15 @@ package body Language.Tree.Ada is
                if Get_Construct (Data (Node)).Category not in
                  Subprogram_Category
                then
-                  return;
+                  return False;
                end if;
             end if;
 
             Node := Next (Node);
          end loop;
 
-         Append (Constructs_Found, It);
-      end Add_If_Visible;
+         return True;
+      end Is_Visible;
 
       ----------------
       -- Name_Match --
@@ -783,6 +785,22 @@ package body Language.Tree.Ada is
          end;
       end Handle_Use_For;
 
+      ------------------------
+      -- Handle_Enumeration --
+      ------------------------
+
+      procedure Handle_Enumeration (Enum : Construct_Tree_Iterator) is
+         Child : Construct_Tree_Iterator := Next (Tree, Enum, Jump_Into);
+      begin
+         while Get_Parent_Scope (Tree, Child) = Enum loop
+            if Name_Match (Get_Construct (Child)) then
+               Append (Constructs_Found, Child);
+            end if;
+
+            Child := Next (Tree, Child, Jump_Over);
+         end loop;
+      end Handle_Enumeration;
+
    begin
       if From /= Null_Construct_Tree_Iterator then
 
@@ -809,14 +827,21 @@ package body Language.Tree.Ada is
 
                when Cat_Package .. Cat_Field =>
 
-                  --  If we are on a named construct, check if it's the one
-                  --  we are actually looking for
+                  if Is_Visible (Seek_Iterator) then
+                     if Get_Construct (Seek_Iterator).Category = Cat_Type
+                       and then Is_Enum_Type (Tree, Seek_Iterator)
+                     then
+                        Handle_Enumeration (Seek_Iterator);
+                     end if;
 
-                  if Get_Construct (Seek_Iterator).Name /= null
-                    and then Name_Match
-                      (Get_Construct (Seek_Iterator))
-                  then
-                     Add_If_Visible (Seek_Iterator);
+                     --  If we are on a named construct, check if it's the one
+                     --  we are actually looking for
+
+                     if Get_Construct (Seek_Iterator).Name /= null
+                       and then Name_Match (Get_Construct (Seek_Iterator))
+                     then
+                        Append (Constructs_Found, Seek_Iterator);
+                     end if;
                   end if;
 
                   if Get_Construct (Seek_Iterator).Category = Cat_Package
@@ -959,6 +984,21 @@ package body Language.Tree.Ada is
            Id,
            Use_Wise);
    end Get_Visible_Constructs;
+
+   ------------------
+   -- Is_Enum_Type --
+   ------------------
+
+   function Is_Enum_Type
+     (Tree : Construct_Tree;
+      It   : Construct_Tree_Iterator) return Boolean
+   is
+      First_Child : constant Construct_Tree_Iterator :=
+        Next (Tree, It, Jump_Into);
+   begin
+      return Get_Construct (It).Category = Cat_Type
+        and then Get_Construct (First_Child).Category = Cat_Literal;
+   end Is_Enum_Type;
 
    ------------------
    -- Get_Language --
@@ -1128,6 +1168,10 @@ package body Language.Tree.Ada is
    is
       pragma Unreferenced (Lang);
    begin
+      if Construct.Name = null then
+         return "";
+      end if;
+
       if Construct.Category = Cat_Package
         or else Construct.Category = Cat_Procedure
         or else Construct.Category = Cat_Function
