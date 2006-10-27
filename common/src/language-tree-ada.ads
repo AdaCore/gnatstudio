@@ -91,6 +91,11 @@ package Language.Tree.Ada is
    --  offset. Null_Tree_Iterator if none. This function is sensitive to
    --  private parts, and to use clauses.
 
+   function Is_Enum_Type
+     (Tree : Construct_Tree;
+      It   : Construct_Tree_Iterator) return Boolean;
+   --  Return tree if the construct given in parameter is a type enumeration
+
    type Ada_Tree_Language is new Tree_Language with private;
    --  This type provides an ada implementation to the language-specific tree
    --  functionalitites.
