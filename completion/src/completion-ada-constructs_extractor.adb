@@ -148,6 +148,14 @@ package body Completion.Ada.Constructs_Extractor is
          Buffer    : GNAT.Strings.String_Access;
          Name      : String := "");
 
+      procedure Add_Children_Of
+        (Tree               : Construct_Tree;
+         Scope              : Construct_Tree_Iterator;
+         List               : in out Extensive_List_Pckg.List;
+         Private_Visibility : Boolean);
+      --  Add all the children of the scope given in parameter in the list.
+      --  Consider private elements if Private_Visibility is true.
+
       procedure Add_To_List
         (List      : in out Extensive_List_Pckg.List;
          Tree_Node : Construct_Tree_Iterator;
@@ -168,12 +176,55 @@ package body Completion.Ada.Constructs_Extractor is
             Proposal.Filter,
             Buffer);
       begin
-         if (Name = "" and then Match (Identifier, Get_Id (P), Is_Partial))
-           or else Match (Identifier, Name, Is_Partial)
+         if Get_Construct (Tree_Node).Name /= null
+           and then
+             ((Name = "" and then Match (Identifier, Get_Id (P), Is_Partial))
+              or else Match (Identifier, Name, Is_Partial))
          then
             Append (List, P);
          end if;
       end Add_To_List;
+
+      ---------------------
+      -- Add_Children_Of --
+      ---------------------
+
+      procedure Add_Children_Of
+        (Tree               : Construct_Tree;
+         Scope              : Construct_Tree_Iterator;
+         List               : in out Extensive_List_Pckg.List;
+         Private_Visibility : Boolean)
+      is
+         Child_Iterator : Construct_Tree_Iterator :=
+           Next (Tree, Scope, Jump_Into);
+      begin
+         while Get_Parent_Scope (Tree, Child_Iterator) = Scope loop
+            if Private_Visibility
+              or else
+                Get_Construct (Child_Iterator).Visibility
+                = Visibility_Public
+            then
+               if (Proposal.Filter and All_Visible_Entities) /= 0
+                 or else Get_Construct
+                   (Child_Iterator).Category = Cat_Package
+               then
+                  Add_To_List
+                    (List,
+                     Child_Iterator,
+                     False,
+                     Proposal.File,
+                     Proposal.Tree,
+                     Proposal.Buffer);
+
+                  if Is_Enum_Type (Tree, Child_Iterator) then
+                     Add_Children_Of (Tree, Child_Iterator, List, True);
+                  end if;
+               end if;
+            end if;
+
+            Child_Iterator := Next (Tree, Child_Iterator, Jump_Over);
+         end loop;
+      end Add_Children_Of;
 
       List : Extensive_List_Pckg.List;
 
@@ -280,6 +331,7 @@ package body Completion.Ada.Constructs_Extractor is
 
             if Get_Construct (Proposal.Tree_Node).Category
               in Cat_Class .. Cat_Subtype
+              and then not Is_Enum_Type (Tree, Proposal.Tree_Node)
             then
                declare
                   Child_Iterator : Construct_Tree_Iterator;
@@ -298,6 +350,7 @@ package body Completion.Ada.Constructs_Extractor is
                         Proposal.File,
                         Proposal.Tree,
                         Proposal.Buffer);
+
                      Child_Iterator := Next
                        (Tree, Child_Iterator, Jump_Over);
                   end loop;
@@ -310,7 +363,6 @@ package body Completion.Ada.Constructs_Extractor is
             declare
                Spec_It         : Construct_Tree_Iterator;
                Body_It         : Construct_Tree_Iterator;
-               Child_Iterator  : Construct_Tree_Iterator;
                Private_Spec_Visibility : Boolean;
                Body_Visibility : Boolean;
             begin
@@ -330,58 +382,14 @@ package body Completion.Ada.Constructs_Extractor is
                           and then Get_Construct
                             (Spec_It).Sloc_End.Index >= Offset);
 
-               Child_Iterator := Next (Tree, Spec_It, Jump_Into);
-
                --  Add the entities from the specification
 
-               while
-                 Get_Parent_Scope (Tree, Child_Iterator) = Spec_It
-               loop
-                  if Private_Spec_Visibility
-                    or else
-                      Get_Construct (Child_Iterator).Visibility
-                      = Visibility_Public
-                  then
-                     if (Proposal.Filter and All_Visible_Entities) /= 0
-                       or else Get_Construct
-                         (Child_Iterator).Category = Cat_Package
-                     then
-                        Add_To_List
-                          (List,
-                           Child_Iterator,
-                           False,
-                           Proposal.File,
-                           Proposal.Tree,
-                           Proposal.Buffer);
-                     end if;
-                  end if;
-
-                  Child_Iterator := Next (Tree, Child_Iterator, Jump_Over);
-               end loop;
+               Add_Children_Of (Tree, Spec_It, List, Private_Spec_Visibility);
 
                --  If we have to add the entries in the body if needed
 
                if Body_Visibility and then Body_It /= Spec_It then
-                  Child_Iterator := Next (Tree, Body_It, Jump_Into);
-
-                  --  Add the entities from the specification
-
-                  while Get_Parent_Scope (Tree, Child_Iterator) = Body_It loop
-                     if (Proposal.Filter and All_Visible_Entities) /= 0
-                       or else Get_Construct
-                         (Child_Iterator).Category = Cat_Package
-                     then
-                        Add_To_List
-                          (List,
-                           Child_Iterator,
-                           False,
-                           Proposal.File,
-                           Proposal.Tree,
-                           Proposal.Buffer);
-                     end if;
-
-                     Child_Iterator := Next (Tree, Child_Iterator, Jump_Over);
-                  end loop;
+                  Add_Children_Of (Tree, Body_It, List, True);
                end if;
 
                if Get_Unit_Construct
@@ -626,7 +634,7 @@ package body Completion.Ada.Constructs_Extractor is
       Result.Is_Partial := Db_Construct.Is_Partial;
       Result.Filter := Db_Construct.Filter;
       Result.First_Buffer := Db_Construct.First_Buffer;
-      Result.Current_Tree := Tree;
+      Result.First_Tree := Tree;
       Result.First_Buffer := Db_Construct.First_Buffer;
 
       Append (Db_Construct.Resolver.Tree_Collection, Tree);
@@ -634,14 +642,14 @@ package body Completion.Ada.Constructs_Extractor is
       declare
          Ada_Tree : Ada_Construct_Tree :=
            Generate_Ada_Construct_Tree
-             (Result.Current_Tree,
+             (Result.First_Tree,
               Ada_Lang,
               Result.First_Buffer.all);
       begin
          Result.Visible_Constructs :=
            new Construct_Tree_Iterator_Array'
              (Get_Visible_Constructs
-                  (Result.Current_Tree,
+                  (Result.First_Tree,
                    Ada_Tree,
                    Db_Construct.Offset,
                    Db_Construct.Name.all,
@@ -747,7 +755,10 @@ package body Completion.Ada.Constructs_Extractor is
             end if;
 
             while It.Current_It /= Null_Construct_Tree_Iterator loop
-               if Get_Construct (It.Current_It).Category = Cat_Package then
+               if Get_Construct (It.Current_It).Category = Cat_Package
+                 or else Is_Enum_Type
+                   (Get_Full_Tree (It.Current_File), It.Current_It)
+               then
                   It.Current_It :=
                     Next
                       (Get_Full_Tree
@@ -767,7 +778,8 @@ package body Completion.Ada.Constructs_Extractor is
                     and then Constr.Name /= null
                     and then Constr.Category /= Cat_Use
                     and then Constr.Category /= Cat_With
-                    and then Get_Parent_Scope (It.Current_Tree, It.Current_It)
+                    and then Get_Parent_Scope
+                      (Get_Full_Tree (It.Current_File), It.Current_It)
                        /= Null_Construct_Tree_Iterator
                     and then Match
                       (It.Name.all,
@@ -812,7 +824,7 @@ package body Completion.Ada.Constructs_Extractor is
                File                 => This.Current_File,
                Is_All               => False,
                Params_In_Expression => 0,
-               Tree                 => This.Current_Tree,
+               Tree                 => This.First_Tree,
                Buffer               => This.First_Buffer,
                Filter               => This.Filter);
          when Parent_File =>
