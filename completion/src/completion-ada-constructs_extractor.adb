@@ -728,83 +728,85 @@ package body Completion.Ada.Constructs_Extractor is
 
    procedure Next (It : in out Construct_Iterator_Wrapper) is
    begin
-      if It.Stage = Initial_File then
-         --  Stage 1: We return the visible constructs from the current file.
+      loop
+         if It.Stage = Initial_File then
+            --  Stage 1: We return the visible constructs from the current
+            --  file.
 
-         if It.Visible_Index < It.Visible_Constructs'Length then
-            It.Visible_Index := It.Visible_Index + 1;
-         else
-            It.Stage := Parent_File;
-            Free (It.Visible_Constructs);
-            It.Visible_Index := 0;
-            It.Current_It := Null_Construct_Tree_Iterator;
-            It.Current_File := Get_Parent_File (It.Current_File);
-         end if;
-      elsif It.Stage = Parent_File then
-         --  Stage 2: We return the constructs from the parent files
-
-         if It.Current_File = null then
-            It.Stage := Database;
-            It.Db_Iterator := Start
-              (It.Construct_Db, To_Lower (It.Name.all), It.Is_Partial);
-         else
-            if It.Current_It = Null_Construct_Tree_Iterator
-              and then It.Current_File /= null
-            then
-               It.Current_It := First (Get_Full_Tree (It.Current_File));
+            if It.Visible_Index < It.Visible_Constructs'Length then
+               It.Visible_Index := It.Visible_Index + 1;
+            else
+               It.Stage := Parent_File;
+               Free (It.Visible_Constructs);
+               It.Visible_Index := 0;
+               It.Current_It := Null_Construct_Tree_Iterator;
+               It.Current_File := Get_Parent_File (It.Current_File);
             end if;
+         elsif It.Stage = Parent_File then
+            --  Stage 2: We return the constructs from the parent files
 
-            while It.Current_It /= Null_Construct_Tree_Iterator loop
-               if Get_Construct (It.Current_It).Category = Cat_Package
-                 or else Is_Enum_Type
-                   (Get_Full_Tree (It.Current_File), It.Current_It)
+            if It.Current_File = null then
+               It.Stage := Database;
+               It.Db_Iterator := Start
+                 (It.Construct_Db, To_Lower (It.Name.all), It.Is_Partial);
+            else
+               if It.Current_It = Null_Construct_Tree_Iterator
+                 and then It.Current_File /= null
                then
-                  It.Current_It :=
-                    Next
-                      (Get_Full_Tree
-                           (It.Current_File), It.Current_It, Jump_Into);
-               else
-                  It.Current_It :=
-                    Next
-                      (Get_Full_Tree
-                           (It.Current_File), It.Current_It, Jump_Over);
+                  It.Current_It := First (Get_Full_Tree (It.Current_File));
                end if;
 
-               declare
-                  Constr : constant Simple_Construct_Information :=
-                    Get_Construct (It.Current_It);
-               begin
-                  exit when It.Current_It /= Null_Construct_Tree_Iterator
-                    and then Constr.Name /= null
-                    and then Constr.Category /= Cat_Use
-                    and then Constr.Category /= Cat_With
-                    and then Get_Parent_Scope
+               while It.Current_It /= Null_Construct_Tree_Iterator loop
+                  if Get_Construct (It.Current_It).Category = Cat_Package
+                    or else Is_Enum_Type
                       (Get_Full_Tree (It.Current_File), It.Current_It)
-                       /= Null_Construct_Tree_Iterator
-                    and then Match
-                      (It.Name.all,
-                       Constr.Name.all,
-                       It.Is_Partial);
-               end;
-            end loop;
+                  then
+                     It.Current_It :=
+                       Next
+                         (Get_Full_Tree
+                              (It.Current_File), It.Current_It, Jump_Into);
+                  else
+                     It.Current_It :=
+                       Next
+                         (Get_Full_Tree
+                              (It.Current_File), It.Current_It, Jump_Over);
+                  end if;
 
-            if It.Current_It = Null_Construct_Tree_Iterator then
-               It.Current_File := Get_Parent_File (It.Current_File);
-               It.Current_It := Null_Construct_Tree_Iterator;
+                  declare
+                     Constr : constant Simple_Construct_Information :=
+                       Get_Construct (It.Current_It);
+                  begin
+                     exit when It.Current_It /= Null_Construct_Tree_Iterator
+                       and then Constr.Name /= null
+                       and then Constr.Category /= Cat_Use
+                       and then Constr.Category /= Cat_With
+                       and then Get_Parent_Scope
+                         (Get_Full_Tree (It.Current_File), It.Current_It)
+                       /= Null_Construct_Tree_Iterator
+                       and then Match
+                         (It.Name.all,
+                          Constr.Name.all,
+                          It.Is_Partial);
+                  end;
+               end loop;
+
+               if It.Current_It = Null_Construct_Tree_Iterator then
+                  It.Current_File := Get_Parent_File (It.Current_File);
+                  It.Current_It := Null_Construct_Tree_Iterator;
+               end if;
+            end if;
+
+         elsif It.Stage = Database then
+            --  Stage 3: We return the files from the database
+
+            if not At_End (It.Db_Iterator) then
+               Next (It.Db_Iterator);
             end if;
          end if;
 
-      elsif It.Stage = Database then
-         --  Stage 3: We return the files from the database
+         exit when Is_Valid (It);
+      end loop;
 
-         if not At_End (It.Db_Iterator) then
-            Next (It.Db_Iterator);
-         end if;
-      end if;
-
-      if not Is_Valid (It) then
-         Next (It);
-      end if;
    end Next;
 
    ---------
