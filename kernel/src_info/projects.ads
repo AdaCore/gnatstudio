@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Containers;
 with Basic_Types;
 with GNAT.OS_Lib;
 with Prj.Tree;
@@ -107,6 +108,12 @@ package Projects is
    function Project_Name (Project : Project_Type) return Types.Name_Id;
    --  Return the name of the project.
    --  "default" is returned if the project is the empty project or No_Project.
+
+   function Project_Name_Hash (Project : Project_Type)
+                               return Ada.Containers.Hash_Type;
+   --  Return a Hash_Type computed from the full name of the given Project.
+   --  Could be used to instantiate an Ada 2005 container that uses a
+   --  Project_type as key and requires a hash function.
 
    function Project_Path
      (Project : Project_Type;

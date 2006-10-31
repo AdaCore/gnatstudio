@@ -22,6 +22,7 @@ with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with Ada.Exceptions;             use Ada.Exceptions;
 with Ada.Strings;                use Ada.Strings;
 with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
+with Ada.Strings.Hash;
 with Ada.Strings.Maps.Constants; use Ada.Strings.Maps.Constants;
 with Ada.Text_IO;                use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
@@ -394,6 +395,16 @@ package body Projects is
          return Prj.Tree.Name_Of (Project.Node, Project.Tree);
       end if;
    end Project_Name;
+
+   -----------------------
+   -- Project_Name_Hash --
+   -----------------------
+
+   function Project_Name_Hash (Project : Project_Type)
+                               return Ada.Containers.Hash_Type is
+   begin
+      return Ada.Strings.Hash (Project_Name (Project));
+   end Project_Name_Hash;
 
    ------------------
    -- Project_Path --
