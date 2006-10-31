@@ -33,7 +33,6 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Strings;                          use GNAT.Strings;
 
 with Projects;                              use Projects;
-with Projects_Hash;                         use Projects_Hash;
 with VFS;                                   use VFS;
 
 package Code_Analysis is
@@ -111,7 +110,7 @@ package Code_Analysis is
      new Indefinite_Hashed_Maps
        (Key_Type        => Project_Type,
         Element_Type    => Project_Access,
-        Hash            => Projects_Hash.Projects_Hash,
+        Hash            => Project_Name_Hash,
         Equivalent_Keys => Projects."=");
    --  Used to stored the Project nodes
 
