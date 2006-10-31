@@ -24,6 +24,7 @@
 
 with Ada.Calendar;
 with Ada.Finalization;
+with Ada.Containers;
 with GNAT.Calendar;
 with GNAT.OS_Lib;
 
@@ -122,6 +123,12 @@ package VFS is
    --  The returned value can be used to recreate a Virtual_File instance.
    --  If file names are case insensitive, the normalized name will always
    --  be all lower cases.
+
+   function Full_Name_Hash (Key : Virtual_File)
+                            return Ada.Containers.Hash_Type;
+   --  Return a Hash_Type computed from the full name of the given VFS.
+   --  Could be used to instantiate an Ada 2005 container that uses a VFS as
+   --  key and requires a hash function.
 
    function File_Extension (File : Virtual_File) return UTF8_String;
    --  Return the extension of the file, or the empty string if there is no
