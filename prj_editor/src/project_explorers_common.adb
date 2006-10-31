@@ -70,50 +70,85 @@ package body Project_Explorers_Common is
    -------------------
 
    procedure Init_Graphics (Widget : Gtk_Widget) is
+      function R (Id : String) return Gdk_Pixbuf;
+      --  Convenience function: create the Gdk_Pixbuf from stock Id.
+
+      function R (Id : String) return Gdk_Pixbuf is
+      begin
+         return Render_Icon (Widget, Id, Icon_Size_Menu);
+      end R;
+
    begin
       --  If initialization has already been done, exit.
       if Open_Pixbufs (Project_Node) /= null then
          return;
       end if;
 
-      Open_Pixbufs (Project_Node)  :=
-        Render_Icon (Widget, "gps-project-open", Icon_Size_Menu);
-      Close_Pixbufs (Project_Node) :=
-        Render_Icon (Widget, "gps-project-closed", Icon_Size_Menu);
+      Open_Pixbufs (Project_Node)  := R ("gps-project-open");
+      Close_Pixbufs (Project_Node) := R ("gps-project-closed");
 
-      Open_Pixbufs (Modified_Project_Node)  :=
-        Render_Icon (Widget, "gps-project-modified-open", Icon_Size_Menu);
+      Open_Pixbufs (Modified_Project_Node)  := R ("gps-project-modified-open");
       Close_Pixbufs (Modified_Project_Node) :=
-        Render_Icon (Widget, "gps-project-modified-closed", Icon_Size_Menu);
+        R ("gps-project-modified-closed");
 
       --  ??? Would be nice to have different pixbufs for these.
-      Open_Pixbufs (Extends_Project_Node)  :=
-        Render_Icon (Widget, "gps-project-open", Icon_Size_Menu);
-      Close_Pixbufs (Extends_Project_Node) :=
-        Render_Icon (Widget, "gps-project-closed", Icon_Size_Menu);
+      Open_Pixbufs (Extends_Project_Node)  := R ("gps-project-open");
+      Close_Pixbufs (Extends_Project_Node) := R ("gps-project-closed");
 
-      Open_Pixbufs (Directory_Node)  :=
-        Render_Icon (Widget, "gps-folder-open", Icon_Size_Menu);
-      Close_Pixbufs (Directory_Node) :=
-        Render_Icon (Widget, "gps-folder-closed", Icon_Size_Menu);
-      Open_Pixbufs (Obj_Directory_Node)  :=
-        Render_Icon (Widget, "gps-folder-obj-open", Icon_Size_Menu);
-      Close_Pixbufs (Obj_Directory_Node) :=
-        Render_Icon (Widget, "gps-folder-obj-closed", Icon_Size_Menu);
+      Open_Pixbufs (Directory_Node)  := R ("gps-folder-open");
+      Close_Pixbufs (Directory_Node) := R ("gps-folder-closed");
+      Open_Pixbufs (Obj_Directory_Node)  := R ("gps-folder-obj-open");
+      Close_Pixbufs (Obj_Directory_Node) := R ("gps-folder-obj-closed");
 
-      Open_Pixbufs (Exec_Directory_Node)  :=
-        Render_Icon (Widget, "gps-folder-exec-open", Icon_Size_Menu);
-      Close_Pixbufs (Exec_Directory_Node) :=
-        Render_Icon (Widget, "gps-folder-exec-closed", Icon_Size_Menu);
-      Open_Pixbufs (File_Node)  :=
-        Render_Icon (Widget, "gps-file", Icon_Size_Menu);
-      Close_Pixbufs (File_Node) :=
-        Render_Icon (Widget, "gps-file", Icon_Size_Menu);
+      Open_Pixbufs (Exec_Directory_Node)  := R ("gps-folder-exec-open");
+      Close_Pixbufs (Exec_Directory_Node) := R ("gps-folder-exec-closed");
+      Open_Pixbufs (File_Node)  := R ("gps-file");
+      Close_Pixbufs (File_Node) := R ("gps-file");
 
-      Open_Pixbufs (Category_Node)  :=
-        Render_Icon (Widget, "gps-box", Icon_Size_Menu);
-      Close_Pixbufs (Category_Node) :=
-        Render_Icon (Widget, "gps-box", Icon_Size_Menu);
+      Open_Pixbufs (Category_Node)  := R ("gps-box");
+      Close_Pixbufs (Category_Node) := R ("gps-box");
+
+      Entity_Icons :=
+        (Cat_Unknown            | Cat_With
+         | Cat_Use              | Cat_Include
+         | Cat_Loop_Statement   | Cat_If_Statement
+         | Cat_Case_Statement   | Cat_Select_Statement
+         | Cat_Accept_Statement | Cat_Declare_Block
+         | Cat_Simple_Block     | Cat_Exception_Handler  =>
+           R ("gps-entity-generic"),
+         Cat_Package | Cat_Namespace  =>
+           R ("gps-entity-package"),
+         Cat_Task        | Cat_Procedure   | Cat_Function
+         | Cat_Method    | Cat_Constructor | Cat_Destructor
+         | Cat_Protected | Cat_Entry =>
+           R ("gps-entity-subprogram"),
+         Cat_Class | Cat_Structure | Cat_Union | Cat_Type | Cat_Subtype =>
+           R ("gps-entity-type"),
+         Cat_Variable    | Cat_Local_Variable
+         | Cat_Parameter | Cat_Field
+         | Cat_Literal   | Cat_Representation_Clause =>
+           R ("gps-entity-variable"));
+
+      Entity_Spec_Icons :=
+        (Cat_Unknown            | Cat_With
+         | Cat_Use              | Cat_Include
+         | Cat_Loop_Statement   | Cat_If_Statement
+         | Cat_Case_Statement   | Cat_Select_Statement
+         | Cat_Accept_Statement | Cat_Declare_Block
+         | Cat_Simple_Block     | Cat_Exception_Handler  =>
+           R ("gps-entity-spec-generic"),
+         Cat_Package | Cat_Namespace  =>
+           R ("gps-entity-spec-package"),
+         Cat_Task        | Cat_Procedure   | Cat_Function
+         | Cat_Method    | Cat_Constructor | Cat_Destructor
+         | Cat_Protected | Cat_Entry =>
+           R ("gps-entity-spec-subprogram"),
+         Cat_Class | Cat_Structure | Cat_Union | Cat_Type | Cat_Subtype =>
+           R ("gps-entity-spec-type"),
+         Cat_Variable    | Cat_Local_Variable
+         | Cat_Parameter | Cat_Field
+         | Cat_Literal   | Cat_Representation_Clause =>
+           R ("gps-entity-spec-variable"));
    end Init_Graphics;
 
    -----------------
@@ -193,7 +228,7 @@ package body Project_Explorers_Common is
 
       Set (Model, N, Absolute_Name_Column, Locale_Full_Name (File));
       Set (Model, N, Base_Name_Column, Locale_To_UTF8 (Name));
-      Set (Model, N, Icon_Column, C_Proxy (Close_Pixbufs (Category_Node)));
+      Set (Model, N, Icon_Column, C_Proxy (Entity_Icons (Category)));
       Set (Model, N, Node_Type_Column, Gint (Node_Types'Pos (Category_Node)));
       Set (Model, N, Up_To_Date_Column, True);
       Set (Model, N, Category_Column, Language_Category'Pos (Category));
@@ -207,24 +242,32 @@ package body Project_Explorers_Common is
 
    function Entity_Name_Of
      (Construct     : Construct_Information;
-      Show_Profiles : Boolean) return String is
+      Show_Profiles : Boolean) return String
+   is
+      Name : constant String := "<tt>" & Reduce (Construct.Name.all) & "</tt>";
    begin
-      if Construct.Is_Declaration then
-         if Show_Profiles and then Construct.Profile /= null then
-            return Locale_To_UTF8
-              (Reduce (Construct.Name.all) & " (spec) " &
-               Reduce (Construct.Profile.all));
-         else
-            return Locale_To_UTF8 (Reduce (Construct.Name.all) & " (spec)");
-         end if;
-
-      elsif Show_Profiles and then Construct.Profile /= null then
+      if Show_Profiles and then Construct.Profile /= null then
          return Locale_To_UTF8
-           (Reduce (Construct.Name.all & " " & Construct.Profile.all));
+           (Name & " <span foreground=""#555555"">"
+            & Reduce (Construct.Profile.all) & "</span>");
       else
-         return Locale_To_UTF8 (Reduce (Construct.Name.all));
+         return Locale_To_UTF8 (Name);
       end if;
    end Entity_Name_Of;
+
+   --------------------
+   -- Entity_Icon_Of --
+   --------------------
+
+   function Entity_Icon_Of
+     (Construct : Construct_Information) return Gdk_Pixbuf is
+   begin
+      if Construct.Is_Declaration then
+         return Entity_Spec_Icons (Construct.Category);
+      else
+         return Entity_Icons (Construct.Category);
+      end if;
+   end Entity_Icon_Of;
 
    ------------------------
    -- Append_Entity_Node --
@@ -262,7 +305,7 @@ package body Project_Explorers_Common is
       Set (Model, N, Base_Name_Column, Entity_Name_Of (Construct, True));
       Set (Model, N, Entity_Base_Column,
            Locale_To_UTF8 (Reduce (Construct.Name.all)));
-      Set (Model, N, Icon_Column, C_Proxy (Close_Pixbufs (Entity_Node)));
+      Set (Model, N, Icon_Column, C_Proxy (Entity_Icon_Of (Construct)));
       Set (Model, N, Node_Type_Column, Gint (Node_Types'Pos (Entity_Node)));
       Set (Model, N, Line_Column, Gint (Construct.Sloc_Entity.Line));
       Set (Model, N, Column_Column, Gint (Construct.Sloc_Entity.Column));
@@ -550,10 +593,12 @@ package body Project_Explorers_Common is
    begin
       Set (Model, Node, Node_Type_Column, Gint (Node_Types'Pos (N_Type)));
 
-      if Expanded then
-         Set (Model, Node, Icon_Column, C_Proxy (Open_Pixbufs (N_Type)));
-      else
-         Set (Model, Node, Icon_Column, C_Proxy (Close_Pixbufs (N_Type)));
+      if N_Type not in Category_Node .. Entity_Node then
+         if Expanded then
+            Set (Model, Node, Icon_Column, C_Proxy (Open_Pixbufs (N_Type)));
+         else
+            Set (Model, Node, Icon_Column, C_Proxy (Close_Pixbufs (N_Type)));
+         end if;
       end if;
    end Set_Node_Type;
 
