@@ -5,15 +5,6 @@ Known Problems fixed in GPS 4.1.0
               be small by default.
   Workaround: Resize the floated window manually.
 
-- FA17-010 Editing project naming scheme has no visible effect
-  Problem:    If you change the naming scheme in the project properties editor
-              for languages other than Ada and C/C++ (for instance for a custom
-              language defined in an XML file), there is no visible effect when
-              you click on the OK button (list of project sources doesn't change
-              for instance).
-  Workaround: Save the project, and restart GPS. The new naming scheme is now
-              properly taken into account.
-
 - F925-005 Instability when commenting a folded block
   Problem:    Commenting a line that contains a folded block - such a line has
               a little '+' icon on the left - might cause unexpected behaviors
