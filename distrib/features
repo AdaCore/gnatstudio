@@ -90,6 +90,14 @@ F822-013 Disable the "replace all" confirmation with a preference (2006-09-12)
   preferences panel, or by directly checking the checkbox "Do not ask again"
   in the popup.
 
+F816-019 Outline View design update (2006-10-31)
+
+  The design of the Outline View has been enhanced for better readability and
+  useability. The toplevel node is hidden by default for a gain of space; new
+  icons have been introduced to distinguish between entity types, and the
+  profile information for subprograms is easier to distinguish from the
+  subprogram name.
+
 F810-009 Entity browser speed up (2006-08-11)
 
   The cross-reference engine has been improved so that getting the children of
