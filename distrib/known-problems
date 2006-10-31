@@ -1,5 +1,14 @@
 Known Problems fixed in GPS 4.0.2
 
+- FA17-010 Editing project naming scheme has no visible effect
+  Problem:    If you change the naming scheme in the project properties editor
+              for languages other than Ada and C/C++ (for instance for a custom
+              language defined in an XML file), there is no visible effect when
+              you click on the OK button (list of project sources doesn't change
+              for instance).
+  Workaround: Save the project, and restart GPS. The new naming scheme is now
+              properly taken into account.
+
 - FA17-006  Zooming the debugger data window not working with keyboard input
   Problem:    The debugger data window cannot be zoomed using the keyboard
               (equal '=' for zooming in and minus '-' for zooming out).
