@@ -1693,7 +1693,7 @@ the preferences dialog. @xref{The Preferences Dialog}.
 @item Code completion
 @cindex completion
 
-GPS provides two kind of code completion: a smart code completion based
+GPS provides two kinds of code completion: a smart code completion based
 on semantic information (see @ref{Smart Completion}), and a text completion.
 
 It is useful when editing a file and using often the same words to get
@@ -2268,13 +2268,16 @@ Limitations:
 @item GPS is not able to complete identifiers declared in the private part of
 a package.
 
-@item Completion does not work with generics
+@item Completion does not work with generics.
 
-@item This feature is current only available for Ada
+@item This feature is currently only available for Ada. Using the smart
+completion on non Ada files behaves as the identifier completion does. See
+below.
 
 @end table
 
 @item Complete Identifier
+@anchor{Complete Identifier}
 @cindex complete identifier
 Complete the identifier prefix under the cursor. This command will cycle
 through all identifiers starting with the given prefix.
@@ -2287,8 +2290,8 @@ function, package). This action works only on an Ada buffer.
 @item Refill
 @cindex refill
 Refill text on the selection or current line according to the right
-margin as defined by the right margin preference.
-@pxref{The Preferences Dialog}.
+margin as defined by the right margin preference
+(@pxref{The Preferences Dialog}).
 
 @item Sort Descending
 Sort the selected lines in reverse alphabetical order
@@ -4614,8 +4617,8 @@ occur.
 GPS will automatically select the most appropriate context when you
 open the search dialog, depending on which component currently has the
 focus. If several contexts are possible for one component (for example, the
-editor has "Current_File", "Files from Project", "Files..." and "Open Files"), 
-then the last one you've been using will be selected. You can of course change 
+editor has "Current_File", "Files from Project", "Files..." and "Open Files"),
+then the last one you've been using will be selected. You can of course change
 the context to another one if needed.
 
 Clicking on the arrow on the right will display the list of all
@@ -4734,7 +4737,7 @@ grayed out), and @code{Replace & Find} will replace the occurence and then
 jump to the next one, if any. If you don't want to replace the current
 occurence, you can jump directly to the next one by pressing @code{Next}.
 
-The @code{Repl all} button will replace all the occurences found. By default, 
+The @code{Repl all} button will replace all the occurences found. By default,
 a popup is displayed and ask for confirmation. It's possible to disable this
 popup by either checking the box "Do not ask this question again", or by going
 in the Search pannel of the preferences pages, and unchecking "Confirmation for
@@ -9033,7 +9036,7 @@ such as the PrintFile freeware utility available from
 
 @item @b{Search}
 @cindex search
-@table @b 
+@table @b
 
 @item Confirmation for "Replace all"
 @cindex replace
@@ -9041,7 +9044,7 @@ Enable or disable the confirmation popup for the replace all action.
 
 @item Close on Match
 @cindex search
-If this option is enabled, the search window will be closed when a match is 
+If this option is enabled, the search window will be closed when a match is
 found.
 
 @item Select on Match
