@@ -17,7 +17,7 @@ New features in GPS 4.1.0
 FA30-012 Smart completion for non Ada files (2006-10-31)
 
   The smart completion engine has been enhanced so that basic completion is
-  provided for non Ada files. This is based on the simple identifer completion
+  provided for non Ada files. This is based on the simple identifier completion
   engine. Thus, the 'Edit/Smart Completion' and 'Edit/Complete Identifier' have
   the same effect on non Ada files.
 
