@@ -35,7 +35,6 @@ with GNAT.Strings;                          use GNAT.Strings;
 with Projects;                              use Projects;
 with Projects_Hash;                         use Projects_Hash;
 with VFS;                                   use VFS;
-with VFS_Hash;                              use VFS_Hash;
 
 package Code_Analysis is
 
@@ -104,7 +103,7 @@ package Code_Analysis is
      new Indefinite_Hashed_Maps
        (Key_Type        => VFS.Virtual_File,
         Element_Type    => File_Access,
-        Hash            => VFS_Hash.VFS_Hash,
+        Hash            => VFS.Full_Name_Hash,
         Equivalent_Keys => VFS."=");
    --  Used to stored the File nodes of every Projects
 
