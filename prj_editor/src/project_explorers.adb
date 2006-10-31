@@ -555,7 +555,7 @@ package body Project_Explorers is
       Pack_Start (Col, Pixbuf_Rend, False);
       Pack_Start (Col, Text_Rend, True);
       Add_Attribute (Col, Pixbuf_Rend, "pixbuf", Icon_Column);
-      Add_Attribute (Col, Text_Rend, "text", Base_Name_Column);
+      Add_Attribute (Col, Text_Rend, "markup", Base_Name_Column);
       Dummy := Append_Column (Tree, Col);
    end Set_Column_Types;
 
@@ -1162,7 +1162,8 @@ package body Project_Explorers is
             Height  : Gint;
          begin
             Font := Get_Pref (Default_Font);
-            Layout := Create_Pango_Layout (Tooltip.Explorer, Str);
+            Layout := Create_Pango_Layout (Tooltip.Explorer, "");
+            Set_Markup (Layout, Str);
             Set_Font_Description (Layout, Font);
             Get_Pixel_Size (Layout, Width, Height);
 
@@ -1237,7 +1238,8 @@ package body Project_Explorers is
            (Text.all,
             Font, Get_Pref (Tooltip_Color),
             Tooltip.Explorer.Tree,
-            Pixmap);
+            Pixmap,
+            Use_Markup => True);
          Free (Text);
       end if;
    end Draw;
