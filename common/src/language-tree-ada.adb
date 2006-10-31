@@ -1048,7 +1048,9 @@ package body Language.Tree.Ada is
       Right_Category, Left_Category : Language_Category;
 
    begin
-      if Left_It /= Null_Construct_Tree_Iterator
+      if Left_It = Right_It then
+         return None;
+      elsif Left_It /= Null_Construct_Tree_Iterator
         and then Right_It /= Null_Construct_Tree_Iterator
       then
          Right_Category := Get_Construct (Right_It).Category;
