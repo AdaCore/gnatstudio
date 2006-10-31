@@ -870,7 +870,9 @@ package body Completion_Module is
          return Commands.Failure;
       end if;
 
-      if Command.Smart_Completion then
+      if Get_Language (Buffer) = Ada_Lang
+        and then Command.Smart_Completion
+      then
          return Smart_Complete (Command.Kernel, Complete => True);
       end if;
 
@@ -887,7 +889,7 @@ package body Completion_Module is
 
          Get_Iter_At_Mark
            (M.Insert_Buffer, Iter, Get_Insert (M.Insert_Buffer));
-         M.Mark            := Create_Mark (M.Insert_Buffer, "", Iter);
+         M.Mark := Create_Mark (M.Insert_Buffer, "", Iter);
 
          Copy (Iter, Prev);
          Backward_Char (Prev, Success);
