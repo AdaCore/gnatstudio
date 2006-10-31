@@ -232,7 +232,7 @@ package body Code_Analysis_Module is
              (Pix_Col  => Gdk.Pixbuf.Get_Type,
               Name_Col => GType_String,
               Node_Col => GType_Pointer,
-              Cov_Col  => GType_Pointer,
+              Cov_Col  => GType_String,
               Sort_Col => GType_Int));
          Gtk_New (Property.View.Tree, Gtk_Tree_Model (Property.View.Model));
 
