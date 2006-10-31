@@ -722,10 +722,13 @@ package body Tries is
    ----------
 
    procedure Next (Iter : in out Iterator) is
+      Force_Loop : Boolean := False;
    begin
       Adjust_If_Need (Iter.Trie_Root_Cell, Iter);
 
       loop
+         Force_Loop := False;
+
          if At_End (Iter) then
             return;
          end if;
@@ -752,13 +755,15 @@ package body Tries is
 
                return;
             end if;
+
+            Force_Loop := True;
          else
             Iter.Current_Cell := Iter.Current_Cell.Children
               (Iter.Current_Index)'Access;
             Iter.Current_Index := 1;
          end if;
 
-         exit when Is_Valid (Iter);
+         exit when not Force_Loop and then Is_Valid (Iter);
       end loop;
 
       if not At_End (Iter) then
