@@ -32,10 +32,13 @@ with Gtk.Box;                   use Gtk.Box;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
+with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
-with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Tree_View;             use Gtk.Tree_View;
+with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
+with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
 
@@ -74,9 +77,11 @@ package body Outline_View is
    Outline_View_Link_Editor         : Param_Spec_Boolean;
    Outline_View_Show_File_Node      : Param_Spec_Boolean;
 
-   Entity_Name_Column : constant := 2;
-   Mark_Column        : constant := 3;
-   Line_Column        : constant := 4;
+   Pixbuf_Column       : constant := 0;
+   Display_Name_Column : constant := 1;
+   Entity_Name_Column  : constant := 2;
+   Mark_Column         : constant := 3;
+   Line_Column         : constant := 4;
 
    procedure Default_Context_Factory
      (Module  : access Outline_View_Module_Record;
@@ -503,6 +508,8 @@ package body Outline_View is
                Execute_GPS_Shell_Command
                  (View.Kernel, "Editor.goto_mark", Args);
             end;
+
+            return True;
          end if;
       end if;
       return False;
@@ -518,6 +525,15 @@ package body Outline_View is
    is
       Scrolled     : Gtk_Scrolled_Window;
       Initial_Sort : Integer := 2;
+      pragma Unreferenced (Initial_Sort);
+      Model        : Gtk_Tree_Store;
+
+      Col               : Gtk_Tree_View_Column;
+      Col_Number        : Gint;
+      Text_Render       : Gtk_Cell_Renderer_Text;
+      Pixbuf_Render     : Gtk_Cell_Renderer_Pixbuf;
+
+      pragma Unreferenced (Col_Number);
    begin
       Outline := new Outline_View_Record;
       Outline.Kernel := Kernel_Handle (Kernel);
@@ -533,18 +549,39 @@ package body Outline_View is
       Pack_Start (Outline, Scrolled, Expand => True);
       Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
 
-      Outline.Tree := Create_Tree_View
-        (Column_Types       =>
-           (0 => Gdk.Pixbuf.Get_Type,
-            1 => GType_String,
-            Entity_Name_Column => GType_String,
-            Mark_Column        => GType_String, --  mark ID
-            Line_Column        => GType_Int),
-         Column_Names       => (1 => null, 2 => null),
-         Show_Column_Titles => False,
-         Initial_Sort_On    => Initial_Sort,
-         Selection_Mode     => Gtk.Enums.Selection_Single,
-         Hide_Expander      => True);
+      Gtk.Tree_Store.Gtk_New
+        (Model,
+         Types =>
+           (Pixbuf_Column       => Gdk.Pixbuf.Get_Type,
+            Display_Name_Column => GType_String,
+            Entity_Name_Column  => GType_String,
+            Mark_Column         => GType_String, --  mark ID
+            Line_Column         => GType_Int));
+
+      Gtk_New (Outline.Tree, Model);
+      Set_Headers_Visible (Outline.Tree, False);
+
+      --  Create an explicit columns for the expander
+      Gtk_New (Col);
+      Col_Number := Append_Column (Outline.Tree, Col);
+      Set_Expander_Column (Outline.Tree, Col);
+      Set_Visible (Col, False);
+      Col := null;
+
+      Gtk_New (Col);
+      Col_Number := Append_Column (Outline.Tree, Col);
+      Gtk_New (Pixbuf_Render);
+      Pack_Start (Col, Pixbuf_Render, False);
+      Add_Attribute (Col, Pixbuf_Render, "pixbuf", Pixbuf_Column);
+
+      Gtk_New (Col);
+      Col_Number := Append_Column (Outline.Tree, Col);
+      Gtk_New (Text_Render);
+      Pack_Start (Col, Text_Render, False);
+      Add_Attribute (Col, Text_Render, "markup", Display_Name_Column);
+
+      Clicked (Col);
+
       Add (Scrolled, Outline.Tree);
 
       if Outline.Show_File_Node then
@@ -562,7 +599,7 @@ package body Outline_View is
 
       Return_Callback.Object_Connect
         (Outline.Tree,
-         "button_release_event",
+         "button_press_event",
          Return_Callback.To_Marshaller (Button_Press'Access),
          Slot_Object => Outline,
          After       => False);
@@ -582,9 +619,14 @@ package body Outline_View is
    ----------------
 
    procedure On_Destroy
-     (Outline : access Gtk_Widget_Record'Class) is
+     (Outline : access Gtk_Widget_Record'Class)
+   is
+      O : constant Outline_View_Access := Outline_View_Access (Outline);
    begin
-      Clear (Outline_View_Access (Outline));
+      Clear (O);
+
+      Unref (O.Icon);
+      Unref (O.File_Icon);
    end On_Destroy;
 
    -------------
@@ -669,15 +711,17 @@ package body Outline_View is
 
          if Outline.Show_File_Node then
             Append (Model, Root, Null_Iter);
-            Set (Model, Root, 0, C_Proxy (Outline.File_Icon));
-            Set (Model, Root, 1, "File: " & Base_Name (Outline.File));
+            Set (Model, Root, Pixbuf_Column, C_Proxy (Outline.File_Icon));
+            Set (Model, Root, Display_Name_Column,
+                 "File: " & Base_Name (Outline.File));
          end if;
       end if;
 
       if Handler = null or else Lang = null then
          Append (Model, Iter, Root);
-         Set (Model, Iter, 0, C_Proxy (Outline.Icon));
-         Set (Model, Iter, 1, "No outline available");
+         Set (Model, Iter, Pixbuf_Column, C_Proxy (Outline.Icon));
+         Set (Model, Iter, Display_Name_Column,
+              "<i>No outline available</i>");
       else
          Parse_File_Constructs
            (Handler, Languages, Outline.File, Constructs);
@@ -688,10 +732,14 @@ package body Outline_View is
                  Cat_Unknown
                then
                   Append (Model, Iter, Root);
-                  Set (Model, Iter, 0, C_Proxy (Outline.Icon));
-                  Set (Model, Iter, 1,
+
+                  Set (Model, Iter, Pixbuf_Column,
+                       C_Proxy (Entity_Icon_Of (Constructs.Current.all)));
+
+                  Set (Model, Iter, Display_Name_Column,
                        Entity_Name_Of (Constructs.Current.all,
-                                       Show_Profiles => Show_Profiles));
+                      Show_Profiles => Show_Profiles));
+
                   Set (Model, Iter, Entity_Name_Column,
                        Constructs.Current.Name.all);
                   Set (Model, Iter, Line_Column,
@@ -984,7 +1032,8 @@ package body Outline_View is
                          & " outline. If false, the name of the file will not"
                          & " be displayed, and the outline view will use"
                          & " slightly less screen estate"),
-            Nick    => -"Show file name"));
+            Nick    => -"Show file name",
+            Flags   => Param_Readable));
       Register_Property
         (Kernel, Param_Spec (Outline_View_Show_File_Node), -"Outline");
    end Register_Module;
