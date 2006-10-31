@@ -144,7 +144,7 @@
     <icon id="gps-project-modified-open"       file="../icons/16px/project_box_pencil.png" />
     <icon id="gps-project-modified-closed"     file="../icons/16px/project_box_pencil.png" />
 
-    <icon id="gps-box"                file="../icons/16px/variable.png" />
+    <icon id="gps-box"                file="../icons/16px/entity-generic.png" />
 
     <icon id="adacore-logo"           file="../icons/other/adacore_logo.png">
        <alternate                     file="../icons/other/adacore_logo.png" size="3" />
@@ -185,6 +185,20 @@
     <icon id="gps-warning"            file="../icons/16px/warning.png">
        <alternate                     file="../icons/16px/warning.png" size="1" />
     </icon>
+
+    <!-- Entities -->
+
+    <icon id="gps-entity-package"     file="../icons/16px/entity-package.png" />
+    <icon id="gps-entity-subprogram"  file="../icons/16px/entity-subprogram.png" />
+    <icon id="gps-entity-type"        file="../icons/16px/entity-type.png" />
+    <icon id="gps-entity-variable"    file="../icons/16px/entity-variable.png" />
+    <icon id="gps-entity-generic"     file="../icons/16px/entity-generic.png" />
+
+    <icon id="gps-entity-spec-package"     file="../icons/16px/entity-spec-package.png" />
+    <icon id="gps-entity-spec-subprogram"  file="../icons/16px/entity-spec-subprogram.png" />
+    <icon id="gps-entity-spec-type"        file="../icons/16px/entity-spec-type.png" />
+    <icon id="gps-entity-spec-variable"    file="../icons/16px/entity-spec-variable.png" />
+    <icon id="gps-entity-spec-generic"     file="../icons/16px/entity-spec-generic.png" />
 
     <!-- VCS icons -->
 
