@@ -866,7 +866,8 @@ package body Language.Tree.Ada is
 
                Initial_Parent := Get_Parent_Scope (Tree, Seek_Iterator);
 
-               if Ada_Tree (Initial_Parent.Index).Spec_Index /= 0
+               if Initial_Parent /= Null_Construct_Tree_Iterator
+                 and then Ada_Tree (Initial_Parent.Index).Spec_Index /= 0
                  and then Ada_Tree (Initial_Parent.Index).Spec_Index
                    /= Initial_Parent.Index
                then
