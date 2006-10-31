@@ -155,7 +155,6 @@ private
 
       --  Data needed by the first completion stage (current file)
 
-      First_File         : Structured_File_Access;
       First_Buffer       : String_Access;
       First_Tree         : Construct_Tree;
       Visible_Constructs : Construct_Tree_Iterator_Array_Access;
@@ -163,6 +162,7 @@ private
 
       --  Data needed by the second completion stage (parent files)
 
+      First_File   : Structured_File_Access;
       Current_File : Structured_File_Access;
       Current_It   : Construct_Tree_Iterator := Null_Construct_Tree_Iterator;
 
