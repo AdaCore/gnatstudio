@@ -537,6 +537,9 @@ package body Outline_View is
    begin
       Outline := new Outline_View_Record;
       Outline.Kernel := Kernel_Handle (Kernel);
+
+      Init_Graphics (Gtk_Widget (Get_Main_Window (Kernel)));
+
       Initialize_Vbox (Outline, Homogeneous => False);
 
       if not Get_Pref (Outline_View_Sort_Alphabetically) then
