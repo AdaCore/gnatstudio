@@ -100,6 +100,12 @@ package Project_Explorers_Common is
    Open_Pixbufs  : Pixbuf_Array;
    Close_Pixbufs : Pixbuf_Array;
 
+   type Pixbuf_Entity_Array is array
+     (Language_Category) of Gdk.Pixbuf.Gdk_Pixbuf;
+
+   Entity_Icons      : Pixbuf_Entity_Array;
+   Entity_Spec_Icons : Pixbuf_Entity_Array;
+
    procedure Init_Graphics (Widget : Gtk_Widget);
    --  Initialize the pixbufs.
 
@@ -213,7 +219,12 @@ package Project_Explorers_Common is
    function Entity_Name_Of
      (Construct     : Construct_Information;
       Show_Profiles : Boolean) return String;
-   --  Return the string to use to display the entity
+   --  Return the string to use to display the entity.
+   --  This returns a string in Pango Markup format.
+
+   function Entity_Icon_Of
+     (Construct : Construct_Information) return Gdk.Pixbuf.Gdk_Pixbuf;
+   --  Return the icon associated with Construct.
 
    function Filter_Category
      (Category : Language.Language_Category) return Language.Language_Category;
