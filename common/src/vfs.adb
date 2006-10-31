@@ -26,6 +26,8 @@ with Ada.Calendar;              use Ada.Calendar;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
+with Ada.Strings.Hash;
+with Ada.Characters.Handling;
 with System;
 
 with GNAT.Case_Util;            use GNAT.Case_Util;
@@ -368,6 +370,21 @@ package body VFS is
          return Cst_UTF8_String_Access (File.Value.Full_Name);
       end if;
    end Full_Name;
+
+   --------------------
+   -- Full_Name_Hash --
+   --------------------
+
+   function Full_Name_Hash (Key : Virtual_File)
+                            return Ada.Containers.Hash_Type is
+   begin
+      if Is_Case_Sensitive (Get_Filesystem (Key)) then
+         return Ada.Strings.Hash (Full_Name (Key, True).all);
+      else
+         return Ada.Strings.Hash (Ada.Characters.Handling.To_Lower
+                                  (Full_Name (Key, True).all));
+      end if;
+   end Full_Name_Hash;
 
    ---------------
    -- Host_Name --
