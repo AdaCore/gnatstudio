@@ -161,19 +161,11 @@ package body Language.Tree.Database is
       if not Is_New_File then
          if File.Public_Tree /= null then
             for J in File.Public_Tree.Contents'Range loop
-               declare
-                  Construct : constant Simple_Construct_Information :=
-                    File.Public_Tree.Contents (J).Construct;
-               begin
-                  if Construct.Name /= null
-                    and then Construct.Category /= Cat_Parameter
-                    and then Construct.Category /= Cat_Field
-                    and then Construct.Category /= Cat_With
-                    and then Construct.Category /= Cat_Use
-                  then
-                     Delete (File.Db_Data_Tree (J).Position);
-                  end if;
-               end;
+               if File.Db_Data_Tree (J).Position
+                 /= Construct_Vector.Null_Iterator
+               then
+                  Delete (File.Db_Data_Tree (J).Position);
+               end if;
             end loop;
          end if;
 
@@ -219,6 +211,8 @@ package body Language.Tree.Database is
               and then Wrapper.Node.Construct.Category /= Cat_Field
               and then Wrapper.Node.Construct.Category /= Cat_With
               and then Wrapper.Node.Construct.Category /= Cat_Use
+              and then (Wrapper.Node.Construct.Category /= Cat_Package
+                        or else Wrapper.Node.Construct.Is_Declaration)
             then
                declare
                   Name : constant String :=
