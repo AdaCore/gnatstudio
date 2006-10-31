@@ -725,43 +725,41 @@ package body Tries is
    begin
       Adjust_If_Need (Iter.Trie_Root_Cell, Iter);
 
-      if At_End (Iter) then
-         return;
-      end if;
-
-      if Iter.Current_Cell = Iter.Root_Cell
-        and then Iter.Current_Cell.Children = null
-      then
-         --  We find only one element, which has already been returned, so this
-         --  is the end of the search.
-
-         Iter.Current_Cell := null;
-
-         return;
-      elsif Iter.Current_Index > Iter.Current_Cell.Num_Children then
-         Iter.Current_Index := Iter.Current_Cell.Number_In_Parent + 1;
-
-         Iter.Current_Cell := Iter.Current_Cell.Parent_Cell;
-
-         if Iter.Current_Cell = Iter.Root_Cell
-           and then Iter.Current_Index > Iter.Root_Cell.Num_Children
-         then
-            --  Here, we are at the end of the search
-            Iter.Current_Cell := null;
-
+      loop
+         if At_End (Iter) then
             return;
          end if;
 
-         Next (Iter);
-      else
-         Iter.Current_Cell := Iter.Current_Cell.Children
-           (Iter.Current_Index)'Access;
-         Iter.Current_Index := 1;
+         if Iter.Current_Cell = Iter.Root_Cell
+           and then Iter.Current_Cell.Children = null
+         then
+            --  We find only one element, which has already been returned, so
+            --  this is the end of the search.
 
-         if not Is_Valid (Iter) then
-            Next (Iter);
+            Iter.Current_Cell := null;
+
+            return;
+         elsif Iter.Current_Index > Iter.Current_Cell.Num_Children then
+            Iter.Current_Index := Iter.Current_Cell.Number_In_Parent + 1;
+
+            Iter.Current_Cell := Iter.Current_Cell.Parent_Cell;
+
+            if Iter.Current_Cell = Iter.Root_Cell
+              and then Iter.Current_Index > Iter.Root_Cell.Num_Children
+            then
+               --  Here, we are at the end of the search
+               Iter.Current_Cell := null;
+
+               return;
+            end if;
+         else
+            Iter.Current_Cell := Iter.Current_Cell.Children
+              (Iter.Current_Index)'Access;
+            Iter.Current_Index := 1;
          end if;
-      end if;
+
+         exit when Is_Valid (Iter);
+      end loop;
 
       if not At_End (Iter) then
          declare

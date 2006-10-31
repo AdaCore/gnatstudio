@@ -106,11 +106,11 @@ package body Lazy_Vectors is
 
    procedure Next (It : in out Iterator) is
    begin
-      It.Index := It.Index + 1;
+      loop
+         It.Index := It.Index + 1;
 
-      if not Is_Valid (It) then
-         Next (It);
-      end if;
+         exit when Is_Valid (It);
+      end loop;
    end Next;
 
    ------------

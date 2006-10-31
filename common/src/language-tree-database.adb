@@ -177,10 +177,10 @@ package body Language.Tree.Database is
             end loop;
          end if;
 
-      --  Remove all the links to this file
+         --  Remove all the links to this file
 
          declare
-            C          : File_Map.Cursor := First (File.Db.Files_Db);
+            C : File_Map.Cursor := First (File.Db.Files_Db);
          begin
             while C /= File_Map.No_Element loop
                if Element (C).Parent_File = File then
@@ -475,23 +475,23 @@ package body Language.Tree.Database is
 
    procedure Next (It : in out Construct_Db_Iterator) is
    begin
-      if not At_End (It.It_Vector) then
-         Next (It.It_Vector);
-      else
-         if It.Is_Partial then
-            Next (It.It_Db);
-
-            if not At_End (It.It_Db) then
-               It.It_Vector := First (Get (It.It_Db).Constructs);
-            end if;
+      loop
+         if not At_End (It.It_Vector) then
+            Next (It.It_Vector);
          else
-            It.It_Db := Construct_Trie_Trees.Null_Iterator;
-         end if;
-      end if;
+            if It.Is_Partial then
+               Next (It.It_Db);
 
-      if not Is_Valid (It) then
-         Next (It);
-      end if;
+               if not At_End (It.It_Db) then
+                  It.It_Vector := First (Get (It.It_Db).Constructs);
+               end if;
+            else
+               It.It_Db := Construct_Trie_Trees.Null_Iterator;
+            end if;
+         end if;
+
+         exit when Is_Valid (It);
+      end loop;
    end Next;
 
    ------------

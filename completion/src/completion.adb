@@ -250,10 +250,10 @@ package body Completion is
 
    procedure Next (This : in out Completion_Iterator) is
    begin
-      Next (This.It);
-
-      while not Is_Valid (This) loop
+      loop
          Next (This.It);
+
+         exit when Is_Valid (This);
       end loop;
    end Next;
 
