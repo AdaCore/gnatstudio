@@ -113,10 +113,8 @@ package body Code_Coverage is
       end if;
 
       loop
-         Match (Last_Line_Regexp,
-                File_Contents.all,
-                Last_Line_Matches,
-                Current);
+         Match
+           (Last_Line_Regexp, File_Contents.all, Last_Line_Matches, Current);
 
          exit when Last_Line_Matches (0) /= No_Match;
 
@@ -143,7 +141,6 @@ package body Code_Coverage is
       --  to the number of code lines in the original source code file.
 
       File_Node.Lines.all := (others => Null_Line);
-
       Current := File_Contents'First;
 
       loop
