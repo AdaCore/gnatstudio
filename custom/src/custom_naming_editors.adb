@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003                            --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2006, AdaCore              --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,10 +17,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Characters.Handling;          use Ada.Characters.Handling;
 with Basic_Types;                      use Basic_Types;
 with GNAT.OS_Lib;                      use GNAT.OS_Lib;
-with GPS.Intl;                       use GPS.Intl;
-with GPS.Kernel.Project;             use GPS.Kernel.Project;
+with GPS.Intl;                         use GPS.Intl;
+with GPS.Kernel.Project;               use GPS.Kernel.Project;
 with Gtk.Box;                          use Gtk.Box;
 with Gtk.Frame;                        use Gtk.Frame;
 with Gtk.GEntry;                       use Gtk.GEntry;
@@ -142,7 +142,7 @@ package body Custom_Naming_Editors is
         or else Get_Attribute_Value
           (Project        => Project,
            Attribute      => Spec_Suffix_Attribute,
-           Index          => Editor.Language.all) /=
+           Index          => To_Lower (Editor.Language.all)) /=
         Get_Text (Editor.Extension)
       then
          Update_Attribute_Value_In_Scenario
@@ -150,7 +150,7 @@ package body Custom_Naming_Editors is
             Scenario_Variables => Scenario_Variables,
             Attribute          => Spec_Suffix_Attribute,
             Value              => Get_Text (Editor.Extension),
-            Attribute_Index    => Editor.Language.all);
+            Attribute_Index    => To_Lower (Editor.Language.all));
          Changed := True;
       end if;
 
@@ -182,7 +182,7 @@ package body Custom_Naming_Editors is
         (Editor.Extension,
          Get_Attribute_Value
             (P, Spec_Suffix_Attribute,
-             Index => Editor.Language.all));
+             Index => To_Lower (Editor.Language.all)));
 
       if Display_Exceptions then
          Show_Project_Settings (Editor.Exceptions, Project);
