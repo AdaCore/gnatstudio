@@ -626,10 +626,9 @@ package body Completion.Ada.Constructs_Extractor is
         To_Construct_Tree (Db_Construct.First_Buffer, Ada_Lang);
    begin
       Result.Stage := Initial_File;
-      Result.Current_File := Db_Construct.First_File;
+      Result.First_File := Db_Construct.First_File;
       Result.Name := Db_Construct.Name;
       Result.Construct_Db := Db_Construct.Construct_Db;
-      Result.First_File := Db_Construct.First_File;
       Result.Resolver := Db_Construct.Resolver;
       Result.Is_Partial := Db_Construct.Is_Partial;
       Result.Filter := Db_Construct.Filter;
@@ -740,7 +739,7 @@ package body Completion.Ada.Constructs_Extractor is
                Free (It.Visible_Constructs);
                It.Visible_Index := 0;
                It.Current_It := Null_Construct_Tree_Iterator;
-               It.Current_File := Get_Parent_File (It.Current_File);
+               It.Current_File := Get_Parent_File (It.First_File);
             end if;
          elsif It.Stage = Parent_File then
             --  Stage 2: We return the constructs from the parent files
@@ -823,7 +822,7 @@ package body Completion.Ada.Constructs_Extractor is
                Resolver             => This.Resolver,
                Tree_Node            =>
                   This.Visible_Constructs (This.Visible_Index),
-               File                 => This.Current_File,
+               File                 => This.First_File,
                Is_All               => False,
                Params_In_Expression => 0,
                Tree                 => This.First_Tree,
