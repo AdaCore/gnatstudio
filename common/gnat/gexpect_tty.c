@@ -1576,12 +1576,14 @@ int
 gvd_interrupt_process (struct GVD_Process* p)
 {
   process_send_signal (p, SIGINT, 1);
+  return 0;
 }
 
 int
 gvd_interrupt_pid (int pid)
 {
   kill (-pid, SIGINT);
+  return 0;
 }
 
 /* kill a process. */
@@ -2012,7 +2014,7 @@ nt_spawnve (char *exe, char **argv, char *env, struct GVD_Process *process)
 
   /* creating a new console allow easier close. creating a new process group
      allow killing the child process, and its own children */
-  flags = CREATE_NEW_CONSOLE | CREATE_NEW_PROCESS_GROUP;
+  flags = CREATE_NEW_CONSOLE;
   if (NILP (Vw32_start_process_inherit_error_mode))
     flags |= CREATE_DEFAULT_ERROR_MODE;
 
@@ -2328,8 +2330,9 @@ gvd_interrupt_process (struct GVD_Process* p)
   }
 
   if (bret == FALSE) {
-    gvd_interrupt_pid (p->procinfo.dwProcessId);
+    return gvd_interrupt_pid (p->procinfo.dwProcessId);
   }
+  return 0;
 }
 
 int
