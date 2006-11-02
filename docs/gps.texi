@@ -2225,14 +2225,17 @@ GPS is also able to complete a dotted notation. For example, if you type
 with Ada.
 @end smallexample
 
-and then hit the completion key, you will be offered all the child and nested
-packages of Ada. You can also write the beginning of the package, e.g.:
+the smart completion window will appear automatically, listing all the child
+and nested packages of Ada. You can configure the time interval after which
+the completion window appears (@pxref{The Preferences Dialog}).
+
+You can also write the beginning of the package, e.g.:
 
 @smallexample
 with Ada.Text
 @end smallexample
 
-will offer you Text_IO.
+pressing the completion key will offer you Text_IO.
 
 If you are in a code section, you will be able to complete the fields of
 a record, or the contents of a package, e.g.:
@@ -8415,6 +8418,15 @@ only be activated with caution.
 Whether the first entry of the location window should be selected
 automatically, and thus whether the corresponding editor should be
 immediately open.
+
+@item Smart completion
+@cindex smart completion
+When enabled, GPS loads on startup all the information needed for the
+Smart completion to work.
+
+@item Smart completion timeout
+The timeout, expressed in milliseconds, after which the Smart completion
+window appears automatically after entering a triggering character, such as '.'
 
 @end table
 
