@@ -1161,7 +1161,7 @@ package body Completion_Module is
           (Gnew_Int
                (Name    => "Smart-Completion-Trigger-Timeout",
                 Minimum => 0,
-                Maximum => 999,
+                Maximum => 9999,
                 Blurb   => -("The timeout (in milliseconds)"
                   & " for character-triggered smart completion"),
                 Nick    => -"Smart completion timeout",
