@@ -83,13 +83,11 @@ package body Completion_Module is
 
    Db_Loading_Queue : constant String := "constructs_db_loading";
 
+   Smart_Completion_Trigger_Timeout : Param_Spec_Int;
    Smart_Completion_Enabled : Param_Spec_Boolean;
    Smart_Completion_Enabled_Set : Param_Spec_Boolean;
 
    use String_List_Utils.String_List;
-
-   Trigger_Timeout : constant := 175;
-   --  The timeout for key triggers, in milliseconds.
 
    type Completion_Module_Record is new Module_ID_Record with record
       Prefix : GNAT.OS_Lib.String_Access;
@@ -155,7 +153,8 @@ package body Completion_Module is
       Completion_Triggers_Callback    : Function_With_Args_Access;
       --  The hook callback corresponding to character triggers
 
-      Trigger_Timeout     : Timeout_Handler_Id;
+      Trigger_Timeout_Value : Gint;
+      Trigger_Timeout       : Timeout_Handler_Id;
       --  The timeout associated to character triggers
 
       Has_Trigger_Timeout : Boolean := False;
@@ -276,6 +275,9 @@ package body Completion_Module is
                          Completion_Module.Completion_Triggers_Callback);
          end if;
       end if;
+
+      Completion_Module.Trigger_Timeout_Value :=
+        Get_Pref (Smart_Completion_Trigger_Timeout);
 
       Completion_Module.Previous_Smart_Completion_State :=
         Get_Pref (Smart_Completion_Enabled);
@@ -1125,7 +1127,8 @@ package body Completion_Module is
 
       if Last = 1 and then Buffer (1) = '.' then
          Completion_Module.Trigger_Timeout :=
-           Timeout_Add (Trigger_Timeout, Trigger_Timeout_Callback'Access);
+           Timeout_Add (Guint32 (Completion_Module.Trigger_Timeout_Value),
+                        Trigger_Timeout_Callback'Access);
          Completion_Module.Has_Trigger_Timeout := True;
       end if;
 
@@ -1146,12 +1149,25 @@ package body Completion_Module is
       Smart_Completion_Enabled := Glib.Properties.Creation.Param_Spec_Boolean
         (Gnew_Boolean
            (Name  => "Smart-Completion-Enabled",
-            Nick  => -"Enable smart completion",
+            Nick  => -"Smart completion",
             Blurb => -("Enable all the mechanisms needed to have the smart " &
               "completion working."),
             Default => False));
       Register_Property
         (Kernel, Param_Spec (Smart_Completion_Enabled), -"General");
+
+      Smart_Completion_Trigger_Timeout :=
+        Glib.Properties.Creation.Param_Spec_Int
+          (Gnew_Int
+               (Name    => "Smart-Completion-Trigger-Timeout",
+                Minimum => 0,
+                Maximum => 999,
+                Blurb   => -("The timeout (in milliseconds)"
+                  & " for character-triggered smart completion"),
+                Nick    => -"Smart completion timeout",
+                Default => 200));
+      Register_Property
+        (Kernel, Param_Spec (Smart_Completion_Trigger_Timeout), -"General");
 
       Smart_Completion_Enabled_Set := Param_Spec_Boolean
         (Gnew_Boolean
