@@ -33,11 +33,11 @@ is
    type Browser_List is array (Natural range <>) of Cst_String_Access;
 
    Browsers : constant Browser_List :=
-     (new String'("firefox"),
+     (new String'("firefox -remote openURL(%u)"),
       new String'("mozilla"),
       new String'("galeon"),
       new String'("netscape"),
-      new String'("opera"),
+      new String'("opera -newpage %u"),
       new String'("nautilus"),
       new String'("konqueror"),
       new String'("open"));
@@ -122,17 +122,17 @@ is
          return False;
       else
          Process := Non_Blocking_Spawn (Cmd.all, Args);
-         Free (Cmd);
 
          Insert
            (Kernel, (-"Launching ") & Browser & (-" to view ") & URL,
             Mode => Info);
 
-         Trace (Me, "Launching external browser with " & Browser & "--");
+         Trace (Me, "Launching external browser with " & Cmd.all & "--");
          for A in Args'Range loop
             Trace (Me, "Args (" & A'Img & ")=" & Args (A).all & "--");
          end loop;
 
+         Free (Cmd);
          return Process /= Invalid_Pid;
       end if;
    end Launch_Browser;
@@ -141,16 +141,19 @@ is
 
 begin
    if HTML_Browser = "" then
-      Args := new Argument_List'(1 => new String'(URL));
       for J in Browsers'Range loop
-         if Launch_Browser (Browsers (J).all, Args.all) then
+         Args := Get_Command (Browsers (J).all);
+         if Launch_Browser
+            (Args (Args'First).all, Args (Args'First + 1 .. Args'Last))
+         then
             Free (Args);
             return;
          end if;
+         Free (Args);
       end loop;
 
-      Free (Args);
       Insert (Kernel, -"No HTML browser specified", Mode => Error);
+      Trace (Me, "Couldn't start browser");
       return;
    end if;
 
