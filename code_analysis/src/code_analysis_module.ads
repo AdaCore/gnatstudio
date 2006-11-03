@@ -20,6 +20,8 @@
 
 --  <description>
 --  This package defines the module for code analysis storage structure
+--  It defines shell commands that allow to create graphical interfaces for
+--  coverage informations inside GPS.
 --  </description>
 
 with Ada.Unchecked_Deallocation;
@@ -33,7 +35,11 @@ with GPS.Kernel.Scripts;   use GPS.Kernel.Scripts;
 with GPS.Kernel.MDI;       use GPS.Kernel.MDI;
 with GPS.Intl;             use GPS.Intl;
 
+with Glib;
+with Glib.Object;
+
 with Gdk.Pixbuf;           use Gdk.Pixbuf;
+with Gdk.Event;            use Gdk.Event;
 
 with Gtk.Box;              use Gtk.Box;
 with Gtk.Tree_View;        use Gtk.Tree_View;
@@ -42,9 +48,6 @@ with Gtk.Tree_Model;       use Gtk.Tree_Model;
 with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
 with Gtk.Widget;           use Gtk.Widget;
 with Gtk.Menu;             use Gtk.Menu;
-with Gdk.Event;            use Gdk.Event;
-with Glib;
-with Glib.Object;
 
 package Code_Analysis_Module is
 
@@ -77,6 +80,7 @@ private
       Iter        : Gtk_Tree_Iter;
       Node_Column : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       Cov_Column  : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
+      Cov_Percent : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       Instance    : Class_Instance;
    end record;
 
