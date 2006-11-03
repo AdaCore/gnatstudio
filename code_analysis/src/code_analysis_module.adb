@@ -18,30 +18,33 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;            use Ada.Exceptions;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with Ada.Exceptions;             use Ada.Exceptions;
+with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
-with Glib;                      use Glib;
-with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
-with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Window;                use Gtk.Window;
-with Gtk.Menu_Item;             use Gtk.Menu_Item;
-with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
-with Gtkada.MDI;                use Gtkada.MDI;
-with Gtkada.Handlers;           use Gtkada.Handlers;
+with Glib;                       use Glib;
+with Glib.Properties;
+with Gtk.Cell_Renderer;
+with Gtk.Cell_Renderer_Text;     use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Pixbuf;   use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Cell_Renderer_Progress; use Gtk.Cell_Renderer_Progress;
+with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
+with Gtk.Enums;                  use Gtk.Enums;
+with Gtk.Window;                 use Gtk.Window;
+with Gtk.Menu_Item;              use Gtk.Menu_Item;
+with Gtk.Tree_Selection;         use Gtk.Tree_Selection;
+with Gtkada.MDI;                 use Gtkada.MDI;
+with Gtkada.Handlers;            use Gtkada.Handlers;
 
-with Code_Coverage;             use Code_Coverage;
-with Code_Analysis_Tree_Model;  use Code_Analysis_Tree_Model;
+with Code_Coverage;              use Code_Coverage;
+with Code_Analysis_Tree_Model;   use Code_Analysis_Tree_Model;
 
-with VFS;                       use VFS;
-with Projects;                  use Projects;
-with Projects.Registry;         use Projects.Registry;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Location_View;         use GPS.Location_View;
+with VFS;                        use VFS;
+with Projects;                   use Projects;
+with Projects.Registry;          use Projects.Registry;
+with GPS.Kernel.Project;         use GPS.Kernel.Project;
+with GPS.Kernel.Styles;          use GPS.Kernel.Styles;
+with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
+with GPS.Location_View;          use GPS.Location_View;
 
 package body Code_Analysis_Module is
 
@@ -200,6 +203,7 @@ package body Code_Analysis_Module is
       Scrolled     : Gtk_Scrolled_Window;
       Text_Render  : Gtk_Cell_Renderer_Text;
       Pixbuf_Rend  : Gtk_Cell_Renderer_Pixbuf;
+      Bar_Render   : Gtk_Cell_Renderer_Progress;
       Num_Col      : Gint;
       pragma Unreferenced (Num_Col, Project_Node);
    begin
@@ -229,11 +233,13 @@ package body Code_Analysis_Module is
          end if;
 
          Gtk_New (Property.View.Model, GType_Array'
-             (Pix_Col  => Gdk.Pixbuf.Get_Type,
-              Name_Col => GType_String,
-              Node_Col => GType_Pointer,
-              Cov_Col  => GType_String,
-              Sort_Col => GType_Int));
+             (Pix_Col     => Gdk.Pixbuf.Get_Type,
+              Name_Col    => GType_String,
+              Node_Col    => GType_Pointer,
+              Cov_Col     => GType_String,
+              Cov_Sort    => GType_Int,
+              Cov_Bar_Txt => GType_String,
+              Cov_Bar_Val => GType_Int));
          Gtk_New (Property.View.Tree, Gtk_Tree_Model (Property.View.Model));
 
          -----------------
@@ -262,15 +268,26 @@ package body Code_Analysis_Module is
          Gtk_New (Property.View.Cov_Column);
          Num_Col :=
            Append_Column (Property.View.Tree, Property.View.Cov_Column);
-
          Gtk_New (Text_Render);
          Pack_Start (Property.View.Cov_Column, Text_Render, False);
          Add_Attribute
            (Property.View.Cov_Column, Text_Render, "text", Cov_Col);
-
          Set_Title (Property.View.Cov_Column, -"Coverage");
-         Set_Sort_Column_Id (Property.View.Cov_Column, Sort_Col);
-
+         Set_Sort_Column_Id (Property.View.Cov_Column, Cov_Sort);
+         Gtk_New (Property.View.Cov_Percent);
+         Num_Col :=
+           Append_Column (Property.View.Tree, Property.View.Cov_Percent);
+         Gtk_New (Bar_Render);
+         Glib.Properties.Set_Property (Bar_Render,
+                       Gtk.Cell_Renderer.Width_Property,
+                       Gint (100));
+         Pack_Start (Property.View.Cov_Percent, Bar_Render, False);
+         Add_Attribute
+           (Property.View.Cov_Percent, Bar_Render, "text", Cov_Bar_Txt);
+         Add_Attribute
+           (Property.View.Cov_Percent, Bar_Render, "value", Cov_Bar_Val);
+         Set_Title (Property.View.Cov_Percent, -"Coverage Percentage");
+         Set_Sort_Column_Id (Property.View.Cov_Percent, Cov_Bar_Val);
          Gtk_New (Scrolled);
          Set_Policy
            (Scrolled, Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
