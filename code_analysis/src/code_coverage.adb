@@ -303,8 +303,10 @@ package body Code_Coverage is
       --  Returns in a String the Subprograms specific coverage info used to
       --  fill the Gtk_Tree_Store of a coverage report
 
-      Cov_Txt   : constant String  := Natural'Image (Coverage.Coverage);
-      Lig_Count : constant Natural := Node_Coverage (Coverage.all).Children;
+      Cov_Txt     : constant String  := Natural'Image (Coverage.Coverage);
+      Lig_Count   : constant Natural := Node_Coverage (Coverage.all).Children;
+      Cov_Percent : constant Natural :=
+                      (Lig_Count - Coverage.Coverage) * 100 / Lig_Count;
 
       function Txt_Lig (Lig_Count : Natural) return String is
       begin
@@ -352,7 +354,11 @@ package body Code_Coverage is
            & Cov_Txt (Cov_Txt'First + 1 .. Cov_Txt'Last)
            & " not covered)"
            & Txt_Sub (Coverage));
-      Set (Tree_Store, Iter, Sort_Col, Glib.Gint (Coverage.Coverage));
+      Set (Tree_Store, Iter, Cov_Sort, Glib.Gint (Coverage.Coverage));
+      Set (Tree_Store, Iter, Cov_Bar_Val, Glib.Gint (Cov_Percent));
+      Set (Tree_Store, Iter, Cov_Bar_Txt,
+           Image (Cov_Percent, Int_Image_Padding)
+           & " %");
    end Fill_Iter;
 
 end Code_Coverage;
