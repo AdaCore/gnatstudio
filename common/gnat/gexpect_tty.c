@@ -2012,8 +2012,8 @@ nt_spawnve (char *exe, char **argv, char *env, struct GVD_Process *process)
   sec_attrs.lpSecurityDescriptor = &sec_desc;
   sec_attrs.bInheritHandle = FALSE;
 
-  /* creating a new console allow easier close. creating a new process group
-     allow killing the child process, and its own children */
+  /* creating a new console allow easier close. Do not use
+     CREATE_NEW_PROCESS_GROUP as this results in disabling Ctrl+C */
   flags = CREATE_NEW_CONSOLE;
   if (NILP (Vw32_start_process_inherit_error_mode))
     flags |= CREATE_DEFAULT_ERROR_MODE;
@@ -2245,7 +2245,7 @@ gvd_setup_parent_communication
   *in = _open_osfhandle ((long) process->w_infd, 0);
   *out = _open_osfhandle ((long) process->w_outfd, 0);
   /* child's stderr is always redirected to outfd */
-  *err = _open_osfhandle ((long) process->w_outfd, 0);
+  *err = *out;
   *pid = process->pid;
 }
 
@@ -2417,6 +2417,7 @@ gvd_interrupt_pid (int pid)
       rc = -1;
     }
 
+  free (cp.procinfo);
   return rc;
 }
 
@@ -2465,8 +2466,7 @@ gvd_waitpid (struct GVD_Process* p)
   CloseHandle (p->procinfo.hThread);
   CloseHandle (p->procinfo.hProcess);
 
-  CloseHandle (p->w_infd);
-  CloseHandle (p->w_outfd);
+  // No need to close the handles: they were closed on the ada side
 
   return (int) exitcode;
 }
