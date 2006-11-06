@@ -550,6 +550,7 @@ package body GVD_Module is
       Widget_Callback.Object_Connect
         (GVD_Module_ID.Cont_Button, "clicked",
          On_Start_Continue'Access, Window);
+      Show_All (GVD_Module_ID.Cont_Button);
 
       Gtk_New_From_Stock (GVD_Module_ID.Step_Button, "gps-debugger-step");
       Set_Tooltip (GVD_Module_ID.Step_Button, Get_Tooltips (Kernel),
@@ -557,6 +558,7 @@ package body GVD_Module is
       Insert (Toolbar, GVD_Module_ID.Step_Button);
       Widget_Callback.Object_Connect
         (GVD_Module_ID.Step_Button, "clicked", On_Step'Access, Window);
+      Show_All (GVD_Module_ID.Step_Button);
 
       Gtk_New_From_Stock (GVD_Module_ID.Next_Button, "gps-debugger-next");
       Set_Tooltip (GVD_Module_ID.Next_Button, Get_Tooltips (Kernel),
@@ -564,6 +566,7 @@ package body GVD_Module is
       Insert (Toolbar, GVD_Module_ID.Next_Button);
       Widget_Callback.Object_Connect
         (GVD_Module_ID.Next_Button, "clicked", On_Next'Access, Window);
+      Show_All (GVD_Module_ID.Next_Button);
 
       Gtk_New_From_Stock (GVD_Module_ID.Finish_Button, "gps-debugger-finish");
       Set_Tooltip (GVD_Module_ID.Finish_Button, Get_Tooltips (Kernel),
@@ -571,6 +574,7 @@ package body GVD_Module is
       Insert (Toolbar, GVD_Module_ID.Finish_Button);
       Widget_Callback.Object_Connect
         (GVD_Module_ID.Finish_Button, "clicked", On_Finish'Access, Window);
+      Show_All (GVD_Module_ID.Finish_Button);
 
       Gtk_New_From_Stock (GVD_Module_ID.Up_Button, "gps-debugger-up");
       Set_Tooltip (GVD_Module_ID.Up_Button, Get_Tooltips (Kernel),
@@ -578,6 +582,7 @@ package body GVD_Module is
       Insert (Toolbar, GVD_Module_ID.Up_Button);
       Widget_Callback.Object_Connect
         (GVD_Module_ID.Up_Button, "clicked", On_Up'Access, Window);
+      Show_All (GVD_Module_ID.Up_Button);
 
       Gtk_New_From_Stock (GVD_Module_ID.Down_Button, "gps-debugger-down");
       Set_Tooltip (GVD_Module_ID.Down_Button, Get_Tooltips (Kernel),
@@ -585,6 +590,7 @@ package body GVD_Module is
       Insert (Toolbar, GVD_Module_ID.Down_Button);
       Widget_Callback.Object_Connect
         (GVD_Module_ID.Down_Button, "clicked", On_Down'Access, Window);
+      Show_All (GVD_Module_ID.Down_Button);
    end Add_Debug_Buttons;
 
    --------------------------
