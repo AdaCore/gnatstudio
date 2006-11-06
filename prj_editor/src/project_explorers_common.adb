@@ -244,7 +244,35 @@ package body Project_Explorers_Common is
      (Construct     : Construct_Information;
       Show_Profiles : Boolean) return String
    is
-      Name : constant String := "<tt>" & Reduce (Construct.Name.all) & "</tt>";
+
+      function Escape return String;
+      pragma Inline (Escape);
+      --  Escape Construct.Name.all as a pango markup string.
+      --  The characters which need to be escaped in pango markup language are
+      --  '&', '<', '>', '\', and '"'.
+      --  The code here assumes that Entity names, in any language, can only
+      --  contain '&', '<', '>', or '"'  and that if it does, one of these
+      --  characters is necessarily in the first position, for the overloading
+      --  of operators such as '<' or '&&', or for a quoted name.
+
+      function Escape return String is
+         C : Character;
+      begin
+         if Construct.Name.all = "" then
+            return "";
+         end if;
+
+         C := Construct.Name (Construct.Name'First);
+
+         if C = '"' or else C = '&' or else C = '<' or else C = '>' then
+            return Escape_Text (Construct.Name.all);
+         else
+            return Construct.Name.all;
+         end if;
+      end Escape;
+
+      Name : constant String := "<tt>" & Reduce (Escape) & "</tt>";
+
    begin
       if Show_Profiles and then Construct.Profile /= null then
          return Locale_To_UTF8
