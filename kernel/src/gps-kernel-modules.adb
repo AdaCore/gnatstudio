@@ -679,7 +679,7 @@ package body GPS.Kernel.Modules is
       Push_State (Kernel_Handle (Kernel), Busy);
       Context.Context := Kernel_Handle (Kernel).Last_Context_For_Contextual;
       Context.Event   := Kernel_Handle (Kernel).Last_Event_For_Contextual;
-      --   Get_Current_Event;
+      --   Event will be deep-copied in the call to Create_Proxy below
 
       case Action.Menu_Type is
          when Type_Action =>
