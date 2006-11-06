@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2003-2006                        --
---                            AdaCore                                --
+--                      Copyright (C) 2003-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -55,7 +55,6 @@ package Commands.Interactive is
    --  lifetime might be different from that of the original event. If you are
    --  passing the context to Create_Proxy below, the deep copy will be done
    --  automatically for you.
-
 
    Null_Context : constant Interactive_Command_Context :=
      (Event       => null,
