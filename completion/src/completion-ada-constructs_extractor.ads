@@ -23,6 +23,7 @@
 with Ada.Containers.Doubly_Linked_Lists; use Ada.Containers;
 
 with Language.Tree;          use Language.Tree;
+with Language.Tree.Ada;      use Language.Tree.Ada;
 with Language.Tree.Database; use Language.Tree.Database;
 
 package Completion.Ada.Constructs_Extractor is
@@ -162,9 +163,15 @@ private
 
       --  Data needed by the second completion stage (parent files)
 
-      First_File   : Structured_File_Access;
-      Current_File : Structured_File_Access;
-      Current_It   : Construct_Tree_Iterator := Null_Construct_Tree_Iterator;
+      First_File       : Structured_File_Access;
+      Current_File     : Structured_File_Access;
+      Current_It       : Construct_Tree_Iterator
+        := Null_Construct_Tree_Iterator;
+
+      Current_Tree      : Construct_Tree;
+      Current_Ada_Tree  : Ada_Construct_Tree;
+      Current_Body_Tree : Ada_Construct_Tree;
+      Is_Current_Spec   : Boolean := False;
 
       --  Data needed by the third completion stage (database)
 
