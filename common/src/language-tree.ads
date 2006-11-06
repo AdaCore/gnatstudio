@@ -168,6 +168,27 @@ package Language.Tree is
    --  Return the name of the construct given in parameter, prefixed by all the
    --  relevant enclosing units.
 
+   ---------------------------
+   -- Construct_Cell_Access --
+   ---------------------------
+
+   type Construct_Cell_Access is private;
+   --  This type is used to point to a particular node of a tree.
+
+   Null_Construct_Cell_Access : constant Construct_Cell_Access;
+
+   function To_Construct_Access
+     (Tree : Construct_Tree; Iterator : Construct_Tree_Iterator)
+      return Construct_Cell_Access;
+   --  Creates a construct access
+
+   function To_Construct_Tree_Iterator
+     (Construct : Construct_Cell_Access) return Construct_Tree_Iterator;
+   --  Returns the construct iterator store in this construct access
+
+   function Get_Tree (Construct : Construct_Cell_Access) return Construct_Tree;
+   --  Return the tree stored in this construct access
+
    --------------------------
    -- Composite_Identifier --
    --------------------------
@@ -315,6 +336,13 @@ private
 
    Null_Construct_Tree_Iterator_Array : constant Construct_Tree_Iterator_Array
      (1 .. 0) := (others => Null_Construct_Tree_Iterator);
+
+   type Construct_Cell_Access is record
+      Tree  : Construct_Tree;
+      Index : Natural := 0;
+   end record;
+
+   Null_Construct_Cell_Access : constant Construct_Cell_Access := (null, 0);
 
    type Positions_Array is array (Natural range <>) of Integer;
 
