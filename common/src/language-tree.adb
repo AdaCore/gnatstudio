@@ -720,6 +720,38 @@ package body Language.Tree is
       end;
    end Get_Full_Name;
 
+   -------------------------
+   -- To_Construct_Access --
+   -------------------------
+
+   function To_Construct_Access
+     (Tree : Construct_Tree; Iterator : Construct_Tree_Iterator)
+      return Construct_Cell_Access
+   is
+   begin
+      return (Tree, Iterator.Index);
+   end To_Construct_Access;
+
+   --------------------------------
+   -- To_Construct_Tree_Iterator --
+   --------------------------------
+
+   function To_Construct_Tree_Iterator
+     (Construct : Construct_Cell_Access) return Construct_Tree_Iterator is
+   begin
+      return (Construct.Tree.Contents (Construct.Index), Construct.Index);
+   end To_Construct_Tree_Iterator;
+
+   --------------
+   -- Get_Tree --
+   --------------
+
+   function Get_Tree
+     (Construct : Construct_Cell_Access) return Construct_Tree is
+   begin
+      return Construct.Tree;
+   end Get_Tree;
+
    ----------
    -- Free --
    ----------
