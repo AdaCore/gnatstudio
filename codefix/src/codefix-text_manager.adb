@@ -23,7 +23,6 @@ with GNAT.Case_Util; use GNAT.Case_Util;
 with GNAT.Regpat;    use GNAT.Regpat;
 
 with Ada_Analyzer;   use Ada_Analyzer;
-with Language.Ada;   use Language.Ada;
 with String_Utils;   use String_Utils;
 with VFS;            use VFS;
 
@@ -492,10 +491,10 @@ package body Codefix.Text_Manager is
 
       if Get_Construct (Unit_Info).Is_Declaration then
 
-         Body_Info := Get_First_Body
+         Body_Info := To_Construct_Tree_Iterator (Get_First_Body
            (Get_Tree (Current_Text, Cursor),
             Get_Ada_Tree (Current_Text, Cursor),
-            Unit_Info);
+            Unit_Info));
 
          for J in Get_Construct (Body_Info).Sloc_Start.Line
            .. Get_Construct (Body_Info).Sloc_End.Line
@@ -657,10 +656,10 @@ package body Codefix.Text_Manager is
       Unit_Info := Get_Iterator_At (Current_Text, Cursor);
 
       if Get_Construct (Unit_Info).Is_Declaration then
-         Body_Info := Get_First_Body
+         Body_Info := To_Construct_Tree_Iterator (Get_First_Body
            (Get_Tree (Current_Text, Cursor),
             Get_Ada_Tree (Current_Text, Cursor),
-            Unit_Info);
+            Unit_Info));
       else
          Body_Info := Null_Construct_Tree_Iterator;
       end if;
@@ -833,6 +832,7 @@ package body Codefix.Text_Manager is
       Free (This.Structure.all);
       Free (This.Structure);
       Free (This.Structure_Up_To_Date);
+      Free (This.Tree, This.Ada_Tree);
       Free (This.Tree);
    end Free;
 
@@ -1324,8 +1324,8 @@ package body Codefix.Text_Manager is
    procedure Update_Structure_If_Needed (This : access Text_Interface'Class) is
    begin
       if not This.Structure_Up_To_Date.all then
+         Free (This.Tree, This.Ada_Tree);
          Free (This.Tree);
-         Free (This.Ada_Tree);
          Free (This.Structure);
          Free (This.Buffer);
 
@@ -1342,7 +1342,7 @@ package body Codefix.Text_Manager is
          This.Tree := To_Construct_Tree (This.Structure, False);
 
          This.Ada_Tree := Generate_Ada_Construct_Tree
-           (This.Tree, Ada_Lang, This.Buffer.all);
+           (This.Tree, This.Buffer);
 
          This.Structure_Up_To_Date.all := True;
 
