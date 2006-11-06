@@ -21,7 +21,7 @@
 with Ada.Unchecked_Deallocation; use Ada;
 
 with Generic_List;
-with Basic_Types; use Basic_Types;
+with Basic_Types;
 with String_Utils;      use String_Utils;
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
@@ -34,10 +34,54 @@ package body Language.Tree.Ada is
    -- Free --
    ----------
 
-   procedure Free (Ada_Tree : in out Ada_Construct_Tree) is
+   procedure Free
+     (Tree : Construct_Tree; Ada_Tree : in out Ada_Construct_Tree)
+   is
       procedure Internal is new Unchecked_Deallocation
         (Ada_Construct_Tree_Array, Ada_Construct_Tree);
+      procedure Internal is new Unchecked_Deallocation
+        (Ada_Construct_Relation, Relation_Ptr);
+
+      Garbage : Relation_Ptr;
    begin
+      if Ada_Tree = null then
+         return;
+      end if;
+
+      for J in Ada_Tree'Range loop
+         if Ada_Tree (J).Ada_Relation /= null then
+            Garbage := Ada_Tree (J).Ada_Relation;
+
+            if Garbage.Spec.Tree = Tree
+              and then Garbage.Spec.Index = J
+            then
+               Garbage.Spec.Tree := null;
+               Garbage.Spec.Index := 0;
+            end if;
+
+            if Garbage.First_Body.Tree = Tree
+              and then Garbage.First_Body.Index = J
+            then
+               Garbage.First_Body.Tree := null;
+               Garbage.First_Body.Index := 0;
+            end if;
+
+            if Garbage.Second_Body.Tree = Tree
+              and then Garbage.Second_Body.Index = J
+            then
+               Garbage.Second_Body.Tree := null;
+               Garbage.Second_Body.Index := 0;
+            end if;
+
+            if Garbage.Spec.Index = 0
+              and then Garbage.First_Body.Index = 0
+              and then Garbage.Second_Body.Index = 0
+            then
+               Internal (Garbage);
+            end if;
+         end if;
+      end loop;
+
       Internal (Ada_Tree);
    end Free;
 
@@ -47,246 +91,533 @@ package body Language.Tree.Ada is
 
    function Generate_Ada_Construct_Tree
      (Tree     : Construct_Tree;
-      Language : Language_Access;
-      Buffer   : String) return Ada_Construct_Tree
+      Buffer   : String_Access) return Ada_Construct_Tree
    is
-      function Check_Profiles
-        (Tree : Construct_Tree; Prof1, Prof2 : Construct_Tree_Iterator)
-         return Boolean;
-      --  Return true if the two profiles are equivalent, false otherwise.
-
-      function Is_Equivalent_Category
-        (Construct1, Construct2 : Simple_Construct_Information) return Boolean;
-      --  Return true if the two categories are equivalent, which is larger
-      --  than a strict equality (for example, a Cat_Type and a Cat_Record
-      --  are equivalent, since they can denote the same object).
-
-      procedure Compute_Scope
-        (Tree       : Construct_Tree;
-         Ada_Tree      : in out Ada_Construct_Tree;
-         Base_Iter  : Construct_Tree_Iterator;
-         Base_Scope : Construct_Tree_Iterator := Null_Construct_Tree_Iterator);
-      --  Set the spec, public body and private body info for this iterator.
-      --  If Base_Scope is null, then the search will start at the entity after
-      --  Base_Iter, otherwise it will start at the first child of Base_Sope.
-
-      --------------------
-      -- Check_Profiles --
-      --------------------
-
-      function Check_Profiles
-        (Tree : Construct_Tree; Prof1, Prof2 : Construct_Tree_Iterator)
-         return Boolean
-      is
-         Iter1, Iter2 : Construct_Tree_Iterator;
-
-         Ref1_Sloc_Start : Source_Location;
-         Ref1_Sloc_End   : Source_Location;
-         Ref1_Success    : Boolean;
-
-         Ref2_Sloc_Start : Source_Location;
-         Ref2_Sloc_End   : Source_Location;
-         Ref2_Success    : Boolean;
-      begin
-         Iter1 := Next (Tree, Prof1, Jump_Into);
-         Iter2 := Next (Tree, Prof2, Jump_Into);
-
-         while Get_Parent_Scope (Tree, Iter1) = Prof1
-           and then Get_Parent_Scope (Tree, Iter2) = Prof2
-         loop
-            if (Get_Construct (Prof1).Category = Cat_Parameter
-                and then Get_Construct (Prof2).Category = Cat_Parameter
-                and then
-                  ((Get_Language_Context (Language).Case_Sensitive and then
-                      To_Lower (Get_Construct (Prof1).Name.all) /=
-                      To_Lower (Get_Construct (Prof2).Name.all))
-                   or else Get_Construct (Prof1).Name.all /=
-                     Get_Construct (Prof2).Name.all))
-              or else (Get_Construct (Prof1).Category = Cat_Parameter
-                       xor Get_Construct (Prof2).Category = Cat_Parameter)
-            then
-               return False;
-            end if;
-
-            Iter1 := Next (Tree, Iter1);
-            Iter2 := Next (Tree, Iter2);
-         end loop;
-
-         --  In case of functions, we should also check return types here !
-
-         Get_Referenced_Entity
-           (Lang       => Language,
-            Buffer     => Buffer,
-            Construct  => Get_Construct (Prof1),
-            Sloc_Start => Ref1_Sloc_Start,
-            Sloc_End   => Ref1_Sloc_End,
-            Success    => Ref1_Success);
-
-         Get_Referenced_Entity
-           (Lang       => Language,
-            Buffer     => Buffer,
-            Construct  => Get_Construct (Prof2),
-            Sloc_Start => Ref2_Sloc_Start,
-            Sloc_End   => Ref2_Sloc_End,
-            Success    => Ref2_Success);
-
-         if Ref1_Success xor Ref2_Success then
-            return False;
-         elsif Ref1_Success then
-            return
-              (Get_Language_Context (Language).Case_Sensitive and then
-               To_Lower (Buffer (Ref1_Sloc_Start.Index .. Ref1_Sloc_End.Index))
-               = To_Lower
-                 (Buffer (Ref2_Sloc_Start.Index .. Ref2_Sloc_End.Index)))
-              or else Buffer (Ref1_Sloc_Start.Index .. Ref1_Sloc_End.Index)
-              = Buffer (Ref2_Sloc_Start.Index .. Ref2_Sloc_End.Index);
-         else
-            return True;
-         end if;
-
-      end Check_Profiles;
-
-      ----------------------------
-      -- Is_Equivalent_Category --
-      ----------------------------
-
-      function Is_Equivalent_Category
-        (Construct1, Construct2 : Simple_Construct_Information) return Boolean
-      is
-      begin
-         return Construct1.Category = Construct2.Category
-           or else (Construct1.Category in Type_Category
-                    and then Construct2.Category in Type_Category);
-      end Is_Equivalent_Category;
-
-      -------------------
-      -- Compute_Scope --
-      -------------------
-
-      procedure Compute_Scope
-        (Tree       : Construct_Tree;
-         Ada_Tree      : in out Ada_Construct_Tree;
-         Base_Iter  : Construct_Tree_Iterator;
-         Base_Scope : Construct_Tree_Iterator := Null_Construct_Tree_Iterator)
-      is
-         Local_Iter  : Construct_Tree_Iterator;
-         Local_Scope : Construct_Tree_Iterator := Null_Construct_Tree_Iterator;
-
-         Spec_Index         : Natural := 0;
-         First_Body_Index   : Natural := 0;
-         Second_Body_Index  : Natural := 0;
-
-      begin
-         if Get_Construct (Base_Iter).Name = null then
-            return;
-         end if;
-
-         if Base_Scope = Null_Construct_Tree_Iterator then
-            Local_Iter := Next (Tree, Base_Iter, Jump_Over);
-            Local_Scope := Get_Parent_Scope (Tree, Base_Iter);
-         else
-            Local_Iter := Next (Tree, Base_Scope, Jump_Into);
-            Local_Scope := Base_Scope;
-         end if;
-
-         while Local_Iter /= Null_Construct_Tree_Iterator
-           and then Get_Parent_Scope (Tree, Local_Iter) = Local_Scope
-         loop
-            if Get_Construct (Local_Iter).Name /= null
-              and then Get_Construct (Local_Iter).Name.all
-              = Get_Construct (Base_Iter).Name.all
-              and then Is_Equivalent_Category
-                (Get_Construct (Base_Iter), Get_Construct (Local_Iter))
-            then
-               if Get_Construct (Base_Iter).Category
-               in Subprogram_Category
-               then
-                  if not Check_Profiles (Tree, Base_Iter, Local_Iter) then
-                     return;
-                  end if;
-               end if;
-
-               if Ada_Tree (Base_Iter.Index).Spec_Index = 0 then
-                  if Get_Construct (Base_Iter).Sloc_Start.Index <
-                    Get_Construct (Local_Iter).Sloc_Start.Index
-                  then
-                     Spec_Index := Base_Iter.Index;
-                     First_Body_Index := Local_Iter.Index;
-                  else
-                     Spec_Index := Local_Iter.Index;
-                     First_Body_Index := Base_Iter.Index;
-                  end if;
-               else
-                  if Get_Construct (Base_Iter).Sloc_Start.Index <
-                    Get_Construct (Local_Iter).Sloc_Start.Index
-                  then
-                     Spec_Index := Base_Iter.Index;
-                     First_Body_Index := Ada_Tree (Base_Iter.Index)
-                       .First_Body_Index;
-                     Second_Body_Index := Local_Iter.Index;
-                  else
-                     Spec_Index := Local_Iter.Index;
-                     First_Body_Index := Base_Iter.Index;
-                     Second_Body_Index := Ada_Tree (Base_Iter.Index)
-                       .First_Body_Index;
-                  end if;
-               end if;
-
-               Ada_Tree (Spec_Index).Spec_Index := Spec_Index;
-               Ada_Tree (Spec_Index).First_Body_Index := First_Body_Index;
-               Ada_Tree (Spec_Index).Second_Body_Index := Second_Body_Index;
-
-               Ada_Tree (First_Body_Index).Spec_Index := Spec_Index;
-               Ada_Tree (First_Body_Index).First_Body_Index :=
-                 First_Body_Index;
-               Ada_Tree (First_Body_Index).Second_Body_Index :=
-                 Second_Body_Index;
-
-               if Second_Body_Index /= 0 then
-                  Ada_Tree (Second_Body_Index).Spec_Index := Spec_Index;
-                  Ada_Tree (Second_Body_Index).First_Body_Index :=
-                    First_Body_Index;
-                  Ada_Tree (Second_Body_Index).Second_Body_Index :=
-                    Second_Body_Index;
-               end if;
-
-               exit;
-            end if;
-
-            Local_Iter := Next (Tree, Local_Iter, Jump_Over);
-         end loop;
-
-         --  Look in the other parts if any
-
-         if Local_Scope /= Null_Construct_Tree_Iterator
-           and then Ada_Tree (Local_Scope.Index).Spec_Index /= 0
-           and then Local_Scope.Index
-             /= Ada_Tree (Local_Scope.Index).Spec_Index
-         then
-            Compute_Scope
-              (Tree,
-               Ada_Tree,
-               Base_Iter,
-               (Tree.Contents (Ada_Tree (Local_Scope.Index).Spec_Index),
-                Ada_Tree (Local_Scope.Index).Spec_Index));
-         end if;
-
-      end Compute_Scope;
-
-      Ada_Tree : Ada_Construct_Tree :=
-        new Ada_Construct_Tree_Array (Tree.Contents'Range);
-      Iter  : Construct_Tree_Iterator;
+      Result, Dummy : Ada_Construct_Tree;
    begin
-      Iter := First (Tree);
+      Generate_Ada_Construct_Trees (Tree, null, Buffer, null, Result, Dummy);
 
-      while Iter /= Null_Construct_Tree_Iterator loop
-         Compute_Scope (Tree, Ada_Tree, Iter);
-
-         Iter := Next (Tree, Iter, Jump_Into);
-      end loop;
-
-      return Ada_Tree;
+      return Result;
    end Generate_Ada_Construct_Tree;
+
+   ----------------------------------
+   -- Generate_Ada_Construct_Trees --
+   ----------------------------------
+
+   procedure Generate_Ada_Construct_Trees
+     (Spec_Tree, Body_Tree         : Construct_Tree;
+      Spec_Buffer, Body_Buffer     : String_Access;
+      Spec_Ada_Tree, Body_Ada_Tree : out Ada_Construct_Tree)
+   is
+      type Simple_Construct_Wrapper is record
+         Tree     : Construct_Tree;
+         Ada_Tree : Ada_Construct_Tree;
+         Buffer   : String_Access;
+         Index    : Integer;
+      end record;
+
+      type Simple_Construct_Array is array
+        (Integer range <>) of Simple_Construct_Wrapper;
+
+      type Simple_Construct_Array_Ptr is access all Simple_Construct_Array;
+
+      procedure Free is new Unchecked_Deallocation
+        (Simple_Construct_Array, Simple_Construct_Array_Ptr);
+
+      type Comp_Result is (Greater_Than, Lower_Than, Equals);
+
+      function Compare
+        (Left, Right               : Construct_Tree_Iterator;
+         Left_Tree, Right_Tree     : Construct_Tree;
+         Left_Buffer, Right_Buffer : String_Access) return Comp_Result;
+      --  Compare the two constructs given in parameters, and uses some
+      --  heuristics to determine if one is supposed to be considered as lower
+      --  or greater than the other, or if they are parts of the same entity.
+
+      procedure Insert_At
+        (Dic_Index  : Natural;
+         Tree       : Construct_Tree;
+         Ada_Tree   : Ada_Construct_Tree;
+         Buffer     : String_Access;
+         Tree_Index : Natural);
+      --  Insert the wrapper {Tree, Ada_Tree, Buffer, Tree_Index} in the
+      --  dictionnary at the position Dic_index.
+
+      Dictionnary : Simple_Construct_Array_Ptr;
+
+      Dictionnary_Length : Integer := 0;
+
+      procedure Process_Tree
+        (Tree     : Construct_Tree;
+         Ada_Tree : Ada_Construct_Tree;
+         Buffer   : String_Access);
+      --  Analyzes the tree, and set the relevant data in the dictionnary and
+      --  in the Ada_Tree.
+
+      procedure Add_In_Dictionnary
+        (Tree     : Construct_Tree;
+         Ada_Tree : Ada_Construct_Tree;
+         Buffer   : String_Access;
+         Index    : Natural);
+      --  Adds the given element {Tree, Ada_Tree, Buffer, Index} in the
+      --  dictionnary. Set the relevant data in the Ada_Tree if needed.
+
+      procedure Establish_Relation (Left, Right : Simple_Construct_Wrapper);
+      --  Establish the Spec, First_Body or Second_Body relationship between
+      --  the two elements.
+
+      -------------
+      -- Compare --
+      -------------
+
+      function Compare
+        (Left, Right               : Construct_Tree_Iterator;
+         Left_Tree, Right_Tree     : Construct_Tree;
+         Left_Buffer, Right_Buffer : String_Access) return Comp_Result
+      is
+         function Check_Lowercase_Names
+           (Left, Right : Basic_Types.String_Access) return Comp_Result;
+
+         function Check_Lowercase_Names
+           (Left, Right : String) return Comp_Result;
+
+         function Check_Referenced_Entitites
+           (Left, Right : Simple_Construct_Information) return Comp_Result;
+
+         ---------------------------
+         -- Check_Lowercase_Names --
+         ---------------------------
+
+         function Check_Lowercase_Names
+           (Left, Right : Basic_Types.String_Access) return Comp_Result
+         is
+            use Basic_Types;
+         begin
+            if Left = null then
+               if Right = null then
+                  return Equals;
+               else
+                  return Greater_Than;
+               end if;
+            elsif Right = null then
+               return Lower_Than;
+            end if;
+
+            return Check_Lowercase_Names (Left.all, Right.all);
+         end Check_Lowercase_Names;
+
+         function Check_Lowercase_Names
+           (Left, Right : String) return Comp_Result
+         is
+            Smaller_Size            : Integer;
+            Left_Index, Right_Index : Integer;
+         begin
+            if Left'Length < Right'Length then
+               Smaller_Size := Left'Length;
+            else
+               Smaller_Size := Right'Length;
+            end if;
+
+            Left_Index := Left'First;
+            Right_Index := Right'First;
+
+            for J in 1 .. Smaller_Size loop
+               declare
+                  Left_C, Right_C : Character;
+               begin
+                  Left_C := To_Lower (Left (Left_Index));
+                  Right_C := To_Lower (Right (Right_Index));
+
+                  if Left_C < Right_C then
+                     return Lower_Than;
+                  elsif Left_C > Right_C then
+                     return Greater_Than;
+                  end if;
+               end;
+            end loop;
+
+            if Left'Length < Right'Length then
+               return Lower_Than;
+            elsif Left'Length > Right'Length then
+               return Greater_Than;
+            else
+               return Equals;
+            end if;
+         end Check_Lowercase_Names;
+
+         -------------------------------
+         -- Check_Referenced_Entities --
+         -------------------------------
+
+         function Check_Referenced_Entitites
+           (Left, Right : Simple_Construct_Information) return Comp_Result
+         is
+            Left_Sloc_Start, Left_Sloc_End,
+            Right_Sloc_Start, Right_Sloc_End : Source_Location;
+
+            Left_Success, Right_Success      : Boolean;
+         begin
+            Get_Referenced_Entity
+              (Ada_Lang,
+               Left_Buffer.all,
+               Left,
+               Left_Sloc_Start,
+               Left_Sloc_End,
+               Left_Success);
+
+            Get_Referenced_Entity
+              (Ada_Lang,
+               Right_Buffer.all,
+               Right,
+               Right_Sloc_Start,
+               Right_Sloc_End,
+               Right_Success);
+
+            if not Left_Success then
+               if not Right_Success then
+                  return Equals;
+               else
+                  return Lower_Than;
+               end if;
+            elsif not Right_Success then
+               return Greater_Than;
+            end if;
+
+            return Check_Lowercase_Names
+              (Left_Buffer (Left_Sloc_Start.Index .. Left_Sloc_End.Index),
+               Right_Buffer (Right_Sloc_Start.Index .. Right_Sloc_End.Index));
+         end Check_Referenced_Entitites;
+
+         Left_Category, Right_Category : Language_Category;
+      begin
+         --  First, checks the categories
+
+         Left_Category := Left.Node.Construct.Category;
+         Right_Category := Right.Node.Construct.Category;
+
+         if Left_Category in Type_Category then
+            Left_Category := Cat_Class;
+         end if;
+
+         if Right_Category in Type_Category then
+            Right_Category := Cat_Class;
+         end if;
+
+         if Left_Category < Right_Category then
+            return Lower_Than;
+         elsif Left_Category > Right_Category then
+            return Greater_Than;
+         end if;
+
+         --  Second, check the names of the identifiers
+
+         declare
+            Tmp_Result : constant Comp_Result :=
+              Check_Lowercase_Names
+                (Left.Node.Construct.Name.all, Right.Node.Construct.Name.all);
+         begin
+            if Tmp_Result /= Equals then
+               return Tmp_Result;
+            end if;
+         end;
+
+         --  Third, check the scopes
+
+         declare
+            Left_Parent, Right_Parent : Construct_Tree_Iterator;
+            Nb_Parents                : Integer := 0;
+         begin
+            Left_Parent := Left;
+            Right_Parent := Right;
+
+            --  First check the number of scopes
+
+            loop
+               Left_Parent := Get_Parent_Scope (Left_Tree, Left_Parent);
+               Right_Parent := Get_Parent_Scope (Right_Tree, Right_Parent);
+
+               if Left_Parent = Null_Construct_Tree_Iterator then
+                  if Right_Parent = Null_Construct_Tree_Iterator then
+                     exit;
+                  else
+                     return Lower_Than;
+                  end if;
+               elsif Right_Parent = Null_Construct_Tree_Iterator then
+                  return Greater_Than;
+               end if;
+
+               Nb_Parents := Nb_Parents + 1;
+            end loop;
+
+            --  Second check the name of the scopes
+
+            declare
+               Left_Scopes, Right_Scopes : array
+                 (1 .. Nb_Parents) of Construct_Tree_Iterator;
+
+               Tmp_Result                : Comp_Result;
+            begin
+               Left_Parent := Left;
+               Right_Parent := Right;
+
+               for J in reverse 1 .. Nb_Parents loop
+                  Left_Parent := Get_Parent_Scope (Left_Tree, Left_Parent);
+                  Right_Parent := Get_Parent_Scope (Right_Tree, Right_Parent);
+
+                  Left_Scopes (J) := Left_Parent;
+                  Right_Scopes (J) := Right_Parent;
+               end loop;
+
+               for J in 1 .. Nb_Parents loop
+                  Tmp_Result := Check_Lowercase_Names
+                    (Left_Scopes (J).Node.Construct.Name,
+                     Right_Scopes (J).Node.Construct.Name);
+
+                  if Tmp_Result /= Equals then
+                     return Tmp_Result;
+                  end if;
+               end loop;
+            end;
+         end;
+
+         --  Fourth, check the profiles
+
+         if Left_Category not in Subprogram_Category then
+            --  If we are not working on subprogram, then nothing has to be
+            --  cheked here
+
+            return Equals;
+         end if;
+
+         declare
+            Left_Param, Right_Param : Construct_Tree_Iterator;
+            Tmp_Result              : Comp_Result;
+         begin
+            --  First check the number of parameters
+
+            Left_Param := Next (Left_Tree, Left, Jump_Into);
+            Right_Param := Next (Right_Tree, Right, Jump_Into);
+
+            loop
+               if Get_Parent_Scope (Left_Tree, Left_Param) /= Left
+                 or else Left_Param.Node.Construct.Category /= Cat_Parameter
+               then
+                  if Get_Parent_Scope (Right_Tree, Right) /= Right
+                    or else Right_Param.Node.Construct.Category
+                      /= Cat_Parameter
+                  then
+                     exit;
+                  else
+                     return Lower_Than;
+                  end if;
+               elsif Get_Parent_Scope (Right_Tree, Right) /= Right
+                 or else Left_Param.Node.Construct.Category /= Cat_Parameter
+               then
+                  return Greater_Than;
+               end if;
+
+               Left_Param := Next (Left_Tree, Left, Jump_Over);
+               Right_Param := Next (Right_Tree, Right, Jump_Over);
+            end loop;
+
+            --  Then check the actual names and types
+
+            Left_Param := Next (Left_Tree, Left, Jump_Into);
+            Right_Param := Next (Right_Tree, Right, Jump_Into);
+
+            loop
+               exit when Get_Parent_Scope (Left_Tree, Left_Param) /= Left
+                 or else Left_Param.Node.Construct.Category /= Cat_Parameter;
+
+               --  Checks the parameter names
+
+               Tmp_Result := Check_Lowercase_Names
+                 (Left_Param.Node.Construct.Name.all,
+                  Right_Param.Node.Construct.Name.all);
+
+               if Tmp_Result /= Equals then
+                  return Tmp_Result;
+               end if;
+
+               Tmp_Result := Check_Referenced_Entitites
+                 (Left_Param.Node.Construct, Right_Param.Node.Construct);
+
+               if Tmp_Result /= Equals then
+                  return Tmp_Result;
+               end if;
+
+               Left_Param := Next (Left_Tree, Left, Jump_Over);
+               Right_Param := Next (Right_Tree, Right, Jump_Over);
+            end loop;
+
+            if Left_Category = Cat_Function then
+               Tmp_Result := Check_Referenced_Entitites
+                 (Left.Node.Construct, Right.Node.Construct);
+
+               if Tmp_Result /= Equals then
+                  return Tmp_Result;
+               end if;
+            end if;
+         end;
+
+         return Equals;
+      end Compare;
+
+      ---------------
+      -- Insert_At --
+      ---------------
+
+      procedure Insert_At
+        (Dic_Index  : Natural;
+         Tree       : Construct_Tree;
+         Ada_Tree   : Ada_Construct_Tree;
+         Buffer     : String_Access;
+         Tree_Index : Natural) is
+      begin
+         Dictionnary_Length := Dictionnary_Length + 1;
+
+         for J in reverse Dic_Index  + 1 .. Dictionnary_Length loop
+            Dictionnary (J) := Dictionnary (J - 1);
+         end loop;
+
+         Dictionnary (Dic_Index) := (Tree, Ada_Tree, Buffer, Tree_Index);
+      end Insert_At;
+
+      ------------------
+      -- Process_Tree --
+      ------------------
+
+      procedure Process_Tree
+        (Tree     : Construct_Tree;
+         Ada_Tree : Ada_Construct_Tree;
+         Buffer   : String_Access) is
+      begin
+         for J in Tree.Contents'Range loop
+            case Tree.Contents (J).Construct.Category is
+               when Cat_Package .. Cat_Subtype | Cat_Variable =>
+                  Add_In_Dictionnary (Tree, Ada_Tree, Buffer, J);
+               when others =>
+                  null;
+            end case;
+         end loop;
+      end Process_Tree;
+
+      ----------------------
+      -- Add_In_Construct --
+      ----------------------
+
+      procedure Add_In_Dictionnary
+        (Tree     : Construct_Tree;
+         Ada_Tree : Ada_Construct_Tree;
+         Buffer   : String_Access;
+         Index    : Natural)
+      is
+         Looked_Index, Looked_Range      : Integer;
+         New_Iterator,  Looked_Iterator  : Construct_Tree_Iterator;
+      begin
+         if Dictionnary_Length = 0 then
+            Dictionnary (1) := (Tree, Ada_Tree, Buffer, Index);
+            Dictionnary_Length := 1;
+
+            return;
+         else
+            Looked_Range := Dictionnary_Length;
+
+            Looked_Index := Looked_Range / 2 + (Looked_Range mod 2);
+
+            New_Iterator := (Tree.Contents (Index), Index);
+
+            loop
+               Looked_Iterator :=
+                 (Dictionnary (Looked_Index).Tree.Contents
+                  (Dictionnary (Looked_Index).Index),
+                  Dictionnary (Looked_Index).Index);
+
+               case Compare
+                 (New_Iterator, Looked_Iterator,
+                  Tree, Dictionnary (Looked_Index).Tree,
+                  Buffer, Dictionnary (Looked_Index).Buffer)
+               is
+                  when Equals =>
+                     Establish_Relation
+                       (Dictionnary (Looked_Index),
+                        (Tree, Ada_Tree, Buffer, Index));
+
+                     exit;
+                  when Greater_Than =>
+                     if Looked_Range = 0 then
+                        Insert_At
+                          (Looked_Index + 1, Tree, Ada_Tree, Buffer, Index);
+                        exit;
+                     else
+                        Looked_Range := Looked_Range / 2;
+
+                        Looked_Index := Looked_Index +
+                          Looked_Range / 2 + (Looked_Range mod 2);
+                     end if;
+                  when Lower_Than =>
+                     if Looked_Range = 0 then
+                        Insert_At
+                          (Looked_Index, Tree, Ada_Tree, Buffer, Index);
+                        exit;
+                     else
+                        Looked_Range := Looked_Range / 2
+                          - (1 - Looked_Range mod 2);
+
+                        if Looked_Range > 0 then
+                           Looked_Index :=
+                             Looked_Index - (Looked_Range / 2 + 1);
+                        end if;
+                     end if;
+               end case;
+            end loop;
+         end if;
+      end Add_In_Dictionnary;
+
+      ------------------------
+      -- Establish_Relation --
+      ------------------------
+
+      procedure Establish_Relation (Left, Right : Simple_Construct_Wrapper) is
+         Relation : Relation_Ptr;
+      begin
+         if Left.Ada_Tree (Left.Index).Ada_Relation /= null then
+            Relation := Left.Ada_Tree (Left.Index).Ada_Relation;
+
+            Relation.Second_Body := (Right.Tree, Right.Index);
+         else
+            Relation := new Ada_Construct_Relation;
+            Left.Ada_Tree (Left.Index).Ada_Relation := Relation;
+
+            Relation.Spec := (Left.Tree, Left.Index);
+
+            Relation.First_Body := (Right.Tree, Right.Index);
+         end if;
+
+         Right.Ada_Tree (Right.Index).Ada_Relation := Relation;
+      end Establish_Relation;
+
+   begin
+      if Body_Tree /= null then
+         Dictionnary := new Simple_Construct_Array
+           (1 .. Spec_Tree.Contents'Length + Body_Tree.Contents'Length);
+         Body_Ada_Tree :=
+           new Ada_Construct_Tree_Array (Body_Tree.Contents'Range);
+      else
+         Dictionnary := new Simple_Construct_Array
+           (1 .. Spec_Tree.Contents'Length);
+      end if;
+
+      Spec_Ada_Tree := new Ada_Construct_Tree_Array (Spec_Tree.Contents'Range);
+
+      Process_Tree (Spec_Tree, Spec_Ada_Tree, Spec_Buffer);
+
+      if Body_Tree /= null then
+         Process_Tree (Body_Tree, Body_Ada_Tree, Body_Buffer);
+      end if;
+
+      Free (Dictionnary);
+   end Generate_Ada_Construct_Trees;
 
    --------------
    -- Get_Spec --
@@ -296,15 +627,13 @@ package body Language.Tree.Ada is
      (Tree     : Construct_Tree;
       Ada_Tree : Ada_Construct_Tree;
       Iter     : Construct_Tree_Iterator)
-      return Construct_Tree_Iterator
+      return Construct_Cell_Access
    is
    begin
-      if Ada_Tree (Iter.Index).Spec_Index = 0 then
-         return Iter;
+      if Ada_Tree (Iter.Index).Ada_Relation = null then
+         return (Tree, Iter.Index);
       else
-         return
-           (Tree.Contents (Ada_Tree (Iter.Index).Spec_Index),
-            Ada_Tree (Iter.Index).Spec_Index);
+         return Ada_Tree (Iter.Index).Ada_Relation.Spec;
       end if;
    end Get_Spec;
 
@@ -316,15 +645,13 @@ package body Language.Tree.Ada is
      (Tree     : Construct_Tree;
       Ada_Tree : Ada_Construct_Tree;
       Iter     : Construct_Tree_Iterator)
-      return Construct_Tree_Iterator
+      return Construct_Cell_Access
    is
    begin
-      if Ada_Tree (Iter.Index).First_Body_Index = 0 then
-         return Iter;
+      if Ada_Tree (Iter.Index).Ada_Relation = null then
+         return (Tree, Iter.Index);
       else
-         return
-           (Tree.Contents (Ada_Tree (Iter.Index).First_Body_Index),
-            Ada_Tree (Iter.Index).First_Body_Index);
+         return Ada_Tree (Iter.Index).Ada_Relation.First_Body;
       end if;
    end Get_First_Body;
 
@@ -336,17 +663,42 @@ package body Language.Tree.Ada is
      (Tree     : Construct_Tree;
       Ada_Tree : Ada_Construct_Tree;
       Iter     : Construct_Tree_Iterator)
-      return Construct_Tree_Iterator
+      return Construct_Cell_Access
    is
    begin
-      if Ada_Tree (Iter.Index).Second_Body_Index = 0 then
-         return Iter;
+      if Ada_Tree (Iter.Index).Ada_Relation = null
+        or else Ada_Tree (Iter.Index).Ada_Relation.Second_Body
+        = Null_Construct_Cell_Access
+      then
+         return (Tree, Iter.Index);
       else
-         return
-           (Tree.Contents (Ada_Tree (Iter.Index).Second_Body_Index),
-            Ada_Tree (Iter.Index).Second_Body_Index);
+         return Ada_Tree (Iter.Index).Ada_Relation.Second_Body;
       end if;
    end Get_Second_Body;
+
+   ---------------------------
+   -- Is_Most_Complete_View --
+   ---------------------------
+
+   function Is_Most_Complete_View
+     (Tree     : Construct_Tree;
+      Ada_Tree : Ada_Construct_Tree;
+      Iter     : Construct_Tree_Iterator) return Boolean is
+   begin
+      if Ada_Tree (Iter.Index).Ada_Relation = null then
+         return True;
+      elsif Ada_Tree (Iter.Index).Ada_Relation.Spec.Index = Iter.Index
+        and then Ada_Tree (Iter.Index).Ada_Relation.Spec.Tree = Tree
+      then
+         return Ada_Tree (Iter.Index).Ada_Relation.First_Body.Index = 0;
+      elsif Ada_Tree (Iter.Index).Ada_Relation.First_Body.Index = Iter.Index
+        and then Ada_Tree (Iter.Index).Ada_Relation.First_Body.Tree = Tree
+      then
+         return Ada_Tree (Iter.Index).Ada_Relation.Second_Body.Index = 0;
+      else
+         return True;
+      end if;
+   end Is_Most_Complete_View;
 
    ---------------------------
    -- Get_Visible_Construct --
@@ -485,6 +837,8 @@ package body Language.Tree.Ada is
         (Package_Iterator : Construct_Tree_Iterator;
          Allow_Private    : Boolean)
       is
+         use Basic_Types;
+
          It : Construct_Tree_Iterator;
       begin
          It := Get_Last_Child (Tree, Package_Iterator);
@@ -530,7 +884,9 @@ package body Language.Tree.Ada is
                --  If we found the spec of an entity of wich we already have
                --  the body, then replace the body by the spec.
 
-               if Get_Spec (Tree, Ada_Tree, Data (Node)) = It then
+               if To_Construct_Tree_Iterator
+                 (Get_Spec (Tree, Ada_Tree, Data (Node))) = It
+               then
                   Set_Data (Node, It);
                   return False;
                end if;
@@ -801,6 +1157,7 @@ package body Language.Tree.Ada is
          end loop;
       end Handle_Enumeration;
 
+      use Basic_Types;
    begin
       if From /= Null_Construct_Tree_Iterator then
 
@@ -867,17 +1224,18 @@ package body Language.Tree.Ada is
                Initial_Parent := Get_Parent_Scope (Tree, Seek_Iterator);
 
                if Initial_Parent /= Null_Construct_Tree_Iterator
-                 and then Ada_Tree (Initial_Parent.Index).Spec_Index /= 0
-                 and then Ada_Tree (Initial_Parent.Index).Spec_Index
-                   /= Initial_Parent.Index
+                 and then Ada_Tree (Initial_Parent.Index).Ada_Relation /= null
+                 and then
+                   To_Construct_Tree_Iterator
+                     (Ada_Tree (Initial_Parent.Index).Ada_Relation.Spec)
+                 /= Initial_Parent
                then
                   --  There is actually a spec somewhere. Get it and look for
                   --  possible entities in jump_over mode.
 
                   Initial_Parent :=
-                    (Tree.Contents
-                       (Ada_Tree (Initial_Parent.Index).Spec_Index),
-                     Ada_Tree (Initial_Parent.Index).Spec_Index);
+                    To_Construct_Tree_Iterator
+                     (Ada_Tree (Initial_Parent.Index).Ada_Relation.Spec);
 
                   Look_In_Package (Initial_Parent, True);
                end if;
@@ -1169,6 +1527,8 @@ package body Language.Tree.Ada is
      (Lang      : access Ada_Tree_Language;
       Construct : Simple_Construct_Information) return String
    is
+      use Basic_Types;
+
       pragma Unreferenced (Lang);
    begin
       if Construct.Name = null then
@@ -1320,5 +1680,23 @@ package body Language.Tree.Ada is
          return Returned_Tree;
       end;
    end Get_Public_Tree;
+
+   ----------------
+   -- Is_Body_Of --
+   ----------------
+
+   function Is_Body_Of
+     (Body_Tree, Spec_Tree : Construct_Tree) return Boolean
+   is
+      Spec_Unit, Body_Unit : Construct_Tree_Iterator;
+   begin
+      Spec_Unit := Get_Unit_Construct (Ada_Tree_Lang, Spec_Tree);
+      Body_Unit := Get_Unit_Construct (Ada_Tree_Lang, Body_Tree);
+
+      return To_Lower (Spec_Unit.Node.Construct.Name.all)
+        = To_Lower (Body_Unit.Node.Construct.Name.all)
+        and then Spec_Unit.Node.Construct.Is_Declaration
+        and then not Body_Unit.Node.Construct.Is_Declaration;
+   end Is_Body_Of;
 
 end Language.Tree.Ada;
