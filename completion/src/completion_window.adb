@@ -107,6 +107,11 @@ package body Completion_Window is
       Params : Glib.Values.GValues);
    --  Callback after a text deletion.
 
+   procedure Before_Delete_Text_Handler
+     (Window : access Completion_Window_Record'Class;
+      Params : Glib.Values.GValues);
+   --  Callback before a text deletion.
+
    function On_Button_Pressed
      (Window : access Completion_Window_Record'Class;
       Event  : Gdk_Event) return Boolean;
@@ -436,6 +441,35 @@ package body Completion_Window is
                 "Unexpected exception: " & Exception_Information (E));
    end Insert_Text_Handler;
 
+   --------------------------------
+   -- Before_Delete_Text_Handler --
+   --------------------------------
+
+   procedure Before_Delete_Text_Handler
+     (Window : access Completion_Window_Record'Class;
+      Params : Glib.Values.GValues) is
+
+      End_Iter : Gtk_Text_Iter;
+      Cur      : Gtk_Text_Iter;
+   begin
+      if Window.In_Deletion then
+         return;
+      end if;
+
+      Get_Text_Iter (Nth (Params, 2), End_Iter);
+      Get_Iter_At_Mark (Window.Buffer, Cur, Get_Insert (Window.Buffer));
+
+      if Get_Offset (End_Iter) > Get_Offset (Cur) then
+         Window.In_Deletion := True;
+         Delete (Window);
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end Before_Delete_Text_Handler;
+
    -------------------------
    -- Delete_Text_Handler --
    -------------------------
@@ -444,14 +478,15 @@ package body Completion_Window is
      (Window : access Completion_Window_Record'Class;
       Params : Glib.Values.GValues)
    is
-      Iter    : Gtk_Text_Iter;
-      Beg     : Gtk_Text_Iter;
+      Iter     : Gtk_Text_Iter;
+      Beg      : Gtk_Text_Iter;
    begin
       if Window.In_Deletion then
          return;
       end if;
 
       Get_Text_Iter (Nth (Params, 1), Iter);
+
       Get_Iter_At_Mark (Window.Buffer, Beg, Window.Mark);
 
       if Get_Offset (Iter) < Window.Initial_Offset then
@@ -1076,6 +1111,10 @@ package body Completion_Window is
       Object_Connect
         (Buffer, "delete_range", Delete_Text_Handler'Access, Window,
          After => True);
+
+      Object_Connect
+        (Buffer, "delete_range", Before_Delete_Text_Handler'Access, Window,
+         After => False);
 
       Object_Connect
         (Window.View, "button_press_event",
