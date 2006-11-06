@@ -15,11 +15,10 @@ Known Problems fixed in GPS 4.0.2
   Workaround: Use the corresponding contextual menus ("Zoom in" and
               "Zoom out").
 
-- FA17-004 On Windows, spawned process do not receive Ctrl+C
-  Problem:    When using a Mingw gdb on Windows, the interrupt action does not
-              work. This is due to Ctrl+C not received by the spawned gdb.
-  Workaround: Use a cygwin based gdb - as distributed with GNAT Pro - that do
-              not have this issue.
+- FA17-004 On Windows, spawned processes may not receive Ctrl+C
+  Problem:    When launching some processes on Windows, it is not always
+              possible to interrupt it, e.g. some versions of mingw gdb.
+  Workaround: In case of gdb, use a cygwin version.
 
 - FA13-021 Incorrect init commands sent to csh or tcsh in remote programming
   Problem:    When connecting to the remote host, GPS initializes the csh shell
