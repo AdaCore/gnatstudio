@@ -24,7 +24,6 @@ with Ada.Unchecked_Deallocation; use Ada;
 with Ada_Analyzer.Utils;     use Ada_Analyzer.Utils;
 with Language.Ada;           use Language.Ada;
 with Language.Documentation; use Language.Documentation;
-with Language.Tree.Ada;      use Language.Tree.Ada;
 with Basic_Types;            use Basic_Types;
 
 package body Completion.Ada.Constructs_Extractor is
@@ -100,13 +99,11 @@ package body Completion.Ada.Constructs_Extractor is
    function Get_Documentation
      (Proposal : Construct_Completion_Proposal) return UTF8_String is
    begin
-
-         return Get_Documentation
-           (Ada_Lang,
-            Proposal.Buffer.all,
-            Proposal.Tree,
-            Proposal.Tree_Node);
-
+      return Get_Documentation
+        (Ada_Lang,
+         Proposal.Buffer.all,
+         Proposal.Tree,
+         Proposal.Tree_Node);
    end Get_Documentation;
 
    ------------------
@@ -234,7 +231,7 @@ package body Completion.Ada.Constructs_Extractor is
       Tree := Proposal.Tree;
 
       Ada_Tree := Generate_Ada_Construct_Tree
-        (Proposal.Tree, Ada_Lang, Proposal.Buffer.all);
+        (Proposal.Tree, Proposal.Buffer);
 
       case Get_Construct (Proposal.Tree_Node).Category is
          when Cat_Variable | Cat_Local_Variable | Cat_Field | Cat_Parameter
@@ -366,10 +363,11 @@ package body Completion.Ada.Constructs_Extractor is
                Private_Spec_Visibility : Boolean;
                Body_Visibility : Boolean;
             begin
-               Spec_It := Get_Spec
-                 (Tree, Ada_Tree, Proposal.Tree_Node);
-               Body_It := Get_First_Body
-                 (Tree, Ada_Tree, Proposal.Tree_Node);
+               --  ??? Should we check that we are still in the same file ?
+               Spec_It := To_Construct_Tree_Iterator
+                 (Get_Spec (Tree, Ada_Tree, Proposal.Tree_Node));
+               Body_It := To_Construct_Tree_Iterator
+                 (Get_First_Body (Tree, Ada_Tree, Proposal.Tree_Node));
 
                Body_Visibility :=
                  Get_Construct (Body_It).Sloc_Start.Index <= Offset
@@ -440,7 +438,7 @@ package body Completion.Ada.Constructs_Extractor is
             null;
       end case;
 
-      Free (Ada_Tree);
+      Free (Tree, Ada_Tree);
    end Get_Composition;
 
    ------------------------------
@@ -642,8 +640,7 @@ package body Completion.Ada.Constructs_Extractor is
          Ada_Tree : Ada_Construct_Tree :=
            Generate_Ada_Construct_Tree
              (Result.First_Tree,
-              Ada_Lang,
-              Result.First_Buffer.all);
+              Result.First_Buffer);
       begin
          Result.Visible_Constructs :=
            new Construct_Tree_Iterator_Array'
@@ -654,7 +651,7 @@ package body Completion.Ada.Constructs_Extractor is
                    Db_Construct.Name.all,
                    Is_Partial => Db_Construct.Is_Partial));
 
-         Free (Ada_Tree);
+         Free (Tree, Ada_Tree);
       end;
 
       if Result.Visible_Constructs'Length = 0 then
@@ -740,6 +737,16 @@ package body Completion.Ada.Constructs_Extractor is
                It.Visible_Index := 0;
                It.Current_It := Null_Construct_Tree_Iterator;
                It.Current_File := Get_Parent_File (It.First_File);
+
+               if It.Current_File /= null then
+                  if Is_Body_Of
+                    (It.First_Tree, Get_Full_Tree (It.Current_File))
+                  then
+                     It.Is_Current_Spec := True;
+                  else
+                     It.Is_Current_Spec := False;
+                  end if;
+               end if;
             end if;
          elsif It.Stage = Parent_File then
             --  Stage 2: We return the constructs from the parent files
@@ -753,22 +760,28 @@ package body Completion.Ada.Constructs_Extractor is
                  and then It.Current_File /= null
                then
                   It.Current_It := First (Get_Full_Tree (It.Current_File));
+                  It.Current_Tree := Get_Full_Tree (It.Current_File);
+
+                  if It.Is_Current_Spec then
+                     Generate_Ada_Construct_Trees
+                       (It.Current_Tree, It.First_Tree,
+                        Get_Buffer (It.Current_File), It.First_Buffer,
+                        It.Current_Ada_Tree, It.Current_Body_Tree);
+                  else
+                     It.Current_Ada_Tree := Generate_Ada_Construct_Tree
+                       (It.Current_Tree, Get_Buffer (It.Current_File));
+                  end if;
                end if;
 
                while It.Current_It /= Null_Construct_Tree_Iterator loop
                   if Get_Construct (It.Current_It).Category = Cat_Package
-                    or else Is_Enum_Type
-                      (Get_Full_Tree (It.Current_File), It.Current_It)
+                    or else Is_Enum_Type (It.Current_Tree, It.Current_It)
                   then
                      It.Current_It :=
-                       Next
-                         (Get_Full_Tree
-                              (It.Current_File), It.Current_It, Jump_Into);
+                       Next (It.Current_Tree, It.Current_It, Jump_Into);
                   else
                      It.Current_It :=
-                       Next
-                         (Get_Full_Tree
-                              (It.Current_File), It.Current_It, Jump_Over);
+                       Next (It.Current_Tree, It.Current_It, Jump_Over);
                   end if;
 
                   declare
@@ -780,8 +793,12 @@ package body Completion.Ada.Constructs_Extractor is
                        and then Constr.Category /= Cat_Use
                        and then Constr.Category /= Cat_With
                        and then Get_Parent_Scope
-                         (Get_Full_Tree (It.Current_File), It.Current_It)
-                       /= Null_Construct_Tree_Iterator
+                         (It.Current_Tree, It.Current_It)
+                         /= Null_Construct_Tree_Iterator
+                       and then Is_Most_Complete_View
+                           (It.Current_Tree,
+                            It.Current_Ada_Tree,
+                            It.Current_It)
                        and then Match
                          (It.Name.all,
                           Constr.Name.all,
@@ -790,8 +807,20 @@ package body Completion.Ada.Constructs_Extractor is
                end loop;
 
                if It.Current_It = Null_Construct_Tree_Iterator then
+                  if It.Current_Tree /= Null_Construct_Tree then
+                     Free (It.Current_Tree, It.Current_Ada_Tree);
+                     --  ??? Todo: fix the leak here, we should free the
+                     --  current tree even when the iteration is interrupted.
+                  end if;
+
+                  if It.Is_Current_Spec then
+                     Free (It.First_Tree, It.Current_Body_Tree);
+                     It.Is_Current_Spec := False;
+                  end if;
+
                   It.Current_File := Get_Parent_File (It.Current_File);
                   It.Current_It := Null_Construct_Tree_Iterator;
+                  It.Current_Tree := Null_Construct_Tree;
                end if;
             end if;
 
@@ -861,9 +890,15 @@ package body Completion.Ada.Constructs_Extractor is
    ----------
 
    procedure Free (This : in out Construct_Iterator_Wrapper) is
-      pragma Unreferenced (This);
    begin
-      null;
+      if This.Current_Tree /= Null_Construct_Tree then
+         Free (This.Current_Tree, This.Current_Ada_Tree);
+      end if;
+
+      if This.Is_Current_Spec then
+         Free (This.First_Tree, This.Current_Body_Tree);
+         This.Is_Current_Spec := False;
+      end if;
    end Free;
 
 end Completion.Ada.Constructs_Extractor;
