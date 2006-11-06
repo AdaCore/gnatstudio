@@ -175,7 +175,7 @@ package body Scenario_Views is
    begin
       View.Kernel := Kernel_Handle (Kernel);
       Gtk.Scrolled_Window.Initialize (View, null, null);
-      Set_Policy (View, Policy_Never, Policy_Automatic);
+      Set_Policy (View, Policy_Automatic, Policy_Automatic);
       Set_Shadow_Type (View, Shadow_None);
 
       --  Do not use Add_With_Viewport, since otherwise we do not have
