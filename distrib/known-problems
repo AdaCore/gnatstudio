@@ -5,7 +5,20 @@ Known Problems fixed in GPS 4.1.0
               then the dialog is not closed when shift is released, as
               opposed to what would happen if you had used control-tab
   Workaround: press Esc to close the dialog
- 
+
+- FB02-011 Smart Completion window not disappearing on Delete
+  Problem:    When pressing "delete" or when executing an action that deletes
+              characters after the cursor, such as "Kill line", the smart
+              completion window does not disappear.
+  Workaround: Delete the completion window manually by pressing "escape".
+
+- FA24-025 Part of the Scenario View is hidden
+  Problem:    When the Scenario View doesn't have sufficient width, parts of
+              its contents might be hidden.
+  Workaround: Increase manually the size of the Scenario View, for example
+              by moving it to another area of the MDI, or by making it a
+              floating window.
+
 - FA24-013 Size of floating windows
   Problem:    When making a window floating, its size is often calculated to
               be small by default.
