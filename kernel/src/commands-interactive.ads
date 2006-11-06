@@ -50,6 +50,12 @@ package Commands.Interactive is
       Args    : GNAT.OS_Lib.String_List_Access;
       Label   : GNAT.OS_Lib.String_Access;
    end record;
+   --  Information about the current context.
+   --  Event, if specified, must be a Deep_Copy of the actual event, since its
+   --  lifetime might be different from that of the original event. If you are
+   --  passing the context to Create_Proxy below, the deep copy will be done
+   --  automatically for you.
+
 
    Null_Context : constant Interactive_Command_Context :=
      (Event       => null,
@@ -177,7 +183,8 @@ package Commands.Interactive is
      (Command : access Interactive_Command'Class;
       Context : Interactive_Command_Context) return Command_Access;
    --  Create a new proxy. Context.Args will be freed automatically by the
-   --  proxy
+   --  proxy. Context.Event is also automatically copied (see comment for
+   --  Interactive_Command_Context)
 
    procedure Interrupt (Command : in out Interactive_Command_Proxy);
    function Execute (Command : access Interactive_Command_Proxy)

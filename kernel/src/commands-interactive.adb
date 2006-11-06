@@ -168,6 +168,11 @@ package body Commands.Interactive is
    begin
       C.Command := Interactive_Command_Access (Command);
       C.Context := Context;
+
+      if Context.Event /= null then
+         Deep_Copy (From => Context.Event, To => C.Context.Event);
+      end if;
+
       return Command_Access (C);
    end Create_Proxy;
 
@@ -212,6 +217,10 @@ package body Commands.Interactive is
          end loop;
 
          Free (X.Args);
+      end if;
+
+      if X.Event /= null then
+         Free (X.Event);
       end if;
 
       Free (X.Dir);
