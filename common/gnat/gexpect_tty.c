@@ -1671,7 +1671,7 @@ is_gui_app (char *exe)
   file = exe;
   if (nlen > 2) {
     if (exe[0] == '"') {
-      // remove quotes
+      /* remove quotes */
       nlen -= 2;
       file = malloc ((nlen + 1) * sizeof (char));
       memcpy (file, &exe[1], nlen);
@@ -2466,7 +2466,7 @@ gvd_waitpid (struct GVD_Process* p)
   CloseHandle (p->procinfo.hThread);
   CloseHandle (p->procinfo.hProcess);
 
-  // No need to close the handles: they were closed on the ada side
+  /* No need to close the handles: they were closed on the ada side */
 
   return (int) exitcode;
 }
