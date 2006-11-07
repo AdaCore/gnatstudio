@@ -467,14 +467,24 @@ package body Project_Explorers_Common is
      (Child : access MDI_Explorer_Child_Record; Copy : Boolean)
       return Gtkada.MDI.MDI_Child
    is
-      pragma Unreferenced (Copy);
+      C : MDI_Child;
    begin
       if Child.Dnd_From_File = VFS.No_File then
          --  So that we can move the explorer itself
          return MDI_Child (Child);
       else
-         Open_File_Editor
-           (Child.Kernel, Child.Dnd_From_File, Line => 0, Column => 0);
+         if Copy then
+            C := Find_MDI_Child_By_Name
+              (Get_MDI (Child.Kernel), Full_Name (Child.Dnd_From_File).all);
+         end if;
+
+         if Copy and then C /= null then
+            return Dnd_Data (C, Copy => True);
+         else
+            Open_File_Editor
+              (Child.Kernel, Child.Dnd_From_File, Line => 0, Column => 0);
+         end if;
+
          return Get_Focus_Child (Get_MDI (Child.Kernel));
       end if;
    end Dnd_Data;

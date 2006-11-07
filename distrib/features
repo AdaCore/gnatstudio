@@ -14,6 +14,12 @@ of the feature.
 New features in GPS 4.1.0
 -------------------------
 
+FB07-007 Drag-and-drop to create new view from Project View (2006-11-07)
+
+  From the Project View or the Files View, you can drag-and-drop a file
+  anywhere in GPS. In this new release, you can now also press shift to
+  create a new view of the file if the file is already edited elsewhere
+
 FA30-012 Smart completion for non Ada files (2006-10-31)
 
   The smart completion engine has been enhanced so that basic completion is

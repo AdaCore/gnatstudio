@@ -632,6 +632,11 @@ Double-clicking on a file, or simple clicking on any entity will open
 a source editor and display respectively the first line in this file
 or the line on which the entity is defined.
 
+You can also drag a file anywhere into GPS. This will open a new editor
+if the file is not already edited, or move the existing editor otherwise.
+If you press @key{shift} at the same time, and the file is already edited,
+a new view of the existing editor is created instead.
+
 @c ??? Following is currently disabled
 @c Moving the mouse over the different components displayed on the
 @c project explorer view will open tooltips with some more information
