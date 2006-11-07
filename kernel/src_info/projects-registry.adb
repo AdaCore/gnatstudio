@@ -1462,7 +1462,15 @@ package body Projects.Registry is
                   Get_Unit_Part_And_Name_From_Filename
                     (UTF8, Project, Part, Unit_Name, Lang);
 
-                  if Lang = No_Name then
+                  --  Language not found from the project, check the default
+                  --  list of extensions
+                  --  ??? FA30-018: Do not check the default extensions: the
+                  --  project attributes already default to those, and the user
+                  --  can override. Otherwise there is no way for him not to
+                  --  see the files with what happens to be a default extension
+                  --  for a custom language.
+
+                  if False and then Lang = No_Name then
                      declare
                         Ext : constant String := File_Extension (UTF8);
                      begin
