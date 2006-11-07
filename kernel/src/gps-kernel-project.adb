@@ -209,7 +209,8 @@ package body GPS.Kernel.Project is
          --  If the gnatls commands hasn't changed, no need to recompute the
          --  predefined paths.
 
-         if Handle.Gnatls_Cache /= null
+         if Use_Cache
+           and then Handle.Gnatls_Cache /= null
            and then Handle.Gnatls_Cache.all = Gnatls
            and then Handle.Gnatls_Server.all = Get_Nickname (Build_Server)
          then
@@ -557,9 +558,17 @@ package body GPS.Kernel.Project is
          end if;
 
          --  Always call Compute_Predefined_Paths who detects if recomputation
-         --  is really needed.
-         Trace (Me, "Recompute predefined paths");
-         Compute_Predefined_Paths (Kernel);
+         --  is really needed. This is also used to get the value of
+         --  ADA_PROJECT_PATH. and the default search path.
+         --  If we are running locally, do not use the cache, and recompute the
+         --  output of gnatls, so that users can possibly change the
+         --  environment variables like ADA_PROJECT_PATH before reloading the
+         --  project (FB07-010)
+
+         Trace (Me, "Recompute predefined paths -- Local builder server ?"
+                & Boolean'Image (Is_Local (Build_Server)));
+         Compute_Predefined_Paths
+           (Kernel, Use_Cache => not Is_Local (Build_Server));
 
          Remove_Location_Category (Kernel, Location_Category);
          Load (Registry           => Kernel.Registry.all,
