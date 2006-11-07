@@ -272,6 +272,7 @@ package body GPS.Location_View is
       Remove_Duplicates  : Boolean;
       Enable_Counter     : Boolean;
       Sort_In_File       : Boolean;
+      Look_For_Secondary : Boolean;
       Parent_Iter        : in out Gtk_Tree_Iter);
    --  Add a file locaton in Category (the name of the node in the location
    --  window).
@@ -290,6 +291,8 @@ package body GPS.Location_View is
    --  If Sort_In_File is True, then all entries for each file will be sorted
    --  by (line, column). This is slightly slower, and should be set to False
    --  if you know that you are inserting them sorted already.
+   --  If Look_For_Secondary is true, then we'll look and add secondary
+   --  location references, if any.
 
    function Button_Press
      (View  : access Gtk_Widget_Record'Class;
@@ -1138,6 +1141,7 @@ package body GPS.Location_View is
       Remove_Duplicates  : Boolean;
       Enable_Counter     : Boolean;
       Sort_In_File       : Boolean;
+      Look_For_Secondary : Boolean;
       Parent_Iter        : in out Gtk_Tree_Iter)
    is
       Category_Iter    : Gtk_Tree_Iter;
@@ -1217,9 +1221,12 @@ package body GPS.Location_View is
       end if;
 
       --  Look for secondary file information and loop on information found.
-
-      Locs := Extract_Locations (View, Message);
-      Has_Secondary_Location := not Is_Empty (Locs);
+      if Look_For_Secondary then
+         Locs := Extract_Locations (View, Message);
+         Has_Secondary_Location := not Is_Empty (Locs);
+      else
+         Has_Secondary_Location := False;
+      end if;
 
       declare
          Potential_Parent : Gtk_Tree_Iter := Null_Iter;
@@ -1769,22 +1776,24 @@ package body GPS.Location_View is
                Glib.Convert.Escape_Text (Category),
                File, Line, Column, Length,
                Highlight, Text, Highlight_Category,
-               Quiet             => Quiet,
-               Remove_Duplicates => Remove_Duplicates,
-               Enable_Counter    => Enable_Counter,
-               Sort_In_File      => Sort_In_File,
-               Parent_Iter       => Iter);
+               Quiet              => Quiet,
+               Remove_Duplicates  => Remove_Duplicates,
+               Enable_Counter     => Enable_Counter,
+               Sort_In_File       => Sort_In_File,
+               Parent_Iter        => Iter,
+               Look_For_Secondary => False);
          else
             Add_Location
               (View, View.Tree.Model,
                Glib.Convert.Escape_Text (Category),
                File, Line, Column, Length,
                Highlight, Glib.Convert.Escape_Text (Text), Highlight_Category,
-               Quiet             => Quiet,
-               Remove_Duplicates => Remove_Duplicates,
-               Enable_Counter    => Enable_Counter,
-               Sort_In_File      => Sort_In_File,
-               Parent_Iter       => Iter);
+               Quiet              => Quiet,
+               Remove_Duplicates  => Remove_Duplicates,
+               Enable_Counter     => Enable_Counter,
+               Sort_In_File       => Sort_In_File,
+               Parent_Iter        => Iter,
+               Look_For_Secondary => False);
          end if;
 
          Gtkada.MDI.Highlight_Child (Find_MDI_Child (Get_MDI (Kernel), View));
@@ -2326,7 +2335,8 @@ package body GPS.Location_View is
             Remove_Duplicates  => False,
             Enable_Counter     => True,
             Sort_In_File       => False,
-            Parent_Iter        => Parent_Iter);
+            Parent_Iter        => Parent_Iter,
+            Look_For_Secondary => False);
 
          Sub := First (Loc.Children);
 
@@ -2942,7 +2952,8 @@ package body GPS.Location_View is
                Remove_Duplicates  => False,
                Enable_Counter     => False,
                Sort_In_File       => False,
-               Parent_Iter        => Iter);
+               Parent_Iter        => Iter,
+               Look_For_Secondary => True);
             Expand := False;
          end if;
 
@@ -3076,18 +3087,31 @@ package body GPS.Location_View is
             & Message (Matched (0).Last + 1 .. Message'Last));
 
          if Matched (View.SFL) /= No_Match then
-            Loc.Line :=
-              Safe_Value
+            declare
+               Val : constant Integer := Safe_Value
                 (Message (Matched (View.SFL).First ..
-                   Matched (View.SFL).Last), 1);
+                    Matched (View.SFL).Last), 1);
+            begin
+               if Val >= 1 then
+                  Loc.Line := Val;
+               else
+                  Loc.Line := 1;
+               end if;
+            end;
          end if;
 
          if Matched (View.SFC) /= No_Match then
-            Loc.Column :=
-              Visible_Column_Type
-                (Safe_Value
-                     (Message (Matched (View.SFF).First ..
-                        Matched (View.SFF).Last), 1));
+            declare
+               Val : constant Integer := Safe_Value
+                 (Message (Matched (View.SFF).First ..
+                    Matched (View.SFF).Last), 1);
+            begin
+               if Val >= 1 then
+                  Loc.Column :=  Visible_Column_Type (Val);
+               else
+                  Loc.Column := 1;
+               end if;
+            end;
          end if;
 
          Append (Result, Loc);
