@@ -9,6 +9,15 @@ Known Problems fixed in GPS 4.1.0
               using it without seeing the line, or remove it by pressing
               "escape".
 
+- FB03-022 Location view always looks for secondary location 
+  Problem:    The location view is always looking for secondary locations, even
+              when the text displayed in a random text, e.g. the result of a
+              search. In addition, it used to raise a CE when the line or
+              column number found was 0.
+  Workaround: Do not expand the lines of the location view when there are
+              extra lines. Use a system seach tool, like grep on unix, when
+              the search process raises an exception. 
+
 - FB03-013 Window selection dialog not closed when bound to shift-tab
   Problem:    If you bind the function "Move to next window" to shift-tab,
               then the dialog is not closed when shift is released, as
