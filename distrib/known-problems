@@ -1,5 +1,14 @@
 Known Problems fixed in GPS 4.1.0
 
+- FB07-014 Incorrect placement of Smart Completion window
+  Problem:    When completing text near the bottom of the screen, the smart
+              completion window might hide the current line from view if there
+              is not enough space for it to fit between the current line and
+              the bottom of the screen.
+  Workaround: The smart completion functions normally: you can either keep
+              using it without seeing the line, or remove it by pressing
+              "escape".
+
 - FB03-013 Window selection dialog not closed when bound to shift-tab
   Problem:    If you bind the function "Move to next window" to shift-tab,
               then the dialog is not closed when shift is released, as
