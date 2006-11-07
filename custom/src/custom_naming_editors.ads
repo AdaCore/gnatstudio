@@ -59,9 +59,10 @@ private
    type Custom_Naming_Editor_Record is new
      Naming_Editors.Language_Naming_Editor_Record
    with record
-      GUI        : Gtk.Box.Gtk_Box;
-      Extension  : Gtk.GEntry.Gtk_Entry;
-      Language   : GNAT.OS_Lib.String_Access;
-      Exceptions : Naming_Exceptions.Exceptions_Editor;
+      GUI            : Gtk.Box.Gtk_Box;
+      Spec_Extension : Gtk.GEntry.Gtk_Entry;
+      Impl_Extension : Gtk.GEntry.Gtk_Entry;
+      Language       : GNAT.OS_Lib.String_Access;
+      Exceptions     : Naming_Exceptions.Exceptions_Editor;
    end record;
 end Custom_Naming_Editors;
