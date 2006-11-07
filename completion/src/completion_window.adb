@@ -1065,7 +1065,23 @@ package body Completion_Window is
       --  the screen border.
       Get_Geometry (Null_Window, Dummy_X, Dummy_Y, Root_Width, Root_Height, D);
       X := Gint'Min (Gdk_X + Window_X, Root_Width - Width);
-      Y := Gint'Min (Gdk_Y + Window_Y, Root_Height - Height);
+
+      --  Make sure the completion window doesn't overlap the current line. In
+      --  case of risk, place the completion window above the current line.
+
+      if Gdk_Y + Window_Y < Root_Height - Height then
+         Y := Gdk_Y + Window_Y;
+      else
+         Get_Iter_Location (View, Iter, Iter_Coords);
+
+         Buffer_To_Window_Coords
+           (View, Text_Window_Text,
+            Iter_Coords.X,
+            Iter_Coords.Y,
+            Window_X, Window_Y);
+
+         Y := Gdk_Y + Window_Y - Height - 1;
+      end if;
 
       Set_UPosition (Window, X, Y);
 
