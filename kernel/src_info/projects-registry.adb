@@ -718,7 +718,7 @@ package body Projects.Registry is
             New_Project_Loaded => New_Project_Loaded,
             Status             => Status);
       else
-         Trace (Me, "Reload_If_Needed: nothing to do");
+         Trace (Me, "Reload_If_Needed: nothing to do, timestamp unchanged");
       end if;
    end Reload_If_Needed;
 
