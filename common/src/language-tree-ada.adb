@@ -234,6 +234,9 @@ package body Language.Tree.Ada is
                      return Greater_Than;
                   end if;
                end;
+
+               Left_Index := Left_Index + 1;
+               Right_Index := Right_Index + 1;
             end loop;
 
             if Left'Length < Right'Length then
@@ -410,7 +413,7 @@ package body Language.Tree.Ada is
                   else
                      return Lower_Than;
                   end if;
-               elsif Get_Parent_Scope (Right_Tree, Right) /= Right
+               elsif Get_Parent_Scope (Right_Tree, Right_Param) /= Right
                  or else Left_Param.Node.Construct.Category /= Cat_Parameter
                then
                   return Greater_Than;
