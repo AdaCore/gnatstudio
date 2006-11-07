@@ -693,7 +693,7 @@ package body Tries is
          --  Find the closest cell that matches the prefix
          Find_Cell_Child (Tree.Child, Prefix, Pointer);
 
-         if Pointer.Scenario in 4 .. 5 then
+         if Pointer.Scenario = 1 or else Pointer.Scenario in 4 .. 5 then
             Iter.Current_Cell := null;
             Iter.Root_Cell := null;
 
