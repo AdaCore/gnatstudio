@@ -3031,6 +3031,12 @@ An exception is raised if the process could not be spawned.</description>
       <description>Send a line of text to the process</description>
   </shell_doc>
 
+  <shell_doc name="GPS.Process.get_result">
+      <param name="self">The instance of GPS.Process</param>
+      <return>A string</return>
+      <description>Wait till the process terminates, and return its output. This is similar to connecting to the on_exit callback, but is easier to use in synchronous programs</description>
+  </shell_doc>
+
   <shell_doc name="GPS.Process.interrupt">
       <param name="self">The instance of GPS.Process</param>
       <description>Interrupt a process controlled by GPS</description>
