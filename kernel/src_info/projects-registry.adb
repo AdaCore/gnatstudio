@@ -107,7 +107,7 @@ package body Projects.Registry is
    type Source_File_Data is record
       Project   : Project_Type;
       Lang      : Name_Id;
-      Directory : Name_Id;
+      Full_Name : Name_Id;
    end record;
    No_Source_File_Data : constant Source_File_Data :=
      (No_Project, No_Name, No_Name);
@@ -1087,7 +1087,7 @@ package body Projects.Registry is
                      --  Do not override runtime files that are in the
                      --  current project
                      Info := Get (Registry.Data.Sources, File (1 .. Last));
-                     if Info.Directory = No_Name then
+                     if Info.Full_Name = No_Name then
                         Name_Len  := Curr'Length;
                         Name_Buffer (1 .. Name_Len) := Curr;
                         Name_Buffer (Name_Len + 1 .. Name_Len + Last) :=
@@ -1639,12 +1639,23 @@ package body Projects.Registry is
      (Registry          : Project_Registry;
       Source_Filename   : Virtual_File;
       Root_If_Not_Found : Boolean := True)
-      return Project_Type is
+      return Project_Type
+   is
+      S : constant Source_File_Data :=
+        Get (Registry.Data.Sources, Base_Name (Source_Filename));
+      P : Project_Type := S.Project;
    begin
-      return Get_Project_From_File
-        (Registry,
-         Base_Name         => Base_Name (Source_Filename),
-         Root_If_Not_Found => Root_If_Not_Found);
+      --  Make sure the file we found has the same full name, since it might
+      --  match a file from the project that has the same base name, but not
+      --  belong to the project (FB03-003)
+      if Get_String (S.Full_Name) /= Full_Name (Source_Filename).all then
+         P := No_Project;
+      end if;
+
+      if P = No_Project and then Root_If_Not_Found then
+         return Registry.Data.Root;
+      end if;
+      return P;
    end Get_Project_From_File;
 
    ---------------------------
@@ -2159,13 +2170,13 @@ package body Projects.Registry is
          if Use_Source_Path then
             Info := Get (Registry.Data.Sources, Filename);
 
-            if Info.Directory = Name_A then
+            if Info.Full_Name = Name_A then
                --  Not found previously, we do not try again
                Name_Len := 0;
                return;
 
-            elsif Info.Directory /= No_Name then
-               Get_Name_String (Info.Directory);
+            elsif Info.Full_Name /= No_Name then
+               Get_Name_String (Info.Full_Name);
                return;
             end if;
          end if;
@@ -2266,7 +2277,7 @@ package body Projects.Registry is
                if Info /= No_Source_File_Data
                  and then Project2 = Real_Project
                then
-                  Info.Directory := Name_Find;
+                  Info.Full_Name := Name_Find;
                   Set (Registry.Data.Sources, Filename, Info);
                end if;
             end;
@@ -2280,7 +2291,7 @@ package body Projects.Registry is
             if Use_Source_Path then
                Info := (Project   => Project2,
                         Lang      => No_Name,
-                        Directory => Name_A);
+                        Full_Name => Name_A);
                Set (Registry.Data.Sources, Filename, Info);
             end if;
 
