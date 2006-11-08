@@ -462,6 +462,9 @@ package Language is
    subtype Type_Category is Data_Type_Category
      range Cat_Class .. Cat_Subtype;
 
+   subtype Data_Category is Language_Category
+     range Cat_Variable .. Cat_Field;
+
    subtype Dependency_Category is Language_Category
      range Cat_With .. Cat_Include;
 
