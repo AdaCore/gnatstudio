@@ -477,7 +477,7 @@ package body Filesystem.Unix is
 
       Send (Pd.all, "GPSEOF");
       loop
-         Expect (Pd.all, Res, Regexp, 500);
+         Expect (Pd.all, Res, Regexp, 5000);
          if Res = Expect_Timeout then
             Flush (Pd.all);
             Close (Pd.all);
