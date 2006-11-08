@@ -239,7 +239,7 @@ package body Ada_Analyzer is
       Delta_Attribute,
       Digits_Attribute,
       Interface_Attribute,
-      Mod_Attrute,
+      Mod_Attribute,
       New_Attribute,
       Range_Attribute,
       Record_Attribute,
@@ -1769,7 +1769,7 @@ package body Ada_Analyzer is
             when Tok_Range =>
                Top_Token.Attributes (Range_Attribute) := True;
             when Tok_Mod =>
-               Top_Token.Attributes (Mod_Attrute) := True;
+               Top_Token.Attributes (Mod_Attribute) := True;
             when Tok_New =>
                Top_Token.Attributes (New_Attribute) := True;
             when Tok_Tagged =>
