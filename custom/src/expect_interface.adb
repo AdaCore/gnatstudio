@@ -828,7 +828,7 @@ package body Expect_Interface is
          end if;
 
       elsif Command = "get_result" then
-        D := Get_Data (Data, 1);
+         D := Get_Data (Data, 1);
 
          --  Wait till end
          E := Interactive_Expect
