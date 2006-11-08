@@ -25,6 +25,8 @@
 --  it might depend on different datas. You can see for example the subprogram
 --  Full_Test in the test driver Completion.Test.
 
+with Ada.Unchecked_Deallocation;
+
 with Glib;         use Glib;
 
 with GNAT.Strings; use GNAT.Strings;
@@ -155,18 +157,6 @@ package Completion is
      (Proposal : Completion_Proposal) return Completion_Resolver_Access;
    --  Returns the resolver that have been used to create this proposal.
 
-   type Proposal_Mode is (Show_Parameters, Show_Identifiers);
-   --  Various mode for the proposal.
-   --  Show_Parameters: Means that the completion proposal should only shows
-   --     the possible parameters for the entity. This does not perform any
-   --     actual completion.
-   --  Show_Identifiers: Means that the completion is an identifier that is
-   --     suitable for completion
-
-   procedure Set_Mode
-     (Proposal : in out Completion_Proposal; Mode : Proposal_Mode);
-   --  Set the display mode
-
    function Get_Completion
      (Proposal : Completion_Proposal) return UTF8_String is abstract;
    --  Return the text that has to be used for the completion, may be different
@@ -293,9 +283,39 @@ private
       Resolvers : Completion_Resolver_List_Pckg.List;
    end record;
 
+   type Parameter is record
+      Name       : String_Access;
+      Is_Written : Boolean := False;
+      --  When this flag is true, the parameter has already been given a value
+      --  in the completing expression.
+   end record;
+
+   type Parameter_List is array (Natural range <>) of Parameter;
+
+   type Profile_Manager (Params_Number : Integer) is record
+      Parameters     : Parameter_List (1 .. Params_Number);
+      Case_Sensitive : Boolean;
+      Is_In_Profile  : Boolean := False;
+   end record;
+
+   type Profile_Manager_Access is access all Profile_Manager;
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Profile_Manager, Profile_Manager_Access);
+
+   procedure Set_Next_Param_Written
+     (Profile : Profile_Manager_Access; Success : out Boolean);
+   --  The first non written parameter is flagged as written. If there's no
+   --  such parameter available, Success is false.
+
+   procedure Set_Param_Written
+     (Profile : Profile_Manager_Access; Name : String; Success : out Boolean);
+   --  If there's a non-written parameter of the name given in parameter, it's
+   --  marked written. Otherwise, Success is false.
+
    type Completion_Proposal is abstract tagged record
-      Mode             : Proposal_Mode := Show_Identifiers;
-      Resolver         : access Completion_Resolver'Class;
+      Resolver : access Completion_Resolver'Class;
+      Profile  : Profile_Manager_Access;
    end record;
 
    Null_File_Location : constant File_Location := (No_File, 0, 0);
@@ -368,6 +388,6 @@ private
 
    Null_Completion_Proposal : constant Completion_Proposal'Class :=
      Simple_Completion_Proposal'
-       (Resolver => null, Mode => Show_Identifiers, Name => null);
+       (Resolver => null, Name => null, Profile => null);
 
 end Completion;
