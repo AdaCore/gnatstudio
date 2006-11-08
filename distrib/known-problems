@@ -24,6 +24,12 @@ Known Problems fixed in GPS 4.1.0
               opposed to what would happen if you had used control-tab
   Workaround: press Esc to close the dialog
 
+- FB03-003 Pretty printer and files not from project
+  Problem:    When running the pretty printer for an Ada file that doesn't
+              belong to the project, it is expected that no project is passed
+              to gnatpp. However, if the file had the same base name as a file
+              from the project, an incorrect -P project was given to gnatpp
+
 - FB02-011 Smart Completion window not disappearing on Delete
   Problem:    When pressing "delete" or when executing an action that deletes
               characters after the cursor, such as "Kill line", the smart
