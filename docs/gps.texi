@@ -1293,7 +1293,6 @@ The format of these index files is specified in @pxref{Adding documentation}.
 * Moving Windows::
 @end menu
 
-
 @noindent
 All the windows that are part of the GPS environment are under control
 of what is commonly called a multiple document interface (MDI for
@@ -1353,6 +1352,10 @@ Wherever the windows are displayed, they are always closed in the same
 manner. In the right side of the title bar of the window, one small
 button is displayed, looking like a cross. Clicking on
 this button will close the window.
+
+An alternative way to close the window is to double-click on the icon
+to the left of the title bar of the window. Not all windows have such
+an icon, but editors do for instance.
 
 When a window is closed, the focus is given to the window of the same
 part of the MDI (each of the docks or the middle area) that previously
