@@ -213,7 +213,25 @@ package body Language.Documentation is
                ASCII.LF & "<b>Return:</b>"
                & ASCII.LF & Buffer (Type_Start.Index .. Type_End.Index));
          end if;
+      elsif Get_Construct (Node).Category in Data_Category then
+         declare
+            Var_Start, Var_End : Source_Location;
+         begin
+            Get_Referenced_Entity
+              (Language,
+               Buffer,
+               Get_Construct (Node),
+               Var_Start,
+               Var_End,
+               Success);
 
+            if Success then
+               Append
+                 (Result,
+                  ASCII.LF & "<b>Type: </b>"
+                  & Buffer (Var_Start.Index .. Var_End.Index));
+            end if;
+         end;
       end if;
 
       return To_String (Result);
