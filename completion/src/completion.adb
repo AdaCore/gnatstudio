@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Unchecked_Deallocation;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 package body Completion is
@@ -142,17 +141,6 @@ package body Completion is
    begin
       null;
    end Free_Proposal;
-
-   --------------
-   -- Set_Mode --
-   --------------
-
-   procedure Set_Mode
-     (Proposal : in out Completion_Proposal; Mode : Proposal_Mode)
-   is
-   begin
-      Proposal.Mode := Mode;
-   end Set_Mode;
 
    ---------------
    -- Get_Label --
@@ -377,5 +365,55 @@ package body Completion is
    begin
       return At_End (This.It);
    end At_End;
+
+   ----------------------------
+   -- Set_Next_Param_Written --
+   ----------------------------
+
+   procedure Set_Next_Param_Written
+     (Profile : Profile_Manager_Access; Success : out Boolean) is
+   begin
+      if Profile = null then
+         Success := False;
+         return;
+      end if;
+
+      for J in Profile.Parameters'Range loop
+         if not Profile.Parameters (J).Is_Written then
+            Profile.Parameters (J).Is_Written := True;
+            Success := True;
+            return;
+         end if;
+      end loop;
+
+      Success := False;
+   end Set_Next_Param_Written;
+
+   -----------------------
+   -- Set_Param_Written --
+   -----------------------
+
+   procedure Set_Param_Written
+     (Profile : Profile_Manager_Access; Name : String; Success : out Boolean)
+   is
+   begin
+      if Profile = null then
+         Success := False;
+         return;
+      end if;
+
+      for J in Profile.Parameters'Range loop
+         --  ??? Handle case sensitivity here !
+         if Profile.Parameters (J).Name.all = Name
+           and then not Profile.Parameters (J).Is_Written
+         then
+            Profile.Parameters (J).Is_Written := True;
+            Success := True;
+            return;
+         end if;
+      end loop;
+
+      Success := False;
+   end Set_Param_Written;
 
 end Completion;
