@@ -524,6 +524,7 @@ try:
        override (KP_PAGE_DOWN, gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_HORIZONTAL_PAGES, 1, select)
 
 except ImportError:
+   has_pygtk = 0
    def on_location_changed (hook, file, line, column):
       try:
          buffer = GPS.EditorBuffer.get (file)
@@ -531,8 +532,6 @@ except ImportError:
          buffer.select (mark.location(), buffer.current_view().cursor())
       except:
          pass  ## no such mark
-   GPS.Hook ("location_changed").add (on_location_changed)
-   has_pygtk = 0
 
 def set_mark_command (location = None):
     """Set mark at LOCATION (or current cursor if LOCATION is unspecified)"""
@@ -543,6 +542,7 @@ def set_mark_command (location = None):
         override_key_bindings (select = True)
     else:
         location.create_mark ("emacs_selection_bound")
+        GPS.Hook ("location_changed").add (on_location_changed)
 
 def cancel_mark_command (buffer = None):
     """Cancel the mark in BUFFER"""
@@ -554,6 +554,7 @@ def cancel_mark_command (buffer = None):
           override_key_bindings (select = False)
        else:
           buffer.get_mark ("emacs_selection_bound").delete ()
+          GPS.Hook ("location_changed").remove (on_location_changed)
     except:
        pass  ## No such mark
 
