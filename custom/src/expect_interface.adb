@@ -826,6 +826,21 @@ package body Expect_Interface is
          else
             Set_Return_Value (Data, "Process terminated");
          end if;
+
+      elsif Command = "get_result" then
+        D := Get_Data (Data, 1);
+
+         --  Wait till end
+         E := Interactive_Expect
+           (Kernel   => Get_Kernel (Data),
+            Action   => D,
+            Timeout  => -1,
+            Pattern  => "",
+            Till_End => True);
+
+         Set_Return_Value
+           (Data,
+            To_String (D.Processed_Output) & To_String (D.Unmatched_Output));
       end if;
    end Custom_Spawn_Handler;
 
@@ -869,6 +884,10 @@ package body Expect_Interface is
          Handler       => Custom_Spawn_Handler'Access);
       Register_Command
         (Kernel, "wait",
+         Class         => Process_Class,
+         Handler       => Custom_Spawn_Handler'Access);
+      Register_Command
+        (Kernel, "get_result",
          Class         => Process_Class,
          Handler       => Custom_Spawn_Handler'Access);
       Register_Command
