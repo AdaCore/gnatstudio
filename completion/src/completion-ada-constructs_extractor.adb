@@ -21,6 +21,8 @@
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation; use Ada;
 
+with GNAT.Strings;
+
 with Ada_Analyzer.Utils;     use Ada_Analyzer.Utils;
 with Language.Ada;           use Language.Ada;
 with Language.Documentation; use Language.Documentation;
@@ -58,24 +60,102 @@ package body Completion.Ada.Constructs_Extractor is
    --------------------
 
    function Get_Completion
-     (Proposal : Construct_Completion_Proposal) return UTF8_String is
+     (Proposal : Construct_Completion_Proposal) return UTF8_String
+   is
+      Comma         : Boolean := False;
+      Max_Size_Name : Integer := 0;
+      Nb_Params     : Integer := 0;
    begin
-      if Proposal.Is_All then
-         return "all";
-      elsif Get_Construct (Proposal.Tree_Node).Category = Cat_Package
-        or else Get_Construct (Proposal.Tree_Node).Category = Cat_Function
-        or else Get_Construct (Proposal.Tree_Node).Category = Cat_Procedure
-      then
-         declare
-            Id : constant Composite_Identifier := To_Composite_Identifier
-              (Get_Construct (Proposal.Tree_Node).Name.all);
-         begin
-            return Get_Item (Id, Length (Id));
-         end;
+      if Proposal.Is_In_Profile then
+         if Get_Construct (Proposal.Tree_Node).Category in Data_Category then
+            return Get_Label (Proposal) & " => ";
+         else
+            if Proposal.Profile.Parameters'Length > 0 then
+               for J in Proposal.Profile.Parameters'Range loop
+                  if not Proposal.Profile.Parameters (J).Is_Written then
+                     if Proposal.Profile.Parameters (J).Name'Length
+                       > Max_Size_Name
+                     then
+                        Max_Size_Name :=
+                          Proposal.Profile.Parameters (J).Name'Length;
+                     end if;
+
+                     Nb_Params := Nb_Params + 1;
+                  end if;
+               end loop;
+
+               declare
+                  Buffer : String
+                    (1 .. Nb_Params * (Max_Size_Name + 6) - 1) :=
+                    (others => ' ');
+
+                  Index : Integer := 1;
+               begin
+                  for J in Proposal.Profile.Parameters'Range loop
+                     if not Proposal.Profile.Parameters (J).Is_Written then
+                        if Comma then
+                           Buffer (Index .. Index + 1) := "," & ASCII.LF;
+                           Index := Index + 2;
+                        end if;
+
+                        Buffer
+                          (Index ..
+                             Index
+                           + Proposal.Profile.Parameters (J).Name'Length
+                           - 1) := Proposal.Profile.Parameters (J).Name.all;
+
+                        Index := Index + Max_Size_Name;
+
+                        Buffer (Index .. Index + 3) := " => ";
+
+                        Index := Index + 4;
+
+                        Comma := True;
+                     end if;
+                  end loop;
+
+                  Buffer (Buffer'Last .. Buffer'Last) := ")";
+
+                  return Buffer;
+               end;
+            end if;
+
+            return "";
+         end if;
       else
-         return Get_Construct (Proposal.Tree_Node).Name.all;
+         return Get_Label (Proposal);
       end if;
    end Get_Completion;
+
+   ---------------
+   -- Get_Label --
+   ---------------
+
+   function Get_Label
+     (Proposal : Construct_Completion_Proposal) return UTF8_String is
+   begin
+      if Proposal.Is_In_Profile and then
+        Get_Construct (Proposal.Tree_Node).Category not in Data_Category
+      then
+         return "params of " & Get_Construct (Proposal.Tree_Node).Name.all;
+      else
+         if Proposal.Is_All then
+            return "all";
+         elsif Get_Construct (Proposal.Tree_Node).Category = Cat_Package
+           or else Get_Construct (Proposal.Tree_Node).Category = Cat_Function
+           or else Get_Construct (Proposal.Tree_Node).Category = Cat_Procedure
+         then
+            declare
+               Id : constant Composite_Identifier := To_Composite_Identifier
+                 (Get_Construct (Proposal.Tree_Node).Name.all);
+            begin
+               return Get_Item (Id, Length (Id));
+            end;
+         else
+            return Get_Construct (Proposal.Tree_Node).Name.all;
+         end if;
+      end if;
+   end Get_Label;
 
    --------------
    -- Get_Type --
@@ -137,13 +217,15 @@ package body Completion.Ada.Constructs_Extractor is
       Parent_Found                       : Boolean;
 
       procedure Add_To_List
-        (List      : in out Extensive_List_Pckg.List;
-         Tree_Node : Construct_Tree_Iterator;
-         Is_All    : Boolean := False;
-         File      : Structured_File_Access;
-         Tree      : Construct_Tree;
-         Buffer    : GNAT.Strings.String_Access;
-         Name      : String := "");
+        (List          : in out Extensive_List_Pckg.List;
+         Tree_Node     : Construct_Tree_Iterator;
+         Is_All        : Boolean := False;
+         File          : Structured_File_Access;
+         Tree          : Construct_Tree;
+         Buffer        : GNAT.Strings.String_Access;
+         Name          : String := "";
+         Is_In_Profile : Boolean := False;
+         Profile       : Profile_Manager_Access := null);
 
       procedure Add_Children_Of
         (Tree               : Construct_Tree;
@@ -154,25 +236,32 @@ package body Completion.Ada.Constructs_Extractor is
       --  Consider private elements if Private_Visibility is true.
 
       procedure Add_To_List
-        (List      : in out Extensive_List_Pckg.List;
-         Tree_Node : Construct_Tree_Iterator;
-         Is_All    : Boolean := False;
-         File      : Structured_File_Access;
-         Tree      : Construct_Tree;
-         Buffer    : GNAT.Strings.String_Access;
-         Name      : String := "")
+        (List          : in out Extensive_List_Pckg.List;
+         Tree_Node     : Construct_Tree_Iterator;
+         Is_All        : Boolean := False;
+         File          : Structured_File_Access;
+         Tree          : Construct_Tree;
+         Buffer        : GNAT.Strings.String_Access;
+         Name          : String := "";
+         Is_In_Profile : Boolean := False;
+         Profile       : Profile_Manager_Access := null)
       is
-         P : constant Construct_Completion_Proposal :=
-           (Show_Identifiers,
-            Get_Resolver (Proposal),
+         P : Construct_Completion_Proposal :=
+           (Get_Resolver (Proposal),
+            Profile,
             Tree_Node,
             File,
             Is_All,
             0,
             Tree,
             Proposal.Filter,
-            Buffer);
+            Buffer,
+            Is_In_Profile);
       begin
+         if P.Profile = null then
+            P.Profile := To_Profile_Manager (Tree, Tree_Node);
+         end if;
+
          if Get_Construct (Tree_Node).Name /= null
            and then
              ((Name = "" and then Match (Identifier, Get_Id (P), Is_Partial))
@@ -228,6 +317,60 @@ package body Completion.Ada.Constructs_Extractor is
       Proposal_Is_Access : Boolean := False;
       Proposal_Is_All    : Boolean := False;
    begin
+      --  If we are completing a parameter profile, then return all the
+      --  possible remaining parameters.
+
+      if Proposal.Profile /= null
+        and then Proposal.Profile.Is_In_Profile
+      then
+         declare
+            Param_List : Extensive_List_Pckg.List;
+
+            Param : Construct_Tree_Iterator := Next
+              (Proposal.Tree, Proposal.Tree_Node, Jump_Into);
+
+            Actual_Param_It : Integer := 1;
+         begin
+            --  This first object is the subprogam itself. It will be used to
+            --  add the full parameters list in one time.
+            Add_To_List
+              (Param_List,
+               Proposal.Tree_Node,
+               False,
+               Proposal.File,
+               Proposal.Tree,
+               Proposal.Buffer,
+               Is_In_Profile => True,
+               Profile => new Profile_Manager'(Proposal.Profile.all));
+
+            while Param /= Null_Construct_Tree_Iterator
+              and then Get_Parent_Scope (Proposal.Tree, Param)
+              = Proposal.Tree_Node
+              and then Get_Construct (Param).Category = Cat_Parameter
+            loop
+               if not
+                 Proposal.Profile.Parameters (Actual_Param_It).Is_Written
+               then
+                  Add_To_List
+                   (Param_List,
+                    Param,
+                    False,
+                    Proposal.File,
+                    Proposal.Tree,
+                    Proposal.Buffer,
+                    Is_In_Profile => True);
+               end if;
+
+               Param := Next (Proposal.Tree, Param, Jump_Over);
+               Actual_Param_It := Actual_Param_It + 1;
+            end loop;
+
+            Append (Result.List, To_Extensive_List (Param_List));
+
+            return;
+         end;
+      end if;
+
       Tree := Proposal.Tree;
 
       Ada_Tree := Generate_Ada_Construct_Tree
@@ -484,9 +627,8 @@ package body Completion.Ada.Constructs_Extractor is
    ----------
 
    procedure Free (Proposal : in out Construct_Completion_Proposal) is
-      pragma Unreferenced (Proposal);
    begin
-      null;
+      Free (Proposal.Profile);
    end Free;
 
    ----------
@@ -558,15 +700,17 @@ package body Completion.Ada.Constructs_Extractor is
                         Append
                           (List,
                            Construct_Completion_Proposal'
-                             (Show_Identifiers,
-                              Resolver,
+                             (Resolver,
+                              To_Profile_Manager
+                                (Get_Public_Tree (Element (C)), Construct_It),
                               Construct_It,
                               Element (C),
                               False,
                               0,
                               Get_Public_Tree (Element (C)),
                               Filter,
-                              Get_Buffer (Element (C))));
+                              Get_Buffer (Element (C)),
+                              False));
                      end if;
                   end;
                end if;
@@ -847,8 +991,10 @@ package body Completion.Ada.Constructs_Extractor is
       case This.Stage is
          when Initial_File =>
             return Construct_Completion_Proposal'
-              (Mode                 => Show_Identifiers,
-               Resolver             => This.Resolver,
+              (Resolver             => This.Resolver,
+               Profile              => To_Profile_Manager
+                 (This.First_Tree,
+                  This.Visible_Constructs (This.Visible_Index)),
                Tree_Node            =>
                   This.Visible_Constructs (This.Visible_Index),
                File                 => This.First_File,
@@ -856,22 +1002,27 @@ package body Completion.Ada.Constructs_Extractor is
                Params_In_Expression => 0,
                Tree                 => This.First_Tree,
                Buffer               => This.First_Buffer,
-               Filter               => This.Filter);
+               Filter               => This.Filter,
+               Is_In_Profile        => False);
          when Parent_File =>
             return Construct_Completion_Proposal'
-              (Mode                 => Show_Identifiers,
-               Resolver             => This.Resolver,
+              (Resolver             => This.Resolver,
+               Profile              => To_Profile_Manager
+                 (Get_Full_Tree (This.Current_File), This.Current_It),
                Tree_Node            => This.Current_It,
                File                 => This.Current_File,
                Tree                 => Get_Full_Tree (This.Current_File),
                Buffer               => Get_Buffer (This.Current_File),
                Is_All               => False,
                Params_In_Expression => 0,
-               Filter               => This.Filter);
+               Filter               => This.Filter,
+               Is_In_Profile        => False);
          when Database =>
             return Construct_Completion_Proposal'
-              (Mode                 => Show_Identifiers,
-               Resolver             => This.Resolver,
+              (Resolver             => This.Resolver,
+               Profile              => To_Profile_Manager
+                 (Get_Public_Tree (Get_File (This.Db_Iterator)),
+                  Get_Construct (This.Db_Iterator)),
                Tree_Node            =>
                   Get_Construct (This.Db_Iterator),
                File                 => Get_File (This.Db_Iterator),
@@ -881,7 +1032,8 @@ package body Completion.Ada.Constructs_Extractor is
                  (Get_File (This.Db_Iterator)),
                Buffer               => Get_Buffer
                  (Get_File (This.Db_Iterator)),
-               Filter               => This.Filter);
+               Filter               => This.Filter,
+               Is_In_Profile        => False);
       end case;
    end Get;
 
@@ -900,5 +1052,56 @@ package body Completion.Ada.Constructs_Extractor is
          This.Is_Current_Spec := False;
       end if;
    end Free;
+
+   ------------------------
+   -- To_Profile_Manager --
+   ------------------------
+
+   function To_Profile_Manager
+     (Tree : Construct_Tree; It : Construct_Tree_Iterator)
+      return Profile_Manager_Access
+   is
+      Profile : Profile_Manager_Access;
+      Index   : Integer;
+   begin
+      if Get_Construct (It).Category in Subprogram_Category then
+         declare
+            Param     : Construct_Tree_Iterator := Next (Tree, It, Jump_Into);
+            Nb_Params : Integer := 0;
+         begin
+            while Param /= Null_Construct_Tree_Iterator
+              and then Get_Parent_Scope (Tree, Param) = It
+              and then Get_Construct (Param).Category = Cat_Parameter
+            loop
+               Nb_Params := Nb_Params + 1;
+
+               Param := Next (Tree, Param, Jump_Over);
+            end loop;
+
+            Profile := new Profile_Manager (Nb_Params);
+            Profile.Case_Sensitive := False;
+
+            Param :=  Next (Tree, It, Jump_Into);
+
+            Index := 1;
+
+            while Param /= Null_Construct_Tree_Iterator
+              and then Get_Parent_Scope (Tree, Param) = It
+              and then Get_Construct (Param).Category = Cat_Parameter
+            loop
+               Profile.Parameters (Index).Name :=
+                 GNAT.Strings.String_Access (Get_Construct (Param).Name);
+
+               Index := Index + 1;
+
+               Param := Next (Tree, Param, Jump_Over);
+            end loop;
+
+            return Profile;
+         end;
+      else
+         return null;
+      end if;
+   end To_Profile_Manager;
 
 end Completion.Ada.Constructs_Extractor;
