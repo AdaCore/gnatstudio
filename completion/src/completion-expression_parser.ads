@@ -28,12 +28,13 @@ package Completion.Expression_Parser is
    type Token_Type is
      (No_Token,
       Tok_Dot,
-      Tok_Comma,
+      Tok_Open_Parenthesis,
       Tok_Identifier,
       Tok_Expression,
       Tok_With,
       Tok_Use,
-      Tok_All);
+      Tok_All,
+      Tok_List_Item);
    --  Types of tokens that are found on the exporession to be completed
 
    type Token_Record is record
