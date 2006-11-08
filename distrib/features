@@ -176,6 +176,12 @@ F704-013 Fix "end loop Name; expected" (2006-07-27)
   It's now possible to fix automatically messages like "end loop Name;
   expected".
 
+F428-015 Smart completion completes subprograms profiles (2006-11-08)
+
+  When writing a subprogram call, hitting the completion key on a comma or an 
+  open parenthesis will offer to complete with the remaining possible named 
+  parameters. 
+
 F419-014 Additions to the GPS.Console script interface (2006-10-19)
 
   Two new commands have been added to the GPS.Console class:
