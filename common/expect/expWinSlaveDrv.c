@@ -69,7 +69,7 @@
 #define STATE_WRITE_DATA 6	/* Wait for the data itself */
 
 #define BUFSIZE 4096
-
+#define CONSOLE_WINDOW_WIDTH 79
 HANDLE hShutdown;   /* Event is set when the slave driver is shutting down. */
 
 int    ExpDebug;
@@ -273,7 +273,7 @@ main(argc, argv)
   consoleWindow.Top = 0;
   consoleWindow.Left = 0;
   consoleWindow.Bottom = 1;
-  consoleWindow.Right = consoleSBInfo.dwSize.X - 1;
+  consoleWindow.Right = CONSOLE_WINDOW_WIDTH;
   EXP_LOG ("right edge of console window : %d", consoleWindow.Right);
   SetConsoleWindowInfo (hConsoleOut, TRUE, &consoleWindow);
 
@@ -527,22 +527,58 @@ ExpWriteMaster(HANDLE hFile, LPCVOID buf, DWORD n)
   BOOL bRet;
   WSABUF wsabuf[1];
   CHAR buf2[n+1];
-  int start;
+  int start,start2;
   int ExpReadingStart;
   int i;
 
   EXP_LOG_FLUSH;
   start = 0;
-  EXP_LOG ("ExpWriteMaster Received: '%s'", buf);
+  start2 = 0;
+  EXP_LOG ("ExpWriteMaster Received %d bytes", n);
   if (ExpReading != NULL) {
     EXP_LOG ("Need to skip: '%s'", ExpReading);
-    while ((start < n) && (ExpReading[start] == ((char*)buf)[start]) && (ExpReading[start]!='\0')) {
+    while ((start < n) &&
+           (ExpReading[start] == ((char*)buf)[start]) &&
+           (ExpReading[start]!='\0'))
+    {
       start++;
     }
+    start2 = start;
+    EXP_LOG ("Nb characters = %d", n);
+    if ((n == CONSOLE_WINDOW_WIDTH - 2) &&
+        (start == 0) &&
+        (((char*)buf)[0] == '<'))
+    {
+      // The Windows console might have scrolled horizontally... damned
+      // In this case, the console does a complete refresh of the screen
+      // which is 79 characters long - 1 for the cursor, and -1 for the one
+      // that is inserted. It starts with a '<'
+      // The newly received characters starts at position 51, and the
+      // remaining is filled with spaces
+      start2 = CONSOLE_WINDOW_WIDTH - 28;
+      EXP_LOG ("51st character is %c\n", ((char*)buf)[start2]);
+      //  Check if first character is a space...
+      if (ExpReading[start] == ' ') {
+        // add this one, check for following ones
+        start++;
+        start2++;
+      }
+      while ((start2 < n) &&
+             (ExpReading[start] == ((char*)buf)[start2]) &&
+             (ExpReading[start]!='\0') &&
+             (ExpReading[start]!=' '))
+      {
+        start++;
+        start2++;
+      }
+      while ((start2 < n) && ((char*)buf)[start2] == ' ') {
+        start2++;
+      }
+    }
   }
-  EXP_LOG ("start is %d", start);
+  EXP_LOG ("start2 is %d", start2);
   if (ExpReading != NULL) {
-    if (start == n) {
+    if (start2 == n) {
       // Skip all incoming buffer
       char *tmp;
       tmp = malloc (strlen (ExpReading) - start + 1);
@@ -557,15 +593,15 @@ ExpWriteMaster(HANDLE hFile, LPCVOID buf, DWORD n)
     }
   }
 
-  if (start < n) {
-    memcpy (buf2, &((char*)buf)[start], n-start);
-    buf2[n-start]='\0';
+  EXP_LOG ("n-start2 is %d", n-start2);
+  if (start2 < n) {
+    memcpy (buf2, &((char*)buf)[start2], n-start2);
+    buf2[n-start2]='\0';
 
     EXP_LOG ("ExpWriteMaster :'%s'", buf2);
     // End Debug
-    bRet = WriteFile(hFile, buf2, n-start, &count, NULL);
+    bRet = WriteFile(hFile, buf2, n-start2, &count, NULL);
     if (!bRet) EXP_LOG ("Error writing to master %8x\n", GetLastError());
-    EXP_LOG_FLUSH;
     return bRet;
   }
    return 0;
