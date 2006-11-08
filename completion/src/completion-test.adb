@@ -188,6 +188,12 @@ procedure Completion.Test is
                Put (" ");
                Put (Buffer
                     (Token.Token_Name_First ..  Token.Token_Name_Last));
+            when Tok_List_Item =>
+               if Token.Token_Name_First /= 0 then
+                  Put (" ");
+                  Put (Buffer
+                       (Token.Token_Name_First ..  Token.Token_Name_Last));
+               end if;
             when Tok_Expression =>
                Put (" ");
                Put (Natural'Image (Token.Number_Of_Parameters));
