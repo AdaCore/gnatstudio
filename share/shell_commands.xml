@@ -3164,6 +3164,14 @@ The specific list depends on the hook type</param>
             print "File edited (hook=" + hook_name + " file=" + file.name()
         GPS.Hook ("file_edited").add (file_edited)
      </example>
+     <see_also name="GPS.Hook.remove" />
+  </shell_doc>
+
+  <shell_doc name="GPS.Hook.remove">
+     <param name="self">The instance of GPS.Hooh</param>
+     <param name="function_name">A subprogram, see the "Subprogram Parameters" section in the GPS documentation</param>
+     <description>Remove function_name from the list of functions executed when the hook is run. This is the reverse of GPS.Hook.add</description>
+     <see_also name="GPS.Hook.add" />
   </shell_doc>
 
   <shell_doc name="GPS.Hook.register">

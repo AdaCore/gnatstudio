@@ -241,6 +241,11 @@ package body GPS.Kernel.Hooks is
    --  a shell language, and for which we do not know how to unmarshall the
    --  arguments contained in the callback_data
 
+   function Wraps
+     (Hook : access Hook_Function_Record'Class;
+      Func : Subprogram_Type) return Boolean;
+   --  True if Hook wraps Subprogram
+
    procedure Default_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles all shell commands related to hooks
@@ -625,6 +630,7 @@ package body GPS.Kernel.Hooks is
             Prev := N;
             N := Next (N);
          end loop;
+         Trace (Me, "Remove_Hook " & Hook & " couldn't find function");
       else
          Trace (Me, "Remove_Hook, no description available for hook "
                 & Hook);
@@ -1255,6 +1261,43 @@ package body GPS.Kernel.Hooks is
       return Hook_Property (Get_Property (Instance, Hook_Class_Name)).Hook;
    end Get_Data;
 
+   -----------
+   -- Wraps --
+   -----------
+
+   function Wraps
+     (Hook : access Hook_Function_Record'Class;
+      Func : Subprogram_Type) return Boolean
+   is
+   begin
+      --  ??? We should have a primitive operationof Hook_Function_Record, but
+      --  that would mean that gps-kernel.ads knows about Subprogram_Type...
+
+      --  In the tests below, we compare the names, instead of directly Func,
+      --  since the latter really depends on the language. Comparing names is
+      --  less precise, but should work in all situations.
+
+      if Hook.all in Subprogram_Wrapper_No_Args'Class then
+         return Get_Name (Func) =
+           Get_Name (Subprogram_Wrapper_No_Args (Hook.all).Subprogram);
+
+      elsif Hook.all in Subprogram_Wrapper_No_Return'Class then
+         return Get_Name (Func) =
+           Get_Name (Subprogram_Wrapper_No_Return (Hook.all).Subprogram);
+
+      elsif Hook.all in Subprogram_Wrapper_Return_Boolean'Class then
+         return Get_Name (Func) =
+           Get_Name (Subprogram_Wrapper_Return_Boolean (Hook.all).Subprogram);
+
+      elsif Hook.all in Subprogram_Wrapper_Return_String'Class then
+         return Get_Name (Func) =
+           Get_Name (Subprogram_Wrapper_Return_String (Hook.all).Subprogram);
+
+      else
+         return False;
+      end if;
+   end Wraps;
+
    -----------------------------
    -- Default_Command_Handler --
    -----------------------------
@@ -1310,6 +1353,33 @@ package body GPS.Kernel.Hooks is
                          Info   => Info,
                          Func   => Info.Create_Subprogram_Wrapper (Func, Info),
                          Name   => Get_Name (Func));
+            end if;
+         end;
+
+      elsif Command = "remove" then
+         Name_Parameters (Data, Add_Hook_Args);
+         Info := Get_Data (Data, 1);
+         declare
+            Func  : constant Subprogram_Type := Nth_Arg (Data, 2);
+            Iter  : Hooks_List.List_Node;
+            Descr : Hook_Function_Description;
+         begin
+            if Info = null then
+               Set_Error_Msg (Data, "Unknown hook");
+            else
+               Iter := Hooks_List.First (Info.Funcs);
+               while Iter /= Hooks_List.Null_Node loop
+                  Descr := Hooks_List.Data (Iter);
+                  if Descr.Func /= null
+                    and then Wraps (Descr.Func, Func)
+                  then
+                     Remove_Hook
+                       (Get_Kernel (Data), Info.Name.all, Descr.Func);
+                     exit;
+                  end if;
+
+                  Iter := Hooks_List.Next (Iter);
+               end loop;
             end if;
          end;
 
@@ -1492,6 +1562,12 @@ package body GPS.Kernel.Hooks is
          Handler      => Default_Command_Handler'Access);
       Register_Command
         (Kernel, "add",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Class        => Hook_Class,
+         Handler      => Default_Command_Handler'Access);
+      Register_Command
+        (Kernel, "remove",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Class        => Hook_Class,
