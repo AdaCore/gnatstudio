@@ -14,7 +14,8 @@ valgrind="valgrind -v --suppressions=$dir/valgrind-python.supp --suppressions=$d
 
 ## Modes that can be used when running this script:
 ## memcheck : check pointers
-## leaks:   : check memory leaks
+## leaks     : detect memory leaks
+## leaks2:   : same as above, but shows how to create a suppression file
 ## massif   : check heap usage
 ## addrcheck: check pointers usage, same as memcheck but doesn't do
 ##            "undefined-value checks". Twice as fast though
@@ -29,7 +30,8 @@ shift
 
 
 case $mode in
-   leaks)    args="--tool=memcheck --leak-check=full --gen-suppressions=all" ;;
+   leaks2)   args="--tool=memcheck --leak-check=full --gen-suppressions=all" ;;
+   leaks)    args="--tool=memcheck --leak-check=full" ;;
    memcheck) args="--tool=memcheck";;
    massif)   args="--tool=massif --depth=5 --format=html --alloc-fn=__gnat_malloc \
                    --alloc-fn=PyObject_Malloc --alloc-fn=g_malloc --alloc-fn=__gnat_realloc \
