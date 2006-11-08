@@ -75,9 +75,14 @@ private
       Tree                 : Construct_Tree;
       Filter               : Possibilities_Filter;
       Buffer               : String_Access;
+      Is_In_Profile        : Boolean := False;
    end record;
 
    function Get_Completion
+     (Proposal : Construct_Completion_Proposal) return UTF8_String;
+   --  See inherited documentation
+
+   function Get_Label
      (Proposal : Construct_Completion_Proposal) return UTF8_String;
    --  See inherited documentation
 
@@ -201,5 +206,11 @@ private
 
    procedure Free (This : in out Construct_Iterator_Wrapper);
    --  Free the data associated to the wrapper
+
+   function To_Profile_Manager
+     (Tree : Construct_Tree; It : Construct_Tree_Iterator)
+      return Profile_Manager_Access;
+   --  Return a profile manager build on the iterator given in parameter, null
+   --  if none.
 
 end Completion.Ada.Constructs_Extractor;
