@@ -135,22 +135,6 @@ package body Completion.Ada is
                     (Next (Token), Previous_Proposal, Result);
                end if;
 
-            when Tok_Comma =>
-               pragma Assert (Next (Token) = Token_List.Null_Node);
-
-               --  ???  Temporary deactivated this code, since it's not
-               --  implemented anyway
---                 declare
---                    Real_Proposal : Completion_Proposal'Class :=
---                      Get_Proposal (Previous_It);
---                 begin
---                    Set_Mode (Real_Proposal, Show_Parameters);
---                    Append (Returned_List, Real_Proposal);
---
---                    return Returned_List;
---                 end;
-               null;
-
             when Tok_All =>
                if Next (Token) = Token_List.Null_Node then
                   --  If it's the last token, it might not be the keyword all,
@@ -179,6 +163,36 @@ package body Completion.Ada is
                      Analyze_Token (Next (Token), Local_Proposal, Result);
                   end;
                end if;
+
+            when Tok_Open_Parenthesis =>
+               declare
+                  Current_Token : Token_List.List_Node := Next (Token);
+                  Success : Boolean;
+               begin
+                  while Current_Token /= Token_List.Null_Node loop
+                     if Data (Current_Token).Tok_Type = Tok_List_Item then
+                        if Data (Current_Token).Token_Name_First = 0 then
+                           Set_Next_Param_Written
+                             (Previous_Proposal.Profile, Success);
+                        else
+                           Set_Param_Written
+                             (Previous_Proposal.Profile,
+                              Buffer
+                                (Data (Current_Token).Token_Name_First
+                                 .. Data (Current_Token).Token_Name_Last),
+                              Success);
+                        end if;
+
+                        if not Success then
+                           return;
+                        end if;
+                     end if;
+
+                     Current_Token := Next (Current_Token);
+                  end loop;
+               end;
+
+               Previous_Proposal.Profile.Is_In_Profile := True;
 
             when Tok_With | Tok_Use =>
                pragma Assert (Token = First (Completing_Expression));
@@ -210,6 +224,17 @@ package body Completion.Ada is
             when others =>
                null;
          end case;
+
+         if Previous_Proposal.Profile /= null
+           and then Previous_Proposal.Profile.Is_In_Profile
+         then
+            Get_Composition
+              (Previous_Proposal,
+               "",
+               Start_Offset,
+               True,
+               Result);
+         end if;
       end Analyze_Token;
 
       Result : Completion_List;
