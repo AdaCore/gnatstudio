@@ -55,6 +55,7 @@ package body Completion.Expression_Parser is
       Result : Token_List.List;
 
       procedure Skip_Expression (Offset : in out Natural);
+      procedure Handle_List_Items (Offset : in out Natural);
       procedure Skip_String (Offset : in out Natural);
       procedure Skip_Comment_Line (Offset : in out Natural);
       procedure Push_Pckg (Offset : in out Natural);
@@ -111,6 +112,89 @@ package body Completion.Expression_Parser is
 
          end loop;
       end Skip_Expression;
+
+      -----------------------
+      -- Handle_List_Items --
+      -----------------------
+
+      procedure Handle_List_Items (Offset : in out Natural) is
+         Local_Token    : Token_Record := Token;
+         Possible_Arrow : Boolean := False;
+         In_Name        : Boolean := False;
+      begin
+         Local_Token.Number_Of_Parameters := 1;
+
+         while Offset > 0 loop
+            case Buffer (Offset) is
+               when ')' =>
+                  Offset := UTF8_Find_Prev_Char (Buffer, Offset);
+                  Skip_Expression (Offset);
+
+                  --  We don't want to store sub expressions
+                  Pop;
+
+               when '"' =>
+                  Offset := UTF8_Find_Prev_Char (Buffer, Offset);
+                  Skip_String (Offset);
+
+               when ''' =>
+                  Offset := UTF8_Find_Prev_Char (Buffer, Offset);
+                  Offset := UTF8_Find_Prev_Char (Buffer, Offset);
+
+               when ',' =>
+                  Local_Token.Tok_Type := Tok_List_Item;
+                  Push (Local_Token);
+
+               when '(' =>
+                  Local_Token.Tok_Type := Tok_List_Item;
+                  Push (Local_Token);
+                  Local_Token.Tok_Type := Tok_Open_Parenthesis;
+                  Push (Local_Token);
+                  exit;
+
+               when '>' =>
+                  Possible_Arrow := True;
+
+               when '=' =>
+                  if Possible_Arrow then
+                     In_Name := True;
+                  end if;
+
+               when ASCII.LF =>
+                  Skip_Comment_Line (Offset);
+
+               when others =>
+                  null;
+            end case;
+
+            if Buffer (Offset) /= '>' then
+               Possible_Arrow := False;
+            end if;
+
+            if Is_Alnum
+              (UTF8_Get_Char
+                 (Buffer (Offset .. UTF8_Next_Char (Buffer, Offset))))
+              or else Buffer (Offset) = '_'
+            then
+               if In_Name then
+                  Local_Token.Token_Name_First := Offset;
+
+                  if Local_Token.Token_Name_Last = 0 then
+                     Local_Token.Token_Name_Last := Offset;
+                  end if;
+               end if;
+            elsif Buffer (Offset) /= ' '
+              and then Buffer (Offset) /= ASCII.HT
+              and then Buffer (Offset) /= ASCII.CR
+              and then Buffer (Offset) /= '='
+            then
+               In_Name := False;
+            end if;
+
+            Offset := UTF8_Find_Prev_Char (Buffer, Offset);
+
+         end loop;
+      end Handle_List_Items;
 
       -----------------
       -- Skip_String --
@@ -247,7 +331,7 @@ package body Completion.Expression_Parser is
                Push (Token);
 
                if Length (Result) = 0 then
-                  Token.Tok_Type := Tok_Expression;
+                  Token.Tok_Type := Tok_Open_Parenthesis;
                   Token.Number_Of_Parameters := 0;
                   Push (Token);
                end if;
@@ -274,7 +358,7 @@ package body Completion.Expression_Parser is
 
                if Length (Result) = 0 then
                   Offset := UTF8_Find_Prev_Char (Buffer, Offset);
-                  Skip_Expression (Offset);
+                  Handle_List_Items (Offset);
                else
                   exit;
                end if;
