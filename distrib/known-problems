@@ -5,6 +5,15 @@ Known Problems fixed in GPS 4.0.2
               changes are not saved.
   Workaround: Edit the file locally, then transfer it to the remote host.
 
+- FB06-014 On Windows, remote programming has problems handling long command
+           lines.
+  Problem:    If GPS needs to send a command to the remote host that is longer
+              than 76 characters, then this command will receive strange
+              characters in the output, and thus lead to incorrect analysis of
+              the command's output. This happens when browsing a remote host
+              with paths pretty long.
+  Workaround: Ignore in the remote browser the paths that have strange names.
+
 - FA17-010 Editing project naming scheme has no visible effect
   Problem:    If you change the naming scheme in the project properties editor
               for languages other than Ada and C/C++ (for instance for a custom
