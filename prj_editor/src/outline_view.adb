@@ -67,7 +67,6 @@ with String_Utils;              use String_Utils;
 with VFS;                       use VFS;
 
 package body Outline_View is
-
    type Outline_View_Module_Record is new Module_ID_Record with null record;
    Outline_View_Module : Module_ID;
    Outline_View_Module_Name : constant String := "Outline_View";
@@ -325,8 +324,7 @@ package body Outline_View is
 
          if Get_Pref (Outline_View_Sort_Alphabetically) then
             Thaw_Sort
-              (Gtk_Tree_Store (Get_Model (Outline.Tree)),
-               Display_Name_Column);
+              (Gtk_Tree_Store (Get_Model (Outline.Tree)), Entity_Name_Column);
          else
             Sort_Column :=
               Freeze_Sort (Gtk_Tree_Store (Get_Model (Outline.Tree)));
@@ -580,11 +578,11 @@ package body Outline_View is
       Add_Attribute (Col, Pixbuf_Render, "pixbuf", Pixbuf_Column);
 
       Gtk_New (Col);
+      Set_Sort_Column_Id (Col, Entity_Name_Column);
       Col_Number := Append_Column (Outline.Tree, Col);
       Gtk_New (Text_Render);
       Pack_Start (Col, Text_Render, False);
       Add_Attribute (Col, Text_Render, "markup", Display_Name_Column);
-
       Clicked (Col);
 
       Add (Scrolled, Outline.Tree);
