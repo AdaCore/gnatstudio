@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 4.0.2
 
+- FB08-018 Edited remote files cannot be saved
+  Problem:    If a file was opened from a remote host and edited, then the
+              changes are not saved.
+  Workaround: Edit the file locally, then transfer it to the remote host.
+
 - FA17-010 Editing project naming scheme has no visible effect
   Problem:    If you change the naming scheme in the project properties editor
               for languages other than Ada and C/C++ (for instance for a custom
