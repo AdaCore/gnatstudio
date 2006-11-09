@@ -324,7 +324,9 @@ package body Outline_View is
          Modify_Font (Outline.Tree, Get_Pref (View_Fixed_Font));
 
          if Get_Pref (Outline_View_Sort_Alphabetically) then
-            Thaw_Sort (Gtk_Tree_Store (Get_Model (Outline.Tree)), 1);
+            Thaw_Sort
+              (Gtk_Tree_Store (Get_Model (Outline.Tree)),
+               Display_Name_Column);
          else
             Sort_Column :=
               Freeze_Sort (Gtk_Tree_Store (Get_Model (Outline.Tree)));
