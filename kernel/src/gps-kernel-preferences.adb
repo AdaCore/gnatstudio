@@ -1052,7 +1052,7 @@ package body GPS.Kernel.Preferences is
 
       Automatic_Xrefs_Load := Param_Spec_Boolean
         (Gnew_Boolean
-           (Name    => "Load-Xref-Info-Automatically",
+           (Name    => "Load-Xref-Info-At-Startup",
             Default => False,
             Blurb   => -("Whether to load the Xref info in memory whenever a"
               & " new project is loaded into memory, or a new file is"
