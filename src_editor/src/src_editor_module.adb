@@ -125,6 +125,8 @@ package body Src_Editor_Module is
 
    type Editor_Child_Record is new GPS_MDI_Child_Record with null record;
 
+   function Get_Command_Queue
+     (Child : access Editor_Child_Record) return Commands.Command_Queue;
    function Dnd_Data
      (Child : access Editor_Child_Record; Copy : Boolean) return MDI_Child;
    --  See inherited documentation
@@ -3516,5 +3518,18 @@ package body Src_Editor_Module is
    begin
       return Id.Post_It_Note_GC;
    end Post_It_Note_GC;
+
+   -----------------------
+   -- Get_Command_Queue --
+   -----------------------
+
+   function Get_Command_Queue
+     (Child : access Editor_Child_Record) return Commands.Command_Queue
+   is
+      Box : constant Source_Editor_Box :=
+        Get_Source_Box_From_MDI (MDI_Child (Child));
+   begin
+      return Get_Command_Queue (Get_Buffer (Box));
+   end Get_Command_Queue;
 
 end Src_Editor_Module;
