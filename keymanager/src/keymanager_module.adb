@@ -79,6 +79,7 @@ with Gtk.Window;              use Gtk.Window;
 with Gtkada.File_Selector;    use Gtkada.File_Selector;
 with Gtkada.Handlers;         use Gtkada.Handlers;
 with Gtkada.Macro;            use Gtkada.Macro;
+with Gtkada.MDI;              use Gtkada.MDI;
 
 with Case_Handling;           use Case_Handling;
 with Commands.Interactive;    use Commands, Commands.Interactive;
@@ -110,6 +111,7 @@ package body KeyManager_Module is
    Speed_Cst                 : aliased constant String := "speed";
    Command_Cst               : aliased constant String := "command";
    Key_Cst                   : aliased constant String := "key";
+   Count_Cst                 : aliased constant String := "count";
    Load_Macro_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => File_Cst'Access);
    Play_Macro_Cmd_Parameters : constant Cst_Argument_List :=
@@ -233,11 +235,47 @@ package body KeyManager_Module is
    end record;
    type Key_Manager_Access is access all Key_Manager_Record;
 
+   function Is_Numeric_Key
+     (Key      : Gdk_Key_Type;
+      Modifier : Gdk_Modifier_Type) return Boolean;
+   --  Whether Key is one of the numeric keys
+
+   type Argument_Key_Validator is access function
+     (Key : Gdk_Key_Type; Modifier : Gdk_Modifier_Type) return Boolean;
+   --  Return True if Key is still valid for the current action argument we
+   --  are reading
+
+   type Argument_Read_Callback is access procedure
+     (Command  : Interactive_Command'Class;
+      Argument : String);
+   --  Called when the user has finished entering the argument for the
+   --  command (ie when Argument_Key_Validator returned False).
+
+   procedure Read_Action_Argument
+     (Validator : Argument_Key_Validator;
+      Callback  : Argument_Read_Callback;
+      Command   : access Interactive_Command'Class);
+   --  Read an argument for the command. This includes all keys pressed while
+   --  Validator returns True. Callback is called when the argument has been
+   --  read.
+
    type Keymanager_Module_Record is new Module_ID_Record with record
       Key_Manager   : Key_Manager_Access;
       Accel_Map_Id  : Handler_Id;
       Menus_Created : Boolean := False;
       --  Indicates whether the initial set of menus has been created.
+
+      Repeat_Count     : Positive := 1;
+      --  Number of times that the next command should be repeated
+
+      Argument_Validator : Argument_Key_Validator;
+      Argument_Callback  : Argument_Read_Callback;
+      Argument_Data      : Interactive_Command_Access;
+      Argument_Current   : String_Access;
+      --  Whether we are currently reading the argument for a command, see
+      --  Read_Action_Argument, and the callbacks to use to check whether the
+      --  user has finished entering the argument. Both callbacks are set to
+      --  null when we are not reading an argument.
 
       Last_Command  : Cst_String_Access;
       --  The last action that was executed by the user. It can either be a
@@ -484,6 +522,19 @@ package body KeyManager_Module is
    --  On exit, Is_User_Changed is set to true if at least one of the key
    --  bindings has been modified by the user (as opposed to being set by a
    --  script or by default in GPS)
+
+   type Repeat_Next_Command is new Interactive_Command with record
+      Kernel : GPS.Kernel.Kernel_Handle;
+   end record;
+   function Execute
+     (Command : access Repeat_Next_Command;
+      Context : Interactive_Command_Context)
+      return Standard.Commands.Command_Return_Type;
+   procedure On_Repeat_Next_Argument_Read
+     (Command  : Interactive_Command'Class;
+      Argument : String);
+   --  This command reads a numeric argument, and will then execute the next
+   --  action a number of times
 
    Action_Column     : constant := 0;
    Key_Column        : constant := 1;
@@ -1045,6 +1096,48 @@ package body KeyManager_Module is
       Context : Selection_Context;
       Context_Computed : Boolean := False;
       Found_Action : Boolean := False;
+      Child    : GPS_MDI_Child;
+
+      procedure Compute_Context;
+      --  Compute the current context if not done already
+
+      procedure Compute_Child;
+      --  Compute the child that currently has the focus. If no such child, or
+      --  this isn't a GPS_MDI_Child, null is set
+
+      procedure Undo_Group (Start : Boolean);
+      --  Start or end an undo group
+
+      procedure Compute_Context is
+      begin
+         if not Context_Computed then
+            Context := Get_Current_Context (Kernel);
+            Context_Computed := True;
+         end if;
+      end Compute_Context;
+
+      procedure Compute_Child is
+         C : constant MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
+      begin
+         if C /= null and then C.all in GPS_MDI_Child_Record'Class then
+            Child := GPS_MDI_Child (C);
+         end if;
+      end Compute_Child;
+
+      procedure Undo_Group (Start : Boolean) is
+      begin
+         if Start then
+            if Keymanager_Module.Repeat_Count >= 2 then
+               Compute_Child;
+               if Child /= null then
+                  Start_Group (Get_Command_Queue (Child));
+               end if;
+            end if;
+         elsif Child /= null then
+            End_Group (Get_Command_Queue (Child));
+         end if;
+      end Undo_Group;
+
    begin
       --  We could test Modif /= 0 if we allowed only key shortcuts with a
       --  modifier (control, alt, ...). However, this would prevent assigning
@@ -1056,6 +1149,34 @@ package body KeyManager_Module is
          --  Remove any num-lock and caps-lock modifiers.
          Modif := Get_State (Event) and Get_Default_Mod_Mask;
          Key   := Get_Key_Val (Event);
+
+         --  Are we reading arguments for a command ?
+
+         if Keymanager_Module.Argument_Validator /= null then
+            if (Modif /= 0 or else Key /= GDK_Escape)
+              and then Keymanager_Module.Argument_Validator (Key, Modif)
+            then
+               declare
+                  Tmp : String_Access := Keymanager_Module.Argument_Current;
+               begin
+                  Keymanager_Module.Argument_Current :=
+                    new String'(Tmp.all & Get_String (Event));
+                  Free (Tmp);
+               end;
+
+               --  No longer process the current key
+               return True;
+            else
+               Trace (Me, "Finished reading argument: "
+                        & Keymanager_Module.Argument_Current.all);
+               Keymanager_Module.Argument_Callback
+                 (Keymanager_Module.Argument_Data.all,
+                  Keymanager_Module.Argument_Current.all);
+               Keymanager_Module.Argument_Validator := null;
+               Free (Keymanager_Module.Argument_Current);
+               --  Process the current key as usual
+            end if;
+         end if;
 
          --  Ignore when the key is just one of the modifier. No binding can
          --  be associated to them anyway, so this is slightly more efficient,
@@ -1091,10 +1212,18 @@ package body KeyManager_Module is
          --  Gtk+ mechanism.
          --  Do this lookup only if we are not currently processing a
          --  secondary key.
+
          if not Has_Secondary
            and then Accel_Groups_Activate
              (Get_Main_Window (Kernel), Key, Modif)
          then
+            Undo_Group (Start => True);
+            for R in 2 .. Keymanager_Module.Repeat_Count loop
+               Found_Action := Accel_Groups_Activate
+                 (Get_Main_Window (Kernel), Key, Modif);
+            end loop;
+            Undo_Group (Start => False);
+
             Found_Action := True;
 
             --  The command will be executed by gtk, we don't know exactly how
@@ -1102,6 +1231,7 @@ package body KeyManager_Module is
                Free (Keymanager_Module.Last_User_Command);
             end if;
             Keymanager_Module.Last_Command := null;
+            Keymanager_Module.Repeat_Count := 1;
 
          else
             --  Execute all commands bound to this key. The order is somewhat
@@ -1123,17 +1253,16 @@ package body KeyManager_Module is
                        (Kernel, -"Action not defined: " & Binding.Action.all);
 
                   elsif Command.Command /= null then
-                     if not Context_Computed then
-                        Context := Get_Current_Context (Kernel);
-                        Context_Computed := True;
-                     end if;
+                     Compute_Context;
 
                      if Command.Filter = null
                        or else
                          (Context /= No_Context
                           and then Filter_Matches (Command.Filter, Context))
                      then
-                        Trace (Me, "Executing action " & Binding.Action.all);
+                        Trace (Me, "Executing action " & Binding.Action.all
+                               & Keymanager_Module.Repeat_Count'Img
+                               & " times");
 
                         if Keymanager_Module.Last_Command /=
                           Cst_String_Access (Binding.Action)
@@ -1143,21 +1272,27 @@ package body KeyManager_Module is
                         Keymanager_Module.Last_Command :=
                           Cst_String_Access (Binding.Action);
 
+                        Undo_Group (Start => True);
+                        for R in 1 .. Keymanager_Module.Repeat_Count loop
+                           Launch_Background_Command
+                             (Kernel,
+                              Create_Proxy
+                                (Command.Command,
+                                 (Event,
+                                  Context,
+                                  False,
+                                  null,
+                                  null,
+                                  new String'(Binding.Action.all))),
+                              Destroy_On_Exit => False,
+                              Active          => True,
+                              Show_Bar        => False,
+                              Queue_Id        => "");
+                        end loop;
+                        Undo_Group (Start => False);
+
                         Found_Action := True;
-                        Launch_Background_Command
-                          (Kernel,
-                           Create_Proxy
-                             (Command.Command,
-                              (Event,
-                               Context,
-                               False,
-                               null,
-                               null,
-                               new String'(Binding.Action.all))),
-                           Destroy_On_Exit => False,
-                           Active          => True,
-                           Show_Bar        => False,
-                           Queue_Id        => "");
+                        Keymanager_Module.Repeat_Count := 1;
                      end if;
                   end if;
                end if;
@@ -1172,7 +1307,21 @@ package body KeyManager_Module is
                Free (Keymanager_Module.Last_User_Command);
             end if;
             Keymanager_Module.Last_Command := null;
+
+            --  To repeat this one, we need to requeue the event...
+            Undo_Group (Start => True);
+            for R in 2 .. Keymanager_Module.Repeat_Count loop
+               declare
+                  Ev : Gdk_Event;
+               begin
+                  Deep_Copy (From => Event, To => Ev);
+                  Put (Ev);
+               end;
+            end loop;
+            Undo_Group (Start => False);
+            Keymanager_Module.Repeat_Count := 1;
          end if;
+
       end if;
 
       --  Let gtk+ handle all events even if we have already processed one or
@@ -2725,6 +2874,10 @@ package body KeyManager_Module is
          Keymanager_Module.Last_User_Command :=
            new String'(Nth_Arg (Data, 1));
 
+      elsif Command = "repeat_next" then
+         Name_Parameters (Data, (1 => Count_Cst'Access));
+         Keymanager_Module.Repeat_Count := Nth_Arg (Data, 1, 1);
+
       elsif Command = "lookup_actions_from_key" then
          Name_Parameters (Data, (1 => Key_Cst'Access));
          declare
@@ -2791,6 +2944,71 @@ package body KeyManager_Module is
          end;
       end if;
    end Keymanager_Command_Handler;
+
+   --------------------
+   -- Is_Numeric_Key --
+   --------------------
+
+   function Is_Numeric_Key
+     (Key      : Gdk_Key_Type;
+      Modifier : Gdk_Modifier_Type) return Boolean is
+   begin
+      return (Modifier = 0 or else Modifier = Shift_Mask)
+        and then (Key in GDK_KP_0 .. GDK_KP_9 or else Key in GDK_0 .. GDK_9);
+   end Is_Numeric_Key;
+
+   --------------------------
+   -- Read_Action_Argument --
+   --------------------------
+
+   procedure Read_Action_Argument
+     (Validator : Argument_Key_Validator;
+      Callback  : Argument_Read_Callback;
+      Command   : access Interactive_Command'Class)
+   is
+   begin
+      Free (Keymanager_Module.Argument_Current);
+      Keymanager_Module.Argument_Current   := new String'("");
+      Keymanager_Module.Argument_Validator := Validator;
+      Keymanager_Module.Argument_Callback  := Callback;
+      Keymanager_Module.Argument_Data      :=
+        Interactive_Command_Access (Command);
+   end Read_Action_Argument;
+
+   ----------------------------------
+   -- On_Repeat_Next_Argument_Read --
+   ----------------------------------
+
+   procedure On_Repeat_Next_Argument_Read
+     (Command  : Interactive_Command'Class;
+      Argument : String)
+   is
+      pragma Unreferenced (Command);
+   begin
+      Keymanager_Module.Repeat_Count := Integer'Value (Argument);
+   exception
+      when Constraint_Error =>
+         Keymanager_Module.Repeat_Count := 1;
+   end On_Repeat_Next_Argument_Read;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Repeat_Next_Command;
+      Context : Interactive_Command_Context)
+      return Standard.Commands.Command_Return_Type
+   is
+      pragma Unreferenced (Context);
+   begin
+      --  Read a numeric argument
+      Read_Action_Argument
+        (Is_Numeric_Key'Access,
+         On_Repeat_Next_Argument_Read'Access,
+         Command);
+      return Commands.Success;
+   end Execute;
 
    --------------------------
    -- On_Accel_Map_Changed --
@@ -2884,6 +3102,7 @@ package body KeyManager_Module is
       Manager    : constant Key_Manager_Access := new Key_Manager_Record;
       Macro_Menu : constant String := "/" & (-"Tools/Macro");
       Key : constant String := Get_Home_Dir (Kernel) & "custom_key";
+      Command    : Interactive_Command_Access;
 
    begin
       Manager.Kernel := Kernel_Handle (Kernel);
@@ -2953,10 +3172,22 @@ package body KeyManager_Module is
       Register_Command
         (Kernel, "set_last_command", 1, 1, Keymanager_Command_Handler'Access);
       Register_Command
+        (Kernel, "repeat_next", 1, 1, Keymanager_Command_Handler'Access);
+      Register_Command
         (Kernel, "lookup_actions_from_key", 1, 1,
            Keymanager_Command_Handler'Access);
       Register_Command
         (Kernel, "lookup_actions", 0, 0, Keymanager_Command_Handler'Access);
+
+      Command := new Repeat_Next_Command;
+      Repeat_Next_Command (Command.all).Kernel := Kernel_Handle (Kernel);
+      Register_Action
+        (Kernel, "Repeat Next", Command,
+         -("Repeat the next action a number of times. Executing this action"
+           & " takes a numeric argument (read from the keyboard). For"
+           & " instance, if this is associated with ctrl-u, you can type"
+           & " ""ctrl-u 30 t"" to instead the character t 30 times"),
+         Category => -"General");
 
       Add_Hook (Kernel, Preferences_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
