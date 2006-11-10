@@ -1997,10 +1997,6 @@ package body Src_Editor_View is
          return True;
       end if;
 
-      if View.In_Completion then
-         return False;
-      end if;
-
       if not Get_Editable (View) then
          return False;
       end if;
