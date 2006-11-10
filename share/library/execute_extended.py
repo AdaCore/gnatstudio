@@ -30,7 +30,7 @@ def on_gps_started (hook_name):
    parse_xml ("""
    <action name='""" + action_name + """' output="none">
       <description>This action asks interactively for the name of an action to execute, and execute it. This allows you to execute any GPS action even if no menu and no key shortcut exists for it</description>
-      <shell lang="python">execute_extended.Extended_Command ()</shell>
+      <shell lang="python">if $repeat == 1: execute_extended.Extended_Command ($remaining + 1)</shell>
    </action>
   """)
 
@@ -50,7 +50,7 @@ class Extended_Command (CommandWindow):
   """This class provides a command window in which the user can type the name
      of any GPS command to execute in the current context"""
 
-  def __init__ (self):
+  def __init__ (self, repeat_count=1):
     try:
        CommandWindow.__init__ (self,
                                global_window = True,
@@ -60,12 +60,16 @@ class Extended_Command (CommandWindow):
        self.set_background (background_color)
        self.actions = lookup_actions()
        self.locked  = False
+       self.repeat_count = repeat_count
     except:
        pass
 
   def on_activate (self, input):
     if input != "":
-       execute_action (remove_completion (input))
+       input = remove_completion (input)
+       Logger ("TESTSUITE").log ("executing " + input + " " + `self.repeat_count`)
+       for r in range (1, self.repeat_count + 1):
+          execute_action (input)
 
   def on_key (self, input, key, cursor_pos):
     if key.lower() == "tab":
