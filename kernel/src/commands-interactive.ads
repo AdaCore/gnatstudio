@@ -48,7 +48,17 @@ package Commands.Interactive is
       --  The directory in which the execution should take place
 
       Args    : GNAT.OS_Lib.String_List_Access;
+      --  Args is the list of arguments to pass to this action. These can be
+      --  accessed through $1, $2 in XML files.
+
       Label   : GNAT.OS_Lib.String_Access;
+
+      Repeat_Count     : Positive := 1;
+      Remaining_Repeat : Natural := 0;
+      --  The number of times that this command has been executed in a row,
+      --  and the number of times it will still be executed.
+      --  This is only different from 0 when the command "repeat-next"
+      --  has been executed just before the current command.
    end record;
    --  Information about the current context.
    --  Event, if specified, must be a Deep_Copy of the actual event, since its
@@ -62,7 +72,9 @@ package Commands.Interactive is
       Synchronous => False,
       Dir         => null,
       Args        => null,
-      Label       => null);
+      Label       => null,
+      Repeat_Count     => 1,
+      Remaining_Repeat => 0);
 
    procedure Free (X : in out Interactive_Command_Context);
    --  Free memory associated to X.
