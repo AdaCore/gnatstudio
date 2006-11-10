@@ -47,9 +47,10 @@ def on_gps_started (hook_name):
 
    <action name="kill line" output="none" category="Editor">
       <description>This is similar to Emacs' kill-line function. It deletes the end of the line after the cursor's current column. If the cursor is at the end of the line, it deletes the newline character and therefore joins the current line and the next.
-The text that is deleted is copied to the clipboard. If you call this action multiple times from the same location, all deleted text is merged into a single clipboard, so that a single Paste will put it all back</description>
+The text that is deleted is copied to the clipboard. If you call this action multiple times from the same location, all deleted text is merged into a single clipboard, so that a single Paste will put it all back.
+When this command is executed after a repeat_next command, the whole line is deleted to provide a more intuitive behavior.</description>
       <filter id="Source editor" />
-      <shell lang="python">text_utils.kill_line()</shell>
+      <shell lang="python">if $repeat == 1: text_utils.kill_line (None, $remaining+1)</shell>
    </action>
 
    <action name="open line" output="none" category="Editor">
@@ -113,7 +114,7 @@ The text that is deleted is copied to the clipboard. If you call this action mul
    </action>
 
    <action name="kill region" output="none" category="Editor">
-      <description>Delete the area of text between the mark set by "set mark command" and the current cursor position. This emulates Emacs' behavior</description>
+      <description>Delete the area of text between the mark set by "set mark command" and the current cursor position. This emulates Emacs' behavior.</description>
       <filter id="Source editor" />
       <shell lang="python">text_utils.kill_region()</shell>
    </action>
@@ -193,7 +194,7 @@ def delete_forward():
    cursor = buffer.current_view().cursor()
    buffer.delete (cursor, cursor)
 
-def kill_line (location = None):
+def kill_line (location = None, count=1):
    """ Kills the end of the line on which LOCATION is.
        If LOCATION is unspecified, the current cursor location in the current
        editor is used.
@@ -202,25 +203,32 @@ def kill_line (location = None):
        This is a better emulation of Emacs's behavior than the one provided by
        default by gtk+, which doesn't handle whitespaces correctly.
        When called several times from the same line, entries are appended in
-       the clipboard"""
-   
+       the clipboard.
+       Count is the number of lines to delete. If greater than 1, then the
+       whole lines are deleted, including newline characters."""
+
    if not location:
       location = GPS.EditorBuffer.get ().current_view ().cursor ()
    buffer = location.buffer ()
    start  = location
 
-   append   = GPS.last_command() == "kill-line"
+   append          = GPS.last_command() == "kill-line"
    GPS.set_last_command ("kill-line")
 
    # In case the current location points to a line terminator we just cut it
-   if start.get_char() == "\n":
+   if count == 1 and start.get_char() == "\n":
       buffer.cut (start, start, append)
    else:
-      end       = start.end_of_line ()
-      str       = buffer.get_chars (start, end)
-      strip_str = str.rstrip ()
-      if len (str) > 0 and str [len (str) - 1] == '\n' and strip_str != "":
-         end = end.forward_char (-1)
+      bol = start
+      for line in range (1, count + 1):
+         end       = bol.end_of_line ()
+         str       = buffer.get_chars (start, end)
+         strip_str = str.rstrip ()
+         if count == 1 \
+          and len (str) > 0 \
+          and str [len (str) - 1] == '\n' and strip_str != "":
+            end = end.forward_char (-1)
+         bol = end+1
       buffer.cut (start, end, append)
 
 ################################################
