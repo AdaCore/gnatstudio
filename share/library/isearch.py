@@ -218,7 +218,7 @@ class Isearch (CommandWindow):
         to prevent its insertion in the command line.
         Return False if the key should be processed as usual"""
 
-     # ctrl-w copies the current word
+     # ctrl-w copies the current word (do not change case sensitivity though)
      # ctrl-y copies the end of the current line
      if key == "control-w" or key == "control-y":
        start = self.editor.current_view().cursor()
@@ -230,11 +230,13 @@ class Isearch (CommandWindow):
           end = start.forward_line () - 2  ## Go to end of this line
     
        self.locked = True
+       case_sensitive = self.case_sensitive
        self.write (input[:cursor_pos + 1] + \
                    self.editor.get_chars (start, end) + \
                    input[cursor_pos + 1 :])
        self.locked = False
        self.editor.select (self.loc, end + 1)
+       self.case_sensitive = case_sensitive
        return True
 
      # backspace goes back to stack location and pattern
@@ -273,7 +275,8 @@ class Isearch (CommandWindow):
            self.write (Isearch.last_search)
         else:
            self.loc = self.loc + 1
-           self.on_changed (input, len (input), redo_overlays=0)
+           self.search_next (input, len (input), redo_overlays=0)
+           # self.on_changed (input, len (input), redo_overlays=0)
         return True
 
      if isearch_backward_action_name in actions \
@@ -283,7 +286,8 @@ class Isearch (CommandWindow):
            self.write (Isearch.last_search)
         else:
            self.loc = self.loc - 1
-           self.on_changed (input, len (input), redo_overlays=0)
+           self.search_next (input, len (input), redo_overlays=0)
+           # self.on_changed (input, len (input), redo_overlays=0)
         return True
 
      # Cancel the search on any special key. Currently, the key is lost, not
@@ -311,8 +315,6 @@ class Isearch (CommandWindow):
         input [cursor_pos + 1:]  is after the cursor"""
 
      if not self.locked and input != "":
-        if redo_overlays: self.remove_overlays ()
-
         # Automatic case sensitivity: when we have an upper case, switch to
         # case sensitive
         if not self.explicit_case_sensitive \
@@ -320,49 +322,54 @@ class Isearch (CommandWindow):
          and input.lower () != input:
            self.case_sensitive = True
            self.set_prompt (self.prompt ())    
+        self.search_next (input, cursor_pos, redo_overlays)
 
-        Isearch.last_search = input
+   def search_next (self, input, cursor_pos, redo_overlays):
+     """Same as a on_changed, but doesn't change case sensitivity"""
+     if redo_overlays: self.remove_overlays ()
 
-        # Special case for backward search: if the current location matches,
-        # no need to do anything else. This is so that when the user keeps
-        # adding characters to the pattern, we correctly highlight them at
-        # the current location
-        if self.backward:
-           result = self.loc.search \
-              (input, regexp = self.regexp,
-               case_sensitive = self.case_sensitive,
-               dialog_on_failure = False, 
-               backward = False)
-           if result and result[0] == self.loc:
-              self.set_background (background_color)
-              (match_from, match_to) = result
-              self.end_loc = match_to
-              self.highlight_match ()
-              self.insert_overlays ()
-              return 
-           
+     Isearch.last_search = input
+
+     # Special case for backward search: if the current location matches,
+     # no need to do anything else. This is so that when the user keeps
+     # adding characters to the pattern, we correctly highlight them at
+     # the current location
+     if self.backward:
         result = self.loc.search \
-            (input, regexp = self.regexp,
-                    case_sensitive = self.case_sensitive,
-                    dialog_on_failure = False, 
-                    backward = self.backward)
-        if result:
+           (input, regexp = self.regexp,
+            case_sensitive = self.case_sensitive,
+            dialog_on_failure = False, 
+            backward = False)
+        if result and result[0] == self.loc:
            self.set_background (background_color)
-           (self.loc, self.end_loc) = result
+           (match_from, match_to) = result
+           self.end_loc = match_to
            self.highlight_match ()
-           if redo_overlays: self.insert_overlays ()
-        else:
-           # If the last entry in the stack was a match, add a new one
-           if self.stack != [] and self.stack [-1][3]:
-              self.stack.append ((self.loc, self.end_loc, self.read (), 0))
+           self.insert_overlays ()
+           return 
+        
+     result = self.loc.search \
+         (input, regexp = self.regexp,
+                 case_sensitive = self.case_sensitive,
+                 dialog_on_failure = False, 
+                 backward = self.backward)
+     if result:
+        self.set_background (background_color)
+        (self.loc, self.end_loc) = result
+        self.highlight_match ()
+        if redo_overlays: self.insert_overlays ()
+     else:
+        # If the last entry in the stack was a match, add a new one
+        if self.stack != [] and self.stack [-1][3]:
+           self.stack.append ((self.loc, self.end_loc, self.read (), 0))
 
-           # Loop around, so that next search matches
-           if self.backward:
-             self.loc = self.loc.buffer().end_of_buffer()
-           else:
-             self.loc = self.loc.buffer().beginning_of_buffer()
-           self.end_loc = self.loc
-           self.set_background (error_color)
+        # Loop around, so that next search matches
+        if self.backward:
+          self.loc = self.loc.buffer().end_of_buffer()
+        else:
+          self.loc = self.loc.buffer().beginning_of_buffer()
+        self.end_loc = self.loc
+        self.set_background (error_color)
 
    def on_activate (self, input):
      """The user has pressed enter"""
