@@ -1230,7 +1230,8 @@ package body GPS.Kernel.Modules is
          Launch_Background_Command
            (Kernel_Handle (Widget),
             Create_Proxy
-              (Command.Command, (null, Context, False, null, null, null)),
+              (Command.Command,
+               (null, Context, False, null, null, null, 1, 0)),
             Destroy_On_Exit => False,
             Active => True, Show_Bar => True, Queue_Id => "");
       elsif Get_Error_Message (Command.Filter) /= "" then

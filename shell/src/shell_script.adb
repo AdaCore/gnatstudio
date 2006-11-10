@@ -1850,7 +1850,9 @@ package body Shell_Script is
                      Synchronous => True,
                      Dir         => null,
                      Args        => new Argument_List'(Clone (D.Args.all)),
-                     Label       => null));
+                     Label       => null,
+                     Repeat_Count => 1,
+                     Remaining_Repeat => 0));
 
       Launch_Background_Command
         (Kernel          => Get_Kernel (Args),

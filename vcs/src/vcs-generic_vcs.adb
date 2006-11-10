@@ -376,7 +376,9 @@ package body VCS.Generic_VCS is
                 Synchronous => False,
                 Dir         => Dir,
                 Args        => Args,
-                Label      => new String'(Describe_Action (Ref, Dir_Action))));
+                Label      => new String'(Describe_Action (Ref, Dir_Action)),
+                Repeat_Count     => 1,
+                Remaining_Repeat => 0));
 
             Launch_Background_Command
               (Kernel          => Kernel,
@@ -504,7 +506,9 @@ package body VCS.Generic_VCS is
                 Synchronous => False,
                 Dir         => Dir,
                 Args        => Args,
-                Label       => new String'(Describe_Action (Ref, Action))));
+                Label       => new String'(Describe_Action (Ref, Action)),
+                Repeat_Count     => 1,
+                Remaining_Repeat => 0));
 
             Launch_Background_Command
               (Kernel          => Kernel,
@@ -573,7 +577,9 @@ package body VCS.Generic_VCS is
           Synchronous => False,
           Dir         => Dir,
           Args        => Args,
-          Label       => new String'(Describe_Action (Ref, Action))));
+          Label       => new String'(Describe_Action (Ref, Action)),
+          Repeat_Count     => 1,
+          Remaining_Repeat => 0));
 
       Launch_Background_Command
         (Kernel          => Kernel,

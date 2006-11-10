@@ -920,7 +920,9 @@ package body GPS.Kernel.Scripts is
                               Synchronous => Synchronous,
                               Dir         => null,
                               Args        => Args,
-                              Label       => new String'(Nth_Arg (Data, 1))));
+                              Label       => new String'(Nth_Arg (Data, 1)),
+                              Repeat_Count     => 1,
+                              Remaining_Repeat => 0));
 
                Launch_Background_Command
                  (Kernel, Custom, Destroy_On_Exit => True,
