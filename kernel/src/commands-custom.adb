@@ -1038,6 +1038,12 @@ package body Commands.Custom is
          Multiple  : Boolean := False;
          First_Arg : Natural := 1;
       begin
+         if Param = "repeat" then
+            return Integer'Image (Context.Repeat_Count);
+         elsif Param = "remaining" then
+            return Integer'Image (Context.Remaining_Repeat);
+         end if;
+
          if Context.Args = null then
             return "";
          end if;
