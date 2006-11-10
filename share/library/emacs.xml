@@ -37,6 +37,7 @@
   <key action="/File/Open...">control-x control-f</key>
   <key action="/Edit/Undo">control-_</key>
   <key action="/Edit/Refill">alt-q</key>
+  <key action="repeat next">control-u</key>
 
   <key action="goto declaration or body">control-c control-d</key>
   <key action="goto other file">control-c o</key>
