@@ -615,10 +615,12 @@ package body Commands is
 
    procedure Start_Group (Q : Command_Queue) is
    begin
-      Q.Group_Level := Q.Group_Level + 1;
+      if Q /= null then
+         Q.Group_Level := Q.Group_Level + 1;
 
-      if Q.Group_Level = 1 then
-         Q.Group_Number := Q.Group_Number + 1;
+         if Q.Group_Level = 1 then
+            Q.Group_Number := Q.Group_Number + 1;
+         end if;
       end if;
    end Start_Group;
 
@@ -628,7 +630,7 @@ package body Commands is
 
    procedure End_Group (Q : Command_Queue) is
    begin
-      if Q.Group_Level > 0 then
+      if Q /= null and then Q.Group_Level > 0 then
          Q.Group_Level := Q.Group_Level - 1;
       end if;
    end End_Group;

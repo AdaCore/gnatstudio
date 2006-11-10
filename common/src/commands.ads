@@ -242,6 +242,7 @@ package Commands is
    --  Start a group of commands. The commands appended to the queue will be
    --  considered as part of a same group, until End_Group is called.
    --  One call to End_Group must be made for each call to Start_Group.
+   --  This has no effect on Null_Command_Queue.
 
    procedure End_Group (Q : Command_Queue);
    --  Ends grouping of commands.
