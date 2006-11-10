@@ -10342,6 +10342,26 @@ general be 1 (ie this is the first execution of the action), unless the user
 has first executed the action @code{"Repeat Next"}, which allows automatic
 repetition of an action.
 
+By default, when the action "Repeat Next" is invoked by the user, it will repeat
+the following action as many times as the user specified. However, in some cases,
+either for efficiency reasons or simply for technical reasons, you might want to
+handle yourself the repear. This can be done with the following action
+declaration:
+
+@smallexample
+<action name="my_action">
+   <shell lang="python">if $repeat==1: my_function($remaining + 1)</shell>
+</action>
+
+def my_function (count):
+   """Perform an action count times"""
+   ...
+@end smallexample
+
+Basically, the technics here is to only perform something the first time the
+action is called (hence the if statement), but pass your shell function the
+number of times that it should repeat (hence the @code{$remaining} parameter).
+
 @item $remaining
 This is similar to $repeat, and indicates the number of times that the action
 remains to be executed. This will generally be 0, unless the user has chosen
