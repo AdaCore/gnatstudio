@@ -14,6 +14,13 @@ of the feature.
 New features in GPS 4.1.0
 -------------------------
 
+FB10-014 New action to repeat a key stroke several times (2006-11-10)
+
+  A new action called Repeat Next can now be bound to a key shortcut
+  through /Edit/Key Shortcuts/General. It can be used to repeat the
+  next action several times (similar to ctrl-u in Emacs, or numeric
+  prefix in vi)
+
 FB07-010 Changing env. variables before reloading the project (2006-11-07)
 
   In some cases, you might have a need for updating some environment
