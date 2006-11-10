@@ -10016,7 +10016,7 @@ For instance, the following action spawn an external tool, and parses its
 output to the location window and the automatic fixing tool if the external
 tool happens to fail.
 
-In this group of commands the %... and $... macros can be used.
+In this group of commands the %... and $... macros can be used (@pxref{Macro arguments}).
 
 @smallexample
 <?xml version="1.0" ?>
@@ -10315,6 +10315,38 @@ recursively.
 
 @item %%
 Replaced by the % sign.
+@end table
+
+Another type of macros are expanded before commands are executed: These
+all start with the @code{$} character, and represent parameters passed to
+the action by its caller. Depending on the context, GPS will give zero, one
+or more arguments to the action. This is in particular used when you define
+your own VCS system. See also the shell function @code{execute_action}, which
+you can use yourself to execute an action and pass it some arguments.
+
+These arguments are the following
+@table @code
+@item $1, $2, ... $n
+Where n is a number. These are each argument passed to the action
+
+@item $1-, $2-, ... $n-
+This represents a string concatenating the specified argument and all
+arguments after it
+
+@item $*
+This represents a string concatenating all arguments passed to the action
+
+@item $repeat
+This is the number of times the action has been repeated in a row. It will in
+general be 1 (ie this is the first execution of the action), unless the user
+has first executed the action @code{"Repeat Next"}, which allows automatic
+repetition of an action.
+
+@item $remaining
+This is similar to $repeat, and indicates the number of times that the action
+remains to be executed. This will generally be 0, unless the user has chosen
+to automatically repeat the action a number of times.
+
 @end table
 
 @c ----------------------------------------------------------------------
