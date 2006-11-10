@@ -556,4 +556,16 @@ package body GPS.Kernel.MDI is
       Set (Model, Iter, 0, not Get_Boolean (Model, Iter, 0));
    end Select_Child_When_Saving;
 
+   -----------------------
+   -- Get_Command_Queue --
+   -----------------------
+
+   function Get_Command_Queue
+     (Child : access GPS_MDI_Child_Record) return Commands.Command_Queue
+   is
+      pragma Unreferenced (Child);
+   begin
+      return Commands.Null_Command_Queue;
+   end Get_Command_Queue;
+
 end GPS.Kernel.MDI;

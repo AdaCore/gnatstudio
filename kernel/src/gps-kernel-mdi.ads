@@ -21,6 +21,7 @@
 --  This package contains various constants and subprograms used for the
 --  GPS-specific usage of the MDI.
 
+with Commands;
 with Gtkada.MDI;         use Gtkada.MDI;
 with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 
@@ -111,6 +112,13 @@ package GPS.Kernel.MDI is
    procedure Close_All_Children (Handle : access Kernel_Handle_Record'Class);
    --  Close all the MDI children. No confirmation is asked, call
    --  Save_All_MDI_Children first if needed.
+
+   function Get_Command_Queue
+     (Child : access GPS_MDI_Child_Record) return Commands.Command_Queue;
+   --  Return the command queue associated with the current context. In
+   --  particular, this can be used for undo, for instance through
+   --     Start_Group (Get_Command_Queue (Child))
+   --  By default, it returns Null_Command_Queue
 
 private
 
