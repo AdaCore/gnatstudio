@@ -21,7 +21,7 @@
 <documentation_file>
    <shell>Editor.edit "a-calend.ads"</shell>
    <descr>Ada.Calendar</descr>
-   <menu>/Help/GNAT Runtime/Ada/Calendar/&lt;Calendar&gt;</menu>
+   <menu>/Help/GNAT Runtime/Ada/Calendar</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -591,7 +591,7 @@
 <documentation_file>
    <shell>Editor.edit "a-reatim.ads"</shell>
    <descr>Ada.Real_Time</descr>
-   <menu>/Help/GNAT Runtime/Ada/Real__Time/&lt;Real__Time&gt;</menu>
+   <menu>/Help/GNAT Runtime/Ada/Real__Time</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -711,7 +711,7 @@
 <documentation_file>
    <shell>Editor.edit "a-strbou.ads"</shell>
    <descr>Ada.Strings.Bounded</descr>
-   <menu>/Help/GNAT Runtime/Ada/Strings/Bounded/&lt;Bounded&gt;</menu>
+   <menu>/Help/GNAT Runtime/Ada/Strings/Bounded</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -729,7 +729,7 @@
 <documentation_file>
    <shell>Editor.edit "a-strfix.ads"</shell>
    <descr>Ada.Strings.Fixed</descr>
-   <menu>/Help/GNAT Runtime/Ada/Strings/Fixed/&lt;Fixed&gt;</menu>
+   <menu>/Help/GNAT Runtime/Ada/Strings/Fixed</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -789,7 +789,7 @@
 <documentation_file>
    <shell>Editor.edit "a-stwibo.ads"</shell>
    <descr>Ada.Strings.Wide_Bounded</descr>
-   <menu>/Help/GNAT Runtime/Ada/Strings/Wide__Bounded/&lt;Wide__Bounded&gt;</menu>
+   <menu>/Help/GNAT Runtime/Ada/Strings/Wide__Bounded</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -801,7 +801,7 @@
 <documentation_file>
    <shell>Editor.edit "a-stwifi.ads"</shell>
    <descr>Ada.Strings.Wide_Fixed</descr>
-   <menu>/Help/GNAT Runtime/Ada/Strings/Wide__Fixed/&lt;Wide__Fixed&gt;</menu>
+   <menu>/Help/GNAT Runtime/Ada/Strings/Wide__Fixed</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -915,7 +915,7 @@
 <documentation_file>
    <shell>Editor.edit "a-tags.ads"</shell>
    <descr>Ada.Tags</descr>
-   <menu>/Help/GNAT Runtime/Ada/Tags/&lt;Tags&gt;</menu>
+   <menu>/Help/GNAT Runtime/Ada/Tags</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -1041,7 +1041,7 @@
 <documentation_file>
    <shell>Editor.edit "a-widcha.ads"</shell>
    <descr>Ada.Wide_Characters</descr>
-   <menu>/Help/GNAT Runtime/Ada/Wide__Characters/&lt;Wide__Characters&gt;</menu>
+   <menu>/Help/GNAT Runtime/Ada/Wide__Characters</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
