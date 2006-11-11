@@ -90,6 +90,7 @@ package body Revision_Views is
       Syms         : String_Hash_Table.HTable;
       File         : Virtual_File;
       Root_Color   : Gdk_Color;
+      Child        : MDI_Child;
    end record;
 
    type Revision_View is access all Revision_View_Record'Class;
@@ -617,7 +618,7 @@ package body Revision_Views is
    is
       Model : constant Gtk_Tree_Store :=
                 Gtk_Tree_Store (Get_Model (View.Tree));
-      Log : Log_Data;
+      Log   : Log_Data;
    begin
       Log.Revision := +Get_String (Model, Iter, Rev_Info_Column);
       Log.Author := +Get_String (Model, Iter, Author_Column);
@@ -780,11 +781,16 @@ package body Revision_Views is
                   Default_Height => Get_Pref (Default_Widget_Height),
                   Group          => Group_Consoles,
                   Module         => Revision_View_Module_ID);
+         View.Child := Child;
          Set_Title (Child, -Title);
          Put (Get_MDI (Kernel), GPS_MDI_Child (Child));
          Set_Focus_Child (Child);
 
          Widget_Callback.Connect (View, "destroy", On_Destroy'Access);
+      end if;
+
+      if View.Child /= null then
+         Gtkada.MDI.Raise_Child (View.Child);
       end if;
 
       return View;
