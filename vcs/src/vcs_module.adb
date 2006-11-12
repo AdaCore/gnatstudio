@@ -433,7 +433,7 @@ package body VCS_Module is
 
       Register_Contextual_Submenu
         (Kernel  => Kernel,
-         Name    => "Version Control",
+         Name    => -"Version Control",
          Filter  => Filter,
          Submenu => new VCS_Contextual_Menu);
 
