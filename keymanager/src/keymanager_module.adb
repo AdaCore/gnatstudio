@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Calendar;            use Ada.Calendar;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Exceptions;          use Ada.Exceptions;
 with Ada.Strings.Unbounded;
@@ -32,7 +31,6 @@ with Gdk.Event;               use Gdk.Event;
 with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
 with Gdk.Types;               use Gdk.Types;
 
-with Glib.Convert;            use Glib.Convert;
 with Glib.Object;             use Glib.Object;
 with Glib.Xml_Int;            use Glib.Xml_Int;
 with Glib.Values;             use Glib.Values;
@@ -44,7 +42,6 @@ with Gtk.Arguments;           use Gtk.Arguments;
 with Gtk.Enums;               use Gtk.Enums;
 with Gtk.Handlers;            use Gtk.Handlers;
 with Gtk.Main;                use Gtk.Main;
-with Gtk.Menu_Item;           use Gtk.Menu_Item;
 with Gtk.Text_Tag;            use Gtk.Text_Tag;
 with Gtk.Tree_Model;          use Gtk.Tree_Model;
 with Gtk.Tree_View_Column;    use Gtk.Tree_View_Column;
@@ -52,7 +49,6 @@ with Gtk.Widget;              use Gtk.Widget;
 with Gtk.Window;              use Gtk.Window;
 
 with Gtkada.File_Selector;    use Gtkada.File_Selector;
-with Gtkada.Macro;            use Gtkada.Macro;
 with Gtkada.MDI;              use Gtkada.MDI;
 
 with Commands.Interactive;    use Commands, Commands.Interactive;
@@ -62,13 +58,13 @@ with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
 with GPS.Kernel.Console;      use GPS.Kernel.Console;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with GPS.Kernel;              use GPS.Kernel;
 with GUI_Utils;               use GUI_Utils;
 with HTables;                 use HTables;
 with KeyManager_Module.GUI;
+with KeyManager_Module.Macros;
 with String_Utils;            use String_Utils;
 with Traces;                  use Traces;
 with VFS;                     use VFS;
@@ -80,18 +76,9 @@ package body KeyManager_Module is
 
    use Key_Htable;
 
-   Use_Macro : constant Debug_Handle := Create ("Keymanager.Macro", Off);
-   --  ??? For now disable by default since this is a work in progress
-
-   File_Cst                  : aliased constant String := "file";
-   Speed_Cst                 : aliased constant String := "speed";
    Command_Cst               : aliased constant String := "command";
    Key_Cst                   : aliased constant String := "key";
    Count_Cst                 : aliased constant String := "count";
-   Load_Macro_Cmd_Parameters : constant Cst_Argument_List :=
-     (1 => File_Cst'Access);
-   Play_Macro_Cmd_Parameters : constant Cst_Argument_List :=
-     (1 => Speed_Cst'Access);
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Key_Description, Key_Description_List);
@@ -107,29 +94,6 @@ package body KeyManager_Module is
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Keymap_Record, Keymap_Access);
-
-   type Event_Set is record
-      Events           : Macro_Item_Access;
-      --  Set of events recorded.
-
-      Last_Event       : Macro_Item_Access;
-      --  Last event recorded.
-
-      Current_Event    : Macro_Item_Access;
-      --  Current event being replayed.
-
-      Start_Clock       : Ada.Calendar.Time;
-      --  Start time of event replay.
-
-      Time_Spent        : Guint32;
-      --  Virtual time spent so far in events (addition of Events.Time)
-
-      Prev_Time         : Guint32;
-      --  Time of previous event recorded.
-
-      Speed            : Duration := 1.0;
-      --  Speed at which replay is made. 1.0 means normal speed.
-   end record;
 
    function Is_Numeric_Key
      (Key      : Gdk_Key_Type;
@@ -155,7 +119,19 @@ package body KeyManager_Module is
    --  Validator returns True. Callback is called when the argument has been
    --  read.
 
+   type Event_Handler_Record;
+   type Event_Handler_Access is access all Event_Handler_Record;
+   type Event_Handler_Record is record
+      Handler : General_Event_Handler_Callback;
+      Next    : Event_Handler_Access;
+   end record;
+
+   procedure General_Event_Handler
+     (Event : Gdk_Event; Kernel : System.Address);
+
    type Keymanager_Module_Record is new Module_ID_Record with record
+      Handlers         : Event_Handler_Access;
+
       Table            : HTable_Access;
 
       Custom_Keys_Loaded : Boolean := False;
@@ -167,12 +143,6 @@ package body KeyManager_Module is
       Active           : Boolean := True;
       --  Whether the key manager should process the key events. This is only
       --  deactivated while editing the key bindings through the GUI.
-
-      Recording        : Boolean := False;
-      --  Whether the key manager is recording key events
-
-      Events           : Event_Set;
-      --  Handle record and replay of events
 
       Accel_Map_Id  : Handler_Id;
       Menus_Created : Boolean := False;
@@ -231,43 +201,6 @@ package body KeyManager_Module is
    --  the GPS shortcuts (since assigning a new accelerator to a menu should
    --  disable all actions currently associated with the same shortcut)
 
-   procedure Macro_Command_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String);
-   --  Interactive command handler for the key manager module.
-
-   procedure Record_Macro (Kernel : Kernel_Handle);
-   --  Start record of all events.
-
-   procedure On_Start_Recording
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Callback for starting record of all events for later re-play.
-
-   procedure On_Stop_Recording
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Stop recording key events for later re-play.
-
-   procedure On_Play_Macro
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Callback for playing current set of events.
-
-   procedure Play_Macro (Kernel : Kernel_Handle; Speed : Duration := 1.0);
-   --  Play current set of events.
-
-   procedure Load_Macro (File : Virtual_File; Success : out Boolean);
-   --  Load macro file.
-
-   procedure On_Load_Macro
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Callback for loading set of events to replay.
-
-   procedure On_Save_Macro
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Save last set of events recorded.
-
-   function Play_Macro_Timer return Boolean;
-   --  Timer used by On_Play_Macro
-
    procedure Get_Secondary_Keymap
      (Table  : in out Key_Htable.HTable;
       Key    : Gdk_Key_Type;
@@ -286,11 +219,6 @@ package body KeyManager_Module is
    procedure Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed.
-
-   procedure General_Event_Handler
-     (Event : Gdk_Event; Kernel : System.Address);
-   --  Event handler called before even gtk can do its dispatching. This
-   --  intercepts all events going through the application
 
    procedure Keymanager_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
@@ -385,6 +313,51 @@ package body KeyManager_Module is
       Keymanager_Module := null;
    end Destroy;
 
+   -----------------------
+   -- Add_Event_Handler --
+   -----------------------
+
+   procedure Add_Event_Handler
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Handler : General_Event_Handler_Callback)
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      Keymanager_Module.Handlers := new Event_Handler_Record'
+        (Handler => Handler,
+         Next    => Keymanager_Module.Handlers);
+   end Add_Event_Handler;
+
+   --------------------------
+   -- Remove_Event_Handler --
+   --------------------------
+
+   procedure Remove_Event_Handler
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Handler : General_Event_Handler_Callback)
+   is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Event_Handler_Record, Event_Handler_Access);
+      pragma Unreferenced (Kernel);
+      Tmp      : Event_Handler_Access := Keymanager_Module.Handlers;
+      N        : Event_Handler_Access;
+   begin
+      if Tmp.Handler = Handler then
+         Keymanager_Module.Handlers := Tmp.Next;
+         Unchecked_Free (Tmp);
+      else
+         while Tmp.Next /= null loop
+            if Tmp.Next.Handler = Handler then
+               N := Tmp.Next;
+               Tmp.Next := Tmp.Next.Next;
+               Unchecked_Free (N);
+               exit;
+            end if;
+            Tmp := Tmp.Next;
+         end loop;
+      end if;
+   end Remove_Event_Handler;
+
    ---------------------------
    -- General_Event_Handler --
    ---------------------------
@@ -393,103 +366,28 @@ package body KeyManager_Module is
      (Event : Gdk_Event; Kernel : System.Address)
    is
       Event_Type  : constant Gdk_Event_Type := Get_Event_Type (Event);
-      Key_Item    : Macro_Item_Key_Access;
-      Button_Item : Macro_Item_Mouse_Access;
-      Motion_Item : Macro_Item_Motion_Access;
-      Scroll_Item : Macro_Item_Scroll_Access;
-
-      procedure Save_Item (Item : Macro_Item_Access);
-      --  Save item in list of current events, if non null
-
-      ---------------
-      -- Save_Item --
-      ---------------
-
-      procedure Save_Item (Item : Macro_Item_Access) is
-      begin
-         if Item /= null then
-            if Keymanager_Module.Events.Events = null then
-               Keymanager_Module.Events.Events := Item;
-               Keymanager_Module.Events.Last_Event := Item;
-
-            else
-               --  Store the relative time, to ease replay.
-
-               Item.Prev := Keymanager_Module.Events.Last_Event;
-               Keymanager_Module.Events.Last_Event.Next := Item;
-               Keymanager_Module.Events.Last_Event := Item;
-            end if;
-
-            Keymanager_Module.Events.Prev_Time := Get_Time (Event);
-         end if;
-      end Save_Item;
+      Tmp         : Event_Handler_Access;
 
    begin
       if Keymanager_Module = null then
          --  This can happen when GPS is exiting and modules have been
          --  deallocated already.
-
          Gtk.Main.Do_Event (Event);
          return;
       end if;
+
+      Tmp := Keymanager_Module.Handlers;
+      while Tmp /= null
+        and then not Tmp.Handler (Event, Convert (Kernel))
+      loop
+         Tmp := Tmp.Next;
+      end loop;
 
       --  We do not put a global exception handler in this procedure since
       --  it is called very often, so when using setjmp/longjmp, the cost
       --  may not be negligible.
 
-      if Keymanager_Module.Recording then
-         begin
-            case Event_Type is
-               when Key_Press | Key_Release =>
-                  Key_Item := Create_Item
-                    (Event, Keymanager_Module.Events.Prev_Time);
-                  Save_Item (Macro_Item_Access (Key_Item));
-
-                  if Process_Event (Convert (Kernel), Event) then
-                     return;
-                  end if;
-
-               when Button_Press | Button_Release
-                    | Gdk_2button_Press
-                    | Gdk_3button_Press
-               =>
-                  Button_Item := Create_Item
-                    (Event, Keymanager_Module.Events.Prev_Time);
-                  Save_Item (Macro_Item_Access (Button_Item));
-
-               when Motion_Notify =>
-                  Motion_Item := Create_Item
-                    (Event, Keymanager_Module.Events.Prev_Time);
-                  Save_Item (Macro_Item_Access (Motion_Item));
-
-               when Scroll =>
-                  Scroll_Item := Create_Item
-                    (Event, Keymanager_Module.Events.Prev_Time);
-                  Save_Item (Macro_Item_Access (Scroll_Item));
-
-               --  Other events should not be needed: they will be generated as
-               --  part the basic events handled above (keyboard/mouse events).
-
-               when others =>
-                  null;
-            end case;
-
-         exception
-            when E : others =>
-               Trace
-                 (Exception_Handle,
-                  "Unexpected exception: " & Exception_Information (E));
-         end;
-
-      elsif Event_Type = Key_Press or else Event_Type = Key_Release then
-         if Keymanager_Module.Events.Current_Event /= null
-           and then not Get_Send_Event (Event)
-           and then Get_Key_Val (Event) = GDK_Escape
-         then
-            Trace (Me, "Replay cancelled");
-            Keymanager_Module.Events.Current_Event := null;
-         end if;
-
+      if Event_Type = Key_Press or else Event_Type = Key_Release then
          if Process_Event (Convert (Kernel), Event) then
             return;
          end if;
@@ -1248,56 +1146,6 @@ package body KeyManager_Module is
          Insert (Kernel, -"Could not parse " & Filename, Mode => Error);
    end Load_Custom_Keys;
 
-   ---------------------------
-   -- Macro_Command_Handler --
-   ---------------------------
-
-   procedure Macro_Command_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String) is
-   begin
-      if Command = "macro_load" then
-         Name_Parameters (Data, Load_Macro_Cmd_Parameters);
-
-         declare
-            File    : constant String := Nth_Arg (Data, 1);
-            Success : Boolean;
-            Macro   : constant String := '/' & (-"Tools/Macro") & '/';
-
-         begin
-            Load_Macro (Create (File), Success);
-
-            if Success then
-               Set_Sensitive
-                 (Find_Menu_Item (Get_Kernel (Data), Macro & (-"Play")), True);
-            else
-               Set_Error_Msg
-                 (Data, Command & ": " & (-"error while reading file"));
-            end if;
-         end;
-
-      elsif Command = "macro_play" then
-         Name_Parameters (Data, Play_Macro_Cmd_Parameters);
-
-         declare
-            Speed : constant String := Nth_Arg (Data, 1, Default => "1.0");
-         begin
-            Play_Macro (Get_Kernel (Data), Duration'Value (Speed));
-         exception
-            when Constraint_Error =>
-               Set_Error_Msg (Data, Command & ": " & (-"invalid speed value"));
-         end;
-
-      elsif Command = "macro_record" then
-         Record_Macro (Get_Kernel (Data));
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
-   end Macro_Command_Handler;
-
    ----------------------------
    -- Lookup_Key_From_Action --
    ----------------------------
@@ -1431,275 +1279,6 @@ package body KeyManager_Module is
          return To_String (Result);
       end if;
    end Lookup_Key_From_Action;
-
-   ------------------------
-   -- On_Start_Recording --
-   ------------------------
-
-   procedure On_Start_Recording
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-   begin
-      Record_Macro (Kernel);
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
-   end On_Start_Recording;
-
-   ------------------
-   -- Record_Macro --
-   ------------------
-
-   procedure Record_Macro (Kernel : Kernel_Handle) is
-      Macro : constant String := '/' & (-"Tools/Macro") & '/';
-   begin
-      Set_Follow_Events (True);
-
-      --  ??? There's no way to remove Pointer_Motion_Mask afterwards
-      Add_Events (Get_Main_Window (Kernel), Pointer_Motion_Mask);
-
-      Set_Sensitive
-        (Find_Menu_Item (Kernel, Macro & (-"Start Recording")), False);
-      Set_Sensitive
-        (Find_Menu_Item (Kernel, Macro & (-"Stop Recording")), True);
-      Set_Sensitive
-        (Find_Menu_Item (Kernel, Macro & (-"Play")), False);
-      Set_Sensitive
-        (Find_Menu_Item (Kernel, Macro & (-"Save As...")), False);
-
-      Free_List (Keymanager_Module.Events.Events);
-      Keymanager_Module.Events.Last_Event := null;
-      Keymanager_Module.Events.Prev_Time := 0;
-      Keymanager_Module.Recording := True;
-   end Record_Macro;
-
-   -----------------------
-   -- On_Stop_Recording --
-   -----------------------
-
-   procedure On_Stop_Recording
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-      Macro : constant String := '/' & (-"Tools/Macro") & '/';
-   begin
-      Set_Follow_Events (False);
-      Keymanager_Module.Recording := False;
-      Set_Sensitive
-        (Find_Menu_Item (Kernel, Macro & (-"Start Recording")), True);
-      Set_Sensitive
-        (Find_Menu_Item (Kernel, Macro & (-"Stop Recording")), False);
-      Set_Sensitive
-        (Find_Menu_Item (Kernel, Macro & (-"Play")), True);
-      Set_Sensitive
-        (Find_Menu_Item (Kernel, Macro & (-"Save As...")), True);
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
-   end On_Stop_Recording;
-
-   ----------------------
-   -- Play_Macro_Timer --
-   ----------------------
-
-   function Play_Macro_Timer return Boolean is
-      Macro         : constant String := '/' & (-"Tools/Macro") & '/';
-      Current_Event : Macro_Item_Access renames
-        Keymanager_Module.Events.Current_Event;
-      Timeout       : Guint32;
-      Wait          : Duration;
-      Success       : Boolean;
-      Id            : Timeout_Handler_Id;
-      pragma Unreferenced (Id, Success);
-
-   begin
-      if Current_Event /= null then
-         Success := Play_Event
-           (Current_Event.all,
-            Gtk_Widget
-              (Get_Main_Window (Get_Kernel (Keymanager_Module.all))));
-         Current_Event := Current_Event.Next;
-      end if;
-
-      if Current_Event = null then
-         Set_Sensitive
-           (Find_Menu_Item
-              (Get_Kernel (Keymanager_Module.all), Macro & (-"Play")), True);
-      else
-         --  Compute proper timeout value, taking into account the time
-         --  spent to handle each event manually.
-
-         Keymanager_Module.Events.Time_Spent :=
-           Keymanager_Module.Events.Time_Spent +
-             Current_Event.Time;
-         Wait := Keymanager_Module.Events.Start_Clock - Clock +
-           Duration (Keymanager_Module.Events.Time_Spent) /
-             Duration (Keymanager_Module.Events.Speed * 1000.0);
-
-         if Wait > 0.0 then
-            Timeout := Guint32 (Wait * 1000.0);
-         else
-            Timeout := 0;
-         end if;
-
-         Id := Gtk.Main.Timeout_Add (Timeout, Play_Macro_Timer'Access);
-      end if;
-
-      return False;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
-         return False;
-   end Play_Macro_Timer;
-
-   ----------------
-   -- Play_Macro --
-   ----------------
-
-   procedure Play_Macro (Kernel : Kernel_Handle; Speed : Duration := 1.0) is
-      Macro         : constant String := '/' & (-"Tools/Macro") & '/';
-      Current_Event : Macro_Item_Access renames
-        Keymanager_Module.Events.Current_Event;
-      Id            : Timeout_Handler_Id;
-      pragma Unreferenced (Id);
-
-   begin
-      Current_Event := Keymanager_Module.Events.Events;
-
-      if Current_Event /= null then
-         Set_Sensitive
-           (Find_Menu_Item (Kernel, Macro & (-"Play")), False);
-         Keymanager_Module.Events.Start_Clock := Clock;
-         Keymanager_Module.Events.Time_Spent  := 0;
-         Keymanager_Module.Events.Speed       := Speed;
-         Id := Gtk.Main.Timeout_Add (0, Play_Macro_Timer'Access);
-      end if;
-   end Play_Macro;
-
-   -------------------
-   -- On_Play_Macro --
-   -------------------
-
-   procedure On_Play_Macro
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-   begin
-      Play_Macro (Kernel);
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
-   end On_Play_Macro;
-
-   -------------------
-   -- On_Load_Macro --
-   -------------------
-
-   procedure On_Load_Macro
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      Macro : constant String := '/' & (-"Tools/Macro") & '/';
-      pragma Unreferenced (Widget);
-   begin
-      declare
-         Success : Boolean := False;
-         Name    : constant Virtual_File :=
-           Select_File
-             (Title             => -"Load Macro",
-              Parent            => Get_Current_Window (Kernel),
-              Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
-              Kind              => Open_File,
-              History           => Get_History (Kernel));
-
-      begin
-         if Name = VFS.No_File then
-            return;
-         end if;
-
-         Load_Macro (Name, Success);
-
-         if Success then
-            Set_Sensitive (Find_Menu_Item (Kernel, Macro & (-"Play")), True);
-         else
-            Insert (Kernel, -"Error while loading macro", Mode => Error);
-         end if;
-      end;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
-   end On_Load_Macro;
-
-   -------------------
-   -- On_Save_Macro --
-   -------------------
-
-   procedure On_Save_Macro
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-      Events : constant Macro_Item_Access := Keymanager_Module.Events.Events;
-   begin
-      if Events = null then
-         return;
-      end if;
-
-      declare
-         Success : Boolean;
-         Name    : constant Virtual_File :=
-           Select_File
-             (Title             => -"Save Macro As",
-              Parent            => Get_Current_Window (Kernel),
-              Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
-              Kind              => Save_File,
-              History           => Get_History (Kernel));
-
-      begin
-         if Name = VFS.No_File then
-            return;
-         end if;
-
-         Success :=
-           Save_List (Locale_From_UTF8 (Full_Name (Name).all), Events);
-
-         if not Success then
-            Insert (Kernel, -"Error while saving macro", Mode => Error);
-         end if;
-      end;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
-   end On_Save_Macro;
-
-   ----------------
-   -- Load_Macro --
-   ----------------
-
-   procedure Load_Macro (File : Virtual_File; Success : out Boolean) is
-      Buffer  : String_Access;
-   begin
-      Success := False;
-      Buffer  := Read_File (File);
-
-      if Buffer /= null then
-         Free_List (Keymanager_Module.Events.Events);
-         Load_List
-           (Buffer.all, Keymanager_Module.Events.Events, Success);
-         Free (Buffer);
-      end if;
-   end Load_Macro;
 
    ---------------
    -- Customize --
@@ -2055,7 +1634,6 @@ package body KeyManager_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Macro_Menu : constant String := "/" & (-"Tools/Macro");
       Key : constant String := Get_Home_Dir (Kernel) & "custom_key";
       Command    : Interactive_Command_Access;
 
@@ -2084,40 +1662,7 @@ package body KeyManager_Module is
          Gtk.Accel_Map.Load (Key);
       end if;
 
-      if Active (Use_Macro) then
-         Register_Menu
-           (Kernel, Macro_Menu, -"_Start Recording",
-            Callback => On_Start_Recording'Access);
-         Register_Menu
-           (Kernel, Macro_Menu, -"S_top Recording",
-            Callback   => On_Stop_Recording'Access,
-            Accel_Key  => GDK_Escape,
-            Accel_Mods => Control_Mask,
-            Sensitive  => False);
-         Register_Menu
-           (Kernel, Macro_Menu, -"_Play",
-            Callback  => On_Play_Macro'Access,
-            Sensitive => False);
-         Register_Menu
-           (Kernel, Macro_Menu, -"Load...",
-            Callback  => On_Load_Macro'Access);
-         Register_Menu
-           (Kernel, Macro_Menu, -"_Save As...",
-            Callback  => On_Save_Macro'Access,
-            Sensitive => False);
-         Register_Command
-           (Kernel, "macro_play",
-            Maximum_Args => 1,
-            Handler      => Macro_Command_Handler'Access);
-         Register_Command
-           (Kernel, "macro_record",
-            Handler      => Macro_Command_Handler'Access);
-         Register_Command
-           (Kernel, "macro_load",
-            Minimum_Args => 1,
-            Maximum_Args => 1,
-            Handler      => Macro_Command_Handler'Access);
-      end if;
+      Standard.KeyManager_Module.Macros.Register_Commands (Kernel);
 
       Register_Command
         (Kernel, "last_command", 0, 0, Keymanager_Command_Handler'Access);

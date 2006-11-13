@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
+with Gdk.Event;
 with Gdk.Types;
 with GNAT.Strings;
 with GPS.Kernel;
@@ -176,5 +177,21 @@ private
 
    procedure Clone (From : Key_Htable.HTable; To : out Key_Htable.HTable);
    --  Deep copy of From
+
+   type General_Event_Handler_Callback is access function
+     (Event : Gdk.Event.Gdk_Event;
+      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return Boolean;
+   --  A function called when any event reaches any of the GPS windows. It
+   --  must return True if the event was processed, False otherwise (in which
+   --  case the event will be further processed).
+
+   procedure Add_Event_Handler
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Handler : General_Event_Handler_Callback);
+   procedure Remove_Event_Handler
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Handler : General_Event_Handler_Callback);
+   --  Add a new callback to be called when an event should be processed
 
 end KeyManager_Module;
