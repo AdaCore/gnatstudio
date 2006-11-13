@@ -39,16 +39,10 @@ with Glib;                    use Glib;
 with Gtk.Accel_Group;         use Gtk.Accel_Group;
 with Gtk.Accel_Map;           use Gtk.Accel_Map;
 with Gtk.Arguments;           use Gtk.Arguments;
-with Gtk.Enums;               use Gtk.Enums;
 with Gtk.Handlers;            use Gtk.Handlers;
 with Gtk.Main;                use Gtk.Main;
-with Gtk.Text_Tag;            use Gtk.Text_Tag;
-with Gtk.Tree_Model;          use Gtk.Tree_Model;
-with Gtk.Tree_View_Column;    use Gtk.Tree_View_Column;
-with Gtk.Widget;              use Gtk.Widget;
 with Gtk.Window;              use Gtk.Window;
 
-with Gtkada.File_Selector;    use Gtkada.File_Selector;
 with Gtkada.MDI;              use Gtkada.MDI;
 
 with Commands.Interactive;    use Commands, Commands.Interactive;
