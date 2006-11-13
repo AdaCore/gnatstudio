@@ -540,7 +540,7 @@ will be loaded; any other file will be opened in a new source editor.
 The project explorer, as well as the file and outline view provide an
 interactive search capability allowing you to quickly
 search in the information currently displayed. The default key
-to start an interactive search is @key{Ctrl-i}.
+to start an interactive search is @key{control-f}.
 @anchor{Interactive Search}
 This will open a small window
 at the bottom of the explorer where you can interactively type names.
