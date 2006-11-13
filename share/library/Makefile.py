@@ -61,6 +61,7 @@ from GPS import *
 from os.path import *
 import re
 import os
+import traceback
 
 class Console_Process (Console, Process):
 
@@ -151,7 +152,7 @@ class Makefile:
       if self.menus:
         for m in self.menus:
            m.destroy()
-        self.menus = None
+        self.menus = []
 
    def edit_makefile (self, menu):
       """Open an editor to edit the current Makefile"""
@@ -167,7 +168,7 @@ class Makefile:
          self.destroy_menus()
          if self.makefile:
             self.menus.append \
-               (Menu.create \
+              (Menu.create \
                   ("/Build/Makefile/Edit Makefile",
                    ref = "Make", add_before=False,
                    on_activate=self.edit_makefile))
@@ -194,6 +195,7 @@ class Makefile:
             
             f.close()
       except:
+         Logger ("MAKE").log (traceback.format_exc())
          pass
 
    def on_project_changed (self, hook):
