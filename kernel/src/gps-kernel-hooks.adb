@@ -46,10 +46,11 @@ package body GPS.Kernel.Hooks is
    Descr_Cst    : aliased constant String := "description";
    Type_Cst     : aliased constant String := "type";
    Function_Cst : aliased constant String := "function_name";
+   Last_Cst     : aliased constant String := "last";
    Constructor_Parameters : constant Cst_Argument_List :=
      (1 => Name_Cst'Access);
    Add_Hook_Args : constant Cst_Argument_List :=
-     (1 => Function_Cst'Access);
+     (1 => Function_Cst'Access, 2 => Last_Cst'Access);
    Register_Hook_Args : constant Cst_Argument_List :=
      (1 => Name_Cst'Access, 2 => Descr_Cst'Access, 3 => Type_Cst'Access);
 
@@ -260,7 +261,8 @@ package body GPS.Kernel.Hooks is
       Info   : Hook_Description_Access;
       Func   : access GPS.Kernel.Hook_Function_Record'Class;
       Name   : String;
-      Watch  : Glib.Object.GObject := null);
+      Watch  : Glib.Object.GObject := null;
+      Last   : Boolean := False);
    --  Same as Add_Hook, but directly with the hook description. This saves a
    --  look up in a hash table
 
@@ -562,15 +564,22 @@ package body GPS.Kernel.Hooks is
       Info   : Hook_Description_Access;
       Func   : access GPS.Kernel.Hook_Function_Record'Class;
       Name   : String;
-      Watch  : Glib.Object.GObject := null)
+      Watch  : Glib.Object.GObject := null;
+      Last   : Boolean := False)
    is
    begin
       if Active (Me) then
          Trace
            (Me, "Adding function to hook " & Info.Name.all & ": " & Name);
       end if;
-      Prepend (Info.Funcs,
-               (Func => Hook_Function (Func), Name => new String'(Name)));
+
+      if Last then
+         Append (Info.Funcs,
+                 (Func => Hook_Function (Func), Name => new String'(Name)));
+      else
+         Prepend (Info.Funcs,
+                  (Func => Hook_Function (Func), Name => new String'(Name)));
+      end if;
       Func.Ref_Count := Func.Ref_Count + 1;
 
       if Watch /= null then
@@ -1345,6 +1354,7 @@ package body GPS.Kernel.Hooks is
          Info := Get_Data (Data, 1);
          declare
             Func : constant Subprogram_Type := Nth_Arg (Data, 2);
+            Last : constant Boolean := Nth_Arg (Data, 3, False);
          begin
             if Info = null then
                Set_Error_Msg (Data, "Unknown hook");
@@ -1352,7 +1362,8 @@ package body GPS.Kernel.Hooks is
                Add_Hook (Kernel => Get_Kernel (Data),
                          Info   => Info,
                          Func   => Info.Create_Subprogram_Wrapper (Func, Info),
-                         Name   => Get_Name (Func));
+                         Name   => Get_Name (Func),
+                         Last   => Last);
             end if;
          end;
 
@@ -1563,7 +1574,7 @@ package body GPS.Kernel.Hooks is
       Register_Command
         (Kernel, "add",
          Minimum_Args => 1,
-         Maximum_Args => 1,
+         Maximum_Args => 2,
          Class        => Hook_Class,
          Handler      => Default_Command_Handler'Access);
       Register_Command

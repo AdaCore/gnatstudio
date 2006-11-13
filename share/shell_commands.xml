@@ -3153,7 +3153,8 @@ The specific list depends on the hook type</param>
   <shell_doc name="GPS.Hook.add">
       <param name="self">The instance of GPS.Hook</param>
       <param name="function_name">A subprogram, see the "Subprogram Parameters" section in the GPS documentation</param>
-      <description>Connect a new function to a specific hook. Any time this hook is run through run_hook, this function will be called with the same parameters passed to run_hook.</description>
+      <param name="last" default="False">A boolean</param>
+      <description>Connect a new function to a specific hook. Any time this hook is run through run_hook, this function will be called with the same parameters passed to run_hook. If Last is True, then this function will be called after all functions currently added to this hook. If Last is False, it will be called before.</description>
       <example lang="shell">
         parse_xml """&lt;action name="edited"&gt;&lt;shell&gt;echo "File edited hook=$1 file=$2"&lt;/shell&gt;&lt;/action&gt;"""
         Hook "file_edited"
