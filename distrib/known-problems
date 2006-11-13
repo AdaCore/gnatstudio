@@ -1,18 +1,10 @@
 Known Problems fixed in GPS 4.1.0
 
-- FB02-007 Bad display of array indexes in debugger data window
-  Problem:    In some cases, when using the visual debugger to display array
-              variables, index values are not properly computed and set to
-              either Long_Integer'First or Long_Integer'Last. This appears in
-              particular with multi-dimensional arrays with index ranges of
-              enumerated types that include the first enumeration value.
-  Workaround: Let us assume you want to display the value of an array variable
-              named My_Array, type in the debugger console:
-                 (gdb) graph display `print my_array`
-              The result of the print command will be displayed as a canvas
-              item in the data window and will be refreshed every time the
-              debugger stops. See section 11.8 of Using GNAT Programming Studio
-              for more information on the debugger console.
+- FB13-004 Multiple undo needed after Complete Block action.
+  Problem:    After a Complete Block action multiple undo are needed
+              to go back to the editor state as it was just before the
+              action.
+  Workaround: Issue two undo actions.
 
 - FB07-014 Incorrect placement of Smart Completion window
   Problem:    When completing text near the bottom of the screen, the smart
@@ -49,6 +41,20 @@ Known Problems fixed in GPS 4.1.0
               characters after the cursor, such as "Kill line", the smart
               completion window does not disappear.
   Workaround: Delete the completion window manually by pressing "escape".
+
+- FB02-007 Bad display of array indexes in debugger data window
+  Problem:    In some cases, when using the visual debugger to display array
+              variables, index values are not properly computed and set to
+              either Long_Integer'First or Long_Integer'Last. This appears in
+              particular with multi-dimensional arrays with index ranges of
+              enumerated types that include the first enumeration value.
+  Workaround: Let us assume you want to display the value of an array variable
+              named My_Array, type in the debugger console:
+                 (gdb) graph display `print my_array`
+              The result of the print command will be displayed as a canvas
+              item in the data window and will be refreshed every time the
+              debugger stops. See section 11.8 of Using GNAT Programming Studio
+              for more information on the debugger console.
 
 - FA24-025 Part of the Scenario View is hidden
   Problem:    When the Scenario View doesn't have sufficient width, parts of
