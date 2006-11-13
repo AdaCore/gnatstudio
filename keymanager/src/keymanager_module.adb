@@ -3191,6 +3191,7 @@ package body KeyManager_Module is
            & " instance, if this is associated with ctrl-u, you can type"
            & " ""ctrl-u 30 t"" to instead the character t 30 times"),
          Category => -"General");
+      Bind_Default_Key (Kernel, "Repeat Next", "control-u");
 
       Add_Hook (Kernel, Preferences_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
