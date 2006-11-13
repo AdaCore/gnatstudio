@@ -122,6 +122,7 @@ class Isearch (CommandWindow):
       When instanciated, it immediately starts executing"""
 
    last_search = ""
+   last_case_sensitive = False
 
    def __init__ (self, case_sensitive=0, backward=0, regexp=0):
      try:
@@ -272,22 +273,24 @@ class Isearch (CommandWindow):
      if isearch_action_name in actions or isearch_menu.lower() in actions:
         self.backward = False
         if input == "":
+           self.case_sensitive = Isearch.last_case_sensitive
+           self.explicit_case_sensitive = True
            self.write (Isearch.last_search)
         else:
            self.loc = self.loc + 1
            self.search_next (input, len (input), redo_overlays=0)
-           # self.on_changed (input, len (input), redo_overlays=0)
         return True
 
      if isearch_backward_action_name in actions \
        or isearch_backward_menu.lower() in actions:
         self.backward = True
         if input == "":
+           self.case_sensitive = Isearch.last_case_sensitive
+           self.explicit_case_sensitive = True
            self.write (Isearch.last_search)
         else:
            self.loc = self.loc - 1
            self.search_next (input, len (input), redo_overlays=0)
-           # self.on_changed (input, len (input), redo_overlays=0)
         return True
 
      # Cancel the search on any special key. Currently, the key is lost, not
@@ -322,6 +325,7 @@ class Isearch (CommandWindow):
          and input.lower () != input:
            self.case_sensitive = True
            self.set_prompt (self.prompt ())    
+        Isearch.last_case_sensitive = self.case_sensitive
         self.search_next (input, cursor_pos, redo_overlays)
 
    def search_next (self, input, cursor_pos, redo_overlays):
