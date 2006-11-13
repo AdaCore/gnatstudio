@@ -1098,9 +1098,17 @@ package body KeyManager_Module is
                          (Context /= No_Context
                           and then Filter_Matches (Command.Filter, Context))
                      then
-                        Trace (Me, "Executing action " & Binding.Action.all
-                               & Keymanager_Module.Repeat_Count'Img
-                               & " times");
+                        if Active (Me) then
+                           if Keymanager_Module.Repeat_Count > 1 then
+                              Trace (Me, "Executing action "
+                                     & Binding.Action.all
+                                     & Keymanager_Module.Repeat_Count'Img
+                                     & " times");
+                           else
+                              Trace (Me, "Executing action "
+                                     & Binding.Action.all);
+                           end if;
+                        end if;
 
                         if Keymanager_Module.Last_Command /=
                           Cst_String_Access (Binding.Action)
