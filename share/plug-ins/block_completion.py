@@ -78,7 +78,7 @@ def on_gps_started (hook_name):
 
 def block_complete_on_location (buffer, location):
     block = location.block_type();
-    
+
     if not BLOCKS_DEFS.has_key (block):
         return;
 
@@ -86,14 +86,14 @@ def block_complete_on_location (buffer, location):
 
     if pattern != '':
         # Retreive the line at the start of the block
-    
-        start = GPS.EditorLocation (buffer, location.block_start_line(), 1); 
+
+        start = GPS.EditorLocation (buffer, location.block_start_line(), 1);
         end = GPS.EditorLocation (buffer, location.block_start_line() + 1, 1);
-    
+
         bs_content = buffer.get_chars (start, end);
-    
+
         re_pattern = re.compile (pattern, re.IGNORECASE | re.DOTALL);
-        
+
         if re_pattern.match (bs_content):
             term = re_pattern.sub (term, bs_content);
         else:
@@ -102,9 +102,11 @@ def block_complete_on_location (buffer, location):
             term = term.replace (r'\1', '');
             term = term.replace (r' \2', '');
             term = term.replace (r'\2', '');
-            
+
+    buffer.start_undo_group();
     buffer.insert (location, term);
     buffer.indent (location, location);
+    buffer.finish_undo_group();
 
 def block_complete (filename):
     file = GPS.File (filename);
