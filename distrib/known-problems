@@ -1,5 +1,19 @@
 Known Problems fixed in GPS 4.1.0
 
+- FB02-007 Bad display of array indexes in debugger data window
+  Problem:    In some cases, when using the visual debugger to display array
+              variables, index values are not properly computed and set to
+              either Long_Integer'First or Long_Integer'Last. This appears in
+              particular with multi-dimensional arrays with index ranges of
+              enumerated types that include the first enumeration value.
+  Workaround: Let us assume you want to display the value of an array variable
+              named My_Array, type in the debugger console:
+                 (gdb) graph display `print my_array`
+              The result of the print command will be displayed as a canvas
+              item in the data window and will be refreshed every time the
+              debugger stops. See section 11.8 of Using GNAT Programming Studio
+              for more information on the debugger console.
+
 - FB07-014 Incorrect placement of Smart Completion window
   Problem:    When completing text near the bottom of the screen, the smart
               completion window might hide the current line from view if there
@@ -9,7 +23,7 @@ Known Problems fixed in GPS 4.1.0
               using it without seeing the line, or remove it by pressing
               "escape".
 
-- FB03-022 Location view always looks for secondary location 
+- FB03-022 Location view always looks for secondary location
   Problem:    The location view is always looking for secondary locations, even
               when the text displayed is a random text, e.g. the result of a
               search. In addition, it may generate unstability when the column
