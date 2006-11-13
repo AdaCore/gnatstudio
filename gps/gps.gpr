@@ -30,6 +30,7 @@ with "../views/views";
 with "../remote/remote";
 with "../completion/completion";
 with "../code_analysis/code_analysis";
+with "plugins";
 
 project GPS is
 

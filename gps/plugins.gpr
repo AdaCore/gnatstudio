@@ -1,0 +1,11 @@
+
+with "../shared";
+
+project Plugins is
+
+   for Languages use ("XML", "Python");
+   for Source_Dirs use ("../share", "../share/plug-ins", "../share/library");
+
+   package IDE renames Shared.IDE;
+
+end Plugins;
