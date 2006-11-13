@@ -1159,8 +1159,17 @@ package body KeyManager_Module is
                declare
                   Tmp : String_Access := Keymanager_Module.Argument_Current;
                begin
-                  Keymanager_Module.Argument_Current :=
-                    new String'(Tmp.all & Get_String (Event));
+                  --  First a simple test: it is possible that Get_String
+                  --  returns an empty string although the keyval is really
+                  --  printable (this is the case from the automatic testsuite
+                  --  for instance).
+                  if Key >= 32 and then Key <= 128 then
+                     Keymanager_Module.Argument_Current :=
+                       new String'(Tmp.all & Character'Val (Key));
+                  else
+                     Keymanager_Module.Argument_Current :=
+                       new String'(Tmp.all & Get_String (Event));
+                  end if;
                   Free (Tmp);
                end;
 
@@ -1312,7 +1321,9 @@ package body KeyManager_Module is
             Keymanager_Module.Last_Command := null;
 
             --  To repeat this one, we need to requeue the event...
-            Undo_Group (Start => True);
+            --  No need to create an undo group, since these events are
+            --  processed asynchronously anyway. The editor will properly merge
+            --  editing actions into a single undo command anyway.
             for R in 2 .. Keymanager_Module.Repeat_Count loop
                declare
                   Ev : Gdk_Event;
@@ -1321,7 +1332,6 @@ package body KeyManager_Module is
                   Put (Ev);
                end;
             end loop;
-            Undo_Group (Start => False);
             Keymanager_Module.Repeat_Count := 1;
          end if;
 
