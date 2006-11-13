@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                                  GPS                              --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
+--                      Copyright (C) 2000-2006                      --
 --                                AdaCore                            --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -872,20 +872,43 @@ package body Debugger.Gdb.Ada is
          if Type_Str (Int) = '=' then
             --  Looking at "index => ".
             --  If we have an array with dynamic bounds, now is a good time to
-            --  find the index
+            --  find the index.
 
             if Bounds.Last < Bounds.First then
                Parse_Num (Type_Str, Index, Bounds.First);
                Set_Dimensions (Result.all, Dim, Bounds);
             end if;
 
-            Index := Int + 3;  --  skip "index => ";
+            Index := Int + 3;  --  skip "index => "
 
             --  If we are not parsing the most internal dimension, we in fact
             --  saw the start of a new dimension, as in:
             --    (3 => ((6 => 1, 2), (6 => 1, 2)), ((6 => 1, 2), (6 => 1, 2)))
             --  for array (3 .. 4, 1 .. 2, 6 .. 7) of integer
-            --  In that case, don't try to parse the item
+            --  In that case, don't try to parse the item.
+
+            if Dim /= Num_Dimensions (Result.all) then
+               return;
+            end if;
+
+         elsif Type_Str (Int) = '(' then
+            --  If we have an array but the "index => " was not used by GDB,
+            --  now is also a good time to find the index.
+            --  ??? GDB does not use the "index => " notation when the range
+            --  used for the index starts with the first element of the index
+            --  type as in:
+            --     type Index is (A, B, C, D);
+            --     type Index_Range is new Index range A .. C;
+            --     type Matrix is array (Index_Range, Index_Range) of Integer;
+
+            if Bounds.Last < Bounds.First then
+               Parse_Num (Type_Str, Index, Bounds.First);
+               Set_Dimensions (Result.all, Dim, Bounds);
+            end if;
+
+            --  If we are not parsing the most internal dimension, we in fact
+            --  saw the start of a new dimension.
+            --  In that case, don't try to parse the item.
 
             if Dim /= Num_Dimensions (Result.all) then
                return;
@@ -974,9 +997,9 @@ package body Debugger.Gdb.Ada is
                --  record or an array. The distinction can be made by
                --  looking at the current dimension being parsed.
 
-               if Dim = Num_Dimensions (Result.all) then
-                  Parse_Item;
-               else
+               Parse_Item;
+
+               if Dim /= Num_Dimensions (Result.all) then
                   Dim := Dim + 1;
                   Index := Index + 1;
                   Lengths (Dim) := 0;
