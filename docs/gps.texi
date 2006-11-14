@@ -2202,13 +2202,11 @@ Remove the comment delimiters from the current selection or line.
 @cindex completion
 
 Complete the identifier prefix under the cursor, and list the results in a
-pop-up list. This command can take advantage of the cross-reference information
-database and offer entity completions from the entire project, along with
-documentation extracted from comments surrounding declarations. To take full
-advantage of this feature, the cross-reference information must be loaded in
-memory. This can be done manually using the menu
-@code{Build->Load xref info in memory}, or this can be done automatically on
-GPS startup via a preference. The first time you use this feature, GPS will
+pop-up list. This command can take advantage of and entity database and offers
+completions from the entire project, along with documentation extracted from 
+comments surrounding declarations. To take full advantage of this feature, the 
+smart completion preference must be enabled, which will imply the load of the
+entity database at GPS startup. The first time you use this feature, GPS will
 ask you wether you want this enabled or not.
 
 In order to use this feature, open any Ada file, and begin to type an
@@ -2262,6 +2260,23 @@ begin
 @end smallexample
 
 Completing V. will propose Field1 and Field2.
+
+The smart completion can also give you the possible parameters of a call
+you're currently making. For example, in the following code:
+
+@smallexample
+
+   procedure Proc (A, B, C : Integer);
+
+begin
+
+   Proc (1,
+@end smallexample
+
+If you hit the completion key after the comma, the smart completion engine
+will propose you to complete with the named parameters "B =>", "C =>" or 
+directly to complete with all the remaining parameters, which in this case 
+will be "B =>, C => )".
 
 @iftex
 @cindex screen shot
