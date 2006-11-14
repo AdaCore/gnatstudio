@@ -457,7 +457,7 @@ class LineIterator:
         raise StopIteration
       loc2 = loc.end_of_line()
       if loc2 >= self.end.location():
-        self.mark = self.end + 1
+        self.mark.move (self.end.location() + 1)
         return (loc, self.end.location() - 1)
       else:
         self.mark.move (loc2 + 1)
