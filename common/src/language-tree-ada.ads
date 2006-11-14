@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.Strings; use GNAT.Strings;
+
 package Language.Tree.Ada is
 
    type Ada_Construct_Tree is private;
@@ -25,6 +27,8 @@ package Language.Tree.Ada is
    --  construct tree. This structure contains only the ada-specific part of
    --  the information, and has to be used with the construct tree from which
    --  it has been created.
+
+   Null_Ada_Construct_Tree : constant Ada_Construct_Tree;
 
    procedure Free
      (Tree : Construct_Tree; Ada_Tree : in out Ada_Construct_Tree);
@@ -64,12 +68,26 @@ package Language.Tree.Ada is
       Iter     : Construct_Tree_Iterator) return Construct_Cell_Access;
    --  Return the second body found in the tree
 
+   function Get_Most_Complete_View
+     (Tree     : Construct_Tree;
+      Ada_Tree : Ada_Construct_Tree;
+      Iter     : Construct_Tree_Iterator) return Construct_Cell_Access;
+   --  Return the most complete view accessible for the iterator given in
+   --  parameter.
+
    function Is_Most_Complete_View
      (Tree     : Construct_Tree;
       Ada_Tree : Ada_Construct_Tree;
       Iter     : Construct_Tree_Iterator) return Boolean;
    --  Return false if we have build a most complete view of the entity pointed
    --  by the iterator, false otherwise.
+
+   function Is_First_Occurence
+     (Tree     : Construct_Tree;
+      Ada_Tree : Ada_Construct_Tree;
+      Iter     : Construct_Tree_Iterator) return Boolean;
+   --  Return True if the iterator given in parameter is the first known
+   --  occurence, according to the trees.
 
    function Get_Visible_Constructs
      (Tree       : Construct_Tree;
@@ -178,6 +196,8 @@ private
      (Positive range <>) of Ada_Construct_Tree_Information;
 
    type Ada_Construct_Tree is access all Ada_Construct_Tree_Array;
+
+   Null_Ada_Construct_Tree : constant Ada_Construct_Tree := null;
 
    type Ada_Tree_Language is new Tree_Language with null record;
 
