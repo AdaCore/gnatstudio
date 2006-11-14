@@ -679,6 +679,24 @@ package body Language.Tree.Ada is
       end if;
    end Get_Second_Body;
 
+   ----------------------------
+   -- Get_Most_Complete_View --
+   ----------------------------
+
+   function Get_Most_Complete_View
+     (Tree     : Construct_Tree;
+      Ada_Tree : Ada_Construct_Tree;
+      Iter     : Construct_Tree_Iterator) return Construct_Cell_Access is
+   begin
+      if Ada_Tree (Iter.Index).Ada_Relation = null then
+         return (Tree, Iter.Index);
+      elsif Ada_Tree (Iter.Index).Ada_Relation.Second_Body.Index /= 0 then
+         return Ada_Tree (Iter.Index).Ada_Relation.Second_Body;
+      else
+         return Ada_Tree (Iter.Index).Ada_Relation.First_Body;
+      end if;
+   end Get_Most_Complete_View;
+
    ---------------------------
    -- Is_Most_Complete_View --
    ---------------------------
@@ -702,6 +720,22 @@ package body Language.Tree.Ada is
          return True;
       end if;
    end Is_Most_Complete_View;
+
+   ------------------------
+   -- Is_First_Occurence --
+   ------------------------
+
+   function Is_First_Occurence
+     (Tree     : Construct_Tree;
+      Ada_Tree : Ada_Construct_Tree;
+      Iter     : Construct_Tree_Iterator) return Boolean
+   is
+   begin
+      return Ada_Tree (Iter.Index).Ada_Relation = null
+        or else
+          (Ada_Tree (Iter.Index).Ada_Relation.Spec.Index = Iter.Index
+           and then Ada_Tree (Iter.Index).Ada_Relation.Spec.Tree = Tree);
+   end Is_First_Occurence;
 
    ---------------------------
    -- Get_Visible_Construct --
@@ -1232,6 +1266,14 @@ package body Language.Tree.Ada is
                    To_Construct_Tree_Iterator
                      (Ada_Tree (Initial_Parent.Index).Ada_Relation.Spec)
                  /= Initial_Parent
+                 and then Ada_Tree
+                   (Initial_Parent.Index).Ada_Relation.Spec.Tree = Tree
+               --  ??? with the statment above, we explicitely say that
+               --  we don't want to consider specs coming from possible foreign
+               --  trees referenced in the Ada_Tree given in parameter (most
+               --  commonly, the spec of a body or vice versa). Insead, we
+               --  could want to handle both, the body and the spec, in this
+               --  subprogram.
                then
                   --  There is actually a spec somewhere. Get it and look for
                   --  possible entities in jump_over mode.
