@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation; use Ada;
 
 with GNAT.Strings;
@@ -423,15 +423,27 @@ package body Completion.Ada.Constructs_Extractor is
 
             if Parent_Found then
                declare
-                  List : Completion_List := Get_Initial_Completion_List
-                    (Get_Resolver (Proposal).Manager.all,
-                     Proposal.Buffer.all,
-                     Parent_Sloc_End.Index,
-                     False);
+                  Context : constant Completion_Context :=
+                    new Ada_Construct_Extractor_Context;
+                  List : Completion_List;
                   Sub_Proposal_Is_Access : Boolean;
 
-                  It : Completion_Iterator := First (List);
+                  It : Completion_Iterator;
                begin
+                  Context.Buffer := Proposal.Buffer;
+                  Context.Offset := Parent_Sloc_End.Index;
+                  Ada_Construct_Extractor_Context (Context.all).File :=
+                    Proposal.File;
+
+                  Append (Get_Resolver (Proposal).Manager.Contexts, Context);
+
+                  List := Get_Initial_Completion_List
+                    (Get_Resolver (Proposal).Manager.all,
+                     Context,
+                     False);
+
+                  It := First (List);
+
                   while not At_End (It) loop
                      if Get_Proposal (It)
                        in Construct_Completion_Proposal'Class
@@ -661,6 +673,7 @@ package body Completion.Ada.Constructs_Extractor is
      (Resolver   : access Construct_Completion_Resolver;
       Identifier : String;
       Is_Partial : Boolean;
+      Context    : Completion_Context;
       Offset     : Integer;
       Filter     : Possibilities_Filter;
       Result     : in out Completion_List) is
@@ -723,17 +736,27 @@ package body Completion.Ada.Constructs_Extractor is
       end if;
 
       if (Filter and All_Visible_Entities) /= 0 and then Offset > 0 then
-         Append
-           (Result.List,
-            Construct_Db_Wrapper'
-              (First_File   => Resolver.Current_File,
-               First_Buffer => Resolver.Current_Buffer,
-               Construct_Db => Resolver.Construct_Db,
-               Name         => new String'(Identifier),
-               Is_Partial   => Is_Partial,
-               Offset       => Offset,
-               Resolver     => Resolver,
-               Filter       => Filter));
+         declare
+            File : Structured_File_Access;
+         begin
+            if Context.all in Ada_Construct_Extractor_Context then
+               File := Ada_Construct_Extractor_Context (Context.all).File;
+            else
+               File := Resolver.Current_File;
+            end if;
+
+            Append
+              (Result.List,
+               Construct_Db_Wrapper'
+                 (First_File   => File,
+                  First_Buffer => Context.Buffer,
+                  Construct_Db => Resolver.Construct_Db,
+                  Name         => new String'(Identifier),
+                  Is_Partial   => Is_Partial,
+                  Offset       => Offset,
+                  Resolver     => Resolver,
+                  Filter       => Filter));
+         end;
       end if;
    end Get_Possibilities;
 
@@ -763,9 +786,10 @@ package body Completion.Ada.Constructs_Extractor is
      (Db_Construct : Construct_Db_Wrapper)
       return Completion_List_Pckg.Virtual_List_Component_Iterator'Class
    is
-      Result : Construct_Iterator_Wrapper;
-      Tree   : constant Construct_Tree :=
-        To_Construct_Tree (Db_Construct.First_Buffer, Ada_Lang);
+      Result         : Construct_Iterator_Wrapper;
+      Tree           : constant Construct_Tree :=
+        To_Construct_Tree (Db_Construct.First_Buffer.all, Ada_Lang);
+      Unit_Construct : Construct_Tree_Iterator;
    begin
       Result.Stage := Initial_File;
       Result.First_File := Db_Construct.First_File;
@@ -780,29 +804,46 @@ package body Completion.Ada.Constructs_Extractor is
 
       Append (Db_Construct.Resolver.Tree_Collection, Tree);
 
-      declare
-         Ada_Tree : Ada_Construct_Tree :=
-           Generate_Ada_Construct_Tree
-             (Result.First_Tree,
-              Result.First_Buffer);
-      begin
-         Result.Visible_Constructs :=
-           new Construct_Tree_Iterator_Array'
-             (Get_Visible_Constructs
-                  (Result.First_Tree,
-                   Ada_Tree,
-                   Db_Construct.Offset,
-                   Db_Construct.Name.all,
-                   Is_Partial => Db_Construct.Is_Partial));
+      Unit_Construct := Get_Unit_Construct (Ada_Tree_Lang, Result.First_Tree);
 
-         Free (Tree, Ada_Tree);
-      end;
+      if Get_Construct (Unit_Construct).Category = Cat_Package
+        and then not Get_Construct (Unit_Construct).Is_Declaration
+        and then Get_Parent_File (Result.First_File) /= null
+        and then Is_Body_Of
+          (Result.First_Tree,
+           Get_Full_Tree (Get_Parent_File (Result.First_File)))
+      then
+         Generate_Ada_Construct_Trees
+           (Spec_Tree     => Get_Full_Tree
+              (Get_Parent_File (Result.First_File)),
+            Body_Tree     => Result.First_Tree,
+            Spec_Buffer   => Get_Buffer (Get_Parent_File (Result.First_File)),
+            Body_Buffer   => Result.First_Buffer,
+            Spec_Ada_Tree => Result.First_Spec_Ada_Tree,
+            Body_Ada_Tree => Result.First_Ada_Tree);
+      else
+         Result.First_Ada_Tree := Generate_Ada_Construct_Tree
+           (Result.First_Tree, Result.First_Buffer);
+      end if;
+
+      Result.Visible_Constructs :=
+        new Construct_Tree_Iterator_Array'
+          (Get_Visible_Constructs
+               (Result.First_Tree,
+                Result.First_Ada_Tree,
+                Db_Construct.Offset,
+                Db_Construct.Name.all,
+                Is_Partial => Db_Construct.Is_Partial));
 
       if Result.Visible_Constructs'Length = 0 then
          Result.Visible_Index := 0;
          Next (Result);
       else
          Result.Visible_Index := Result.Visible_Constructs'First;
+      end if;
+
+      if not Is_Valid (Result) then
+         Next (Result);
       end if;
 
       return Result;
@@ -840,7 +881,11 @@ package body Completion.Ada.Constructs_Extractor is
               .Category /= Cat_Package
               or else
               Get_Construct (It.Visible_Constructs (It.Visible_Index))
-              .Is_Declaration);
+              .Is_Declaration)
+           and then Is_First_Occurence
+             (It.First_Tree,
+              It.First_Ada_Tree,
+              It.Visible_Constructs (It.Visible_Index));
       elsif It.Stage = Parent_File then
          return It.Current_It /= Null_Construct_Tree_Iterator;
       elsif It.Stage = Database then
@@ -939,7 +984,7 @@ package body Completion.Ada.Constructs_Extractor is
                        and then Get_Parent_Scope
                          (It.Current_Tree, It.Current_It)
                          /= Null_Construct_Tree_Iterator
-                       and then Is_Most_Complete_View
+                       and then Is_First_Occurence
                            (It.Current_Tree,
                             It.Current_Ada_Tree,
                             It.Current_It)
@@ -978,7 +1023,6 @@ package body Completion.Ada.Constructs_Extractor is
 
          exit when Is_Valid (It);
       end loop;
-
    end Next;
 
    ---------
@@ -986,11 +1030,14 @@ package body Completion.Ada.Constructs_Extractor is
    ---------
 
    function Get
-     (This : Construct_Iterator_Wrapper) return Completion_Proposal'Class is
+     (This : Construct_Iterator_Wrapper) return Completion_Proposal'Class
+   is
+      Proposal  : Construct_Completion_Proposal;
+      Full_Cell : Construct_Cell_Access;
    begin
       case This.Stage is
          when Initial_File =>
-            return Construct_Completion_Proposal'
+            Proposal := Construct_Completion_Proposal'
               (Resolver             => This.Resolver,
                Profile              => To_Profile_Manager
                  (This.First_Tree,
@@ -1004,8 +1051,19 @@ package body Completion.Ada.Constructs_Extractor is
                Buffer               => This.First_Buffer,
                Filter               => This.Filter,
                Is_In_Profile        => False);
+
+            Full_Cell := Get_Most_Complete_View
+                (This.First_Tree,
+                 This.First_Ada_Tree,
+                 This.Visible_Constructs (This.Visible_Index));
+
+            if Get_Tree (Full_Cell) = This.First_Tree then
+               Proposal.Tree_Node := To_Construct_Tree_Iterator (Full_Cell);
+            end if;
+
+            return Proposal;
          when Parent_File =>
-            return Construct_Completion_Proposal'
+            Proposal :=
               (Resolver             => This.Resolver,
                Profile              => To_Profile_Manager
                  (Get_Full_Tree (This.Current_File), This.Current_It),
@@ -1017,6 +1075,23 @@ package body Completion.Ada.Constructs_Extractor is
                Params_In_Expression => 0,
                Filter               => This.Filter,
                Is_In_Profile        => False);
+
+            Full_Cell := Get_Most_Complete_View
+                (This.Current_Tree, This.Current_Ada_Tree, This.Current_It);
+
+            if Get_Tree (Full_Cell) = This.First_Tree then
+               Proposal.Tree := This.First_Tree;
+               Proposal.Tree_Node := To_Construct_Tree_Iterator
+                 (Full_Cell);
+               Proposal.Buffer := This.First_Buffer;
+            elsif  To_Construct_Tree_Iterator (Full_Cell) /=
+              Proposal.Tree_Node
+            then
+               Proposal.Tree_Node := To_Construct_Tree_Iterator
+                 (Full_Cell);
+            end if;
+
+            return Proposal;
          when Database =>
             return Construct_Completion_Proposal'
               (Resolver             => This.Resolver,
