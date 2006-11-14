@@ -64,6 +64,7 @@ background_color = "yellow"
 
 import GPS, re
 from text_utils import *
+import traceback
 
 ispell = None
 
@@ -98,11 +99,11 @@ class Ispell:
         ## forever in any case.
         self.proc = GPS.Process \
            (ispell_command, before_kill=self.before_kill, task_manager=False)
-        result = self.proc.expect ("^.*", timeout=2000)
+        result = self.proc.expect ("^.*\\n", timeout=2000)
 
-   def read (self, word):
-      """Run ispell to find out the possible completions for the word stored in
-         the context. Ispell runs forever, waiting for words to check on its
+   def read (self, words):
+      """Run ispell to find out the possible correction for the words.
+         Ispell runs forever, waiting for words to check on its
          standard input.
          Note the use of a timeout in the call to expect(). This is so that if
          for some reason ispell answers something unexpected, we don't keep
@@ -111,29 +112,45 @@ class Ispell:
       attempt = 0
       while attempt < 2:
          self.restart_if_needed()
-         self.proc.send (word)
-         result = self.proc.expect ("^[&#\*\+\?\-].*", timeout=2000)
-         if result: break
+
+         # Always prepend a space, to protect special characters at the
+         # beginning of words that might be interpreted by aspell. This
+         # means we'll have to adjust indexes in parse()
+
+         self.proc.send (" " + words)
+
+         # output of aspell ends with an empty line, but includes
+         # multiple blank lines
+         result = self.proc.expect ("^\\n", timeout=2000)
+         if result != None: break
          attempt = attempt + 1
          self.proc.kill()
          self.proc = None
 
       try:
-         return re.compile ("^([&#*+?-].*)", re.M).search (result).group(1)
+         return result.strip(" \n")
       except:
          GPS.Console ("Messages").write ("Error while parsing ispell=" + result + "\n")
 
-   def parse (self, word):
+   def parse (self, words):
       """Parse the output from ispell, and returns a list of all possible
-         replacements"""
+         replacements. This returns a list of tuples, where each element has
+         the following contents ["mispelled", index, ["word1", "word2"]],
+         where index is the index in words of the mispelled word"""
 
-      result = self.read (word)
-      if result and result[0] == '&':
-         colon = result.find (":")
-         result = result[colon + 2 :].replace (" ","")
-         return result.split (",") 
-      else:
-         return []
+      result = []
+      try:
+        output = self.read (words)
+        for line in output.splitlines():
+          if line and line[0] == '&':
+              colon = line.find (":")
+              pos   = line [:colon].split()
+              # Adjust index with -1, since we added a space at the beginning
+              result.append ((pos[1], int (pos[-1]) - 1 ,
+                             line[colon + 2:].replace (" ", "").split(",")))
+      except:
+         GPS.Logger ("ISPELL").log (traceback.format_exc())
+      return result
 
    def ignore (self, word):
       """Should ignore word from now on, but not add it to personal dict"""
@@ -242,7 +259,7 @@ class Dynamic_Contextual (GPS.Contextual):
    def factory (self, context):
       """Return a list of strings, each of which is the title to use for an
          entry in the dynamic contextual menu"""
-      return ispell.parse (context.ispell_module_word)
+      return ispell.parse (context.ispell_module_word)[0][2]
 
    def on_activate (self, context, choice, choice_index):
       context.ispell_module_start.buffer().delete (context.ispell_module_start, context.ispell_module_end)
@@ -254,15 +271,20 @@ class Dynamic_Contextual (GPS.Contextual):
 ####################################
 
 class SpellCheckBuffer (GPS.CommandWindow):
-   """Spell check all the comments in a buffer.
+   """Spell check all the words in a buffer that belong to a specific category.
       The user is asked interactively for possible replacements"""
 
    def __init__ (self, category, buffer = None):
       if not buffer: buffer = GPS.EditorBuffer.get()
-      self.word_iter = None
-      self.comment = BlockIterator (buffer, category)
+      self.block = BlockIterator (buffer, category)
       self.replace_mode = False
+      self.line_iter = None
       self.has_window = False
+      self.replacement = None
+      self.current_line_start = 0
+      self.current_replace = 0
+      self.index_adjust = 0
+      self.local_dict = dict()
       self.next_with_error_or_destroy()
 
    def create_window (self):
@@ -280,46 +302,76 @@ class SpellCheckBuffer (GPS.CommandWindow):
          self.set_prompt ("(i,a,r,space")
 
    def next (self):
-      """Move to next word to analyze. Raise StopIteration at the end.
-         Returns a tuple (word_start, word_end) on success"""
+      """Move to the next line to analyze"""
+
+      # First try to move to next mispelled word on line
+      # We also need to handle a local dictionary, since the user might
+      # have added some words in the dictionary since the beginning of the
+      # block, and since we have computed the replacement
+      self.current_replace = self.current_replace + 1
+      while self.replacement and self.current_replace < len (self.replacement):
+         if self.replacement[self.current_replace][0] not in self.local_dict:
+           return
+         self.current_replace = self.current_replace + 1
+
       while True:
-         try:
-           if not self.word_iter: raise StopIteration
-           return self.word_iter.next()
-         except StopIteration:
-           block          = self.comment.next()
-           self.word_iter = WordIterator (block[0], block[1])
+        try:
+          # Else try to move to next line of current block
+          if not self.line_iter : raise StopIteration
+          line = self.line_iter.next ()
+          text = line[0].buffer().get_chars (line[0], line[1])
+          self.current_line_start = line[0]
+          self.local_dict         = dict() # Dict already known by aspell
+          self.replacement        = ispell.parse (text)
+          self.current_replace    = 0
+          self.index_adjust       = 0
+
+          # If there is a mispelled word on this line, process it
+          if self.replacement:
+            return
+        except StopIteration:
+          # Finally move to next block (and loop for first line of this block)
+          block = self.block.next ()
+          self.line_iter = LineIterator (block[0], block[1])
 
    def next_with_error_or_destroy (self):
       """Store the location of the next word with spelling errors.
          Raise StopIteration when there are no more words"""
       global ispell
+
       try:
-        while True:
-          word = self.next()
-          text = word[0].buffer().get_chars (word[0], word[1])
-          replace = ispell.parse (text)
-          if replace:
-            suggest = ""
-            for p in range (len(replace)):
-               if p <= 9: key=`p`
-               else:      key=chr (ord('A') + p - 10)
-               suggest=suggest + "[" + key + "]" + replace[p] + " "
-            word[0].buffer().select (word[0], word[1] + 1)
-            self.create_window()
-            self.write (suggest, 0)
-            self.word    = word
-            self.replace = replace
-            return
+         self.next ()
+         (word, index, replace) = self.replacement [self.current_replace]
+         suggest = ""
+         for p in range (len(replace)):
+           if p <= 9:
+              key=`p`
+           else:
+              key=chr (ord('A') + p - 10)
+           suggest=suggest + "[" + key + "]" + replace[p] + " "
+
+         start = self.current_line_start + index + self.index_adjust
+         stop  = start + len (word) - 1
+         self.current_line_start.buffer().select (start, stop + 1)
+         self.create_window()
+         self.write (suggest, 0)
+ 
       except StopIteration:
+        self.destroy()
+      except:
+        GPS.Logger ("ISPELL").log (traceback.format_exc())
         self.destroy()
 
    def on_activate (self, input):
       if self.replace_mode:
-         buffer = self.word[0].buffer()
-         buffer.delete (self.word[0], self.word[1])
-         buffer.insert (self.word[0], input)
-         self.word_iter.starts_at (self.word[0])
+         (word, index, replace) = self.replacement [self.current_replace]
+         buffer = self.current_line_start.buffer()
+         start  = self.current_line_start + index + self.index_adjust
+         stop   = start + len (word) - 1
+
+         buffer.delete (start, stop)
+         self.index_adjust = len (input) - len (word) + self.index_adjust
+         buffer.insert (start, input)
          self.replace_mode = False
          self.next_with_error_or_destroy()
 
@@ -328,23 +380,28 @@ class SpellCheckBuffer (GPS.CommandWindow):
       if self.replace_mode:
          return False
       else:
-         buffer = self.word[0].buffer()
-         replace = None
+         (word, index, replace) = self.replacement [self.current_replace]
+         buffer = self.current_line_start.buffer()
+         start  = self.current_line_start + index + self.index_adjust
+         stop   = start + len (word) - 1
+
+         repl = None
          key = key.replace ("shift-", "")
          if key == "i":
-            ispell.add_to_dict (buffer.get_chars (self.word[0], self.word[1]))
+            ispell.add_to_dict (word)
+            self.local_dict[word] = True
          elif key == "a":
-            ispell.ignore (buffer.get_chars (self.word[0], self.word[1]))
+            ispell.ignore (buffer.get_chars (start, stop))
+            self.local_dict[word] = True
          elif key == "r":
             self.write ("")         
-            self.set_prompt ("Replace with:")
             self.replace_mode = True
             return True
          elif key.isdigit():
-            try: replace = self.replace[int (key)]
+            try: repl = replace[int (key)]
             except IndexError: return True
          elif key.isupper():
-            try: replace = self.replace [ord(key) - ord('A') + 10]
+            try: repl = replace [ord(key) - ord('A') + 10]
             except IndexError: return True
          elif key == "Escape":
             self.destroy()
@@ -355,9 +412,10 @@ class SpellCheckBuffer (GPS.CommandWindow):
             # Invalid key, wait for valid one
             return True
 
-         if replace:
-            buffer.delete (self.word[0], self.word[1])
-            buffer.insert (self.word[0], replace)
+         if repl:
+            buffer.delete (start, stop)
+            self.index_adjust = len (repl) - len (word) + self.index_adjust
+            buffer.insert (start, repl)
 
          # Move to next word
          self.next_with_error_or_destroy()
