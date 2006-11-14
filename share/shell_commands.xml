@@ -3680,12 +3680,14 @@ After this, the menu will never be displayed again.
      <param name="self">The instance of GPS.Contextual</param>
      <param name="on_activate">A subprogram with one parameter context</param>
      <param name="label" default="None">A subprogram</param>
-     <param name="filter" default="None">A subprogram</param>
      <param name="ref" default="">A string</param>
      <param name="add_before" default="True">A boolean</param>
+     <param name="filter" default="None">A subprogram</param>
      <description>Create a new contextual menu entry.
 Whenever this menu entry is selected by the user, GPS will execute on_activate, passing one parameter which is the context for which the menu is displayed (this is generally the same as GPS.current_contextual()).
+
 The filter parameter can be used to filter when the entry should be displayed in the menu. It is a subprogram that receives one parameter, an instance of GPS.Context, and returns a boolean. If it returns True, the entry will be displayed, otherwise it is hidden.
+
 The label parameter can be used to control the text displayed in the contextual menu. By default, it is the same as the contextual name (used in the constructor to GPS.Contextual.__init__). If specified, it must be a subprogram that takes an instance of GPS.Context in parameter, and returns a string, which will be displayed in the menu.
 The parameters ref and add_before can be used to control the location of the entry within the contextual menu. ref is the name of another contextual menu entry, and add_before indicates whether the new entry is put before or after that second entry.</description>
      <example lang="python">

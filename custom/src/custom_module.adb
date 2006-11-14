@@ -86,7 +86,8 @@ package body Custom_Module is
      (1 => Path_Cst'Access,
       2 => On_Activate_Cst'Access,
       3 => Ref_Cst'Access,
-      4 => Add_Before_Cst'Access);
+      4 => Add_Before_Cst'Access,
+      5 => Filter_Cst'Access);
    Contextual_Constructor_Params : constant Cst_Argument_List :=
      (1 => Name_Cst'Access);
    Contextual_Create_Params : constant Cst_Argument_List :=
@@ -107,6 +108,14 @@ package body Custom_Module is
       On_Activate : Subprogram_Type;
    end record;
    type Subprogram_Type_Menu is access all Subprogram_Type_Menu_Record'Class;
+
+   type Action_Filter_Wrapper is new Action_Filter_Record with record
+      Filter : Subprogram_Type;
+   end record;
+   function Filter_Matches_Primitive
+     (Filter  : access Action_Filter_Wrapper;
+      Context : Selection_Context) return Boolean;
+   --  A filter that executes a shell subprogram
 
    procedure On_Activate (Menu : access Gtk_Widget_Record'Class);
    --  Called when a Subprogram_Type_Menu is activated
@@ -1244,6 +1253,25 @@ package body Custom_Module is
                 "Unexpected exception: " & Exception_Information (E));
    end On_Activate;
 
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   function Filter_Matches_Primitive
+     (Filter  : access Action_Filter_Wrapper;
+      Context : Selection_Context) return Boolean
+   is
+      C : Callback_Data'Class := Create
+        (Get_Script (Filter.Filter.all), 1);
+      Result : Boolean;
+   begin
+      Set_Nth_Arg
+        (C, 1, Create_Context (Get_Script (Filter.Filter.all), Context));
+      Result := Execute (Filter.Filter, C);
+      Free (C);
+      return Result;
+   end Filter_Matches_Primitive;
+
    ------------------
    -- Menu_Handler --
    ------------------
@@ -1283,6 +1311,9 @@ package body Custom_Module is
          declare
             Inst : Class_Instance;
             Path : constant String := Nth_Arg (Data, 1);
+            Filter : constant Subprogram_Type := Nth_Arg (Data, 5, null);
+            Filter_A : Action_Filter;
+
             Item : Gtk_Menu_Item;
             Menu : Subprogram_Type_Menu;
             Base : constant String := Base_Name (Path);
@@ -1300,12 +1331,18 @@ package body Custom_Module is
                Item := Gtk_Menu_Item (Menu);
             end if;
 
+            if Filter /= null then
+               Filter_A := new Action_Filter_Wrapper'
+                 (Action_Filter_Record with Filter);
+            end if;
+
             Register_Menu
               (Kernel      => Kernel,
                Parent_Path => Dir_Name (Path),
                Item        => Item,
                Ref_Item    => Nth_Arg (Data, 3, ""),
-               Add_Before  => Nth_Arg (Data, 4, True));
+               Add_Before  => Nth_Arg (Data, 4, True),
+               Filter      => Filter_A);
 
             Inst := New_Instance (Get_Script (Data), Menu_Class);
             Set_Data (Inst, Widget => GObject (Item));
@@ -1498,7 +1535,7 @@ package body Custom_Module is
       Register_Command
         (Kernel, "create",
          Minimum_Args  => 1,
-         Maximum_Args  => 4,
+         Maximum_Args  => 5,
          Static_Method => True,
          Class         => Menu_Class,
          Handler       => Menu_Handler'Access);
