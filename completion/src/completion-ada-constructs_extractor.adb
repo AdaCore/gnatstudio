@@ -210,7 +210,6 @@ package body Completion.Ada.Constructs_Extractor is
       Is_Partial : Boolean;
       Result     : in out Completion_List)
    is
-      Tree  : Construct_Tree;
       Ada_Tree : Ada_Construct_Tree;
 
       Parent_Sloc_Start, Parent_Sloc_End : Source_Location;
@@ -371,8 +370,6 @@ package body Completion.Ada.Constructs_Extractor is
          end;
       end if;
 
-      Tree := Proposal.Tree;
-
       Ada_Tree := Generate_Ada_Construct_Tree
         (Proposal.Tree, Proposal.Buffer);
 
@@ -483,17 +480,19 @@ package body Completion.Ada.Constructs_Extractor is
 
             if Get_Construct (Proposal.Tree_Node).Category
               in Cat_Class .. Cat_Subtype
-              and then not Is_Enum_Type (Tree, Proposal.Tree_Node)
+              and then not Is_Enum_Type (Proposal.Tree, Proposal.Tree_Node)
             then
                declare
                   Child_Iterator : Construct_Tree_Iterator;
                   Type_Iterator  : constant Construct_Tree_Iterator
                     := Proposal.Tree_Node;
                begin
-                  Child_Iterator := Next (Tree, Type_Iterator, Jump_Into);
+                  Child_Iterator := Next
+                    (Proposal.Tree, Type_Iterator, Jump_Into);
 
                   while
-                    Get_Parent_Scope (Tree, Child_Iterator) = Type_Iterator
+                    Get_Parent_Scope (Proposal.Tree, Child_Iterator)
+                    = Type_Iterator
                   loop
                      Add_To_List
                        (List,
@@ -504,7 +503,7 @@ package body Completion.Ada.Constructs_Extractor is
                         Proposal.Buffer);
 
                      Child_Iterator := Next
-                       (Tree, Child_Iterator, Jump_Over);
+                       (Proposal.Tree, Child_Iterator, Jump_Over);
                   end loop;
                end;
             end if;
@@ -520,9 +519,10 @@ package body Completion.Ada.Constructs_Extractor is
             begin
                --  ??? Should we check that we are still in the same file ?
                Spec_It := To_Construct_Tree_Iterator
-                 (Get_Spec (Tree, Ada_Tree, Proposal.Tree_Node));
+                 (Get_Spec (Proposal.Tree, Ada_Tree, Proposal.Tree_Node));
                Body_It := To_Construct_Tree_Iterator
-                 (Get_First_Body (Tree, Ada_Tree, Proposal.Tree_Node));
+                 (Get_First_Body
+                    (Proposal.Tree, Ada_Tree, Proposal.Tree_Node));
 
                Body_Visibility :=
                  Get_Construct (Body_It).Sloc_Start.Index <= Offset
@@ -537,12 +537,13 @@ package body Completion.Ada.Constructs_Extractor is
 
                --  Add the entities from the specification
 
-               Add_Children_Of (Tree, Spec_It, List, Private_Spec_Visibility);
+               Add_Children_Of
+                 (Proposal.Tree, Spec_It, List, Private_Spec_Visibility);
 
                --  If we have to add the entries in the body if needed
 
                if Body_Visibility and then Body_It /= Spec_It then
-                  Add_Children_Of (Tree, Body_It, List, True);
+                  Add_Children_Of (Proposal.Tree, Body_It, List, True);
                end if;
 
                if Get_Unit_Construct
@@ -593,7 +594,7 @@ package body Completion.Ada.Constructs_Extractor is
             null;
       end case;
 
-      Free (Tree, Ada_Tree);
+      Free (Proposal.Tree, Ada_Tree);
    end Get_Composition;
 
    ------------------------------
@@ -738,18 +739,32 @@ package body Completion.Ada.Constructs_Extractor is
       if (Filter and All_Visible_Entities) /= 0 and then Offset > 0 then
          declare
             File : Structured_File_Access;
+            Tree : aliased Construct_Tree;
          begin
+            Tree := To_Construct_Tree (Context.Buffer.all, Ada_Lang);
+
             if Context.all in Ada_Construct_Extractor_Context then
+               if not Is_In_Parents
+                 (Ada_Construct_Extractor_Context (Context.all).File,
+                  Construct_Completion_Resolver (Resolver.all).Current_File)
+               then
+                  Tree := Get_Public_Tree (Ada_Tree_Lang, Tree'Access, True);
+               end if;
+
                File := Ada_Construct_Extractor_Context (Context.all).File;
             else
                File := Resolver.Current_File;
+               Tree := To_Construct_Tree (Context.Buffer.all, Ada_Lang);
             end if;
+
+            Append (Resolver.Tree_Collection, Tree);
 
             Append
               (Result.List,
                Construct_Db_Wrapper'
                  (First_File   => File,
                   First_Buffer => Context.Buffer,
+                  First_Tree   => Tree,
                   Construct_Db => Resolver.Construct_Db,
                   Name         => new String'(Identifier),
                   Is_Partial   => Is_Partial,
@@ -787,8 +802,6 @@ package body Completion.Ada.Constructs_Extractor is
       return Completion_List_Pckg.Virtual_List_Component_Iterator'Class
    is
       Result         : Construct_Iterator_Wrapper;
-      Tree           : constant Construct_Tree :=
-        To_Construct_Tree (Db_Construct.First_Buffer.all, Ada_Lang);
       Unit_Construct : Construct_Tree_Iterator;
    begin
       Result.Stage := Initial_File;
@@ -798,11 +811,9 @@ package body Completion.Ada.Constructs_Extractor is
       Result.Resolver := Db_Construct.Resolver;
       Result.Is_Partial := Db_Construct.Is_Partial;
       Result.Filter := Db_Construct.Filter;
+      Result.First_File := Db_Construct.First_File;
+      Result.First_Tree := Db_Construct.First_Tree;
       Result.First_Buffer := Db_Construct.First_Buffer;
-      Result.First_Tree := Tree;
-      Result.First_Buffer := Db_Construct.First_Buffer;
-
-      Append (Db_Construct.Resolver.Tree_Collection, Tree);
 
       Unit_Construct := Get_Unit_Construct (Ada_Tree_Lang, Result.First_Tree);
 
@@ -889,19 +900,7 @@ package body Completion.Ada.Constructs_Extractor is
       elsif It.Stage = Parent_File then
          return It.Current_It /= Null_Construct_Tree_Iterator;
       elsif It.Stage = Database then
-         declare
-            File : Structured_File_Access := It.First_File;
-         begin
-            while File /= null loop
-               if Get_File (It.Db_Iterator) = File then
-                  return False;
-               end if;
-
-               File := Get_Parent_File (File);
-            end loop;
-         end;
-
-         return True;
+         return not Is_In_Parents (Get_File (It.Db_Iterator), It.First_File);
       end if;
 
       return True;
@@ -949,7 +948,16 @@ package body Completion.Ada.Constructs_Extractor is
                  and then It.Current_File /= null
                then
                   It.Current_It := First (Get_Full_Tree (It.Current_File));
-                  It.Current_Tree := Get_Full_Tree (It.Current_File);
+
+                  if Is_In_Parents
+                    (It.Current_File,
+                     Construct_Completion_Resolver
+                       (It.Resolver.all).Current_File)
+                  then
+                     It.Current_Tree := Get_Full_Tree (It.Current_File);
+                  else
+                     It.Current_Tree := Get_Public_Tree (It.Current_File);
+                  end if;
 
                   if It.Is_Current_Spec then
                      Generate_Ada_Construct_Trees
@@ -1084,6 +1092,7 @@ package body Completion.Ada.Constructs_Extractor is
                Proposal.Tree_Node := To_Construct_Tree_Iterator
                  (Full_Cell);
                Proposal.Buffer := This.First_Buffer;
+               Proposal.File := This.First_File;
             elsif  To_Construct_Tree_Iterator (Full_Cell) /=
               Proposal.Tree_Node
             then
