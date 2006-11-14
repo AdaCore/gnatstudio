@@ -54,6 +54,27 @@ package Completion is
 
    Null_Completion_List : constant Completion_List;
 
+   ------------------------
+   -- Completion_Context --
+   ------------------------
+
+   type Completion_Context is private;
+   --  A context holds data used by the completion engine to precise the
+   --  completion. It holds at least the buffer and the offset of the
+   --  completion, but some completion engines might want to attach specific
+   --  data to it.
+
+   procedure Free (Context : in out Completion_Context);
+   --  Free data associated to the context given in parameter.
+
+   function Get_Buffer
+     (Context : Completion_Context) return String_Access;
+   --  Return the buffer associated to this context.
+
+   function Get_Completion_Offset
+     (Context : Completion_Context) return Natural;
+   --  Return the offset associated to this context.
+
    -------------------------
    -- Completion_Resolver --
    -------------------------
@@ -88,6 +109,7 @@ package Completion is
      (Resolver   : access Completion_Resolver;
       Identifier : String;
       Is_Partial : Boolean;
+      Context    : Completion_Context;
       Offset     : Integer;
       Filter     : Possibilities_Filter;
       Result     : in out Completion_List) is abstract;
@@ -118,23 +140,19 @@ package Completion is
    --  Free the memory associated to a completion manager access. This does not
    --  free the referenced resolvers which have to be freed separately.
 
-   procedure Set_Buffer
-     (Manager : in out Completion_Manager; Buffer : String_Access);
-   --  Set the buffer from where the competion is done. This has to be called
-   --  before any completion attempt.
-   --  Warning ! The pointer given in parameter must remain valid during the
-   --  whole life of the buffer, otherwise accessing it will result a memory
-   --  corruption.
-
-   function Get_Buffer (Manager : Completion_Manager) return String_Access;
-   --  Return the buffer associated to this manager.
-
    procedure Register_Resolver
      (Manager  : access Completion_Manager;
       Resolver : access Completion_Resolver'Class);
    --  Add a resolver to this manager. A given resolver can only be added in
    --  one manager (it knows its manager). Resolvers will be called in the
    --  order that they have been registred.
+
+   function Create_Context
+     (Manager : access Completion_Manager;
+      Buffer  : String_Access;
+      Offset  : Natural) return Completion_Context;
+   --  Creates a new context for this manager, with the offset and the buffer
+   --  given in parameter.
 
    -------------------------
    -- Completion_Proposal --
@@ -219,8 +237,7 @@ package Completion is
 
    function Get_Initial_Completion_List
      (Manager        : Completion_Manager;
-      Buffer         : String;
-      Start_Offset   : Natural;
+      Context        : Completion_Context;
       End_Is_Partial : Boolean := True) return Completion_List is abstract;
    --  Generates an initial completion list, for the cursor pointing at the
    --  given offset. This operation is time consuming, so it would be good
@@ -269,6 +286,15 @@ package Completion is
 
 private
 
+   type Completion_Context_Record is tagged record
+      Buffer : String_Access;
+      Offset : Integer;
+   end record;
+
+   type Completion_Context is access all Completion_Context_Record'Class;
+
+   procedure Free (Context : in out Completion_Context_Record);
+
    type Completion_Resolver is abstract tagged record
       Manager : Completion_Manager_Access;
    end record;
@@ -278,9 +304,13 @@ private
 
    use Completion_Resolver_List_Pckg;
 
+   package Context_List_Pckg is new Generic_List (Completion_Context);
+
+   use Context_List_Pckg;
+
    type Completion_Manager is abstract tagged record
-      Buffer    : String_Access;
       Resolvers : Completion_Resolver_List_Pckg.List;
+      Contexts  : Context_List_Pckg.List;
    end record;
 
    type Parameter is record
