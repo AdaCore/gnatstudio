@@ -360,7 +360,10 @@ class SpellCheckBuffer (GPS.CommandWindow):
         self.destroy()
       except:
         GPS.Logger ("ISPELL").log (traceback.format_exc())
-        self.destroy()
+        try:
+           self.destroy()
+        except:
+           pass  # already destroyed
 
    def on_activate (self, input):
       if self.replace_mode:
