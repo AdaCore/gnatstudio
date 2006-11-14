@@ -1358,6 +1358,9 @@ package body GPS.Kernel.Hooks is
          begin
             if Info = null then
                Set_Error_Msg (Data, "Unknown hook");
+            elsif Info.Create_Subprogram_Wrapper = null then
+               Set_Error_Msg
+                 (Data, "Cannot create internal wrapper for this hook");
             else
                Add_Hook (Kernel => Get_Kernel (Data),
                          Info   => Info,
