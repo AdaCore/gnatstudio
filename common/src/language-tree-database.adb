@@ -526,4 +526,24 @@ package body Language.Tree.Database is
       return First (Db.Sorted_Files_Db);
    end Start_File_Search;
 
+   -------------------
+   -- Is_In_Parents --
+   -------------------
+
+   function Is_In_Parents
+     (Parent, Child : Structured_File_Access) return Boolean
+   is
+      Current : Structured_File_Access := Child;
+   begin
+      while Current /= null loop
+         if Current = Parent then
+            return True;
+         end if;
+
+         Current := Current.Parent_File;
+      end loop;
+
+      return False;
+   end Is_In_Parents;
+
 end Language.Tree.Database;

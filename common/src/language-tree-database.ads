@@ -144,6 +144,11 @@ package Language.Tree.Database is
    function Start_File_Search (Db : Construct_Database) return File_Set.Cursor;
    --  Return a cursor pointing at the first element of the file database.
 
+   function Is_In_Parents
+     (Parent, Child : Structured_File_Access) return Boolean;
+   --  Return true if Parent is one of the parents of Child (including the
+   --  child itself).
+
 private
 
    type Construct_Node_Wrapper is record
