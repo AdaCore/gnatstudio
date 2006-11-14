@@ -49,6 +49,47 @@ package body Completion is
    end Get_Completed_String;
 
    ----------
+   -- Free --
+   ----------
+
+   procedure Free (Context : in out Completion_Context_Record) is
+      pragma Unreferenced (Context);
+   begin
+      null;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Context : in out Completion_Context) is
+      procedure Internal is new Ada.Unchecked_Deallocation
+        (Completion_Context_Record'Class, Completion_Context);
+   begin
+      Internal (Context);
+   end Free;
+
+   ----------------
+   -- Get_Buffer --
+   ----------------
+
+   function Get_Buffer
+     (Context : Completion_Context) return String_Access is
+   begin
+      return Context.Buffer;
+   end Get_Buffer;
+
+   ---------------------------
+   -- Get_Completion_Offset --
+   ---------------------------
+
+   function Get_Completion_Offset
+     (Context : Completion_Context) return Natural is
+   begin
+      return Context.Offset;
+   end Get_Completion_Offset;
+
+   ----------
    -- Next --
    ----------
 
@@ -74,17 +115,6 @@ package body Completion is
       return null;
    end Next;
 
-   ----------------
-   -- Set_Buffer --
-   ----------------
-
-   procedure Set_Buffer
-     (Manager : in out Completion_Manager; Buffer : String_Access)
-   is
-   begin
-      Manager.Buffer := Buffer;
-   end Set_Buffer;
-
    ----------
    -- Free --
    ----------
@@ -95,17 +125,9 @@ package body Completion is
           (Completion_Manager'Class, Completion_Manager_Access);
    begin
       Free (This.Resolvers, False);
+      Free (This.Contexts, True);
       Internal_Free (This);
    end Free;
-
-   ----------------
-   -- Get_Buffer --
-   ----------------
-
-   function Get_Buffer (Manager : Completion_Manager) return String_Access is
-   begin
-      return Manager.Buffer;
-   end Get_Buffer;
 
    -----------------------
    -- Register_Resolver --
@@ -118,6 +140,26 @@ package body Completion is
       Append (Manager.Resolvers, Completion_Resolver_Access (Resolver));
       Resolver.Manager := Completion_Manager_Access (Manager);
    end Register_Resolver;
+
+   --------------------
+   -- Create_Context --
+   --------------------
+
+   function Create_Context
+     (Manager : access Completion_Manager;
+      Buffer  : String_Access;
+      Offset  : Natural) return Completion_Context
+   is
+      New_Context : constant Completion_Context :=
+        new Completion_Context_Record;
+   begin
+      New_Context.Buffer := Buffer;
+      New_Context.Offset := Offset;
+
+      Append (Manager.Contexts, New_Context);
+
+      return New_Context;
+   end Create_Context;
 
    ----------
    -- Free --
