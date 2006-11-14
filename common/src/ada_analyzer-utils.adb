@@ -51,6 +51,9 @@ package body Ada_Analyzer.Utils is
             if Word = "access" then
                Result := True;
                return True;
+            elsif Word = "record" then
+               Result := False;
+               return True;
             end if;
          end if;
 
