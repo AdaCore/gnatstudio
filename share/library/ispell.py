@@ -259,7 +259,10 @@ class Dynamic_Contextual (GPS.Contextual):
    def factory (self, context):
       """Return a list of strings, each of which is the title to use for an
          entry in the dynamic contextual menu"""
-      return ispell.parse (context.ispell_module_word)[0][2]
+      try:
+        return ispell.parse (context.ispell_module_word)[0][2]
+      except:
+        return []
 
    def on_activate (self, context, choice, choice_index):
       context.ispell_module_start.buffer().delete (context.ispell_module_start, context.ispell_module_end)
