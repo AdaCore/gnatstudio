@@ -745,10 +745,6 @@ package body Completion_Module is
             Data.The_Text := Get_String (Buffer);
             Constructs := Get_Constructs (Buffer, Exact);
 
-            Set_Buffer
-              (Data.Manager.all,
-               GNAT.Strings.String_Access (Data.The_Text));
-
             Data.Constructs_Resolver := new Construct_Completion_Resolver'
               (New_Construct_Completion_Resolver
                  (Get_Construct_Database (Kernel),
@@ -788,9 +784,12 @@ package body Completion_Module is
 
                Trace (Me_Adv, "Getting completions ...");
                Data.Result := Get_Initial_Completion_List
-                 (Manager      => Data.Manager.all,
-                  Buffer       => Data.The_Text.all,
-                  Start_Offset => Offset);
+                 (Manager => Data.Manager.all,
+                  Context =>
+                    Create_Context
+                      (Data.Manager,
+                       GNAT.Strings.String_Access (Data.The_Text),
+                       Offset));
                Trace (Me_Adv, "Getting completions done");
             end;
 
