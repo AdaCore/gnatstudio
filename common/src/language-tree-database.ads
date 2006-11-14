@@ -26,6 +26,8 @@ with Ada.Containers.Ordered_Multisets;
 
 with GNAT.OS_Lib;
 
+with GNAT.Strings; use GNAT.Strings;
+
 with Lazy_Vectors;
 with Tries;
 with VFS;   use VFS;
