@@ -1145,7 +1145,8 @@ package body GPS.Kernel.Modules is
       Parent_Path : String;
       Item        : Gtk.Menu_Item.Gtk_Menu_Item := null;
       Ref_Item    : String := "";
-      Add_Before  : Boolean := True)
+      Add_Before  : Boolean := True;
+      Filter      : Action_Filter  := null)
    is
       Parent, Pred : Gtk_Menu_Item;
       Parent_Menu  : Gtk_Menu;
@@ -1182,6 +1183,15 @@ package body GPS.Kernel.Modules is
                    Index      => Index,
                    Add_Before => Add_Before);
          Show_All (Item);
+
+         if Filter /= null then
+            Command_Callback.Object_Connect
+              (Get_Toplevel (Item), "map", Map_Menu'Access,
+               Slot_Object => Item,
+               User_Data   => (Kernel_Handle (Kernel),
+                               null,
+                               Filter));
+         end if;
       end if;
    end Register_Menu;
 

@@ -563,7 +563,8 @@ package GPS.Kernel.Modules is
       Parent_Path : String;
       Item        : Gtk.Menu_Item.Gtk_Menu_Item := null;
       Ref_Item    : String := "";
-      Add_Before  : Boolean := True);
+      Add_Before  : Boolean := True;
+      Filter      : Action_Filter  := null);
    --  Add new menu items to the menu bar, as a child of Parent_Path.
    --  Parent_Path should have a form like "/main_main/submenu".
    --  Menus will be created if they don't exist.
@@ -584,6 +585,8 @@ package GPS.Kernel.Modules is
    --      Mitem : Gtk_Menu_Item;
    --      Gtk_New (Mitem);
    --      Register_Menu (Kernel, "/Parent_Path", Mitem);
+   --
+   --  The menu item will be active if Filter matches.
 
    procedure Register_Menu
      (Kernel      : access Kernel_Handle_Record'Class;
