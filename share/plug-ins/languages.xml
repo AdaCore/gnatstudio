@@ -243,7 +243,8 @@
     <Name>XML</Name>
     <Spec_Suffix>.xml</Spec_Suffix>
     <Context>
-      <New_Line_Comment_Start>&lt;!--</New_Line_Comment_Start>
+      <Comment_Start>&lt;!--</Comment_Start>
+      <Comment_End>--&gt;</Comment_End>
       <String_Delimiter>"</String_Delimiter>
       <Can_Indent>True</Can_Indent>
       <Syntax_Highlighting>True</Syntax_Highlighting>
