@@ -1,0 +1,15 @@
+with "../shared";
+
+project Docs is
+
+   for Languages use ("Texinfo");
+   for Object_Dir use ".";
+
+   package Naming is
+      for Specification_Suffix ("texinfo") use ".texi";
+   end Naming;
+
+   package IDE renames Shared.IDE;
+
+end Docs;
+
