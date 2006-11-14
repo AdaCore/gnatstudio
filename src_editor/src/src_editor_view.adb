@@ -2003,6 +2003,13 @@ package body Src_Editor_View is
 
       case Get_Key_Val (Event) is
          when GDK_Return =>
+            --  If we are in a smart completion, let the Return character be
+            --  caught by the completion window.
+
+            if View.In_Completion then
+               return False;
+            end if;
+
             if not View.As_Is_Mode then
                Word_Added (Buffer);
             end if;
