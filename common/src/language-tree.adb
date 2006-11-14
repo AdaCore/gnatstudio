@@ -152,13 +152,13 @@ package body Language.Tree is
    -----------------------
 
    function To_Construct_Tree
-     (Buffer : GNAT.Strings.String_Access;
-      Lang : access Language_Root'Class)
+     (Buffer : String;
+      Lang   : access Language_Root'Class)
       return Construct_Tree
    is
       List : aliased Construct_List;
    begin
-      Parse_Constructs (Lang, Buffer.all, List);
+      Parse_Constructs (Lang, Buffer, List);
 
       return To_Construct_Tree (List'Access, True);
    end To_Construct_Tree;

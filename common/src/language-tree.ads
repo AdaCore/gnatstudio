@@ -18,8 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Strings; use GNAT.Strings;
-
 with Language; use Language;
 
 package Language.Tree is
@@ -49,7 +47,7 @@ package Language.Tree is
    --  be freed at the end of the process.
 
    function To_Construct_Tree
-     (Buffer : String_Access; Lang : access Language_Root'Class)
+     (Buffer : String; Lang : access Language_Root'Class)
       return Construct_Tree;
    --  Same as above
 
