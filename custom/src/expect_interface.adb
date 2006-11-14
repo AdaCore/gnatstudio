@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Calendar;            use Ada.Calendar;
+with Ada.Exceptions;          use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 with GNAT.Expect;             use GNAT.Expect;
 pragma Warnings (Off);
@@ -561,6 +562,7 @@ package body Expect_Interface is
       Regexp  : constant Pattern_Matcher := Compile (Pattern, Multiple_Lines);
       Dead    : Boolean;
       Start   : Ada.Calendar.Time;
+      Tmp     : String_Access;
       Matches : Match_Array (0 .. 0);
       pragma Unreferenced (Kernel, Dead);
 
@@ -571,6 +573,10 @@ package body Expect_Interface is
          Trace (Me, "Expect " & Pattern & " Timeout=" & Timeout'Img);
       end if;
 
+      if Action.Processed_Output /= null then
+         Free (Action.Processed_Output);
+      end if;
+
       while Action.Pd /= null loop
          --  Check for timeout
 
@@ -579,7 +585,7 @@ package body Expect_Interface is
            and then Ada.Calendar.Clock > Start + (Duration (Timeout) / 1000.0)
          then
             if Active (Me) then
-               Trace (Me, "Interactive_Expect: Timeout");
+               Trace (Me, "Interactive_Expect: Timed out");
             end if;
 
             return Exit_Type'(Timed_Out);
@@ -591,13 +597,17 @@ package body Expect_Interface is
             Match (Regexp, Action.Unmatched_Output.all, Matches);
 
             if Matches (0) /= No_Match then
-               if Action.Processed_Output /= null then
-                  Free (Action.Processed_Output);
+               Tmp := Action.Processed_Output;
+               if Tmp = null then
+                  Action.Processed_Output := new String'
+                    (Action.Unmatched_Output
+                       (Action.Unmatched_Output'First .. Matches (0).Last));
+               else
+                  Action.Processed_Output := new String'
+                    (Tmp.all & Action.Unmatched_Output
+                       (Action.Unmatched_Output'First .. Matches (0).Last));
+                  Free (Tmp);
                end if;
-
-               Action.Processed_Output := new String'
-                 (Action.Unmatched_Output
-                    (Matches (0).First .. Matches (0).Last));
 
                if Matches (0).Last = Action.Unmatched_Output'Last then
                   Free (Action.Unmatched_Output);
@@ -842,6 +852,11 @@ package body Expect_Interface is
            (Data,
             To_String (D.Processed_Output) & To_String (D.Unmatched_Output));
       end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, "Unexpected exception: "
+                & Exception_Information (E));
    end Custom_Spawn_Handler;
 
    -----------------------
