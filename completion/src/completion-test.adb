@@ -300,7 +300,6 @@ procedure Completion.Test is
    begin
       Tag_Index := 1;
 
-      Set_Buffer (Manager.all, Buffer);
       Register_Resolver (Manager, Resolver);
 
       while Tag_Index < Buffer'Last loop
@@ -312,9 +311,10 @@ procedure Completion.Test is
          Start_Date := Clock;
 
          Get_Possibilities
-           (Resolver => Resolver,
+           (Resolver   => Resolver,
             Identifier => Buffer (Start_Word .. End_Word),
             Is_Partial => True,
+            Context    => Create_Context (Manager, Buffer, End_Word),
             Offset     => Start_Word - 1,
             Filter     => All_Visible_Entities,
             Result     => Result);
@@ -353,11 +353,9 @@ procedure Completion.Test is
       Start_Date  : Time;
       Time_Passed : Duration;
       Buffer      : constant String_Access := String_Access (Read_File (File));
-
    begin
       Tag_Index := 1;
 
-      Set_Buffer (Manager.all, Buffer);
       Register_Resolver (Manager, Resolver);
 
       while Tag_Index < Buffer'Last loop
@@ -370,8 +368,7 @@ procedure Completion.Test is
 
          Result := Get_Initial_Completion_List
            (Manager      => Manager.all,
-            Buffer       => Buffer.all,
-            Start_Offset => End_Word);
+            Context      => Create_Context (Manager, Buffer, End_Word));
 
          Time_Passed := Clock - Start_Date;
 
@@ -404,11 +401,9 @@ procedure Completion.Test is
       Start_Date  : Time;
       Time_Passed : Duration;
       Buffer      : constant String_Access := String_Access (Read_File (File));
-
    begin
       Tag_Index := 1;
 
-      Set_Buffer (Manager.all, Buffer);
       Register_Resolver (Manager, Resolver);
 
       while Tag_Index < Buffer'Last loop
@@ -423,6 +418,7 @@ procedure Completion.Test is
            (Resolver   => Resolver,
             Identifier => Buffer (Start_Word .. End_Word),
             Is_Partial => True,
+            Context    => Create_Context (Manager, Buffer, End_Word),
             Offset     => End_Word,
             Filter     => All_Visible_Entities,
             Result     => Result);
@@ -459,8 +455,7 @@ procedure Completion.Test is
       Start_Date  : Time;
       Time_Passed : Duration;
 
-      Buffer : constant String_Access := String_Access (Read_File (File));
-
+      Buffer  : constant String_Access := String_Access (Read_File (File));
    begin
       Start_Date := Clock;
 
@@ -477,7 +472,6 @@ procedure Completion.Test is
 
       Tag_Index := 1;
 
-      Set_Buffer (Manager.all, Buffer);
       Register_Resolver (Manager, Resolver);
 
       while Tag_Index < Buffer'Last loop
@@ -490,8 +484,7 @@ procedure Completion.Test is
 
          Result := Get_Initial_Completion_List
            (Manager      => Manager.all,
-            Buffer       => Buffer.all,
-            Start_Offset => End_Word);
+            Context      => Create_Context (Manager, Buffer, End_Word));
 
          Time_Passed := Clock - Start_Date;
 
