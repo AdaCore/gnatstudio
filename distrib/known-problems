@@ -13,6 +13,12 @@ Known Problems fixed in GPS 4.1.0
               action.
   Workaround: Issue two undo actions.
 
+- FB10-013 Interactive selection dialog causes crash.
+  Problem:    When closing windows using a key shortcut while in the window
+              selection dialog, GPS might crash if selecting in the list one of
+              the editors that has been closed.
+  Workaround: Do not close windows while in the interactive selection dialog
+
 - FB07-014 Incorrect placement of Smart Completion window
   Problem:    When completing text near the bottom of the screen, the smart
               completion window might hide the current line from view if there
