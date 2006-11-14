@@ -129,6 +129,7 @@ private
    with record
       First_File   : Structured_File_Access;
       First_Buffer : String_Access;
+      First_Tree   : Construct_Tree;
       Construct_Db : Construct_Database_Access;
       Name         : String_Access;
       Is_Partial   : Boolean;
