@@ -43,6 +43,7 @@ package Completion.Ada.Constructs_Extractor is
      (Resolver   : access Construct_Completion_Resolver;
       Identifier : String;
       Is_Partial : Boolean;
+      Context    : Completion_Context;
       Offset     : Integer;
       Filter     : Possibilities_Filter;
       Result     : in out Completion_List);
@@ -161,8 +162,11 @@ private
 
       --  Data needed by the first completion stage (current file)
 
-      First_Buffer       : String_Access;
-      First_Tree         : Construct_Tree;
+      First_Buffer        : String_Access;
+      First_Tree          : Construct_Tree;
+      First_Spec_Ada_Tree : Ada_Construct_Tree;
+      First_Ada_Tree      : Ada_Construct_Tree;
+
       Visible_Constructs : Construct_Tree_Iterator_Array_Access;
       Visible_Index      : Integer;
 
@@ -212,5 +216,10 @@ private
       return Profile_Manager_Access;
    --  Return a profile manager build on the iterator given in parameter, null
    --  if none.
+
+   type Ada_Construct_Extractor_Context is new Completion_Context_Record with
+      record
+         File : Structured_File_Access;
+      end record;
 
 end Completion.Ada.Constructs_Extractor;
