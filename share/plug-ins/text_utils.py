@@ -404,16 +404,16 @@ class BlockIterator:
               return (loc.buffer().beginning_of_buffer(),
                       loc.buffer().end_of_buffer())
       else:
-        while loc < loc.buffer().end_of_buffer():
-           loc2 = loc.forward_overlay (self.overlay)
-           self.in_comment = not self.in_comment
-           if not self.in_comment:
-             # Use a mark, in case the buffer is modified between iterations
-             self.mark.move (loc2 + 1)
-             return (loc, loc2 - 1)
-           else:
-             loc = loc2
-      raise StopIteration
+        # Find beginning of next section
+        if not loc.has_overlay (self.overlay):
+           loc = loc.forward_overlay (self.overlay)
+
+        if loc >= loc.buffer().end_of_buffer():
+           raise StopIteration
+
+        loc2 = loc.forward_overlay (self.overlay)
+        self.mark.move (loc2 + 1)
+        return (loc, loc2 - 1)
 
 class WordIterator:
    """An iterator for all words in a block. Each iteration returns a
@@ -458,10 +458,10 @@ class LineIterator:
       loc2 = loc.end_of_line()
       if loc2 >= self.end.location():
         self.mark.move (self.end.location() + 1)
-        return (loc, self.end.location() - 1)
+        return (loc, self.end.location())
       else:
         self.mark.move (loc2 + 1)
-        return (loc, loc2 - 1)
+        return (loc, loc2)
 
 ### Emulating Emacs selection:
 ### In Emacs, one sets the mark first, then when the cursor is moved the
