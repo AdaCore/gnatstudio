@@ -28,8 +28,7 @@ package body Completion.Ada is
 
    function Get_Initial_Completion_List
      (Manager        : Ada_Completion_Manager;
-      Buffer         : String;
-      Start_Offset   : Natural;
+      Context        : Completion_Context;
       End_Is_Partial : Boolean := True) return Completion_List
    is
       use Token_List;
@@ -76,7 +75,8 @@ package body Completion.Ada is
                        (Data (It),
                         Id,
                         Next (Token) = Token_List.Null_Node
-                          and then End_Is_Partial,
+                           and then End_Is_Partial,
+                        Context,
                         Data (Token).Token_Name_First - 1,
                         Filter,
                         Tmp);
@@ -89,14 +89,14 @@ package body Completion.Ada is
             else
                Get_Composition
                  (Previous_Proposal,
-                  Get_Name (Buffer, Data (Token)),
+                  Get_Name (Context.Buffer.all, Data (Token)),
                   Data (Token).Token_Name_First - 1,
                   Next (Token) = Token_List.Null_Node
                      and then End_Is_Partial,
                   Tmp);
 
                Tmp.Searched_Identifier := new String'
-                 (Get_Name (Buffer, Data (Token)));
+                 (Get_Name (Context.Buffer.all, Data (Token)));
             end if;
 
             Tmp_It := First (Tmp);
@@ -127,7 +127,7 @@ package body Completion.Ada is
                   Get_Composition
                     (Previous_Proposal,
                      "",
-                     Start_Offset,
+                     Context.Offset,
                      True,
                      Result);
                else
@@ -148,7 +148,7 @@ package body Completion.Ada is
 
             when Tok_Identifier =>
                Handle_Identifier
-                 (Get_Name (Buffer, Data (Token)));
+                 (Get_Name (Context.Buffer.all, Data (Token)));
 
             when Tok_Expression =>
                if Next (Token) /= Token_List.Null_Node then
@@ -177,7 +177,7 @@ package body Completion.Ada is
                         else
                            Set_Param_Written
                              (Previous_Proposal.Profile,
-                              Buffer
+                              Context.Buffer
                                 (Data (Current_Token).Token_Name_First
                                  .. Data (Current_Token).Token_Name_Last),
                               Success);
@@ -212,6 +212,7 @@ package body Completion.Ada is
                           (Data (It),
                            "",
                            True,
+                           Context,
                            Data (Token).Token_Name_First - 1,
                            All_Accessible_Units,
                            Result);
@@ -231,7 +232,7 @@ package body Completion.Ada is
             Get_Composition
               (Previous_Proposal,
                "",
-               Start_Offset,
+               Context.Offset,
                True,
                Result);
          end if;
@@ -239,7 +240,8 @@ package body Completion.Ada is
 
       Result : Completion_List;
    begin
-      Completing_Expression := Parse_Current_List (Buffer, Start_Offset);
+      Completing_Expression := Parse_Current_List
+        (Context.Buffer.all, Context.Offset);
 
       if First (Completing_Expression) /= Token_List.Null_Node then
          Analyze_Token
