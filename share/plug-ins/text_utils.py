@@ -443,6 +443,26 @@ class WordIterator:
             loc = loc + 1
       raise StopIteration
 
+class LineIterator:
+   """An iterator for all lines in a block. Each iteration returns a
+      tuple (start, end) of EditorLocation instances."""
+   def __init__ (self, start, end):
+      self.mark = start.create_mark()
+      self.end  = end.create_mark()
+   def __iter__ (self):
+      return self
+   def next (self):
+      loc = self.mark.location()
+      if loc >= self.end.location():
+        raise StopIteration
+      loc2 = loc.end_of_line()
+      if loc2 >= self.end.location():
+        self.mark = self.end + 1
+        return (loc, self.end.location() - 1)
+      else:
+        self.mark.move (loc2 + 1)
+        return (loc, loc2 - 1)
+
 ### Emulating Emacs selection:
 ### In Emacs, one sets the mark first, then when the cursor is moved the
 ### selection is extended appropriately. This is rather tricky to emulate
