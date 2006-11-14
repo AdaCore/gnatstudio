@@ -131,9 +131,9 @@ def contextual_filter (context):
      Logger ("LocalHist").log ("Unexpected exception " + traceback.format_exc())
      return False
 
-def revert_file (file, revision):
-   """Revert file to a local history revision"""
-   Logger ("LocalHist").log ("revert " + file.name() + " to " + revision)
+def local_checkout (file, revision):
+   """Do a local checkout of file at given revision in the RCS directory.
+      Return the name of the checked out file"""
    (dir, rcs_file) = create_RCS_dir (file, allow_create = False)
    pwd = os.getcwd()
    os.chdir (dir)
@@ -142,27 +142,47 @@ def revert_file (file, revision):
    except: pass
 
    proc = Process ("co -r" + revision + " " + os.path.basename (rcs_file))
-   if proc.wait() == 0:
-      shutil.copymode (file.name(), os.path.basename (file.name()))
-      shutil.move (os.path.basename (file.name()), file.name())
-      EditorBuffer.get (file, force = True)
    os.chdir (pwd)
+   if proc.wait() == 0:
+      return os.path.join (dir, os.path.basename (file.name()))
+   return None
+
+def revert_file (file, revision):
+   """Revert file to a local history revision"""
+   Logger ("LocalHist").log ("revert " + file.name() + " to " + revision)
+   local = local_checkout (file, revision)
+   if local:
+      shutil.copymode (file.name(), local)
+      shutil.move (local, file.name())
+      EditorBuffer.get (file, force = True)
+
+def diff_file (file, revision):
+   """Compare the current version of file with the given revision"""
+   local = local_checkout (file, revision)
+   Vdiff.create (file, File (local))
+   try: os.unlink (local)
+   except: pass
 
 def contextual_factory (context):
    (dir, rcs_file) = create_RCS_dir (context.file())
    revisions = get_revisions (rcs_file)
-   context.revisions = ["1." + `a[0]` for a in revisions]
 
-   result = []
-   for a in revisions:
-     date = datetime.datetime (*(time.strptime (a[1], "%Y.%m.%d.%H.%M.%S")[0:6]))
-     result.append (date.strftime ("%Y/%m/%d %H:%M:%S"))
-   return result
+   try:
+      return context.revisions_menu
+   except:
+      context.revisions = ["1." + `a[0]` for a in revisions]
+      result = []
+      for a in revisions:
+        date = datetime.datetime (*(time.strptime (a[1], "%Y.%m.%d.%H.%M.%S")[0:6]))
+        result.append (date.strftime ("%Y/%m/%d %H:%M:%S"))
+      context.revisions_menu = result
+      return context.revisions_menu
 
 def on_revert (context, choice, choice_index):
-   file = context.file ()
-   revert_to = context.revisions [choice_index]
-   revert_file (file, revert_to)
+   revert_file (context.file(), context.revisions [choice_index])
+
+def on_diff (context, choice, choice_index):
+   diff_file (context.file(), context.revisions [choice_index])
 
 def register_module (hook):
    """Activate this local history module if RCS is found on the path"""
@@ -173,6 +193,11 @@ def register_module (hook):
        (factory     = contextual_factory,
         on_activate = on_revert,
         label       = "Local History/Revert To",
+        filter      = contextual_filter)
+     Contextual ("Local History Diff").create_dynamic \
+       (factory     = contextual_factory,
+        on_activate = on_diff,
+        label       = "Local History/Diff",
         filter      = contextual_filter)
    
 Hook ("gps_started").add (register_module)
