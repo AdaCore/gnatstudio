@@ -296,6 +296,11 @@ package body Project_Explorers is
       Event    : Gdk_Event) return Boolean;
    --  Called every time a row is clicked
 
+   function Key_Press
+     (Explorer : access Gtk_Widget_Record'Class;
+      Event    : Gdk_Event) return Boolean;
+   --  Calledback on a key press.
+
    procedure Tree_Select_Row_Cb
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class; Args : GValues);
    --  Called every time a new row is selected
@@ -598,6 +603,24 @@ package body Project_Explorers is
          return False;
    end Button_Press;
 
+   ---------------
+   -- Key_Press --
+   ---------------
+
+   function Key_Press
+     (Explorer : access Gtk_Widget_Record'Class;
+      Event    : Gdk_Event) return Boolean
+   is
+      T : constant Project_Explorer := Project_Explorer (Explorer);
+   begin
+      return On_Key_Press (T.Kernel, T.Tree, Event);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+         return False;
+   end Key_Press;
+
    ------------------------
    -- Tree_Select_Row_Cb --
    ------------------------
@@ -672,6 +695,13 @@ package body Project_Explorers is
         (Explorer.Tree,
          "button_press_event",
          Gtkada.Handlers.Return_Callback.To_Marshaller (Button_Press'Access),
+         Slot_Object => Explorer,
+         After       => False);
+
+      Gtkada.Handlers.Return_Callback.Object_Connect
+        (Explorer.Tree,
+         "key_press_event",
+         Gtkada.Handlers.Return_Callback.To_Marshaller (Key_Press'Access),
          Slot_Object => Explorer,
          After       => False);
 
