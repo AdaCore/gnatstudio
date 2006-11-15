@@ -4920,6 +4920,8 @@ started last or not, is to use the @code{Task Manager}, through the
 and right-clicking on any of these lines gives the possibility to interrupt
 that process.
 
+If your application is build through a Makefile, you should probably load
+the @file{Makefile.py} startup script (see the menu @code{/Edit/Startup scripts}).
 
 @c --------------------------------------------------------------------
 @node Source Browsing
