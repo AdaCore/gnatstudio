@@ -25,18 +25,18 @@ begin
    loop
       --  Open a block to catch Stack Overflow and Underflow exceptions.
 
-     begin
+      begin
 
-        Process (Next);
-        --  Read the next Token from the input and process it.
+         Process (Next);
+         --  Read the next Token from the input and process it.
 
-     exception
-        when Stack.Underflow =>
-           Error_Msg ("Not enough values in the Stack.");
+      exception
+         when Stack.Underflow =>
+            Error_Msg ("Not enough values in the Stack.");
 
-        when Stack.Overflow =>
-           Error_Msg ("The stack is full.");
-     end;
+         when Stack.Overflow =>
+            null;
+      end;
 
    end loop;
 
