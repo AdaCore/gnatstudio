@@ -69,18 +69,21 @@ class LocalHistory:
         Result is a list of tuples: (revision_number, date), where
         revision is the RCS revision number less the "1." prefix.
         First in the list is the most recent revision."""
-     f = file (self.rcs_file)
-     result = []
+     try:
+       f = file (self.rcs_file)
+       result = []
 
-     for line in f.readlines():
-       if line.startswith ("log"): break
-       if line.startswith ("date\t"):
-         date = line.split()[1]
-         result.append ((int (previous[2:]), date[:-1]))
-       previous = line
+       for line in f.readlines():
+	 if line.startswith ("log"): break
+	 if line.startswith ("date\t"):
+	   date = line.split()[1]
+	   result.append ((int (previous[2:]), date[:-1]))
+	 previous = line
 
-     f.close ()
-     return result
+       f.close ()
+       return result
+     except:
+       return None
 
   def add_to_history (self):
      """Expand the local history for file, to include the current version"""
@@ -89,20 +92,22 @@ class LocalHistory:
        Logger ("LocalHist").log ("creating directory " + `self.rcs_dir`)
 
      shutil.copy2 (self.file, self.rcs_dir)
-     proc = Process ("rcs -l " + self.rcs_file)
-     if proc.wait() == 0:
-        pwd = os.getcwd()
-        os.chdir (self.rcs_dir)
-        # Specify our own date, so that the date associated with the revision
-        # is the one when the file was saved. Otherwise, it defaults to the
-        # last modification of the date, and this might dependent on the local
-        # time zone
-	proc = Process ("ci -d" + \
-           datetime.datetime.now().strftime ("%Y/%m/%d\\ %H:%M:%S") + \
-           " " + self.rcs_file)
-	proc.send (".\n")
-	proc.wait ()
-        os.chdir (pwd)
+     if isfile (self.rcs_file):
+        proc = Process ("rcs -l " + self.rcs_file)
+        proc.wait ()
+
+     pwd = os.getcwd()
+     os.chdir (self.rcs_dir)
+     # Specify our own date, so that the date associated with the revision
+     # is the one when the file was saved. Otherwise, it defaults to the
+     # last modification of the date, and this might dependent on the local
+     # time zone
+     proc = Process ("ci -d" + \
+	datetime.datetime.now().strftime ("%Y/%m/%d\\ %H:%M:%S") + \
+	" " + basename (self.file))
+     proc.send (".\n")
+     proc.wait ()
+     os.chdir (pwd)
 
   def cleanup_history (self):
      """Remove the older revision histories for self"""
@@ -110,18 +115,18 @@ class LocalHistory:
      older = older.strftime ("%Y.%m.%d.%H.%M.%S")
 
      revisions = self.get_revisions ()
+     if revisions:
+       version = max (0, revisions[0][0] - max_revisions)
+       for r in revisions:
+	 if r[1] < older:
+	    version = max (version, r[0])
+	    break
 
-     version = max (0, revisions[0][0] - max_revisions)
-     for r in revisions:
-       if r[1] < older:
-	  version = max (version, r[0])
-	  break
-
-     if version >= 1:
-	Logger ("LocalHist").log \
-	  ("Truncating file " + self.rcs_file + " to revision " + `version`)
-	proc = Process ("rcs -o:1." + version + " " + self.rcs_file)
-	proc.wait ()
+       if version >= 1:
+	  Logger ("LocalHist").log \
+	    ("Truncating file " + self.rcs_file + " to revision " + `version`)
+	  proc = Process ("rcs -o:1." + version + " " + self.rcs_file)
+	  proc.wait ()
 
   def local_checkout (self, revision):
      """Do a local checkout of file at given revision in the RCS directory.
