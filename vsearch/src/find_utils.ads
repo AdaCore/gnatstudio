@@ -93,6 +93,13 @@ package Find_Utils is
 
    type Root_Search_Context is tagged limited private;
 
+   procedure Set_End_Notif_Done
+     (Context : in out Root_Search_Context; Value : Boolean);
+   --  Set the state of the "end of search" notification for this context
+
+   function Get_End_Notif_Done (Context : Root_Search_Context) return Boolean;
+   --  Return the state of the "end of search" notification for this context
+
    procedure Set_Context
      (Context  : access Root_Search_Context'Class;
       Look_For : String;
@@ -393,6 +400,13 @@ private
 
       BM_Matcher     : Boyer_Moore.Pattern;
       BM_Initialized : Boolean := False;
+
+      End_Notif_Done : Boolean := False;
+      --  This variable is true when a notification has been sent to the
+      --  user specifiying that the search in finished. This notification can
+      --  be done in various places during the search project, but implementers
+      --  should always check that is has not already been given before making
+      --  it.
    end record;
 
    type Search_Context is abstract new Root_Search_Context with null record;
