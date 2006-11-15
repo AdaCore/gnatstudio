@@ -112,6 +112,7 @@ with GPS.Location_View;
 with GVD_Module;
 with Help_Module;
 with KeyManager_Module;
+with KeyManager_Module.Macros;
 with Navigation_Module;
 with Outline_View;
 with Project_Explorers;
@@ -1258,6 +1259,7 @@ procedure GPS.Main is
       --  register their keys
 
       KeyManager_Module.Register_Module (GPS_Main.Kernel);
+      KeyManager_Module.Macros.Register_Module (GPS_Main.Kernel);
       Command_Window.Register_Module (GPS_Main.Kernel);
       Register_Keys (GPS_Main);
 
