@@ -306,16 +306,18 @@ GPS a progress bar, showing the status of the completion database load. Note
 that you can still work during this operation. The auto completion mechanism 
 can be disabled from the preferences if needed.
 
-Wait until the progress bar diseapears, and then hit @key{Ctrl+Space} again.
+Wait until the progress bar disappears, and then hit @key{Ctrl+Space} again.
 A completion popup will be displayed, showing all the entities of the project
-begining with @code{Scr}. Select @code{Screen_Output}. The code will gets 
+begining with @code{Scr}. Select @code{Screen_Output}. The code will be 
 automatically completed in the editor. Then add a dot in your code. The 
 completion popup will be automatically triggered, and will offer you to 
 complete your code with the entities contained in the @code{Screen_Output} 
 package. Select @code{Msg}, and add an open parenthesis. Once again, the 
 completion popup will pop, and show you the possible parameters for msg. If you
-chose the first entry of the completion list ("params of Msg"), the call will
-be automatically completed by a list of named parameters. Complete the list by giving e.g. @code{"The stack is full."} for @code{S1}, @code{""} for @code{S2}, and @code{True} for @code{End_Line}.
+choose the first entry of the completion list ("params of Msg"), the call will
+be automatically completed by a list of named parameters. Complete the list by
+giving e.g. @code{"The stack is full."} for @code{S1}, @code{""} for @code{S2},
+and @code{True} for @code{End_Line}.
 
 Don't forget to add a semicolon at the end of the instruction. Then hit @key{F4}
 in order to rebuild the application.
