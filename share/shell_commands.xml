@@ -3053,6 +3053,7 @@ An exception is raised if the process could not be spawned.</description>
       <param name="timeout" default="-1">An integer, in milliseconds</param>
       <return>A string</return>
       <description>Block the execution of the script until either regexp has been seen in the output of the command, or the timeout has expired. If the timeout is negative, wait forever until we see the regexp or the process finishes its execution. While in such a call, the usual on_match callback will not be called.
+
 This command returns the output of the process since the last call to expect, and up to the point where regexp matched</description>
     <example lang="python">
        proc = GPS.Process ("/bin/sh")
@@ -3063,7 +3064,10 @@ This command returns the output of the process since the last call to expect, an
 
   <shell_doc name="GPS.Process.wait">
       <param name="self">The instance of GPS.Process</param>
-      <description>Block the execution of the script until the process has finished executing. The exit callback registered when the process was started will be called before returning from this function</description>
+      <return>An integer</return>
+      <description>Block the execution of the script until the process has finished executing. The exit callback registered when the process was started will be called before returning from this function.
+
+This function returns the exit status of the command.</description>
   </shell_doc>
 
   <!--#################################################################

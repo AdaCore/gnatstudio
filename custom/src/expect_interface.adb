@@ -816,6 +816,7 @@ package body Expect_Interface is
             Timeout  => -1,
             Pattern  => "",
             Till_End => True);
+         Set_Return_Value (Data, D.Status);
 
       elsif Command = "expect" then
          Name_Parameters (Data, Expect_Args);
