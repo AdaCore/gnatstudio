@@ -109,6 +109,8 @@ package body GPS.Main_Window is
      (1 => Visible_Only_Cst'Access);
    Name_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Short_Cst'Access);
+   Rename_Cmd_Parameter : constant Cst_Argument_List :=
+     (1 => Name_Cst'Access, 2 => Short_Cst'Access);
 
    type Tabs_Position_Preference is (Bottom, Top, Left, Right);
    for Tabs_Position_Preference'Size use Glib.Gint'Size;
@@ -795,6 +797,12 @@ package body GPS.Main_Window is
          Maximum_Args   => 1,
          Class          => MDI_Window_Class,
          Handler        => Default_Window_Command_Handler'Access);
+      Register_Command
+        (Main_Window.Kernel, "rename",
+         Minimum_Args   => 1,
+         Maximum_Args   => 2,
+         Class          => MDI_Window_Class,
+         Handler        => Default_Window_Command_Handler'Access);
 
       Register_Command
         (Main_Window.Kernel, "get",
@@ -889,6 +897,10 @@ package body GPS.Main_Window is
          else
             Set_Return_Value (Data, Get_Title (Child));
          end if;
+
+      elsif Command = "rename" then
+         Name_Parameters (Data, Rename_Cmd_Parameter);
+         Set_Title (Child, Nth_Arg (Data, 2), Nth_Arg (Data, 3, ""));
 
       elsif Command = "next" then
          Name_Parameters (Data, Next_Cmd_Parameters);
