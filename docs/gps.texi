@@ -2431,7 +2431,8 @@ recording the events.
 
 In Emacs mode, the macro actions are bound to @key{control-x (},
 @key{control-x )} and @key{control-x e} key shortcuts. For instance,
-you can execute the following:
+you can execute the following to create a very simple macro that deletes the
+current line, wherever your cursor initially is on that line:
 
 @smallexample
 @key{control-x (}     # start recording
@@ -2439,10 +2440,6 @@ you can execute the following:
 @key{control-k}       # delete line
 @key{control-x )}     # stop recording
 @end smallexample
-
-@noindent
-To create a very simple macro that deletes the current line, wherever
-your cursor initially is on that line.
 
 @end itemize
 
