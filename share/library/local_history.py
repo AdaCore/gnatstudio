@@ -34,6 +34,10 @@ max_days = 2
 max_revisions = 200
 ## Maximal number of completions to keep. See also max_days
 
+diff_switches="-u"
+## Additional switches to pass to rcsdiff. In particular, this can be used
+## to specify your preferred format for diff
+
 
 ###########################################################################
 ## No user customization below this line
@@ -89,7 +93,13 @@ class LocalHistory:
      if proc.wait() == 0:
         pwd = os.getcwd()
         os.chdir (self.rcs_dir)
-	proc = Process ("ci " + self.rcs_file)
+        # Specify our own date, so that the date associated with the revision
+        # is the one when the file was saved. Otherwise, it defaults to the
+        # last modification of the date, and this might dependent on the local
+        # time zone
+	proc = Process ("ci -d" + \
+           datetime.datetime.now().strftime ("%Y/%m/%d\\ %H:%M:%S") + \
+           " " + self.rcs_file)
 	proc.send (".\n")
 	proc.wait ()
         os.chdir (pwd)
@@ -148,6 +158,20 @@ class LocalHistory:
      try: os.unlink (local2)
      except: pass
 
+  def show_diff (self, revision, date):
+     """Show, in a console, the diff between the current version and
+        revision"""
+     if isdir (self.rcs_dir):
+        pwd = os.getcwd()
+        os.chdir (dirname (self.file))
+        proc = Process ("rcsdiff " + diff_switches \
+                        + " -r" + revision + " " + self.rcs_file)
+        diff = proc.get_result()
+        os.chdir (pwd)
+        Console ("Local History").clear ()
+        Console ("Local History").write ("Local history at " + date + "\n")
+        Console ("Local History").write (diff)
+
   def has_local_history (self):
      """Whether there is local history information for self"""
      return isfile (self.rcs_file)
@@ -200,7 +224,13 @@ def on_revert (context, choice, choice_index):
 
 def on_diff (context, choice, choice_index):
    hist = LocalHistory (context.file())
-   hist.diff_file (context.revisions [choice_index], choice)
+   hist.diff_file (context.revisions [choice_index],
+                   context.revisions_menu [choice_index])
+
+def on_patch (context, choice, choice_index):
+   hist = LocalHistory (context.file())
+   hist.show_diff (context.revisions [choice_index], 
+                   context.revisions_menu [choice_index])
 
 def register_module (hook):
    """Activate this local history module if RCS is found on the path"""
@@ -216,6 +246,11 @@ def register_module (hook):
        (factory     = contextual_factory,
         on_activate = on_diff,
         label       = "Local History/Diff",
+        filter      = contextual_filter)
+     Contextual ("Local History Patch").create_dynamic \
+       (factory     = contextual_factory,
+        on_activate = on_patch,
+        label       = "Local History/Show Patch",
         filter      = contextual_filter)
    
 Hook ("gps_started").add (register_module)
