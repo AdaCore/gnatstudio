@@ -422,7 +422,9 @@ package GUI_Utils is
       Allow_Create  : Boolean := True;
       Ref_Item      : String  := "";
       Add_Before    : Boolean := True;
-      Use_Mnemonics : Boolean := True) return Gtk.Menu_Item.Gtk_Menu_Item;
+      Use_Mnemonics : Boolean := True;
+      New_Item      : Gtk.Menu_Item.Gtk_Menu_Item := null)
+      return Gtk.Menu_Item.Gtk_Menu_Item;
    --  Create or return the menu_item corresponding to Path in Menu.
    --  Path is a '/'-separated list of menu names, for instance File/New.
    --  Menu_Bar is used if Menu is null
@@ -430,6 +432,10 @@ package GUI_Utils is
    --  If Use_Mnemonics is True, then '_' characters in the path will indicate
    --  keyboard shortcuts, and need to be doubled to actually display an
    --  underscore.
+   --  New_Item, if specified, is used when a new item needs to be created. It
+   --  shouldn't be Initialized, since that will be done automatically by this
+   --  function. If it is used, it is returned by this function. If it isn't
+   --  used, memory is deallocated for it through Unchecked_Deallocation.
 
    procedure Add_Menu
      (Parent     : Gtk.Menu.Gtk_Menu;

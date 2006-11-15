@@ -21,6 +21,7 @@
 with Ada.Exceptions;           use Ada.Exceptions;
 with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 with Ada.Text_IO;              use Ada.Text_IO;
+with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 
 with Glib.Convert;             use Glib.Convert;
@@ -1470,8 +1471,11 @@ package body GUI_Utils is
       Allow_Create : Boolean := True;
       Ref_Item     : String  := "";
       Add_Before   : Boolean := True;
-      Use_Mnemonics : Boolean := True) return Gtk_Menu_Item
+      Use_Mnemonics : Boolean := True;
+      New_Item      : Gtk.Menu_Item.Gtk_Menu_Item := null) return Gtk_Menu_Item
    is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Gtk_Menu_Item_Record'Class, Gtk_Menu_Item);
       First     : Natural := Path'First;
       Last      : Natural;
       Parent    : Gtk_Menu := Menu;
@@ -1525,10 +1529,16 @@ package body GUI_Utils is
             Last := First + 1;
             Skip_To_Char (Path, Last, '/');
 
-            if Use_Mnemonics then
-               Gtk_New_With_Mnemonic (Menu_Item, Path (First .. Last - 1));
+            if Last > Path'Last and then New_Item /= null then
+               Menu_Item := New_Item;
             else
-               Gtk_New (Menu_Item, Path (First .. Last - 1));
+               Menu_Item := new Gtk_Menu_Item_Record;
+            end if;
+
+            if Use_Mnemonics then
+               Initialize_With_Mnemonic (Menu_Item, Path (First .. Last - 1));
+            else
+               Initialize (Menu_Item, Path (First .. Last - 1));
             end if;
 
             --  Should we create a submenu ?
@@ -1551,6 +1561,11 @@ package body GUI_Utils is
       elsif First <= Path'Last then
          --  No such item
          Menu_Item := null;
+      end if;
+
+      if Menu_Item = null then
+         Menu_Item := New_Item;
+         Unchecked_Free (Menu_Item);
       end if;
 
       return Menu_Item;
