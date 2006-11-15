@@ -438,7 +438,8 @@ functionalities of GPS. It is usually easier to access a given functionality
 using the various contextual menus provided throughout GPS: these menus
 give direct access to the most relevant actions given the current context
 (e.g. a project, a directory, a file, an entity, @dots{}). Contextual menus
-pop up when the right mouse button is clicked.
+pop up when the right mouse button is clicked or when using the special
+@key{open contextual menu} key on most PC keyboards.
 
 The menu bar gives access to the following items:
 
