@@ -802,6 +802,7 @@ package body Vsearch is
             --  Give a visual feedback that the search is terminated.
             if not Found
               and then not Has_Next
+              and then not Get_End_Notif_Done (Vsearch.Last_Search_Context.all)
             then
                Button := Message_Dialog
                  (Msg     => (-"No occurrences of '") & Pattern &
@@ -809,6 +810,7 @@ package body Vsearch is
                   Title   => -"Search",
                   Buttons => Button_OK,
                   Parent  => Gtk_Window (Toplevel));
+               Set_End_Notif_Done (Vsearch.Last_Search_Context.all, True);
             end if;
 
             --  We keep the "Next" mode until a new context is created by
