@@ -61,6 +61,10 @@
   <key action="/Edit/Copy">alt-w</key>
   <key action="/Edit/Cut">control-w</key>
 
+  <key action="Macro Start Keyboard">control-x parenleft</key>
+  <key action="Macro Stop">control-x parenright</key>
+  <key action="Macro Play">control-x e</key>
+
   <key action="/Edit/Undo">shift-control-underscore</key>
 
   <key action="/File/Close">control-x k</key>
