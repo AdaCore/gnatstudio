@@ -527,6 +527,26 @@ package body Find_Utils is
       Matcher := Context.BM_Matcher;
    end Context_As_Boyer_Moore;
 
+   ------------------------
+   -- Set_End_Notif_Done --
+   ------------------------
+
+   procedure Set_End_Notif_Done
+     (Context : in out Root_Search_Context; Value : Boolean) is
+   begin
+      Context.End_Notif_Done := Value;
+   end Set_End_Notif_Done;
+
+   ------------------------
+   -- Get_End_Notif_Done --
+   ------------------------
+
+   function Get_End_Notif_Done
+     (Context : Root_Search_Context) return Boolean is
+   begin
+      return Context.End_Notif_Done;
+   end Get_End_Notif_Done;
+
    -----------------
    -- Set_Context --
    -----------------
