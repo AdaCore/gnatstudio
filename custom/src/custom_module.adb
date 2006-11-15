@@ -56,6 +56,7 @@ with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GUI_Utils;                 use GUI_Utils;
 with Language.Custom;           use Language.Custom;
 with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
@@ -256,14 +257,22 @@ package body Custom_Module is
          for L in List'Range loop
             if List (L) /= null then
                Item := new Python_Menu_Item_Record;
-               Gtk.Menu_Item.Initialize (Item, List (L).all);
+               Item := Python_Menu_Item
+                 (Find_Or_Create_Menu_Tree
+                    (Menu_Bar      => null,
+                     Menu          => Gtk_Menu (Menu),
+                     Path          => List (L).all,
+                     Use_Mnemonics => False,
+                     Accelerators  =>
+                       Get_Default_Accelerators (Get_Kernel (Script)),
+                     New_Item      => Gtk_Menu_Item (Item)));
+
                Item.Index := L - List'First;
                Factory_Callback.Connect
                  (Item, "activate", On_Dynamic_Menu_Activate'Access,
                   User_Data =>
                     (Contextual => Create_Dynamic_Contextual_Access (Factory),
                      Context    => Create_Context (Script, Context)));
-               Append (Menu, Item);
             end if;
          end loop;
 
