@@ -121,6 +121,7 @@ Editing Files
 * Editing Sources::
 * The File Selector::
 * Menu Items::
+* Recording and replaying macros::
 * Contextual Menus for Editing Files::
 * Handling of case exceptions::
 * Refactoring::
@@ -1528,6 +1529,7 @@ to a new location, instead of moving them one by one.
 * Editing Sources::
 * The File Selector::
 * Menu Items::
+* Recording and replaying macros::
 * Contextual Menus for Editing Files::
 * Handling of case exceptions::
 * Refactoring::
@@ -2384,6 +2386,65 @@ keys. @xref{The Key Manager Dialog}.
 Give access to the preferences dialog. @xref{The Preferences Dialog}.
 
 @end table
+
+@c --------------------------------------------------------------------
+@node Recording and replaying macros
+@section Recording and replaying macros
+@cindex macros
+@c --------------------------------------------------------------------
+
+@noindent
+It is often convenient to be able to repeat a given key sequence a
+number of times.
+
+GPS supports this with several different methods:
+
+@itemize @bullet
+@item Repeat the next action
+
+If there is a single key press that you wish to repeat a number of
+times, you should first use the GPS action @code{"Repeat Next"} (bound
+by default to @key{control-u}, but this can be changed as usual through
+the @code{/Edit/Key Shortcuts} menu), then entering the number of times
+you wish to repeat, and finally pressing the key you want.
+
+For instance, the following sequence @key{control-u 79 -} will insert
+79 characters '-' in the current editor. This proves often useful to
+insert separators. 
+
+If you are using the emacs mode (see @code{/Edit/Startup Scripts} menu),
+you can also use the sequence @key{control-u 30 control-k} to delete
+30 lines.
+
+@item recording macros
+
+If you wish to repeat a sequence of more than 1 key, you should record
+this sequence as a macro. All macro-related menus are found in
+@code{/Tools/Macros}, although it is often more convenient to use these
+through key bindings, which you can of course override.
+
+You must indicate to GPS that it should start recording the keys you are
+pressing. This is done through the @code{/Tools/Macros/Start Keyboard Macro}
+menu. As its name indicates, this only records keyboard events, not mouse
+events. Until you select @code{/Tools/Macros/Stop Macro}, GPS will keep
+recording the events.
+
+In Emacs mode, the macro actions are bound to @key{control-x (},
+@key{control-x )} and @key{control-x e} key shortcuts. For instance,
+you can execute the following:
+
+@smallexample
+@key{control-x (}     # start recording
+@key{control-a}       # go to beginning of line
+@key{control-k}       # delete line
+@key{control-x )}     # stop recording
+@end smallexample
+
+@noindent
+to create a very simple macro that deletes the current line, wherever
+your cursor initially is on that line.
+
+@end itemize
 
 @c --------------------------------------------------------------------
 @node Contextual Menus for Editing Files
