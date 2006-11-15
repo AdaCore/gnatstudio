@@ -646,6 +646,7 @@ package body Language.Ada is
       if Construct.Category in Type_Category
         or else Construct.Category in Subprogram_Category
         or else Construct.Category in Cat_Variable .. Cat_Field
+        or else Construct.Category in Namespace_Category
       then
          Parse_Entities
            (Lang,
