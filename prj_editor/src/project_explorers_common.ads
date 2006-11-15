@@ -244,6 +244,12 @@ package Project_Explorers_Common is
    --  If Add_Dummy is true, a dummy node will be added to nodes collapsed
    --  by this call.
 
+   function On_Key_Press
+     (Kernel    : Kernel_Handle;
+      Tree      : access Gtk_Tree_View_Record'Class;
+      Event    : Gdk_Event) return Boolean;
+   --  React to key press event on the tree.
+
    procedure Context_Factory
      (Context : in out Selection_Context;
       Kernel  : Kernel_Handle;

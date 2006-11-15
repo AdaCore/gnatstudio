@@ -23,6 +23,7 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
+with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 with Gtk.Enums;                 use Gtk.Enums;
 with Glib.Convert;              use Glib.Convert;
 
@@ -39,6 +40,7 @@ with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with Types;                     use Types;
 with VFS;                       use VFS;
+with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 
 package body Project_Explorers_Common is
 
@@ -604,6 +606,60 @@ package body Project_Explorers_Common is
 
       return False;
    end On_Button_Press;
+
+   ------------------
+   -- On_Key_Press --
+   ------------------
+
+   function On_Key_Press
+     (Kernel    : Kernel_Handle;
+      Tree      : access Gtk_Tree_View_Record'Class;
+      Event     : Gdk_Event) return Boolean
+   is
+      Iter         : Gtk_Tree_Iter;
+      Line, Column : Gint;
+      Model        : Gtk_Tree_Model;
+
+      use type Gdk.Types.Gdk_Key_Type;
+   begin
+      Get_Selected (Get_Selection (Tree), Model, Iter);
+
+      if Iter = Null_Iter then
+         return False;
+      end if;
+
+      if Get_Key_Val (Event) = GDK_Return then
+         case Node_Types'Val
+           (Integer (Get_Int (Model, Iter, Node_Type_Column))) is
+
+         when File_Node =>
+            Open_File_Editor
+              (Kernel,
+               Create
+                 (Full_Filename =>
+                  Get_String (Model, Iter, Absolute_Name_Column)),
+               Line   => 0,
+               Column => 0);
+
+         when Entity_Node =>
+            Line := Get_Int (Model, Iter, Line_Column);
+            Column := Get_Int (Model, Iter, Column_Column);
+
+            Open_File_Editor
+              (Kernel,
+               Create
+                 (Full_Filename =>
+                  Get_String (Model, Iter, Absolute_Name_Column)),
+               Line   => Natural (Line),
+               Column => Visible_Column_Type (Column));
+
+         when others =>
+            null;
+         end case;
+      end if;
+
+      return False;
+   end On_Key_Press;
 
    -------------------
    -- Get_Node_Type --
