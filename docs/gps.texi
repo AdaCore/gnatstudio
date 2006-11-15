@@ -2416,7 +2416,7 @@ If you are using the emacs mode (see @code{/Edit/Startup Scripts} menu),
 you can also use the sequence @key{control-u 30 control-k} to delete
 30 lines.
 
-@item recording macros
+@item Recording macros
 
 If you wish to repeat a sequence of more than 1 key, you should record
 this sequence as a macro. All macro-related menus are found in
@@ -2441,7 +2441,7 @@ you can execute the following:
 @end smallexample
 
 @noindent
-to create a very simple macro that deletes the current line, wherever
+To create a very simple macro that deletes the current line, wherever
 your cursor initially is on that line.
 
 @end itemize
