@@ -5,6 +5,18 @@ it is also committed in a local RCS directory, which can later be used to
 easily revert to a previous version.
 Compared to the standard undo feature in GPS, this provides a persistent
 undo across GPS sessions.
+
+You must install RCS. On Unix systems, this is generally available by
+default. On Windows, this is available through the cygwin environment.
+If RCS is not detected on your PATH, this module will do nothing.
+
+A new contextual menu is shown for files that have a local history. This
+menu allows you to view the diff between the current version of the file
+and the version at the selected time, or to revert to a specific version.
+
+Revert doesn't ask for confirmation! But if you have saved the file before
+the revert, the current version is in the local revision history, and can
+therefore be reverted.
 """
 
 ############################################################################
@@ -166,6 +178,10 @@ def diff_file (file, revision):
 def contextual_factory (context):
    (dir, rcs_file) = create_RCS_dir (context.file())
    revisions = get_revisions (rcs_file)
+
+   # Save in the context the result of parsing the file. This factory is
+   # used for multiple contextual menus, so this saves some processing.
+   # Part of this parsing is also needed when performing the action.
 
    try:
       return context.revisions_menu
