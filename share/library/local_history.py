@@ -41,7 +41,7 @@ max_revisions = 200
 
 from GPS import *
 from os.path import *
-import os, shutil, datetime, traceback, time, stat, string
+import os, shutil, datetime, traceback, time, stat
 
 class LocalHistory:
   """This class provides access to the local history of a file"""
@@ -142,7 +142,6 @@ class LocalHistory:
         The referenced file will have a name ending with file_ext"""
      local = self.local_checkout (revision)
      local2 = basename (local) + " " + file_ext
-     local2 = local2.translate (string.maketrans ("/", "-"))
      local2 = join (self.rcs_dir, local2)
      shutil.move (local, local2)
      Vdiff.create (File (self.file), File (local2))
@@ -191,7 +190,7 @@ def contextual_factory (context):
       result = []
       for a in revisions:
         date = datetime.datetime (*(time.strptime (a[1], "%Y.%m.%d.%H.%M.%S")[0:6]))
-        result.append (date.strftime ("%Y/%m/%d %H:%M:%S"))
+        result.append (date.strftime ("%Y-%m-%d/%H:%M:%S"))
       context.revisions_menu = result
       return context.revisions_menu
 
