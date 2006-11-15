@@ -7,7 +7,6 @@ Known Problems fixed in GPS 4.1.0
               end of the matched output.
   Workaround: Modify the regexp to start with "(.|\\n)*?"
 
-
 - FB13-028 Extra popup at the end of the search
   Problem:    At the end of the search on a file, GPS shows a popup asking if
               the user wants to start again from the beginning of the file.
