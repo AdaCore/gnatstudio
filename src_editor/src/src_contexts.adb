@@ -718,6 +718,7 @@ package body Src_Contexts is
            and then not Continue_Dialog
              (-"No more matches, restart from the end ?")
          then
+            Set_End_Notif_Done (Context.all, True);
             Unchecked_Free (Result);
             return;
          end if;
@@ -741,6 +742,7 @@ package body Src_Contexts is
                  or else not Continue_Dialog
                    (-"No more matches, restart from the beginning ?"))
             then
+               Set_End_Notif_Done (Context.all, True);
                return;
             end if;
 
