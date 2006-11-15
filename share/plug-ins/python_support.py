@@ -167,11 +167,12 @@ def before_exit (hook_name):
     pydoc_proc = None
   return 1
 
-### Do not call create_python_menu yet, since keeping a hidden toplevel menu
-### triggers bugs in gtk+, for instance leaving an empty space in the menubar
+## Always register python immediately as a language, so that projects that
+## have
+##    for Languages use ("Python");
+## do not have to define a naming scheme and can depend on the default.
 
-def on_gps_started (hook_name):
-  GPS.parse_xml ("""
+GPS.parse_xml ("""
   <Language>
     <Name>Python</Name>
     <Spec_Suffix>.py</Spec_Suffix>
@@ -209,5 +210,4 @@ def on_gps_started (hook_name):
 GPS.Hook ("project_view_changed").add (project_recomputed)
 GPS.Hook ("before_exit_action_hook").add (before_exit)
 GPS.Hook ("context_changed").add (context_changed)
-GPS.Hook ("gps_started").add (on_gps_started)
 
