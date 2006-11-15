@@ -7,6 +7,14 @@ Known Problems fixed in GPS 4.1.0
               end of the matched output.
   Workaround: Modify the regexp to start with "(.|\\n)*?"
 
+
+- FB13-028 Extra popup at the end of the search
+  Problem:    At the end of the search on a file, GPS shows a popup asking if
+              the user wants to start again from the beginning of the file.
+              Clicking on "No" will display a second irrelevant popup saying
+              that no more occurences are found.
+  Workaround: Click on "Ok" on this second window. 
+
 - FB13-004 Multiple undo needed after Complete Block action.
   Problem:    After a Complete Block action multiple undo are needed
               to go back to the editor state as it was just before the
