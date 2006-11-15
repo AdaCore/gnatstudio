@@ -50,6 +50,22 @@ package KeyManager_Module is
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Reactivate the handling of key shortcuts
 
+   type General_Event_Handler_Callback is access function
+     (Event : Gdk.Event.Gdk_Event;
+      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return Boolean;
+   --  A function called when any event reaches any of the GPS windows. It
+   --  must return True if the event was processed, False otherwise (in which
+   --  case the event will be further processed).
+
+   procedure Add_Event_Handler
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Handler : General_Event_Handler_Callback);
+   procedure Remove_Event_Handler
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Handler : General_Event_Handler_Callback);
+   --  Add a new callback to be called when an event should be processed
+
 private
    type Keys_Header_Num is range 0 .. 1000;
    type Key_Binding is record
@@ -177,21 +193,5 @@ private
 
    procedure Clone (From : Key_Htable.HTable; To : out Key_Htable.HTable);
    --  Deep copy of From
-
-   type General_Event_Handler_Callback is access function
-     (Event : Gdk.Event.Gdk_Event;
-      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Boolean;
-   --  A function called when any event reaches any of the GPS windows. It
-   --  must return True if the event was processed, False otherwise (in which
-   --  case the event will be further processed).
-
-   procedure Add_Event_Handler
-     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Handler : General_Event_Handler_Callback);
-   procedure Remove_Event_Handler
-     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Handler : General_Event_Handler_Callback);
-   --  Add a new callback to be called when an event should be processed
 
 end KeyManager_Module;

@@ -58,7 +58,6 @@ with GPS.Kernel;              use GPS.Kernel;
 with GUI_Utils;               use GUI_Utils;
 with HTables;                 use HTables;
 with KeyManager_Module.GUI;
-with KeyManager_Module.Macros;
 with String_Utils;            use String_Utils;
 with Traces;                  use Traces;
 with VFS;                     use VFS;
@@ -1655,8 +1654,6 @@ package body KeyManager_Module is
          Trace (Me, "Loading key bindings from " & Key);
          Gtk.Accel_Map.Load (Key);
       end if;
-
-      Standard.KeyManager_Module.Macros.Register_Commands (Kernel);
 
       Register_Command
         (Kernel, "last_command", 0, 0, Keymanager_Command_Handler'Access);
