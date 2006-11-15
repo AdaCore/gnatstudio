@@ -20,9 +20,10 @@
 
 with GPS.Kernel;
 
-private package KeyManager_Module.Macros is
+package KeyManager_Module.Macros is
 
-   procedure Register_Commands
+   procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Register the module into the list
 
 end KeyManager_Module.Macros;
