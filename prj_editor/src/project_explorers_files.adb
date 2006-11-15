@@ -153,6 +153,11 @@ package body Project_Explorers_Files is
       Event    : Gdk_Event) return Boolean;
    --  Callback for the "button_press" event on the file view.
 
+   function File_Key_Press
+     (Explorer : access Gtk_Widget_Record'Class;
+      Event    : Gdk_Event) return Boolean;
+   --  Callback for the "key_press" event on the file view.
+
    procedure File_Selection_Changed
      (Explorer : access Gtk_Widget_Record'Class);
    --  Callback for the "button_press" event on the file view.
@@ -624,6 +629,13 @@ package body Project_Explorers_Files is
          Slot_Object => Explorer,
          After       => False);
 
+      Gtkada.Handlers.Return_Callback.Object_Connect
+        (Explorer.File_Tree,
+         "key_press_event",
+         Gtkada.Handlers.Return_Callback.To_Marshaller (File_Key_Press'Access),
+         Slot_Object => Explorer,
+         After       => False);
+
       Widget_Callback.Object_Connect
         (Get_Selection (Explorer.File_Tree),
          "changed",
@@ -925,6 +937,25 @@ package body Project_Explorers_Files is
                 "Unexpected exception: " & Exception_Information (E));
          return False;
    end File_Button_Press;
+
+   --------------------
+   -- File_Key_Press --
+   --------------------
+
+   function File_Key_Press
+     (Explorer : access Gtk_Widget_Record'Class;
+      Event    : Gdk_Event) return Boolean
+   is
+      T : constant Project_Explorer_Files := Project_Explorer_Files (Explorer);
+   begin
+      return On_Key_Press (T.Kernel, T.File_Tree, Event);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+         return False;
+   end File_Key_Press;
 
    ----------
    -- Free --
