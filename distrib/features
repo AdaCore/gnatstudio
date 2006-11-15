@@ -14,6 +14,12 @@ of the feature.
 New features in GPS 4.1.0
 -------------------------
 
+FB13-012 New keyboard shortcuts on Project View and File View (2006-11-15)
+
+  Keyboard navigation in the Project View and File View has been enhanced:
+  it is now possible to press Enter on nodes representing files or entities
+  to navigate to the file locations.
+
 FB10-014 New action to repeat a key stroke several times (2006-11-10)
 
   A new action called Repeat Next can now be bound to a key shortcut
@@ -185,9 +191,9 @@ F704-013 Fix "end loop Name; expected" (2006-07-27)
 
 F428-015 Smart completion completes subprograms profiles (2006-11-08)
 
-  When writing a subprogram call, hitting the completion key on a comma or an 
-  open parenthesis will offer to complete with the remaining possible named 
-  parameters. 
+  When writing a subprogram call, hitting the completion key on a comma or an
+  open parenthesis will offer to complete with the remaining possible named
+  parameters.
 
 F419-014 Additions to the GPS.Console script interface (2006-10-19)
 
