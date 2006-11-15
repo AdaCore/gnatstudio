@@ -212,9 +212,6 @@ package body Completion.Ada.Constructs_Extractor is
    is
       Ada_Tree : Ada_Construct_Tree;
 
-      Parent_Sloc_Start, Parent_Sloc_End : Source_Location;
-      Parent_Found                       : Boolean;
-
       procedure Add_To_List
         (List          : in out Extensive_List_Pckg.List;
          Tree_Node     : Construct_Tree_Iterator;
@@ -233,6 +230,11 @@ package body Completion.Ada.Constructs_Extractor is
          Private_Visibility : Boolean);
       --  Add all the children of the scope given in parameter in the list.
       --  Consider private elements if Private_Visibility is true.
+
+      procedure Handle_Referenced_Entity
+        (Proposal : Construct_Completion_Proposal; Cut_Access : Boolean);
+      --  Adds the relevant content from the sub entity of the proposal. If
+      --  Cut_Access is true, then accesses won't be appened to the result.
 
       procedure Add_To_List
         (List          : in out Extensive_List_Pckg.List;
@@ -310,6 +312,82 @@ package body Completion.Ada.Constructs_Extractor is
             Child_Iterator := Next (Tree, Child_Iterator, Jump_Over);
          end loop;
       end Add_Children_Of;
+
+      ------------------------------
+      -- Handle_Referenced_Entity --
+      ------------------------------
+
+      procedure Handle_Referenced_Entity
+        (Proposal : Construct_Completion_Proposal; Cut_Access : Boolean)
+      is
+         Parent_Sloc_Start, Parent_Sloc_End : Source_Location;
+         Parent_Found                       : Boolean;
+      begin
+         Get_Referenced_Entity
+           (Ada_Lang,
+            Proposal.Buffer.all,
+            Get_Construct (Proposal.Tree_Node),
+            Parent_Sloc_Start,
+            Parent_Sloc_End,
+            Parent_Found);
+
+         if Parent_Found then
+            declare
+               Context : constant Completion_Context :=
+                 new Ada_Construct_Extractor_Context;
+               List : Completion_List;
+
+               It : Completion_Iterator;
+            begin
+               Context.Buffer := Proposal.Buffer;
+               Context.Offset := Parent_Sloc_End.Index;
+               Ada_Construct_Extractor_Context (Context.all).File :=
+                 Proposal.File;
+
+               Append (Get_Resolver (Proposal).Manager.Contexts, Context);
+
+               List := Get_Initial_Completion_List
+                 (Get_Resolver (Proposal).Manager.all,
+                  Context,
+                  False);
+
+               It := First (List);
+
+               while not At_End (It) loop
+                  if Get_Proposal (It)
+                  in Construct_Completion_Proposal'Class
+                  then
+                     if not Cut_Access
+                       or else not Is_Access
+                         (Construct_Completion_Proposal
+                              (Get_Proposal (It)).Buffer.all,
+                          Get_Construct
+                            (Construct_Completion_Proposal
+                               (Get_Proposal (It)).Tree_Node))
+                     then
+                        Get_Composition
+                          (Get_Proposal (It),
+                           Identifier,
+                           1,
+                           Is_Partial,
+                           Result);
+                     end if;
+                  else
+                     Get_Composition
+                       (Get_Proposal (It),
+                        Identifier,
+                        1,
+                        Is_Partial,
+                        Result);
+                  end if;
+
+                  Next (It);
+               end loop;
+
+               Free (List);
+            end;
+         end if;
+      end Handle_Referenced_Entity;
 
       List : Extensive_List_Pckg.List;
 
@@ -410,73 +488,8 @@ package body Completion.Ada.Constructs_Extractor is
                end;
             end if;
 
-            Get_Referenced_Entity
-              (Ada_Lang,
-               Proposal.Buffer.all,
-               Get_Construct (Proposal.Tree_Node),
-               Parent_Sloc_Start,
-               Parent_Sloc_End,
-               Parent_Found);
-
-            if Parent_Found then
-               declare
-                  Context : constant Completion_Context :=
-                    new Ada_Construct_Extractor_Context;
-                  List : Completion_List;
-                  Sub_Proposal_Is_Access : Boolean;
-
-                  It : Completion_Iterator;
-               begin
-                  Context.Buffer := Proposal.Buffer;
-                  Context.Offset := Parent_Sloc_End.Index;
-                  Ada_Construct_Extractor_Context (Context.all).File :=
-                    Proposal.File;
-
-                  Append (Get_Resolver (Proposal).Manager.Contexts, Context);
-
-                  List := Get_Initial_Completion_List
-                    (Get_Resolver (Proposal).Manager.all,
-                     Context,
-                     False);
-
-                  It := First (List);
-
-                  while not At_End (It) loop
-                     if Get_Proposal (It)
-                       in Construct_Completion_Proposal'Class
-                     then
-                        Sub_Proposal_Is_Access := Is_Access
-                          (Construct_Completion_Proposal
-                                (Get_Proposal (It)).Buffer.all,
-                           Get_Construct
-                             (Construct_Completion_Proposal
-                                (Get_Proposal (It)).Tree_Node));
-
-                        if not Proposal_Is_All
-                          or else not Sub_Proposal_Is_Access
-                        then
-                           Get_Composition
-                             (Get_Proposal (It),
-                              Identifier,
-                              1,
-                              Is_Partial,
-                              Result);
-                        end if;
-                     else
-                        Get_Composition
-                          (Get_Proposal (It),
-                           Identifier,
-                           1,
-                           Is_Partial,
-                           Result);
-                     end if;
-
-                     Next (It);
-                  end loop;
-
-                  Free (List);
-               end;
-            end if;
+            Handle_Referenced_Entity
+              (Proposal, Proposal_Is_All);
 
             if Get_Construct (Proposal.Tree_Node).Category
               in Cat_Class .. Cat_Subtype
@@ -511,6 +524,8 @@ package body Completion.Ada.Constructs_Extractor is
             Append (Result.List, To_Extensive_List (List));
 
          when Cat_Package =>
+            Handle_Referenced_Entity (Proposal, False);
+
             declare
                Spec_It         : Construct_Tree_Iterator;
                Body_It         : Construct_Tree_Iterator;
