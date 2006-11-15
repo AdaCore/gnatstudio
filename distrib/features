@@ -40,6 +40,11 @@ FB07-007 Drag-and-drop to create new view from Project View (2006-11-07)
   anywhere in GPS. In this new release, you can now also press shift to
   create a new view of the file if the file is already edited elsewhere
 
+FB06-004 Macros support (2006-11-15)
+
+  It is now possible to record sequences of key presses, and replay them
+  later on. This is available through the /Tools/Macros menu
+
 FA30-018 Editing file extensions for custom languages (2006-1107)
 
   When a custom language is defined from an XML file, it is now possible
