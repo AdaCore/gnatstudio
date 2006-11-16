@@ -21,6 +21,7 @@
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Strings;
 
 with Gdk;                       use Gdk;
 with Gdk.Event;                 use Gdk.Event;
@@ -367,7 +368,7 @@ package body Src_Editor_Box is
       File_Up_To_Date   : Boolean;
       L                 : Natural;
       Is_Case_Sensitive : Boolean;
-      Arg               : GNAT.OS_Lib.String_Access;
+      Arg               : GNAT.Strings.String_Access;
 
       Char_Column       : Character_Offset_Type;
    begin
@@ -433,7 +434,7 @@ package body Src_Editor_Box is
             --  appropriate region in the editor.
 
             declare
-               Buffer : Basic_Types.String_Access;
+               Buffer : GNAT.Strings.String_Access;
                Col    : Visible_Column_Type;
             begin
                L := Convert (Line);
@@ -584,7 +585,6 @@ package body Src_Editor_Box is
                Get_Extra_Information (Box.Source_Buffer);
       Label : Gtk_Label;
 
-      use type Basic_Types.String_Access;
    begin
       if Box.Buffer_Info_Frames /= null then
          for J in Box.Buffer_Info_Frames'Range loop
@@ -1803,15 +1803,14 @@ package body Src_Editor_Box is
                         Get_Filename (Editor.Source_Buffer);
       Constructs    : Construct_List;
       Info          : Construct_Access;
-      New_Base_Name : GNAT.OS_Lib.String_Access;
+      New_Base_Name : GNAT.Strings.String_Access;
       Part          : Projects.Unit_Part;
 
-      Buffer        : Basic_Types.String_Access;
+      Buffer        : GNAT.Strings.String_Access;
       Old_Name      : constant Virtual_File := Get_Filename (Editor);
       Child         : constant MDI_Child := Find_MDI_Child
         (Get_MDI (Get_Kernel (Editor)), Editor);
 
-      use type Basic_Types.String_Access;
    begin
       --  Do not authorize saving a read-only file, unless we save it to
       --  another disk file.

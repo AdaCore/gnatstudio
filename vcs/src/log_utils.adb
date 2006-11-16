@@ -27,6 +27,7 @@ with Traces;                    use Traces;
 with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
+with GNAT.Strings;
 
 with Gtk.Enums;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
@@ -856,10 +857,10 @@ package body Log_Utils is
                File_Args          : String_List.List;
                Log_Args           : String_List.List;
                Head_List          : String_List.List;
-               S                  : OS_Lib.String_Access;
+               S                  : Strings.String_Access;
                C_Args             : OS_Lib.Argument_List_Access;
 
-               use type GNAT.OS_Lib.String_Access;
+               use type GNAT.Strings.String_Access;
 
             begin
                if Has_Status

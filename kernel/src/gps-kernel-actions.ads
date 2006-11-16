@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
@@ -24,7 +24,7 @@
 --  be associated with menus, keys and toolbar buttons among other things.
 
 with Commands.Interactive;
-with GNAT.OS_Lib;
+with GNAT.Strings;
 with VFS;
 
 package GPS.Kernel.Actions is
@@ -32,10 +32,10 @@ package GPS.Kernel.Actions is
    type Action_Record is record
       Command     : Commands.Interactive.Interactive_Command_Access;
       Filter      : Action_Filter;
-      Description : GNAT.OS_Lib.String_Access;
+      Description : GNAT.Strings.String_Access;
       Modified    : Boolean;
       Overriden   : Boolean;
-      Category    : GNAT.OS_Lib.String_Access;
+      Category    : GNAT.Strings.String_Access;
       Defined_In  : VFS.Virtual_File;
    end record;
    --  Command is freed automatically by the kernel.

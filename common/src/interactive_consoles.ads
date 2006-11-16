@@ -32,8 +32,7 @@ with Gtk.Text_Mark;
 with Gtk.Text_Tag;
 with Gtk.Scrolled_Window;
 
-with GNAT.OS_Lib;
-with Basic_Types;       use Basic_Types;
+with GNAT.Strings;
 with Histories;
 with GUI_Utils;
 with System;
@@ -167,7 +166,7 @@ package Interactive_Consoles is
 
    function Get_History
      (Console : access Interactive_Console_Record)
-      return GNAT.OS_Lib.String_List_Access;
+      return GNAT.Strings.String_List_Access;
    --  Return the command history.
 
    function Get_View
@@ -188,7 +187,7 @@ private
       Buffer : Gtk.Text_Buffer.Gtk_Text_Buffer;
       View   : Gtk.Text_View.Gtk_Text_View;
 
-      Prompt : String_Access;
+      Prompt : GNAT.Strings.String_Access;
       --  The prompt to be displayed.
 
       Prompt_Mark : Gtk.Text_Mark.Gtk_Text_Mark;
@@ -219,7 +218,7 @@ private
       --  Used to enable selection in places where the cursor is not
       --  allowed.
 
-      User_Input : String_Access;
+      User_Input : GNAT.Strings.String_Access;
       --  The text that was entered at the prompt but was never validated.
       --  Used when commands are issued by menus, etc, replacing the user
       --  input.
@@ -232,7 +231,7 @@ private
       --  not a prompt.
 
       History : Histories.History;
-      Key     : GNAT.OS_Lib.String_Access;
+      Key     : GNAT.Strings.String_Access;
       --  The command history. The most recent commands are at the
       --  beginning.
 

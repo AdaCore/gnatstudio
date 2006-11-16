@@ -20,8 +20,6 @@
 
 with Ada.Unchecked_Deallocation; use Ada;
 
-with Basic_Types; use Basic_Types;
-
 with Language.Tree.Ada; use Language.Tree.Ada;
 
 package body Language.Tree.Database is
@@ -375,7 +373,7 @@ package body Language.Tree.Database is
    --------------
 
    function Get_Name
-     (Node : Construct_Node_List_Access) return GNAT.OS_Lib.String_Access is
+     (Node : Construct_Node_List_Access) return GNAT.Strings.String_Access is
    begin
       if Node /= null then
          return Node.Name;

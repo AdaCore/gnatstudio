@@ -46,6 +46,7 @@ with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
 with Language;
 with Src_Highlighting;
 with VFS;
+with GNAT.Strings;
 
 package Src_Editor_Buffer is
 
@@ -582,7 +583,7 @@ package Src_Editor_Buffer is
    --  such as VCS status of the file.
 
    type Extra_Information_Record is record
-      Identifier : String_Access;
+      Identifier : GNAT.Strings.String_Access;
       Info       : Line_Information_Access;
    end record;
    type Extra_Information_Access is access Extra_Information_Record;
@@ -615,7 +616,7 @@ package Src_Editor_Buffer is
     (Line_Info_Width_Array, Line_Info_Width_Array_Access);
 
    type Line_Info_Display_Record is record
-      Identifier : String_Access;
+      Identifier : GNAT.Strings.String_Access;
       --  This identifies the column
 
       Starting_X : Integer;
@@ -695,7 +696,7 @@ package Src_Editor_Buffer is
       Last_Line         : Editable_Line_Type := 0;
       --  Indicate the lines that bound the block
 
-      Name              : String_Access;
+      Name              : GNAT.Strings.String_Access;
       --  The name of the block, this is the subprogram or package name. This
       --  pointer is null for a block where name has no meaning.
 
@@ -781,14 +782,14 @@ package Src_Editor_Buffer is
    --  lines in the actual Gtk_Text_Buffer, plus 1.
 
    function Get_String
-     (Buffer : Source_Buffer) return String_Access;
+     (Buffer : Source_Buffer) return GNAT.Strings.String_Access;
    --  Return the entire editable string.
    --  The caller is responsible for freeing the returned value.
 
    function Get_Buffer_Lines
      (Buffer     : access Source_Buffer_Record'Class;
       Start_Line : Editable_Line_Type;
-      End_Line   : Editable_Line_Type) return Basic_Types.String_Access;
+      End_Line   : Editable_Line_Type) return GNAT.Strings.String_Access;
    --  Return the text from Start_Line to End_Line, included.
 
    function Get_Editable_Line
@@ -985,7 +986,7 @@ private
             Buffer_Line : Buffer_Line_Type;
 
          when In_Mark =>
-            Text : String_Access := null;
+            Text : GNAT.Strings.String_Access := null;
             --  ??? This string is UTF-8, it should be marked as so!
       end case;
    end record;
@@ -1185,7 +1186,7 @@ private
       In_Destruction : Boolean := False;
       --  Indicates whether the buffer is currently being destroyed
 
-      Charset : String_Access;
+      Charset : GNAT.Strings.String_Access;
       --  The charset associated with the buffer
 
       Constructs : Language.Construct_List;

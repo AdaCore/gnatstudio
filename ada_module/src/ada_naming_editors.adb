@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.OS_Lib;              use GNAT.OS_Lib;
+with GNAT.Strings;             use GNAT.Strings;
 with System;                   use System;
 
 with Glib;                     use Glib;
@@ -63,8 +63,8 @@ package body Ada_Naming_Editors is
    Custom_Naming_Scheme : constant := 3;
 
    type Naming_Data is record
-      Body_Name : GNAT.OS_Lib.String_Access;
-      Spec_Name : GNAT.OS_Lib.String_Access;
+      Body_Name : GNAT.Strings.String_Access;
+      Spec_Name : GNAT.Strings.String_Access;
    end record;
    No_Data : constant Naming_Data := (null, null);
 
@@ -231,16 +231,16 @@ package body Ada_Naming_Editors is
    function Create_Project_Entry
      (Editor             : access Ada_Naming_Editor_Record;
       Project            : Projects.Project_Type;
-      Languages          : Argument_List;
+      Languages          : GNAT.Strings.String_List;
       Scenario_Variables : Projects.Scenario_Variable_Array) return Boolean
    is
       pragma Unreferenced (Languages);
-      Changed  : Boolean := False;
-      Iter : Gtk_Tree_Iter;
+      Changed    : Boolean := False;
+      Iter       : Gtk_Tree_Iter;
       Ada_Scheme : constant Boolean :=
-        Get_Index_In_List (Editor.GUI.Standard_Scheme) = 0;
-      Cache   : Naming_Hash.String_Hash_Table.HTable;
-      Data : Naming_Data;
+                     Get_Index_In_List (Editor.GUI.Standard_Scheme) = 0;
+      Cache      : Naming_Hash.String_Hash_Table.HTable;
+      Data       : Naming_Data;
       Cache_Iter : Naming_Hash.String_Hash_Table.Iterator;
 
       type Array2 is array (Gint'(1) .. 2) of Integer;

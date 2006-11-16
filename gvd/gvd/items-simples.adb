@@ -27,10 +27,11 @@ with Gdk.GC;          use Gdk.GC;
 with Language;        use Language;
 with Pango.Layout;    use Pango.Layout;
 
-with Basic_Types;     use Basic_Types;
 with String_Utils;    use String_Utils;
 
 package body Items.Simples is
+
+   use type GNAT.Strings.String_Access;
 
    Line_Highlighted     : constant Character := '@';
    Line_Not_Highlighted : constant Character := ' ';
@@ -67,7 +68,7 @@ package body Items.Simples is
    -- Get_Value --
    ---------------
 
-   function Get_Value (Item : Simple_Type) return String_Access is
+   function Get_Value (Item : Simple_Type) return GNAT.Strings.String_Access is
    begin
       return Item.Value;
    end Get_Value;
@@ -110,7 +111,8 @@ package body Items.Simples is
          if Item.Value.all /= Value then
             Item.Has_Changed := True;
          end if;
-         Free (Item.Value);
+
+         GNAT.Strings.Free (Item.Value);
       end if;
 
       Item.Value := new String'(Quote_Non_Printable_Characters (Value));
@@ -138,7 +140,7 @@ package body Items.Simples is
    procedure Free
      (Item : access Simple_Type; Only_Value : Boolean := False) is
    begin
-      Free (Item.Value);
+      GNAT.Strings.Free (Item.Value);
       Free (Generic_Type (Item.all)'Access, Only_Value);
    end Free;
 
@@ -513,7 +515,7 @@ package body Items.Simples is
       Only_Value : Boolean := False) is
    begin
       if not Only_Value then
-         Free (Item.Refresh_Cmd);
+         GNAT.Strings.Free (Item.Refresh_Cmd);
       end if;
 
       Free (Simple_Type (Item.all)'Access, Only_Value);
@@ -628,7 +630,7 @@ package body Items.Simples is
 
    procedure Set_Value (Item : in out Debugger_Output_Type; Value : String) is
       S              : constant String := Do_Tab_Expansion (Value, 8);
-      V              : String_Access := Item.Value;
+      V              : GNAT.Strings.String_Access := Item.Value;
 
       Index_New      : Positive := S'First;
       Line_Start_New : Positive;
@@ -700,7 +702,7 @@ package body Items.Simples is
       end loop;
 
       if V /= null then
-         Free (V);
+         GNAT.Strings.Free (V);
       end if;
 
       Item.Valid := True;

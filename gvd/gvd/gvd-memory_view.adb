@@ -51,6 +51,8 @@ with String_Utils;             use String_Utils;
 
 package body GVD.Memory_View is
 
+   use GNAT.Strings;
+
    --------------------
    -- Local packages --
    --------------------

@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.Strings;
 with Ada.Strings.Maps;  use Ada.Strings.Maps;
 
 with GNAT.Regpat;
@@ -136,10 +137,10 @@ package Language is
    ---------------------
 
    type Project_Field is record
-      Attribute_Name  : Basic_Types.String_Access;
-      Attribute_Index : Basic_Types.String_Access := null;
-      Description     : Basic_Types.String_Access;
-      Values          : Basic_Types.String_Array_Access := null;
+      Attribute_Name  : GNAT.Strings.String_Access;
+      Attribute_Index : GNAT.Strings.String_Access := null;
+      Description     : GNAT.Strings.String_Access;
+      Values          : GNAT.Strings.String_List_Access := null;
       Editable        : Boolean := True;
    end record;
    No_Project_Field : constant Project_Field := (null, null, null, null, True);
@@ -184,7 +185,7 @@ package Language is
       Comment_End : String (1 .. Comment_End_Length);
       --  How comments end for this language
 
-      New_Line_Comment_Start : Basic_Types.String_Access;
+      New_Line_Comment_Start : GNAT.Strings.String_Access;
       --  How comments start. These comments end on the next newline character.
       --  If null, use New_Line_Comment_Start_Regexp instead.
 
@@ -494,10 +495,10 @@ package Language is
       Visibility     : Construct_Visibility := Visibility_Public;
       --  Is the construct public, private or protected ?
 
-      Name           : Basic_Types.String_Access;
+      Name           : GNAT.Strings.String_Access;
       --  Name of the enclosing token. Null if not relevant for Token
 
-      Profile        : Basic_Types.String_Access;
+      Profile        : GNAT.Strings.String_Access;
       --  Subprogram profile, if Category is in Subprogram_Category.
       --  Note that even for Subprogram_Category, Profile can be null if the
       --  subprogram does not have any parameter.
@@ -525,7 +526,7 @@ package Language is
       Category       : Language_Category;
       Is_Declaration : Boolean;
       Visibility     : Construct_Visibility := Visibility_Public;
-      Name           : Basic_Types.String_Access;
+      Name           : GNAT.Strings.String_Access;
       Sloc_Start     : Source_Location;
       Sloc_Entity    : Source_Location;
       Sloc_End       : Source_Location;

@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                               G P S                               --
 --                                                                   --
 --                      Copyright (C) 2000-2006                      --
 --                              AdaCore                              --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -24,7 +24,6 @@ with GNAT.Regpat;  use GNAT.Regpat;
 with Pixmaps_IDE;  use Pixmaps_IDE;
 with String_Utils; use String_Utils;
 with Ada_Analyzer; use Ada_Analyzer;
-with Basic_Types;  use Basic_Types;
 
 package body Language.Ada is
 
@@ -125,7 +124,7 @@ package body Language.Ada is
      (1 => (Attribute_Name  => new String'("compiler_command"),
             Attribute_Index => new String'("ada"),
             Description     => new String'("Ada compiler"),
-            Values          => new String_Array'
+            Values          => new GNAT.Strings.String_List'
               (1  => new String'("gnatmake"),
                2  => new String'("powerpc-wrs-vxworks-gnatmake"),
                3  => new String'("powerpc-wrs-vxworksae-gnatmake"),
@@ -143,7 +142,7 @@ package body Language.Ada is
       2 => (Attribute_Name  => new String'("gnatlist"),
             attribute_Index => null,
             Description     => new String'("Gnatls"),
-            Values          => new String_Array'
+            Values          => new GNAT.Strings.String_List'
               (1  => new String'("gnatls"),
                2  => new String'("powerpc-wrs-vxworks-gnatls"),
                3  => new String'("powerpc-wrs-vxworksae-gnatls"),

@@ -20,7 +20,7 @@
 
 with Ada.Exceptions;         use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
-with GNAT.OS_Lib;
+with GNAT.Strings;
 
 with Gdk;                    use Gdk;
 with Glib.Xml_Int;           use Glib.Xml_Int;
@@ -37,6 +37,7 @@ package body GPS.Kernel.Styles is
 
    Me : constant Debug_Handle := Create ("Styles");
 
+   use GNAT.Strings;
    use Style_Htable.String_Hash_Table;
 
    -----------------------
@@ -336,7 +337,7 @@ package body GPS.Kernel.Styles is
       File   : Virtual_File)
    is
       F, Node : Node_Ptr;
-      Err     : GNAT.OS_Lib.String_Access;
+      Err     : GNAT.Strings.String_Access;
 
       procedure Read_Style (N : Node_Ptr);
       --  Read one Style from N.
@@ -384,7 +385,7 @@ package body GPS.Kernel.Styles is
 
          else
             Trace (Me, "Error while parsing styles file " & Err.all);
-            GNAT.OS_Lib.Free (Err);
+            GNAT.Strings.Free (Err);
          end if;
 
          Free (F);

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
@@ -20,7 +20,7 @@
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Commands;                  use Commands;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Strings;              use GNAT.Strings;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Intl;                  use GPS.Intl;
@@ -38,7 +38,7 @@ package body GPS.Kernel.Actions is
 
    type Menu_Command_Record is new Interactive_Command with record
       Kernel    : Kernel_Handle;
-      Menu_Name : GNAT.OS_Lib.String_Access;
+      Menu_Name : GNAT.Strings.String_Access;
    end record;
    type Menu_Command is access all Menu_Command_Record'Class;
    function Execute

@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
---                              ACT-Europe                           --
+--                      Copyright (C) 2000-2006                      --
+--                              AdaCore                              --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -24,11 +24,12 @@ with Gdk.Pixmap;        use Gdk.Pixmap;
 with Gdk.Bitmap;        use Gdk.Bitmap;
 with Gdk.GC;            use Gdk.GC;
 with Language;          use Language;
-with Basic_Types;       use Basic_Types;
 with Debugger;          use Debugger;
 with Language.Debugger; use Language.Debugger;
 
 package body Items is
+
+   use type GNAT.Strings.String_Access;
 
    Max_Item_Width : constant := 1200;
    --  Maximal width (in pixels) an item can have
@@ -211,7 +212,7 @@ package body Items is
      (Item : access Generic_Type;
       Name : String) is
    begin
-      Free (Item.Type_Name);
+      GNAT.Strings.Free (Item.Type_Name);
       Item.Type_Name := new String'(Name);
    end Set_Type_Name;
 
@@ -314,7 +315,7 @@ package body Items is
       J : Generic_Type_Access := Generic_Type_Access (Item);
    begin
       if not Only_Value then
-         Free (Item.Type_Name);
+         GNAT.Strings.Free (Item.Type_Name);
          Free_Internal (J);
       end if;
    end Free;

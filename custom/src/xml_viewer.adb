@@ -20,7 +20,7 @@
 
 with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.OS_Lib;
+with GNAT.Strings;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
@@ -46,10 +46,10 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 
 with Custom_Module;             use Custom_Module;
 with GUI_Utils;                 use GUI_Utils;
-with Basic_Types;               use Basic_Types;
 with Traces;                    use Traces;
 with XML_Parsers;               use XML_Parsers;
 with VFS;                       use VFS;
+with GNAT.Strings;
 
 package body XML_Viewer is
 
@@ -58,7 +58,7 @@ package body XML_Viewer is
      (1 => Filename_Cst'Access);
 
    type XML_Viewer_Record is new Gtk_Vbox_Record with record
-      Name  : String_Access;
+      Name  : GNAT.Strings.String_Access;
       Child : GPS_MDI_Child;
       Tree  : Tree_View;
    end record;
@@ -139,7 +139,7 @@ package body XML_Viewer is
      (View : XML_Viewer;
       File : String) return String
    is
-      Error        : GNAT.OS_Lib.String_Access;
+      Error        : GNAT.Strings.String_Access;
       Root         : Node_Ptr;
       Path         : Gtk_Tree_Path;
       Dummy        : Boolean;
@@ -234,17 +234,17 @@ package body XML_Viewer is
          end loop;
       end Parse_Node;
 
-      use type GNAT.OS_Lib.String_Access;
+      use type GNAT.Strings.String_Access;
    begin
       --  ??? Add a dirty kludge here to support versions of gnatmetrix prior
       --  to 5.03a1, which didn't output correct XML.
 
       declare
          V : constant Virtual_File := Create (File);
-         S : GNAT.OS_Lib.String_Access := Read_File (V);
+         S : GNAT.Strings.String_Access := Read_File (V);
          W : Writable_File;
 
-         use type GNAT.OS_Lib.String_Access;
+         use type GNAT.Strings.String_Access;
       begin
          if S /= null
            and then S.all'Length > 2
@@ -257,7 +257,7 @@ package body XML_Viewer is
             Close (W);
          end if;
 
-         GNAT.OS_Lib.Free (S);
+         GNAT.Strings.Free (S);
       end;
 
       Parse (File, Root, Error);
@@ -267,7 +267,7 @@ package body XML_Viewer is
             Message : constant String := Error.all;
          begin
             Free (Root);
-            GNAT.OS_Lib.Free (Error);
+            GNAT.Strings.Free (Error);
             return Message;
          end;
       end if;

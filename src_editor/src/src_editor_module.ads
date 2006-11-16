@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
+with GNAT.Strings;
 
 with Gdk.GC;
 with Gdk.Pixbuf;         use Gdk.Pixbuf;
@@ -33,7 +34,6 @@ with Gtk.Widget;         use Gtk.Widget;
 
 with Gtkada.MDI;         use Gtkada.MDI;
 
-with Basic_Types;
 with Commands.Controls;  use Commands.Controls;
 with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules; use GPS.Kernel.Modules;
@@ -243,7 +243,7 @@ private
 
       Search_Context        : Src_Contexts.Files_Project_Context_Access;
       Search_File           : VFS.Virtual_File;
-      Search_Pattern        : Basic_Types.String_Access;
+      Search_Pattern        : GNAT.Strings.String_Access;
    end record;
    type Source_Editor_Module is access all Source_Editor_Module_Record'Class;
 

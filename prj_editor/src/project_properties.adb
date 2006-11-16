@@ -24,6 +24,7 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Strings;
 
 with Gdk.Event;                 use Gdk.Event;
 
@@ -124,18 +125,18 @@ package body Project_Properties is
          when Attribute_As_String
             | Attribute_As_Filename
             | Attribute_As_Directory   =>
-            Default           : GNAT.OS_Lib.String_Access;
+            Default           : GNAT.Strings.String_Access;
             Filter            : File_Filter := Filter_None;
             Allow_Empty       : Boolean := True;
          when Attribute_As_Static_List =>
             Static_Allows_Any_String : Boolean := False;
-            Static_List       : GNAT.OS_Lib.String_List_Access;
+            Static_List       : GNAT.Strings.String_List_Access;
             Static_Default    : Boolean_List;
          when Attribute_As_Dynamic_List =>
             Dynamic_Allows_Any_String : Boolean := False;
-            Dynamic_List_Lang : GNAT.OS_Lib.String_Access;
-            Dynamic_List_Cmd  : GNAT.OS_Lib.String_Access;
-            Dynamic_Default   : GNAT.OS_Lib.String_Access;
+            Dynamic_List_Lang : GNAT.Strings.String_Access;
+            Dynamic_List_Cmd  : GNAT.Strings.String_Access;
+            Dynamic_Default   : GNAT.Strings.String_Access;
       end case;
    end record;
 
@@ -144,7 +145,7 @@ package body Project_Properties is
 
    type Indexed_Attribute_Type is record
       Typ         : Attribute_Type;
-      Index_Value : GNAT.OS_Lib.String_Access;  --  null for the general case
+      Index_Value : GNAT.Strings.String_Access;  --  null for the general case
    end record;
       type Indexed_Attribute_Type_Array
      is array (Natural range <>) of Indexed_Attribute_Type;
@@ -156,11 +157,11 @@ package body Project_Properties is
    --  Free the memory occupied by Index
 
    type Attribute_Description (Indexed : Boolean := False) is record
-      Name                 : GNAT.OS_Lib.String_Access;
-      Pkg                  : GNAT.OS_Lib.String_Access;
-      Description          : GNAT.OS_Lib.String_Access;
-      Label                : GNAT.OS_Lib.String_Access;
-      Hide_In              : GNAT.OS_Lib.String_Access;
+      Name                 : GNAT.Strings.String_Access;
+      Pkg                  : GNAT.Strings.String_Access;
+      Description          : GNAT.Strings.String_Access;
+      Label                : GNAT.Strings.String_Access;
+      Hide_In              : GNAT.Strings.String_Access;
       Is_List              : Boolean := False;
       Ordered_List         : Boolean := False;
       Omit_If_Default      : Boolean := True;
@@ -173,15 +174,15 @@ package body Project_Properties is
       --  the user, or the editor is greyed out (a check button is also shown
       --  to allow the edition of the attribute)
 
-      Disable              : GNAT.OS_Lib.String_Access;
+      Disable              : GNAT.Strings.String_Access;
       --  Space-separated list of attributes that are disabled when this
       --  attribute is set. This assumes that Disable_If_Not_Set is True,
       --  otherwise nothing happens.
 
       case Indexed is
          when True =>
-            Index_Attribute : GNAT.OS_Lib.String_Access;
-            Index_Package   : GNAT.OS_Lib.String_Access;
+            Index_Attribute : GNAT.Strings.String_Access;
+            Index_Package   : GNAT.Strings.String_Access;
             Index_Types     : Indexed_Attribute_Type_List;
          when False =>
             Non_Index_Type  : Attribute_Type;
@@ -208,7 +209,7 @@ package body Project_Properties is
      (Gtk_Widget_Record, Attribute_Description_Access);
 
    type Attribute_Page_Section is record
-      Name       : GNAT.OS_Lib.String_Access;  --  "" for unnamed sections
+      Name       : GNAT.Strings.String_Access;  --  "" for unnamed sections
       Attributes : Attribute_Description_List;
    end record;
 
@@ -222,7 +223,7 @@ package body Project_Properties is
      (Attribute_Page_Section_Array, Attribute_Page_Section_List);
 
    type Attribute_Page is record
-      Name     : GNAT.OS_Lib.String_Access;
+      Name     : GNAT.Strings.String_Access;
       Sections : Attribute_Page_Section_List;
    end record;
 
@@ -349,7 +350,7 @@ package body Project_Properties is
       Project         : Project_Type;
       Description     : Attribute_Description_Access;
       Attribute_Index : String;
-      Project_Path    : String) return GNAT.OS_Lib.String_List;
+      Project_Path    : String) return GNAT.Strings.String_List;
    --  Ask the user (through a dialog) for a new value for the attribute.
    --  Multiple values can be returned if the attribute is a list. Returned
    --  value must be freed by the user.
@@ -386,7 +387,7 @@ package body Project_Properties is
 
    function Get_Value_As_List
      (Editor          : access File_Attribute_Editor_Record;
-      Attribute_Index : String := "") return GNAT.OS_Lib.String_List;
+      Attribute_Index : String := "") return GNAT.Strings.String_List;
    function Get_Value_As_String
      (Editor : access File_Attribute_Editor_Record;
       Attribute_Index : String := "") return String;
@@ -433,7 +434,7 @@ package body Project_Properties is
 
    function Get_Value_As_List
      (Editor          : access List_Attribute_Editor_Record;
-      Attribute_Index : String := "") return GNAT.OS_Lib.String_List;
+      Attribute_Index : String := "") return GNAT.Strings.String_List;
    function Get_Value_As_String
      (Editor : access List_Attribute_Editor_Record;
       Attribute_Index : String := "") return String;
@@ -486,8 +487,8 @@ package body Project_Properties is
    ---------------------------------
 
    type Indexed_Values is record
-      Index  : GNAT.OS_Lib.String_Access;
-      Values : GNAT.OS_Lib.String_List_Access;
+      Index  : GNAT.Strings.String_Access;
+      Values : GNAT.Strings.String_List_Access;
    end record;
    type Indexed_Values_Array is array (Natural range <>) of Indexed_Values;
    type Indexed_Values_Array_Access is access Indexed_Values_Array;
@@ -506,7 +507,7 @@ package body Project_Properties is
 
    function Get_Value_As_List
      (Editor          : access Indexed_Attribute_Editor_Record;
-      Attribute_Index : String := "") return GNAT.OS_Lib.String_List;
+      Attribute_Index : String := "") return GNAT.Strings.String_List;
    function Get_Value_As_String
      (Editor : access Indexed_Attribute_Editor_Record;
       Attribute_Index : String := "") return String;
@@ -582,7 +583,7 @@ package body Project_Properties is
    --  Called when an editor is destroyed
 
    function Get_Languages
-     (Editor : Properties_Editor) return GNAT.OS_Lib.String_List;
+     (Editor : Properties_Editor) return GNAT.Strings.String_List;
    --  Return the list of languages currently set in the editor
 
    procedure Toggle_Sensitive
@@ -643,7 +644,7 @@ package body Project_Properties is
       Index         : String := "";
       Default_Only  : Boolean := False;
       Ignore_Editor : Boolean := False)
-      return GNAT.OS_Lib.String_List;
+      return GNAT.Strings.String_List;
    --  Get the current value for the given attribute. This value is extracted
    --  from one of three sources, in that order:
    --    - Either the current editor for that attribute. This reflects the
@@ -735,12 +736,12 @@ package body Project_Properties is
       Attr               : Attribute_Description_Access;
       Project            : Project_Type;
       Scenario_Variables : Scenario_Variable_Array;
-      Values             : GNAT.OS_Lib.String_List;
+      Values             : GNAT.Strings.String_List;
       Attribute_Index    : String := "";
       Project_Changed    : in out Boolean);
    --  Change, if needed, a project to reflect the new value of the attribute
 
-   function To_String (List : GNAT.OS_Lib.String_List) return String;
+   function To_String (List : GNAT.Strings.String_List) return String;
    --  Convert List into a string suitable to represent it. The string need not
    --  be parsable again to extract the values.
 
@@ -1033,7 +1034,7 @@ package body Project_Properties is
       Attr               : Attribute_Description_Access;
       Project            : Project_Type;
       Scenario_Variables : Scenario_Variable_Array;
-      Values             : GNAT.OS_Lib.String_List;
+      Values             : GNAT.Strings.String_List;
       Attribute_Index    : String := "";
       Project_Changed    : in out Boolean)
    is
@@ -1047,7 +1048,7 @@ package body Project_Properties is
       end if;
 
       declare
-         Old_Values : aliased GNAT.OS_Lib.String_List := Get_Attribute_Value
+         Old_Values : aliased GNAT.Strings.String_List := Get_Attribute_Value
            (Project   => Project,
             Attribute => Attribute,
             Index     => Lower_Attribute_Index);
@@ -1058,7 +1059,7 @@ package body Project_Properties is
                Ordered => Attr.Ordered_List);
          else
             declare
-               Default : GNAT.OS_Lib.String_List :=
+               Default : GNAT.Strings.String_List :=
                  Get_Current_Value
                    (Kernel       => Kernel,
                     Project      => Project,
@@ -1294,7 +1295,7 @@ package body Project_Properties is
             Project_Changed    => Project_Changed);
       else
          declare
-            Values : GNAT.OS_Lib.String_List := Get_Current_Value
+            Values : GNAT.Strings.String_List := Get_Current_Value
               (Kernel  => Editor.Kernel,
                Project => Project,
                Attr    => Editor.Attribute);
@@ -1379,7 +1380,7 @@ package body Project_Properties is
 
             if Editor.Attribute.Is_List then
                declare
-                  Values : GNAT.OS_Lib.String_List := Get_Current_Value
+                  Values : GNAT.Strings.String_List := Get_Current_Value
                     (Kernel  => Editor.Kernel,
                      Project => Project,
                      Attr    => Editor.Attribute,
@@ -1572,7 +1573,7 @@ package body Project_Properties is
          --  the default value for attributes not declared in the project
          if Descr.Is_List then
             declare
-               List : GNAT.OS_Lib.String_List := Get_Current_Value
+               List : GNAT.Strings.String_List := Get_Current_Value
                  (Kernel, Project, Descr, Index);
             begin
                Set_Return_Attribute (List, As_List);
@@ -2032,7 +2033,7 @@ package body Project_Properties is
          A :=
            (Typ            => Attribute_As_Static_List,
             Static_Allows_Any_String => Child2 /= null,
-            Static_List    => new GNAT.OS_Lib.String_List (1 .. Choice_Count),
+            Static_List    => new GNAT.Strings.String_List (1 .. Choice_Count),
             Static_Default => new Boolean_Array (1 .. Choice_Count));
 
          Child2 := Child;
@@ -2668,7 +2669,7 @@ package body Project_Properties is
       Col_Number : Gint;
       pragma Unreferenced (Col_Number);
 
-      Current_Value : GNAT.OS_Lib.String_List_Access;
+      Current_Value : GNAT.Strings.String_List_Access;
 
       procedure Value_Cb (Value : String; Is_Default : Boolean);
       --  Called for each possible value of the attribute
@@ -2722,7 +2723,7 @@ package body Project_Properties is
 
       if Is_List then
          declare
-            Current : aliased GNAT.OS_Lib.String_List := Get_Current_Value
+            Current : aliased GNAT.Strings.String_List := Get_Current_Value
               (Kernel  => Kernel,
                Project => Project,
                Attr    => Description,
@@ -2973,7 +2974,7 @@ package body Project_Properties is
 
    procedure Add_String_In_List (Editor : access Gtk_Widget_Record'Class) is
       Ed    : constant File_Attribute_Editor := File_Attribute_Editor (Editor);
-      Value : GNAT.OS_Lib.String_List := Create_Attribute_Dialog
+      Value : GNAT.Strings.String_List := Create_Attribute_Dialog
         (Ed.Kernel, Gtk_Window (Get_Toplevel (Editor)),
          Ed.Project, Ed.Attribute, Attribute_Index => "",
          Project_Path => Get_Text (Ed.Path_Widget));
@@ -3263,7 +3264,7 @@ package body Project_Properties is
          end if;
 
          declare
-            Value : GNAT.OS_Lib.String_List := Get_Current_Value
+            Value : GNAT.Strings.String_List := Get_Current_Value
               (Kernel  => Kernel,
                Project => Project,
                Attr    => Description,
@@ -3354,7 +3355,7 @@ package body Project_Properties is
       Project         : Project_Type;
       Description     : Attribute_Description_Access;
       Attribute_Index : String;
-      Project_Path    : String) return GNAT.OS_Lib.String_List
+      Project_Path    : String) return GNAT.Strings.String_List
    is
       Dialog : Gtk_Dialog;
       Button : Gtk_Widget;
@@ -3406,7 +3407,7 @@ package body Project_Properties is
                   As_Directory      => Attr.Typ = Attribute_As_Directory,
                   Filter            => Attr.Filter,
                   Allow_Multiple    => False);
-               Result : GNAT.OS_Lib.String_List (Files'Range);
+               Result : GNAT.Strings.String_List (Files'Range);
             begin
                for F in Files'Range loop
                   Result (F) := new String'(Full_Name (Files (F)).all);
@@ -3641,11 +3642,11 @@ package body Project_Properties is
 
    function Get_Value_As_List
      (Editor : access File_Attribute_Editor_Record;
-      Attribute_Index : String := "") return GNAT.OS_Lib.String_List
+      Attribute_Index : String := "") return GNAT.Strings.String_List
    is
       pragma Unreferenced (Attribute_Index);
       Count  : constant Integer := Integer (N_Children (Editor.Model));
-      Result : GNAT.OS_Lib.String_List (1 .. Count);
+      Result : GNAT.Strings.String_List (1 .. Count);
       Iter   : Gtk_Tree_Iter := Get_Iter_First (Editor.Model);
       Index  : Natural := Result'First;
    begin
@@ -3664,11 +3665,11 @@ package body Project_Properties is
 
    function Get_Value_As_List
      (Editor          : access List_Attribute_Editor_Record;
-      Attribute_Index : String := "") return GNAT.OS_Lib.String_List
+      Attribute_Index : String := "") return GNAT.Strings.String_List
    is
       pragma Unreferenced (Attribute_Index);
       Count  : constant Integer := Integer (N_Children (Editor.Model));
-      Result : GNAT.OS_Lib.String_List (1 .. Count);
+      Result : GNAT.Strings.String_List (1 .. Count);
       Iter   : Gtk_Tree_Iter := Get_Iter_First (Editor.Model);
       Index  : Natural := Result'First;
    begin
@@ -3689,14 +3690,14 @@ package body Project_Properties is
 
    function Get_Value_As_List
      (Editor          : access Indexed_Attribute_Editor_Record;
-      Attribute_Index : String := "") return GNAT.OS_Lib.String_List
+      Attribute_Index : String := "") return GNAT.Strings.String_List
    is
    begin
       if Editor.Current_Values /= null then
          for C in Editor.Current_Values'Range loop
             if Editor.Current_Values (C).Index.all = Attribute_Index then
                declare
-                  V : GNAT.OS_Lib.String_List
+                  V : GNAT.Strings.String_List
                     (Editor.Current_Values (C).Values'Range);
                begin
                   for Val in Editor.Current_Values (C).Values'Range loop
@@ -3708,7 +3709,7 @@ package body Project_Properties is
             end if;
          end loop;
       end if;
-      return GNAT.OS_Lib.String_List'(1 .. 0 => null);
+      return GNAT.Strings.String_List'(1 .. 0 => null);
    end Get_Value_As_List;
 
    -----------------------
@@ -3723,7 +3724,7 @@ package body Project_Properties is
       Ignore_Editor : Boolean := False) return String
    is
       Empty_String          : aliased String := "";
-      Default_Value         : GNAT.OS_Lib.String_Access :=
+      Default_Value         : GNAT.Strings.String_Access :=
                                 Empty_String'Unchecked_Access;
       Typ : constant Attribute_Type := Get_Attribute_Type_From_Description
         (Attr, Index);
@@ -3786,7 +3787,7 @@ package body Project_Properties is
       Pkg     : String;
       Name    : String;
       Index   : String := "")
-      return GNAT.OS_Lib.String_List
+      return GNAT.Strings.String_List
    is
       Attr : constant Attribute_Description_Access :=
         Get_Attribute_Type_From_Name (Pkg, Name);
@@ -3809,7 +3810,7 @@ package body Project_Properties is
       Index         : String := "";
       Default_Only  : Boolean := False;
       Ignore_Editor : Boolean := False)
-      return GNAT.OS_Lib.String_List
+      return GNAT.Strings.String_List
    is
       Result : String_List_Access;
 
@@ -3822,16 +3823,16 @@ package body Project_Properties is
 
       procedure Save_Value (Value : String; Is_Default : Boolean) is
          procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-           (GNAT.OS_Lib.String_List, String_List_Access);
+           (GNAT.Strings.String_List, String_List_Access);
          Tmp : String_List_Access := Result;
       begin
          if Is_Default then
             if Result /= null then
-               Result := new GNAT.OS_Lib.String_List (1 .. Tmp'Length + 1);
+               Result := new GNAT.Strings.String_List (1 .. Tmp'Length + 1);
                Result (Tmp'Range) := Tmp.all;
                Unchecked_Free (Tmp);
             else
-               Result := new GNAT.OS_Lib.String_List (1 .. 1);
+               Result := new GNAT.Strings.String_List (1 .. 1);
             end if;
             Result (Result'Last) := new String'(Value);
          end if;
@@ -3886,16 +3887,16 @@ package body Project_Properties is
             | Attribute_As_Directory =>
 
             if Attr_Type.Default.all = "" then
-               return GNAT.OS_Lib.String_List'(1 .. 0 => null);
+               return GNAT.Strings.String_List'(1 .. 0 => null);
 
             elsif Attr_Type.Default.all = "project source files" then
                if Project = Projects.No_Project then
-                  return GNAT.OS_Lib.String_List'(1 .. 0 => null);
+                  return GNAT.Strings.String_List'(1 .. 0 => null);
                else
                   declare
                      Files : File_Array_Access :=
                                Get_Source_Files (Project, Recursive => False);
-                     Result : GNAT.OS_Lib.String_List (Files'Range);
+                     Result : GNAT.Strings.String_List (Files'Range);
                   begin
                      for R in Result'Range loop
                         Result (R) := new String'(Full_Name (Files (R)).all);
@@ -3908,7 +3909,7 @@ package body Project_Properties is
             else
                --  Workaround fatal crash in GNAT
                declare
-                  V : GNAT.OS_Lib.String_List (1 .. 1);
+                  V : GNAT.Strings.String_List (1 .. 1);
                begin
                   V (1) := new String'(Attr_Type.Default.all);
                   return V;
@@ -3921,7 +3922,7 @@ package body Project_Properties is
               (Kernel, Attr_Type, Save_Value'Unrestricted_Access);
 
             declare
-               R : constant GNAT.OS_Lib.String_List := Result.all;
+               R : constant GNAT.Strings.String_List := Result.all;
             begin
                Unchecked_Free (Result);
                return R;
@@ -3999,7 +4000,7 @@ package body Project_Properties is
                            then
                               Free (Ed.Current_Values (C).Values);
                               Ed.Current_Values (C).Values :=
-                                new GNAT.OS_Lib.String_List'
+                                new GNAT.Strings.String_List'
                                   (Get_Value_As_List (Value_Ed, ""));
                               Set (Ed.Model, Iter, 1,
                                    To_String
@@ -4016,7 +4017,7 @@ package body Project_Properties is
                   --  done in-line
                   if Typ.Typ /= Attribute_As_String then
                      declare
-                        Value : GNAT.OS_Lib.String_List :=
+                        Value : GNAT.Strings.String_List :=
                           Create_Attribute_Dialog
                             (Kernel          => Ed.Kernel,
                              Toplevel        => Gtk_Window (Get_Toplevel (Ed)),
@@ -4048,7 +4049,7 @@ package body Project_Properties is
    -- To_String --
    ---------------
 
-   function To_String (List : GNAT.OS_Lib.String_List) return String is
+   function To_String (List : GNAT.Strings.String_List) return String is
       Str : Unbounded_String;
    begin
       for C in List'Range loop
@@ -4112,7 +4113,7 @@ package body Project_Properties is
 
                if Attr.Is_List then
                   declare
-                     Current : constant GNAT.OS_Lib.String_List :=
+                     Current : constant GNAT.Strings.String_List :=
                        Get_Current_Value
                          (Kernel   => Kernel,
                           Project  => Project,
@@ -4134,7 +4135,7 @@ package body Project_Properties is
 
                      Ed.Current_Values (Ed.Current_Values'Last) :=
                        (Index  => new String'(Value),
-                        Values => new GNAT.OS_Lib.String_List'(Current));
+                        Values => new GNAT.Strings.String_List'(Current));
                   end;
                else
                   Set (Ed.Model, Iter, Attribute_Col,
@@ -4172,7 +4173,7 @@ package body Project_Properties is
                 Editable_Col   => GType_Boolean));
 
       declare
-         Current_Value : aliased GNAT.OS_Lib.String_List :=
+         Current_Value : aliased GNAT.Strings.String_List :=
            Get_Current_Value (Kernel, Project, Index);
       begin
          Current_Index := Current_Value'Unchecked_Access;
@@ -4797,7 +4798,7 @@ package body Project_Properties is
    -------------------
 
    function Get_Languages
-     (Editor : Properties_Editor) return GNAT.OS_Lib.String_List
+     (Editor : Properties_Editor) return GNAT.Strings.String_List
    is
       Attr : constant Attribute_Description_Access :=
         Get_Attribute_Type_From_Name (Pkg => "", Name => "languages");

@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with GPS.Kernel;           use GPS.Kernel;
-with GNAT.OS_Lib;
+with GNAT.Strings;
 with GNAT.Regpat;
 with GNAT.Expect;
 
@@ -111,7 +111,7 @@ package Codefix.GPS_Io is
    --  Initialize the structure of the Console_Interface. Actually do noting.
 
    function Read_File (This : Console_Interface)
-      return GNAT.OS_Lib.String_Access;
+      return GNAT.Strings.String_Access;
    --  Get the entire file
 
    procedure Commit (This : Console_Interface);
@@ -151,7 +151,7 @@ package Codefix.GPS_Io is
 
 private
 
-   package String_List is new Generic_List (GNAT.OS_Lib.String_Access);
+   package String_List is new Generic_List (GNAT.Strings.String_Access);
    use String_List;
    --  ??? Should use standard string list
 
@@ -176,7 +176,7 @@ private
    --  changes appened.
 
    type GPS_Mark is new Mark_Abstr with record
-      Id : GNAT.OS_Lib.String_Access;
+      Id : GNAT.Strings.String_Access;
    end record;
 
    procedure Free (This : in out Compilation_Output);
@@ -187,7 +187,7 @@ private
    --  See doc for inherited subprograms
 
    type Compilation_Output is new Errors_Interface with record
-      Errors_Buffer : GNAT.OS_Lib.String_Access := null;
+      Errors_Buffer : GNAT.Strings.String_Access := null;
       Current_Index : Natural := 1;
       Kernel        : Kernel_Handle;
       File_Regexp : GNAT.Expect.Pattern_Matcher_Access;

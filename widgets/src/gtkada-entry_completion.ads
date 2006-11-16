@@ -23,8 +23,7 @@ with Gtk.Combo;
 with Gtk.GEntry;
 with Gtk.Tree_Store;
 with Gtk.Tree_View;
-
-with Basic_Types;
+with GNAT.Strings;
 
 package Gtkada.Entry_Completion is
 
@@ -98,7 +97,7 @@ package Gtkada.Entry_Completion is
 
    procedure Set_Completions
      (The_Entry   : access Gtkada_Entry_Record;
-      Completions : Basic_Types.String_Array_Access);
+      Completions : GNAT.Strings.String_List_Access);
    --  Set the possible completions for The_Entry.
    --  Completions should not be freed by the caller, it is taken care of by
    --  this widget. Current_Completion will always 0 in this case.
@@ -118,7 +117,7 @@ package Gtkada.Entry_Completion is
 
 private
    type String_Factory is new Completions_Factory with record
-      Completions  : Basic_Types.String_Array_Access;
+      Completions  : GNAT.Strings.String_List_Access;
    end record;
    function Completion
      (Factory : String_Factory; Index : Positive) return String;

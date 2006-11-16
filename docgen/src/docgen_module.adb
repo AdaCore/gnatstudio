@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2006                       --
+--                      Copyright (C) 2003-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -21,7 +21,8 @@
 with Ada.Exceptions;            use Ada.Exceptions;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.OS_Lib;
+with GNAT.Strings;              use GNAT.Strings;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
@@ -671,7 +672,7 @@ package body Docgen_Module is
                                 (Docgen_Module_Id).Options.Process_Body_Files;
       Source_File_List    : Type_Source_File_Table.HTable;
       Other_File          : Virtual_File;
-      Other_File_Basename : GNAT.OS_Lib.String_Access;
+      Other_File_Basename : GNAT.Strings.String_Access;
       Source              : Source_File;
       Nb_Files            : Natural := 1;
 
@@ -889,7 +890,7 @@ package body Docgen_Module is
       --  which has been already processed.
       --  Documentation for new files is added.
 
-      if not Is_Directory
+      if not GNAT.OS_Lib.Is_Directory
         (Get_Doc_Directory (Backend, Kernel))
       then
          Make_Dir (Get_Doc_Directory (Backend, Kernel));

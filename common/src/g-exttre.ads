@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---           Copyright (C) 2006 Ada Core Technologies, Inc.            --
+--                         Copyright (C) 2006 AdaCore                       --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -19,14 +19,14 @@
 -- to  the Free Software Foundation,  59 Temple Place - Suite 330,  Boston, --
 -- MA 02111-1307, USA.                                                      --
 --                                                                          --
--- GNAT is maintained by Ada Core Technologies Inc (http://www.gnat.com).   --
+-- GNAT is maintained by AdaCore (http://www.adacore.com).                  --
 --                                                                          --
 ------------------------------------------------------------------------------
 
 with GNAT.Expect;     use GNAT.Expect;
 with GNAT.Expect.TTY; use GNAT.Expect.TTY;
 with GNAT.Regpat;     use GNAT.Regpat;
-with GNAT.OS_Lib;     use GNAT.OS_Lib;
+with GNAT.Strings;    use GNAT.Strings;
 
 with Glib;            use Glib;
 
@@ -324,7 +324,7 @@ package GNAT.Expect.TTY.Remote is
    procedure Sync_Execute
      (Host                : String;
       Args                : GNAT.OS_Lib.Argument_List;
-      Out_Value           : out GNAT.OS_Lib.String_Access;
+      Out_Value           : out GNAT.Strings.String_Access;
       Status              : out Boolean;
       Execution_Directory : String  := "");
    --  Same as above, except that the program output is also returned

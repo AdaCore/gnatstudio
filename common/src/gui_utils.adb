@@ -1646,7 +1646,7 @@ package body GUI_Utils is
 
    function Create_Tree_View
      (Column_Types       : Glib.GType_Array;
-      Column_Names       : GNAT.OS_Lib.String_List;
+      Column_Names       : GNAT.Strings.String_List;
       Show_Column_Titles : Boolean := True;
       Selection_Mode     : Gtk.Enums.Gtk_Selection_Mode :=
         Gtk.Enums.Selection_Single;

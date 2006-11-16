@@ -18,7 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.OS_Lib;
+with GNAT.Strings;              use GNAT.Strings;
 with Traces;                    use Traces;
 with HTables;
 with Ada.Unchecked_Deallocation;
@@ -98,13 +99,13 @@ package body GPR_Creation is
    --  file
 
    procedure Parse_Source_Dirs
-     (Source_Dirs : GNAT.OS_Lib.String_List;
+     (Source_Dirs : GNAT.Strings.String_List;
       Files       : in out File_Htables.HTable);
    --  Process all source directories, and find the list of source files.
    --  Result is stored in the Directories/Files parameters
 
    procedure Parse_Object_Dirs
-     (Object_Dirs     : GNAT.OS_Lib.String_List;
+     (Object_Dirs     : GNAT.Strings.String_List;
       Related_To      : in out Is_Related_To;
       Directories     : in out Object_Directory_Info_Array;
       Src_Files       : in out File_Htables.HTable;
@@ -209,7 +210,7 @@ package body GPR_Creation is
    -----------------------
 
    procedure Parse_Source_Dirs
-     (Source_Dirs : GNAT.OS_Lib.String_List;
+     (Source_Dirs : GNAT.Strings.String_List;
       Files       : in out File_Htables.HTable)
    is
       Dir  : Dir_Type;
@@ -306,7 +307,7 @@ package body GPR_Creation is
    -----------------------
 
    procedure Parse_Object_Dirs
-     (Object_Dirs     : GNAT.OS_Lib.String_List;
+     (Object_Dirs     : GNAT.Strings.String_List;
       Related_To      : in out Is_Related_To;
       Directories     : in out Object_Directory_Info_Array;
       Src_Files       : in out File_Htables.HTable;
@@ -457,10 +458,10 @@ package body GPR_Creation is
       Value           : String;
       Attribute_Index : String := "")
    is
-      List : Argument_List_Access;
+      List : String_List_Access;
    begin
       if Value /= "" then
-         List := Argument_String_To_List (Value);
+         List := GNAT.OS_Lib.Argument_String_To_List (Value);
          Update_Attribute_Value_In_Scenario
            (Project            => Project,
             Scenario_Variables => No_Scenario,
@@ -649,11 +650,11 @@ package body GPR_Creation is
    procedure Create_Gpr_Files
      (Registry          : Projects.Registry.Project_Registry'Class;
       Root_Project      : Project_Type;
-      Source_Dirs       : GNAT.OS_Lib.String_List;
-      Object_Dirs       : GNAT.OS_Lib.String_List;
+      Source_Dirs       : GNAT.Strings.String_List;
+      Object_Dirs       : GNAT.Strings.String_List;
       Spec_Extension    : String;
       Body_Extension    : String;
-      Main_Units        : GNAT.OS_Lib.String_List_Access := null;
+      Main_Units        : GNAT.Strings.String_List_Access := null;
       Builder_Switches  : String;
       Compiler_Switches : String;
       Binder_Switches   : String;
@@ -786,15 +787,15 @@ package body GPR_Creation is
       Object_Dirs       : VFS.File_Array;
       Spec_Extension    : String;
       Body_Extension    : String;
-      Main_Units        : GNAT.OS_Lib.String_List_Access := null;
+      Main_Units        : GNAT.Strings.String_List_Access := null;
       Builder_Switches  : String;
       Compiler_Switches : String;
       Binder_Switches   : String;
       Linker_Switches   : String;
       Cross_Prefix      : String := "")
    is
-      S_Source_Dirs : GNAT.OS_Lib.String_List (Source_Dirs'Range);
-      S_Object_Dirs : GNAT.OS_Lib.String_List (Object_Dirs'Range);
+      S_Source_Dirs : GNAT.Strings.String_List (Source_Dirs'Range);
+      S_Object_Dirs : GNAT.Strings.String_List (Object_Dirs'Range);
    begin
 
       for J in Source_Dirs'Range loop

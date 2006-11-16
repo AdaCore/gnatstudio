@@ -20,7 +20,7 @@
 
 with Ada.Exceptions;              use Ada.Exceptions;
 
-with GNAT.OS_Lib;                 use GNAT.OS_Lib;
+with GNAT.Strings;                use GNAT.Strings;
 
 with Glib;                        use Glib;
 with Glib.Object;                 use Glib.Object;
@@ -1098,7 +1098,7 @@ package body Call_Graph_Views is
      (View   : access Callgraph_View_Record'Class;
       Kernel : access Kernel_Handle_Record'Class)
    is
-      Names  : GNAT.OS_Lib.String_List := (1 => new String'(-"Name"));
+      Names  : GNAT.Strings.String_List := (1 => new String'(-"Name"));
       Scroll : Gtk_Scrolled_Window;
 
    begin

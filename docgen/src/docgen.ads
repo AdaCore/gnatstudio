@@ -24,7 +24,7 @@
 --  which entity type should be processed by the output procedure.
 
 with Basic_Types;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Strings;
 with List_Utils;                use List_Utils;
 with Entities;                  use Entities;
 with GPS.Kernel;                use GPS.Kernel;
@@ -52,8 +52,8 @@ package Docgen is
    --  See inherited documentation.
 
    type Source_File_Information is record
-      Unit_Name     : GNAT.OS_Lib.String_Access;
-      Doc_File_Name : GNAT.OS_Lib.String_Access;
+      Unit_Name     : GNAT.Strings.String_Access;
+      Doc_File_Name : GNAT.Strings.String_Access;
       --  The base name of the output file that contains the documentation for
       --  this source file.
       Is_Spec       : Boolean;

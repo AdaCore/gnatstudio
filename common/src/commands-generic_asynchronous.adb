@@ -20,6 +20,8 @@
 
 package body Commands.Generic_Asynchronous is
 
+   use GNAT.Strings;
+
    ----------
    -- Free --
    ----------

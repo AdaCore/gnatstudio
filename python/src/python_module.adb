@@ -26,7 +26,8 @@ with Interfaces.C.Strings;       use Interfaces.C, Interfaces.C.Strings;
 with System;                     use System;
 
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
-with GNAT.OS_Lib;                use GNAT.OS_Lib;
+with GNAT.OS_Lib;
+with GNAT.Strings;               use GNAT.Strings;
 
 with Basic_Types;
 
@@ -184,7 +185,7 @@ package body Python_Module is
    function Execute
      (Subprogram : access Python_Subprogram_Record;
       Args       : Callback_Data'Class)
-      return GNAT.OS_Lib.String_List;
+      return GNAT.Strings.String_List;
    procedure Free (Subprogram : in out Python_Subprogram_Record);
    function Get_Name
      (Subprogram : access Python_Subprogram_Record) return String;
@@ -947,7 +948,7 @@ package body Python_Module is
          VF     : VFS.Virtual_File;
          Command : Custom_Command_Access;
       begin
-         if not Is_Directory (Dir) then
+         if not GNAT.OS_Lib.Is_Directory (Dir) then
             return;
          end if;
 
@@ -2680,7 +2681,7 @@ package body Python_Module is
    function Execute
      (Subprogram : access Python_Subprogram_Record;
       Args       : Callback_Data'Class)
-      return GNAT.OS_Lib.String_List
+      return GNAT.Strings.String_List
    is
       Obj : constant PyObject := Execute_Command
         (Script => Python_Module_Id.Script,
@@ -2704,7 +2705,7 @@ package body Python_Module is
 
       elsif PyList_Check (Obj) then
          declare
-            Result : GNAT.OS_Lib.String_List (1 .. PyList_Size (Obj));
+            Result : GNAT.Strings.String_List (1 .. PyList_Size (Obj));
             Item   : PyObject;
          begin
             for J in 0 .. PyList_Size (Obj) - 1 loop

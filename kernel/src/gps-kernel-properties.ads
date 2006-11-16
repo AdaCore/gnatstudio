@@ -35,6 +35,7 @@
 --        Set_Property (File, "dummy", Prop, Persistent => True);
 --     end;
 
+with GNAT.Strings;
 with Glib.Xml_Int;
 with Projects;
 
@@ -179,7 +180,7 @@ package GPS.Kernel.Properties is
    type Integer_Property_Access is access all Integer_Property'Class;
 
    type String_Property is new Property_Record with record
-      Value : GNAT.OS_Lib.String_Access;
+      Value : GNAT.Strings.String_Access;
    end record;
    type String_Property_Access is access all String_Property'Class;
 

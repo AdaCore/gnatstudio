@@ -102,8 +102,8 @@ package body Language is
       loop
          exit when Info = null;
 
-         Free (Info.Name);
-         Free (Info.Profile);
+         GNAT.Strings.Free (Info.Name);
+         GNAT.Strings.Free (Info.Profile);
          Tmp := Info;
          Info := Info.Next;
          Free (Tmp);
@@ -161,6 +161,8 @@ package body Language is
       Buffer_Length : constant Natural := Buffer'Last - First + 1;
       Tmp           : Natural;
       Found         : Boolean;
+
+      use GNAT.Strings;
 
    begin
       Line   := 1;
@@ -359,7 +361,9 @@ package body Language is
    procedure To_Simple_Construct_Information
      (Construct : Construct_Information;
       Simple    : out Simple_Construct_Information;
-      Full_Copy : Boolean) is
+      Full_Copy : Boolean)
+   is
+      use GNAT.Strings;
    begin
       Simple :=
         (Category       => Construct.Category,
@@ -777,9 +781,9 @@ package body Language is
    procedure Free (Fields : in out Project_Field_Array) is
    begin
       for F in Fields'Range loop
-         Free (Fields (F).Attribute_Name);
-         Free (Fields (F).Attribute_Index);
-         Free (Fields (F).Description);
+         GNAT.Strings.Free (Fields (F).Attribute_Name);
+         GNAT.Strings.Free (Fields (F).Attribute_Index);
+         GNAT.Strings.Free (Fields (F).Description);
       end loop;
    end Free;
 
@@ -805,6 +809,7 @@ package body Language is
       Buffer  : String;
       Index   : Natural) return Comment_Type
    is
+      use GNAT.Strings;
    begin
       if Context.New_Line_Comment_Start /= null
         and then Index + Context.New_Line_Comment_Start'Length <= Buffer'Last

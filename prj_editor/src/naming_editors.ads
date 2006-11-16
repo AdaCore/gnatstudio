@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2003                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2002-2006                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,7 +20,7 @@
 
 with Gtk.Notebook;
 with GPS.Kernel;
-with GNAT.OS_Lib;
+with GNAT.Strings;
 with Projects;
 with Gtk.Widget;
 
@@ -38,7 +38,7 @@ package Naming_Editors is
    procedure Gtk_New
      (Editor    : out Naming_Editor;
       Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Languages : GNAT.OS_Lib.Argument_List);
+      Languages : GNAT.Strings.String_List);
    --  Create a new naming scheme editor, that supports the edition of all the
    --  languages in Languages.
    --  It is the responsability of the caller to free Languages.
@@ -53,7 +53,7 @@ package Naming_Editors is
    function Create_Project_Entry
      (Editor          : access Naming_Editor_Record;
       Project         : Projects.Project_Type;
-      Languages       : GNAT.OS_Lib.Argument_List;
+      Languages       : GNAT.Strings.String_List;
       Scenario_Variables : Projects.Scenario_Variable_Array) return Boolean;
    --  Create a new entry in the project file Project for the naming scheme
    --  defined in the editor.
@@ -78,7 +78,7 @@ package Naming_Editors is
    procedure Set_Visible_Pages
      (Editor       : access Naming_Editor_Record;
       Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Languages    : GNAT.OS_Lib.Argument_List;
+      Languages    : GNAT.Strings.String_List;
       Project      : Projects.Project_Type);
    --  Change the visible pages in editor, based on languages
 
@@ -104,7 +104,7 @@ package Naming_Editors is
    function Create_Project_Entry
      (Editor             : access Language_Naming_Editor_Record;
       Project            : Projects.Project_Type;
-      Languages          : GNAT.OS_Lib.Argument_List;
+      Languages          : GNAT.Strings.String_List;
       Scenario_Variables : Projects.Scenario_Variable_Array) return Boolean
       is abstract;
    --  Create a new entry in the project file Project for the naming scheme
@@ -125,7 +125,7 @@ package Naming_Editors is
 
 private
    type Language_Naming is record
-      Language       : GNAT.OS_Lib.String_Access;
+      Language       : GNAT.Strings.String_Access;
       Naming         : Language_Naming_Editor;
       Is_Visible     : Boolean;
    end record;

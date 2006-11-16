@@ -113,7 +113,7 @@ is
      (Browser : String;
       Args    : Argument_List := (1 .. 0 => null)) return Boolean
    is
-      Cmd     : GNAT.OS_Lib.String_Access;
+      Cmd     : GNAT.Strings.String_Access;
       Process : Process_Id;
    begin
       Cmd := Locate_Exec_On_Path (Browser);

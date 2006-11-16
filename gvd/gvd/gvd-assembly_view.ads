@@ -21,6 +21,8 @@
 --  This package implements a text area target to the display of assembly
 --  code.
 
+with GNAT.Strings;
+
 with Glib;
 with Glib.Object;
 with Gdk.Font;
@@ -28,7 +30,6 @@ with Gtk.Box;
 with Gtk.Menu;
 with Gtk.Text_Tag;
 with Gtk.Text_View;
-with Basic_Types;
 with Pango.Font;
 
 with GVD.Types;
@@ -120,7 +121,7 @@ private
       Low, High : GVD.Types.Address_Type;
       --  The low and high ranges for this item
 
-      Data      : Basic_Types.String_Access;
+      Data      : GNAT.Strings.String_Access;
       --  The assembly code for that range
 
       Next      : Cache_Data_Access;

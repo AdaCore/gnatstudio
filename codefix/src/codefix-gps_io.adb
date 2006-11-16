@@ -53,11 +53,12 @@ package body Codefix.GPS_Io is
       Cursor       : File_Cursor'Class) return Mark_Abstr'Class
    is
       Result : GPS_Mark;
-      Args   : Argument_List :=
+      Args   : GNAT.Strings.String_List :=
         (1 => new String'(Full_Name (Get_File (Cursor)).all),
          2 => new String'(Image (Get_Line (Cursor))),
          3 => new String'(Image (Natural (Get_Column (Cursor)))),
          4 => new String'("0"));
+
    begin
       Result.Id := new String'
         (Execute_GPS_Shell_Command
@@ -75,7 +76,7 @@ package body Codefix.GPS_Io is
       Mark         : Mark_Abstr'Class) return File_Cursor'Class
    is
       New_Cursor : File_Cursor;
-      Args       : Argument_List (1 .. 1);
+      Args       : GNAT.Strings.String_List (1 .. 1);
    begin
       Set_File (New_Cursor, Get_File_Name (Current_Text));
       Args (1) := new String'(GPS_Mark (Mark).Id.all);
@@ -133,7 +134,7 @@ package body Codefix.GPS_Io is
    ----------
 
    procedure Undo (This : in out Console_Interface) is
-      Args : Argument_List :=
+      Args : GNAT.Strings.String_List :=
         (1 => new String'(Full_Name (Get_File_Name (This)).all));
       Ignore : constant String := Execute_GPS_Shell_Command
         (This.Kernel, "Editor.undo", Args);
@@ -235,7 +236,7 @@ package body Codefix.GPS_Io is
 
       if Get_Line (Cursor) /= 0 then
          declare
-            Args : Argument_List :=
+            Args : GNAT.Strings.String_List :=
               (1 => new String'(Full_Name (Get_File_Name (This)).all),
                2 => new String'(Image (Get_Line (Cursor))),
                3 => new String'(Image (Natural (Get_Column (Cursor)))),
@@ -254,7 +255,7 @@ package body Codefix.GPS_Io is
 
       else
          declare
-            Args : Argument_List :=
+            Args : GNAT.Strings.String_List :=
               (1 => new String'(Full_Name (Get_File_Name (This)).all),
                2 => new String'("1"),  --  line
                3 => new String'("1"),  --  column
@@ -282,7 +283,7 @@ package body Codefix.GPS_Io is
       Cursor      : Text_Cursor'Class;
       New_Line    : String)
    is
-      Line_Str        : GNAT.OS_Lib.String_Access;
+      Line_Str        : GNAT.Strings.String_Access;
       Insert_Position : Text_Cursor := Text_Cursor (Cursor);
    begin
       This.File_Modified.all := True;
@@ -311,7 +312,7 @@ package body Codefix.GPS_Io is
      (This : in out Console_Interface;
       Cursor : Text_Cursor'Class)
    is
-      Args : Argument_List :=
+      Args : GNAT.Strings.String_List :=
         (1 => new String'(Full_Name (Get_File_Name (This)).all),
          2 => new String'(Image (Get_Line (Cursor))),
          3 => new String'(Image (Natural (Get_Column (Cursor)))),
@@ -347,11 +348,11 @@ package body Codefix.GPS_Io is
    ---------------
 
    function Read_File (This : Console_Interface)
-      return GNAT.OS_Lib.String_Access
+      return GNAT.Strings.String_Access
    is
-      Args : Argument_List :=
+      Args : GNAT.Strings.String_List :=
         (1 => new String'(Full_Name (Get_File_Name (This)).all));
-      S    : constant GNAT.OS_Lib.String_Access := new String'
+      S    : constant GNAT.Strings.String_Access := new String'
         (Execute_GPS_Shell_Command (This.Kernel, "Editor.get_buffer", Args));
    begin
       Free (Args);
@@ -384,10 +385,10 @@ package body Codefix.GPS_Io is
    ------------
 
    procedure Update (This : Console_Interface) is
-      File          : GNAT.OS_Lib.String_Access;
+      File          : GNAT.Strings.String_Access;
       Current_Index : Natural := 0;
       Old_Index     : Natural := 0;
-      Last_Line     : GNAT.OS_Lib.String_Access;
+      Last_Line     : GNAT.Strings.String_Access;
 
    begin
       if not This.File_Modified.all then
@@ -422,7 +423,7 @@ package body Codefix.GPS_Io is
       end loop;
 
       declare
-         Args : Argument_List :=
+         Args : GNAT.Strings.String_List :=
            (1 => new String'(Full_Name (Get_File_Name (This)).all));
          Result : constant String := Execute_GPS_Shell_Command
            (This.Kernel, "Editor.get_last_line", Args);

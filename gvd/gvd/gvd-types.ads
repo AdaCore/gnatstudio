@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2005                       --
+--                     Copyright (C) 2000-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,8 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Basic_Types; use Basic_Types;
 with VFS;
+with GNAT.Strings;
 
 package GVD.Types is
 
@@ -160,7 +160,7 @@ package GVD.Types is
       --  The action that causes the watchpoint to break the program.  The
       --  value set here is valid only for watchpoints.
 
-      Expression  : String_Access;
+      Expression  : GNAT.Strings.String_Access;
       --  The name of the variable to watch for watchpoints. This is left to
       --  null for breakpoints.
 
@@ -168,25 +168,25 @@ package GVD.Types is
       --  The file name that contains the breakpoint.
       --  Must be stored as an absolute file name.
 
-      Except      : String_Access;
+      Except      : GNAT.Strings.String_Access;
       --  Name of the exception on which we break
 
-      Subprogram  : String_Access;
+      Subprogram  : GNAT.Strings.String_Access;
       --  Name of the subprogram we stop in.
 
       Line        : Integer := 0;
       --  The line that contains the breakpoint
 
-      Info        : String_Access;
+      Info        : GNAT.Strings.String_Access;
       --  Additionnal information
 
       Ignore      : Natural := 0;
       --  Number of hits that will be ignored before actually stopping
 
-      Condition   : String_Access;
+      Condition   : GNAT.Strings.String_Access;
       --  Condition on which this breakpoint is activated
 
-      Commands    : String_Access;
+      Commands    : GNAT.Strings.String_Access;
       --  Commands to execute when the debugger stops at this breakpoint
 
       Scope       : Scope_Type;
@@ -215,7 +215,7 @@ package GVD.Types is
    ----------------
 
    type Exception_Data is record
-      Name : String_Access;
+      Name : GNAT.Strings.String_Access;
    end record;
    --  Description of an exception that can occur in the current application.
 
@@ -243,10 +243,10 @@ package GVD.Types is
    type Program_Descriptor is record
       Program       : VFS.Virtual_File;
       Debugger      : Debugger_Type;
-      Debugger_Name : String_Access;
-      Remote_Host   : String_Access;
-      Remote_Target : String_Access;
-      Protocol      : String_Access;
+      Debugger_Name : GNAT.Strings.String_Access;
+      Remote_Host   : GNAT.Strings.String_Access;
+      Remote_Target : GNAT.Strings.String_Access;
+      Protocol      : GNAT.Strings.String_Access;
       Launch        : Launch_Method;
    end record;
    --  This record contains all the information about how a debugger was

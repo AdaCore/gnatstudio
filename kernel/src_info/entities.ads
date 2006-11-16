@@ -20,7 +20,7 @@
 
 with Ada.Calendar;
 with Glib.Values;
-with GNAT.OS_Lib;
+with GNAT.Strings;
 with HTables;
 with VFS;
 with Dynamic_Arrays;
@@ -562,7 +562,7 @@ package Entities is
    --  Return the current end of scope for the entity
 
    function Get_Name
-     (Entity : Entity_Information) return GNAT.OS_Lib.String_Access;
+     (Entity : Entity_Information) return GNAT.Strings.String_Access;
    pragma Inline (Get_Name);
    --  Return the name of the entity
 
@@ -954,11 +954,11 @@ private
 
    type Entity_Array_Node is record
       Entities : Entity_Array_Access;
-      Name     : GNAT.OS_Lib.String_Access;
+      Name     : GNAT.Strings.String_Access;
    end record;
 
    function Get_Name (Entities : Entity_Array_Node)
-      return GNAT.OS_Lib.String_Access;
+      return GNAT.Strings.String_Access;
    --  Return the name of the entity, in lower case if the language is
    --  case-insensitive
 
@@ -997,7 +997,7 @@ private
    ------------------------
 
    type Entity_Information_Record is tagged record
-      Name           : GNAT.OS_Lib.String_Access;
+      Name           : GNAT.Strings.String_Access;
       --  Name of the entity. This name contains the
       --  proper casing for the entity.
 
@@ -1083,7 +1083,7 @@ private
    type Entity_Information_List_Access is access Entity_Information_List;
 
    type Cased_String is record
-      Str            : GNAT.OS_Lib.String_Access;
+      Str            : GNAT.Strings.String_Access;
       Case_Sensitive : Boolean;
    end record;
    Empty_Cased_String : constant Cased_String := (null, True);
@@ -1164,7 +1164,7 @@ private
       --  and that are kept because they are still referenced in some files.
       --  In this case, there Is_Active field is set to False.
 
-      Unit_Name   : GNAT.OS_Lib.String_Access;
+      Unit_Name   : GNAT.Strings.String_Access;
       --  The name of the toplevel unit.
       --  Only relevant for Ada files
 

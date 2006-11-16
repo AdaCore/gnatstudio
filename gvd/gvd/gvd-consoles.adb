@@ -20,7 +20,6 @@
 
 with Ada.Unchecked_Conversion;
 with Ada.Exceptions;         use Ada.Exceptions;
-with Basic_Types;            use Basic_Types;
 with Debugger;               use Debugger;
 with Glib;                   use Glib;
 with Glib.Object;            use Glib.Object;
@@ -39,6 +38,7 @@ pragma Warnings (On);
 with GNAT.Expect;            use GNAT.Expect;
 with GNAT.Regpat;            use GNAT.Regpat;
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
+with GNAT.Strings;
 with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
@@ -57,6 +57,7 @@ with Process_Proxies;        use Process_Proxies;
 with String_List_Utils;      use String_List_Utils;
 with System;                 use System;
 with Traces;                 use Traces;
+with Basic_Types;
 
 package body GVD.Consoles is
 
@@ -357,13 +358,14 @@ package body GVD.Consoles is
            and then Input (Input'Last) /= '\'
          then
             declare
-               S : String_Array := Complete (Get_Process (C).Debugger, Input);
+               S : GNAT.Strings.String_List :=
+                     Complete (Get_Process (C).Debugger, Input);
             begin
                for J in S'Range loop
                   Append (Result, S (J).all);
                end loop;
 
-               Free (S);
+               Basic_Types.Free (S);
             end;
          end if;
       end if;

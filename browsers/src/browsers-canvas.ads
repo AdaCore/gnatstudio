@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-with GNAT.OS_Lib;
+with GNAT.Strings;
 
 with Gdk.Color;
 with Gdk.Event;
@@ -405,7 +405,7 @@ package Browsers.Canvas is
       Num         : Positive;
       Num_In_Line : Positive := 1;
       Callback    : out Active_Area_Cb;
-      Text        : out GNAT.OS_Lib.String_Access);
+      Text        : out GNAT.Strings.String_Access);
    --  Return the contents of the Nth line in the list in Text. This is set to
    --  null if there is no such line. Do not free Text.
    --  It also returns the num_in_line-th link in this line in Callback or null
@@ -631,7 +631,7 @@ private
    Empty_Cb_Array : constant Active_Area_Cb_Array (1 .. 0) := (others => null);
 
    type Xref_Line is record
-      Text      : GNAT.OS_Lib.String_Access;
+      Text      : GNAT.Strings.String_Access;
       Callbacks : Active_Area_Cb_Array_Access;
       Length    : Natural;
    end record;

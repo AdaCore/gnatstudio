@@ -22,6 +22,7 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.Strings;
 
 with Gtkada.MDI;                use Gtkada.MDI;
 
@@ -30,11 +31,12 @@ with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with VCS_Module;                use VCS_Module;
-with Basic_Types;               use Basic_Types;
 with Log_Utils;                 use Log_Utils;
 with Traces;                    use Traces;
 
 package body VCS_Utils is
+
+   use type GNAT.Strings.String_Access;
 
    Max_Rev_Length : constant := 10;
    --  The maximum length of a revision string, in characters. Revisions longer
@@ -49,8 +51,8 @@ package body VCS_Utils is
       Ref    : VCS_Access;
       Status : File_Status_Record)
    is
-      Status_Label   : String_Access;
-      Revision_Label : String_Access;
+      Status_Label   : GNAT.Strings.String_Access;
+      Revision_Label : GNAT.Strings.String_Access;
 
       function Short_Revision (R : String) return String;
       --  If R is too long, return only the last digits.
@@ -96,8 +98,8 @@ package body VCS_Utils is
         (Kernel, Status.File, VCS_Module_Name,
          Revision_Label.all & Status_Label.all);
 
-      Free (Status_Label);
-      Free (Revision_Label);
+      GNAT.Strings.Free (Status_Label);
+      GNAT.Strings.Free (Revision_Label);
    end Display_Editor_Status;
 
    ---------------------

@@ -41,11 +41,12 @@ with Default_Preferences; use Default_Preferences;
 with GVD.Preferences;     use GVD.Preferences;
 with GVD.Process;         use GVD.Process;
 with GVD.Types;
-with Basic_Types;         use Basic_Types;
 with Ada.Exceptions;      use Ada.Exceptions;
 with Traces;              use Traces;
 
 package body Display_Items is
+
+   use type GNAT.Strings.String_Access;
 
    Me : constant Debug_Handle := Create ("Display_Items");
 
@@ -1274,8 +1275,8 @@ package body Display_Items is
          Free (Item.Entity);
       end if;
 
-      Free (Item.Name);
-      Free (Item.Id);
+      GNAT.Strings.Free (Item.Name);
+      GNAT.Strings.Free (Item.Id);
 
       declare
          Debugger : constant GVD.Process.Visual_Debugger := Item.Debugger;
@@ -1413,7 +1414,8 @@ package body Display_Items is
       end if;
 
       --  Else recompute the id for the item
-      Free (It.Id);
+      GNAT.Strings.Free (It.Id);
+
       declare
          Id : constant String :=
            Get_Uniq_Id (It.Debugger.Debugger, It.Name.all);

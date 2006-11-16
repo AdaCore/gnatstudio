@@ -202,6 +202,7 @@ package body VCS is
    ---------------------
 
    function Ignore_Filename (Ref : access VCS_Record) return String is
+      use GNAT.Strings;
    begin
       if Ref.Ignore_Filename = null then
          return "";
@@ -302,8 +303,8 @@ package body VCS is
 
    procedure Free (X : in out File_Status) is
    begin
-      Free (X.Label);
-      Free (X.Stock_Id);
+      GNAT.Strings.Free (X.Label);
+      GNAT.Strings.Free (X.Stock_Id);
    end Free;
 
    ---------------------------

@@ -29,6 +29,7 @@
 --  text, which will be displayed in a secondary window when the line is
 --  selected.
 with Glib;           use Glib;
+with GNAT.Strings;   use GNAT.Strings;
 
 with Gtk.Window;     use Gtk.Window;
 
@@ -99,8 +100,6 @@ package Completion_Window is
    --  ??? Need a function to set case sensitivity
 
 private
-
-   type String_Access is access String;
 
    type Completion_Proposal_Access is access Completion_Proposal'Class;
 

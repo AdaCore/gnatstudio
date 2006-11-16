@@ -30,7 +30,6 @@ with GNAT.Regpat;         use GNAT.Regpat;
 
 with Gtk.Window;          use Gtk.Window;
 
-with Basic_Types;         use Basic_Types;
 with Config;              use Config;
 with Debugger.Gdb.Ada;    use Debugger.Gdb.Ada;
 with Debugger.Gdb.C;      use Debugger.Gdb.C;
@@ -1018,7 +1017,7 @@ package body Debugger.Gdb is
         Compile ("No such file or directory.");
       --  Note that this pattern should work even when LANG isn't english
       --  because gdb does not seem to take into account this variable at all.
-      Cmd                 : Basic_Types.String_Access;
+      Cmd                 : GNAT.Strings.String_Access;
       Process             : Visual_Debugger;
       Remote_Exec         : constant String :=
                               To_Remote (Full_Name (Executable, True).all,
@@ -1879,8 +1878,8 @@ package body Debugger.Gdb is
       Num      : GVD.Types.Breakpoint_Identifier := 0;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
    is
-      Scope_String  : Basic_Types.String_Access;
-      Action_String : Basic_Types.String_Access;
+      Scope_String  : GNAT.Strings.String_Access;
+      Action_String : GNAT.Strings.String_Access;
    begin
       if Scope /= No_Scope then
          if Scope = Current_Task then
@@ -2476,7 +2475,7 @@ package body Debugger.Gdb is
    -----------------------
 
    function Source_Files_List
-     (Debugger : access Gdb_Debugger) return String_Array
+     (Debugger : access Gdb_Debugger) return GNAT.Strings.String_List
    is
       S         : constant String :=
         Send (Debugger, "info sources", Mode => Internal);
@@ -2502,10 +2501,11 @@ package body Debugger.Gdb is
       Num_Files := Num_Files + 2;
 
       declare
-         Result : String_Array (1 .. Num_Files);
+         Result : GNAT.Strings.String_List (1 .. Num_Files);
          Num    : Natural := 1;
          Index  : Positive := S'First;
          Start  : Positive;
+
       begin
          while Index <= S'Last loop
             --  Parse each file
@@ -3428,7 +3428,7 @@ package body Debugger.Gdb is
      (Debugger      : access Gdb_Debugger;
       Range_Start   : out GVD.Types.Address_Type;
       Range_End     : out Address_Type;
-      Code          : out Basic_Types.String_Access;
+      Code          : out GNAT.Strings.String_Access;
       Start_Address : GVD.Types.Address_Type := GVD.Types.Invalid_Address;
       End_Address   : GVD.Types.Address_Type := GVD.Types.Invalid_Address)
    is
@@ -3706,7 +3706,7 @@ package body Debugger.Gdb is
 
    function Complete
      (Debugger  : access Gdb_Debugger;
-      Beginning : String) return String_Array
+      Beginning : String) return GNAT.Strings.String_List
    is
       S           : constant String :=
         Send (Debugger, "complete " & Beginning, Mode => Internal);
@@ -3729,7 +3729,7 @@ package body Debugger.Gdb is
 
       --  Fill the string array with the proper values.
       declare
-         Result : String_Array (1 .. Num);
+         Result : GNAT.Strings.String_List (1 .. Num);
       begin
          for Index in 1 .. Num loop
             while S (Last_Index) /= ASCII.LF and then Last_Index < S'Last loop

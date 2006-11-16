@@ -20,6 +20,7 @@
 
 with Ada.Exceptions;             use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
+with GNAT.Strings;               use GNAT.Strings;
 
 with Gdk.Event;                  use Gdk.Event;
 with Gdk.Types;                  use Gdk.Types;
@@ -41,7 +42,6 @@ with Gtk.Widget;                 use Gtk.Widget;
 with Gtk.Window;                 use Gtk.Window;
 with Gtkada.Handlers;            use Gtkada.Handlers;
 
-with Basic_Types;                use Basic_Types;
 with Generic_List;
 with String_Utils;               use String_Utils;
 with Traces;                     use Traces;
@@ -295,7 +295,7 @@ package body Gtkada.Entry_Completion is
 
    procedure Set_Completions
      (The_Entry   : access Gtkada_Entry_Record;
-      Completions : Basic_Types.String_Array_Access) is
+      Completions : String_List_Access) is
    begin
       Clear (The_Entry.List);
 

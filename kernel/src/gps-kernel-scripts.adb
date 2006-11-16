@@ -92,7 +92,7 @@ package body GPS.Kernel.Scripts is
    with record
       case Typ is
          when Strings =>
-            Str : GNAT.OS_Lib.String_Access;
+            Str : GNAT.Strings.String_Access;
          when Objects =>
             Obj : Glib.Object.GObject;
          when Integers =>

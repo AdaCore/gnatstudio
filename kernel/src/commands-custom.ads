@@ -59,7 +59,7 @@
 --      %l, %c -> the current line and column in the current file.
 
 with GNAT.Expect;
-with GNAT.OS_Lib;          use GNAT.OS_Lib;
+with GNAT.Strings;            use GNAT.Strings;
 
 with Glib.Xml_Int;
 
@@ -180,10 +180,10 @@ private
       Process_Exit_Status : Integer;
       --  True if an external process is currently running
 
-      Outputs : Argument_List_Access;
+      Outputs : String_List_Access;
       --  The output of the various commands, if it was saved.
 
-      Current_Output : GNAT.OS_Lib.String_Access;
+      Current_Output : String_Access;
       --  Output of the external currently executing, if we need to save it.
 
       Save_Output : Boolean_Array_Access;
@@ -234,7 +234,7 @@ private
       --  their output. If the output is hidden, the command itself will not
       --  be shown
 
-      Name : GNAT.OS_Lib.String_Access;
+      Name : String_Access;
       --  The name of the command
 
       Execution   : Custom_Command_Execution;

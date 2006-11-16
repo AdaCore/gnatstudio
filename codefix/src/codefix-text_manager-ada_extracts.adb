@@ -26,9 +26,9 @@ with Codefix.Ada_Tools;       use Codefix.Ada_Tools;
 
 package body Codefix.Text_Manager.Ada_Extracts is
 
-   ----------------------------------------------------------------------------
-   --  Internal subprograms
-   ----------------------------------------------------------------------------
+   ----------------------------
+   --  Internal subprograms  --
+   ----------------------------
 
    ----------------
    -- Is_Comment --
@@ -425,7 +425,7 @@ package body Codefix.Text_Manager.Ada_Extracts is
 
    procedure Cut_Off_Elements
      (This         : in out Ada_List;
-      New_Instr    : out GNAT.OS_Lib.String_Access;
+      New_Instr    : out GNAT.Strings.String_Access;
       Current_Text : Text_Navigator_Abstr'Class;
       First        : Natural;
       Last         : Natural := 0)
@@ -478,7 +478,7 @@ package body Codefix.Text_Manager.Ada_Extracts is
 
    procedure Cut_Off_Elements
      (This         : in out Ada_List;
-      New_Instr    : out GNAT.OS_Lib.String_Access;
+      New_Instr    : out GNAT.Strings.String_Access;
       Current_Text : Text_Navigator_Abstr'Class;
       First        : String;
       Last         : String := "") is

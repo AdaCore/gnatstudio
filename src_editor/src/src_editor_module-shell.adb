@@ -22,6 +22,7 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Strings;
 with System;
 
 with Gdk.Color;                 use Gdk.Color;
@@ -1249,7 +1250,7 @@ package body Src_Editor_Module.Shell is
          begin
             if Child = null then
                declare
-                  A : GNAT.OS_Lib.String_Access := Read_File (File);
+                  A : GNAT.Strings.String_Access := Read_File (File);
                   N : Natural := 0;
                begin
                   if A /= null then
@@ -1438,8 +1439,8 @@ package body Src_Editor_Module.Shell is
             File  : constant Virtual_File :=
               Create (Nth_Arg (Data, 1), Kernel);
             Child : constant MDI_Child := Find_Editor (Kernel, File);
-            A     : Basic_Types.String_Access;
-            B     : GNAT.OS_Lib.String_Access;
+            A     : GNAT.Strings.String_Access;
+            B     : GNAT.Strings.String_Access;
 
          begin
             if Child /= null then

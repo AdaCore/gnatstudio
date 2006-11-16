@@ -27,6 +27,7 @@ pragma Warnings (Off);
 with GNAT.TTY;                   use GNAT.TTY;
 with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
 pragma Warnings (On);
+with GNAT.Strings;
 with System;                     use System;
 
 with Glib;                       use Glib;
@@ -168,7 +169,7 @@ package body GVD.Process is
    --  Called when the debugger console is destroyed, which also terminates the
    --  debugger itself
 
-   type String_Access_Access is access all Basic_Types.String_Access;
+   type String_Access_Access is access all GNAT.Strings.String_Access;
 
    procedure Process_User_Command
      (Debugger       : Visual_Debugger;
@@ -301,14 +302,14 @@ package body GVD.Process is
       Breaks : Node_Ptr;
       Count  : Natural := 0;
 
-      function Get_String (Attr : String) return Basic_Types.String_Access;
+      function Get_String (Attr : String) return GNAT.Strings.String_Access;
       --  return the value of Attr (or null if the Attr doesn't exist
 
       ----------------
       -- Get_String --
       ----------------
 
-      function Get_String (Attr : String) return Basic_Types.String_Access is
+      function Get_String (Attr : String) return GNAT.Strings.String_Access is
          Value : constant String := Get_Attribute (Breaks, Attr, "");
       begin
          if Value = "" then
@@ -767,7 +768,7 @@ package body GVD.Process is
    is
       Process        : constant Visual_Debugger :=
                          Convert (To_Main_Debug_Window (Window), Descriptor);
-      Tmp_Str        : GNAT.OS_Lib.String_Access;
+      Tmp_Str        : GNAT.Strings.String_Access;
       Current_Filter : Regexp_Filter_List;
       Matched        : Match_Array (0 .. Max_Paren_Count);
       First, Last    : Natural := 0;
@@ -1495,7 +1496,7 @@ package body GVD.Process is
       Mode           : GVD.Types.Invisible_Command := GVD.Types.Hidden)
       return String
    is
-      Result : aliased Basic_Types.String_Access;
+      Result : aliased GNAT.Strings.String_Access;
    begin
       Process_User_Command
         (Debugger, Command, Output_Command, Mode, Result'Unchecked_Access);
@@ -1506,7 +1507,7 @@ package body GVD.Process is
          declare
             S : constant String := Result.all;
          begin
-            Basic_Types.Free (Result);
+            GNAT.Strings.Free (Result);
             return S;
          end;
       end if;
@@ -1716,12 +1717,12 @@ package body GVD.Process is
       Process      : Visual_Debugger;
       Edit         : GVD.Source_Editor.GPS.GEdit;
       Module       : VFS.Virtual_File;
-      Program_Args : GNAT.OS_Lib.String_Access;
+      Program_Args : GNAT.Strings.String_Access;
       Blank_Pos    : Natural;
       Proxy        : Process_Proxy_Access;
       Success      : Boolean;
       Property     : Breakpoint_Property_Record;
-      Exec         : GNAT.OS_Lib.String_Access;
+      Exec         : GNAT.Strings.String_Access;
 
       procedure Check_Extension (Module : in out Virtual_File);
       --  Check for a missing extension in module, and add it if needed
@@ -1956,7 +1957,8 @@ package body GVD.Process is
       end;
 
       declare
-         List       : String_Array := Source_Files_List (Debugger.Debugger);
+         List       : GNAT.Strings.String_List :=
+                        Source_Files_List (Debugger.Debugger);
          Bases      : GNAT.OS_Lib.Argument_List (List'Range);
          Dirs       : GNAT.OS_Lib.Argument_List (List'Range);
          Dirs_Index : Natural := Dirs'First;

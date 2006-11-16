@@ -42,8 +42,11 @@ with VCS;                       use VCS;
 with VCS_Module;                use VCS_Module;
 with VCS_View_Pixmaps;          use VCS_View_Pixmaps;
 with Traces;                    use Traces;
+with GNAT.Strings;
 
 package body VCS_View is
+
+   use type GNAT.Strings.String_Access;
 
    package Explorer_Selection_Foreach is
      new Selection_Foreach (VCS_View_Access);
@@ -252,7 +255,8 @@ package body VCS_View is
       Row_Found  : Boolean;
       Iter       : Gtk_Tree_Iter;
 
-      Text       : String_Access;
+      Text       : GNAT.Strings.String_Access;
+
    begin
       if Tooltip.Explorer.Tree = null then
          return;
@@ -298,7 +302,7 @@ package body VCS_View is
             Get_Pref (Tooltip_Color),
             Tooltip.Explorer.Tree,
             Pixmap);
-         Free (Text);
+         GNAT.Strings.Free (Text);
       end if;
    end Draw;
 

@@ -29,7 +29,7 @@ with Code_Coverage;            use Code_Coverage;
 
 with Projects;                 use Projects;
 with Projects.Registry;        use Projects.Registry;
-with GNAT.OS_Lib;              use GNAT.OS_Lib;
+with GNAT.Strings;             use GNAT.Strings;
 with VFS;                      use VFS;
 with Glib;                     use Glib;
 with Gtk.Main;                 use Gtk.Main;
@@ -110,7 +110,7 @@ procedure Code_Analysis_Test is
                              return Project_Access is
       VFS_File_Name : VFS.Virtual_File;
       Cov_File_Name : VFS.Virtual_File;
-      File_Contents : GNAT.OS_Lib.String_Access;
+      File_Contents : GNAT.Strings.String_Access;
       Registry      : Project_Registry;
       Project_Name  : Project_Type;
       Project_Node  : Project_Access;
@@ -164,7 +164,7 @@ procedure Code_Analysis_Test is
       use Project_Maps;
       VFS_File_Name : VFS.Virtual_File;
       Cov_File_Name : VFS.Virtual_File;
-      File_Contents : GNAT.OS_Lib.String_Access;
+      File_Contents : GNAT.Strings.String_Access;
       File_Node     : Code_Analysis.File_Access;
       Registry      : Project_Registry;
       Project_Name  : Project_Type;

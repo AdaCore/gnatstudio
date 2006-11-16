@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;          use Ada.Exceptions;
+with GNAT.Strings;            use GNAT.Strings;
 with GNAT.Regpat;             use GNAT.Regpat;
 
 with Gdk.Color;               use Gdk.Color;
@@ -43,7 +44,6 @@ with Gtk.Text_View;           use Gtk.Text_View;
 
 with Pango.Font;              use Pango.Font;
 
-with Basic_Types;             use Basic_Types;
 with Debugger;                use Debugger;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;

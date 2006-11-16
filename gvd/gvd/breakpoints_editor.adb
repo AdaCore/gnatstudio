@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.Strings;     use GNAT.Strings;
+
 with Glib;             use Glib;
 with Gdk.Color;        use Gdk.Color;
 with Gdk.Event;        use Gdk.Event;
@@ -52,7 +54,6 @@ with Gtk.Tree_Selection;   use Gtk.Tree_Selection;
 with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
 
 with Gtkada.Handlers;  use Gtkada.Handlers;
-with Basic_Types;      use Basic_Types;
 with GPS.Intl;       use GPS.Intl;
 with Breakpoints_Pkg.Callbacks; use Breakpoints_Pkg.Callbacks;
 with Pixmaps_IDE;      use Pixmaps_IDE;
@@ -335,6 +336,7 @@ package body Breakpoints_Editor is
    is
       Start, The_End : Gtk_Text_Iter;
       Buffer         : Gtk_Text_Buffer;
+
    begin
       if Advanced = null then
          return;
@@ -395,6 +397,7 @@ package body Breakpoints_Editor is
         Editor.Advanced_Breakpoints;
       Modified : Boolean := False;
       Start, The_End : Gtk_Text_Iter;
+
    begin
       if Visible_Is_Set (Adv.Condition_Box) then
          Get_Bounds (Get_Buffer (Adv.Command_Descr), Start, The_End);

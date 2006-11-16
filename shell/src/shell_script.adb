@@ -30,6 +30,7 @@ with System;                    use System;
 
 with GNAT.Debug_Utilities;      use GNAT.Debug_Utilities;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Strings;
 
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with Glib.Object;               use Glib.Object;
@@ -179,7 +180,7 @@ package body Shell_Script is
    ----------------------
 
    type Shell_Subprogram_Record is new Subprogram_Record with record
-      Action_Name : GNAT.OS_Lib.String_Access;
+      Action_Name : GNAT.Strings.String_Access;
    end record;
    --  subprograms in GPS shell are just GPS actions
 
@@ -191,7 +192,7 @@ package body Shell_Script is
       Args       : Callback_Data'Class) return String;
    function Execute
      (Subprogram : access Shell_Subprogram_Record;
-      Args       : Callback_Data'Class) return GNAT.OS_Lib.String_List;
+      Args       : Callback_Data'Class) return GNAT.Strings.String_List;
    procedure Free (Subprogram : in out Shell_Subprogram_Record);
    function Get_Name
      (Subprogram : access Shell_Subprogram_Record) return String;
@@ -206,8 +207,8 @@ package body Shell_Script is
    type Shell_Callback_Data is new Callback_Data with record
       Script          : Shell_Scripting;
       Args            : GNAT.OS_Lib.Argument_List_Access;
-      Return_Value    : GNAT.OS_Lib.String_Access;
-      Return_Dict     : GNAT.OS_Lib.String_Access;
+      Return_Value    : GNAT.Strings.String_Access;
+      Return_Dict     : GNAT.Strings.String_Access;
       Return_As_List  : Boolean := False;
       Return_As_Error : Boolean := False;
    end record;
@@ -270,8 +271,8 @@ package body Shell_Script is
    -------------------------
 
    type Command_Information is record
-      Command         : GNAT.OS_Lib.String_Access;
-      Short_Command   : GNAT.OS_Lib.String_Access;
+      Command         : GNAT.Strings.String_Access;
+      Short_Command   : GNAT.Strings.String_Access;
       Minimum_Args    : Natural;
       Maximum_Args    : Natural;
       Command_Handler : Module_Command_Function;
@@ -753,7 +754,7 @@ package body Shell_Script is
 
       L      : String_List_Utils.String_List.List;
       L2     : String_List_Utils.String_List.List_Node;
-      Result : GNAT.OS_Lib.String_Access := new String'("");
+      Result : GNAT.Strings.String_Access := new String'("");
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
 
       procedure Insert (S : String; Separator : Character := ASCII.LF);
@@ -840,7 +841,7 @@ package body Shell_Script is
       elsif Command = "load" then
          declare
             Filename : constant String := Nth_Arg (Data, 1);
-            Buffer   : GNAT.OS_Lib.String_Access := Read_File (Filename);
+            Buffer   : GNAT.Strings.String_Access := Read_File (Filename);
             Errors   : Boolean;
          begin
             if Buffer /= null then
@@ -885,7 +886,7 @@ package body Shell_Script is
       Static_Method : Boolean := False)
    is
       pragma Unreferenced (Script);
-      Cmd  : GNAT.OS_Lib.String_Access;
+      Cmd  : GNAT.Strings.String_Access;
       Min  : Natural := Minimum_Args;
       Max  : Natural := Maximum_Args;
       Info : Command_Information_Access;
@@ -1303,7 +1304,7 @@ package body Shell_Script is
 
       Args          : Argument_List_Access;
       First, Last   : Integer;
-      Tmp           : GNAT.OS_Lib.String_Access;
+      Tmp           : GNAT.Strings.String_Access;
       Quoted        : Boolean;
       Triple_Quoted : Boolean;
    begin
@@ -1648,7 +1649,7 @@ package body Shell_Script is
       Append : Boolean := False)
    is
       pragma Unreferenced (Append);
-      Tmp : GNAT.OS_Lib.String_Access;
+      Tmp : GNAT.Strings.String_Access;
    begin
       if Data.Return_Value = null then
          if Data.Return_Dict = null then
@@ -1734,7 +1735,7 @@ package body Shell_Script is
    procedure Set_Return_Value
      (Data : in out Shell_Callback_Data; Value : String)
    is
-      Tmp : GNAT.OS_Lib.String_Access;
+      Tmp : GNAT.Strings.String_Access;
    begin
       if Data.Return_As_List and then Data.Return_Value /= null then
          Tmp := Data.Return_Value;
@@ -1875,7 +1876,7 @@ package body Shell_Script is
 
    function Execute
      (Subprogram : access Shell_Subprogram_Record;
-      Args       : Callback_Data'Class) return GNAT.OS_Lib.String_List
+      Args       : Callback_Data'Class) return GNAT.Strings.String_List
    is
       pragma Unreferenced (Subprogram, Args);
    begin

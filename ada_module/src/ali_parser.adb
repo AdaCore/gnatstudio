@@ -24,6 +24,7 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Strings;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Basic_Types;               use Basic_Types;
@@ -1235,9 +1236,10 @@ package body ALI_Parser is
       First_Sect, Last_Sect : out Nat)
    is
       function Convert is new Ada.Unchecked_Conversion
-        (GNAT.OS_Lib.String_Access, Text_Buffer_Ptr);
+        (GNAT.Strings.String_Access, Text_Buffer_Ptr);
       Full   : constant String := Full_Name (ALI_Filename).all;
-      Buffer : GNAT.OS_Lib.String_Access   := Read_File (ALI_Filename);
+      Buffer : GNAT.Strings.String_Access := Read_File (ALI_Filename);
+
    begin
       if Buffer = null then
          Trace (Me, "Couldn't open " & Full);
@@ -1368,7 +1370,7 @@ package body ALI_Parser is
       end Next_Candidate;
 
       Current_Dir_Name   : constant Character := '.';
-      Dir                : GNAT.OS_Lib.String_Access;
+      Dir                : GNAT.Strings.String_Access;
       P                  : Project_Type := Project;
       Extension : constant String := File_Extension (Short_ALI_Filename);
       Is_Parent_LI : Boolean := False;

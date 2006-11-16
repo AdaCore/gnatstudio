@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.OS_Lib;
+with GNAT.Strings;
 with GPS.Kernel;
 with Gtk.Widget;
 with Projects;
@@ -70,7 +70,7 @@ package Project_Viewers is
       Project       : Projects.Project_Type;
       Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
       Widget        : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Languages     : GNAT.OS_Lib.Argument_List;
+      Languages     : GNAT.Strings.String_List;
       Scenario_Variables : Projects.Scenario_Variable_Array;
       Ref_Project   : Projects.Project_Type) return Boolean is abstract;
    --  Modifies Project given the data in Widget. Widget is the same that was
@@ -98,7 +98,7 @@ package Project_Viewers is
      (Page      : access Project_Editor_Page_Record;
       Widget    : access Gtk.Widget.Gtk_Widget_Record'Class;
       Project   : Projects.Project_Type := Projects.No_Project;
-      Languages : GNAT.OS_Lib.Argument_List);
+      Languages : GNAT.Strings.String_List);
    --  Refresh the contents of Widget, that was created by Widget_Factory.
    --  Since Project_View is still the one when the project creation wizard or
    --  the project properties editor were initially displayed, the list of
@@ -235,7 +235,7 @@ package Project_Viewers is
 private
 
    type Project_Editor_Page_Record is abstract tagged record
-      Label, Toc, Title : GNAT.OS_Lib.String_Access;
+      Label, Toc, Title : GNAT.Strings.String_Access;
       Flags             : Selector_Flags;
    end record;
 

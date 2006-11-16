@@ -21,7 +21,7 @@
 --  This package is the root of the GPS' kernel API.
 
 with Ada.Finalization;
-with GNAT.OS_Lib;
+with GNAT.Strings;
 with System;
 
 with Glib.Object;  use Glib;
@@ -495,10 +495,10 @@ package GPS.Kernel is
    --  for the <language> tag.
 
    type Tool_Properties_Record is record
-      Project_Package   : GNAT.OS_Lib.String_Access;
-      Project_Attribute : GNAT.OS_Lib.String_Access;
-      Project_Index     : GNAT.OS_Lib.String_Access;
-      Initial_Cmd_Line  : GNAT.OS_Lib.String_Access;
+      Project_Package   : GNAT.Strings.String_Access;
+      Project_Attribute : GNAT.Strings.String_Access;
+      Project_Index     : GNAT.Strings.String_Access;
+      Initial_Cmd_Line  : GNAT.Strings.String_Access;
    end record;
    --  (Project_Package, Project_Attribute, Project_Index) describe where its
    --  switches are stored in a project.
@@ -679,8 +679,8 @@ private
    type Filter_Type is (Filter_And, Filter_Or, Filter_Not, Standard_Filter);
 
    type Action_Filter_Record is abstract tagged record
-      Error_Msg : GNAT.OS_Lib.String_Access;
-      Name      : GNAT.OS_Lib.String_Access;
+      Error_Msg : GNAT.Strings.String_Access;
+      Name      : GNAT.Strings.String_Access;
    end record;
 
    type Base_Action_Filter_Record (Kind : Filter_Type)
@@ -688,10 +688,10 @@ private
    with record
       case Kind is
          when Standard_Filter =>
-            Language   : GNAT.OS_Lib.String_Access;
-            Shell      : GNAT.OS_Lib.String_Access;
-            Shell_Lang : GNAT.OS_Lib.String_Access;
-            Module     : GNAT.OS_Lib.String_Access;
+            Language   : GNAT.Strings.String_Access;
+            Shell      : GNAT.Strings.String_Access;
+            Shell_Lang : GNAT.Strings.String_Access;
+            Module     : GNAT.Strings.String_Access;
 
          when Filter_And =>
             And1, And2 : Action_Filter;
@@ -721,25 +721,25 @@ private
       Line              : Integer := 0;
       Column            : Basic_Types.Visible_Column_Type := 0;
 
-      Category_Name : GNAT.OS_Lib.String_Access := null;
-      Message       : GNAT.OS_Lib.String_Access := null;
-      Revision      : GNAT.OS_Lib.String_Access := null;
-      Tag           : GNAT.OS_Lib.String_Access := null;
+      Category_Name : GNAT.Strings.String_Access := null;
+      Message       : GNAT.Strings.String_Access := null;
+      Revision      : GNAT.Strings.String_Access := null;
+      Tag           : GNAT.Strings.String_Access := null;
       --  In the location window
 
       Start_Line : Integer;
       End_Line   : Integer;
-      Text       : GNAT.OS_Lib.String_Access;
+      Text       : GNAT.Strings.String_Access;
       --  When several lines are selected in a file. The selection starts
       --  at Line. Text is the current selection.
 
-      Entity_Name   : GNAT.OS_Lib.String_Access := null;  --  ??? Use Text
+      Entity_Name   : GNAT.Strings.String_Access := null;  --  ??? Use Text
       Entity_Column : Basic_Types.Visible_Column_Type := 0;
 
       Entity        : Entities.Entity_Information := null;
       --  The entity on which the user has clicked
 
-      Activity_Id : GNAT.OS_Lib.String_Access := null;
+      Activity_Id : GNAT.Strings.String_Access := null;
       --  An activity
 
       Entity_Resolved : Entities.Queries.Find_Decl_Or_Body_Query_Status :=
@@ -869,14 +869,14 @@ private
       Scripts : Kernel_Scripting_Data;
       --  Data used to store information for the scripting languages
 
-      GNAT_Version : GNAT.OS_Lib.String_Access;
+      GNAT_Version : GNAT.Strings.String_Access;
       --  Full GNAT Version, if relevant
 
-      Gnatls_Cache : GNAT.OS_Lib.String_Access;
+      Gnatls_Cache : GNAT.Strings.String_Access;
       --  The name of the gnatls command used to get the predefined source
       --  path.
 
-      Gnatls_Server : GNAT.OS_Lib.String_Access;
+      Gnatls_Server : GNAT.Strings.String_Access;
       --  The name of the server having executed the last gnatls command.
 
       Preferences : Default_Preferences.Preferences_Manager;
@@ -895,10 +895,10 @@ private
       Last_Event_For_Contextual   : Gdk.Event.Gdk_Event;
       --  The event triggering the last contextual menu
 
-      Home_Dir : GNAT.OS_Lib.String_Access;
+      Home_Dir : GNAT.Strings.String_Access;
       --  The home directory (e.g ~/.gps)
 
-      Prefix : GNAT.OS_Lib.String_Access;
+      Prefix : GNAT.Strings.String_Access;
       --  Prefix directory (e.g. /opt/gps)
 
       Logs_Mapper : Basic_Mapper.File_Mapper_Access;

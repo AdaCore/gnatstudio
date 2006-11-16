@@ -21,6 +21,7 @@
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Regexp;               use GNAT.Regexp;
+with GNAT.Strings;
 
 with File_Utils;                use File_Utils;
 with GPS.Kernel;                use GPS.Kernel;
@@ -89,7 +90,7 @@ package body VFS_Module is
          Base           : constant String := Base_Name (Pattern);
          Is_Cur_Dir     : Boolean;
          File_Regexp    : Regexp;
-         Directory      : GNAT.OS_Lib.String_Access;
+         Directory      : GNAT.Strings.String_Access;
          Dir            : Dir_Type;
          Buffer         : String (1 .. 4096);
          Last           : Natural;

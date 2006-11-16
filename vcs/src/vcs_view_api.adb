@@ -23,6 +23,7 @@ with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Maps;          use Ada.Strings.Maps;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
+with GNAT.Strings;
 
 with Glib.Values;               use Glib.Values;
 with Gtk.Accel_Group;           use Gtk.Accel_Group;
@@ -42,7 +43,6 @@ with Gtk.Window;                use Gtk.Window;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.MDI;                use Gtkada.MDI;
 
-with Basic_Types;               use Basic_Types;
 with Commands.Custom;           use Commands; use Commands.Custom;
 with File_Utils;                use File_Utils;
 with GPS.Intl;                  use GPS.Intl;
@@ -72,6 +72,8 @@ with VCS_View.Explorer;         use VCS_View.Explorer;
 with VFS;                       use VFS;
 
 package body VCS_View_API is
+
+   use type GNAT.Strings.String_Access;
 
    VCS_Menu_Prefix : constant String := "<gps>/VCS/";
 
@@ -3051,7 +3053,7 @@ package body VCS_View_API is
 
       Kernel   : constant Kernel_Handle := Get_Kernel (Context);
       Files    : String_List.List;
-      Revision : String_Access;
+      Revision : GNAT.Strings.String_Access;
       Status   : File_Status_Record;
    begin
       Files := Get_Selected_Files (Context);
@@ -3095,7 +3097,7 @@ package body VCS_View_API is
          end if;
       end;
 
-      Free (Revision);
+      GNAT.Strings.Free (Revision);
       String_List.Free (Files);
 
    exception
@@ -3200,11 +3202,12 @@ package body VCS_View_API is
       Kernel     : constant Kernel_Handle := Get_Kernel (Context);
       Files      : String_List.List;
       Status     : File_Status_Record;
-      Revision_1 : String_Access;
-      Revision_2 : String_Access;
-      Str        : String_Access;
+      Revision_1 : GNAT.Strings.String_Access;
+      Revision_2 : GNAT.Strings.String_Access;
+      Str        : GNAT.Strings.String_Access;
       Index      : Natural;
       Confirm    : Boolean := True;
+
    begin
       Files := Get_Selected_Files (Context);
 
@@ -3301,11 +3304,11 @@ package body VCS_View_API is
                Str (Index + 1 .. Str'Last));
          end if;
 
-         Free (Revision_2);
+         GNAT.Strings.Free (Revision_2);
       end if;
 
-      Free (Revision_1);
-      Free (Str);
+      GNAT.Strings.Free (Revision_1);
+      GNAT.Strings.Free (Str);
 
       String_List.Free (Files);
    end Comparison;
@@ -3348,13 +3351,14 @@ package body VCS_View_API is
       Prev   : List_Node;
    begin
       declare
-         A : String_Array_Access :=
+         A : GNAT.Strings.String_List_Access :=
                Source_Dirs (Project, Recursive, Has_VCS => True);
       begin
          for J in A'Range loop
             Append (Result, A (J).all);
          end loop;
-         Free (A);
+
+         GNAT.Strings.Free (A);
       end;
 
       --  The result of Source_Dirs can contain duplicate entries.

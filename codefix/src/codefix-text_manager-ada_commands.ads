@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.Strings;
 with Codefix.Text_Manager.Ada_Extracts; use Codefix.Text_Manager.Ada_Extracts;
 with VFS;
 
@@ -302,7 +303,7 @@ private
 
    type Recase_Word_Cmd is new Text_Command with record
       Cursor       : Ptr_Mark;
-      Correct_Word : GNAT.OS_Lib.String_Access;
+      Correct_Word : GNAT.Strings.String_Access;
       Word_Case    : Case_Type;
    end record;
 
@@ -315,7 +316,7 @@ private
       Mode        : Remove_Code_Mode := Erase;
    end record;
 
-   package String_List is new Generic_List (GNAT.OS_Lib.String_Access);
+   package String_List is new Generic_List (GNAT.Strings.String_Access);
    use String_List;
    --  ??? Should use standard string list
 
@@ -335,12 +336,12 @@ private
 
    type Add_Pragma_Cmd is new Text_Command with record
       Position       : Ptr_Mark;
-      Name, Argument : GNAT.OS_Lib.String_Access;
+      Name, Argument : GNAT.Strings.String_Access;
    end record;
 
    type Make_Constant_Cmd is new Text_Command with record
       Position : Ptr_Mark;
-      Name     : GNAT.OS_Lib.String_Access;
+      Name     : GNAT.Strings.String_Access;
    end record;
 
    type Remove_Parenthesis_Cmd is new Text_Command with record
@@ -362,8 +363,8 @@ private
 
    type Replace_Code_By_Cmd is new Text_Command with record
       Start_Cursor : Ptr_Mark;
-      Replaced_Exp : GNAT.OS_Lib.String_Access;
-      New_String   : GNAT.OS_Lib.String_Access;
+      Replaced_Exp : GNAT.Strings.String_Access;
+      New_String   : GNAT.Strings.String_Access;
    end record;
 
 end Codefix.Text_Manager.Ada_Commands;

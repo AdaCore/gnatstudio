@@ -24,6 +24,7 @@
 
 with Ada.Unchecked_Deallocation;
 with GNAT.Regpat; use GNAT.Regpat;
+with GNAT.Strings;
 
 package VCS.Generic_VCS is
 
@@ -202,11 +203,11 @@ private
       Date_Index           : Natural := 0;
       Log_Index            : Natural := 0;
       Sym_Index            : Natural := 0;
-      Pattern              : String_Access;
+      Pattern              : GNAT.Strings.String_Access;
    end record;
 
    type Generic_VCS_Record is new VCS_Record with record
-      Id       : String_Access;
+      Id       : GNAT.Strings.String_Access;
       Commands : Action_Array;
       Labels   : Action_Array;
 

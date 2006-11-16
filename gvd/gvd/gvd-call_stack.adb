@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;         use Ada.Exceptions;
+with GNAT.Strings;           use GNAT.Strings;
 
 with Gdk.Event;              use Gdk.Event;
 
@@ -41,7 +42,6 @@ with Gtk.Widget;             use Gtk.Widget;
 with Gtkada.Handlers;        use Gtkada.Handlers;
 with Gtkada.MDI;             use Gtkada.MDI;
 
-with Basic_Types;            use Basic_Types;
 with Config;                 use Config;
 with Debugger;               use Debugger;
 with GPS.Kernel;             use GPS.Kernel;
@@ -56,6 +56,7 @@ with GVD.Process;            use GVD.Process;
 with GVD.Types;              use GVD.Types;
 with Process_Proxies;        use Process_Proxies;
 with Traces;                 use Traces;
+with GNAT.Strings;
 
 package body GVD.Call_Stack is
 
@@ -451,7 +452,7 @@ package body GVD.Call_Stack is
       Len      : Natural;
       Process  : Process_Proxy_Access;
       Index    : Integer;
-      Subp     : String_Access;
+      Subp     : GNAT.Strings.String_Access;
       Iter     : Gtk_Tree_Iter;
 
    begin

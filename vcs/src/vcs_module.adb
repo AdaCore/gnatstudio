@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;            use Ada.Exceptions;
+with GNAT.Strings;
 
 with Glib.Object;               use Glib.Object;
 with Glib.Xml_Int;              use Glib.Xml_Int;
@@ -389,7 +390,7 @@ package body VCS_Module is
          Filter       : Action_Filter;
          Callback     : Context_Callback.Marshallers.Void_Marshaller.Handler)
       is
-         Parent_String : Basic_Types.String_Access;
+         Parent_String : GNAT.Strings.String_Access;
       begin
          Create (Command, Kernel_Handle (Kernel), Callback);
          Register_Action

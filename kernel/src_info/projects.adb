@@ -98,7 +98,7 @@ package body Projects is
       Directories : Directory_Htable.String_Hash_Table.HTable;
       --  Information for the various directories of the project
 
-      Non_Recursive_Include_Path : GNAT.OS_Lib.String_Access;
+      Non_Recursive_Include_Path : GNAT.Strings.String_Access;
       --  The include path for this project.
 
       Registry   : Project_Registry_Access;
@@ -477,13 +477,13 @@ package body Projects is
    function Source_Dirs
      (Project   : Project_Type;
       Recursive : Boolean;
-      Has_VCS   : Boolean := False) return Basic_Types.String_Array_Access
+      Has_VCS   : Boolean := False) return GNAT.Strings.String_List_Access
    is
       Iter    : Imported_Project_Iterator := Start (Project, Recursive);
       Count   : Natural := 0;
       P       : Project_Type;
-      Sources : String_Array_Access;
-      Result  : String_Array_Access;
+      Sources : GNAT.Strings.String_List_Access;
+      Result  : GNAT.Strings.String_List_Access;
       Src     : String_List_Id;
       Index   : Natural := 1;
    begin
@@ -497,7 +497,7 @@ package body Projects is
       end loop;
 
       Iter := Start (Project, Recursive);
-      Sources := new String_Array (1 .. Count);
+      Sources := new GNAT.Strings.String_List (1 .. Count);
 
       loop
          P := Current (Iter);
@@ -523,7 +523,7 @@ package body Projects is
       end loop;
 
       if Index < Sources'Last then
-         Result := new String_Array'(Sources (1 .. Index - 1));
+         Result := new GNAT.Strings.String_List'(Sources (1 .. Index - 1));
          Unchecked_Free (Sources);
       else
          Result := Sources;

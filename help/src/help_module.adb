@@ -25,6 +25,7 @@ with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
+with GNAT.Strings;
 
 with Glib;                       use Glib;
 with Glib.Convert;               use Glib.Convert;
@@ -82,10 +83,10 @@ package body Help_Module is
                               (1 => Name_Cst'Access);
 
    type Help_File_Record is record
-      URL        : GNAT.OS_Lib.String_Access;
-      Shell_Cmd  : GNAT.OS_Lib.String_Access;
-      Shell_Lang : GNAT.OS_Lib.String_Access;
-      Descr      : GNAT.OS_Lib.String_Access;
+      URL        : GNAT.Strings.String_Access;
+      Shell_Cmd  : GNAT.Strings.String_Access;
+      Shell_Lang : GNAT.Strings.String_Access;
+      Descr      : GNAT.Strings.String_Access;
    end record;
 
    type XML_Property is new Instance_Property_Record with record
@@ -99,7 +100,7 @@ package body Help_Module is
    use Help_File_List;
 
    type Help_Category_Record is record
-      Name  : GNAT.OS_Lib.String_Access;
+      Name  : GNAT.Strings.String_Access;
       Files : Help_File_List.List;
    end record;
    type Help_Category_Access is access Help_Category_Record;
@@ -112,7 +113,7 @@ package body Help_Module is
       Categories : Help_Category_List.List;
       --  The registered help files
 
-      Doc_Path   : GNAT.OS_Lib.String_Access;
+      Doc_Path   : GNAT.Strings.String_Access;
 
       Html_Class : Class_Type;
       Help_Class : Class_Type;
@@ -209,9 +210,9 @@ package body Help_Module is
    --  Menu Help->Welcome...
 
    type String_Menu_Item_Record is new Gtk_Menu_Item_Record with record
-      URL        : GNAT.OS_Lib.String_Access;
-      Shell      : GNAT.OS_Lib.String_Access;
-      Shell_Lang : GNAT.OS_Lib.String_Access;
+      URL        : GNAT.Strings.String_Access;
+      Shell      : GNAT.Strings.String_Access;
+      Shell_Lang : GNAT.Strings.String_Access;
    end record;
    type String_Menu_Item is access all String_Menu_Item_Record'Class;
 
@@ -305,7 +306,7 @@ package body Help_Module is
    ---------------
 
    function Find_File (Name : Glib.UTF8_String) return VFS.Virtual_File is
-      Full   : GNAT.OS_Lib.String_Access;
+      Full   : GNAT.Strings.String_Access;
    begin
       if Is_Absolute_Path (Name) then
          return Create (Name);
@@ -472,7 +473,7 @@ package body Help_Module is
    function Initialize_XML_Doc
      (Kernel : access Kernel_Handle_Record'Class) return Glib.Xml_Int.Node_Ptr
    is
-      Error : GNAT.OS_Lib.String_Access;
+      Error : GNAT.Strings.String_Access;
       Tmp   : Glib.Xml_Int.Node_Ptr;
    begin
       Trace (Me, "Parsing XML file "
@@ -579,7 +580,7 @@ package body Help_Module is
      (Kernel    : access Kernel_Handle_Record'Class;
       Directory : String)
    is
-      Old  : GNAT.OS_Lib.String_Access := Help_Module_ID.Doc_Path;
+      Old  : GNAT.Strings.String_Access := Help_Module_ID.Doc_Path;
       Dir  : constant String := Normalize_Pathname
         (Directory, Get_System_Dir (Kernel));
       Iter : Path_Iterator;
@@ -881,7 +882,7 @@ package body Help_Module is
       About_File : constant String :=
                      GNAT.Directory_Operations.Format_Pathname
                        (Get_System_Dir (Kernel) & "/share/gps/about.txt");
-      Contents   : GNAT.OS_Lib.String_Access;
+      Contents   : GNAT.Strings.String_Access;
 
    begin
       Contents := Read_File (About_File);
@@ -932,7 +933,7 @@ package body Help_Module is
       pragma Unreferenced (Level);
       Kernel : constant Kernel_Handle := Get_Kernel (Module.all);
       Name, Descr, Menu, Cat : Node_Ptr;
-      Shell, Shell_Lang      : GNAT.OS_Lib.String_Access;
+      Shell, Shell_Lang      : GNAT.Strings.String_Access;
       Field                  : Node_Ptr;
    begin
       if Node.Tag.all = "doc_path" then
@@ -1030,7 +1031,7 @@ package body Help_Module is
    is
       Full    : constant String := Name_As_Directory (Directory) & Index_File;
       Node, N : Node_Ptr;
-      Err     : GNAT.OS_Lib.String_Access;
+      Err     : GNAT.Strings.String_Access;
    begin
       if Is_Regular_File (Full) then
          Trace (Me, "Parsing index " & Full);
@@ -1060,7 +1061,7 @@ package body Help_Module is
    is
       pragma Unreferenced (Widget);
       File     : constant Virtual_File := Find_File (Template_Index);
-      Buffer   : GNAT.OS_Lib.String_Access := Read_File (File);
+      Buffer   : GNAT.Strings.String_Access := Read_File (File);
       Index    : Natural;
       Str      : Unbounded_String;
       In_Category : Unbounded_String;
@@ -1136,7 +1137,7 @@ package body Help_Module is
    procedure Add_Doc_Path_From_Env
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Path_From_Env : GNAT.OS_Lib.String_Access := Getenv ("GPS_DOC_PATH");
+      Path_From_Env : GNAT.Strings.String_Access := Getenv ("GPS_DOC_PATH");
       Iter          : Path_Iterator := Start (Path_From_Env.all);
    begin
       while not At_End (Path_From_Env.all, Iter) loop

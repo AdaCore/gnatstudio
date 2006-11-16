@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2004-2005                        --
---                              AdaCore                                --
+--                      Copyright (C) 2004-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,7 +21,7 @@
 --  This package provides a series of subprograms for creating simple GPR
 --  files given input data.
 
-with GNAT.OS_Lib;
+with GNAT.Strings;
 with Projects.Registry;
 with VFS;
 
@@ -30,11 +30,11 @@ package GPR_Creation is
    procedure Create_Gpr_Files
      (Registry          : Projects.Registry.Project_Registry'Class;
       Root_Project      : Projects.Project_Type;
-      Source_Dirs       : GNAT.OS_Lib.String_List;
-      Object_Dirs       : GNAT.OS_Lib.String_List;
+      Source_Dirs       : GNAT.Strings.String_List;
+      Object_Dirs       : GNAT.Strings.String_List;
       Spec_Extension    : String;
       Body_Extension    : String;
-      Main_Units        : GNAT.OS_Lib.String_List_Access := null;
+      Main_Units        : GNAT.Strings.String_List_Access := null;
       Builder_Switches  : String;
       Compiler_Switches : String;
       Binder_Switches   : String;
@@ -61,7 +61,7 @@ package GPR_Creation is
       Object_Dirs       : VFS.File_Array;
       Spec_Extension    : String;
       Body_Extension    : String;
-      Main_Units        : GNAT.OS_Lib.String_List_Access := null;
+      Main_Units        : GNAT.Strings.String_List_Access := null;
       Builder_Switches  : String;
       Compiler_Switches : String;
       Binder_Switches   : String;

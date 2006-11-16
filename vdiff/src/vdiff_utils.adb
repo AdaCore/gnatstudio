@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -39,14 +39,15 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 
 with Pango.Font;                use Pango.Font;
 
-with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
-with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
-with GPS.Kernel;              use GPS.Kernel;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel;                use GPS.Kernel;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with Vdiff_Module;              use Vdiff_Module;
 with Vdiff_Pkg;                 use Vdiff_Pkg;
+with Basic_Types;               use Basic_Types;
 
 package body Vdiff_Utils is
 
@@ -494,8 +495,8 @@ package body Vdiff_Utils is
          Free (This.Next);
       end if;
 
-      Free (This.New_Line);
-      Free (This.Old_Line);
+      GNAT.Strings.Free (This.New_Line);
+      GNAT.Strings.Free (This.Old_Line);
       Free_Data (This);
    end Free;
 

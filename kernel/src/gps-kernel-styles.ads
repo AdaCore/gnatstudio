@@ -31,7 +31,7 @@ with Gdk.Color; use Gdk.Color;
 with VFS; use VFS;
 with String_Hash;
 
-with Basic_Types; use Basic_Types;
+with GNAT.Strings;
 
 package GPS.Kernel.Styles is
 
@@ -94,14 +94,14 @@ package GPS.Kernel.Styles is
 private
 
    type Color_Record is record
-      Value : String_Access;
+      Value : GNAT.Strings.String_Access;
       Color : Gdk_Color := Null_Color;
       GC    : Gdk_GC    := Null_GC;
    end record;
 
    type Style_Record is record
-      Name        : String_Access;
-      Description : String_Access;
+      Name        : GNAT.Strings.String_Access;
+      Description : GNAT.Strings.String_Access;
       --  A short description of the style
 
       Foreground : Color_Record;

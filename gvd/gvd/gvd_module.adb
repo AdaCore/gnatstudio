@@ -21,6 +21,7 @@
 with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
+with GNAT.Strings;
 
 with Gdk.Color;                 use Gdk.Color;
 with Gdk.Types;                 use Gdk.Types;
@@ -684,6 +685,8 @@ package body GVD_Module is
       Process : constant Visual_Debugger :=
         Get_Current_Process (Top);
 
+      use GNAT.Strings;
+
    begin
       declare
          S : constant Virtual_File :=
@@ -1252,11 +1255,11 @@ package body GVD_Module is
       No_Msg       : aliased String := "";
       Button1      : Boolean_Access := null;
       Button2      : Boolean_Access := null;
-      Cmd_Msg      : Basic_Types.String_Access := Arg_Msg'Unchecked_Access;
-      Msg1         : Basic_Types.String_Access := No_Msg'Unchecked_Access;
-      Msg2         : Basic_Types.String_Access := No_Msg'Unchecked_Access;
-      Key1         : Basic_Types.String_Access := No_Msg'Unchecked_Access;
-      Key2         : Basic_Types.String_Access := No_Msg'Unchecked_Access;
+      Cmd_Msg      : GNAT.Strings.String_Access := Arg_Msg'Unchecked_Access;
+      Msg1         : GNAT.Strings.String_Access := No_Msg'Unchecked_Access;
+      Msg2         : GNAT.Strings.String_Access := No_Msg'Unchecked_Access;
+      Key1         : GNAT.Strings.String_Access := No_Msg'Unchecked_Access;
+      Key2         : GNAT.Strings.String_Access := No_Msg'Unchecked_Access;
       WTX_Version  : Natural;
    begin
       --  If the user has already requested to stop at the beginning (Start
@@ -1547,8 +1550,8 @@ package body GVD_Module is
                       GPS_Window (Get_Main_Window (Kernel));
       Process     : constant Visual_Debugger :=
                       Get_Current_Process (Top);
-      Exec        : GNAT.OS_Lib.String_Access;
-      Ptr         : GNAT.OS_Lib.String_Access :=
+      Exec        : GNAT.Strings.String_Access;
+      Ptr         : GNAT.Strings.String_Access :=
                       GNAT.OS_Lib.Get_Executable_Suffix;
       Exec_Suffix : constant String := Ptr.all;
 
@@ -1622,6 +1625,8 @@ package body GVD_Module is
         GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger :=
         Get_Current_Process (Top);
+
+      use GNAT.Strings;
 
    begin
       declare
@@ -1894,7 +1899,7 @@ package body GVD_Module is
       Pixmap    : Gdk.Gdk_Pixmap;
       Debugger  : Visual_Debugger;
       Kernel    : Kernel_Handle;
-      Value     : Basic_Types.String_Access;
+      Value     : GNAT.Strings.String_Access;
 
    begin
       if not Has_Entity_Name_Information (Context) then
@@ -1941,7 +1946,7 @@ package body GVD_Module is
          end if;
       end;
 
-      Free (Value);
+      GNAT.Strings.Free (Value);
       Pop_State (Kernel);
       return Pixmap;
 
@@ -2449,7 +2454,8 @@ package body GVD_Module is
       Iter              : Imported_Project_Iterator :=
                             Start (Loaded_Project);
       Current_Project   : Project_Type := Current (Iter);
-      Debuggable_Suffix : GNAT.OS_Lib.String_Access := Get_Debuggable_Suffix;
+      Debuggable_Suffix : GNAT.Strings.String_Access := Get_Debuggable_Suffix;
+
    begin
       --  Remove all existing menus
 

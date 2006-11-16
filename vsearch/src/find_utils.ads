@@ -48,7 +48,7 @@
 --  * Allowed chars in a word are found in g-regpat.ads.
 
 with Boyer_Moore;
-with GNAT.OS_Lib;
+with GNAT.Strings;
 with GNAT.Regpat;
 with GPS.Kernel;
 with Glib.Object;
@@ -393,7 +393,7 @@ private
 
    type Root_Search_Context is tagged limited record
       Options        : Search_Options;
-      Look_For       : GNAT.OS_Lib.String_Access := null;
+      Look_For       : GNAT.Strings.String_Access := null;
 
       RE_Matcher     : Pattern_Matcher_Access := null;
       Sub_Matches    : Match_Array_Access := null;

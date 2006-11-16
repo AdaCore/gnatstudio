@@ -24,7 +24,7 @@
 
 with Gdk.Event;
 with Glib.Xml_Int;
-with GNAT.OS_Lib;
+with GNAT.Strings;
 with GPS.Kernel;
 with Gtk.Box;
 
@@ -44,14 +44,14 @@ package Commands.Interactive is
       Synchronous : Boolean := False;
       --  Whether the command should be executed synchronously
 
-      Dir     : GNAT.OS_Lib.String_Access;
+      Dir     : GNAT.Strings.String_Access;
       --  The directory in which the execution should take place
 
-      Args    : GNAT.OS_Lib.String_List_Access;
+      Args    : GNAT.Strings.String_List_Access;
       --  Args is the list of arguments to pass to this action. These can be
       --  accessed through $1, $2 in XML files.
 
-      Label   : GNAT.OS_Lib.String_Access;
+      Label   : GNAT.Strings.String_Access;
 
       Repeat_Count     : Positive := 1;
       Remaining_Repeat : Natural := 0;

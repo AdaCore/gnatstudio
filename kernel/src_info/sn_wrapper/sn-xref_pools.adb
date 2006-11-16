@@ -50,13 +50,6 @@ package body SN.Xref_Pools is
    -- Free --
    ----------
 
-   procedure Free is new Ada.Unchecked_Deallocation
-     (String, GNAT.OS_Lib.String_Access);
-
-   ----------
-   -- Free --
-   ----------
-
    procedure Free (Xref : in out Xref_Elmt_Ptr) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Xref_Elmt_Record, Xref_Elmt_Ptr);
@@ -87,7 +80,7 @@ package body SN.Xref_Pools is
    -- Get_Key --
    -------------
 
-   function Get_Key (Xref : Xref_Elmt_Ptr) return GNAT.OS_Lib.String_Access is
+   function Get_Key (Xref : Xref_Elmt_Ptr) return GNAT.Strings.String_Access is
    begin
       return Xref.Source_Filename;
    end Get_Key;
@@ -96,7 +89,7 @@ package body SN.Xref_Pools is
    -- Hash --
    ----------
 
-   function Hash (Key : GNAT.OS_Lib.String_Access) return Hash_Range is
+   function Hash (Key : GNAT.Strings.String_Access) return Hash_Range is
    begin
       return Str_Hash (Key.all);
    end Hash;
@@ -105,7 +98,7 @@ package body SN.Xref_Pools is
    -- Equal --
    -----------
 
-   function Equal (K1, K2 : GNAT.OS_Lib.String_Access) return Boolean is
+   function Equal (K1, K2 : GNAT.Strings.String_Access) return Boolean is
    begin
       return K1.all = K2.all;
    end Equal;
@@ -282,7 +275,7 @@ package body SN.Xref_Pools is
    is
       Data   : Xref_Elmt_Ptr;
       N      : Integer := 0;
-      Source : GNAT.OS_Lib.String_Access :=
+      Source : GNAT.Strings.String_Access :=
         new String'(Full_Name (Source_Filename).all);
 
    begin

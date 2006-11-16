@@ -18,9 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.Strings;
 with GPS.Intl;            use GPS.Intl;
 with Traces;              use Traces;
-with Basic_Types;         use Basic_Types;
 with VCS_Module;          use VCS_Module;
 with VCS_Status;          use VCS_Status;
 with VCS_View;            use VCS_View;
@@ -28,6 +28,8 @@ with VCS_View.Activities; use VCS_View.Activities;
 with VFS;                 use VFS;
 
 package body Commands.VCS is
+
+   use type GNAT.Strings.String_Access;
 
    Me : constant Debug_Handle := Create ("Command.VCS");
 
@@ -264,7 +266,7 @@ package body Commands.VCS is
    ----------
 
    function Name (X : access Log_Action_Command_Type) return String is
-      Action_String : constant Basic_Types.String_Access :=
+      Action_String : constant GNAT.Strings.String_Access :=
                         Get_Identified_Actions (X.Rep) (X.Action);
    begin
       if Action_String /= null then

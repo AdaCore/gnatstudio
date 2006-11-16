@@ -22,7 +22,6 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
 with GNAT.Heap_Sort_G;
-with GNAT.OS_Lib;
 with GNAT.Strings;              use GNAT.Strings;
 
 with Gdk.GC;                    use Gdk.GC;
@@ -1998,9 +1997,10 @@ package body Browsers.Entities is
      (Item : access Type_Item_Record) return String
    is
       Output   : Unbounded_String;
-      Line     : GNAT.OS_Lib.String_Access;
+      Line     : GNAT.Strings.String_Access;
       Dummy_Cb : Active_Area_Cb := null;
       J, K, L  : Positive := 1;
+
    begin
       Get_Line (Item.General_Lines, J, Callback => Dummy_Cb, Text => Line);
 

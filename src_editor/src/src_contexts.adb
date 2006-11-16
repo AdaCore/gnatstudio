@@ -24,6 +24,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Regexp;               use GNAT.Regexp;
 with GNAT.Regpat;               use GNAT.Regpat;
+with GNAT.Strings;
 
 with Glib;                      use Glib;
 with Glib.Unicode;              use Glib.Unicode;
@@ -471,7 +472,7 @@ package body Src_Contexts is
       Was_Partial   : out Boolean)
    is
       Lang          : Language_Access;
-      Buffer        : GNAT.OS_Lib.String_Access;
+      Buffer        : GNAT.Strings.String_Access;
       Child         : MDI_Child;
       Start         : Natural;
       Line          : Editable_Line_Type;
@@ -698,7 +699,7 @@ package body Src_Contexts is
       end Continue_Dialog;
 
       Was_Partial       : Boolean;
-      Buffer_Text       : Basic_Types.String_Access;
+      Buffer_Text       : GNAT.Strings.String_Access;
 
    begin
       Result := null;
@@ -1783,7 +1784,7 @@ package body Src_Contexts is
                --  file to do the search
 
                declare
-                  Buffer   : GNAT.OS_Lib.String_Access;
+                  Buffer   : GNAT.Strings.String_Access;
                   FD       : File_Descriptor;
                   Len      : Natural;
 

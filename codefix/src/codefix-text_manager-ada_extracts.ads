@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with Generic_List;
-with GNAT.OS_Lib;
+with GNAT.Strings;
 
 package Codefix.Text_Manager.Ada_Extracts is
 
@@ -29,7 +29,7 @@ package Codefix.Text_Manager.Ada_Extracts is
    --  type Ada_Instruction
    ----------------------------------------------------------------------------
 
-   subtype Delimiters_Array is String_Array;
+   subtype Delimiters_Array is GNAT.Strings.String_List;
 
    Default_Delimiters : Delimiters_Array :=
      (new String'("declare"),
@@ -99,7 +99,7 @@ package Codefix.Text_Manager.Ada_Extracts is
 
    procedure Cut_Off_Elements
      (This         : in out Ada_List;
-      New_Instr    : out GNAT.OS_Lib.String_Access;
+      New_Instr    : out GNAT.Strings.String_Access;
       Current_Text : Text_Navigator_Abstr'Class;
       First        : Natural;
       Last         : Natural := 0);
@@ -109,7 +109,7 @@ package Codefix.Text_Manager.Ada_Extracts is
 
    procedure Cut_Off_Elements
      (This         : in out Ada_List;
-      New_Instr    : out GNAT.OS_Lib.String_Access;
+      New_Instr    : out GNAT.Strings.String_Access;
       Current_Text : Text_Navigator_Abstr'Class;
       First        : String;
       Last         : String := "");
@@ -152,7 +152,7 @@ private
    type Token_Record is record
       Line                  : Ptr_Extract_Line;
       First_Char, Last_Char : Char_Index := 0;
-      Content               : GNAT.OS_Lib.String_Access;
+      Content               : GNAT.Strings.String_Access;
    end record;
 
    procedure Free (This : in out Token_Record);

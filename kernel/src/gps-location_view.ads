@@ -38,6 +38,7 @@ with Gtkada.Tree_View;          use Gtkada.Tree_View;
 with Basic_Types;               use Basic_Types;
 
 with Generic_List;
+with GNAT.Strings;
 
 package GPS.Location_View is
 
@@ -173,14 +174,14 @@ private
    use Location_List;
 
    type Location_Record is record
-      Category           : String_Access;
+      Category           : GNAT.Strings.String_Access;
       File               : VFS.Virtual_File;
       Line               : Integer;
       Column             : Visible_Column_Type;
       Length             : Integer;
       Highlight          : Boolean;
-      Message            : String_Access;
-      Highlight_Category : String_Access;
+      Message            : GNAT.Strings.String_Access;
+      Highlight_Category : GNAT.Strings.String_Access;
 
       Children           : List;
    end record;

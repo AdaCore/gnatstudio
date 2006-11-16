@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -42,7 +42,7 @@ with Gtk.Widget;
 with Gtk.Style;
 with Gtk.Label;
 with GPS.Kernel;
-with GNAT.OS_Lib;
+with GNAT.Strings;
 with Ada.Unchecked_Deallocation;
 
 with Logo_Boxes;
@@ -209,7 +209,7 @@ package Wizards is
 private
    type Wizard_Page_Record is abstract tagged record
       Toc           : Gtk.Label.Gtk_Label;
-      Title         : GNAT.OS_Lib.String_Access;
+      Title         : GNAT.Strings.String_Access;
       Content       : Gtk.Widget.Gtk_Widget;
       Was_Complete  : Boolean;
    end record;

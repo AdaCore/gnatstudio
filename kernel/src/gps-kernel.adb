@@ -23,7 +23,8 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.OS_Lib;
+with GNAT.Strings;              use GNAT.Strings;
 with System;                    use System;
 
 with Gdk;                       use Gdk;
@@ -601,7 +602,7 @@ package body GPS.Kernel is
       N            : Node_Ptr;
       M            : Node_Ptr;
       Old          : Node_Ptr;
-      Err          : GNAT.OS_Lib.String_Access;
+      Err          : GNAT.Strings.String_Access;
       Main_Window : constant Gdk.Window.Gdk_Window :=
         Get_Window (Handle.Main_Window);
 
@@ -621,7 +622,7 @@ package body GPS.Kernel is
          return;
       end if;
 
-      if Is_Regular_File (File_Name) then
+      if GNAT.OS_Lib.Is_Regular_File (File_Name) then
          XML_Parsers.Parse (File_Name, Old, Err);
 
          if Err /= null then
@@ -677,7 +678,7 @@ package body GPS.Kernel is
    function Has_User_Desktop
      (Handle : access Kernel_Handle_Record) return Boolean is
    begin
-      return Is_Regular_File (Handle.Home_Dir.all & Desktop_Name);
+      return GNAT.OS_Lib.Is_Regular_File (Handle.Home_Dir.all & Desktop_Name);
    end Has_User_Desktop;
 
    ------------------
@@ -719,11 +720,11 @@ package body GPS.Kernel is
       while not Success_Loading_Desktop
         and then (Try_User_Desktop or else not Is_Default_Desktop)
       loop
-         if Try_User_Desktop and then Is_Regular_File (File) then
+         if Try_User_Desktop and then GNAT.OS_Lib.Is_Regular_File (File) then
             Trace (Me, "loading desktop file " & File
                    & " Project=" & Full_Name (Project_Name).all);
             XML_Parsers.Parse (File, Node, Err);
-         elsif Is_Regular_File (Predefined_Desktop) then
+         elsif GNAT.OS_Lib.Is_Regular_File (Predefined_Desktop) then
             Trace (Me, "loading predefined desktop");
             Is_Default_Desktop := True;
             XML_Parsers.Parse (Predefined_Desktop, Node, Err);
@@ -1163,7 +1164,7 @@ package body GPS.Kernel is
          2 => GType_Int,
          3 => GType_String,
          4 => GType_Pointer);
-      Column_Names : GNAT.OS_Lib.String_List :=
+      Column_Names : GNAT.Strings.String_List :=
         (1 => new String'("File"),
          2 => new String'("Line"),
          3 => new String'("Column"),

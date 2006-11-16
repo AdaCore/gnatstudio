@@ -23,6 +23,7 @@ with Ada.Exceptions;             use Ada.Exceptions;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;                use GNAT;
+with GNAT.Strings;
 with GNAT.HTable;
 with GNAT.Calendar.Time_IO;      use GNAT.Calendar.Time_IO;
 
@@ -167,7 +168,7 @@ package body VCS_Activities is
       end Parse_Activity;
 
       File, Child : Node_Ptr;
-      Err         : OS_Lib.String_Access;
+      Err         : Strings.String_Access;
 
    begin
       if OS_Lib.Is_Regular_File (Filename) then
@@ -458,9 +459,9 @@ package body VCS_Activities is
      (Kernel   : Kernel_Handle;
       Activity : Activity_Id) return String
    is
-      use type OS_Lib.String_Access;
+      use type Strings.String_Access;
       File : constant Virtual_File := Get_Log_File (Kernel, Activity);
-      R    : OS_Lib.String_Access;
+      R    : Strings.String_Access;
    begin
       R := Read_File (File);
 

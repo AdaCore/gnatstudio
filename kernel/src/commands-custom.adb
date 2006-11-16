@@ -24,6 +24,7 @@ with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Expect;               use GNAT.Expect;
+with GNAT.OS_Lib;
 with GNAT.Regpat;               use GNAT.Regpat;
 with System;
 
@@ -393,7 +394,7 @@ package body Commands.Custom is
       ------------
 
       procedure Append (S : in out String_Access; Value : String) is
-         Previous : GNAT.OS_Lib.String_Access;
+         Previous : GNAT.Strings.String_Access;
       begin
          if S = null then
             S := new String'(Value);
@@ -547,10 +548,10 @@ package body Commands.Custom is
      (Kernel  : access Kernel_Handle_Record'Class;
       Command : access Custom_Command'Class)
    is
-      procedure Clear_Console (Name : GNAT.OS_Lib.String_Access);
+      procedure Clear_Console (Name : GNAT.Strings.String_Access);
       --  Clear a specific console
 
-      procedure Clear_Console (Name : GNAT.OS_Lib.String_Access) is
+      procedure Clear_Console (Name : GNAT.Strings.String_Access) is
          Console : Interactive_Console;
       begin
          if Name /= null
@@ -674,11 +675,11 @@ package body Commands.Custom is
         (Custom_Command_Execution_Record, Custom_Command_Execution);
    begin
       if Execution /= null then
-         Free             (Execution.Current_Output);
-         GNAT.OS_Lib.Free (Execution.Outputs);
-         Unchecked_Free   (Execution.Save_Output);
-         Unchecked_Free   (Execution.Progress_Matcher);
-         Unchecked_Free (Execution);
+         Free              (Execution.Current_Output);
+         GNAT.Strings.Free (Execution.Outputs);
+         Unchecked_Free    (Execution.Save_Output);
+         Unchecked_Free    (Execution.Progress_Matcher);
+         Unchecked_Free    (Execution);
       end if;
    end Free;
 
@@ -753,7 +754,7 @@ package body Commands.Custom is
       Command : Glib.Xml_Int.Node_Ptr) return Command_Component
    is
       Output : constant String := Get_Attribute (Command, "output", "@@");
-      Outp   : GNAT.OS_Lib.String_Access := null;
+      Outp   : GNAT.Strings.String_Access := null;
       Show_Command : constant Boolean :=
         Get_Attribute (Command, "show-command", "true") = "true";
       Script : constant String :=
@@ -783,7 +784,7 @@ package body Commands.Custom is
       Default_Show_Command         : Boolean) return Command_Component
    is
       Output : constant String := Get_Attribute (Command, "output", "@@");
-      Outp   : GNAT.OS_Lib.String_Access := null;
+      Outp   : GNAT.Strings.String_Access := null;
       Show_Command : constant String :=
         Get_Attribute (Command, "show-command");
       Show_C          : Boolean := Show_Command = "true";
@@ -1167,7 +1168,7 @@ package body Commands.Custom is
          declare
             Output_Index : constant Integer := Output_Substitution
               (Command, Command.Execution.Cmd_Index, Num);
-            Output       : GNAT.OS_Lib.String_Access;
+            Output       : GNAT.Strings.String_Access;
             Last         : Integer;
          begin
             if Output_Index = -1 then
@@ -1224,9 +1225,9 @@ package body Commands.Custom is
             Callback          => Dollar_Substitution'Unrestricted_Access,
             Recursive         => False);
          Console         : Interactive_Console;
-         Output_Location : GNAT.OS_Lib.String_Access;
+         Output_Location : GNAT.Strings.String_Access;
 
-         function To_String (P : in GNAT.OS_Lib.String_Access) return String;
+         function To_String (P : in GNAT.Strings.String_Access) return String;
          --  Return the contents of P, or the empty string if P is null
 
          function Execute_Shell
@@ -1240,7 +1241,8 @@ package body Commands.Custom is
          -- To_String --
          ---------------
 
-         function To_String (P : in GNAT.OS_Lib.String_Access) return String is
+         function To_String
+           (P : in GNAT.Strings.String_Access) return String is
          begin
             if P = null then
                return "";
@@ -1257,7 +1259,7 @@ package body Commands.Custom is
            (Component : Custom_Component_Record'Class) return Boolean
          is
             Errors  : aliased Boolean;
-            Old_Dir : GNAT.OS_Lib.String_Access;
+            Old_Dir : GNAT.Strings.String_Access;
             --  has to be determined here so that Current_Server is
             --  correctly set:
             Subst_Cmd_Line  : constant String := Substitute
@@ -1312,7 +1314,7 @@ package body Commands.Custom is
          function Execute_External
            (Component : Custom_Component_Record'Class) return Boolean
          is
-            Tmp  : GNAT.OS_Lib.String_Access;
+            Tmp  : GNAT.Strings.String_Access;
             Args : String_List_Access;
             Subst_Cmd_Line  : constant String := Substitute
               (Subst_Percent,
@@ -1340,7 +1342,7 @@ package body Commands.Custom is
                            Multiple_Lines or Single_Line));
             end if;
 
-            Args := Argument_String_To_List (Subst_Cmd_Line);
+            Args := GNAT.OS_Lib.Argument_String_To_List (Subst_Cmd_Line);
 
             for J in Args'Range loop
                Tmp := Args (J);
@@ -1473,7 +1475,7 @@ package body Commands.Custom is
       end Terminate_Command;
 
       use type Glib.String_Ptr;
-      Old_Dir        : GNAT.OS_Lib.String_Access;
+      Old_Dir        : GNAT.Strings.String_Access;
 
    begin  --  Execute
       --  If there was an external command executing:
@@ -1506,7 +1508,7 @@ package body Commands.Custom is
 
          Command.Execution := new Custom_Command_Execution_Record;
          Command.Execution.Outputs     :=
-           new Argument_List (Command.Components'Range);
+           new GNAT.Strings.String_List (Command.Components'Range);
          Command.Execution.Save_Output :=
            new Boolean_Array (Command.Components'Range);
 

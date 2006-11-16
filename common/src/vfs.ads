@@ -27,6 +27,7 @@ with Ada.Finalization;
 with Ada.Containers;
 with GNAT.Calendar;
 with GNAT.OS_Lib;
+with GNAT.Strings;
 
 with Glib;               use Glib;
 with Glib.Values;
@@ -45,7 +46,7 @@ package VFS is
       GNAT.OS_Lib.GM_Minute (GNAT.OS_Lib.Invalid_Time),
       GNAT.OS_Lib.GM_Second (GNAT.OS_Lib.Invalid_Time));
 
-   subtype UTF8_String_Access is GNAT.OS_Lib.String_Access;
+   subtype UTF8_String_Access is GNAT.Strings.String_Access;
    type Cst_UTF8_String_Access is access constant Glib.UTF8_String;
 
    type Virtual_File is tagged private;
@@ -181,7 +182,7 @@ package VFS is
    -- Reading files --
    -------------------
 
-   function Read_File (File : Virtual_File) return GNAT.OS_Lib.String_Access;
+   function Read_File (File : Virtual_File) return GNAT.Strings.String_Access;
    --  Return the contents of an entire file, encoded with the locale encoding.
    --  If the file cannot be found, return null.
    --  The caller is responsible for freeing the returned memory.
@@ -326,11 +327,11 @@ private
       );
 
    type Contents_Record is record
-      Server          : GNAT.OS_Lib.String_Access;
+      Server          : GNAT.Strings.String_Access;
       Ref_Count       : Natural := 1;
-      Full_Name       : GNAT.OS_Lib.String_Access;
-      Normalized_Full : GNAT.OS_Lib.String_Access;
-      Dir_Name        : GNAT.OS_Lib.String_Access;
+      Full_Name       : GNAT.Strings.String_Access;
+      Normalized_Full : GNAT.Strings.String_Access;
+      Dir_Name        : GNAT.Strings.String_Access;
       Kind            : File_Type := Unknown;
    end record;
    --  Start_Of_Path is the index in Full_Name where the remote path starts.
@@ -350,7 +351,7 @@ private
    type Writable_File is record
       File     : Virtual_File;
       FD       : GNAT.OS_Lib.File_Descriptor := GNAT.OS_Lib.Invalid_FD;
-      Filename : GNAT.OS_Lib.String_Access;
+      Filename : GNAT.Strings.String_Access;
    end record;
 
    No_File : constant Virtual_File :=

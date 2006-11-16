@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2004                       --
---                            ACT-Europe                             --
+--                      Copyright (C) 2002-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,13 +20,13 @@
 
 with Glib; use Glib;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Basic_Types;             use Basic_Types;
-with GNAT.OS_Lib;             use GNAT.OS_Lib;
+with GNAT.Strings;            use GNAT.Strings;
 with Gtk.Label;               use Gtk.Label;
 with Gtk.Notebook;            use Gtk.Notebook;
 with Gtk.Widget;              use Gtk.Widget;
+with Basic_Types;
 with GPS.Kernel;              use GPS.Kernel;
-with Language_Handlers;   use Language_Handlers;
+with Language_Handlers;       use Language_Handlers;
 with Gtkada.Handlers;         use Gtkada.Handlers;
 with Projects;                use Projects;
 with String_Utils;            use String_Utils;
@@ -66,14 +66,15 @@ package body Naming_Editors is
    procedure Gtk_New
      (Editor    : out Naming_Editor;
       Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Languages : Argument_List)
+      Languages : String_List)
    is
-      Supported : Argument_List := Known_Languages
+      Supported : String_List := Known_Languages
         (Get_Language_Handler (Kernel));
-      Naming : Language_Naming_Editor;
-      Old    : Language_Naming_Array_Access;
-      Last   : Natural;
-      Label  : Gtk_Label;
+      Naming    : Language_Naming_Editor;
+      Old       : Language_Naming_Array_Access;
+      Last      : Natural;
+      Label     : Gtk_Label;
+
    begin
       Editor := new Naming_Editor_Record;
       Gtk.Notebook.Initialize (Editor);
@@ -120,7 +121,7 @@ package body Naming_Editors is
 
       Widget_Callback.Connect (Editor, "destroy", On_Destroy'Access);
 
-      Free (Supported);
+      Basic_Types.Free (Supported);
    end Gtk_New;
 
    -------------
@@ -132,11 +133,11 @@ package body Naming_Editors is
       Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
       Project      : Project_Type)
    is
-      Languages : Argument_List := Get_Languages (Project);
+      Languages : String_List := Get_Languages (Project);
    begin
       Gtk_New (Editor, Kernel, Languages);
       Set_Visible_Pages (Editor, Kernel, Languages, Project);
-      Free (Languages);
+      Basic_Types.Free (Languages);
    end Gtk_New;
 
    -----------------------
@@ -146,7 +147,7 @@ package body Naming_Editors is
    procedure Set_Visible_Pages
      (Editor       : access Naming_Editor_Record;
       Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Languages    : GNAT.OS_Lib.Argument_List;
+      Languages    : String_List;
       Project      : Projects.Project_Type)
    is
       Current : constant Gint := Get_Current_Page (Editor);
@@ -195,9 +196,9 @@ package body Naming_Editors is
    --------------------------
 
    function Create_Project_Entry
-     (Editor          : access Naming_Editor_Record;
-      Project         : Projects.Project_Type;
-      Languages       : Argument_List;
+     (Editor             : access Naming_Editor_Record;
+      Project            : Projects.Project_Type;
+      Languages          : String_List;
       Scenario_Variables : Scenario_Variable_Array) return Boolean
    is
       Changed : Boolean := False;
@@ -228,7 +229,7 @@ package body Naming_Editors is
       Project      : Projects.Project_Type;
       Display_Exceptions : Boolean := True)
    is
-      Languages : Argument_List := Get_Languages (Project);
+      Languages : String_List := Get_Languages (Project);
    begin
       if Editor.Pages /= null then
          for P in Editor.Pages'Range loop
@@ -237,7 +238,7 @@ package body Naming_Editors is
          end loop;
       end if;
 
-      Free (Languages);
+      Basic_Types.Free (Languages);
    end Show_Project_Settings;
 
 end Naming_Editors;

@@ -18,9 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.OS_Lib;
-with Ada.Exceptions;              use Ada.Exceptions;
-with Traces;                      use Traces;
+with GNAT.Strings;   use GNAT.Strings;
+with Ada.Exceptions; use Ada.Exceptions;
+with Traces;         use Traces;
 
 package body Language_Utils is
 
@@ -33,9 +33,7 @@ package body Language_Utils is
       File_Name : VFS.Virtual_File;
       Result    : out Construct_List)
    is
-      use GNAT.OS_Lib;
-
-      Buffer : GNAT.OS_Lib.String_Access;
+      Buffer : GNAT.Strings.String_Access;
    begin
       Buffer := VFS.Read_File (File_Name);
 

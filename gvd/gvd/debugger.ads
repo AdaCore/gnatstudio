@@ -21,14 +21,13 @@
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 with Language;
 with Items;
-with GNAT.OS_Lib;
+with GNAT.Strings;
 with Process_Proxies;
 with GNAT.Regpat;
 
 with Gtk.Window;
 
 with GVD.Types;
-with Basic_Types;
 with GVD.Proc_Utils;
 with GPS.Kernel; use GPS.Kernel;
 with VFS;
@@ -45,7 +44,7 @@ package Debugger is
    procedure Spawn
      (Debugger        : access Debugger_Root;
       Executable      : VFS.Virtual_File;
-      Debugger_Args   : GNAT.OS_Lib.Argument_List;
+      Debugger_Args   : GNAT.Strings.String_List;
       Executable_Args : String;
       Proxy           : Process_Proxies.Process_Proxy_Access;
       Window          : Gtk.Window.Gtk_Window;
@@ -83,7 +82,7 @@ package Debugger is
 
    procedure General_Spawn
      (Debugger       : access Debugger_Root'Class;
-      Arguments      : GNAT.OS_Lib.Argument_List;
+      Arguments      : GNAT.Strings.String_List;
       Debugger_Name  : String;
       Proxy          : Process_Proxies.Process_Proxy_Access);
    --  Convenience function to start a debugger.
@@ -337,7 +336,7 @@ package Debugger is
    --  there is one.
 
    function Source_Files_List
-     (Debugger : access Debugger_Root) return Basic_Types.String_Array;
+     (Debugger : access Debugger_Root) return GNAT.Strings.String_List;
    --  Return the list of source files for the currently loaded executable.
    --  If the debugger can not return a list of specific sources, it should
    --  return an empty array.
@@ -538,9 +537,9 @@ package Debugger is
 
    type Backtrace_Record is record
       Frame_Id        : Natural;
-      Program_Counter : Basic_Types.String_Access;
-      Subprogram      : Basic_Types.String_Access;
-      Source_Location : Basic_Types.String_Access;
+      Program_Counter : GNAT.Strings.String_Access;
+      Subprogram      : GNAT.Strings.String_Access;
+      Source_Location : GNAT.Strings.String_Access;
    end record;
 
    type Backtrace_Array is array (Positive range <>) of Backtrace_Record;
@@ -807,7 +806,7 @@ package Debugger is
      (Debugger        : access Debugger_Root;
       Range_Start     : out GVD.Types.Address_Type;
       Range_End       : out GVD.Types.Address_Type;
-      Code            : out Basic_Types.String_Access;
+      Code            : out GNAT.Strings.String_Access;
       Start_Address   : GVD.Types.Address_Type := GVD.Types.Invalid_Address;
       End_Address     : GVD.Types.Address_Type := GVD.Types.Invalid_Address)
    is abstract;
@@ -879,7 +878,7 @@ package Debugger is
 
    function Complete
      (Debugger  : access Debugger_Root;
-      Beginning : String) return Basic_Types.String_Array is abstract;
+      Beginning : String) return GNAT.Strings.String_List is abstract;
    --  Return a list of commands recognized by the debugger that begin with
    --  Beginning.
    --  Note that the caller is responsible for freeing the memory allocated
@@ -926,7 +925,7 @@ private
    type Command_Record;
    type Command_Access is access Command_Record;
    type Command_Record is record
-      Cmd             : Basic_Types.String_Access;
+      Cmd             : GNAT.Strings.String_Access;
       Empty_Buffer    : Boolean;
       Mode            : GVD.Types.Command_Type;
       Next            : Command_Access;
@@ -949,8 +948,8 @@ private
       Continuation_Line : Boolean := False;
       --  Whether the debugger is currently handling a multiple line command.
 
-      Remote_Target   : GNAT.OS_Lib.String_Access;
-      Remote_Protocol : GNAT.OS_Lib.String_Access;
+      Remote_Target   : GNAT.Strings.String_Access;
+      Remote_Protocol : GNAT.Strings.String_Access;
 
       Handle : GVD.Proc_Utils.Process_Handle;
       --  Handle used to implement Open/Next/Close_Process.

@@ -21,7 +21,7 @@
 --  ??? Description of this package
 
 with Ada.Unchecked_Deallocation;
-with Basic_Types; use Basic_Types;
+with GNAT.Strings;
 
 generic
    type Data_Type (<>) is private;
@@ -79,7 +79,7 @@ private
    type Generic_Asynchronous_Command is new Root_Command with record
       Data        : Data_Access;
       Iterate     : Iteration_Procedure;
-      Description : String_Access;
+      Description : GNAT.Strings.String_Access;
    end record;
 
 end Commands.Generic_Asynchronous;

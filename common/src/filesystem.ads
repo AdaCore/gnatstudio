@@ -21,7 +21,7 @@
 --  This package is used to describe a complete filesystem and how to use it
 
 with Ada.Calendar;
-with GNAT.OS_Lib;
+with GNAT.Strings;
 
 package Filesystem is
 
@@ -144,7 +144,7 @@ package Filesystem is
    function Read_File
      (FS              : Filesystem_Record;
       Host            : String;
-      Local_Full_Name : String) return GNAT.OS_Lib.String_Access is abstract;
+      Local_Full_Name : String) return GNAT.Strings.String_Access is abstract;
    --  Return the contents of an entire file.
    --  If the file cannot be found, return null.
    --  The caller is responsible for freeing the returned memory.
@@ -234,7 +234,7 @@ package Filesystem is
       Local_Dir_Name : String;
       Dirs_Only      : Boolean := False;
       Files_Only     : Boolean := False)
-      return GNAT.OS_Lib.String_List is abstract;
+      return GNAT.Strings.String_List is abstract;
    --  Read the specified directory and returns a list of filenames
    --  (base names). If Dirs_Only is set, then the files returned are directory
    --  only. Same for Files_Only, concerning regular files.

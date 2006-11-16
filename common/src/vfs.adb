@@ -37,6 +37,7 @@ with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 with GNAT.Heap_Sort;            use GNAT.Heap_Sort;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Strings;
 
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 
@@ -647,7 +648,7 @@ package body VFS is
      (File   : Virtual_File;
       Append : Boolean := False) return Writable_File
    is
-      Tmp : GNAT.OS_Lib.String_Access := null;
+      Tmp : GNAT.Strings.String_Access := null;
       Fd  : File_Descriptor;
    begin
       if File.Value = null then
@@ -1058,7 +1059,7 @@ package body VFS is
 
       else
          declare
-            List : GNAT.OS_Lib.String_List :=
+            List : GNAT.Strings.String_List :=
                      Dir.Get_Filesystem.Read_Dir
                        (Dir.Value.Server.all,
                         Dir.Value.Full_Name.all,

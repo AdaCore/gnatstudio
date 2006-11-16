@@ -54,6 +54,7 @@ with Interfaces.C.Strings;  use Interfaces.C.Strings;
 with Interfaces.C;          use Interfaces.C;
 with Process_Proxies;       use Process_Proxies;
 with Traces;                use Traces;
+with Basic_Types;
 
 package body GVD.Dialogs is
    Me : constant Debug_Handle := Create ("GVD.Dialogs");
@@ -509,7 +510,7 @@ package body GVD.Dialogs is
 
          if Thread.Tree = null and then Len > Info'First then
             declare
-               Titles : GNAT.OS_Lib.String_List (1 .. Integer (Num_Columns));
+               Titles : GNAT.Strings.String_List (1 .. Integer (Num_Columns));
             begin
                Trace (Me, "Threads: Creating tree, num_columns="
                       & Num_Columns'Img);

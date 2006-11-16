@@ -22,7 +22,7 @@
 --  errors and commands.
 
 with Generic_List;
-with GNAT.OS_Lib;
+with GNAT.Strings;
 with VFS;
 
 with Codefix.Text_Manager; use Codefix.Text_Manager;
@@ -64,7 +64,7 @@ private
 
    type Use_Type is record
       Position : File_Cursor;
-      Name     : GNAT.OS_Lib.String_Access;
+      Name     : GNAT.Strings.String_Access;
       Nb_Ref   : Natural := 0;
    end record;
 
@@ -74,11 +74,11 @@ private
 
    type Arr_Use is array (Natural range <>) of Ptr_Use;
 
-   type Arr_Str is array (Natural range <>) of GNAT.OS_Lib.String_Access;
+   type Arr_Str is array (Natural range <>) of GNAT.Strings.String_Access;
    --  ??? Should use subprogram in basic_types.ads
 
    type With_Type (Nb_Elems : Natural) is record
-      Name_Str : GNAT.OS_Lib.String_Access;
+      Name_Str : GNAT.Strings.String_Access;
       Name     : Arr_Str (1 .. Nb_Elems);
       Clauses  : Arr_Use (1 .. Nb_Elems);
    end record;

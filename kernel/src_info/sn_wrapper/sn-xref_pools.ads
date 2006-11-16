@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2003                      --
---                            ACT-Europe                             --
+--                      Copyright (C) 2002-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,7 +22,7 @@
 --  Generates unique filename for given source file name.
 
 with HTables;
-with GNAT.OS_Lib;
+with GNAT.Strings;
 with VFS;
 
 package SN.Xref_Pools is
@@ -97,7 +97,7 @@ private
    type Xref_Elmt_Ptr is access all Xref_Elmt_Record;
 
    type Xref_Elmt_Record is record
-      Source_Filename   : GNAT.OS_Lib.String_Access;
+      Source_Filename   : GNAT.Strings.String_Access;
       Xref_Filename     : VFS.Virtual_File;
       Valid             : Boolean := False;
       Next              : Xref_Elmt_Ptr;
@@ -107,9 +107,9 @@ private
 
    procedure Set_Next (Xref : Xref_Elmt_Ptr; Next : Xref_Elmt_Ptr);
    function Next      (Xref : Xref_Elmt_Ptr) return Xref_Elmt_Ptr;
-   function Get_Key   (Xref : Xref_Elmt_Ptr) return GNAT.OS_Lib.String_Access;
-   function Hash      (Key : GNAT.OS_Lib.String_Access) return Hash_Range;
-   function Equal     (K1, K2 : GNAT.OS_Lib.String_Access) return Boolean;
+   function Get_Key   (Xref : Xref_Elmt_Ptr) return GNAT.Strings.String_Access;
+   function Hash      (Key : GNAT.Strings.String_Access) return Hash_Range;
+   function Equal     (K1, K2 : GNAT.Strings.String_Access) return Boolean;
    procedure Free     (Xref : in out Xref_Elmt_Ptr);
 
    package STable is new HTables.Static_HTable
@@ -118,7 +118,7 @@ private
       Null_Ptr    => Null_Xref_Elmt,
       Set_Next    => Set_Next,
       Next        => Next,
-      Key         => GNAT.OS_Lib.String_Access,
+      Key         => GNAT.Strings.String_Access,
       Get_Key     => Get_Key,
       Hash        => Hash,
       Equal       => Equal,

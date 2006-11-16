@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002                            --
---                            ACT-Europe                             --
+--                      Copyright (C) 2002-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,6 +23,7 @@ with GNAT.Expect.TTY;
 pragma Warnings (On);
 
 with GNAT.OS_Lib;
+with GNAT.Strings;
 
 package SN.Browse is
    Unlink_Failure    : exception;
@@ -53,7 +54,7 @@ package SN.Browse is
    --  process spawning, file unlinking...
 
    procedure Generate_Xrefs
-     (DB_Directories : GNAT.OS_Lib.String_List_Access;
+     (DB_Directories : GNAT.Strings.String_List_Access;
       DBIMP_Path     : String;
       Temp_Name      : out GNAT.OS_Lib.Temp_File_Name;
       PD             : out GNAT.Expect.TTY.TTY_Process_Descriptor);

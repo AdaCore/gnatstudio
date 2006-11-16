@@ -57,7 +57,7 @@ with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
 with System;                   use System;
-with GNAT.OS_Lib;              use GNAT.OS_Lib;
+with GNAT.Strings;             use GNAT.Strings;
 with VFS;
 
 package body Theme_Manager_Module is
@@ -69,9 +69,9 @@ package body Theme_Manager_Module is
    type Theme_Description;
    type Theme_Description_Access is access Theme_Description;
    type Theme_Description is record
-      Name        : GNAT.OS_Lib.String_Access;
-      Description : GNAT.OS_Lib.String_Access;
-      Category    : GNAT.OS_Lib.String_Access;
+      Name        : GNAT.Strings.String_Access;
+      Description : GNAT.Strings.String_Access;
+      Category    : GNAT.Strings.String_Access;
       Xml         : Node_Ptr;
       --  The concatenation of all XML nodes that define the theme. They are
       --  stored in an order so that system-wide definitions are parsed first,
@@ -249,8 +249,9 @@ package body Theme_Manager_Module is
       Kernel       : constant Kernel_Handle := Get_Kernel (Module.all);
       Active       : constant String := Get_Pref (Active_Themes);
       Themes       : Theme_Description_Access;
-      Str          : GNAT.OS_Lib.String_Access;
+      Str          : GNAT.Strings.String_Access;
       Theme_Active : Boolean;
+
    begin
       if Node.Tag.all = "theme" then
          declare

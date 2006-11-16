@@ -34,6 +34,7 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 with GNAT.Regexp;               use GNAT.Regexp;
+with GNAT.Strings;
 with Interfaces.C.Strings;
 with System;
 
@@ -177,7 +178,7 @@ package body Gtkada.File_Selector is
       File      : Virtual_File;
       State     : out File_State;
       Pixbuf    : out Gdk_Pixbuf;
-      Text      : out GNAT.OS_Lib.String_Access);
+      Text      : out GNAT.Strings.String_Access);
    --  See spec for more details on this dispatching routine.
 
    procedure Set_Busy (W : Gtk_Window; Busy : Boolean);
@@ -380,7 +381,7 @@ package body Gtkada.File_Selector is
       File   : Virtual_File;
       State  : out File_State;
       Pixbuf : out Gdk_Pixbuf;
-      Text   : out GNAT.OS_Lib.String_Access)
+      Text   : out GNAT.Strings.String_Access)
    is
       pragma Unreferenced (Win);
    begin

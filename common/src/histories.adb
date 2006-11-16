@@ -406,7 +406,7 @@ package body Histories is
 
    function Get_History
      (Hist : History_Record; Key : History_Key)
-      return GNAT.OS_Lib.String_List_Access
+      return GNAT.Strings.String_List_Access
    is
       Val : constant History_Key_Access :=
               Create_New_Key_If_Necessary (Hist, Key, Strings);

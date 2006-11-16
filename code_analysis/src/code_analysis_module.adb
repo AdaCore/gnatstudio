@@ -20,6 +20,7 @@
 
 with Ada.Exceptions;             use Ada.Exceptions;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
+with GNAT.Strings;
 
 with Glib;                       use Glib;
 with Glib.Properties;
@@ -86,7 +87,7 @@ package body Code_Analysis_Module is
       pragma Unreferenced (Command);
       Property      : Code_Analysis_Class_Record;
       Instance      : Class_Instance;
-      File_Contents : GNAT.OS_Lib.String_Access;
+      File_Contents : GNAT.Strings.String_Access;
       Project_Name  : Project_Type;
       Project_Node  : Project_Access;
       Src_File      : Class_Instance;

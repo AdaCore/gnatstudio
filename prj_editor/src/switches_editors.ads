@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                      Copyright (C) 2001-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -34,7 +34,7 @@ with Gtk.Notebook;     use Gtk.Notebook;
 with Gtk.Size_Group;
 with Gtk.Tooltips;
 with Gtk.Widget;
-with GNAT.OS_Lib;
+with GNAT.Strings;
 with GPS.Kernel;
 with Projects;
 with VFS;
@@ -252,13 +252,13 @@ package Switches_Editors is
 
    procedure Set_Visible_Pages
      (Editor : access Switches_Edit_Record;
-      Languages : GNAT.OS_Lib.Argument_List);
+      Languages : GNAT.Strings.String_List);
    --  Set the visible pages based on the specific languages
 
    function Generate_Project
      (Switches           : access Switches_Edit_Record'Class;
       Project            : Projects.Project_Type;
-      Languages          : GNAT.OS_Lib.Argument_List;
+      Languages          : GNAT.Strings.String_List;
       Scenario_Variables : Projects.Scenario_Variable_Array;
       Files              : VFS.File_Array)
       return Boolean;
@@ -316,13 +316,13 @@ private
 
    procedure Filter_Switch
      (Switch : Switch_Basic_Widget_Record;
-      List   : in out GNAT.OS_Lib.Argument_List) is abstract;
+      List   : in out GNAT.Strings.String_List) is abstract;
    --  Remove (and free) from List the switches that would correspond to the
    --  one edited by Switch.
 
    procedure Set_And_Filter_Switch
      (Switch : Switch_Basic_Widget_Record;
-      List   : in out GNAT.OS_Lib.Argument_List) is abstract;
+      List   : in out GNAT.Strings.String_List) is abstract;
    --  If one of the switches in List matches Switch, the widget is actived as
    --  appropriate, and the entry in List is freed and set to null.
 
@@ -330,14 +330,14 @@ private
    type Widget_Array_Access is access Widget_Array;
 
    type String_List_Array is array (Natural range <>) of
-     GNAT.OS_Lib.Argument_List_Access;
+     GNAT.Strings.String_List_Access;
    type String_List_Array_Access is access all String_List_Array;
 
    type Dependency_Description;
    type Dependency_Description_Access is access Dependency_Description;
    type Dependency_Description is record
-      Master_Page, Slave_Page     : GNAT.OS_Lib.String_Access;
-      Master_Switch, Slave_Switch : GNAT.OS_Lib.String_Access;
+      Master_Page, Slave_Page     : GNAT.Strings.String_Access;
+      Master_Switch, Slave_Switch : GNAT.Strings.String_Access;
       Master_Status, Slave_Status : Boolean;
       Next                        : Dependency_Description_Access;
    end record;
@@ -347,23 +347,23 @@ private
 
    type Switches_Editor_Page_Record is new Gtk_Table_Record with record
       Kernel : GPS.Kernel.Kernel_Handle;
-      Lang_Filter : GNAT.OS_Lib.Argument_List_Access;
+      Lang_Filter : GNAT.Strings.String_List_Access;
       --  List of languages for which this page applies
 
       Dependencies : Dependency_Description_Access;
 
-      Attribute_Index : GNAT.OS_Lib.String_Access;
-      Title    : GNAT.OS_Lib.String_Access;
-      Pkg      : GNAT.OS_Lib.String_Access;
+      Attribute_Index : GNAT.Strings.String_Access;
+      Title    : GNAT.Strings.String_Access;
+      Pkg      : GNAT.Strings.String_Access;
       Switches : Widget_Array_Access;
       Cmd_Line : Gtk.GEntry.Gtk_Entry;
       Tips     : Gtk.Tooltips.Gtk_Tooltips;
 
-      Coalesce_Switches : GNAT.OS_Lib.String_List_Access;
+      Coalesce_Switches : GNAT.Strings.String_List_Access;
       --  List of coalesce switches (see Add_Coalesce_Switch). This is never
       --  null once the widget has been created.
 
-      Coalesce_Switches_Default : GNAT.OS_Lib.String_List_Access;
+      Coalesce_Switches_Default : GNAT.Strings.String_List_Access;
       --  This array has the same size as Coalesce_Switches, and contains the
       --  values of Default_As_String passed to Add_Coalesce_Switch
 

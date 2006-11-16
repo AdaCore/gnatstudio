@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2005                       --
+--                     Copyright (C) 2000-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.Strings;
 with Gtk; use Gtk;
 with Gtk.Adjustment;   use Gtk.Adjustment;
 with Gtk.Stock;        use Gtk.Stock;
@@ -27,7 +28,6 @@ with GPS.Intl;         use GPS.Intl;
 with Breakpoints_Pkg.Callbacks; use Breakpoints_Pkg.Callbacks;
 with Gtkada.Handlers;  use Gtkada.Handlers;
 
-with GNAT.OS_Lib;
 with GUI_Utils;        use GUI_Utils;
 
 package body Breakpoints_Pkg is
@@ -449,7 +449,7 @@ package body Breakpoints_Pkg is
            (Guint (Col_Enb + 1)  => GType_Boolean,
             others   => GType_String);
 
-         Column_Names : GNAT.OS_Lib.String_List (1 .. 8) :=
+         Column_Names : GNAT.Strings.String_List (1 .. 8) :=
            (new String'(-"Num"),
             new String'(-"Enb"),
             new String'(-"Type"),
@@ -464,7 +464,7 @@ package body Breakpoints_Pkg is
              (Column_Types, Column_Names, Sortable_Columns => False);
 
          for J in Column_Names'Range loop
-            GNAT.OS_Lib.Free (Column_Names (J));
+            GNAT.Strings.Free (Column_Names (J));
          end loop;
       end;
 

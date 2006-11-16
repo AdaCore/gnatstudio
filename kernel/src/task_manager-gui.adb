@@ -50,6 +50,7 @@ with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GUI_Utils;                use GUI_Utils;
 with String_Utils;             use String_Utils;
 with Traces;                   use Traces;
+with GNAT.Strings;
 
 package body Task_Manager.GUI is
 
@@ -702,8 +703,8 @@ package body Task_Manager.GUI is
       Progress        : Progress_Record;
       Length          : Natural;
       View            : Task_Manager_Interface;
-      Progress_String : String_Access;
-      Name_String     : String_Access;
+      Progress_String : GNAT.Strings.String_Access;
+      Name_String     : GNAT.Strings.String_Access;
       Fraction        : Gdouble;
 
    begin
@@ -740,7 +741,7 @@ package body Task_Manager.GUI is
                New_String : constant String := Progress_String.all
                  & " (" & Image (Length) & (-" queued)");
             begin
-               Free (Progress_String);
+               GNAT.Strings.Free (Progress_String);
                Progress_String := new String'(New_String);
             end;
          end if;
@@ -824,8 +825,8 @@ package body Task_Manager.GUI is
             Set_Fraction (Manager.Queues (Index).Bar, Fraction);
          end if;
 
-         Free (Name_String);
-         Free (Progress_String);
+         GNAT.Strings.Free (Name_String);
+         GNAT.Strings.Free (Progress_String);
       end if;
 
       Manager.Queues (Index).Need_Refresh := False;

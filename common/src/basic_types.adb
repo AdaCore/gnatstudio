@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.OS_Lib; use GNAT.OS_Lib;
+with GNAT.Strings; use GNAT.Strings;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 package body Basic_Types is
@@ -27,26 +27,11 @@ package body Basic_Types is
    -- Free --
    ----------
 
-   procedure Free (Ar : in out String_Array) is
+   procedure Free (Ar : in out GNAT.Strings.String_List) is
    begin
       for A in Ar'Range loop
          Free (Ar (A));
       end loop;
-   end Free;
-
-   procedure Free (Ar : in out Argument_List) is
-   begin
-      for A in Ar'Range loop
-         Free (Ar (A));
-      end loop;
-   end Free;
-
-   procedure Free (Ar : in out String_Array_Access) is
-   begin
-      if Ar /= null then
-         Free (Ar.all);
-         Unchecked_Free (Ar);
-      end if;
    end Free;
 
    --------------
@@ -71,8 +56,8 @@ package body Basic_Types is
 
       else
          declare
-            L1 : Argument_List := List1;
-            L2 : Argument_List := List2;
+            L1 : GNAT.OS_Lib.Argument_List := List1;
+            L2 : GNAT.OS_Lib.Argument_List := List2;
          begin
             for A in L1'Range loop
                for B in L2'Range loop

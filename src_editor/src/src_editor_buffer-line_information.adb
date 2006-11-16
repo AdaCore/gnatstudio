@@ -1424,7 +1424,7 @@ package body Src_Editor_Buffer.Line_Information is
                   Side_Info_Data => Editable_Lines (Line).Side_Info_Data,
                   Buffer_Line    => Buffer_Line_Type (Get_Line (Iter) + 1));
             begin
-               Free (Editable_Lines (Line).Text);
+               GNAT.Strings.Free (Editable_Lines (Line).Text);
                Editable_Lines (Line) := Line_Data;
             end;
 

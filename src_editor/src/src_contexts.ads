@@ -19,9 +19,9 @@
 -----------------------------------------------------------------------
 
 with GNAT.Directory_Operations;
-with GNAT.OS_Lib;
 with GNAT.Regexp;
 with GNAT.Regpat;
+with GNAT.Strings;
 
 with Gtk.Widget;
 with Gtk.Combo;
@@ -287,7 +287,7 @@ private
    type Match_Result_Array_Access is access all Match_Result_Array;
 
    type Dir_Data is record
-      Name : GNAT.OS_Lib.String_Access;
+      Name : GNAT.Strings.String_Access;
       Dir  : GNAT.Directory_Operations.Dir_Type;
    end record;
    type Dir_Data_Access is access Dir_Data;
@@ -352,7 +352,7 @@ private
       Dirs          : Directory_List.List;
       Current_File  : VFS.Virtual_File;
 
-      Directory     : GNAT.OS_Lib.String_Access := null;
+      Directory     : GNAT.Strings.String_Access := null;
       --  Set to null at the end of the search
 
       Total_Dirs    : Natural := 0;

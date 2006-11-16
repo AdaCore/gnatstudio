@@ -94,7 +94,7 @@ package Filesystem.Unix is
    function Read_File
      (FS              : Unix_Filesystem_Record;
       Host            : String;
-      Local_Full_Name : String) return GNAT.OS_Lib.String_Access;
+      Local_Full_Name : String) return GNAT.Strings.String_Access;
 
    function Delete
      (FS              : Unix_Filesystem_Record;
@@ -161,6 +161,6 @@ package Filesystem.Unix is
       Host           : String;
       Local_Dir_Name : String;
       Dirs_Only      : Boolean := False;
-      Files_Only     : Boolean := False) return GNAT.OS_Lib.String_List;
+      Files_Only     : Boolean := False) return GNAT.Strings.String_List;
 
 end Filesystem.Unix;

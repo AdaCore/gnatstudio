@@ -23,7 +23,7 @@ with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
-with GNAT.OS_Lib;                use GNAT.OS_Lib;
+with GNAT.Strings;               use GNAT.Strings;
 
 with Glib.Unicode;               use Glib, Glib.Unicode;
 
@@ -1012,7 +1012,7 @@ package body String_Utils is
    -----------------------------
 
    function Argument_List_To_String
-     (List           : GNAT.OS_Lib.Argument_List;
+     (List           : GNAT.Strings.String_List;
       Protect_Quotes : Boolean := True) return String
    is
       Length : Natural := 0;
@@ -1057,10 +1057,10 @@ package body String_Utils is
    -- Clone --
    -----------
 
-   function Clone (List : GNAT.OS_Lib.Argument_List)
-      return GNAT.OS_Lib.Argument_List
+   function Clone (List : GNAT.Strings.String_List)
+      return GNAT.Strings.String_List
    is
-      L : Argument_List (List'Range);
+      L : String_List (List'Range);
    begin
       for J in List'Range loop
          L (J) := new String'(List (J).all);
@@ -1072,17 +1072,17 @@ package body String_Utils is
    -- Append --
    ------------
 
-   procedure Append (List  : in out GNAT.OS_Lib.Argument_List_Access;
-                     List2 : GNAT.OS_Lib.Argument_List)
+   procedure Append (List  : in out GNAT.Strings.String_List_Access;
+                     List2 : GNAT.Strings.String_List)
    is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Argument_List, Argument_List_Access);
-      L : Argument_List_Access := List;
+        (String_List, String_List_Access);
+      L : String_List_Access := List;
    begin
       if List = null then
-         List := new Argument_List (1 .. List2'Length);
+         List := new String_List (1 .. List2'Length);
       else
-         List := new Argument_List (L'First .. L'Last + List2'Length);
+         List := new String_List (L'First .. L'Last + List2'Length);
          List (L'Range) := L.all;
          Unchecked_Free (L);
       end if;
@@ -1255,7 +1255,7 @@ package body String_Utils is
    ------------------------------------
 
    function Argument_List_To_Quoted_String
-     (Args            : GNAT.OS_Lib.Argument_List;
+     (Args            : GNAT.Strings.String_List;
       Quote           : Character := '"';
       Quote_Backslash : Boolean := True) return String
    is
@@ -1350,16 +1350,15 @@ package body String_Utils is
    ------------------------------------------------
 
    function Argument_String_To_List_With_Triple_Quotes
-     (Arg_String : String)
-      return       Argument_List_Access
+     (Arg_String : String) return String_List_Access
    is
       Max_Args : Integer := 128;
-      New_Argv : Argument_List_Access := new Argument_List (1 .. Max_Args);
+      New_Argv : String_List_Access := new String_List (1 .. Max_Args);
       New_Argc : Natural := 0;
       Idx      : Integer;
 
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Argument_List, Argument_List_Access);
+        (String_List, String_List_Access);
       Backslashed       : Boolean;
       Quoted            : Boolean;
       Triple_Quoted     : Boolean;
@@ -1430,11 +1429,11 @@ package body String_Utils is
          --  Resize the table if needed
          if New_Argc > Max_Args then
             declare
-               New_New_Argv : Argument_List (1 .. Max_Args * 2);
+               New_New_Argv : String_List (1 .. Max_Args * 2);
             begin
                New_New_Argv (1 .. Max_Args) := New_Argv.all;
                Unchecked_Free (New_Argv);
-               New_Argv := new Argument_List'(New_New_Argv);
+               New_Argv := new String_List'(New_New_Argv);
             end;
 
             Max_Args := Max_Args * 2;
@@ -1456,10 +1455,10 @@ package body String_Utils is
       end loop;
 
       declare
-         Result : constant Argument_List := New_Argv (1 .. New_Argc);
+         Result : constant String_List := New_Argv (1 .. New_Argc);
       begin
          Unchecked_Free (New_Argv);
-         return new Argument_List'(Result);
+         return new String_List'(Result);
       end;
    end Argument_String_To_List_With_Triple_Quotes;
 

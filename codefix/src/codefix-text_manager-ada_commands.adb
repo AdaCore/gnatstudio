@@ -21,6 +21,7 @@
 with Ada.Exceptions;                    use Ada.Exceptions;
 with Ada.Characters.Handling;           use Ada.Characters.Handling;
 with GNAT.Regpat;                       use GNAT.Regpat;
+with GNAT.Strings;
 
 with Case_Handling;                     use Case_Handling;
 with Codefix.Ada_Tools;                 use Codefix.Ada_Tools;
@@ -86,8 +87,8 @@ package body Codefix.Text_Manager.Ada_Commands is
       Cursor       : File_Cursor;
       Matches      : Match_Array (0 .. 1);
       Size         : Integer;
-      Line         : GNAT.OS_Lib.String_Access;
-      Word_Chosen  : GNAT.OS_Lib.String_Access;
+      Line         : GNAT.Strings.String_Access;
+      Word_Chosen  : GNAT.Strings.String_Access;
 
    begin
       Cursor := File_Cursor
@@ -593,7 +594,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Position      : File_Cursor;
       Pragma_Cursor : File_Cursor;
       Line_Cursor   : File_Cursor;
-      Next_Str      : GNAT.OS_Lib.String_Access;
+      Next_Str      : GNAT.Strings.String_Access;
    begin
       Position := File_Cursor
         (Get_Current_Cursor (Current_Text, This.Position.all));
@@ -662,8 +663,9 @@ package body Codefix.Text_Manager.Ada_Commands is
    is
       Cursor        : File_Cursor;
       Work_Extract  : Ada_List;
-      New_Instr     : GNAT.OS_Lib.String_Access;
+      New_Instr     : GNAT.Strings.String_Access;
       Col_Decl      : Natural;
+
    begin
       Cursor := File_Cursor
         (Get_Current_Cursor (Current_Text, This.Position.all));
@@ -1069,9 +1071,10 @@ package body Codefix.Text_Manager.Ada_Commands is
    is
       Result      : Get_Visible_Declaration_Cmd;
       With_Cursor : File_Cursor;
-      Clauses_Str : GNAT.OS_Lib.String_Access := new String'("");
+      Clauses_Str : GNAT.Strings.String_Access := new String'("");
       Pkg_Name    : constant String := Get_Package_To_Be_Withed
         (Current_Text, Source_Position);
+
    begin
       if With_Could_Miss then
          With_Cursor := File_Cursor

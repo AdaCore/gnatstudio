@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Containers;
-with Basic_Types;
+with GNAT.Strings;
 with GNAT.OS_Lib;
 with Prj.Tree;
 with String_List_Utils;
@@ -156,7 +156,7 @@ package Projects is
    function Source_Dirs
      (Project   : Project_Type;
       Recursive : Boolean;
-      Has_VCS   : Boolean := False) return Basic_Types.String_Array_Access;
+      Has_VCS   : Boolean := False) return GNAT.Strings.String_List_Access;
    --  Return the list of source directories. The directories are normalized.
    --  If Recursive is True, directories from imported projects will also be
    --  returned. If Has_VCS is set to True only directories for projects having

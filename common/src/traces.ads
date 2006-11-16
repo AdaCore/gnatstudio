@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with GNAT.Source_Info;
-with GNAT.OS_Lib;
+with GNAT.Strings;
 with Ada.Calendar;
 with Ada.Text_IO;
 
@@ -231,7 +231,7 @@ private
    type File_Type_Access is access Ada.Text_IO.File_Type;
 
    type Debug_Handle_Record is record
-      Name          : GNAT.OS_Lib.String_Access;
+      Name          : GNAT.Strings.String_Access;
       Active        : Boolean;
       Forced_Active : Boolean := False;
       Stream        : File_Type_Access;

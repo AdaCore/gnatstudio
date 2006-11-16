@@ -151,8 +151,8 @@ package body Docgen is
 
    procedure Free (X : in out Source_File_Information) is
    begin
-      Free (X.Unit_Name);
-      Free (X.Doc_File_Name);
+      GNAT.Strings.Free (X.Unit_Name);
+      GNAT.Strings.Free (X.Doc_File_Name);
    end Free;
 
    ----------

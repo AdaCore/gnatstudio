@@ -22,8 +22,8 @@ with Gtk.Text_Tag;          use Gtk.Text_Tag;
 with Gdk.Window;            use Gdk.Window;
 with Gtk.Widget;            use Gtk.Widget;
 
-with Basic_Types;           use Basic_Types;
 with Memory_View_Pkg;       use Memory_View_Pkg;
+with GNAT.Strings;
 
 package GVD.Memory_View is
 
@@ -50,11 +50,11 @@ package GVD.Memory_View is
       Starting_Address  : Long_Long_Integer := 0;
       --  The first address that is being explored.
 
-      Values            : String_Access;
+      Values            : GNAT.Strings.String_Access;
       --  The values that are to be shown in the window.
       --  This is a string of hexadecimal digits.
 
-      Flags             : String_Access;
+      Flags             : GNAT.Strings.String_Access;
       --  A string of the same size as Values used to set markers on the
       --  values.
 

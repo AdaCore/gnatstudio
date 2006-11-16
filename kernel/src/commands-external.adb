@@ -55,8 +55,8 @@ package body Commands.External is
    begin
       Free (D.Args);
       Free (D.Head);
-      Free (D.Command);
-      Free (D.Dir);
+      GNAT.Strings.Free (D.Command);
+      GNAT.Strings.Free (D.Dir);
       Free (D.Output);
 
       PID := Get_Pid (Fd);

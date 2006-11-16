@@ -27,6 +27,7 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Strings;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 
 with Basic_Types;               use Basic_Types;
@@ -143,8 +144,8 @@ package body CPP_Parser is
       Db            : Entities_Database;
       Registry      : Project_Registry;
       SN_Table      : SN_Table_Array;
-      DBIMP_Path    : GNAT.OS_Lib.String_Access;
-      CBrowser_Path : GNAT.OS_Lib.String_Access;
+      DBIMP_Path    : GNAT.Strings.String_Access;
+      CBrowser_Path : GNAT.Strings.String_Access;
    end record;
    type CPP_Handler is access all CPP_Handler_Record'Class;
 
@@ -185,7 +186,7 @@ package body CPP_Parser is
       Process_Running : Boolean := False;
       PD              : GNAT.Expect.TTY.TTY_Process_Descriptor;
       Prj_Iterator    : Projects.Imported_Project_Iterator;
-      List_Filename   : GNAT.OS_Lib.String_Access;
+      List_Filename   : GNAT.Strings.String_Access;
       Current_Files   : VFS.File_Array_Access;
       Current_File    : Natural;
       Lang_Handler    : Language_Handler;
@@ -245,7 +246,8 @@ package body CPP_Parser is
    --  Return the directory that contains the source navigator files
    --  for specified project
 
-   function Get_DB_Dirs (Project : Project_Type) return String_List_Access;
+   function Get_DB_Dirs
+     (Project : Project_Type) return GNAT.Strings.String_List_Access;
    --  Return the list of database directories that should be inspected
    --  when looking for cross-references (basically, the db directories for
    --  all imported projects).
@@ -530,7 +532,7 @@ package body CPP_Parser is
 
    function Create_Directory_If_Not_Exist (Dir : String) return Boolean is
    begin
-      if Dir /= "" and then not Is_Directory (Dir) then
+      if Dir /= "" and then not GNAT.OS_Lib.Is_Directory (Dir) then
          --  It might happen that the Directory exists but is not readable.
          --  A bug in the GNAT runtime has Is_Directory return False in this
          --  case, and Make_Dir will of course fail.
@@ -562,12 +564,15 @@ package body CPP_Parser is
    -- Get_DB_Dirs --
    -----------------
 
-   function Get_DB_Dirs (Project : Project_Type) return String_List_Access is
+   function Get_DB_Dirs
+     (Project : Project_Type) return GNAT.Strings.String_List_Access
+   is
       Obj_Dir : constant String := Object_Path (Project, True);
       Db_Dir  : constant String := Name_As_Directory (DB_Dir_Name);
       Iter    : Path_Iterator := Start (Obj_Dir);
       Length  : Natural := 0;
-      List    : String_List_Access;
+      List    : GNAT.Strings.String_List_Access;
+
    begin
       --  ??? Should we avoid duplicates in the list of object directories ?
 
@@ -576,7 +581,7 @@ package body CPP_Parser is
          Iter := Next (Obj_Dir, Iter);
       end loop;
 
-      List := new String_List (1 .. Length);
+      List := new GNAT.Strings.String_List (1 .. Length);
       Iter := Start (Obj_Dir);
 
       for F in List'Range loop
@@ -2967,8 +2972,8 @@ package body CPP_Parser is
                   --  Remove the current xref file if it exists, since
                   --  cbrowser opens it in append mode.
 
-                  if Is_Regular_File (Xref_File_Name) then
-                     Delete_File (Xref_File_Name, Success);
+                  if GNAT.OS_Lib.Is_Regular_File (Xref_File_Name) then
+                     GNAT.OS_Lib.Delete_File (Xref_File_Name, Success);
                   end if;
 
                   Put_Line (Tmp_File, "@" & Xref_File_Name);
@@ -3001,8 +3006,8 @@ package body CPP_Parser is
          Iterator.State := Analyze_Files;
 
       else
-         Delete_File (Iterator.List_Filename.all, Success);
-         Free (Iterator.List_Filename);
+         GNAT.OS_Lib.Delete_File (Iterator.List_Filename.all, Success);
+         GNAT.Strings.Free (Iterator.List_Filename);
          Iterator.State := Skip_Project;
       end if;
    end Browse_Project;
@@ -3071,7 +3076,7 @@ package body CPP_Parser is
    is
       Process_Alive  : Boolean := False;
       Success        : Boolean;
-      DB_Dirs        : GNAT.OS_Lib.String_List_Access;
+      DB_Dirs        : GNAT.Strings.String_List_Access;
 
       procedure Next_Project;
       --  Parse the source files for the next project
@@ -3117,7 +3122,7 @@ package body CPP_Parser is
                   Temp_Name      => Iterator.Tmp_Filename,
                   PD             => Iterator.PD);
                Iterator.Process_Running := True;
-               Free (DB_Dirs);
+               GNAT.Strings.Free (DB_Dirs);
             else
                Iterator.Process_Running := False;
                Iterator.State := Done;
@@ -3134,7 +3139,7 @@ package body CPP_Parser is
             Iterator.Process_Running := False;
             Trace (Me, "dbimp finished, switching to next project");
 
-            Delete_File (Iterator.Tmp_Filename, Success);
+            GNAT.OS_Lib.Delete_File (Iterator.Tmp_Filename, Success);
             Next_Project;
       end case;
 
@@ -3155,7 +3160,7 @@ package body CPP_Parser is
    begin
       if Iterator.List_Filename /= null then
          Delete_File (Iterator.List_Filename.all, Success);
-         Free (Iterator.List_Filename);
+         GNAT.Strings.Free (Iterator.List_Filename);
       end if;
 
       Unchecked_Free (Iterator.Current_Files);
@@ -3170,17 +3175,18 @@ package body CPP_Parser is
       Handler    : access Entities.LI_Handler_Record'Class) return String
    is
       H            : constant CPP_Handler := CPP_Handler (Handler);
-      Exec_Suffix  : GNAT.OS_Lib.String_Access := Get_Executable_Suffix;
-      DBIMP_Dir    : GNAT.OS_Lib.String_Access := Getenv ("DBIMP_PATH");
-      CBrowser_Dir : GNAT.OS_Lib.String_Access := Getenv ("CBROWSER_PATH");
+      Exec_Suffix  : GNAT.Strings.String_Access := Get_Executable_Suffix;
+      DBIMP_Dir    : GNAT.Strings.String_Access := Getenv ("DBIMP_PATH");
+      CBrowser_Dir : GNAT.Strings.String_Access := Getenv ("CBROWSER_PATH");
+
    begin
-      Free (H.DBIMP_Path);
-      Free (H.CBrowser_Path);
+      GNAT.Strings.Free (H.DBIMP_Path);
+      GNAT.Strings.Free (H.CBrowser_Path);
 
       if DBIMP_Dir.all = "" then
          H.DBIMP_Path := new String'
            (Name_As_Directory (System_Dir) & "bin" &
-            Directory_Separator & DBIMP & Exec_Suffix.all);
+            GNAT.OS_Lib.Directory_Separator & DBIMP & Exec_Suffix.all);
       else
          H.DBIMP_Path := new String'
            (DBIMP_Dir.all & Directory_Separator & DBIMP & Exec_Suffix.all);
@@ -3196,20 +3202,20 @@ package body CPP_Parser is
             & Directory_Separator & CBrowser & Exec_Suffix.all);
       end if;
 
-      Free (Exec_Suffix);
-      Free (DBIMP_Dir);
-      Free (CBrowser_Dir);
+      GNAT.Strings.Free (Exec_Suffix);
+      GNAT.Strings.Free (DBIMP_Dir);
+      GNAT.Strings.Free (CBrowser_Dir);
 
-      if not Is_Regular_File (H.DBIMP_Path.all) then
-         Free (H.DBIMP_Path);
-         Free (H.CBrowser_Path);
+      if not GNAT.OS_Lib.Is_Regular_File (H.DBIMP_Path.all) then
+         GNAT.Strings.Free (H.DBIMP_Path);
+         GNAT.Strings.Free (H.CBrowser_Path);
          return DBIMP
            & " not found on the path. C/C++ browsing is not available";
       end if;
 
-      if not Is_Regular_File (H.CBrowser_Path.all) then
-         Free (H.DBIMP_Path);
-         Free (H.CBrowser_Path);
+      if not GNAT.OS_Lib.Is_Regular_File (H.CBrowser_Path.all) then
+         GNAT.Strings.Free (H.DBIMP_Path);
+         GNAT.Strings.Free (H.CBrowser_Path);
          return CBrowser
            & " not found on the path. C/C++ browsing is not available";
       end if;

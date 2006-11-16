@@ -29,7 +29,6 @@ with GPS.Kernel;            use GPS.Kernel;
 with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;    use GPS.Kernel.Scripts;
 
-with Basic_Types;             use Basic_Types;
 with Traces;                  use Traces;
 
 with Commands.Socket;         use Commands.Socket;
@@ -38,6 +37,7 @@ with Commands;                use Commands;
 with GPS.Intl;              use GPS.Intl;
 
 with Ada.Unchecked_Deallocation;
+with GNAT.Strings;
 
 package body Socket_Module is
 
@@ -81,7 +81,7 @@ package body Socket_Module is
       Buffer   : String (1 .. 4096);
       Index    : Natural := 1;
 
-      Name     : String_Access := new String'("");
+      Name     : GNAT.Strings.String_Access := new String'("");
       Next     : Read_Data_Access;
 
       Timeout  : Timeout_Handler_Id;
@@ -206,7 +206,7 @@ package body Socket_Module is
 
       Close_Socket (R.Socket);
 
-      Free (R.Name);
+      GNAT.Strings.Free (R.Name);
       Unchecked_Free (R);
    end Close;
 
@@ -287,7 +287,7 @@ package body Socket_Module is
                         elsif Data.Index > 4
                           and then Data.Buffer (1 .. 3) = "id "
                         then
-                           Free (Data.Name);
+                           GNAT.Strings.Free (Data.Name);
                            Data.Name :=
                              new String'(Data.Buffer (4 .. Data.Index - 1));
                            String'Write (Data.Channel, "id set to '" &

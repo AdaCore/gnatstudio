@@ -20,8 +20,7 @@
 
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
-
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Strings;              use GNAT.Strings;
 
 with Gdk.Color;                 use Gdk.Color;
 with Gdk.Event;                 use Gdk.Event;
@@ -161,7 +160,7 @@ package body Clipboard_Views is
       Iter       : Gtk_Tree_Iter;
       Selected   : Integer;
 
-      Text       : GNAT.OS_Lib.String_Access;
+      Text       : GNAT.Strings.String_Access;
    begin
       Pixmap := null;
       Area   := (0, 0, 0, 0);

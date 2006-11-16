@@ -25,6 +25,7 @@ with Case_Handling;             use Case_Handling;
 with Entities;                  use Entities;
 with GNAT.Bubble_Sort_G;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Strings;
 with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
 with GPS.Intl;                  use GPS.Intl;
 with Gtk.Combo;                 use Gtk.Combo;
@@ -296,7 +297,7 @@ package body Language_Handlers is
             function Lt (From, To : Natural) return Boolean;
             package Sort is new GNAT.Bubble_Sort_G (Move => Move, Lt => Lt);
 
-            Tmp : GNAT.OS_Lib.String_Access;
+            Tmp : GNAT.Strings.String_Access;
 
             procedure Move (From, To : Natural) is
             begin

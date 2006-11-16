@@ -21,7 +21,8 @@
 with Ada.Exceptions;             use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 
-with GNAT.OS_Lib;                use GNAT.OS_Lib;
+with GNAT.OS_Lib;
+with GNAT.Strings;               use GNAT.Strings;
 
 with Glib;                       use Glib;
 with Glib.Object;                use Glib.Object;
@@ -82,7 +83,7 @@ package body Navigation_Module is
 
    type Shell_Marker_Record is new Location_Marker_Record with record
       Script  : Scripting_Language;
-      Command : GNAT.OS_Lib.String_Access;
+      Command : GNAT.Strings.String_Access;
    end record;
    type Shell_Marker is access all Shell_Marker_Record'Class;
 
@@ -300,7 +301,7 @@ package body Navigation_Module is
       Marker      : Location_Marker;
       Err         : String_Access;
    begin
-      if Is_Regular_File (Filename) then
+      if GNAT.OS_Lib.Is_Regular_File (Filename) then
          Trace (Me, "Loading " & Filename);
          XML_Parsers.Parse (Filename, File, Err);
 

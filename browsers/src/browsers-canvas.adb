@@ -20,6 +20,7 @@
 
 with Ada.Exceptions;                    use Ada.Exceptions;
 with Ada.Numerics.Elementary_Functions; use Ada.Numerics.Elementary_Functions;
+with GNAT.OS_Lib;
 with GNAT.Strings;                      use GNAT.Strings;
 
 with Gdk.Color;                         use Gdk.Color;
@@ -214,7 +215,7 @@ package body Browsers.Canvas is
    -------------
 
    type Browser_Marker_Record is new Location_Marker_Record with record
-      Title : GNAT.OS_Lib.String_Access;
+      Title : GNAT.Strings.String_Access;
    end record;
    type Browser_Marker is access all Browser_Marker_Record'Class;
 
@@ -1962,7 +1963,7 @@ package body Browsers.Canvas is
       Num      : Positive;
       Num_In_Line : Positive := 1;
       Callback : out Active_Area_Cb;
-      Text     : out GNAT.OS_Lib.String_Access)
+      Text     : out GNAT.Strings.String_Access)
    is
       N : Natural;
    begin

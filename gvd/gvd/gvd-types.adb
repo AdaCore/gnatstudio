@@ -24,6 +24,8 @@ with String_Utils;
 
 package body GVD.Types is
 
+   use GNAT.Strings;
+
    ----------
    -- Free --
    ----------

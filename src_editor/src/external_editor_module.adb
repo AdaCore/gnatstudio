@@ -26,6 +26,7 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Strings;
 
 with Glib;                      use Glib;
 with Glib.Properties.Creation;  use Glib.Properties.Creation;
@@ -300,7 +301,7 @@ package body External_Editor_Module is
    -------------------
 
    procedure Select_Client is
-      Path           : GNAT.OS_Lib.String_Access;
+      Path           : GNAT.Strings.String_Access;
       Args           : Argument_List_Access;
       Match          : Boolean;
       Default_Client : constant Supported_Clients := Supported_Clients'Val
@@ -545,7 +546,7 @@ package body External_Editor_Module is
       Success : out Boolean)
    is
       Args : Argument_List_Access;
-      Path : GNAT.OS_Lib.String_Access;
+      Path : GNAT.Strings.String_Access;
 
    begin
       Success := False;
@@ -628,7 +629,7 @@ package body External_Editor_Module is
       Col_Str   : constant String := Visible_Column_Type'Image (Column);
       Result    : Integer := 0;
       Success   : Boolean;
-      Path      : GNAT.OS_Lib.String_Access;
+      Path      : GNAT.Strings.String_Access;
       Args      : Argument_List_Access;
 
    begin

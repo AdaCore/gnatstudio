@@ -29,7 +29,7 @@ with Gtk.Button; use Gtk.Button;
 with Gtk.Window; use Gtk.Window;
 with GVD.Process;
 with Debugger; use Debugger;
-with Basic_Types;
+with GNAT.Strings;
 
 package GVD.Dialogs is
 
@@ -57,10 +57,10 @@ package GVD.Dialogs is
    type Question_Dialog_Access is access all Question_Dialog_Record'Class;
 
    type Question_Record is record
-      Choice : Basic_Types.String_Access;
+      Choice : GNAT.Strings.String_Access;
       --  String that the user should enter to select that choice
 
-      Description : Basic_Types.String_Access;
+      Description : GNAT.Strings.String_Access;
       --  Associated description
    end record;
    type Question_Array is array (Positive range <>) of Question_Record;

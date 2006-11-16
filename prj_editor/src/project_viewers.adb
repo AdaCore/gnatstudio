@@ -22,7 +22,7 @@ with Ada.Characters.Handling;      use Ada.Characters.Handling;
 with Ada.Exceptions;               use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 with GNAT.Case_Util;               use GNAT.Case_Util;
-with GNAT.OS_Lib;                  use GNAT.OS_Lib;
+with GNAT.Strings;                 use GNAT.Strings;
 
 with Gdk.Color;                    use Gdk.Color;
 with Gdk.Event;                    use Gdk.Event;
@@ -51,7 +51,7 @@ with Gtk.Widget;                   use Gtk.Widget;
 with Gtkada.Handlers;              use Gtkada.Handlers;
 with Gtkada.MDI;                   use Gtkada.MDI;
 
-with Basic_Types;                  use Basic_Types;
+with Basic_Types;
 with Commands.Interactive;         use Commands, Commands.Interactive;
 with Creation_Wizard.Dependencies; use Creation_Wizard.Dependencies;
 with Creation_Wizard.Extending;    use Creation_Wizard.Extending;
@@ -83,6 +83,7 @@ with Traces;                       use Traces;
 with Types;                        use Types;
 with VFS;                          use VFS;
 with Variable_Editors;             use Variable_Editors;
+with GNAT.OS_Lib;
 
 package body Project_Viewers is
 
@@ -101,8 +102,8 @@ package body Project_Viewers is
 
    type XML_Switches_Record is new Switches_Page_Creator_Record with record
       XML_Node  : Node_Ptr;   --  The <switches> node
-      Tool_Name : GNAT.OS_Lib.String_Access;
-      Languages : GNAT.OS_Lib.Argument_List_Access;
+      Tool_Name : GNAT.Strings.String_Access;
+      Languages : GNAT.Strings.String_List_Access;
    end record;
    type XML_Switches is access all XML_Switches_Record'Class;
 
@@ -362,7 +363,7 @@ package body Project_Viewers is
       Project      : Project_Type;
       Kernel       : access Kernel_Handle_Record'Class;
       Widget       : access Gtk_Widget_Record'Class;
-      Languages    : Argument_List;
+      Languages    : GNAT.Strings.String_List;
       Scenario_Variables : Scenario_Variable_Array;
       Ref_Project  : Project_Type)
       return Boolean;
@@ -370,7 +371,7 @@ package body Project_Viewers is
      (Page         : access Switches_Editor_Record;
       Widget       : access Gtk.Widget.Gtk_Widget_Record'Class;
       Project      : Project_Type := No_Project;
-      Languages    : GNAT.OS_Lib.Argument_List);
+      Languages    : GNAT.Strings.String_List);
 
    type Naming_Editor_Record is new Project_Editor_Page_Record
      with record
@@ -387,14 +388,14 @@ package body Project_Viewers is
       Project      : Project_Type;
       Kernel       : access Kernel_Handle_Record'Class;
       Widget       : access Gtk_Widget_Record'Class;
-      Languages    : Argument_List;
+      Languages    : GNAT.Strings.String_List;
       Scenario_Variables : Scenario_Variable_Array;
       Ref_Project  : Project_Type) return Boolean;
    procedure Refresh
      (Page         : access Naming_Editor_Record;
       Widget       : access Gtk.Widget.Gtk_Widget_Record'Class;
       Project      : Project_Type := No_Project;
-      Languages    : GNAT.OS_Lib.Argument_List);
+      Languages    : GNAT.Strings.String_List);
 
    ----------------------
    -- Contextual menus --
@@ -1115,7 +1116,7 @@ package body Project_Viewers is
       Project      : Project_Type;
       Kernel       : access Kernel_Handle_Record'Class;
       Widget       : access Gtk_Widget_Record'Class;
-      Languages    : Argument_List;
+      Languages    : GNAT.Strings.String_List;
       Scenario_Variables : Scenario_Variable_Array;
       Ref_Project  : Project_Type)
       return Boolean
@@ -1144,7 +1145,7 @@ package body Project_Viewers is
      (Page         : access Switches_Editor_Record;
       Widget       : access Gtk.Widget.Gtk_Widget_Record'Class;
       Project      : Project_Type := No_Project;
-      Languages    : GNAT.OS_Lib.Argument_List)
+      Languages    : GNAT.Strings.String_List)
    is
       pragma Unreferenced (Page, Project);
    begin
@@ -1192,7 +1193,7 @@ package body Project_Viewers is
       Project      : Project_Type;
       Kernel       : access Kernel_Handle_Record'Class;
       Widget       : access Gtk_Widget_Record'Class;
-      Languages    : Argument_List;
+      Languages    : GNAT.Strings.String_List;
       Scenario_Variables : Scenario_Variable_Array;
       Ref_Project  : Project_Type)
       return Boolean
@@ -1220,7 +1221,7 @@ package body Project_Viewers is
      (Page         : access Naming_Editor_Record;
       Widget       : access Gtk.Widget.Gtk_Widget_Record'Class;
       Project      : Project_Type := No_Project;
-      Languages    : GNAT.OS_Lib.Argument_List) is
+      Languages    : GNAT.Strings.String_List) is
    begin
       Set_Visible_Pages
         (Naming_Editor (Widget), Page.Kernel, Languages, Project);
@@ -1248,12 +1249,13 @@ package body Project_Viewers is
             if New_Src /= "" then
                Set_Predefined_Source_Path
                  (Get_Registry (Kernel).all,
-                  New_Src & Path_Separator & Old_Src);
+                  New_Src & GNAT.OS_Lib.Path_Separator & Old_Src);
             end if;
+
             if Old_Obj /= "" then
                Set_Predefined_Object_Path
                  (Get_Registry (Kernel).all,
-                  New_Obj & Path_Separator & Old_Obj);
+                  New_Obj & GNAT.OS_Lib.Path_Separator & Old_Obj);
             end if;
          end;
       end if;
@@ -1284,7 +1286,8 @@ package body Project_Viewers is
    begin
       if Command = "add_main_unit" then
          declare
-            Args : Argument_List (1 .. Number_Of_Arguments (Data) - 1);
+            Args : GNAT.Strings.String_List
+              (1 .. Number_Of_Arguments (Data) - 1);
          begin
             for Index in 2 .. Number_Of_Arguments (Data) loop
                Args (Index - 1) := new String'(Nth_Arg (Data, Index));
@@ -1297,7 +1300,7 @@ package body Project_Viewers is
                Values             => Args,
                Prepend            => True);
             Recompute_View (Kernel);
-            Free (Args);
+            Basic_Types.Free (Args);
          end;
 
       elsif Command = "rename" then
@@ -1327,7 +1330,7 @@ package body Project_Viewers is
       elsif Command = "add_dependency" then
          Name_Parameters (Data, Add_Dep_Cmd_Parameters);
          declare
-            Project2 : constant String  := Normalize_Pathname
+            Project2 : constant String  := GNAT.OS_Lib.Normalize_Pathname
               (Name => Nth_Arg (Data, 2));
             Relative : constant Boolean :=
               Get_Paths_Type (Project) = Projects.Relative
@@ -1363,21 +1366,21 @@ package body Project_Viewers is
       elsif Command = "languages" then
          Name_Parameters (Data, Languages_Cmd_Parameters);
          declare
-            Langs : Argument_List := Get_Languages
+            Langs : GNAT.Strings.String_List := Get_Languages
               (Project => Project, Recursive => Nth_Arg (Data, 2, False));
          begin
             Set_Return_Value_As_List (Data);
             for L in Langs'Range loop
                Set_Return_Value (Data, Langs (L).all);
             end loop;
-            Free (Langs);
+            Basic_Types.Free (Langs);
          end;
 
       elsif Command = "source_dirs" then
          Name_Parameters (Data, Source_Dirs_Cmd_Parameters);
          declare
             Recursive : constant Boolean := Nth_Arg (Data, 2, False);
-            Dirs      : String_Array_Access := Source_Dirs
+            Dirs      : String_List_Access := Source_Dirs
               (Project, Recursive => Recursive);
          begin
             Set_Return_Value_As_List (Data);
@@ -1408,14 +1411,15 @@ package body Project_Viewers is
          Name_Parameters (Data, Add_Source_Dir_Cmd_Parameters);
          declare
             Dir     : constant String := Name_As_Directory
-              (Normalize_Pathname
+              (GNAT.OS_Lib.Normalize_Pathname
                  (Nth_Arg (Data, 2),
                   Directory => Full_Name (Project_Directory (Project)).all,
                   Resolve_Links => False));
-            Dirs    : Argument_List := (1 => new String'(Dir));
-            Sources : String_Array_Access :=
+            Dirs    : GNAT.Strings.String_List := (1 => new String'(Dir));
+            Sources : String_List_Access :=
               Source_Dirs (Project, Recursive => False);
             Found   : Boolean := False;
+
          begin
             for S in Sources'Range loop
                if Sources (S).all = Dir then
@@ -1433,7 +1437,8 @@ package body Project_Viewers is
                   Attribute_Index    => "",
                   Prepend            => True);
             end if;
-            Free (Dirs);
+
+            Basic_Types.Free (Dirs);
             Free (Sources);
          end;
 
@@ -1441,7 +1446,7 @@ package body Project_Viewers is
          Name_Parameters (Data, Add_Source_Dir_Cmd_Parameters);
          declare
             Dir : constant String := Nth_Arg (Data, 2);
-            Dirs : Argument_List := Get_Attribute_Value
+            Dirs : GNAT.Strings.String_List := Get_Attribute_Value
               (Project, Source_Dirs_Attribute);
             Index : Natural := Dirs'Last;
          begin
@@ -1459,7 +1464,7 @@ package body Project_Viewers is
                Attribute          => Source_Dirs_Attribute,
                Values             => Dirs (Dirs'First .. Index),
                Attribute_Index    => "");
-            Free (Dirs);
+            Basic_Types.Free (Dirs);
          end;
 
       end if;
@@ -1484,7 +1489,7 @@ package body Project_Viewers is
      (Page      : access Project_Editor_Page_Record;
       Widget    : access Gtk.Widget.Gtk_Widget_Record'Class;
       Project   : Project_Type := No_Project;
-      Languages : Argument_List)
+      Languages : GNAT.Strings.String_List)
    is
       pragma Unreferenced (Page, Widget, Project, Languages);
    begin
@@ -2375,16 +2380,17 @@ package body Project_Viewers is
    ----------------------------------
 
    function Get_Languages_From_Tool_Node
-     (N : Node_Ptr) return Argument_List_Access
+     (N : Node_Ptr) return String_List_Access
    is
-      Result : Argument_List_Access;
-      Child : Node_Ptr := N.Child;
+      Result : String_List_Access;
+      Child  : Node_Ptr := N.Child;
    begin
       while Child /= null loop
          if Child.Tag.all = "language" then
             Append (Result, (1 => new String'(Child.Value.all)));
             To_Lower (Result (Result'Last).all);
          end if;
+
          Child := Child.Next;
       end loop;
 

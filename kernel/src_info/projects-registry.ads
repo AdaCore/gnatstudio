@@ -89,7 +89,7 @@ package Projects.Registry is
 
    procedure Compute_Predefined_Paths
      (Registry     : in out Project_Registry;
-      GNAT_Version : out GNAT.OS_Lib.String_Access;
+      GNAT_Version : out GNAT.Strings.String_Access;
       Gnatls_Args  : GNAT.OS_Lib.Argument_List_Access;
       E_Handler    : Error_Handler := Null_E_Handler);
    --  Compute the predefined paths for the GNAT runtime, and return the

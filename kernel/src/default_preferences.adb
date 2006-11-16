@@ -21,6 +21,7 @@
 with Ada.Exceptions;           use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
+with GNAT.Strings;
 with Interfaces.C.Strings;     use Interfaces.C.Strings;
 
 with Gdk.Color;                use Gdk.Color;
@@ -101,8 +102,8 @@ package body Default_Preferences is
    ----------------------
 
    type Pref_Description is record
-      Value : GNAT.OS_Lib.String_Access;
-      Page  : GNAT.OS_Lib.String_Access;
+      Value : GNAT.Strings.String_Access;
+      Page  : GNAT.Strings.String_Access;
       Param : Glib.Param_Spec;
       --  The definition of the preference. This can be null if the preference
       --  has not been registered yet, but its value has been read in the
@@ -377,7 +378,7 @@ package body Default_Preferences is
       Descr : Pref_Description_Access := Convert (Data);
 
    begin
-      GNAT.OS_Lib.Free (Descr.Value);
+      GNAT.Strings.Free (Descr.Value);
       Free (Descr.Page);
       Unchecked_Free (Descr);
    end Free_Pref_Description;

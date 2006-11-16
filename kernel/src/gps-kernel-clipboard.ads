@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with Gtk.Widget;
-with GNAT.OS_Lib;
+with GNAT.Strings;
 
 package GPS.Kernel.Clipboard is
 
@@ -27,7 +27,7 @@ package GPS.Kernel.Clipboard is
    type Clipboard_Access is access all Clipboard_Record;
 
    type Selection_List is
-     array (Natural range <>) of GNAT.OS_Lib.String_Access;
+     array (Natural range <>) of GNAT.Strings.String_Access;
 
    procedure Create_Clipboard
      (Kernel : access Kernel_Handle_Record'Class);

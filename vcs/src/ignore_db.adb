@@ -23,19 +23,22 @@ with Ada.Text_IO;                use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 
 with GNAT.OS_Lib;                use GNAT;
+with GNAT.Strings;
 
-with Basic_Types;                use Basic_Types;
 with String_Hash;
 
 package body Ignore_Db is
 
+   use type GNAT.Strings.String_Access;
+
    --  Table of files
 
-   Not_Null : constant String_Access := new String'("");
+   Not_Null : constant GNAT.Strings.String_Access := new String'("");
 
-   procedure No_Free (Str : in out String_Access);
+   procedure No_Free (Str : in out GNAT.Strings.String_Access);
 
-   package Files_Table is new String_Hash (String_Access, No_Free, null);
+   package Files_Table is new String_Hash
+     (GNAT.Strings.String_Access, No_Free, null);
    use Files_Table;
 
    type File_Table_Access is access String_Hash_Table.HTable;
@@ -114,7 +117,7 @@ package body Ignore_Db is
    -- No_Free --
    -------------
 
-   procedure No_Free (Str : in out String_Access) is
+   procedure No_Free (Str : in out GNAT.Strings.String_Access) is
       pragma Unreferenced (Str);
    begin
       null;

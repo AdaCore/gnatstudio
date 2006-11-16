@@ -26,6 +26,7 @@
 
 with Ada.Finalization;
 with GNAT.OS_Lib;
+with GNAT.Strings;
 with Basic_Types;
 with Gtk.Handlers;
 with Gtk.Widget;
@@ -87,7 +88,7 @@ package GPS.Kernel.Scripts is
    function Execute
      (Subprogram : access Subprogram_Record;
       Args       : Callback_Data'Class)
-      return GNAT.OS_Lib.String_List is abstract;
+      return GNAT.Strings.String_List is abstract;
    --  Returned value must be freed by the caller.
    --  Some items in the result value might be left to null if the
    --  corresponding element from the shell is not a string.
@@ -942,7 +943,7 @@ private
    Destructor_Method   : constant String := "<@destructor@>";
 
    type Class_Type is record
-      Name : GNAT.OS_Lib.String_Access;
+      Name : GNAT.Strings.String_Access;
    end record;
 
    type File_Location_Info is record

@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                              G P S                                --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
---                              AdaCore                              --
+--                     Copyright (C) 2000-2006                       --
+--                             AdaCore                               --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -18,11 +18,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.Strings;
+
 with Glib;
 with Items;
 with GVD.Process;
 with Gdk.Event;
-with Basic_Types;
 with Gtkada.Canvas;
 with Debugger;
 
@@ -196,8 +197,8 @@ private
    type Display_Item_Record is new Gtkada.Canvas.Buffered_Item_Record with
    record
       Num          : Integer;
-      Graph_Cmd    : Basic_Types.String_Access := null;
-      Name         : Basic_Types.String_Access := null;
+      Graph_Cmd    : GNAT.Strings.String_Access := null;
+      Name         : GNAT.Strings.String_Access := null;
       Entity       : Items.Generic_Type_Access := null;
       Auto_Refresh : Boolean := True;
       Debugger     : GVD.Process.Visual_Debugger;
@@ -207,7 +208,7 @@ private
 
       Title_Height : Glib.Gint;
 
-      Id           : Basic_Types.String_Access := null;
+      Id           : GNAT.Strings.String_Access := null;
       --  Uniq ID used for the variable.
       --  This Id is returned by the debugger, and can be the address of a
       --  variable (in Ada or C), or simply the name of the variable (in

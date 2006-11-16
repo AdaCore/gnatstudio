@@ -22,7 +22,8 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 with GNAT.Case_Util;            use GNAT.Case_Util;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.OS_Lib;
+with GNAT.Strings;              use GNAT.Strings;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
@@ -89,9 +90,9 @@ package body Switches_Editors is
 
    function Get_Switch (Switch : Switch_Check_Widget) return String;
    procedure Filter_Switch
-     (Switch : Switch_Check_Widget; List : in out Argument_List);
+     (Switch : Switch_Check_Widget; List : in out GNAT.Strings.String_List);
    procedure Set_And_Filter_Switch
-     (Switch : Switch_Check_Widget; List : in out Argument_List);
+     (Switch : Switch_Check_Widget; List : in out GNAT.Strings.String_List);
 
    ------------
    -- Fields --
@@ -107,9 +108,9 @@ package body Switches_Editors is
 
    function Get_Switch (Switch : Switch_Field_Widget) return String;
    procedure Filter_Switch
-     (Switch : Switch_Field_Widget; List : in out Argument_List);
+     (Switch : Switch_Field_Widget; List : in out GNAT.Strings.String_List);
    procedure Set_And_Filter_Switch
-     (Switch : Switch_Field_Widget; List : in out Argument_List);
+     (Switch : Switch_Field_Widget; List : in out GNAT.Strings.String_List);
 
    ------------------
    -- Spin buttons --
@@ -127,9 +128,9 @@ package body Switches_Editors is
 
    function Get_Switch (Switch : Switch_Spin_Widget) return String;
    procedure Filter_Switch
-     (Switch : Switch_Spin_Widget; List : in out Argument_List);
+     (Switch : Switch_Spin_Widget; List : in out GNAT.Strings.String_List);
    procedure Set_And_Filter_Switch
-     (Switch : Switch_Spin_Widget; List : in out Argument_List);
+     (Switch : Switch_Spin_Widget; List : in out GNAT.Strings.String_List);
 
    -------------------
    -- Popup buttons --
@@ -162,9 +163,9 @@ package body Switches_Editors is
 
    function Get_Switch (Switch : Switch_Combo_Widget) return String;
    procedure Filter_Switch
-     (Switch : Switch_Combo_Widget; List : in out Argument_List);
+     (Switch : Switch_Combo_Widget; List : in out GNAT.Strings.String_List);
    procedure Set_And_Filter_Switch
-     (Switch : Switch_Combo_Widget; List : in out Argument_List);
+     (Switch : Switch_Combo_Widget; List : in out GNAT.Strings.String_List);
 
    procedure Page_Destroyed (Page : access Gtk_Widget_Record'Class);
    --  Free the memory occupied by Page
@@ -210,7 +211,7 @@ package body Switches_Editors is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Pages_Array, Page_Array_Access);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (GNAT.OS_Lib.String_List, String_List_Access);
+     (GNAT.Strings.String_List, String_List_Access);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (String_List_Array, String_List_Array_Access);
 
@@ -249,7 +250,7 @@ package body Switches_Editors is
 
    function Normalize_Compiler_Switches
      (Page     : access Switches_Editor_Page_Record'Class;
-      Switches : Argument_List) return Argument_List;
+      Switches : GNAT.Strings.String_List) return GNAT.Strings.String_List;
    --  Return an equivalent of Switches, but where concatenated switches have
    --  been separated (for instance, -gnatwue = -gnatwu -gnatwe).
    --  Nothing is done if the tool doesn't need this special treatment.
@@ -271,7 +272,7 @@ package body Switches_Editors is
 
    function Get_Switches
      (Page : access Switches_Editor_Page_Record'Class;
-      Normalize : Boolean) return Argument_List;
+      Normalize : Boolean) return GNAT.Strings.String_List;
    --  Return the list of parameters set on the command line.
    --  If normalize is True, then GNAT's switches will be split when possible
    --  ("gnatwue" => "gnatwu", "gnatwe")
@@ -281,14 +282,14 @@ package body Switches_Editors is
       Pkg_Name : String;
       Language : String;
       Files    : File_Array;
-      Use_Initial_Value : Boolean := True) return Argument_List;
+      Use_Initial_Value : Boolean := True) return GNAT.Strings.String_List;
    --  Return the list of switches for Files, found in the package Pkg_Name,
    --  for a specific language, and for a specific list of switches. The
    --  returned array must be freed by the caller.
 
    procedure Set_Visible_Pages
      (Editor    : access Switches_Edit_Record'Class;
-      Languages : Argument_List;
+      Languages : GNAT.Strings.String_List;
       Show_Only : Boolean;
       File_Specific : Boolean);
    --  Same as the public version, except that the pages are never hidden, only
@@ -317,14 +318,14 @@ package body Switches_Editors is
 
    function Has_Supported_Language
      (Page                : access Switches_Editor_Page_Record'Class;
-      Supported_Languages : Argument_List) return Boolean;
+      Supported_Languages : GNAT.Strings.String_List) return Boolean;
    --  Return True if Page applies to one of the languages in
    --  Supported_Language
 
    function Get_Parameter
      (Switch          : String;
       Separator       : String;
-      List            : Argument_List;
+      List            : GNAT.Strings.String_List;
       Index_In_List   : Natural;
       Skip_Next_Index : access Boolean) return String;
    --  Get the parameter for Switch, assuming it was first seen at position
@@ -333,7 +334,7 @@ package body Switches_Editors is
    function Switch_Matches
      (Switch        : String;
       Separator     : String;
-      Candidate     : GNAT.OS_Lib.String_Access) return Boolean;
+      Candidate     : GNAT.Strings.String_Access) return Boolean;
    --  Whether Candidate matches Switch & Separator (properly take into
    --  account the case where Separator is a space, and the argument appears
    --  in a separate item in the argument_list
@@ -374,7 +375,7 @@ package body Switches_Editors is
    -------------------
 
    procedure Filter_Switch
-     (Switch : Switch_Check_Widget; List : in out Argument_List) is
+     (Switch : Switch_Check_Widget; List : in out GNAT.Strings.String_List) is
    begin
       for L in List'Range loop
          if List (L) /= null and then List (L).all = Switch.Switch then
@@ -388,7 +389,7 @@ package body Switches_Editors is
    ---------------------------
 
    procedure Set_And_Filter_Switch
-     (Switch : Switch_Check_Widget; List : in out Argument_List)
+     (Switch : Switch_Check_Widget; List : in out GNAT.Strings.String_List)
    is
       use Widget_SList;
       Active : Boolean := False;
@@ -443,7 +444,7 @@ package body Switches_Editors is
          return "";
       else
          declare
-            T : GNAT.OS_Lib.String_Access := new String'(Text);
+            T : GNAT.Strings.String_Access := new String'(Text);
             Result : constant String := Switch.Switch & Switch.Separator
               & Argument_List_To_Quoted_String
               ((1 => T), Quote_Backslash => False);
@@ -459,7 +460,7 @@ package body Switches_Editors is
    -------------------
 
    procedure Filter_Switch
-     (Switch : Switch_Field_Widget; List : in out Argument_List) is
+     (Switch : Switch_Field_Widget; List : in out GNAT.Strings.String_List) is
    begin
       for L in List'Range loop
          if Switch_Matches (Switch.Switch, Switch.Separator, List (L)) then
@@ -485,7 +486,7 @@ package body Switches_Editors is
    function Switch_Matches
      (Switch        : String;
       Separator     : String;
-      Candidate     : GNAT.OS_Lib.String_Access) return Boolean is
+      Candidate     : GNAT.Strings.String_Access) return Boolean is
    begin
       if Candidate = null then
          return False;
@@ -511,7 +512,7 @@ package body Switches_Editors is
    function Get_Parameter
      (Switch          : String;
       Separator       : String;
-      List            : Argument_List;
+      List            : GNAT.Strings.String_List;
       Index_In_List   : Natural;
       Skip_Next_Index : access Boolean) return String is
    begin
@@ -541,7 +542,7 @@ package body Switches_Editors is
    ---------------------------
 
    procedure Set_And_Filter_Switch
-     (Switch : Switch_Field_Widget; List : in out Argument_List)
+     (Switch : Switch_Field_Widget; List : in out GNAT.Strings.String_List)
    is
       Skip_Next_Index : aliased Boolean;
    begin
@@ -595,7 +596,7 @@ package body Switches_Editors is
    -------------------
 
    procedure Filter_Switch
-     (Switch : Switch_Combo_Widget; List : in out Argument_List) is
+     (Switch : Switch_Combo_Widget; List : in out GNAT.Strings.String_List) is
    begin
       for L in List'Range loop
          if List (L) /= null
@@ -619,7 +620,7 @@ package body Switches_Editors is
    ---------------------------
 
    procedure Set_And_Filter_Switch
-     (Switch : Switch_Combo_Widget; List : in out Argument_List)
+     (Switch : Switch_Combo_Widget; List : in out GNAT.Strings.String_List)
    is
       use type Widget_List.Glist;
       Item_Value : Integer := -2;
@@ -715,7 +716,7 @@ package body Switches_Editors is
    -------------------
 
    procedure Filter_Switch
-     (Switch : Switch_Spin_Widget; List : in out Argument_List) is
+     (Switch : Switch_Spin_Widget; List : in out GNAT.Strings.String_List) is
    begin
       for L in List'Range loop
          if List (L) /= null
@@ -739,7 +740,7 @@ package body Switches_Editors is
    ---------------------------
 
    procedure Set_And_Filter_Switch
-     (Switch : Switch_Spin_Widget; List : in out Argument_List)
+     (Switch : Switch_Spin_Widget; List : in out GNAT.Strings.String_List)
    is
       Value           : Grange_Float := Grange_Float (Switch.Default);
       Skip_Next_Index : aliased Boolean;
@@ -795,10 +796,12 @@ package body Switches_Editors is
       end if;
 
       declare
-         Current : Argument_List := Get_Switches (P, Normalize => True);
-         Coalesce_Switches : Argument_List (P.Coalesce_Switches'Range) :=
-           (others => null);
-         Tmp : GNAT.OS_Lib.String_Access;
+         Current            : GNAT.Strings.String_List :=
+                                Get_Switches (P, Normalize => True);
+         Coalesce_Switches  : GNAT.Strings.String_List
+           (P.Coalesce_Switches'Range) := (others => null);
+         Tmp                : GNAT.Strings.String_Access;
+
       begin
          P.Block_Refresh := True;
          Set_Text (P.Cmd_Line, "");
@@ -926,21 +929,23 @@ package body Switches_Editors is
    ------------------
 
    function Get_Switches
-     (Page : access Switches_Editor_Page_Record'Class;
-      Normalize : Boolean) return Argument_List
+     (Page      : access Switches_Editor_Page_Record'Class;
+      Normalize : Boolean) return GNAT.Strings.String_List
    is
       Str : constant String := Get_Text (Page.Cmd_Line);
-      Null_Argument_List : Argument_List (1 .. 0);
-      List               : Argument_List_Access;
+      Null_Argument_List : GNAT.Strings.String_List (1 .. 0);
+      List               : GNAT.Strings.String_List_Access;
       First_Non_Blank    : Natural := Str'First;
    begin
       Skip_Blanks (Str, First_Non_Blank);
       if First_Non_Blank <= Str'Last then
-         List := Argument_String_To_List (Str (First_Non_Blank .. Str'Last));
+         List :=
+           GNAT.OS_Lib.Argument_String_To_List
+             (Str (First_Non_Blank .. Str'Last));
 
          if Normalize then
             declare
-               Ret : constant Argument_List :=
+               Ret : constant GNAT.Strings.String_List :=
                  Normalize_Compiler_Switches (Page, List.all);
             begin
                Unchecked_Free (List);
@@ -948,7 +953,7 @@ package body Switches_Editors is
             end;
          else
             declare
-               Ret : constant Argument_List := List.all;
+               Ret : constant GNAT.Strings.String_List := List.all;
             begin
                Unchecked_Free (List);
                return Ret;
@@ -964,17 +969,17 @@ package body Switches_Editors is
 
    function Normalize_Compiler_Switches
      (Page     : access Switches_Editor_Page_Record'Class;
-      Switches : Argument_List) return Argument_List
+      Switches : GNAT.Strings.String_List) return GNAT.Strings.String_List
    is
-      Output : Argument_List_Access;
+      Output : GNAT.Strings.String_List_Access;
       Found  : Boolean;
-      S      : GNAT.OS_Lib.String_Access;
+      S      : GNAT.Strings.String_Access;
 
       procedure Expand_Or_Append (Switch : String);
       --  Add either switch or its expansion to Output
 
       procedure Expand_Or_Append (Switch : String) is
-         Exp   : Argument_List_Access;
+         Exp   : GNAT.Strings.String_List_Access;
          Found : Boolean := False;
       begin
          for C in Page.Expansion_Switches'Range loop
@@ -1001,7 +1006,7 @@ package body Switches_Editors is
 
          if Filter_Matches (Page, Ada_String) then
             declare
-               Arr : constant Argument_List :=
+               Arr : constant GNAT.Strings.String_List :=
                  Normalize_Compiler_Switches (Switches (Index).all);
                --  Do not free Arr, this refers to internal strings in GNAT!
             begin
@@ -1030,7 +1035,7 @@ package body Switches_Editors is
 
       else
          declare
-            O : constant Argument_List := Output.all;
+            O : constant GNAT.Strings.String_List := Output.all;
          begin
             Unchecked_Free (Output);
             return O;
@@ -1051,7 +1056,8 @@ package body Switches_Editors is
 
       if P.Switches /= null then
          declare
-            Arg : Argument_List := Get_Switches (P, Normalize => True);
+            Arg : GNAT.Strings.String_List :=
+                    Get_Switches (P, Normalize => True);
          begin
             P.Block_Refresh := True;
 
@@ -1634,7 +1640,7 @@ package body Switches_Editors is
       Page.Expansion_Switches (Tmp'Range) := Tmp.all;
       Unchecked_Free (Tmp);
       Page.Expansion_Switches (Page.Expansion_Switches'Last) :=
-        new GNAT.OS_Lib.String_List (Default'First .. Default'Last + 1);
+        new GNAT.Strings.String_List (Default'First .. Default'Last + 1);
 
       --  Duplicate the strings, which are freed in Page_Destroyed.
       Page.Expansion_Switches (Page.Expansion_Switches'Last)(Default'First) :=
@@ -1669,8 +1675,8 @@ package body Switches_Editors is
       Page.Attribute_Index := new String'(Attribute_Index);
       Page.Title := new String'(Title);
       Page.Pkg   := new String'(To_Lower (Project_Package));
-      Page.Coalesce_Switches  := new GNAT.OS_Lib.String_List (1 .. 0);
-      Page.Coalesce_Switches_Default := new GNAT.OS_Lib.String_List (1 .. 0);
+      Page.Coalesce_Switches  := new GNAT.Strings.String_List (1 .. 0);
+      Page.Coalesce_Switches_Default := new GNAT.Strings.String_List (1 .. 0);
       Page.Expansion_Switches := new String_List_Array (1 .. 0);
       Page.Tips               := Gtk_Tooltips (Tips);
 
@@ -1802,7 +1808,8 @@ package body Switches_Editors is
    -----------------------
 
    procedure Set_Visible_Pages
-     (Editor : access Switches_Edit_Record; Languages : Argument_List) is
+     (Editor    : access Switches_Edit_Record;
+      Languages : GNAT.Strings.String_List) is
    begin
       Set_Visible_Pages
         (Editor, Languages, Show_Only => False, File_Specific => False);
@@ -1814,7 +1821,7 @@ package body Switches_Editors is
 
    procedure Set_Visible_Pages
      (Editor    : access Switches_Edit_Record'Class;
-      Languages : Argument_List;
+      Languages : GNAT.Strings.String_List;
       Show_Only : Boolean;
       File_Specific : Boolean)
    is
@@ -1853,7 +1860,7 @@ package body Switches_Editors is
    begin
       for P in S.Pages'Range loop
          declare
-            List : Argument_List := Get_Switches
+            List : GNAT.Strings.String_List := Get_Switches
               (S,
                S.Pages (P).Pkg.all,
                S.Pages (P).Attribute_Index.all,
@@ -1878,7 +1885,7 @@ package body Switches_Editors is
 
    function Has_Supported_Language
      (Page                : access Switches_Editor_Page_Record'Class;
-      Supported_Languages : Argument_List) return Boolean is
+      Supported_Languages : GNAT.Strings.String_List) return Boolean is
    begin
       if Page.Lang_Filter /= null then
          for L in Page.Lang_Filter'Range loop
@@ -1904,7 +1911,7 @@ package body Switches_Editors is
    function Generate_Project
      (Switches           : access Switches_Edit_Record'Class;
       Project            : Project_Type;
-      Languages          : Argument_List;
+      Languages          : GNAT.Strings.String_List;
       Scenario_Variables : Scenario_Variable_Array;
       Files              : File_Array) return Boolean
    is
@@ -1951,7 +1958,7 @@ package body Switches_Editors is
          --  doesn't handle the case where "-O" and "-O1" are the same.
 
          declare
-            Args : Argument_List := Normalize_Compiler_Switches
+            Args : GNAT.Strings.String_List := Normalize_Compiler_Switches
               (Page, Get_Switches (Page, Normalize => False));
          begin
             if Project = No_Project then
@@ -1969,8 +1976,11 @@ package body Switches_Editors is
                   Value            => Value,
                   Is_Default_Value => Is_Default_Value);
                declare
-                  Default_Args : Argument_List := Normalize_Compiler_Switches
-                      (Page, To_Argument_List (Get_Tree (Project), Value));
+                  Default_Args : GNAT.Strings.String_List :=
+                                   Normalize_Compiler_Switches
+                                     (Page,
+                                      To_Argument_List
+                                        (Get_Tree (Project), Value));
                begin
                   Is_Default_Value := Is_Equal (Default_Args, Args);
 
@@ -1996,7 +2006,7 @@ package body Switches_Editors is
                      Value            => Value,
                      Is_Default_Value => Is_Default_Value);
                   declare
-                     Default_Args : Argument_List :=
+                     Default_Args : GNAT.Strings.String_List :=
                        Normalize_Compiler_Switches
                          (Page, To_Argument_List (Get_Tree (Project), Value));
                   begin
@@ -2115,16 +2125,17 @@ package body Switches_Editors is
       Files        : VFS.File_Array;
       Scenario     : access Scenario_Selector_Record'Class) return Boolean
    is
-      Saved : Argument_List := Get_Current_Scenario
+      Saved     : GNAT.Strings.String_List := Get_Current_Scenario
         (Scenario_Variables (Switches.Kernel));
-      Scenar : Scenario_Iterator := Start (Scenario);
-      Modified : Boolean := False;
-      Languages : Argument_List := Get_Languages (Project);
+      Scenar    : Scenario_Iterator := Start (Scenario);
+      Modified  : Boolean := False;
+      Languages : GNAT.Strings.String_List := Get_Languages (Project);
+
    begin
       --  No scenario variables ?
       while not At_End (Scenar) loop
          declare
-            Cur : Argument_List := Current (Scenar);
+            Cur : GNAT.Strings.String_List := Current (Scenar);
          begin
             Set_Environment (Scenario_Variables (Switches.Kernel), Cur);
             Modified := Modified or Generate_Project
@@ -2167,11 +2178,11 @@ package body Switches_Editors is
    ------------------
 
    function Get_Switches
-     (Switches : access Switches_Edit_Record'Class;
-      Pkg_Name : String;
-      Language : String;
-      Files    : File_Array;
-      Use_Initial_Value : Boolean := True) return Argument_List is
+     (Switches          : access Switches_Edit_Record'Class;
+      Pkg_Name          : String;
+      Language          : String;
+      Files             : File_Array;
+      Use_Initial_Value : Boolean := True) return GNAT.Strings.String_List is
    begin
       if Files'Length = 0 then
          return Get_Switches
@@ -2204,7 +2215,7 @@ package body Switches_Editors is
       if Project /= No_Project then
          if Files'Length = 0 then
             declare
-               Langs : Argument_List := Get_Languages (Project);
+               Langs : GNAT.Strings.String_List := Get_Languages (Project);
             begin
                Set_Visible_Pages (Switches, Langs);
                Free (Langs);
@@ -2232,7 +2243,7 @@ package body Switches_Editors is
 
       for P in Switches.Pages'Range loop
          declare
-            List : Argument_List := Get_Switches
+            List : GNAT.Strings.String_List := Get_Switches
               (Switches,
                Switches.Pages (P).Pkg.all,
                Switches.Pages (P).Attribute_Index.all,

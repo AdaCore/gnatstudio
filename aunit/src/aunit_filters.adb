@@ -18,8 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.OS_Lib;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Basic_Types;             use Basic_Types;
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
 with Language;                use Language;
 with Language.Ada;            use Language.Ada;
@@ -36,12 +36,12 @@ package body Aunit_Filters is
    procedure Get_Suite_Name
      (Kernel       : GPS.Kernel.Kernel_Handle;
       File_Name    : String;
-      Package_Name : out GNAT.OS_Lib.String_Access;
-      Suite_Name   : out GNAT.OS_Lib.String_Access;
+      Package_Name : out GNAT.Strings.String_Access;
+      Suite_Name   : out GNAT.Strings.String_Access;
       F_Type       : out Test_Type)
    is
       Index             : Integer;
-      File_Buffer       : GNAT.OS_Lib.String_Access;
+      File_Buffer       : GNAT.Strings.String_Access;
       Constructs        : aliased Construct_List;
       Current_Construct : Construct_Access;
       Found             : Boolean := False;
@@ -54,7 +54,7 @@ package body Aunit_Filters is
       Suite_Name   := null;
       F_Type       := Unknown;
 
-      if not Is_Regular_File (File_Name) then
+      if not GNAT.OS_Lib.Is_Regular_File (File_Name) then
          return;
       end if;
 
@@ -100,7 +100,7 @@ package body Aunit_Filters is
             if Index + 8 <= Current_Construct.Sloc_End.Index then
                Found := True;
                F_Type := Test_Case;
-               Suite_Name := GNAT.OS_Lib.String_Access
+               Suite_Name := GNAT.Strings.String_Access
                  (Current_Construct.Name);
             end if;
          end if;
@@ -120,7 +120,7 @@ package body Aunit_Filters is
             if Index + 16 <= Current_Construct.Sloc_End.Index then
                Found := True;
                F_Type := Test_Suite;
-               Suite_Name := GNAT.OS_Lib.String_Access
+               Suite_Name := GNAT.Strings.String_Access
                  (Current_Construct.Name);
             end if;
          end if;
@@ -149,11 +149,11 @@ package body Aunit_Filters is
       File   : VFS.Virtual_File;
       State  : out File_State;
       Pixbuf : out Gdk_Pixbuf;
-      Text   : out GNAT.OS_Lib.String_Access)
+      Text   : out GNAT.Strings.String_Access)
    is
       pragma Unreferenced (Win);
-      Suite_Name   : GNAT.OS_Lib.String_Access;
-      Package_Name : GNAT.OS_Lib.String_Access;
+      Suite_Name   : GNAT.Strings.String_Access;
+      Package_Name : GNAT.Strings.String_Access;
       F_Type       : Test_Type;
 
    begin
@@ -187,11 +187,11 @@ package body Aunit_Filters is
       File   : VFS.Virtual_File;
       State  : out File_State;
       Pixbuf : out Gdk_Pixbuf;
-      Text   : out GNAT.OS_Lib.String_Access)
+      Text   : out GNAT.Strings.String_Access)
    is
       pragma Unreferenced (Win);
-      Suite_Name   : GNAT.OS_Lib.String_Access;
-      Package_Name : GNAT.OS_Lib.String_Access;
+      Suite_Name   : GNAT.Strings.String_Access;
+      Package_Name : GNAT.Strings.String_Access;
       F_Type       : Test_Type;
 
    begin
@@ -225,7 +225,7 @@ package body Aunit_Filters is
       File   : VFS.Virtual_File;
       State  : out File_State;
       Pixbuf : out Gdk_Pixbuf;
-      Text   : out GNAT.OS_Lib.String_Access)
+      Text   : out GNAT.Strings.String_Access)
    is
       pragma Unreferenced (Win);
       Part      : Unit_Part;

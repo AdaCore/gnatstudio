@@ -26,7 +26,7 @@ pragma Warnings (Off);
 with Ada.Strings.Unbounded.Aux;           use Ada.Strings.Unbounded.Aux;
 pragma Warnings (On);
 with GNAT.Regpat;
-with GNAT.OS_Lib;
+with GNAT.Strings;
 with Interfaces.C.Strings;                use Interfaces.C.Strings;
 with System.Address_Image;
 
@@ -88,6 +88,7 @@ package body Src_Editor_Buffer is
    use Src_Editor_Module.Line_Highlighting;
    use Src_Editor_Buffer.Line_Information;
    use type System.Address;
+   use type GNAT.Strings.String_Access;
 
    Me                        : constant Debug_Handle :=
      Create ("Source_Editor_Buffer");
@@ -474,7 +475,7 @@ package body Src_Editor_Buffer is
       if Column_Info /= null then
          if Column_Info.all /= null then
             for J in Column_Info.all'Range loop
-               Free (Column_Info.all (J).Identifier);
+               GNAT.Strings.Free (Column_Info.all (J).Identifier);
                Unchecked_Free (Column_Info.all (J));
             end loop;
 
@@ -506,7 +507,7 @@ package body Src_Editor_Buffer is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Block_Record, Block_Access);
    begin
-      Free (Block.Name);
+      GNAT.Strings.Free (Block.Name);
       Unchecked_Free (Block);
    end Free_Block;
 
@@ -560,10 +561,10 @@ package body Src_Editor_Buffer is
    end Get_String;
 
    function Get_String
-     (Buffer : Source_Buffer) return Basic_Types.String_Access
+     (Buffer : Source_Buffer) return GNAT.Strings.String_Access
    is
       Start, The_End : Gtk_Text_Iter;
-      Result         : Basic_Types.String_Access;
+      Result         : GNAT.Strings.String_Access;
       Chars          : Interfaces.C.Strings.chars_ptr;
       C_Str          : Unchecked_String_Access;
 
@@ -591,12 +592,12 @@ package body Src_Editor_Buffer is
    function Get_Buffer_Lines
      (Buffer     : access Source_Buffer_Record'Class;
       Start_Line : Editable_Line_Type;
-      End_Line   : Editable_Line_Type) return Basic_Types.String_Access
+      End_Line   : Editable_Line_Type) return GNAT.Strings.String_Access
    is
       A      : array (Start_Line .. End_Line) of Src_String;
       Len    : Integer := 0;
       Index  : Integer := 1;
-      Output : Basic_Types.String_Access;
+      Output : GNAT.Strings.String_Access;
       Last   : Editable_Line_Type;
    begin
       for J in A'Range loop
@@ -1246,8 +1247,9 @@ package body Src_Editor_Buffer is
       if Buffer.Editable_Lines /= null then
          for J in Buffer.Editable_Lines'Range loop
             if Buffer.Editable_Lines (J).Where = In_Mark then
-               Free (Buffer.Editable_Lines (J).Text);
+               GNAT.Strings.Free (Buffer.Editable_Lines (J).Text);
             end if;
+
             if Buffer.Editable_Lines (J).Side_Info_Data /= null then
                Free (Buffer.Editable_Lines (J).Side_Info_Data.all);
                Unchecked_Free (Buffer.Editable_Lines (J).Side_Info_Data);
@@ -1871,6 +1873,7 @@ package body Src_Editor_Buffer is
    is
       Buffer_Line : constant Buffer_Line_Type :=
         Get_Buffer_Line (Buffer, Line);
+
    begin
       if Buffer_Line = 0 then
          if Line in Buffer.Editable_Lines'Range
@@ -2513,7 +2516,7 @@ package body Src_Editor_Buffer is
          if Buffer.Editable_Lines /= null then
             for J in Buffer.Editable_Lines'Range loop
                if Buffer.Editable_Lines (J).Where = In_Mark then
-                  Free (Buffer.Editable_Lines (J).Text);
+                  GNAT.Strings.Free (Buffer.Editable_Lines (J).Text);
                end if;
             end loop;
 
@@ -2565,7 +2568,7 @@ package body Src_Editor_Buffer is
          Register_Edit_Timeout (Buffer);
       end Reset_Buffer;
 
-      Contents      : GNAT.OS_Lib.String_Access;
+      Contents      : GNAT.Strings.String_Access;
       UTF8          : Gtkada.Types.Chars_Ptr;
       Ignore        : aliased Natural;
       Length        : aliased Natural;
@@ -2578,7 +2581,6 @@ package body Src_Editor_Buffer is
       Buttons       : Message_Dialog_Buttons;
       File_Is_New   : constant Boolean := not Buffer.Original_Text_Inserted;
 
-      use GNAT.OS_Lib;
    begin
       Success := True;
 
@@ -2652,7 +2654,7 @@ package body Src_Editor_Buffer is
             Ignore'Unchecked_Access, Length'Unchecked_Access);
       end if;
 
-      Free (Contents);
+      GNAT.Strings.Free (Contents);
       UTF8_Validate (To_Unchecked_String (UTF8) (1 .. Length),
                      Valid, First_Invalid);
 
@@ -3058,6 +3060,7 @@ package body Src_Editor_Buffer is
       Success : Boolean;
       Buttons : Message_Dialog_Buttons;
       pragma Unreferenced (Buttons);
+
    begin
       if Buffer.Filename /= VFS.No_File then
          if Charset /= Get_File_Charset (Buffer.Filename) then
@@ -3075,7 +3078,7 @@ package body Src_Editor_Buffer is
       if Buffer.Charset /= null
         and then Buffer.Charset.all /= Charset
       then
-         Free (Buffer.Charset);
+         GNAT.Strings.Free (Buffer.Charset);
          Buffer.Charset := new String'(Charset);
 
          if Get_Status (Buffer) = Modified then
@@ -3095,7 +3098,7 @@ package body Src_Editor_Buffer is
             Load_File (Buffer, Buffer.Filename, Success => Success);
          end if;
       else
-         Free (Buffer.Charset);
+         GNAT.Strings.Free (Buffer.Charset);
          Buffer.Charset := new String'(Charset);
       end if;
    end Set_Charset;
@@ -4677,7 +4680,7 @@ package body Src_Editor_Buffer is
       Cursor_Offset : Gint;
       Indent_Offset : Integer := 0;
       Result        : Boolean;
-      Buffer_Text   : Basic_Types.String_Access;
+      Buffer_Text   : GNAT.Strings.String_Access;
       Indent_Params : Indent_Parameters;
       From_Line     : Editable_Line_Type;
       To_Line       : Editable_Line_Type;
@@ -4991,7 +4994,7 @@ package body Src_Editor_Buffer is
                Buffer_Text.all,
                Replace_Text'Unrestricted_Access,
                Integer (From_Line), Integer (To_Line), Indent_Params);
-            Free (Buffer_Text);
+            GNAT.Strings.Free (Buffer_Text);
          end if;
       end if;
 
@@ -5025,7 +5028,7 @@ package body Src_Editor_Buffer is
          Buffer.Do_Not_Move_Cursor := False;
 
          if Buffer_Text /= null then
-            Free (Buffer_Text);
+            GNAT.Strings.Free (Buffer_Text);
          end if;
 
          if C_Str /= Gtkada.Types.Null_Ptr then
@@ -5052,9 +5055,9 @@ package body Src_Editor_Buffer is
       To_Line   : Editable_Line_Type;
       --  Block to work on
 
-      B_Sep     : Basic_Types.String_Access; --  Spaces/TAB before comment line
-      Sep       : Basic_Types.String_Access; --  Comment symbol
-      After     : Natural;                   --  Spaces after comment symbol
+      B_Sep     : GNAT.Strings.String_Access; -- Spaces/TAB before comment line
+      Sep       : GNAT.Strings.String_Access; -- Comment symbol
+      After     : Natural;                    -- Spaces after comment symbol
       --  Note that if Sep is null we are not working on a comment, in this
       --  case Indent and After must be ignored.
 
@@ -5452,8 +5455,8 @@ package body Src_Editor_Buffer is
       Replace_Slice
         (Buffer, From_Line, 1, To_Line + 1, 1, To_String (New_Text));
 
-      Free (B_Sep);
-      Free (Sep);
+      GNAT.Strings.Free (B_Sep);
+      GNAT.Strings.Free (Sep);
 
       return True;
    end Do_Refill;
@@ -5595,13 +5598,13 @@ package body Src_Editor_Buffer is
          Set_Line_Offset (End_Begin, 0);
 
          declare
-            A : Basic_Types.String_Access :=
+            A : GNAT.Strings.String_Access :=
               Get_Buffer_Lines (Buffer, Start_Line + 1, Real_End_Line - 1);
             S : constant String :=
               Get_Text (Buffer, Start_Iter, Start_End) & ASCII.LF
                 & A.all & Get_Text (Buffer, End_Begin, End_Iter);
          begin
-            Free (A);
+            GNAT.Strings.Free (A);
             return S;
          end;
       else
@@ -5977,7 +5980,7 @@ package body Src_Editor_Buffer is
      (Buffer         : access Source_Buffer_Record;
       Required_Level : Constructs_State_Type) return Construct_List
    is
-      Text : Basic_Types.String_Access;
+      Text : GNAT.Strings.String_Access;
    begin
       if Buffer.Constructs_State >= Required_Level then
          return Buffer.Constructs;
@@ -5987,7 +5990,7 @@ package body Src_Editor_Buffer is
 
       Text := Get_String (Source_Buffer (Buffer));
       Parse_Constructs (Buffer.Lang, Text.all, Buffer.Constructs);
-      Free (Text);
+      GNAT.Strings.Free (Text);
 
       Buffer.Constructs_State := Exact;
 

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -19,6 +19,8 @@
 -----------------------------------------------------------------------
 
 package body Commands.Console is
+
+   use type GNAT.Strings.String_Access;
 
    ----------
    -- Copy --
@@ -83,7 +85,7 @@ package body Commands.Console is
 
    procedure Free (Command : in out Console_Command) is
    begin
-      Free (Command.Text);
+      GNAT.Strings.Free (Command.Text);
    end Free;
 
    ----------

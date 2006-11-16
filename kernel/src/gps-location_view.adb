@@ -21,7 +21,7 @@
 with Ada.Exceptions;           use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with GNAT.OS_Lib;
+with GNAT.Strings;
 with System;
 
 with Gdk.Event;                use Gdk.Event;
@@ -163,7 +163,7 @@ package body GPS.Location_View is
       File    : VFS.Virtual_File := VFS.No_File;
       Line    : Positive := 1;
       Column  : Visible_Column_Type := 1;
-      Message : String_Access;
+      Message : GNAT.Strings.String_Access;
    end record;
 
    procedure Free (X : in out Location);
@@ -581,13 +581,15 @@ package body GPS.Location_View is
       Column   : Visible_Column_Type := 1;
       Length   : Natural := 0) return String
    is
-      Args : GNAT.OS_Lib.Argument_List :=
+      Args : GNAT.Strings.String_List :=
         (1 => new String'(Full_Name (Filename).all),
          2 => new String'(Image (Line)),
          3 => new String'(Image (Integer (Column))),
          4 => new String'(Image (Length)));
       Location : constant String :=
-        Execute_GPS_Shell_Command (Kernel, "Editor.create_mark", Args);
+                   Execute_GPS_Shell_Command (Kernel,
+                                              "Editor.create_mark", Args);
+
    begin
       Free (Args);
       return Location;
@@ -606,13 +608,14 @@ package body GPS.Location_View is
       Highlight_Category : Style_Access;
       Highlight          : Boolean := True)
    is
-      Args    : GNAT.OS_Lib.Argument_List (1 .. 5) :=
+      Args    : GNAT.Strings.String_List (1 .. 5) :=
         (1 => new String'(Full_Name (Filename).all),
          2 => new String'(Get_Name (Highlight_Category)),
          3 => new String'(Image (Line)),
          4 => new String'(Image (Integer (Column))),
          5 => new String'(Image (Integer (Column) + Length)));
-      Command : GNAT.OS_Lib.String_Access;
+      Command : GNAT.Strings.String_Access;
+
    begin
       if Highlight_Category = null then
          return;
@@ -643,7 +646,7 @@ package body GPS.Location_View is
       end if;
 
       Free (Args);
-      GNAT.OS_Lib.Free (Command);
+      GNAT.Strings.Free (Command);
    end Highlight_Line;
 
    -------------------
@@ -680,8 +683,9 @@ package body GPS.Location_View is
 
       declare
          Mark : constant Gint := Get_Int (Model, Iter, Mark_Column);
-         Args : GNAT.OS_Lib.Argument_List :=
-           (1 => new String'(Image (Integer (Mark))));
+         Args : GNAT.Strings.String_List :=
+                  (1 => new String'(Image (Integer (Mark))));
+
       begin
          if Mark /= -1 then
             Execute_GPS_Shell_Command (View.Kernel, "Editor.goto_mark", Args);
@@ -744,7 +748,7 @@ package body GPS.Location_View is
             declare
                Mark : constant Gint :=
                  Get_Int (View.Tree.Model, Loc_Iter, Mark_Column);
-               Args : GNAT.OS_Lib.Argument_List :=
+               Args : GNAT.Strings.String_List :=
                  (1 => new String'(Image (Integer (Mark))));
 
                Style : Style_Access;
@@ -2984,6 +2988,9 @@ package body GPS.Location_View is
    procedure Free (X : in out Location_Record_Access) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Location_Record, Location_Record_Access);
+
+      use GNAT.Strings;
+
    begin
       Free (X.Category);
       Free (X.Message);
@@ -3051,6 +3058,7 @@ package body GPS.Location_View is
    ----------
 
    procedure Free (X : in out Location) is
+      use GNAT.Strings;
    begin
       Free (X.Message);
    end Free;

@@ -23,7 +23,8 @@ with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with System;                    use System;
 
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.OS_Lib;
+with GNAT.Strings;              use GNAT.Strings;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
@@ -78,7 +79,7 @@ package body Bookmark_Views is
 
    type Bookmark_Data is record
       Marker    : Location_Marker;
-      Name      : GNAT.OS_Lib.String_Access;
+      Name      : GNAT.Strings.String_Access;
       Instances : Instance_List;
    end record;
    type Bookmark_Data_Access is access Bookmark_Data;
@@ -257,7 +258,7 @@ package body Bookmark_Views is
       Selected   : Integer;
       pragma Unreferenced (Selected);
 
-      Text       : GNAT.OS_Lib.String_Access;
+      Text       : GNAT.Strings.String_Access;
       Data       : Bookmark_Data_Access;
    begin
       Pixmap := null;
@@ -723,7 +724,7 @@ package body Bookmark_Views is
       Err         : String_Access;
       Marker      : Location_Marker;
    begin
-      if Is_Regular_File (Filename) then
+      if GNAT.OS_Lib.Is_Regular_File (Filename) then
          Trace (Me, "Loading " & Filename);
          XML_Parsers.Parse (Filename, File, Err);
 

@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.Strings;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
@@ -89,8 +90,8 @@ package body GPS.Kernel.Project is
    -------------------------------
 
    type Property_Index_Type is record
-      Nickname : GNAT.OS_Lib.String_Access;
-      Gnatls   : GNAT.OS_Lib.String_Access;
+      Nickname : GNAT.Strings.String_Access;
+      Gnatls   : GNAT.Strings.String_Access;
    end record;
 
    No_Index : constant Property_Index_Type :=

@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Basic_Types;               use Basic_Types;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
@@ -35,6 +34,7 @@ with Commands.Debugger;         use Commands.Debugger;
 
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;
+with GNAT.Strings;              use GNAT.Strings;
 
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GVD.Preferences;           use GVD.Preferences;

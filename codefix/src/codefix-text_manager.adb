@@ -23,6 +23,7 @@ with GNAT.Case_Util; use GNAT.Case_Util;
 with GNAT.Regpat;    use GNAT.Regpat;
 
 with Ada_Analyzer;   use Ada_Analyzer;
+with Basic_Types;    use Basic_Types;
 with String_Utils;   use String_Utils;
 with VFS;            use VFS;
 
@@ -76,7 +77,7 @@ package body Codefix.Text_Manager is
    -- Normalize --
    ---------------
 
-   function Normalize (Str : Basic_Types.String_Access) return String is
+   function Normalize (Str : GNAT.Strings.String_Access) return String is
    begin
       if Str /= null then
          return Reduce (Str.all);
@@ -393,7 +394,7 @@ package body Codefix.Text_Manager is
 
    function Read_File
      (This : Text_Navigator_Abstr;
-      File_Name : VFS.Virtual_File) return GNAT.OS_Lib.String_Access is
+      File_Name : VFS.Virtual_File) return GNAT.Strings.String_Access is
    begin
       return Read_File (Get_File (This, File_Name).all);
    end Read_File;
@@ -565,7 +566,7 @@ package body Codefix.Text_Manager is
    function Search_Strings
      (This           : Text_Navigator_Abstr'Class;
       Cursor         : File_Cursor'Class;
-      Searched       : String_Array;
+      Searched       : GNAT.Strings.String_List;
       Escape_Manager : Escape_Str_Manager'Class;
       Step           : Step_Way := Normal_Step)
       return Word_Cursor'Class is
@@ -722,7 +723,7 @@ package body Codefix.Text_Manager is
    procedure Next_Word
      (This   : Text_Navigator_Abstr'Class;
       Cursor : in out File_Cursor'Class;
-      Word   : out GNAT.OS_Lib.String_Access) is
+      Word   : out GNAT.Strings.String_Access) is
    begin
       Next_Word
         (Get_File (This, Get_File (Cursor)).all,
@@ -943,7 +944,7 @@ package body Codefix.Text_Manager is
    ----------------
 
    function Get_Buffer
-     (This : access Text_Interface'Class) return GNAT.OS_Lib.String_Access is
+     (This : access Text_Interface'Class) return GNAT.Strings.String_Access is
    begin
       if This.Buffer = null then
          This.Buffer := Read_File (This.all);
@@ -963,7 +964,7 @@ package body Codefix.Text_Manager is
       Escape_Manager : Escape_Str_Manager'Class;
       Step           : Step_Way := Normal_Step) return File_Cursor'Class
    is
-      Str_Array : String_Array := (1 => new String'(Searched));
+      Str_Array : GNAT.Strings.String_List := (1 => new String'(Searched));
       Result    : Word_Cursor'Class := Search_Strings
         (This,
          Cursor,
@@ -985,7 +986,7 @@ package body Codefix.Text_Manager is
    function Search_Strings
      (This           : Text_Interface'Class;
       Cursor         : Text_Cursor'Class;
-      Searched       : String_Array;
+      Searched       : GNAT.Strings.String_List;
       Escape_Manager : Escape_Str_Manager'Class;
       Step           : Step_Way := Normal_Step) return Word_Cursor'Class
    is
@@ -1133,8 +1134,10 @@ package body Codefix.Text_Manager is
         return Text_Cursor
       is
          Local_Cursor : Text_Cursor := Text_Cursor (Cursor);
-         Local_Line   : GNAT.OS_Lib.String_Access := new String'(Current_Line);
+         Local_Line   : GNAT.Strings.String_Access :=
+                          new String'(Current_Line);
          Local_Cursor_Char_Index : Char_Index := Index;
+
       begin
          loop
             if Natural (Local_Cursor_Char_Index) > Local_Line'Last then
@@ -1191,9 +1194,9 @@ package body Codefix.Text_Manager is
    procedure Next_Word
      (This   : Text_Interface'Class;
       Cursor : in out Text_Cursor'Class;
-      Word   : out GNAT.OS_Lib.String_Access)
+      Word   : out GNAT.Strings.String_Access)
    is
-      Current_Line      : GNAT.OS_Lib.String_Access;
+      Current_Line      : GNAT.Strings.String_Access;
       Line_Cursor       : Text_Cursor := Text_Cursor (Cursor);
       Begin_Word        : Char_Index;
       Cursor_Char_Index : Char_Index;
@@ -1367,7 +1370,7 @@ package body Codefix.Text_Manager is
      return Text_Cursor'Class
    is
       Result, Line_Cursor : Text_Cursor := Text_Cursor (Cursor);
-      Current_Line        : GNAT.OS_Lib.String_Access;
+      Current_Line        : GNAT.Strings.String_Access;
    begin
       Line_Cursor.Col := 1;
 
@@ -1859,7 +1862,7 @@ package body Codefix.Text_Manager is
       Escape_Manager : Escape_Str_Manager'Class;
       Step           : Step_Way := Normal_Step) return File_Cursor'Class
    is
-      Str_Array : String_Array := (1 => new String'(Searched));
+      Str_Array : GNAT.Strings.String_List := (1 => new String'(Searched));
       Result    : File_Cursor'Class := Search_Strings
         (This,
          Cursor,
@@ -1881,7 +1884,7 @@ package body Codefix.Text_Manager is
    function Search_Strings
      (This           : Extract_Line;
       Cursor         : File_Cursor'Class;
-      Searched       : String_Array;
+      Searched       : GNAT.Strings.String_List;
       Escape_Manager : Escape_Str_Manager'Class;
       Step           : Step_Way := Normal_Step) return Word_Cursor'Class
    is
@@ -1890,13 +1893,13 @@ package body Codefix.Text_Manager is
       Start_Index   : Char_Index;
 
       function Test_Result
-        (Str : Basic_Types.String_Access; Index : Char_Index)
+        (Str : GNAT.Strings.String_Access; Index : Char_Index)
         return Boolean;
       --  Return true if the string given in parameter is on the Index position
       --  of the content, and set the Result accordingly if needed.
 
       function Test_Result
-        (Str   : Basic_Types.String_Access;
+        (Str   : GNAT.Strings.String_Access;
          Index : Char_Index)
         return Boolean
       is
@@ -1982,7 +1985,7 @@ package body Codefix.Text_Manager is
       Cursor      : File_Cursor'Class;
       Destination : in out Extract_Line)
    is
-      Str : GNAT.OS_Lib.String_Access;
+      Str : GNAT.Strings.String_Access;
    begin
       Str := new String'(Get_Line (This, Cursor));
       Destination :=
@@ -2004,7 +2007,7 @@ package body Codefix.Text_Manager is
       Cursor      : File_Cursor'Class;
       Destination : in out Extract_Line)
    is
-      Str : GNAT.OS_Lib.String_Access;
+      Str : GNAT.Strings.String_Access;
    begin
       Str := new String'(Get_Line (This, Cursor));
       Free_Data (Destination);
@@ -2508,7 +2511,7 @@ package body Codefix.Text_Manager is
       Source_Start, Source_Stop : File_Cursor'Class;
       Current_Text              : Text_Navigator_Abstr'Class)
    is
-      function Get_Next_Source_Line return GNAT.OS_Lib.String_Access;
+      function Get_Next_Source_Line return GNAT.Strings.String_Access;
       --  Retutn the next source line that have to be added to the extract,
       --  addinf Head or Bottom if needed.
 
@@ -2516,16 +2519,16 @@ package body Codefix.Text_Manager is
 
       Cursor_Dest      : File_Cursor := File_Cursor (Dest_Start);
       Cursor_Source    : File_Cursor := File_Cursor (Source_Start);
-      Source_Line      : GNAT.OS_Lib.String_Access;
-      Head, Bottom     : GNAT.OS_Lib.String_Access;
-      Last_Line        : GNAT.OS_Lib.String_Access;
+      Source_Line      : GNAT.Strings.String_Access;
+      Head, Bottom     : GNAT.Strings.String_Access;
+      Last_Line        : GNAT.Strings.String_Access;
 
       --------------------------
       -- Get_Next_Source_Line --
       --------------------------
 
-      function Get_Next_Source_Line return GNAT.OS_Lib.String_Access is
-         Line : GNAT.OS_Lib.String_Access :=
+      function Get_Next_Source_Line return GNAT.Strings.String_Access is
+         Line : GNAT.Strings.String_Access :=
            new String'(Get_Line (Current_Text, Cursor_Source));
       begin
          if Cursor_Source.Line = Source_Stop.Line then
@@ -2854,7 +2857,7 @@ package body Codefix.Text_Manager is
       Format_Old   : String_Mode := Text_Ascii)
    is
       Word_Length  : Natural;
-      Old_Line     : GNAT.OS_Lib.String_Access;
+      Old_Line     : GNAT.Strings.String_Access;
       Current_Line : Ptr_Extract_Line;
 
    begin
@@ -3538,7 +3541,7 @@ package body Codefix.Text_Manager is
    is
       Previous     : VFS.Virtual_File;
       Current_Line : Ptr_Extract_Line := Get_First_Line (This);
-      Result       : GNAT.OS_Lib.String_Access;
+      Result       : GNAT.Strings.String_Access;
 
    begin
       if Current_Line = null then
@@ -3858,7 +3861,7 @@ package body Codefix.Text_Manager is
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : out Extract'Class)
    is
-      New_Str         : GNAT.OS_Lib.String_Access;
+      New_Str         : GNAT.Strings.String_Access;
       Line_Cursor     : File_Cursor;
       Space_Cursor    : File_Cursor;
       Word            : Word_Cursor;

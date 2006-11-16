@@ -20,6 +20,7 @@
 
 with Ada.Exceptions;        use Ada.Exceptions;
 with GNAT.OS_Lib;           use GNAT;
+with GNAT.Strings;
 
 with GNAT.Calendar.Time_IO; use GNAT.Calendar; use GNAT.Calendar.Time_IO;
 
@@ -229,7 +230,7 @@ package body VCS_Status is
       Filename    : constant String :=
                       Get_Home_Dir (Kernel) & VCS_Cache_Filename;
       File, Child : Node_Ptr;
-      Err         : OS_Lib.String_Access;
+      Err         : Strings.String_Access;
 
       procedure Parse_Status (Node : Node_Ptr);
       --  Parse a cache status node

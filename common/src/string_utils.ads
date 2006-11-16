@@ -21,7 +21,7 @@
 --  This package provides a set of subprograms for manipulating and parsing
 --  strings.
 
-with GNAT.OS_Lib;
+with GNAT.Strings;
 with Interfaces.C.Strings;
 with Glib;
 
@@ -241,7 +241,7 @@ package String_Utils is
    -------------------
 
    function Argument_List_To_String
-     (List : GNAT.OS_Lib.Argument_List;
+     (List : GNAT.Strings.String_List;
       Protect_Quotes : Boolean := True) return String;
    --  Concatenate all the elements in List into a single string.
    --    Argument_String_To_List (Argument_List_To_String (X)) = X
@@ -249,14 +249,14 @@ package String_Utils is
    --  If Protect_Quotes is True, then all quotes (single and double) are
    --  preceded by a backslash.
 
-   function Clone (List : GNAT.OS_Lib.Argument_List)
-      return GNAT.OS_Lib.Argument_List;
+   function Clone (List : GNAT.Strings.String_List)
+      return GNAT.Strings.String_List;
    --  Return a deep-copy of List. The returned value must be freed by the
    --  caller.
 
    procedure Append
-     (List  : in out GNAT.OS_Lib.Argument_List_Access;
-      List2 : GNAT.OS_Lib.Argument_List);
+     (List  : in out GNAT.Strings.String_List_Access;
+      List2 : GNAT.Strings.String_List);
    --  Append all the strings in List2 to the end of List.
    --  The strings in List2 are not duplicated.
    --  List might be null initially.
@@ -266,8 +266,8 @@ package String_Utils is
    ----------------------------
 
    type Substitution_Value is record
-      Name  : GNAT.OS_Lib.String_Access;
-      Value : GNAT.OS_Lib.String_Access;
+      Name  : GNAT.Strings.String_Access;
+      Value : GNAT.Strings.String_Access;
    end record;
    type Substitution_Array is array (Natural range <>) of Substitution_Value;
    --  ??? Should have a second version where Value is replaced with a function
@@ -350,7 +350,7 @@ package String_Utils is
    ----------------------------
 
    function Argument_List_To_Quoted_String
-     (Args  : GNAT.OS_Lib.Argument_List;
+     (Args  : GNAT.Strings.String_List;
       Quote : Character := '"';
       Quote_Backslash : Boolean := True) return String;
    --  Return the arguments as a full string.
@@ -362,8 +362,7 @@ package String_Utils is
    --      not Quote_Backslash =>   "A simple\ \"string\""
 
    function Argument_String_To_List_With_Triple_Quotes
-     (Arg_String : String)
-      return       GNAT.OS_Lib.Argument_List_Access;
+     (Arg_String : String) return GNAT.Strings.String_List_Access;
    --  This is similar to GNAT.OS_Lib.Argument_String_To_List, except that
    --  if part of the string is surrounded by triple quotes, any special
    --  character is ignored till the closing triple quotes. This is the same

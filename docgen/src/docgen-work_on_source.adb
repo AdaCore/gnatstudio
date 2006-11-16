@@ -20,8 +20,9 @@
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Exceptions;            use Ada.Exceptions;
+with GNAT.OS_Lib;
+with GNAT.Strings;
 
-with Basic_Types;
 with Doc_Utils;                 use Doc_Utils;
 with Docgen.Backend;            use Docgen.Backend;
 with Entities.Queries;          use Entities.Queries;
@@ -36,6 +37,8 @@ with Traces;                    use Traces;
 with VFS;                       use VFS;
 
 package body Docgen.Work_On_Source is
+
+   use type GNAT.Strings.String_Access;
 
    package TEL renames Type_Entity_List;
 
@@ -54,7 +57,7 @@ package body Docgen.Work_On_Source is
       Private_Tagged_Types_List : in out List_Entity_Information.List;
       Options                   : All_Options;
       Level                     : in out Natural;
-      File_Text                 : GNAT.OS_Lib.String_Access;
+      File_Text                 : GNAT.Strings.String_Access;
       Parsed_List               : in out Construct_List);
    --  It's in charge of processing packages, types, variables, subprograms,
    --  exceptions, entries. It can be called recursively for inner package.
@@ -83,7 +86,7 @@ package body Docgen.Work_On_Source is
       Result           : in out Unbounded_String;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_File      : Virtual_File;
-      File_Text        : GNAT.OS_Lib.String_Access;
+      File_Text        : GNAT.Strings.String_Access;
       Source_File_List : Type_Source_File_Table.HTable;
       Options          : All_Options;
       Level            : in out Natural);
@@ -120,7 +123,7 @@ package body Docgen.Work_On_Source is
       Parsed_List      : in out Construct_List;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_Filename  : VFS.Virtual_File;
-      File_Text        : GNAT.OS_Lib.String_Access;
+      File_Text        : GNAT.Strings.String_Access;
       Source_File_List : in out Type_Source_File_Table.HTable;
       Options          : All_Options;
       Level            : in out Natural);
@@ -149,7 +152,7 @@ package body Docgen.Work_On_Source is
       Package_Name              : String;
       Package_Information       : Entity_Information;
       Main_Unit                 : Boolean;
-      File_Text                 : GNAT.OS_Lib.String_Access;
+      File_Text                 : GNAT.Strings.String_Access;
       Source_File_List          : in out Type_Source_File_Table.HTable;
       Options                   : All_Options;
       Private_Entity            : Boolean;
@@ -171,7 +174,7 @@ package body Docgen.Work_On_Source is
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_Filename  : VFS.Virtual_File;
       Package_Info     : Entity_Information;
-      File_Text        : GNAT.OS_Lib.String_Access;
+      File_Text        : GNAT.Strings.String_Access;
       Source_File_List : in out Type_Source_File_Table.HTable;
       Options          : All_Options;
       Private_Entity   : Boolean;
@@ -192,7 +195,7 @@ package body Docgen.Work_On_Source is
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_Filename  : VFS.Virtual_File;
       Package_Info     : Entity_Information;
-      File_Text        : GNAT.OS_Lib.String_Access;
+      File_Text        : GNAT.Strings.String_Access;
       Source_File_List : in out Type_Source_File_Table.HTable;
       Options          : All_Options;
       Private_Entity   : Boolean;
@@ -213,7 +216,7 @@ package body Docgen.Work_On_Source is
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_Filename  : VFS.Virtual_File;
       Package_Info     : Entity_Information;
-      File_Text        : GNAT.OS_Lib.String_Access;
+      File_Text        : GNAT.Strings.String_Access;
       Source_File_List : in out Type_Source_File_Table.HTable;
       Options          : All_Options;
       Private_Entity   : Boolean;
@@ -253,7 +256,7 @@ package body Docgen.Work_On_Source is
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_Filename  : VFS.Virtual_File;
       Unit_Info        : Entity_Information;
-      File_Text        : GNAT.OS_Lib.String_Access;
+      File_Text        : GNAT.Strings.String_Access;
       Source_File_List : in out Type_Source_File_Table.HTable;
       Options          : All_Options;
       Private_Entity   : Boolean;
@@ -286,7 +289,7 @@ package body Docgen.Work_On_Source is
       Private_Tagged_Types_List : in out List_Entity_Information.List;
       Source_Filename           : VFS.Virtual_File;
       Package_Info              : Entity_Information;
-      File_Text                 : GNAT.OS_Lib.String_Access;
+      File_Text                 : GNAT.Strings.String_Access;
       Source_File_List          : in out Type_Source_File_Table.HTable;
       Options                   : All_Options;
       Private_Entity            : Boolean;
@@ -399,7 +402,7 @@ package body Docgen.Work_On_Source is
 
    procedure Remove_Indent
      (Text       : String;
-      Clean_Text : out GNAT.OS_Lib.String_Access;
+      Clean_Text : out GNAT.Strings.String_Access;
       Line_Count : out Natural);
    --  The header returned by Get_Whole_Header contains leading spaces. We
    --  the first line is well indented.
@@ -428,8 +431,7 @@ package body Docgen.Work_On_Source is
       Level                     : in out Natural)
    is
       use TEL;
-      use type Basic_Types.String_Access;
-      File_Text            : GNAT.OS_Lib.String_Access;
+      File_Text            : GNAT.Strings.String_Access;
       Entity_Node          : Type_Entity_List.List_Node;
       Found_Main_Unit      : Boolean;
       Parsed_List          : Construct_List;
@@ -538,7 +540,7 @@ package body Docgen.Work_On_Source is
 
       Process_Footer (B, Kernel, Result);
       Doc_Close (B, Kernel, Result);
-      Free (File_Text);
+      GNAT.Strings.Free (File_Text);
 
    exception
       when E : others =>
@@ -565,7 +567,7 @@ package body Docgen.Work_On_Source is
       Private_Tagged_Types_List : in out List_Entity_Information.List;
       Options                   : All_Options;
       Level                     : in out Natural;
-      File_Text                 : GNAT.OS_Lib.String_Access;
+      File_Text                 : GNAT.Strings.String_Access;
       Parsed_List               : in out Construct_List)
    is
       use Type_Entity_List;
@@ -760,7 +762,7 @@ package body Docgen.Work_On_Source is
       Result           : in out Unbounded_String;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_File      : Virtual_File;
-      File_Text        : GNAT.OS_Lib.String_Access;
+      File_Text        : GNAT.Strings.String_Access;
       Source_File_List : Type_Source_File_Table.HTable;
       Options          : All_Options;
       Level            : in out Natural) is
@@ -783,7 +785,9 @@ package body Docgen.Work_On_Source is
       Options          : Docgen.All_Options;
       Level            : in out Natural)
    is
+      use GNAT.OS_Lib;
       use Type_Source_File_Table;
+
       Source_File_Node : Type_Source_File_Table.Iterator;
       Index_File       : File_Descriptor;
       Doc_File_Name    : constant String := "index_unit";
@@ -849,6 +853,8 @@ package body Docgen.Work_On_Source is
       Source_File_List              : Type_Source_File_Table.HTable;
       Options                       : All_Options)
    is
+      use GNAT.OS_Lib;
+
       Doc_File_Name : constant String := "index_sub";
       Index_File    : File_Descriptor;
       Result        : Unbounded_String;
@@ -933,6 +939,8 @@ package body Docgen.Work_On_Source is
       Source_File_List        : Type_Source_File_Table.HTable;
       Options                 : All_Options)
    is
+      use GNAT.OS_Lib;
+
       Doc_File_Name : constant String := "index_type";
       Index_File    : File_Descriptor;
       Result        : Unbounded_String;
@@ -1013,6 +1021,8 @@ package body Docgen.Work_On_Source is
       Source_File_List          : Type_Source_File_Table.HTable;
       Options                   : All_Options)
    is
+      use GNAT.OS_Lib;
+
       Doc_File_Name : constant String := "index_tagged_type";
       Index_File    : File_Descriptor;
       Result        : Unbounded_String;
@@ -1257,7 +1267,7 @@ package body Docgen.Work_On_Source is
    is
       pragma Unreferenced (Options);
 
-      Description : GNAT.OS_Lib.String_Access;
+      Description : GNAT.Strings.String_Access;
       Start_Line  : Natural := Text'First;
       End_Line    : Natural := Start_Line;
 
@@ -1280,7 +1290,7 @@ package body Docgen.Work_On_Source is
 
       Doc_Package_Desc
         (B, Kernel, Result, Level, Description => Description.all);
-      Free (Description);
+      GNAT.Strings.Free (Description);
    end Process_File_Description;
 
    -------------------------
@@ -1294,7 +1304,7 @@ package body Docgen.Work_On_Source is
       Parsed_List      : in out Construct_List;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_Filename  : VFS.Virtual_File;
-      File_Text        : GNAT.OS_Lib.String_Access;
+      File_Text        : GNAT.Strings.String_Access;
       Source_File_List : in out Type_Source_File_Table.HTable;
       Options          : All_Options;
       Level            : in out Natural)
@@ -1373,7 +1383,7 @@ package body Docgen.Work_On_Source is
       Package_Name              : String;
       Package_Information       : Entity_Information;
       Main_Unit                 : Boolean;
-      File_Text                 : GNAT.OS_Lib.String_Access;
+      File_Text                 : GNAT.Strings.String_Access;
       Source_File_List          : in out Type_Source_File_Table.HTable;
       Options                   : All_Options;
       Private_Entity            : Boolean;
@@ -1388,7 +1398,7 @@ package body Docgen.Work_On_Source is
                                  (Get_Language_Handler (Kernel),
                                   Source_Filename)).Case_Sensitive;
       Entity_Node       : Type_Entity_List.List_Node;
-      Description       : GNAT.OS_Lib.String_Access;
+      Description       : GNAT.Strings.String_Access;
       First_Already_Set : Boolean := False;
       Entity            : TEL.Data_Access;
       Renamed           : Entity_Information;
@@ -1510,7 +1520,7 @@ package body Docgen.Work_On_Source is
                           Parsed_List,
                           Entity.all,
                           Case_Sensitive);
-                     Header       : GNAT.OS_Lib.String_Access;
+                     Header       : GNAT.Strings.String_Access;
                      Header_Lines : Natural;
                   begin
                      --  Check if it was an entity with its own header
@@ -1543,8 +1553,8 @@ package body Docgen.Work_On_Source is
                               Description.all);
                         end if;
 
-                        Free (Header);
-                        Free (Description);
+                        GNAT.Strings.Free (Header);
+                        GNAT.Strings.Free (Description);
                      end if;
                   end;
                end if;
@@ -1587,7 +1597,7 @@ package body Docgen.Work_On_Source is
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_Filename  : VFS.Virtual_File;
       Package_Info     : Entity_Information;
-      File_Text        : GNAT.OS_Lib.String_Access;
+      File_Text        : GNAT.Strings.String_Access;
       Source_File_List : in out Type_Source_File_Table.HTable;
       Options          : All_Options;
       Private_Entity   : Boolean;
@@ -1595,15 +1605,14 @@ package body Docgen.Work_On_Source is
       Level            : in out Natural)
    is
       use TEL;
-      use type Basic_Types.String_Access;
       Case_Sensitive    : constant Boolean :=
                              Get_Language_Context
                                (Get_Language_From_File
                                  (Get_Language_Handler (Kernel),
                                   Source_Filename)).Case_Sensitive;
       Entity_Node       : Type_Entity_List.List_Node;
-      Description       : GNAT.OS_Lib.String_Access;
-      Header            : GNAT.OS_Lib.String_Access;
+      Description       : GNAT.Strings.String_Access;
+      Header            : GNAT.Strings.String_Access;
       Header_Lines      : Natural;
       First_Already_Set : Boolean;
       Entity            : TEL.Data_Access;
@@ -1670,8 +1679,8 @@ package body Docgen.Work_On_Source is
                           (B, Kernel, Result, Level, Description.all);
                      end if;
 
-                     Free (Header);
-                     Free (Description);
+                     GNAT.Strings.Free (Header);
+                     GNAT.Strings.Free (Description);
                   end if;
                end;
             end if;
@@ -1709,7 +1718,7 @@ package body Docgen.Work_On_Source is
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_Filename  : VFS.Virtual_File;
       Package_Info     : Entity_Information;
-      File_Text        : GNAT.OS_Lib.String_Access;
+      File_Text        : GNAT.Strings.String_Access;
       Source_File_List : in out Type_Source_File_Table.HTable;
       Options          : All_Options;
       Private_Entity   : Boolean;
@@ -1723,8 +1732,8 @@ package body Docgen.Work_On_Source is
                                  (Get_Language_Handler (Kernel),
                                   Source_Filename)).Case_Sensitive;
       Entity_Node       : Type_Entity_List.List_Node;
-      Description       : GNAT.OS_Lib.String_Access;
-      Header            : GNAT.OS_Lib.String_Access;
+      Description       : GNAT.Strings.String_Access;
+      Header            : GNAT.Strings.String_Access;
       Header_Lines      : Natural;
       First_Already_Set : Boolean;
       Entity            : TEL.Data_Access;
@@ -1788,8 +1797,8 @@ package body Docgen.Work_On_Source is
                           (B, Kernel, Result, Level, Description.all);
                      end if;
 
-                     Free (Header);
-                     Free (Description);
+                     GNAT.Strings.Free (Header);
+                     GNAT.Strings.Free (Description);
                   end if;
                end;
             end if;
@@ -1866,7 +1875,7 @@ package body Docgen.Work_On_Source is
       Private_Tagged_Types_List : in out List_Entity_Information.List;
       Source_Filename           : VFS.Virtual_File;
       Package_Info              : Entity_Information;
-      File_Text                 : GNAT.OS_Lib.String_Access;
+      File_Text                 : GNAT.Strings.String_Access;
       Source_File_List          : in out Type_Source_File_Table.HTable;
       Options                   : All_Options;
       Private_Entity            : Boolean;
@@ -1880,8 +1889,8 @@ package body Docgen.Work_On_Source is
                                  (Get_Language_Handler (Kernel),
                                   Source_Filename)).Case_Sensitive;
       Entity_Node       : Type_Entity_List.List_Node;
-      Description       : GNAT.OS_Lib.String_Access;
-      Header            : GNAT.OS_Lib.String_Access;
+      Description       : GNAT.Strings.String_Access;
+      Header            : GNAT.Strings.String_Access;
       Header_Lines      : Natural;
       First_Already_Set : Boolean;
       Entity            : TEL.Data_Access;
@@ -2000,8 +2009,8 @@ package body Docgen.Work_On_Source is
                         end if;
                      end if;
 
-                     Free (Header);
-                     Free (Description);
+                     GNAT.Strings.Free (Header);
+                     GNAT.Strings.Free (Description);
                   end if;
                end;
             end if;
@@ -2040,7 +2049,7 @@ package body Docgen.Work_On_Source is
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_Filename  : VFS.Virtual_File;
       Package_Info     : Entity_Information;
-      File_Text        : GNAT.OS_Lib.String_Access;
+      File_Text        : GNAT.Strings.String_Access;
       Source_File_List : in out Type_Source_File_Table.HTable;
       Options          : All_Options;
       Private_Entity   : Boolean;
@@ -2054,8 +2063,8 @@ package body Docgen.Work_On_Source is
                                  (Get_Language_Handler (Kernel),
                                   Source_Filename)).Case_Sensitive;
       Entity_Node       : Type_Entity_List.List_Node;
-      Description       : GNAT.OS_Lib.String_Access;
-      Header            : GNAT.OS_Lib.String_Access;
+      Description       : GNAT.Strings.String_Access;
+      Header            : GNAT.Strings.String_Access;
       Header_Lines      : Natural;
       First_Already_Set : Boolean;
       Entity            : TEL.Data_Access;
@@ -2118,8 +2127,8 @@ package body Docgen.Work_On_Source is
                           (B, Kernel, Result, Level, Description.all);
                      end if;
 
-                     Free (Header);
-                     Free (Description);
+                     GNAT.Strings.Free (Header);
+                     GNAT.Strings.Free (Description);
                   end if;
                end;
             end if;
@@ -2234,7 +2243,7 @@ package body Docgen.Work_On_Source is
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_Filename  : VFS.Virtual_File;
       Unit_Info        : Entity_Information;
-      File_Text        : GNAT.OS_Lib.String_Access;
+      File_Text        : GNAT.Strings.String_Access;
       Source_File_List : in out Type_Source_File_Table.HTable;
       Options          : All_Options;
       Private_Entity   : Boolean;
@@ -2248,8 +2257,8 @@ package body Docgen.Work_On_Source is
                                  (Get_Language_Handler (Kernel),
                                   Source_Filename)).Case_Sensitive;
       Entity_Node       : Type_Entity_List.List_Node;
-      Description       : GNAT.OS_Lib.String_Access;
-      Header            : GNAT.OS_Lib.String_Access;
+      Description       : GNAT.Strings.String_Access;
+      Header            : GNAT.Strings.String_Access;
       Header_Lines      : Natural;
       First_Already_Set : Boolean;
       Entity            : TEL.Data_Access;
@@ -2337,8 +2346,8 @@ package body Docgen.Work_On_Source is
                            Level            => Level);
                      end if;
 
-                     Free (Header);
-                     Free (Description);
+                     GNAT.Strings.Free (Header);
+                     GNAT.Strings.Free (Description);
                   end if;
                end;
             end if;
@@ -2427,9 +2436,7 @@ package body Docgen.Work_On_Source is
       Case_Sensitive : Boolean)
       return String
    is
-      use type Basic_Types.String_Access;
       Parse_Node : Construct_Access := Parsed_List.First;
-
    begin
       while Parse_Node /= null loop
          if Parse_Node.Sloc_Start.Line =
@@ -2480,7 +2487,7 @@ package body Docgen.Work_On_Source is
 
    procedure Remove_Indent
      (Text       : String;
-      Clean_Text : out GNAT.OS_Lib.String_Access;
+      Clean_Text : out GNAT.Strings.String_Access;
       Line_Count : out Natural)
    is
       Result            : Unbounded_String := Null_Unbounded_String;

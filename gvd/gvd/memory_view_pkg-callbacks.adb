@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
+--                      Copyright (C) 2001-2004                      --
 --                              AdaCore                              --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;    use Ada.Exceptions;
+with GNAT.Strings;
 
 with Gdk.Event;         use Gdk.Event;
 with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
@@ -31,11 +32,12 @@ with Gtk.Handlers;      use Gtk.Handlers;
 with Gtk.Text_Buffer;   use Gtk.Text_Buffer;
 with Gtk.Text_Iter;     use Gtk.Text_Iter;
 
-with Basic_Types;       use Basic_Types;
 with GVD.Memory_View;   use GVD.Memory_View;
 with Traces;            use Traces;
 
 package body Memory_View_Pkg.Callbacks is
+
+   use type GNAT.Strings.String_Access;
 
    -------------------------------
    -- On_Address_Entry_Activate --
@@ -291,7 +293,7 @@ package body Memory_View_Pkg.Callbacks is
       View : constant GVD_Memory_View :=
                GVD_Memory_View (Get_Toplevel (Object));
    begin
-      Free (View.Flags);
+      GNAT.Strings.Free (View.Flags);
       View.Flags := new String'(View.Values.all);
       Update_Display (View);
 

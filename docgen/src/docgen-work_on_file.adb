@@ -20,6 +20,7 @@
 
 with Ada.Exceptions;                use Ada.Exceptions;
 with Ada.Strings.Unbounded;         use Ada.Strings.Unbounded;
+with GNAT.OS_Lib;                   use GNAT.OS_Lib;
 
 with Commands;                      use Commands;
 with Commands.Generic_Asynchronous;
@@ -629,7 +630,7 @@ package body Docgen.Work_On_File is
    begin
       if Get_Element (Data.Source_File_Node) /= No_Source_File_Information then
          declare
-            Current_Unit   : constant GNAT.OS_Lib.String_Access :=
+            Current_Unit   : constant GNAT.Strings.String_Access :=
                                Get_Element (Data.Source_File_Node).Unit_Name;
             File           : constant Source_File :=
                                Get_Key (Data.Source_File_Node);

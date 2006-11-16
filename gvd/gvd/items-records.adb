@@ -24,10 +24,11 @@ with Glib;         use Glib;
 with Gdk.Drawable; use Gdk.Drawable;
 with Pango.Layout; use Pango.Layout;
 
-with Language;               use Language;
-with Basic_Types;            use Basic_Types;
+with Language;     use Language;
 
 package body Items.Records is
+
+   use type GNAT.Strings.String_Access;
 
    ---------------------
    -- New_Record_Type --
@@ -73,7 +74,7 @@ package body Items.Records is
       end if;
 
       if Item.Fields (Index).Name /= null then
-         Free (Item.Fields (Index).Name);
+         GNAT.Strings.Free (Item.Fields (Index).Name);
       end if;
 
       if Variant_Parts = 0 then
@@ -96,7 +97,7 @@ package body Items.Records is
 
    function Get_Field_Name
      (Item  : in Record_Type;
-      Index : Positive) return String_Access is
+      Index : Positive) return GNAT.Strings.String_Access is
    begin
       return Item.Fields (Index).Name;
    end Get_Field_Name;
@@ -337,7 +338,7 @@ package body Items.Records is
             end if;
 
             if not Only_Value then
-               Free (Item.Fields (J).Name);
+               GNAT.Strings.Free (Item.Fields (J).Name);
                Free (Item.Fields (J).Variant_Part);
             end if;
          end if;
@@ -527,7 +528,7 @@ package body Items.Records is
    is
       Total_Height, Total_Width : Gint := 0;
       H : Gint;
-      Largest_Name : String_Access := null;
+      Largest_Name : GNAT.Strings.String_Access := null;
 
    begin
       if not Item.Valid then

@@ -23,7 +23,7 @@ with Ada.Strings.Unbounded;     use Ada.Strings; use Ada.Strings.Unbounded;
 with Ada.Unchecked_Conversion;
 with System;
 
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Strings;              use GNAT.Strings;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
@@ -653,7 +653,7 @@ package body Revision_Views is
          Free (List);
       end Set_Attribute;
 
-      Names   : GNAT.OS_Lib.String_List :=
+      Names   : GNAT.Strings.String_List :=
                   (1 => new String'(-"Revision"),
                    2 => new String'(-"Author"),
                    3 => new String'(-"Date / Log"));

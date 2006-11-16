@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---           Copyright (C) 2006 Ada Core Technologies, Inc.            --
+--                        Copyright (C) 2006 AdaCore                        --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -19,7 +19,7 @@
 -- to  the Free Software Foundation,  59 Temple Place - Suite 330,  Boston, --
 -- MA 02111-1307, USA.                                                      --
 --                                                                          --
--- GNAT is maintained by Ada Core Technologies Inc (http://www.gnat.com).   --
+-- GNAT is maintained by AdaCore (http://www.adacore.com).                  --
 --                                                                          --
 ------------------------------------------------------------------------------
 
@@ -130,7 +130,7 @@ package body GNAT.Expect.TTY.Remote is
       Args                : GNAT.OS_Lib.Argument_List;
       Execution_Directory : String;
       Get_Output          : Boolean;
-      Out_Value           : out GNAT.OS_Lib.String_Access;
+      Out_Value           : out GNAT.Strings.String_Access;
       Status              : out Integer;
       Success             : out Boolean);
    --  Execute the command synchronously.
@@ -698,18 +698,19 @@ package body GNAT.Expect.TTY.Remote is
          --  Set command
 
          if Old_Args /= null then
-            New_Args := new Argument_List'(Old_Args.all &
-                                           Remote_Desc.Start_Cmd);
+            New_Args := new GNAT.OS_Lib.Argument_List'(Old_Args.all &
+                                                       Remote_Desc.Start_Cmd);
             Simple_Free (Old_Args);
             Old_Args := New_Args;
          else
-            Old_Args := new Argument_List'(1 => Remote_Desc.Start_Cmd);
+            Old_Args := new GNAT.OS_Lib.Argument_List'
+              (1 => Remote_Desc.Start_Cmd);
          end if;
 
          --  Set user argument
 
          if Descriptor.Machine.Desc.User_Name.all /= "" then
-            New_Args := new Argument_List'
+            New_Args := new GNAT.OS_Lib.Argument_List'
               (Old_Args.all &
                Process_Arg_List
                  (Remote_Desc.Start_Cmd_User_Args.all));
@@ -719,7 +720,7 @@ package body GNAT.Expect.TTY.Remote is
 
          --  Set common arguments and remote command
 
-         New_Args := new Argument_List'
+         New_Args := new GNAT.OS_Lib.Argument_List'
            (Old_Args.all &
             Process_Arg_List
               (Remote_Desc.Start_Cmd_Common_Args.all) &
@@ -738,7 +739,7 @@ package body GNAT.Expect.TTY.Remote is
                Search_Loop :
                for J in Old_Args'Range loop
                   if Old_Args (J).all = "" then
-                     New_Args := new Argument_List'
+                     New_Args := new GNAT.OS_Lib.Argument_List'
                        (Old_Args (Old_Args'First .. J - 1) &
                         Old_Args (J + 1 .. Old_Args'Last));
                      Free (Old_Args (J));
@@ -998,7 +999,7 @@ package body GNAT.Expect.TTY.Remote is
    procedure Sync_Execute
      (Host                  : String;
       Args                  : GNAT.OS_Lib.Argument_List;
-      Out_Value             : out GNAT.OS_Lib.String_Access;
+      Out_Value             : out GNAT.Strings.String_Access;
       Status                : out Boolean;
       Execution_Directory   : String  := "")
    is
@@ -1018,7 +1019,7 @@ package body GNAT.Expect.TTY.Remote is
       Status                : out Boolean;
       Execution_Directory   : String  := "")
    is
-      Out_Value : GNAT.OS_Lib.String_Access;
+      Out_Value : GNAT.Strings.String_Access;
       Status_Nb : Integer;
    begin
       Internal_Sync_Execute
@@ -1034,7 +1035,7 @@ package body GNAT.Expect.TTY.Remote is
       Args                  : GNAT.OS_Lib.Argument_List;
       Execution_Directory   : String;
       Get_Output            : Boolean;
-      Out_Value             : out GNAT.OS_Lib.String_Access;
+      Out_Value             : out GNAT.Strings.String_Access;
       Status                : out Integer;
       Success               : out Boolean)
    is
@@ -1446,7 +1447,7 @@ package body GNAT.Expect.TTY.Remote is
       Login_Ptrn      : Pattern_Matcher_Access;
 
    begin
-      Full_Exec := Locate_Exec_On_Path (Start_Command);
+      Full_Exec := GNAT.OS_Lib.Locate_Exec_On_Path (Start_Command);
 
       if Full_Exec = null then
          return;

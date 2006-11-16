@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
+--                      Copyright (C) 2000-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -26,11 +26,11 @@ with Gdk.Drawable; use Gdk.Drawable;
 with Language;     use Language;
 with Pango.Layout; use Pango.Layout;
 
-with Basic_Types;         use Basic_Types;
-
 with Items.Repeats; use Items.Repeats;
 
 package body Items.Arrays is
+
+   use type GNAT.Strings.String_Access;
 
    function Index_String
      (Item    : Array_Type;

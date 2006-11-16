@@ -31,6 +31,7 @@ with GNAT.Expect.TTY.Remote;     use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Regpat;                use GNAT.Regpat;
+with GNAT.Strings;
 
 with Glib;                       use Glib;
 with Glib.Convert;               use Glib.Convert;
@@ -180,7 +181,7 @@ package body GPS.Kernel.Remote is
      new GNAT.Expect.TTY.Remote.Machine_Descriptor_Record
    with record
       Attribute  : Descriptor_Attribute;
-      Rsync_Func : GNAT.OS_Lib.String_Access;
+      Rsync_Func : GNAT.Strings.String_Access;
       Applied    : Boolean;
       --  tells if the machine configuration has been applied.
    end record;
@@ -1520,7 +1521,7 @@ package body GPS.Kernel.Remote is
            "filesystems, if these are not shared filesystems."));
 
       declare
-         Rsync_List : constant GNAT.OS_Lib.String_List :=
+         Rsync_List : constant GNAT.Strings.String_List :=
            Get_Hook_Func_List (Kernel, Rsync_Action_Hook);
       begin
          for J in Rsync_List'Range loop
@@ -1818,7 +1819,7 @@ package body GPS.Kernel.Remote is
 
             declare
                Substr : constant String := Str (Idx .. Idx_End);
-               List   : GNAT.OS_Lib.String_List (1 .. N_Lines);
+               List   : GNAT.Strings.String_List (1 .. N_Lines);
             begin
                Idx := Substr'First;
 
@@ -3051,8 +3052,8 @@ package body GPS.Kernel.Remote is
             end if;
 
             declare
-               Init_Cmds : GNAT.OS_Lib.String_List (1 .. Nb_Init_Cmds);
-               Exit_Cmds : GNAT.OS_Lib.String_List (1 .. Nb_Exit_Cmds);
+               Init_Cmds : GNAT.Strings.String_List (1 .. Nb_Init_Cmds);
+               Exit_Cmds : GNAT.Strings.String_List (1 .. Nb_Exit_Cmds);
                Idx       : Natural;
             begin
                Child := Init_Cmds_Child.Child;

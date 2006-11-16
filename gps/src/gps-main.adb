@@ -27,6 +27,7 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Strings;
 
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 
@@ -207,7 +208,7 @@ procedure GPS.Main is
    --  If any of these debug handles is active, the correponding module
    --  is loaded.
 
-   subtype String_Access is GNAT.OS_Lib.String_Access;
+   subtype String_Access is GNAT.Strings.String_Access;
 
    GPS_Main               : GPS_Window;
    Directory              : Dir_Type;
@@ -224,7 +225,7 @@ procedure GPS.Main is
    Protocol               : String_Access;
    Debugger_Name          : String_Access;
    Startup_Dir            : String_Access;
-   About_Contents         : GNAT.OS_Lib.String_Access;
+   About_Contents         : String_Access;
    Splash                 : Gtk_Window;
    User_Directory_Existed : Boolean;
    Cleanup_Needed         : Boolean := False;

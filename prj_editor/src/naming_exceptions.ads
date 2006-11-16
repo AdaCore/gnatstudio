@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003                            --
---                            ACT-Europe                             --
+--                      Copyright (C) 2003-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,7 +24,7 @@
 
 with Gtk.Box;
 with Projects;
-with GNAT.OS_Lib;
+with GNAT.Strings;
 with Gtk.GEntry;
 with Gtk.Tree_View;
 with Gtk.Tree_Store;
@@ -50,7 +50,7 @@ package Naming_Exceptions is
 
 private
    type Exceptions_Editor_Record is new Gtk.Box.Gtk_Box_Record with record
-      Language        : GNAT.OS_Lib.String_Access;
+      Language        : GNAT.Strings.String_Access;
       Filename_Entry  : Gtk.GEntry.Gtk_Entry;
       Exceptions_List : Gtk.Tree_View.Gtk_Tree_View;
       Exceptions      : Gtk.Tree_Store.Gtk_Tree_Store;

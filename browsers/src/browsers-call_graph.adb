@@ -21,7 +21,7 @@
 with Ada.Exceptions;                use Ada.Exceptions;
 with Ada.Strings.Unbounded;
 with Ada.Text_IO;                   use Ada.Text_IO;
-with GNAT.OS_Lib;                   use GNAT.OS_Lib;
+with GNAT.Strings;                  use GNAT.Strings;
 
 with Gdk.GC;                        use Gdk.GC;
 with Gdk.Event;                     use Gdk.Event;
@@ -2355,9 +2355,10 @@ package body Browsers.Call_Graph is
       use Ada.Strings.Unbounded;
 
       Output   : Unbounded_String;
-      Line     : GNAT.OS_Lib.String_Access;
+      Line     : GNAT.Strings.String_Access;
       Dummy_Cb : Active_Area_Cb := null;
       J        : Positive := 1;
+
    begin
       Get_Line (Item.Refs, J, Callback => Dummy_Cb, Text => Line);
 

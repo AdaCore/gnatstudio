@@ -18,8 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.OS_Lib; use GNAT.OS_Lib;
-with Gdk.Pixbuf;  use Gdk.Pixbuf;
+with GNAT.Strings; use GNAT.Strings;
+with Gdk.Pixbuf;   use Gdk.Pixbuf;
 
 with Gtkada.File_Selector; use Gtkada.File_Selector;
 
@@ -36,8 +36,8 @@ package Aunit_Filters is
    procedure Get_Suite_Name
      (Kernel       : GPS.Kernel.Kernel_Handle;
       File_Name    : String;
-      Package_Name : out GNAT.OS_Lib.String_Access;
-      Suite_Name   : out GNAT.OS_Lib.String_Access;
+      Package_Name : out GNAT.Strings.String_Access;
+      Suite_Name   : out GNAT.Strings.String_Access;
       F_Type       : out Test_Type);
    --  Open File_Name, do a basic parsing on it to look for aunit tests or
    --  tests suite. If found, then Suite_Name is initialized to this test/suite
@@ -77,7 +77,7 @@ package Aunit_Filters is
       File   : VFS.Virtual_File;
       State  : out File_State;
       Pixbuf : out Gdk_Pixbuf;
-      Text   : out GNAT.OS_Lib.String_Access);
+      Text   : out GNAT.Strings.String_Access);
    --  Use_File_Filter procedure for Filter_Show_Ada.
    --  Text is set to the name of the main unit in the file.
 
@@ -87,7 +87,7 @@ package Aunit_Filters is
       File   : VFS.Virtual_File;
       State  : out File_State;
       Pixbuf : out Gdk_Pixbuf;
-      Text   : out GNAT.OS_Lib.String_Access);
+      Text   : out GNAT.Strings.String_Access);
    --  Use_File_Filter procedure for Filter_Show_Suites.
    --  Text is set to the name of the suite found in the file.
 
@@ -97,7 +97,7 @@ package Aunit_Filters is
       File   : VFS.Virtual_File;
       State  : out File_State;
       Pixbuf : out Gdk_Pixbuf;
-      Text   : out GNAT.OS_Lib.String_Access);
+      Text   : out GNAT.Strings.String_Access);
    --  Use_File_Filter procedure for Filter_Show_Tests.
    --  Text is set to the name of the suite/test case found in the file.
 

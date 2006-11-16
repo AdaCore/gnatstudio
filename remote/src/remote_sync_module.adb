@@ -25,6 +25,7 @@ with GNAT.Expect;            use GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote; use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
+with GNAT.Strings;
 with Ada.Strings.Unbounded;
 
 with Glib;               use Glib;
@@ -60,7 +61,7 @@ package body Remote_Sync_Module is
 
    type Rsync_Module_Record is new Module_ID_Record with record
       Kernel     : Kernel_Handle;
-      Rsync_Args : String_List_Access;
+      Rsync_Args : GNAT.Strings.String_List_Access;
    end record;
    type Rsync_Module_ID is access all Rsync_Module_Record'Class;
 
@@ -92,14 +93,14 @@ package body Remote_Sync_Module is
    type Return_Data_Access is access all Return_Data;
 
    type Rsync_Callback_Data is new Callback_Data_Record with record
-      Network_Name      : String_Access;
-      User_Name         : String_Access;
+      Network_Name      : GNAT.Strings.String_Access;
+      User_Name         : GNAT.Strings.String_Access;
       Nb_Password_Tries : Natural;
       Synchronous       : Boolean;
       Dialog            : Rsync_Dialog;
       Dialog_Running    : Boolean;
       Ret_Data          : Return_Data_Access;
-      Buffer            : String_Access;
+      Buffer            : GNAT.Strings.String_Access;
    end record;
 
    function On_Rsync_Hook
@@ -198,8 +199,8 @@ package body Remote_Sync_Module is
       Data   : access Hooks_Data'Class) return Boolean
    is
       Rsync_Data        : Rsync_Hooks_Args renames Rsync_Hooks_Args (Data.all);
-      Src_Path          : String_Access;
-      Dest_Path         : String_Access;
+      Src_Path          : GNAT.Strings.String_Access;
+      Dest_Path         : GNAT.Strings.String_Access;
       Src_FS            : Filesystem_Access;
       Dest_FS           : Filesystem_Access;
       Machine           : Machine_Descriptor;
@@ -208,36 +209,40 @@ package body Remote_Sync_Module is
       Ret_Data          : aliased Return_Data;
       Real_Print_Output : Boolean;
 
-      function  Build_Arg return String_List;
+      function Build_Arg return GNAT.Strings.String_List;
       --  Build rsync arguments
 
       ---------------
       -- Build_Arg --
       ---------------
 
-      function Build_Arg return String_List is
+      function Build_Arg return GNAT.Strings.String_List is
 
-         Rsync_Args : constant String_List :=
+         Rsync_Args : constant GNAT.Strings.String_List :=
                         Clone (Rsync_Module.Rsync_Args.all);
 
-         function Transport_Arg return String_List;
+         function Transport_Arg return GNAT.Strings.String_List;
          --  Argument for transport
 
-         function Use_Links_Arg return String_List;
+         function Use_Links_Arg return GNAT.Strings.String_List;
          --  Argument for link transfer
 
-         function Protect (S : String_Access) return String_Access;
+         function Protect
+           (S : GNAT.Strings.String_Access) return GNAT.Strings.String_Access;
          --  Protects spaces and quotes
 
          -------------
          -- Protect --
          -------------
 
-         function Protect (S : String_Access) return String_Access is
+         function Protect
+           (S : GNAT.Strings.String_Access) return GNAT.Strings.String_Access
+         is
             use Ada.Strings.Unbounded;
             Out_Str : Unbounded_String;
-            Ret     : GNAT.OS_Lib.String_Access;
+            Ret     : GNAT.Strings.String_Access;
             Ignore  : Boolean;
+
          begin
             Ignore := False;
 
@@ -257,7 +262,7 @@ package body Remote_Sync_Module is
             end loop;
 
             Ret := S;
-            Free (Ret);
+            GNAT.Strings.Free (Ret);
             Ret := new String'(To_String (Out_Str));
 
             return Ret;
@@ -267,7 +272,7 @@ package body Remote_Sync_Module is
          -- Transport_Arg --
          -------------------
 
-         function Transport_Arg return String_List is
+         function Transport_Arg return GNAT.Strings.String_List is
          begin
             if Machine.Access_Name.all = "ssh" then
                return (1 => new String'("--rsh=ssh"));
@@ -280,7 +285,7 @@ package body Remote_Sync_Module is
          -- Use_Links_Arg --
          -------------------
 
-         function Use_Links_Arg return String_List is
+         function Use_Links_Arg return GNAT.Strings.String_List is
          begin
             --  No support for symbolic links under windows...
             if Dest_FS.all in Windows_Filesystem_Record'Class then
@@ -444,7 +449,7 @@ package body Remote_Sync_Module is
       Cb_Data              : Rsync_Callback_Data renames
         Rsync_Callback_Data (Data.Callback_Data.all);
       Dead                 : Boolean;
-      Old_Buff             : String_Access;
+      Old_Buff             : GNAT.Strings.String_Access;
       LF_Index             : Integer;
       Last                 : Natural;
 
@@ -544,7 +549,7 @@ package body Remote_Sync_Module is
                end;
 
                --  Do not preserve the password prompt
-               Free (Cb_Data.Buffer);
+               GNAT.Strings.Free (Cb_Data.Buffer);
                return;
             end if;
 
@@ -572,7 +577,7 @@ package body Remote_Sync_Module is
                end;
 
                --  Do not preserve the password prompt
-               Free (Cb_Data.Buffer);
+               GNAT.Strings.Free (Cb_Data.Buffer);
                return;
             end if;
 

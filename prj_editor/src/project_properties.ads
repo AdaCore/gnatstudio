@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
---                          G P S                                    --
+--                              G P S                                --
 --                                                                   --
---                        Copyright (C) 2002-2006                    --
---                            AdaCore                                --
+--                     Copyright (C) 2002-2006                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
@@ -28,7 +28,7 @@ with Gtk.Box;
 with Gtk.GEntry;
 with GPS.Kernel;
 with Projects;
-with GNAT.OS_Lib;
+with GNAT.Strings;
 with Commands.Interactive;
 with Creation_Wizard;
 with Wizards;
@@ -99,7 +99,7 @@ package Project_Properties is
       Pkg    : String;
       Name   : String;
       Index  : String := "")
-      return GNAT.OS_Lib.String_List;
+      return GNAT.Strings.String_List;
    --  Return the value of the attribute as currently edited.
    --  The returned value must be freed by the caller.
    --  ??? Relies on global variables, would be nice to eliminate through the
@@ -127,8 +127,8 @@ private
 
    function Get_Value_As_List
      (Editor          : access Root_Attribute_Editor_Record;
-      Attribute_Index : String := "") return GNAT.OS_Lib.String_List
-     is abstract;
+      Attribute_Index : String := "") return GNAT.Strings.String_List
+      is abstract;
    --  Return the current value in Editor for the given attribute_Index.
    --  The returned value must be freed by the user.
 

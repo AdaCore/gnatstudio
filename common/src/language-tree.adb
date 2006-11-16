@@ -18,12 +18,13 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Basic_Types;       use Basic_Types;
-with String_Utils;      use String_Utils;
+with String_Utils; use String_Utils;
 
 with Ada.Unchecked_Deallocation;
 
 package body Language.Tree is
+
+   use type GNAT.Strings.String_Access;
 
    --------------
    -- Contains --
@@ -45,7 +46,7 @@ package body Language.Tree is
    begin
       if Tree /= null then
          for J in Tree.Contents'Range loop
-            Free (Tree.Contents (J).Construct.Name);
+            GNAT.Strings.Free (Tree.Contents (J).Construct.Name);
          end loop;
 
          Free (Tree.Unit_Name);

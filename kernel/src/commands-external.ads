@@ -22,7 +22,7 @@ with GNAT.Expect.TTY;      use GNAT.Expect.TTY;
 with Gtk.Main;             use Gtk.Main;
 with GPS.Kernel;         use GPS.Kernel;
 with String_List_Utils;    use String_List_Utils;
-with Basic_Types;          use Basic_Types;
+with GNAT.Strings;
 
 package Commands.External is
 
@@ -78,8 +78,8 @@ private
    type External_Command is new Root_Command with record
       Kernel          : Kernel_Handle;
       Fd              : TTY_Process_Descriptor;
-      Command         : String_Access;
-      Dir             : String_Access;
+      Command         : GNAT.Strings.String_Access;
+      Dir             : GNAT.Strings.String_Access;
       Args            : String_List.List;
       Head            : String_List.List;
       Handler         : String_List_Handler;
@@ -89,7 +89,7 @@ private
       Check_Password  : Boolean := False;
       Nb_Pwd          : Natural := 0;
 
-      Description     : String_Access;
+      Description     : GNAT.Strings.String_Access;
 
       Handler_Success : Boolean := False;
    end record;

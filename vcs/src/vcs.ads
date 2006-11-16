@@ -21,11 +21,11 @@
 with Ada.Unchecked_Deallocation;
 
 with GPS.Kernel;                use GPS.Kernel;
-with Basic_Types;               use Basic_Types;
 with String_List_Utils;         use String_List_Utils;
 with Generic_List;
 with OS_Utils;                  use OS_Utils;
 with VFS;
+with GNAT.Strings;
 
 package VCS is
 
@@ -79,7 +79,7 @@ package VCS is
       Remove_No_Commit,   --  Remove one file or dir from repository
       Revert);            --  Revert files or dirs to repository revision
 
-   type Action_Array is array (VCS_Action) of String_Access;
+   type Action_Array is array (VCS_Action) of GNAT.Strings.String_Access;
 
    function Get_VCS_From_Id (Id : String) return VCS_Access;
    --  Browse through all VCS identifiers that are registered and return
@@ -122,10 +122,10 @@ package VCS is
    --  string if no such file is set for this VCS.
 
    type File_Status is record
-      Label    : String_Access;
+      Label    : GNAT.Strings.String_Access;
       --  The label corresponding to the status
 
-      Stock_Id : String_Access;
+      Stock_Id : GNAT.Strings.String_Access;
       --  Associated stock icon
    end record;
 
@@ -499,7 +499,7 @@ private
       Atomic_Commands  : Boolean    := False;
       Commit_Directory : Boolean    := False;
       Path_Style       : OS_Utils.Path_Style := System_Default;
-      Ignore_Filename  : String_Access;
+      Ignore_Filename  : GNAT.Strings.String_Access;
    end record;
 
 end VCS;

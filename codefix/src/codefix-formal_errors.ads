@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.OS_Lib;
+with GNAT.Strings;
 with GNAT.Regpat;
 
 with Codefix.Text_Manager; use Codefix.Text_Manager;
@@ -248,7 +248,7 @@ package Codefix.Formal_Errors is
 private
 
    type Error_Message is new File_Cursor with record
-      Message : GNAT.OS_Lib.String_Access;
+      Message : GNAT.Strings.String_Access;
       Is_Style, Is_Warning : Boolean := False;
    end record;
 

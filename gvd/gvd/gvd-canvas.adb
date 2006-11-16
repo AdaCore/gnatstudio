@@ -46,7 +46,6 @@ with Pango.Font;          use Pango.Font;
 with Pango.Layout;        use Pango.Layout;
 
 with Ada.Exceptions;         use Ada.Exceptions;
-with Basic_Types;            use Basic_Types;
 with Debugger;               use Debugger;
 with Display_Items;          use Display_Items;
 with GNAT.Regpat;            use GNAT.Regpat;
@@ -579,7 +578,7 @@ package body GVD.Canvas is
       Last      : Positive;
       Enable    : Boolean;
       First     : Natural;
-      Link_Name : Basic_Types.String_Access;
+      Link_Name : GNAT.Strings.String_Access;
       Link_From : Display_Item;
       X, Y               : Gint := Gint'First;
       Num       : Integer := -1;

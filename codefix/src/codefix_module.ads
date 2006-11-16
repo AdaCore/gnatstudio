@@ -22,7 +22,7 @@
 
 with Gtk.Menu;                use Gtk.Menu;
 with GPS.Kernel;              use GPS.Kernel;
-with GNAT.OS_Lib;             use GNAT.OS_Lib;
+with GNAT.Strings;            use GNAT.Strings;
 with Codefix;                 use Codefix;
 with Codefix.Errors_Manager;  use Codefix.Errors_Manager;
 with Codefix.Text_Manager;
@@ -37,7 +37,7 @@ package Codefix_Module is
    --  Register the module into the list
 
    type Codefix_Session_Record is record
-      Category     : GNAT.OS_Lib.String_Access;
+      Category     : GNAT.Strings.String_Access;
       Corrector    : Ptr_Correction_Manager;
       Current_Text : Codefix.Text_Manager.Ptr_Text_Navigator;
    end record;

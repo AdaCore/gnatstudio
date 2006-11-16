@@ -28,7 +28,7 @@ with Find_Utils;             use Find_Utils;
 with Interfaces.C.Strings;   use Interfaces.C.Strings;
 with Traces;                 use Traces;
 with GPS.Kernel.Charsets;    use GPS.Kernel.Charsets;
-with GNAT.OS_Lib;            use GNAT.OS_Lib;
+with GNAT.Strings;           use GNAT.Strings;
 with VFS;                    use VFS;
 with Language_Handlers;      use Language_Handlers;
 with Language.Documentation; use Language.Documentation;
@@ -86,7 +86,7 @@ package body Doc_Utils is
 
       if Declaration_File_Contents = "" then
          declare
-            Tmp_Buffer : GNAT.OS_Lib.String_Access;
+            Tmp_Buffer : GNAT.Strings.String_Access;
          begin
             Tmp_Buffer := Read_File (Declaration_File);
 
@@ -226,7 +226,7 @@ package body Doc_Utils is
            and then Location /= Get_Declaration_Of (Entity)
          then
             declare
-               Tmp_Buffer : GNAT.OS_Lib.String_Access;
+               Tmp_Buffer : GNAT.Strings.String_Access;
             begin
                Tmp_Buffer := Read_File (Get_Filename (Location.File));
 

@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003 - 2006                     --
---                              AdaCore                              --
+--                      Copyright (C) 2003-2006                      --
+--                               AdaCore                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -265,7 +265,7 @@ package body Task_Manager is
                --  If it was the last command in the queue, free the queue.
 
                if Command_Queues.Is_Empty (Queue.Queue) then
-                  Free (Queue.Id);
+                  GNAT.Strings.Free (Queue.Id);
 
                   if Queue.Bar /= null then
                      Destroy (Get_Parent (Queue.Bar));
@@ -386,7 +386,9 @@ package body Task_Manager is
       Queue_Id   : String;
       Active     : Boolean;
       Show_Bar   : Boolean;
-      Block_Exit : Boolean) return Integer is
+      Block_Exit : Boolean) return Integer
+   is
+      use GNAT.Strings;
    begin
       if Manager.Queues = null then
          Manager.Queues := new Task_Queue_Array (1 .. 1);

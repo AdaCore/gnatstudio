@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2005                       --
+--                      Copyright (C) 2000-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -713,7 +713,7 @@ package body Language.Custom is
       Is_Declaration : Boolean;
       Prev, Next     : Construct_Access)
    is
-      N, P : Basic_Types.String_Access;
+      N, P : GNAT.Strings.String_Access;
    begin
       if Name /= Null_Ptr then
          N := new String'(Value (Name));

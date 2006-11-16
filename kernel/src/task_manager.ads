@@ -33,7 +33,7 @@ with Gtk.Progress_Bar;
 with Gtk.Widget;  use Gtk.Widget;
 
 with Commands;    use Commands;
-with Basic_Types; use Basic_Types;
+with GNAT.Strings;
 
 with Ada.Unchecked_Deallocation;
 
@@ -128,7 +128,7 @@ private
       Done     : Integer := 0;
       --  The number of items done in queue
 
-      Id       : String_Access;
+      Id       : GNAT.Strings.String_Access;
 
       Priority : Natural := 2;
       --  A priority of 1 is high priority,

@@ -22,6 +22,7 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Strings;
 
 with Glib;                      use Glib;
 with Glib.Convert;              use Glib.Convert;
@@ -51,7 +52,6 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 with Unchecked_Deallocation;
 
 with VFS;                      use VFS;
-with Basic_Types;              use Basic_Types;
 with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
@@ -88,8 +88,8 @@ package body Project_Explorers_Files is
 
    type Append_Directory_Idle_Data is record
       Explorer      : Project_Explorer_Files;
-      Norm_Dest     : Basic_Types.String_Access;
-      Norm_Dir      : Basic_Types.String_Access;
+      Norm_Dest     : GNAT.Strings.String_Access;
+      Norm_Dir      : GNAT.Strings.String_Access;
       D             : GNAT.Directory_Operations.Dir_Type;
       Depth         : Integer := 0;
       Base          : Gtk_Tree_Iter;

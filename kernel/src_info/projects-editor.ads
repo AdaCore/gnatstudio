@@ -299,8 +299,8 @@ package Projects.Editor is
    --  Same as above, but for an attribute that contains a single value.
 
    type Associative_Array_Value is record
-      Index : GNAT.OS_Lib.String_Access;
-      Value : GNAT.OS_Lib.String_Access;
+      Index : GNAT.Strings.String_Access;
+      Value : GNAT.Strings.String_Access;
    end record;
    type Associative_Array_Values is array (Natural range <>)
      of Associative_Array_Value;

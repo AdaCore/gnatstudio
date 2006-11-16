@@ -53,6 +53,7 @@ with Traces;              use Traces;
 with Histories;           use Histories;
 with String_Utils;        use String_Utils;
 with GUI_Utils;           use GUI_Utils;
+with GNAT.OS_Lib;
 
 package body Interactive_Consoles is
 
@@ -926,7 +927,7 @@ package body Interactive_Consoles is
 
    function Get_History
      (Console : access Interactive_Console_Record)
-      return GNAT.OS_Lib.String_List_Access is
+      return GNAT.Strings.String_List_Access is
    begin
       if Console.History = null then
          return null;
@@ -947,13 +948,13 @@ package body Interactive_Consoles is
       procedure Get_Next_Command
         (Text     : String;
          Start_At : in out Natural;
-         Command  : in out GNAT.OS_Lib.String_Access);
+         Command  : in out GNAT.Strings.String_Access);
       --  Look into Text, starting at Start_At, for the next command
       --  Commands are separated by ASCII.LF and trimmed
 
       Console   : constant Interactive_Console := Interactive_Console (Object);
       Last_Iter : Gtk_Text_Iter;
-      Command   : GNAT.OS_Lib.String_Access;
+      Command   : GNAT.Strings.String_Access;
       Start_At  : Natural := Text'First;
 
       ----------------------
@@ -963,7 +964,7 @@ package body Interactive_Consoles is
       procedure Get_Next_Command
         (Text     : String;
          Start_At : in out Natural;
-         Command  : in out GNAT.OS_Lib.String_Access)
+         Command  : in out GNAT.Strings.String_Access)
       is
          End_At : Natural := Start_At - 1;
       begin
@@ -1032,7 +1033,7 @@ package body Interactive_Consoles is
      (Console : Interactive_Console;
       Command : String)
    is
-      Output      : GNAT.OS_Lib.String_Access;
+      Output      : GNAT.Strings.String_Access;
       Prompt_Iter : Gtk_Text_Iter;
       Last_Iter   : Gtk_Text_Iter;
 

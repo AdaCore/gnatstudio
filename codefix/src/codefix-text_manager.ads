@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                      Copyright (C) 2002-2006                      --
---                              AdaCore                             --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,12 +19,11 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-with GNAT.OS_Lib;
+with GNAT.Strings;
 
 with Language;          use Language;
 with Language.Tree;     use Language.Tree;
 with Language.Tree.Ada; use Language.Tree.Ada;
-with Basic_Types;       use Basic_Types;
 with VFS;
 with Projects.Registry;
 
@@ -128,7 +127,7 @@ package Codefix.Text_Manager is
 
    type Word_Mark is record
       Mark_Id      : Ptr_Mark;
-      String_Match : GNAT.OS_Lib.String_Access;
+      String_Match : GNAT.Strings.String_Access;
       Mode         : String_Mode := Text_Ascii;
    end record;
 
@@ -246,11 +245,11 @@ package Codefix.Text_Manager is
    --  Returns le length of a line from the position of the cursor.
 
    function Read_File
-     (This : Text_Interface) return GNAT.OS_Lib.String_Access is abstract;
+     (This : Text_Interface) return GNAT.Strings.String_Access is abstract;
    --  Get the entire file in a String_Access.
 
    function Get_Buffer
-     (This : access Text_Interface'Class) return GNAT.OS_Lib.String_Access;
+     (This : access Text_Interface'Class) return GNAT.Strings.String_Access;
    --  Return the buffer stored in this text
 
    function Get_File_Name (This : Text_Interface) return VFS.Virtual_File;
@@ -271,7 +270,7 @@ package Codefix.Text_Manager is
    function Search_Strings
      (This           : Text_Interface'Class;
       Cursor         : Text_Cursor'Class;
-      Searched       : String_Array;
+      Searched       : String_List;
       Escape_Manager : Escape_Str_Manager'Class;
       Step           : Step_Way := Normal_Step) return Word_Cursor'Class;
    --  Search a string in the text, among serveal possibilities, and returns a
@@ -311,7 +310,7 @@ package Codefix.Text_Manager is
    procedure Next_Word
      (This   : Text_Interface'Class;
       Cursor : in out Text_Cursor'Class;
-      Word   : out GNAT.OS_Lib.String_Access);
+      Word   : out GNAT.Strings.String_Access);
    --  Put Cursor after the next word, and set 'Word' to this value, knowing
    --  that a word is a succession of non-blanks characters.
 
@@ -442,7 +441,7 @@ package Codefix.Text_Manager is
 
    function Read_File
      (This      : Text_Navigator_Abstr;
-      File_Name : VFS.Virtual_File) return GNAT.OS_Lib.String_Access;
+      File_Name : VFS.Virtual_File) return GNAT.Strings.String_Access;
    --  Get the entire file File_Name.
 
    procedure Replace
@@ -485,7 +484,7 @@ package Codefix.Text_Manager is
    function Search_Strings
      (This           : Text_Navigator_Abstr'Class;
       Cursor         : File_Cursor'Class;
-      Searched       : String_Array;
+      Searched       : GNAT.Strings.String_List;
       Escape_Manager : Escape_Str_Manager'Class;
       Step           : Step_Way := Normal_Step) return Word_Cursor'Class;
    --  Search a string in the text and returns a cursor at the beginning. The
@@ -532,7 +531,7 @@ package Codefix.Text_Manager is
    procedure Next_Word
      (This   : Text_Navigator_Abstr'Class;
       Cursor : in out File_Cursor'Class;
-      Word   : out GNAT.OS_Lib.String_Access);
+      Word   : out GNAT.Strings.String_Access);
    --  Put Cursor after the next word, and set 'Word' to this value, knowing
    --  that a word is a succession of non-blanks characters.
 
@@ -650,7 +649,7 @@ package Codefix.Text_Manager is
    function Search_Strings
      (This           : Extract_Line;
       Cursor         : File_Cursor'Class;
-      Searched       : String_Array;
+      Searched       : GNAT.Strings.String_List;
       Escape_Manager : Escape_Str_Manager'Class;
       Step           : Step_Way := Normal_Step) return Word_Cursor'Class;
    --  Search a string in the text and returns a cursor at the beginning. First
@@ -1312,7 +1311,7 @@ private
       Structure            : Construct_List_Access := new Construct_List;
       Tree                 : Construct_Tree := Null_Construct_Tree;
       Ada_Tree             : Ada_Construct_Tree;
-      Buffer               : GNAT.OS_Lib.String_Access := null;
+      Buffer               : GNAT.Strings.String_Access := null;
       File_Name            : VFS.Virtual_File;
       Structure_Up_To_Date : Ptr_Boolean := new Boolean'(False);
    end record;
@@ -1386,7 +1385,7 @@ private
    ----------------------------------------------------------------------------
 
    type Text_Command is abstract tagged record
-      Caption      : GNAT.OS_Lib.String_Access;
+      Caption      : GNAT.Strings.String_Access;
    end record;
 
    type Remove_Word_Cmd is new Text_Command with record
@@ -1408,7 +1407,7 @@ private
 
    type Replace_Word_Cmd is new Text_Command with record
       Mark         : Word_Mark;
-      Str_Expected : GNAT.OS_Lib.String_Access;
+      Str_Expected : GNAT.Strings.String_Access;
    end record;
 
    type Invert_Words_Cmd is new Text_Command with record
@@ -1417,14 +1416,14 @@ private
    end record;
 
    type Add_Line_Cmd is new Text_Command with record
-      Line     : GNAT.OS_Lib.String_Access;
+      Line     : GNAT.Strings.String_Access;
       Position : Ptr_Mark;
    end record;
 
    type Replace_Slice_Cmd is new Text_Command with record
       Start_Mark : Ptr_Mark;
       End_Mark   : Ptr_Mark;
-      New_Text   : GNAT.OS_Lib.String_Access;
+      New_Text   : GNAT.Strings.String_Access;
    end record;
 
    ----------------------------------------------------------------------------
@@ -1453,14 +1452,14 @@ private
    Null_File_Cursor : constant File_Cursor := (0, 0, VFS.No_File);
 
    type Word_Cursor is new File_Cursor with record
-      String_Match : GNAT.OS_Lib.String_Access;
+      String_Match : GNAT.Strings.String_Access;
       Mode         : String_Mode := Text_Ascii;
    end record;
 
    Null_Word_Cursor : constant Word_Cursor :=
      (Null_File_Cursor with null, Text_Ascii);
 
-   function Normalize (Str : Basic_Types.String_Access) return String;
+   function Normalize (Str : GNAT.Strings.String_Access) return String;
    --  Change the string in order to make comparaisons between lists of
    --  parameters.
 

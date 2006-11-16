@@ -28,6 +28,7 @@ with Gtk.Text_Iter;     use Gtk.Text_Iter;
 
 package body Src_Editor_Buffer.Blocks is
 
+   use type GNAT.Strings.String_Access;
    use Src_Editor_Buffer.Line_Information;
    use Block_List;
 
@@ -38,7 +39,7 @@ package body Src_Editor_Buffer.Blocks is
    procedure Compute_Blocks (Buffer : access Source_Buffer_Record'Class) is
 
       function Copy
-        (Str : Basic_Types.String_Access) return Basic_Types.String_Access;
+        (Str : GNAT.Strings.String_Access) return GNAT.Strings.String_Access;
       pragma Inline (Copy);
       --  Return a copy of Str
 
@@ -55,7 +56,7 @@ package body Src_Editor_Buffer.Blocks is
       ----------
 
       function Copy
-        (Str : Basic_Types.String_Access) return Basic_Types.String_Access is
+        (Str : GNAT.Strings.String_Access) return GNAT.Strings.String_Access is
       begin
          if Str = null then
             return null;

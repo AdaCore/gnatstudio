@@ -19,9 +19,9 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation; use Ada;
+with GNAT.Strings;
 
 with Generic_List;
-with Basic_Types;
 with String_Utils;      use String_Utils;
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
@@ -29,6 +29,8 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Language.Ada; use Language.Ada;
 
 package body Language.Tree.Ada is
+
+   use type GNAT.Strings.String_Access;
 
    ----------
    -- Free --
@@ -176,7 +178,7 @@ package body Language.Tree.Ada is
          Left_Buffer, Right_Buffer : String_Access) return Comp_Result
       is
          function Check_Lowercase_Names
-           (Left, Right : Basic_Types.String_Access) return Comp_Result;
+           (Left, Right : GNAT.Strings.String_Access) return Comp_Result;
 
          function Check_Lowercase_Names
            (Left, Right : String) return Comp_Result;
@@ -189,9 +191,8 @@ package body Language.Tree.Ada is
          ---------------------------
 
          function Check_Lowercase_Names
-           (Left, Right : Basic_Types.String_Access) return Comp_Result
+           (Left, Right : GNAT.Strings.String_Access) return Comp_Result
          is
-            use Basic_Types;
          begin
             if Left = null then
                if Right = null then

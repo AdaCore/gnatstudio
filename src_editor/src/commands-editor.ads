@@ -23,6 +23,7 @@
 with Basic_Types;       use Basic_Types;
 with Gtk.Text_Mark;     use Gtk.Text_Mark;
 with Src_Editor_Buffer; use Src_Editor_Buffer;
+with GNAT.Strings;
 
 package Commands.Editor is
 
@@ -173,7 +174,7 @@ private
 
    type Editor_Command_Type is new Root_Command with record
       Buffer                    : Source_Buffer;
-      Current_Text              : String_Access;
+      Current_Text              : GNAT.Strings.String_Access;
       Current_Text_Total_Length : Natural := 512;
       Current_Text_Size         : Natural := 0;
       Edition_Mode              : Editor_Command_Mode;
@@ -198,8 +199,8 @@ private
       End_Line_After    : Editable_Line_Type := 0;
       End_Column_After  : Character_Offset_Type := 0;
 
-      Text_Before       : String_Access;
-      Text_After        : String_Access;
+      Text_Before       : GNAT.Strings.String_Access;
+      Text_After        : GNAT.Strings.String_Access;
 
       Force_End         : Boolean;
    end record;

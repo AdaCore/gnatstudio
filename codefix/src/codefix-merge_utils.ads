@@ -21,7 +21,7 @@
 --  Implement the main merge functions, and all merge tools used with strings.
 
 with Ada.Unchecked_Deallocation;
-with GNAT.OS_Lib;
+with GNAT.Strings;
 
 package Codefix.Merge_Utils is
 
@@ -181,7 +181,7 @@ private
      Ada.Unchecked_Deallocation (Merge_Array, Ptr_Merge_Array);
 
    type Mergable_String is record
-      Str   : GNAT.OS_Lib.String_Access;
+      Str   : GNAT.Strings.String_Access;
       Infos : Ptr_Merge_Array;
    end record;
 
@@ -218,7 +218,7 @@ private
    --  if any.
 
    procedure Delete_Char
-     (This : in out GNAT.OS_Lib.String_Access; Position : Natural);
+     (This : in out GNAT.Strings.String_Access; Position : Natural);
    procedure Delete_Info (This : in out Ptr_Merge_Array; Position : Natural);
 
    type Mask_Iterator is record

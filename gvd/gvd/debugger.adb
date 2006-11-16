@@ -34,7 +34,6 @@ with Gtk.Window;                 use Gtk.Window;
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
 with Gtkada.Types;               use Gtkada.Types;
 
-with Basic_Types;                use Basic_Types;
 with Config;                     use Config;
 with GVD;                        use GVD;
 with GVD.Canvas;                 use GVD.Canvas;
@@ -358,10 +357,10 @@ package body Debugger is
    -----------------------
 
    function Source_Files_List
-     (Debugger : access Debugger_Root) return String_Array
+     (Debugger : access Debugger_Root) return GNAT.Strings.String_List
    is
       pragma Unreferenced (Debugger);
-      A : String_Array (1 .. 0);
+      A : GNAT.Strings.String_List (1 .. 0);
    begin
       return A;
    end Source_Files_List;

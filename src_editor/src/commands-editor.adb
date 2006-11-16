@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.Strings;              use GNAT.Strings;
 with Interfaces.C;
 
 with Src_Editor_Box;            use Src_Editor_Box;

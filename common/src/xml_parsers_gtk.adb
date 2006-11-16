@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2006                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -29,7 +29,7 @@ package body XML_Parsers is
    procedure Parse
      (File  : String;
       Tree  : out Glib.Xml_Int.Node_Ptr;
-      Error : out GNAT.OS_Lib.String_Access)
+      Error : out GNAT.Strings.String_Access)
    is
    begin
       Tree := Glib.Xml_Int.Parse (File);
@@ -49,7 +49,7 @@ package body XML_Parsers is
       From_File  : String := "<input>";
       Start_Line : Natural := 1;
       Tree       : out Glib.Xml_Int.Node_Ptr;
-      Error      : out GNAT.OS_Lib.String_Access)
+      Error      : out GNAT.Strings.String_Access)
    is
       pragma Unreferenced (From_File, Start_Line);
    begin

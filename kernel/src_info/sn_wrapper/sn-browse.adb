@@ -71,7 +71,7 @@ package body SN.Browse is
    --------------------
 
    procedure Generate_Xrefs
-     (DB_Directories : GNAT.OS_Lib.String_List_Access;
+     (DB_Directories : GNAT.Strings.String_List_Access;
       DBIMP_Path     : String;
       Temp_Name      : out GNAT.OS_Lib.Temp_File_Name;
       PD             : out GNAT.Expect.TTY.TTY_Process_Descriptor)
@@ -84,7 +84,7 @@ package body SN.Browse is
       Dir_Entry    : String (1 .. 8192);
       Success      : Boolean;
       Args         : Argument_List_Access;
-      Content      : GNAT.OS_Lib.String_Access;
+      Content      : GNAT.Strings.String_Access;
       Temp_File    : File_Descriptor;
 
    begin

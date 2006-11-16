@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003                            --
---                            ACT-Europe                             --
+--                      Copyright (C) 2003-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,7 +22,7 @@
 --  python interpreter into a GtkAda application
 
 with Gtk.Handlers;
-with GNAT.OS_Lib;
+with GNAT.Strings;
 with Ada.Calendar;
 with Interactive_Consoles;
 
@@ -99,7 +99,7 @@ private
       Use_Secondary_Prompt : Boolean := False;
       --  Which type of prompt should be displayed
 
-      Buffer : GNAT.OS_Lib.String_Access;
+      Buffer : GNAT.Strings.String_Access;
       --  Buffer for the command, to be added in front of any command before
       --  executing.
 

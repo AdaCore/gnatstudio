@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --              GtkAda - Ada95 binding for Gtk+/Gnome                --
 --                                                                   --
---                Copyright (C) 2000-2003 ACT-Europe                 --
+--                 Copyright (C) 2000-2006 AdaCore                   --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -32,7 +32,7 @@ with Glib; use Glib;
 with Gdk.Event;
 with Gdk.Types;
 with Gtk.Widget; use Gtk.Widget;
-with GNAT.OS_Lib;
+with GNAT.Strings;
 with Ada.Text_IO;
 
 package Gtkada.Macro is
@@ -62,12 +62,12 @@ package Gtkada.Macro is
 
    type Identifier is record
       Id_Type : Identifier_Type;
-      Id      : GNAT.OS_Lib.String_Access;
+      Id      : GNAT.Strings.String_Access;
    end record;
    --  An identifier for a widget
 
    type File_Buffer is record
-      Buffer : GNAT.OS_Lib.String_Access;
+      Buffer : GNAT.Strings.String_Access;
       Index  : Natural;
    end record;
    --  Buffer used by Load_Macro procedures.

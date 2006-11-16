@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002-2003                    --
---                            ACT-Europe                             --
+--                      Copyright (C) 2002-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,9 +24,9 @@
 with Gtk.Widget;   use Gtk.Widget;
 with Gtk.Clist;    use Gtk.Clist;
 with Diff_Utils;   use Diff_Utils;
-with Basic_Types;  use Basic_Types;
 with GPS.Kernel;
 with VFS;          use VFS;
+with GNAT.Strings;
 
 package Vdiff_Utils is
 
@@ -44,7 +44,7 @@ package Vdiff_Utils is
    type Text_Iterator_Access is access all Text_Iterator;
 
    type Text_Iterator is record
-      New_Line, Old_Line : String_Access;
+      New_Line, Old_Line : GNAT.Strings.String_Access;
       Original_Position  : Natural;
       Action             : Diff_Action := Nothing;
       Color_Enabled      : Boolean := True;

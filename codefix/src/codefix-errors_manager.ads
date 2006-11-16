@@ -23,7 +23,7 @@ with Generic_List;
 with Codefix.Text_Manager; use Codefix.Text_Manager;
 with Codefix.Formal_Errors; use Codefix.Formal_Errors;
 use Codefix.Formal_Errors.Command_List;
-with GNAT.OS_Lib;
+with GNAT.Strings;
 with VFS;
 
 with Ada.Unchecked_Deallocation;
@@ -205,7 +205,7 @@ private
    type Error_Id_Record is record
       Message         : Error_Message := Invalid_Error_Message;
       Solutions       : Solution_List := Command_List.Null_List;
-      Category        : GNAT.OS_Lib.String_Access;
+      Category        : GNAT.Strings.String_Access;
       Fixed           : Ptr_Boolean := new Boolean'(False);
       Solution_Chosen : Ptr_Extract := new Extract;
    end record;
@@ -234,7 +234,7 @@ private
       New_Error : out Error_Id);
 
    type State_Node is record
-      Error : GNAT.OS_Lib.String_Access;
+      Error : GNAT.Strings.String_Access;
       State : Error_State := Unknown;
    end record;
 

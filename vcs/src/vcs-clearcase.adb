@@ -42,6 +42,7 @@ with String_Utils;              use String_Utils;
 with VCS_Module;                use VCS_Module;
 with VCS_View.Explorer;         use VCS_View.Explorer;
 with VFS;                       use VFS;
+with GNAT.Strings;
 
 package body VCS.ClearCase is
 
@@ -518,12 +519,13 @@ package body VCS.ClearCase is
          end if;
 
          declare
-            Line        : constant String := Data (Node);
-            Begin_Index : Natural;
-            End_Index   : Natural;
+            Line           : constant String := Data (Node);
+            Begin_Index    : Natural;
+            End_Index      : Natural;
             Current_Status : File_Status_Record;
-            Version     : String_Access;
-            Rep_Version : String_Access;
+            Version        : GNAT.Strings.String_Access;
+            Rep_Version    : GNAT.Strings.String_Access;
+
          begin
             Current_Status.File := Create (Data (Files_Node));
 
@@ -581,8 +583,8 @@ package body VCS.ClearCase is
                Current_Status.Status := Needs_Update;
             end if;
 
-            Free (Rep_Version);
-            Free (Version);
+            GNAT.Strings.Free (Rep_Version);
+            GNAT.Strings.Free (Version);
 
             File_Status_List.Append (Result, Current_Status);
          end;

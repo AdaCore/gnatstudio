@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003                            --
---                            ACT-Europe                             --
+--                      Copyright (C) 2003-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,7 +22,7 @@ with Gtk.Widget;
 with Projects;
 with GPS.Kernel;
 with Naming_Editors;
-with GNAT.OS_Lib;
+with GNAT.Strings;
 with Gtk.Box;
 with Gtk.GEntry;
 with Naming_Exceptions;
@@ -44,9 +44,9 @@ package Custom_Naming_Editors is
      (Editor : access Custom_Naming_Editor_Record)
       return Gtk.Widget.Gtk_Widget;
    function Create_Project_Entry
-     (Editor  : access Custom_Naming_Editor_Record;
-      Project : Projects.Project_Type;
-      Languages    : GNAT.OS_Lib.Argument_List;
+     (Editor             : access Custom_Naming_Editor_Record;
+      Project            : Projects.Project_Type;
+      Languages          : GNAT.Strings.String_List;
       Scenario_Variables : Projects.Scenario_Variable_Array) return Boolean;
    procedure Show_Project_Settings
      (Editor             : access Custom_Naming_Editor_Record;
@@ -62,7 +62,7 @@ private
       GUI            : Gtk.Box.Gtk_Box;
       Spec_Extension : Gtk.GEntry.Gtk_Entry;
       Impl_Extension : Gtk.GEntry.Gtk_Entry;
-      Language       : GNAT.OS_Lib.String_Access;
+      Language       : GNAT.Strings.String_Access;
       Exceptions     : Naming_Exceptions.Exceptions_Editor;
    end record;
 end Custom_Naming_Editors;

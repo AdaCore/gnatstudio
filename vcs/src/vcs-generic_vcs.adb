@@ -52,6 +52,8 @@ with String_Utils;
 
 package body VCS.Generic_VCS is
 
+   use type GNAT.Strings.String_Access;
+
    Me : constant Debug_Handle := Create ("Generic_VCS");
 
    Max_Matches : constant := 64;
@@ -100,7 +102,7 @@ package body VCS.Generic_VCS is
    procedure Generic_Command
      (Ref        : access Generic_VCS_Record;
       Files      : String_List.List;
-      First_Args : GNAT.OS_Lib.String_List_Access;
+      First_Args : GNAT.Strings.String_List_Access;
       Action     : VCS_Action;
       Show_Bar   : Boolean := True);
    --  Launch a generic command corresponding to Action.
@@ -113,7 +115,7 @@ package body VCS.Generic_VCS is
    procedure Generic_Dir_Command
      (Ref        : access Generic_VCS_Record;
       Dirs       : String_List.List;
-      First_Args : GNAT.OS_Lib.String_List_Access;
+      First_Args : GNAT.Strings.String_List_Access;
       Dir_Action : VCS_Action;
       Show_Bar   : Boolean := True);
    --  Same as above, but work on dirs
@@ -121,13 +123,13 @@ package body VCS.Generic_VCS is
    procedure Generic_Command
      (Ref        : access Generic_VCS_Record;
       File       : VFS.Virtual_File;
-      First_Args : GNAT.OS_Lib.String_List_Access;
+      First_Args : GNAT.Strings.String_List_Access;
       Action     : VCS_Action);
    --  Launch a generic command corresponding to Action
 
    function Lookup_Action
      (Kernel : Kernel_Handle;
-      Action : String_Access) return Action_Record_Access;
+      Action : GNAT.Strings.String_Access) return Action_Record_Access;
    --  Wrapper for Lookup_Action
 
    procedure Generic_Parse_Status
@@ -150,13 +152,13 @@ package body VCS.Generic_VCS is
    type Parser_Command_Type is new Root_Command with record
       Override_Cache : Boolean;
       Clear_Logs     : Boolean;
-      Text           : String_Access;
+      Text           : GNAT.Strings.String_Access;
       Start          : Integer;
       Prev_Start     : Integer;
       Parser         : Status_Parser_Record;
       Status         : File_Status_List.List;
       Rep            : Generic_VCS_Access;
-      Dir            : String_Access;
+      Dir            : GNAT.Strings.String_Access;
    end record;
 
    --  ??? Need to implement destroy
@@ -176,8 +178,8 @@ package body VCS.Generic_VCS is
 
    procedure Free (Command : in out Parser_Command_Type) is
    begin
-      Free (Command.Text);
-      Free (Command.Dir);
+      GNAT.Strings.Free (Command.Text);
+      GNAT.Strings.Free (Command.Dir);
       File_Status_List.Free (Command.Status);
    end Free;
 
@@ -189,7 +191,6 @@ package body VCS.Generic_VCS is
      (Ref    : access Generic_VCS_Record;
       Action : VCS_Action) return String
    is
-      use type GNAT.OS_Lib.String_Access;
    begin
       if Ref.Labels (Action) = null then
          return -"VCS command";
@@ -204,7 +205,7 @@ package body VCS.Generic_VCS is
 
    function Lookup_Action
      (Kernel : Kernel_Handle;
-      Action : String_Access) return Action_Record_Access is
+      Action : GNAT.Strings.String_Access) return Action_Record_Access is
    begin
       if Action = null then
          return null;
@@ -262,14 +263,14 @@ package body VCS.Generic_VCS is
 
    procedure Free (X : in out Generic_VCS_Access) is
    begin
-      Free (X.Id);
+      GNAT.Strings.Free (X.Id);
 
       for J in X.Commands'Range loop
-         Free (X.Commands (J));
+         GNAT.Strings.Free (X.Commands (J));
       end loop;
 
       for J in X.Labels'Range loop
-         Free (X.Labels (J));
+         GNAT.Strings.Free (X.Labels (J));
       end loop;
    end Free;
 
@@ -322,7 +323,7 @@ package body VCS.Generic_VCS is
    procedure Generic_Dir_Command
      (Ref        : access Generic_VCS_Record;
       Dirs       : String_List.List;
-      First_Args : GNAT.OS_Lib.String_List_Access;
+      First_Args : GNAT.Strings.String_List_Access;
       Dir_Action : VCS_Action;
       Show_Bar   : Boolean := True)
    is
@@ -334,7 +335,7 @@ package body VCS.Generic_VCS is
       Custom     : Command_Access;
       Index      : Natural := 1;
 
-      use type GNAT.OS_Lib.String_List_Access;
+      use type GNAT.Strings.String_List_Access;
 
    begin
       if The_Action = null then
@@ -345,16 +346,16 @@ package body VCS.Generic_VCS is
 
       while Node /= Null_Node loop
          declare
-            Args : GNAT.OS_Lib.String_List_Access;
+            Args : GNAT.Strings.String_List_Access;
             Dir  : GNAT.Strings.String_Access;
 
          begin
             --  Args and Dir freed when the command proxy is destroyed.
 
             if First_Args = null then
-               Args := new GNAT.OS_Lib.String_List (1 .. 1);
+               Args := new GNAT.Strings.String_List (1 .. 1);
             else
-               Args := new GNAT.OS_Lib.String_List
+               Args := new GNAT.Strings.String_List
                  (1 .. 1 + First_Args'Length);
             end if;
 
@@ -400,7 +401,7 @@ package body VCS.Generic_VCS is
    procedure Generic_Command
      (Ref        : access Generic_VCS_Record;
       Files      : String_List.List;
-      First_Args : GNAT.OS_Lib.String_List_Access;
+      First_Args : GNAT.Strings.String_List_Access;
       Action     : VCS_Action;
       Show_Bar   : Boolean := True)
    is
@@ -416,7 +417,7 @@ package body VCS.Generic_VCS is
       First_Args_Length : Natural := 0;
       Dir               : GNAT.Strings.String_Access;
 
-      use type GNAT.OS_Lib.String_List_Access;
+      use type GNAT.Strings.String_List_Access;
    begin
       if The_Action = null or else Is_Empty (Files) then
          return;
@@ -432,14 +433,14 @@ package body VCS.Generic_VCS is
 
       while Node /= Null_Node loop
          declare
-            Args : GNAT.OS_Lib.String_List_Access;
+            Args : GNAT.Strings.String_List_Access;
             --  Set to True when the current working directory already part of
             --  the command line.
          begin
             --  Args, Dir and Dir_Args are freed when the command proxy is
             --  destroyed.
 
-            Args := new GNAT.OS_Lib.String_List
+            Args := new GNAT.Strings.String_List
               (1 .. Length + First_Args_Length);
 
             Index := 1;
@@ -524,17 +525,17 @@ package body VCS.Generic_VCS is
    procedure Generic_Command
      (Ref        : access Generic_VCS_Record;
       File       : VFS.Virtual_File;
-      First_Args : GNAT.OS_Lib.String_List_Access;
+      First_Args : GNAT.Strings.String_List_Access;
       Action     : VCS_Action)
    is
       Kernel     : Kernel_Handle renames Ref.Kernel;
       The_Action : constant Action_Record_Access :=
                      Lookup_Action (Kernel, Ref.Commands (Action));
       Custom     : Command_Access;
-      Args       : GNAT.OS_Lib.String_List_Access;
+      Args       : GNAT.Strings.String_List_Access;
       Dir        : GNAT.Strings.String_Access;
 
-      use type GNAT.OS_Lib.String_List_Access;
+      use type GNAT.Strings.String_List_Access;
       use GNAT.Strings;
 
    begin
@@ -545,7 +546,7 @@ package body VCS.Generic_VCS is
       Dir := new String'(Locale_From_UTF8 (Dir_Name (File).all));
 
       if First_Args /= null then
-         Args := new GNAT.OS_Lib.String_List (1 .. First_Args'Length + 1);
+         Args := new GNAT.Strings.String_List (1 .. First_Args'Length + 1);
 
          for J in First_Args'Range loop
             Args (J - First_Args'First + 1) :=
@@ -553,7 +554,7 @@ package body VCS.Generic_VCS is
          end loop;
 
       else
-         Args := new GNAT.OS_Lib.String_List (1 .. 1);
+         Args := new GNAT.Strings.String_List (1 .. 1);
       end if;
 
       if Ref.Absolute_Names then
@@ -600,10 +601,10 @@ package body VCS.Generic_VCS is
       Clear_Logs : Boolean := False;
       Local      : Boolean := False)
    is
-      Args   : GNAT.OS_Lib.String_List_Access;
+      Args   : GNAT.Strings.String_List_Access;
       Sorted : String_List.List := Copy_String_List (Filenames);
    begin
-      Args := new GNAT.OS_Lib.String_List (1 .. 1);
+      Args := new GNAT.Strings.String_List (1 .. 1);
       Args (1) := new String'(Clear_Logs'Img);
 
       if Rep.Current_Query_Files /= Null_List then
@@ -641,9 +642,9 @@ package body VCS.Generic_VCS is
       Clear_Logs : Boolean := False;
       Local      : Boolean := False)
    is
-      Args : GNAT.OS_Lib.String_List_Access;
+      Args : GNAT.Strings.String_List_Access;
    begin
-      Args := new GNAT.OS_Lib.String_List (1 .. 1);
+      Args := new GNAT.Strings.String_List (1 .. 1);
       Args (1) := new String'(Clear_Logs'Img);
 
       if Rep.Current_Query_Files /= Null_List then
@@ -695,10 +696,10 @@ package body VCS.Generic_VCS is
       Tag       : String;
       As_Branch : Boolean)
    is
-      Args     : GNAT.OS_Lib.String_List_Access;
+      Args     : GNAT.Strings.String_List_Access;
       Dir_List : String_List.List;
    begin
-      Args := new GNAT.OS_Lib.String_List (1 .. 2);
+      Args := new GNAT.Strings.String_List (1 .. 2);
       Args (1) := new String'(Base_Dir_Name (Dir)); -- root dir
       Args (2) := new String'(Tag);                 -- tag name
 
@@ -737,10 +738,10 @@ package body VCS.Generic_VCS is
       Filenames : String_List.List;
       Log       : String)
    is
-      Args : GNAT.OS_Lib.String_List_Access;
+      Args : GNAT.Strings.String_List_Access;
 
    begin
-      Args := new GNAT.OS_Lib.String_List (1 .. 1);
+      Args := new GNAT.Strings.String_List (1 .. 1);
       Args (1) := new String'(Log);
 
       Generic_Command (Rep, Filenames, Args, Commit);
@@ -768,10 +769,10 @@ package body VCS.Generic_VCS is
       Dir : VFS.Virtual_File;
       Tag : String)
    is
-      Args     : GNAT.OS_Lib.String_List_Access;
+      Args     : GNAT.Strings.String_List_Access;
       Dir_List : String_List.List;
    begin
-      Args := new GNAT.OS_Lib.String_List (1 .. 2);
+      Args := new GNAT.Strings.String_List (1 .. 2);
       Args (1) := new String'(Base_Dir_Name (Dir)); -- root dir
       Args (2) := new String'(Tag);                 -- tag name
 
@@ -803,9 +804,9 @@ package body VCS.Generic_VCS is
       Filenames : String_List.List;
       Tag       : String)
    is
-      Args : GNAT.OS_Lib.String_List_Access;
+      Args : GNAT.Strings.String_List_Access;
    begin
-      Args := new GNAT.OS_Lib.String_List (1 .. 1);
+      Args := new GNAT.Strings.String_List (1 .. 1);
       Args (1) := new String'(Tag);                 -- tag name
 
       --  Iterate through all files, the merge is file oriented and some VCS
@@ -833,9 +834,9 @@ package body VCS.Generic_VCS is
       File     : VFS.Virtual_File;
       Revision : String)
    is
-      Args : GNAT.OS_Lib.String_List_Access;
+      Args : GNAT.Strings.String_List_Access;
    begin
-      Args := new GNAT.OS_Lib.String_List (1 .. 1);
+      Args := new GNAT.Strings.String_List (1 .. 1);
       Args (1) := new String'(Revision);
 
       Generic_Command (Rep, File, Args, VCS.Revision);
@@ -851,10 +852,10 @@ package body VCS.Generic_VCS is
       Log       : String;
       Commit    : Boolean := True)
    is
-      Args : GNAT.OS_Lib.String_List_Access;
+      Args : GNAT.Strings.String_List_Access;
 
    begin
-      Args := new GNAT.OS_Lib.String_List (1 .. 1);
+      Args := new GNAT.Strings.String_List (1 .. 1);
       Args (1) := new String'(Log);
 
       if Commit then
@@ -876,10 +877,10 @@ package body VCS.Generic_VCS is
       Log       : String;
       Commit    : Boolean := True)
    is
-      Args : GNAT.OS_Lib.String_List_Access;
+      Args : GNAT.Strings.String_List_Access;
 
    begin
-      Args := new GNAT.OS_Lib.String_List (1 .. 1);
+      Args := new GNAT.Strings.String_List (1 .. 1);
       Args (1) := new String'(Log);
 
       if Commit then
@@ -912,7 +913,7 @@ package body VCS.Generic_VCS is
       Version_1 : String := "";
       Version_2 : String := "")
    is
-      Args : GNAT.OS_Lib.String_List_Access;
+      Args : GNAT.Strings.String_List_Access;
 
    begin
       if Version_1 = ""
@@ -923,7 +924,7 @@ package body VCS.Generic_VCS is
       elsif Version_1 /= ""
         and then Version_2 = ""
       then
-         Args := new GNAT.OS_Lib.String_List (1 .. 1);
+         Args := new GNAT.Strings.String_List (1 .. 1);
          Args (1) := new String'(Version_1);
          Generic_Command (Rep, File, Args, Diff);
          GNAT.Strings.Free (Args);
@@ -931,7 +932,7 @@ package body VCS.Generic_VCS is
       elsif Version_1 /= ""
         and then Version_2 /= ""
       then
-         Args := new GNAT.OS_Lib.String_List (1 .. 2);
+         Args := new GNAT.Strings.String_List (1 .. 2);
          Args (1) := new String'(Version_1);
          Args (2) := new String'(Version_2);
          Generic_Command (Rep, File, Args, Diff2);
@@ -948,9 +949,9 @@ package body VCS.Generic_VCS is
       File   : VFS.Virtual_File;
       Output : VFS.Virtual_File)
    is
-      Args : GNAT.OS_Lib.String_List_Access;
+      Args : GNAT.Strings.String_List_Access;
    begin
-      Args := new GNAT.OS_Lib.String_List (1 .. 1);
+      Args := new GNAT.Strings.String_List (1 .. 1);
       Args (1) := new String'(Full_Name (Output).all);
 
       Generic_Command (Rep, File, Args, Diff_Patch);
@@ -988,9 +989,9 @@ package body VCS.Generic_VCS is
       File     : VFS.Virtual_File;
       Tag_Name : String)
    is
-      Args : GNAT.OS_Lib.String_List_Access;
+      Args : GNAT.Strings.String_List_Access;
    begin
-      Args := new GNAT.OS_Lib.String_List (1 .. 2);
+      Args := new GNAT.Strings.String_List (1 .. 2);
       Args (1) := new String'(Tag_Name);
       Args (2) := new String'(Base_Name (File));
 
@@ -1009,11 +1010,11 @@ package body VCS.Generic_VCS is
       Rev     : String;
       As_Text : Boolean := True)
    is
-      Args : GNAT.OS_Lib.String_List_Access;
+      Args : GNAT.Strings.String_List_Access;
 
    begin
       if Rev /= "" then
-         Args := new GNAT.OS_Lib.String_List (1 .. 1);
+         Args := new GNAT.Strings.String_List (1 .. 1);
          Args (1) := new String'(Rev);
 
          Generic_Command (Rep, File, Args, History_Revision);

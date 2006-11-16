@@ -21,7 +21,6 @@
 with Ada.Text_IO;             use Ada.Text_IO;
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 
-with Basic_Types;             use Basic_Types;
 with Entities;                use Entities;
 with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
@@ -30,6 +29,7 @@ with Projects.Registry;       use Projects.Registry;
 with Remote.Path.Translator;  use Remote.Path.Translator;
 with String_Utils;            use String_Utils;
 with VFS;                     use VFS;
+with GNAT.Strings;
 
 package body GPS.Kernel.Macros is
 
@@ -256,9 +256,12 @@ package body GPS.Kernel.Macros is
                if Index < Param'Last and then Param (Index + 1) = 'f' then
                   --  Append the list to a file.
                   declare
-                     File : File_Type;
+                     use GNAT.Strings;
+
+                     File       : File_Type;
                      Files_List : File_Array_Access;
-                     List : String_Array_Access;
+                     List       : String_List_Access;
+
                   begin
                      Create (File);
 
@@ -297,8 +300,10 @@ package body GPS.Kernel.Macros is
 
                else
                   declare
+                     use GNAT.Strings;
+
                      Result : Unbounded_String;
-                     List : String_Array_Access;
+                     List   : String_List_Access;
                      Files_List : File_Array_Access;
                   begin
                      if List_Dirs then

@@ -23,9 +23,6 @@
 
 with Ada.Containers.Ordered_Maps;
 with Ada.Containers.Ordered_Multisets;
-
-with GNAT.OS_Lib;
-
 with GNAT.Strings; use GNAT.Strings;
 
 with Lazy_Vectors;
@@ -172,7 +169,7 @@ private
 
    type Construct_Node_List is record
       Constructs : Construct_Vector.Lazy_Vector;
-      Name       : GNAT.OS_Lib.String_Access;
+      Name       : GNAT.Strings.String_Access;
    end record;
 
    type Construct_Node_List_Access is access all Construct_Node_List;
@@ -181,7 +178,7 @@ private
      (Construct_Vector.Null_Lazy_Vector, null);
 
    function Get_Name
-     (Node : Construct_Node_List_Access) return GNAT.OS_Lib.String_Access;
+     (Node : Construct_Node_List_Access) return GNAT.Strings.String_Access;
 
    procedure Free (Node : in out Construct_Node_List_Access);
    --  Free the data associated to the node.

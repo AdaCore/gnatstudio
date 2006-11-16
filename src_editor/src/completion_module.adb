@@ -20,7 +20,7 @@
 
 with Ada.Exceptions;            use Ada.Exceptions;
 
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Strings;              use GNAT.Strings;
 with GNAT.Strings;
 with Basic_Types;               use Basic_Types;
 
@@ -90,7 +90,7 @@ package body Completion_Module is
    use String_List_Utils.String_List;
 
    type Completion_Module_Record is new Module_ID_Record with record
-      Prefix : GNAT.OS_Lib.String_Access;
+      Prefix : GNAT.Strings.String_Access;
       --  The current prefix for the search.
       --  Warning : this is an UTF-8 string obtained from the buffer, and
       --  should only be compared with UTF-8 strings.
@@ -166,7 +166,7 @@ package body Completion_Module is
       Manager             : Completion_Manager_Access;
       Constructs_Resolver : Completion_Resolver_Access;
       Result              : Completion_List;
-      The_Text            : Basic_Types.String_Access;
+      The_Text            : GNAT.Strings.String_Access;
    end record;
 
    package Smart_Completion_Callback is new
@@ -371,7 +371,7 @@ package body Completion_Module is
          return;
       end if;
 
-      GNAT.OS_Lib.Free (Completion_Module.Prefix);
+      GNAT.Strings.Free (Completion_Module.Prefix);
 
       String_List_Utils.String_List.Free (Completion_Module.List);
       Completion_Module.Node := String_List_Utils.String_List.Null_Node;
@@ -768,7 +768,7 @@ package body Completion_Module is
 
             declare
                Offset : Natural;
-               Lines  : Basic_Types.String_Access;
+               Lines  : GNAT.Strings.String_Access;
             begin
                Lines := Get_Buffer_Lines
                  (Buffer, 1,
@@ -851,7 +851,7 @@ package body Completion_Module is
       Iter          : Gtk_Text_Iter;
       Prev          : Gtk_Text_Iter;
       Success       : Boolean;
-      Text          : GNAT.OS_Lib.String_Access;
+      Text          : GNAT.Strings.String_Access;
       Buffer        : Source_Buffer;
 
    begin
@@ -956,7 +956,7 @@ package body Completion_Module is
          True);
 
       Enqueue (M.Insert_Buffer, Command_Access (Shell_Command));
-      GNAT.OS_Lib.Free (Text);
+      GNAT.Strings.Free (Text);
 
       return Commands.Success;
    end Execute;

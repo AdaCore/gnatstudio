@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with VFS;
-with Basic_Types;
+with GNAT.Strings;
 
 package Entities.Queries is
 
@@ -449,13 +449,13 @@ private
    end record;
 
    type Entity_Iterator is record
-      Name   : GNAT.OS_Lib.String_Access;
-      SIter  : Entities_Hash.Iterator;
-      Iter   : Entities_Hash.Iterator;
-      File   : Source_File;
-      EL     : Entity_Information_List_Access;
-      Index_In_EL : Entity_Information_Arrays.Index_Type;
-      Case_Sensitive : Boolean;
+      Name                : GNAT.Strings.String_Access;
+      SIter               : Entities_Hash.Iterator;
+      Iter                : Entities_Hash.Iterator;
+      File                : Source_File;
+      EL                  : Entity_Information_List_Access;
+      Index_In_EL         : Entity_Information_Arrays.Index_Type;
+      Case_Sensitive      : Boolean;
       Processing_Entities : Boolean;
       --  Whether we are processing File.Entities or File.All_Entities
    end record;

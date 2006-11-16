@@ -112,6 +112,7 @@
 --   itself. This means that a user might choose not to load some of the
 --   modules to simplify the GUI or to use less memory.
 
+with GNAT.Strings;
 with Gdk.Event;
 with Glib.Object;
 with Glib.Values;
@@ -523,7 +524,7 @@ package GPS.Kernel.Modules is
 
    function Get_Registered_Contextual_Menus
      (Kernel  : access Kernel_Handle_Record'Class)
-      return GNAT.OS_Lib.String_List_Access;
+      return GNAT.Strings.String_List_Access;
    --  Return the list of registered contextual menus. The returned array must
    --  be freed by the caller
 
@@ -688,7 +689,7 @@ private
    type Module_ID_Record is new Abstract_Module_ID_Record with record
       Kernel                : Kernel_Handle;
       Priority              : Module_Priority;
-      Name                  : GNAT.OS_Lib.String_Access;
+      Name                  : GNAT.Strings.String_Access;
    end record;
 
 end GPS.Kernel.Modules;

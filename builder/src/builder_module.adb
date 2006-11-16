@@ -32,6 +32,7 @@ with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Strings;
 with GNAT.Case_Util;            use GNAT.Case_Util;
 
 with Glib;                      use Glib;
@@ -227,7 +228,7 @@ package body Builder_Module is
      (Menu         : in out Gtk_Menu;
       Project      : Project_Type;
       Kernel       : access Kernel_Handle_Record'Class;
-      Mains        : Argument_List;
+      Mains        : String_List;
       Set_Shortcut : Boolean);
    --  Add new entries for all the main subprograms of Project.
    --  If Menu is null, a new one is created if there are any entries
@@ -438,7 +439,7 @@ package body Builder_Module is
       Extra_Args     : Argument_List_Access := null)
       return Argument_List_Access
    is
-      Project_Str    : GNAT.OS_Lib.String_Access;
+      Project_Str    : GNAT.Strings.String_Access;
       Result         : Argument_List_Access;
       Vars           : Argument_List_Access;
 

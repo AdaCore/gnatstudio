@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -20,7 +20,7 @@
 
 with GPS.Kernel;         use GPS.Kernel;
 with GPS.Kernel.Console; use GPS.Kernel.Console;
-with Basic_Types;        use Basic_Types;
+with GNAT.Strings;
 
 package Commands.Console is
 
@@ -54,7 +54,7 @@ private
 
    type Console_Command is new Root_Command with record
       Kernel         : Kernel_Handle;
-      Text           : String_Access;
+      Text           : GNAT.Strings.String_Access;
       Highlight_Sloc : Boolean := True;
       Add_LF         : Boolean := True;
       Insert_Mode    : Message_Type := Info;

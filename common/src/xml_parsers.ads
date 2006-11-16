@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2004                       --
+--                     Copyright (C) 2003-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -19,14 +19,14 @@
 -----------------------------------------------------------------------
 
 with Glib.Xml_Int;
-with GNAT.OS_Lib;
+with GNAT.Strings;
 
 package XML_Parsers is
 
    procedure Parse
      (File  : String;
       Tree  : out Glib.Xml_Int.Node_Ptr;
-      Error : out GNAT.OS_Lib.String_Access);
+      Error : out GNAT.Strings.String_Access);
    --  Parse File, and return a pointer to the resulting Tree.
    --  The resulting value must be freed by the user
 
@@ -35,7 +35,7 @@ package XML_Parsers is
       From_File  : String  := "<input>";
       Start_Line : Natural := 1;
       Tree       : out Glib.Xml_Int.Node_Ptr;
-      Error      : out GNAT.OS_Lib.String_Access);
+      Error      : out GNAT.Strings.String_Access);
    --  Same as above, but the XML string is already in memory.
    --  (From_File, Start_Line) indicate where the buffer was read from. This
    --  is in particular useful when reading strings in script files through

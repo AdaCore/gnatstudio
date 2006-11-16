@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Traces;       use Traces;
-with GNAT.OS_Lib;  use GNAT.OS_Lib;
 with Glib.Object;  use Glib.Object;
 with System;       use System;
 with Ada.Exceptions; use Ada.Exceptions;
@@ -35,6 +34,7 @@ package body GPS.Kernel.Hooks is
 
    Me : constant Debug_Handle := Create ("Hooks", Default => Off);
 
+   use GNAT.Strings;
    use GPS.Kernel.Hooks_Hash.String_Hash_Table;
 
    No_Args_Data_Type_Name : constant String := "<no_args>";
@@ -60,7 +60,7 @@ package body GPS.Kernel.Hooks is
 
    type Hook_Function_Description is record
       Func : Hook_Function;
-      Name : GNAT.OS_Lib.String_Access;
+      Name : GNAT.Strings.String_Access;
    end record;
    procedure Free (F : in out Hook_Function_Description);
    package Hooks_List is new Generic_List (Hook_Function_Description, Free);
@@ -86,7 +86,7 @@ package body GPS.Kernel.Hooks is
          when True =>
             From_Data                 : From_Callback_Data_Function;
          when False =>
-            Name                      : GNAT.OS_Lib.String_Access;
+            Name                      : GNAT.Strings.String_Access;
             Funcs                     : Hooks_List.List;
             Create_Subprogram_Wrapper : Subprogram_Wrapper_Creator;
             Command_Handler           : Module_Command_Function;

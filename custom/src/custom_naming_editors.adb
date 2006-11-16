@@ -19,7 +19,7 @@
 
 with Ada.Characters.Handling;          use Ada.Characters.Handling;
 with Basic_Types;                      use Basic_Types;
-with GNAT.OS_Lib;                      use GNAT.OS_Lib;
+with GNAT.Strings;                     use GNAT.Strings;
 with GPS.Intl;                         use GPS.Intl;
 with GPS.Kernel.Project;               use GPS.Kernel, GPS.Kernel.Project;
 with Gtk.Box;                          use Gtk.Box;
@@ -44,7 +44,7 @@ package body Custom_Naming_Editors is
       Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Language : String)
    is
-      Extensions : Argument_List := Get_Registered_Extensions
+      Extensions : String_List := Get_Registered_Extensions
         (Get_Registry (Kernel).all, Language);
       Label      : Gtk_Label;
       Box        : Gtk_Box;
@@ -159,9 +159,9 @@ package body Custom_Naming_Editors is
    --------------------------
 
    function Create_Project_Entry
-     (Editor  : access Custom_Naming_Editor_Record;
-      Project : Projects.Project_Type;
-      Languages    : Argument_List;
+     (Editor             : access Custom_Naming_Editor_Record;
+      Project            : Projects.Project_Type;
+      Languages          : String_List;
       Scenario_Variables : Scenario_Variable_Array) return Boolean
    is
       pragma Unreferenced (Languages);

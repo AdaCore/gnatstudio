@@ -22,7 +22,7 @@ with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with System;
 
-with GNAT.OS_Lib;
+with GNAT.Strings;
 with Basic_Types;
 
 with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
@@ -244,8 +244,8 @@ package GPS.Kernel.Standard_Hooks is
    ----------------------------
 
    type Line_Information_Record is record
-      Text               : GNAT.OS_Lib.String_Access := null;
-      Tooltip_Text       : GNAT.OS_Lib.String_Access := null;
+      Text               : GNAT.Strings.String_Access := null;
+      Tooltip_Text       : GNAT.Strings.String_Access := null;
       --  A text to be displayed in a tooltip
       Image              : Gdk.Pixbuf.Gdk_Pixbuf := Gdk.Pixbuf.Null_Pixbuf;
       Associated_Command : Commands.Command_Access := null;

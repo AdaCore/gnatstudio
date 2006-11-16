@@ -100,9 +100,9 @@ package body GPS.Kernel.Modules is
    type Contextual_Menu_Record
      (Menu_Type : Contextual_Menu_Type := Type_Separator)
       is record
-         Name           : GNAT.OS_Lib.String_Access;
+         Name           : GNAT.Strings.String_Access;
          Label          : Contextual_Menu_Label_Creator;
-         Pix            : GNAT.OS_Lib.String_Access;
+         Pix            : GNAT.Strings.String_Access;
          Next           : Contextual_Menu_Access;
          Group          : Natural;
          Visible        : Boolean := True;
@@ -151,7 +151,7 @@ package body GPS.Kernel.Modules is
 
    type Contextual_Label_Parameters is new Contextual_Menu_Label_Creator_Record
       with record
-      Label  : GNAT.OS_Lib.String_Access;
+      Label  : GNAT.Strings.String_Access;
       Custom : Custom_Expansion;
       Filter : Macro_Filter;
       end record;
@@ -743,7 +743,7 @@ package body GPS.Kernel.Modules is
         (C         : Contextual_Menu_Access;
          Context   : Selection_Context;
          Item      : out Gtk_Menu_Item;
-         Full_Name : out GNAT.OS_Lib.String_Access);
+         Full_Name : out GNAT.Strings.String_Access);
       --  Create the menu item to use when displaying C.
       --  Full_Name is the label of the menu
 
@@ -807,9 +807,9 @@ package body GPS.Kernel.Modules is
         (C         : Contextual_Menu_Access;
          Context   : Selection_Context;
          Item      : out Gtk_Menu_Item;
-         Full_Name : out GNAT.OS_Lib.String_Access)
+         Full_Name : out GNAT.Strings.String_Access)
       is
-         use type GNAT.OS_Lib.String_Access;
+         use type GNAT.Strings.String_Access;
          Image : Gtk_Image_Menu_Item;
          Pix   : Gtk_Image;
          Menu  : Gtk_Menu;
@@ -820,7 +820,7 @@ package body GPS.Kernel.Modules is
             when Type_Submenu =>
                declare
                   C2    : Contextual_Menu_Access;
-                  Full2 : GNAT.OS_Lib.String_Access;
+                  Full2 : GNAT.Strings.String_Access;
                   Item  : Gtk_Menu_Item;
                begin
                   Gtk_New (Menu);
@@ -929,7 +929,7 @@ package body GPS.Kernel.Modules is
          return False;
       end Has_Explicit_Parent;
 
-      Full_Name   : GNAT.OS_Lib.String_Access;
+      Full_Name   : GNAT.Strings.String_Access;
       C           : Contextual_Menu_Access;
       Item        : Gtk_Menu_Item;
       Parent_Item : Gtk_Menu_Item;
@@ -1762,9 +1762,10 @@ package body GPS.Kernel.Modules is
       Add_Before  : Boolean := True;
       Group       : Natural := 0)
    is
-      T : Contextual_Label_Param;
-      Pix : GNAT.OS_Lib.String_Access;
+      T    : Contextual_Label_Param;
+      Pix  : GNAT.Strings.String_Access;
       Menu : Contextual_Menu_Access;
+
    begin
       if Label /= "" then
          T        := new Contextual_Label_Parameters;
@@ -1821,7 +1822,7 @@ package body GPS.Kernel.Modules is
       Add_Before  : Boolean := True;
       Group       : Natural := 0)
    is
-      Pix  : GNAT.OS_Lib.String_Access;
+      Pix  : GNAT.Strings.String_Access;
       Menu : Contextual_Menu_Access;
    begin
       if Stock_Image /= "" then
@@ -1873,7 +1874,7 @@ package body GPS.Kernel.Modules is
       Add_Before  : Boolean := True;
       Group       : Natural := 0)
    is
-      Pix  : GNAT.OS_Lib.String_Access;
+      Pix  : GNAT.Strings.String_Access;
       Menu : Contextual_Menu_Access;
    begin
       if Stock_Image /= "" then
@@ -1928,7 +1929,7 @@ package body GPS.Kernel.Modules is
       Group       : Natural := 0)
    is
       T : Contextual_Label_Param;
-      Pix : GNAT.OS_Lib.String_Access;
+      Pix : GNAT.Strings.String_Access;
       Menu : Contextual_Menu_Access;
    begin
       if Label /= "" then
@@ -2027,11 +2028,11 @@ package body GPS.Kernel.Modules is
 
    function Get_Registered_Contextual_Menus
      (Kernel  : access Kernel_Handle_Record'Class)
-      return GNAT.OS_Lib.String_List_Access
+      return GNAT.Strings.String_List_Access
    is
       Count  : Natural := 0;
       C      : Contextual_Menu_Access;
-      Result : GNAT.OS_Lib.String_List_Access;
+      Result : GNAT.Strings.String_List_Access;
    begin
       if Kernel.Contextual /= System.Null_Address then
          C := Convert (Kernel.Contextual);
@@ -2040,7 +2041,7 @@ package body GPS.Kernel.Modules is
             C := C.Next;
          end loop;
 
-         Result := new GNAT.OS_Lib.String_List (1 .. Count);
+         Result := new GNAT.Strings.String_List (1 .. Count);
          Count := Result'First;
          C := Convert (Kernel.Contextual);
          while C /= null loop

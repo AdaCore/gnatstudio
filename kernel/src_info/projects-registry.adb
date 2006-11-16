@@ -134,9 +134,9 @@ package body Projects.Registry is
    type Naming_Scheme_Record;
    type Naming_Scheme_Access is access Naming_Scheme_Record;
    type Naming_Scheme_Record is record
-      Language            : GNAT.OS_Lib.String_Access;
-      Default_Spec_Suffix : GNAT.OS_Lib.String_Access;
-      Default_Body_Suffix : GNAT.OS_Lib.String_Access;
+      Language            : GNAT.Strings.String_Access;
+      Default_Spec_Suffix : GNAT.Strings.String_Access;
+      Default_Body_Suffix : GNAT.Strings.String_Access;
       Next                : Naming_Scheme_Access;
    end record;
 
@@ -167,10 +167,10 @@ package body Projects.Registry is
       --  through the function Scenario_Variables, since it needs to be
       --  initialized first.
 
-      Predefined_Object_Path : GNAT.OS_Lib.String_Access;
+      Predefined_Object_Path : GNAT.Strings.String_Access;
       --  Predefined object path for the runtime library
 
-      Predefined_Source_Path : GNAT.OS_Lib.String_Access;
+      Predefined_Source_Path : GNAT.Strings.String_Access;
       --  Predefined source paths for the runtime library
 
       Predefined_Source_Files : VFS.File_Array_Access;
@@ -1321,7 +1321,7 @@ package body Projects.Registry is
       --  reset to No_Name if at least one file exists for the given language.
       --  Thus we can easily issue warnings when a language has no file.
 
-      Dirs      : String_Array_Access;
+      Dirs      : GNAT.Strings.String_List_Access;
       Dir       : Dir_Type;
       Length    : Natural;
       Buffer    : String (1 .. 2048);
@@ -1907,11 +1907,11 @@ package body Projects.Registry is
 
    procedure Compute_Predefined_Paths
      (Registry     : in out Project_Registry;
-      GNAT_Version : out GNAT.OS_Lib.String_Access;
+      GNAT_Version : out GNAT.Strings.String_Access;
       Gnatls_Args  : GNAT.OS_Lib.Argument_List_Access;
       E_Handler    : Error_Handler := Null_E_Handler)
    is
-      Current         : GNAT.OS_Lib.String_Access := new String'("");
+      Current         : GNAT.Strings.String_Access := new String'("");
       Object_Path_Set : Boolean := False;
 
       procedure Add_Directory (S : String);
@@ -1924,7 +1924,7 @@ package body Projects.Registry is
       -------------------
 
       procedure Add_Directory (S : String) is
-         Tmp : GNAT.OS_Lib.String_Access;
+         Tmp : GNAT.Strings.String_Access;
       begin
          if S = "" then
             return;
@@ -1958,7 +1958,7 @@ package body Projects.Registry is
 
          if Is_Local (Build_Server) then
             declare
-               Gnatls_Path : GNAT.OS_Lib.String_Access :=
+               Gnatls_Path : GNAT.Strings.String_Access :=
                      Locate_Exec_On_Path (Gnatls_Args (Gnatls_Args'First).all);
             begin
                if Gnatls_Path = null then
@@ -2149,7 +2149,7 @@ package body Projects.Registry is
    is
       Locale                 : constant String := Locale_From_UTF8 (Filename);
       Project2, Real_Project : Project_Type;
-      Path                   : GNAT.OS_Lib.String_Access;
+      Path                   : GNAT.Strings.String_Access;
       Iterator               : Imported_Project_Iterator;
       Info                   : Source_File_Data := No_Source_File_Data;
 

@@ -20,7 +20,8 @@
 
 --  This package implements a general support for hooks.
 --  See the GPS documentation on how to use hooks from the scripting languages.
-with GNAT.OS_Lib;
+
+with GNAT.Strings;
 with GPS.Kernel.Scripts;
 with Glib.Object;
 
@@ -144,7 +145,7 @@ package GPS.Kernel.Hooks is
 
    function Get_Hook_Func_List
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Hook   : String) return GNAT.OS_Lib.String_List;
+      Hook   : String) return GNAT.Strings.String_List;
    --  Return the description of the functions attached to the specified hook.
 
    --------------------------------------

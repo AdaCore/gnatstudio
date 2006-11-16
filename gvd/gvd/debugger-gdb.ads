@@ -21,12 +21,11 @@
 --  This is the implementation of Debugger for the GNU Debugger (Gdb).
 --  See debugger.ads for complete documentation on this package.
 
-with GNAT.OS_Lib;
+with GNAT.Strings;
 with Debugger;
 with GNAT.Regpat;
 with Gtk.Window;
 with Language.Debugger;
-with Basic_Types;
 with GVD.Types;
 with VFS;
 
@@ -37,7 +36,7 @@ package Debugger.Gdb is
    procedure Spawn
      (Debugger        : access Gdb_Debugger;
       Executable      : VFS.Virtual_File := VFS.No_File;
-      Debugger_Args   : GNAT.OS_Lib.Argument_List;
+      Debugger_Args   : GNAT.Strings.String_List;
       Executable_Args : String;
       Proxy           : Process_Proxies.Process_Proxy_Access;
       Window          : Gtk.Window.Gtk_Window;
@@ -90,7 +89,7 @@ package Debugger.Gdb is
       Message     : out Frame_Info_Type);
 
    function Source_Files_List
-     (Debugger : access Gdb_Debugger) return Basic_Types.String_Array;
+     (Debugger : access Gdb_Debugger) return GNAT.Strings.String_List;
 
    function Find_File
      (Debugger : access Gdb_Debugger; File_Name : String) return String;
@@ -353,7 +352,7 @@ package Debugger.Gdb is
      (Debugger      : access Gdb_Debugger;
       Range_Start   : out GVD.Types.Address_Type;
       Range_End     : out GVD.Types.Address_Type;
-      Code          : out Basic_Types.String_Access;
+      Code          : out GNAT.Strings.String_Access;
       Start_Address : GVD.Types.Address_Type := GVD.Types.Invalid_Address;
       End_Address   : GVD.Types.Address_Type := GVD.Types.Invalid_Address);
 
@@ -382,7 +381,7 @@ package Debugger.Gdb is
 
    function Complete
      (Debugger  : access Gdb_Debugger;
-      Beginning : String) return Basic_Types.String_Array;
+      Beginning : String) return GNAT.Strings.String_List;
 
    procedure Open_Processes (Debugger : access Gdb_Debugger);
 
@@ -414,9 +413,9 @@ private
 
    type Gdb_Debugger is new Debugger.Debugger_Root with record
       Executable       : VFS.Virtual_File;
-      Executable_Args  : GNAT.OS_Lib.String_Access;
-      Stored_Language  : GNAT.OS_Lib.String_Access;
-      WTX_List         : GNAT.OS_Lib.String_Access;
+      Executable_Args  : GNAT.Strings.String_Access;
+      Stored_Language  : GNAT.Strings.String_Access;
+      WTX_List         : GNAT.Strings.String_Access;
       WTX_Index        : Natural;
       WTX_Version      : Integer := -1;
       Endian           : Endian_Type := Unknown_Endian;

@@ -339,7 +339,7 @@ package body Filesystem.Windows is
    function Read_File
      (FS              : Windows_Filesystem_Record;
       Host            : String;
-      Local_Full_Name : String) return GNAT.OS_Lib.String_Access
+      Local_Full_Name : String) return GNAT.Strings.String_Access
    is
       pragma Unreferenced (FS);
       Args : GNAT.OS_Lib.Argument_List :=
@@ -654,7 +654,7 @@ package body Filesystem.Windows is
       Host           : String;
       Local_Dir_Name : String;
       Dirs_Only      : Boolean := False;
-      Files_Only     : Boolean := False) return GNAT.OS_Lib.String_List
+      Files_Only     : Boolean := False) return GNAT.Strings.String_List
    is
       pragma Unreferenced (FS);
       function Create_Args return GNAT.OS_Lib.Argument_List;

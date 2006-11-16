@@ -21,7 +21,6 @@
 with Ada.Exceptions;          use Ada.Exceptions;
 with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
 
-with Basic_Types;             use Basic_Types;
 with Language_Handlers;   use Language_Handlers;
 with String_Utils;            use String_Utils;
 with Traces;                  use Traces;
@@ -209,7 +208,6 @@ package body Docgen.Backend is
       Level            : Natural;
       Indent           : Natural)
    is
-      use type Basic_Types.String_Access;
       use List_Reference_In_File;
       use Type_Entity_List;
 

@@ -31,7 +31,7 @@ with Gtk.GEntry;        use Gtk.GEntry;
 with Gtk.Combo;         use Gtk.Combo;
 with Collapsing_Pane;   use Collapsing_Pane;
 with Gdk.Pixbuf;
-with GNAT.OS_Lib;
+with GNAT.Strings;
 
 --  This package provides an extended version of the visual search
 --  widget that can be found in module vsearch, so that it can be integrated
@@ -176,8 +176,8 @@ private
    end record;
 
    type Search_Regexp is record
-      Name           : GNAT.OS_Lib.String_Access;
-      Regexp         : GNAT.OS_Lib.String_Access;
+      Name           : GNAT.Strings.String_Access;
+      Regexp         : GNAT.Strings.String_Access;
       Case_Sensitive : Boolean;
       Is_Regexp      : Boolean;
    end record;

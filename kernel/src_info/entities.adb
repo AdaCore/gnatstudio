@@ -299,7 +299,7 @@ package body Entities is
    --------------
 
    function Get_Name
-     (Entity : Entity_Information) return GNAT.OS_Lib.String_Access is
+     (Entity : Entity_Information) return GNAT.Strings.String_Access is
    begin
       if Entity = null then
          return null;
@@ -864,7 +864,7 @@ package body Entities is
    -----------
 
    procedure Unref (Entity : in out Entity_Information) is
-      Shared : GNAT.OS_Lib.String_Access;
+      Shared : GNAT.Strings.String_Access;
    begin
       if Entity /= null and then Entity.Ref_Count /= Natural'Last then
          if Active (Assert_Me) then
@@ -2692,9 +2692,8 @@ package body Entities is
    -- Get_Index_In_Search_Tree --
    ------------------------------
 
-   function Get_Name (Entities : Entity_Array_Node)
-      return GNAT.OS_Lib.String_Access
-   is
+   function Get_Name
+     (Entities : Entity_Array_Node) return GNAT.Strings.String_Access is
    begin
       return Entities.Name;
    end Get_Name;
@@ -2760,7 +2759,7 @@ package body Entities is
 
       declare
          Old_Array : constant Entity_Array_Access := Node.Entities;
-         Old_Name  : constant GNAT.OS_Lib.String_Access := Node.Name;
+         Old_Name  : constant GNAT.Strings.String_Access := Node.Name;
       begin
          Node.Entities := new Entity_Information_Array
            (1 .. Old_Array'Length * 2);

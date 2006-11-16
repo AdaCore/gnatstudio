@@ -118,6 +118,7 @@
 
 with Ada.Unchecked_Deallocation;
 with GNAT.Regpat;            use GNAT.Regpat;
+with GNAT.Strings;
 
 with Codefix.Errors_Manager; use Codefix.Errors_Manager;
 with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
@@ -133,7 +134,7 @@ package Codefix.Errors_Parser is
       Errors_List  : in out Errors_Interface'Class;
       Message      : Error_Message;
       Options      : Fix_Options;
-      Category     : out GNAT.OS_Lib.String_Access;
+      Category     : out GNAT.Strings.String_Access;
       Solutions    : out Solution_List);
    --  Here is the big function that analyses a message and return the
    --  possible solutions.
@@ -153,7 +154,7 @@ package Codefix.Errors_Parser is
       Ada.Unchecked_Deallocation (Natural, Ptr_Natural);
 
    type Error_Parser
-     (Category : GNAT.OS_Lib.String_Access; Nb_Parsers : Natural)
+     (Category : GNAT.Strings.String_Access; Nb_Parsers : Natural)
    is abstract tagged record
        Current_It : Ptr_Natural := new Natural;
        Matcher    : Arr_Matcher (1 .. Nb_Parsers);
