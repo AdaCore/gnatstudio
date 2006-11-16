@@ -61,7 +61,6 @@ with Pango.Layout;              use Pango.Layout;
 with Namet;                     use Namet;
 with Types;                     use Types;
 
-with Basic_Types;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with Find_Utils;                use Find_Utils;
 with File_Utils;                use File_Utils;
@@ -2559,8 +2558,6 @@ package body Project_Explorers is
                         Get_LI_Handler_From_File (Languages, File);
          Constructs : Construct_List;
          Status     : Boolean := False;
-
-         use type Basic_Types.String_Access;
 
       begin
          if Handler = null then
