@@ -885,8 +885,10 @@ package body Completion.Ada.Constructs_Extractor is
         (At_End (It.Db_Iterator)
          or else
            (not It.Is_Partial
-            and then  Get_Construct
-              (Get_Construct (It.Db_Iterator)).Name.all /= It.Name.all));
+            and then not Match
+              (It.Name.all,
+               Get_Current_Id (It.Db_Iterator),
+               False)));
    end At_End;
 
    --------------
