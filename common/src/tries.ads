@@ -80,6 +80,9 @@ package Tries is
    --  the iterator might be invalidated here, that's why it's in / out
    --  parameter.
 
+   function Get_Index (Iter : Iterator) return String;
+   --  Return the index of the current iterator
+
    function Is_Valid (Iter : Iterator) return Boolean;
    --  Return true if the iterator is meant to be used by the user (including
    --  the case where it is at the end).

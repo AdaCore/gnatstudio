@@ -810,6 +810,16 @@ package body Tries is
       end if;
    end Get;
 
+   ---------------
+   -- Get_Index --
+   ---------------
+
+   function Get_Index (Iter : Iterator) return String is
+   begin
+      return Iter.Root_Name.all
+        & Iter.Current_Name (1 .. Iter.Current_Name_Length);
+   end Get_Index;
+
    ------------
    -- At_End --
    ------------
