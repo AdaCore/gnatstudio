@@ -38,6 +38,12 @@ diff_switches="-u"
 ## Additional switches to pass to rcsdiff. In particular, this can be used
 ## to specify your preferred format for diff
 
+local_hist_when_no_project=False
+## Whether files outside of a project should also have a local history. In
+## such a case, the local history will be put in a local_rcs_dir subdirectory
+## of the directory that contains the file. When the file belongs to a
+## project, the local history goes to the object directory of the project.
+
 
 ###########################################################################
 ## No user customization below this line
@@ -58,8 +64,10 @@ class LocalHistory:
      project   = file.project (default_to_root = False)
      if project:
         dir = project.object_dirs (recursive = False)[0]
-     else:
+     elif local_hist_when_no_project:
         dir = dirname (self.file)
+     else:
+        return
 
      self.rcs_dir = join (dir, local_rcs_dir)
      self.rcs_file = join (self.rcs_dir, basename (self.file)) + ",v"
@@ -69,6 +77,8 @@ class LocalHistory:
         Result is a list of tuples: (revision_number, date), where
         revision is the RCS revision number less the "1." prefix.
         First in the list is the most recent revision."""
+     if not self.rcs_dir:
+        return
      try:
        f = file (self.rcs_file)
        result = []
@@ -87,6 +97,8 @@ class LocalHistory:
 
   def add_to_history (self):
      """Expand the local history for file, to include the current version"""
+     if not self.rcs_dir:
+        return
      if not isdir (self.rcs_dir):
        os.makedirs (self.rcs_dir)
        Logger ("LocalHist").log ("creating directory " + `self.rcs_dir`)
@@ -111,6 +123,8 @@ class LocalHistory:
 
   def cleanup_history (self):
      """Remove the older revision histories for self"""
+     if not self.rcs_dir:
+        return
      older = datetime.datetime.now() - datetime.timedelta (days = max_days)
      older = older.strftime ("%Y.%m.%d.%H.%M.%S")
 
@@ -131,7 +145,7 @@ class LocalHistory:
   def local_checkout (self, revision):
      """Do a local checkout of file at given revision in the RCS directory.
 	Return the name of the checked out file"""
-     if isdir (self.rcs_dir):
+     if self.rcs_dir and isdir (self.rcs_dir):
        try:    os.unlink (join (self.rcs_dir, basename (self.file)))
        except: pass
 
@@ -145,6 +159,8 @@ class LocalHistory:
 
   def revert_file (self, revision):
      """Revert file to a local history revision"""
+     if not self.rcs_dir:
+        return
      Logger ("LocalHist").log ("revert " + self.file + " to " + revision)
      local = self.local_checkout (revision)
      if local:
@@ -155,6 +171,8 @@ class LocalHistory:
   def diff_file (self, revision, file_ext="old"):
      """Compare the current version of file with the given revision.
         The referenced file will have a name ending with file_ext"""
+     if not self.rcs_dir:
+        return
      local = self.local_checkout (revision)
      local2 = basename (local) + " " + file_ext
      local2 = join (self.rcs_dir, local2)
@@ -166,7 +184,7 @@ class LocalHistory:
   def show_diff (self, revision, date):
      """Show, in a console, the diff between the current version and
         revision"""
-     if isdir (self.rcs_dir):
+     if self.rcs_dir and isdir (self.rcs_dir):
         pwd = os.getcwd()
         os.chdir (dirname (self.file))
         proc = Process ("rcsdiff " + diff_switches \
