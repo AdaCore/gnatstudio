@@ -112,6 +112,11 @@ package Language.Tree.Database is
    --  Return an iterator pointing to the construct stored by the current
    --  database iterator.
 
+   function Get_Current_Id (It : Construct_Db_Iterator) return String;
+   --  Return the current identifier of the entity pointed by the iterator. The
+   --  identifier is the one that has been recorded in the database, not the
+   --  actual construct one.
+
    function Get_File
      (It : Construct_Db_Iterator) return Structured_File_Access;
    --  Return the file containing the construct pointed by the iterator given

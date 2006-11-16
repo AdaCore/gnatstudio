@@ -453,6 +453,15 @@ package body Language.Tree.Database is
         (Node => Get (It.It_Vector).Node, Index => Get (It.It_Vector).Index);
    end Get_Construct;
 
+   --------------------
+   -- Get_Current_Id --
+   --------------------
+
+   function Get_Current_Id (It : Construct_Db_Iterator) return String is
+   begin
+      return Get_Index (It.It_Db);
+   end Get_Current_Id;
+
    --------------
    -- Get_File --
    --------------
