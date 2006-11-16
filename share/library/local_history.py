@@ -95,6 +95,20 @@ class LocalHistory:
      except:
        return None
 
+  def on_lock_taken (self, proc, exit_status, output):
+     """Called when we have finished taking the lock on the local RCS file"""
+     pwd = os.getcwd()
+     os.chdir (self.rcs_dir)
+     # Specify our own date, so that the date associated with the revision
+     # is the one when the file was saved. Otherwise, it defaults to the
+     # last modification of the date, and this might dependent on the local
+     # time zone
+     proc = Process ("ci -d" + \
+	datetime.datetime.now().strftime ("%Y/%m/%d\\ %H:%M:%S") + \
+	" " + basename (self.file))
+     os.chdir (pwd)
+     proc.send (".\n")
+
   def add_to_history (self):
      """Expand the local history for file, to include the current version"""
      if not self.rcs_dir:
@@ -105,21 +119,7 @@ class LocalHistory:
 
      shutil.copy2 (self.file, self.rcs_dir)
      if isfile (self.rcs_file):
-        proc = Process ("rcs -l " + self.rcs_file)
-        proc.wait ()
-
-     pwd = os.getcwd()
-     os.chdir (self.rcs_dir)
-     # Specify our own date, so that the date associated with the revision
-     # is the one when the file was saved. Otherwise, it defaults to the
-     # last modification of the date, and this might dependent on the local
-     # time zone
-     proc = Process ("ci -d" + \
-	datetime.datetime.now().strftime ("%Y/%m/%d\\ %H:%M:%S") + \
-	" " + basename (self.file))
-     proc.send (".\n")
-     proc.wait ()
-     os.chdir (pwd)
+        proc = Process ("rcs -l " + self.rcs_file, on_exit=self.on_lock_taken)
 
   def cleanup_history (self):
      """Remove the older revision histories for self"""
