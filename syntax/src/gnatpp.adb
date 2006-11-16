@@ -23,13 +23,13 @@ with C_Analyzer;                use C_Analyzer;
 with Ada.Command_Line;          use Ada.Command_Line;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with Basic_Types;               use Basic_Types;
+with GNAT.Strings;
 with Language;                  use Language;
 with Line_Buffers;              use Line_Buffers;
 with Case_Handling;             use Case_Handling;
 
 procedure Gnatpp is
-   subtype String_Access is Basic_Types.String_Access;
+   subtype String_Access is GNAT.Strings.String_Access;
 
    F          : File_Descriptor;
    Name       : constant String := Argument (1);

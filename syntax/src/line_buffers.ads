@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
---                            ACT-Europe                             --
+--                      Copyright (C) 2003-200                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Basic_Types;
+with GNAT.Strings;
 with Ada.Unchecked_Deallocation;
 
 package Line_Buffers is
@@ -42,7 +42,7 @@ package Line_Buffers is
    type Line_Buffer_Record;
    type Line_Buffer is access Line_Buffer_Record;
    type Line_Buffer_Record is record
-      Line : Basic_Types.String_Access;
+      Line : GNAT.Strings.String_Access;
       Next : Line_Buffer;
    end record;
 

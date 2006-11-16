@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
---                            ACT-Europe                             --
+--                      Copyright (C) 2001-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,7 +21,7 @@
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Text_IO;             use Ada.Text_IO;
 with String_Utils;            use String_Utils;
-with Basic_Types;             use Basic_Types;
+with GNAT.Strings;            use GNAT.Strings;
 
 package body Syntax_Diff is
 
@@ -36,7 +36,7 @@ package body Syntax_Diff is
       New_Construct : Construct_Access := null);
    --  Append a result to the list of results
 
-   function Profile_Image (Profile : Basic_Types.String_Access) return String;
+   function Profile_Image (Profile : GNAT.Strings.String_Access) return String;
    --  Return a string suitable for printing Profile.
 
    function Image (Info : Construct_Access) return String;
@@ -353,7 +353,7 @@ package body Syntax_Diff is
    -------------------
 
    function Profile_Image
-     (Profile : Basic_Types.String_Access) return String
+     (Profile : GNAT.Strings.String_Access) return String
    is
       Line_Length : constant := 72;
    begin

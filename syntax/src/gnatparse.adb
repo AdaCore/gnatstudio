@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
---                            AdaCore                             --
+--                      Copyright (C) 2001-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,11 +26,11 @@ with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Text_IO;               use Ada.Text_IO;
 with String_Utils;              use String_Utils;
-with Basic_Types;               use Basic_Types;
+with GNAT.Strings;
 with Language;                  use Language;
 
 procedure Gnatparse is
-   subtype String_Access is Basic_Types.String_Access;
+   subtype String_Access is GNAT.Strings.String_Access;
 
    F           : File_Descriptor;
    Name        : constant String := Argument (1);

@@ -23,7 +23,7 @@ with String_Utils; use String_Utils;
 
 package body Line_Buffers is
 
-   use Basic_Types;
+   use GNAT.Strings;
 
    --------------------
    -- To_Line_Buffer --
