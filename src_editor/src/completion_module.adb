@@ -21,7 +21,6 @@
 with Ada.Exceptions;            use Ada.Exceptions;
 
 with GNAT.Strings;              use GNAT.Strings;
-with GNAT.Strings;
 with Basic_Types;               use Basic_Types;
 
 with Gdk.Types.Keysyms;         use Gdk.Types, Gdk.Types.Keysyms;
