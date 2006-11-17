@@ -12,7 +12,7 @@ Known Problems fixed in GPS 4.1.0
               the user wants to start again from the beginning of the file.
               Clicking on "No" will display a second irrelevant popup saying
               that no more occurences are found.
-  Workaround: Click on "Ok" on this second window. 
+  Workaround: Click on "Ok" on this second window.
 
 - FB13-004 Multiple undo needed after Complete Block action.
   Problem:    After a Complete Block action multiple undo are needed
@@ -55,6 +55,14 @@ Known Problems fixed in GPS 4.1.0
               belong to the project, it is expected that no project is passed
               to gnatpp. However, if the file had the same base name as a file
               from the project, an incorrect -P project was given to gnatpp
+
+- FB02-017 Obsolete location in the Call Tree view
+  Problem:    When clicking on a location in the Call Tree view that
+              corresponds to a file that does not exist anymore (e.g. because
+              the file has been moved ot removed from the file system), an
+              empty editor is opended and could cause some instabilities.
+              GPS now inserts an appropriate entry in the Messages window
+              instead.
 
 - FB02-011 Smart Completion window not disappearing on Delete
   Problem:    When pressing "delete" or when executing an action that deletes
