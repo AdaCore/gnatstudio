@@ -21,7 +21,6 @@
 with Ada.Exceptions;           use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with GNAT.Strings;
 with System;
 
 with Gdk.Event;                use Gdk.Event;
