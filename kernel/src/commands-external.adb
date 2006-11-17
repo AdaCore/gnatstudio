@@ -22,7 +22,6 @@ with GNAT.Expect;                use GNAT.Expect;
 with GNAT.Regpat;                use GNAT.Regpat;
 with GNAT.OS_Lib;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
-with GNAT.Strings;
 
 with Ada.Exceptions;             use Ada.Exceptions;
 
