@@ -272,10 +272,9 @@ package body Call_Graph_Views is
    procedure Select_Current_Location
      (View : access Callgraph_View_Record'Class)
    is
-      Iter  : Gtk_Tree_Iter;
-      Model : Gtk_Tree_Model;
-      File  : VFS.Virtual_File;
-
+      Iter   : Gtk_Tree_Iter;
+      Model  : Gtk_Tree_Model;
+      File   : VFS.Virtual_File;
       Value  : GValue;
       Entity : Entity_Information;
    begin
@@ -311,6 +310,7 @@ package body Call_Graph_Views is
                   Column_End => Visible_Column_Type
                     (Get_Int (Model, Iter, Location_Column_Column))
                   + Get_Name (Entity)'Length,
+                  New_File   => False,
                   Focus => False);
             end if;
          end if;
@@ -1118,7 +1118,7 @@ package body Call_Graph_Views is
          Show_Column_Titles => False,
          Sortable_Columns   => True,
          Initial_Sort_On    => Names'First);
-
+      Set_Name (View.Tree, "Call Graph Tree");  --  For test suite
       Gtk_New_Hpaned (View.Pane);
 
       Gtk_New (Scroll);
@@ -1138,6 +1138,9 @@ package body Call_Graph_Views is
                 Location_File_Column      => GType_String));
       Gtk_New (View.Locations_Tree, View.Locations_Model);
       Set_Headers_Visible (View.Locations_Tree, False);
+
+      Set_Name (View.Locations_Tree, "Call Graph Location Tree");
+      --  For test suite
 
       --  Create the locations model
 
