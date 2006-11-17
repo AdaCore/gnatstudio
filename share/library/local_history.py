@@ -120,6 +120,8 @@ class LocalHistory:
      shutil.copy2 (self.file, self.rcs_dir)
      if isfile (self.rcs_file):
         proc = Process ("rcs -l " + self.rcs_file, on_exit=self.on_lock_taken)
+     else:
+        self.on_lock_taken (None, 0, "")
 
   def cleanup_history (self):
      """Remove the older revision histories for self"""
@@ -210,9 +212,13 @@ def has_RCS_on_path():
 
 def on_file_saved (hook, file):
    """Called when a file has been saved"""
-   hist = LocalHistory (file)
-   hist.add_to_history ()
-   hist.cleanup_history ()
+   try:
+     Logger ("LocalHist").log ("saving file in local history: " + file.name())
+     hist = LocalHistory (file)
+     hist.add_to_history ()
+     hist.cleanup_history ()
+   except:
+     Logger ("LocalHist").log ("Unexpected exception " + traceback.format_exc())
 
 def contextual_filter (context):
    try: 
@@ -223,16 +229,17 @@ def contextual_filter (context):
      return False
 
 def contextual_factory (context):
-   hist = LocalHistory (context.file())
-   revisions = hist.get_revisions ()
-
-   # Save in the context the result of parsing the file. This factory is
-   # used for multiple contextual menus, so this saves some processing.
-   # Part of this parsing is also needed when performing the action.
-
    try:
+     hist = LocalHistory (context.file())
+     revisions = hist.get_revisions ()
+
+     # Save in the context the result of parsing the file. This factory is
+     # used for multiple contextual menus, so this saves some processing.
+     # Part of this parsing is also needed when performing the action.
+
+     try:
       return context.revisions_menu
-   except:
+     except:
       context.revisions = ["1." + `a[0]` for a in revisions]
       result = []
       for a in revisions:
@@ -240,6 +247,8 @@ def contextual_factory (context):
         result.append (date.strftime ("%Y-%m-%d/%H:%M:%S"))
       context.revisions_menu = result
       return context.revisions_menu
+   except:
+      return None
 
 def on_revert (context, choice, choice_index):
    hist = LocalHistory (context.file())
