@@ -24,7 +24,7 @@
 --  It also provides a way to save the current value for check buttons from one
 --  session of GPS to the other.
 
-with GNAT.OS_Lib;
+with GNAT.Strings;
 with Gtk.Check_Menu_Item;
 with Gtk.Combo;
 with Gtk.Toggle_Button;
@@ -90,7 +90,7 @@ package Histories is
 
    function Get_History
      (Hist : History_Record; Key : History_Key)
-      return GNAT.OS_Lib.String_List_Access;
+      return GNAT.Strings.String_List_Access;
    --  Return the list of strings stored as Key.
    --  The returned array mustn't be freed by the user, it references internal
    --  data.
@@ -189,7 +189,7 @@ private
 
       case Typ is
          when Strings =>
-            List             : GNAT.OS_Lib.String_List_Access;
+            List             : GNAT.Strings.String_List_Access;
             Max_Length       : Integer := -1;
             --  -1 means unspecified, use the default one for the whole
             --  History_Record

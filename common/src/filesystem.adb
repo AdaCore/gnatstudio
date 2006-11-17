@@ -22,7 +22,6 @@ with GNAT.Expect;            use GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote; use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
-with GNAT.OS_Lib;            use GNAT.OS_Lib;
 with String_Utils;           use String_Utils;
 
 package body Filesystem is

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
+--                      Copyright (C) 2000-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -21,7 +21,6 @@
 --  Items used for record types.
 --  See the package Items for more information on all the private subprograms.
 
-with Basic_Types;
 with Ada.Unchecked_Deallocation;
 
 package Items.Records is
@@ -58,7 +57,7 @@ package Items.Records is
 
    function Get_Field_Name
      (Item  : in Record_Type;
-      Index : Positive) return Basic_Types.String_Access;
+      Index : Positive) return GNAT.Strings.String_Access;
    --  Return the name of the Index-th field in Item.
 
    function Find_Variant_Part
@@ -132,7 +131,7 @@ private
    type Record_Type_Array_Access is access Record_Type_Array;
 
    type Record_Field is record
-      Name         : Basic_Types.String_Access := null;
+      Name         : GNAT.Strings.String_Access := null;
       Value        : Items.Generic_Type_Access := null;
       Variant_Part : Record_Type_Array_Access := null;
    end record;
