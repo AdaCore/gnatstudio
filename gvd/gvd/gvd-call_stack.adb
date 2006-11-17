@@ -56,7 +56,6 @@ with GVD.Process;            use GVD.Process;
 with GVD.Types;              use GVD.Types;
 with Process_Proxies;        use Process_Proxies;
 with Traces;                 use Traces;
-with GNAT.Strings;
 
 package body GVD.Call_Stack is
 

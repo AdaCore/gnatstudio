@@ -54,7 +54,6 @@ with Interfaces.C.Strings;  use Interfaces.C.Strings;
 with Interfaces.C;          use Interfaces.C;
 with Process_Proxies;       use Process_Proxies;
 with Traces;                use Traces;
-with Basic_Types;
 
 package body GVD.Dialogs is
    Me : constant Debug_Handle := Create ("GVD.Dialogs");
