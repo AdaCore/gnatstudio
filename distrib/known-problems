@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.0.2
 
+- FB13-011 Empty node in project explorer after keyboard expansion
+  Problem:    In some cases, using the keyboard to expand a node in the project
+              explorer (through '+' key  or the one from the numerical pad)
+              leads to an empty subnode.
+  Workaround: Collapse the row and expand it with the mouse. The project, file
+              or entity subnodes will be displayed properly.
+
 - FB08-018 Edited remote files cannot be saved
   Problem:    If a file was opened from a remote host and edited, then the
               changes are not saved.
