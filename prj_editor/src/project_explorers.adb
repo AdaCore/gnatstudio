@@ -280,13 +280,13 @@ package body Project_Explorers is
    --  Expand a file node, ie add children for all the entities defined in the
    --  file.
 
-   procedure Expand_Tree_Cb
+   procedure Expand_Row_Cb
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class; Args : GValues);
    --  Called every time a node is expanded. It is responsible for
    --  automatically adding the children of the current node if they are not
    --  there already.
 
-   procedure Collapse_Tree_Cb
+   procedure Collapse_Row_Cb
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class; Args : GValues);
    --  Called every time a node is collapsed
 
@@ -294,6 +294,8 @@ package body Project_Explorers is
      (Explorer : access Gtk_Widget_Record'Class;
       Event    : Gdk_Event) return Boolean;
    --  Called every time a row is clicked
+   --  ??? It is actually called twice in that case: a first time when the
+   --  mouse button is pressed and a second time when it is released.
 
    function Key_Press
      (Explorer : access Gtk_Widget_Record'Class;
@@ -680,9 +682,9 @@ package body Project_Explorers is
       --  when the user has changed the visibility status of a node.
 
       Explorer.Expand_Id := Widget_Callback.Object_Connect
-        (Explorer.Tree, "row_expanded", Expand_Tree_Cb'Access, Explorer);
+        (Explorer.Tree, "row_expanded", Expand_Row_Cb'Access, Explorer);
       Widget_Callback.Object_Connect
-        (Explorer.Tree, "row_collapsed", Collapse_Tree_Cb'Access, Explorer);
+        (Explorer.Tree, "row_collapsed", Collapse_Row_Cb'Access, Explorer);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
         (Explorer.Tree,
@@ -1362,7 +1364,7 @@ package body Project_Explorers is
       Node     : Gtk_Tree_Iter)
    is
       File_Name : constant Virtual_File :=
-        Get_File_From_Node (Explorer.Tree.Model, Node);
+                    Get_File_From_Node (Explorer.Tree.Model, Node);
    begin
       Append_File_Info (Explorer.Kernel, Explorer.Tree.Model, Node, File_Name);
 
@@ -1468,11 +1470,11 @@ package body Project_Explorers is
       end if;
    end Compute_Children;
 
-   --------------------
-   -- Expand_Tree_Cb --
-   --------------------
+   -------------------
+   -- Expand_Row_Cb --
+   -------------------
 
-   procedure Expand_Tree_Cb
+   procedure Expand_Row_Cb
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class; Args : GValues)
    is
       Margin    : constant Gint := 30;
@@ -1528,24 +1530,20 @@ package body Project_Explorers is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
          T.Expanding := False;
-   end Expand_Tree_Cb;
+   end Expand_Row_Cb;
 
-   ----------------------
-   -- Collapse_Tree_Cb --
-   ----------------------
+   ---------------------
+   -- Collapse_Row_Cb --
+   ---------------------
 
-   procedure Collapse_Tree_Cb
+   procedure Collapse_Row_Cb
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class; Args : GValues)
    is
       E    : constant Project_Explorer := Project_Explorer (Explorer);
       Path : constant Gtk_Tree_Path :=
                Gtk_Tree_Path (Get_Proxy (Nth (Args, 2)));
       Node : constant Gtk_Tree_Iter := Get_Iter (E.Tree.Model, Path);
-
    begin
-      --  Set expanding state to prevent automatic drag & drop start
-      E.Expanding := True;
-
       --  Redraw the pixmap.
 
       Set_Node_Type
@@ -1553,7 +1551,7 @@ package body Project_Explorers is
          Node,
          Get_Node_Type (E.Tree.Model, Node),
          False);
-   end Collapse_Tree_Cb;
+   end Collapse_Row_Cb;
 
    ---------------------------
    -- Get_Imported_Projects --
@@ -1566,8 +1564,8 @@ package body Project_Explorers is
       return Project_Type_Array
    is
       Count : Natural := 0;
-      Iter  : Imported_Project_Iterator := Start
-        (Project, Recursive => True, Direct_Only => Direct_Only);
+      Iter  : Imported_Project_Iterator :=
+                Start (Project, Recursive => True, Direct_Only => Direct_Only);
    begin
       while Current (Iter) /= No_Project loop
          Count := Count + 1;
