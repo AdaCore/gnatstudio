@@ -23,7 +23,6 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
 with GNAT.OS_Lib;
-with GNAT.Strings;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Glib;                      use Glib;

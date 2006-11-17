@@ -21,7 +21,6 @@
 with Ada.Exceptions;                    use Ada.Exceptions;
 with Ada.Characters.Handling;           use Ada.Characters.Handling;
 with GNAT.Regpat;                       use GNAT.Regpat;
-with GNAT.Strings;
 
 with Case_Handling;                     use Case_Handling;
 with Codefix.Ada_Tools;                 use Codefix.Ada_Tools;

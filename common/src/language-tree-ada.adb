@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation; use Ada;
-with GNAT.Strings;
 
 with Generic_List;
 with String_Utils;      use String_Utils;
