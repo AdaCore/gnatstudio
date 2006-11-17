@@ -20,7 +20,6 @@
 
 with Ada.Exceptions;         use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
-with GNAT.Strings;
 
 with Gdk;                    use Gdk;
 with Glib.Xml_Int;           use Glib.Xml_Int;

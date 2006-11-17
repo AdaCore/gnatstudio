@@ -24,7 +24,6 @@ with Ada.IO_Exceptions;                 use Ada.IO_Exceptions;
 with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
 with GNAT.Directory_Operations;         use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
-with GNAT.Strings;
 
 with Gdk.Color;                         use Gdk.Color;
 with Gdk.GC;                            use Gdk.GC;

@@ -37,7 +37,6 @@ with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 with GNAT.Heap_Sort;            use GNAT.Heap_Sort;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNAT.Strings;
 
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 

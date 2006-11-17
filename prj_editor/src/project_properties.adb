@@ -24,7 +24,6 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNAT.Strings;
 
 with Gdk.Event;                 use Gdk.Event;
 

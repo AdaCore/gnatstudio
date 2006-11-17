@@ -53,7 +53,6 @@ with Traces;              use Traces;
 with Histories;           use Histories;
 with String_Utils;        use String_Utils;
 with GUI_Utils;           use GUI_Utils;
-with GNAT.OS_Lib;
 
 package body Interactive_Consoles is
 
