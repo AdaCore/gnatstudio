@@ -45,6 +45,7 @@ with Projects.Registry;          use Projects.Registry;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Styles;          use GPS.Kernel.Styles;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Location_View;          use GPS.Location_View;
 
 package body Code_Analysis_Module is
@@ -68,19 +69,42 @@ package body Code_Analysis_Module is
       Property : constant Code_Analysis_Class
         := new Code_Analysis_Class_Record;
       Instance : Class_Instance;
+      Submenu  : Coverage_Contextual_Menu_Access;
    begin
       Instance          := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
       Property.Projects := new Project_Maps.Map;
+      Submenu := new Coverage_Contextual_Menu;
+      Submenu.Code_Analysis := Property;
+      Register_Contextual_Submenu
+        (Kernel  => Code_Analysis_Module_ID.Kernel,
+         Name    => -"Coverage",
+         Filter  => new Has_Coverage_Filter,
+         Submenu => Submenu_Factory (Submenu));
       GPS.Kernel.Scripts.Set_Property
         (Instance, Code_Analysis_Cst_Str,
          Instance_Property_Record (Property.all));
+
+      if Code_Analysis_Module_ID.Project_Pixbuf = null then
+         Code_Analysis_Module_ID.Project_Pixbuf := Render_Icon
+           (Get_Main_Window (Code_Analysis_Module_ID.Kernel),
+            "gps-project-closed", Gtk.Enums.Icon_Size_Menu);
+         Code_Analysis_Module_ID.File_Pixbuf := Render_Icon
+           (Get_Main_Window (Code_Analysis_Module_ID.Kernel), "gps-file",
+            Gtk.Enums.Icon_Size_Menu);
+         Code_Analysis_Module_ID.Subp_Pixbuf := Render_Icon
+           (Get_Main_Window (Code_Analysis_Module_ID.Kernel), "gps-box",
+            Gtk.Enums.Icon_Size_Menu);
+         Code_Analysis_Module_ID.Warn_Pixbuf := Render_Icon
+           (Get_Main_Window (Code_Analysis_Module_ID.Kernel),
+            "gps-warning", Gtk.Enums.Icon_Size_Menu);
+      end if;
    end Create;
 
-   -------------------
-   -- Add_Gcov_Info --
-   -------------------
+   -------------------------
+   -- Shell_Add_Gcov_Info --
+   -------------------------
 
-   procedure Add_Gcov_Info
+   procedure Shell_Add_Gcov_Info
      (Data    : in out Callback_Data'Class;
       Command : String)
    is
@@ -96,8 +120,8 @@ package body Code_Analysis_Module is
       VFS_Cov_File  : VFS.Virtual_File;
       File_Node     : Code_Analysis.File_Access;
    begin
-      Instance      := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
-      Property      := Code_Analysis_Class_Record
+      Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
+      Property := Code_Analysis_Class_Record
         (Get_Property (Instance, Code_Analysis_Cst_Str));
 
       Name_Parameters (Data, (2 => Src_File_Cst'Access,
@@ -136,7 +160,6 @@ package body Code_Analysis_Module is
       Project_Name  := Get_Project_From_File
         (Get_Registry (Code_Analysis_Module_ID.Kernel).all, VFS_Src_File);
       Project_Node  := Get_Or_Create (Property.Projects, Project_Name);
-
       File_Node     := Get_Or_Create (Project_Node, VFS_Src_File);
       File_Node.Analysis_Data.Coverage_Data := new Node_Coverage;
       File_Contents := Read_File (VFS_Cov_File);
@@ -152,13 +175,13 @@ package body Code_Analysis_Module is
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
-   end Add_Gcov_Info;
+   end Shell_Add_Gcov_Info;
 
-   ----------------------------
-   -- List_Not_Covered_Lines --
-   ----------------------------
+   ----------------------------------
+   -- Shell_List_Lines_Not_Covered --
+   ----------------------------------
 
-   procedure List_Not_Covered_Lines
+   procedure Shell_List_Lines_Not_Covered
      (Data    : in out Callback_Data'Class;
       Command : String)
    is
@@ -184,16 +207,16 @@ package body Code_Analysis_Module is
          Sort_Projects (Sort_Arr);
 
          for J in Sort_Arr'Range loop
-            List_Not_Covered_Lines_In_Project (Sort_Arr (J));
+            List_Lines_Not_Covered_In_Project (Sort_Arr (J));
          end loop;
       end;
-   end List_Not_Covered_Lines;
+   end Shell_List_Lines_Not_Covered;
 
-   --------------------
-   -- Show_Tree_View --
-   --------------------
+   --------------------------
+   -- Shell_Show_Tree_View --
+   --------------------------
 
-   procedure Show_Tree_View
+   procedure Shell_Show_Tree_View
      (Data    : in out Callback_Data'Class;
       Command : String)
    is
@@ -217,21 +240,6 @@ package body Code_Analysis_Module is
          Initialize_Hbox (Property.View);
 
          Property.View.Instance := Instance;
-
-         if Code_Analysis_Module_ID.Project_Pixbuf = null then
-            Code_Analysis_Module_ID.Project_Pixbuf := Render_Icon
-              (Get_Main_Window (Code_Analysis_Module_ID.Kernel),
-               "gps-project-closed", Gtk.Enums.Icon_Size_Menu);
-            Code_Analysis_Module_ID.File_Pixbuf := Render_Icon
-              (Get_Main_Window (Code_Analysis_Module_ID.Kernel), "gps-file",
-               Gtk.Enums.Icon_Size_Menu);
-            Code_Analysis_Module_ID.Subp_Pixbuf := Render_Icon
-              (Get_Main_Window (Code_Analysis_Module_ID.Kernel), "gps-box",
-               Gtk.Enums.Icon_Size_Menu);
-            Code_Analysis_Module_ID.Warn_Pixbuf := Render_Icon
-              (Get_Main_Window (Code_Analysis_Module_ID.Kernel),
-               "gps-warning", Gtk.Enums.Icon_Size_Menu);
-         end if;
 
          Gtk_New (Property.View.Model, GType_Array'
              (Pix_Col     => Gdk.Pixbuf.Get_Type,
@@ -328,7 +336,7 @@ package body Code_Analysis_Module is
       Fill_Iter
         (Property.View.Model, Property.View.Iter, Property.Projects);
       Raise_Child (Property.Child);
-   end Show_Tree_View;
+   end Shell_Show_Tree_View;
 
    -------------
    -- Destroy --
@@ -415,11 +423,11 @@ package body Code_Analysis_Module is
          return False;
    end On_Double_Click;
 
-   ------------------------------
-   -- Add_Coverage_Annotations --
-   ------------------------------
+   ------------------------------------------
+   -- Add_Coverage_Annotations_From_Report --
+   ------------------------------------------
 
-   procedure Add_Coverage_Annotations
+   procedure Add_Coverage_Annotations_From_Report
      (Object : access Gtk_Widget_Record'Class)
    is
       View       : constant Code_Analysis_View := Code_Analysis_View (Object);
@@ -428,8 +436,6 @@ package body Code_Analysis_Module is
       Path       : Gtk_Tree_Path;
       File_Node  : Code_Analysis.File_Access;
       Subp_Node  : Subprogram_Access;
-      Line_Info  : Line_Information_Data;
-      Line_Icons : Line_Information_Data;
    begin
       Get_Selected (Get_Selection (View.Tree), Model, Iter);
       Path := Get_Path (Model, Iter);
@@ -451,6 +457,44 @@ package body Code_Analysis_Module is
             Subp_Node.Body_Line);
       end if;
 
+      Add_Coverage_Annotations (File_Node);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end Add_Coverage_Annotations_From_Report;
+
+   -------------------------------------------
+   -- Add_Coverage_Annotations_From_Context --
+   -------------------------------------------
+
+   procedure Add_Coverage_Annotations_From_Context
+     (Widget : access Glib.Object.GObject_Record'Class;
+      C      : Context_And_Code_Analysis)
+   is
+      Project_Node : constant Project_Access := Get_Or_Create
+        (C.Code_Analysis.Projects, Project_Information (C.Context));
+      File_Node    : constant Code_Analysis.File_Access := Get_Or_Create
+        (Project_Node, File_Information (C.Context));
+      pragma Unreferenced (Widget);
+   begin
+      Open_File_Editor (Code_Analysis_Module_ID.Kernel, File_Node.Name);
+      Add_Coverage_Annotations (File_Node);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end Add_Coverage_Annotations_From_Context;
+
+   ------------------------------
+   -- Add_Coverage_Annotations --
+   ------------------------------
+
+   procedure Add_Coverage_Annotations
+     (File_Node : Code_Analysis.File_Access) is
+      Line_Info  : Line_Information_Data;
+      Line_Icons : Line_Information_Data;
+   begin
       Line_Info  := new Line_Information_Array (File_Node.Lines'Range);
       Line_Icons := new Line_Information_Array (File_Node.Lines'Range);
 
@@ -482,17 +526,13 @@ package body Code_Analysis_Module is
          Line_Info);
       Unchecked_Free (Line_Info);
       Unchecked_Free (Line_Icons);
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
    end Add_Coverage_Annotations;
 
-   ---------------------------------
-   -- Remove_Coverage_Annotations --
-   ---------------------------------
+   ---------------------------------------------
+   -- Remove_Coverage_Annotations_From_Report --
+   ---------------------------------------------
 
-   procedure Remove_Coverage_Annotations
+   procedure Remove_Coverage_Annotations_From_Report
      (Object : access Gtk_Widget_Record'Class)
    is
       View      : constant Code_Analysis_View := Code_Analysis_View (Object);
@@ -514,6 +554,42 @@ package body Code_Analysis_Module is
               (Gtk_Tree_Store (Model), Parent (Model, Iter), Node_Col));
       end if;
 
+      Remove_Coverage_Annotations (File_Node);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end Remove_Coverage_Annotations_From_Report;
+
+   ----------------------------------------------
+   -- Remove_Coverage_Annotations_From_Context --
+   ----------------------------------------------
+
+   procedure Remove_Coverage_Annotations_From_Context
+     (Widget : access Glib.Object.GObject_Record'Class;
+      C      : Context_And_Code_Analysis)
+   is
+      Project_Node : constant Project_Access := Get_Or_Create
+        (C.Code_Analysis.Projects, Project_Information (C.Context));
+      File_Node    : constant Code_Analysis.File_Access := Get_Or_Create
+        (Project_Node, File_Information (C.Context));
+      pragma Unreferenced (Widget);
+   begin
+      Open_File_Editor (Code_Analysis_Module_ID.Kernel, File_Node.Name);
+      Remove_Coverage_Annotations (File_Node);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end Remove_Coverage_Annotations_From_Context;
+
+   ---------------------------------
+   -- Remove_Coverage_Annotations --
+   ---------------------------------
+
+   procedure Remove_Coverage_Annotations
+     (File_Node : Code_Analysis.File_Access) is
+   begin
       Remove_Line_Information_Column
         (Code_Analysis_Module_ID.Kernel,
          File_Node.Name,
@@ -528,11 +604,11 @@ package body Code_Analysis_Module is
                 "Unexpected exception: " & Exception_Information (E));
    end Remove_Coverage_Annotations;
 
-   --------------------------------------------
-   -- Menu_List_Not_Covered_Lines_In_Project --
-   --------------------------------------------
+   ---------------------------------------------------
+   -- List_Lines_Not_Covered_In_Project_From_Report --
+   ---------------------------------------------------
 
-   procedure Menu_List_Not_Covered_Lines_In_Project
+   procedure List_Lines_Not_Covered_In_Project_From_Report
      (Object : access Gtk_Widget_Record'Class)
    is
       View  : constant Code_Analysis_View := Code_Analysis_View (Object);
@@ -543,18 +619,18 @@ package body Code_Analysis_Module is
       Get_Selected (Get_Selection (View.Tree), Model, Iter);
       Project_Node := Project_Access
         (GType_Project.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
-      List_Not_Covered_Lines_In_Project (Project_Node);
+      List_Lines_Not_Covered_In_Project (Project_Node);
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
-   end Menu_List_Not_Covered_Lines_In_Project;
+   end List_Lines_Not_Covered_In_Project_From_Report;
 
-   -----------------------------------------
-   -- Menu_List_Not_Covered_Lines_In_File --
-   -----------------------------------------
+   ------------------------------------------------
+   -- List_Lines_Not_Covered_In_File_From_Report --
+   ------------------------------------------------
 
-   procedure Menu_List_Not_Covered_Lines_In_File
+   procedure List_Lines_Not_Covered_In_File_From_Report
      (Object : access Gtk_Widget_Record'Class)
    is
       View      : constant Code_Analysis_View := Code_Analysis_View (Object);
@@ -566,19 +642,19 @@ package body Code_Analysis_Module is
       File_Node := Code_Analysis.File_Access
         (GType_File.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
       Open_File_Editor (Code_Analysis_Module_ID.Kernel, File_Node.Name);
-      List_Not_Covered_Lines_In_File (File_Node);
+      List_Lines_Not_Covered_In_File (File_Node);
 
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
-   end Menu_List_Not_Covered_Lines_In_File;
+   end List_Lines_Not_Covered_In_File_From_Report;
 
    ---------------------------------------
-   -- List_Not_Covered_Lines_In_Project --
+   -- List_Lines_Not_Covered_In_Project --
    ---------------------------------------
 
-   procedure List_Not_Covered_Lines_In_Project
+   procedure List_Lines_Not_Covered_In_Project
      (Project_Node : Project_Access)
    is
       use File_Maps;
@@ -594,15 +670,15 @@ package body Code_Analysis_Module is
       Sort_Files (Sort_Arr);
 
       for J in Sort_Arr'Range loop
-         List_Not_Covered_Lines_In_File (Sort_Arr (J));
+         List_Lines_Not_Covered_In_File (Sort_Arr (J));
       end loop;
-   end List_Not_Covered_Lines_In_Project;
+   end List_Lines_Not_Covered_In_Project;
 
    ------------------------------------
-   -- List_Not_Covered_Lines_In_File --
+   -- List_Lines_Not_Covered_In_File --
    ------------------------------------
 
-   procedure List_Not_Covered_Lines_In_File
+   procedure List_Lines_Not_Covered_In_File
      (File_Node : Code_Analysis.File_Access) is
    begin
       for J in File_Node.Lines'Range loop
@@ -621,7 +697,7 @@ package body Code_Analysis_Module is
             end if;
          end if;
       end loop;
-   end List_Not_Covered_Lines_In_File;
+   end List_Lines_Not_Covered_In_File;
 
    ------------------
    -- Context_Func --
@@ -666,20 +742,21 @@ package body Code_Analysis_Module is
       if Get_Depth (Path) > 1 then
          Gtk_New (Mitem, -"View with coverage annotations");
          Gtkada.Handlers.Widget_Callback.Object_Connect
-           (Mitem, "activate", Add_Coverage_Annotations'Access,
+           (Mitem, "activate", Add_Coverage_Annotations_From_Report'Access,
             View, After => False);
          Append (Menu, Mitem);
          Gtk_New (Mitem, -"Remove coverage annotations");
          Gtkada.Handlers.Widget_Callback.Object_Connect
-           (Mitem, "activate", Remove_Coverage_Annotations'Access,
+           (Mitem, "activate", Remove_Coverage_Annotations_From_Report'Access,
             View, After => False);
          Append (Menu, Mitem);
       end if;
 
       if Get_Depth (Path) = 1 then
-         Gtk_New (Mitem, -"List not covered lines");
+         Gtk_New (Mitem, -"List lines not covered");
          Gtkada.Handlers.Widget_Callback.Object_Connect
-           (Mitem, "activate", Menu_List_Not_Covered_Lines_In_Project'Access,
+           (Mitem, "activate",
+            List_Lines_Not_Covered_In_Project_From_Report'Access,
             View, After => False);
          Append (Menu, Mitem);
       end if;
@@ -687,14 +764,92 @@ package body Code_Analysis_Module is
       if Get_Depth (Path) = 2 then
          Gtk_New (Mitem);
          Append (Menu, Mitem);
-         Gtk_New (Mitem, -"List not covered lines");
+         Gtk_New (Mitem, -"List lines not covered");
          Gtkada.Handlers.Widget_Callback.Object_Connect
-           (Mitem, "activate", Menu_List_Not_Covered_Lines_In_File'Access,
+           (Mitem, "activate",
+            List_Lines_Not_Covered_In_File_From_Report'Access,
             View, After => False);
          Append (Menu, Mitem);
       end if;
-
    end Context_Func;
+
+   -------------------------------
+   -- Load_Coverage_Information --
+   -------------------------------
+
+   procedure Load_Coverage_Information
+     (Widget : access Glib.Object.GObject_Record'Class;
+      C      : Context_And_Code_Analysis)
+   is
+      pragma Unreferenced (Widget, C);
+   begin
+      Trace (Me, "Load_Coverage_Information : not yet implemented");
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end Load_Coverage_Information;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   function Filter_Matches_Primitive
+     (Filter  : access Has_Coverage_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+   begin
+      return (Has_Project_Information (Context)
+              or else Has_File_Information (Context)
+              or else Has_Entity_Name_Information (Context));
+   end Filter_Matches_Primitive;
+
+   --------------------
+   -- Append_To_Menu --
+   --------------------
+
+   procedure Append_To_Menu
+     (Factory : access Coverage_Contextual_Menu;
+      Object  : access Glib.Object.GObject_Record'Class;
+      Context : Selection_Context;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      pragma Unreferenced (Object);
+      C : Context_And_Code_Analysis :=
+            (Context => Context, Code_Analysis => Factory.Code_Analysis);
+      Project_Node : constant Project_Access := Get_Or_Create
+              (C.Code_Analysis.Projects, Project_Information (Context));
+      Item : Gtk_Menu_Item;
+   begin
+      if Has_File_Information (Context) then
+         declare
+            File_Node   : constant Code_Analysis.File_Access := Get_Or_Create
+              (Project_Node, File_Information (Context));
+         begin
+            if File_Node.Analysis_Data.Coverage_Data /= null then
+               Gtk_New (Item, -"View with coverage annotations");
+               Append (Menu, Item);
+               Context_And_Code_Analysis_CB.Connect
+                 (Item, "activate", Context_And_Code_Analysis_CB.To_Marshaller
+                    (Add_Coverage_Annotations_From_Context'Access), C);
+               Gtk_New (Item, -"Remove coverage annotations");
+               Append (Menu, Item);
+               Context_And_Code_Analysis_CB.Connect
+                 (Item, "activate", Context_And_Code_Analysis_CB.To_Marshaller
+                    (Remove_Coverage_Annotations_From_Context'Access), C);
+            end if;
+         end;
+      end if;
+
+      if Project_Node.Analysis_Data.Coverage_Data = null then
+         Gtk_New (Item, -"Load coverage information");
+         Append (Menu, Item);
+         Context_And_Code_Analysis_CB.Connect
+           (Item, "activate", Context_And_Code_Analysis_CB.To_Marshaller
+              (Load_Coverage_Information'Access), C);
+      end if;
+   end Append_To_Menu;
 
    ---------------------
    -- Register_Module --
@@ -713,29 +868,28 @@ package body Code_Analysis_Module is
         (Module      => Code_Analysis_Module_ID,
          Kernel      => Kernel,
          Module_Name => Code_Analysis_Cst_Str);
-
       Register_Command
         (Kernel, Constructor_Method,
-         Class         => Code_Analysis_Class,
-         Handler       => Create'Access);
+         Class        => Code_Analysis_Class,
+         Handler      => Create'Access);
       Register_Command
         (Kernel, "add_gcov_info",
-         Minimum_Args  => 2,
-         Maximum_Args  => 2,
-         Class         => Code_Analysis_Class,
-         Handler       => Add_Gcov_Info'Access);
+         Minimum_Args => 2,
+         Maximum_Args => 2,
+         Class        => Code_Analysis_Class,
+         Handler      => Shell_Add_Gcov_Info'Access);
       Register_Command
         (Kernel, "list_not_covered_lines",
-         Class         => Code_Analysis_Class,
-         Handler       => List_Not_Covered_Lines'Access);
+         Class        => Code_Analysis_Class,
+         Handler      => Shell_List_Lines_Not_Covered'Access);
       Register_Command
         (Kernel, "show_tree_view",
-         Class         => Code_Analysis_Class,
-         Handler       => Show_Tree_View'Access);
+         Class        => Code_Analysis_Class,
+         Handler      => Shell_Show_Tree_View'Access);
       Register_Command
         (Kernel, Destructor_Method,
-         Class         => Code_Analysis_Class,
-         Handler       => Destroy'Access);
+         Class        => Code_Analysis_Class,
+         Handler      => Destroy'Access);
    end Register_Module;
 
 end Code_Analysis_Module;
