@@ -626,6 +626,25 @@ package body Code_Analysis_Module is
                 "Unexpected exception: " & Exception_Information (E));
    end List_Lines_Not_Covered_In_Project_From_Report;
 
+   ----------------------------------------------------
+   -- List_Lines_Not_Covered_In_Project_From_Context --
+   ----------------------------------------------------
+
+   procedure List_Lines_Not_Covered_In_Project_From_Context
+     (Widget : access Glib.Object.GObject_Record'Class;
+      C      : Context_And_Code_Analysis)
+   is
+      Project_Node : constant Project_Access := Get_Or_Create
+        (C.Code_Analysis.Projects, Project_Information (C.Context));
+      pragma Unreferenced (Widget);
+   begin
+      List_Lines_Not_Covered_In_Project (Project_Node);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end List_Lines_Not_Covered_In_Project_From_Context;
+
    ------------------------------------------------
    -- List_Lines_Not_Covered_In_File_From_Report --
    ------------------------------------------------
@@ -650,6 +669,28 @@ package body Code_Analysis_Module is
                 "Unexpected exception: " & Exception_Information (E));
    end List_Lines_Not_Covered_In_File_From_Report;
 
+   -------------------------------------------------
+   -- List_Lines_Not_Covered_In_File_From_Context --
+   -------------------------------------------------
+
+   procedure List_Lines_Not_Covered_In_File_From_Context
+     (Widget : access Glib.Object.GObject_Record'Class;
+      C      : Context_And_Code_Analysis)
+   is
+      Project_Node : constant Project_Access := Get_Or_Create
+        (C.Code_Analysis.Projects, Project_Information (C.Context));
+      File_Node    : constant Code_Analysis.File_Access := Get_Or_Create
+        (Project_Node, File_Information (C.Context));
+      pragma Unreferenced (Widget);
+   begin
+      Open_File_Editor (Code_Analysis_Module_ID.Kernel, File_Node.Name);
+      List_Lines_Not_Covered_In_File (File_Node);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end List_Lines_Not_Covered_In_File_From_Context;
+
    ---------------------------------------
    -- List_Lines_Not_Covered_In_Project --
    ---------------------------------------
@@ -670,7 +711,9 @@ package body Code_Analysis_Module is
       Sort_Files (Sort_Arr);
 
       for J in Sort_Arr'Range loop
-         List_Lines_Not_Covered_In_File (Sort_Arr (J));
+         if Sort_Arr (J).Analysis_Data.Coverage_Data /= null then
+            List_Lines_Not_Covered_In_File (Sort_Arr (J));
+         end if;
       end loop;
    end List_Lines_Not_Covered_In_Project;
 
@@ -838,17 +881,31 @@ package body Code_Analysis_Module is
                Context_And_Code_Analysis_CB.Connect
                  (Item, "activate", Context_And_Code_Analysis_CB.To_Marshaller
                     (Remove_Coverage_Annotations_From_Context'Access), C);
+               Gtk_New (Item);
+               Append (Menu, Item);
+               Gtk_New (Item, -"List lines not covered");
+               Append (Menu, Item);
+               Context_And_Code_Analysis_CB.Connect
+                 (Item, "activate", Context_And_Code_Analysis_CB.To_Marshaller
+                    (List_Lines_Not_Covered_In_File_From_Context'Access), C);
             end if;
          end;
+      else
+         if Project_Node.Analysis_Data.Coverage_Data /= null then
+            Gtk_New (Item, -"List lines not covered");
+            Append (Menu, Item);
+            Context_And_Code_Analysis_CB.Connect
+              (Item, "activate", Context_And_Code_Analysis_CB.To_Marshaller
+                 (List_Lines_Not_Covered_In_Project_From_Context'Access), C);
+         else
+            Gtk_New (Item, -"Load coverage information");
+            Append (Menu, Item);
+            Context_And_Code_Analysis_CB.Connect
+              (Item, "activate", Context_And_Code_Analysis_CB.To_Marshaller
+                 (Load_Coverage_Information'Access), C);
+         end if;
       end if;
 
-      if Project_Node.Analysis_Data.Coverage_Data = null then
-         Gtk_New (Item, -"Load coverage information");
-         Append (Menu, Item);
-         Context_And_Code_Analysis_CB.Connect
-           (Item, "activate", Context_And_Code_Analysis_CB.To_Marshaller
-              (Load_Coverage_Information'Access), C);
-      end if;
    end Append_To_Menu;
 
    ---------------------
