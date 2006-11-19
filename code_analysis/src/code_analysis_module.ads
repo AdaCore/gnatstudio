@@ -215,11 +215,25 @@ private
    --  Add to the location view the unexecuted lines of all files of the
    --  selected Project.
 
+   procedure List_Lines_Not_Covered_In_Project_From_Context
+     (Widget : access Glib.Object.GObject_Record'Class;
+      C      : Context_And_Code_Analysis);
+   --  Callback of the "List lines not covered" entry of the global "Coverage"
+   --  submenu when the Context only contains Project information.
+   --  Just call the subprogram List_Lines_Not_Covered_In_File
+
    procedure List_Lines_Not_Covered_In_File_From_Report
      (Object : access Gtk_Widget_Record'Class);
    --  Callback of contextual menu for File rows in a Coverage Report. Opens
    --  the select File in a source editor and call
    --  List_Lines_Not_Covered_In_File.
+
+   procedure List_Lines_Not_Covered_In_File_From_Context
+     (Widget : access Glib.Object.GObject_Record'Class;
+      C      : Context_And_Code_Analysis);
+   --  Callback of the "List lines not covered" entry of the global "Coverage"
+   --  submenu when the Context contains file information.
+   --  Just call the List_Lines_Not_Covered_In_File subprogram
 
    procedure List_Lines_Not_Covered_In_Project
      (Project_Node : Project_Access);
