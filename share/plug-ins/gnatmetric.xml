@@ -28,7 +28,7 @@
       progress-final="2"
       progress-hide="true">%2 metric -dd -x "%pps"</external>
      <shell>Locations.parse "%1" metrics</shell>
-     <shell show-command="false" output="none">XMLViewer "Metrics (%p)"</shell>
+     <shell show-command="false" output="none">XMLViewer.create_metric "Metrics (%p)"</shell>
      <shell show-command="false">XMLViewer.parse %1 metrix.xml</shell>
   </action>
 
@@ -45,7 +45,7 @@
       progress-final="2"
       progress-hide="true">%2 metric -dd -x "%PPs"</external>
      <shell>Locations.parse "%1" metrics</shell>
-     <shell show-command="false" output="none">XMLViewer "Metrics (%P)"</shell>
+     <shell show-command="false" output="none">XMLViewer.create_metric "Metrics (%P)"</shell>
      <shell show-command="false">XMLViewer.parse %1 metrix.xml</shell>
   </action>
 
@@ -61,7 +61,7 @@
      <shell>echo %1 metric -x "%pps" "%F"</shell>
      <external server="build_server">%2 metric -x "%pps" "%F"</external>
      <shell>Locations.parse "%1" metrics</shell>
-     <shell show-command="false" output="none">XMLViewer "Metrics (%f)"</shell>
+     <shell show-command="false" output="none">XMLViewer.create_metric "Metrics (%f)"</shell>
      <shell show-command="false">XMLViewer.parse %1 metrix.xml</shell>
   </action>
 
