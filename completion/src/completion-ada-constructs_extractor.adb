@@ -232,7 +232,9 @@ package body Completion.Ada.Constructs_Extractor is
       --  Consider private elements if Private_Visibility is true.
 
       procedure Handle_Referenced_Entity
-        (Proposal : Construct_Completion_Proposal; Cut_Access : Boolean);
+        (Proposal        : Construct_Completion_Proposal;
+         Cut_Access      : Boolean;
+         Cut_Subprograms : Boolean);
       --  Adds the relevant content from the sub entity of the proposal. If
       --  Cut_Access is true, then accesses won't be appened to the result.
 
@@ -318,7 +320,9 @@ package body Completion.Ada.Constructs_Extractor is
       ------------------------------
 
       procedure Handle_Referenced_Entity
-        (Proposal : Construct_Completion_Proposal; Cut_Access : Boolean)
+        (Proposal        : Construct_Completion_Proposal;
+         Cut_Access      : Boolean;
+         Cut_Subprograms : Boolean)
       is
          Parent_Sloc_Start, Parent_Sloc_End : Source_Location;
          Parent_Found                       : Boolean;
@@ -338,6 +342,7 @@ package body Completion.Ada.Constructs_Extractor is
                List : Completion_List;
 
                It : Completion_Iterator;
+               Construct : Simple_Construct_Information;
             begin
                Context.Buffer := Proposal.Buffer;
                Context.Offset := Parent_Sloc_End.Index;
@@ -357,13 +362,19 @@ package body Completion.Ada.Constructs_Extractor is
                   if Get_Proposal (It)
                   in Construct_Completion_Proposal'Class
                   then
-                     if not Cut_Access
-                       or else not Is_Access
-                         (Construct_Completion_Proposal
+                     Construct := Get_Construct
+                       (Construct_Completion_Proposal
+                          (Get_Proposal (It)).Tree_Node);
+
+                     if (not Cut_Access
+                         or else not Is_Access
+                           (Construct_Completion_Proposal
                               (Get_Proposal (It)).Buffer.all,
-                          Get_Construct
-                            (Construct_Completion_Proposal
-                               (Get_Proposal (It)).Tree_Node))
+                            Construct))
+                       and then
+                         (not Cut_Subprograms
+                          or else
+                            Construct.Category not in Subprogram_Category)
                      then
                         Get_Composition
                           (Get_Proposal (It),
@@ -489,7 +500,10 @@ package body Completion.Ada.Constructs_Extractor is
             end if;
 
             Handle_Referenced_Entity
-              (Proposal, Proposal_Is_All);
+              (Proposal,
+               Proposal_Is_All,
+               Get_Construct
+                 (Proposal.Tree_Node).Category in Subprogram_Category);
 
             if Get_Construct (Proposal.Tree_Node).Category
               in Cat_Class .. Cat_Subtype
@@ -524,7 +538,7 @@ package body Completion.Ada.Constructs_Extractor is
             Append (Result.List, To_Extensive_List (List));
 
          when Cat_Package =>
-            Handle_Referenced_Entity (Proposal, False);
+            Handle_Referenced_Entity (Proposal, False, False);
 
             declare
                Spec_It         : Construct_Tree_Iterator;
