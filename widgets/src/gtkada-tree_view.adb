@@ -266,7 +266,8 @@ package body Gtkada.Tree_View is
         (Column_Types'First .. Column_Types'Last + 1);
    begin
       Real_Column_Types := Column_Types & (GType_Boolean);
-      Widget.Expanded_State_Column := Gint (Real_Column_Types'Last);
+      Widget.Expanded_State_Column :=
+        Gint (Real_Column_Types'Length - 1);
 
       Gtk_New (Widget.Model, Real_Column_Types);
       Initialize (Gtk_Tree_View (Widget), Widget.Model);
