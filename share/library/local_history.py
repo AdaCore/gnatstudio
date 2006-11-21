@@ -141,7 +141,7 @@ class LocalHistory:
        if version >= 1:
 	  Logger ("LocalHist").log \
 	    ("Truncating file " + self.rcs_file + " to revision " + `version`)
-	  proc = Process ("rcs -o:1." + version + " " + self.rcs_file)
+	  proc = Process ("rcs -o:1." + `version` + " " + self.rcs_file)
 	  proc.wait ()
 
   def local_checkout (self, revision):
