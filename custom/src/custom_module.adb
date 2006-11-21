@@ -225,7 +225,7 @@ package body Custom_Module is
    exception
       when E : others =>
          Trace (Exception_Handle, "Unexpected exception "
-                & Exception_Message (E));
+                & Exception_Information (E));
    end On_Dynamic_Menu_Activate;
 
    --------------------

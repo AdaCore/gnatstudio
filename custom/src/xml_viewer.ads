@@ -47,6 +47,13 @@ private
    --  Child_Index is set to 1 for the first XML child of a given node, and
    --  increased for each children.
 
+   function On_Click
+     (View        : access Abstract_XML_Viewer_Record;
+      Iter        : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Node        : Glib.Xml_Int.Node_Ptr) return Boolean is abstract;
+   --  Called when a row of the table is clicked on.
+   --  Return true if an action was performed
+
    procedure Free (View : access Abstract_XML_Viewer_Record) is abstract;
    --  Free the memory occupied by View
 
