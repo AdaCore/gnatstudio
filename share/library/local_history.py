@@ -51,7 +51,7 @@ local_hist_when_no_project=False
 
 from GPS import *
 from os.path import *
-import os, shutil, datetime, traceback, time, stat
+import os, shutil, datetime, traceback, time, stat, re
 
 class LocalHistory:
   """This class provides access to the local history of a file"""
@@ -112,6 +112,7 @@ class LocalHistory:
   def add_to_history (self):
      """Expand the local history for file, to include the current version"""
      if not self.rcs_dir:
+        Logger ("LocalHist").log ("No RCS dir for file " + self.file)
         return
      if not isdir (self.rcs_dir):
        os.makedirs (self.rcs_dir)
@@ -201,6 +202,39 @@ class LocalHistory:
      """Whether there is local history information for self"""
      return isfile (self.rcs_file)
 
+  def on_select_xml_node (self, node_name, attrs, value):
+     if node_name == "revision":
+        attr = dict ()
+        for a in re.findall ("""(\\w+)=['"](.*?)['"]\B""", attrs):
+          attr[a[0]] = a[1]
+        self.show_diff (attr["name"], attr["date"])
+
+  def create_xml_node (self, node_name, attrs, value):
+     attr = dict ()
+     for a in re.findall ("""(\\w+)=['"](.*?)['"]\B""", attrs):
+        attr[a[0]] = a[1]
+     if node_name == "revision":
+        return ["[<b>" + attr["date"] + "</b>] " + attr["name"]]
+
+  def view_all (self, revisions, dates):
+     """View all revisions of self in a graphical tree"""
+     if self.rcs_dir and isdir (self.rcs_dir):
+        pwd = os.getcwd ()
+        os.chdir (dirname (self.file))
+
+        xml = "<local_history>\n"
+        for index, r in enumerate (revisions):
+          xml = xml + "  <revision name='" + r + "' date='" \
+             + dates[index] + "' />"
+        
+        xml = xml + "</local_history>"
+
+        view = XMLViewer ("History",
+                          columns = 1,
+                          on_select = self.on_select_xml_node,
+                          parser = self.create_xml_node)
+        view.parse_string (xml)
+        os.chdir (pwd)
 
 def has_RCS_on_path():
    """True if RCS was found on the PATH"""
@@ -225,7 +259,6 @@ def contextual_filter (context):
      hist = LocalHistory (context.file())
      return hist.has_local_history ()
    except: 
-     Logger ("LocalHist").log ("Unexpected exception " + traceback.format_exc())
      return False
 
 def contextual_factory (context):
@@ -264,6 +297,10 @@ def on_patch (context, choice, choice_index):
    hist.show_diff (context.revisions [choice_index], 
                    context.revisions_menu [choice_index])
 
+def on_view_all (context):
+   hist = LocalHistory (context.file())
+   hist.view_all (context.revisions, context.revisions_menu)
+
 def register_module (hook):
    """Activate this local history module if RCS is found on the path"""
 
@@ -283,6 +320,9 @@ def register_module (hook):
        (factory     = contextual_factory,
         on_activate = on_patch,
         label       = "Local History/Show Patch",
+        filter      = contextual_filter)
+     Contextual ("Local History/View").create \
+       (on_activate = on_view_all,
         filter      = contextual_filter)
    
 Hook ("gps_started").add (register_module)
