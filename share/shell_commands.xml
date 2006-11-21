@@ -4585,6 +4585,7 @@ Underscore characters ('_') need to be duplicated in the path. A single undersco
      <param name="columns" default="1">An integer</param>
      <param name="parser">A subprogram</param>
      <param name="on_click" default="none">A subprogram</param>
+     <param name="on_select" default="none">A subprogram</param>
      <description>Create a new XMLViewer, with the given name.
 
 Columns is the number of columns that the table representation should have. The first column is
@@ -4593,6 +4594,9 @@ always the one used for sorting the table.
 Parser is a subprogram called for each XML node that is parsed. It takes three arguments: the name of the XML node being visited, its attributes (in the form "attr='foo' attr="bar""), and the text value of that node. This subprogram should return a list of strings, one per visible column create for the table. Each element will be put in the corresponding column.
 
 On_Click is an optional subprogram. It is called every time the user double-click on a line, and is passed the same arguments as Parser. It has no return value.
+
+On_Select has the same profile as On_Click, but is called when the user has selected a new line,
+not double-clicked on it.
 </description>
       <example lang="python">
           # Display a very simply tree. If you click on the file name,

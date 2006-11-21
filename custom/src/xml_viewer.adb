@@ -60,12 +60,14 @@ package body XML_Viewer is
    Columns_Cst   : aliased constant String := "columns";
    Parser_Cst    : aliased constant String := "parser";
    On_Click_Cst  : aliased constant String := "on_click";
+   On_Select_Cst : aliased constant String := "on_select";
 
    XML_Constructor_Params : constant Cst_Argument_List  :=
      (1 => Name_Cst'Access,
       2 => Columns_Cst'Access,
       3 => Parser_Cst'Access,
-      4 => On_Click_Cst'Access);
+      4 => On_Click_Cst'Access,
+      5 => On_Select_Cst'Access);
    XML_Metrics_Params : constant Cst_Argument_List :=
      (1 => Name_Cst'Access);
    Parse_Params : constant Cst_Argument_List :=
@@ -94,14 +96,16 @@ package body XML_Viewer is
       Child_Index : Positive) return Gtk_Tree_Iter;
    procedure Free (View : access Metrix_XML_Viewer_Record);
    function On_Click
-     (View        : access Metrix_XML_Viewer_Record;
-      Iter        : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Node        : Glib.Xml_Int.Node_Ptr) return Boolean;
+     (View         : access Metrix_XML_Viewer_Record;
+      Double_Click : Boolean;
+      Iter         : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Node         : Glib.Xml_Int.Node_Ptr) return Boolean;
    --  See inherited documentation
 
    type Custom_XML_Viewer_Record is new XML_Viewer_Record with record
-      Parser   : Subprogram_Type;
-      On_Click : Subprogram_Type;
+      Parser    : Subprogram_Type;
+      On_Click  : Subprogram_Type;
+      On_Select : Subprogram_Type;
    end record;
    function Node_Parser
      (View        : access Custom_XML_Viewer_Record;
@@ -110,9 +114,10 @@ package body XML_Viewer is
       Child_Index : Positive) return Gtk_Tree_Iter;
    procedure Free (View : access Custom_XML_Viewer_Record);
    function On_Click
-     (View        : access Custom_XML_Viewer_Record;
-      Iter        : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Node        : Glib.Xml_Int.Node_Ptr) return Boolean;
+     (View         : access Custom_XML_Viewer_Record;
+      Double_Click : Boolean;
+      Iter         : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Node         : Glib.Xml_Int.Node_Ptr) return Boolean;
    --  See inherited documentation
 
    function Create_Callback_Data
@@ -174,6 +179,7 @@ package body XML_Viewer is
    begin
       Free (View.Parser);
       Free (View.On_Click);
+      Free (View.On_Select);
    end Free;
 
    --------------------------
@@ -245,22 +251,37 @@ package body XML_Viewer is
    --------------
 
    function On_Click
-     (View        : access Custom_XML_Viewer_Record;
-      Iter        : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Node        : Glib.Xml_Int.Node_Ptr) return Boolean
+     (View         : access Custom_XML_Viewer_Record;
+      Double_Click : Boolean;
+      Iter         : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Node         : Glib.Xml_Int.Node_Ptr) return Boolean
    is
       Tmp : Boolean;
       pragma Unreferenced (Iter, Tmp);
    begin
-      if View.On_Click /= null then
-         declare
-            C : Callback_Data'Class :=
-              Create_Callback_Data (View.On_Click, Node);
-         begin
-            Tmp := Execute (View.On_Click, C);
-            Free (C);
-            return True;
-         end;
+      if Double_Click then
+         if View.On_Click /= null then
+            declare
+               C : Callback_Data'Class :=
+                 Create_Callback_Data (View.On_Click, Node);
+            begin
+               Tmp := Execute (View.On_Click, C);
+               Free (C);
+               return True;
+            end;
+         end if;
+
+      else
+         if View.On_Select /= null then
+            declare
+               C : Callback_Data'Class :=
+                 Create_Callback_Data (View.On_Select, Node);
+            begin
+               Tmp := Execute (View.On_Select, C);
+               Free (C);
+               return False;
+            end;
+         end if;
       end if;
       return False;
    end On_Click;
@@ -270,17 +291,20 @@ package body XML_Viewer is
    --------------
 
    function On_Click
-     (View        : access Metrix_XML_Viewer_Record;
-      Iter        : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Node        : Glib.Xml_Int.Node_Ptr) return Boolean
+     (View         : access Metrix_XML_Viewer_Record;
+      Double_Click : Boolean;
+      Iter         : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Node         : Glib.Xml_Int.Node_Ptr) return Boolean
    is
       pragma Unreferenced (Node);
       Cmd : constant String := Get_String
         (View.Tree.Model, Iter, View.Command_Column);
    begin
-      if Cmd /= "" then
-         Execute_GPS_Shell_Command (Get_Kernel (Custom_Module_ID.all), Cmd);
-         return True;
+      if Double_Click then
+         if Cmd /= "" then
+            Execute_GPS_Shell_Command (Get_Kernel (Custom_Module_ID.all), Cmd);
+            return True;
+         end if;
       end if;
       return False;
    end On_Click;
@@ -299,12 +323,18 @@ package body XML_Viewer is
       Iter : Gtk_Tree_Iter;
       N    : Node_Ptr;
    begin
-      if Get_Event_Type (Event) = Gdk_2button_Press then
+      if Get_Event_Type (Event) = Gdk_2button_Press
+        or else Get_Event_Type (Event) = Button_Press
+      then
          Iter := Find_Iter_For_Event (View.Tree, View.Tree.Model, Event);
          if Iter /= Null_Iter then
             N :=
               Convert (Get_Address (View.Tree.Model, Iter, View.XML_Column));
-            return On_Click (View, Iter, N);
+            return On_Click
+              (View         => View,
+               Double_Click => Get_Event_Type (Event) = Gdk_2button_Press,
+               Iter         => Iter,
+               Node         => N);
          end if;
       end if;
 
@@ -639,7 +669,6 @@ package body XML_Viewer is
       Inst             : Class_Instance;
       View             : XML_Viewer;
    begin
-
       if Command = Constructor_Method then
          Name_Parameters (Data, XML_Constructor_Params);
          Inst := Nth_Arg (Data, 1, XML_Viewer_Class);
@@ -651,6 +680,8 @@ package body XML_Viewer is
          Custom_XML_Viewer_Record (View.all).Parser := Nth_Arg (Data, 4);
          Custom_XML_Viewer_Record (View.all).On_Click :=
            Nth_Arg (Data, 5, null);
+         Custom_XML_Viewer_Record (View.all).On_Select :=
+           Nth_Arg (Data, 6, null);
          Set_Data (Inst, Widget => GObject (View));
 
       elsif Command = "create_metric" then
@@ -705,7 +736,7 @@ package body XML_Viewer is
         (Kernel, Constructor_Method,
          Class        => XML_Viewer_Class,
          Minimum_Args => 3,
-         Maximum_Args => 4,
+         Maximum_Args => 5,
          Handler      => XML_Commands_Handler'Access);
 
       Register_Command

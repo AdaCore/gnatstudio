@@ -48,9 +48,10 @@ private
    --  increased for each children.
 
    function On_Click
-     (View        : access Abstract_XML_Viewer_Record;
-      Iter        : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Node        : Glib.Xml_Int.Node_Ptr) return Boolean is abstract;
+     (View         : access Abstract_XML_Viewer_Record;
+      Double_Click : Boolean;
+      Iter         : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Node         : Glib.Xml_Int.Node_Ptr) return Boolean is abstract;
    --  Called when a row of the table is clicked on.
    --  Return true if an action was performed
 
