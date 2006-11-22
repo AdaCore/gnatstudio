@@ -113,29 +113,29 @@ package body Python_Module is
       Class         : Class_Type := No_Class;
       Static_Method : Boolean := False);
    procedure Register_Class
-     (Script        : access Python_Scripting_Record;
-      Name          : String;
-      Base          : Class_Type := No_Class);
+     (Script : access Python_Scripting_Record;
+      Name   : String;
+      Base   : Class_Type := No_Class);
    procedure Execute_Command
-     (Script             : access Python_Scripting_Record;
-      Command            : String;
-      Console            : Interactive_Consoles.Interactive_Console := null;
-      Hide_Output        : Boolean := False;
-      Show_Command       : Boolean := True;
-      Errors             : out Boolean);
+     (Script       : access Python_Scripting_Record;
+      Command      : String;
+      Console      : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output  : Boolean := False;
+      Show_Command : Boolean := True;
+      Errors       : out Boolean);
    function Execute_Command
-     (Script             : access Python_Scripting_Record;
-      Command            : String;
-      Console            : Interactive_Consoles.Interactive_Console := null;
-      Hide_Output        : Boolean := False;
-      Show_Command       : Boolean := True;
-      Errors             : access Boolean) return String;
+     (Script       : access Python_Scripting_Record;
+      Command      : String;
+      Console      : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output  : Boolean := False;
+      Show_Command : Boolean := True;
+      Errors       : access Boolean) return String;
    function Execute_Command
-     (Script             : access Python_Scripting_Record;
-      Command            : String;
-      Console            : Interactive_Consoles.Interactive_Console := null;
-      Hide_Output        : Boolean := False;
-      Errors             : access Boolean) return Boolean;
+     (Script      : access Python_Scripting_Record;
+      Command     : String;
+      Console     : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output : Boolean := False;
+      Errors      : access Boolean) return Boolean;
    function Execute_Command
      (Script  : access Python_Scripting_Record;
       Command : String;
@@ -156,11 +156,11 @@ package body Python_Module is
       Command : PyObject;
       Args    : Callback_Data'Class) return Boolean;
    procedure Execute_File
-     (Script             : access Python_Scripting_Record;
-      Filename           : String;
-      Console            : Interactive_Consoles.Interactive_Console := null;
-      Hide_Output        : Boolean := False;
-      Errors             : out Boolean);
+     (Script      : access Python_Scripting_Record;
+      Filename    : String;
+      Console     : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output : Boolean := False;
+      Errors      : out Boolean);
    function Get_Name (Script : access Python_Scripting_Record) return String;
    function Get_Kernel
      (Script : access Python_Scripting_Record) return Kernel_Handle;
@@ -940,12 +940,12 @@ package body Python_Module is
       --------------
 
       procedure Load_Dir (Dir : String; Default_Autoload : Boolean) is
-         D      : Dir_Type;
-         File   : String (1 .. 1024);
-         Last   : Natural;
-         Result : PyObject;
+         D       : Dir_Type;
+         File    : String (1 .. 1024);
+         Last    : Natural;
+         Result  : PyObject;
          pragma Unreferenced (Result);
-         VF     : VFS.Virtual_File;
+         VF      : VFS.Virtual_File;
          Command : Custom_Command_Access;
       begin
          if not GNAT.OS_Lib.Is_Directory (Dir) then
@@ -1026,7 +1026,7 @@ package body Python_Module is
    is
       Kernel   : constant Kernel_Handle  := Get_Kernel (Data);
       Instance : constant Class_Instance :=
-        Nth_Arg (Data, 1, Get_File_Class (Kernel));
+                   Nth_Arg (Data, 1, Get_File_Class (Kernel));
       Info     : constant Virtual_File := Get_Data (Instance);
    begin
       if Command = "__str__" or else Command = "__repr__" then
@@ -1487,9 +1487,9 @@ package body Python_Module is
    -----------------
 
    function First_Level (Self, Args, Kw : PyObject) return PyObject is
-      Handler : constant Handler_Data_Access :=
-        Convert (PyCObject_AsVoidPtr (Self));
-      Size : Integer := PyTuple_Size (Args);
+      Handler  : constant Handler_Data_Access :=
+                   Convert (PyCObject_AsVoidPtr (Self));
+      Size     : Integer := PyTuple_Size (Args);
       Callback : Python_Callback_Data;
    begin
       if Kw /= null then
@@ -1586,7 +1586,7 @@ package body Python_Module is
       Class         : Class_Type := No_Class;
       Static_Method : Boolean := False)
    is
-      H   : constant Handler_Data_Access := new Handler_Data'
+      H         : constant Handler_Data_Access := new Handler_Data'
         (Length       => Command'Length,
          Command      => Command,
          Handler      => Handler,
@@ -1596,8 +1596,8 @@ package body Python_Module is
          Maximum_Args => Maximum_Args);
       User_Data : constant PyObject := PyCObject_FromVoidPtr
         (H.all'Address, Destroy_Handler_Data'Access);
-      Klass : PyObject;
-      Def   : PyMethodDef;
+      Klass     : PyObject;
+      Def       : PyMethodDef;
    begin
       if Class = No_Class then
          Add_Function
@@ -1640,11 +1640,11 @@ package body Python_Module is
       Name          : String;
       Base          : Class_Type := No_Class)
    is
-      Dict  : constant PyDictObject := PyDict_New;
-      Class : PyClassObject;
+      Dict    : constant PyDictObject := PyDict_New;
+      Class   : PyClassObject;
       Ignored : Integer;
       Bases   : PyObject := null;
-      S       : Interfaces.C.Strings.chars_ptr;
+      S       : Interfaces.C.Strings.Chars_Ptr;
       pragma Unreferenced (Ignored);
    begin
       PyDict_SetItemString
@@ -1711,14 +1711,14 @@ package body Python_Module is
    ---------------------
 
    procedure Execute_Command
-     (Script             : access Python_Scripting_Record;
-      Command            : String;
-      Console            : Interactive_Consoles.Interactive_Console := null;
-      Hide_Output        : Boolean := False;
-      Show_Command       : Boolean := True;
-      Errors             : out Boolean)
+     (Script       : access Python_Scripting_Record;
+      Command      : String;
+      Console      : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output  : Boolean := False;
+      Show_Command : Boolean := True;
+      Errors       : out Boolean)
    is
-      E : aliased Boolean;
+      E      : aliased Boolean;
       Result : PyObject;
    begin
       if Script.Blocked then
@@ -1768,11 +1768,11 @@ package body Python_Module is
    ---------------------
 
    function Execute_Command
-     (Script             : access Python_Scripting_Record;
-      Command            : String;
-      Console            : Interactive_Consoles.Interactive_Console := null;
-      Hide_Output        : Boolean := False;
-      Errors             : access Boolean) return Boolean
+     (Script      : access Python_Scripting_Record;
+      Command     : String;
+      Console     : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output : Boolean := False;
+      Errors      : access Boolean) return Boolean
    is
       Obj : PyObject;
       Result : Boolean;
@@ -1930,7 +1930,7 @@ package body Python_Module is
       Command : PyObject;
       Args    : Callback_Data'Class) return Boolean
    is
-      Obj : constant PyObject := Execute_Command (Script, Command, Args);
+      Obj    : constant PyObject := Execute_Command (Script, Command, Args);
       Result : Boolean;
    begin
       if Obj = null then
@@ -1950,11 +1950,11 @@ package body Python_Module is
    ------------------
 
    procedure Execute_File
-     (Script             : access Python_Scripting_Record;
-      Filename           : String;
-      Console            : Interactive_Consoles.Interactive_Console := null;
-      Hide_Output        : Boolean := False;
-      Errors             : out Boolean) is
+     (Script      : access Python_Scripting_Record;
+      Filename    : String;
+      Console     : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output : Boolean := False;
+      Errors      : out Boolean) is
    begin
       Script.Current_File := Create (Full_Filename => Filename);
       Execute_Command
@@ -2204,12 +2204,12 @@ package body Python_Module is
    -------------
 
    function Nth_Arg
-     (Data : Python_Callback_Data; N : Positive; Class : Class_Type;
+     (Data       : Python_Callback_Data; N : Positive; Class : Class_Type;
       Allow_Null : Boolean := False)
       return Class_Instance
    is
-      Item : PyObject;
-      C    : constant PyObject := Lookup_Class_Object
+      Item       : PyObject;
+      C          : constant PyObject := Lookup_Class_Object
         (Data.Script.GPS_Module, Get_Name (Class));
       Item_Class : PyObject;
 
@@ -2319,10 +2319,10 @@ package body Python_Module is
    function Get_CI (Object : PyObject) return Class_Instance is
       function Convert is new Ada.Unchecked_Conversion
         (System.Address, Python_Class_Instance);
-      Item : constant PyObject :=
-        PyObject_GetAttrString (Object, "__gps_data");
-      CIR  : System.Address;
-      CI   : Python_Class_Instance;
+      Item   : constant PyObject :=
+                 PyObject_GetAttrString (Object, "__gps_data");
+      CIR    : System.Address;
+      CI     : Python_Class_Instance;
       Result : Class_Instance;
    begin
       if Item = null then
@@ -2568,7 +2568,7 @@ package body Python_Module is
      (Data : in out Python_Callback_Data; Value : Class_Instance)
    is
       V   : constant Python_Class_Instance :=
-        Python_Class_Instance (Get_CIR (Value));
+              Python_Class_Instance (Get_CIR (Value));
       Obj : PyObject;
       Num : Integer;
       pragma Unreferenced (Num);

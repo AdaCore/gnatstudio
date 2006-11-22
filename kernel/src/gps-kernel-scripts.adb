@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2006                       --
---                            AdaCore                                --
+--                      Copyright (C) 2003-2006                      --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -120,6 +120,7 @@ package body GPS.Kernel.Scripts is
    -----------------
    -- Subprograms --
    -----------------
+
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Class_Instance_Record'Class, Class_Instance_Record_Access);
 
@@ -252,36 +253,39 @@ package body GPS.Kernel.Scripts is
    Nth_Cst        : aliased constant String := "nth";
    Local_Cst      : aliased constant String := "local";
 
-   Project_Cmd_Parameters : constant Cst_Argument_List :=
-     (1 => Name_Cst'Access);
-   Insmod_Cmd_Parameters  : constant Cst_Argument_List :=
-     (1 => Shared_Lib_Cst'Access, 2 => Module_Cst'Access);
-   Body_Cmd_Parameters    : constant Cst_Argument_List :=
-     (1 => Nth_Cst'Access);
-   Entity_Cmd_Parameters   : constant Cst_Argument_List :=
-     (Name_Cst'Access, File_Cst'Access, Line_Cst'Access, Col_Cst'Access);
-   File_Cmd_Parameters     : constant Cst_Argument_List :=
-     (1 => Name_Cst'Access,
-      2 => Local_Cst'Access);
-   File_Project_Parameters : constant Cst_Argument_List :=
-     (1 => Default_Cst'Access);
-   Open_Cmd_Parameters     : constant Cst_Argument_List :=
-     (1 => Filename_Cst'Access,
-      2 => Force_Cst'Access);
-   Location_Cmd_Parameters : constant Cst_Argument_List :=
-     (1 => Filename_Cst'Access,
-      2 => Line_Cst'Access,
-      3 => Col_Cst'Access);
-   Xml_Custom_Parameters : constant Cst_Argument_List :=
-     (1 => Xml_Cst'Access);
-   Exec_Action_Parameters : constant Cst_Argument_List :=
-     (1 => Action_Cst'Access);
-   Scenar_Var_Parameters : constant Cst_Argument_List :=
-     (1 => Prefix_Cst'Access);
+   Project_Cmd_Parameters   : constant Cst_Argument_List :=
+                                (1 => Name_Cst'Access);
+   Insmod_Cmd_Parameters    : constant Cst_Argument_List :=
+                                (1 => Shared_Lib_Cst'Access,
+                                 2 => Module_Cst'Access);
+   Body_Cmd_Parameters      : constant Cst_Argument_List :=
+                                (1 => Nth_Cst'Access);
+   Entity_Cmd_Parameters    : constant Cst_Argument_List :=
+                                (Name_Cst'Access, File_Cst'Access,
+                                 Line_Cst'Access, Col_Cst'Access);
+   File_Cmd_Parameters      : constant Cst_Argument_List :=
+                                (1 => Name_Cst'Access,
+                                 2 => Local_Cst'Access);
+   File_Project_Parameters  : constant Cst_Argument_List :=
+                                (1 => Default_Cst'Access);
+   Open_Cmd_Parameters      : constant Cst_Argument_List :=
+                                (1 => Filename_Cst'Access,
+                                 2 => Force_Cst'Access);
+   Location_Cmd_Parameters  : constant Cst_Argument_List :=
+                                (1 => Filename_Cst'Access,
+                                 2 => Line_Cst'Access,
+                                 3 => Col_Cst'Access);
+   Xml_Custom_Parameters    : constant Cst_Argument_List :=
+                                (1 => Xml_Cst'Access);
+   Exec_Action_Parameters   : constant Cst_Argument_List :=
+                                (1 => Action_Cst'Access);
+   Scenar_Var_Parameters    : constant Cst_Argument_List :=
+                                (1 => Prefix_Cst'Access);
    Set_Sensitive_Parameters : constant Cst_Argument_List :=
-     (1 => Sensitive_Cst'Access);
-   Set_Scenario_Parameters : constant Cst_Argument_List :=
-     (1 => Name_Cst'Access, 2 => Value_Cst'Access);
+                                (1 => Sensitive_Cst'Access);
+   Set_Scenario_Parameters  : constant Cst_Argument_List :=
+                                (1 => Name_Cst'Access,
+                                 2 => Value_Cst'Access);
 
    Accept_Input_Cst : aliased constant String := "accept_input";
    On_Input_Cst     : aliased constant String := "on_input";
@@ -1045,8 +1049,8 @@ package body GPS.Kernel.Scripts is
    procedure Create_Entity_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Kernel   : constant Kernel_Handle := Get_Kernel (Data);
-      Entity   : Entity_Information;
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      Entity : Entity_Information;
 
    begin
       if Command = Constructor_Method then
@@ -1667,8 +1671,9 @@ package body GPS.Kernel.Scripts is
    is
       Kernel        : constant Kernel_Handle := Get_Kernel (Data);
       Console_Class : constant Class_Type := New_Class (Kernel, "Console");
-      Inst      : constant Class_Instance := Nth_Arg (Data, 1, Console_Class);
-      Console   : Interactive_Console;
+      Inst          : constant Class_Instance :=
+                        Nth_Arg (Data, 1, Console_Class);
+      Console       : Interactive_Console;
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, Console_Constructor_Args);

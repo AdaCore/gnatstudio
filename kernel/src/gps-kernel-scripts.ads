@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2006                       --
+--                      Copyright (C) 2003-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -25,11 +25,14 @@
 --  independant as possible from the specific language.
 
 with Ada.Finalization;
+
 with GNAT.OS_Lib;
 with GNAT.Strings;
-with Basic_Types;
+
 with Gtk.Handlers;
 with Gtk.Widget;
+
+with Basic_Types;
 with Entities;
 with Projects;
 with Interactive_Consoles;
@@ -230,8 +233,7 @@ package GPS.Kernel.Scripts is
      (Data       : Callback_Data;
       N          : Positive;
       Class      : Class_Type;
-      Allow_Null : Boolean := False)
-      return Class_Instance is abstract;
+      Allow_Null : Boolean := False) return Class_Instance is abstract;
    --  The class_instance must belong to Class or its children, or
    --  Invalid_Parameter is also raised.
    --  The return value must be freed by the caller.
@@ -253,8 +255,7 @@ package GPS.Kernel.Scripts is
       N       : Positive;
       Class   : Class_Type;
       Default : Class_Instance;
-      Allow_Null : Boolean := False)
-      return Class_Instance;
+      Allow_Null : Boolean := False) return Class_Instance;
    function Nth_Arg
      (Data    : Callback_Data;
       N       : Positive;
@@ -336,7 +337,7 @@ package GPS.Kernel.Scripts is
 
    function Is_Subclass
      (Instance : Class_Instance; Base : Class_Type) return Boolean;
-   --  Whether Instance is a Base or from a subclass of Base.
+   --  Whether Instance is a Base or from a subclass of Base
 
    function Get_Script (Instance : Class_Instance) return Scripting_Language;
    --  Return the scripting language that created this instance
@@ -362,7 +363,7 @@ package GPS.Kernel.Scripts is
    function Get_Property
      (Instance : Class_Instance;
       Name     : String) return Instance_Property_Record'Class;
-   --  Return a general property associated with the widget.
+   --  Return a general property associated with the widget
 
    function Get_Data
      (Instance : Class_Instance; Name : Class_Type) return Integer;
@@ -662,7 +663,7 @@ package GPS.Kernel.Scripts is
    -- Commands and methods --
    --------------------------
 
-   GPS_Shell_Name : constant String := "Shell";
+   GPS_Shell_Name      : constant String := "Shell";
    Constructor_Method  : constant String;
    Addition_Method     : constant String;
    Substraction_Method : constant String;
@@ -806,7 +807,7 @@ package GPS.Kernel.Scripts is
    function Create_Entity
      (Script : access Scripting_Language_Record'Class;
       Entity : Entities.Entity_Information) return Class_Instance;
-   --  Return a new entity. Entity parameter should be freed by the caller.
+   --  Return a new entity. Entity parameter should be freed by the caller
 
    ----------------
    -- File_Class --
@@ -829,7 +830,7 @@ package GPS.Kernel.Scripts is
    function Create_File
      (Script : access Scripting_Language_Record'Class;
       File   : VFS.Virtual_File) return Class_Instance;
-   --  Return a new file.
+   --  Return a new file
 
    ---------------
    -- GUI_Class --
@@ -877,7 +878,7 @@ package GPS.Kernel.Scripts is
    function Get_Hook_Class
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Class_Type;
-   --  Return the class used to provide an interface to hooks.
+   --  Return the class used to provide an interface to hooks
 
    -------------------
    -- Project_Class --
@@ -904,7 +905,7 @@ package GPS.Kernel.Scripts is
    function Get_Context_Class
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Class_Type;
-   --  Return the base class for all context-related classes.
+   --  Return the base class for all context-related classes
 
    function Create_Context
      (Script  : access Scripting_Language_Record'Class;
@@ -947,9 +948,9 @@ private
    end record;
 
    type File_Location_Info is record
-      File         : Class_Instance;
-      Line         : Natural;
-      Column       : Basic_Types.Visible_Column_Type;
+      File   : Class_Instance;
+      Line   : Natural;
+      Column : Basic_Types.Visible_Column_Type;
    end record;
 
    type User_Data;

@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2004-2006                       --
---                             AdaCore                               --
+--                      Copyright (C) 2004-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,6 +21,8 @@
 with Ada.Calendar;            use Ada.Calendar;
 with Ada.Exceptions;          use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
+with System;
+
 with GNAT.Expect;             use GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY;         use GNAT.Expect.TTY;
@@ -38,13 +40,12 @@ with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with String_Utils;            use String_Utils;
 with Traces;                  use Traces;
 with Commands;                use Commands;
-with System;
 
 package body Expect_Interface is
 
    Me : constant Debug_Handle := Create ("Expect", Off);
 
-   Process_Class_Name : constant String := "Process";
+   Process_Class_Name   : constant String := "Process";
 
    Command_Cst          : aliased constant String := "command";
    Regexp_Cst           : aliased constant String := "regexp";
@@ -57,36 +58,39 @@ package body Expect_Interface is
    Progress_Current_Cst : aliased constant String := "progress_current";
    Progress_Total_Cst   : aliased constant String := "progress_total";
    Before_Kill_Cst      : aliased constant String := "before_kill";
+
    Constructor_Args : constant Cst_Argument_List :=
-     (2 => Command_Cst'Access,
-      3 => Regexp_Cst'Access,
-      4 => On_Match_Action_Cst'Access,
-      5 => On_Exit_Action_Cst'Access,
-      6 => Task_Manager_Cst'Access,
-      7 => Progress_Regexp_Cst'Access,
-      8 => Progress_Current_Cst'Access,
-      9 => Progress_Total_Cst'Access,
-      10 => Before_Kill_Cst'Access);
+                        (2  => Command_Cst'Access,
+                         3  => Regexp_Cst'Access,
+                         4  => On_Match_Action_Cst'Access,
+                         5  => On_Exit_Action_Cst'Access,
+                         6  => Task_Manager_Cst'Access,
+                         7  => Progress_Regexp_Cst'Access,
+                         8  => Progress_Current_Cst'Access,
+                         9  => Progress_Total_Cst'Access,
+                         10 => Before_Kill_Cst'Access);
+
    Send_Args : constant Cst_Argument_List :=
-     (Command_Cst'Access, Add_Lf_Cst'Access);
+                 (Command_Cst'Access, Add_Lf_Cst'Access);
+
    Expect_Args : constant Cst_Argument_List :=
-     (Regexp_Cst'Access, Timeout_Cst'Access);
+                   (Regexp_Cst'Access, Timeout_Cst'Access);
 
    type Pattern_Matcher_Access is access GNAT.Regpat.Pattern_Matcher;
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (GNAT.Regpat.Pattern_Matcher, Pattern_Matcher_Access);
 
    type Custom_Action_Record is new Root_Command with record
-      Pattern     : Pattern_Matcher_Access;
-      Command     : Argument_List_Access;
-      On_Match    : GPS.Kernel.Scripts.Subprogram_Type;
-      On_Exit     : GPS.Kernel.Scripts.Subprogram_Type;
-      Before_Kill : GPS.Kernel.Scripts.Subprogram_Type;
-      Pd         : Process_Descriptor_Access;
-      Status     : Integer := 0;
-      Terminated : Boolean;
-      Inst       : Class_Instance;
-      Progress_Regexp : Pattern_Matcher_Access;
+      Pattern          : Pattern_Matcher_Access;
+      Command          : Argument_List_Access;
+      On_Match         : GPS.Kernel.Scripts.Subprogram_Type;
+      On_Exit          : GPS.Kernel.Scripts.Subprogram_Type;
+      Before_Kill      : GPS.Kernel.Scripts.Subprogram_Type;
+      Pd               : Process_Descriptor_Access;
+      Status           : Integer := 0;
+      Terminated       : Boolean;
+      Inst             : Class_Instance;
+      Progress_Regexp  : Pattern_Matcher_Access;
       Progress_Current : Natural := 1;  --  Parenthesis within the regexp
       Progress_Final   : Natural := 2;  --  Parenthesis within the regexp
 
@@ -98,7 +102,7 @@ package body Expect_Interface is
    --  Returns the name of the command
 
    procedure Free (X : in out Custom_Action_Record);
-   --  Free memory associated to X.
+   --  Free memory associated to X
 
    function Execute
      (Command : access Custom_Action_Record) return Command_Return_Type;
@@ -111,7 +115,7 @@ package body Expect_Interface is
      (Custom_Action_Record, Custom_Action_Access);
 
    procedure Free (X : in out Custom_Action_Access);
-   --  Free memory associated to X.
+   --  Free memory associated to X
 
    function Get_Process_Class (Kernel : access Kernel_Handle_Record'Class)
       return Class_Type;
@@ -147,13 +151,13 @@ package body Expect_Interface is
    --  Called before killing the external process
 
    procedure Output_Cb (D : Custom_Action_Access; Output : String);
-   --  Called when an external process has produced some output.
+   --  Called when an external process has produced some output
 
    procedure Concat (S : in out String_Access; S2 : String);
-   --  Append S2 at the end of S.
+   --  Append S2 at the end of S
 
    function To_String (S : String_Access) return String;
-   --  Return the contents of S. if S is null, return "".
+   --  Return the contents of S. if S is null, return ""
 
    function Get_Data
      (Data : Callback_Data'Class; N : Positive) return Custom_Action_Access;
@@ -161,8 +165,8 @@ package body Expect_Interface is
    --  Get or store some data in an instance of GPS.Process
 
    procedure Custom_Spawn_Handler
-     (Data    : in out Callback_Data'Class; Command : String);
-   --  Interactive command handler for the expect interface.
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Interactive command handler for the expect interface
 
    type Exit_Type is (Matched, Timed_Out, Died);
    function Interactive_Expect
@@ -171,7 +175,7 @@ package body Expect_Interface is
       Timeout  : Integer := 200;
       Pattern  : String := "";
       Till_End : Boolean := True) return Exit_Type;
-   --  Execute a call to Expect, but process the gtk+ events periodically.
+   --  Execute a call to Expect, but process the gtk+ events periodically
 
    ----------
    -- Name --
@@ -233,14 +237,11 @@ package body Expect_Interface is
    function Execute
      (Command : access Custom_Action_Record) return Command_Return_Type
    is
-      Result : Expect_Match;
-      All_Match : constant Pattern_Matcher :=
-                    Compile (".+", Single_Line);
+      Result    : Expect_Match;
+      All_Match : constant Pattern_Matcher := Compile (".+", Single_Line);
    begin
       if Command.Pd /= null then
-         Expect
-           (Command.Pd.all, Result,
-            All_Match, Timeout => 1);
+         Expect (Command.Pd.all, Result, All_Match, Timeout => 1);
          if Result /= Expect_Timeout then
             Output_Cb (Custom_Action_Access (Command),
                        Strip_CR (Expect_Out (Command.Pd.all)));
@@ -287,8 +288,9 @@ package body Expect_Interface is
      (Data : Callback_Data'Class; N : Positive) return Custom_Action_Access
    is
       Process_Class : constant Class_Type :=
-        Get_Process_Class (Get_Kernel (Data));
-      Inst : constant Class_Instance := Nth_Arg (Data, N, Process_Class);
+                        Get_Process_Class (Get_Kernel (Data));
+      Inst          : constant Class_Instance :=
+                        Nth_Arg (Data, N, Process_Class);
    begin
       return Get_Data (Inst);
    end Get_Data;
@@ -387,14 +389,14 @@ package body Expect_Interface is
    ---------------
 
    procedure Output_Cb (D : Custom_Action_Access; Output : String) is
-      Matches   : Match_Array (0 .. Max_Paren_Count);
-      Beg_Index : Natural;
-      End_Index : Natural;
-      Prev_Beg  : Natural;
+      Matches           : Match_Array (0 .. Max_Paren_Count);
+      Beg_Index         : Natural;
+      End_Index         : Natural;
+      Prev_Beg          : Natural;
       Action_To_Execute : Subprogram_Type;
-      Index     : Natural;
-      Index_Start    : Natural;
-      Current, Final : Natural;
+      Index             : Natural;
+      Index_Start       : Natural;
+      Current, Final    : Natural;
 
    begin
       --  First check the progress regexp
@@ -524,10 +526,10 @@ package body Expect_Interface is
          end if;
       end loop;
 
-      --  If we have matched something, do the necessary adjustments.
+      --  If we have matched something, do the necessary adjustments
 
       if Beg_Index > D.Unmatched_Output'First then
-         --  Add the matched output to the stored output, if necessary.
+         --  Add the matched output to the stored output, if necessary
 
          if D.On_Exit /= null then
             Concat (D.Processed_Output,
@@ -535,7 +537,7 @@ package body Expect_Interface is
                        (D.Unmatched_Output'First .. Beg_Index - 1)));
          end if;
 
-         --  Reduce the output that we have already matched.
+         --  Reduce the output that we have already matched
 
          declare
             S : constant String := D.Unmatched_Output (Beg_Index .. End_Index);
@@ -696,10 +698,10 @@ package body Expect_Interface is
       Command : String)
    is
       Kernel          : constant Kernel_Handle :=
-        Get_Kernel (Custom_Module_ID.all);
-      D               : Custom_Action_Access;
+                          Get_Kernel (Custom_Module_ID.all);
       Process_Class   : constant Class_Type :=
-        Get_Process_Class (Get_Kernel (Data));
+                          Get_Process_Class (Get_Kernel (Data));
+      D               : Custom_Action_Access;
       E               : Exit_Type;
       Created_Command : Scheduled_Command_Access;
       Dead            : Boolean;
@@ -710,12 +712,13 @@ package body Expect_Interface is
          Name_Parameters (Data, Constructor_Args);
 
          declare
-            Inst : constant Class_Instance := Nth_Arg (Data, 1, Process_Class);
-            Command_Line : constant String := Nth_Arg (Data, 2);
-            Regexp       : constant String := Nth_Arg (Data, 3, "");
-            Show_Bar     : constant Boolean := Nth_Arg (Data, 6, True);
+            Inst            : constant Class_Instance :=
+                                Nth_Arg (Data, 1, Process_Class);
+            Command_Line    : constant String := Nth_Arg (Data, 2);
+            Regexp          : constant String := Nth_Arg (Data, 3, "");
+            Show_Bar        : constant Boolean := Nth_Arg (Data, 6, True);
             Progress_Regexp : constant String := Nth_Arg (Data, 7, "");
-            Success      : Boolean;
+            Success         : Boolean;
          begin
             if Command_Line = "" then
                Set_Error_Msg (Data, -"Argument for command cannot be empty");
@@ -725,12 +728,12 @@ package body Expect_Interface is
             Trace (Me, "Spawning Show_Bar=" & Boolean'Image (Show_Bar) &
                    ": "& Command_Line);
 
-            D          := new Custom_Action_Record;
-            D.Command  := Argument_String_To_List (Command_Line);
-            D.On_Match := Nth_Arg (Data, 4, null);
-            D.On_Exit  := Nth_Arg (Data, 5, null);
+            D             := new Custom_Action_Record;
+            D.Command     := Argument_String_To_List (Command_Line);
+            D.On_Match    := Nth_Arg (Data, 4, null);
+            D.On_Exit     := Nth_Arg (Data, 5, null);
             D.Before_Kill := Nth_Arg (Data, 10, null);
-            D.Inst     := Inst;
+            D.Inst        := Inst;
 
             if Progress_Regexp /= "" then
                D.Progress_Regexp := new Pattern_Matcher'
@@ -744,7 +747,7 @@ package body Expect_Interface is
                  new Pattern_Matcher'(Compile (Regexp, Multiple_Lines));
             end if;
 
-            --  All the parameters are correct: launch the process.
+            --  All the parameters are correct: launch the process
             D.Pd := new TTY_Process_Descriptor;
             begin
                Non_Blocking_Spawn
@@ -772,10 +775,10 @@ package body Expect_Interface is
                end if;
 
                Created_Command := Launch_Background_Command
-                 (Kernel          => Kernel,
-                  Command         => D,
-                  Active          => False,
-                  Show_Bar        => Show_Bar);
+                 (Kernel   => Kernel,
+                  Command  => D,
+                  Active   => False,
+                  Show_Bar => Show_Bar);
 
                Set_Instance (Created_Command, Get_Script (Data), Inst);
                Set_Property
@@ -882,36 +885,36 @@ package body Expect_Interface is
         (Kernel, Constructor_Method,
          Minimum_Args => 1,
          Maximum_Args => 10,
-         Class         => Process_Class,
-         Handler       => Custom_Spawn_Handler'Access);
+         Class        => Process_Class,
+         Handler      => Custom_Spawn_Handler'Access);
       Register_Command
         (Kernel, "send",
-         Minimum_Args  => 1,
-         Maximum_Args  => 2,
-         Class         => Process_Class,
-         Handler       => Custom_Spawn_Handler'Access);
+         Minimum_Args => 1,
+         Maximum_Args => 2,
+         Class        => Process_Class,
+         Handler      => Custom_Spawn_Handler'Access);
       Register_Command
         (Kernel, "interrupt",
-         Class         => Process_Class,
-         Handler       => Custom_Spawn_Handler'Access);
+         Class        => Process_Class,
+         Handler      => Custom_Spawn_Handler'Access);
       Register_Command
         (Kernel, "kill",
-         Class         => Process_Class,
-         Handler       => Custom_Spawn_Handler'Access);
+         Class        => Process_Class,
+         Handler      => Custom_Spawn_Handler'Access);
       Register_Command
         (Kernel, "wait",
-         Class         => Process_Class,
-         Handler       => Custom_Spawn_Handler'Access);
+         Class        => Process_Class,
+         Handler      => Custom_Spawn_Handler'Access);
       Register_Command
         (Kernel, "get_result",
-         Class         => Process_Class,
-         Handler       => Custom_Spawn_Handler'Access);
+         Class        => Process_Class,
+         Handler      => Custom_Spawn_Handler'Access);
       Register_Command
         (Kernel, "expect",
          Minimum_Args => 1,
          Maximum_Args => 2,
-         Class         => Process_Class,
-         Handler       => Custom_Spawn_Handler'Access);
+         Class        => Process_Class,
+         Handler      => Custom_Spawn_Handler'Access);
    end Register_Commands;
 
 end Expect_Interface;

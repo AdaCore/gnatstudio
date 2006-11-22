@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2000-2005                       --
+--                      Copyright (C) 2000-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,12 +18,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Expect;           use GNAT.Expect;
-with Gtk.Main;              use Gtk.Main;
-with GNAT.Regpat;           use GNAT.Regpat;
 with Ada.Unchecked_Deallocation;
-with GVD.Types;             use GVD.Types;
+with GNAT.Expect;           use GNAT.Expect;
+with GNAT.Regpat;           use GNAT.Regpat;
+
+with Gtk.Main;              use Gtk.Main;
 with Glib.Convert;          use Glib.Convert;
+
+with GVD.Types;             use GVD.Types;
 
 package body Process_Proxies is
 
