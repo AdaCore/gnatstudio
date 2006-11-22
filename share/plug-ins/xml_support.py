@@ -14,6 +14,9 @@ being edited:
   - /XML/Move to ...
     Various submenus to move around the XML file. You can bind key shortcuts
     to these through the /Edit/Key Shortcuts editor.
+
+  - /XML/View as tree
+    Open a read-only widget that shows the organization of the XML file
 """
 
 ############################################################################
@@ -82,6 +85,14 @@ def quote_selection (menu):
    buffer.insert (min, text)
    buffer.end_undo_group()
 
+def view_as_tree (menu):
+   try:
+     buffer = EditorBuffer.get()
+     view = XMLViewer (buffer.file().name())
+     view.parse_string (buffer.get_chars())
+   except:
+     pass
+
 def next_open_tag (menu):
    """Move to the next opening tag"""
    buffer = EditorBuffer.get()
@@ -132,6 +143,7 @@ def create_xml_menu():
       xml_menu = Menu.create ("/XML", ref="Help", add_before=1)
       Menu.create ("/XML/Check Well Formedness", on_activate=check_wf)
       Menu.create ("/XML/Escape Selection", on_activate=quote_selection)
+      Menu.create ("/XML/View as Tree", on_activate=view_as_tree)
       Menu.create ("/XML/Move To Next Open Tag", on_activate=next_open_tag)
       Menu.create ("/XML/Move To Next Close Tag", on_activate=next_close_tag)
       Menu.create ("/XML/Move To Matching Close Tag",
