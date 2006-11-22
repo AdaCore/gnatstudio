@@ -125,16 +125,6 @@ package body Language.Tree.Ada is
       procedure Free is new Unchecked_Deallocation
         (Simple_Construct_Array, Simple_Construct_Array_Ptr);
 
-      type Comp_Result is (Greater_Than, Lower_Than, Equals);
-
-      function Compare
-        (Left, Right               : Construct_Tree_Iterator;
-         Left_Tree, Right_Tree     : Construct_Tree;
-         Left_Buffer, Right_Buffer : String_Access) return Comp_Result;
-      --  Compare the two constructs given in parameters, and uses some
-      --  heuristics to determine if one is supposed to be considered as lower
-      --  or greater than the other, or if they are parts of the same entity.
-
       procedure Insert_At
         (Dic_Index  : Natural;
          Tree       : Construct_Tree;
@@ -166,305 +156,6 @@ package body Language.Tree.Ada is
       procedure Establish_Relation (Left, Right : Simple_Construct_Wrapper);
       --  Establish the Spec, First_Body or Second_Body relationship between
       --  the two elements.
-
-      -------------
-      -- Compare --
-      -------------
-
-      function Compare
-        (Left, Right               : Construct_Tree_Iterator;
-         Left_Tree, Right_Tree     : Construct_Tree;
-         Left_Buffer, Right_Buffer : String_Access) return Comp_Result
-      is
-         function Check_Lowercase_Names
-           (Left, Right : GNAT.Strings.String_Access) return Comp_Result;
-
-         function Check_Lowercase_Names
-           (Left, Right : String) return Comp_Result;
-
-         function Check_Referenced_Entitites
-           (Left, Right : Simple_Construct_Information) return Comp_Result;
-
-         ---------------------------
-         -- Check_Lowercase_Names --
-         ---------------------------
-
-         function Check_Lowercase_Names
-           (Left, Right : GNAT.Strings.String_Access) return Comp_Result
-         is
-         begin
-            if Left = null then
-               if Right = null then
-                  return Equals;
-               else
-                  return Greater_Than;
-               end if;
-            elsif Right = null then
-               return Lower_Than;
-            end if;
-
-            return Check_Lowercase_Names (Left.all, Right.all);
-         end Check_Lowercase_Names;
-
-         function Check_Lowercase_Names
-           (Left, Right : String) return Comp_Result
-         is
-            Smaller_Size            : Integer;
-            Left_Index, Right_Index : Integer;
-         begin
-            if Left'Length < Right'Length then
-               Smaller_Size := Left'Length;
-            else
-               Smaller_Size := Right'Length;
-            end if;
-
-            Left_Index := Left'First;
-            Right_Index := Right'First;
-
-            for J in 1 .. Smaller_Size loop
-               declare
-                  Left_C, Right_C : Character;
-               begin
-                  Left_C := To_Lower (Left (Left_Index));
-                  Right_C := To_Lower (Right (Right_Index));
-
-                  if Left_C < Right_C then
-                     return Lower_Than;
-                  elsif Left_C > Right_C then
-                     return Greater_Than;
-                  end if;
-               end;
-
-               Left_Index := Left_Index + 1;
-               Right_Index := Right_Index + 1;
-            end loop;
-
-            if Left'Length < Right'Length then
-               return Lower_Than;
-            elsif Left'Length > Right'Length then
-               return Greater_Than;
-            else
-               return Equals;
-            end if;
-         end Check_Lowercase_Names;
-
-         -------------------------------
-         -- Check_Referenced_Entities --
-         -------------------------------
-
-         function Check_Referenced_Entitites
-           (Left, Right : Simple_Construct_Information) return Comp_Result
-         is
-            Left_Sloc_Start, Left_Sloc_End,
-            Right_Sloc_Start, Right_Sloc_End : Source_Location;
-
-            Left_Success, Right_Success      : Boolean;
-         begin
-            Get_Referenced_Entity
-              (Ada_Lang,
-               Left_Buffer.all,
-               Left,
-               Left_Sloc_Start,
-               Left_Sloc_End,
-               Left_Success);
-
-            Get_Referenced_Entity
-              (Ada_Lang,
-               Right_Buffer.all,
-               Right,
-               Right_Sloc_Start,
-               Right_Sloc_End,
-               Right_Success);
-
-            if not Left_Success then
-               if not Right_Success then
-                  return Equals;
-               else
-                  return Lower_Than;
-               end if;
-            elsif not Right_Success then
-               return Greater_Than;
-            end if;
-
-            return Check_Lowercase_Names
-              (Left_Buffer (Left_Sloc_Start.Index .. Left_Sloc_End.Index),
-               Right_Buffer (Right_Sloc_Start.Index .. Right_Sloc_End.Index));
-         end Check_Referenced_Entitites;
-
-         Left_Category, Right_Category : Language_Category;
-      begin
-         --  First, checks the categories
-
-         Left_Category := Left.Node.Construct.Category;
-         Right_Category := Right.Node.Construct.Category;
-
-         if Left_Category in Type_Category then
-            Left_Category := Cat_Class;
-         end if;
-
-         if Right_Category in Type_Category then
-            Right_Category := Cat_Class;
-         end if;
-
-         if Left_Category < Right_Category then
-            return Lower_Than;
-         elsif Left_Category > Right_Category then
-            return Greater_Than;
-         end if;
-
-         --  Second, check the names of the identifiers
-
-         declare
-            Tmp_Result : constant Comp_Result :=
-              Check_Lowercase_Names
-                (Left.Node.Construct.Name.all, Right.Node.Construct.Name.all);
-         begin
-            if Tmp_Result /= Equals then
-               return Tmp_Result;
-            end if;
-         end;
-
-         --  Third, check the scopes
-
-         declare
-            Left_Parent, Right_Parent : Construct_Tree_Iterator;
-            Nb_Parents                : Integer := 0;
-         begin
-            Left_Parent := Left;
-            Right_Parent := Right;
-
-            --  First check the number of scopes
-
-            loop
-               Left_Parent := Get_Parent_Scope (Left_Tree, Left_Parent);
-               Right_Parent := Get_Parent_Scope (Right_Tree, Right_Parent);
-
-               if Left_Parent = Null_Construct_Tree_Iterator then
-                  if Right_Parent = Null_Construct_Tree_Iterator then
-                     exit;
-                  else
-                     return Lower_Than;
-                  end if;
-               elsif Right_Parent = Null_Construct_Tree_Iterator then
-                  return Greater_Than;
-               end if;
-
-               Nb_Parents := Nb_Parents + 1;
-            end loop;
-
-            --  Second check the name of the scopes
-
-            declare
-               Left_Scopes, Right_Scopes : array
-                 (1 .. Nb_Parents) of Construct_Tree_Iterator;
-
-               Tmp_Result                : Comp_Result;
-            begin
-               Left_Parent := Left;
-               Right_Parent := Right;
-
-               for J in reverse 1 .. Nb_Parents loop
-                  Left_Parent := Get_Parent_Scope (Left_Tree, Left_Parent);
-                  Right_Parent := Get_Parent_Scope (Right_Tree, Right_Parent);
-
-                  Left_Scopes (J) := Left_Parent;
-                  Right_Scopes (J) := Right_Parent;
-               end loop;
-
-               for J in 1 .. Nb_Parents loop
-                  Tmp_Result := Check_Lowercase_Names
-                    (Left_Scopes (J).Node.Construct.Name,
-                     Right_Scopes (J).Node.Construct.Name);
-
-                  if Tmp_Result /= Equals then
-                     return Tmp_Result;
-                  end if;
-               end loop;
-            end;
-         end;
-
-         --  Fourth, check the profiles
-
-         if Left_Category not in Subprogram_Category then
-            --  If we are not working on subprogram, then nothing has to be
-            --  cheked here
-
-            return Equals;
-         end if;
-
-         declare
-            Left_Param, Right_Param : Construct_Tree_Iterator;
-            Tmp_Result              : Comp_Result;
-         begin
-            --  First check the number of parameters
-
-            Left_Param := Next (Left_Tree, Left, Jump_Into);
-            Right_Param := Next (Right_Tree, Right, Jump_Into);
-
-            loop
-               if Get_Parent_Scope (Left_Tree, Left_Param) /= Left
-                 or else Left_Param.Node.Construct.Category /= Cat_Parameter
-               then
-                  if Get_Parent_Scope (Right_Tree, Right) /= Right
-                    or else Right_Param.Node.Construct.Category
-                      /= Cat_Parameter
-                  then
-                     exit;
-                  else
-                     return Lower_Than;
-                  end if;
-               elsif Get_Parent_Scope (Right_Tree, Right_Param) /= Right
-                 or else Left_Param.Node.Construct.Category /= Cat_Parameter
-               then
-                  return Greater_Than;
-               end if;
-
-               Left_Param := Next (Left_Tree, Left, Jump_Over);
-               Right_Param := Next (Right_Tree, Right, Jump_Over);
-            end loop;
-
-            --  Then check the actual names and types
-
-            Left_Param := Next (Left_Tree, Left, Jump_Into);
-            Right_Param := Next (Right_Tree, Right, Jump_Into);
-
-            loop
-               exit when Get_Parent_Scope (Left_Tree, Left_Param) /= Left
-                 or else Left_Param.Node.Construct.Category /= Cat_Parameter;
-
-               --  Checks the parameter names
-
-               Tmp_Result := Check_Lowercase_Names
-                 (Left_Param.Node.Construct.Name.all,
-                  Right_Param.Node.Construct.Name.all);
-
-               if Tmp_Result /= Equals then
-                  return Tmp_Result;
-               end if;
-
-               Tmp_Result := Check_Referenced_Entitites
-                 (Left_Param.Node.Construct, Right_Param.Node.Construct);
-
-               if Tmp_Result /= Equals then
-                  return Tmp_Result;
-               end if;
-
-               Left_Param := Next (Left_Tree, Left, Jump_Over);
-               Right_Param := Next (Right_Tree, Right, Jump_Over);
-            end loop;
-
-            if Left_Category = Cat_Function then
-               Tmp_Result := Check_Referenced_Entitites
-                 (Left.Node.Construct, Right.Node.Construct);
-
-               if Tmp_Result /= Equals then
-                  return Tmp_Result;
-               end if;
-            end if;
-         end;
-
-         return Equals;
-      end Compare;
 
       ---------------
       -- Insert_At --
@@ -536,12 +227,13 @@ package body Language.Tree.Ada is
                   (Dictionnary (Looked_Index).Index),
                   Dictionnary (Looked_Index).Index);
 
-               case Compare
-                 (New_Iterator, Looked_Iterator,
+               case Compare_Entities
+                 (Ada_Tree_Lang,
+                  New_Iterator, Looked_Iterator,
                   Tree, Dictionnary (Looked_Index).Tree,
                   Buffer, Dictionnary (Looked_Index).Buffer)
                is
-                  when Equals =>
+                  when Equals | Equivalent =>
                      Establish_Relation
                        (Dictionnary (Looked_Index),
                         (Tree, Ada_Tree, Buffer, Index));
@@ -1597,6 +1289,313 @@ package body Language.Tree.Ada is
          return To_Lower (Construct.Name.all);
       end if;
    end Get_Name_Index;
+
+   ----------------------
+   -- Compare_Entities --
+   ----------------------
+
+   function Compare_Entities
+     (Lang                      : access Ada_Tree_Language;
+      Left_Iter, Right_Iter     : Construct_Tree_Iterator;
+      Left_Tree, Right_Tree     : Construct_Tree;
+      Left_Buffer, Right_Buffer : String_Access) return General_Order
+   is
+      pragma Unreferenced (Lang);
+
+      function Check_Lowercase_Names
+        (Left, Right : GNAT.Strings.String_Access) return General_Order;
+
+      function Check_Lowercase_Names
+        (Left, Right : String) return General_Order;
+
+      function Check_Referenced_Entitites
+        (Left, Right : Simple_Construct_Information) return General_Order;
+
+      ---------------------------
+      -- Check_Lowercase_Names --
+      ---------------------------
+
+      function Check_Lowercase_Names
+        (Left, Right : GNAT.Strings.String_Access) return General_Order
+      is
+      begin
+         if Left = null then
+            if Right = null then
+               return Equals;
+            else
+               return Greater_Than;
+            end if;
+         elsif Right = null then
+            return Lower_Than;
+         end if;
+
+         return Check_Lowercase_Names (Left.all, Right.all);
+      end Check_Lowercase_Names;
+
+      function Check_Lowercase_Names
+        (Left, Right : String) return General_Order
+      is
+         Smaller_Size            : Integer;
+         Left_Index, Right_Index : Integer;
+      begin
+         if Left'Length < Right'Length then
+            Smaller_Size := Left'Length;
+         else
+            Smaller_Size := Right'Length;
+         end if;
+
+         Left_Index := Left'First;
+         Right_Index := Right'First;
+
+         for J in 1 .. Smaller_Size loop
+            declare
+               Left_C, Right_C : Character;
+            begin
+               Left_C := To_Lower (Left (Left_Index));
+               Right_C := To_Lower (Right (Right_Index));
+
+               if Left_C < Right_C then
+                  return Lower_Than;
+               elsif Left_C > Right_C then
+                  return Greater_Than;
+               end if;
+            end;
+
+            Left_Index := Left_Index + 1;
+            Right_Index := Right_Index + 1;
+         end loop;
+
+         if Left'Length < Right'Length then
+            return Lower_Than;
+         elsif Left'Length > Right'Length then
+            return Greater_Than;
+         else
+            return Equals;
+         end if;
+      end Check_Lowercase_Names;
+
+      -------------------------------
+      -- Check_Referenced_Entities --
+      -------------------------------
+
+      function Check_Referenced_Entitites
+        (Left, Right : Simple_Construct_Information) return General_Order
+      is
+         Left_Sloc_Start, Left_Sloc_End,
+         Right_Sloc_Start, Right_Sloc_End : Source_Location;
+
+         Left_Success, Right_Success      : Boolean;
+      begin
+         Get_Referenced_Entity
+           (Ada_Lang,
+            Left_Buffer.all,
+            Left,
+            Left_Sloc_Start,
+            Left_Sloc_End,
+            Left_Success);
+
+         Get_Referenced_Entity
+           (Ada_Lang,
+            Right_Buffer.all,
+            Right,
+            Right_Sloc_Start,
+            Right_Sloc_End,
+            Right_Success);
+
+         if not Left_Success then
+            if not Right_Success then
+               return Equals;
+            else
+               return Lower_Than;
+            end if;
+         elsif not Right_Success then
+            return Greater_Than;
+         end if;
+
+         return Check_Lowercase_Names
+           (Left_Buffer (Left_Sloc_Start.Index .. Left_Sloc_End.Index),
+            Right_Buffer (Right_Sloc_Start.Index .. Right_Sloc_End.Index));
+      end Check_Referenced_Entitites;
+
+      Left_Category, Right_Category : Language_Category;
+
+   begin
+      --  First, checks the categories
+
+      Left_Category := Left_Iter.Node.Construct.Category;
+      Right_Category := Right_Iter.Node.Construct.Category;
+
+      if Left_Category in Type_Category then
+         Left_Category := Cat_Class;
+      end if;
+
+      if Right_Category in Type_Category then
+         Right_Category := Cat_Class;
+      end if;
+
+      if Left_Category < Right_Category then
+         return Lower_Than;
+      elsif Left_Category > Right_Category then
+         return Greater_Than;
+      end if;
+
+      --  Second, check the names of the identifiers
+
+      declare
+         Tmp_Result : constant General_Order :=
+           Check_Lowercase_Names
+             (Left_Iter.Node.Construct.Name.all,
+              Right_Iter.Node.Construct.Name.all);
+      begin
+         if Tmp_Result /= Equals then
+            return Tmp_Result;
+         end if;
+      end;
+
+      --  Third, check the scopes
+
+      declare
+         Left_Parent, Right_Parent : Construct_Tree_Iterator;
+         Nb_Parents                : Integer := 0;
+      begin
+         Left_Parent := Left_Iter;
+         Right_Parent := Right_Iter;
+
+         --  First check the number of scopes
+
+         loop
+            Left_Parent := Get_Parent_Scope (Left_Tree, Left_Parent);
+            Right_Parent := Get_Parent_Scope (Right_Tree, Right_Parent);
+
+            if Left_Parent = Null_Construct_Tree_Iterator then
+               if Right_Parent = Null_Construct_Tree_Iterator then
+                  exit;
+               else
+                  return Lower_Than;
+               end if;
+            elsif Right_Parent = Null_Construct_Tree_Iterator then
+               return Greater_Than;
+            end if;
+
+            Nb_Parents := Nb_Parents + 1;
+         end loop;
+
+         --  Second check the name of the scopes
+
+         declare
+            Left_Scopes, Right_Scopes : array
+              (1 .. Nb_Parents) of Construct_Tree_Iterator;
+
+            Tmp_Result                : General_Order;
+         begin
+            Left_Parent := Left_Iter;
+            Right_Parent := Right_Iter;
+
+            for J in reverse 1 .. Nb_Parents loop
+               Left_Parent := Get_Parent_Scope (Left_Tree, Left_Parent);
+               Right_Parent := Get_Parent_Scope (Right_Tree, Right_Parent);
+
+               Left_Scopes (J) := Left_Parent;
+               Right_Scopes (J) := Right_Parent;
+            end loop;
+
+            for J in 1 .. Nb_Parents loop
+               Tmp_Result := Check_Lowercase_Names
+                 (Left_Scopes (J).Node.Construct.Name,
+                  Right_Scopes (J).Node.Construct.Name);
+
+               if Tmp_Result /= Equals then
+                  return Tmp_Result;
+               end if;
+            end loop;
+         end;
+      end;
+
+      --  Fourth, check the profiles
+
+      if Left_Category not in Subprogram_Category then
+         --  If we are not working on subprogram, then nothing has to be
+         --  cheked here
+
+         return Equals;
+      end if;
+
+      declare
+         Left_Param, Right_Param : Construct_Tree_Iterator;
+         Tmp_Result              : General_Order;
+      begin
+         --  First check the number of parameters
+
+         Left_Param := Next (Left_Tree, Left_Iter, Jump_Into);
+         Right_Param := Next (Right_Tree, Right_Iter, Jump_Into);
+
+         loop
+            if Get_Parent_Scope (Left_Tree, Left_Param) /= Left_Iter
+              or else Left_Param.Node.Construct.Category /= Cat_Parameter
+            then
+               if Get_Parent_Scope (Right_Tree, Right_Iter) /= Right_Iter
+                 or else Right_Param.Node.Construct.Category
+                   /= Cat_Parameter
+               then
+                  exit;
+               else
+                  return Lower_Than;
+               end if;
+            elsif Get_Parent_Scope (Right_Tree, Right_Param) /= Right_Iter
+              or else Left_Param.Node.Construct.Category /= Cat_Parameter
+            then
+               return Greater_Than;
+            end if;
+
+            Left_Param := Next (Left_Tree, Left_Iter, Jump_Over);
+            Right_Param := Next (Right_Tree, Right_Iter, Jump_Over);
+         end loop;
+
+         --  Then check the actual names and types
+
+         Left_Param := Next (Left_Tree, Left_Iter, Jump_Into);
+         Right_Param := Next (Right_Tree, Right_Iter, Jump_Into);
+
+         loop
+            exit when Get_Parent_Scope (Left_Tree, Left_Param) /= Left_Iter
+              or else Left_Param.Node.Construct.Category /= Cat_Parameter;
+
+            --  Checks the parameter names
+
+            Tmp_Result := Check_Lowercase_Names
+              (Left_Param.Node.Construct.Name.all,
+               Right_Param.Node.Construct.Name.all);
+
+            if Tmp_Result /= Equals then
+               return Tmp_Result;
+            end if;
+
+            Tmp_Result := Check_Referenced_Entitites
+              (Left_Param.Node.Construct, Right_Param.Node.Construct);
+
+            if Tmp_Result /= Equals then
+               return Tmp_Result;
+            end if;
+
+            Left_Param := Next (Left_Tree, Left_Iter, Jump_Over);
+            Right_Param := Next (Right_Tree, Right_Iter, Jump_Over);
+         end loop;
+
+         if Left_Category = Cat_Function then
+            Tmp_Result := Check_Referenced_Entitites
+              (Left_Iter.Node.Construct, Right_Iter.Node.Construct);
+
+            if Tmp_Result /= Equals then
+               return Tmp_Result;
+            end if;
+         end if;
+      end;
+
+      --  ??? Handle the Equivalent case as well (iterators points to different
+      --  parts of the same entity.
+
+      return Equals;
+   end Compare_Entities;
 
    ---------------------
    -- Get_Public_Tree --
