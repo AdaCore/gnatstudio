@@ -20,9 +20,13 @@
 
 with Language; use Language;
 
+with GNAT.Strings; use GNAT.Strings;
+
 package Language.Tree is
 
    type Relative_Position is (Before, After, Specified, Enclosing);
+
+   type General_Order is (Greater_Than, Lower_Than, Equals, Equivalent);
 
    function Contains (Scope, Item : Construct_Access) return Boolean;
    --  Returns true if Item is contained by Scope, false otherwise.
@@ -290,6 +294,18 @@ package Language.Tree is
       Construct : Simple_Construct_Information) return String is abstract;
    --  Return the name that should be used to index the given construct. Takes
    --  care of e.g. case handling.
+
+   function Compare_Entities
+     (Lang                      : access Tree_Language;
+      Left_Iter, Right_Iter     : Construct_Tree_Iterator;
+      Left_Tree, Right_Tree     : Construct_Tree;
+      Left_Buffer, Right_Buffer : String_Access) return General_Order
+      is abstract;
+   --  Return a the order relationship between the two cell. The definition of
+   --  order is language dependant, and can be based on the name, categories
+   --  or structure of the two cells. This function is aimed to be used
+   --  efficiently by generic sort procedures. If two entities are
+   --  "equivalent", they both refer to differents views of the same entity.
 
 private
 
