@@ -1644,7 +1644,7 @@ package body Python_Module is
       Class   : PyClassObject;
       Ignored : Integer;
       Bases   : PyObject := null;
-      S       : Interfaces.C.Strings.Chars_Ptr;
+      S       : Interfaces.C.Strings.chars_ptr;
       pragma Unreferenced (Ignored);
    begin
       PyDict_SetItemString
