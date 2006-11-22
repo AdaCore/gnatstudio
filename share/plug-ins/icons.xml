@@ -144,7 +144,7 @@
     <icon id="gps-project-modified-open"       file="../icons/16px/project_box_pencil.png" />
     <icon id="gps-project-modified-closed"     file="../icons/16px/project_box_pencil.png" />
 
-    <icon id="gps-box"                file="../icons/16px/entity-generic.png" />
+    <icon id="gps-box"                file="../icons/16px/box.png" />
 
     <icon id="adacore-logo"           file="../icons/other/adacore_logo.png">
        <alternate                     file="../icons/other/adacore_logo.png" size="3" />
@@ -188,17 +188,41 @@
 
     <!-- Entities -->
 
-    <icon id="gps-entity-package"     file="../icons/16px/entity-package.png" />
-    <icon id="gps-entity-subprogram"  file="../icons/16px/entity-subprogram.png" />
-    <icon id="gps-entity-type"        file="../icons/16px/entity-type.png" />
-    <icon id="gps-entity-variable"    file="../icons/16px/entity-variable.png" />
-    <icon id="gps-entity-generic"     file="../icons/16px/entity-generic.png" />
+    <icon id="gps-entity-package"         file="../icons/16px/entities/square_x.png" />
+    <icon id="gps-entity-subprogram"      file="../icons/16px/entities/circle_x.png" />
+    <icon id="gps-entity-type"            file="../icons/16px/entities/triangle_x.png" />
+    <icon id="gps-entity-variable"        file="../icons/16px/entities/dot_x.png" />
+    <icon id="gps-entity-generic"         file="../icons/16px/entities/diamond_x.png" />
 
-    <icon id="gps-entity-spec-package"     file="../icons/16px/entity-spec-package.png" />
-    <icon id="gps-entity-spec-subprogram"  file="../icons/16px/entity-spec-subprogram.png" />
-    <icon id="gps-entity-spec-type"        file="../icons/16px/entity-spec-type.png" />
-    <icon id="gps-entity-spec-variable"    file="../icons/16px/entity-spec-variable.png" />
-    <icon id="gps-entity-spec-generic"     file="../icons/16px/entity-spec-generic.png" />
+    <icon id="gps-entity-package-spec"         file="../icons/16px/entities/square_xs.png" />
+    <icon id="gps-entity-subprogram-spec"      file="../icons/16px/entities/circle_xs.png" />
+    <icon id="gps-entity-type-spec"            file="../icons/16px/entities/triangle_xs.png" />
+    <icon id="gps-entity-variable-spec"        file="../icons/16px/entities/dot_xs.png" />
+    <icon id="gps-entity-generic-spec"         file="../icons/16px/entities/diamond_xs.png" />
+
+    <icon id="gps-entity-package-private"         file="../icons/16px/entities/square.png" />
+    <icon id="gps-entity-subprogram-private"      file="../icons/16px/entities/circle.png" />
+    <icon id="gps-entity-type-private"            file="../icons/16px/entities/triangle.png" />
+    <icon id="gps-entity-variable-private"        file="../icons/16px/entities/dot.png" />
+    <icon id="gps-entity-generic-private"         file="../icons/16px/entities/diamond.png" />
+
+    <icon id="gps-entity-package-private-spec"         file="../icons/16px/entities/square_s.png" />
+    <icon id="gps-entity-subprogram-private-spec"      file="../icons/16px/entities/circle_s.png" />
+    <icon id="gps-entity-type-private-spec"            file="../icons/16px/entities/triangle_s.png" />
+    <icon id="gps-entity-variable-private-spec"        file="../icons/16px/entities/dot_s.png" />
+    <icon id="gps-entity-generic-private-spec"         file="../icons/16px/entities/diamond_s.png" />
+
+    <icon id="gps-entity-package-protected"         file="../icons/16px/entities/square_p.png" />
+    <icon id="gps-entity-subprogram-protected"      file="../icons/16px/entities/circle_p.png" />
+    <icon id="gps-entity-type-protected"            file="../icons/16px/entities/triangle_p.png" />
+    <icon id="gps-entity-variable-protected"        file="../icons/16px/entities/dot_p.png" />
+    <icon id="gps-entity-generic-protected"         file="../icons/16px/entities/diamond_p.png" />
+
+    <icon id="gps-entity-package-protected-spec"         file="../icons/16px/entities/square_ps.png" />
+    <icon id="gps-entity-subprogram-protected-spec"      file="../icons/16px/entities/circle_ps.png" />
+    <icon id="gps-entity-type-protected-spec"            file="../icons/16px/entities/triangle_ps.png" />
+    <icon id="gps-entity-variable-protected-spec"        file="../icons/16px/entities/dot_ps.png" />
+    <icon id="gps-entity-generic-protected-spec"         file="../icons/16px/entities/diamond_ps.png" />
 
     <!-- VCS icons -->
 
