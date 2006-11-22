@@ -18,8 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Strings; use GNAT.Strings;
-
 package Language.Tree.Ada is
 
    type Ada_Construct_Tree is private;
@@ -165,6 +163,14 @@ package Language.Tree.Ada is
      (Lang      : access Ada_Tree_Language;
       Construct : Simple_Construct_Information) return String;
    --  See inherited documentation
+
+   function Compare_Entities
+     (Lang                      : access Ada_Tree_Language;
+      Left_Iter, Right_Iter     : Construct_Tree_Iterator;
+      Left_Tree, Right_Tree     : Construct_Tree;
+      Left_Buffer, Right_Buffer : String_Access)  return General_Order;
+   --  See inherited documentation. If the two cells points to two parts of
+   --  the same entity, this will return Equals.
 
    Ada_Tree_Lang : constant Tree_Language_Access;
 
