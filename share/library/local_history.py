@@ -72,6 +72,13 @@ class LocalHistory:
      self.rcs_dir = join (dir, local_rcs_dir)
      self.rcs_file = join (self.rcs_dir, basename (self.file)) + ",v"
 
+     # convert all \ to / for Cygwin toolset, note that forward
+     # slashes are handled by the native Win32 API. So it is safe to
+     # do that on Windows.
+
+     self.file = self.file.replace ("\\", "/")
+     self.rcs_file = self.rcs_file.replace ("\\", "/")
+
   def get_revisions (self):
      """Extract all revisions and associated dates.
         Result is a list of tuples: (revision_number, date), where
