@@ -333,7 +333,7 @@ package body Builder_Module is
 
    function On_Compilation_Starting
      (Kernel : access Kernel_Handle_Record'Class;
-      Data : access Hooks_Data'Class) return Boolean;
+      Data   : access Hooks_Data'Class) return Boolean;
    --  Called when the compilation is starting
 
    procedure Load_Xref_In_Memory (Kernel : access Kernel_Handle_Record'Class);
@@ -439,9 +439,9 @@ package body Builder_Module is
       Extra_Args     : Argument_List_Access := null)
       return Argument_List_Access
    is
-      Project_Str    : GNAT.Strings.String_Access;
-      Result         : Argument_List_Access;
-      Vars           : Argument_List_Access;
+      Project_Str : GNAT.Strings.String_Access;
+      Result      : Argument_List_Access;
+      Vars        : Argument_List_Access;
 
    begin
       --  Convert path to Build_Server style
@@ -613,16 +613,16 @@ package body Builder_Module is
       Synchronous : Boolean := False;
       Extra_Args  : Argument_List_Access := null)
    is
-      Old_Dir : constant Dir_Name_Str := Get_Current_Dir;
-      Cmd     : String_Access;
-      Args    : Argument_List_Access;
+      Old_Dir     : constant Dir_Name_Str := Get_Current_Dir;
+      Cmd         : String_Access;
+      Args        : Argument_List_Access;
 
-      Context : Selection_Context;
-      Prj     : Project_Type;
-      Langs   : Argument_List := Get_Languages
-        (Get_Project (Kernel), Recursive => True);
-      Syntax  : Command_Syntax;
-      Success : Boolean;
+      Context     : Selection_Context;
+      Prj         : Project_Type;
+      Langs       : Argument_List :=
+                      Get_Languages (Get_Project (Kernel), Recursive => True);
+      Syntax      : Command_Syntax;
+      Success     : Boolean;
       Common_Args : Argument_List_Access;
 
    begin
@@ -809,15 +809,17 @@ package body Builder_Module is
       Extra_Args  : Argument_List_Access := null)
    is
       Prj             : constant Project_Type :=
-        Extending_Project
-          (Get_Project_From_File (Get_Registry (Kernel).all, File),
-           Recurse => True);
+                          Extending_Project
+                            (Get_Project_From_File
+                               (Get_Registry (Kernel).all, File),
+                             Recurse => True);
       Old_Dir         : constant Dir_Name_Str := Get_Current_Dir;
       Cmd             : String_Access;
       Fd              : Process_Descriptor_Access;
       Local_File      : String_Access;
-      Lang            : String := Get_Language_From_File
-        (Get_Language_Handler (Kernel), File);
+      Lang            : String :=
+                          Get_Language_From_File
+                            (Get_Language_Handler (Kernel), File);
       Common_Args     : Argument_List_Access;
       Args            : Argument_List_Access;
       Shadow_Path     : String_Access;
@@ -898,7 +900,7 @@ package body Builder_Module is
                              Create (Get_Tmp_Dir & Base_Name (File));
             Writable     : Writable_File;
          begin
-            --  Do nothing if one of the files already exists.
+            --  Do nothing if one of the files already exists
 
             if not Is_Regular_File (Temp_Project) then
                --  Write the temporary project file
@@ -1289,7 +1291,7 @@ package body Builder_Module is
 
    function On_Compilation_Starting
      (Kernel : access Kernel_Handle_Record'Class;
-      Data : access Hooks_Data'Class) return Boolean
+      Data   : access Hooks_Data'Class) return Boolean
    is
       D : constant String_Boolean_Hooks_Args :=
             String_Boolean_Hooks_Args (Data.all);
@@ -1329,7 +1331,7 @@ package body Builder_Module is
 
    procedure On_Compilation_Finished
      (Kernel : access Kernel_Handle_Record'Class;
-      Data : access Hooks_Data'Class)
+      Data   : access Hooks_Data'Class)
    is
       pragma Unreferenced (Data);
    begin
@@ -1387,7 +1389,7 @@ package body Builder_Module is
          Arguments    : GNAT.OS_Lib.Argument_List;
          Ext_Terminal : Boolean;
          Title        : String);
-      --  Launch Command (with Args) locally, or remotely if necessary.
+      --  Launch Command (with Args) locally, or remotely if necessary
 
       ------------
       -- Launch --
@@ -1410,13 +1412,13 @@ package body Builder_Module is
 
          Launch_Process
            (K,
-            Command              => Command,
-            Arguments            => Arguments,
-            Server               => Execution_Server,
-            Console              => Console,
-            Success              => Success,
-            Use_Ext_Terminal     => Ext_Terminal,
-            Show_Exit_Status     => True);
+            Command          => Command,
+            Arguments        => Arguments,
+            Server           => Execution_Server,
+            Console          => Console,
+            Success          => Success,
+            Use_Ext_Terminal => Ext_Terminal,
+            Show_Exit_Status => True);
       end Launch;
 
    begin
@@ -1592,7 +1594,7 @@ package body Builder_Module is
       File_Project_Cb.Object_Connect
         (Mitem, "activate", On_Build'Access,
          Slot_Object => Kernel,
-         User_Data => File_Project_Record'
+         User_Data   => File_Project_Record'
            (Project => Get_Project (Kernel),
             File    => VFS.No_File));
 
@@ -1688,7 +1690,7 @@ package body Builder_Module is
          Changed    : Boolean)
       is
          pragma Unreferenced (Data, Accel_Key, Accel_Mods, Changed);
-         Tmp   : Boolean;
+         Tmp : Boolean;
          pragma Unreferenced (Tmp);
 
       begin
@@ -1828,7 +1830,7 @@ package body Builder_Module is
                         Kernel       => Kernel,
                         Mains        => Mains,
                         Set_Shortcut => Set_Shortcut);
-                     --  The provided Project Argument is not relevant here.
+                     --  The provided Project Argument is not relevant here
                   end if;
 
                   Free (Mains);
@@ -1960,7 +1962,7 @@ package body Builder_Module is
       Mitem : Gtk_Menu_Item;
       Menu  : Gtk_Menu;
    begin
-      --  This memory is allocated once, and lives as long as the application.
+      --  This memory is allocated once, and lives as long as the application
 
       Builder_Module_ID := new Builder_Module_ID_Record;
       Register_Module
@@ -1994,6 +1996,7 @@ package body Builder_Module is
       Set_Submenu (Mitem, Menu);
 
       --  Dynamic run menu
+
       Mitem := Register_Menu
         (Kernel, Build, -"_Run", Stock_Execute, null);
       Gtk_New (Menu);
