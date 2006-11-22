@@ -23,7 +23,6 @@
 
 with Ada.Containers.Ordered_Maps;
 with Ada.Containers.Ordered_Multisets;
-with GNAT.Strings; use GNAT.Strings;
 
 with Lazy_Vectors;
 with Tries;
