@@ -228,29 +228,36 @@ package body Completion.Expression_Parser is
       -----------------------
 
       procedure Skip_Comment_Line (Offset : in out Natural) is
-         Local_Offset : Natural := 0;
+         Local_Offset : Natural := Offset;
       begin
+         Local_Offset := UTF8_Find_Prev_Char (Buffer, Local_Offset);
+
          while Local_Offset > 1 loop
             case Buffer (Local_Offset) is
                when '"' =>
-                  Offset := UTF8_Find_Prev_Char (Buffer, Offset);
+                  Local_Offset := UTF8_Find_Prev_Char (Buffer, Local_Offset);
                   Skip_String (Local_Offset);
 
                when '-' =>
-                  if Buffer (Local_Offset - 1) = '-' then
+                  Local_Offset := UTF8_Find_Prev_Char (Buffer, Local_Offset);
+
+                  if Buffer (Local_Offset) = '-' then
                      Local_Offset := UTF8_Find_Prev_Char
                        (Buffer, Local_Offset);
 
                      Skip_Comment_Line (Local_Offset);
                      Offset := Local_Offset;
+
                      exit;
                   end if;
 
+               when ASCII.LF =>
+                  exit;
+
                when others =>
-                  null;
+                  Local_Offset := UTF8_Find_Prev_Char (Buffer, Local_Offset);
 
             end case;
-
          end loop;
       end Skip_Comment_Line;
 
@@ -317,6 +324,15 @@ package body Completion.Expression_Parser is
       Next_Ind                 : Natural;
 
    begin
+      Skip_Comment_Line (Offset);
+
+      if Offset /= Start_Offset then
+         --  In this case, we are on a comment line. So the expression is
+         --  empty.
+
+         return Result;
+      end if;
+
       while Offset > 0 loop
 
          Blank_Here := False;
