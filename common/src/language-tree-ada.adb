@@ -1442,10 +1442,8 @@ package body Language.Tree.Ada is
       --  Second, check the names of the identifiers
 
       declare
-         Tmp_Result : constant General_Order :=
-           Check_Lowercase_Names
-             (Left_Iter.Node.Construct.Name.all,
-              Right_Iter.Node.Construct.Name.all);
+         Tmp_Result : constant General_Order := Check_Lowercase_Names
+           (Left_Iter.Node.Construct.Name, Right_Iter.Node.Construct.Name);
       begin
          if Tmp_Result /= Equals then
             return Tmp_Result;
