@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <!--This file adds a new Build->Compile current with -gnatR menu.
 
-  Selecting an open source editor, and then clicking on this menu, will
+  Selecting an opened source editor, and then clicking on this menu, will
   output the layout of all the records in the current file, by recompiling
   the file with -gnatR.
 -->
