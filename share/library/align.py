@@ -1,6 +1,6 @@
 """Contextual menu for aligning text
 
-This script provides a number of contextual menus to help highlight the
+This script provides a number of contextual menus to help align the
 text in the selected region following a number of criteria. Some of these
 criteria are Ada specific, but could easily be changed for other
 languages. The contextual menus that do not apply will not be visible
