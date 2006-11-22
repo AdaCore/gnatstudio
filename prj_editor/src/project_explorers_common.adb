@@ -76,10 +76,38 @@ package body Project_Explorers_Common is
       function R (Id : String) return Gdk_Pixbuf;
       --  Convenience function: create the Gdk_Pixbuf from stock Id.
 
+      function Predefined_Array (Suffix : String) return Cat_Array;
+      --  Convenience function to produce the predefined entity graphics.
+
       function R (Id : String) return Gdk_Pixbuf is
       begin
          return Render_Icon (Widget, Id, Icon_Size_Menu);
       end R;
+
+      function Predefined_Array (Suffix : String) return Cat_Array is
+      begin
+         return
+           (Cat_Unknown            | Cat_With
+            | Cat_Use              | Cat_Include
+            | Cat_Loop_Statement   | Cat_If_Statement
+            | Cat_Case_Statement   | Cat_Select_Statement
+            | Cat_Accept_Statement | Cat_Declare_Block
+            | Cat_Simple_Block     | Cat_Exception_Handler =>
+              R ("gps-entity-generic" & Suffix),
+            Cat_Package | Cat_Namespace  =>
+              R ("gps-entity-package" & Suffix),
+            Cat_Task        | Cat_Procedure   | Cat_Function
+            | Cat_Method    | Cat_Constructor | Cat_Destructor
+            | Cat_Protected | Cat_Entry =>
+              R ("gps-entity-subprogram" & Suffix),
+            Cat_Class | Cat_Structure | Cat_Union |
+            Cat_Type  | Cat_Subtype =>
+              R ("gps-entity-type" & Suffix),
+            Cat_Variable    | Cat_Local_Variable
+            | Cat_Parameter | Cat_Field
+            | Cat_Literal   | Cat_Representation_Clause =>
+              R ("gps-entity-variable" & Suffix));
+      end Predefined_Array;
 
    begin
       --  If initialization has already been done, exit.
@@ -111,47 +139,17 @@ package body Project_Explorers_Common is
       Open_Pixbufs (Category_Node)  := R ("gps-box");
       Close_Pixbufs (Category_Node) := R ("gps-box");
 
-      Entity_Icons :=
-        (Cat_Unknown            | Cat_With
-         | Cat_Use              | Cat_Include
-         | Cat_Loop_Statement   | Cat_If_Statement
-         | Cat_Case_Statement   | Cat_Select_Statement
-         | Cat_Accept_Statement | Cat_Declare_Block
-         | Cat_Simple_Block     | Cat_Exception_Handler  =>
-           R ("gps-entity-generic"),
-         Cat_Package | Cat_Namespace  =>
-           R ("gps-entity-package"),
-         Cat_Task        | Cat_Procedure   | Cat_Function
-         | Cat_Method    | Cat_Constructor | Cat_Destructor
-         | Cat_Protected | Cat_Entry =>
-           R ("gps-entity-subprogram"),
-         Cat_Class | Cat_Structure | Cat_Union | Cat_Type | Cat_Subtype =>
-           R ("gps-entity-type"),
-         Cat_Variable    | Cat_Local_Variable
-         | Cat_Parameter | Cat_Field
-         | Cat_Literal   | Cat_Representation_Clause =>
-           R ("gps-entity-variable"));
+      Entity_Icons (False, Visibility_Public) := Predefined_Array ("");
+      Entity_Icons (False, Visibility_Protected) :=
+        Predefined_Array ("-protected");
+      Entity_Icons (False, Visibility_Private) :=
+        Predefined_Array ("-private");
 
-      Entity_Spec_Icons :=
-        (Cat_Unknown            | Cat_With
-         | Cat_Use              | Cat_Include
-         | Cat_Loop_Statement   | Cat_If_Statement
-         | Cat_Case_Statement   | Cat_Select_Statement
-         | Cat_Accept_Statement | Cat_Declare_Block
-         | Cat_Simple_Block     | Cat_Exception_Handler  =>
-           R ("gps-entity-spec-generic"),
-         Cat_Package | Cat_Namespace  =>
-           R ("gps-entity-spec-package"),
-         Cat_Task        | Cat_Procedure   | Cat_Function
-         | Cat_Method    | Cat_Constructor | Cat_Destructor
-         | Cat_Protected | Cat_Entry =>
-           R ("gps-entity-spec-subprogram"),
-         Cat_Class | Cat_Structure | Cat_Union | Cat_Type | Cat_Subtype =>
-           R ("gps-entity-spec-type"),
-         Cat_Variable    | Cat_Local_Variable
-         | Cat_Parameter | Cat_Field
-         | Cat_Literal   | Cat_Representation_Clause =>
-           R ("gps-entity-spec-variable"));
+      Entity_Icons (True, Visibility_Public) := Predefined_Array ("-spec");
+      Entity_Icons (True, Visibility_Protected) :=
+        Predefined_Array ("-protected-spec");
+      Entity_Icons (True, Visibility_Private) := Predefined_Array
+        ("-private-spec");
    end Init_Graphics;
 
    -----------------
@@ -231,7 +229,8 @@ package body Project_Explorers_Common is
 
       Set (Model, N, Absolute_Name_Column, Locale_Full_Name (File));
       Set (Model, N, Base_Name_Column, Locale_To_UTF8 (Name));
-      Set (Model, N, Icon_Column, C_Proxy (Entity_Icons (Category)));
+      Set (Model, N, Icon_Column,
+           C_Proxy (Entity_Icons (False, Visibility_Public) (Category)));
       Set (Model, N, Node_Type_Column, Gint (Node_Types'Pos (Category_Node)));
       Set (Model, N, Up_To_Date_Column, True);
       Set (Model, N, Category_Column, Language_Category'Pos (Category));
@@ -293,11 +292,8 @@ package body Project_Explorers_Common is
    function Entity_Icon_Of
      (Construct : Construct_Information) return Gdk_Pixbuf is
    begin
-      if Construct.Is_Declaration then
-         return Entity_Spec_Icons (Construct.Category);
-      else
-         return Entity_Icons (Construct.Category);
-      end if;
+      return Entity_Icons
+        (Construct.Is_Declaration, Construct.Visibility) (Construct.Category);
    end Entity_Icon_Of;
 
    ------------------------
