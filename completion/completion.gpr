@@ -1,6 +1,5 @@
 with "../kernel/kernel";
 with "../common/common";
-with "../ada_module/ada_module";
 with "../vsearch/vsearch";
 with "../shared";
 

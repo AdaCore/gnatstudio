@@ -1,6 +1,5 @@
 with "../kernel/kernel";
 with "../shared";
-with "../vsearch/vsearch";
 
 project Help is
 

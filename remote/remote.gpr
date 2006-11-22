@@ -1,7 +1,6 @@
 with "../common/common";
 with "../gtkada/gtkada";
 with "../kernel/kernel";
-with "../views/views";
 with "../shared";
 
 project Remote is

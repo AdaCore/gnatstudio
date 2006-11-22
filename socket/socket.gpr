@@ -1,6 +1,5 @@
 with "../gtkada/gtkada";
 with "../kernel/kernel";
-with "../widgets/widgets";
 with "../shared";
 
 project Socket is
