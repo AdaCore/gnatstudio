@@ -140,6 +140,7 @@ class XMLOutput:
      self.xml = self.xml + "</projects>\n"
      view = XMLViewer (name    = "Project dependencies", 
                        columns = 2,
+                       sorted = True,
                        parser  = self.parse_xml_node,
                        on_click = self.on_node_clicked)
      view.parse_string (self.xml)

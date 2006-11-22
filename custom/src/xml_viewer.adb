@@ -61,13 +61,15 @@ package body XML_Viewer is
    Parser_Cst    : aliased constant String := "parser";
    On_Click_Cst  : aliased constant String := "on_click";
    On_Select_Cst : aliased constant String := "on_select";
+   Sorted_Cst    : aliased constant String := "sorted";
 
    XML_Constructor_Params : constant Cst_Argument_List  :=
      (1 => Name_Cst'Access,
       2 => Columns_Cst'Access,
       3 => Parser_Cst'Access,
       4 => On_Click_Cst'Access,
-      5 => On_Select_Cst'Access);
+      5 => On_Select_Cst'Access,
+      6 => Sorted_Cst'Access);
    XML_Metrics_Params : constant Cst_Argument_List :=
      (1 => Name_Cst'Access);
    Parse_Params : constant Cst_Argument_List :=
@@ -79,6 +81,7 @@ package body XML_Viewer is
       record
          Child          : GPS_MDI_Child;
          Tree           : Tree_View;
+         Sorted         : Boolean := False;
          Sort_Column    : Gint;
          Command_Column : Gint;
          XML_Column     : Gint;
@@ -106,6 +109,7 @@ package body XML_Viewer is
       Parser    : Subprogram_Type;
       On_Click  : Subprogram_Type;
       On_Select : Subprogram_Type;
+      Columns   : Integer;
    end record;
    function Node_Parser
      (View        : access Custom_XML_Viewer_Record;
@@ -220,22 +224,39 @@ package body XML_Viewer is
       Child_Index : Positive) return Gtk_Tree_Iter
    is
       pragma Unreferenced (Child_Index);
-      C      : Callback_Data'Class := Create_Callback_Data (View.Parser, Node);
       Iter   : Gtk_Tree_Iter := Null_Iter;
-      Tmp : GNAT.Strings.String_List := Execute (View.Parser, C);
    begin
-      if Tmp'Length /= 0 then
+      if View.Parser /= null then
+         declare
+            C : Callback_Data'Class :=
+              Create_Callback_Data (View.Parser, Node);
+            Tmp : GNAT.Strings.String_List := Execute (View.Parser, C);
+         begin
+            if Tmp'Length /= 0 then
+               Append (View.Tree.Model, Iter, Parent);
+
+               for S in Tmp'Range loop
+                  Set (View.Tree.Model, Iter, Gint (S - Tmp'First),
+                       Tmp (S).all);
+               end loop;
+
+               Set (View.Tree.Model, Iter, View.Sort_Column,
+                    Tmp (Tmp'First).all);
+            end if;
+
+            Basic_Types.Free (Tmp);
+            Free (C);
+         end;
+      else
          Append (View.Tree.Model, Iter, Parent);
-
-         for S in Tmp'Range loop
-            Set (View.Tree.Model, Iter, Gint (S - Tmp'First), Tmp (S).all);
-         end loop;
-
-         Set (View.Tree.Model, Iter, View.Sort_Column, Tmp (Tmp'First).all);
+         Set (View.Tree.Model, Iter, 0, Node.Tag.all);
+         if View.Columns >= 2 and then Node.Attributes /= null then
+            Set (View.Tree.Model, Iter, 1, Node.Attributes.all);
+         end if;
+         if View.Columns >= 3 and then Node.Value /= null then
+            Set (View.Tree.Model, Iter, 2, Node.Value.all);
+         end if;
       end if;
-
-      Basic_Types.Free (Tmp);
-      Free (C);
 
       return Iter;
 
@@ -645,7 +666,7 @@ package body XML_Viewer is
          Add_Attribute (Col, Rend, "markup", Gint (C - 1));
          Set_Sort_Column_Id (Col, View.Sort_Column);
          Dumm := Append_Column (View.Tree, Col);
-         if C = 1 then
+         if C = 1 and then View.Sorted then
             Clicked (Col);
          end if;
       end loop;
@@ -673,20 +694,23 @@ package body XML_Viewer is
          Name_Parameters (Data, XML_Constructor_Params);
          Inst := Nth_Arg (Data, 1, XML_Viewer_Class);
          View := new Custom_XML_Viewer_Record;
-         Initialize_XML_Viewer
-           (View, Kernel,
-            Name    => Nth_Arg (Data, 2),
-            Columns => Nth_Arg (Data, 3, 1));
-         Custom_XML_Viewer_Record (View.all).Parser := Nth_Arg (Data, 4);
+         Custom_XML_Viewer_Record (View.all).Parser := Nth_Arg (Data, 4, null);
          Custom_XML_Viewer_Record (View.all).On_Click :=
            Nth_Arg (Data, 5, null);
          Custom_XML_Viewer_Record (View.all).On_Select :=
            Nth_Arg (Data, 6, null);
+         View.Sorted := Nth_Arg (Data, 7, False);
+         Custom_XML_Viewer_Record (View.all).Columns := Nth_Arg (Data, 3, 3);
+         Initialize_XML_Viewer
+           (View, Kernel,
+            Name    => Nth_Arg (Data, 2),
+            Columns => Custom_XML_Viewer_Record (View.all).Columns);
          Set_Data (Inst, Widget => GObject (View));
 
       elsif Command = "create_metric" then
          Name_Parameters (Data, XML_Metrics_Params);
          View := new Metrix_XML_Viewer_Record;
+         View.Sorted := True;
          Initialize_XML_Viewer (View, Kernel, Nth_Arg (Data, 1), 2);
          Inst := Get_Instance (Get_Script (Data), Widget => View);
          if Inst = No_Class_Instance then
@@ -735,8 +759,8 @@ package body XML_Viewer is
       Register_Command
         (Kernel, Constructor_Method,
          Class        => XML_Viewer_Class,
-         Minimum_Args => 3,
-         Maximum_Args => 5,
+         Minimum_Args => 1,
+         Maximum_Args => 6,
          Handler      => XML_Commands_Handler'Access);
 
       Register_Command
