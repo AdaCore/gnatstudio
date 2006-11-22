@@ -58,6 +58,16 @@ private
 
    use Tree_List;
 
+   type Full_Construct_Cell is record
+      It     : Construct_Tree_Iterator;
+      Tree   : Construct_Tree;
+      Buffer : String_Access;
+   end record;
+
+   package Construct_List is new Doubly_Linked_Lists (Full_Construct_Cell);
+
+   use Construct_List;
+
    type Construct_Completion_Resolver is new Completion_Resolver with record
       Construct_Db    : Construct_Database_Access;
       Current_File    : Structured_File_Access;
@@ -66,6 +76,13 @@ private
       Tree_Collection : Tree_List.List;
       --  This is the list of the tree that have to be freed when the resolver
       --  is freed.
+
+      Excluded_List   : Construct_List.List;
+      --  Since completion is working on non compilable files, there might be
+      --  cirtularities in the references. We don't want to enter in an
+      --  infinite loop in this case, so we maitain a list of constructs that
+      --  have been found during the process, in order to avoid cycling.
+
    end record;
 
    type Construct_Completion_Proposal is new Completion_Proposal with record
@@ -222,5 +239,20 @@ private
       record
          File : Structured_File_Access;
       end record;
+
+   procedure Push_Excluded_Construct
+     (Resolver : access Construct_Completion_Resolver;
+      Pointer  : Full_Construct_Cell);
+   --  Add an element to exclude from the extracted constructs.
+
+   procedure Pop_Excluded_Construct
+     (Resolver : access Construct_Completion_Resolver);
+   --  Removes the last element added in the extraction list.
+
+   function Is_Excluded
+     (Resolver : access Construct_Completion_Resolver;
+      Pointer  : Full_Construct_Cell) return Boolean;
+   --  Return true if the construct given in parameter has to be excluded from
+   --  the completion analyzis.
 
 end Completion.Ada.Constructs_Extractor;
