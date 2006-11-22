@@ -327,6 +327,10 @@ package body Completion.Ada.Constructs_Extractor is
          Parent_Sloc_Start, Parent_Sloc_End : Source_Location;
          Parent_Found                       : Boolean;
       begin
+         Push_Excluded_Construct
+           (Construct_Completion_Resolver (Proposal.Resolver.all)'Access,
+            (Proposal.Tree_Node, Proposal.Tree, Proposal.Buffer));
+
          Get_Referenced_Entity
            (Ada_Lang,
             Proposal.Buffer.all,
@@ -341,8 +345,10 @@ package body Completion.Ada.Constructs_Extractor is
                  new Ada_Construct_Extractor_Context;
                List : Completion_List;
 
-               It : Completion_Iterator;
+               It        : Completion_Iterator;
                Construct : Simple_Construct_Information;
+
+               Completion_Proposal : Construct_Completion_Proposal;
             begin
                Context.Buffer := Proposal.Buffer;
                Context.Offset := Parent_Sloc_End.Index;
@@ -362,26 +368,37 @@ package body Completion.Ada.Constructs_Extractor is
                   if Get_Proposal (It)
                   in Construct_Completion_Proposal'Class
                   then
-                     Construct := Get_Construct
-                       (Construct_Completion_Proposal
-                          (Get_Proposal (It)).Tree_Node);
+                     Completion_Proposal := Construct_Completion_Proposal
+                       (Get_Proposal (It));
 
-                     if (not Cut_Access
-                         or else not Is_Access
-                           (Construct_Completion_Proposal
-                              (Get_Proposal (It)).Buffer.all,
-                            Construct))
-                       and then
-                         (not Cut_Subprograms
-                          or else
-                            Construct.Category not in Subprogram_Category)
+                     if not Is_Excluded
+                       (Construct_Completion_Resolver
+                          (Completion_Proposal.Resolver.all)'Access,
+                        (Completion_Proposal.Tree_Node,
+                         Completion_Proposal.Tree,
+                         Completion_Proposal.Buffer))
                      then
-                        Get_Composition
-                          (Get_Proposal (It),
-                           Identifier,
-                           1,
-                           Is_Partial,
-                           Result);
+                        Construct := Get_Construct
+                          (Construct_Completion_Proposal
+                             (Get_Proposal (It)).Tree_Node);
+
+                        if (not Cut_Access
+                            or else not Is_Access
+                              (Construct_Completion_Proposal
+                                 (Get_Proposal (It)).Buffer.all,
+                               Construct))
+                          and then
+                            (not Cut_Subprograms
+                             or else
+                               Construct.Category not in Subprogram_Category)
+                        then
+                           Get_Composition
+                             (Get_Proposal (It),
+                              Identifier,
+                              1,
+                              Is_Partial,
+                              Result);
+                        end if;
                      end if;
                   else
                      Get_Composition
@@ -398,6 +415,9 @@ package body Completion.Ada.Constructs_Extractor is
                Free (List);
             end;
          end if;
+
+         Pop_Excluded_Construct
+           (Construct_Completion_Resolver (Proposal.Resolver.all)'Access);
       end Handle_Referenced_Entity;
 
       List : Extensive_List_Pckg.List;
@@ -1218,5 +1238,57 @@ package body Completion.Ada.Constructs_Extractor is
          return null;
       end if;
    end To_Profile_Manager;
+
+   -----------------------------
+   -- Push_Excluded_Construct --
+   -----------------------------
+
+   procedure Push_Excluded_Construct
+     (Resolver : access Construct_Completion_Resolver;
+      Pointer  : Full_Construct_Cell) is
+   begin
+      Append (Resolver.Excluded_List, Pointer);
+   end Push_Excluded_Construct;
+
+   ----------------------------
+   -- Pop_Excluded_Construct --
+   ----------------------------
+
+   procedure Pop_Excluded_Construct
+     (Resolver : access Construct_Completion_Resolver) is
+   begin
+      Delete_Last (Resolver.Excluded_List);
+   end Pop_Excluded_Construct;
+
+   -----------------
+   -- Is_Excluded --
+   -----------------
+
+   function Is_Excluded
+     (Resolver : access Construct_Completion_Resolver;
+      Pointer  : Full_Construct_Cell) return Boolean
+   is
+      It : Construct_List.Cursor := First (Resolver.Excluded_List);
+      Relation : General_Order;
+   begin
+      while It /= Construct_List.No_Element loop
+         Relation := Compare_Entities
+           (Lang         => Ada_Tree_Lang,
+            Left_Iter    => Element (It).It,
+            Right_Iter   => Pointer.It,
+            Left_Tree    => Element (It).Tree,
+            Right_Tree   => Pointer.Tree,
+            Left_Buffer  => Element (It).Buffer,
+            Right_Buffer => Pointer.Buffer);
+
+         if Relation = Equals or else Relation = Equivalent then
+            return True;
+         end if;
+
+         It := Next (It);
+      end loop;
+
+      return False;
+   end Is_Excluded;
 
 end Completion.Ada.Constructs_Extractor;
