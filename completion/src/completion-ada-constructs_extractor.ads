@@ -108,6 +108,10 @@ private
      (Proposal : Construct_Completion_Proposal) return Language_Category;
    --  See inherited documentation
 
+   function Get_Visibility
+     (Proposal : Construct_Completion_Proposal) return Construct_Visibility;
+   --  See inherited documentation
+
    function Get_Documentation
      (Proposal : Construct_Completion_Proposal) return UTF8_String;
    --  See inherited documentation

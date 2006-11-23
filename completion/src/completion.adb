@@ -328,6 +328,18 @@ package body Completion is
       return Cat_Unknown;
    end Get_Category;
 
+   --------------------
+   -- Get_Visibility --
+   --------------------
+
+   function Get_Visibility
+     (Proposal : Simple_Completion_Proposal) return Construct_Visibility
+   is
+      pragma Unreferenced (Proposal);
+   begin
+      return Visibility_Public;
+   end Get_Visibility;
+
    ---------------------
    -- Get_Composition --
    ---------------------

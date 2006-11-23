@@ -171,6 +171,20 @@ package body Completion.Ada.Constructs_Extractor is
       end if;
    end Get_Category;
 
+   --------------------
+   -- Get_Visibility --
+   --------------------
+
+   function Get_Visibility
+     (Proposal : Construct_Completion_Proposal) return Construct_Visibility is
+   begin
+      if Proposal.Is_All then
+         return Visibility_Public;
+      else
+         return Get_Construct (Proposal.Tree_Node).Visibility;
+      end if;
+   end Get_Visibility;
+
    -----------------------
    -- Get_Documentation --
    -----------------------
