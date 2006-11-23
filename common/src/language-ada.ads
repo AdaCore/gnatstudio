@@ -21,6 +21,8 @@
 --  This is the general Ada (non debugger specific) support package.
 --  See language.ads for a complete spec.
 
+with Ada_Analyzer;
+
 package Language.Ada is
 
    type Ada_Language is new Language_Root with private;
@@ -110,17 +112,28 @@ package Language.Ada is
       From_Index : Natural := 0);
    --  See inherited documentation
 
-   Ada_Abstract_Attribute  : constant Construct_Att_Key := Last_Gen_Att + 1;
-   Ada_Access_Attribute    : constant Construct_Att_Key := Access_Attribute;
-   Ada_Array_Attribute     : constant Construct_Att_Key := Array_Attribute;
-   Ada_Delta_Attribute     : constant Construct_Att_Key := Last_Gen_Att + 2;
-   Ada_Digits_Attribute    : constant Construct_Att_Key := Last_Gen_Att + 3;
-   Ada_Interface_Attribute : constant Construct_Att_Key := Last_Gen_Att + 4;
-   Ada_Mod_Attribute       : constant Construct_Att_Key := Last_Gen_Att + 5;
-   Ada_New_Attribute       : constant Construct_Att_Key := Last_Gen_Att + 6;
-   Ada_Range_Attribute     : constant Construct_Att_Key := Last_Gen_Att + 7;
-   Ada_Record_Attribute    : constant Construct_Att_Key := Last_Gen_Att + 8;
-   Ada_Tagged_Attribute    : constant Construct_Att_Key := Last_Gen_Att + 9;
+   Ada_Abstract_Attribute  : constant Construct_Att_Key :=
+     Ada_Analyzer.Ada_Abstract_Attribute;
+   Ada_Access_Attribute    : constant Construct_Att_Key :=
+     Ada_Analyzer.Ada_Access_Attribute;
+   Ada_Array_Attribute     : constant Construct_Att_Key :=
+     Ada_Analyzer.Ada_Array_Attribute;
+   Ada_Delta_Attribute     : constant Construct_Att_Key :=
+     Ada_Analyzer.Ada_Delta_Attribute;
+   Ada_Digits_Attribute    : constant Construct_Att_Key :=
+     Ada_Analyzer.Ada_Digits_Attribute;
+   Ada_Interface_Attribute : constant Construct_Att_Key :=
+     Ada_Analyzer.Ada_Interface_Attribute;
+   Ada_Mod_Attribute       : constant Construct_Att_Key :=
+     Ada_Analyzer.Ada_Mod_Attribute;
+   Ada_New_Attribute       : constant Construct_Att_Key :=
+     Ada_Analyzer.Ada_New_Attribute;
+   Ada_Range_Attribute     : constant Construct_Att_Key :=
+     Ada_Analyzer.Ada_Range_Attribute;
+   Ada_Record_Attribute    : constant Construct_Att_Key :=
+     Ada_Analyzer.Ada_Record_Attribute;
+   Ada_Tagged_Attribute    : constant Construct_Att_Key :=
+     Ada_Analyzer.Ada_Tagged_Attribute;
 
 private
    type Ada_Language is new Language_Root with null record;
