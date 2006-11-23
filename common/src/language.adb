@@ -22,7 +22,6 @@ with Ada.Unchecked_Deallocation;
 with Ada.Strings.Maps.Constants;
 with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
 
-with Basic_Types;                 use Basic_Types;
 with GNAT.Regpat;                 use GNAT.Regpat;
 with String_Utils;                use String_Utils;
 with Glib.Unicode;                use Glib, Glib.Unicode;
