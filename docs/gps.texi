@@ -8503,15 +8503,6 @@ Whether the first entry of the location window should be selected
 automatically, and thus whether the corresponding editor should be
 immediately open.
 
-@item Smart completion
-@cindex smart completion
-When enabled, GPS loads on startup all the information needed for the
-Smart completion to work.
-
-@item Smart completion timeout
-The timeout, expressed in milliseconds, after which the Smart completion
-window appears automatically after entering a triggering character, such as '.'
-
 @end table
 
 @item @b{Windows}
@@ -8696,6 +8687,15 @@ percent sign ('%')
 True if all editions should be done with the external editor. This will
 deactivate completely the internal editor. False if the external editor
 needs to be explicitly called by the user.
+
+@item Smart completion
+@cindex smart completion
+When enabled, GPS loads on startup all the information needed for the
+Smart completion to work.
+
+@item Smart completion timeout
+The timeout, expressed in milliseconds, after which the Smart completion
+window appears automatically after entering a triggering character, such as '.'
 
 @end table
 
