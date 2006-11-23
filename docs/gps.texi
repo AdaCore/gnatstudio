@@ -11369,10 +11369,19 @@ be several such children. The extension must start with a '.' character
 @item Keywords
 A V7 style regular expression for recognizing and highlighting keywords.
 Multiple @code{Keywords} tags can be specified, and will be concatenated
-into a single regular expression.
+into a single regular expression. If the regular expression needs to match
+characters other than letters and underscore, you must also edit the
+@code{Wordchars} node.
 
 The full grammar of the regular expression can be found in the spec of the
 file @file{g-regpat.ads} in the GNAT run time.
+
+@item Wordchars
+Most languages have keywords that only contain letters, digits and underscore
+characters. However, if you want to also include other special characters
+(for instance '<' and '>' in XML), you need to use this tag to let GPS
+know. The value of this node is a string made of all the special word
+characters. You do not need to include letters, digits or underscores.
 
 @item Engine
 The name of a dynamic library providing one or several of the functions
