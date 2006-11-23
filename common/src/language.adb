@@ -294,6 +294,8 @@ package body Language is
       end if;
 
       --  Do we have a keyword ?
+      --  ??? It is assumed the regexp should check at the current char
+      --  only, not beyond for efficiency...
 
       Match (Keys.all, Buffer (First .. Buffer'Last), Matched);
 
@@ -309,8 +311,8 @@ package body Language is
       --  It is better to return a pointer to the newline, so that the icons
       --  on the side might be displayed properly.
 
-      if not Is_Entity_Letter
-        (UTF8_Get_Char (Buffer (First .. Buffer'Last)))
+      if not Is_Word_Char
+        (Language_Access (Lang), UTF8_Get_Char (Buffer (First .. Buffer'Last)))
       then
          Entity := Normal_Text;
          Next_Char := UTF8_Next_Char (Buffer, First);
@@ -341,7 +343,10 @@ package body Language is
          return;
       end if;
 
-      --  Skip the current word
+      --  Skip the current word. We only take into account Is_Entity_Letter,
+      --  not the full set of chars supported by the language for its keywords
+      --  because of cases like "<foo>bar</foo>" in XML, which would otherwise
+      --  consider this as a single word when they are in fact several.
 
       while Next_Char <= Buffer'Last
         and then Is_Entity_Letter
@@ -1052,5 +1057,17 @@ package body Language is
 
       Index := 0;
    end Skip_To_Previous_Comment_Start;
+
+   ------------------
+   -- Is_Word_Char --
+   ------------------
+
+   function Is_Word_Char
+     (Lang : access Language_Root; Char : Glib.Gunichar) return Boolean
+   is
+      pragma Unreferenced (Lang);
+   begin
+      return Is_Entity_Letter (Char);
+   end Is_Word_Char;
 
 end Language;

@@ -18,11 +18,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Strings;
 with Ada.Strings.Maps;  use Ada.Strings.Maps;
-
-with GNAT.Regpat;
 with Case_Handling;
+with Glib;
+with GNAT.Regpat;
+with GNAT.Strings;
 
 package Language is
 
@@ -92,6 +92,12 @@ package Language is
    --  language.
    --  Note: we return an access type (instead of a Pattern_Matcher) for
    --  efficiency.
+
+   function Is_Word_Char
+     (Lang : access Language_Root; Char : Glib.Gunichar) return Boolean;
+   --  Return True if Char belongs to the set of characters that compose a
+   --  keyword for this language. By default, this returns true for letters,
+   --  digits and underscore characters.
 
    ----------------------------
    -- Tooltips in the editor --
