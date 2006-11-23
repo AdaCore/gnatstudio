@@ -566,8 +566,6 @@ package body Language.Tree.Ada is
         (Package_Iterator : Construct_Tree_Iterator;
          Allow_Private    : Boolean)
       is
-         use Basic_Types;
-
          It : Construct_Tree_Iterator;
       begin
          It := Get_Last_Child (Tree, Package_Iterator);
@@ -886,7 +884,6 @@ package body Language.Tree.Ada is
          end loop;
       end Handle_Enumeration;
 
-      use Basic_Types;
    begin
       if From /= Null_Construct_Tree_Iterator then
 
@@ -1264,8 +1261,6 @@ package body Language.Tree.Ada is
      (Lang      : access Ada_Tree_Language;
       Construct : Simple_Construct_Information) return String
    is
-      use Basic_Types;
-
       pragma Unreferenced (Lang);
    begin
       if Construct.Name = null then
