@@ -26,8 +26,6 @@ with Generic_Stack;
 with Indent_Stack;
 with String_Utils;            use String_Utils;
 
-with Language.Ada;            use Language.Ada;
-
 package body Ada_Analyzer is
 
    use Indent_Stack.Stack;
