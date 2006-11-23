@@ -31,6 +31,8 @@
 with Glib;           use Glib;
 with GNAT.Strings;   use GNAT.Strings;
 
+with Gdk.Pixbuf;
+
 with Gtk.Window;     use Gtk.Window;
 
 with Gtk.Button;     use Gtk.Button;
@@ -61,19 +63,6 @@ package Completion_Window is
 
    procedure Initialize (Window : access Completion_Window_Record'Class);
    --  Internal initialization procedure.
-
-   procedure Add_Contents
-     (Window     : Completion_Window_Access;
-      Markup     : String;
-      Completion : String;
-      Notes      : String);
-   --  Add new content to be displayed in the completion window.
-   --  Markup is the string to display in the main completion tree, in pango
-   --   markup format.
-   --  Completion is the string to associate to the displayed string, in
-   --   UTF-8
-   --  Notes is an additional text that will be shown in the secondary window,
-   --   in UTF-8.
 
    procedure Show
      (Window         : Completion_Window_Access;
@@ -107,6 +96,7 @@ private
       Markup  : String_Access;
       Text    : String_Access;
       Notes   : String_Access;
+      Icon    : Gdk.Pixbuf.Gdk_Pixbuf;
       --  This can be null, in which case it indicates that it must be computed
       --  from Proposal.
       Proposal : Completion_Proposal_Access;
