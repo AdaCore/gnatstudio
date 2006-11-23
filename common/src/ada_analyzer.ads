@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2005                      --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -48,5 +48,17 @@ package Ada_Analyzer is
    --  If Callback is not null, call it for each Source_Entity_Kind.
    --  Case_Exceptions is the handler containing all the casing exceptions
    --  to be used while reformatting the code.
+
+   Ada_Abstract_Attribute  : constant Construct_Att_Key := Last_Gen_Att + 1;
+   Ada_Access_Attribute    : constant Construct_Att_Key := Access_Attribute;
+   Ada_Array_Attribute     : constant Construct_Att_Key := Array_Attribute;
+   Ada_Delta_Attribute     : constant Construct_Att_Key := Last_Gen_Att + 2;
+   Ada_Digits_Attribute    : constant Construct_Att_Key := Last_Gen_Att + 3;
+   Ada_Interface_Attribute : constant Construct_Att_Key := Last_Gen_Att + 4;
+   Ada_Mod_Attribute       : constant Construct_Att_Key := Last_Gen_Att + 5;
+   Ada_New_Attribute       : constant Construct_Att_Key := Last_Gen_Att + 6;
+   Ada_Range_Attribute     : constant Construct_Att_Key := Last_Gen_Att + 7;
+   Ada_Record_Attribute    : constant Construct_Att_Key := Last_Gen_Att + 8;
+   Ada_Tagged_Attribute    : constant Construct_Att_Key := Last_Gen_Att + 9;
 
 end Ada_Analyzer;
