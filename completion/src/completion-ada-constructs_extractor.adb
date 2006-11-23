@@ -23,7 +23,6 @@ with Ada.Unchecked_Deallocation; use Ada;
 
 with GNAT.Strings;
 
-with Ada_Analyzer.Utils;     use Ada_Analyzer.Utils;
 with Language.Ada;           use Language.Ada;
 with Language.Documentation; use Language.Documentation;
 with Basic_Types;            use Basic_Types;
@@ -327,10 +326,6 @@ package body Completion.Ada.Constructs_Extractor is
          Parent_Sloc_Start, Parent_Sloc_End : Source_Location;
          Parent_Found                       : Boolean;
       begin
-         Push_Excluded_Construct
-           (Construct_Completion_Resolver (Proposal.Resolver.all)'Access,
-            (Proposal.Tree_Node, Proposal.Tree, Proposal.Buffer));
-
          Get_Referenced_Entity
            (Ada_Lang,
             Proposal.Buffer.all,
@@ -340,6 +335,10 @@ package body Completion.Ada.Constructs_Extractor is
             Parent_Found);
 
          if Parent_Found then
+            Push_Excluded_Construct
+              (Construct_Completion_Resolver (Proposal.Resolver.all)'Access,
+               (Proposal.Tree_Node, Proposal.Tree, Proposal.Buffer));
+
             declare
                Context : constant Completion_Context :=
                  new Ada_Construct_Extractor_Context;
@@ -370,6 +369,8 @@ package body Completion.Ada.Constructs_Extractor is
                   then
                      Completion_Proposal := Construct_Completion_Proposal
                        (Get_Proposal (It));
+                     Completion_Proposal.Params_In_Expression :=
+                       Proposal.Params_In_Expression;
 
                      if not Is_Excluded
                        (Construct_Completion_Resolver
@@ -383,17 +384,15 @@ package body Completion.Ada.Constructs_Extractor is
                              (Get_Proposal (It)).Tree_Node);
 
                         if (not Cut_Access
-                            or else not Is_Access
-                              (Construct_Completion_Proposal
-                                 (Get_Proposal (It)).Buffer.all,
-                               Construct))
+                            or else not
+                              Construct.Attributes (Ada_Access_Attribute))
                           and then
                             (not Cut_Subprograms
                              or else
                                Construct.Category not in Subprogram_Category)
                         then
                            Get_Composition
-                             (Get_Proposal (It),
+                             (Completion_Proposal,
                               Identifier,
                               1,
                               Is_Partial,
@@ -414,15 +413,14 @@ package body Completion.Ada.Constructs_Extractor is
 
                Free (List);
             end;
-         end if;
 
-         Pop_Excluded_Construct
-           (Construct_Completion_Resolver (Proposal.Resolver.all)'Access);
+            Pop_Excluded_Construct
+              (Construct_Completion_Resolver (Proposal.Resolver.all)'Access);
+         end if;
       end Handle_Referenced_Entity;
 
       List : Extensive_List_Pckg.List;
 
-      Proposal_Is_Access : Boolean := False;
       Proposal_Is_All    : Boolean := False;
    begin
       --  If we are completing a parameter profile, then return all the
@@ -494,11 +492,21 @@ package body Completion.Ada.Constructs_Extractor is
                return;
             end if;
 
-            Proposal_Is_Access := Is_Access
-              (Proposal.Buffer.all,
-               Get_Construct (Proposal.Tree_Node));
+            if Get_Construct (Proposal.Tree_Node).
+              Attributes (Ada_Array_Attribute)
+              and then Proposal.Params_In_Expression < 1
+            then
+               --  We know that arrays have at least one dimension, so we don't
+               --  complete if none is given. We could do something a bit more
+               --  fancy at some point.
 
-            if Proposal_Is_Access and then not Proposal.Is_All then
+               return;
+            end if;
+
+            if Get_Construct (Proposal.Tree_Node).
+              Attributes (Ada_Access_Attribute)
+              and then not Proposal.Is_All
+            then
                declare
                   All_List : Extensive_List_Pckg.List;
                begin
@@ -1128,7 +1136,7 @@ package body Completion.Ada.Constructs_Extractor is
                  (Get_Full_Tree (This.Current_File), This.Current_It),
                Tree_Node            => This.Current_It,
                File                 => This.Current_File,
-               Tree                 => Get_Full_Tree (This.Current_File),
+               Tree                 => This.Current_Tree,
                Buffer               => Get_Buffer (This.Current_File),
                Is_All               => False,
                Params_In_Expression => 0,
@@ -1139,16 +1147,15 @@ package body Completion.Ada.Constructs_Extractor is
                 (This.Current_Tree, This.Current_Ada_Tree, This.Current_It);
 
             if Get_Tree (Full_Cell) = This.First_Tree then
-               Proposal.Tree := This.First_Tree;
-               Proposal.Tree_Node := To_Construct_Tree_Iterator
-                 (Full_Cell);
+               Proposal.Tree := Get_Tree (Full_Cell);
+               Proposal.Tree_Node := To_Construct_Tree_Iterator (Full_Cell);
                Proposal.Buffer := This.First_Buffer;
                Proposal.File := This.First_File;
             elsif  To_Construct_Tree_Iterator (Full_Cell) /=
               Proposal.Tree_Node
             then
-               Proposal.Tree_Node := To_Construct_Tree_Iterator
-                 (Full_Cell);
+               Proposal.Tree_Node := To_Construct_Tree_Iterator (Full_Cell);
+               Proposal.Tree := Get_Tree (Full_Cell);
             end if;
 
             return Proposal;
