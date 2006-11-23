@@ -406,7 +406,7 @@ package body GPS.Kernel.Preferences is
 
       Tooltip_Color := Param_Spec_Color (Gnew_Color
         (Name    => "General-Tooltip-Color",
-         Default => "#EEEEEE",
+         Default => "#FFFFEE",
          Blurb   => -"Color to use for the tooltips background",
          Nick    => -"Tooltip color",
          Flags   => Param_Readable));
