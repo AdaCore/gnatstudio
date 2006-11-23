@@ -110,6 +110,18 @@ package Language.Ada is
       From_Index : Natural := 0);
    --  See inherited documentation
 
+   Ada_Abstract_Attribute  : constant Construct_Att_Key := Last_Gen_Att + 1;
+   Ada_Access_Attribute    : constant Construct_Att_Key := Access_Attribute;
+   Ada_Array_Attribute     : constant Construct_Att_Key := Array_Attribute;
+   Ada_Delta_Attribute     : constant Construct_Att_Key := Last_Gen_Att + 2;
+   Ada_Digits_Attribute    : constant Construct_Att_Key := Last_Gen_Att + 3;
+   Ada_Interface_Attribute : constant Construct_Att_Key := Last_Gen_Att + 4;
+   Ada_Mod_Attribute       : constant Construct_Att_Key := Last_Gen_Att + 5;
+   Ada_New_Attribute       : constant Construct_Att_Key := Last_Gen_Att + 6;
+   Ada_Range_Attribute     : constant Construct_Att_Key := Last_Gen_Att + 7;
+   Ada_Record_Attribute    : constant Construct_Att_Key := Last_Gen_Att + 8;
+   Ada_Tagged_Attribute    : constant Construct_Att_Key := Last_Gen_Att + 9;
+
 private
    type Ada_Language is new Language_Root with null record;
 
