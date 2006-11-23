@@ -22,7 +22,6 @@ with GNAT.Strings;
 with Ada.Strings.Maps;  use Ada.Strings.Maps;
 
 with GNAT.Regpat;
-with Basic_Types;
 with Case_Handling;
 
 package Language is
@@ -482,6 +481,24 @@ package Language is
       Visibility_Public);
    --  Represents the visibility of a construct from the enclosing entity.
 
+   type Construct_Att_Key is range 1 .. 32;
+   --  This is the type of keys attributes. In order to minimize size, there
+   --  cannot be more than 32 attributes at all for a given language. Some
+   --  of them are language independent (up to Last_Gen_Att).
+   --  Specific languages might want to implement they own keys, which have to
+   --  start at Last_Gen_Att + 1.
+   --  We migh consider raising the limit if we have specific needs.
+
+   type Construct_Attribute_Map is array
+     (Construct_Att_Key) of Boolean;
+   pragma Pack (Construct_Attribute_Map);
+
+   Access_Attribute : constant Construct_Att_Key  := 1;
+   Array_Attribute  : constant Construct_Att_Key  := 2;
+   --  ??? This list is currently incomplete. To be completed.
+
+   Last_Gen_Att : constant Construct_Att_Key := 2;
+
    type Construct_Information;
    type Construct_Access is access Construct_Information;
 
@@ -518,6 +535,9 @@ package Language is
 
       Prev, Next     : Construct_Access;
       --  Links to the previous and the next construct info
+
+      Attributes     : Construct_Attribute_Map := (others => False);
+      --  Set of construct attributes
    end record;
    --  Information needed to define a language construct (e.g procedure,
    --  loop statement, ...).
@@ -530,6 +550,7 @@ package Language is
       Sloc_Start     : Source_Location;
       Sloc_Entity    : Source_Location;
       Sloc_End       : Source_Location;
+      Attributes     : Construct_Attribute_Map;
    end record;
    --  Same as above, but containing only the needed construct information, no
    --  list constructions.
@@ -650,7 +671,6 @@ package Language is
       Category       : Language_Category;
       Regexp         : Pattern_Matcher_Access;
       Position_Index : Natural;
-      Icon           : Basic_Types.Pixmap_Access;
       Make_Entry     : Make_Entry_Func;
    end record;
    --  Definition for a category (ie one of the subtrees of the explorer).
@@ -709,7 +729,8 @@ private
       Sloc_Entity    => (0, 0, 0),
       Sloc_End       => (0, 0, 0),
       Prev           => null,
-      Next           => null);
+      Next           => null,
+      Attributes     => (others => False));
 
    Null_Simple_Construct_Info : constant Simple_Construct_Information :=
      (Category       => Cat_Unknown,
@@ -718,6 +739,7 @@ private
       Name           => null,
       Sloc_Start     => (0, 0, 0),
       Sloc_Entity    => (0, 0, 0),
-      Sloc_End       => (0, 0, 0));
+      Sloc_End       => (0, 0, 0),
+      Attributes     => (others => False));
 
 end Language;
