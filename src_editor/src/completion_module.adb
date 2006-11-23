@@ -45,6 +45,7 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Intl;                  use GPS.Intl;
 with Language;                  use Language;
+with Language.Icons;
 with Language_Handlers;         use Language_Handlers;
 with Src_Editor_Buffer;         use Src_Editor_Buffer;
 with Src_Editor_Buffer.Hooks;   use Src_Editor_Buffer.Hooks;
@@ -279,6 +280,8 @@ package body Completion_Module is
 
       Completion_Module.Previous_Smart_Completion_State :=
         Get_Pref (Smart_Completion);
+
+      Language.Icons.Init_Graphics (Gtk_Widget (Get_Main_Window (Kernel)));
    end Preferences_Changed;
 
    ---------------
