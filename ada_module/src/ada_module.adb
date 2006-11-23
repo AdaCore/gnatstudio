@@ -20,15 +20,16 @@
 
 with Glib.Generic_Properties;  use Glib;
 with Glib.Properties.Creation; use Glib.Properties.Creation;
+
 with GPS.Kernel;               use GPS.Kernel;
 with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;       use GPS.Kernel.Project;
+with GPS.Intl;                 use GPS.Intl;
 with ALI_Parser;               use ALI_Parser;
 with Entities;                 use Entities;
 with Language.Ada;             use Language.Ada;
-with Language_Handlers;    use Language_Handlers;
-with GPS.Intl;                 use GPS.Intl;
+with Language_Handlers;        use Language_Handlers;
 with Language;                 use Language;
 with Project_Viewers;          use Project_Viewers;
 with Naming_Editors;           use Naming_Editors;
