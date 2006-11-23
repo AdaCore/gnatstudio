@@ -14,6 +14,7 @@
     <Name>Texinfo</Name>
     <Spec_Suffix>.texi</Spec_Suffix>
     <Keywords>^@\w+</Keywords>
+    <Wordchars>@</Wordchars>
     <Context>
       <New_Line_Comment_Start>@c </New_Line_Comment_Start>
       <String_Delimiter>"</String_Delimiter>
