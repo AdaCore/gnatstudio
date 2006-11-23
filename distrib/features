@@ -14,6 +14,13 @@ of the feature.
 New features in GPS 4.1.0
 -------------------------
 
+FB23-013 Support for custom languages with special keywords (2006-11-23)
+
+  When you define a custom language through the <Langage> tag, you can
+  now define keywords that include special characters other than letters,
+  digits and underscores. In particular, this is used for syntax highlighting
+  in XML files
+
 FB23-012 Improved XML edition support (2006-11-22)
 
   GPS now provides an improved support for editing XML files, including
