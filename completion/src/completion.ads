@@ -201,6 +201,10 @@ package Completion is
      (Proposal : Completion_Proposal) return Language_Category is abstract;
    --  Return the category of the object proposed for the completion
 
+   function Get_Visibility
+     (Proposal : Completion_Proposal) return Construct_Visibility is abstract;
+   --  Return the visibility of the object proposed for completion
+
    procedure Get_Composition
      (Proposal   : Completion_Proposal;
       Identifier : String;
@@ -393,6 +397,10 @@ private
 
    function Get_Category
      (Proposal : Simple_Completion_Proposal) return Language_Category;
+   --  See inherited documentation
+
+   function Get_Visibility
+     (Proposal : Simple_Completion_Proposal) return Construct_Visibility;
    --  See inherited documentation
 
    procedure Get_Composition
