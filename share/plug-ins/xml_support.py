@@ -169,6 +169,8 @@ parse_xml ("""
   <Language>
     <Name>XML</Name>
     <Spec_Suffix>.xml</Spec_Suffix>
+    <Keywords>&lt;/?\w+&gt;?</Keywords>
+    <Wordchars>&lt;&gt;/</Wordchars>
     <Context>
       <Comment_Start>&lt;!--</Comment_Start>
       <Comment_End>--&gt;</Comment_End>
