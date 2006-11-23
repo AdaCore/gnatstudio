@@ -583,13 +583,12 @@ package body Language.Custom is
                  (Compile (Pattern, Flags)),
                Position_Index =>
                  Integer'Value (Get_Field (Node, "Index").all),
-               Icon           => null,  -- ??? subprogram_xpm'Access,
                Make_Entry     => null);
 
          exception
             when Constraint_Error =>
                --  ??? Should display an error instead.
-               Lang.Categories (J) := (Cat_Unknown, null, 0, null, null);
+               Lang.Categories (J) := (Cat_Unknown, null, 0, null);
                Trace (Me, "Invalid Category found for language "
                       & Lang.Name.all);
          end;
@@ -733,7 +732,8 @@ package body Language.Custom is
          Sloc_Entity    => Sloc_Entity,
          Sloc_End       => Sloc_End,
          Prev           => Prev,
-         Next           => Next);
+         Next           => Next,
+         Attributes     => (others => False));
    end Set_Construct;
 
    ------------------
