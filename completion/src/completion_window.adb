@@ -34,6 +34,7 @@ with Gtk.Enums;              use Gtk.Enums;
 with Gtk.Tree_Selection;     use Gtk.Tree_Selection;
 with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
 with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Style;              use Gtk.Style;
 with Gtk.Scrollbar;          use Gtk.Scrollbar;
 with Gtk.Widget;             use Gtk.Widget;
@@ -52,10 +53,13 @@ with Traces;                    use Traces;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with VFS;                       use VFS;
 
+with Language.Icons;            use Language.Icons;
+
 package body Completion_Window is
 
    Markup_Column : constant := 0;
    Index_Column  : constant := 1;
+   Icon_Column   : constant := 2;
 
    Minimal_Items_To_Show : constant := 50;
 
@@ -78,9 +82,10 @@ package body Completion_Window is
    package Cb is new Gtk.Handlers.Callback (Completion_Window_Record);
    use Cb;
 
-   Column_Types : constant GType_Array :=
-     (Markup_Column => GType_String,
-      Index_Column  => GType_Int);
+   function Column_Types return GType_Array;
+   --  Return the types of the columns to use in the model.
+   --  Need to call that in a function since Gdk.Pixbuf.Get_Type needs GtkAda
+   --  to be initialized.
 
    function On_Focus_Out
      (Window : access Completion_Window_Record'Class;
@@ -159,6 +164,18 @@ package body Completion_Window is
    begin
       return Escape_Text (Get_Label (P));
    end To_Showable_String;
+
+   ------------------
+   -- Column_Types --
+   ------------------
+
+   function Column_Types return GType_Array is
+   begin
+      return
+        (Markup_Column => GType_String,
+         Index_Column  => GType_Int,
+         Icon_Column   => Gdk.Pixbuf.Get_Type);
+   end Column_Types;
 
    ----------
    -- Free --
@@ -253,12 +270,20 @@ package body Completion_Window is
       end if;
 
       while not At_End (Window.Iter) loop
-         Info :=
-           (new String'(To_Showable_String (Get_Proposal (Window.Iter))),
-            new String'(Get_Completion (Get_Proposal (Window.Iter))),
-            null,
-            new Completion_Proposal'Class'(Get_Proposal (Window.Iter)),
-            True);
+         declare
+            Proposal : Completion_Proposal'Class :=
+              Get_Proposal (Window.Iter);
+
+         begin
+            Info :=
+              (new String'(To_Showable_String (Proposal)),
+               new String'(Get_Completion (Proposal)),
+               null,
+               Entity_Icons (False, Get_Visibility (Proposal))
+               (Get_Category (Proposal)),
+               new Completion_Proposal'Class'(Get_Proposal (Window.Iter)),
+               True);
+         end;
 
          --  ??? some code duplication with Add_Contents
          Window.Info (Window.Index) := Info;
@@ -280,6 +305,7 @@ package body Completion_Window is
             --  ??? some code duplication with Add_Contents
             Append (Window.Model, Iter);
             Set (Window.Model, Iter, Markup_Column, Info.Markup.all);
+            Set (Window.Model, Iter, Icon_Column, Info.Icon);
             Set (Window.Model, Iter, Index_Column, Gint (Window.Index - 1));
             --  ??? End of code duplication
 
@@ -360,6 +386,7 @@ package body Completion_Window is
 
             Set (Window.Model, Curr, Markup_Column,
                  Window.Info (J).Markup.all);
+            Set (Window.Model, Curr, Icon_Column, Window.Info (J).Icon);
             Set (Window.Model, Curr, Index_Column, Gint (J));
 
             if J = Previously_Selected then
@@ -851,6 +878,7 @@ package body Completion_Window is
    procedure Initialize (Window : access Completion_Window_Record'Class) is
       Col    : Gtk_Tree_View_Column;
       Text   : Gtk_Cell_Renderer_Text;
+      Pix    : Gtk_Cell_Renderer_Pixbuf;
       Dummy  : Gint;
       Frame  : Gtk_Frame;
       Scroll : Gtk_Scrolled_Window;
@@ -866,6 +894,13 @@ package body Completion_Window is
       Gtk_New (Window.Model, Column_Types);
       Gtk_New (Window.View, Window.Model);
       Set_Headers_Visible (Window.View, False);
+
+      Gtk_New (Col);
+      Dummy := Append_Column (Window.View, Col);
+
+      Gtk_New (Pix);
+      Pack_Start (Col, Pix, False);
+      Add_Attribute (Col, Pix, "pixbuf", Icon_Column);
 
       Gtk_New (Col);
       Dummy := Append_Column (Window.View, Col);
@@ -926,44 +961,6 @@ package body Completion_Window is
       Pack_Start (VBox, HBox, False, False, 3);
       Pack_Start (HBox, Window.Notes_Label, False, False, 3);
    end Initialize;
-
-   ------------------
-   -- Add_Contents --
-   ------------------
-
-   procedure Add_Contents
-     (Window     : Completion_Window_Access;
-      Markup     : String;
-      Completion : String;
-      Notes      : String)
-   is
-      Iter : Gtk_Tree_Iter;
-      Info : Information_Record;
-   begin
-      Info :=
-        (new String'(Markup),
-         new String'(Completion),
-         new String'(Notes),
-         null,
-         True);
-
-      Window.Info (Window.Index) := Info;
-      Window.Index := Window.Index + 1;
-
-      if Window.Index > Window.Info'Last then
-         declare
-            A : Information_Array (1 .. Window.Info'Last * 2);
-         begin
-            A (1 .. Window.Index - 1) := Window.Info (1 .. Window.Index - 1);
-            Unchecked_Free (Window.Info);
-            Window.Info := new Information_Array'(A);
-         end;
-      end if;
-
-      Append (Window.Model, Iter);
-      Set (Window.Model, Iter, Markup_Column, Markup);
-      Set (Window.Model, Iter, Index_Column, Gint (Window.Index - 1));
-   end Add_Contents;
 
    ----------
    -- Show --
