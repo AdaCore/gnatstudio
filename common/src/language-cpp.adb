@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
+--                      Copyright (C) 2000-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with GNAT.Regpat; use GNAT.Regpat;
-with Pixmaps_IDE; use Pixmaps_IDE;
 with Language.C;  use Language.C;
 with C_Analyzer;  use C_Analyzer;
 
@@ -56,12 +55,10 @@ package body Language.Cpp is
      (1 => (Category       => Cat_Class,
             Regexp         => Classes_RE'Access,
             Position_Index => 2,
-            Icon           => package_xpm'Access,
             Make_Entry     => Make_Entry_Class'Access),
       2 => (Category       => Cat_Method,
             Regexp         => Methods_RE'Access,
             Position_Index => 5,
-            Icon           => subprogram_xpm'Access,
             Make_Entry     => null));
 
    Cpp_Project_Fields : constant Project_Field_Array :=
