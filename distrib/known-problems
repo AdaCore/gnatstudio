@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.1.0
 
+- FB23-029 Floating windows should be raised when they gain focus
+  Problem:    If you are using floating windows, and select one of them
+              through the Window menu, it should be raised to become
+              fully visible
+  Workaround: Select the window through your environment's usual method
+              (alt-tab, taskbar,...)
+
 - FB14-001 GPS.Process.expect returns only matched text
   Problem:    Calling the python function GPS.Process.expect only returns
               the part of the process output that matches the regular
