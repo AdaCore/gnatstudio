@@ -100,15 +100,6 @@ package Project_Explorers_Common is
    Open_Pixbufs  : Pixbuf_Array;
    Close_Pixbufs : Pixbuf_Array;
 
-   type Cat_Array is array (Language_Category) of Gdk.Pixbuf.Gdk_Pixbuf;
-
-   type Pixbuf_Entity_Array is array
-     (Boolean,              --  True for entities that are declarations
-      Construct_Visibility) --  The visibility of entities
-   of Cat_Array;
-
-   Entity_Icons      : Pixbuf_Entity_Array;
-
    procedure Init_Graphics (Widget : Gtk_Widget);
    --  Initialize the pixbufs.
 
