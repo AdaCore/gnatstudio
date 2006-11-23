@@ -35,7 +35,7 @@ with Language.Cpp;
 with Language.Java;
 with Entities;
 with Dummy_Parser;              use Dummy_Parser;
-with Language_Handlers;     use Language_Handlers;
+with Language_Handlers;         use Language_Handlers;
 with Projects.Registry;         use Projects.Registry;
 with Custom_Naming_Editors;     use Custom_Naming_Editors;
 with GPS.Kernel;                use GPS.Kernel;
@@ -44,6 +44,7 @@ with Project_Viewers;           use Project_Viewers;
 with Naming_Editors;            use Naming_Editors;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with String_Utils;              use String_Utils;
 
 package body Language.Custom is
 
@@ -523,7 +524,7 @@ package body Language.Custom is
       end loop;
 
       declare
-         Keywords : constant String := To_String (Str);
+         Keywords      : constant String := To_String (Str);
       begin
          if Keywords /= "" then
             Lang.Keywords := new Pattern_Matcher'
@@ -534,6 +535,14 @@ package body Language.Custom is
             Insert (Kernel, -"Invalid regexp in <keywords>: ^("
                     & Keywords & ")", Mode => Error);
       end;
+
+      Node := Find_Tag (Top.Child, "Wordchars");
+      if Node /= null then
+         Lang.Word_Chars := new Gunichar_Array (Node.Value'Range);
+         for N in Node.Value'Range loop
+            Lang.Word_Chars (N) := Character'Pos (Node.Value (N));
+         end loop;
+      end if;
 
       Parent := Find_Tag (Top.Child, "Categories");
 
@@ -894,5 +903,28 @@ package body Language.Custom is
            (Buffer, Entity_Cb'Address, Buffer'Length);
       end if;
    end Parse_Entities;
+
+   ------------------
+   -- Is_Word_Char --
+   ------------------
+
+   function Is_Word_Char
+     (Lang : access Custom_Language; Char : Glib.Gunichar) return Boolean
+   is
+   begin
+      if Is_Entity_Letter (Char) then
+         return True;
+      end if;
+
+      if Lang.Word_Chars /= null then
+         for C in Lang.Word_Chars'Range loop
+            if Char = Lang.Word_Chars (C) then
+               return True;
+            end if;
+         end loop;
+      end if;
+
+      return False;
+   end Is_Word_Char;
 
 end Language.Custom;

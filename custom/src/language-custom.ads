@@ -52,6 +52,9 @@ package Language.Custom is
    function Keywords
      (Lang : access Custom_Language) return Pattern_Matcher_Access;
 
+   function Is_Word_Char
+     (Lang : access Custom_Language; Char : Glib.Gunichar) return Boolean;
+
    function Get_Language_Context
      (Lang : access Custom_Language) return Language_Context_Access;
 
@@ -303,6 +306,9 @@ private
       Comment : Boolean := True;
       Clean   : Boolean := False) return String;
 
+   type Gunichar_Array is array (Natural range <>) of Glib.Gunichar;
+   type Gunichar_Array_Access is access Gunichar_Array;
+
    type Custom_Language is new Language_Root with record
       Categories       : Explorer_Categories_Access;
       Keywords         : Pattern_Matcher_Access;
@@ -315,6 +321,7 @@ private
       Parse_Entities   : Parse_Entities_Proc;
       Parent           : Language_Access;
       Next             : Custom_Language_Access;
+      Word_Chars       : Gunichar_Array_Access;
    end record;
 
 end Language.Custom;
