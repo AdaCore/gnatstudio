@@ -35,6 +35,7 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GUI_Utils;                 use GUI_Utils;
 with Language.Unknown;          use Language.Unknown;
+with Language.Icons;            use Language.Icons;
 with Language_Handlers;         use Language_Handlers;
 with Projects.Registry;         use Projects, Projects.Registry;
 with String_Utils;              use String_Utils;
@@ -76,44 +77,18 @@ package body Project_Explorers_Common is
       function R (Id : String) return Gdk_Pixbuf;
       --  Convenience function: create the Gdk_Pixbuf from stock Id.
 
-      function Predefined_Array (Suffix : String) return Cat_Array;
-      --  Convenience function to produce the predefined entity graphics.
-
       function R (Id : String) return Gdk_Pixbuf is
       begin
          return Render_Icon (Widget, Id, Icon_Size_Menu);
       end R;
-
-      function Predefined_Array (Suffix : String) return Cat_Array is
-      begin
-         return
-           (Cat_Unknown            | Cat_With
-            | Cat_Use              | Cat_Include
-            | Cat_Loop_Statement   | Cat_If_Statement
-            | Cat_Case_Statement   | Cat_Select_Statement
-            | Cat_Accept_Statement | Cat_Declare_Block
-            | Cat_Simple_Block     | Cat_Exception_Handler =>
-              R ("gps-entity-generic" & Suffix),
-            Cat_Package | Cat_Namespace  =>
-              R ("gps-entity-package" & Suffix),
-            Cat_Task        | Cat_Procedure   | Cat_Function
-            | Cat_Method    | Cat_Constructor | Cat_Destructor
-            | Cat_Protected | Cat_Entry =>
-              R ("gps-entity-subprogram" & Suffix),
-            Cat_Class | Cat_Structure | Cat_Union |
-            Cat_Type  | Cat_Subtype =>
-              R ("gps-entity-type" & Suffix),
-            Cat_Variable    | Cat_Local_Variable
-            | Cat_Parameter | Cat_Field
-            | Cat_Literal   | Cat_Representation_Clause =>
-              R ("gps-entity-variable" & Suffix));
-      end Predefined_Array;
 
    begin
       --  If initialization has already been done, exit.
       if Open_Pixbufs (Project_Node) /= null then
          return;
       end if;
+
+      Language.Icons.Init_Graphics (Widget);
 
       Open_Pixbufs (Project_Node)  := R ("gps-project-open");
       Close_Pixbufs (Project_Node) := R ("gps-project-closed");
@@ -138,18 +113,6 @@ package body Project_Explorers_Common is
 
       Open_Pixbufs (Category_Node)  := R ("gps-box");
       Close_Pixbufs (Category_Node) := R ("gps-box");
-
-      Entity_Icons (False, Visibility_Public) := Predefined_Array ("");
-      Entity_Icons (False, Visibility_Protected) :=
-        Predefined_Array ("-protected");
-      Entity_Icons (False, Visibility_Private) :=
-        Predefined_Array ("-private");
-
-      Entity_Icons (True, Visibility_Public) := Predefined_Array ("-spec");
-      Entity_Icons (True, Visibility_Protected) :=
-        Predefined_Array ("-protected-spec");
-      Entity_Icons (True, Visibility_Private) := Predefined_Array
-        ("-private-spec");
    end Init_Graphics;
 
    -----------------
