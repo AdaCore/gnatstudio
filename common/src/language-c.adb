@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with GNAT.Regpat;           use GNAT.Regpat;
-with Pixmaps_IDE;           use Pixmaps_IDE;
 with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
 with String_Utils;          use String_Utils;
 with C_Analyzer;            use C_Analyzer;
@@ -48,7 +47,6 @@ package body Language.C is
      (1 => (Category       => Cat_Function,
             Regexp         => Subprogram_RE'Access,
             Position_Index => 5,
-            Icon           => subprogram_xpm'Access,
             Make_Entry     => null));
 
    C_Project_Fields : constant Project_Field_Array :=
