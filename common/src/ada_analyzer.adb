@@ -26,6 +26,8 @@ with Generic_Stack;
 with Indent_Stack;
 with String_Utils;            use String_Utils;
 
+with Language.Ada;            use Language.Ada;
+
 package body Ada_Analyzer is
 
    use Indent_Stack.Stack;
@@ -232,23 +234,7 @@ package body Ada_Analyzer is
    Max_Identifier : constant := 256;
    --  Maximum length of an identifier.
 
-   type Type_Attribute is
-     (Abstract_Attribute,
-      Access_Attribute,
-      Array_Attribute,
-      Delta_Attribute,
-      Digits_Attribute,
-      Interface_Attribute,
-      Mod_Attribute,
-      New_Attribute,
-      Range_Attribute,
-      Record_Attribute,
-      Tagged_Attribute);
-
-   type Type_Attribute_Array is array (Type_Attribute) of Boolean;
-   pragma Pack (Type_Attribute_Array);
-
-   No_Attribute : constant Type_Attribute_Array := (others => False);
+   No_Attribute : constant Construct_Attribute_Map := (others => False);
 
    type Extended_Token is record
       Token         : Token_Type := No_Token;
@@ -317,7 +303,7 @@ package body Ada_Analyzer is
       Is_In_Type_Definition : Boolean := False;
       --  Is this token found in the type definition section of its parent ?
 
-      Attributes            : Type_Attribute_Array := No_Attribute;
+      Attributes            : Construct_Attribute_Map := No_Attribute;
       --  Defines the attributes that have been found for the given token
    end record;
    --  Extended information for a token
@@ -1577,8 +1563,23 @@ package body Ada_Analyzer is
          --  Tok_Case inside a type definition should also not be recorded.
          --  Build next entry of Constructs
 
-         if Value.Token /= Tok_Record
-           and then Value.Token /= Tok_Colon
+         if Value.Token = Tok_Colon and then Constructs /= null then
+            --  If we are on a Tok_Colon, then we want to assign attibutes to
+            --  all the data that are related to this declaration.
+
+            declare
+               Current : Construct_Access := Constructs.Current;
+            begin
+               while Current /= null
+                 and then Current.Category in Data_Category
+                 and then Current.Sloc_Start.Index <= Prec
+                 and then Current.Sloc_End.Index >= Prec
+               loop
+                  Current.Attributes := Value.Attributes;
+                  Current := Current.Prev;
+               end loop;
+            end;
+         elsif Value.Token /= Tok_Record
            and then Value.Token /= Tok_When
            and then Constructs /= null
            and then
@@ -1600,10 +1601,11 @@ package body Ada_Analyzer is
             Constructs.Last := Constructs.Current;
 
             Constructs.Current.Visibility := Value.Visibility;
+            Constructs.Current.Attributes := Value.Attributes;
 
-            if Value.Attributes (Tagged_Attribute) then
+            if Value.Attributes (Ada_Tagged_Attribute) then
                Constructs.Current.Category := Cat_Class;
-            elsif Value.Attributes (Record_Attribute) then
+            elsif Value.Attributes (Ada_Record_Attribute) then
                Constructs.Current.Category := Cat_Structure;
             else
                case Value.Token is
@@ -1633,7 +1635,7 @@ package body Ada_Analyzer is
                         Constructs.Current.Category := Cat_Parameter;
                      elsif Value.Is_In_Type_Definition then
                         if Top (Stack).Type_Declaration
-                          or else Top (Stack).Attributes (Record_Attribute)
+                          or else Top (Stack).Attributes (Ada_Record_Attribute)
                         then
                            Constructs.Current.Category := Cat_Field;
                         else
@@ -1757,27 +1759,27 @@ package body Ada_Analyzer is
 
          case Reserved is
             when Tok_Abstract =>
-               Top_Token.Attributes (Abstract_Attribute) := True;
+               Top_Token.Attributes (Ada_Abstract_Attribute) := True;
             when Tok_Access =>
-               Top_Token.Attributes (Access_Attribute) := True;
+               Top_Token.Attributes (Ada_Access_Attribute) := True;
             when Tok_Array =>
-               Top_Token.Attributes (Array_Attribute) := True;
+               Top_Token.Attributes (Ada_Array_Attribute) := True;
             when Tok_Delta =>
-               Top_Token.Attributes (Delta_Attribute) := True;
+               Top_Token.Attributes (Ada_Delta_Attribute) := True;
             when Tok_Digits =>
-               Top_Token.Attributes (Digits_Attribute) := True;
+               Top_Token.Attributes (Ada_Digits_Attribute) := True;
             when Tok_Range =>
-               Top_Token.Attributes (Range_Attribute) := True;
+               Top_Token.Attributes (Ada_Range_Attribute) := True;
             when Tok_Mod =>
-               Top_Token.Attributes (Mod_Attribute) := True;
+               Top_Token.Attributes (Ada_Mod_Attribute) := True;
             when Tok_New =>
-               Top_Token.Attributes (New_Attribute) := True;
+               Top_Token.Attributes (Ada_New_Attribute) := True;
             when Tok_Tagged =>
-               Top_Token.Attributes (Tagged_Attribute) := True;
+               Top_Token.Attributes (Ada_Tagged_Attribute) := True;
             when Tok_Interface =>
-               Top_Token.Attributes (Interface_Attribute) := True;
+               Top_Token.Attributes (Ada_Interface_Attribute) := True;
             when Tok_Record =>
-               Top_Token.Attributes (Record_Attribute) := True;
+               Top_Token.Attributes (Ada_Record_Attribute) := True;
             when others =>
                null;
          end case;
@@ -1812,8 +1814,8 @@ package body Ada_Analyzer is
 
             --  If the case is in a record, then mark itself as a record so we
             --  will extract the corresponding fields.
-            if Top_Token.Attributes (Record_Attribute) then
-               Temp.Attributes (Record_Attribute) := True;
+            if Top_Token.Attributes (Ada_Record_Attribute) then
+               Temp.Attributes (Ada_Record_Attribute) := True;
             end if;
 
             Do_Indent (Prec, Num_Spaces);
@@ -2052,7 +2054,7 @@ package body Ada_Analyzer is
                   --  ??? is this correct for Ada 05 constructs:
                   --  task type foo is new A with entry A; end task;
 
-                  Top_Token.Attributes (Tagged_Attribute) := True;
+                  Top_Token.Attributes (Ada_Tagged_Attribute) := True;
                end if;
             end if;
 
@@ -2205,8 +2207,8 @@ package body Ada_Analyzer is
                end if;
 
                if Top_Token.Token = Tok_Type then
-                  Top_Token.Attributes (Record_Attribute) := True;
-                  Temp.Attributes (Record_Attribute) := True;
+                  Top_Token.Attributes (Ada_Record_Attribute) := True;
+                  Temp.Attributes (Ada_Record_Attribute) := True;
                   Temp.Type_Definition_Section :=
                     Top_Token.Type_Definition_Section;
                   Num_Spaces := Num_Spaces + Indent_Level;
@@ -3026,13 +3028,14 @@ package body Ada_Analyzer is
                       (Top_Token.Is_Parameter
                        or else
                          (Top_Token.Is_In_Type_Definition
-                          and then not Top_Token.Attributes (Record_Attribute)
+                          and then not
+                            Top_Token.Attributes (Ada_Record_Attribute)
                           and then not Top_Token.Type_Declaration))
                   then
                      if Top_Token.Token = Tok_Identifier
                        and then not (Top_Token.Is_In_Type_Definition
-                                     and then not
-                                       Top_Token.Attributes (Record_Attribute)
+                                     and then not Top_Token.Attributes
+                                       (Ada_Record_Attribute)
                                      and then not Top_Token.Type_Declaration)
                      then
                         --  This handles cases where we have a family entry.
@@ -3556,7 +3559,7 @@ package body Ada_Analyzer is
 
             if (Top_Token.Declaration
                 or else Top_Token.Type_Declaration
-                or else Top_Token.Attributes (Record_Attribute)
+                or else Top_Token.Attributes (Ada_Record_Attribute)
                 or else Is_Parameter
                 or else
                   (Top_Token.Type_Definition_Section
