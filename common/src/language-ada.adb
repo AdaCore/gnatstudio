@@ -21,7 +21,6 @@
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Regpat;  use GNAT.Regpat;
 
-with Pixmaps_IDE;  use Pixmaps_IDE;
 with String_Utils; use String_Utils;
 with Ada_Analyzer; use Ada_Analyzer;
 
@@ -90,31 +89,26 @@ package body Language.Ada is
      ((Category       => Cat_Procedure,
        Regexp         => Subprogram_RE'Access,
        Position_Index => 2,
-       Icon           => subprogram_xpm'Access,
        Make_Entry     => Make_Entry_Subprogram'Access),
 
       (Category       => Cat_Package,
        Regexp         => Package_RE'Access,
        Position_Index => 3,
-       Icon           => package_xpm'Access,
        Make_Entry     => null),
 
       (Category       => Cat_Type,
        Regexp         => Type_Def_RE'Access,
        Position_Index => 2,
-       Icon           => var_xpm'Access,
        Make_Entry     => null),
 
       (Category       => Cat_Task,
        Regexp         => Task_RE'Access,
        Position_Index => 3,
-       Icon           => package_xpm'Access,
        Make_Entry     => Make_Entry_Task'Access),
 
       (Category       => Cat_Protected,
        Regexp         => Protected_RE'Access,
        Position_Index => 3,
-       Icon           => package_xpm'Access,
        Make_Entry     => Make_Entry_Protected'Access));
 
    --  ??? Would be nice to specify the list of available cross compilers
