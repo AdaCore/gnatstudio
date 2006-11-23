@@ -386,6 +386,12 @@ package body GPS.Main_Window is
            (Boolean'Pos
               (Get_Pref (Can_Change_Accels))));
 
+      Gtk.Rc.Parse_String
+        ("style ""gtk-default-tooltips-style""  {" & ASCII.LF
+         & "  bg[NORMAL] = """
+         & Get_Pref (Tooltip_Color) & """" & ASCII.LF
+         & "}");
+
       case Toolbar_Icons_Size'Val (Get_Pref (Pref_Toolbar_Style)) is
          when Hide_Toolbar =>
             Set_Child_Visible (Win.Toolbar_Box, False);
