@@ -20,6 +20,12 @@ FB23-012 Improved XML edition support (2006-11-22)
   syntax highlighting, navigation between tags, checking well formedness,
   and escaping special characters in the current selection.
 
+FB23-008 Improved Smart Completion window (2006-11-23)
+
+   The Smart Completion now indicates, using an icon, which are the entity
+   types corresponding to the proposed completions.
+   See also F816-019.
+
 FB23-011 Project dependencies analyzer (2006-11-21)
 
   GPS now has an optional script that you can use to analyze your project
@@ -63,7 +69,7 @@ FB06-004 Macros support and repeating actions (2006-11-15)
   It is now possible to record sequences of key presses, and replay them
   later on. This is available through the /Tools/Macros menu.
   It is now also possible to repeat the next key press a number of times,
-  through the default control-u binding. 
+  through the default control-u binding.
 
 FA30-018 Editing file extensions for custom languages (2006-1107)
 
