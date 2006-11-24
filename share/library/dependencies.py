@@ -144,6 +144,7 @@ class XMLOutput:
                        parser  = self.parse_xml_node,
                        on_click = self.on_node_clicked)
      view.parse_string (self.xml)
+     self.xml = ""
 
 def compute_project_dependencies (menu):
  try:
