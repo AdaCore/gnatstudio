@@ -158,7 +158,8 @@ def destroy_xml_menu():
 def context_changed (hook, context):
    """Called when the current context has changed"""
    try:
-      if context.file().language() == "xml":
+      if context.file().language() == "xml" \
+        or context.file().language() == "html":
          create_xml_menu ()
       else:
          destroy_xml_menu ()
@@ -181,16 +182,27 @@ parse_xml ("""
     </Context>
   </Language>
 
-  <action name="XML move to next open tag" category="XML">
+  <Language>
+    <Name>HTML</Name>
+    <Spec_Suffix>.html</Spec_Suffix>
+    <Parent>XML</Parent>
+  </Language>
+
+  <filter_or name="xml_based">
      <filter language="xml" />
+     <filter language="html" />
+  </filter_or>
+
+  <action name="XML move to next open tag" category="XML">
+     <filter id="xml_based" />
      <shell lang="python">xml_support.next_open_tag (None)</shell>
   </action>
   <action name="XML move to next close tag" category="XML">
-     <filter language="xml" />
+     <filter id="xml_based" />
      <shell lang="python">xml_support.next_close_tag (None)</shell>
   </action>
   <action name="XML move to matching close tag" category="XML">
-     <filter language="xml" />
+     <filter id="xml_based" />
      <shell lang="python">xml_support.goto_matching_tag (None)</shell>
   </action>
 """)
