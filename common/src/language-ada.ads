@@ -118,16 +118,26 @@ package Language.Ada is
      Ada_Analyzer.Ada_Access_Attribute;
    Ada_Array_Attribute     : constant Construct_Att_Key :=
      Ada_Analyzer.Ada_Array_Attribute;
+   Ada_Assign_Attribute    : constant Construct_Att_Key :=
+     Ada_Analyzer.Ada_Assign_Attribute;
    Ada_Delta_Attribute     : constant Construct_Att_Key :=
      Ada_Analyzer.Ada_Delta_Attribute;
    Ada_Digits_Attribute    : constant Construct_Att_Key :=
      Ada_Analyzer.Ada_Digits_Attribute;
+   Ada_In_Attribute        : constant Construct_Att_Key :=
+     Ada_Analyzer.Ada_In_Attribute;
    Ada_Interface_Attribute : constant Construct_Att_Key :=
      Ada_Analyzer.Ada_Interface_Attribute;
    Ada_Mod_Attribute       : constant Construct_Att_Key :=
      Ada_Analyzer.Ada_Mod_Attribute;
    Ada_New_Attribute       : constant Construct_Att_Key :=
      Ada_Analyzer.Ada_New_Attribute;
+   Ada_Not_Attribute       : constant Construct_Att_Key :=
+     Ada_Analyzer.Ada_Not_Attribute;
+   Ada_Null_Attribute      : constant Construct_Att_Key :=
+     Ada_Analyzer.Ada_Null_Attribute;
+   Ada_Out_Attribute       : constant Construct_Att_Key :=
+     Ada_Analyzer.Ada_Out_Attribute;
    Ada_Range_Attribute     : constant Construct_Att_Key :=
      Ada_Analyzer.Ada_Range_Attribute;
    Ada_Record_Attribute    : constant Construct_Att_Key :=

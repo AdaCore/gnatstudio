@@ -52,13 +52,18 @@ package Ada_Analyzer is
    Ada_Abstract_Attribute  : constant Construct_Att_Key := Last_Gen_Att + 1;
    Ada_Access_Attribute    : constant Construct_Att_Key := Access_Attribute;
    Ada_Array_Attribute     : constant Construct_Att_Key := Array_Attribute;
-   Ada_Delta_Attribute     : constant Construct_Att_Key := Last_Gen_Att + 2;
-   Ada_Digits_Attribute    : constant Construct_Att_Key := Last_Gen_Att + 3;
-   Ada_Interface_Attribute : constant Construct_Att_Key := Last_Gen_Att + 4;
-   Ada_Mod_Attribute       : constant Construct_Att_Key := Last_Gen_Att + 5;
-   Ada_New_Attribute       : constant Construct_Att_Key := Last_Gen_Att + 6;
-   Ada_Range_Attribute     : constant Construct_Att_Key := Last_Gen_Att + 7;
-   Ada_Record_Attribute    : constant Construct_Att_Key := Last_Gen_Att + 8;
-   Ada_Tagged_Attribute    : constant Construct_Att_Key := Last_Gen_Att + 9;
+   Ada_Assign_Attribute    : constant Construct_Att_Key := Last_Gen_Att + 2;
+   Ada_Delta_Attribute     : constant Construct_Att_Key := Last_Gen_Att + 3;
+   Ada_Digits_Attribute    : constant Construct_Att_Key := Last_Gen_Att + 4;
+   Ada_In_Attribute        : constant Construct_Att_Key := Last_Gen_Att + 5;
+   Ada_Interface_Attribute : constant Construct_Att_Key := Last_Gen_Att + 6;
+   Ada_Mod_Attribute       : constant Construct_Att_Key := Last_Gen_Att + 7;
+   Ada_New_Attribute       : constant Construct_Att_Key := Last_Gen_Att + 8;
+   Ada_Not_Attribute       : constant Construct_Att_Key := Last_Gen_Att + 9;
+   Ada_Null_Attribute      : constant Construct_Att_Key := Last_Gen_Att + 10;
+   Ada_Out_Attribute       : constant Construct_Att_Key := Last_Gen_Att + 11;
+   Ada_Range_Attribute     : constant Construct_Att_Key := Last_Gen_Att + 12;
+   Ada_Record_Attribute    : constant Construct_Att_Key := Last_Gen_Att + 13;
+   Ada_Tagged_Attribute    : constant Construct_Att_Key := Last_Gen_Att + 14;
 
 end Ada_Analyzer;
