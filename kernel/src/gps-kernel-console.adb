@@ -451,12 +451,14 @@ package body GPS.Kernel.Console is
             Raise_Child (Child);
 
          elsif Child /= null then
-            Console := Interactive_Console (Get_Widget (Child));
             Highlight_Child (Child);
             Console := Interactive_Console (Get_Widget (Child));
          end if;
 
-         Enable_Prompt_Display (Console, Accept_Input);
+         if Console /= null then
+            Enable_Prompt_Display (Console, Accept_Input);
+         end if;
+
          return Console;
 
       else
