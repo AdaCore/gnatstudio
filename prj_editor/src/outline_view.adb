@@ -27,12 +27,13 @@ with Gdk.Rectangle;             use Gdk.Rectangle;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
-with Glib.Properties.Creation;  use Glib.Properties.Creation;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 
 with Gtk.Box;                   use Gtk.Box;
+with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Menu;                  use Gtk.Menu;
+with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
@@ -62,6 +63,7 @@ with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                use GPS.Kernel;
 with GUI_Utils;                 use GUI_Utils;
+with Histories;                 use Histories;
 with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
 with Project_Explorers_Common;  use Project_Explorers_Common;
@@ -75,10 +77,10 @@ package body Outline_View is
    Outline_View_Module : Module_ID;
    Outline_View_Module_Name : constant String := "Outline_View";
 
-   Outline_View_Profiles            : Param_Spec_Boolean;
-   Outline_View_Sort_Alphabetically : Param_Spec_Boolean;
-   Outline_View_Link_Editor         : Param_Spec_Boolean;
-   Outline_View_Show_File_Node      : Param_Spec_Boolean;
+   Hist_Show_Profile      : constant History_Key := "outline-show-profile";
+   Hist_Sort_Alphabetical : constant History_Key := "outline-alphabetical";
+   Hist_Editor_Link       : constant History_Key := "outline-editor-link";
+   Hist_File_Node         : constant History_Key := "outline-file-node";
 
    Pixbuf_Column       : constant := 0;
    Display_Name_Column : constant := 1;
@@ -113,10 +115,6 @@ package body Outline_View is
       File      : VFS.Virtual_File;
       Icon      : Gdk_Pixbuf;
       File_Icon : Gdk_Pixbuf;
-
-      Show_File_Node : Boolean := False;
-      --  Whether the root node should show the file name. If set to False, no
-      --  root node is used, which saves space on the display.
    end record;
    type Outline_View_Access is access all Outline_View_Record'Class;
 
@@ -150,6 +148,10 @@ package body Outline_View is
       User : Kernel_Handle) return MDI_Child;
    --  Handling of desktops
 
+   procedure Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  React to changes in the preferences
+
    function Filter_Category
      (Category : Language.Language_Category) return Language.Language_Category;
    --  Return Cat_Unknown if the category should be filtered out, and the
@@ -163,9 +165,6 @@ package body Outline_View is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk_Menu);
    --  Context factory when creating contextual menus
-
-   procedure Preferences_Changed (Kernel : access Kernel_Handle_Record'Class);
-   --  Called when the preferences have changed.
 
    procedure Location_Changed
      (Kernel : access Kernel_Handle_Record'Class;
@@ -305,7 +304,7 @@ package body Outline_View is
       Distance    : Gint := Gint'Last;
       Closest     : Gtk_Tree_Iter;
    begin
-      if Get_Pref (Outline_View_Link_Editor)
+      if Get_History (Get_History (Kernel).all, Hist_Editor_Link)
         and then Child /= null
       then
          Outline := Outline_View_Access (Get_Widget (Child));
@@ -361,7 +360,9 @@ package body Outline_View is
                --  Next find all occurrences for entities with the same name,
                --  and select the closest one to the current line
 
-               if Outline.Show_File_Node then
+               if Get_History
+                 (Get_History (Outline.Kernel).all, Hist_File_Node)
+               then
                   if Get_Iter_First (Model) /= Null_Iter then
                      Iter := Children (Model, Get_Iter_First (Model));
                   else
@@ -409,32 +410,10 @@ package body Outline_View is
       Child : constant MDI_Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Outline_View_Record'Tag);
       Outline : Outline_View_Access;
-      Sort_Column : Gint;
-      pragma Unreferenced (Sort_Column);
    begin
       if Child /= null then
          Outline := Outline_View_Access (Get_Widget (Child));
-
          Modify_Font (Outline.Tree, Get_Pref (View_Fixed_Font));
-
-         if Get_Pref (Outline_View_Sort_Alphabetically) then
-            Thaw_Sort
-              (Gtk_Tree_Store (Get_Model (Outline.Tree)), Entity_Name_Column);
-         else
-            Sort_Column :=
-              Freeze_Sort (Gtk_Tree_Store (Get_Model (Outline.Tree)));
-         end if;
-
-         Outline.Show_File_Node :=
-           Get_Pref (Outline_View_Show_File_Node);
-
-         if Outline.Show_File_Node then
-            Set_Expander_Column (Outline.Tree, null);
-         else
-            Set_Expander_Column (Outline.Tree, Get_Column (Outline.Tree, 0));
-         end if;
-
-         Refresh (Outline);
       end if;
    end Preferences_Changed;
 
@@ -470,7 +449,7 @@ package body Outline_View is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk_Menu)
    is
-      pragma Unreferenced (Kernel, Event_Widget, Menu);
+      pragma Unreferenced (Event_Widget);
       Outline : constant Outline_View_Access := Outline_View_Access (Object);
       Model   : constant Gtk_Tree_Store :=
                   Gtk_Tree_Store (Get_Model (Outline.Tree));
@@ -478,6 +457,9 @@ package body Outline_View is
       Iter    : Gtk_Tree_Iter;
       Line    : Integer;
       Column  : Visible_Column_Type;
+      Check   : Gtk_Check_Menu_Item;
+      Item    : Gtk_Menu_Item;
+      Submenu : Gtk_Menu;
    begin
       Iter := Find_Iter_For_Event (Outline.Tree, Model, Event);
 
@@ -504,6 +486,39 @@ package body Outline_View is
          Project => Projects.No_Project,
          File    => Outline.File,
          Line    => Line);
+
+      if Menu /= null then
+         Gtk_New (Item, Label => -"Filters");
+         Append (Menu, Item);
+
+         Gtk_New (Submenu);
+         Set_Submenu (Item, Submenu);
+
+         Gtk_New (Check, Label => -"Show profiles");
+         Associate (Get_History (Kernel).all, Hist_Show_Profile, Check);
+         Append (Submenu, Check);
+         Widget_Callback.Object_Connect
+           (Check, "toggled", Refresh'Access, Outline);
+
+         Gtk_New (Check, Label => -"Sort alphabetically");
+         Associate (Get_History (Kernel).all, Hist_Sort_Alphabetical, Check);
+         Append (Submenu, Check);
+         Widget_Callback.Object_Connect
+           (Check, "toggled", Refresh'Access, Outline);
+
+         Gtk_New (Check, Label => -"Dynamic link with editor");
+         Associate (Get_History (Kernel).all, Hist_Editor_Link, Check);
+         Append (Submenu, Check);
+         Widget_Callback.Object_Connect
+           (Check, "toggled", Refresh'Access, Outline);
+
+         Gtk_New (Check, Label => -"Show file node");
+         Associate (Get_History (Kernel).all, Hist_File_Node, Check);
+         Append (Submenu, Check);
+         Widget_Callback.Object_Connect
+           (Check, "toggled", Refresh'Access, Outline);
+
+      end if;
    end Outline_Context_Factory;
 
    ---------------------
@@ -629,11 +644,11 @@ package body Outline_View is
 
       Initialize_Vbox (Outline, Homogeneous => False);
 
-      if not Get_Pref (Outline_View_Sort_Alphabetically) then
+      if not Get_History
+        (Get_History (Kernel).all, Hist_Sort_Alphabetical)
+      then
          Initial_Sort := -1;
       end if;
-
-      Outline.Show_File_Node := Get_Pref (Outline_View_Show_File_Node);
 
       Gtk_New (Scrolled);
       Pack_Start (Outline, Scrolled, Expand => True);
@@ -656,7 +671,6 @@ package body Outline_View is
       Col_Number := Append_Column (Outline.Tree, Col);
       Set_Expander_Column (Outline.Tree, Col);
       Set_Visible (Col, False);
-      Col := null;
 
       Gtk_New (Col);
       Col_Number := Append_Column (Outline.Tree, Col);
@@ -673,12 +687,6 @@ package body Outline_View is
       Clicked (Col);
 
       Add (Scrolled, Outline.Tree);
-
-      if Outline.Show_File_Node then
-         Set_Expander_Column (Outline.Tree, null);
-      else
-         Set_Expander_Column (Outline.Tree, Get_Column (Outline.Tree, 0));
-      end if;
 
       Outline.Icon := Render_Icon
         (Get_Main_Window (Kernel), "gps-box", Icon_Size_Menu);
@@ -791,10 +799,12 @@ package body Outline_View is
                           (Get_Language_Handler (Outline.Kernel));
       Constructs    : Construct_List;
       Show_Profiles : constant Boolean :=
-                        Get_Pref (Outline_View_Profiles);
+        Get_History (Get_History (Outline.Kernel).all, Hist_Show_Profile);
       Sort_Column   : constant Gint := Freeze_Sort (Model);
+      pragma Unreferenced (Sort_Column);
       Args          : Argument_List (1 .. 4);
-
+      Show_File_Node : constant Boolean :=
+        Get_History (Get_History (Outline.Kernel).all, Hist_File_Node);
    begin
       Push_State (Outline.Kernel, Busy);
       Clear (Outline);
@@ -803,7 +813,7 @@ package body Outline_View is
          Handler := Get_LI_Handler_From_File (Languages, Outline.File);
          Lang := Get_Language_From_File (Languages, Outline.File);
 
-         if Outline.Show_File_Node then
+         if Show_File_Node then
             Append (Model, Root, Null_Iter);
             Set (Model, Root, Pixbuf_Column, C_Proxy (Outline.File_Icon));
             Set (Model, Root, Display_Name_Column,
@@ -859,8 +869,13 @@ package body Outline_View is
 
       Expand_All (Outline.Tree);
 
+      if Get_History
+        (Get_History (Outline.Kernel).all, Hist_Sort_Alphabetical)
+      then
+         Thaw_Sort (Model, Entity_Name_Column);
+      end if;
+
       Pop_State (Outline.Kernel);
-      Thaw_Sort (Model, Sort_Column);
    end Refresh;
 
    ---------------------
@@ -1086,50 +1101,15 @@ package body Outline_View is
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
-      Outline_View_Profiles := Param_Spec_Boolean
-        (Gnew_Boolean
-           (Name    => "Outline-View-Profiles",
-            Default => True,
-            Blurb   => -("Whether the outline view should display the profiles"
-                         & " of the entities"),
-            Nick    => -"Show parameter profiles"));
-      Register_Property
-        (Kernel, Param_Spec (Outline_View_Profiles), -"Outline");
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Kernel).all, Hist_Show_Profile, True);
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Kernel).all, Hist_Sort_Alphabetical, True);
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Kernel).all, Hist_File_Node, False);
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Kernel).all, Hist_Editor_Link, True);
 
-      Outline_View_Sort_Alphabetically := Param_Spec_Boolean
-        (Gnew_Boolean
-           (Name    => "Outline-View-Sort-Alphabetical",
-            Default => True,
-            Blurb   => -("If set, the entities are sorted alphabetically,"
-                         & " otherwise they appear in the order they are"
-                         & " found in the source file"),
-            Nick    => -"Sort alphabetically"));
-      Register_Property
-        (Kernel, Param_Spec (Outline_View_Sort_Alphabetically), -"Outline");
-
-      Outline_View_Link_Editor := Param_Spec_Boolean
-        (Gnew_Boolean
-           (Name    => "Outline-View-Link-Editor",
-            Default => True,
-            Blurb   => -("If true, the current subprogram in the editor is"
-                         & " automatically highlighted in the outline view"),
-            Nick    => -"Link with editor"));
-      Register_Property
-        (Kernel, Param_Spec (Outline_View_Link_Editor), -"Outline");
-
-      Outline_View_Show_File_Node := Param_Spec_Boolean
-        (Gnew_Boolean
-           (Name    => "Outline-View-Display-File-Node",
-            Default => False,
-            Blurb   => -("If true, the outline view's top line will indicate"
-                         & " the name of the file currently shown in the"
-                         & " outline. If false, the name of the file will not"
-                         & " be displayed, and the outline view will use"
-                         & " slightly less screen estate"),
-            Nick    => -"Show file name",
-            Flags   => Param_Readable));
-      Register_Property
-        (Kernel, Param_Spec (Outline_View_Show_File_Node), -"Outline");
    end Register_Module;
 
 end Outline_View;
