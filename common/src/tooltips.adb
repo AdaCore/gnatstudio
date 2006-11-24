@@ -34,7 +34,7 @@ with Glib;            use Glib;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtk.Handlers;    use Gtk.Handlers;
 with Gtk.Main;        use Gtk.Main;
-with Gtk.Pixmap;      use Gtk.Pixmap;
+with Gtk.Image;       use Gtk.Image;
 with Gtk.Tree_Model;  use Gtk.Tree_Model;
 with Gtk.Tree_View;   use Gtk.Tree_View;
 with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
@@ -215,7 +215,7 @@ package body Tooltips is
    is
       use type Gdk_Window;
       Pixmap : Gdk_Pixmap;
-      Pix    : Gtk_Pixmap;
+      Pix    : Gtk_Image;
    begin
       Draw (Pixmap_Tooltips_Access (Tooltip), Pixmap, Tooltip.Area);
 
