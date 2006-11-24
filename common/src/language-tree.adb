@@ -18,9 +18,13 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with String_Utils; use String_Utils;
-
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
+
+with Language.Documentation; use Language.Documentation;
+with Language.Unknown;       use Language.Unknown;
+
+with String_Utils; use String_Utils;
 
 package body Language.Tree is
 
@@ -926,5 +930,270 @@ package body Language.Tree is
 
       return Result;
    end Get_Slice;
+
+   ---------------------
+   -- Get_Parent_Tree --
+   ---------------------
+
+   function Get_Parent_Tree
+     (Lang       : access Tree_Language;
+      Left_Tree  : Construct_Tree;
+      Right_Tree : Construct_Tree)
+      return Get_Parent_Tree_Result
+   is
+      pragma Unreferenced (Lang, Left_Tree, Right_Tree);
+   begin
+      return None;
+   end Get_Parent_Tree;
+
+   ---------------------
+   -- Get_Public_Tree --
+   ---------------------
+
+   function Get_Public_Tree
+     (Lang      : access Tree_Language;
+      Full_Tree : access Construct_Tree;
+      Free_Tree : Boolean) return Construct_Tree
+   is
+      pragma Unreferenced (Lang);
+
+      New_Tree : Construct_Tree;
+   begin
+      if Free_Tree then
+         New_Tree := Full_Tree.all;
+      else
+         --  Since we're not supposed to free the orininal tree, the new one
+         --  has to be a copy.
+         New_Tree := new Construct_Tree_Record'(Full_Tree.all.all);
+
+         for J in New_Tree.Contents'Range loop
+            New_Tree.Contents (J).Construct.Name :=
+              new String'(New_Tree.Contents (J).Construct.Name.all);
+         end loop;
+      end if;
+
+      return New_Tree;
+   end Get_Public_Tree;
+
+   ------------------------
+   -- Get_Unit_Construct --
+   ------------------------
+
+   function Get_Unit_Construct
+     (Lang : access Tree_Language;
+      Tree : Construct_Tree) return Construct_Tree_Iterator
+   is
+      pragma Unreferenced (Lang, Tree);
+   begin
+      return Null_Construct_Tree_Iterator;
+   end Get_Unit_Construct;
+
+   -------------------
+   -- Get_Unit_Name --
+   -------------------
+
+   function Get_Unit_Name
+     (Lang : access Tree_Language;
+      Tree : Construct_Tree) return Composite_Identifier
+   is
+      pragma Unreferenced (Lang, Tree);
+   begin
+      return To_Composite_Identifier ("");
+   end Get_Unit_Name;
+
+   --------------------
+   -- Get_Name_Index --
+   --------------------
+
+   function Get_Name_Index
+     (Lang      : access Tree_Language;
+      Construct : Simple_Construct_Information) return String
+   is
+      pragma Unreferenced (Lang);
+   begin
+      return Construct.Name.all;
+   end Get_Name_Index;
+
+   ----------------------
+   -- Compare_Entities --
+   ----------------------
+
+   function Compare_Entities
+     (Lang                      : access Tree_Language;
+      Left_Iter, Right_Iter     : Construct_Tree_Iterator;
+      Left_Tree, Right_Tree     : Construct_Tree;
+      Left_Buffer, Right_Buffer : GNAT.Strings.String_Access)
+      return General_Order
+   is
+      pragma Unreferenced (Lang, Left_Buffer, Right_Buffer);
+
+      Left_Name  : String := Get_Full_Name (Left_Tree, Left_Iter);
+      Right_Name : String := Get_Full_Name (Right_Tree, Right_Iter);
+   begin
+      if Left_Name < Right_Name then
+         return Lower_Than;
+      elsif Left_Name > Right_Name then
+         return Greater_Than;
+      else
+         return Equals;
+      end if;
+   end Compare_Entities;
+
+   -----------------------
+   -- Get_Documentation --
+   -----------------------
+
+   function Get_Documentation
+     (Lang   : access Tree_Language;
+      Buffer : String;
+      Tree   : Construct_Tree;
+      Node   : Construct_Tree_Iterator) return String
+   is
+      Beginning, Current   : Natural;
+      Result               : Unbounded_String;
+
+      Type_Start, Type_End : Source_Location;
+      Success              : Boolean;
+      Language             : constant Language_Access :=
+        Get_Language (Tree_Language'Class (Lang.all)'Access);
+   begin
+      Get_Documentation_Before
+        (Context       => Get_Language_Context (Language).all,
+         Buffer        => Buffer,
+         Decl_Index    => Get_Construct (Node).Sloc_Start.Index,
+         Comment_Start => Beginning,
+         Comment_End   => Current);
+
+      if Beginning = 0 then
+         Get_Documentation_After
+           (Context       => Get_Language_Context
+              (Get_Language (Tree_Language'Class (Lang.all)'Access)).all,
+            Buffer        => Buffer,
+            Decl_Index    => Get_Construct (Node).Sloc_End.Index,
+            Comment_Start => Beginning,
+            Comment_End   => Current);
+      end if;
+
+      if Beginning /= 0 then
+         Append
+           (Result,
+            Comment_Block
+              (Get_Language (Tree_Language'Class (Lang.all)'Access),
+               Buffer (Beginning .. Current) & ASCII.LF,
+               Comment => False,
+               Clean   => True));
+      end if;
+
+      if Get_Construct (Node).Category in Subprogram_Category then
+         declare
+            Sub_Iter               : Construct_Tree_Iterator :=
+                                       Next (Tree, Node, Jump_Into);
+            Has_Parameter          : Boolean := False;
+            Biggest_Parameter_Name : Integer := 0;
+         begin
+            while Get_Parent_Scope (Tree, Sub_Iter) = Node loop
+               if Get_Construct (Sub_Iter).Category = Cat_Parameter then
+                  if Get_Construct (Sub_Iter).Name'Length >
+                    Biggest_Parameter_Name
+                  then
+                     Biggest_Parameter_Name :=
+                       Get_Construct (Sub_Iter).Name'Length;
+                  end if;
+               end if;
+
+               Sub_Iter := Next (Tree, Sub_Iter, Jump_Over);
+            end loop;
+
+            Sub_Iter := Next (Tree, Node, Jump_Into);
+
+            while Get_Parent_Scope (Tree, Sub_Iter) = Node loop
+               if Get_Construct (Sub_Iter).Category = Cat_Parameter then
+                  if not Has_Parameter then
+                     Append (Result, ASCII.LF & "<b>Parameters:</b>"
+                             & ASCII.LF);
+                     Has_Parameter := True;
+                  end if;
+
+                  Get_Referenced_Entity
+                    (Language,
+                     Buffer,
+                     Get_Construct (Sub_Iter),
+                     Type_Start,
+                     Type_End,
+                     Success);
+
+                  Append
+                    (Result,
+                     Get_Construct (Sub_Iter).Name.all);
+
+                  for J in Get_Construct (Sub_Iter).Name'Length + 1
+                    .. Biggest_Parameter_Name
+                  loop
+                     Append (Result, " ");
+                  end loop;
+
+                  if Success then
+                     Append
+                       (Result,
+                        " : " & Buffer (Type_Start.Index .. Type_End.Index)
+                        & ASCII.LF);
+                  else
+                     Append (Result, " : ???" & ASCII.LF);
+                  end if;
+               end if;
+
+               Sub_Iter := Next (Tree, Sub_Iter, Jump_Over);
+            end loop;
+         end;
+
+         Get_Referenced_Entity
+           (Language,
+            Buffer,
+            Get_Construct (Node),
+            Type_Start,
+            Type_End,
+            Success);
+
+         if Success then
+            Append
+              (Result,
+               ASCII.LF & "<b>Return:</b>"
+               & ASCII.LF & Buffer (Type_Start.Index .. Type_End.Index));
+         end if;
+      elsif Get_Construct (Node).Category in Data_Category then
+         declare
+            Var_Start, Var_End : Source_Location;
+         begin
+            Get_Referenced_Entity
+              (Language,
+               Buffer,
+               Get_Construct (Node),
+               Var_Start,
+               Var_End,
+               Success);
+
+            if Success then
+               Append
+                 (Result,
+                  ASCII.LF & "<b>Type: </b>"
+                  & Buffer (Var_Start.Index .. Var_End.Index));
+            end if;
+         end;
+      end if;
+
+      return To_String (Result);
+   end Get_Documentation;
+
+   ------------------
+   -- Get_Language --
+   ------------------
+
+   function Get_Language
+     (Tree : access Unknown_Tree_Language) return Language_Access
+   is
+      pragma Unreferenced (Tree);
+   begin
+      return Unknown_Lang;
+   end Get_Language;
 
 end Language.Tree;

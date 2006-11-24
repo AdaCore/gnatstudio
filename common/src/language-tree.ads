@@ -264,48 +264,71 @@ package Language.Tree is
      (Lang       : access Tree_Language;
       Left_Tree  : Construct_Tree;
       Right_Tree : Construct_Tree)
-      return Get_Parent_Tree_Result is abstract;
+      return Get_Parent_Tree_Result;
    --  Return Left if Left if the parent of Right, Right if it's the parent
-   --  of Left, None if no parent relationship can be estalished.
+   --  of Left, None if no parent relationship can be estalished. Default
+   --  implementation always returns None.
 
    function Get_Public_Tree
      (Lang      : access Tree_Language;
       Full_Tree : access Construct_Tree;
-      Free_Tree : Boolean) return Construct_Tree is abstract;
+      Free_Tree : Boolean) return Construct_Tree;
    --  Return a tree containing only the public information of the tree given
    --  in parameter. If Free_Tree is True, then Full_Tree will be freed at
-   --  the end of the process.
+   --  the end of the process. By default, the same tree is returned.
 
    function Get_Unit_Construct
      (Lang : access Tree_Language;
-      Tree : Construct_Tree) return Construct_Tree_Iterator is abstract;
+      Tree : Construct_Tree) return Construct_Tree_Iterator;
    --  Return the construct representing the unit of the file, if such a
    --  notion exists in the target language. Otherwise, return
-   --  Null_Construct_Tree_Iterator.
+   --  Null_Construct_Tree_Iterator. Default implementation returns
+   --  Null_Construct_Iterator.
 
    function Get_Unit_Name
      (Lang : access Tree_Language;
-      Tree : Construct_Tree) return Composite_Identifier is abstract;
+      Tree : Construct_Tree) return Composite_Identifier;
    --  Return the identifier representing the unit of the file, if such a
-   --  notion exists in the target language.
+   --  notion exists in the target language. Default implementation returns
+   --  an empty name.
 
    function Get_Name_Index
      (Lang      : access Tree_Language;
-      Construct : Simple_Construct_Information) return String is abstract;
+      Construct : Simple_Construct_Information) return String;
    --  Return the name that should be used to index the given construct. Takes
-   --  care of e.g. case handling.
+   --  care of e.g. case handling. Default implementation return the actual
+   --  construct name.
 
    function Compare_Entities
      (Lang                      : access Tree_Language;
       Left_Iter, Right_Iter     : Construct_Tree_Iterator;
       Left_Tree, Right_Tree     : Construct_Tree;
-      Left_Buffer, Right_Buffer : String_Access) return General_Order
-      is abstract;
+      Left_Buffer, Right_Buffer : String_Access) return General_Order;
    --  Return a the order relationship between the two cell. The definition of
    --  order is language dependant, and can be based on the name, categories
    --  or structure of the two cells. This function is aimed to be used
    --  efficiently by generic sort procedures. If two entities are
    --  "equivalent", they both refer to differents views of the same entity.
+   --  Default implementation compares computed full names of the two
+   --  iterators.
+
+   function Get_Documentation
+     (Lang   : access Tree_Language;
+      Buffer : String;
+      Tree   : Construct_Tree;
+      Node   : Construct_Tree_Iterator) return String;
+   --  This function returns the documentation for the entity given in
+   --  parameter, for the given language. By default, it computes a
+   --  documentation from generic knowledge on the constructs.
+   --  Language-specific computation may give more accurate information.
+
+   type Unknown_Tree_Language is new Tree_Language with private;
+
+   function Get_Language
+     (Tree : access Unknown_Tree_Language) return Language_Access;
+   --  See inherited documentation
+
+   Unknown_Tree_Lang : constant Tree_Language_Access;
 
 private
 
@@ -402,5 +425,10 @@ private
    --  package A is <- here is the last relevant construct
    --
    --     <-  here is the offset
+
+   type Unknown_Tree_Language is new Tree_Language with null record;
+
+   Unknown_Tree_Lang : constant Tree_Language_Access :=
+     new Unknown_Tree_Language;
 
 end Language.Tree;
