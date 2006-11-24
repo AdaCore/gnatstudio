@@ -458,15 +458,15 @@ package body Custom_Module is
       ---------------------
 
       procedure Parse_Tool_Node (Node : Node_Ptr) is
-         Name  : constant String := Get_Attribute (Node, "name");
-         Pack  : constant String :=
-           Get_Attribute (Node, "package", Projects.Ide_Package);
-         Index : constant String :=
-           To_Lower (Get_Attribute (Node, "index", Name));
+         Name      : constant String := Get_Attribute (Node, "name");
+         Pack      : constant String :=
+                       Get_Attribute (Node, "package", Projects.Ide_Package);
+         Index     : constant String :=
+                       To_Lower (Get_Attribute (Node, "index", Name));
          Attribute : constant String :=
-           Get_Attribute (Node, "attribute", "default_switches");
-         Switches : String_Access;
-         N     : Node_Ptr := Node.Child;
+                       Get_Attribute (Node, "attribute", "default_switches");
+         Switches  : String_Access;
+         N         : Node_Ptr := Node.Child;
 
       begin
          if Name = "" then
@@ -517,7 +517,8 @@ package body Custom_Module is
                Lang    : constant String  := Get_Attribute (Node, "language");
                Shell   : constant String  := Get_Attribute (Node, "shell_cmd");
                Shell_Lang : constant String :=
-                 Get_Attribute (Node, "shell_lang", GPS_Shell_Name);
+                              Get_Attribute
+                                (Node, "shell_lang", GPS_Shell_Name);
                Module  : constant String := Get_Attribute (Node, "module");
                Id      : constant String := Get_Attribute (Node, "id");
             begin
@@ -607,13 +608,13 @@ package body Custom_Module is
       -----------------------
 
       procedure Parse_Action_Node (Node : Node_Ptr) is
-         Name    : constant String := Get_Attribute (Node, "name");
-         Child   : Node_Ptr;
-         Command : Custom_Command_Access;
-         Description : String_Access := new String'("");
-         Category    : constant String :=
-           Get_Attribute (Node, "category", "General");
-         Filter_A    : Action_Filter;
+         Name            : constant String := Get_Attribute (Node, "name");
+         Category        : constant String :=
+                             Get_Attribute (Node, "category", "General");
+         Child           : Node_Ptr;
+         Command         : Custom_Command_Access;
+         Description     : String_Access := new String'("");
+         Filter_A        : Action_Filter;
          Implicit_Filter : Action_Filter;
       begin
          if Name = "" then
@@ -639,9 +640,8 @@ package body Custom_Module is
               or else Child.Tag.all = "filter_or"
             then
                if Filter_A /= null then
-                  Filter_A :=
-                    Action_Filter (Filter_A or Parse_Filter_Node (Child,
-                                                                  Name));
+                  Filter_A := Action_Filter
+                    (Filter_A or Parse_Filter_Node (Child, Name));
                else
                   Filter_A := Parse_Filter_Node (Child, Name);
                end if;
@@ -662,15 +662,15 @@ package body Custom_Module is
          end loop;
 
          Create (Command,
-                 Name           => Name,
-                 Kernel         => Kernel,
-                 Command        => Node.Child,
-                 Default_Output => Get_Attribute
+                 Name                 => Name,
+                 Kernel               => Kernel,
+                 Command              => Node.Child,
+                 Default_Output       => Get_Attribute
                    (Node, "output", Console_Output),
                  Show_In_Task_Manager => To_Lower
-                   (Get_Attribute (Node, "show-task-manager", "false")) =
-                   "true",
-                 Show_Command => To_Lower
+                   (Get_Attribute
+                     (Node, "show-task-manager", "false")) = "true",
+                 Show_Command         => To_Lower
                    (Get_Attribute (Node, "show-command", "true")) = "true");
 
          Implicit_Filter := Create_Filter (Node.Child);
@@ -771,9 +771,9 @@ package body Custom_Module is
       ----------------------
 
       procedure Parse_Entry_Node (Node : Node_Ptr) is
-         Child   : Node_Ptr;
-         Id      : constant String := Get_Attribute (Node, "id", "");
-         Label   : constant String := Get_Attribute (Node, "label", "");
+         Child : Node_Ptr;
+         Id    : constant String := Get_Attribute (Node, "id", "");
+         Label : constant String := Get_Attribute (Node, "label", "");
       begin
          if Id = "" then
             Insert
@@ -838,10 +838,10 @@ package body Custom_Module is
       procedure Parse_Submenu_Node
         (Node : Node_Ptr; Parent_Path : UTF8_String)
       is
-         Child : Node_Ptr := Node.Child;
-         Title : String_Access := new String'("");
          Before : constant String := Get_Attribute (Node, "before");
          After  : constant String := Get_Attribute (Node, "after");
+         Child  : Node_Ptr := Node.Child;
+         Title  : String_Access := new String'("");
       begin
          --  First look for the title of the submenu
          while Child /= null loop
@@ -921,12 +921,12 @@ package body Custom_Module is
       ---------------------
 
       procedure Parse_Menu_Node (Node : Node_Ptr; Parent_Path : UTF8_String) is
-         Action : constant String := Get_Attribute (Node, "action");
-         Before : constant String := Get_Attribute (Node, "before");
-         After  : constant String := Get_Attribute (Node, "after");
-         Child  : Node_Ptr;
-         Title  : String_Access := new String'("");
-         Item   : Gtk_Menu_Item;
+         Action  : constant String := Get_Attribute (Node, "action");
+         Before  : constant String := Get_Attribute (Node, "before");
+         After   : constant String := Get_Attribute (Node, "after");
+         Child   : Node_Ptr;
+         Title   : String_Access := new String'("");
+         Item    : Gtk_Menu_Item;
          Command : Action_Record_Access;
       begin
          Child := Node.Child;
@@ -1163,7 +1163,7 @@ package body Custom_Module is
       ---------------
 
       procedure Add_Child (Parent_Path : String; Current_Node : Node_Ptr) is
-         Lang       : Custom_Language_Access;
+         Lang : Custom_Language_Access;
       begin
          if Current_Node = null
            or else Current_Node.Tag = null
@@ -1194,7 +1194,7 @@ package body Custom_Module is
          then
             declare
                Name   : constant String :=
-                 Get_Attribute (Current_Node, "name");
+                          Get_Attribute (Current_Node, "name");
                Filter : Action_Filter;
             begin
                if Name = "" then
@@ -1270,8 +1270,8 @@ package body Custom_Module is
      (Filter  : access Action_Filter_Wrapper;
       Context : Selection_Context) return Boolean
    is
-      C : Callback_Data'Class := Create
-        (Get_Script (Filter.Filter.all), 1);
+      C      : Callback_Data'Class :=
+                 Create (Get_Script (Filter.Filter.all), 1);
       Result : Boolean;
    begin
       Set_Nth_Arg
@@ -1295,6 +1295,7 @@ package body Custom_Module is
          Set_Error_Msg
            (Data, -("Cannot build instances of GPS.Menu directly."
                     & " Use GPS.Menu.get() or GPS.Menu.create() instead"));
+
       elsif Command = "get" then
          Name_Parameters (Data, Menu_Get_Params);
          declare
@@ -1393,14 +1394,14 @@ package body Custom_Module is
    procedure Contextual_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Kernel     : constant Kernel_Handle := Get_Kernel (Data);
+      Kernel           : constant Kernel_Handle := Get_Kernel (Data);
       Contextual_Class : constant Class_Type :=
-        New_Class (Kernel, "Contextual");
-      Inst       : Class_Instance;
-      Cmd        : Contextual_Shell_Command;
-      Filter     : Contextual_Shell_Filter;
-      Label      : Contextual_Shell_Label;
-      Subp       : Subprogram_Type;
+                           New_Class (Kernel, "Contextual");
+      Inst             : Class_Instance;
+      Cmd              : Contextual_Shell_Command;
+      Filter           : Contextual_Shell_Filter;
+      Label            : Contextual_Shell_Label;
+      Subp             : Subprogram_Type;
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, Contextual_Constructor_Params);
@@ -1520,10 +1521,10 @@ package body Custom_Module is
    begin
       Custom_Module_ID := new Custom_Module_ID_Record;
       Register_Module
-        (Module                  => Custom_Module_ID,
-         Kernel                  => Kernel,
-         Module_Name             => "Custom",
-         Priority                => Low_Priority);
+        (Module      => Custom_Module_ID,
+         Kernel      => Kernel,
+         Module_Name => "Custom",
+         Priority    => Low_Priority);
 
       Expect_Interface.Register_Commands (Kernel);
       Custom_Combos.Register_Commands (Kernel);
