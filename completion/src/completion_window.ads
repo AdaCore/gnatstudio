@@ -138,6 +138,10 @@ private
 
       Case_Sensitive : Boolean;
       In_Deletion    : Boolean := False;
+      --  Set to True when we are deleting text.
+
+      In_Destruction : Boolean := False;
+      --  Set to True when we are destroying the window.
 
       More_Iter      : Gtk_Tree_Iter := Null_Iter;
       --  Indicates the iter which says ("more...");
