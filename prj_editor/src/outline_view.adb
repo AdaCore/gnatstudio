@@ -81,6 +81,8 @@ package body Outline_View is
    Hist_Sort_Alphabetical : constant History_Key := "outline-alphabetical";
    Hist_Editor_Link       : constant History_Key := "outline-editor-link";
    Hist_File_Node         : constant History_Key := "outline-file-node";
+   Hist_Show_Decls        : constant History_Key := "outline-show-decls";
+   Hist_Show_Types        : constant History_Key := "outline-show-types";
 
    Pixbuf_Column       : constant := 0;
    Display_Name_Column : constant := 1;
@@ -512,6 +514,18 @@ package body Outline_View is
          Widget_Callback.Object_Connect
            (Check, "toggled", Refresh'Access, Outline);
 
+         Gtk_New (Check, Label => -"Show subprogram declarations");
+         Associate (Get_History (Kernel).all, Hist_Show_Decls, Check);
+         Append (Submenu, Check);
+         Widget_Callback.Object_Connect
+           (Check, "toggled", Refresh'Access, Outline);
+
+         Gtk_New (Check, Label => -"Show types");
+         Associate (Get_History (Kernel).all, Hist_Show_Types, Check);
+         Append (Submenu, Check);
+         Widget_Callback.Object_Connect
+           (Check, "toggled", Refresh'Access, Outline);
+
          Gtk_New (Check, Label => -"Show file node");
          Associate (Get_History (Kernel).all, Hist_File_Node, Check);
          Append (Submenu, Check);
@@ -803,8 +817,13 @@ package body Outline_View is
       Sort_Column   : constant Gint := Freeze_Sort (Model);
       pragma Unreferenced (Sort_Column);
       Args          : Argument_List (1 .. 4);
+      Show_Specs    : constant Boolean :=
+        Get_History (Get_History (Outline.Kernel).all, Hist_Show_Decls);
+      Show_Types    : constant Boolean :=
+        Get_History (Get_History (Outline.Kernel).all, Hist_Show_Types);
       Show_File_Node : constant Boolean :=
         Get_History (Get_History (Outline.Kernel).all, Hist_File_Node);
+      Is_Type        : Boolean;
    begin
       Push_State (Outline.Kernel, Busy);
       Clear (Outline);
@@ -832,8 +851,12 @@ package body Outline_View is
          Constructs.Current := Constructs.First;
          while Constructs.Current /= null loop
             if Constructs.Current.Name /= null then
+               Is_Type := Constructs.Current.Category in Data_Type_Category;
+
                if Filter_Category (Constructs.Current.Category) /=
                  Cat_Unknown
+                 and then (Show_Specs or not Constructs.Current.Is_Declaration)
+                 and then (Show_Types or not Is_Type)
                then
                   Append (Model, Iter, Root);
 
@@ -1109,7 +1132,10 @@ package body Outline_View is
         (Get_History (Kernel).all, Hist_File_Node, False);
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, Hist_Editor_Link, True);
-
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Kernel).all, Hist_Show_Decls, True);
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Kernel).all, Hist_Show_Types, True);
    end Register_Module;
 
 end Outline_View;
