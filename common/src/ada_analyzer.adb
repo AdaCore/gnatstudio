@@ -1755,32 +1755,44 @@ package body Ada_Analyzer is
 
          --  Computes Tok_Token.Type_Att
 
-         case Reserved is
-            when Tok_Abstract =>
-               Top_Token.Attributes (Ada_Abstract_Attribute) := True;
-            when Tok_Access =>
-               Top_Token.Attributes (Ada_Access_Attribute) := True;
-            when Tok_Array =>
-               Top_Token.Attributes (Ada_Array_Attribute) := True;
-            when Tok_Delta =>
-               Top_Token.Attributes (Ada_Delta_Attribute) := True;
-            when Tok_Digits =>
-               Top_Token.Attributes (Ada_Digits_Attribute) := True;
-            when Tok_Range =>
-               Top_Token.Attributes (Ada_Range_Attribute) := True;
-            when Tok_Mod =>
-               Top_Token.Attributes (Ada_Mod_Attribute) := True;
-            when Tok_New =>
-               Top_Token.Attributes (Ada_New_Attribute) := True;
-            when Tok_Tagged =>
-               Top_Token.Attributes (Ada_Tagged_Attribute) := True;
-            when Tok_Interface =>
-               Top_Token.Attributes (Ada_Interface_Attribute) := True;
-            when Tok_Record =>
-               Top_Token.Attributes (Ada_Record_Attribute) := True;
-            when others =>
-               null;
-         end case;
+         if not Top_Token.Attributes (Ada_Assign_Attribute) then
+            case Reserved is
+               when Tok_Abstract =>
+                  Top_Token.Attributes (Ada_Abstract_Attribute) := True;
+               when Tok_Access =>
+                  Top_Token.Attributes (Ada_Access_Attribute) := True;
+               when Tok_Array =>
+                  Top_Token.Attributes (Ada_Array_Attribute) := True;
+               when Tok_Colon_Equal =>
+                  Top_Token.Attributes (Ada_Assign_Attribute) := True;
+               when Tok_Delta =>
+                  Top_Token.Attributes (Ada_Delta_Attribute) := True;
+               when Tok_Digits =>
+                  Top_Token.Attributes (Ada_Digits_Attribute) := True;
+               when Tok_Range =>
+                  Top_Token.Attributes (Ada_Range_Attribute) := True;
+               when Tok_Mod =>
+                  Top_Token.Attributes (Ada_Mod_Attribute) := True;
+               when Tok_New =>
+                  Top_Token.Attributes (Ada_New_Attribute) := True;
+               when Tok_Not =>
+                  Top_Token.Attributes (Ada_Not_Attribute) := True;
+               when Tok_Null =>
+                  Top_Token.Attributes (Ada_Null_Attribute) := True;
+               when Tok_Out =>
+                  Top_Token.Attributes (Ada_Out_Attribute) := True;
+               when Tok_Tagged =>
+                  Top_Token.Attributes (Ada_Tagged_Attribute) := True;
+               when Tok_In =>
+                  Top_Token.Attributes (Ada_In_Attribute) := True;
+               when Tok_Interface =>
+                  Top_Token.Attributes (Ada_Interface_Attribute) := True;
+               when Tok_Record =>
+                  Top_Token.Attributes (Ada_Record_Attribute) := True;
+               when others =>
+                  null;
+            end case;
+         end if;
 
          --  Note: the order of the following conditions is important
 
@@ -3171,6 +3183,8 @@ package body Ada_Analyzer is
                              and then Top_Token.Token = Tok_Colon
                              and then Top_Token.Is_Parameter
                            then
+                              Top_Token.Attributes
+                                (Ada_Assign_Attribute) := True;
                               Pop (Tokens);
                            end if;
 
