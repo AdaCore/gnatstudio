@@ -171,14 +171,14 @@ package body Cpp_Module is
          On_Project_View_Changed (LI);
       end if;
 
-      Register_Language (Handler, C_Lang, LI => LI);
+      Register_Language (Handler, C_Lang, null, LI => LI);
       Register_Default_Language_Extension
         (Get_Registry (Kernel).all,
          Language_Name       => "c",
          Default_Spec_Suffix => ".h",
          Default_Body_Suffix => ".c");
 
-      Register_Language (Handler, Cpp_Lang, LI => LI);
+      Register_Language (Handler, Cpp_Lang, null, LI => LI);
       Register_Default_Language_Extension
         (Get_Registry (Kernel).all,
          Language_Name       => "c++",

@@ -350,7 +350,7 @@ package body Language.Custom is
 
       Lang.Name := Get_String (Get_Field (Top, "Name"));
 
-      Register_Language (Handler, Language_Access (Lang),
+      Register_Language (Handler, Language_Access (Lang), null,
                          LI => Dummy_Handler);
       Register_Default_Language_Extension
         (Get_Registry (Kernel).all,
