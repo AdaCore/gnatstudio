@@ -18,8 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Language.Tree; use Language.Tree;
-
 with Traces;        use Traces;
 
 package Language.Documentation is
@@ -40,13 +38,5 @@ package Language.Documentation is
       Debug         : Debug_Handle := null);
    --  Get the comment just before or just after Decl_Index, skipping code
    --  lines as needed.
-
-   function Get_Documentation
-     (Language  : access Language_Root'Class;
-      Buffer    : String;
-      Tree      : Construct_Tree;
-      Node      : Construct_Tree_Iterator) return String;
-   --  Return a pre-formated documentation for the entity pointed by the node
-   --  given in parameter.
 
 end Language.Documentation;
