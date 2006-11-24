@@ -166,6 +166,8 @@ package body Completion_Module is
       Manager             : Completion_Manager_Access;
       Constructs_Resolver : Completion_Resolver_Access;
       Result              : Completion_List;
+      Start_Mark          : Gtk_Text_Mark := null;
+      Buffer              : Source_Buffer;
       The_Text            : GNAT.Strings.String_Access;
    end record;
 
@@ -321,7 +323,10 @@ package body Completion_Module is
      (Win  : access Gtk_Widget_Record'Class;
       Data : Smart_Completion_Data)
    is
-      D : Smart_Completion_Data := Data;
+      D           : Smart_Completion_Data := Data;
+      First, Last : Gtk_Text_Iter;
+      Dummy       : Boolean;
+      pragma Unreferenced (Dummy);
    begin
       Free (D.Manager);
       Free (D.Constructs_Resolver);
@@ -331,6 +336,20 @@ package body Completion_Module is
       Completion_Module.Has_Smart_Completion := False;
 
       End_Completion (Source_View (Win));
+
+      --  If we did complete on multiple lines, indent the resulting lines
+      --  using the user preferences.
+
+      if D.Start_Mark /= null then
+         Get_Iter_At_Mark (D.Buffer, First, D.Start_Mark);
+         Get_Iter_At_Mark (D.Buffer, Last, Get_Insert (D.Buffer));
+         Delete_Mark (D.Buffer, D.Start_Mark);
+
+         if Get_Line (First) < Get_Line (Last) then
+            Dummy := Do_Indentation (D.Buffer, First, Last, False);
+         end if;
+      end if;
+
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -738,8 +757,8 @@ package body Completion_Module is
 
          declare
             Win  : Completion_Window_Access;
-            It   : Gtk_Text_Iter;
             Data : Smart_Completion_Data;
+            It   : Gtk_Text_Iter;
             Constructs : aliased Construct_List;
 
          begin
@@ -805,8 +824,14 @@ package body Completion_Module is
 
             Gtk_New (Win, Kernel);
 
-            Get_Iter_At_Mark
-              (Buffer, It, Get_Insert (Buffer));
+            Data.Buffer := Buffer;
+
+            Get_Iter_At_Mark (Buffer, It, Get_Insert (Buffer));
+
+            Data.Start_Mark := Create_Mark
+              (Buffer       => Buffer,
+               Mark_Name    => "",
+               Where        => It);
 
             To_Replace := Get_Completed_String (Data.Result)'Length;
 
@@ -821,7 +846,7 @@ package body Completion_Module is
             Object_Connect
               (Win, "destroy",
                To_Marshaller (On_Completion_Destroy'Access),
-               View, Data);
+               View, Data, After => True);
 
             Set_Completion_Iterator (Win, First (Data.Result));
 
@@ -1125,7 +1150,11 @@ package body Completion_Module is
 
       Unichar_To_UTF8 (Edition_Data.Character, Buffer, Last);
 
-      if Last = 1 and then Buffer (1) = '.' then
+      if Last = 1
+        and then (Buffer (1) = '.'
+                  or else Buffer (1) = ','
+                  or else Buffer (1) = '(')
+      then
          Completion_Module.Trigger_Timeout :=
            Timeout_Add (Guint32 (Completion_Module.Trigger_Timeout_Value),
                         Trigger_Timeout_Callback'Access);
