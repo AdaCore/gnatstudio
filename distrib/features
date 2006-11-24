@@ -14,6 +14,12 @@ of the feature.
 New features in GPS 4.1.0
 -------------------------
 
+FB24-009 Outline View configuration through contextual menu (2006-11-24)
+
+  The outline view filters can now be configured through the contextual
+  menu, instead of the preferences dialog. This provides easier access to
+  these filters, and matches what is done for other views.
+
 FB23-013 Support for custom languages with special keywords (2006-11-23)
 
   When you define a custom language through the <Langage> tag, you can
