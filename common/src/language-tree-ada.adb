@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Strings.Unbounded; use Ada.Strings;
 with Ada.Unchecked_Deallocation; use Ada;
 
 with Generic_List;
@@ -25,7 +26,8 @@ with String_Utils;      use String_Utils;
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
-with Language.Ada; use Language.Ada;
+with Language.Ada;           use Language.Ada;
+with Language.Documentation; use Language.Documentation;
 
 package body Language.Tree.Ada is
 
@@ -1717,6 +1719,244 @@ package body Language.Tree.Ada is
          return Returned_Tree;
       end;
    end Get_Public_Tree;
+
+   -----------------------
+   -- Get_Documentation --
+   -----------------------
+
+   function Get_Documentation
+     (Lang   : access Ada_Tree_Language;
+      Buffer : String;
+      Tree   : Construct_Tree;
+      Node   : Construct_Tree_Iterator) return String
+   is
+      Beginning, Current   : Natural;
+      Result               : Unbounded.Unbounded_String;
+
+      Type_Start, Type_End : Source_Location;
+      Success              : Boolean;
+      Language             : constant Language_Access :=
+        Get_Language (Tree_Language'Class (Lang.all)'Access);
+
+      function Attribute_Decoration
+        (Construct  : Simple_Construct_Information;
+         Default_In : Boolean) return String;
+
+      function Attribute_Decoration
+        (Construct  : Simple_Construct_Information;
+         Default_In : Boolean) return String
+      is
+         Buffer : String (1 .. 30);
+         Ind    : Integer := 1;
+      begin
+         if Construct.Attributes (Ada_In_Attribute)
+           or else
+             (Default_In and then not
+                  (Construct.Attributes (Ada_Out_Attribute)
+                   or else Construct.Attributes (Ada_Access_Attribute)))
+         then
+            Buffer (Ind .. Ind + 2) := "in ";
+            Ind := Ind + 3;
+         end if;
+
+         if Construct.Attributes (Ada_Out_Attribute) then
+            Buffer (Ind .. Ind + 3) := "out ";
+            Ind := Ind + 4;
+         end if;
+
+         if Construct.Attributes (Ada_Access_Attribute) then
+            Buffer (Ind .. Ind + 6) := "access ";
+            Ind := Ind + 7;
+         end if;
+
+         if Construct.Attributes (Ada_Not_Attribute) then
+            Buffer (Ind .. Ind + 3) := "not ";
+            Ind := Ind + 4;
+         end if;
+
+         if Construct.Attributes (Ada_Null_Attribute) then
+            Buffer (Ind .. Ind + 4) := "null ";
+            Ind := Ind + 5;
+         end if;
+
+         return Buffer (1 .. Ind - 1);
+      end Attribute_Decoration;
+
+   begin
+      Get_Documentation_Before
+        (Context       => Get_Language_Context (Language).all,
+         Buffer        => Buffer,
+         Decl_Index    => Get_Construct (Node).Sloc_Start.Index,
+         Comment_Start => Beginning,
+         Comment_End   => Current);
+
+      if Beginning = 0 then
+         Get_Documentation_After
+           (Context       => Get_Language_Context
+              (Get_Language (Tree_Language'Class (Lang.all)'Access)).all,
+            Buffer        => Buffer,
+            Decl_Index    => Get_Construct (Node).Sloc_End.Index,
+            Comment_Start => Beginning,
+            Comment_End   => Current);
+      end if;
+
+      if Beginning /= 0 then
+         Unbounded.Append
+           (Result,
+            Comment_Block
+              (Get_Language (Tree_Language'Class (Lang.all)'Access),
+               Buffer (Beginning .. Current) & ASCII.LF,
+               Comment => False,
+               Clean   => True));
+      end if;
+
+      if Get_Construct (Node).Category in Subprogram_Category then
+         declare
+            Sub_Iter                  : Construct_Tree_Iterator :=
+              Next (Tree, Node, Jump_Into);
+            Has_Parameter             : Boolean := False;
+            Biggest_Parameter_Name    : Integer := 0;
+            Biggest_Decoration_Length : Integer := 0;
+         begin
+            while Get_Parent_Scope (Tree, Sub_Iter) = Node loop
+               if Get_Construct (Sub_Iter).Category = Cat_Parameter then
+                  if Get_Construct (Sub_Iter).Name'Length >
+                    Biggest_Parameter_Name
+                  then
+                     Biggest_Parameter_Name :=
+                       Get_Construct (Sub_Iter).Name'Length;
+                  end if;
+
+                  if Attribute_Decoration
+                    (Get_Construct (Sub_Iter), True)'Length
+                    > Biggest_Decoration_Length
+                  then
+                     Biggest_Decoration_Length :=
+                       Attribute_Decoration
+                         (Get_Construct (Sub_Iter), True)'Length;
+                  end if;
+               end if;
+
+               Sub_Iter := Next (Tree, Sub_Iter, Jump_Over);
+               --  Compute biggest attributes size as well...
+            end loop;
+
+            Sub_Iter := Next (Tree, Node, Jump_Into);
+
+            while Get_Parent_Scope (Tree, Sub_Iter) = Node loop
+               if Get_Construct (Sub_Iter).Category = Cat_Parameter then
+                  if not Has_Parameter then
+                     Unbounded.Append (Result, ASCII.LF & "<b>Parameters:</b>"
+                             & ASCII.LF);
+                     Has_Parameter := True;
+                  end if;
+
+                  Get_Referenced_Entity
+                    (Language,
+                     Buffer,
+                     Get_Construct (Sub_Iter),
+                     Type_Start,
+                     Type_End,
+                     Success);
+
+                  if Get_Construct (Sub_Iter).Attributes
+                    (Ada_Assign_Attribute)
+                  then
+                     Unbounded.Append
+                       (Result, "[");
+                  else
+                     Unbounded.Append
+                       (Result, " ");
+                  end if;
+
+                  Unbounded.Append
+                    (Result,
+                     Get_Construct (Sub_Iter).Name.all);
+
+                  --  ??? These loops are highly inefficient. Consider
+                  --  improving these
+
+                  for J in Get_Construct (Sub_Iter).Name'Length + 1
+                    .. Biggest_Parameter_Name
+                  loop
+                     Unbounded.Append (Result, " ");
+                  end loop;
+
+                  if Success then
+                     Unbounded.Append
+                       (Result,
+                        " : <b>"
+                        & Attribute_Decoration (Get_Construct (Sub_Iter), True)
+                        & "</b>");
+
+                     for J in
+                       Attribute_Decoration
+                         (Get_Construct (Sub_Iter), True)'Length + 1
+                       .. Biggest_Decoration_Length
+                     loop
+                        Unbounded.Append (Result, " ");
+                     end loop;
+
+                     Unbounded.Append
+                       (Result, Buffer (Type_Start.Index .. Type_End.Index));
+                  else
+                     Unbounded.Append (Result, " : ???");
+                  end if;
+
+                  if Get_Construct (Sub_Iter).Attributes
+                    (Ada_Assign_Attribute)
+                  then
+                     Unbounded.Append
+                       (Result, "]" & ASCII.LF);
+                  else
+                     Unbounded.Append
+                       (Result, ASCII.LF);
+                  end if;
+               end if;
+
+               Sub_Iter := Next (Tree, Sub_Iter, Jump_Over);
+            end loop;
+         end;
+
+         Get_Referenced_Entity
+           (Language,
+            Buffer,
+            Get_Construct (Node),
+            Type_Start,
+            Type_End,
+            Success);
+
+         if Success then
+            Unbounded.Append
+              (Result,
+               ASCII.LF & "<b>Return:</b>"
+               & ASCII.LF & "<b>"
+               & Attribute_Decoration (Get_Construct (Node), False)
+               & "</b>" & Buffer (Type_Start.Index .. Type_End.Index));
+         end if;
+      elsif Get_Construct (Node).Category in Data_Category then
+         declare
+            Var_Start, Var_End : Source_Location;
+         begin
+            Get_Referenced_Entity
+              (Language,
+               Buffer,
+               Get_Construct (Node),
+               Var_Start,
+               Var_End,
+               Success);
+
+            if Success then
+               Unbounded.Append
+                 (Result,
+                  ASCII.LF & "<b>Type: </b>"
+                  & Buffer (Var_Start.Index .. Var_End.Index));
+            end if;
+         end;
+      end if;
+
+      return Unbounded.To_String (Result);
+   end Get_Documentation;
 
    ----------------
    -- Is_Body_Of --

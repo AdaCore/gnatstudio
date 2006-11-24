@@ -172,6 +172,13 @@ package Language.Tree.Ada is
    --  See inherited documentation. If the two cells points to two parts of
    --  the same entity, this will return Equals.
 
+   function Get_Documentation
+     (Lang   : access Ada_Tree_Language;
+      Buffer : String;
+      Tree   : Construct_Tree;
+      Node   : Construct_Tree_Iterator) return String;
+   --  See inherited documentation
+
    Ada_Tree_Lang : constant Tree_Language_Access;
 
    function Is_Body_Of (Body_Tree, Spec_Tree : Construct_Tree) return Boolean;
