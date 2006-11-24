@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2005                       --
+--                     Copyright (C) 2000-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -35,6 +35,9 @@ with Gtk.Enums;       use Gtk.Enums;
 with Gtk.Handlers;    use Gtk.Handlers;
 with Gtk.Main;        use Gtk.Main;
 with Gtk.Pixmap;      use Gtk.Pixmap;
+with Gtk.Tree_Model;  use Gtk.Tree_Model;
+with Gtk.Tree_View;   use Gtk.Tree_View;
+with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
 with Gtk.Window;      use Gtk.Window;
 
 with Traces;          use Traces;
@@ -399,5 +402,38 @@ package body Tooltips is
          Trace (Exception_Handle, "Unexpected exception"
                 & Exception_Information (E));
    end Destroy_Cb;
+
+   -------------------------
+   -- Initialize_Tooltips --
+   -------------------------
+
+   procedure Initialize_Tooltips
+     (Tree : access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
+      Area : out Gdk.Rectangle.Gdk_Rectangle;
+      Iter : out Gtk.Tree_Model.Gtk_Tree_Iter)
+   is
+      Window     : Gdk_Window;
+      New_Window : Gdk_Window;
+      X, Y       : Gint;
+      Mask       : Gdk_Modifier_Type;
+      Cell_X, Cell_Y : Gint;
+      Path       : Gtk_Tree_Path;
+      Found      :  Boolean;
+      Column     : Gtk_Tree_View_Column;
+   begin
+      Area   := (0, 0, 0, 0);
+      Iter   := Null_Iter;
+
+      Window := Get_Bin_Window (Tree);
+      Get_Pointer (Window, X, Y, Mask, New_Window);
+      Get_Path_At_Pos (Tree, X, Y, Path, Column, Cell_X, Cell_Y, Found);
+      if not Found then
+         return;
+      end if;
+
+      Get_Cell_Area (Tree, Path, Column, Area);
+      Iter := Get_Iter (Get_Model (Tree), Path);
+      Path_Free (Path);
+   end Initialize_Tooltips;
 
 end Tooltips;

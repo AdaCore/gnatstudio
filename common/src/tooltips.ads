@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2005                       --
+--                     Copyright (C) 2000-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -31,12 +31,23 @@ with Gtk.Widget; use Gtk.Widget;
 with Gdk.Pixmap;
 with Gdk.Rectangle;
 with Gtk.Main;
+with Gtk.Tree_Model;
+with Gtk.Tree_View;
 with Gtk.Window;
 
 package Tooltips is
 
    Default_Timeout : constant Glib.Guint32 := 600;
    --  The delay before a tooltip is displayed, in milliseconds)
+
+   procedure Initialize_Tooltips
+     (Tree : access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
+      Area : out Gdk.Rectangle.Gdk_Rectangle;
+      Iter : out Gtk.Tree_Model.Gtk_Tree_Iter);
+   --  Find out the position of the mouse over the tree, and compute the area
+   --  that triggered the tooltip to appear (see Create_Contents below).
+   --  Iter is the iterator for which we should generate a tooltip.
+   --  Null_Iter is returned if no tooltip should be displayed.
 
    --------------
    -- Tooltips --
