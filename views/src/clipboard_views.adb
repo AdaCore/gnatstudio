@@ -28,7 +28,6 @@ with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Pixmap;                use Gdk.Pixmap;
 with Gdk.Rectangle;             use Gdk.Rectangle;
 with Gdk.Window;                use Gdk.Window;
-with Gdk.Types;                 use Gdk.Types;
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Glib.Unicode;              use Glib.Unicode;
@@ -144,55 +143,32 @@ package body Clipboard_Views is
       Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
       Area    : out Gdk.Rectangle.Gdk_Rectangle)
    is
-      Window     : Gdk.Window.Gdk_Window;
-      New_Window : Gdk_Window;
-      Mask       : Gdk_Modifier_Type;
-
       Model      : constant Gtk_Tree_Model :=
                      Get_Model (Tooltip.Clipboard_View.Tree);
-
-      X, Y       : Gint;
-      Path       : Gtk_Tree_Path;
-      Column     : Gtk_Tree_View_Column;
-      Cell_X,
-      Cell_Y     : Gint;
-      Row_Found  : Boolean := False;
       Iter       : Gtk_Tree_Iter;
       Selected   : Integer;
 
       Text       : GNAT.Strings.String_Access;
    begin
       Pixmap := null;
-      Area   := (0, 0, 0, 0);
 
-      Window := Get_Bin_Window (Tooltip.Clipboard_View.Tree);
-      Get_Pointer (Window, X, Y, Mask, New_Window);
+      Initialize_Tooltips (Tooltip.Clipboard_View.Tree, Area, Iter);
+      if Iter /= Null_Iter then
+         Selected := Integer (Get_Int (Model, Iter, 2));
 
-      Get_Path_At_Pos
-        (Tooltip.Clipboard_View.Tree, X, Y, Path,
-         Column, Cell_X, Cell_Y, Row_Found);
+         Text := new String'
+           (Get_Content
+              (Get_Clipboard (Tooltip.Clipboard_View.Kernel)) (Selected).all);
 
-      if not Row_Found then
-         return;
-      end if;
-
-      Get_Cell_Area (Tooltip.Clipboard_View.Tree, Path, Column, Area);
-      Iter := Get_Iter (Model, Path);
-      Path_Free (Path);
-      Selected := Integer (Get_Int (Model, Iter, 2));
-
-      Text := new String'
-        (Get_Content
-           (Get_Clipboard (Tooltip.Clipboard_View.Kernel)) (Selected).all);
-
-      if Text /= null then
-         Create_Pixmap_From_Text
-           (Text.all,
-            Get_Pref (Default_Font),
-            White (Get_Default_Colormap),
-            Tooltip.Clipboard_View.Tree,
-            Pixmap);
-         Free (Text);
+         if Text /= null then
+            Create_Pixmap_From_Text
+              (Text.all,
+               Get_Pref (Default_Font),
+               White (Get_Default_Colormap),
+               Tooltip.Clipboard_View.Tree,
+               Pixmap);
+            Free (Text);
+         end if;
       end if;
    end Draw;
 
