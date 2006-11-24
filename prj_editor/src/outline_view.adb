@@ -22,6 +22,8 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
+with Gdk.Pixmap;                use Gdk.Pixmap;
+with Gdk.Rectangle;             use Gdk.Rectangle;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
@@ -47,8 +49,9 @@ with Gtkada.MDI;                use Gtkada.MDI;
 
 with Basic_Types;               use Basic_Types;
 with Commands.Interactive;      use Commands, Commands.Interactive;
-with Entities.Queries;          use Entities.Queries;
 with Entities;                  use Entities;
+with Entities.Queries;          use Entities.Queries;
+with Entities.Tooltips;         use Entities.Tooltips;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
@@ -64,6 +67,7 @@ with Language_Handlers;         use Language_Handlers;
 with Project_Explorers_Common;  use Project_Explorers_Common;
 with Projects;                  use Projects;
 with String_Utils;              use String_Utils;
+with Tooltips;                  use Tooltips;
 with VFS;                       use VFS;
 
 package body Outline_View is
@@ -170,7 +174,7 @@ package body Outline_View is
 
    procedure On_Destroy
      (Outline : access Gtk_Widget_Record'Class);
-   --  Called when the outline is destroyed
+   --  Called when the outline is destroye
 
    procedure Clear (Outline : access Outline_View_Record'Class);
    --  Clear the contents of the outline view, and reset all marks
@@ -189,6 +193,60 @@ package body Outline_View is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
    --  Called when a file has been edited
+
+   --------------
+   -- Tooltips --
+   --------------
+
+   type Outline_View_Tooltips is new Tooltips.Pixmap_Tooltips with record
+      Outline : Outline_View_Access;
+   end record;
+   type Outline_View_Tooltips_Access is access all Outline_View_Tooltips;
+   procedure Draw
+     (Tooltip : access Outline_View_Tooltips;
+      Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
+      Area    : out Gdk.Rectangle.Gdk_Rectangle);
+
+   ----------
+   -- Draw --
+   ----------
+
+   procedure Draw
+     (Tooltip : access Outline_View_Tooltips;
+      Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
+      Area    : out Gdk.Rectangle.Gdk_Rectangle)
+   is
+      Status     : Find_Decl_Or_Body_Query_Status := Success;
+      Entity     : Entity_Information;
+      Iter       : Gtk_Tree_Iter;
+      Model      : constant Gtk_Tree_Store := Gtk_Tree_Store
+        (Get_Model (Tooltip.Outline.Tree));
+   begin
+      Pixmap := null;
+      Initialize_Tooltips (Tooltip.Outline.Tree, Area, Iter);
+      if Iter /= Null_Iter then
+         Find_Declaration_Or_Overloaded
+           (Kernel            => Tooltip.Outline.Kernel,
+            File              => Get_Or_Create
+              (Db     => Get_Database (Tooltip.Outline.Kernel),
+               File   => Tooltip.Outline.File),
+            Entity_Name       => Get_String (Model, Iter, Entity_Name_Column),
+            Line              => Integer (Get_Int (Model, Iter, Line_Column)),
+            Column            => 1,
+            Ask_If_Overloaded => False,
+            Entity            => Entity,
+            Status            => Status);
+         if Entity /= null then
+            Ref (Entity);
+            Pixmap := Entities.Tooltips.Draw_Tooltip
+              (Kernel => Tooltip.Outline.Kernel,
+               Entity => Entity,
+               Ref    => No_Entity_Reference,
+               Status => Status);
+            Unref (Entity);
+         end if;
+      end if;
+   end Draw;
 
    ----------------------
    -- Location_Changed --
@@ -532,6 +590,7 @@ package body Outline_View is
       Col_Number        : Gint;
       Text_Render       : Gtk_Cell_Renderer_Text;
       Pixbuf_Render     : Gtk_Cell_Renderer_Pixbuf;
+      Tooltip           : Outline_View_Tooltips_Access;
 
       pragma Unreferenced (Col_Number);
    begin
@@ -615,6 +674,10 @@ package body Outline_View is
          Object          => Outline,
          ID              => Outline_View_Module,
          Context_Func    => Outline_Context_Factory'Access);
+
+      Tooltip := new Outline_View_Tooltips;
+      Tooltip.Outline := Outline;
+      Set_Tooltip (Tooltip, Outline.Tree);
    end Gtk_New;
 
    ----------------
