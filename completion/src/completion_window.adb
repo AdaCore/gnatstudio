@@ -200,6 +200,12 @@ package body Completion_Window is
 
    procedure Delete (Window : access Completion_Window_Record'Class) is
    begin
+      if Window.In_Destruction then
+         return;
+      end if;
+
+      Window.In_Destruction := True;
+
       for J in 1 .. Window.Index - 1 loop
          Free (Window.Info (J));
       end loop;
