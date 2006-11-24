@@ -194,6 +194,13 @@ package body Outline_View is
       Data   : access Hooks_Data'Class);
    --  Called when a file has been edited
 
+   procedure Entity_At_Iter
+     (Outline : access Outline_View_Record'Class;
+      Iter    : Gtk_Tree_Iter;
+      Line    : out Integer;
+      Column  : out Visible_Column_Type);
+   --  Return the current coordinates for the entity referenced at Iter.
+
    --------------
    -- Tooltips --
    --------------
@@ -206,6 +213,29 @@ package body Outline_View is
      (Tooltip : access Outline_View_Tooltips;
       Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
       Area    : out Gdk.Rectangle.Gdk_Rectangle);
+
+   --------------------
+   -- Entity_At_Iter --
+   --------------------
+
+   procedure Entity_At_Iter
+     (Outline : access Outline_View_Record'Class;
+      Iter    : Gtk_Tree_Iter;
+      Line    : out Integer;
+      Column  : out Visible_Column_Type)
+   is
+      Model     : constant Gtk_Tree_Store :=
+        Gtk_Tree_Store (Get_Model (Outline.Tree));
+      Mark_Name : aliased String := Get_String (Model, Iter, Mark_Column);
+      Args      : constant Argument_List := (1 => Mark_Name'Unchecked_Access);
+   begin
+      Line := Safe_Value
+        (Execute_GPS_Shell_Command (Outline.Kernel, "Editor.get_line", Args));
+      Column := Visible_Column_Type
+        (Safe_Value
+           (Execute_GPS_Shell_Command
+              (Outline.Kernel, "Editor.get_column", Args)));
+   end Entity_At_Iter;
 
    ----------
    -- Draw --
@@ -221,18 +251,25 @@ package body Outline_View is
       Iter       : Gtk_Tree_Iter;
       Model      : constant Gtk_Tree_Store := Gtk_Tree_Store
         (Get_Model (Tooltip.Outline.Tree));
+      Line       : Integer;
+      Column     : Visible_Column_Type;
    begin
       Pixmap := null;
       Initialize_Tooltips (Tooltip.Outline.Tree, Area, Iter);
       if Iter /= Null_Iter then
+         Entity_At_Iter
+           (Outline => Tooltip.Outline,
+            Iter    => Iter,
+            Line    => Line,
+            Column  => Column);
          Find_Declaration_Or_Overloaded
            (Kernel            => Tooltip.Outline.Kernel,
             File              => Get_Or_Create
               (Db     => Get_Database (Tooltip.Outline.Kernel),
                File   => Tooltip.Outline.File),
             Entity_Name       => Get_String (Model, Iter, Entity_Name_Column),
-            Line              => Integer (Get_Int (Model, Iter, Line_Column)),
-            Column            => 1,
+            Line              => Line,
+            Column            => Column,
             Ask_If_Overloaded => False,
             Entity            => Entity,
             Status            => Status);
@@ -451,20 +488,11 @@ package body Outline_View is
          end if;
          Path_Free (Path);
 
-         declare
-            Mark_Name : aliased String :=
-              Get_String (Model, Iter, Mark_Column);
-            Args : constant Argument_List := (1 => Mark_Name'Unchecked_Access);
-         begin
-            Line := Safe_Value
-              (Execute_GPS_Shell_Command
-                 (Outline.Kernel, "Editor.get_line", Args));
-            Column := Visible_Column_Type
-              (Safe_Value
-                 (Execute_GPS_Shell_Command
-                    (Outline.Kernel, "Editor.get_column", Args)));
-         end;
-
+         Entity_At_Iter
+           (Outline => Outline,
+            Iter    => Iter,
+            Line    => Line,
+            Column  => Column);
          Set_Entity_Information
            (Context       => Context,
             Entity_Name   => Get_String (Model, Iter, Entity_Name_Column),
