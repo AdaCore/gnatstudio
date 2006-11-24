@@ -32,6 +32,7 @@
 --  in Projects.Registry.Register_Default_Language_Extension.
 
 with Language;
+with Language.Tree;
 with Entities;
 with Projects;
 with GNAT.OS_Lib;
@@ -106,6 +107,13 @@ package Language_Handlers is
    --  setting is returned.
    --  Return Unknown_Lang if no other language could be found.
 
+   function Get_Tree_Language_From_File
+     (Handler           : access Language_Handler_Record;
+      Source_Filename   : VFS.Virtual_File;
+      From_Project_Only : Boolean := False)
+      return Language.Tree.Tree_Language_Access;
+   --  Same as above but returns the tree language.
+
    function Get_Language_From_File
      (Handler           : access Language_Handler_Record;
       Source_Filename   : VFS.Virtual_File;
@@ -135,9 +143,10 @@ package Language_Handlers is
       Name    : String) return Language.Language_Access;
 
    procedure Register_Language
-     (Handler : access Language_Handler_Record;
-      Lang    : access Language.Language_Root'Class;
-      LI      : Entities.LI_Handler);
+     (Handler   : access Language_Handler_Record;
+      Lang      : access Language.Language_Root'Class;
+      Tree_Lang : access Language.Tree.Tree_Language'Class;
+      LI        : Entities.LI_Handler);
    --  Register a language and additional information about it.
    --  LI is the parser that should be used for cross references for this
    --  language, and can be left to null if no cross-reference is available. It
@@ -178,8 +187,9 @@ package Language_Handlers is
 
 private
    type Language_Info is record
-      Lang          : Language.Language_Access;
-      Handler       : Entities.LI_Handler;
+      Lang      : Language.Language_Access;
+      Tree_Lang : Language.Tree.Tree_Language_Access;
+      Handler   : Entities.LI_Handler;
    end record;
 
    type Language_Info_Array is array (Positive range <>) of Language_Info;

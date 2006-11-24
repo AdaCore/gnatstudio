@@ -34,6 +34,7 @@ with Gtk.List;                  use Gtk.List;
 with Gtk.List_Item;             use Gtk.List_Item;
 with Language.Unknown;          use Language.Unknown;
 with Language;                  use Language;
+with Language.Tree;             use Language.Tree;
 with Projects.Registry;         use Projects.Registry;
 with Projects;                  use Projects;
 with Traces;                    use Traces;
@@ -133,6 +134,29 @@ package body Language_Handlers is
       return Unknown_Lang;
    end Get_Language_From_File;
 
+   ---------------------------------
+   -- Get_Tree_Language_From_File --
+   ---------------------------------
+
+   function Get_Tree_Language_From_File
+     (Handler           : access Language_Handler_Record;
+      Source_Filename   : VFS.Virtual_File;
+      From_Project_Only : Boolean := False)
+      return Language.Tree.Tree_Language_Access
+   is
+      Index : Natural;
+   begin
+      Index := Get_Index_From_Language
+        (Handler,
+         Get_Language_From_File (Handler, Source_Filename, From_Project_Only));
+
+      if Index /= 0 and then Handler.Languages (Index).Tree_Lang /= null then
+         return Handler.Languages (Index).Tree_Lang;
+      end if;
+
+      return Unknown_Tree_Lang;
+   end Get_Tree_Language_From_File;
+
    ----------------------------
    -- Get_Language_From_File --
    ----------------------------
@@ -224,9 +248,10 @@ package body Language_Handlers is
    -----------------------
 
    procedure Register_Language
-     (Handler : access Language_Handler_Record;
-      Lang    : access Language.Language_Root'Class;
-      LI      : LI_Handler)
+     (Handler   : access Language_Handler_Record;
+      Lang      : access Language.Language_Root'Class;
+      Tree_Lang : access Language.Tree.Tree_Language'Class;
+      LI        : LI_Handler)
    is
       N     : constant String := To_Lower (Get_Name (Lang));
       Tmp   : Language_Info_Access;
@@ -249,8 +274,9 @@ package body Language_Handlers is
       end if;
 
       Handler.Languages (Index) :=
-        (Handler => LI,
-         Lang    => Language_Access (Lang));
+        (Handler   => LI,
+         Lang      => Language_Access (Lang),
+         Tree_Lang => Tree_Language_Access (Tree_Lang));
 
       --  If the name is "", this is a dummy LI handler and we do not need to
       --  register it explicitly
