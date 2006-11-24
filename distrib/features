@@ -237,7 +237,8 @@ F428-015 Smart completion completes subprograms profiles (2006-11-08)
 
   When writing a subprogram call, hitting the completion key on a comma or an
   open parenthesis will offer to complete with the remaining possible named
-  parameters.
+  parameters. The Smart Completion is triggered automatically after entering
+  a ',' or a '('.
 
 F419-014 Additions to the GPS.Console script interface (2006-10-19)
 
