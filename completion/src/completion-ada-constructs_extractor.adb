@@ -24,7 +24,6 @@ with Ada.Unchecked_Deallocation; use Ada;
 with GNAT.Strings;
 
 with Language.Ada;           use Language.Ada;
-with Language.Documentation; use Language.Documentation;
 with Basic_Types;            use Basic_Types;
 
 package body Completion.Ada.Constructs_Extractor is
@@ -193,7 +192,7 @@ package body Completion.Ada.Constructs_Extractor is
      (Proposal : Construct_Completion_Proposal) return UTF8_String is
    begin
       return Get_Documentation
-        (Ada_Lang,
+        (Ada_Tree_Lang,
          Proposal.Buffer.all,
          Proposal.Tree,
          Proposal.Tree_Node);
