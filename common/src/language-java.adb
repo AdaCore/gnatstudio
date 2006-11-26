@@ -1,7 +1,8 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                 Copyright (C) 2000-2005 AdaCore                   --
+--                     Copyright (C) 2000-2006                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,11 +19,17 @@
 -----------------------------------------------------------------------
 
 with GNAT.Regpat; use GNAT.Regpat;
+with Language.C;  use Language.C;
 
 package body Language.Java is
 
-   Keywords_List : aliased Pattern_Matcher := Compile ("^@@@@$");
-   --  ??? Need to set a real pattern
+   Keywords_Regexp : aliased String :=
+                       Language.Keywords (C_Lang).all &
+                       "finally|synchronized|implements|extends" &
+                       "t(h(rows|readsafe)|ransient)|native|volatile";
+
+   Keywords_List : aliased Pattern_Matcher :=
+                     Compile ("^(" & Keywords_Regexp & ")\W");
 
    --------------------
    -- Is_Simple_Type --
@@ -82,6 +89,14 @@ package body Language.Java is
    --------------
    -- Keywords --
    --------------
+
+   function Keywords
+     (Lang : access Java_Language) return Strings.String_Access
+   is
+      pragma Unreferenced (Lang);
+   begin
+      return Keywords_Regexp'Access;
+   end Keywords;
 
    function Keywords
      (Lang : access Java_Language) return Pattern_Matcher_Access
