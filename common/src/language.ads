@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                      Copyright (C) 2000-2006                      --
---                             AdaCore                               --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,9 +19,11 @@
 -----------------------------------------------------------------------
 
 with Ada.Strings.Maps;  use Ada.Strings.Maps;
-with Case_Handling;
+
 with Glib;
-with GNAT.Regpat;
+with Case_Handling;
+
+with GNAT.Regpat;       use GNAT;
 with GNAT.Strings;
 
 package Language is
@@ -84,7 +86,12 @@ package Language is
    --  First is required so that regexps can be used to match on e.g. start
    --  of lines.
 
-   type Pattern_Matcher_Access is access all GNAT.Regpat.Pattern_Matcher;
+   type Pattern_Matcher_Access is access all Regpat.Pattern_Matcher;
+
+   function Keywords
+     (Lang : access Language_Root) return Strings.String_Access is abstract;
+   --  Returns the uncompiled keyword regular expression. This string is used
+   --  to create the pattern matcher as returned by the version above.
 
    function Keywords
      (Lang : access Language_Root) return Pattern_Matcher_Access is abstract;
@@ -142,10 +149,10 @@ package Language is
    ---------------------
 
    type Project_Field is record
-      Attribute_Name  : GNAT.Strings.String_Access;
-      Attribute_Index : GNAT.Strings.String_Access := null;
-      Description     : GNAT.Strings.String_Access;
-      Values          : GNAT.Strings.String_List_Access := null;
+      Attribute_Name  : Strings.String_Access;
+      Attribute_Index : Strings.String_Access := null;
+      Description     : Strings.String_Access;
+      Values          : Strings.String_List_Access := null;
       Editable        : Boolean := True;
    end record;
    No_Project_Field : constant Project_Field := (null, null, null, null, True);
@@ -183,40 +190,40 @@ package Language is
       Comment_End_Length   : Natural) is
    --  Set any of the length to 0 if there is no such comment
    record
-      Comment_Start : String (1 .. Comment_Start_Length);
-      --  How comments start for this language. This is for comments that
-      --  do not end on Newline, but with Comment_End.
+         Comment_Start                 : String (1 .. Comment_Start_Length);
+         --  How comments start for this language. This is for comments that
+         --  do not end on Newline, but with Comment_End.
 
-      Comment_End : String (1 .. Comment_End_Length);
-      --  How comments end for this language
+         Comment_End                   : String (1 .. Comment_End_Length);
+         --  How comments end for this language
 
-      New_Line_Comment_Start : GNAT.Strings.String_Access;
-      --  How comments start. These comments end on the next newline character.
-      --  If null, use New_Line_Comment_Start_Regexp instead.
+         New_Line_Comment_Start        : Strings.String_Access;
+         --  How comments start. These comments end on the next newline
+         --  character. If null, use New_Line_Comment_Start_Regexp instead.
 
-      New_Line_Comment_Start_Regexp : Pattern_Matcher_Access;
-      --  How comments start. These comments end on the next newline character.
-      --  If null, use New_Line_Comment_Start instead.
+         New_Line_Comment_Start_Regexp : Pattern_Matcher_Access;
+         --  How comments start. These comments end on the next newline
+         --  character. If null, use New_Line_Comment_Start instead.
 
-      String_Delimiter : Character;
-      --  How strings start and end
+         String_Delimiter              : Character;
+         --  How strings start and end
 
-      Quote_Character : Character;
-      --  The character used to quote (protect) the following one. If this is
-      --  set to ASCII.NUL, then there is no such character in the
-      --  language. For instance, it should be set to \ for C.
+         Quote_Character               : Character;
+         --  The character used to quote (protect) the following one. If this
+         --  is set to ASCII.NUL, then there is no such character in the
+         --  language. For instance, it should be set to \ for C.
 
-      Constant_Character : Character;
-      --  The character that starts and ends constant characters
+         Constant_Character            : Character;
+         --  The character that starts and ends constant characters
 
-      Can_Indent         : Boolean;
-      --  Whether indentation is supported by this language.
+         Can_Indent                    : Boolean;
+         --  Whether indentation is supported by this language
 
-      Syntax_Highlighting : Boolean;
-      --  Whether syntax highlighting is relevant to this language.
+         Syntax_Highlighting           : Boolean;
+         --  Whether syntax highlighting is relevant to this language
 
-      Case_Sensitive      : Boolean;
-      --  Whether the language is case sensitive.
+         Case_Sensitive                : Boolean;
+         --  Whether the language is case sensitive
    end record;
    --  This record describes the syntax of the language (for color
    --  highlighting purposes). All the fields in this record are language
@@ -518,10 +525,10 @@ package Language is
       Visibility     : Construct_Visibility := Visibility_Public;
       --  Is the construct public, private or protected ?
 
-      Name           : GNAT.Strings.String_Access;
+      Name           : Strings.String_Access;
       --  Name of the enclosing token. Null if not relevant for Token
 
-      Profile        : GNAT.Strings.String_Access;
+      Profile        : Strings.String_Access;
       --  Subprogram profile, if Category is in Subprogram_Category.
       --  Note that even for Subprogram_Category, Profile can be null if the
       --  subprogram does not have any parameter.
@@ -552,7 +559,7 @@ package Language is
       Category       : Language_Category;
       Is_Declaration : Boolean;
       Visibility     : Construct_Visibility := Visibility_Public;
-      Name           : GNAT.Strings.String_Access;
+      Name           : Strings.String_Access;
       Sloc_Start     : Source_Location;
       Sloc_Entity    : Source_Location;
       Sloc_End       : Source_Location;
@@ -670,7 +677,7 @@ package Language is
 
    type Make_Entry_Func is access function
      (Str      : String;
-      Matched  : GNAT.Regpat.Match_Array) return String;
+      Matched  : Regpat.Match_Array) return String;
    --  Function that builds the string to be inserted in the tree.
 
    type Explorer_Category is record
