@@ -18,17 +18,23 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Regpat;           use GNAT.Regpat;
-with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
-with String_Utils;          use String_Utils;
-with C_Analyzer;            use C_Analyzer;
+with Ada.Strings.Fixed; use Ada.Strings.Fixed;
+
+with GNAT.Regpat;       use GNAT.Regpat;
+
+with String_Utils;      use String_Utils;
+with C_Analyzer;        use C_Analyzer;
 
 package body Language.C is
 
-   Keywords_List : aliased Pattern_Matcher := Compile
-     ("^(" & C_Keywords_Regexp & ")\W");
-   --  for java: ("finally" "synchronized" "implements" "extends" "throws"
-   --  "threadsafe" "transient" "native" "volatile"
+   Keywords_Regexp : aliased String :=
+     "auto|break|c(ase|on(st|tinue)|har)|d(efault|o|ouble)|e(lse|num|xtern)" &
+     "|f(loat|or)|goto|i(f|n(t|line))|long|re(gister|strict|turn)" &
+     "|s(hort|i(gned|zeof)|t(atic|ruct)|witch)|un(ion|signed)|vo(id|latile)" &
+     "|while|typedef";
+
+   Keywords_List : aliased Pattern_Matcher :=
+                     Compile ("^(" & Keywords_Regexp & ")\W");
 
    Subprogram_RE : aliased Pattern_Matcher :=
      Compile
@@ -148,6 +154,14 @@ package body Language.C is
    --------------
    -- Keywords --
    --------------
+
+   function Keywords
+     (Lang : access C_Language) return Strings.String_Access
+   is
+      pragma Unreferenced (Lang);
+   begin
+      return Keywords_Regexp'Access;
+   end Keywords;
 
    function Keywords
      (Lang : access C_Language) return Pattern_Matcher_Access
