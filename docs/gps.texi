@@ -2206,8 +2206,8 @@ Remove the comment delimiters from the current selection or line.
 
 Complete the identifier prefix under the cursor, and list the results in a
 pop-up list. This command can take advantage of and entity database and offers
-completions from the entire project, along with documentation extracted from 
-comments surrounding declarations. To take full advantage of this feature, the 
+completions from the entire project, along with documentation extracted from
+comments surrounding declarations. To take full advantage of this feature, the
 smart completion preference must be enabled, which will imply the load of the
 entity database at GPS startup. The first time you use this feature, GPS will
 ask you wether you want this enabled or not.
@@ -2277,8 +2277,8 @@ begin
 @end smallexample
 
 If you hit the completion key after the comma, the smart completion engine
-will propose you to complete with the named parameters "B =>", "C =>" or 
-directly to complete with all the remaining parameters, which in this case 
+will propose you to complete with the named parameters "B =>", "C =>" or
+directly to complete with all the remaining parameters, which in this case
 will be "B =>, C => )".
 
 @iftex
@@ -2410,7 +2410,7 @@ you wish to repeat, and finally pressing the key you want.
 
 For instance, the following sequence @key{control-u 79 -} will insert
 79 characters '-' in the current editor. This proves often useful to
-insert separators. 
+insert separators.
 
 If you are using the emacs mode (see @code{/Edit/Startup Scripts} menu),
 you can also use the sequence @key{control-u 30 control-k} to delete
@@ -11371,7 +11371,11 @@ A V7 style regular expression for recognizing and highlighting keywords.
 Multiple @code{Keywords} tags can be specified, and will be concatenated
 into a single regular expression. If the regular expression needs to match
 characters other than letters and underscore, you must also edit the
-@code{Wordchars} node.
+@code{Wordchars} node. If a parent language has been specified for the
+current language definition it is possible to append to the parent Keywords
+by setting the @code{mode} attribute to @code{append}, the default value is
+@code{override} meaning that the keywords definition will replace the
+parent's one.
 
 The full grammar of the regular expression can be found in the spec of the
 file @file{g-regpat.ads} in the GNAT run time.
@@ -11447,7 +11451,11 @@ Describes the context used to highlight the syntax of a file.
    A regular expression defining the beginning of a single line comment
    (ended at the next end of line). This regular expression may contain
    multiple possible line starts, such as @code{;|#} for comments starting
-   after a semicolon or after the hash sign.
+   after a semicolon or after the hash sign. If a parent language has been
+   specified for the current language definition it is possible to append
+   to the parent New_Line_Comment_Start by setting the @code{mode} attribute to
+   @code{append}, the default value is @code{override} meaning that the
+   New_Line_Comment_Start definition will replace the parent's one.
 
    @item String_Delimiter
    A character defining the string delimiter.
