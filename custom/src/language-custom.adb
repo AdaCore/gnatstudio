@@ -18,14 +18,16 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
+with Ada.Unchecked_Deallocation;
+
+with GNAT.Regpat;             use GNAT.Regpat;
+
 with Glib;                    use Glib;
 with Glib.Module;             use Glib.Module;
 with Glib.Xml_Int;            use Glib.Xml_Int;
-with GNAT.Regpat;             use GNAT.Regpat;
-with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
-with Ada.Unchecked_Deallocation;
 with Traces;                  use Traces;
-with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 --  ??? Would be nice if languages registered themselves somewhere instead
 --  of having a static knowledge of all the language defined.
@@ -162,23 +164,26 @@ package body Language.Custom is
    ----------------
 
    procedure Initialize
-     (Lang     : access Custom_Language'Class;
-      Handler  : access Language_Handler_Record'Class;
-      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Top      : Glib.Xml_Int.Node_Ptr)
+     (Lang    : access Custom_Language'Class;
+      Handler : access Language_Handler_Record'Class;
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Top     : Glib.Xml_Int.Node_Ptr)
    is
-      N, Node                       : Node_Ptr;
-      Parent                        : Node_Ptr;
-      Comment_Start                 : String_Ptr;
-      Comment_End                   : String_Ptr;
-      Tmp_Str                       : String_Ptr;
-      Flags                         : Regexp_Flags;
-      New_Line_Comment_Start        : String_Ptr;
+      use type Strings.String_Access;
+
+      N, Node                 : Node_Ptr;
+      Parent                  : Node_Ptr;
+      Comment_Start           : String_Ptr;
+      Comment_End             : String_Ptr;
+      Tmp_Str                 : String_Ptr;
+      Flags                   : Regexp_Flags;
+      New_Line_Comment_Start  : String_Ptr;
       Num_Categories,
       Comment_Start_Length,
-      Comment_End_Length            : Natural := 0;
-      Tmp                           : Project_Field_Array_Access;
-      Str                           : Unbounded_String;
+      Comment_End_Length      : Natural := 0;
+      Tmp                     : Project_Field_Array_Access;
+      Str                     : Unbounded_String;
+      Keyword_Append          : Boolean := False; -- default is override
 
       function Contains_Special_Characters (S : String) return Boolean;
       --  Return whether S contains special regexp characters.
@@ -461,8 +466,27 @@ package body Language.Custom is
             Comment_End_Length := Comment_End'Length;
          end if;
 
-         New_Line_Comment_Start :=
-           Get_Field (Node, "New_Line_Comment_Start");
+         declare
+            NL : constant Node_Ptr :=
+                   Find_Tag (Node.Child, "New_Line_Comment_Start");
+         begin
+            if NL = null then
+               New_Line_Comment_Start := null;
+
+            elsif Get_Attribute (NL, "mode", "override") = "append"
+              and then Lang.Parent /= null
+              and then Get_Language_Context (Lang.Parent) /= null
+              and then Get_Language_Context
+                (Lang.Parent).New_Line_Comment_Start /= null
+            then
+               New_Line_Comment_Start :=
+                 new String'(Get_Language_Context
+                             (Lang.Parent).New_Line_Comment_Start.all & '|' &
+                             NL.Value.all);
+            else
+               New_Line_Comment_Start := NL.Value;
+            end if;
+         end;
 
          Lang.Context := new Language_Context
            (Comment_Start_Length,
@@ -519,12 +543,32 @@ package body Language.Custom is
 
          exit when Node = null;
 
+         --  Check inherited mode
+
+         if Get_Attribute (Node, "mode", "override") = "append" then
+            Keyword_Append := True;
+         end if;
+
          Append (Str, Node.Value.all);
          Node := Node.Next;
       end loop;
 
+      if Keyword_Append
+        and then Lang.Parent /= null
+        and then Strings.String_Access'(Keywords (Lang.Parent)) /= null
+      then
+         Lang.Keywords_Regexp :=
+           new String'(Keywords (Lang.Parent).all & '|' & To_String (Str));
+
+      elsif Str /= Null_Unbounded_String then
+         Lang.Keywords_Regexp := new String'(To_String (Str));
+
+      else
+         Lang.Keywords_Regexp := new String'("");
+      end if;
+
       declare
-         Keywords      : constant String := To_String (Str);
+         Keywords : constant String := Lang.Keywords_Regexp.all;
       begin
          if Keywords /= "" then
             Lang.Keywords := new Pattern_Matcher'
@@ -570,8 +614,8 @@ package body Language.Custom is
 
          --  Concatenate all Pattern tags
 
-         Str := To_Unbounded_String (0);
-         N := Node.Child;
+         Str := Null_Unbounded_String;
+         N   := Node.Child;
 
          loop
             N := Find_Tag (N, "Pattern");
@@ -624,6 +668,12 @@ package body Language.Custom is
    --------------
    -- Keywords --
    --------------
+
+   function Keywords
+     (Lang : access Custom_Language) return Strings.String_Access is
+   begin
+      return Lang.Keywords_Regexp;
+   end Keywords;
 
    function Keywords
      (Lang : access Custom_Language) return Pattern_Matcher_Access is
@@ -771,7 +821,7 @@ package body Language.Custom is
       if Comment then
          declare
             S   : constant chars_ptr :=
-              Lang.Comment_Line (Line, True, Line'Length);
+                    Lang.Comment_Line (Line, True, Line'Length);
             Val : constant String := Value (S);
 
          begin
@@ -781,7 +831,7 @@ package body Language.Custom is
       else
          declare
             S   : constant chars_ptr :=
-              Lang.Comment_Line (Line, False, Line'Length);
+                    Lang.Comment_Line (Line, False, Line'Length);
             Val : constant String := Value (S);
 
          begin
@@ -835,6 +885,10 @@ package body Language.Custom is
       pragma Convention (C, Replace_Cb);
       --  Convention C wrapper for Replace
 
+      ----------------
+      -- Replace_Cb --
+      ----------------
+
       procedure Replace_Cb
         (Line, First, Last : Integer;
          S                 : chars_ptr) is
@@ -878,6 +932,10 @@ package body Language.Custom is
          Partial_Entity : Boolean) return Boolean;
       pragma Convention (C, Entity_Cb);
       --  Convention C wrapper for Callback
+
+      ---------------
+      -- Entity_Cb --
+      ---------------
 
       function Entity_Cb
         (Entity         : Language_Entity;
