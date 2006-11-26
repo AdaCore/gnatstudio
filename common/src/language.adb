@@ -151,13 +151,13 @@ package body Language is
       Line      : out Natural;
       Column    : out Natural)
    is
-      Matched       : Match_Array (0 .. 1);
       Context       : constant Language_Context_Access :=
-        Get_Language_Context (Language_Access (Lang));
+                        Get_Language_Context (Language_Access (Lang));
       Keys          : constant Pattern_Matcher_Access :=
-        Keywords (Language_Access (Lang));
-      C             : Gunichar;
+                        Keywords (Language_Access (Lang));
       Buffer_Length : constant Natural := Buffer'Last - First + 1;
+      Matched       : Match_Array (0 .. 1);
+      C             : Gunichar;
       Tmp           : Natural;
       Found         : Boolean;
 
@@ -786,9 +786,9 @@ package body Language is
    procedure Free (Fields : in out Project_Field_Array) is
    begin
       for F in Fields'Range loop
-         GNAT.Strings.Free (Fields (F).Attribute_Name);
-         GNAT.Strings.Free (Fields (F).Attribute_Index);
-         GNAT.Strings.Free (Fields (F).Description);
+         Strings.Free (Fields (F).Attribute_Name);
+         Strings.Free (Fields (F).Attribute_Index);
+         Strings.Free (Fields (F).Description);
       end loop;
    end Free;
 
