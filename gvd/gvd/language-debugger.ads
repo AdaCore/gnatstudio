@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
---                              ACT-Europe                           --
+--                      Copyright (C) 2000-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,6 +26,11 @@ package Language.Debugger is
 
    type Language_Debugger is abstract new Language_Root with private;
    type Language_Debugger_Access is access all Language_Debugger'Class;
+
+   function Keywords
+     (Lang : access Language_Debugger) return Strings.String_Access;
+   --  Function used for all debugger languages as this is not used. This
+   --  version always returns null.
 
    procedure Set_Debugger
      (The_Language : access Language_Debugger;
