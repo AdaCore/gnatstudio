@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2005                       --
+--                     Copyright (C) 2000-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -40,18 +40,13 @@ package Language.C is
    ------------------
 
    function Keywords
+     (Lang : access C_Language) return Strings.String_Access;
+
+   function Keywords
      (Lang : access C_Language) return Pattern_Matcher_Access;
 
    function Get_Language_Context
      (Lang : access C_Language) return Language_Context_Access;
-
-   C_Keywords_Regexp : constant String :=
-     "auto|break|c(ase|on(st|tinue)|har)|d(efault|o|ouble)|e(lse|num|xtern)|" &
-     "f(loat|or)|goto|i(f|n(t|line))|long|re(gister|strict|turn)|" &
-     "s(hort|i(gned|zeof)|t(atic|ruct)|witch)|un(ion|signed)|vo(id|latile)|" &
-     "while|typedef";
-   --  Regexp used to highlight keywords in C.
-   --  Do not use this directly, use the function Keywords instead.
 
    --------------
    -- Explorer --
