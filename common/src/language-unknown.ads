@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2005                       --
+--                     Copyright (C) 2000-2006                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -40,6 +40,9 @@ package Language.Unknown is
    function Is_Simple_Type
      (Lang : access Unknown_Language;
       Str : String) return Boolean;
+
+   function Keywords
+     (Lang : access Unknown_Language) return Strings.String_Access;
 
    function Keywords
      (Lang : access Unknown_Language) return Pattern_Matcher_Access;

@@ -1,7 +1,8 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                 Copyright (C) 2000-2005 AdaCore                   --
+--                      Copyright (C) 2000-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,7 +22,9 @@ with GNAT.Regpat; use GNAT.Regpat;
 
 package body Language.Unknown is
 
-   Keywords_List : aliased Pattern_Matcher := GNAT.Regpat.Never_Match;
+   Keywords_Regexp : aliased String := "";
+
+   Keywords_List   : aliased Pattern_Matcher := GNAT.Regpat.Never_Match;
 
    --------------------
    -- Is_Simple_Type --
@@ -84,6 +87,14 @@ package body Language.Unknown is
    --------------
    -- Keywords --
    --------------
+
+   function Keywords
+     (Lang : access Unknown_Language) return Strings.String_Access
+   is
+      pragma Unreferenced (Lang);
+   begin
+      return Keywords_Regexp'Access;
+   end Keywords;
 
    function Keywords
      (Lang : access Unknown_Language) return Pattern_Matcher_Access
