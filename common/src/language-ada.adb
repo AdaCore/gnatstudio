@@ -19,18 +19,28 @@
 -----------------------------------------------------------------------
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.Regpat;  use GNAT.Regpat;
+with GNAT.Regpat;               use GNAT.Regpat;
 
-with String_Utils; use String_Utils;
-with Ada_Analyzer; use Ada_Analyzer;
+with String_Utils;              use String_Utils;
+with Ada_Analyzer;              use Ada_Analyzer;
 
 package body Language.Ada is
 
-   Keywords_List : aliased Pattern_Matcher (1292);
-   --  The size is hard-coded to save a little bit on the compilation time
-   --  for the regular expression (we need to compile the regexp only once).
+   Keywords_Regexp : aliased String :=
+                   "a(b(ort|s(tract)?)|cce(pt|ss)|l(iased|l)|nd|rray|t)|b"
+                 & "(egin|ody)|c(ase|onstant)|d(e(clare|l(ay|ta))|igits|o)|"
+                 & "e(ls(e|if)|n(d|try)|x(ception|it))|f(or|unction)|g(eneric|"
+                 & "oto)|i[fns]|l(imited|oop)|mod|n(ew|ot|ull)|o(thers|ut|[fr]"
+                 & ")|p(ackage|r(agma|ivate|o(cedure|tected)))|r(a(ise|nge)|e("
+                 & "cord|m|names|queue|turn|verse))|s(e(lect|parate)|ubtype)|t"
+                 & "(a(gged|sk)|erminate|hen|ype)|u(ntil|se)|w(h(en|ile)|ith)|"
+                 & "xor";
 
-   --  Make_Entry functions for the explorer.
+   Keywords_List : aliased Pattern_Matcher :=
+                     Compile
+                       ("^(" & Keywords_Regexp & ")\b", Case_Insensitive);
+
+   --  Make_Entry functions for the explorer
 
    function Make_Entry_Subprogram
      (Str     : String;
@@ -363,6 +373,14 @@ package body Language.Ada is
    --------------
 
    function Keywords
+     (Lang : access Ada_Language) return Strings.String_Access
+   is
+      pragma Unreferenced (Lang);
+   begin
+      return Keywords_Regexp'Access;
+   end Keywords;
+
+   function Keywords
      (Lang : access Ada_Language) return Pattern_Matcher_Access
    is
       pragma Unreferenced (Lang);
@@ -375,18 +393,18 @@ package body Language.Ada is
    --------------------------
 
    Ada_Context : aliased Language_Context :=
-     (Comment_Start_Length   => 0,
-      Comment_End_Length     => 0,
-      Comment_Start          => "",
-      Comment_End            => "",
-      New_Line_Comment_Start => new String'("--"),
-      New_Line_Comment_Start_Regexp => null,
-      String_Delimiter       => '"',
-      Quote_Character        => ASCII.NUL,
-      Constant_Character     => ''',
-      Can_Indent             => True,
-      Syntax_Highlighting    => True,
-      Case_Sensitive         => False);
+                   (Comment_Start_Length          => 0,
+                    Comment_End_Length            => 0,
+                    Comment_Start                 => "",
+                    Comment_End                   => "",
+                    New_Line_Comment_Start        => new String'("--"),
+                    New_Line_Comment_Start_Regexp => null,
+                    String_Delimiter              => '"',
+                    Quote_Character               => ASCII.NUL,
+                    Constant_Character            => ''',
+                    Can_Indent                    => True,
+                    Syntax_Highlighting           => True,
+                    Case_Sensitive                => False);
 
    function Get_Language_Context
      (Lang : access Ada_Language) return Language_Context_Access
@@ -649,15 +667,4 @@ package body Language.Ada is
 
    end Get_Referenced_Entity;
 
-begin
-   Compile (Keywords_List,
-            "^(a(b(ort|s(tract)?)|cce(pt|ss)|l(iased|l)|nd|rray|t)|b"
-            & "(egin|ody)|c(ase|onstant)|d(e(clare|l(ay|ta))|igits|o)|"
-            & "e(ls(e|if)|n(d|try)|x(ception|it))|f(or|unction)|g(eneric|"
-            & "oto)|i[fns]|l(imited|oop)|mod|n(ew|ot|ull)|o(thers|ut|[fr]"
-            & ")|p(ackage|r(agma|ivate|o(cedure|tected)))|r(a(ise|nge)|e("
-            & "cord|m|names|queue|turn|verse))|s(e(lect|parate)|ubtype)|t"
-            & "(a(gged|sk)|erminate|hen|ype)|u(ntil|se)|w(h(en|ile)|ith)|"
-            & "xor)\b",
-            Case_Insensitive);
 end Language.Ada;
