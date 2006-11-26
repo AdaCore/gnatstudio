@@ -551,6 +551,10 @@ package body Commands.Custom is
       procedure Clear_Console (Name : GNAT.Strings.String_Access);
       --  Clear a specific console
 
+      -------------------
+      -- Clear_Console --
+      -------------------
+
       procedure Clear_Console (Name : GNAT.Strings.String_Access) is
          Console : Interactive_Console;
       begin
