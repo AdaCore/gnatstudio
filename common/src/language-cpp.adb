@@ -19,18 +19,23 @@
 -----------------------------------------------------------------------
 
 with GNAT.Regpat; use GNAT.Regpat;
-with Language.C;  use Language.C;
+with Language.C;  use Language, Language.C;
 with C_Analyzer;  use C_Analyzer;
 
 package body Language.Cpp is
 
-   Keywords_List : aliased Pattern_Matcher := Compile
-     ("^(" & C_Keywords_Regexp &
-      "|a(bstract|sm)|bool|c(atch|lass|onst_cast)|d(elete|ynamic_cast)|" &
-      "explicit|f(alse|inal|riend)|interface|mutable|n(amespace|ew)|operator" &
-      "p(r(ivate|otected)|ublic)|reinterpret_cast|s(tatic_cast|ynchronized)|" &
-      "t(emplate|h(is|hrow)|r(ue|y)|ype(id|name))|using|virtual|wchar_t"
-      & ")\W");
+   Keywords_Regexp : aliased constant String :=
+                       Language.Keywords (C_Lang).all &
+                       "|a(bstract|sm)|bool|c(atch|lass|onst_cast)" &
+                       "|d(elete|ynamic_cast)|explicit|f(alse|inal|riend)" &
+                       "|interface|mutable|n(amespace|ew)|operator" &
+                       "|p(r(ivate|otected)|ublic)|reinterpret_cast" &
+                       "|s(tatic_cast|ynchronized)" &
+                       "|t(emplate|h(is|hrow)|r(ue|y)|ype(id|name))" &
+                       "|using|virtual|wchar_t";
+
+   Keywords_List : aliased Pattern_Matcher :=
+                     Compile ("^(" & Keywords_Regexp & ")\W");
 
    Classes_RE : aliased Pattern_Matcher :=
      Compile ("^\s*(class|struct)\s+([\w_]+)\s*(:[^{]+)?\{", Multiple_Lines);
@@ -46,8 +51,8 @@ package body Language.Cpp is
         Multiple_Lines);
 
    function Make_Entry_Class
-     (Str      : String;
-      Matched  : Match_Array) return String;
+     (Str     : String;
+      Matched : Match_Array) return String;
    --  Function used to create an entry in the explorer, for classes.
    --  See the description of Explorer_Categories for more information.
 
