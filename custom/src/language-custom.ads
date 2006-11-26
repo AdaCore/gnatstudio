@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
+--                      Copyright (C) 2000-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -21,9 +21,13 @@
 --  This is a generic language that it customized from a XML file.
 --  See language.ads for a complete spec.
 
-with System;
 with Interfaces.C.Strings;
+with System;
+
+with GNAT.Strings;
+
 with Glib.Xml_Int;
+
 with Language_Handlers;
 with GPS.Kernel;
 
@@ -33,11 +37,10 @@ package Language.Custom is
    type Custom_Language_Access is access all Custom_Language'Class;
 
    procedure Initialize
-     (Lang     : access Custom_Language'Class;
-      Handler  : access
-        Language_Handlers.Language_Handler_Record'Class;
-      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Top      : Glib.Xml_Int.Node_Ptr);
+     (Lang    : access Custom_Language'Class;
+      Handler : access Language_Handlers.Language_Handler_Record'Class;
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Top     : Glib.Xml_Int.Node_Ptr);
    --  Initialize Lang based on the contents of an XML node.
    --  The language and its extensions are automatically registered in the
    --  handler.
@@ -48,6 +51,9 @@ package Language.Custom is
 
    function Is_Simple_Type
      (Lang : access Custom_Language; Str : String) return Boolean;
+
+   function Keywords
+     (Lang : access Custom_Language) return Strings.String_Access;
 
    function Keywords
      (Lang : access Custom_Language) return Pattern_Matcher_Access;
@@ -312,6 +318,7 @@ private
    type Custom_Language is new Language_Root with record
       Categories       : Explorer_Categories_Access;
       Keywords         : Pattern_Matcher_Access;
+      Keywords_Regexp  : Strings.String_Access;
       Context          : Language_Context_Access;
       Name             : Glib.String_Ptr;
       Project_Fields   : Project_Field_Array_Access;
