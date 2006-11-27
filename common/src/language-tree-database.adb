@@ -33,6 +33,18 @@ package body Language.Tree.Database is
    -- Free --
    ----------
 
+   procedure Free (This : in out Buffer_Provider_Access) is
+      procedure Internal is new Unchecked_Deallocation
+        (Buffer_Provider'Class, Buffer_Provider_Access);
+   begin
+      Free (This.all);
+      Internal (This);
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
    procedure Free (File : in out Structured_File_Access) is
       procedure Internal is new Unchecked_Deallocation
         (Structured_File, Structured_File_Access);
@@ -91,10 +103,17 @@ package body Language.Tree.Database is
    ----------------
 
    function Get_Buffer
-     (File : Structured_File_Access) return GNAT.Strings.String_Access is
+     (File : Structured_File_Access) return GNAT.Strings.String_Access
+   is
+      Provider : Buffer_Provider_Access;
    begin
       if File.Cache_Buffer = null then
-         File.Cache_Buffer := Read_File (File.File);
+         if Contains (File.Db.Providers_Db, File.File) then
+            Provider := Element (File.Db.Providers_Db, File.File);
+            File.Cache_Buffer := new String'(Get_Buffer (Provider).all);
+         else
+            File.Cache_Buffer := Read_File (File.File);
+         end if;
       end if;
 
       return File.Cache_Buffer;
@@ -347,6 +366,38 @@ package body Language.Tree.Database is
          Update_Contents (Element (Db.Files_Db, File));
       end if;
    end Update_Contents;
+
+   -----------------------------
+   -- Install_Buffer_Provider --
+   -----------------------------
+
+   procedure Install_Buffer_Provider
+     (Db       : access Construct_Database;
+      File     : VFS.Virtual_File;
+      Provider : access Buffer_Provider'Class) is
+   begin
+      if Contains (Db.Providers_Db, File) then
+         Replace (Db.Providers_Db, File, Buffer_Provider_Access (Provider));
+      else
+         Insert (Db.Providers_Db, File, Buffer_Provider_Access (Provider));
+      end if;
+   end Install_Buffer_Provider;
+
+   -------------------------------
+   -- Uninstall_Buffer_Provider --
+   -------------------------------
+
+   procedure Uninstall_Buffer_Provider
+     (Db       : access Construct_Database;
+      File     : VFS.Virtual_File;
+      Provider : access Buffer_Provider'Class) is
+   begin
+      if Contains (Db.Providers_Db, File) then
+         if Element (Db.Providers_Db, File) = Provider then
+            Delete (Db.Providers_Db, File);
+         end if;
+      end if;
+   end Uninstall_Buffer_Provider;
 
    -----------
    -- Clear --
