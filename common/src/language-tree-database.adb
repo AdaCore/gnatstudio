@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Unchecked_Deallocation;
+with Ada.Unchecked_Deallocation; use Ada;
 
 with Language.Tree.Ada; use Language.Tree.Ada;
 
@@ -34,7 +34,7 @@ package body Language.Tree.Database is
    ----------
 
    procedure Free (This : in out Buffer_Provider_Access) is
-      procedure Internal is new Ada.Unchecked_Deallocation
+      procedure Internal is new Unchecked_Deallocation
         (Buffer_Provider'Class, Buffer_Provider_Access);
    begin
       Free (This.all);
@@ -46,7 +46,7 @@ package body Language.Tree.Database is
    ----------
 
    procedure Free (File : in out Structured_File_Access) is
-      procedure Internal is new Ada.Unchecked_Deallocation
+      procedure Internal is new Unchecked_Deallocation
         (Structured_File, Structured_File_Access);
    begin
       Free (File.Cache_Tree);
@@ -314,7 +314,7 @@ package body Language.Tree.Database is
    ----------
 
    procedure Free (This : in out Construct_Database_Access) is
-      procedure Internal is new Ada.Unchecked_Deallocation
+      procedure Internal is new Unchecked_Deallocation
         (Construct_Database, Construct_Database_Access);
    begin
       Clear (This);
@@ -438,7 +438,7 @@ package body Language.Tree.Database is
    ----------
 
    procedure Free (Node : in out Construct_Node_List_Access) is
-      procedure Internal is new Ada.Unchecked_Deallocation
+      procedure Internal is new Unchecked_Deallocation
         (Construct_Node_List, Construct_Node_List_Access);
    begin
       if Node /= null then
@@ -454,7 +454,7 @@ package body Language.Tree.Database is
    ----------
 
    procedure Free (This : in out Construct_Db_Data_Access) is
-      procedure Internal is new Ada.Unchecked_Deallocation
+      procedure Internal is new Unchecked_Deallocation
         (Construct_Db_Data_Array, Construct_Db_Data_Access);
    begin
       Internal (This);
