@@ -168,6 +168,15 @@ package body Python_Module is
      (Script : access Python_Scripting_Record) return String;
    --  See doc from inherited subprograms
 
+   procedure Load_Dir
+     (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Dir              : String;
+      Default_Autoload : Boolean);
+   --  Load all .py files from Dir, if any.
+   --  Default_Autoload indicates whether scripts in this directory should
+   --  be autoloaded by default, unless otherwise mentioned in
+   --  ~/.gps/startup.xml
+
    ------------------------
    -- Python_Subprograms --
    ------------------------
@@ -918,104 +927,115 @@ package body Python_Module is
          Class        => Get_File_Location_Class (Kernel));
    end Register_Module;
 
-   -------------------------------
-   -- Load_Python_Startup_Files --
-   -------------------------------
+   --------------
+   -- Load_Dir --
+   --------------
 
-   procedure Load_Python_Startup_Files
+   procedure Load_Dir
+     (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Dir              : String;
+      Default_Autoload : Boolean)
+   is
+      D       : Dir_Type;
+      File    : String (1 .. 1024);
+      Last    : Natural;
+      Result  : PyObject;
+      pragma Unreferenced (Result);
+      VF      : VFS.Virtual_File;
+      Command : Custom_Command_Access;
+      Errors  : aliased Boolean;
+   begin
+      if not GNAT.OS_Lib.Is_Directory (Dir) then
+         return;
+      end if;
+
+      Trace (Me, "Load python files from " & Dir);
+
+      Result := Run_Command
+        (Python_Module_Id.Script.Interpreter,
+         "sys.path=[r'" & Dir & "']+sys.path",
+         Hide_Output => True,
+         Errors      => Errors'Unchecked_Access);
+
+      Open (D, Dir);
+
+      loop
+         Read (D, File, Last);
+         exit when Last = 0;
+
+         if Last > 3 and then File (Last - 2 .. Last) = ".py" then
+            VF := Create
+              (Full_Filename => Name_As_Directory (Dir)
+               & File (1 .. Last));
+            if Load_File_At_Startup
+              (Kernel, VF, Default => Default_Autoload)
+            then
+               Trace (Me, "Loading " & Full_Name (VF).all);
+               Python_Module_Id.Script.Current_File := VF;
+               Execute_Command
+                 (Python_Module_Id.Script,
+                  "import " & Base_Name (File (1 .. Last), ".py"),
+                  Hide_Output => True,
+                  Errors      => Errors);
+               Python_Module_Id.Script.Current_File := VFS.No_File;
+
+               Command := Initialization_Command (Kernel, VF);
+               if Command /= null then
+                  Launch_Background_Command
+                    (Kernel,
+                     Command    => Command,
+                     Active     => True,
+                     Show_Bar   => False,
+                     Block_Exit => False);
+               end if;
+            end if;
+         end if;
+      end loop;
+
+      Close (D);
+   end Load_Dir;
+
+   --------------------------------------
+   -- Load_System_Python_Startup_Files --
+   --------------------------------------
+
+   procedure Load_System_Python_Startup_Files
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Env_Path : constant String := Get_Custom_Path;
       Path     : Path_Iterator;
-      Errors   : aliased Boolean;
-
-      procedure Load_Dir (Dir : String; Default_Autoload : Boolean);
-      --  Load all .py files from Dir, if any.
-      --  Default_Autoload indicates whether scripts in this directory should
-      --  be autoloaded by default, unless otherwise mentioned in
-      --  ~/.gps/startup.xml
-
-      --------------
-      -- Load_Dir --
-      --------------
-
-      procedure Load_Dir (Dir : String; Default_Autoload : Boolean) is
-         D       : Dir_Type;
-         File    : String (1 .. 1024);
-         Last    : Natural;
-         Result  : PyObject;
-         pragma Unreferenced (Result);
-         VF      : VFS.Virtual_File;
-         Command : Custom_Command_Access;
-      begin
-         if not GNAT.OS_Lib.Is_Directory (Dir) then
-            return;
-         end if;
-
-         Trace (Me, "Load python files from " & Dir);
-
-         Result := Run_Command
-           (Python_Module_Id.Script.Interpreter,
-            "sys.path=[r'" & Dir & "']+sys.path",
-            Hide_Output => True,
-            Errors      => Errors'Unchecked_Access);
-
-         Open (D, Dir);
-
-         loop
-            Read (D, File, Last);
-            exit when Last = 0;
-
-            if Last > 3 and then File (Last - 2 .. Last) = ".py" then
-               VF := Create
-                 (Full_Filename => Name_As_Directory (Dir)
-                  & File (1 .. Last));
-               if Load_File_At_Startup
-                 (Kernel, VF, Default => Default_Autoload)
-               then
-                  Trace (Me, "Loading " & Full_Name (VF).all);
-                  Python_Module_Id.Script.Current_File := VF;
-                  Execute_Command
-                    (Python_Module_Id.Script,
-                     "import " & Base_Name (File (1 .. Last), ".py"),
-                     Hide_Output => True,
-                     Errors => Errors);
-                  Python_Module_Id.Script.Current_File := VFS.No_File;
-
-                  Command := Initialization_Command (Kernel, VF);
-                  if Command /= null then
-                     Launch_Background_Command
-                       (Kernel,
-                        Command    => Command,
-                        Active     => True,
-                        Show_Bar   => False,
-                        Block_Exit => False);
-                  end if;
-               end if;
-            end if;
-         end loop;
-
-         Close (D);
-      end Load_Dir;
-
    begin
       if Python_Module_Id = null then
          return;
       end if;
 
-      Load_Dir (Autoload_System_Dir (Kernel),    Default_Autoload => True);
-      Load_Dir (No_Autoload_System_Dir (Kernel), Default_Autoload => False);
+      Load_Dir
+        (Kernel, Autoload_System_Dir (Kernel), Default_Autoload => True);
+      Load_Dir
+        (Kernel, No_Autoload_System_Dir (Kernel), Default_Autoload => False);
 
       Path := Start (Env_Path);
       while not At_End (Env_Path, Path) loop
          if Current (Env_Path, Path) /= "" then
-            Load_Dir (Current (Env_Path, Path), Default_Autoload => True);
+            Load_Dir
+              (Kernel, Current (Env_Path, Path), Default_Autoload => True);
          end if;
          Path := Next (Env_Path, Path);
       end loop;
+   end Load_System_Python_Startup_Files;
 
-      Load_Dir (Autoload_User_Dir (Kernel),      Default_Autoload => True);
-   end Load_Python_Startup_Files;
+   ------------------------------------
+   -- Load_User_Python_Startup_Files --
+   ------------------------------------
+
+   procedure Load_User_Python_Startup_Files
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+   begin
+      if Python_Module_Id = null then
+         return;
+      end if;
+      Load_Dir (Kernel, Autoload_User_Dir (Kernel), Default_Autoload => True);
+   end Load_User_Python_Startup_Files;
 
    ---------------------------------
    -- Python_File_Command_Handler --
