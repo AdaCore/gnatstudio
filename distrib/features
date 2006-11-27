@@ -258,7 +258,7 @@ EA14-021 Fix "use 'Valid attribute instead" (2006-07-28)
   It's now possible to fix automatically messages like "use 'Valid instead",
   in e.g. "A in B" (won't work with "not in").
 
-D524-003 Closing windows when double-clicking on left title bar icon (2006-11-08)
+D524-003 Closing window when double-clicking on left title bar icon (2006-11-08)
 
   Windows can now be closed by double-clicking on the icon to the left of their
   title bar, when such an icon exits
