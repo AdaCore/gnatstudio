@@ -80,7 +80,6 @@ package body Outline_View is
    Hist_Show_Profile      : constant History_Key := "outline-show-profile";
    Hist_Sort_Alphabetical : constant History_Key := "outline-alphabetical";
    Hist_Editor_Link       : constant History_Key := "outline-editor-link";
-   Hist_File_Node         : constant History_Key := "outline-file-node";
    Hist_Show_Decls        : constant History_Key := "outline-show-decls";
    Hist_Show_Types        : constant History_Key := "outline-show-types";
 
@@ -362,17 +361,7 @@ package body Outline_View is
                --  Next find all occurrences for entities with the same name,
                --  and select the closest one to the current line
 
-               if Get_History
-                 (Get_History (Outline.Kernel).all, Hist_File_Node)
-               then
-                  if Get_Iter_First (Model) /= Null_Iter then
-                     Iter := Children (Model, Get_Iter_First (Model));
-                  else
-                     Iter := Null_Iter;
-                  end if;
-               else
-                  Iter := Get_Iter_First (Model);
-               end if;
+               Iter := Get_Iter_First (Model);
 
                while Iter /= Null_Iter loop
                   if Equal
@@ -461,6 +450,7 @@ package body Outline_View is
       Column  : Visible_Column_Type;
       Check   : Gtk_Check_Menu_Item;
       Item    : Gtk_Menu_Item;
+      Sep     : Gtk_Menu_Item;
       Submenu : Gtk_Menu;
    begin
       Iter := Find_Iter_For_Event (Outline.Tree, Model, Event);
@@ -490,14 +480,28 @@ package body Outline_View is
          Line    => Line);
 
       if Menu /= null then
-         Gtk_New (Item, Label => -"Filters");
+         Gtk_New (Item, Label => -"Outline");
          Append (Menu, Item);
+         Gtk_New (Sep);
+         Append (Menu, Sep);
 
          Gtk_New (Submenu);
          Set_Submenu (Item, Submenu);
 
          Gtk_New (Check, Label => -"Show profiles");
          Associate (Get_History (Kernel).all, Hist_Show_Profile, Check);
+         Append (Submenu, Check);
+         Widget_Callback.Object_Connect
+           (Check, "toggled", Refresh'Access, Outline);
+
+         Gtk_New (Check, Label => -"Show types");
+         Associate (Get_History (Kernel).all, Hist_Show_Types, Check);
+         Append (Submenu, Check);
+         Widget_Callback.Object_Connect
+           (Check, "toggled", Refresh'Access, Outline);
+
+         Gtk_New (Check, Label => -"Show specifications");
+         Associate (Get_History (Kernel).all, Hist_Show_Decls, Check);
          Append (Submenu, Check);
          Widget_Callback.Object_Connect
            (Check, "toggled", Refresh'Access, Outline);
@@ -513,25 +517,6 @@ package body Outline_View is
          Append (Submenu, Check);
          Widget_Callback.Object_Connect
            (Check, "toggled", Refresh'Access, Outline);
-
-         Gtk_New (Check, Label => -"Show subprogram declarations");
-         Associate (Get_History (Kernel).all, Hist_Show_Decls, Check);
-         Append (Submenu, Check);
-         Widget_Callback.Object_Connect
-           (Check, "toggled", Refresh'Access, Outline);
-
-         Gtk_New (Check, Label => -"Show types");
-         Associate (Get_History (Kernel).all, Hist_Show_Types, Check);
-         Append (Submenu, Check);
-         Widget_Callback.Object_Connect
-           (Check, "toggled", Refresh'Access, Outline);
-
-         Gtk_New (Check, Label => -"Show file node");
-         Associate (Get_History (Kernel).all, Hist_File_Node, Check);
-         Append (Submenu, Check);
-         Widget_Callback.Object_Connect
-           (Check, "toggled", Refresh'Access, Outline);
-
       end if;
    end Outline_Context_Factory;
 
@@ -805,7 +790,8 @@ package body Outline_View is
                         Outline_View_Access (View);
       Model         : constant Gtk_Tree_Store :=
                         Gtk_Tree_Store (Get_Model (Outline.Tree));
-      Iter, Root    : Gtk_Tree_Iter := Null_Iter;
+      Iter          : Gtk_Tree_Iter := Null_Iter;
+      Root          : constant Gtk_Tree_Iter := Null_Iter;
       Lang          : Language_Access;
       Handler       : LI_Handler;
       Languages     : constant Language_Handler :=
@@ -821,8 +807,6 @@ package body Outline_View is
         Get_History (Get_History (Outline.Kernel).all, Hist_Show_Decls);
       Show_Types    : constant Boolean :=
         Get_History (Get_History (Outline.Kernel).all, Hist_Show_Types);
-      Show_File_Node : constant Boolean :=
-        Get_History (Get_History (Outline.Kernel).all, Hist_File_Node);
       Is_Type        : Boolean;
    begin
       Push_State (Outline.Kernel, Busy);
@@ -831,13 +815,6 @@ package body Outline_View is
       if Outline.File /= VFS.No_File then
          Handler := Get_LI_Handler_From_File (Languages, Outline.File);
          Lang := Get_Language_From_File (Languages, Outline.File);
-
-         if Show_File_Node then
-            Append (Model, Root, Null_Iter);
-            Set (Model, Root, Pixbuf_Column, C_Proxy (Outline.File_Icon));
-            Set (Model, Root, Display_Name_Column,
-                 "File: " & Base_Name (Outline.File));
-         end if;
       end if;
 
       if Handler = null or else Lang = null then
@@ -1128,8 +1105,6 @@ package body Outline_View is
         (Get_History (Kernel).all, Hist_Show_Profile, True);
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, Hist_Sort_Alphabetical, True);
-      Create_New_Boolean_Key_If_Necessary
-        (Get_History (Kernel).all, Hist_File_Node, False);
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, Hist_Editor_Link, True);
       Create_New_Boolean_Key_If_Necessary
