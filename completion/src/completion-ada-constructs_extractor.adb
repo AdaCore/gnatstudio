@@ -160,14 +160,13 @@ package body Completion.Ada.Constructs_Extractor is
    --------------
 
    function Get_Category
-     (Proposal : Construct_Completion_Proposal) return Language_Category
-   is
+     (Proposal : Construct_Completion_Proposal) return Language_Category is
    begin
       if Proposal.Is_All then
          return Cat_Literal;
       elsif Proposal.Is_In_Profile
-        and then Get_Construct (Proposal.Tree_Node).Category
-      not in Data_Category
+        and then Get_Construct
+          (Proposal.Tree_Node).Category not in Data_Category
       then
          return Cat_Unknown;
       else
