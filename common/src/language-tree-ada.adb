@@ -1868,7 +1868,7 @@ package body Language.Tree.Ada is
                     (Ada_Assign_Attribute)
                   then
                      Unbounded.Append
-                       (Result, "[");
+                       (Result, "<span foreground=""#555555"">[");
                   else
                      Unbounded.Append
                        (Result, " ");
@@ -1912,7 +1912,7 @@ package body Language.Tree.Ada is
                     (Ada_Assign_Attribute)
                   then
                      Unbounded.Append
-                       (Result, "]");
+                       (Result, "]</span>");
                   end if;
                end if;
 
