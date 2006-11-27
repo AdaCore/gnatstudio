@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2005                       --
+--                      Copyright (C) 2003-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -61,13 +61,17 @@ package GPS.Kernel.Custom is
    -- Loading and defining customizations --
    -----------------------------------------
 
-   procedure Load_All_Custom_Files
+   procedure Load_System_Custom_Files
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Find and parse all the customization files (system, project or user).
+   --  Find and parse all the customization files (system, project).
    --  This also parses any XML string that has been registered previously
    --  through Add_Customization_String.
    --  This updates the internal directory, and calls all the callback
    --  registered by the modules.
+
+   procedure Load_User_Custom_Files
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  As above but for user's plug-ins
 
    function Add_Customization_String
      (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;

@@ -235,11 +235,11 @@ package body GPS.Kernel.Custom is
          null;
    end Parse_Custom_Dir;
 
-   ---------------------------
-   -- Load_All_Custom_Files --
-   ---------------------------
+   ------------------------------
+   -- Load_System_Custom_Files --
+   ------------------------------
 
-   procedure Load_All_Custom_Files
+   procedure Load_System_Custom_Files
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Env_Path : constant String := Get_Custom_Path;
@@ -247,10 +247,10 @@ package body GPS.Kernel.Custom is
       N        : Node_Ptr;
 
    begin
-      Kernel.Custom_Files_Loaded := True;
+      Kernel.Custom_Files_Loaded := System_Level;
 
       --  Load the hard-coded customization strings first, so that anyone
-      --  can override them
+      --  can override them.
 
       if Kernel.Customization_Strings /= null then
          Trace (Me, "Executing customization strings previously registered");
@@ -286,11 +286,42 @@ package body GPS.Kernel.Custom is
          end if;
          Path := Next (Env_Path, Path);
       end loop;
+   end Load_System_Custom_Files;
+
+   ----------------------------
+   -- Load_User_Custom_Files --
+   ----------------------------
+
+   procedure Load_User_Custom_Files
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      N : Node_Ptr;
+   begin
+      Kernel.Custom_Files_Loaded := User_Level;
+
+      --  Load the hard-coded customization strings first, so that anyone
+      --  can override them.
+
+      if Kernel.Customization_Strings /= null then
+         Trace (Me, "Executing customization strings previously registered");
+         Execute_Customization_String
+           (Kernel,
+            No_File,
+            Kernel.Customization_Strings,
+            Hard_Coded);
+
+         --  Can't call Free itself, since it doesn't free the siblings
+         while Kernel.Customization_Strings /= null loop
+            N := Kernel.Customization_Strings;
+            Kernel.Customization_Strings := Kernel.Customization_Strings.Next;
+            Free (N);
+         end loop;
+      end if;
 
       Parse_Custom_Dir
         (Kernel, Autoload_User_Dir (Kernel), User_Specific,
          Default_Autoload => True);
-   end Load_All_Custom_Files;
+   end Load_User_Custom_Files;
 
    ------------------------------
    -- Add_Customization_String --
@@ -335,13 +366,13 @@ package body GPS.Kernel.Custom is
       end if;
 
       --  If the custom files have already been loaded, this means that all
-      --  modules have been registered and are read to listen to events. We
-      --  can then inform them all. Otherwise, the need to append them to the
+      --  modules have been registered and are ready to listen to events. We
+      --  can then inform them all. Otherwise, we need to append them to the
       --  list which will be executed later when all modules have been
-      --  registered
+      --  registered.
 
       if Node /= null then
-         if Kernel.Custom_Files_Loaded then
+         if Kernel.Custom_Files_Loaded = User_Level then
             begin
                Execute_Customization_String
                  (Kernel, Create (From_File), Node.Child, Hard_Coded);
@@ -376,7 +407,6 @@ package body GPS.Kernel.Custom is
          return "";
 
       else
-         --  Insert (Kernel, Err.all, Mode => Error);
          declare
             E : constant String := Err.all;
          begin
