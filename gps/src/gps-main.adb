@@ -1429,13 +1429,38 @@ procedure GPS.Main is
       --  module relies on icons defined in custom files.
 
       if Active (Custom_Trace) then
-         Load_All_Custom_Files (GPS_Main.Kernel);
+         Load_System_Custom_Files (GPS_Main.Kernel);
+      end if;
+
+      --  Create a hook for when GPS is started
+
+      Register_Hook_No_Args (GPS_Main.Kernel, GPS_Started_Hook);
+
+      --  Load the customization files before loading the actual projects,
+      --  so that the usual hooks are taken into account right from the
+      --  beginning
+
+      if Active (Python_Trace) then
+         Python_Module.Load_System_Python_Startup_Files (GPS_Main.Kernel);
+      end if;
+
+      --  The system wide custom files have been loaded, load the user's ones
+
+      if Active (Custom_Trace) then
+         Load_User_Custom_Files (GPS_Main.Kernel);
+      end if;
+
+      if Active (Python_Trace) then
+         Python_Module.Load_User_Python_Startup_Files (GPS_Main.Kernel);
       end if;
 
       Navigation_Module.Register_Module (GPS_Main.Kernel);
 
       --  Do this after the custom files, since this will override other
       --  The comment above is unfinished ???
+      --  Especially since the comment on body of Add_Customization_String
+      --  (gps-kernel-custom.adb) says that if the custom files have been
+      --  loaded then all modules are registered ???
 
       if Active (Action_Editor_Trace) then
          Action_Editor.Register_Module (GPS_Main.Kernel);
@@ -1450,18 +1475,6 @@ procedure GPS.Main is
       --  local choices.
 
       Load_Preferences (GPS_Main.Kernel);
-
-      --  Create a hook for when GPS is started
-
-      Register_Hook_No_Args (GPS_Main.Kernel, GPS_Started_Hook);
-
-      --  Load the customization files before loading the actual projects,
-      --  so that the usual hooks are taken into account right from the
-      --  beginning
-
-      if Active (Python_Trace) then
-         Python_Module.Load_Python_Startup_Files (GPS_Main.Kernel);
-      end if;
 
       --  Load the custom keys last, so that they override everything else set
       --  so far.
