@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2003-2006                       --
---                            AdaCore                                --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -31,9 +31,9 @@ package Python_Module is
      (Console : Interactive_Consoles.Interactive_Console);
    --  Override the console to which Python should write through "print"
 
-   procedure Load_Python_Startup_Files
+   procedure Load_System_Python_Startup_Files
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Load all the user's startup file of the user.
+   --  Load all the GPS's systems Python plug-ins.
    --  This procedure should be called only after all standard modules
    --  have been registered, so that if the user's startup files depend
    --  on standard GPS functions these are already loaded.
@@ -42,5 +42,9 @@ package Python_Module is
    --
    --  ??? Ideally, we should have a hook run after all modules have been
    --  registered
+
+   procedure Load_User_Python_Startup_Files
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  As above but load the user's Python plug-ins
 
 end Python_Module;
