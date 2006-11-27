@@ -157,8 +157,8 @@ package GPS.Kernel.Custom is
    --  list them to the user later on.
 
    function Initialization_Command
-     (Kernel  : access Kernel_Handle_Record'Class;
-      File    : VFS.Virtual_File)
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File)
       return Commands.Custom.Custom_Command_Access;
    --  Return the command to execute to initialize this module. This is
    --  null if no initialization command was provided. These are read from
