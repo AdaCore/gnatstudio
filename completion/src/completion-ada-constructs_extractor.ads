@@ -105,7 +105,8 @@ private
    --  See inherited documentation
 
    function Get_Caret_Offset
-     (Proposal : Construct_Completion_Proposal) return Natural;
+     (Proposal : Construct_Completion_Proposal)
+      return Basic_Types.Character_Offset_Type;
    --  See inherited documentation
 
    function Get_Category

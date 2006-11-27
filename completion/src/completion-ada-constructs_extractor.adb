@@ -23,6 +23,8 @@ with Ada.Unchecked_Deallocation; use Ada;
 
 with GNAT.Strings;
 
+with Glib.Unicode; use Glib.Unicode;
+
 with Language.Ada;           use Language.Ada;
 with Basic_Types;            use Basic_Types;
 
@@ -160,19 +162,23 @@ package body Completion.Ada.Constructs_Extractor is
    ----------------------
 
    function Get_Caret_Offset
-     (Proposal : Construct_Completion_Proposal) return Natural is
+     (Proposal : Construct_Completion_Proposal)
+      return Basic_Types.Character_Offset_Type is
    begin
       if Proposal.Is_In_Profile and then
         Get_Construct (Proposal.Tree_Node).Category not in Data_Category
       then
          if Proposal.Profile.Parameters'Length > 0 then
-            return Proposal.Profile.Parameters (1).Name'Length + 4;
+            return Basic_Types.Character_Offset_Type
+              (UTF8_Strlen (Proposal.Profile.Parameters (1).Name.all)) + 4;
             --  4 is for the " => " string.
          else
             return 0;
          end if;
       else
-         return Get_Completion (Proposal)'Length;
+         return Basic_Types.Character_Offset_Type
+          (UTF8_Strlen
+               (Get_Completion (Completion_Proposal'Class (Proposal))));
       end if;
    end Get_Caret_Offset;
 

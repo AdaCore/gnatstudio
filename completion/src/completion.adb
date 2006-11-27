@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib.Unicode; use Glib.Unicode;
+
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 package body Completion is
@@ -208,9 +210,14 @@ package body Completion is
    -- Get_Caret_Offset --
    ----------------------
 
-   function Get_Caret_Offset (Proposal : Completion_Proposal) return Natural is
+   function Get_Caret_Offset
+     (Proposal : Completion_Proposal)
+      return Basic_Types.Character_Offset_Type is
    begin
-      return Get_Completion (Completion_Proposal'Class (Proposal))'Length;
+      return
+        Basic_Types.Character_Offset_Type
+          (UTF8_Strlen
+               (Get_Completion (Completion_Proposal'Class (Proposal))));
    end Get_Caret_Offset;
 
    -----------------------
