@@ -104,6 +104,10 @@ private
      (Proposal : Construct_Completion_Proposal) return UTF8_String;
    --  See inherited documentation
 
+   function Get_Caret_Offset
+     (Proposal : Construct_Completion_Proposal) return Natural;
+   --  See inherited documentation
+
    function Get_Category
      (Proposal : Construct_Completion_Proposal) return Language_Category;
    --  See inherited documentation

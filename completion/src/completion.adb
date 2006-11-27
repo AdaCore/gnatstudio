@@ -204,6 +204,15 @@ package body Completion is
       return Get_Completion (Completion_Proposal'Class (Proposal));
    end Get_Id;
 
+   ----------------------
+   -- Get_Caret_Offset --
+   ----------------------
+
+   function Get_Caret_Offset (Proposal : Completion_Proposal) return Natural is
+   begin
+      return Get_Completion (Completion_Proposal'Class (Proposal))'Length;
+   end Get_Caret_Offset;
+
    -----------------------
    -- Get_Documentation --
    -----------------------

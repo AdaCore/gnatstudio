@@ -189,6 +189,11 @@ package Completion is
    --  identifier can be different from the completion propsed and the label.
    --  By default, return the completion.
 
+   function Get_Caret_Offset (Proposal : Completion_Proposal) return Natural;
+   --  Return the offset where the editor caret is supposed to be after the
+   --  completion. In the default implementation, it's always moved at the
+   --  end of the inserted text.
+
    function Get_Documentation
      (Proposal : Completion_Proposal) return UTF8_String;
    --  Return the documentation corresponding to the proposal.

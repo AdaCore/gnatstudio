@@ -155,6 +155,27 @@ package body Completion.Ada.Constructs_Extractor is
       end if;
    end Get_Label;
 
+   ----------------------
+   -- Get_Caret_Offset --
+   ----------------------
+
+   function Get_Caret_Offset
+     (Proposal : Construct_Completion_Proposal) return Natural is
+   begin
+      if Proposal.Is_In_Profile and then
+        Get_Construct (Proposal.Tree_Node).Category not in Data_Category
+      then
+         if Proposal.Profile.Parameters'Length > 0 then
+            return Proposal.Profile.Parameters (1).Name'Length + 4;
+            --  4 is for the " => " string.
+         else
+            return 0;
+         end if;
+      else
+         return Get_Completion (Proposal)'Length;
+      end if;
+   end Get_Caret_Offset;
+
    --------------
    -- Get_Type --
    --------------
