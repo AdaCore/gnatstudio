@@ -165,6 +165,11 @@ package body Completion.Ada.Constructs_Extractor is
    begin
       if Proposal.Is_All then
          return Cat_Literal;
+      elsif Proposal.Is_In_Profile
+        and then Get_Construct (Proposal.Tree_Node).Category
+      not in Data_Category
+      then
+         return Cat_Unknown;
       else
          return Get_Construct (Proposal.Tree_Node).Category;
       end if;
