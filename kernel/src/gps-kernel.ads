@@ -828,6 +828,11 @@ private
 
    type Location_Marker_Record is abstract tagged null record;
 
+   type Custom_Load_State is (None, System_Level, User_Level);
+   --  None         : loading not started
+   --  System_Level : system custom files loaded
+   --  User_Level   : system and user custom files loaded
+
    type Kernel_Handle_Record is new Glib.Object.GObject_Record with record
       Database : Entities.Entities_Database;
       --  The cross-reference information
@@ -916,7 +921,7 @@ private
       Tasks : Task_Manager.Task_Manager_Access;
       --  The GPS task manager
 
-      Custom_Files_Loaded : Boolean := False;
+      Custom_Files_Loaded : Custom_Load_State := None;
       --  Whether all custom files have already been loaded
 
       Customization_Strings : Glib.Xml_Int.Node_Ptr;
