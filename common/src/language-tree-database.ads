@@ -30,6 +30,24 @@ with VFS;   use VFS;
 
 package Language.Tree.Database is
 
+   type Buffer_Provider is abstract tagged private;
+   --  A buffer provider is used to change the way the database is getting the
+   --  buffer for a given file. By default, it loads the file from the disk,
+   --  but we might need to give some other sources, for example an open
+   --  editor.
+
+   type Buffer_Provider_Access is access all Buffer_Provider'Class;
+
+   function Get_Buffer
+     (Provider : access Buffer_Provider) return String_Access is abstract;
+   --  Return the buffer corresponding to this buffer provider
+
+   procedure Free (This : in out Buffer_Provider_Access);
+   --  Free the access and its internal datas.
+
+   procedure Free (This : in out Buffer_Provider) is abstract;
+   --  Free the data associated to this buffer provider.
+
    type Structured_File is private;
    --  This type reprensents a file with a structured view of its contents
 
@@ -87,6 +105,22 @@ package Language.Tree.Database is
      (Db : access Construct_Database; File : Virtual_File);
    --  Reload the file and its constructs. Previous constructs are removed from
    --  the database.
+
+   procedure Install_Buffer_Provider
+     (Db       : access Construct_Database;
+      File     : VFS.Virtual_File;
+      Provider : access Buffer_Provider'Class);
+   --  Install a buffer provider for the given File. If there's already one
+   --  other provider installed, it's replaced by the one given in parameter.
+   --  When no buffer provider has been installed, the database will get the
+   --  buffer from the disk.
+
+   procedure Uninstall_Buffer_Provider
+     (Db       : access Construct_Database;
+      File     : VFS.Virtual_File;
+      Provider : access Buffer_Provider'Class);
+   --  Remove the given provider from the file, if it's the one currently
+   --  installed. Won't do anything otherwise.
 
    procedure Clear (Db : access Construct_Database);
    --  Remove the contents of the database. New contents can still be added
@@ -151,6 +185,8 @@ package Language.Tree.Database is
    --  child itself).
 
 private
+
+   type Buffer_Provider is abstract tagged null record;
 
    type Construct_Node_Wrapper is record
       Index : Natural;
@@ -219,9 +255,15 @@ private
 
    use File_Map;
 
+   package Buffer_Provider_Map is new Ada.Containers.Ordered_Maps
+     (Virtual_File, Buffer_Provider_Access);
+
+   use Buffer_Provider_Map;
+
    type Construct_Database is record
       Files_Db        : File_Map.Map;
       Sorted_Files_Db : File_Set.Set;
+      Providers_Db    : Buffer_Provider_Map.Map;
       Entities_Db     : aliased Construct_Trie_Trees.Trie_Tree;
    end record;
 
