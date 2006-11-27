@@ -28,7 +28,7 @@ with Gdk.Drawable;              use Gdk.Drawable;
 with Gtk.Widget;                use Gtk.Widget;
 with Pango.Font;                use Pango.Font;
 with Pango.Layout;              use Pango.Layout;
-with Pango.Tabs;                use Pango.Tabs;
+
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Intl;                  use GPS.Intl;
 with VFS;                       use VFS;
@@ -37,7 +37,9 @@ with String_Utils;              use String_Utils;
 with Language;                  use Language;
 with Language.Icons;            use Language.Icons;
 
-with Doc_Utils;                 use Doc_Utils;
+with Language.Tree;             use Language.Tree;
+with Language.Tree.Database;    use Language.Tree.Database;
+with Language_Handlers;         use Language_Handlers;
 
 package body Entities.Tooltips is
 
@@ -49,12 +51,6 @@ package body Entities.Tooltips is
       Entity : Entity_Information) return String;
    --  Return the documentation for the entity (prefixed by a LF char if not
    --  null)
-
-   function Get_Parameters
-     (Entity : Entity_Information;
-      Widget : access Gtk_Widget_Record'Class;
-      Font   : Pango_Font_Description) return Pango_Layout;
-   --  Return the list of parameters for the entity
 
    function Get_Header (Entity : Entity_Information) return String;
    --  Return a string in pango markup format to represent the header of a
@@ -94,105 +90,40 @@ package body Entities.Tooltips is
       return Entity_Icons (Is_Spec, Visibility) (Cat);
    end Get_Pixbuf;
 
-   --------------------
-   -- Get_Parameters --
-   --------------------
-
-   function Get_Parameters
-     (Entity : Entity_Information;
-      Widget : access Gtk_Widget_Record'Class;
-      Font   : Pango_Font_Description) return Pango_Layout
-   is
-      use Ada.Strings.Unbounded;
-      --  ??? Display should depend on the language
-      Iter                          : Subprogram_Iterator;
-      Param                         : Entity_Information;
-      Param_Type                    : Entity_Information;
-      Result                        : Unbounded_String;
-      Longuest_Param, Longuest_Type : Gint := 0;
-      Layout                        : Pango_Layout;
-      Tabs                          : Pango_Tab_Array;
-      Char_Width, Char_Height       : Gint;
-   begin
-      if Is_Subprogram (Entity) then
-         Layout := Create_Pango_Layout (Widget, "");
-         Set_Font_Description (Layout, Font);
-
-         Iter := Get_Subprogram_Parameters (Subprogram => Entity);
-
-         Get (Iter, Param);
-
-         if Param = null then
-            Result := To_Unbounded_String ("<u><i>(No parameter)</i></u>");
-
-         else
-            Result := To_Unbounded_String ("<u>Parameters:</u>");
-
-            while Param /= null loop
-               Set_Markup (Layout, "   <b>" & Get_Name (Param).all & "</b>");
-               Get_Pixel_Size (Layout, Char_Width, Char_Height);
-               Longuest_Param := Gint'Max (Longuest_Param, Char_Width);
-
-               Set_Text (Layout, ": " & Image (Get_Type (Iter)));
-               Get_Pixel_Size (Layout, Char_Width, Char_Height);
-               Longuest_Type := Gint'Max (Longuest_Type, Char_Width);
-
-               Next (Iter);
-               Get (Iter, Param);
-            end loop;
-         end if;
-
-         Pango_New (Tabs, Initial_Size => 2, Positions_In_Pixels => True);
-         Set_Tab (Tabs, 0, Location => Longuest_Param + 2);
-         Set_Tab (Tabs, 1, Location => Longuest_Param + 2 + Longuest_Type);
-         Set_Tabs (Layout, Tabs);
-
-         Iter := Get_Subprogram_Parameters (Subprogram => Entity);
-         loop
-            Get (Iter, Param);
-            exit when Param = null;
-
-            Result := Result & ASCII.LF
-              & "   <b>" & Get_Name (Param).all & "</b>" & ASCII.HT
-              & ": " & Image (Get_Type (Iter)) & ASCII.HT & " ";
-
-            if Get_Type (Iter) = Access_Parameter then
-               Param_Type := Pointed_Type (Param);
-            else
-               Param_Type := Get_Type_Of (Param);
-            end if;
-
-            if Param_Type /= null then
-               Result := Result & Get_Name (Param_Type).all;
-            end if;
-
-            Next (Iter);
-         end loop;
-
-         Param := Returned_Type (Entity);
-         if Param /= null then
-            Result := Result & ASCII.LF & "   return <b>"
-              & Get_Name (Param).all & "</b>";
-         end if;
-
-         Set_Markup (Layout, To_String (Result));
-
-         Free (Tabs);
-         return Layout;
-      else
-         return null;
-      end if;
-   end Get_Parameters;
-
    -----------------------
    -- Get_Documentation --
    -----------------------
 
    function Get_Documentation
      (Kernel : access Kernel_Handle_Record'Class;
-      Entity : Entity_Information) return String is
+      Entity : Entity_Information) return String
+   is
+      Loc        : constant File_Location := Get_Declaration_Of (Entity);
+      Decl_File  : constant Virtual_File := Get_Filename (Loc.File);
+      Handler    : constant Language_Handler := Get_Language_Handler (Kernel);
+      Database   : constant Construct_Database_Access :=
+        Get_Construct_Database (Kernel);
+      Data_File  : Structured_File_Access;
+      Tree_Lang  : constant Tree_Language_Access :=
+        Get_Tree_Language_From_File (Handler, Decl_File, False);
+      Tree       : Construct_Tree;
    begin
-      return Get_Documentation (Get_Language_Handler (Kernel), Entity);
+      Data_File := Language.Tree.Database.Get_Or_Create
+        (Db   => Database,
+         File => Decl_File,
+         Lang => Tree_Lang);
+
+      Tree := Get_Full_Tree (Data_File);
+
+      return Language.Tree.Get_Documentation
+        (Lang     => Tree_Lang,
+         Buffer   => Get_Buffer (Data_File).all,
+         Tree     => Tree,
+         Node     => Get_Iterator_At
+           (Tree        => Tree,
+            Line        => Loc.Line,
+            Line_Offset => Natural (Loc.Column),
+            From_Type   => Start_Name));
    end Get_Documentation;
 
    ------------------
@@ -275,9 +206,9 @@ package body Entities.Tooltips is
       Font   : constant Pango_Font_Description := Get_Pref (Default_Font);
       Fixed  : constant Pango_Font_Description := Get_Pref (View_Fixed_Font);
 
-      Header_Layout, Doc_Layout, Params_Layout : Pango_Layout;
+      Header_Layout, Doc_Layout : Pango_Layout;
 
-      Width, Height, W1, H1, W2, H2, W3, H3 : Gint := 0;
+      Width, Height, W1, H1, W2, H2 : Gint := 0;
       GC     : Gdk.Gdk_GC;
       Pixbuf : Gdk_Pixbuf;
 
@@ -303,23 +234,17 @@ package body Entities.Tooltips is
 
       Set_Font_Description (Header_Layout, Font);
       Get_Pixel_Size (Header_Layout, W1, H1);
+      Height := Height + V_Pad + H1;
 
       if Doc /= "" then
-         Doc_Layout := Create_Pango_Layout (Widget, Doc);
+         Doc_Layout := Create_Pango_Layout (Widget, "");
+         Set_Markup (Doc_Layout, Doc);
          Set_Font_Description (Doc_Layout, Fixed);
          Get_Pixel_Size (Doc_Layout, W2, H2);
-      end if;
-
-      Params_Layout := Get_Parameters (Entity, Widget, Fixed);
-      if Params_Layout /= null then
-         Get_Pixel_Size (Params_Layout, W3, H3);
-         H3 := H3 + H_Pad * 2 + 1;
+         Height := Height + V_Pad * 3 + 1 + H2;
       end if;
 
       Width  := Gint'Max (W1 + Get_Width (Pixbuf) + H_Pad * 2, W2 + H_Pad * 2);
-      Height := V_Pad * 3 + H1 + H2;
-      Width  := H_Pad * 2 + Gint'Max (Width, W3);
-      Height := Height + H3;
 
       Gdk_New (GC, Get_Window (Widget));
       Set_Foreground (GC, Get_Pref (Tooltip_Color));
@@ -337,19 +262,10 @@ package body Entities.Tooltips is
         (Pixmap, GC, V_Pad + Get_Width (Pixbuf), H_Pad, Header_Layout);
       Unref (Header_Layout);
 
-      if Doc_Layout /= null or else Params_Layout /= null then
-         Draw_Line (Pixmap, GC, 0, H1 + V_Pad * 2, Width - 1, H1 + V_Pad * 2);
-      end if;
-
       if Doc_Layout /= null then
+         Draw_Line (Pixmap, GC, 0, H1 + V_Pad * 2, Width - 1, H1 + V_Pad * 2);
          Draw_Layout (Pixmap, GC, H_Pad, H1 + 1 + V_Pad * 3, Doc_Layout);
          Unref (Doc_Layout);
-      end if;
-
-      if Params_Layout /= null then
-         Draw_Layout
-           (Pixmap, GC, H_Pad, H1 + H2 + 1 + V_Pad * 4, Params_Layout);
-         Unref (Params_Layout);
       end if;
 
       Unref (GC);
