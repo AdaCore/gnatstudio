@@ -27,7 +27,6 @@ with Gdk.Event;                 use Gdk.Event;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Pixmap;                use Gdk.Pixmap;
 with Gdk.Rectangle;             use Gdk.Rectangle;
-with Gdk.Window;                use Gdk.Window;
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Glib.Unicode;              use Glib.Unicode;
@@ -37,7 +36,6 @@ with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Tree_View;             use Gtk.Tree_View;
-with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.Handlers;           use Gtkada.Handlers;
