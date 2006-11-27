@@ -1907,10 +1907,7 @@ package body Language.Tree.Ada is
                     (Ada_Assign_Attribute)
                   then
                      Unbounded.Append
-                       (Result, "]" & ASCII.LF);
-                  else
-                     Unbounded.Append
-                       (Result, ASCII.LF);
+                       (Result, "]");
                   end if;
                end if;
 
@@ -1929,7 +1926,7 @@ package body Language.Tree.Ada is
          if Success then
             Unbounded.Append
               (Result,
-               ASCII.LF & "<b>Return:</b>"
+               ASCII.LF & ASCII.LF & "<b>Return:</b>"
                & ASCII.LF & "<b>"
                & Attribute_Decoration (Get_Construct (Node), False)
                & "</b>" & Buffer (Type_Start.Index .. Type_End.Index));

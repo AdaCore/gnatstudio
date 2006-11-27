@@ -1135,10 +1135,9 @@ package body Language.Tree is
                   if Success then
                      Append
                        (Result,
-                        " : " & Buffer (Type_Start.Index .. Type_End.Index)
-                        & ASCII.LF);
+                        " : " & Buffer (Type_Start.Index .. Type_End.Index));
                   else
-                     Append (Result, " : ???" & ASCII.LF);
+                     Append (Result, " : ???");
                   end if;
                end if;
 
@@ -1157,7 +1156,7 @@ package body Language.Tree is
          if Success then
             Append
               (Result,
-               ASCII.LF & "<b>Return:</b>"
+               ASCII.LF & ASCII.LF & "<b>Return:</b>"
                & ASCII.LF & Buffer (Type_Start.Index .. Type_End.Index));
          end if;
       elsif Get_Construct (Node).Category in Data_Category then
