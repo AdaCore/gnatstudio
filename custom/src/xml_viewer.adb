@@ -54,6 +54,7 @@ with XML_Parsers;               use XML_Parsers;
 with VFS;                       use VFS;
 
 package body XML_Viewer is
+
    Name_Cst      : aliased constant String := "name";
    Filename_Cst  : aliased constant String := "filename";
    Str_Cst       : aliased constant String := "str";
@@ -64,18 +65,18 @@ package body XML_Viewer is
    Sorted_Cst    : aliased constant String := "sorted";
 
    XML_Constructor_Params : constant Cst_Argument_List  :=
-     (1 => Name_Cst'Access,
-      2 => Columns_Cst'Access,
-      3 => Parser_Cst'Access,
-      4 => On_Click_Cst'Access,
-      5 => On_Select_Cst'Access,
-      6 => Sorted_Cst'Access);
+                              (1 => Name_Cst'Access,
+                               2 => Columns_Cst'Access,
+                               3 => Parser_Cst'Access,
+                               4 => On_Click_Cst'Access,
+                               5 => On_Select_Cst'Access,
+                               6 => Sorted_Cst'Access);
    XML_Metrics_Params : constant Cst_Argument_List :=
-     (1 => Name_Cst'Access);
+                          (1 => Name_Cst'Access);
    Parse_Params : constant Cst_Argument_List :=
-     (1 => Filename_Cst'Access);
+                     (1 => Filename_Cst'Access);
    Parse_String_Params : constant Cst_Argument_List :=
-     (1 => Str_Cst'Access);
+                           (1 => Str_Cst'Access);
 
    type XML_Viewer_Record is abstract new Abstract_XML_Viewer_Record with
       record
@@ -163,12 +164,12 @@ package body XML_Viewer is
    --  Called when View is being destroyed
 
    function Set_Row_Content
-     (View      : access XML_Viewer_Record'Class;
-      Parent    : Gtk_Tree_Iter;
-      Col0      : String;
-      Sort_On   : String  := "";
-      Col1      : String  := "";
-      On_Click  : String  := "") return Gtk_Tree_Iter;
+     (View     : access XML_Viewer_Record'Class;
+      Parent   : Gtk_Tree_Iter;
+      Col0     : String;
+      Sort_On  : String  := "";
+      Col1     : String  := "";
+      On_Click : String  := "") return Gtk_Tree_Iter;
    --  Add a new row to the model.
    --  Name and Value are displayed in the visible columns.
    --  Sort_On, if specified, is the sorting string used to sort columns. If
@@ -224,7 +225,7 @@ package body XML_Viewer is
       Child_Index : Positive) return Gtk_Tree_Iter
    is
       pragma Unreferenced (Child_Index);
-      Iter   : Gtk_Tree_Iter := Null_Iter;
+      Iter : Gtk_Tree_Iter := Null_Iter;
    begin
       if View.Parser /= null then
          declare
@@ -247,6 +248,7 @@ package body XML_Viewer is
             Basic_Types.Free (Tmp);
             Free (C);
          end;
+
       else
          Append (View.Tree.Model, Iter, Parent);
          Set (View.Tree.Model, Iter, 0, Node.Tag.all);
@@ -318,8 +320,8 @@ package body XML_Viewer is
       Node         : Glib.Xml_Int.Node_Ptr) return Boolean
    is
       pragma Unreferenced (Node);
-      Cmd : constant String := Get_String
-        (View.Tree.Model, Iter, View.Command_Column);
+      Cmd : constant String :=
+              Get_String (View.Tree.Model, Iter, View.Command_Column);
    begin
       if Double_Click then
          if Cmd /= "" then
@@ -427,6 +429,10 @@ package body XML_Viewer is
       pragma Inline (Right_Align);
       --  Returns the right-aligned Metric_Count for sorting purposes
 
+      --------------
+      -- Get_Kind --
+      --------------
+
       function Get_Kind return String is
          Kind : constant UTF8_String := Get_Attribute (Node, "kind");
       begin
@@ -436,6 +442,10 @@ package body XML_Viewer is
             return " (" & Kind & ")";
          end if;
       end Get_Kind;
+
+      -----------------
+      -- Right_Align --
+      -----------------
 
       function Right_Align return String is
          Img : constant String := Child_Index'Img;
@@ -467,9 +477,9 @@ package body XML_Viewer is
       elsif Node.Tag.all = "metric" then
          return Set_Row_Content
            (View, Parent,
-            Col0      => Name,
-            Sort_On   => Right_Align,
-            Col1      => Node.Value.all);
+            Col0    => Name,
+            Sort_On => Right_Align,
+            Col1    => Node.Value.all);
       else
          return Null_Iter;
       end if;
@@ -484,11 +494,11 @@ package body XML_Viewer is
       Buffer       : String;
       Is_File_Name : Boolean := True) return String
    is
-      Error        : GNAT.Strings.String_Access;
-      Root         : Node_Ptr;
-      Path         : Gtk_Tree_Path;
-      Col          : Gint;
-      Dummy        : Boolean;
+      Error : GNAT.Strings.String_Access;
+      Root  : Node_Ptr;
+      Path  : Gtk_Tree_Path;
+      Col   : Gint;
+      Dummy : Boolean;
       pragma Unreferenced (Dummy);
 
       procedure Parse_Node
@@ -547,7 +557,7 @@ package body XML_Viewer is
               and then S.all'Length > 2
               and then S (S'First .. S'First + 1) /= "<?"
             then
-               --  The beginning tag is missing, add it.
+               --  The beginning tag is missing, add it
 
                W := Write_File (V);
                Write (W, "<?xml version=""1.0""?>" & ASCII.LF & S.all);
@@ -618,13 +628,13 @@ package body XML_Viewer is
       Name    : String;
       Columns : Natural)
    is
-      Col    : Gtk_Tree_View_Column;
-      Rend   : Gtk_Cell_Renderer_Text;
-      Dumm   : Gint;
-      Scroll : Gtk_Scrolled_Window;
+      Col          : Gtk_Tree_View_Column;
+      Rend         : Gtk_Cell_Renderer_Text;
+      Dumm         : Gint;
+      Scroll       : Gtk_Scrolled_Window;
       pragma Unreferenced (Dumm);
       Column_Types : Glib.GType_Array (1 .. Guint (Columns) + 3) :=
-        (others => GType_String);
+                       (others => GType_String);
    begin
       Column_Types (Guint (Columns) + 3) := GType_Pointer;
 
@@ -752,9 +762,8 @@ package body XML_Viewer is
    -----------------------
 
    procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class) is
-      XML_Viewer_Class : constant Class_Type := New_Class
-        (Kernel, "XMLViewer");
-
+      XML_Viewer_Class : constant Class_Type :=
+                           New_Class (Kernel, "XMLViewer");
    begin
       Register_Command
         (Kernel, Constructor_Method,
