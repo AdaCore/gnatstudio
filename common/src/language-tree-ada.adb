@@ -1805,7 +1805,7 @@ package body Language.Tree.Ada is
            (Result,
             Comment_Block
               (Get_Language (Tree_Language'Class (Lang.all)'Access),
-               Buffer (Beginning .. Current) & ASCII.LF,
+               Buffer (Beginning .. Current),
                Comment => False,
                Clean   => True));
       end if;
@@ -1846,10 +1846,15 @@ package body Language.Tree.Ada is
             while Get_Parent_Scope (Tree, Sub_Iter) = Node loop
                if Get_Construct (Sub_Iter).Category = Cat_Parameter then
                   if not Has_Parameter then
-                     Unbounded.Append (Result, ASCII.LF & "<b>Parameters:</b>"
-                             & ASCII.LF);
+                     if Beginning /= 0 then
+                        Unbounded.Append (Result, ASCII.LF & ASCII.LF);
+                     end if;
+
+                     Unbounded.Append (Result, "<b>Parameters:</b>");
                      Has_Parameter := True;
                   end if;
+
+                  Unbounded.Append (Result, ASCII.LF);
 
                   Get_Referenced_Entity
                     (Language,
@@ -1944,10 +1949,13 @@ package body Language.Tree.Ada is
                Success);
 
             if Success then
+               if Beginning /= 0 then
+                  Unbounded.Append (Result, ASCII.LF & ASCII.LF);
+               end if;
+
                Unbounded.Append
                  (Result,
-                  ASCII.LF & "<b>Type: </b>"
-                  & Buffer (Var_Start.Index .. Var_End.Index));
+                  "<b>Type: </b>" & Buffer (Var_Start.Index .. Var_End.Index));
             end if;
          end;
       end if;
