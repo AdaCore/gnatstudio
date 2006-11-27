@@ -106,7 +106,9 @@ package body Entities.Tooltips is
       Data_File  : Structured_File_Access;
       Tree_Lang  : constant Tree_Language_Access :=
         Get_Tree_Language_From_File (Handler, Decl_File, False);
+      Node       : Construct_Tree_Iterator;
       Tree       : Construct_Tree;
+
    begin
       Data_File := Language.Tree.Database.Get_Or_Create
         (Db   => Database,
@@ -115,15 +117,21 @@ package body Entities.Tooltips is
 
       Tree := Get_Full_Tree (Data_File);
 
+      Node := Get_Iterator_At
+        (Tree        => Tree,
+         Line        => Loc.Line,
+         Line_Offset => Natural (Loc.Column),
+         From_Type   => Start_Name);
+
+      if Node = Null_Construct_Tree_Iterator then
+         return -"<i>No documentation available.</i>";
+      end if;
+
       return Language.Tree.Get_Documentation
         (Lang     => Tree_Lang,
          Buffer   => Get_Buffer (Data_File).all,
          Tree     => Tree,
-         Node     => Get_Iterator_At
-           (Tree        => Tree,
-            Line        => Loc.Line,
-            Line_Offset => Natural (Loc.Column),
-            From_Type   => Start_Name));
+         Node     => Node);
    end Get_Documentation;
 
    ------------------
@@ -212,7 +220,7 @@ package body Entities.Tooltips is
       GC     : Gdk.Gdk_GC;
       Pixbuf : Gdk_Pixbuf;
 
-      H_Pad : constant := 3;
+      H_Pad : constant := 4;
       V_Pad : constant := 3;
 
    begin
@@ -234,14 +242,14 @@ package body Entities.Tooltips is
 
       Set_Font_Description (Header_Layout, Font);
       Get_Pixel_Size (Header_Layout, W1, H1);
-      Height := Height + V_Pad + H1;
+      Height := Height + V_Pad * 2 + H1;
 
       if Doc /= "" then
          Doc_Layout := Create_Pango_Layout (Widget, "");
          Set_Markup (Doc_Layout, Doc);
          Set_Font_Description (Doc_Layout, Fixed);
          Get_Pixel_Size (Doc_Layout, W2, H2);
-         Height := Height + V_Pad * 3 + 1 + H2;
+         Height := Height + V_Pad * 2 + 1 + H2;
       end if;
 
       Width  := Gint'Max (W1 + Get_Width (Pixbuf) + H_Pad * 2, W2 + H_Pad * 2);
