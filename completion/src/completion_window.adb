@@ -461,7 +461,7 @@ package body Completion_Window is
       Beg    : Gtk_Text_Iter;
 
    begin
-      if Window.In_Deletion then
+      if Window.In_Deletion or else Window.In_Destruction then
          return;
       end if;
 
@@ -485,7 +485,7 @@ package body Completion_Window is
       End_Iter : Gtk_Text_Iter;
       Cur      : Gtk_Text_Iter;
    begin
-      if Window.In_Deletion then
+      if Window.In_Deletion or else Window.In_Destruction then
          return;
       end if;
 
@@ -514,7 +514,7 @@ package body Completion_Window is
       Iter     : Gtk_Text_Iter;
       Beg      : Gtk_Text_Iter;
    begin
-      if Window.In_Deletion then
+      if Window.In_Deletion or else Window.In_Destruction then
          return;
       end if;
 
@@ -821,6 +821,13 @@ package body Completion_Window is
             return True;
 
          when GDK_Return =>
+            Sel := Get_Selection (Window.View);
+            Get_Selected (Sel, Model, Iter);
+
+            if Iter = Null_Iter then
+               return False;
+            end if;
+
             Complete_And_Exit (Window);
             return True;
 
@@ -828,12 +835,14 @@ package body Completion_Window is
             Sel := Get_Selection (Window.View);
             Get_Selected (Sel, Model, Iter);
 
-            if Iter /= Null_Iter then
+            if Iter = Null_Iter then
+               Iter := Get_Iter_First (Window.Model);
+            else
                Next (Window.Model, Iter);
+            end if;
 
-               if Iter /= Null_Iter then
-                  Select_Iter (Sel, Iter);
-               end if;
+            if Iter /= Null_Iter then
+               Select_Iter (Sel, Iter);
             end if;
 
             return True;
@@ -841,14 +850,22 @@ package body Completion_Window is
          when GDK_Up | GDK_KP_Up =>
             Sel := Get_Selection (Window.View);
             Get_Selected (Sel, Model, Iter);
-            Path := Get_Path (Window.Model, Iter);
 
-            if Prev (Path) then
-               Iter := Get_Iter (Window.Model, Path);
-               Select_Iter (Sel, Iter);
+            if Iter = Null_Iter then
+               Iter := Get_Iter_First (Window.Model);
             end if;
 
-            Path_Free (Path);
+            if Iter /= Null_Iter then
+               Path := Get_Path (Window.Model, Iter);
+
+               if Prev (Path) then
+                  Iter := Get_Iter (Window.Model, Path);
+                  Select_Iter (Sel, Iter);
+               end if;
+
+               Path_Free (Path);
+            end if;
+
             return True;
 
          when others =>
@@ -1153,7 +1170,9 @@ package body Completion_Window is
          Delete (Window);
          return;
       else
-         Select_Iter (Get_Selection (Window.View), Tree_Iter);
+         if Complete then
+            Select_Iter (Get_Selection (Window.View), Tree_Iter);
+         end if;
       end if;
 
       On_Selection_Changed (Window);
