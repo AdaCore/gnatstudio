@@ -269,7 +269,6 @@ package body Src_Editor_Box.Tooltips is
          return;
       end if;
 
-      --  Cursor_Col := Col;
       Get_Iter_At_Line_Offset (Box.Source_Buffer, Start_Iter, Line, Col);
       Search_Entity_Bounds (Start_Iter, End_Iter);
       Get_Screen_Position (Box.Source_Buffer, Start_Iter, Line, Col);
@@ -279,15 +278,21 @@ package body Src_Editor_Box.Tooltips is
 
       Get_Iter_Location (Widget, Start_Iter, Location);
       Buffer_To_Window_Coords
-        (Widget, Text_Window_Text, Location.X, Location.Y, Win_X, Win_Y);
-      Area.X := Win_X - Mouse_X;
-      Area.Y := Win_Y - Mouse_Y;
-
+        (Widget, Text_Window_Text, Location.X, Location.Y, Area.X, Area.Y);
       Get_Iter_Location (Widget, End_Iter, Location);
       Buffer_To_Window_Coords
         (Widget, Text_Window_Text, Location.X, Location.Y, Win_X, Win_Y);
-      Area.Width  := Win_X - Mouse_X - Area.X + Location.Width;
-      Area.Height := Win_Y - Mouse_Y - Area.Y + Location.Height;
+
+      Area.Width  := Win_X - Area.X + Location.Width;
+      Area.Height := Win_Y - Area.Y + Location.Height;
+
+      declare
+         Tmp_X, Tmp_Y, Tmp_Width, Tmp_Height, Tmp_Depth : Gint;
+      begin
+         Get_Geometry (Get_Window (Widget, Text_Window_Left),
+                       Tmp_X, Tmp_Y, Tmp_Width, Tmp_Height, Tmp_Depth);
+         Area.X := Area.X + Tmp_Width;
+      end;
 
       declare
          Entity_Name : constant String := Get_Text (Start_Iter, End_Iter);
@@ -338,11 +343,10 @@ package body Src_Editor_Box.Tooltips is
             return;
          end if;
 
+         --  Ref the entity, so that if Draw_Tooltip regenerates the xref info,
+         --  we are sure to always have a valid entity reference.
          Ref (Entity);
-         --  ??? What is the purpose of the Ref/Unref call?
-
          Pixmap := Draw_Tooltip (Box.Kernel, Entity, Entity_Ref, Status);
-
          Unref (Entity);
       end;
 
