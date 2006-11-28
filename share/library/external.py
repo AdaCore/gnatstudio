@@ -12,6 +12,11 @@
                   sets a number of parameters when calling this function.
 
       - "sort" => Sort the selected lines
+
+      - "ls"   => If you have no current selection, this will simply insert
+                  the contents of the current directory in the file
+
+      - "date" => Insert the current date in the file
 """
 
 ############################################################################
@@ -38,16 +43,22 @@ def process_through_shell (command, buffer=None):
 
    # Ignore white spaces and newlines at end, to preserve the rest
    # of the text
-   while end.get_char() == ' ' or end.get_char() == '\n':
-     end = end - 1
+   if start != end:
+     while end.get_char() == ' ' or end.get_char() == '\n':
+        end = end - 1
 
-   text = buffer.get_chars (start, end)
+     text = buffer.get_chars (start, end)
+   else:
+     text = ""
+
    proc = Process (command)
    proc.send (text)
    proc.send (chr (4))  # Close input
    output = proc.get_result()
    buffer.start_undo_group()
-   buffer.delete (start, end)
+
+   if start != end:
+      buffer.delete (start, end)
    buffer.insert (start, output.rstrip())
    buffer.finish_undo_group()
 
@@ -81,7 +92,7 @@ class ShellProcess (CommandWindow):
       process_through_shell (shell_command)
 
 def on_gps_started (hook):
-   Menu.create ("/Edit/Process through shell",
+   Menu.create ("/Edit/External program",
                 ref = "Create Bookmark",
                 on_activate=lambda menu: ShellProcess())
    Menu.create ("/Edit/Refill with fmt",
@@ -89,7 +100,7 @@ def on_gps_started (hook):
                 on_activate=lambda menu: fmt_selection())
 
 parse_xml ("""
-  <action name="Process through shell">
+  <action name="External program" output="none">
      <description>Process the current selection through a shell command,
         and replace it with the output of that command.</description>
      <filter id="Source editor" />
