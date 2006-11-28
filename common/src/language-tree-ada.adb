@@ -1779,6 +1779,16 @@ package body Language.Tree.Ada is
             Ind := Ind + 5;
          end if;
 
+         if Construct.Attributes (Ada_Constant_Attribute) then
+            Buffer (Ind .. Ind + 8) := "constant ";
+            Ind := Ind + 9;
+         end if;
+
+         if Construct.Attributes (Ada_Aliased_Attribute) then
+            Buffer (Ind .. Ind + 7) := "aliased ";
+            Ind := Ind + 8;
+         end if;
+
          return Buffer (1 .. Ind - 1);
       end Attribute_Decoration;
 
@@ -1955,7 +1965,10 @@ package body Language.Tree.Ada is
 
                Unbounded.Append
                  (Result,
-                  "<b>Type: </b>" & Buffer (Var_Start.Index .. Var_End.Index));
+                  "<b>Type: "
+                  & Attribute_Decoration (Get_Construct (Node), False)
+                  & "</b>"
+                  & Buffer (Var_Start.Index .. Var_End.Index));
             end if;
          end;
       end if;
