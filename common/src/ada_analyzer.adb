@@ -1761,10 +1761,14 @@ package body Ada_Analyzer is
                   Top_Token.Attributes (Ada_Abstract_Attribute) := True;
                when Tok_Access =>
                   Top_Token.Attributes (Ada_Access_Attribute) := True;
+               when Tok_Aliased =>
+                  Top_Token.Attributes (Ada_Aliased_Attribute) := True;
                when Tok_Array =>
                   Top_Token.Attributes (Ada_Array_Attribute) := True;
                when Tok_Colon_Equal =>
                   Top_Token.Attributes (Ada_Assign_Attribute) := True;
+               when Tok_Constant =>
+                  Top_Token.Attributes (Ada_Constant_Attribute) := True;
                when Tok_Delta =>
                   Top_Token.Attributes (Ada_Delta_Attribute) := True;
                when Tok_Digits =>
