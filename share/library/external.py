@@ -80,8 +80,13 @@ class ShellProcess (CommandWindow):
    def on_activate (self, shell_command):
       process_through_shell (shell_command)
 
+def interactive_process_through_shell (menu):
+   ShellProcess()
+
 def on_gps_started (hook):
-   pass
+   Menu.create ("/Edit/Process through shell",
+                ref = "Create Bookmark",
+                on_activate=interactive_process_through_shell)
 
 parse_xml ("""
   <action name="Process through shell">
