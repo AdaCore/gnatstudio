@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.1.0
 
+- FB27-017 Default shortcuts for /File/Save More
+  Problem:    The shortcut "Alt-f o" is the same for /File/Open and
+              /File/Save More, making it harder to access these from
+              the keyboards. The latter has been changed to "Alt-f m"
+              and the /File/Messages has been changed to "Alt-f g"
+  Workaround: Press "o" until the appropriate menu is selected
+
 - FB23-029 Floating windows should be raised when they gain focus
   Problem:    If you are using floating windows, and select one of them
               through the Window menu, it should be raised to become
