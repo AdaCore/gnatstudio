@@ -829,6 +829,12 @@ package Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record'Class) return Command_Queue;
    --  Return the command queue associated to Buffer.
 
+   procedure Prevent_CR_Insertion
+     (Buffer  : access Source_Buffer_Record'Class;
+      Prevent : Boolean := True);
+   --  Whether the buffer should monitor the next text insertion and strip any
+   --  CRs.
+
 private
 
    procedure Set_Cursor_Position
@@ -1206,6 +1212,9 @@ private
       --  Whether the user has manually toggled the editor read-only
       --  or writable
 
+      Prevent_CR_Insertion : Boolean := False;
+      --  Whether the buffer should monitor every text inserted and strip it
+      --  of potential CRs.
    end record;
 
    procedure Emit_By_Name
