@@ -249,6 +249,9 @@ package body Src_Editor_View is
    procedure Size_Allocated (View : access Gtk_Widget_Record'Class);
    --  Called when a new size has been allocated
 
+   procedure Paste_Clipboard_Before (View : access Gtk_Widget_Record'Class);
+   --  Called before pasting the clipboard
+
    function Cursor_Screen_Position
      (View : access Source_View_Record'Class) return Gdouble;
    --  Return the cursor position on screen.
@@ -752,6 +755,21 @@ package body Src_Editor_View is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end Size_Allocated;
+
+   ----------------------------
+   -- Paste_Clipboard_Before --
+   ----------------------------
+
+   procedure Paste_Clipboard_Before (View : access Gtk_Widget_Record'Class) is
+      V      : constant Source_View := Source_View (View);
+      Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (V));
+   begin
+      Prevent_CR_Insertion (Buffer, True);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end Paste_Clipboard_Before;
 
    --------------------------------
    -- Speed_Bar_Size_Allocate_Cb --
@@ -1336,6 +1354,11 @@ package body Src_Editor_View is
       Widget_Callback.Connect
         (View, "size_allocate",
          Widget_Callback.To_Marshaller (Size_Allocated_Before'Access),
+         After => False);
+
+      Widget_Callback.Connect
+        (View, "paste_clipboard",
+         Widget_Callback.To_Marshaller (Paste_Clipboard_Before'Access),
          After => False);
 
       Source_Buffer_Callback.Connect
