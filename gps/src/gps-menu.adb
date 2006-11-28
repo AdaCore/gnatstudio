@@ -386,7 +386,7 @@ package body GPS.Menu is
       File        : constant String := '/' & (-"File") & '/';
       Edit        : constant String := "/_" & (-"Edit")     & '/';
       Project     : constant String := "/_" & (-"Project")  & '/';
-      Save        : constant String := File & (-"Save M_ore") & '/';
+      Save        : constant String := File & (-"Save _More") & '/';
       Reopen_Menu : Gtk.Menu_Item.Gtk_Menu_Item;
       Command     : Interactive_Command_Access;
    begin

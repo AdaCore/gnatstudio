@@ -516,7 +516,7 @@ package body GPS.Kernel.Console is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       File    : constant String := '/' & (-"File");
-      Console : constant String := File & '/' & (-"_Messages");
+      Console : constant String := File & '/' & (-"Messa_ges");
    begin
       Console_Module_Id := new Console_Module_Id_Record;
       Register_Module
