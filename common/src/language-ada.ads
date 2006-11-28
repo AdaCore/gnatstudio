@@ -119,10 +119,14 @@ package Language.Ada is
                                Ada_Analyzer.Ada_Abstract_Attribute;
    Ada_Access_Attribute    : constant Construct_Att_Key :=
                                Ada_Analyzer.Ada_Access_Attribute;
+   Ada_Aliased_Attribute   : constant Construct_Att_Key :=
+                               Ada_Analyzer.Ada_Aliased_Attribute;
    Ada_Array_Attribute     : constant Construct_Att_Key :=
                                Ada_Analyzer.Ada_Array_Attribute;
    Ada_Assign_Attribute    : constant Construct_Att_Key :=
                                Ada_Analyzer.Ada_Assign_Attribute;
+   Ada_Constant_Attribute  : constant Construct_Att_Key :=
+                               Ada_Analyzer.Ada_Constant_Attribute;
    Ada_Delta_Attribute     : constant Construct_Att_Key :=
                                Ada_Analyzer.Ada_Delta_Attribute;
    Ada_Digits_Attribute    : constant Construct_Att_Key :=
