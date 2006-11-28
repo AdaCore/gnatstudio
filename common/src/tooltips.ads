@@ -98,7 +98,10 @@ package Tooltips is
      (Tooltip : access Pixmap_Tooltips;
       Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
       Area    : out Gdk.Rectangle.Gdk_Rectangle) is abstract;
-   --  Create the contents of the tooltip
+   --  Create the contents of the tooltip.
+   --  The tooltip is hidden when the mouse leaves the area defined by Area,
+   --  which is relative to Get_Window for the widget on which the tooltip
+   --  applies (On_Widget parameter to Set_Tooltip)
 
    procedure Create_Contents
      (Tooltip  : access Pixmap_Tooltips;

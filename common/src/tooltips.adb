@@ -43,7 +43,6 @@ with Gtk.Window;      use Gtk.Window;
 with Traces;          use Traces;
 
 package body Tooltips is
-
    package Tooltip_Handler is new Gtk.Handlers.User_Return_Callback
      (Widget_Type => Gtk.Widget.Gtk_Widget_Record,
       Return_Type => Boolean,
@@ -244,12 +243,10 @@ package body Tooltips is
    begin
       Get_Pointer (Get_Window (Tooltip.Widget), X, Y, Mask, Window);
 
-      if X <= Tooltip.X + Tooltip.Area.X +
-        GRectangle_Coord (Tooltip.Area.Width)
-        and then Y <= Tooltip.Y + Tooltip.Area.Y +
-          GRectangle_Coord (Tooltip.Area.Height)
-        and then X >= Tooltip.X + Tooltip.Area.X
-        and then Y >= Tooltip.Y + Tooltip.Area.Y
+      if X <= Tooltip.Area.X + GRectangle_Coord (Tooltip.Area.Width)
+        and then Y <= Tooltip.Area.Y + GRectangle_Coord (Tooltip.Area.Height)
+        and then X >= Tooltip.Area.X
+        and then Y >= Tooltip.Area.Y
       then
          return;
       end if;
