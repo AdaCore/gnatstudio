@@ -1429,6 +1429,43 @@ package body Src_Editor_Buffer is
       Pos     : Gtk_Text_Iter;
       Command : Editor_Command := Editor_Command (Buffer.Current_Command);
    begin
+      if Buffer.Prevent_CR_Insertion then
+         Buffer.Prevent_CR_Insertion := False;
+
+         declare
+            T        : String (1 .. Length);
+            Last     : Integer := 1;
+            CR_Found : Boolean := False;
+         begin
+            --  Copy Text in T, replacing CRLF by LF and CR by LF.
+            for J in 1 .. Length loop
+               if Text (J) = ASCII.CR then
+                  CR_Found := True;
+
+                  if J = Length or else Text (J + 1) /= ASCII.LF then
+                     T (Last) := ASCII.LF;
+                     Last := Last + 1;
+                  end if;
+               else
+                  T (Last) := Text (J);
+                  Last := Last + 1;
+               end if;
+            end loop;
+
+            Last := Last - 1;
+
+            if CR_Found then
+               --  If we have found a CR in the text, block the current
+               --  insertion and write the stripped text instead.
+
+               Emit_Stop_By_Name (Object => Buffer, Name   => "insert_text");
+               CR_Found := Insert_Interactive_At_Cursor
+                 (Buffer, T (1 .. Last), True);
+               return;
+            end if;
+         end;
+      end if;
+
       Edit_Hook (Buffer);
       Cursor_Move_Hook (Buffer);
 
@@ -6038,5 +6075,16 @@ package body Src_Editor_Buffer is
    begin
       return Buffer.Explicit_Writable_Set;
    end Get_Explicit_Writable_Set;
+
+   --------------------------
+   -- Prevent_CR_Insertion --
+   --------------------------
+
+   procedure Prevent_CR_Insertion
+     (Buffer  : access Source_Buffer_Record'Class;
+      Prevent : Boolean := True) is
+   begin
+      Buffer.Prevent_CR_Insertion := Prevent;
+   end Prevent_CR_Insertion;
 
 end Src_Editor_Buffer;
