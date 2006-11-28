@@ -14,6 +14,13 @@ of the feature.
 New features in GPS 4.1.0
 -------------------------
 
+FB28-013 New startup script to process text through shell command (2006-11-28)
+
+  A new startup script (see /Edit/Startup Scripts) has been provided that
+  allows you to replace a chunk of text by the result of a shell command run
+  on it. In particular, you can run it through the "fmt", "sort",... command
+  line utilities. This is similar to vi's ! command.
+
 FB24-015 Add some support for inheritance in language definitions
 
   The Keywords and New_Line_Comment_Start XML node can be refined
