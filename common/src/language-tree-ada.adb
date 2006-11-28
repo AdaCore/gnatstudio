@@ -1742,6 +1742,10 @@ package body Language.Tree.Ada is
         (Construct  : Simple_Construct_Information;
          Default_In : Boolean) return String;
 
+      function Get_Default_Value
+        (Construct  : Simple_Construct_Information;
+         Max_Length : Integer := 30) return String;
+
       function Attribute_Decoration
         (Construct  : Simple_Construct_Information;
          Default_In : Boolean) return String
@@ -1792,6 +1796,113 @@ package body Language.Tree.Ada is
          return Buffer (1 .. Ind - 1);
       end Attribute_Decoration;
 
+      ------------------------
+      --  Get_Default_Value --
+      ------------------------
+
+      function Get_Default_Value
+        (Construct  : Simple_Construct_Information;
+         Max_Length : Integer := 30) return String
+      is
+         Result        : String (1 .. Max_Length);
+         Current_Ind   : Integer := 0;
+         Extract_Value : Boolean := False;
+         Parent_Depth  : Integer := 0;
+
+         function Append_Text (Str : String) return Boolean;
+
+         function Token_Callback
+           (Entity         : Language_Entity;
+            Sloc_Start     : Source_Location;
+            Sloc_End       : Source_Location;
+            Partial_Entity : Boolean) return Boolean;
+
+         -----------------
+         -- Append_Text --
+         -----------------
+
+         function Append_Text (Str : String) return Boolean is
+            Size_Taken : Integer := Str'Length;
+            Stop       : Boolean := False;
+         begin
+            if Size_Taken + Current_Ind > Result'Length - 3 then
+               Size_Taken := Result'Length - 3 - Current_Ind;
+               Stop := True;
+            end if;
+
+            Result (Current_Ind + 1 .. Current_Ind + 1 + Size_Taken - 1) :=
+              Str (Str'First .. Str'First + Size_Taken - 1);
+
+            Current_Ind := Current_Ind + Size_Taken;
+
+            if Stop then
+               Result (Result'Last - 2 .. Result'Last) := "...";
+               Current_Ind := Result'Last;
+               return True;
+            else
+               return False;
+            end if;
+         end Append_Text;
+
+         --------------------
+         -- Token_Callback --
+         --------------------
+
+         function Token_Callback
+           (Entity         : Language_Entity;
+            Sloc_Start     : Source_Location;
+            Sloc_End       : Source_Location;
+            Partial_Entity : Boolean) return Boolean
+         is
+            pragma Unreferenced (Partial_Entity);
+
+            Text : constant String :=
+              Buffer (Sloc_Start.Index .. Sloc_End.Index);
+         begin
+            if Entity = Operator_Text and then Text = ";" then
+               return True;
+            end if;
+
+            if not Extract_Value  then
+               if Entity = Operator_Text
+                 and then Text = ":="
+               then
+                  Extract_Value := True;
+               end if;
+
+               return False;
+            else
+               if Entity = Operator_Text then
+                  if Text = "(" then
+                     Parent_Depth := Parent_Depth + 1;
+
+                     return Append_Text (" (");
+                  elsif Text = ")" or else Text = "," then
+                     if Text = ")" then
+                        if Parent_Depth = 0 then
+                           return True;
+                        end if;
+
+                        Parent_Depth := Parent_Depth - 1;
+                     end if;
+
+                     return Append_Text (Text);
+                  else
+                     return Append_Text (" " & Text);
+                  end if;
+               end if;
+
+               return Append_Text (" " & Text);
+            end if;
+         end Token_Callback;
+      begin
+         Parse_Entities
+           (Ada_Lang, Buffer (Construct.Sloc_Entity.Index .. Buffer'Last),
+            Token_Callback'Unrestricted_Access);
+
+         return Result (1 .. Current_Ind);
+      end Get_Default_Value;
+
    begin
       Get_Documentation_Before
         (Context       => Get_Language_Context (Language).all,
@@ -1824,9 +1935,10 @@ package body Language.Tree.Ada is
          declare
             Sub_Iter                  : Construct_Tree_Iterator :=
               Next (Tree, Node, Jump_Into);
-            Has_Parameter             : Boolean := False;
-            Biggest_Parameter_Name    : Integer := 0;
-            Biggest_Decoration_Length : Integer := 0;
+            Has_Parameter                : Boolean := False;
+            Biggest_Parameter_Name       : Integer := 0;
+            Biggest_Decoration_Length    : Integer := 0;
+            Biggest_Affected_Type_Length : Integer := 0;
          begin
             while Get_Parent_Scope (Tree, Sub_Iter) = Node loop
                if Get_Construct (Sub_Iter).Category = Cat_Parameter then
@@ -1844,6 +1956,26 @@ package body Language.Tree.Ada is
                      Biggest_Decoration_Length :=
                        Attribute_Decoration
                          (Get_Construct (Sub_Iter), True)'Length;
+                  end if;
+
+                  if Get_Construct (Sub_Iter).Attributes
+                    (Ada_Assign_Attribute)
+                  then
+                     Get_Referenced_Entity
+                       (Language,
+                        Buffer,
+                        Get_Construct (Sub_Iter),
+                        Type_Start,
+                        Type_End,
+                        Success);
+
+                     if Success
+                       and then Type_End.Index - Type_Start.Index + 1
+                         > Biggest_Affected_Type_Length
+                     then
+                        Biggest_Affected_Type_Length :=
+                          Type_End.Index - Type_Start.Index + 1;
+                     end if;
                   end if;
                end if;
 
@@ -1880,8 +2012,7 @@ package body Language.Tree.Ada is
                      Unbounded.Append
                        (Result, "<span foreground=""#555555"">[");
                   else
-                     Unbounded.Append
-                       (Result, " ");
+                     Unbounded.Append (Result, " ");
                   end if;
 
                   Unbounded.Append
@@ -1921,8 +2052,16 @@ package body Language.Tree.Ada is
                   if Get_Construct (Sub_Iter).Attributes
                     (Ada_Assign_Attribute)
                   then
+                     for J in Type_End.Index - Type_Start.Index + 1 + 1
+                       .. Biggest_Affected_Type_Length
+                     loop
+                        Unbounded.Append (Result, " ");
+                     end loop;
+
                      Unbounded.Append
-                       (Result, "]</span>");
+                       (Result, " :="
+                        & Get_Default_Value (Get_Construct (Sub_Iter))
+                        & "]</span>");
                   end if;
                end if;
 
