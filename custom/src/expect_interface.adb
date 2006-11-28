@@ -729,7 +729,8 @@ package body Expect_Interface is
                    ": "& Command_Line);
 
             D             := new Custom_Action_Record;
-            D.Command     := Argument_String_To_List (Command_Line);
+            D.Command     := Argument_String_To_List_With_Triple_Quotes
+              (Command_Line);
             D.On_Match    := Nth_Arg (Data, 4, null);
             D.On_Exit     := Nth_Arg (Data, 5, null);
             D.Before_Kill := Nth_Arg (Data, 10, null);
