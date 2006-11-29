@@ -14,6 +14,12 @@ of the feature.
 New features in GPS 4.1.0
 -------------------------
 
+FB29-006 New startup script to save and restore last position (2006-11-29)
+
+  A new startup script (see /Edit/Startup Scripts) is now provided that
+  allows you to automatically remember the last position viewed in a file,
+  and automatically restore it when the file is reopened
+
 FB28-013 New startup script to process text through shell command (2006-11-28)
 
   A new startup script (see /Edit/Startup Scripts) has been provided that
