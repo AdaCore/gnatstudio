@@ -1903,6 +1903,8 @@ package body Language.Tree.Ada is
          return Result (1 .. Current_Ind);
       end Get_Default_Value;
 
+      Add_New_Line : Boolean := False;
+
    begin
       Get_Documentation_Before
         (Context       => Get_Language_Context (Language).all,
@@ -1929,6 +1931,8 @@ package body Language.Tree.Ada is
                Buffer (Beginning .. Current),
                Comment => False,
                Clean   => True));
+
+         Add_New_Line := True;
       end if;
 
       if Get_Construct (Node).Category in Subprogram_Category then
@@ -1988,12 +1992,13 @@ package body Language.Tree.Ada is
             while Get_Parent_Scope (Tree, Sub_Iter) = Node loop
                if Get_Construct (Sub_Iter).Category = Cat_Parameter then
                   if not Has_Parameter then
-                     if Beginning /= 0 then
+                     if Add_New_Line then
                         Unbounded.Append (Result, ASCII.LF & ASCII.LF);
                      end if;
 
                      Unbounded.Append (Result, "<b>Parameters:</b>");
                      Has_Parameter := True;
+                     Add_New_Line := True;
                   end if;
 
                   Unbounded.Append (Result, ASCII.LF);
@@ -2078,10 +2083,14 @@ package body Language.Tree.Ada is
             Success);
 
          if Success then
+            if Add_New_Line then
+               Unbounded.Append (Result, ASCII.LF & ASCII.LF);
+            end if;
+
             Unbounded.Append
               (Result,
-               ASCII.LF & ASCII.LF & "<b>Return:</b>"
-               & ASCII.LF & "<b>"
+               "<b>Return:</b>"
+               & ASCII.LF & " <b>"
                & Attribute_Decoration (Get_Construct (Node), False)
                & "</b>" & Buffer (Type_Start.Index .. Type_End.Index));
          end if;
@@ -2098,7 +2107,7 @@ package body Language.Tree.Ada is
                Success);
 
             if Success then
-               if Beginning /= 0 then
+               if Add_New_Line then
                   Unbounded.Append (Result, ASCII.LF & ASCII.LF);
                end if;
 
