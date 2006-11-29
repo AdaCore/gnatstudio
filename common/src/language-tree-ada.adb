@@ -1768,11 +1768,6 @@ package body Language.Tree.Ada is
             Ind := Ind + 4;
          end if;
 
-         if Construct.Attributes (Ada_Access_Attribute) then
-            Buffer (Ind .. Ind + 6) := "access ";
-            Ind := Ind + 7;
-         end if;
-
          if Construct.Attributes (Ada_Not_Attribute) then
             Buffer (Ind .. Ind + 3) := "not ";
             Ind := Ind + 4;
@@ -1781,6 +1776,11 @@ package body Language.Tree.Ada is
          if Construct.Attributes (Ada_Null_Attribute) then
             Buffer (Ind .. Ind + 4) := "null ";
             Ind := Ind + 5;
+         end if;
+
+         if Construct.Attributes (Ada_Access_Attribute) then
+            Buffer (Ind .. Ind + 6) := "access ";
+            Ind := Ind + 7;
          end if;
 
          if Construct.Attributes (Ada_Constant_Attribute) then
