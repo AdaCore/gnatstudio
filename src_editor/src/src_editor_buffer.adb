@@ -1216,13 +1216,6 @@ package body Src_Editor_Buffer is
       --  We do not free memory associated to Buffer.Current_Command, since
       --  this command is already freed when freeing Buffer.Queue.
 
-      if Buffer.Filename /= VFS.No_File then
-         File_Closed (Buffer.Kernel, Buffer.Filename);
-
-      elsif Buffer.File_Identifier /= VFS.No_File then
-         File_Closed (Buffer.Kernel, Buffer.File_Identifier);
-      end if;
-
       Destroy_Hook (Buffer);
 
       if Buffer.Timeout_Registered then
@@ -4266,6 +4259,16 @@ package body Src_Editor_Buffer is
          Buffer.Number_Of_Views := Buffer.Number_Of_Views + 1;
       else
          Buffer.Number_Of_Views := Buffer.Number_Of_Views - 1;
+      end if;
+
+      if Buffer.Number_Of_Views = 0 then
+         if Buffer.Filename /= VFS.No_File then
+            File_Closed (Buffer.Kernel, Buffer.Filename);
+
+         elsif Buffer.File_Identifier /= VFS.No_File then
+            File_Closed (Buffer.Kernel, Buffer.File_Identifier);
+         end if;
+
       end if;
    end Register_View;
 
