@@ -48,7 +48,6 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 
-with Basic_Types;               use Basic_Types;
 with Traces;                    use Traces;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with VFS;                       use VFS;
@@ -287,6 +286,7 @@ package body Completion_Window is
                null,
                Entity_Icons (False, Get_Visibility (Proposal))
                (Get_Category (Proposal)),
+               Get_Caret_Offset (Proposal),
                new Completion_Proposal'Class'(Get_Proposal (Window.Iter)),
                True);
          end;
@@ -466,6 +466,7 @@ package body Completion_Window is
       end if;
 
       Get_Text_Iter (Nth (Params, 1), Iter);
+      Move_Mark (Window.Buffer, Window.Cursor_Mark, Iter);
       Get_Iter_At_Mark (Window.Buffer, Beg, Window.Mark);
       Adjust_Selected (Window, Get_Text (Window.Buffer, Beg, Iter));
    exception
@@ -776,6 +777,8 @@ package body Completion_Window is
       Pos        : Natural;
       Text_Begin : Gtk_Text_Iter;
       Text_End   : Gtk_Text_Iter;
+
+      Result     : Boolean;
    begin
       Get_Selected (Get_Selection (Window.View), Model, Iter);
 
@@ -791,6 +794,17 @@ package body Completion_Window is
 
          Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Mark);
          Insert (Window.Buffer, Text_Begin, Window.Info (Pos).Text.all);
+
+         Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Mark);
+         Forward_Chars (Iter   => Text_Begin,
+                        Count  => Gint (Window.Info (Pos).Offset),
+                        Result => Result);
+
+         if Result then
+            Move_Mark (Buffer => Window.Buffer,
+                       Mark   => Window.Cursor_Mark,
+                       Where  => Text_Begin);
+         end if;
       end if;
 
       Delete (Window);
@@ -994,6 +1008,7 @@ package body Completion_Window is
       View           : Gtk_Text_View;
       Buffer         : Gtk_Text_Buffer;
       Iter           : Gtk_Text_Iter;
+      Mark           : Gtk_Text_Mark;
       Case_Sensitive : Boolean;
       Complete       : Boolean)
    is
@@ -1019,6 +1034,7 @@ package body Completion_Window is
       Window.Text := View;
       Window.Buffer := Buffer;
       Window.Mark := Create_Mark (Buffer, "", Iter);
+      Window.Cursor_Mark := Mark;
 
       Get_Iter_At_Mark (Buffer, Cursor, Get_Insert (Buffer));
       Window.Initial_Offset := Get_Offset (Cursor);
