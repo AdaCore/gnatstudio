@@ -163,14 +163,25 @@ package body Completion.Ada.Constructs_Extractor is
 
    function Get_Caret_Offset
      (Proposal : Construct_Completion_Proposal)
-      return Basic_Types.Character_Offset_Type is
+      return Basic_Types.Character_Offset_Type
+   is
+      Max_Param_Length     : Glong := 0;
+      Current_Param_Length : Glong := 0;
    begin
       if Proposal.Is_In_Profile and then
         Get_Construct (Proposal.Tree_Node).Category not in Data_Category
       then
          if Proposal.Profile.Parameters'Length > 0 then
-            return Basic_Types.Character_Offset_Type
-              (UTF8_Strlen (Proposal.Profile.Parameters (1).Name.all)) + 4;
+            for J in Proposal.Profile.Parameters'Range loop
+               Current_Param_Length :=
+                 UTF8_Strlen (Proposal.Profile.Parameters (1).Name.all);
+
+               if Current_Param_Length > Max_Param_Length then
+                  Max_Param_Length := Current_Param_Length;
+               end if;
+            end loop;
+
+            return Basic_Types.Character_Offset_Type (Max_Param_Length) + 4;
             --  4 is for the " => " string.
          else
             return 0;
