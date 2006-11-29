@@ -50,6 +50,7 @@ with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
 
 with Completion;    use Completion;
 with GPS.Kernel;    use GPS.Kernel;
+with Basic_Types;   use Basic_Types;
 
 package Completion_Window is
 
@@ -69,10 +70,13 @@ package Completion_Window is
       View           : Gtk_Text_View;
       Buffer         : Gtk_Text_Buffer;
       Iter           : Gtk_Text_Iter;
+      Mark           : Gtk_Text_Mark;
       Case_Sensitive : Boolean;
       Complete       : Boolean);
    --  Attach the completion window to a text view, and set the completion
    --  to start on the given mark.
+   --  Mark is set on the position which the cursor should occupy after a
+   --  completion. It should be initialized and freed by the caller.
    --  Show the window.
 
    procedure Set_Completion_Iterator
@@ -99,6 +103,8 @@ private
       Icon    : Gdk.Pixbuf.Gdk_Pixbuf;
       --  This can be null, in which case it indicates that it must be computed
       --  from Proposal.
+      Offset   : Character_Offset_Type;
+      --  The offset at which to place the cursor after completion.
       Proposal : Completion_Proposal_Access;
       Visible  : Boolean := True;
    end record;
@@ -119,6 +125,9 @@ private
       Buffer : Gtk_Text_Buffer;
       Mark   : Gtk_Text_Mark;
       --  The mark from which the text should be replaced
+
+      Cursor_Mark : Gtk_Text_Mark;
+      --  The mark set at the cursor place
 
       Initial_Offset : Gint;
       Initial_Line   : Gint;
