@@ -1056,6 +1056,7 @@ package body Language.Tree is
       Success              : Boolean;
       Language             : constant Language_Access :=
         Get_Language (Tree_Language'Class (Lang.all)'Access);
+      Add_New_Line         : Boolean := False;
    begin
       Get_Documentation_Before
         (Context       => Get_Language_Context (Language).all,
@@ -1082,6 +1083,8 @@ package body Language.Tree is
                Buffer (Beginning .. Current),
                Comment => False,
                Clean   => True));
+
+         Add_New_Line := True;
       end if;
 
       if Get_Construct (Node).Category in Subprogram_Category then
@@ -1093,6 +1096,8 @@ package body Language.Tree is
          begin
             while Get_Parent_Scope (Tree, Sub_Iter) = Node loop
                if Get_Construct (Sub_Iter).Category = Cat_Parameter then
+                  Add_New_Line := True;
+
                   if Get_Construct (Sub_Iter).Name'Length >
                     Biggest_Parameter_Name
                   then
@@ -1109,13 +1114,14 @@ package body Language.Tree is
             while Get_Parent_Scope (Tree, Sub_Iter) = Node loop
                if Get_Construct (Sub_Iter).Category = Cat_Parameter then
                   if not Has_Parameter then
-                     if Beginning /= 0 then
+                     if Add_New_Line then
                         Append (Result, ASCII.LF & ASCII.LF);
                      end if;
 
                      Append
                        (Result, "<b>Parameters:</b>");
                      Has_Parameter := True;
+                     Add_New_Line := True;
                   end if;
 
                   Append (Result, ASCII.LF);
@@ -1160,9 +1166,13 @@ package body Language.Tree is
             Success);
 
          if Success then
+            if Add_New_Line then
+               Append (Result, ASCII.LF & ASCII.LF);
+            end if;
+
             Append
               (Result,
-               ASCII.LF & ASCII.LF & "<b>Return:</b>"
+               "<b>Return:</b>"
                & ASCII.LF & Buffer (Type_Start.Index .. Type_End.Index));
          end if;
       elsif Get_Construct (Node).Category in Data_Category then
@@ -1178,13 +1188,13 @@ package body Language.Tree is
                Success);
 
             if Success then
-               if Beginning /= 0 then
+               if Add_New_Line then
                   Append (Result, ASCII.LF & ASCII.LF);
                end if;
 
                Append
                  (Result,
-                  ASCII.LF & ASCII.LF & "<b>Type: </b>"
+                  "<b>Type: </b>"
                   & Buffer (Var_Start.Index .. Var_End.Index));
             end if;
          end;
