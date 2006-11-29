@@ -173,11 +173,13 @@ package body Completion.Ada.Constructs_Extractor is
       then
          if Proposal.Profile.Parameters'Length > 0 then
             for J in Proposal.Profile.Parameters'Range loop
-               Current_Param_Length :=
-                 UTF8_Strlen (Proposal.Profile.Parameters (1).Name.all);
+               if not Proposal.Profile.Parameters (J).Is_Written then
+                  Current_Param_Length :=
+                    UTF8_Strlen (Proposal.Profile.Parameters (1).Name.all);
 
-               if Current_Param_Length > Max_Param_Length then
-                  Max_Param_Length := Current_Param_Length;
+                  if Current_Param_Length > Max_Param_Length then
+                     Max_Param_Length := Current_Param_Length;
+                  end if;
                end if;
             end loop;
 
