@@ -167,6 +167,7 @@ package body Completion_Module is
       Constructs_Resolver : Completion_Resolver_Access;
       Result              : Completion_List;
       Start_Mark          : Gtk_Text_Mark := null;
+      End_Mark            : Gtk_Text_Mark := null;
       Buffer              : Source_Buffer;
       The_Text            : GNAT.Strings.String_Access;
    end record;
@@ -327,6 +328,7 @@ package body Completion_Module is
       First, Last : Gtk_Text_Iter;
       Dummy       : Boolean;
       pragma Unreferenced (Dummy);
+      Target      : Gtk_Text_Iter;
    begin
       Free (D.Manager);
       Free (D.Constructs_Resolver);
@@ -337,13 +339,18 @@ package body Completion_Module is
 
       End_Completion (Source_View (Win));
 
-      --  If we did complete on multiple lines, indent the resulting lines
-      --  using the user preferences.
-
       if D.Start_Mark /= null then
          Get_Iter_At_Mark (D.Buffer, First, D.Start_Mark);
-         Get_Iter_At_Mark (D.Buffer, Last, Get_Insert (D.Buffer));
          Delete_Mark (D.Buffer, D.Start_Mark);
+
+         Get_Iter_At_Mark (D.Buffer, Last, Get_Insert (D.Buffer));
+         Get_Iter_At_Mark (D.Buffer, Target, D.End_Mark);
+         Delete_Mark (D.Buffer, D.End_Mark);
+
+         Place_Cursor (D.Buffer, Target);
+
+         --  If we did complete on multiple lines, indent the resulting lines
+         --  using the user preferences.
 
          if Get_Line (First) < Get_Line (Last) then
             Dummy := Do_Indentation (D.Buffer, First, Last, False);
@@ -832,6 +839,10 @@ package body Completion_Module is
               (Buffer       => Buffer,
                Mark_Name    => "",
                Where        => It);
+            Data.End_Mark := Create_Mark
+              (Buffer       => Buffer,
+               Mark_Name    => "",
+               Where        => It);
 
             To_Replace := Get_Completed_String (Data.Result)'Length;
 
@@ -853,6 +864,7 @@ package body Completion_Module is
             Show
               (Win, Gtk_Text_View (View),
                Gtk_Text_Buffer (Buffer), It,
+               Data.End_Mark,
                Get_Language_Context
                  (Get_Language (Buffer)).Case_Sensitive,
                Complete);
