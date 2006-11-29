@@ -33,7 +33,7 @@ background_color = "yellow"
 
 from GPS import *
 
-def process_through_shell (command, buffer=None):
+def pipe (command, buffer=None):
    """Process the current selection in BUFFER through COMMAND,
       and replace that selection with the output of the command"""
    if not buffer:
@@ -76,7 +76,7 @@ def fmt_selection ():
      loc = loc + 1
     
   prefix = '-p """' + (' ' * (loc.column() - 1)) + prefix + '"""' 
-  process_through_shell ("fmt " + prefix + " -w " + `width`, buffer)
+  pipe ("fmt " + prefix + " -w " + `width`, buffer)
 
 class ShellProcess (CommandWindow):
    """Send the current selection to an external process,
@@ -89,10 +89,10 @@ class ShellProcess (CommandWindow):
       self.set_background (background_color)
 
    def on_activate (self, shell_command):
-      process_through_shell (shell_command)
+      pipe (shell_command)
 
 def on_gps_started (hook):
-   Menu.create ("/Edit/External program",
+   Menu.create ("/Edit/Pipe in external program",
                 ref = "Create Bookmark",
                 on_activate=lambda menu: ShellProcess())
    Menu.create ("/Edit/Refill with fmt",
@@ -100,18 +100,18 @@ def on_gps_started (hook):
                 on_activate=lambda menu: fmt_selection())
 
 parse_xml ("""
-  <action name="External program" output="none">
+  <action name="Pipe" output="none">
      <description>Process the current selection through a shell command,
         and replace it with the output of that command.</description>
      <filter id="Source editor" />
-     <shell lang="python">external.ShellProcess()</shell>
+     <shell lang="python">pipe.ShellProcess()</shell>
   </action>
 
   <action name="Fmt selection">
      <description>Process the current selection through the "fmt" command
         to reformat paragraphs</description>
      <filter id="Source editor" />
-     <shell lang="python">external.fmt_selection()</shell>
+     <shell lang="python">pipe.fmt_selection()</shell>
   </action>
 """)
 
