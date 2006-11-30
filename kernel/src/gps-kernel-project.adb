@@ -566,7 +566,7 @@ package body GPS.Kernel.Project is
          --  environment variables like ADA_PROJECT_PATH before reloading the
          --  project (FB07-010)
 
-         Trace (Me, "Recompute predefined paths -- Local builder server ?"
+         Trace (Me, "Recompute predefined paths -- Local builder server ? "
                 & Boolean'Image (Is_Local (Build_Server)));
          Compute_Predefined_Paths
            (Kernel, Use_Cache => not Is_Local (Build_Server));
