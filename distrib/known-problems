@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.1.0
 
+- FB28-020 Regexp searching for ^ and $ blocks on empty lines
+  Problem:    If you are searching for the regular expression "^" or "$,
+              the search will be blocked on empty lines (ie GPS will keep
+              matching the same place)
+  Workaround: Move the cursor one character forward, and restart the search
+
 - FB27-017 Default shortcuts for /File/Save More
   Problem:    The shortcut "Alt-f o" is the same for /File/Open and
               /File/Save More, making it harder to access these from
