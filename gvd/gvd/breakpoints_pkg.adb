@@ -343,6 +343,7 @@ package body Breakpoints_Pkg is
 
       Gtk_New_Hbox (Breakpoints.Hbox4, False, 0);
       Add (Breakpoints.Notebook1, Breakpoints.Hbox4);
+      Set_Name (Breakpoints.Hbox4, "Breakpoints.Hbox4"); -- For testsuite
 
       Gtk_New_Vbox (Breakpoints.Vbox8, False, 0);
       Set_Border_Width (Breakpoints.Vbox8, 7);
