@@ -13,14 +13,6 @@ Known Problems fixed in GPS 4.1.0
               and the /File/Messages has been changed to "Alt-f g"
   Workaround: Press "o" until the appropriate menu is selected
 
-- FB23-031 Breakpoint editor page for exception remains grayed
-  Problem:    When debugging a C file, pressing the button that loads the list
-              of exceptions in the breakpoint editor dialog makes the page
-              dedicated to exceptions insensitive (grayed). What is unexpected
-              is that this page remains insensitive even after starting another
-              debug session for an Ada program.
-  Workaround: Restart GPS before debugging the Ada program
-
 - FB23-029 Floating windows should be raised when they gain focus
   Problem:    If you are using floating windows, and select one of them
               through the Window menu, it should be raised to become
