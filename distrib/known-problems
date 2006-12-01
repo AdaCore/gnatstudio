@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 4.0.2
 
+- FB23-031 Breakpoint editor page for exception remains grayed
+  Problem:    When debugging a C file, pressing the button that loads the list
+              of exceptions in the breakpoint editor dialog makes the page
+              dedicated to exceptions insensitive (grayed). What is unexpected
+              is that this page remains insensitive even after starting another
+              debug session for an Ada program.
+  Workaround: Restart GPS before debugging the Ada program
+
 - FB13-011 Empty node in project explorer after keyboard expansion
   Problem:    In some cases, using the keyboard to expand a node in the project
               explorer (through '+' key  or the one from the numerical pad)
