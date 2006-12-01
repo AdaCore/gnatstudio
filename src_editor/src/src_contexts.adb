@@ -410,10 +410,15 @@ package body Src_Contexts is
 
       if Scope = Whole or else Lang = null then
          Scan_Buffer_No_Scope
-           (Context,
-            Buffer, Buffer_First, Buffer'Last,
-            Callback,
-            Pos, Integer (Line), Column, Was_Partial);
+           (Context     => Context,
+            Buffer      => Buffer,
+            Start_Index => Buffer_First,
+            End_Index   => Buffer'Last,
+            Callback    => Callback,
+            Ref_Index   => Pos,
+            Ref_Line    => Integer (Line),
+            Ref_Column  => Column,
+            Was_Partial => Was_Partial);
          return;
       end if;
 
@@ -725,11 +730,16 @@ package body Src_Contexts is
 
       else
          Scan_Buffer
-           (Get_Text (Editor, Current_Line, 1),
-            Natural (Current_Column), Context,
-            Stop_At_First_Callback'Unrestricted_Access, Scope,
-            Lexical_State, Lang, Current_Line, Current_Column,
-            Was_Partial);
+           (Buffer        => Get_Text (Editor, Current_Line, 1),
+            Buffer_First  => Natural (Current_Column),
+            Context       => Context,
+            Callback      => Stop_At_First_Callback'Unrestricted_Access,
+            Scope         => Scope,
+            Lexical_State => Lexical_State,
+            Lang          => Lang,
+            Ref_Line      => Current_Line,
+            Ref_Column    => Current_Column,
+            Was_Partial   => Was_Partial);
 
          --  Start from the beginning if necessary.
          --  Do not display the continue dialog if starting search from the
@@ -1222,8 +1232,11 @@ package body Src_Contexts is
         and then Context.End_Column = Column
         and then Context.Begin_Column = Context.End_Column
       then
+         --  The test below will return True if the character after the current
+         --  one is eol.
          if Is_Valid_Position
            (Editor, Gint (Context.End_Line - 1), Gint (Column))
+           and then not Ends_Line (Start_At)
          then
             Column := Column + 1;
          else
@@ -1305,13 +1318,13 @@ package body Src_Contexts is
             Found           => Found);
       else
          if not Equal (Selection_Start, Selection_End) then
-            --  Selection is empty ?
+            --  Selection is not empty ?
             Forward_Char (Selection_Start, Dummy);
          end if;
 
          Search_In_Editor
            (Context         => Context,
-            Start_At        => Selection_Start,
+            Start_At        => Selection_End,
             Kernel          => Kernel,
             Search_Backward => Search_Backward,
             Match_From      => Match_From,
