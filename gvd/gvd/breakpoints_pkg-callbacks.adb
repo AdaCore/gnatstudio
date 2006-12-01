@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
+--                      Copyright (C) 2000-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -170,8 +170,7 @@ package body Breakpoints_Pkg.Callbacks is
    -----------------------------
 
    procedure On_Add_Location_Clicked
-     (Object : access Gtk_Widget_Record'Class)
-   is
+     (Object : access Gtk_Widget_Record'Class) is
    begin
       Set_Location_Breakpoint (Breakpoint_Editor_Access (Object));
 
@@ -186,8 +185,7 @@ package body Breakpoints_Pkg.Callbacks is
    -------------------------------
 
    procedure On_Add_Watchpoint_Clicked
-     (Object : access Gtk_Widget_Record'Class)
-   is
+     (Object : access Gtk_Widget_Record'Class) is
    begin
       Set_Watchpoint (Breakpoint_Editor_Access (Object));
 
@@ -205,13 +203,13 @@ package body Breakpoints_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class)
    is
       Editor : constant Breakpoint_Editor_Access :=
-        Breakpoint_Editor_Access (Object);
+                 Breakpoint_Editor_Access (Object);
    begin
       Set_Busy (Editor.Process, True);
 
       declare
          Exception_Arr : Exception_Array :=
-           List_Exceptions (Editor.Process.Debugger);
+                           List_Exceptions (Editor.Process.Debugger);
       begin
          if Exception_Arr'Length > 0 then
             Set_Sensitive (Editor.Hbox4, True);
