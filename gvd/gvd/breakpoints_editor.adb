@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
+--                      Copyright (C) 2000-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -638,6 +638,9 @@ package body Breakpoints_Editor is
         (Editor.Exception_Name, -"All exceptions");
       Add_Unique_Combo_Entry
         (Editor.Exception_Name, -"All assertions");
+
+      --  Reset the Exception page
+      Set_Sensitive (Editor.Hbox4, True);
    end Set_Process;
 
    -------------------------
