@@ -27,6 +27,7 @@
 --  </description>
 
 with Ada.Containers.Indefinite_Hashed_Maps; use Ada.Containers;
+with Ada.Containers.Hashed_Maps;
 with Ada.Strings.Hash;
 with Ada.Strings.Equal_Case_Insensitive;
 with Ada.Unchecked_Deallocation;
@@ -99,7 +100,7 @@ package Code_Analysis is
    --  Used to stored the Subprogram nodes of every Files
 
    package File_Maps is
-     new Indefinite_Hashed_Maps
+     new Hashed_Maps
        (Key_Type        => VFS.Virtual_File,
         Element_Type    => File_Access,
         Hash            => VFS.Full_Name_Hash,
@@ -107,7 +108,7 @@ package Code_Analysis is
    --  Used to stored the File nodes of every Projects
 
    package Project_Maps is
-     new Indefinite_Hashed_Maps
+     new Hashed_Maps
        (Key_Type        => Project_Type,
         Element_Type    => Project_Access,
         Hash            => Project_Name_Hash,
