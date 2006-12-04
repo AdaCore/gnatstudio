@@ -14,6 +14,11 @@ of the feature.
 New features in GPS 4.1.0
 -------------------------
 
+FC02-001 Python documentation now include inheriting classes (2006-12-04)
+
+  The documentation for the python extensions now includes the list of
+  inheriting classes in the inheritance tree
+
 FB29-006 New startup script to save and restore last position (2006-11-29)
 
   A new startup script (see /Edit/Startup Scripts) is now provided that
