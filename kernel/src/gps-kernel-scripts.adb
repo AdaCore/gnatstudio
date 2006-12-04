@@ -2586,7 +2586,9 @@ package body GPS.Kernel.Scripts is
             Get_Entity_Context_Class (Get_Kernel (Script)),
             Context);
 
-      elsif Has_File_Information (Context) then
+      elsif Has_File_Information (Context)
+        or else Has_Project_Information (Context)
+      then
          return Get_Or_Create_Context
            (Script,
             Get_File_Context_Class (Get_Kernel (Script)),
