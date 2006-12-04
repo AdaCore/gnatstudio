@@ -413,6 +413,8 @@ package body GPS.Kernel is
       Files : File_Array_Access := Handle.Open_Files;
       Data  : aliased File_Hooks_Args := (Hooks_Data with File => File);
    begin
+      Run_Hook (Handle, File_Closed_Hook, Data'Unchecked_Access);
+
       if Files /= null then
          for F in Files'Range loop
             if Files (F) = File then
@@ -427,8 +429,6 @@ package body GPS.Kernel is
             end if;
          end loop;
       end if;
-
-      Run_Hook (Handle, File_Closed_Hook, Data'Unchecked_Access);
    end File_Closed;
 
    --------------------------
