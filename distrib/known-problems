@@ -8,6 +8,13 @@ Known Problems fixed in GPS 4.0.2
               name
   Workaround: None found
 
+- FC01-011 Current project not saved when reloaded with Project -> Recent menu
+  Problem:    GPS does not ask the user what to do with modifications to the
+              current project when it is re-opened with the Project -> Recent
+              menu. As a result all modifications are automatically and
+              silently discarded.
+  Workaround: Use the Project -> Reload Project menu instead
+
 - FB23-031 Breakpoint editor page for exception remains grayed
   Problem:    When debugging a C file, pressing the button that loads the list
               of exceptions in the breakpoint editor dialog makes the page
