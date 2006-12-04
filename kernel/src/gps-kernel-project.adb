@@ -482,13 +482,13 @@ package body GPS.Kernel.Project is
 
       --  Unless we are reloading the same project
 
-      if not Same_Project then
-         if not No_Save
-           and then not Save_MDI_Children (Kernel, Force => False)
-         then
-            return;
-         end if;
+      if not No_Save
+        and then not Save_MDI_Children (Kernel, Force => False)
+      then
+         return;
+      end if;
 
+      if not Same_Project then
          --  Never save automatically the desktop for the default project
 
          if Status (Get_Root_Project (Kernel.Registry.all)) = From_File
