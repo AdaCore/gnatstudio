@@ -4195,9 +4195,13 @@ When no match is found, this function returns null. Additionally, if dialog_on_f
   <shell_doc name="GPS.EditorBuffer.get">
       <param name="file" default="current editor">An instance of GPS.File</param>
       <param name="force" default="false">A boolean</param>
+      <param name="open" default="True">A boolean</param>
       <return>An instance of GPS.Editor.Buffer</return>
       <description>If file is already opened in an editor, get a handle on its buffer. This instance is then shared will all other buffers referencing the same file. As a result, you can for instance associate your own data with the buffer, and retrieve it at any time until the buffer is closed. If the file is not opened yet, it is loaded in a new editor, and a new view is opened at the same time (and thus the editor becomes visible to the user).
 If file is not specified, the current editor is returned, ie the last one that had the keyboard focus.
+
+If the file is not currently open, the behavior depends on the open parameter: if true, a new editor is created for that file, otherwise None is returned.
+
 If force is set to true, a reload is forced in case the file is already open.
       </description>
       <example lang="python">
