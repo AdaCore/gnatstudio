@@ -20,7 +20,7 @@ This package provides support for:
 ## No user customization below this line
 ############################################################################
 
-import GPS, pydoc, os, inspect, pydoc, sys, re
+import GPS, pydoc, os, inspect, pydoc, sys, re, shutil
 from string import rstrip, lstrip, expandtabs
 
 # The following classes provide a nice way to display HTML documentation.
@@ -140,11 +140,33 @@ class DocGenerator:
 
       if inspect.isclass (object):
         mro     = inspect.getmro (object)
-        if len (mro) > 1:
+
+        children=[]
+        for (name, g) in inspect.getmembers (GPS, inspect.isclass):
+          if g != object and object in inspect.getmro(g):
+             children.append (g)
+
+        if len (mro) > 1 or len (children) > 0:
            output += "<tr><td colspan='3' class='title'>Inheritance tree</td></tr>" \
-              + "<tr><td colspan='3'><ul>\n"
-           for base in mro:
-               output += "  <li>" + self.full_name (base) + "</li>\n"
+              + "<tr><td colspan='3'><ul class='inheritance'>\n"
+
+           parents = [m for m in mro]
+           parents.reverse()
+           prefix=""
+           for base in parents[:-1]:
+             output += "  <li>" + prefix
+             output += "<img src='childtree.png' alt='_'/>"
+             output += self.full_name (base) + "</li>\n"
+             prefix += "<img src='childtree2.png' alt='  '/>"
+
+           output += "  <li>" + prefix + "<img src='childtree.png' alt='_'/>" \
+             + "<b>" + self.full_name (object) + "</b></li>\n"
+           prefix += "<img src='childtree2.png' alt='  '/>" + \
+             "<img src='childtree.png' alt='_'/>"
+
+           for c in sorted (children):
+            output += "  <li>" + prefix + self.full_name (c) + "</li>\n"
+ 
            output += "</ul></td></tr>"
 
       output += "</table>\n"
@@ -216,6 +238,8 @@ div.menu ul       { color: #369;
                     margin: 3px 0px 0px 20px;
                     padding: 0px }
 div.menu li       { margin-top: 3px; }
+ul.inheritance    { margin: 0; padding-left: 5px }
+ul.inheritance li { list-style-type: none; }
 div.documentation { position: relative;
                     top: 8px;
                     margin-left: 210px;
@@ -558,6 +582,11 @@ def generate_doc (entity):
 
   ## Generate the documentation for our own module
   name = docgen.html_documentation (entity)
+
+  shutil.copy (GPS.get_system_dir() + "share/gps/plug-ins/childtree.png",
+               GPS.get_home_dir() + "generated_doc")
+  shutil.copy (GPS.get_system_dir() + "share/gps/plug-ins/childtree2.png",
+               GPS.get_home_dir() + "generated_doc")
 
   ## These comment lines are for use through pydoc
   #home_dir = GPS.get_home_dir()
