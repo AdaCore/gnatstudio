@@ -109,6 +109,7 @@ package body Src_Editor_Module.Shell is
    Backward_Cst          : aliased constant String := "backward";
    Whole_Word_Cst        : aliased constant String := "whole_word";
    Dialog_On_Failure_Cst : aliased constant String := "dialog_on_failure";
+   Open_Cst              : aliased constant String := "open";
 
    Edit_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Filename_Cst'Access,
@@ -1796,7 +1797,8 @@ package body Src_Editor_Module.Shell is
 
       elsif Command = "get" then
          Name_Parameters (Data, (1 => File_Cst'Access,
-                                 2 => Force_Cst'Access));
+                                 2 => Force_Cst'Access,
+                                 3 => Open_Cst'Access));
          File_Inst := Nth_Arg
            (Data, 1, Get_File_Class (Kernel),
             Default => No_Class_Instance, Allow_Null => True);
@@ -1815,7 +1817,12 @@ package body Src_Editor_Module.Shell is
          end if;
 
          if Child = null then
-            Box := Open_File (Get_Kernel (Data), File);
+            if Nth_Arg (Data, 3, Default => True) then
+               Box := Open_File (Get_Kernel (Data), File);
+            else
+               Set_Return_Value (Data, No_Class_Instance);
+               return;
+            end if;
          else
             Box := Get_Source_Box_From_MDI (Child);
 
