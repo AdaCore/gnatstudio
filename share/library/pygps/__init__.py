@@ -205,8 +205,11 @@ try:
   def get_button_from_label (label, parents=None):
     """Return the first button with the matching label"""
 
-    return [x for x in WidgetTree(parents) \
-            if isinstance (x, gtk.Button) and x.get_label() == label][0]
+    for x in get_widgets_by_type (gtk.Button, parents):
+       if x.get_label() == label: return x
+       for l in get_widgets_by_type (gtk.Label, x):
+          if l.get_text() == label: return x
+    return None
 
   ###########
   ## Menus ##
