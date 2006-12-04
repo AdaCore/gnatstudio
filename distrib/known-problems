@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 4.0.2
 
+- FC03-007 GPS.get_current_context() fails on directories
+  Problem:    If you have python code to create your own contextual menus,
+              and try to make these available only on directories, GPS
+              will always return an instance of GPS.Context when clicking on
+              directory nodes, from which you cannot extract the directory
+              name
+  Workaround: None found
+
 - FB23-031 Breakpoint editor page for exception remains grayed
   Problem:    When debugging a C file, pressing the button that loads the list
               of exceptions in the breakpoint editor dialog makes the page
