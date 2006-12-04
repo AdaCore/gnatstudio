@@ -2546,12 +2546,12 @@ Access the various suggested fixes through the methods of the Codefix class</des
     ###################################################################-->
 
   <shell_doc name="GPS.CodeAnalysis">
-      <description>This class is a toolset that allows to handle Code_Analysis tree structures</description>
+      <description>This class is a toolset that allows to handle CodeAnalysis instances</description>
   </shell_doc>
 
   <shell_doc name="GPS.CodeAnalysis.create">
       <return>An instance of GPS.CodeAnalysis</return>
-      <description>Creates an empty Code_Analysis data structure. Data can be put in this structure by using one of the primitive operations.</description>
+      <description>Creates an empty CodeAnalysis data structure. Data can be put in this structure by using one of the primitive operations.</description>
   </shell_doc>
 
   <shell_doc name="GPS.CodeAnalysis.add_gcov_info">
@@ -4612,7 +4612,7 @@ If sorted is True, then the resulting graphical list is sorted on the first colu
 
           xml = """&lt;project name='foo'&gt;
     &lt;file&gt;source.adb&lt;/file&gt;
- &lt;/project&gt;""" 
+ &lt;/project&gt;"""
 
           view = GPS.XMLViewer ("Dummy", 1, parser, on_click)
           view.parse_string (xml)

@@ -116,7 +116,7 @@ private
       Object  : access Glib.Object.GObject_Record'Class;
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
-   --  Fill Menu with the contextual menu for the Coverage module in ,
+   --  Fill Menu with the contextual menu for the Coverage module in,
    --  if Context is appropriate.
 
    type Context_And_Code_Analysis is record
@@ -128,7 +128,7 @@ private
      (Glib.Object.GObject_Record, Context_And_Code_Analysis);
    --  Used to connect handlers on the global Coverage contextual menu
 
-   Code_Analysis_Cst_Str : constant String := "code_analysis";
+   Code_Analysis_Cst_Str : constant String := "CodeAnalysis";
    Coverage_Category     : constant Glib.UTF8_String := -"Not covered lines";
    Me : constant Debug_Handle := Create (Code_Analysis_Cst_Str);
 
