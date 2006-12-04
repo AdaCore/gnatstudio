@@ -196,7 +196,6 @@ package Project_Explorers_Common is
       Node  : Gtk_Tree_Iter) return VFS.Virtual_File;
    --  Return the name of the file containing Node (or, in case Node is an
    --  Entity_Node, the name of the file that contains the entity).
-   --  The full name, including directory, is returned if Full_Path is True.
 
    function Get_Project_From_Node
      (Model     : Gtk_Tree_Store;
