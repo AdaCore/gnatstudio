@@ -271,10 +271,6 @@ package body VFS is
                     (File.Value.Full_Name.all,
                      Resolve_Links => Active (Resolve_Links_Handle)));
             end if;
-
-            if not File_Utils.Is_Case_Sensitive (GPS_Server) then
-               To_Lower (File.Value.Normalized_Full.all);
-            end if;
          end if;
       end if;
    end Ensure_Normalized;
