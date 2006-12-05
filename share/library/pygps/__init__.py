@@ -21,7 +21,7 @@ depends on it should use the statement:
 ## No user customization below this line
 ############################################################################
 
-import GPS
+import GPS, time
 
 # List of modules to import when user does "from pygps import *"
 # Do not use, since otherwise the functions defined in this module are
@@ -265,10 +265,14 @@ try:
 
     if not window:
        window = gtk.window_list_toplevels()[0]
+    if isinstance (window, gtk.TextView):
+       window = window.get_window (gtk.TEXT_WINDOW_TEXT)
     if not isinstance (window, gtk.gdk.Window):
        window = window.window
     event.window = window
     event.keyval = keyval
+    event.send_event = 1
+    event.time   = int (time.time())
 
     # We cannot set event.string, because of a bug in pygtk, which tries
     # to doubly deallocate the string later on
