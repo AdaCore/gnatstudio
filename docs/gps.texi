@@ -10291,8 +10291,8 @@ This attribute specifies a shell command to execute. The output value of this
 command is used to find whether the filter matches: if it returns "1" or
 "true", the filter matches. In any other case, the filter fails.
 
-Note that currently no expansion of macro arguments (%f, %p,@dots{}) is done
-in this command.
+Macro arguments (%f, %p, @dots{}) are fully supported in the text of the
+command to execute.
 
 @item shell_lang (optional)
 This attribute specifies in which language the shell command above is written.
