@@ -70,6 +70,7 @@ with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Custom;         use GPS.Kernel.Custom;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.Macros;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
@@ -1859,6 +1860,25 @@ package body GPS.Kernel is
                   Lang : constant Scripting_Language :=
                     Lookup_Scripting_Language
                       (Kernel, Filter.Shell_Lang.all);
+
+                  function Substitution
+                    (Param  : String; Quoted : Boolean) return String;
+                  --  Local substitution of special chars
+
+                  function Substitution
+                    (Param  : String; Quoted : Boolean) return String
+                  is
+                     Done  : aliased Boolean := False;
+                  begin
+                     return GPS.Kernel.Macros.Substitute
+                       (Param, Context, Quoted, Done'Access);
+                  end Substitution;
+
+                  Cmd : constant String := Substitute
+                    (Str               => Filter.Shell.all,
+                     Substitution_Char => GPS.Kernel.Macros.Special_Character,
+                     Callback          => Substitution'Unrestricted_Access);
+
                begin
                   if Lang = null then
                      Result := False;
@@ -1868,7 +1888,8 @@ package body GPS.Kernel is
                         Errors : aliased Boolean;
                         R      : constant Boolean :=
                          GPS.Kernel.Scripts.Execute_Command
-                            (Lang, Filter.Shell.all,
+                            (Lang,
+                             Cmd,
                              Hide_Output => True,
                              Errors => Errors'Unchecked_Access);
                      begin
