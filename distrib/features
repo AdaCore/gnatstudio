@@ -11,6 +11,14 @@ An ISO date (YYYY-MM-DD) appears in parentheses after the
 description line. This date shows the implementation date
 of the feature.
 
+New features in GPS 4.0.2
+-------------------------
+
+FC04-010 Support for macro substitution in <filter> nodes (2006-12-05)
+
+  In XML customization files, it is now possible to use %F,... in a
+  <filter> node
+
 New features in GPS 4.0.1
 -------------------------
 
