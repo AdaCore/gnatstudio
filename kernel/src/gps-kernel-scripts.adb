@@ -907,9 +907,10 @@ package body GPS.Kernel.Scripts is
          begin
             if Action = null then
                Set_Error_Msg (Data, -"No such registered action");
-            elsif Context = No_Context
-              or else not Filter_Matches (Action.Filter, Context)
-            then
+            elsif Context = No_Context then
+               Set_Error_Msg
+                 (Data, -"No current context, can't execute action");
+            elsif not Filter_Matches (Action.Filter, Context) then
                Set_Error_Msg (Data, -"Invalid context for the action");
             else
                Args := new String_List (1 .. Number_Of_Arguments (Data) - 1);
