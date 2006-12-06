@@ -7645,10 +7645,10 @@ under the object directory of the root project loaded in GPS.
 Once the documentation is generated, the main documentation file is loaded
 in your default browser.
 
-The documentation generator uses a set of templates files to control
-the final rendering. This means that you can control precisely the
-rendering of the generated documentation. The default set of templates
-is defined in the file @file{docgen.xml} and can be found under
+The documentation generator uses a set of templates files to control the final
+rendering. This means that you can control precisely the rendering of the
+generated documentation. The default set of templates is defined in the file
+@file{<install_dir>/share/gps/plug-ins/docgen.xml} and can be found under
 @file{<install_dir>/share/gps/docgen/html}. For a description of the
 documentation generator renderer @pxref{Defining a documentation format}.
 
