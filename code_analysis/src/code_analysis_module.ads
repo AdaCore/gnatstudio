@@ -25,15 +25,9 @@
 --  </description>
 
 with Ada.Unchecked_Deallocation;
+with Ada.Containers.Indefinite_Ordered_Sets; use Ada.Containers;
 
-with Traces;               use Traces;
-with Code_Analysis;        use Code_Analysis;
-
-with GPS.Kernel;           use GPS.Kernel;
-with GPS.Kernel.Modules;   use GPS.Kernel.Modules;
-with GPS.Kernel.Scripts;   use GPS.Kernel.Scripts;
-with GPS.Kernel.MDI;       use GPS.Kernel.MDI;
-with GPS.Intl;             use GPS.Intl;
+--  with GNAT.Strings;
 
 with Glib;
 with Glib.Object;
@@ -50,11 +44,38 @@ with Gtk.Widget;           use Gtk.Widget;
 with Gtk.Menu;             use Gtk.Menu;
 with Gtk.Handlers;         use Gtk.Handlers;
 
+with GPS.Kernel;           use GPS.Kernel;
+with GPS.Kernel.Modules;   use GPS.Kernel.Modules;
+with GPS.Kernel.Scripts;   use GPS.Kernel.Scripts;
+with GPS.Kernel.MDI;       use GPS.Kernel.MDI;
+with GPS.Intl;             use GPS.Intl;
+
+with Traces;               use Traces;
+with Code_Analysis;        use Code_Analysis;
+
 package Code_Analysis_Module is
+
+   ---------------
+   -- Instances --
+   ---------------
+
+   function "<" (Left, Right : Class_Instance) return Boolean;
+   function "=" (Left, Right : Class_Instance) return Boolean;
+   --  Use the Code_Analysis user property "Instance_Name" to perform the test
+
+   package Code_Analysis_Class_Instance_Sets is new Indefinite_Ordered_Sets
+       (Element_Type => Class_Instance);
+   --  Sets package for declared instances of the CodeAnalysis module.
+   --  Allow to handle many instances.
+
+   ------------------------
+   -- Basic module stuff --
+   ------------------------
 
    type Code_Analysis_Module_ID_Record is new Module_ID_Record with record
       Kernel         : Kernel_Handle;
       Class          : Class_Type;
+      Instances      : Code_Analysis_Class_Instance_Sets.Set;
       Project_Pixbuf : Gdk_Pixbuf;
       File_Pixbuf    : Gdk_Pixbuf;
       Subp_Pixbuf    : Gdk_Pixbuf;
@@ -71,6 +92,11 @@ package Code_Analysis_Module is
    --  Register the module into the list
 
 private
+
+   ---------------
+   -- Tree view --
+   ---------------
+
    type Code_Analysis_View_Record is new Gtk_Hbox_Record with record
       Tree        : Gtk_Tree_View;
       Model       : Gtk_Tree_Store;
@@ -86,51 +112,74 @@ private
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Code_Analysis_View_Record, Code_Analysis_View);
 
-   type Code_Analysis_Class_Record is new Instance_Property_Record with record
-      Projects : Code_Analysis_Tree;
-      View     : Code_Analysis_View;
-      Child    : GPS_MDI_Child;
+   --------------
+   -- Property --
+   --------------
+
+   type Code_Analysis_Property_Record is new Instance_Property_Record
+   with record
+      Projects      : Code_Analysis_Tree;
+      View          : Code_Analysis_View;
+      Child         : GPS_MDI_Child;
+      --      Instance_Name : GNAT.Strings.String_Access;
    end record;
 
-   type Code_Analysis_Class is access all Code_Analysis_Class_Record;
+   type Code_Analysis_Property is access all Code_Analysis_Property_Record;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Code_Analysis_Class_Record, Code_Analysis_Class);
+     (Code_Analysis_Property_Record, Code_Analysis_Property);
+   --  ??? Where to free this
+
+   ---------------------
+   -- Contextual menu --
+   ---------------------
+
+   type Code_Analysis_Contextual_Menu is new Submenu_Factory_Record with null
+     record;
+
+   type Code_Analysis_Contextual_Menu_Access is access all
+     Code_Analysis_Contextual_Menu;
 
    type Has_Coverage_Filter is new Action_Filter_Record with null record;
+
    function Filter_Matches_Primitive
      (Filter  : access Has_Coverage_Filter;
       Context : Selection_Context) return Boolean;
    --  True when the current context is associated with project, file or
    --  subprogram information
 
-   type Coverage_Contextual_Menu is new Submenu_Factory_Record
-   with record
-      Code_Analysis : Code_Analysis_Class;
-   end record;
-
-   type Coverage_Contextual_Menu_Access is access all Coverage_Contextual_Menu;
-
    procedure Append_To_Menu
-     (Factory : access Coverage_Contextual_Menu;
+     (Factory : access Code_Analysis_Contextual_Menu;
       Object  : access Glib.Object.GObject_Record'Class;
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
-   --  Fill Menu with the contextual menu for the Coverage module in,
-   --  if Context is appropriate.
+   --  Determine wether we add entries directly in the menu, or in a generated
+   --  submenu. Submenus are created if many instances are loaded
+   --  See Append_Submenu
 
-   type Context_And_Code_Analysis is record
+   type Context_And_Instance is record
       Context       : Selection_Context;
-      Code_Analysis : Code_Analysis_Class;
+      Instance      : Class_Instance;
    end record;
 
-   package Context_And_Code_Analysis_CB is new User_Callback
-     (Glib.Object.GObject_Record, Context_And_Code_Analysis);
+   procedure Append_Submenu
+     (C            : Context_And_Instance;
+      Submenu      : access Gtk_Menu_Record'Class;
+      Project_Node : Project_Access);
+   --  Actually fills the given Submenu with the appropriate coverage action
+   --  entries (Add/Remove coverage annotations, Show coverage report, ...)
+
+   package Context_And_Instance_CB is new User_Callback
+     (Glib.Object.GObject_Record, Context_And_Instance);
    --  Used to connect handlers on the global Coverage contextual menu
 
    Code_Analysis_Cst_Str : constant String := "CodeAnalysis";
-   Coverage_Category     : constant Glib.UTF8_String := -"Not covered lines";
+   Coverage_Category     : constant Glib.UTF8_String := -"Lines not covered";
    Me : constant Debug_Handle := Create (Code_Analysis_Cst_Str);
+
+   --------------------
+   -- Shell commands --
+   --------------------
 
    procedure Create
      (Data    : in out Callback_Data'Class;
@@ -158,6 +207,10 @@ private
       Command : String);
    --  Free memory used by a Code_Analysis instance
 
+   ---------------
+   -- Callbacks --
+   ---------------
+
    procedure On_Destroy (View : access Gtk_Widget_Record'Class);
    --  Callback for the "destroy" signal that cleanly destroy the widget
 
@@ -183,7 +236,7 @@ private
 
    procedure Add_Coverage_Annotations_From_Context
      (Widget : access Glib.Object.GObject_Record'Class;
-      C      : Context_And_Code_Analysis);
+      C      : Context_And_Instance);
    --  Add coverage annotations to source file editor
    --  Callback to the global contextual menu entry
    --  "View with coverage annotations"
@@ -199,7 +252,7 @@ private
 
    procedure Remove_Coverage_Annotations_From_Context
      (Widget : access Glib.Object.GObject_Record'Class;
-      C      : Context_And_Code_Analysis);
+      C      : Context_And_Instance);
    --  Callback attached to the "Remove coverage annotations" contextual
    --  menu entry of every objects that have File or Subprogram information in
    --  its context
@@ -217,7 +270,7 @@ private
 
    procedure List_Lines_Not_Covered_In_Project_From_Context
      (Widget : access Glib.Object.GObject_Record'Class;
-      C      : Context_And_Code_Analysis);
+      C      : Context_And_Instance);
    --  Callback of the "List lines not covered" entry of the global "Coverage"
    --  submenu when the Context only contains Project information.
    --  Just call the subprogram List_Lines_Not_Covered_In_File
@@ -230,7 +283,7 @@ private
 
    procedure List_Lines_Not_Covered_In_File_From_Context
      (Widget : access Glib.Object.GObject_Record'Class;
-      C      : Context_And_Code_Analysis);
+      C      : Context_And_Instance);
    --  Callback of the "List lines not covered" entry of the global "Coverage"
    --  submenu when the Context contains file information.
    --  Just call the List_Lines_Not_Covered_In_File subprogram
@@ -247,7 +300,7 @@ private
 
    procedure Load_Coverage_Information
      (Widget : access Glib.Object.GObject_Record'Class;
-      C      : Context_And_Code_Analysis);
+      C      : Context_And_Instance);
    --  Not yet implemented
    --  Will try to load every .gcov files of the project in the
    --  Selection_Context of the Context_And_Code_Analysis in its Code_Analysis
