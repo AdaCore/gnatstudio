@@ -2022,8 +2022,7 @@ package body Codefix.Text_Manager is
       Escape_Manager : Escape_Str_Manager'Class;
       Step           : Step_Way := Normal_Step) return Word_Cursor'Class
    is
-      Result        : Word_Cursor :=
-        (File_Cursor (Cursor) with null, Text_Ascii);
+      Result        : Word_Cursor;
       Result_String : constant String := To_String (This.Content);
       Start_Index   : Char_Index;
 
@@ -2055,6 +2054,11 @@ package body Codefix.Text_Manager is
       end Test_Result;
 
    begin
+      Result := (File_Cursor (Cursor) with null, Text_Ascii);
+      --  Because of a temporary bug in gcc 41 (see FC01-013), this aggregate
+      --  can't be initialized in the declaration, that's why it has been moved
+      --  here.
+
       if Result.Col = 0 then
          Start_Index := Char_Index (Result_String'Last);
       else
