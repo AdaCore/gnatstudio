@@ -2663,6 +2663,11 @@ package body GPS.Location_View is
          Static_Method => True,
          Handler      => Default_Command_Handler'Access);
       Register_Command
+        (Kernel, "list_categories",
+         Class         => Locations_Class,
+         Static_Method => True,
+         Handler      => Default_Command_Handler'Access);
+      Register_Command
         (Kernel, "dump",
          Minimum_Args => 1,
          Maximum_Args => 1,
@@ -2716,6 +2721,20 @@ package body GPS.Location_View is
          Remove_Location_Category
            (Get_Kernel (Data),
             Category => Nth_Arg (Data, 1));
+
+      elsif Command = "list_categories" then
+         declare
+            View  : constant Location_View := Get_Or_Create_Location_View
+              (Get_Kernel (Data), Allow_Creation => False);
+            Model : constant Gtk_Tree_Store := View.Tree.Model;
+            Iter  : Gtk_Tree_Iter := Get_Iter_First (Model);
+         begin
+            Set_Return_Value_As_List (Data);
+            while Iter /= Null_Iter loop
+               Set_Return_Value (Data, Get_Category_Name (Model, Iter));
+               Next (Model, Iter);
+            end loop;
+         end;
 
       elsif Command = "add" then
          Name_Parameters (Data, Locations_Add_Parameters);

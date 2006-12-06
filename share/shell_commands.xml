@@ -3446,6 +3446,13 @@ highlight_category, style_category and warning_category reference the colors to 
   <shell_doc name="GPS.Locations.remove_category">
      <param name="category">A string</param>
      <description>Remove a category from the location window. This removes all associated files</description>
+     <see_also name="GPS.Locations.list_categories" />
+  </shell_doc>
+
+  <shell_doc name="GPS.Locations.list_categories">
+     <return>A list of strings</return>
+     <description>Return the list of all categories currently displayed in the Locations window. These are the top-level nodes used to group information generally related to one command, like the result of a compilation.</description>
+     <see_also name="GPS.Locations.remove_category" />
   </shell_doc>
 
   <shell_doc name="GPS.Locations.dump">
