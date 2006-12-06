@@ -19,6 +19,15 @@ FC04-010 Support for macro substitution in <filter> nodes (2006-12-05)
   In XML customization files, it is now possible to use %F,... in a
   <filter> node
 
+F130-004 PyGTK distributed with GPS (2006-12-01)
+
+  PyGTK is now distributed with GPS on most platforms, and allows very
+  flexible and powerful UI interaction. It is also now possible to create
+  widgets with PyGTK and include them in the GPS MDI. It is also possible to
+  get the MDI contents and export it to PyGTK
+
+  Keywords: Python
+
 New features in GPS 4.0.1
 -------------------------
 
