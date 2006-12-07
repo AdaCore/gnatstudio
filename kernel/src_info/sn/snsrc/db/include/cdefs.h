@@ -116,7 +116,7 @@
  * these work for GNU C++ (modulo a slight glitch in the C++ grammar
  * in the distribution version of 2.5.5).
  */
-#if !defined(__GNUC__) || (__GNUC__ * 2 + __GNUC_MINOR__ < 25)
+#if !defined(__GNUC__) || (__GNUC__ * 10 + __GNUC_MINOR__ < 25)
 /* Delete __attribute__ if non-gcc or gcc < 2.5 */ 
 #define	__attribute__(x)
 #if defined(__GNUC__) && !defined(__STRICT_ANSI__)
