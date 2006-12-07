@@ -236,7 +236,7 @@ package body Project_Explorers_Common is
          end if;
       end Escape;
 
-      Name : constant String := "<tt>" & Reduce (Escape) & "</tt>";
+      Name : constant String := Reduce (Escape);
 
    begin
       if Show_Profiles and then Construct.Profile /= null then
