@@ -110,6 +110,51 @@ AC_DEFUN(AM_PATH_PYTHON,
    fi
 ])
 
+
+##############################################################
+#
+#  Checking for pygtk
+#    $1 = minimum pygtk version required
+#
+##############################################################
+
+AC_DEFUN(AM_PATH_PYGTK,
+[
+    AC_ARG_ENABLE(pygtk,
+                  [  --disable-pygtk    do not try to build the special support for Py
+GTK],
+                  ,
+                  enable_pygtk=yes)
+
+    min_pygtk_version=ifelse([$1], ,2.8,$1)
+    module=pygtk-2.0
+    AC_MSG_CHECKING(for pygtk - version >= $min_pygtk_version)
+
+    if test x"$enable_pygtk" = x -o x"$enable_pygtk" = xno ; then
+       AC_MSG_RESULT(no)
+       PYGTK_PREFIX=""
+       PYGTK_INCLUDE=""
+
+    elif test "$PYTHON_BASE" != "no" ; then
+       pygtk_version=`$PKG_CONFIG $module --modversion`
+       $PKG_CONFIG $module --atleast-version=$min_pygtk_version
+       if test $? = 0 ; then
+          PYGTK_INCLUDE=`$PKG_CONFIG $module --cflags`
+          PYGTK_PREFIX=`$PKG_CONFIG $module --variable=prefix`
+          AC_MSG_RESULT(yes (version $pygtk_version))
+       else
+          AC_MSG_RESULT(no (found $pygtk_version))
+          PYGTK_PREFIX=""
+          PYGTK_INCLUDE=""
+       fi
+
+    else
+       AC_MSG_RESULT(no since python not found)
+       PYGTK_PREFIX=""
+       PYGTK_INCLUDE=""
+    fi
+])
+
 #############################################################
 #
 # Configure paths for GtkAda

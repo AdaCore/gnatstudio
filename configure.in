@@ -59,17 +59,23 @@ AC_CHECK_HEADERS(sys/stropts.h)
 AC_CHECK_FUNCS(getpt)
 AC_CHECK_FUNCS(grantpt)
 AC_CHECK_FUNCS(unlockpt)
-AC_CHECK_FUNCS(openpty,,
-   AC_CHECK_LIB(util,openpty,
-     [AC_DEFINE(HAVE_OPENPTY) TARGET_LFLAGS="$TARGET_LFLAGS -lutil"],
-     AC_CHECK_LIB(bsd,openpty, [AC_DEFINE(HAVE_OPENPTY) TARGET_LFLAGS="$TARGET_LFLAGS -lbsd"])
-   )
+
+AC_CHECK_LIB(util,openpty,
+ [AC_DEFINE(HAVE_OPENPTY) TARGET_LFLAGS="$TARGET_LFLAGS -lutil"],
+ [AC_CHECK_LIB(bsd,openpty,
+  [AC_DEFINE(HAVE_OPENPTY) TARGET_LFLAGS="$TARGET_LFLAGS -lbsd"],
+  [AC_CHECK_FUNCS(openpty)]
+ ])
 )
+
 AC_CHECK_FUNCS(_getpty)
 AC_CHECK_FUNCS(ptsname)
 AC_CHECK_FUNCS(setpgid)
 AC_CHECK_FUNCS(setsid)
 AC_CHECK_FUNCS(sigprocmask)
+
+# checking for gtk
+AM_PATH_GTK(2.4.0,,AC_MSG_ERROR(Test for GtkAda failed. See the file 'INSTALL' for help.))
 
 opsys=''
 
@@ -243,8 +249,8 @@ esac
 machfile="'\"machine/${machine}.h\"'"
 opsysfile="\\\"system/${opsys}.h\\\""
 
-# checking for gtk
-AM_PATH_GTK(2.4.0,,AC_MSG_ERROR(Test for GtkAda failed. See the file 'INSTALL' for help.))
+######### checking for python (needs to be done after gtk)
+AM_PATH_PYGTK(2.8)
 
 # Set the version number of GPS/GVD
 AC_SUBST(GPS_VERSION)
@@ -274,6 +280,7 @@ AC_SUBST(PYTHON_VERSION)
 AC_SUBST(PYTHON_ADA_SOURCE)
 AC_SUBST(PYTHON_DIR)
 AC_SUBST(PYTHON_LIBS)
+AC_SUBST(PYGTK_INCLUDE)
 
 AC_CONFIG_SUBDIRS(kernel/src_info/sn)
 AC_CONFIG_SUBDIRS(kernel/src_info/sn/snsrc)
@@ -282,6 +289,11 @@ echo ""
 echo "--------- Summary --------------"
 echo "       python: $PYTHON_BASE"
 echo "           uses --with-python=<dir> to find libpython.so"
+if test "$PYGTK_INCLUDE" = "" ; then
+   echo "       pygtk: no"
+else
+   echo "       pygtk: $PYGTK_PREFIX"
+fi
 echo "       xmlada: $XMLADA_GPR"
 echo "           uses ADA_PROJECT_PATH to find xmlada.gpr"
 echo ""

@@ -310,7 +310,7 @@ ac_includes_default="\
 
 ac_subdirs_all="$ac_subdirs_all kernel/src_info/sn"
 ac_subdirs_all="$ac_subdirs_all kernel/src_info/sn/snsrc"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os XMLADA_GPR CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP GNATMAKE PYTHON_BASE SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB DVIPS MAKEINFO TEXI2DVI PKG_CONFIG GTK_CONFIG GTK_PREFIX GLIB_PREFIX ATK_PREFIX PANGO_PREFIX GTKADA_SRC GTKADA_OBJ GTK_CFLAGS GTK_LIBS GTK_STATIC_LIBS GPS_VERSION opsysfile ROOT TARGET EXEC_PREFIX STRIP_CR CAN_OUTPUT TARGET_CFLAGS TARGET_LFLAGS EXEC_COMMAND DEFAULT_PS DEFAULT_FONT PRINT_CMD DIFF_CMD PATCH_CMD OPAQUE_MDI HOST_TYPE EXECUTION_WINDOW PYTHON_VERSION PYTHON_ADA_SOURCE PYTHON_DIR PYTHON_LIBS subdirs LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os XMLADA_GPR CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP GNATMAKE PYTHON_BASE SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB DVIPS MAKEINFO TEXI2DVI PKG_CONFIG GTK_CONFIG GTK_PREFIX GLIB_PREFIX ATK_PREFIX PANGO_PREFIX GTKADA_SRC GTKADA_OBJ GTK_CFLAGS GTK_LIBS GTK_STATIC_LIBS GPS_VERSION opsysfile ROOT TARGET EXEC_PREFIX STRIP_CR CAN_OUTPUT TARGET_CFLAGS TARGET_LFLAGS EXEC_COMMAND DEFAULT_PS DEFAULT_FONT PRINT_CMD DIFF_CMD PATCH_CMD OPAQUE_MDI HOST_TYPE EXECUTION_WINDOW PYTHON_VERSION PYTHON_ADA_SOURCE PYTHON_DIR PYTHON_LIBS PYGTK_INCLUDE subdirs LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -842,6 +842,12 @@ fi
 if test -n "$ac_init_help"; then
 
   cat <<\_ACEOF
+
+Optional Features:
+  --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
+  --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+  --disable-pygtk    do not try to build the special support for Py
+GTK
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1379,7 +1385,10 @@ TARGET_CFLAGS=""
 TARGET_LFLAGS=""
 EXEC_COMMAND="xterm -e"
 DEFAULT_FONT="sans 9"
+
+## We need to double the quotes here, since this is inserted in an Ada file
 DEFAULT_PS='sh -c """"""ps x 2> /dev/null || ps -u \$USER 2> /dev/null || ps""""""'
+
 PRINT_CMD="lp"
 OPAQUE_MDI=False
 HOST_TYPE=Unix
@@ -3839,88 +3848,7 @@ fi
 done
 
 
-for ac_func in openpty
-do
-as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
-echo "$as_me:$LINENO: checking for $ac_func" >&5
-echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6
-if eval "test \"\${$as_ac_var+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-/* System header to define __stub macros and hopefully few prototypes,
-    which can conflict with char $ac_func (); below.
-    Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
-    <limits.h> exists even on freestanding compilers.  */
-#ifdef __STDC__
-# include <limits.h>
-#else
-# include <assert.h>
-#endif
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char $ac_func ();
-/* The GNU C library defines this for functions which it implements
-    to always fail with ENOSYS.  Some functions are actually named
-    something starting with __ and the normal name is an alias.  */
-#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
-choke me
-#else
-char (*f) () = $ac_func;
-#endif
-#ifdef __cplusplus
-}
-#endif
-
-int
-main ()
-{
-return f != $ac_func;
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  eval "$as_ac_var=yes"
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-eval "$as_ac_var=no"
-fi
-rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_var'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_var'}'`" >&6
-if test `eval echo '${'$as_ac_var'}'` = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define `echo "HAVE_$ac_func" | $as_tr_cpp` 1
-_ACEOF
-
-else
-  echo "$as_me:$LINENO: checking for openpty in -lutil" >&5
+echo "$as_me:$LINENO: checking for openpty in -lutil" >&5
 echo $ECHO_N "checking for openpty in -lutil... $ECHO_C" >&6
 if test "${ac_cv_lib_util_openpty+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -4039,14 +3967,97 @@ if test $ac_cv_lib_bsd_openpty = yes; then
 #define HAVE_OPENPTY 1
 _ACEOF
  TARGET_LFLAGS="$TARGET_LFLAGS -lbsd"
+else
+
+for ac_func in openpty
+do
+as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for $ac_func" >&5
+echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6
+if eval "test \"\${$as_ac_var+set}\" = set"; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with char $ac_func (); below.
+    Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
+    <limits.h> exists even on freestanding compilers.  */
+#ifdef __STDC__
+# include <limits.h>
+#else
+# include <assert.h>
+#endif
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char $ac_func ();
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
+choke me
+#else
+char (*f) () = $ac_func;
+#endif
+#ifdef __cplusplus
+}
+#endif
+
+int
+main ()
+{
+return f != $ac_func;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  eval "$as_ac_var=yes"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+eval "$as_ac_var=no"
 fi
-
-
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 fi
-
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_var'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_var'}'`" >&6
+if test `eval echo '${'$as_ac_var'}'` = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define `echo "HAVE_$ac_func" | $as_tr_cpp` 1
+_ACEOF
 
 fi
 done
+
+
+fi
+
+
+fi
+
 
 
 for ac_func in _getpty
@@ -4469,178 +4480,6 @@ fi
 done
 
 
-opsys=''
-
-case "${host}" in
-
-  ## Alpha (DEC) machines.
-  alpha*-dec-osf* )
-    machine=alpha opsys=osf1
-    EXECUTION_WINDOW=False
-  ;;
-
-  ## HP 9000 series 700 and 800, running HP/UX
-  hppa*-hp-hpux1[0-9]* )
-    machine=hp800 opsys=hpux10
-    PYTHON_LIBS="-Wl,-E ${PYTHON_LIBS}"
-  ;;
-
-  mips-sgi-irix6.5* )
-    machine=iris4d opsys=irix6-5
-  ;;
-  mips-sgi-irix6* )
-    machine=iris4d opsys=irix6-0
-  ;;
-
-  ## IBM, AIX machines
-  powerpc-ibm-aix5.*  )
-    machine=ibmrs6000 opsys=aix4-2
-    PYTHON_LIBS="-lld ${PYTHON_LIBS}"
-    TARGET_LFLAGS="$TARGET_LFLAGS -Wl,-bbigtoc"
-  ;;
-
-  ## PowerPC
-  powerpc-*-linux-gnu )
-    machine=powerpc opsys=gnu-linux
-    PRINT_CMD="a2ps"
-  ;;
-
-  powerpc-*-darwin* )
-    machine=powerpc opsys=darwin
-    PYTHON_LIBS="-ldl ${PYTHON_LIBS}"
-    STRIP_CR=True
-  ;;
-
-  ## Suns
-  *-auspex-sunos* | *-sun-sunos* | *-sun-bsd* | *-sun-solaris* \
-    | i[3456]86-*-solaris2* | i345686-*-sunos5* | powerpc*-*-solaris2* \
-    | rs6000-*-solaris2* | sparc*-linux*-gnu )
-    case "${host}" in
-      m68*-sunos1* )    machine=sun1 ;;
-      m68*-sunos2* )    machine=sun2 ;;
-      m68* )            machine=sun3 ;;
-      i[3456]86-sun-sunos[34]* )        machine=sun386 ;;
-      i[3456]86-*-* )     machine=intel386 ;;
-      powerpcle* )      machine=powerpcle ;;
-      powerpc* | rs6000* )  machine=ibmrs6000 ;;
-      sparc* )          machine=sparc ;;
-      * )               unported=yes ;;
-    esac
-    case "${host}" in
-      ## The Sun386 didn't get past 4.0.
-      i[3456]86-*-sunos4          ) opsys=sunos4-0 ;;
-      *-sunos4.0*         ) opsys=sunos4-0 ;;
-      *-sunos4.1.[3-9]*noshare )
-                opsys=sunos413
-                ;;
-      *-sunos4.1.[3-9]* | *-sunos4shr*)
-                opsys=sunos4shr
-                ;;
-      *-sunos4* | *-sunos )
-                opsys=sunos4-1
-                ;;
-      *-sunos5.3* | *-solaris2.3* )
-                opsys=sol2-3
-                ;;
-      *-sunos5.4* | *-solaris2.4* )
-                opsys=sol2-4
-                ;;
-      *-sunos5.5* | *-solaris2.5* )
-		PYTHON_LIBS="-lresolv -lsocket -lnsl -ldl -lm ${PYTHON_LIBS}"
-                opsys=sol2-5
-                ;;
-      *-sunos5* | *-solaris* )
-		PYTHON_LIBS="-lresolv -lsocket -lnsl -ldl -lm ${PYTHON_LIBS}"
-                opsys=sol2-5
-                ;;
-      *-linux-gnu* )
-  	        opsys=gnu-linux
-		PRINT_CMD="a2ps"
-		;;
-      *) opsys=bsd4-2   ;;
-    esac;;
-
-  # IA64 processors
-  ia64-*-* )
-    case "${host}" in
-      *-linux-gnu* )
-	PYTHON_LIBS="-Wl,-export-dynamic -ldl ${PYTHON_LIBS}"
-	opsys=gnu-linux
-	PRINT_CMD="a2ps"
-        ;;
-      *-hp-hpux11* )
-	PYTHON_LIBS="-ldld -Wl,-E ${PYTHON_LIBS}"
-        opsys=hpux10
-        ;;
-    esac
-  ;;
-
-  # AMD64 processors
-  x86_64-*-* )
-    case "${host}" in
-      *-linux-gnu* )
-        opsys=gnu-linux
-	PYTHON_LIBS="-Wl,-export-dynamic -ldl -lm ${PYTHON_LIBS}"
-	PRINT_CMD="a2ps"
-        ;;
-    esac
-  ;;
-
-  ## Intel 386 machines where we don't care about the manufacturer
-  i[3456]86-*-* )
-    machine=intel386
-    case "${host}" in
-      *-lynxos* )               opsys=lynxos ;;
-      *-isc1.* | *-isc2.[01]* ) opsys=386-ix ;;
-      *-isc2.2* )               opsys=isc2-2 ;;
-      *-isc4.0* )               opsys=isc4-0 ;;
-      *-isc4.* )                opsys=isc4-1 ;;
-      *-isc* )                  opsys=isc3-0 ;;
-      *-esix5* )                opsys=esix5r4 ;;
-      *-esix* )                 opsys=esix ;;
-      *-xenix* )                opsys=xenix ;;
-      *-linux-gnu* )
-	opsys=gnu-linux
-	PRINT_CMD="a2ps"
-
-	# If we do not link with -Wl,-export-dynamic, commands like
-	# "import time" will raise errors in the interpreter
-	PYTHON_LIBS="-Wl,-export-dynamic -ldl -lm ${PYTHON_LIBS}"
-	;;
-
-      *-sco3.2v4* )             opsys=sco4  ;;
-      *-sco3.2v5* )             opsys=sco5 ;;
-      *-sysv4.2uw* | *-sysv5uw* ) opsys=unixware ;;
-      *-386bsd* )               opsys=386bsd ;;
-      *-freebsd* )              opsys=freebsd ;;
-      *-nextstep* )             opsys=nextstep ;;
-      *win32* | *mingw32* | *cygwin* )
-	machine=intel386 opsys=windows
-	STRIP_CR=True
-	CAN_OUTPUT=False
-	TARGET_LFLAGS="$TARGET_LFLAGS -luser32 -lcomdlg32 -mwindows -Wl,--stack=0x10000000"
-	TARGET=pentium-mingw32msv
-	COLOR_SELECTION="#BEBEBE"
-	EXEC_COMMAND="cmd /c start"
-	DEFAULT_PS="winps"
-	DEFAULT_FONT="tahoma 8"
-	PRINT_CMD=""
-	DIFF_CMD="gnudiff"
-	PATCH_CMD="patch"
-	OPAQUE_MDI=True
-	HOST_TYPE=Windows
-	;;
-      ## Otherwise, we'll fall through to the generic opsys code at the bottom.
-    esac
-  ;;
-
-  *) echo "Unknown system: ${host}"
-     exit;;
-esac
-
-machfile="'\"machine/${machine}.h\"'"
-opsysfile="\\\"system/${opsys}.h\\\""
-
 # checking for gtk
   # Extract the first word of "pkg-config", so it can be a program name with args.
 set dummy pkg-config; ac_word=$2
@@ -4877,7 +4716,224 @@ echo "$as_me: error: Test for GtkAda failed. See the file 'INSTALL' for help." >
   rm -f conf.gtktest
 
 
+opsys=''
+
+case "${host}" in
+
+  ## Alpha (DEC) machines.
+  alpha*-dec-osf* )
+    machine=alpha opsys=osf1
+    EXECUTION_WINDOW=False
+  ;;
+
+  ## HP 9000 series 700 and 800, running HP/UX
+  hppa*-hp-hpux1[0-9]* )
+    machine=hp800 opsys=hpux10
+    PYTHON_LIBS="-Wl,-E ${PYTHON_LIBS}"
+  ;;
+
+  mips-sgi-irix6.5* )
+    machine=iris4d opsys=irix6-5
+  ;;
+  mips-sgi-irix6* )
+    machine=iris4d opsys=irix6-0
+  ;;
+
+  ## IBM, AIX machines
+  powerpc-ibm-aix5.*  )
+    machine=ibmrs6000 opsys=aix4-2
+    PYTHON_LIBS="-lld ${PYTHON_LIBS}"
+    TARGET_LFLAGS="$TARGET_LFLAGS -Wl,-bbigtoc"
+  ;;
+
+  ## PowerPC
+  powerpc-*-linux-gnu )
+    machine=powerpc opsys=gnu-linux
+    PRINT_CMD="a2ps"
+  ;;
+
+  powerpc-*-darwin* )
+    machine=powerpc opsys=darwin
+    PYTHON_LIBS="-ldl ${PYTHON_LIBS}"
+    STRIP_CR=True
+  ;;
+
+  ## Suns
+  *-auspex-sunos* | *-sun-sunos* | *-sun-bsd* | *-sun-solaris* \
+    | i[3456]86-*-solaris2* | i345686-*-sunos5* | powerpc*-*-solaris2* \
+    | rs6000-*-solaris2* | sparc*-linux*-gnu )
+    case "${host}" in
+      m68*-sunos1* )    machine=sun1 ;;
+      m68*-sunos2* )    machine=sun2 ;;
+      m68* )            machine=sun3 ;;
+      i[3456]86-sun-sunos[34]* )        machine=sun386 ;;
+      i[3456]86-*-* )     machine=intel386 ;;
+      powerpcle* )      machine=powerpcle ;;
+      powerpc* | rs6000* )  machine=ibmrs6000 ;;
+      sparc* )          machine=sparc ;;
+      * )               unported=yes ;;
+    esac
+    case "${host}" in
+      ## The Sun386 didn't get past 4.0.
+      i[3456]86-*-sunos4          ) opsys=sunos4-0 ;;
+      *-sunos4.0*         ) opsys=sunos4-0 ;;
+      *-sunos4.1.[3-9]*noshare )
+                opsys=sunos413
+                ;;
+      *-sunos4.1.[3-9]* | *-sunos4shr*)
+                opsys=sunos4shr
+                ;;
+      *-sunos4* | *-sunos )
+                opsys=sunos4-1
+                ;;
+      *-sunos5.3* | *-solaris2.3* )
+                opsys=sol2-3
+                ;;
+      *-sunos5.4* | *-solaris2.4* )
+                opsys=sol2-4
+                ;;
+      *-sunos5.5* | *-solaris2.5* )
+		PYTHON_LIBS="-lresolv -lsocket -lnsl -ldl -lm ${PYTHON_LIBS}"
+                opsys=sol2-5
+                ;;
+      *-sunos5* | *-solaris* )
+		PYTHON_LIBS="-lresolv -lsocket -lnsl -ldl -lm ${PYTHON_LIBS}"
+                opsys=sol2-5
+                ;;
+      *-linux-gnu* )
+  	        opsys=gnu-linux
+		PRINT_CMD="a2ps"
+		;;
+      *) opsys=bsd4-2   ;;
+    esac;;
+
+  # IA64 processors
+  ia64-*-* )
+    case "${host}" in
+      *-linux-gnu* )
+	PYTHON_LIBS="-Wl,-export-dynamic -ldl ${PYTHON_LIBS}"
+	opsys=gnu-linux
+	PRINT_CMD="a2ps"
+        ;;
+      *-hp-hpux11* )
+	PYTHON_LIBS="-ldld -ldl -Wl,-E ${PYTHON_LIBS}"
+        opsys=hpux10
+        ;;
+    esac
+  ;;
+
+  # AMD64 processors
+  x86_64-*-* )
+    case "${host}" in
+      *-linux-gnu* )
+        opsys=gnu-linux
+	PYTHON_LIBS="-Wl,-export-dynamic -ldl -lm ${PYTHON_LIBS}"
+	PRINT_CMD="a2ps"
+        ;;
+    esac
+  ;;
+
+  ## Intel 386 machines where we don't care about the manufacturer
+  i[3456]86-*-* )
+    machine=intel386
+    case "${host}" in
+      *-lynxos* )               opsys=lynxos ;;
+      *-isc1.* | *-isc2.[01]* ) opsys=386-ix ;;
+      *-isc2.2* )               opsys=isc2-2 ;;
+      *-isc4.0* )               opsys=isc4-0 ;;
+      *-isc4.* )                opsys=isc4-1 ;;
+      *-isc* )                  opsys=isc3-0 ;;
+      *-esix5* )                opsys=esix5r4 ;;
+      *-esix* )                 opsys=esix ;;
+      *-xenix* )                opsys=xenix ;;
+      *-linux-gnu* )
+	opsys=gnu-linux
+	PRINT_CMD="a2ps"
+
+	# If we do not link with -Wl,-export-dynamic, commands like
+	# "import time" will raise errors in the interpreter
+	PYTHON_LIBS="-Wl,-export-dynamic -ldl -lm ${PYTHON_LIBS}"
+	;;
+
+      *-sco3.2v4* )             opsys=sco4  ;;
+      *-sco3.2v5* )             opsys=sco5 ;;
+      *-sysv4.2uw* | *-sysv5uw* ) opsys=unixware ;;
+      *-386bsd* )               opsys=386bsd ;;
+      *-freebsd* )              opsys=freebsd ;;
+      *-nextstep* )             opsys=nextstep ;;
+      *win32* | *mingw32* | *cygwin* )
+	machine=intel386 opsys=windows
+	STRIP_CR=True
+	CAN_OUTPUT=False
+	TARGET_LFLAGS="$TARGET_LFLAGS -luser32 -lcomdlg32 -mwindows -Wl,--stack=0x10000000"
+	TARGET=pentium-mingw32msv
+	COLOR_SELECTION="#BEBEBE"
+	EXEC_COMMAND="cmd /c start"
+	DEFAULT_PS="winps"
+	DEFAULT_FONT="tahoma 8"
+	PRINT_CMD=""
+	DIFF_CMD="gnudiff"
+	PATCH_CMD="patch"
+	OPAQUE_MDI=True
+	HOST_TYPE=Windows
+	;;
+      ## Otherwise, we'll fall through to the generic opsys code at the bottom.
+    esac
+  ;;
+
+  *) echo "Unknown system: ${host}"
+     exit;;
+esac
+
+machfile="'\"machine/${machine}.h\"'"
+opsysfile="\\\"system/${opsys}.h\\\""
+
+######### checking for python (needs to be done after gtk)
+
+    # Check whether --enable-pygtk or --disable-pygtk was given.
+if test "${enable_pygtk+set}" = set; then
+  enableval="$enable_pygtk"
+
+else
+  enable_pygtk=yes
+fi;
+
+    min_pygtk_version=2.8
+    module=pygtk-2.0
+    echo "$as_me:$LINENO: checking for pygtk - version >= $min_pygtk_version" >&5
+echo $ECHO_N "checking for pygtk - version >= $min_pygtk_version... $ECHO_C" >&6
+
+    if test x"$enable_pygtk" = x -o x"$enable_pygtk" = xno ; then
+       echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+       PYGTK_PREFIX=""
+       PYGTK_INCLUDE=""
+
+    elif test "$PYTHON_BASE" != "no" ; then
+       pygtk_version=`$PKG_CONFIG $module --modversion`
+       $PKG_CONFIG $module --atleast-version=$min_pygtk_version
+       if test $? = 0 ; then
+          PYGTK_INCLUDE=`$PKG_CONFIG $module --cflags`
+          PYGTK_PREFIX=`$PKG_CONFIG $module --variable=prefix`
+          echo "$as_me:$LINENO: result: yes (version $pygtk_version)" >&5
+echo "${ECHO_T}yes (version $pygtk_version)" >&6
+       else
+          echo "$as_me:$LINENO: result: no (found $pygtk_version)" >&5
+echo "${ECHO_T}no (found $pygtk_version)" >&6
+          PYGTK_PREFIX=""
+          PYGTK_INCLUDE=""
+       fi
+
+    else
+       echo "$as_me:$LINENO: result: no since python not found" >&5
+echo "${ECHO_T}no since python not found" >&6
+       PYGTK_PREFIX=""
+       PYGTK_INCLUDE=""
+    fi
+
+
 # Set the version number of GPS/GVD
+
 
 
 
@@ -4919,11 +4975,16 @@ echo ""
 echo "--------- Summary --------------"
 echo "       python: $PYTHON_BASE"
 echo "           uses --with-python=<dir> to find libpython.so"
+if test "$PYGTK_INCLUDE" = "" ; then
+   echo "       pygtk: no"
+else
+   echo "       pygtk: $PYGTK_PREFIX"
+fi
 echo "       xmlada: $XMLADA_GPR"
 echo "           uses ADA_PROJECT_PATH to find xmlada.gpr"
 echo ""
 
-                                                                                                                        ac_config_files="$ac_config_files Makefile Makefile.common gnat/sdefault/sdefault.adb docs/Makefile po/Makefile common/Makefile.common common/src/config.ads common/expect/Makefile python/Makefile.python python/python.gpr gtkada/gtkada.gpr common/common.gpr:common/common_${XMLADA_GPR}.gpr.in gps/src/gpslink.adb"
+                                                                                                                                  ac_config_files="$ac_config_files Makefile Makefile.common gnat/sdefault/sdefault.adb docs/Makefile po/Makefile common/Makefile.common common/src/config.ads python/Makefile.python python/python.gpr gtkada/gtkada.gpr common/expect/Makefile common/common.gpr:common/common_${XMLADA_GPR}.gpr.in gps/src/gpslink.adb"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -5484,6 +5545,7 @@ do
   "python/Makefile.python" ) CONFIG_FILES="$CONFIG_FILES python/Makefile.python" ;;
   "python/python.gpr" ) CONFIG_FILES="$CONFIG_FILES python/python.gpr" ;;
   "gtkada/gtkada.gpr" ) CONFIG_FILES="$CONFIG_FILES gtkada/gtkada.gpr" ;;
+  "common/expect/Makefile" ) CONFIG_FILES="$CONFIG_FILES common/expect/Makefile" ;;
   "common/common.gpr" ) CONFIG_FILES="$CONFIG_FILES common/common.gpr:common/common_${XMLADA_GPR}.gpr.in" ;;
   "gps/src/gpslink.adb" ) CONFIG_FILES="$CONFIG_FILES gps/src/gpslink.adb" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
@@ -5635,6 +5697,7 @@ s,@PYTHON_VERSION@,$PYTHON_VERSION,;t t
 s,@PYTHON_ADA_SOURCE@,$PYTHON_ADA_SOURCE,;t t
 s,@PYTHON_DIR@,$PYTHON_DIR,;t t
 s,@PYTHON_LIBS@,$PYTHON_LIBS,;t t
+s,@PYGTK_INCLUDE@,$PYGTK_INCLUDE,;t t
 s,@subdirs@,$subdirs,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t

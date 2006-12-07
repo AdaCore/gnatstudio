@@ -9,6 +9,7 @@ endif
 
 PYTHON_BASE=@PYTHON_BASE@
 PYTHON_VERSION=@PYTHON_VERSION@
+PYGTK_INCLUDE=@PYGTK_INCLUDE@
 PYTHON_INCLUDE=-I$(PYTHON_BASE)/include/python$(PYTHON_VERSION)
 PYTHON_LIBS=-L@PYTHON_DIR@ -lpython$(PYTHON_VERSION) @PYTHON_LIBS@
 
@@ -20,13 +21,19 @@ else
 PYTHON_SRC_DIRS = $(PYTHON_BASE_DIR)/src2
 endif
 
+ifneq ($(PYGTK_INCLUDE),)
+PYGTK_MACRO=-DPYGTK
+else
+PYGTK_MACRO=
+endif
+
 SRC_DIRS += $(PYTHON_SRC_DIRS)
 C_SRCS = \
   $(foreach name,$(PYTHON_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
 PYTHON_OBJ_DIR = $(PYTHON_BASE_DIR)/obj
 OBJ_DIR = $(PYTHON_OBJ_DIR)
 
-CFLAGS = -g -O2 $(PYTHON_INCLUDE) `pkg-config gtk+-2.0 --cflags`
+CFLAGS = -g -O2 $(PYTHON_INCLUDE) ${PYGTK_MACRO} ${PYGTK_INCLUDE} `pkg-config gtk+-2.0 --cflags`
 
 PROJECT_FILE = python
 

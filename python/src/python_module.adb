@@ -669,8 +669,14 @@ package body Python_Module is
       Ignored : Integer;
       Result  : PyObject;
       Tmp     : Boolean;
-      pragma Unreferenced (Ignored, Result, Tmp);
+      pragma Unreferenced (Ignored, Tmp);
       Errors  : aliased Boolean;
+
+      procedure Init_PyGtk;
+      pragma Import (C, Init_PyGtk, "ada_init_pygtk");
+
+      function Build_With_PyGtk return Integer;
+      pragma Import (C, Build_With_PyGtk, "ada_build_with_pygtk");
 
    begin
       Python_Module_Id := new Python_Module_Record;
@@ -723,6 +729,7 @@ package body Python_Module is
         (Python_Module_Id.Script.Interpreter,
          "import GPS", Hide_Output => True,
          Errors => Errors'Unchecked_Access);
+      Assert (Me, Result /= null, "Couldn't import GPS module");
 
       Set_Default_Console
         (Python_Module_Id.Script.Interpreter,
@@ -744,13 +751,26 @@ package body Python_Module is
          Text        => -"_Python",
          Callback    => Open_Python_Console'Access);
 
+      --  PyGTK prints its error messages using sys.argv, which doesn't
+      --  exist in non-interactive mode. We therefore define it here
+      Result := Run_Command
+        (Python_Module_Id.Script.Interpreter,
+         "sys.argv=['GPS']", Hide_Output => True,
+         Errors         => Errors'Unchecked_Access);
+
       --  If PyGtk is available, register some special functions, so that
       --  users can interact directly with widgets
 
-      Result := Run_Command
-        (Python_Module_Id.Script.Interpreter,
-         "import pygtk", Hide_Output => True,
-         Errors => Errors'Unchecked_Access);
+      if Build_With_PyGtk = 1 then
+         Result := Run_Command
+           (Python_Module_Id.Script.Interpreter,
+            "import pygtk", Hide_Output => True,
+            Errors => Errors'Unchecked_Access);
+      else
+         --  Since we were not build with pygtk, don't even try to activate the
+         --  special support for it
+         Errors := True;
+      end if;
 
       if not Errors then
          Trace (Me, "Loading support for pygtk");
@@ -758,26 +778,31 @@ package body Python_Module is
            (Python_Module_Id.Script.Interpreter,
             "pygtk.require('2.0'); import gtk", Hide_Output => True,
             Errors => Errors'Unchecked_Access);
+         if Result = null then
+            Trace (Me, "Couldn't initialize gtk");
+         else
+            Init_PyGtk;
 
---           Register_Command
---             (Python_Module_Id.Script,
---              Command      => "pywidget",
---              Handler      => Python_GUI_Command_Handler'Access,
---              Class        => Get_GUI_Class (Kernel));
-         Register_Command
-           (Python_Module_Id.Script,
-            Command       => "add",
-            Handler       => Python_GUI_Command_Handler'Access,
-            Class         => New_Class (Kernel, "MDI"),
-            Minimum_Args  => 1,
-            Maximum_Args  => 3,
-            Static_Method => True);
-         Register_Command
-           (Python_Module_Id.Script,
-            Command       => "exec_in_console",
-            Handler       => Python_GUI_Command_Handler'Access,
-            Minimum_Args  => 1,
-            Maximum_Args  => 1);
+            Register_Command
+              (Python_Module_Id.Script,
+               Command      => "pywidget",
+               Handler      => Python_GUI_Command_Handler'Access,
+               Class        => Get_GUI_Class (Kernel));
+            Register_Command
+              (Python_Module_Id.Script,
+               Command       => "add",
+               Handler       => Python_GUI_Command_Handler'Access,
+               Class         => New_Class (Kernel, "MDI"),
+               Minimum_Args  => 1,
+               Maximum_Args  => 3,
+               Static_Method => True);
+            Register_Command
+              (Python_Module_Id.Script,
+               Command       => "exec_in_console",
+               Handler       => Python_GUI_Command_Handler'Access,
+               Minimum_Args  => 1,
+               Maximum_Args  => 1);
+         end if;
 
       else
          Trace (Me, "Not loading support for pygtk");
@@ -1051,29 +1076,31 @@ package body Python_Module is
    is
       function PyObject_From_Widget (W : System.Address) return PyObject;
       pragma Import (C, PyObject_From_Widget, "ada_pyobject_from_widget");
-      pragma Unreferenced (PyObject_From_Widget);
 
       function Widget_From_PyObject (Object : PyObject) return System.Address;
       pragma Import (C, Widget_From_PyObject, "ada_widget_from_pyobject");
 
       Stub     : Gtk.Widget.Gtk_Widget_Record;
       Widget   : Glib.Object.GObject;
---      Instance : Class_Instance;
+      Instance : Class_Instance;
       Child    : MDI_Child;
       Result   : PyObject;
       pragma Unreferenced (Result);
       Errors   : aliased Boolean;
+      Object   : GObject;
    begin
       --  This is only called when pygtk has been loaded properly
 
       if Command = "pywidget" then
-         null;
-         --  ??? Don't know how to implement that without depending on the
-         --  sources of pygtk when compiling GPS
---           Instance := Nth_Arg (Data, 1, Get_GUI_Class (Get_Kernel (Data)));
---           Python_Callback_Data (Data).Return_Value :=
---             PyObject_From_Widget (Get_Object (Get_Data (Instance)));
---           Free (Instance);
+         Instance := Nth_Arg (Data, 1, Get_GUI_Class (Get_Kernel (Data)));
+         Object := Get_Data (Instance, GUI_Class_Name);
+         if Object = null then
+            Python_Callback_Data (Data).Return_Value := Py_None;
+            Py_INCREF (Python_Callback_Data (Data).Return_Value);
+         else
+            Python_Callback_Data (Data).Return_Value := PyObject_From_Widget
+              (Get_Object (Object));
+         end if;
 
       elsif Command = "add" then
          Widget := Get_User_Data
