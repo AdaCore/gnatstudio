@@ -266,9 +266,13 @@ package body Code_Analysis is
 
    begin
 
-      for J in 1 .. File_Node.Lines'Length loop
-         Free_Line (File_Node.Lines (J));
-      end loop;
+      if File_Node.Lines /= null then
+         for J in 1 .. File_Node.Lines'Length loop
+            Free_Line (File_Node.Lines (J));
+         end loop;
+
+         Unchecked_Free (File_Node.Lines);
+      end if;
 
       File_Node.Subprograms.Iterate (Free_From_Cursor'Access);
       Free_Analysis (File_Node.Analysis_Data);
