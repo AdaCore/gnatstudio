@@ -27,7 +27,7 @@
 with Ada.Unchecked_Deallocation;
 with Ada.Containers.Indefinite_Ordered_Sets; use Ada.Containers;
 
---  with GNAT.Strings;
+with GNAT.Strings;
 
 with Glib;
 with Glib.Object;
@@ -59,12 +59,16 @@ package Code_Analysis_Module is
    -- Instances --
    ---------------
 
-   function "<" (Left, Right : Class_Instance) return Boolean;
-   function "=" (Left, Right : Class_Instance) return Boolean;
+   function Less_Case_Insensitive
+     (Left, Right : Class_Instance) return Boolean;
+   function Equal_Case_Insensitive
+     (Left, Right : Class_Instance) return Boolean;
    --  Use the Code_Analysis user property "Instance_Name" to perform the test
 
    package Code_Analysis_Class_Instance_Sets is new Indefinite_Ordered_Sets
-       (Element_Type => Class_Instance);
+     (Element_Type => Class_Instance,
+      "<" => Less_Case_Insensitive,
+      "=" => Equal_Case_Insensitive);
    --  Sets package for declared instances of the CodeAnalysis module.
    --  Allow to handle many instances.
 
@@ -121,7 +125,7 @@ private
       Projects      : Code_Analysis_Tree;
       View          : Code_Analysis_View;
       Child         : GPS_MDI_Child;
-      --      Instance_Name : GNAT.Strings.String_Access;
+      Instance_Name : GNAT.Strings.String_Access;
    end record;
 
    type Code_Analysis_Property is access all Code_Analysis_Property_Record;
