@@ -262,6 +262,9 @@ private
      Ada.Unchecked_Deallocation (File, File_Access);
 
    procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Line_Array, Line_Array_Access);
+
+   procedure Unchecked_Free is new
      Ada.Unchecked_Deallocation (Project, Project_Access);
 
 end Code_Analysis;
