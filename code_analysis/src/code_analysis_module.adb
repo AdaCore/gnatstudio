@@ -19,9 +19,9 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;             use Ada.Exceptions;
---  with Ada.Strings.Less_Case_Insensitive;
---  with Ada.Strings.Equal_Case_Insensitive;
-with GNAT.Strings;
+with Ada.Strings.Less_Case_Insensitive;
+with Ada.Strings.Equal_Case_Insensitive;
+with Ada.Calendar;               use Ada.Calendar;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
 with Glib;                       use Glib;
@@ -47,6 +47,7 @@ with GPS.Location_View;          use GPS.Location_View;
 with VFS;                        use VFS;
 with Projects;                   use Projects;
 with Projects.Registry;          use Projects.Registry;
+with String_Utils;               use String_Utils;
 with Code_Coverage;              use Code_Coverage;
 with Code_Analysis_Tree_Model;   use Code_Analysis_Tree_Model;
 
@@ -71,16 +72,27 @@ package body Code_Analysis_Module is
       Property : constant Code_Analysis_Property
         := new Code_Analysis_Property_Record;
       Instance : Class_Instance;
+      Date     : Time;
+      Year     : Year_Number;
+      Month    : Month_Number;
+      Day      : Day_Number;
+      Seconds  : Day_Duration;
    begin
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
---        Property.Instance_Name :=
---          new String'("Analyze" & Integer'Image
---                   (Integer (Code_Analysis_Module_ID.Instances.Length + 1)));
+      Date := Clock;
+      Split (Date, Year, Month, Day, Seconds);
+      Property.Instance_Name :=
+        new String'("Analysis" & Integer'Image
+                    (Integer (Code_Analysis_Module_ID.Instances.Length + 1))
+                    & " (" & Image (Year)
+                    & "/" & Image (Month)
+                    & "/" & Image (Day)
+                    & Duration'Image (Seconds) & ")");
       Property.Projects := new Project_Maps.Map;
-      Code_Analysis_Module_ID.Instances.Insert (Instance);
       GPS.Kernel.Scripts.Set_Property
         (Instance, Code_Analysis_Cst_Str,
          Instance_Property_Record (Property.all));
+      Code_Analysis_Module_ID.Instances.Insert (Instance);
 
       if Code_Analysis_Module_ID.Project_Pixbuf = null then
          Code_Analysis_Module_ID.Project_Pixbuf := Render_Icon
@@ -305,7 +317,7 @@ package body Code_Analysis_Module is
                                  Property.View,
                                  Group  => Group_VCS_Explorer,
                                  Module => Code_Analysis_Module_ID);
-         Set_Title (Property.Child, -"Code Analysis Report");
+         Set_Title (Property.Child, -(Property.Instance_Name.all & " Report"));
 
          Register_Contextual_Menu
            (Code_Analysis_Module_ID.Kernel,
@@ -351,8 +363,12 @@ package body Code_Analysis_Module is
         (Get_Property (Instance, Code_Analysis_Cst_Str));
       Free_Code_Analysis (Property.Projects);
       Unchecked_Free (Property.View);
---      Code_Analysis_Module_ID.Instances.Delete (Instance);
---      GNAT.Strings.Free (Property.Instance_Name);
+
+      if Code_Analysis_Module_ID.Instances.Contains (Instance) then
+         Code_Analysis_Module_ID.Instances.Delete (Instance);
+      end if;
+
+      GNAT.Strings.Free (Property.Instance_Name);
    end Destroy;
 
    ----------------
@@ -890,8 +906,7 @@ package body Code_Analysis_Module is
       Project_Node : Project_Access;
       Submenu      : Gtk_Menu;
       Item         : Gtk_Menu_Item;
-      Cur          : Cursor := Code_Analysis_Module_ID.Instances.Last;
-      Pos          : Integer := 1;
+      Cur          : Cursor := Code_Analysis_Module_ID.Instances.First;
    begin
 
       C.Context := Context;
@@ -906,8 +921,7 @@ package body Code_Analysis_Module is
            (Property.Projects, Project_Information (C.Context));
 
          if Code_Analysis_Module_ID.Instances.Length > 1 then
---              Gtk_New (Item, -(Property.Instance_Name.all));
-            Gtk_New (Item, -("Analysis" & Integer'Image (Pos)));
+            Gtk_New (Item, -(Property.Instance_Name.all));
             Append (Menu, Item);
             Gtk_New (Submenu);
             Set_Submenu (Item, Submenu);
@@ -917,8 +931,7 @@ package body Code_Analysis_Module is
             Append_Submenu (C, Menu, Project_Node);
          end if;
 
-         Previous (Cur);
-         Pos := Pos + 1;
+         Next (Cur);
       end loop;
 
    end Append_To_Menu;
@@ -990,63 +1003,60 @@ package body Code_Analysis_Module is
       end if;
    end Append_Submenu;
 
-   ---------
-   -- "<" --
-   ---------
+   ---------------------------
+   -- Less_Case_Insensitive --
+   ---------------------------
 
-   function "<" (Left, Right : Class_Instance) return Boolean
+   function Less_Case_Insensitive (Left, Right : Class_Instance) return Boolean
    is
-      pragma Unreferenced (Left, Right);
---        Property_Left      : Code_Analysis_Property_Record;
---        Property_Right     : Code_Analysis_Property_Record;
---        Miss_Instance_Name : exception;
+      Property_Left      : Code_Analysis_Property_Record;
+      Property_Right     : Code_Analysis_Property_Record;
+      Miss_Instance_Name : exception;
    begin
---        Property_Left := Code_Analysis_Property_Record
---          (Get_Property (Left, Code_Analysis_Cst_Str));
---        Property_Right := Code_Analysis_Property_Record
---          (Get_Property (Right, Code_Analysis_Cst_Str));
+      Property_Left := Code_Analysis_Property_Record
+        (Get_Property (Left, Code_Analysis_Cst_Str));
+      Property_Right := Code_Analysis_Property_Record
+        (Get_Property (Right, Code_Analysis_Cst_Str));
 
---        if Property_Left.Instance_Name = null then
---        raise Miss_Instance_Name with "Property_Left.Instance_Name is null";
---        end if;
---
---        if Property_Right.Instance_Name = null then
---        raise Miss_Instance_Name with "Property_Right.Instance_Name is null";
---        end if;
---
---        return Ada.Strings.Less_Case_Insensitive
---      (Property_Left.Instance_Name.all, Property_Right.Instance_Name.all);
-      return True;
-   end "<";
+      if Property_Left.Instance_Name = null then
+         raise Miss_Instance_Name with "Property_Left.Instance_Name is null";
+      end if;
 
-   ---------
-   -- "=" --
-   ---------
+      if Property_Right.Instance_Name = null then
+         raise Miss_Instance_Name with "Property_Right.Instance_Name is null";
+      end if;
 
-   function "=" (Left, Right : Class_Instance) return Boolean
+      return Ada.Strings.Less_Case_Insensitive
+        (Property_Left.Instance_Name.all, Property_Right.Instance_Name.all);
+   end Less_Case_Insensitive;
+
+   ----------------------------
+   -- Equal_Case_Insensitive --
+   ----------------------------
+
+   function Equal_Case_Insensitive
+     (Left, Right : Class_Instance) return Boolean
     is
-      pragma Unreferenced (Left, Right);
---        Property_Left      : Code_Analysis_Property_Record;
---        Property_Right     : Code_Analysis_Property_Record;
---        Miss_Instance_Name : exception;
+      Property_Left      : Code_Analysis_Property_Record;
+      Property_Right     : Code_Analysis_Property_Record;
+      Miss_Instance_Name : exception;
    begin
---        Property_Left := Code_Analysis_Property_Record
---          (Get_Property (Left, Code_Analysis_Cst_Str));
---        Property_Right := Code_Analysis_Property_Record
---          (Get_Property (Right, Code_Analysis_Cst_Str));
+      Property_Left := Code_Analysis_Property_Record
+        (Get_Property (Left, Code_Analysis_Cst_Str));
+      Property_Right := Code_Analysis_Property_Record
+        (Get_Property (Right, Code_Analysis_Cst_Str));
 
---        if Property_Left.Instance_Name = null then
---        raise Miss_Instance_Name with "Property_Left.Instance_Name is null";
---        end if;
---
---        if Property_Right.Instance_Name = null then
---        raise Miss_Instance_Name with "Property_Right.Instance_Name is null";
---        end if;
---
---        return Ada.Strings.Equal_Case_Insensitive
---       (Property_Left.Instance_Name.all, Property_Right.Instance_Name.all);
-      return False;
-   end "=";
+      if Property_Left.Instance_Name = null then
+         raise Miss_Instance_Name with "Property_Left.Instance_Name is null";
+      end if;
+
+      if Property_Right.Instance_Name = null then
+         raise Miss_Instance_Name with "Property_Right.Instance_Name is null";
+      end if;
+
+      return Ada.Strings.Equal_Case_Insensitive
+        (Property_Left.Instance_Name.all, Property_Right.Instance_Name.all);
+   end Equal_Case_Insensitive;
 
    ---------------------
    -- Register_Module --
