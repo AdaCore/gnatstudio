@@ -154,6 +154,7 @@ package body Vsearch is
       Search_Backward : Boolean;
       Context         : Search_Context_Access;
       Found           : Boolean := False;
+      Replace_With    : String_Access := null;
       --  Whether the search results in at least one match.
    end record;
 
@@ -628,9 +629,7 @@ package body Vsearch is
       if Replace
         (Data.Context,
          Data.Vsearch.Kernel,
-         Get_Text (Data.Vsearch.Replace_Entry),
-         --  ??? The user could have changed this interactively in the
-         --  meantime. This value must be stored in the context.
+         Data.Replace_With.all,
          Data.Search_Backward,
          Give_Focus => Get_Active (Data.Vsearch.Select_Editor_Check))
       then
@@ -645,6 +644,7 @@ package body Vsearch is
          Insert (Data.Vsearch.Kernel,
                  -"Finished replacing the string in all the files");
          Free (Data.Context);
+         Free (Data.Replace_With);
          Set_Sensitive (Data.Vsearch.Search_Next_Button, True);
          Pop_State (Data.Vsearch.Kernel);
          Data.Vsearch.Search_Idle_Handler := 0;
@@ -655,6 +655,7 @@ package body Vsearch is
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
+         Free (Data.Replace_With);
          Pop_State (Data.Vsearch.Kernel);
          Data.Vsearch.Search_Idle_Handler := 0;
          Result := Success;
@@ -787,7 +788,8 @@ package body Vsearch is
                (Vsearch         => Vsearch,
                 Search_Backward => False,
                 Context         => Vsearch.Last_Search_All_Context,
-                Found           => False),
+                Found           => False,
+                Replace_With    => null),
                Search_Iterate'Access);
 
             Launch_Background_Command
@@ -1056,7 +1058,8 @@ package body Vsearch is
          (Vsearch         => Vsearch,
           Search_Backward => False,
           Context         => Vsearch.Last_Search_All_Context,
-          Found           => False),
+          Found           => False,
+          Replace_With    => new String'(Get_Text (Vsearch.Replace_Entry))),
          Replace_Iterate'Access);
 
       Launch_Background_Command
