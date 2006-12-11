@@ -165,7 +165,6 @@ private
       Search_Previous_Button  : Gtk.Button.Gtk_Button;
       Search_All_Button       : Gtk.Button.Gtk_Button;
       Replace_Only_Button     : Gtk.Button.Gtk_Button;
-      Continue                : Boolean := True;
       Extra_Information       : Gtk.Widget.Gtk_Widget;
       Options_Box             : Collapsing_Pane.Collapsing_Pane;
       Search_Idle_Handler     : Gtk.Main.Idle_Handler_Id := 0;
