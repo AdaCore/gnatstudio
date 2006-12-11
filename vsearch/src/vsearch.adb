@@ -137,6 +137,10 @@ package body Vsearch is
    type Idle_Search_Data is record
       Vsearch         : Vsearch_Access;
       Search_Backward : Boolean;
+      Context         : Search_Context_Access;
+      Found           : Boolean := False;
+      Replace_With    : String_Access := null;
+      --  Whether the search results in at least one match.
    end record;
 
    procedure Search_Iterate
@@ -219,7 +223,9 @@ package body Vsearch is
    procedure Create_Context
      (Vsearch : access Vsearch_Record'Class; All_Occurrences : Boolean);
    --  Create the search context based on the current contents of the GUI.
-   --  This is stored in Vsearch.Last_Search_Context.
+   --  This is stored in Vsearch.Last_Search_Context or
+   --  Vsearch.Last_Search_All_Context before being stored in
+   --  Idle_Search_Data.Context.
 
    function On_Delete (Search : access Gtk_Widget_Record'Class)
                        return Boolean;
@@ -233,9 +239,9 @@ package body Vsearch is
    --  Resize the vsearch window if needed.
 
    procedure Internal_Search
-     (Vsearch        : Vsearch_Access;
-      All_Occurences : Boolean := False;
-      Replace        : Boolean := False);
+     (Vsearch         : Vsearch_Access;
+      All_Occurrences : Boolean := False;
+      Replace         : Boolean := False);
    --  Internal implementation of search capability, used by On_Search and
    --  On_Search_Replace.
 
@@ -537,42 +543,40 @@ package body Vsearch is
       Found    : Boolean;
       Continue : Boolean;
    begin
-      if Data.Vsearch.Continue then
-         Search
-           (Data.Vsearch.Last_Search_Context,
-            Data.Vsearch.Kernel,
-            Data.Search_Backward,
-            Give_Focus => Get_Active (Data.Vsearch.Select_Editor_Check),
-            Found      => Found,
-            Continue   => Continue);
+      Search
+        (Data.Context,
+         Data.Vsearch.Kernel,
+         Data.Search_Backward,
+         Give_Focus => Get_Active (Data.Vsearch.Select_Editor_Check),
+         Found      => Found,
+         Continue   => Continue);
 
-         Data.Vsearch.Found := Data.Vsearch.Found or else Found;
+      Data.Found := Data.Found or else Found;
 
-         if Continue then
-            Set_Progress
-              (Command,
-               (Running,
-                Get_Current_Progress (Data.Vsearch.Last_Search_Context),
-                Get_Total_Progress (Data.Vsearch.Last_Search_Context)));
-            Result := Execute_Again;
-            return;
-         end if;
+      if Continue then
+         Set_Progress
+           (Command,
+            (Running,
+             Get_Current_Progress (Data.Context),
+             Get_Total_Progress (Data.Context)));
+         Result := Execute_Again;
+         return;
       end if;
 
-      Free (Data.Vsearch.Last_Search_Context);
       Set_Sensitive (Data.Vsearch.Search_Next_Button, True);
       Pop_State (Data.Vsearch.Kernel);
       Data.Vsearch.Search_Idle_Handler := 0;
 
-      if not Vsearch.Found then
+      if not Data.Found then
          Button := Message_Dialog
            (Msg     => "No occurrences of '" &
-            Get_Text (Vsearch.Pattern_Entry) & "' found.",
+            Context_Look_For (Data.Context) & "' found.",
             Title   => -"Search",
             Buttons => Button_OK,
             Parent  => Get_Main_Window (Vsearch.Kernel));
       end if;
 
+      Free (Data.Context);
       Result := Success;
 
    exception
@@ -595,26 +599,25 @@ package body Vsearch is
       Command : Command_Access;
       Result  : out Command_Return_Type) is
    begin
-      if Data.Vsearch.Continue
-        and then Replace
-          (Data.Vsearch.Last_Search_Context,
-           Data.Vsearch.Kernel,
-           Get_Text (Data.Vsearch.Replace_Entry),
---             ??? The user could change this interactively in the meantime
-           Data.Search_Backward,
-           Give_Focus => Get_Active (Data.Vsearch.Select_Editor_Check))
+      if Replace
+        (Data.Context,
+         Data.Vsearch.Kernel,
+         Data.Replace_With.all,
+         Data.Search_Backward,
+         Give_Focus => Get_Active (Data.Vsearch.Select_Editor_Check))
       then
          Set_Progress
            (Command,
             (Running,
-             Get_Current_Progress (Data.Vsearch.Last_Search_Context),
-             Get_Total_Progress (Data.Vsearch.Last_Search_Context)));
+             Get_Current_Progress (Data.Context),
+             Get_Total_Progress (Data.Context)));
 
          Result := Execute_Again;
       else
          Insert (Data.Vsearch.Kernel,
                  -"Finished replacing the string in all the files");
-         Free (Data.Vsearch.Last_Search_Context);
+         Free (Data.Context);
+         Free (Data.Replace_With);
          Set_Sensitive (Data.Vsearch.Search_Next_Button, True);
          Pop_State (Data.Vsearch.Kernel);
          Data.Vsearch.Search_Idle_Handler := 0;
@@ -625,6 +628,7 @@ package body Vsearch is
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
+         Free (Data.Replace_With);
          Pop_State (Data.Vsearch.Kernel);
          Data.Vsearch.Search_Idle_Handler := 0;
          Result := Success;
@@ -638,26 +642,41 @@ package body Vsearch is
      (Vsearch : access Vsearch_Record'Class; All_Occurrences : Boolean)
    is
       use Widget_List;
-      Data            : constant Search_Module_Data :=
-        Find_Module
-          (Vsearch.Kernel,
-           Get_Text (Get_Entry (Vsearch.Context_Combo)));
-      Pattern         : constant String := Get_Text (Vsearch.Pattern_Entry);
-      Options         : Search_Options;
+      Data    : constant Search_Module_Data :=
+                  Find_Module
+                    (Vsearch.Kernel,
+                     Get_Text (Get_Entry (Vsearch.Context_Combo)));
+      Pattern : constant String := Get_Text (Vsearch.Pattern_Entry);
+      Options : Search_Options;
    begin
-      Free (Vsearch.Last_Search_Context);
+      if not All_Occurrences then
+         Free (Vsearch.Last_Search_Context);
+      end if;
 
       if Data.Factory /= null and then Pattern /= "" then
-         Vsearch.Last_Search_Context := Data.Factory
-           (Vsearch.Kernel, All_Occurrences, Data.Extra_Information);
+         if All_Occurrences then
+            Vsearch.Last_Search_All_Context := Data.Factory
+              (Vsearch.Kernel, All_Occurrences, Data.Extra_Information);
+         else
+            Vsearch.Last_Search_Context := Data.Factory
+              (Vsearch.Kernel, All_Occurrences, Data.Extra_Information);
+         end if;
 
-         if Vsearch.Last_Search_Context /= null then
+         if (All_Occurrences and then Vsearch.Last_Search_All_Context /= null)
+           or else Vsearch.Last_Search_Context /= null
+         then
             Options :=
               (Case_Sensitive => Get_Active (Vsearch.Case_Check),
                Whole_Word     => Get_Active (Vsearch.Whole_Word_Check),
                Regexp         => Get_Active (Vsearch.Regexp_Check));
-            Set_Context (Vsearch.Last_Search_Context, Pattern, Options);
-            Reset (Vsearch.Last_Search_Context, Vsearch.Kernel);
+
+            if All_Occurrences then
+               Set_Context (Vsearch.Last_Search_All_Context, Pattern, Options);
+               Reset (Vsearch.Last_Search_All_Context, Vsearch.Kernel);
+            else
+               Set_Context (Vsearch.Last_Search_Context, Pattern, Options);
+               Reset (Vsearch.Last_Search_Context, Vsearch.Kernel);
+            end if;
          else
             Insert (Vsearch.Kernel, -"Invalid search context specified");
             return;
@@ -698,25 +717,25 @@ package body Vsearch is
    ---------------------
 
    procedure Internal_Search
-     (Vsearch        : Vsearch_Access;
-      All_Occurences : Boolean := False;
-      Replace        : Boolean := False)
+     (Vsearch         : Vsearch_Access;
+      All_Occurrences : Boolean := False;
+      Replace         : Boolean := False)
    is
-      Data            : constant Search_Module_Data :=
-        Find_Module
-          (Vsearch.Kernel,
-           Get_Text (Get_Entry (Vsearch.Context_Combo)));
-      Toplevel       : Gtk_Widget := Get_Toplevel (Vsearch);
-      Found          : Boolean;
-      Has_Next       : Boolean;
-      Button         : Message_Dialog_Buttons;
+      Data     : constant Search_Module_Data :=
+                   Find_Module
+                     (Vsearch.Kernel,
+                      Get_Text (Get_Entry (Vsearch.Context_Combo)));
+      Toplevel : Gtk_Widget := Get_Toplevel (Vsearch);
+      Found    : Boolean;
+      Has_Next : Boolean;
+      Button   : Message_Dialog_Buttons;
       pragma Unreferenced (Button);
 
-      Pattern        : constant String := Get_Text (Vsearch.Pattern_Entry);
-      C              : Search_Commands.Generic_Asynchronous_Command_Access;
+      Pattern  : constant String := Get_Text (Vsearch.Pattern_Entry);
+      C        : Search_Commands.Generic_Asynchronous_Command_Access;
 
    begin
-      if All_Occurences then
+      if All_Occurrences then
          Vsearch.Find_Next := False;
       end if;
 
@@ -725,23 +744,25 @@ package body Vsearch is
       end if;
 
       if not Vsearch.Find_Next then
-         Create_Context (Vsearch, All_Occurences);
+         Create_Context (Vsearch, All_Occurrences);
       end if;
 
-      if Vsearch.Last_Search_Context /= null then
-         Vsearch.Continue := True;
-
-         if All_Occurences then
+      if (All_Occurrences and then Vsearch.Last_Search_All_Context /= null)
+        or else Vsearch.Last_Search_Context /= null
+      then
+         if All_Occurrences then
             --  Set up the search. Everything is automatically
             --  put back when the idle loop terminates.
             --  ??? What is that supposed to mean.
 
-            Vsearch.Found := False;
-
             Search_Commands.Create
               (C,
                -"Searching",
-               (Vsearch => Vsearch, Search_Backward => False),
+               (Vsearch         => Vsearch,
+                Search_Backward => False,
+                Context         => Vsearch.Last_Search_All_Context,
+                Found           => False,
+                Replace_With    => null),
                Search_Iterate'Access);
 
             Launch_Background_Command
@@ -840,8 +861,6 @@ package body Vsearch is
       end if;
 
       if Vsearch.Last_Search_Context /= null then
-         Vsearch.Continue := True;
-
          if All_Occurences then
             --  Is this supported ???
             return;
@@ -975,7 +994,11 @@ package body Vsearch is
       Search_Commands.Create
         (C,
          -"Searching/Replacing",
-         (Vsearch => Vsearch, Search_Backward => False),
+         (Vsearch         => Vsearch,
+          Search_Backward => False,
+          Context         => Vsearch.Last_Search_All_Context,
+          Found           => False,
+          Replace_With    => new String'(Get_Text (Vsearch.Replace_Entry))),
          Replace_Iterate'Access);
 
       Launch_Background_Command
