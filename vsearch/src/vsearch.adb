@@ -153,6 +153,8 @@ package body Vsearch is
       Vsearch         : Vsearch_Access;
       Search_Backward : Boolean;
       Context         : Search_Context_Access;
+      Found           : Boolean := False;
+      --  Whether the search results in at least one match.
    end record;
 
    procedure Search_Iterate
@@ -576,7 +578,7 @@ package body Vsearch is
             Found      => Found,
             Continue   => Continue);
 
-         Data.Vsearch.Found := Data.Vsearch.Found or else Found;
+         Data.Found := Data.Found or else Found;
 
          if Continue then
             Set_Progress
@@ -589,20 +591,20 @@ package body Vsearch is
          end if;
       end if;
 
-      Free (Data.Context);
       Set_Sensitive (Data.Vsearch.Search_Next_Button, True);
       Pop_State (Data.Vsearch.Kernel);
       Data.Vsearch.Search_Idle_Handler := 0;
 
-      if not Vsearch.Found then
+      if not Data.Found then
          Button := Message_Dialog
            (Msg     => "No occurrences of '" &
-            Get_Text (Vsearch.Pattern_Entry) & "' found.",
+            Context_Look_For (Data.Context) & "' found.",
             Title   => -"Search",
             Buttons => Button_OK,
             Parent  => Get_Main_Window (Vsearch.Kernel));
       end if;
 
+      Free (Data.Context);
       Result := Success;
 
    exception
@@ -783,14 +785,13 @@ package body Vsearch is
             --  put back when the idle loop terminates.
             --  ??? What is that supposed to mean.
 
-            Vsearch.Found := False;
-
             Search_Commands.Create
               (C,
                -"Searching",
                (Vsearch         => Vsearch,
                 Search_Backward => False,
-                Context         => Vsearch.Last_Search_All_Context),
+                Context         => Vsearch.Last_Search_All_Context,
+                Found           => False),
                Search_Iterate'Access);
 
             Launch_Background_Command
@@ -1060,7 +1061,8 @@ package body Vsearch is
          -"Searching/Replacing",
          (Vsearch         => Vsearch,
           Search_Backward => False,
-          Context         => Vsearch.Last_Search_All_Context),
+          Context         => Vsearch.Last_Search_All_Context,
+          Found           => False),
          Replace_Iterate'Access);
 
       Launch_Background_Command
