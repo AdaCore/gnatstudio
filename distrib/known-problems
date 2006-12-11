@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.0.2
 
+- FC08-004 Parallel search queries for all occurrences
+  Problem:    If you start a search for all occurences of a given pattern
+              while another such query is already being processed, the former
+              will not be processed correctly once the latter is done.
+  Workaround: Wait for the running search query to be terminated before
+              launching a new one.
+
 - FC03-007 GPS.get_current_context() fails on directories
   Problem:    If you have python code to create your own contextual menus,
               and try to make these available only on directories, GPS
