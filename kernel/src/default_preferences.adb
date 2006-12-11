@@ -71,7 +71,6 @@ with Gtkada.Color_Combo;       use Gtkada.Color_Combo;
 with Gtkada.Handlers;          use Gtkada.Handlers;
 
 with Pango.Font;               use Pango.Font;
-with Pango.Layout;             use Pango.Layout;
 
 with Case_Handling;            use Case_Handling;
 with GPS.Intl;                 use GPS.Intl;
@@ -1162,7 +1161,9 @@ package body Default_Preferences is
 
    procedure Reset_Font (Ent : access Gtk_Widget_Record'Class) is
       E    : constant Gtk_Entry := Gtk_Entry (Ent);
-      Desc : constant Pango_Font_Description := From_String (Get_Text (E));
+      Desc : Pango_Font_Description := From_String (Get_Text (E));
+
+      use type Gdk_Font;
    begin
       --  Also set the context, so that every time the pango layout is
       --  recreated by the entry (key press,...), we still use the correct
@@ -1172,7 +1173,12 @@ package body Default_Preferences is
       --  the following code is commented out.
       --  Set_Font_Description (Get_Pango_Context (E), Desc);
 
-      Set_Font_Description (Get_Layout (E), Desc);
+      if From_Description (Desc) = null then
+         Free (Desc);
+         Desc := From_String (Fallback_Font);
+      end if;
+
+      Modify_Font (E, Desc);
    end Reset_Font;
 
    ------------------------
@@ -1492,9 +1498,12 @@ package body Default_Preferences is
       Desc         : Pango_Font_Description;
       Button_Label : String) return Gtk_Box
    is
-      Box : Gtk_Box;
-      Ent : Gtk_Entry;
+      Box    : Gtk_Box;
+      Ent    : Gtk_Entry;
       Button : Gtk_Button;
+
+      use type Gdk_Font;
+
    begin
       Gtk_New_Hbox (Box, Homogeneous => False);
       Gtk_New (Ent);
@@ -1516,8 +1525,10 @@ package body Default_Preferences is
          Update_Font_Entry'Access, Ent,
          User_Data => (Preferences_Manager (Manager), Pref));
 
-      Set_Style (Ent, Copy (Get_Style (Ent)));
-      Set_Font_Description (Get_Style (Ent), Desc);
+      if From_Description (Desc) /= null then
+         Modify_Font (Ent, Desc);
+      end if;
+
       Set_Text (Ent, To_String (Desc));
       Reset_Font (Ent);
       return Box;
