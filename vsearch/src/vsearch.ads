@@ -146,22 +146,26 @@ private
       Regexp_Check        : Gtk_Check_Button;
       Context_Specific    : Gtk_Box;
 
-      Kernel                 : GPS.Kernel.Kernel_Handle;
-      Search_Next_Button     : Gtk.Button.Gtk_Button;
-      Replace_Button         : Gtk.Button.Gtk_Button;
-      Replace_Search_Button  : Gtk.Button.Gtk_Button;
-      Replace_All_Button     : Gtk.Button.Gtk_Button;
-      Search_Previous_Button : Gtk.Button.Gtk_Button;
-      Search_All_Button      : Gtk.Button.Gtk_Button;
-      Replace_Only_Button    : Gtk.Button.Gtk_Button;
-      Continue               : Boolean := True;
-      Extra_Information      : Gtk.Widget.Gtk_Widget;
-      Options_Box            : Collapsing_Pane.Collapsing_Pane;
-      Search_Idle_Handler    : Gtk.Main.Idle_Handler_Id := 0;
-      Last_Search_Context    : Find_Utils.Search_Context_Access;
-      Find_Next              : Boolean := False;
-      Found                  : Boolean := False;
-      --  Whether the search results in at least one match.
+      Kernel                  : GPS.Kernel.Kernel_Handle;
+      Search_Next_Button      : Gtk.Button.Gtk_Button;
+      Replace_Button          : Gtk.Button.Gtk_Button;
+      Replace_Search_Button   : Gtk.Button.Gtk_Button;
+      Replace_All_Button      : Gtk.Button.Gtk_Button;
+      Search_Previous_Button  : Gtk.Button.Gtk_Button;
+      Search_All_Button       : Gtk.Button.Gtk_Button;
+      Replace_Only_Button     : Gtk.Button.Gtk_Button;
+      Extra_Information       : Gtk.Widget.Gtk_Widget;
+      Options_Box             : Collapsing_Pane.Collapsing_Pane;
+      Search_Idle_Handler     : Gtk.Main.Idle_Handler_Id := 0;
+      Last_Search_Context     : Find_Utils.Search_Context_Access;
+      --  This is the context used for single Find/Next and Replace operations.
+      Last_Search_All_Context : Find_Utils.Search_Context_Access;
+      --  This is the context used for Find/Replace All operations. It is
+      --  then copied to the idle data of the background command. The purpose
+      --  here it to be able to launch a new Find/Replace All operation while
+      --  there is another one already running: they need to have their own
+      --  context.
+      Find_Next               : Boolean := False;
    end record;
 
    type Search_Regexp is record
