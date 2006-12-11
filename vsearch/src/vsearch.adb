@@ -569,26 +569,24 @@ package body Vsearch is
       Found    : Boolean;
       Continue : Boolean;
    begin
-      if Data.Vsearch.Continue then
-         Search
-           (Data.Context,
-            Data.Vsearch.Kernel,
-            Data.Search_Backward,
-            Give_Focus => Get_Active (Data.Vsearch.Select_Editor_Check),
-            Found      => Found,
-            Continue   => Continue);
+      Search
+        (Data.Context,
+         Data.Vsearch.Kernel,
+         Data.Search_Backward,
+         Give_Focus => Get_Active (Data.Vsearch.Select_Editor_Check),
+         Found      => Found,
+         Continue   => Continue);
 
-         Data.Found := Data.Found or else Found;
+      Data.Found := Data.Found or else Found;
 
-         if Continue then
-            Set_Progress
-              (Command,
-               (Running,
-                Get_Current_Progress (Data.Context),
-                Get_Total_Progress (Data.Context)));
-            Result := Execute_Again;
-            return;
-         end if;
+      if Continue then
+         Set_Progress
+           (Command,
+            (Running,
+             Get_Current_Progress (Data.Context),
+             Get_Total_Progress (Data.Context)));
+         Result := Execute_Again;
+         return;
       end if;
 
       Set_Sensitive (Data.Vsearch.Search_Next_Button, True);
@@ -627,14 +625,14 @@ package body Vsearch is
       Command : Command_Access;
       Result  : out Command_Return_Type) is
    begin
-      if Data.Vsearch.Continue
-        and then Replace
-          (Data.Context,
-           Data.Vsearch.Kernel,
-           Get_Text (Data.Vsearch.Replace_Entry),
---             ??? The user could change this interactively in the meantime
-           Data.Search_Backward,
-           Give_Focus => Get_Active (Data.Vsearch.Select_Editor_Check))
+      if Replace
+        (Data.Context,
+         Data.Vsearch.Kernel,
+         Get_Text (Data.Vsearch.Replace_Entry),
+         --  ??? The user could have changed this interactively in the
+         --  meantime. This value must be stored in the context.
+         Data.Search_Backward,
+         Give_Focus => Get_Active (Data.Vsearch.Select_Editor_Check))
       then
          Set_Progress
            (Command,
@@ -778,8 +776,6 @@ package body Vsearch is
       if (All_Occurrences and then Vsearch.Last_Search_All_Context /= null)
         or else Vsearch.Last_Search_Context /= null
       then
-         Vsearch.Continue := True;
-
          if All_Occurrences then
             --  Set up the search. Everything is automatically
             --  put back when the idle loop terminates.
@@ -891,8 +887,6 @@ package body Vsearch is
       end if;
 
       if Vsearch.Last_Search_Context /= null then
-         Vsearch.Continue := True;
-
          if All_Occurences then
             --  Is this supported ???
             return;
