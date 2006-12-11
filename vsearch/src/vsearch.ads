@@ -178,8 +178,6 @@ private
       --  there is another one already running: they need to have their own
       --  context.
       Find_Next               : Boolean := False;
-      Found                   : Boolean := False;
-      --  Whether the search results in at least one match.
    end record;
 
    type Search_Regexp is record
