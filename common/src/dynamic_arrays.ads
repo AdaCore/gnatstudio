@@ -21,6 +21,8 @@
 --  This package is very similar to what is provided by GNAT.Dynamic_Table,
 --  except it provides better control over reallocation of the array (we
 --  do not necessary increment it proportionaly to its current size).
+--
+--  NOTE: Controlled types are NOT supported.
 
 generic
    type Data is private;
