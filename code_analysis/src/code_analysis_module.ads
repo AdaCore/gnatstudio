@@ -128,7 +128,7 @@ private
       Date          : Time;
    end record;
 
-   procedure Show_Tree_View
+   procedure Show_Analysis_Report
      (Instance : Class_Instance;
       Property : in out Code_Analysis_Property_Record;
       Context  : Selection_Context := No_Context);
@@ -195,18 +195,18 @@ private
       Command : String);
    --  Create a new instance of Code_Analysis data structure
 
-   procedure Shell_Add_Gcov_Info
+   procedure Add_Gcov_Info_From_Shell
      (Data    : in out Callback_Data'Class;
       Command : String);
    --  Add node and coverage info provided by a gcov file parsing
 
-   procedure Shell_List_Lines_Not_Covered
+   procedure List_Lines_Not_Covered_From_Shell
      (Data    : in out Callback_Data'Class;
       Command : String);
    --  Add in the location view every not covered lines of any projects loaded
    --  in the Code_Analysis structure of the current Instance.
 
-   procedure Shell_Show_Tree_View
+   procedure Show_Analysis_Report_From_Shell
      (Data    : in out Callback_Data'Class;
       Command : String);
    --  Creata an display a Code_Analysis tree view within a MDI Child
@@ -318,7 +318,7 @@ private
      (Object : access Gtk_Widget_Record'Class);
    --  Fill the Gtk_Tree_Store with only on level of subprograms
 
-   procedure Show_Tree_View_From_Context
+   procedure Show_Analysis_Report_From_Context
      (Widget : access Glib.Object.GObject_Record'Class;
       C      : Context_And_Instance);
    --  Contextual menu callback that call Show_Report
