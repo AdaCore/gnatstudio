@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 4.1.0
 
+- FC11-011 Crash when entering an invalid font
+  Problem:    After entering an empty or invalid text in the font selection
+              entries in the Preferences dialog, GPS might crash.
+  Workaround: Use the font chooser dialog to select the fonts
+
 - FB28-020 Regexp searching for ^ and $ blocks on empty lines
   Problem:    If you are searching for the regular expression "^" or "$,
               the search will be blocked on empty lines (ie GPS will keep
