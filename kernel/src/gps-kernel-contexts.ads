@@ -51,6 +51,7 @@ package GPS.Kernel.Contexts is
 
    function Has_Directory_Information
      (Context : Selection_Context) return Boolean;
+   --  Return True if Context has directory information
    function Directory_Information
      (Context : Selection_Context) return String;
    --  Return the information about the selected project. This is only relevant
@@ -59,6 +60,7 @@ package GPS.Kernel.Contexts is
 
    function Has_File_Information
      (Context : Selection_Context) return Boolean;
+   --  Return True if Context has file information
    function File_Information
      (Context : Selection_Context) return VFS.Virtual_File;
    --  Return the information about the selected file. This is only relevant
@@ -67,24 +69,26 @@ package GPS.Kernel.Contexts is
 
    function Has_Line_Information
      (Context : Selection_Context) return Boolean;
+   --  Return True if Context has line information
    function Line_Information
      (Context : Selection_Context) return Integer;
-   --  Check whether there is some line information, and return it. This is the
-   --  location of the cursor in the file, when in an editor, or the location
-   --  in the file from the messages window or the explorer for instance.
+   --  Return the location of the cursor in the file, when in an editor, or
+   --  the location in the file from the messages window or the explorer for
+   --  instance.
    --  This information will not be set if multiple lines are selected.
 
    function Has_Column_Information
      (Context : Selection_Context) return Boolean;
+   --  Return True if Context has column information
    function Column_Information
      (Context : Selection_Context) return Basic_Types.Visible_Column_Type;
-   --  Check whether there is some column information, and return it. Same
-   --  comment as for Line_Information.
+   --  Return the column information. Same comment as for Line_Information.
    --  Column is the index of the character in the string representing the
    --  line. This means that tabs only count as one, and are not expanded.
 
    function Has_Project_Information
      (Context : Selection_Context) return Boolean;
+   --  Return True if Context has project information
    function Project_Information
      (Context : Selection_Context) return Projects.Project_Type;
    --  Return the id of the project to which the file belongs. Note that this
@@ -94,6 +98,8 @@ package GPS.Kernel.Contexts is
 
    function Has_Importing_Project_Information
      (Context : Selection_Context) return Boolean;
+   --  Return True if Context has information about the project that imports
+   --  the one returned by Project_Information.
    function Importing_Project_Information
      (Context : Selection_Context) return Projects.Project_Type;
    --  Return the project that imports the one returned by Project_Information.
@@ -102,6 +108,7 @@ package GPS.Kernel.Contexts is
 
    function Has_Revision_Information
      (Context : Selection_Context) return Boolean;
+   --  Return True if Context has revision information
    function Revision_Information
      (Context : Selection_Context) return String;
    --  Return the revision information associated with the file. The revision
@@ -109,9 +116,12 @@ package GPS.Kernel.Contexts is
 
    function Has_Tag_Information
      (Context : Selection_Context) return Boolean;
+   --  Return True if Context has information about the tag/branch name
+   --  associated with the file returned by File_Information
    function Tag_Information
      (Context : Selection_Context) return String;
-   --  Return the tag/branch name associated with the file
+   --  Return the tag/branch name associated with the file returned by
+   --  File_Information
 
    -----------
    -- Areas --
@@ -160,15 +170,17 @@ package GPS.Kernel.Contexts is
 
    function Has_Category_Information
      (Context : Selection_Context) return Boolean;
+   --  Return True if Context has category information
    function Category_Information
      (Context : Selection_Context) return String;
-   --  Check whether there is some category information, and return it
+   --  Return the category information associated with Context
 
    function Has_Message_Information
      (Context : Selection_Context) return Boolean;
+   --  Return True if Context has message information
    function Message_Information
      (Context : Selection_Context) return String;
-   --  Check whether there is some message information, and return it
+   --  Return the message information associated with Context.
 
    ---------------------
    -- Entity Contexts --
@@ -195,16 +207,17 @@ package GPS.Kernel.Contexts is
 
    function Has_Entity_Name_Information
      (Context : Selection_Context) return Boolean;
+   --  Return True if Context has entity name information
    function Entity_Name_Information
      (Context : Selection_Context) return String;
-   --  Check whether there is some entity information, and return it. This is
-   --  a UTF8-encoded string.
+   --  Return the entity name information. This is a UTF8-encoded string.
 
    function Has_Entity_Column_Information
      (Context : Selection_Context) return Boolean;
+   --  Return True if Context has entity column information
    function Entity_Column_Information
      (Context : Selection_Context) return Basic_Types.Visible_Column_Type;
-   --  Check whether there is some column information, and return it.
+   --  Return entity column information associated with Context.
    --  The column returned is the column on which the entity starts, not the
    --  column on which the cursor currently is.
 
@@ -232,9 +245,11 @@ package GPS.Kernel.Contexts is
 
    procedure Set_Activity_Information
      (Context : in out Selection_Context; Id : String);
+   --  Fill Context with an activity name
 
    function Has_Activity_Information
      (Context : Selection_Context) return Boolean;
+   --  Return True if Context has activity information
    function Activity_Information
      (Context : Selection_Context) return String;
    --  Returns the name of the activity
