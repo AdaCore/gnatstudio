@@ -239,13 +239,11 @@ package body Code_Analysis_Module is
       C      : Context_And_Instance)
    is
       pragma Unreferenced (Widget);
-      Instance : Class_Instance;
       Property : Code_Analysis_Property_Record;
    begin
-      Instance := C.Instance;
       Property := Code_Analysis_Property_Record
-        (Get_Property (Instance, Code_Analysis_Cst_Str));
-      Show_Tree_View (Instance, Property, C.Context);
+        (Get_Property (C.Instance, Code_Analysis_Cst_Str));
+      Show_Tree_View (C.Instance, Property, C.Context);
    end Show_Tree_View_From_Context;
 
    --------------------
@@ -264,6 +262,8 @@ package body Code_Analysis_Module is
       Bar_Render   : Gtk_Cell_Renderer_Progress;
       Iter         : Gtk_Tree_Iter;
       Path         : Gtk_Tree_Path;
+      C            : Context_And_Instance :=
+                       (Context => Context, Instance => Instance);
       Num_Col      : Gint;
       pragma Unreferenced (Project_Node);
    begin
@@ -271,7 +271,6 @@ package body Code_Analysis_Module is
       if Property.View = null then
          Property.View := new Code_Analysis_View_Record;
          Initialize_Hbox (Property.View);
-         Property.View.Instance := Instance;
          Gtk_New (Property.View.Model, GType_Array'
              (Pix_Col     => Gdk.Pixbuf.Get_Type,
               Name_Col    => GType_String,
@@ -349,7 +348,6 @@ package body Code_Analysis_Module is
             Object          => Property.View,
             ID              => Module_ID (Code_Analysis_Module_ID),
             Context_Func    => Context_Func'Access);
-         Widget_Callback.Connect (Property.View, "destroy", On_Destroy'Access);
          Gtkada.Handlers.Return_Callback.Object_Connect
            (Property.View.Tree,
             "button_press_event",
@@ -357,6 +355,9 @@ package body Code_Analysis_Module is
               (On_Double_Click'Access),
             Property.View,
             After => False);
+         Context_And_Instance_CB.Connect
+           (Property.View, "destroy", Context_And_Instance_CB.To_Marshaller
+              (On_Destroy'Access), C);
          Put (Get_MDI (Code_Analysis_Module_ID.Kernel), Property.Child);
          GPS.Kernel.Scripts.Set_Property
            (Instance, Code_Analysis_Cst_Str,
@@ -440,14 +441,15 @@ package body Code_Analysis_Module is
    -- On_Destroy --
    ----------------
 
-   procedure On_Destroy (View : access Gtk_Widget_Record'Class) is
-      V        : constant Code_Analysis_View := Code_Analysis_View (View);
+   procedure On_Destroy (Widget : access Glib.Object.GObject_Record'Class;
+                         C      : Context_And_Instance) is
       Property : Code_Analysis_Property_Record;
+      pragma Unreferenced (Widget);
    begin
       Property := Code_Analysis_Property_Record
-        (Get_Property (V.Instance, Code_Analysis_Cst_Str));
+        (Get_Property (C.Instance, Code_Analysis_Cst_Str));
       Property.View := null;
-      GPS.Kernel.Scripts.Set_Property (V.Instance, Code_Analysis_Cst_Str,
+      GPS.Kernel.Scripts.Set_Property (C.Instance, Code_Analysis_Cst_Str,
                                        Instance_Property_Record (Property));
    exception
       when E : others =>
@@ -511,25 +513,26 @@ package body Code_Analysis_Module is
    is
       View       : constant Code_Analysis_View := Code_Analysis_View (Object);
       Iter       : Gtk_Tree_Iter;
-      Model      : Gtk_Tree_Model;
       Path       : Gtk_Tree_Path;
       File_Node  : Code_Analysis.File_Access;
       Subp_Node  : Subprogram_Access;
    begin
-      Get_Selected (Get_Selection (View.Tree), Model, Iter);
-      Path := Get_Path (Model, Iter);
+      Get_Selected
+        (Get_Selection (View.Tree), Gtk_Tree_Model (View.Model), Iter);
+      Path := Get_Path (View.Model, Iter);
 
       if Get_Depth (Path) = 2 then
          File_Node := Code_Analysis.File_Access
-           (GType_File.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
+           (GType_File.Get (Gtk_Tree_Store (View.Model), Iter, Node_Col));
          Open_File_Editor (Code_Analysis_Module_ID.Kernel, File_Node.Name);
 
       elsif Get_Depth (Path) = 3 then
          File_Node := Code_Analysis.File_Access
-           (GType_File.Get
-              (Gtk_Tree_Store (Model), Parent (Model, Iter), Node_Col));
+           (GType_File.Get (Gtk_Tree_Store (View.Model),
+            Parent (View.Model, Iter), Node_Col));
          Subp_Node := Subprogram_Access
-           (GType_Subprogram.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
+           (GType_Subprogram.Get (Gtk_Tree_Store (View.Model),
+            Iter, Node_Col));
          Open_File_Editor
            (Code_Analysis_Module_ID.Kernel,
             File_Node.Name,
@@ -623,21 +626,21 @@ package body Code_Analysis_Module is
    is
       View      : constant Code_Analysis_View := Code_Analysis_View (Object);
       Iter      : Gtk_Tree_Iter;
-      Model     : Gtk_Tree_Model;
       Path      : Gtk_Tree_Path;
       File_Node : Code_Analysis.File_Access;
    begin
-      Get_Selected (Get_Selection (View.Tree), Model, Iter);
-      Path := Get_Path (Model, Iter);
+      Get_Selected
+        (Get_Selection (View.Tree), Gtk_Tree_Model (View.Model), Iter);
+      Path := Get_Path (View.Model, Iter);
 
       if Get_Depth (Path) = 2 then
          File_Node := Code_Analysis.File_Access
-           (GType_File.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
+           (GType_File.Get (Gtk_Tree_Store (View.Model), Iter, Node_Col));
          Open_File_Editor (Code_Analysis_Module_ID.Kernel, File_Node.Name);
       elsif Get_Depth (Path) = 3 then
          File_Node := Code_Analysis.File_Access
-           (GType_File.Get
-              (Gtk_Tree_Store (Model), Parent (Model, Iter), Node_Col));
+           (GType_File.Get (Gtk_Tree_Store (View.Model),
+            Parent (View.Model, Iter), Node_Col));
       end if;
 
       Remove_Coverage_Annotations (File_Node);
@@ -706,12 +709,12 @@ package body Code_Analysis_Module is
    is
       View  : constant Code_Analysis_View := Code_Analysis_View (Object);
       Iter  : Gtk_Tree_Iter;
-      Model : Gtk_Tree_Model;
       Project_Node : Project_Access;
    begin
-      Get_Selected (Get_Selection (View.Tree), Model, Iter);
+      Get_Selected
+        (Get_Selection (View.Tree), Gtk_Tree_Model (View.Model), Iter);
       Project_Node := Project_Access
-        (GType_Project.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
+        (GType_Project.Get (Gtk_Tree_Store (View.Model), Iter, Node_Col));
       List_Lines_Not_Covered_In_Project (Project_Node);
    exception
       when E : others =>
@@ -753,15 +756,14 @@ package body Code_Analysis_Module is
    is
       View      : constant Code_Analysis_View := Code_Analysis_View (Object);
       Iter      : Gtk_Tree_Iter;
-      Model     : Gtk_Tree_Model;
       File_Node : Code_Analysis.File_Access;
    begin
-      Get_Selected (Get_Selection (View.Tree), Model, Iter);
+      Get_Selected
+        (Get_Selection (View.Tree), Gtk_Tree_Model (View.Model), Iter);
       File_Node := Code_Analysis.File_Access
-        (GType_File.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
+        (GType_File.Get (Gtk_Tree_Store (View.Model), Iter, Node_Col));
       Open_File_Editor (Code_Analysis_Module_ID.Kernel, File_Node.Name);
       List_Lines_Not_Covered_In_File (File_Node);
-
    exception
       when E : others =>
          Trace (Exception_Handle,
