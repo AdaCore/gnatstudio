@@ -22,6 +22,7 @@ with Ada.Exceptions;             use Ada.Exceptions;
 with Ada.Strings.Less_Case_Insensitive;
 with Ada.Strings.Equal_Case_Insensitive;
 with Ada.Calendar;               use Ada.Calendar;
+with Ada.Calendar.Formatting;    use Ada.Calendar.Formatting;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
 with Glib;                       use Glib;
@@ -47,7 +48,6 @@ with GPS.Location_View;          use GPS.Location_View;
 with VFS;                        use VFS;
 with Projects;                   use Projects;
 with Projects.Registry;          use Projects.Registry;
-with String_Utils;               use String_Utils;
 with Code_Coverage;              use Code_Coverage;
 with Code_Analysis_Tree_Model;   use Code_Analysis_Tree_Model;
 
@@ -71,23 +71,15 @@ package body Code_Analysis_Module is
       pragma Unreferenced (Command);
       Property : constant Code_Analysis_Property
         := new Code_Analysis_Property_Record;
-      Instance : Class_Instance;
-      Date     : Time;
-      Year     : Year_Number;
-      Month    : Month_Number;
-      Day      : Day_Number;
-      Seconds  : Day_Duration;
+      Instance  : Class_Instance;
+      Date      : Time;
    begin
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
       Date := Clock;
-      Split (Date, Year, Month, Day, Seconds);
       Property.Instance_Name :=
         new String'("Analysis" & Integer'Image
                     (Integer (Code_Analysis_Module_ID.Instances.Length + 1))
-                    & " (" & Image (Year)
-                    & "/" & Image (Month)
-                    & "/" & Image (Day)
-                    & Duration'Image (Seconds) & ")");
+                    & " (" & Image (Date, False) & ")");
       Property.Projects := new Project_Maps.Map;
       GPS.Kernel.Scripts.Set_Property
         (Instance, Code_Analysis_Cst_Str,
@@ -229,26 +221,57 @@ package body Code_Analysis_Module is
       Command : String)
    is
       pragma Unreferenced (Command);
-      Property     : Code_Analysis_Property_Record;
-      Instance     : Class_Instance;
+      Instance : Class_Instance;
+      Property : Code_Analysis_Property_Record;
+   begin
+      Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
+      Property := Code_Analysis_Property_Record
+        (Get_Property (Instance, Code_Analysis_Cst_Str));
+      Show_Tree_View (Instance, Property);
+   end Shell_Show_Tree_View;
+
+   ---------------------------------
+   -- Show_Tree_View_From_Context --
+   ---------------------------------
+
+   procedure Show_Tree_View_From_Context
+     (Widget : access Glib.Object.GObject_Record'Class;
+      C      : Context_And_Instance)
+   is
+      pragma Unreferenced (Widget);
+      Instance : Class_Instance;
+      Property : Code_Analysis_Property_Record;
+   begin
+      Instance := C.Instance;
+      Property := Code_Analysis_Property_Record
+        (Get_Property (Instance, Code_Analysis_Cst_Str));
+      Show_Tree_View (Instance, Property, C.Context);
+   end Show_Tree_View_From_Context;
+
+   --------------------
+   -- Show_Tree_View --
+   --------------------
+
+   procedure Show_Tree_View
+     (Instance : Class_Instance;
+      Property : in out Code_Analysis_Property_Record;
+      Context  : Selection_Context := No_Context)
+   is
       Project_Node : Project_Access;
       Scrolled     : Gtk_Scrolled_Window;
       Text_Render  : Gtk_Cell_Renderer_Text;
       Pixbuf_Rend  : Gtk_Cell_Renderer_Pixbuf;
       Bar_Render   : Gtk_Cell_Renderer_Progress;
+      Iter         : Gtk_Tree_Iter;
+      Path         : Gtk_Tree_Path;
       Num_Col      : Gint;
-      pragma Unreferenced (Num_Col, Project_Node);
+      pragma Unreferenced (Project_Node);
    begin
-      Instance      := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
-      Property      := Code_Analysis_Property_Record
-        (Get_Property (Instance, Code_Analysis_Cst_Str));
 
       if Property.View = null then
          Property.View := new Code_Analysis_View_Record;
          Initialize_Hbox (Property.View);
-
          Property.View.Instance := Instance;
-
          Gtk_New (Property.View.Model, GType_Array'
              (Pix_Col     => Gdk.Pixbuf.Get_Type,
               Name_Col    => GType_String,
@@ -295,9 +318,8 @@ package body Code_Analysis_Module is
          Num_Col :=
            Append_Column (Property.View.Tree, Property.View.Cov_Percent);
          Gtk_New (Bar_Render);
-         Glib.Properties.Set_Property (Bar_Render,
-                       Gtk.Cell_Renderer.Width_Property,
-                       Gint (100));
+         Glib.Properties.Set_Property
+           (Bar_Render, Gtk.Cell_Renderer.Width_Property, Gint (100));
          Pack_Start (Property.View.Cov_Percent, Bar_Render, False);
          Add_Attribute
            (Property.View.Cov_Percent, Bar_Render, "text", Cov_Bar_Txt);
@@ -310,22 +332,23 @@ package body Code_Analysis_Module is
            (Scrolled, Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
          Add (Scrolled, Property.View.Tree);
          Add (Property.View, Scrolled);
-         Property.View.Iter := Get_Iter_First
-           (Gtk_Tree_Model (Property.View.Model));
 
-         GPS.Kernel.MDI.Gtk_New (Property.Child,
-                                 Property.View,
-                                 Group  => Group_VCS_Explorer,
-                                 Module => Code_Analysis_Module_ID);
-         Set_Title (Property.Child, -(Property.Instance_Name.all & " Report"));
+         ---------------
+         -- MDI child --
+         ---------------
 
+         GPS.Kernel.MDI.Gtk_New
+           (Property.Child, Property.View,
+            Group  => Group_VCS_Explorer,
+            Module => Code_Analysis_Module_ID);
+         Set_Title
+           (Property.Child, -("Report of " & Property.Instance_Name.all));
          Register_Contextual_Menu
            (Code_Analysis_Module_ID.Kernel,
             Event_On_Widget => Property.View.Tree,
             Object          => Property.View,
             ID              => Module_ID (Code_Analysis_Module_ID),
             Context_Func    => Context_Func'Access);
-
          Widget_Callback.Connect (Property.View, "destroy", On_Destroy'Access);
          Gtkada.Handlers.Return_Callback.Object_Connect
            (Property.View.Tree,
@@ -334,17 +357,59 @@ package body Code_Analysis_Module is
               (On_Double_Click'Access),
             Property.View,
             After => False);
-
          Put (Get_MDI (Code_Analysis_Module_ID.Kernel), Property.Child);
          GPS.Kernel.Scripts.Set_Property
            (Instance, Code_Analysis_Cst_Str,
             Instance_Property_Record (Property));
       end if;
 
-      Fill_Iter
-        (Property.View.Model, Property.View.Iter, Property.Projects);
+      Clear (Property.View.Model);
+      Iter := Get_Iter_First (Property.View.Model);
+      Fill_Iter (Property.View.Model, Iter, Property.Projects);
+
+      -------------------------------------
+      -- Selection of the context caller --
+      -------------------------------------
+
+      if Context /= No_Context then
+         --  So we have some project information
+         Iter := Get_Iter_First (Property.View.Model);
+         Num_Col := 1;
+
+         loop
+            exit when Get_String (Property.View.Model, Iter, Num_Col) =
+              Project_Name (Project_Information (Context));
+            Next (Property.View.Model, Iter);
+         end loop;
+         --  Find in the tree the context's project
+
+         if Has_File_Information (Context) then
+            --  So we also have file information
+            Iter := Children (Property.View.Model, Iter);
+
+            loop
+               exit when Get_String (Property.View.Model, Iter, Num_Col) =
+                 Base_Name (File_Information (Context));
+               Next (Property.View.Model, Iter);
+            end loop;
+         end if;
+         --  Find in the tree the context's file
+
+         --  ??? Here miss subprogram handling (coming soon)
+
+         Path := Get_Path (Property.View.Model, Iter);
+         Collapse_All (Property.View.Tree);
+         Expand_To_Path (Property.View.Tree, Path);
+         Select_Path (Get_Selection (Property.View.Tree), Path);
+         Path_Free (Path);
+      end if;
+
       Raise_Child (Property.Child);
-   end Shell_Show_Tree_View;
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end Show_Tree_View;
 
    -------------
    -- Destroy --
@@ -968,11 +1033,13 @@ package body Code_Analysis_Module is
                Gtk_New (Item, -"List lines not covered");
                Append (Submenu, Item);
                Context_And_Instance_CB.Connect
-                 (Item,
-                  "activate",
-                  Context_And_Instance_CB.To_Marshaller
-                    (List_Lines_Not_Covered_In_File_From_Context'Access),
-                  C);
+                 (Item, "activate", Context_And_Instance_CB.To_Marshaller
+                    (List_Lines_Not_Covered_In_File_From_Context'Access), C);
+               Gtk_New (Item, -"Show Analysis Report");
+               Append (Submenu, Item);
+               Context_And_Instance_CB.Connect
+                 (Item, "activate", Context_And_Instance_CB.To_Marshaller
+                    (Show_Tree_View_From_Context'Access), C);
             else
                Gtk_New (Item, -"Load coverage information");
                Append (Submenu, Item);
@@ -987,11 +1054,13 @@ package body Code_Analysis_Module is
             Gtk_New (Item, -"List lines not covered");
             Append (Submenu, Item);
             Context_And_Instance_CB.Connect
-              (Item,
-               "activate",
-               Context_And_Instance_CB.To_Marshaller
-                 (List_Lines_Not_Covered_In_Project_From_Context'Access),
-               C);
+              (Item, "activate", Context_And_Instance_CB.To_Marshaller
+                 (List_Lines_Not_Covered_In_Project_From_Context'Access), C);
+            Gtk_New (Item, -"Show Analysis Report");
+            Append (Submenu, Item);
+            Context_And_Instance_CB.Connect
+              (Item, "activate", Context_And_Instance_CB.To_Marshaller
+                 (Show_Tree_View_From_Context'Access), C);
          else
             Gtk_New (Item, -"Load coverage information");
             Append (Submenu, Item);
