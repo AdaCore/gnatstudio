@@ -104,7 +104,6 @@ private
    type Code_Analysis_View_Record is new Gtk_Hbox_Record with record
       Tree        : Gtk_Tree_View;
       Model       : Gtk_Tree_Store;
-      Iter        : Gtk_Tree_Iter;
       Node_Column : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       Cov_Column  : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       Cov_Percent : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
@@ -128,11 +127,16 @@ private
       Instance_Name : GNAT.Strings.String_Access;
    end record;
 
+   procedure Show_Tree_View
+     (Instance : Class_Instance;
+      Property : in out Code_Analysis_Property_Record;
+      Context  : Selection_Context := No_Context);
+   --  Actually builds and shows the tree view report
+
    type Code_Analysis_Property is access all Code_Analysis_Property_Record;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Code_Analysis_Property_Record, Code_Analysis_Property);
-   --  ??? Where to free this
 
    ---------------------
    -- Contextual menu --
@@ -301,6 +305,11 @@ private
      (File_Node : Code_Analysis.File_Access);
    --  Add to the location view the unexecuted lines of the given File of a
    --  Coverage Report.
+
+   procedure Show_Tree_View_From_Context
+     (Widget : access Glib.Object.GObject_Record'Class;
+      C      : Context_And_Instance);
+   --  Contextual menu callback that call Show_Report
 
    procedure Load_Coverage_Information
      (Widget : access Glib.Object.GObject_Record'Class;
