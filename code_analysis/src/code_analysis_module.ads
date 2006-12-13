@@ -26,7 +26,7 @@
 
 with Ada.Unchecked_Deallocation;
 with Ada.Containers.Indefinite_Ordered_Sets; use Ada.Containers;
-
+with Ada.Calendar;         use Ada.Calendar;
 with GNAT.Strings;
 
 with Glib;
@@ -125,6 +125,7 @@ private
       View          : Code_Analysis_View;
       Child         : GPS_MDI_Child;
       Instance_Name : GNAT.Strings.String_Access;
+      Date          : Time;
    end record;
 
    procedure Show_Tree_View
