@@ -107,6 +107,7 @@ private
       Node_Column : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       Cov_Column  : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       Cov_Percent : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
+      Projects    : Code_Analysis_Tree;
    end record;
 
    type Code_Analysis_View is access all Code_Analysis_View_Record;
@@ -305,6 +306,16 @@ private
      (File_Node : Code_Analysis.File_Access);
    --  Add to the location view the unexecuted lines of the given File of a
    --  Coverage Report.
+
+   procedure Show_Full_Tree (Object : access Gtk_Widget_Record'Class);
+   --  Fill again the Gtk_Tree_Store with the full tree
+
+   procedure Show_Flat_List_Of_Files (Object : access Gtk_Widget_Record'Class);
+   --  Fill the Gtk_Tree_Store with only on level of file
+
+   procedure Show_Flat_List_Of_Subprograms
+     (Object : access Gtk_Widget_Record'Class);
+   --  Fill the Gtk_Tree_Store with only on level of subprograms
 
    procedure Show_Tree_View_From_Context
      (Widget : access Glib.Object.GObject_Record'Class;
