@@ -21,8 +21,6 @@
 with Ada.Exceptions;             use Ada.Exceptions;
 with Ada.Strings.Less_Case_Insensitive;
 with Ada.Strings.Equal_Case_Insensitive;
-with Ada.Calendar;               use Ada.Calendar;
-with Ada.Calendar.Formatting;    use Ada.Calendar.Formatting;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
 with Glib;                       use Glib;
@@ -76,10 +74,10 @@ package body Code_Analysis_Module is
    begin
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
       Date := Clock;
+      Property.Date := Date;
       Property.Instance_Name :=
         new String'("Analysis" & Integer'Image
-                    (Integer (Code_Analysis_Module_ID.Instances.Length + 1))
-                    & " (" & Image (Date, False) & ")");
+                    (Integer (Code_Analysis_Module_ID.Instances.Length + 1)));
       Property.Projects := new Project_Maps.Map;
       GPS.Kernel.Scripts.Set_Property
         (Instance, Code_Analysis_Cst_Str,
