@@ -239,10 +239,10 @@ package body Code_Analysis_Module is
       C      : Context_And_Instance)
    is
       pragma Unreferenced (Widget);
-      Property : Code_Analysis_Property_Record;
+      Property : Code_Analysis_Property_Record
+        := Code_Analysis_Property_Record
+          (Get_Property (C.Instance, Code_Analysis_Cst_Str));
    begin
-      Property := Code_Analysis_Property_Record
-        (Get_Property (C.Instance, Code_Analysis_Cst_Str));
       Show_Tree_View (C.Instance, Property, C.Context);
    end Show_Tree_View_From_Context;
 
@@ -271,6 +271,7 @@ package body Code_Analysis_Module is
       if Property.View = null then
          Property.View := new Code_Analysis_View_Record;
          Initialize_Hbox (Property.View);
+         Property.View.Projects := Property.Projects;
          Gtk_New (Property.View.Model, GType_Array'
              (Pix_Col     => Gdk.Pixbuf.Get_Type,
               Name_Col    => GType_String,
@@ -443,11 +444,10 @@ package body Code_Analysis_Module is
 
    procedure On_Destroy (Widget : access Glib.Object.GObject_Record'Class;
                          C      : Context_And_Instance) is
-      Property : Code_Analysis_Property_Record;
+      Property : Code_Analysis_Property_Record := Code_Analysis_Property_Record
+        (Get_Property (C.Instance, Code_Analysis_Cst_Str));
       pragma Unreferenced (Widget);
    begin
-      Property := Code_Analysis_Property_Record
-        (Get_Property (C.Instance, Code_Analysis_Cst_Str));
       Property.View := null;
       GPS.Kernel.Scripts.Set_Property (C.Instance, Code_Analysis_Cst_Str,
                                        Instance_Property_Record (Property));
@@ -554,15 +554,13 @@ package body Code_Analysis_Module is
      (Widget : access Glib.Object.GObject_Record'Class;
       C      : Context_And_Instance)
    is
-      Property     : Code_Analysis_Property_Record;
-      Instance     : Class_Instance;
+      Property     : Code_Analysis_Property_Record
+        := Code_Analysis_Property_Record
+          (Get_Property (C.Instance, Code_Analysis_Cst_Str));
       Project_Node : Project_Access;
       File_Node    : Code_Analysis.File_Access;
       pragma Unreferenced (Widget);
    begin
-      Instance := C.Instance;
-      Property := Code_Analysis_Property_Record
-        (Get_Property (Instance, Code_Analysis_Cst_Str));
       Project_Node := Get_Or_Create
         (Property.Projects, Project_Information (C.Context));
       File_Node := Get_Or_Create
@@ -658,15 +656,13 @@ package body Code_Analysis_Module is
      (Widget : access Glib.Object.GObject_Record'Class;
       C      : Context_And_Instance)
    is
-      Property     : Code_Analysis_Property_Record;
-      Instance     : Class_Instance;
+      Property     : Code_Analysis_Property_Record
+        := Code_Analysis_Property_Record
+          (Get_Property (C.Instance, Code_Analysis_Cst_Str));
       Project_Node : Project_Access;
       File_Node    : Code_Analysis.File_Access;
       pragma Unreferenced (Widget);
    begin
-      Instance := C.Instance;
-      Property := Code_Analysis_Property_Record
-        (Get_Property (Instance, Code_Analysis_Cst_Str));
       Project_Node := Get_Or_Create
         (Property.Projects, Project_Information (C.Context));
       File_Node := Get_Or_Create
@@ -730,14 +726,12 @@ package body Code_Analysis_Module is
      (Widget : access Glib.Object.GObject_Record'Class;
       C      : Context_And_Instance)
    is
-      Property     : Code_Analysis_Property_Record;
-      Instance     : Class_Instance;
+      Property     : Code_Analysis_Property_Record
+        := Code_Analysis_Property_Record
+          (Get_Property (C.Instance, Code_Analysis_Cst_Str));
       Project_Node : Project_Access;
       pragma Unreferenced (Widget);
    begin
-      Instance := C.Instance;
-      Property := Code_Analysis_Property_Record
-        (Get_Property (Instance, Code_Analysis_Cst_Str));
       Project_Node := Get_Or_Create
         (Property.Projects, Project_Information (C.Context));
       List_Lines_Not_Covered_In_Project (Project_Node);
@@ -778,15 +772,13 @@ package body Code_Analysis_Module is
      (Widget : access Glib.Object.GObject_Record'Class;
       C      : Context_And_Instance)
    is
-      Property     : Code_Analysis_Property_Record;
-      Instance     : Class_Instance;
+      Property     : Code_Analysis_Property_Record
+        := Code_Analysis_Property_Record
+          (Get_Property (C.Instance, Code_Analysis_Cst_Str));
       Project_Node : Project_Access;
       File_Node    : Code_Analysis.File_Access;
       pragma Unreferenced (Widget);
    begin
-      Instance := C.Instance;
-      Property := Code_Analysis_Property_Record
-        (Get_Property (Instance, Code_Analysis_Cst_Str));
       Project_Node := Get_Or_Create
         (Property.Projects, Project_Information (C.Context));
       File_Node := Get_Or_Create
@@ -850,6 +842,46 @@ package body Code_Analysis_Module is
       end loop;
    end List_Lines_Not_Covered_In_File;
 
+   --------------------
+   -- Show_Full_Tree --
+   --------------------
+
+   procedure Show_Full_Tree (Object : access Gtk_Widget_Record'Class)
+   is
+      View : constant Code_Analysis_View := Code_Analysis_View (Object);
+      Iter : Gtk_Tree_Iter := Get_Iter_First (View.Model);
+   begin
+      Clear (View.Model);
+      Fill_Iter (View.Model, Iter, View.Projects);
+   end Show_Full_Tree;
+
+   -----------------------------
+   -- Show_Flat_List_Of_Files --
+   -----------------------------
+
+   procedure Show_Flat_List_Of_Files (Object : access Gtk_Widget_Record'Class)
+   is
+      View : constant Code_Analysis_View := Code_Analysis_View (Object);
+      Iter : Gtk_Tree_Iter := Get_Iter_First (View.Model);
+   begin
+      Clear (View.Model);
+      Fill_Iter_With_Files (View.Model, Iter, View.Projects);
+   end Show_Flat_List_Of_Files;
+
+   -----------------------------------
+   -- Show_Flat_List_Of_Subprograms --
+   -----------------------------------
+
+   procedure Show_Flat_List_Of_Subprograms
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      View : constant Code_Analysis_View := Code_Analysis_View (Object);
+      Iter : Gtk_Tree_Iter := Get_Iter_First (View.Model);
+   begin
+      Clear (View.Model);
+      Fill_Iter_With_Subprograms (View.Model, Iter, View.Projects);
+   end Show_Flat_List_Of_Subprograms;
+
    ------------------
    -- Context_Func --
    ------------------
@@ -862,7 +894,7 @@ package body Code_Analysis_Module is
       Event        : Gdk_Event;
       Menu         : Gtk_Menu)
    is
-      pragma Unreferenced (Context, Kernel, Event_Widget);
+      pragma Unreferenced (Kernel, Event_Widget, Context);
       View      : constant Code_Analysis_View := Code_Analysis_View (Object);
       X         : constant Gdouble := Get_X (Event);
       Y         : constant Gdouble := Get_Y (Event);
@@ -871,7 +903,7 @@ package body Code_Analysis_Module is
       Buffer_X  : Gint;
       Buffer_Y  : Gint;
       Row_Found : Boolean;
-      Mitem     : Gtk_Menu_Item;
+      Item      : Gtk_Menu_Item;
    begin
 
       Get_Path_At_Pos
@@ -884,44 +916,60 @@ package body Code_Analysis_Module is
          Buffer_Y,
          Row_Found);
 
-      if Path = null then
-         return;
+      if Path /= null then
+         Select_Path (Get_Selection (View.Tree), Path);
+
+         if Get_Depth (Path) > 1 then
+            Gtk_New (Item, -"View with coverage annotations");
+            Gtkada.Handlers.Widget_Callback.Object_Connect
+              (Item, "activate", Add_Coverage_Annotations_From_Report'Access,
+               View, After => False);
+            Append (Menu, Item);
+            Gtk_New (Item, -"Remove coverage annotations");
+            Gtkada.Handlers.Widget_Callback.Object_Connect
+              (Item, "activate",
+               Remove_Coverage_Annotations_From_Report'Access,
+               View, After => False);
+            Append (Menu, Item);
+         end if;
+
+         if Get_Depth (Path) = 1 then
+            Gtk_New (Item, -"List lines not covered");
+            Gtkada.Handlers.Widget_Callback.Object_Connect
+              (Item, "activate",
+               List_Lines_Not_Covered_In_Project_From_Report'Access,
+               View, After => False);
+            Append (Menu, Item);
+         end if;
+
+         if Get_Depth (Path) = 2 then
+            Gtk_New (Item, -"List lines not covered");
+            Gtkada.Handlers.Widget_Callback.Object_Connect
+              (Item, "activate",
+               List_Lines_Not_Covered_In_File_From_Report'Access,
+               View, After => False);
+            Append (Menu, Item);
+         end if;
+
+         Gtk_New (Item);
+         Append (Menu, Item);
       end if;
 
-      Select_Path (Get_Selection (View.Tree), Path);
-
-      if Get_Depth (Path) > 1 then
-         Gtk_New (Mitem, -"View with coverage annotations");
-         Gtkada.Handlers.Widget_Callback.Object_Connect
-           (Mitem, "activate", Add_Coverage_Annotations_From_Report'Access,
-            View, After => False);
-         Append (Menu, Mitem);
-         Gtk_New (Mitem, -"Remove coverage annotations");
-         Gtkada.Handlers.Widget_Callback.Object_Connect
-           (Mitem, "activate", Remove_Coverage_Annotations_From_Report'Access,
-            View, After => False);
-         Append (Menu, Mitem);
-      end if;
-
-      if Get_Depth (Path) = 1 then
-         Gtk_New (Mitem, -"List lines not covered");
-         Gtkada.Handlers.Widget_Callback.Object_Connect
-           (Mitem, "activate",
-            List_Lines_Not_Covered_In_Project_From_Report'Access,
-            View, After => False);
-         Append (Menu, Mitem);
-      end if;
-
-      if Get_Depth (Path) = 2 then
-         Gtk_New (Mitem);
-         Append (Menu, Mitem);
-         Gtk_New (Mitem, -"List lines not covered");
-         Gtkada.Handlers.Widget_Callback.Object_Connect
-           (Mitem, "activate",
-            List_Lines_Not_Covered_In_File_From_Report'Access,
-            View, After => False);
-         Append (Menu, Mitem);
-      end if;
+      Gtk_New (Item, -"Show flat list of files");
+      Gtkada.Handlers.Widget_Callback.Object_Connect
+        (Item, "activate", Show_Flat_List_Of_Files'Access,
+         View, After => False);
+      Append (Menu, Item);
+      Gtk_New (Item, -"Show flat list of Subprograms");
+      Gtkada.Handlers.Widget_Callback.Object_Connect
+        (Item, "activate", Show_Flat_List_Of_Subprograms'Access,
+         View, After => False);
+      Append (Menu, Item);
+      Gtk_New (Item, -"Show full tree");
+      Gtkada.Handlers.Widget_Callback.Object_Connect
+        (Item, "activate", Show_Full_Tree'Access,
+         View, After => False);
+      Append (Menu, Item);
    end Context_Func;
 
    -------------------------------
@@ -975,7 +1023,6 @@ package body Code_Analysis_Module is
       Item         : Gtk_Menu_Item;
       Cur          : Cursor := Code_Analysis_Module_ID.Instances.First;
    begin
-
       C.Context := Context;
 
       loop
@@ -1000,7 +1047,6 @@ package body Code_Analysis_Module is
 
          Next (Cur);
       end loop;
-
    end Append_To_Menu;
 
    --------------------
@@ -1030,8 +1076,6 @@ package body Code_Analysis_Module is
                Context_And_Instance_CB.Connect
                  (Item, "activate", Context_And_Instance_CB.To_Marshaller
                     (Remove_Coverage_Annotations_From_Context'Access), C);
-               Gtk_New (Item);
-               Append (Submenu, Item);
                Gtk_New (Item, -"List lines not covered");
                Append (Submenu, Item);
                Context_And_Instance_CB.Connect
