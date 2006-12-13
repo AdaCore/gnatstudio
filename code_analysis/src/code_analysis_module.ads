@@ -107,7 +107,6 @@ private
       Node_Column : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       Cov_Column  : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       Cov_Percent : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
-      Instance    : Class_Instance;
    end record;
 
    type Code_Analysis_View is access all Code_Analysis_View_Record;
@@ -219,7 +218,8 @@ private
    -- Callbacks --
    ---------------
 
-   procedure On_Destroy (View : access Gtk_Widget_Record'Class);
+   procedure On_Destroy (Widget : access Glib.Object.GObject_Record'Class;
+                         C      : Context_And_Instance);
    --  Callback for the "destroy" signal that cleanly destroy the widget
 
    function On_Double_Click (View  : access Gtk_Widget_Record'Class;
