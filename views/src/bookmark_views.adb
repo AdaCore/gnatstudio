@@ -103,8 +103,14 @@ package body Bookmark_Views is
       Tree      : Gtk_Tree_View;
       Kernel    : Kernel_Handle;
       Goto_Icon : Gdk_Pixbuf;
+      Deleting  : Boolean := False;
+      --  Whether we are deleting multiple bookmarks.
    end record;
    type Bookmark_View is access all Bookmark_View_Record'Class;
+
+   package Bookmarks_Selection_Foreach is new
+     Selection_Foreach (Bookmark_View_Record);
+   use Bookmarks_Selection_Foreach;
 
    procedure Initialize
      (View   : access Bookmark_View_Record'Class;
@@ -161,11 +167,6 @@ package body Bookmark_Views is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu);
    --  Context factory when creating contextual menus
-
-   function Get_Selected_From_Event
-     (View  : access Bookmark_View_Record'Class;
-      Event : Gdk_Event) return Bookmark_Data_Access;
-   --  Return the entry selected by event
 
    procedure Load_Bookmarks (Kernel : access Kernel_Handle_Record'Class);
    procedure Save_Bookmarks (Kernel : access Kernel_Handle_Record'Class);
@@ -344,15 +345,32 @@ package body Bookmark_Views is
       View : constant Bookmark_View_Access :=
                Generic_View.Get_Or_Create_View (Get_Kernel (Context.Context));
       Data : Bookmark_Data_Access;
+
+      Model : constant Gtk_Tree_Model := Get_Model (View.Tree);
+      Iter  : Gtk_Tree_Iter;
    begin
-      if Context.Event /= null then
-         Data := Get_Selected_From_Event (View, Context.Event);
-         if Data /= null then
-            Delete_Bookmark (Get_Kernel (Context.Context), Data.all);
-            return Success;
+      Iter := Get_Iter_First (Model);
+      View.Deleting := True;
+
+      while Iter /= Null_Iter loop
+         if Iter_Is_Selected (Get_Selection (View.Tree), Iter) then
+            Data := Convert (Get_Address (Model, Iter, Data_Column));
+
+            if Data /= null then
+               Delete_Bookmark (Get_Kernel (Context.Context), Data.all);
+               Remove (Gtk_Tree_Store (Model), Iter);
+               Iter := Get_Iter_First (Model);
+            else
+               Next (Model, Iter);
+            end if;
+         else
+            Next (Model, Iter);
          end if;
-      end if;
-      return Failure;
+      end loop;
+
+      View.Deleting := False;
+      Refresh (View);
+      return Success;
    end Execute;
 
    ------------------------
@@ -360,21 +378,50 @@ package body Bookmark_Views is
    ------------------------
 
    function Start_Editing_Idle (View : Bookmark_View_Access) return Boolean is
-      Model : Gtk_Tree_Model;
-      Iter  : Gtk_Tree_Iter;
-      Path  : Gtk_Tree_Path;
+      procedure Edit_Selected
+        (Model : Gtk.Tree_Model.Gtk_Tree_Model;
+         Path  : Gtk.Tree_Model.Gtk_Tree_Path;
+         Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
+         Data  : Data_Type_Access);
+      --  Foreach callback on a selection
+
+      -------------------
+      -- Edit_Selected --
+      -------------------
+
+      procedure Edit_Selected
+        (Model : Gtk.Tree_Model.Gtk_Tree_Model;
+         Path  : Gtk.Tree_Model.Gtk_Tree_Path;
+         Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
+         Data  : Data_Type_Access) is
+         pragma Unreferenced (Model, Data);
+      begin
+         if Iter /= Null_Iter then
+            Set_Cursor
+              (View.Tree,
+               Path          => Path,
+               Focus_Column  => Get_Column (View.Tree, 2),
+               Start_Editing => True);
+         end if;
+
+      exception
+         when E : others =>
+            Trace (Exception_Handle, "Unexpected exception "
+                   & Exception_Information (E));
+      end Edit_Selected;
+
    begin
-      Get_Selected (Get_Selection (View.Tree), Model, Iter);
-      if Iter /= Null_Iter then
-         Path := Get_Path (Model, Iter);
-         Set_Cursor
-           (View.Tree,
-            Path          => Path,
-            Focus_Column  => Get_Column (View.Tree, 2),
-            Start_Editing => True);
-         Path_Free (Path);
-      end if;
+      Selected_Foreach
+        (Get_Selection (View.Tree), Edit_Selected'Unrestricted_Access,
+         Data_Type_Access (View));
+
       return False;
+
+      exception
+         when E : others =>
+            Trace (Exception_Handle, "Unexpected exception "
+                   & Exception_Information (E));
+         return False;
    end Start_Editing_Idle;
 
    -------------
@@ -396,6 +443,7 @@ package body Bookmark_Views is
       if Context.Event /= null then
          Iter := Find_Iter_For_Event (View.Tree, Model, Context.Event);
          if Iter /= Null_Iter then
+            Unselect_All (Get_Selection (View.Tree));
             Select_Iter (Get_Selection (View.Tree), Iter);
 
             --  Start the edition in idle mode, since otherwise the tree gains
@@ -423,26 +471,6 @@ package body Bookmark_Views is
       Unchecked_Free (Data);
    end Free;
 
-   -----------------------------
-   -- Get_Selected_From_Event --
-   -----------------------------
-
-   function Get_Selected_From_Event
-     (View  : access Bookmark_View_Record'Class;
-      Event : Gdk_Event) return Bookmark_Data_Access
-   is
-      Model : constant Gtk_Tree_Store :=
-                Gtk_Tree_Store (Get_Model (View.Tree));
-      Iter  : Gtk_Tree_Iter;
-   begin
-      Iter := Find_Iter_For_Event (View.Tree, Model, Event);
-      if Iter /= Null_Iter then
-         return Convert (Get_Address (Model, Iter, Data_Column));
-      else
-         return null;
-      end if;
-   end Get_Selected_From_Event;
-
    --------------------------
    -- View_Context_Factory --
    --------------------------
@@ -463,6 +491,7 @@ package body Bookmark_Views is
       Iter  : Gtk_Tree_Iter;
    begin
       Iter := Find_Iter_For_Event (V.Tree, Model, Event);
+
       if Iter /= Null_Iter then
          Select_Iter (Get_Selection (V.Tree), Iter);
       end if;
@@ -477,19 +506,39 @@ package body Bookmark_Views is
       Event : Gdk_Event) return Boolean
    is
       View   : constant Bookmark_View_Access := Bookmark_View_Access (Clip);
+      Path   : Gtk_Tree_Path;
+      Model  : constant Gtk_Tree_Store :=
+        Gtk_Tree_Store (Get_Model (View.Tree));
+      Iter  : Gtk_Tree_Iter;
       Marker : Bookmark_Data_Access;
       Result : Boolean;
       pragma Unreferenced (Result);
    begin
-      if Get_Button (Event) = 1 then
-         Marker := Get_Selected_From_Event (View, Event);
+      if Get_State (Event) /= 0 then
+         --  If there is a key modifier present, (such as ctrl or shift for
+         --  example), grab the focus on the tree so that ctrl-clicking and
+         --  shift-clicking extend the multiple selection as expected.
+         Grab_Focus (View.Tree);
+      elsif Get_Button (Event) = 1 then
+         Iter := Find_Iter_For_Event (View.Tree, Model, Event);
 
-         --  Always return True to prevent the selection
-         if Marker /= null then
-            Result := Go_To (Marker.Marker, View.Kernel);
-            return True;
+         if Iter /= Null_Iter then
+            --  Select the row that was clicked.
+            Path := Get_Path (Model, Iter);
+            Set_Cursor (View.Tree, Path, null, False);
+            Path_Free (Path);
+
+            Marker := Convert (Get_Address (Model, Iter, Data_Column));
+
+            if Marker /= null then
+               Result := Go_To (Marker.Marker, View.Kernel);
+               --  Return True here to prevent focus from flickering between
+               --  editor and bookmark view.
+               return True;
+            end if;
          end if;
       end if;
+
       return False;
    exception
       when E : others =>
@@ -563,7 +612,12 @@ package body Bookmark_Views is
       List  : Bookmark_List.List_Node := First (Bookmark_Views_Module.List);
       Iter  : Gtk_Tree_Iter;
    begin
+      if View.Deleting then
+         return;
+      end if;
+
       Clear (Model);
+
       while List /= Null_Node loop
          Append (Model, Iter, Null_Iter);
          Set (Model, Iter, Icon_Column, C_Proxy (View.Goto_Icon));
@@ -642,7 +696,7 @@ package body Bookmark_Views is
          Editable_Columns   => (Name_Column => Editable_Column),
          Editable_Callback  => (Name_Column => Edited_Callback'Access),
          Show_Column_Titles => False,
-         Selection_Mode     => Selection_Single,
+         Selection_Mode     => Selection_Multiple,
          Sortable_Columns   => True,
          Initial_Sort_On    => 2,
          Merge_Icon_Columns => False,
