@@ -104,7 +104,7 @@ package body Code_Analysis_Module is
    -- Shell_Add_Gcov_Info --
    -------------------------
 
-   procedure Shell_Add_Gcov_Info
+   procedure Add_Gcov_Info_From_Shell
      (Data    : in out Callback_Data'Class;
       Command : String)
    is
@@ -173,13 +173,13 @@ package body Code_Analysis_Module is
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
-   end Shell_Add_Gcov_Info;
+   end Add_Gcov_Info_From_Shell;
 
    ----------------------------------
    -- Shell_List_Lines_Not_Covered --
    ----------------------------------
 
-   procedure Shell_List_Lines_Not_Covered
+   procedure List_Lines_Not_Covered_From_Shell
      (Data    : in out Callback_Data'Class;
       Command : String)
    is
@@ -208,13 +208,13 @@ package body Code_Analysis_Module is
             List_Lines_Not_Covered_In_Project (Sort_Arr (J));
          end loop;
       end;
-   end Shell_List_Lines_Not_Covered;
+   end List_Lines_Not_Covered_From_Shell;
 
    --------------------------
    -- Shell_Show_Tree_View --
    --------------------------
 
-   procedure Shell_Show_Tree_View
+   procedure Show_Analysis_Report_From_Shell
      (Data    : in out Callback_Data'Class;
       Command : String)
    is
@@ -225,14 +225,14 @@ package body Code_Analysis_Module is
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
       Property := Code_Analysis_Property_Record
         (Get_Property (Instance, Code_Analysis_Cst_Str));
-      Show_Tree_View (Instance, Property);
-   end Shell_Show_Tree_View;
+      Show_Analysis_Report (Instance, Property);
+   end Show_Analysis_Report_From_Shell;
 
    ---------------------------------
    -- Show_Tree_View_From_Context --
    ---------------------------------
 
-   procedure Show_Tree_View_From_Context
+   procedure Show_Analysis_Report_From_Context
      (Widget : access Glib.Object.GObject_Record'Class;
       C      : Context_And_Instance)
    is
@@ -241,14 +241,14 @@ package body Code_Analysis_Module is
         := Code_Analysis_Property_Record
           (Get_Property (C.Instance, Code_Analysis_Cst_Str));
    begin
-      Show_Tree_View (C.Instance, Property, C.Context);
-   end Show_Tree_View_From_Context;
+      Show_Analysis_Report (C.Instance, Property, C.Context);
+   end Show_Analysis_Report_From_Context;
 
    --------------------
    -- Show_Tree_View --
    --------------------
 
-   procedure Show_Tree_View
+   procedure Show_Analysis_Report
      (Instance : Class_Instance;
       Property : in out Code_Analysis_Property_Record;
       Context  : Selection_Context := No_Context)
@@ -409,7 +409,7 @@ package body Code_Analysis_Module is
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
-   end Show_Tree_View;
+   end Show_Analysis_Report;
 
    -------------
    -- Destroy --
@@ -1083,7 +1083,7 @@ package body Code_Analysis_Module is
                Append (Submenu, Item);
                Context_And_Instance_CB.Connect
                  (Item, "activate", Context_And_Instance_CB.To_Marshaller
-                    (Show_Tree_View_From_Context'Access), C);
+                    (Show_Analysis_Report_From_Context'Access), C);
             else
                Gtk_New (Item, -"Load coverage information");
                Append (Submenu, Item);
@@ -1104,7 +1104,7 @@ package body Code_Analysis_Module is
             Append (Submenu, Item);
             Context_And_Instance_CB.Connect
               (Item, "activate", Context_And_Instance_CB.To_Marshaller
-                 (Show_Tree_View_From_Context'Access), C);
+                 (Show_Analysis_Report_From_Context'Access), C);
          else
             Gtk_New (Item, -"Load coverage information");
             Append (Submenu, Item);
@@ -1204,15 +1204,15 @@ package body Code_Analysis_Module is
          Minimum_Args => 2,
          Maximum_Args => 2,
          Class        => Code_Analysis_Class,
-         Handler      => Shell_Add_Gcov_Info'Access);
+         Handler      => Add_Gcov_Info_From_Shell'Access);
       Register_Command
         (Kernel, "list_not_covered_lines",
          Class        => Code_Analysis_Class,
-         Handler      => Shell_List_Lines_Not_Covered'Access);
+         Handler      => List_Lines_Not_Covered_From_Shell'Access);
       Register_Command
-        (Kernel, "show_tree_view",
+        (Kernel, "show_analysis_report",
          Class        => Code_Analysis_Class,
-         Handler      => Shell_Show_Tree_View'Access);
+         Handler      => Show_Analysis_Report_From_Shell'Access);
       Register_Command
         (Kernel, Destructor_Method,
          Class        => Code_Analysis_Class,
