@@ -1537,6 +1537,8 @@ package body Debugger.Gdb is
         or else Command (Command'First .. Index - 1) = "nexti"
         or else Command (Command'First .. Index - 1) = "cont"
         or else Command (Command'First .. Index - 1) = "c"
+        or else Command (Command'First .. Index - 1) = "run"
+        or else Command (Command'First .. Index - 1) = "r"
         or else Command = "finish"
         or else (Command'Length >= 6
           and then
@@ -1544,6 +1546,8 @@ package body Debugger.Gdb is
              or else Command (Command'First .. Command'First + 5) = "target"))
         or else (Command'Length >= 3
           and then Command (Command'First .. Command'First + 2) = "run")
+        or else (Command'Length >= 2
+          and then Command (Command'First .. Command'First + 1) = "r ")
         or else (Command'Length >= 5
           and then
             (Command (Command'First .. Command'First + 4) = "begin"
