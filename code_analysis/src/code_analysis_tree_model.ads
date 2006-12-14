@@ -41,7 +41,19 @@ package Code_Analysis_Tree_Model is
      (Model    : in out Gtk_Tree_Store;
       Iter     : in out Gtk_Tree_Iter;
       Projects : Code_Analysis_Tree);
-   --  Fill the Gtk_Tree_Store
+   --  Fill the Gtk_Tree_Store with every nodes
+
+   procedure Fill_Iter_With_Files
+     (Model    : in out Gtk_Tree_Store;
+      Iter     : in out Gtk_Tree_Iter;
+      Projects : Code_Analysis_Tree);
+   --  Fill the Gtk_Tree_Store with file rows only
+
+   procedure Fill_Iter_With_Subprograms
+     (Model    : in out Gtk_Tree_Store;
+      Iter     : in out Gtk_Tree_Iter;
+      Projects : Code_Analysis_Tree);
+   --  Fill the Gtk_Tree_Store with subprogram rows only
 
    procedure Fill_Iter
      (Model     : in out Gtk_Tree_Store;
@@ -55,13 +67,40 @@ package Code_Analysis_Tree_Model is
       Iter      : in out Gtk_Tree_Iter;
       Parent    : Gtk_Tree_Iter;
       File_Node : File_Access);
-   --  Fill the Gtk_Tree_Store with the given File node
+   --  Fill the Gtk_Tree_Store with the given File node and recurse on its
+   --  children
+
+   procedure Fill_Iter_With_Files
+     (Model     : in out Gtk_Tree_Store;
+      Iter      : in out Gtk_Tree_Iter;
+      File_Node : File_Access);
+   --  Fill the Gtk_Tree_Store with the given File node and stop
+
+   procedure Fill_Iter_With_Subprograms
+     (Model     : in out Gtk_Tree_Store;
+      Iter      : in out Gtk_Tree_Iter;
+      File_Node : File_Access);
+   --  Fill the Gtk_Tree_Store with the children of the given File node
 
    procedure Fill_Iter
      (Model        : in out Gtk_Tree_Store;
       Iter         : in out Gtk_Tree_Iter;
       Project_Node : Project_Access);
-   --  Fill the Gtk_Tree_Store with the given Project node
+   --  Fill the Gtk_Tree_Store with the given Project node and recurse on its
+   --  children
+
+   procedure Fill_Iter_With_Files
+     (Model        : in out Gtk_Tree_Store;
+      Iter         : in out Gtk_Tree_Iter;
+      Project_Node : Project_Access);
+   --  Fill the Gtk_Tree_Store with the children of the given Project node
+
+   procedure Fill_Iter_With_Subprograms
+     (Model        : in out Gtk_Tree_Store;
+      Iter         : in out Gtk_Tree_Iter;
+      Project_Node : Project_Access);
+   --  Fill the Gtk_Tree_Store with the subprograms of the file children of the
+   --  given Project node
 
    procedure Fill_Iter
      (Model        : in out Gtk_Tree_Store;
