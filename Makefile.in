@@ -32,6 +32,7 @@ install-common:
 	$(MKDIR) $(sharedir)/gps/aunit
 	(cd share; tar cf - plug-ins/*.xml) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - plug-ins/*.py) | (cd $(sharedir)/gps; tar xf -)
+	(cd share; tar cf - plug-ins/*.png) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - library/*.xml) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - library/*.py) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - library/pygps/*.py) | (cd $(sharedir)/gps; tar xf -)
