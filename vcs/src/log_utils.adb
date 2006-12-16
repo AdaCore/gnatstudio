@@ -734,7 +734,7 @@ package body Log_Utils is
       First_Check, Last_Check : Command_Access := null;
 
    begin
-      if not Save_Files (Kernel, Files, Save_Logs => True) then
+      if not Save_Files (Kernel, Files, Activity, Save_Logs => True) then
          return;
       end if;
 
@@ -831,6 +831,23 @@ package body Log_Utils is
             Command_Access (Check_Activity_Command));
       end if;
 
+      --  Check if the activity log is not empty
+
+      if Activity /= No_Activity and then Get_Log (Kernel, Activity) = "" then
+         if Message_Dialog
+           ((-"The activity log file is empty,")
+            & ASCII.LF &
+            (-"Commit anyway ?"),
+            Confirmation,
+            Button_Yes or Button_No,
+            Button_Yes,
+            "", -"Empty log detected",
+            Gtk.Enums.Justify_Left) = Button_No
+         then
+            Cancel_All := True;
+         end if;
+      end if;
+
       --  Create the file checks and the log checks
 
       --  ??? Should we add check for the activity log and in this case which
@@ -838,7 +855,7 @@ package body Log_Utils is
 
       Files_Temp := First (Files);
 
-      while Files_Temp /= Null_Node loop
+      while not Cancel_All and then Files_Temp /= Null_Node loop
          File := Create (Full_Filename => Data (Files_Temp));
          Project := Get_Project_From_File (Get_Registry (Kernel).all, File);
 
@@ -978,7 +995,7 @@ package body Log_Utils is
                      Log_Args,
                      Head_List,
                      Check_Handler'Access,
-                     -"CVS: Checking file changelogs");
+                     -"Version Control: Checking file changelogs");
 
                   if First_Check = null then
                      First_Check := Command_Access (Log_Checks);
