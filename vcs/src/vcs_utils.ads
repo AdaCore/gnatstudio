@@ -21,6 +21,7 @@
 with String_List_Utils; use String_List_Utils;
 with GPS.Kernel;        use GPS.Kernel;
 with VCS;               use VCS;
+with VCS_Activities;    use VCS_Activities;
 with VFS;               use VFS;
 
 package VCS_Utils is
@@ -35,7 +36,8 @@ package VCS_Utils is
    function Save_Files
      (Kernel    : Kernel_Handle;
       Files     : String_List.List;
-      Save_Logs : Boolean := False) return Boolean;
+      Activity  : Activity_Id := No_Activity;
+      Save_Logs : Boolean     := False) return Boolean;
    --  Ask the user whether he wants to save the file editors for Files.
    --  Return False if the user has cancelled the action.
 

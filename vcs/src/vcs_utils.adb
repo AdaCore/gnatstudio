@@ -135,13 +135,15 @@ package body VCS_Utils is
    function Save_Files
      (Kernel    : Kernel_Handle;
       Files     : String_List.List;
-      Save_Logs : Boolean := False) return Boolean
+      Activity  : Activity_Id := No_Activity;
+      Save_Logs : Boolean     := False) return Boolean
    is
       use String_List;
-      Children   : MDI_Child_Array (1 .. Length (Files));
-      Logs       : MDI_Child_Array (Children'Range);
-      Files_Temp : List_Node := First (Files);
-      File       : Virtual_File;
+      Children     : MDI_Child_Array (1 .. Length (Files));
+      Logs         : MDI_Child_Array (Children'Range);
+      Activity_Log : MDI_Child_Array (1 .. 1);
+      Files_Temp   : List_Node := First (Files);
+      File         : Virtual_File;
    begin
       for C in Children'Range loop
          File := Create (Full_Filename => Head (Files));
@@ -156,8 +158,18 @@ package body VCS_Utils is
       end loop;
 
       if Save_Logs then
-         return Save_MDI_Children
-           (Kernel, Children & Logs, Force => Get_Pref (Auto_Save));
+         if Activity /= No_Activity then
+            Activity_Log (1) := Get_File_Editor
+              (Kernel, Get_Log_File (Kernel, Activity));
+            return Save_MDI_Children
+              (Kernel, Children & Logs & Activity_Log,
+               Force => Get_Pref (Auto_Save));
+
+         else
+            return Save_MDI_Children
+              (Kernel, Children & Logs, Force => Get_Pref (Auto_Save));
+         end if;
+
       else
          return Save_MDI_Children
            (Kernel, Children, Force => Get_Pref (Auto_Save));
