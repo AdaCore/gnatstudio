@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2006                            --
---                             AdaCore                               --
+--                        Copyright (C) 2006                         --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.Case_Util;         use GNAT.Case_Util;
 pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote; use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
@@ -58,7 +59,7 @@ package body Filesystem.Windows is
         and then The_Path'Length > 3
         and then The_Path (The_Path'First + 1 .. The_Path'First + 2) = ":/"
       then
-         return "/cygdrive/" & The_Path (The_Path'First) &
+         return "/cygdrive/" & To_Upper (The_Path (The_Path'First)) &
             The_Path (The_Path'First + 2 .. The_Path'Last);
       end if;
 
@@ -244,14 +245,23 @@ package body Filesystem.Windows is
    ----------
 
    function Path
-     (FS : Windows_Filesystem_Record;
+     (FS     : Windows_Filesystem_Record;
       Device : String;
       Dir    : String;
       File   : String) return String
    is
       pragma Unreferenced (FS);
    begin
-      return Device & ":" & Dir & File;
+      if Device'Length = 1 then
+         --  This is a drive letter
+         return To_Upper (Device (Device'First)) & ":" & Dir & File;
+
+      else
+         --  Not a drive letter, let's return it as-is, this probably should
+         --  never happen. The Device can have multiple characters on non
+         --  Windows OS.
+         return Device & ":" & Dir & File;
+      end if;
    end Path;
 
    -----------------------
@@ -284,9 +294,9 @@ package body Filesystem.Windows is
      (FS   : Windows_Filesystem_Record;
       Host : String) return String
    is
-      Args : GNAT.OS_Lib.Argument_List :=
-               (1 => new String'("echo"),
-                2 => new String'("%HOME%"));
+      Args   : GNAT.OS_Lib.Argument_List :=
+                 (1 => new String'("echo"),
+                  2 => new String'("%HOME%"));
       Output : String_Access;
       Status : Boolean;
 
@@ -319,11 +329,11 @@ package body Filesystem.Windows is
       pragma Unreferenced (FS);
       --  Redirect stderr to stdout for synchronisation purpose
       --  (stderr is asynchronous on windows)
-      Args : GNAT.OS_Lib.Argument_List :=
-        (new String'("dir"),
-         new String'("/a-d"),
-         new String'("""" & Local_Full_Name & """"),
-         new String'("2>&1"));
+      Args   : GNAT.OS_Lib.Argument_List :=
+                 (new String'("dir"),
+                  new String'("/a-d"),
+                  new String'("""" & Local_Full_Name & """"),
+                  new String'("2>&1"));
       Status : Boolean;
 
    begin
@@ -342,9 +352,9 @@ package body Filesystem.Windows is
       Local_Full_Name : String) return GNAT.Strings.String_Access
    is
       pragma Unreferenced (FS);
-      Args : GNAT.OS_Lib.Argument_List :=
-        (new String'("type"),
-         new String'("""" & Local_Full_Name & """"));
+      Args   : GNAT.OS_Lib.Argument_List :=
+                 (new String'("type"),
+                  new String'("""" & Local_Full_Name & """"));
       Status : Boolean;
       Output : String_Access;
 
@@ -364,11 +374,11 @@ package body Filesystem.Windows is
       Local_Full_Name : String) return Boolean
    is
       pragma Unreferenced (FS);
-      Args : GNAT.OS_Lib.Argument_List :=
-        (new String'("erase"),
-         new String'("/f"),
-         new String'("""" & Local_Full_Name & """"),
-         new String'("2>&1"));
+      Args  : GNAT.OS_Lib.Argument_List :=
+                (new String'("erase"),
+                 new String'("/f"),
+                 new String'("""" & Local_Full_Name & """"),
+                 new String'("2>&1"));
       Status : Boolean;
 
    begin
@@ -415,10 +425,10 @@ package body Filesystem.Windows is
    is
       pragma Unreferenced (FS);
       Args : GNAT.OS_Lib.Argument_List :=
-        (new String'("dir"),
-         new String'("/ad"),
-         new String'("""" & Local_Full_Name & """"),
-         new String'("2>&1"));
+               (new String'("dir"),
+                new String'("/ad"),
+                new String'("""" & Local_Full_Name & """"),
+                new String'("2>&1"));
       Status : Boolean;
 
    begin
@@ -437,16 +447,16 @@ package body Filesystem.Windows is
       Local_Full_Name : String) return Ada.Calendar.Time
    is
       pragma Unreferenced (FS);
-      Args : GNAT.OS_Lib.Argument_List :=
-        (new String'("ls"),
-         new String'("-l"),
-         new String'("--time-style=full-iso"),
-         new String'("""" & Local_Full_Name & """"),
-         new String'("2>"),
-         new String'("/dev/null"));
-      Status  : Boolean;
       Regexp  : constant Pattern_Matcher
         := Compile ("(\d\d\d\d[-]\d\d[-]\d\d)\s+(\d\d:\d\d:\d\d[.]\d+)\s+");
+      Args    : GNAT.OS_Lib.Argument_List :=
+                  (new String'("ls"),
+                   new String'("-l"),
+                   new String'("--time-style=full-iso"),
+                   new String'("""" & Local_Full_Name & """"),
+                   new String'("2>"),
+                   new String'("/dev/null"));
+      Status  : Boolean;
       Matched : Match_Array (0 .. 2);
       Output  : String_Access;
       Year    : Natural;
@@ -530,11 +540,11 @@ package body Filesystem.Windows is
       Writable        : Boolean)
    is
       pragma Unreferenced (FS);
-      Args : GNAT.OS_Lib.Argument_List :=
-        (new String'("attrib"),
-         new String'("-r"),
-         new String'("""" & Local_Full_Name & """"),
-         new String'("2>&1"));
+      Args   : GNAT.OS_Lib.Argument_List :=
+                 (new String'("attrib"),
+                  new String'("-r"),
+                  new String'("""" & Local_Full_Name & """"),
+                  new String'("2>&1"));
       Status : Boolean;
 
    begin
@@ -604,10 +614,10 @@ package body Filesystem.Windows is
       Local_Dir_Name : String) return Boolean
    is
       pragma Unreferenced (FS);
-      Args : GNAT.OS_Lib.Argument_List :=
-        (new String'("mkdir"),
-         new String'("""" & Local_Dir_Name & """"),
-         new String'("2>&1"));
+      Args   : GNAT.OS_Lib.Argument_List :=
+                 (new String'("mkdir"),
+                  new String'("""" & Local_Dir_Name & """"),
+                  new String'("2>&1"));
       Status : Boolean;
 
    begin
@@ -627,11 +637,11 @@ package body Filesystem.Windows is
       Recursive      : Boolean) return Boolean
    is
       pragma Unreferenced (FS);
-      Args : GNAT.OS_Lib.Argument_List :=
-        (1 => new String'("rmdir"),
-         2 => new String'("/q"),
-         3 => new String'("""" & Local_Dir_Name & """"),
-         4 => new String'("2>&1"));
+      Args   : GNAT.OS_Lib.Argument_List :=
+                 (1 => new String'("rmdir"),
+                  2 => new String'("/q"),
+                  3 => new String'("""" & Local_Dir_Name & """"),
+                  4 => new String'("2>&1"));
       Status : Boolean;
 
    begin
@@ -689,8 +699,8 @@ package body Filesystem.Windows is
       Args     : GNAT.OS_Lib.Argument_List := Create_Args;
       Status   : Boolean;
       Output   : String_Access;
-      Regexp   : constant Pattern_Matcher := Compile ("^(.+)$",
-                                                      Multiple_Lines);
+      Regexp   : constant Pattern_Matcher :=
+                   Compile ("^(.+)$", Multiple_Lines);
       Matched  : Match_Array (0 .. 1);
       Index    : Natural;
       Nb_Files : Natural;
@@ -716,7 +726,7 @@ package body Filesystem.Windows is
          end loop;
 
          declare
-            List : String_List (1 .. Nb_Files);
+            List     : String_List (1 .. Nb_Files);
             File_Idx : Natural;
          begin
             Index    := Output'First;
