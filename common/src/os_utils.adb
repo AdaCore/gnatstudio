@@ -337,8 +337,8 @@ package body OS_Utils is
          Cygdrive : constant String := "/cygdrive/";
       begin
          if Is_Cygwin_Path (Path) then
-            return Path (Path'First + Cygdrive'Length) & ":" &
-              Path (Path'First + Cygdrive'Length + 1 .. Path'Last);
+            return Case_Util.To_Upper (Path (Path'First + Cygdrive'Length)) &
+              ":" & Path (Path'First + Cygdrive'Length + 1 .. Path'Last);
          else
             return Path;
          end if;
@@ -370,7 +370,7 @@ package body OS_Utils is
                  and then Result (Result'First + 2) = '/'
                then
                   return "/cygdrive/" &
-                    Case_Util.To_Lower (Result (Result'First)) &
+                    Case_Util.To_Upper (Result (Result'First)) &
                     Result (Result'First + 2 .. Result'Last);
                else
                   return Result;
