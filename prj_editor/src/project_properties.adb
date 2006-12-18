@@ -2858,7 +2858,7 @@ package body Project_Properties is
             while Prj /= Projects.No_Project loop
                Source := 1;
                loop
-                  File := Get_Source_Files (Prj, Source);
+                  File := Get_Source_File (Prj, Source);
                   exit when File = VFS.No_File;
 
                   Append (Model, Iter, Null_Iter);
