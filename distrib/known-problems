@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 4.1.0
 
+- FC13-014 Debugger menu items not made insensitive while debugger is running
+  Problem:    While the program is running, some items in the "Debug" menu,
+              such as "Run..." or "Next", should be greyed out. Activating
+              those menu while the debugger is running could cause unexpected
+              behavior.
+  Workaround: Do not use debugger menus other than "Interrupt" while the
+              program is running.
+
 - FC11-011 Crash when entering an invalid font
   Problem:    After entering an empty or invalid text in the font selection
               entries in the Preferences dialog, GPS might crash.
