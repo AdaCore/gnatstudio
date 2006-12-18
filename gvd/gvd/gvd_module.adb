@@ -1989,24 +1989,33 @@ package body GVD_Module is
          --  or it could have been destroyed from a python script
          Item := Find_Menu_Item (Kernel, Debug & (-"Debug"));
          if Item /= null then
+            if GVD_Module_ID.Cont_Button /= null then
+               Set_Sensitive (GVD_Module_ID.Cont_Button, Available);
+               Set_Sensitive (GVD_Module_ID.Step_Button, Available);
+               Set_Sensitive (GVD_Module_ID.Next_Button, Available);
+               Set_Sensitive (GVD_Module_ID.Finish_Button, Available);
+               Set_Sensitive (GVD_Module_ID.Up_Button, Available);
+               Set_Sensitive (GVD_Module_ID.Down_Button, Available);
+            end if;
+
             Set_Sensitive (Item, Available);
             Set_Sensitive
               (Find_Menu_Item (Kernel, Debug & (-"Data")), Available);
             Set_Sensitive
               (Find_Menu_Item (Kernel, Debug & (-"Run...")), Available);
             Set_Sensitive
-              (Find_Menu_Item (Kernel, Debug & (-"Step")), Sensitive);
+              (Find_Menu_Item (Kernel, Debug & (-"Step")), Available);
             Set_Sensitive (Find_Menu_Item
-              (Kernel, Debug & (-"Step Instruction")), Sensitive);
+              (Kernel, Debug & (-"Step Instruction")), Available);
             Set_Sensitive
-              (Find_Menu_Item (Kernel, Debug & (-"Next")), Sensitive);
+              (Find_Menu_Item (Kernel, Debug & (-"Next")), Available);
             Set_Sensitive
               (Find_Menu_Item
-                 (Kernel, Debug & (-"Next Instruction")), Sensitive);
+                 (Kernel, Debug & (-"Next Instruction")), Available);
             Set_Sensitive
-              (Find_Menu_Item (Kernel, Debug & (-"Finish")), Sensitive);
+              (Find_Menu_Item (Kernel, Debug & (-"Finish")), Available);
             Set_Sensitive
-              (Find_Menu_Item (Kernel, Debug & (-"Continue")), Sensitive);
+              (Find_Menu_Item (Kernel, Debug & (-"Continue")), Available);
             Set_Sensitive
               (Find_Menu_Item
                  (Kernel, Debug & (-"Interrupt")), State = Debug_Busy);
