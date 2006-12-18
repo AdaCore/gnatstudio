@@ -22,7 +22,9 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Calendar;              use Ada.Calendar;
 with Ada.Unchecked_Deallocation;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+
 with ALI;
 with Atree;
 with Basic_Types;               use Basic_Types;
@@ -148,7 +150,7 @@ package body Projects.Registry is
       Root    : Project_Type := No_Project;
       --  The root of the project hierarchy
 
-      Sources  : Source_Htable.String_Hash_Table.HTable;
+      Sources : Source_Htable.String_Hash_Table.HTable;
       --  Index on base source file names, return the managing project
 
       Directories : Directory_Htable.String_Hash_Table.HTable;
@@ -174,16 +176,16 @@ package body Projects.Registry is
       --  Predefined source paths for the runtime library
 
       Predefined_Source_Files : VFS.File_Array_Access;
-      --  The list of source files in Predefined_Source_Path.
+      --  The list of source files in Predefined_Source_Path
 
       Extensions : Languages_Htable.String_Hash_Table.HTable;
-      --  The extensions registered for each language.
+      --  The extensions registered for each language
 
       Timestamp : Ada.Calendar.Time;
       --  Time when we last parsed the project from the disk
 
       Trusted_Mode : Boolean := True;
-      --  Whether we are in trusted mode when recomputing the project view:
+      --  Whether we are in trusted mode when recomputing the project view
 
       --  Implicit dependency on the global htables in the Prj.* packages.
    end record;
@@ -1222,11 +1224,16 @@ package body Projects.Registry is
       Sources_Specified       : Boolean := False;
       Specified_Sources_Count : Natural := 0;
 
+      package Virtual_File_List is new Ada.Containers.Doubly_Linked_Lists
+        (Element_Type => Virtual_File);
+      use Virtual_File_List;
+      Source_File_List : Virtual_File_List.List;
+
       procedure Record_Source
         (Dir, File, Display_File : String; Lang : Name_Id);
       --  Add file to the list of source files for Project.
       --  File's casing must have been normalized, whereas Display_File is the
-      --  name with the same casing as on the disk
+      --  name with the same casing as on the disk.
 
       function File_In_Sources (File : String) return Boolean;
       --  Whether File belongs to the list of source files for this project
@@ -1234,7 +1241,10 @@ package body Projects.Registry is
       procedure Process_Explicit_Source (File : String);
       --  Do the required processing for a source file that has been specified
       --  explicitly by the user, either through Source_Files or
-      --  Source_List_File attributes
+      --  Source_List_File attributes.
+
+      procedure Set_Source_Files;
+      --  Set the source file cache of the project
 
       -----------------------------
       -- Process_Explicit_Source --
@@ -1248,6 +1258,15 @@ package body Projects.Registry is
          Specified_Sources_Count := Specified_Sources_Count + 1;
 
          Src := Get (Registry.Data.Sources, F);
+
+         if Src = No_Source_File_Data then
+            Append
+              (Source_File_List,
+               Create (File, Project, Use_Object_Path => False));
+         else
+            Append (Source_File_List, VFS.Create (Get_String (Src.Full_Name)));
+         end if;
+
          if Src.Lang = Name_Ada then
             --  No warning, this was already processed
             null;
@@ -1279,22 +1298,24 @@ package body Projects.Registry is
       is
          Full_Path : constant Name_Id := Get_String (Dir & Display_File);
       begin
+         Append (Source_File_List, VFS.Create (Dir & Display_File));
+
          String_Element_Table.Increment_Last
            (Registry.Data.View_Tree.String_Elements);
          String_Elements (Registry)
-          (String_Element_Table.Last (Registry.Data.View_Tree.String_Elements))
-           :=
+           (String_Element_Table.Last
+              (Registry.Data.View_Tree.String_Elements)) :=
            (Value         => Full_Path,
             Display_Value => Get_String (Display_File),
             Flag          => False,  --  Irrelevant for files
             Location      => No_Location,
             Index         => 0,
-            Next     => Projects_Table (Registry)(Get_View (Project)).Sources);
-         Projects_Table (Registry)(Get_View (Project)).Sources :=
+            Next          => Projects_Table
+              (Registry) (Get_View (Project)).Sources);
+         Projects_Table (Registry) (Get_View (Project)).Sources :=
            String_Element_Table.Last (Registry.Data.View_Tree.String_Elements);
-
-         Set (Registry.Data.Sources, K => File,
-              E => (Project, Lang, Full_Path));
+         Set
+           (Registry.Data.Sources, K => File, E => (Project, Lang, Full_Path));
       end Record_Source;
 
       ---------------------
@@ -1304,14 +1325,35 @@ package body Projects.Registry is
       function File_In_Sources (File : String) return Boolean is
          Data : Source_File_Data;
       begin
-         if not Sources_Specified then
-            return True;
-         else
+         if Sources_Specified then
             Data := Get (Registry.Data.Sources, File);
             return Data.Lang /= No_Name
               and then Data.Project = Project;
+         else
+            return True;
          end if;
       end File_In_Sources;
+
+      ----------------------
+      -- Set_Source_Files --
+      ----------------------
+
+      procedure Set_Source_Files is
+         Count   : constant Ada.Containers.Count_Type :=
+                     Virtual_File_List.Length (Source_File_List);
+         Files   : constant File_Array_Access :=
+                     new File_Array (1 .. Natural (Count));
+         Current : Cursor := First (Source_File_List);
+         J       : Natural := Files'First;
+      begin
+         while Has_Element (Current) loop
+            Files (J) := Element (Current);
+            Next (Current);
+            J := J + 1;
+         end loop;
+
+         Set_Source_Files (Project, Files);
+      end Set_Source_Files;
 
       Languages  : Argument_List := Get_Languages (Project);
       Languages2 : Name_Id_Array (Languages'Range);
@@ -1328,12 +1370,32 @@ package body Projects.Registry is
       Lang      : Name_Id;
       Has_File  : Boolean;
       Dirs_List : String_List_Id;
+      Src       : String_List_Id;
 
    begin
       --  We already know if the directories contain Ada files. Update the
-      --  status accordingly, in case they don't contain any other file
+      --  status accordingly, in case they don't contain any other file.
+
+      Src := Projects_Table (Registry) (Get_View (Project)).Sources;
+
+      while Src /= Nil_String loop
+         Get_Name_String
+           (String_Elements (Registry) (Src).Display_Value);
+
+         declare
+            File : constant String :=
+                     Locale_To_UTF8 (Name_Buffer (1 .. Name_Len));
+         begin
+            Append
+              (Source_File_List,
+               Create (File, Project, Use_Object_Path => False));
+         end;
+
+         Src := String_Elements (Registry) (Src).Next;
+      end loop;
 
       Dirs_List := Projects_Table (Registry)(Get_View (Project)).Source_Dirs;
+
       while Dirs_List /= Nil_String loop
          Update_Directory_Cache
            (Project, Get_String (String_Elements (Registry)(Dirs_List).Value),
@@ -1342,12 +1404,13 @@ package body Projects.Registry is
       end loop;
 
       --  Nothing to do if the only language is Ada, since this has already
-      --  been taken care of
+      --  been taken care of.
 
       if Languages'Length = 0
         or else (Languages'Length = 1
                  and then Languages (Languages'First).all = Ada_String)
       then
+         Set_Source_Files;
          Free (Languages);
          return;
       end if;
@@ -1367,6 +1430,7 @@ package body Projects.Registry is
       begin
          if not Sources.Default then
             Sources_Specified := True;
+
             while File /= Nil_String loop
                Get_Name_String (String_Elements (Registry)(File).Value);
                Process_Explicit_Source (Name_Buffer (1 .. Name_Len));
@@ -1379,8 +1443,8 @@ package body Projects.Registry is
       --  ??? Should also be shared with the project parser (Prj.Nmsc)
 
       declare
-         Data : constant Project_Data :=
-                  Projects_Table (Registry) (Get_View (Project));
+         Data             : constant Project_Data :=
+                              Projects_Table (Registry) (Get_View (Project));
          Source_List_File : constant Variable_Value :=
                               Prj.Util.Value_Of
                                 (Name_Source_List_File, Data.Decl.Attributes,
@@ -1392,10 +1456,11 @@ package body Projects.Registry is
       begin
          if not Source_List_File.Default then
             Sources_Specified := True;
+
             declare
                F : constant String :=
-                 Name_As_Directory (Get_String (Data.Directory))
-                 & Get_String (Source_List_File.Value);
+                     Name_As_Directory (Get_String (Data.Directory)) &
+                       Get_String (Source_List_File.Value);
             begin
                if Is_Regular_File (F) then
                   Open (File, F);
@@ -1421,100 +1486,106 @@ package body Projects.Registry is
       --  Given the implementation in prj-nmsc, does this attribute apply for
       --  languages other than Ada ?
 
-      --  Parse all directories to find the files that match the naming
-      --  scheme.
-
       for L in Languages'Range loop
          Languages2 (L) := Get_String (Languages (L).all);
       end loop;
+
       Languages3 := Languages2;
 
-      Dirs := Source_Dirs (Project, False);
+      if not Sources_Specified then
+         --  Parse all directories to find the files that match the naming
+         --  scheme.
 
-      for D in Dirs'Range loop
-         Open (Dir, Dirs (D).all);
-         Has_File := False;
+         Dirs := Source_Dirs (Project, False);
 
-         loop
-            Read (Dir, Buffer, Length);
-            exit when Length = 0;
+         for D in Dirs'Range loop
+            Open (Dir, Dirs (D).all);
+            Has_File := False;
 
-            --  Need to normalize the casing, before we call
-            --  File_In_Sources. Unfortunately,
-            --  Get_Unit_Part_And_Name_From_Filename will do the same again,
-            --  which is slightly inefficient
+            loop
+               Read (Dir, Buffer, Length);
+               exit when Length = 0;
 
-            --  Convert the file to UTF8
+               --  Need to normalize the casing, before we call
+               --  File_In_Sources. Unfortunately,
+               --  Get_Unit_Part_And_Name_From_Filename will do the same again,
+               --  which is slightly inefficient
 
-            declare
-               UTF8      : String := Locale_To_UTF8 (Buffer (1 .. Length));
-               Part      : Unit_Part;
-               Unit_Name : Name_Id;
-            begin
-               Canonical_Case_File_Name (UTF8);
+               --  Convert the file to UTF8
 
-               --  Check if the file is in the list of sources, for this
-               --  project, as specified in the project file.
+               declare
+                  UTF8      : String := Locale_To_UTF8 (Buffer (1 .. Length));
+                  Part      : Unit_Part;
+                  Unit_Name : Name_Id;
+               begin
+                  Canonical_Case_File_Name (UTF8);
 
-               if File_In_Sources (UTF8) then
-                  --  First check naming scheme in the project, in case the
-                  --  naming scheme overrides GPS's default
-                  Get_Unit_Part_And_Name_From_Filename
-                    (UTF8, Project, Part, Unit_Name, Lang);
+                  --  Check if the file is in the list of sources, for this
+                  --  project, as specified in the project file.
 
-                  --  Language not found from the project, check the default
-                  --  list of extensions
-                  --  ??? FA30-018: Do not check the default extensions: the
-                  --  project attributes already default to those, and the user
-                  --  can override. Otherwise there is no way for him not to
-                  --  see the files with what happens to be a default extension
-                  --  for a custom language.
+                  if File_In_Sources (UTF8) then
+                     --  First check naming scheme in the project, in case the
+                     --  naming scheme overrides GPS's default
+                     Get_Unit_Part_And_Name_From_Filename
+                       (UTF8, Project, Part, Unit_Name, Lang);
 
-                  if False and then Lang = No_Name then
-                     declare
-                        Ext : constant String := File_Extension (UTF8);
-                     begin
-                        if Ext = "" then
-                           --  No extension, use Base_Name to find the
-                           --  proper language for this file. This is needed
-                           --  for makefile and ChangeLog files for example.
-                           Lang := Languages_Htable.String_Hash_Table.Get
-                             (Registry.Data.Extensions, To_Lower (UTF8));
-                        else
-                           Lang := Languages_Htable.String_Hash_Table.Get
-                             (Registry.Data.Extensions, Ext);
-                        end if;
-                     end;
+                     --  Language not found from the project, check the default
+                     --  list of extensions
+                     --  ??? FA30-018: Do not check the default extensions: the
+                     --  project attributes already default to those, and the
+                     --  user can override. Otherwise there is no way for him
+                     --  not to see the files with what happens to be
+                     --   a default extension for a custom language.
+
+                     if False and then Lang = No_Name then
+                        declare
+                           Ext : constant String := File_Extension (UTF8);
+                        begin
+                           if Ext = "" then
+                              --  No extension, use Base_Name to find the
+                              --  proper language for this file. This is needed
+                              --  for makefile and ChangeLog files for example.
+                              Lang := Languages_Htable.String_Hash_Table.Get
+                                (Registry.Data.Extensions, To_Lower (UTF8));
+                           else
+                              Lang := Languages_Htable.String_Hash_Table.Get
+                                (Registry.Data.Extensions, Ext);
+                           end if;
+                        end;
+                     end if;
+
+                     --  Check if the returned language belongs to the
+                     --  supported languages for the project.
+
+                     if Lang /= No_Name
+                       and then Lang /= Name_Ada
+                     then
+                        for Index in Languages2'Range loop
+                           if Languages2 (Index) = Lang then
+                              Record_Source (Dirs (D).all, UTF8,
+                                             Buffer (1 .. Length), Lang);
+                              Has_File := True;
+
+                              Languages3 (Index) := No_Name;
+                              exit;
+                           end if;
+                        end loop;
+                     end if;
                   end if;
+               end;
+            end loop;
 
-                  --  Check if the returned language belongs to the supported
-                  --  languages for the project
+            if Has_File then
+               Update_Directory_Cache (Project, Dirs (D).all, Has_File);
+            end if;
 
-                  if Lang /= No_Name
-                    and then Lang /= Name_Ada
-                  then
-                     for Index in Languages2'Range loop
-                        if Languages2 (Index) = Lang then
-                           Record_Source (Dirs (D).all, UTF8,
-                                          Buffer (1 .. Length), Lang);
-                           Has_File := True;
-                           Languages3 (Index) := No_Name;
-                           exit;
-                        end if;
-                     end loop;
-                  end if;
-               end if;
-            end;
+            Close (Dir);
          end loop;
+      end if;
 
-         if Has_File then
-            Update_Directory_Cache (Project, Dirs (D).all, Has_File);
-         end if;
+      Set_Source_Files;
 
-         Close (Dir);
-      end loop;
-
-      --  Print error messages for remaining messages
+      --  Print error messages for remaining languages
 
       if not Sources_Specified
         or else Specified_Sources_Count /= 0
