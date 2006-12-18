@@ -87,6 +87,15 @@ Known Problems fixed in GPS 4.1.0
               to gnatpp. However, if the file had the same base name as a file
               from the project, an incorrect -P project was given to gnatpp
 
+- FB03-002 C files incorrectly displayed in project explorer
+  Problem:    In case you have two C (or any other language that is not Ada)
+              files that have the same name and are stored in two distinct
+              source directories that are part of your project, only one of
+              them will be displayed in the project explorer (as a child of the
+              source directory specified last in the project file) and it will
+              furthermore be duplicated in this directory.
+  Workaround: Use distinct file names.
+
 - FB02-017 Obsolete location in the Call Tree view
   Problem:    When clicking on a location in the Call Tree view that
               corresponds to a file that does not exist anymore (e.g. because
