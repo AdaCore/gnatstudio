@@ -923,8 +923,7 @@ package body Project_Explorers_Files is
      (Explorer : access Gtk_Widget_Record'Class;
       Event    : Gdk_Event) return Boolean
    is
-      T    : constant Project_Explorer_Files :=
-        Project_Explorer_Files (Explorer);
+      T : constant Project_Explorer_Files := Project_Explorer_Files (Explorer);
    begin
       return On_Button_Press
         (T.Kernel,
