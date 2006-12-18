@@ -361,7 +361,7 @@
    <!-- SVN -->
 
    <vcs name="Subversion" 
-        path_style="CYGWIN"
+        path_style="@PATH_STYLE@"
         absolute_names="TRUE" atomic_commands="TRUE"
         commit_directory="TRUE">
       <status_files       action="generic_svn_status"           label="Query status"/>

@@ -310,7 +310,7 @@ ac_includes_default="\
 
 ac_subdirs_all="$ac_subdirs_all kernel/src_info/sn"
 ac_subdirs_all="$ac_subdirs_all kernel/src_info/sn/snsrc"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os XMLADA_GPR CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP GNATMAKE SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB DVIPS MAKEINFO TEXI2DVI PKG_CONFIG GTK_CONFIG GTK_PREFIX GLIB_PREFIX ATK_PREFIX PANGO_PREFIX GTKADA_SRC GTKADA_OBJ GTK_CFLAGS GTK_LIBS GTK_STATIC_LIBS PYTHON GPS_VERSION opsysfile ROOT TARGET EXEC_PREFIX STRIP_CR CAN_OUTPUT TARGET_CFLAGS TARGET_LFLAGS EXEC_COMMAND DEFAULT_PS DEFAULT_FONT PRINT_CMD DIFF_CMD PATCH_CMD OPAQUE_MDI HOST_TYPE EXECUTION_WINDOW PYTHON_BASE PYTHON_VERSION PYTHON_ADA_SOURCE PYTHON_DIR PYTHON_LIBS PYGTK_INCLUDE subdirs LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os XMLADA_GPR CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP GNATMAKE SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB DVIPS MAKEINFO TEXI2DVI PKG_CONFIG GTK_CONFIG GTK_PREFIX GLIB_PREFIX ATK_PREFIX PANGO_PREFIX GTKADA_SRC GTKADA_OBJ GTK_CFLAGS GTK_LIBS GTK_STATIC_LIBS PYTHON GPS_VERSION opsysfile TARGET EXEC_PREFIX STRIP_CR CAN_OUTPUT TARGET_CFLAGS TARGET_LFLAGS EXEC_COMMAND DEFAULT_PS DEFAULT_FONT PRINT_CMD DIFF_CMD PATCH_CMD OPAQUE_MDI HOST_TYPE EXECUTION_WINDOW PYTHON_BASE PYTHON_VERSION PYTHON_ADA_SOURCE PYTHON_DIR PYTHON_LIBS PYGTK_INCLUDE PATH_STYLE subdirs LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1384,6 +1384,7 @@ TARGET_CFLAGS=""
 TARGET_LFLAGS=""
 EXEC_COMMAND="xterm -e"
 DEFAULT_FONT="sans 9"
+PATH_STYLE=UNIX
 
 ## We need to double the quotes here, since this is inserted in an Ada file
 DEFAULT_PS='sh -c """"""ps x 2> /dev/null || ps -u \$USER 2> /dev/null || ps""""""'
@@ -1396,7 +1397,6 @@ DIFF_CMD="diff"
 PATCH_CMD="patch"
 EXECUTION_WINDOW=True
 
-ROOT=`pwd`
 TARGET=$host
 EXEC_PREFIX="$prefix"
 
@@ -4923,6 +4923,7 @@ case "${host}" in
 	PATCH_CMD="patch"
 	OPAQUE_MDI=True
 	HOST_TYPE=Windows
+	PATH_STYLE=CYGWIN
 	;;
 
       *-darwin* )
@@ -4994,7 +4995,7 @@ echo "       xmlada: $XMLADA_GPR"
 echo "           uses ADA_PROJECT_PATH to find xmlada.gpr"
 echo ""
 
-                                                                                                                                  ac_config_files="$ac_config_files Makefile Makefile.common gnat/sdefault/sdefault.adb docs/Makefile po/Makefile common/Makefile.common common/src/config.ads python/Makefile.python python/python.gpr gtkada/gtkada.gpr common/expect/Makefile common/common.gpr:common/common_${XMLADA_GPR}.gpr.in gps/src/gpslink.adb"
+                                                                                                                                  ac_config_files="$ac_config_files Makefile Makefile.common gnat/sdefault/sdefault.adb docs/Makefile po/Makefile common/Makefile.common common/src/config.ads python/Makefile.python python/python.gpr gtkada/gtkada.gpr common/expect/Makefile common/common.gpr:common/common_${XMLADA_GPR}.gpr.in share/plug-ins/subversion.xml"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -5557,7 +5558,7 @@ do
   "gtkada/gtkada.gpr" ) CONFIG_FILES="$CONFIG_FILES gtkada/gtkada.gpr" ;;
   "common/expect/Makefile" ) CONFIG_FILES="$CONFIG_FILES common/expect/Makefile" ;;
   "common/common.gpr" ) CONFIG_FILES="$CONFIG_FILES common/common.gpr:common/common_${XMLADA_GPR}.gpr.in" ;;
-  "gps/src/gpslink.adb" ) CONFIG_FILES="$CONFIG_FILES gps/src/gpslink.adb" ;;
+  "share/plug-ins/subversion.xml" ) CONFIG_FILES="$CONFIG_FILES share/plug-ins/subversion.xml" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
    { (exit 1); exit 1; }; };;
@@ -5687,7 +5688,6 @@ s,@GTK_STATIC_LIBS@,$GTK_STATIC_LIBS,;t t
 s,@PYTHON@,$PYTHON,;t t
 s,@GPS_VERSION@,$GPS_VERSION,;t t
 s,@opsysfile@,$opsysfile,;t t
-s,@ROOT@,$ROOT,;t t
 s,@TARGET@,$TARGET,;t t
 s,@EXEC_PREFIX@,$EXEC_PREFIX,;t t
 s,@STRIP_CR@,$STRIP_CR,;t t
@@ -5709,6 +5709,7 @@ s,@PYTHON_ADA_SOURCE@,$PYTHON_ADA_SOURCE,;t t
 s,@PYTHON_DIR@,$PYTHON_DIR,;t t
 s,@PYTHON_LIBS@,$PYTHON_LIBS,;t t
 s,@PYGTK_INCLUDE@,$PYGTK_INCLUDE,;t t
+s,@PATH_STYLE@,$PATH_STYLE,;t t
 s,@subdirs@,$subdirs,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
