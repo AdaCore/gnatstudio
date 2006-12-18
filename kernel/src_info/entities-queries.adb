@@ -1238,7 +1238,7 @@ package body Entities.Queries is
       else
          if Active (Find_Deps_File_Granularity) then
             Iter.Source_File_Index := Iter.Source_File_Index + 1;
-            VF := Get_Source_Files
+            VF := Get_Source_File
               (Current (Iter.Importing), Iter.Source_File_Index);
             if VF /= VFS.No_File then
                Iter.Current_Progress := Iter.Current_Progress + 1;
