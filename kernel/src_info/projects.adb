@@ -29,7 +29,6 @@ with Ada.Unchecked_Deallocation;
 with Basic_Types;               use Basic_Types;
 with Casing;                    use Casing;
 with File_Utils;                use File_Utils;
-with Glib.Convert;              use Glib.Convert;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Namet;                     use Namet;
@@ -117,9 +116,6 @@ package body Projects is
      (Name_Id_Array, Name_Id_Array_Access);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Project_Registry'Class, Project_Registry_Access);
-
-   procedure Ensure_Source_Files (Project : Project_Type);
-   --  Make sure Project.Data.Files has been initialized
 
    function Get_View
      (Tree : Prj.Project_Tree_Ref; Name : Name_Id) return Prj.Project_Id;
@@ -623,52 +619,19 @@ package body Projects is
       end if;
    end Create;
 
-   ----------------------
-   -- Get_Source_Files --
-   ----------------------
+   ---------------------
+   -- Get_Source_File --
+   ---------------------
 
-   function Get_Source_Files
+   function Get_Source_File
      (Project : Project_Type; Index : Positive) return VFS.Virtual_File is
    begin
-      Ensure_Source_Files (Project);
       if Index <= Project.Data.Files'Last then
          return Project.Data.Files (Index);
       else
          return VFS.No_File;
       end if;
-   end Get_Source_Files;
-
-   -------------------------
-   -- Ensure_Source_Files --
-   -------------------------
-
-   procedure Ensure_Source_Files (Project : Project_Type) is
-      Count : Natural;
-      Src   : String_List_Id;
-      Index : Natural := 1;
-   begin
-      if Project.Data.Files = null then
-         Count := Direct_Sources_Count (Project);
-         Project.Data.Files := new File_Array (1 .. Count);
-
-         Src := Projects_Table (Project)(Get_View (Project)).Sources;
-
-         while Src /= Nil_String loop
-            Get_Name_String (String_Elements (Project)(Src).Display_Value);
-
-            declare
-               File : constant String :=
-                 Locale_To_UTF8 (Name_Buffer (1 .. Name_Len));
-            begin
-               Project.Data.Files (Index) := Create
-                 (File, Project, Use_Object_Path => False);
-               Index := Index + 1;
-            end;
-
-            Src := String_Elements (Project)(Src).Next;
-         end loop;
-      end if;
-   end Ensure_Source_Files;
+   end Get_Source_File;
 
    ----------------------
    -- Get_Source_Files --
@@ -686,15 +649,12 @@ package body Projects is
 
    begin
       if not Recursive then
-         Ensure_Source_Files (Project);
          return new File_Array'(Project.Data.Files.all);
       end if;
 
       declare
-         Seen : Boolean_Htable.String_Hash_Table.HTable;
          Iter : Imported_Project_Iterator := Start (Project, Recursive);
       begin
-         Reset (Seen);
          Count := 0;
 
          --  Count files
@@ -702,7 +662,7 @@ package body Projects is
          loop
             P := Current (Iter);
             exit when P = No_Project;
-            Ensure_Source_Files (P);
+
             Count := Count + P.Data.Files'Length;
             Next (Iter);
          end loop;
@@ -717,17 +677,13 @@ package body Projects is
             exit when P = No_Project;
 
             for S in P.Data.Files'Range loop
-               if not Get (Seen, Base_Name (P.Data.Files (S))) then
-                  Set (Seen, Base_Name (P.Data.Files (S)), True);
-                  Sources (Index) := P.Data.Files (S);
-                  Index := Index + 1;
-               end if;
+               Sources (Index) := P.Data.Files (S);
+               Index := Index + 1;
             end loop;
 
             Next (Iter);
          end loop;
 
-         Reset (Seen);
          return new File_Array'(Sources (Sources'First .. Index - 1));
       end;
    end Get_Source_Files;
@@ -2773,5 +2729,20 @@ package body Projects is
    begin
       return Project.View_Tree;
    end Get_Tree;
+
+   ----------------------
+   -- Set_Source_Files --
+   ----------------------
+
+   procedure Set_Source_Files
+     (Project      : Project_Type;
+      Source_Files : VFS.File_Array_Access) is
+   begin
+      if Project.Data.Files /= null then
+         Unchecked_Free (Project.Data.Files);
+      end if;
+
+      Project.Data.Files := Source_Files;
+   end Set_Source_Files;
 
 end Projects;
