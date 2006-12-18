@@ -173,7 +173,7 @@ package body Creation_Wizard.Extending is
 
          File_Index := 1;
          loop
-            File := Get_Source_Files (Project, File_Index);
+            File := Get_Source_File (Project, File_Index);
             exit when File = VFS.No_File;
 
             Append (Model, FIter, TIter);
@@ -275,7 +275,7 @@ package body Creation_Wizard.Extending is
          if Get_Boolean (Model, PIter, 0) then
             P := 1;
             loop
-               File := Get_Source_Files (Prj, P);
+               File := Get_Source_File (Prj, P);
                exit when File = VFS.No_File;
                Add_File (Prj, File);
                P := P + 1;
