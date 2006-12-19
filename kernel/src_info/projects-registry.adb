@@ -98,7 +98,6 @@ package body Projects.Registry is
    --  doesn't belong at all.
 
    procedure Do_Nothing (Dep : in out Directory_Dependency);
-
    package Directory_Htable is new String_Hash
      (Data_Type      => Directory_Dependency,
       Free_Data      => Do_Nothing,
@@ -118,7 +117,6 @@ package body Projects.Registry is
    --   but no matching language was found.
 
    procedure Do_Nothing (Data : in out Source_File_Data);
-
    package Source_Htable is new String_Hash
      (Data_Type      => Source_File_Data,
       Free_Data      => Do_Nothing,
@@ -132,6 +130,12 @@ package body Projects.Registry is
       Free_Data => Do_Nothing,
       Null_Ptr  => No_Name);
    use Languages_Htable.String_Hash_Table;
+
+   procedure Do_Nothing (Bool : in out Boolean);
+   package Boolean_Htable is new String_Hash
+        (Data_Type => Boolean,
+         Free_Data => Do_Nothing,
+         Null_Ptr  => False);
 
    type Naming_Scheme_Record;
    type Naming_Scheme_Access is access Naming_Scheme_Record;
@@ -257,6 +261,16 @@ package body Projects.Registry is
    pragma Inline (Array_Elements);
    --  Return access to the various tables that contain information about the
    --  project
+
+   ----------------
+   -- Do_Nothing --
+   ----------------
+
+   procedure Do_Nothing (Bool : in out Boolean) is
+      pragma Unreferenced (Bool);
+   begin
+      null;
+   end Do_Nothing;
 
    --------------------
    -- Array_Elements --
@@ -1371,6 +1385,9 @@ package body Projects.Registry is
       Has_File  : Boolean;
       Dirs_List : String_List_Id;
       Src       : String_List_Id;
+      Seen      : Boolean_Htable.String_Hash_Table.HTable;
+
+      use Boolean_Htable.String_Hash_Table;
 
    begin
       --  We already know if the directories contain Ada files. Update the
@@ -1386,13 +1403,21 @@ package body Projects.Registry is
             File : constant String :=
                      Locale_To_UTF8 (Name_Buffer (1 .. Name_Len));
          begin
-            Append
-              (Source_File_List,
-               Create (File, Project, Use_Object_Path => False));
+            --  The project manager duplicates files that contain sevral units.
+            --  Only add them once in the project sources.
+
+            if not Get (Seen, File) then
+               Append
+                 (Source_File_List,
+                  Create (File, Project, Use_Object_Path => False));
+               Set (Seen, File, True);
+            end if;
          end;
 
          Src := String_Elements (Registry) (Src).Next;
       end loop;
+
+      Reset (Seen);
 
       Dirs_List := Projects_Table (Registry)(Get_View (Project)).Source_Dirs;
 
