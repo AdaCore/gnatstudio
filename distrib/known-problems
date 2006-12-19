@@ -281,6 +281,12 @@ Known Problems fixed in GPS 4.1.0
               incorrectly displayed in the menus.
   Workaround: Although not visible, the shortcut works as expected
 
+- F421-003 Duplicated files in the project explorer
+  Problem:    Ada files that contains several compilation units are duplicated
+              in the project explorer.
+  Workaround: Follow the GNAT naming scheme and put only one unit per source
+              file.
+
 - F407-008 Problem in calculating width of line numbers
   Problem:    In editors with 10, or 100, or 1000 (etc) lines, the width
               of the space allocated to displaying the line numbers on the left
