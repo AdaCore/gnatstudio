@@ -69,12 +69,6 @@ package body Projects is
       Null_Ptr  => No_Directory_Info);
    use Directory_Htable.String_Hash_Table;
 
-   procedure Do_Nothing (Bool : in out Boolean);
-   package Boolean_Htable is new String_Hash
-     (Data_Type => Boolean,
-      Free_Data => Do_Nothing,
-      Null_Ptr  => False);
-
    type Project_Type_Data is record
       View : Prj.Project_Id;
 
@@ -232,12 +226,6 @@ package body Projects is
 
    procedure Do_Nothing (Dep : in out Directory_Info) is
       pragma Unreferenced (Dep);
-   begin
-      null;
-   end Do_Nothing;
-
-   procedure Do_Nothing (Bool : in out Boolean) is
-      pragma Unreferenced (Bool);
    begin
       null;
    end Do_Nothing;
@@ -644,7 +632,6 @@ package body Projects is
       Count   : Natural;
       Index   : Natural := 1;
       P       : Project_Type;
-      use Boolean_Htable.String_Hash_Table;
       Sources : File_Array_Access;
 
    begin
