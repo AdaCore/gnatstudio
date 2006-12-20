@@ -350,6 +350,13 @@ The file should be opened directly at line and column. If column_end is not 0, t
      <description>Hook called when a word has been added in the editor</description>
   </shell_doc>
 
+  <shell_doc name="@hook@ character_added">
+     <param name="hook">A string, the name of the hook</param>
+     <param name="file">An instance of GPS.File</param>
+     <param name="character">A character</param>
+     <description>Hook called when a character has been added in the editor</description>
+  </shell_doc>
+
   <shell_doc name="@hook@ gps_started">
      <param name="hook">A string, the name of the hook</param>
      <description>Hook called when GPS is fully loaded, and its window is visible to the user.
@@ -519,6 +526,11 @@ This directory always ends with a directory separator</description>
      <see_also name="GPS.lookup_actions_from_key" />
   </shell_doc>
 
+  <shell_doc name="GPS.repeat_next">
+     <param name="count">An integer</param>
+     <description>This action will execute the next one &lt;count&gt; times.</description>
+  </shell_doc>
+
   <shell_doc name="GPS.insmod">
      <param name="shared_lib">Library containing the code of the module</param>
      <param name="module">Name of the module</param>
@@ -602,10 +614,7 @@ this action.
   <shell_doc name="GPS.execute_asynchronous_action">
      <param name="action">Name of the action to execute</param>
      <param name="...">Any number of string parameters</param>
-     <description>This command is similar to GPS.execute_action. However, commands that e
-xecute external applications or menus are executed asynchronously: GPS.execute_asynchrono
-us_action will immediately return, although the external application might not have compl
-eted its execution</description>
+     <description>This command is similar to GPS.execute_action. However, commands that execute external applications or menus are executed asynchronously: GPS.execute_asynchronous_action will immediately return, although the external application might not have completed its execution</description>
      <see_also name="GPS.execute_action" />
   </shell_doc>
 
@@ -2549,6 +2558,14 @@ Access the various suggested fixes through the methods of the Codefix class</des
       <description>This class is a toolset that allows to handle CodeAnalysis instances</description>
   </shell_doc>
 
+  <shell_doc name="GPS.CodeAnalysis.__del__">
+      <description>???</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.CodeAnalysis.__init__">
+      <description>???</description>
+  </shell_doc>
+
   <shell_doc name="GPS.CodeAnalysis.create">
       <return>An instance of GPS.CodeAnalysis</return>
       <description>Creates an empty CodeAnalysis data structure. Data can be put in this structure by using one of the primitive operations.</description>
@@ -2566,7 +2583,7 @@ Access the various suggested fixes through the methods of the Codefix class</des
       <description>Display the data stored in the CodeAnalysis instance into a new MDI window. This window contains a tree that can be interactively manipulated to analyze the results of the code analysis (Coverage, ...).</description>
   </shell_doc>
 
-  <shell_doc name="GPS.CodeAnalysis.list_not_coreved_lines">
+  <shell_doc name="GPS.CodeAnalysis.list_not_covered_lines">
       <param name="self">An instance of GPS.CodeAnalysis</param>
       <description>Show in the Locations window the list of lines that are not covered in the projects loaded in the CodeAnalysis instance. The lines are also highlighted in the corresponding source files.</description>
       <see_also name="GPS.CodeAnalysis" />
