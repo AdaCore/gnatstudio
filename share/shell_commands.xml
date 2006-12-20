@@ -2555,18 +2555,15 @@ Access the various suggested fixes through the methods of the Codefix class</des
     ###################################################################-->
 
   <shell_doc name="GPS.CodeAnalysis">
-      <description>This class is a toolset that allows to handle CodeAnalysis instances</description>
+      <description>This class is a toolset that allows to handle CodeAnalysis instances.</description>
   </shell_doc>
 
   <shell_doc name="GPS.CodeAnalysis.__del__">
-      <description>???</description>
+      <description>Deletes every information contained in a CodeAnalysis instance.</description>
   </shell_doc>
 
   <shell_doc name="GPS.CodeAnalysis.__init__">
-      <description>???</description>
-  </shell_doc>
-
-  <shell_doc name="GPS.CodeAnalysis.create">
+      <param name="self">The GPS.CodeAnalysis instance to build</param>
       <return>An instance of GPS.CodeAnalysis</return>
       <description>Creates an empty CodeAnalysis data structure. Data can be put in this structure by using one of the primitive operations.</description>
   </shell_doc>
@@ -2575,17 +2572,17 @@ Access the various suggested fixes through the methods of the Codefix class</des
       <param name="self">An instance of GPS.CodeAnalysis</param>
       <param name="src">A GPS.File instance</param>
       <param name="cov">A GPS.File instance</param>
-      <description>Adds coverage info provided by a .gcov file parsing. The data is read from the cov parameter, and is associated with the specified source file.</description>
+      <description>Adds coverage information provided by a .gcov file parsing. The data is read from the cov parameter, that should have been created from the specified src file.</description>
   </shell_doc>
 
   <shell_doc name="GPS.CodeAnalysis.show_analysis_report">
       <param name="self">An instance of GPS.CodeAnalysis</param>
-      <description>Display the data stored in the CodeAnalysis instance into a new MDI window. This window contains a tree that can be interactively manipulated to analyze the results of the code analysis (Coverage, ...).</description>
+      <description>Displays the data stored in the CodeAnalysis instance into a new MDI window. This window contains a tree view that can be interactively manipulated to analyze the results of the code analysis (Coverage, ...).</description>
   </shell_doc>
 
-  <shell_doc name="GPS.CodeAnalysis.list_not_covered_lines">
+  <shell_doc name="GPS.CodeAnalysis.list_lines_not_covered">
       <param name="self">An instance of GPS.CodeAnalysis</param>
-      <description>Show in the Locations window the list of lines that are not covered in the projects loaded in the CodeAnalysis instance. The lines are also highlighted in the corresponding source files.</description>
+      <description>Lists in the Locations view the lines that are not covered in the files loaded in the CodeAnalysis instance. The lines are also highlighted in the corresponding source files currently edited.</description>
       <see_also name="GPS.CodeAnalysis" />
   </shell_doc>
 
