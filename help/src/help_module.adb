@@ -61,7 +61,8 @@ with Config;
 
 package body Help_Module is
 
-   Me : constant Debug_Handle := Create ("GPS.Kernel.Help");
+   Me        : constant Debug_Handle := Create ("GPS.Kernel.Help");
+   Shell_Doc : constant Debug_Handle := Create ("Shell_Doc");
 
    Template_Index   : constant String := "help_index.html";
    Index_File       : constant String := "gps_index.xml";
@@ -539,8 +540,13 @@ package body Help_Module is
             if Doc /= "" then
                Set_Return_Value (Data, Doc);
             else
-               Set_Error_Msg
-                 (Data, "No documentation for " & Nth_Arg (Data, 2));
+               declare
+                  Error : constant String :=
+                            "No documentation for " & Nth_Arg (Data, 2);
+               begin
+                  Set_Error_Msg (Data, Error);
+                  Trace (Shell_Doc, Error);
+               end;
             end if;
          end;
 
