@@ -100,9 +100,9 @@ package body Code_Analysis_Module is
       end if;
    end Create;
 
-   -------------------------
-   -- Shell_Add_Gcov_Info --
-   -------------------------
+   ------------------------------
+   -- Add_Gcov_Info_From_Shell --
+   ------------------------------
 
    procedure Add_Gcov_Info_From_Shell
      (Data    : in out Callback_Data'Class;
@@ -175,9 +175,9 @@ package body Code_Analysis_Module is
                 "Unexpected exception: " & Exception_Information (E));
    end Add_Gcov_Info_From_Shell;
 
-   ----------------------------------
-   -- Shell_List_Lines_Not_Covered --
-   ----------------------------------
+   ---------------------------------------
+   -- List_Lines_Not_Covered_From_Shell --
+   ---------------------------------------
 
    procedure List_Lines_Not_Covered_From_Shell
      (Data    : in out Callback_Data'Class;
@@ -210,9 +210,9 @@ package body Code_Analysis_Module is
       end;
    end List_Lines_Not_Covered_From_Shell;
 
-   --------------------------
-   -- Shell_Show_Tree_View --
-   --------------------------
+   -------------------------------------
+   -- Show_Analysis_Report_From_Shell --
+   -------------------------------------
 
    procedure Show_Analysis_Report_From_Shell
      (Data    : in out Callback_Data'Class;
@@ -1206,7 +1206,7 @@ package body Code_Analysis_Module is
          Class        => Code_Analysis_Class,
          Handler      => Add_Gcov_Info_From_Shell'Access);
       Register_Command
-        (Kernel, "list_not_covered_lines",
+        (Kernel, "list_lines_not_covered",
          Class        => Code_Analysis_Class,
          Handler      => List_Lines_Not_Covered_From_Shell'Access);
       Register_Command
