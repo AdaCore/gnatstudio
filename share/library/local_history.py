@@ -184,11 +184,12 @@ class LocalHistory:
      if not self.rcs_dir:
         return
      local = self.local_checkout (revision)
+     file_ext = file_ext.replace ("/", ".").replace (":", "-")
      local2 = basename (local) + " " + file_ext
      local2 = join (self.rcs_dir, local2)
      shutil.move (local, local2)
-     Vdiff.create (File (self.file), File (local2))
-     try: os.unlink (local2)
+     Vdiff.create (File (local2), File (self.file))
+     try: os.chmod (local2, 0777); os.unlink (local2)
      except: pass
 
   def show_diff (self, revision, date):
