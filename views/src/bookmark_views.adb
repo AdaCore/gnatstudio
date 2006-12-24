@@ -289,9 +289,8 @@ package body Bookmark_Views is
          if Location = Data.Name.all then
             Text := new String'("Location: " & Location);
          else
-            Text := new String'("Name: " & Data.Name.all
-                                & ASCII.LF
-                                & "Location: " & Location);
+            Text := new String'
+              ("Name: " & Data.Name.all & ASCII.LF & "Location: " & Location);
          end if;
       end;
 
