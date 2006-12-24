@@ -1088,14 +1088,14 @@ package body GPS.Kernel.Scripts is
             end if;
 
             Find_Declaration_Or_Overloaded
-              (Kernel      => Kernel,
-               File        => Source,
-               Entity_Name => Name,
-               Line        => L,
-               Column      => C,
+              (Kernel            => Kernel,
+               File              => Source,
+               Entity_Name       => Name,
+               Line              => L,
+               Column            => C,
                Ask_If_Overloaded => False,
-               Entity      => Entity,
-               Status      => Status);
+               Entity            => Entity,
+               Status            => Status);
 
             if Status /= Success and then Status /= Fuzzy_Match then
                Set_Error_Msg (Data, -"Entity not found");

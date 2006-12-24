@@ -814,8 +814,7 @@ package GPS.Kernel.Scripts is
    ----------------
 
    function Get_File_Class
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Class_Type;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) return Class_Type;
    --  Return the class to use for file types. This encapsulates a File_Info.
    --  This is more efficient than calling directly
    --  GPS.Kernel.Scripts.New_Class particularly when a File class has already

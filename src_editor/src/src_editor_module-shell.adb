@@ -2662,6 +2662,7 @@ package body Src_Editor_Module.Shell is
    begin
       if Command = Constructor_Method then
          Set_Error_Msg (Data, "Cannot create an EditorMark directly");
+
       elsif Command = Destructor_Method then
          Get_Mark (Mark, Data, 1);
          if Mark /= null
@@ -2672,11 +2673,13 @@ package body Src_Editor_Module.Shell is
             Trace (Me, "Deleting unnamed mark");
             Delete_Mark (Get_Buffer (Mark), Mark);
          end if;
+
       elsif Command = "delete" then
          Get_Mark (Mark, Data, 1);
          if Mark /= null then
             Trace (Me, "Deleting mark");
             Delete_Mark (Get_Buffer (Mark), Mark);
+
          end if;
       elsif Command = "location" then
          Get_Mark (Mark, Data, 1);
@@ -2685,6 +2688,7 @@ package body Src_Editor_Module.Shell is
             Set_Return_Value
               (Data, Create_Editor_Location (Get_Script (Data), Iter));
          end if;
+
       elsif Command = "move" then
          Name_Parameters (Data, (1 => Location_Cst'Access));
          Get_Mark (Mark, Data, 1);
