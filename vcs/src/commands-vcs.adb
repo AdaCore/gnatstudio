@@ -20,6 +20,7 @@
 
 with GNAT.Strings;
 with GPS.Intl;            use GPS.Intl;
+with GPS.Kernel.Hooks;    use GPS.Kernel.Hooks;
 with Traces;              use Traces;
 with VCS_Module;          use VCS_Module;
 with VCS_Status;          use VCS_Status;
@@ -65,12 +66,14 @@ package body Commands.VCS is
 
    procedure Create
      (Item      : out Log_Action_Command_Access;
+      Kernel    : in Kernel_Handle;
       Rep       : VCS_Access;
       Action    : VCS_Action;
       Filenames : String_List.List;
       Logs      : String_List.List) is
    begin
       Item := new Log_Action_Command_Type;
+      Item.Kernel    := Kernel;
       Item.Rep       := Rep;
       Item.Filenames := Copy_String_List (Filenames);
       Item.Logs      := Copy_String_List (Logs);
@@ -179,6 +182,10 @@ package body Commands.VCS is
          end loop;
       end if;
 
+      if Command.Action = Commit then
+         Run_Hook (Command.Kernel, Commit_Done_Hook);
+      end if;
+
       Command_Finished (Command, True);
       return Success;
 
@@ -256,6 +263,8 @@ package body Commands.VCS is
 
       Set_Closed (Command.Kernel, Command.Activity, To => Closed);
       Refresh (Explorer);
+
+      Run_Hook (Command.Kernel, Activity_Checked_Hook);
 
       Command_Finished (Command, True);
       return Success;
