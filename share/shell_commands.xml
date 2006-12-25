@@ -415,7 +415,6 @@ GPS.Hook ("debugger_command_action_hook").add (debugger_commands)
      </example>
    </shell_doc>
 
-
   <shell_doc name="@hook@ marker_added_to_history">
      <param name="hook">A string, the name of the hook</param>
      <description>Hook called when a new marker is added to the history list of previous locations, where the user can navigate back and forward</description>
@@ -450,6 +449,14 @@ GPS.Hook ("debugger_command_action_hook").add (debugger_commands)
   <shell_doc name="@hook@ server_list_hook">
     <param name="hook">A string, the name of the hook</param>
     <description>Hook called when the list of configured servers changed.</description>
+  </shell_doc>
+
+  <shell_doc name="@hook@ commit_done_hook">
+    <description>Hook called when a commit has been done.</description>
+  </shell_doc>
+
+  <shell_doc name="@hook@ activity_checked_hook">
+    <description>Hook called when an activity has been checked, this is the last step done after the activity has been committed. It is at this point that the activity closed status is updated.</description>
   </shell_doc>
 
   <!--#################################################################
@@ -1268,7 +1275,6 @@ to a generic instantiation in Ada. If synchronous is True, then the result will 
       <see_also name="GPS.Command" />
       <see_also name="GPS.Entity.references" />
   </shell_doc>
-
 
   <shell_doc name="GPS.ReferencesCommand.get_result">
       <param name="self">The instance of GPS.ReferencesCommand</param>
@@ -2280,6 +2286,140 @@ If the line and column are not specified, then the current selection is returned
   </shell_doc>
 
   <!--#################################################################
+    ####  Activities class
+    ###################################################################-->
+
+  <shell_doc name="GPS.Activities">
+     <description>General interface to version control activities systems</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Activities.__init__">
+      <param name="self">The instance being constructed</param>
+      <param name="id">Activity's id associated with this instance</param>
+      <return>An instance of GPS.Activities</return>
+      <description>Returns the instance of the activity with the given id</description>
+      <example lang="python">
+         a=GPS.Activities("20061115193904785")
+         print a.name()
+      </example>
+      <see_also name="GPS.Activities.list()"/>
+  </shell_doc>
+
+  <shell_doc name="GPS.Activities.list">
+      <return>A list of all activities's id defined</return>
+      <description>Returns the list of all activities's id</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Activities.create">
+      <param name="name">The activity's name</param>
+      <return>An instance of GPS.Activities</return>
+      <description>Create a new activity and returns it</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Activities.from_file">
+      <param name="file">An instance of GPS.File</param>
+      <return>An instance of GPS.Activities</return>
+      <description>Returns the activity containing the given file</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Activities.name">
+      <param name="self">The instance of GPS.Activities</param>
+      <return>A string</return>
+      <description>Returns the activity's name</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Activities.id">
+      <param name="self">The instance of GPS.Activities</param>
+      <return>A string</return>
+      <description>Returns the activity's unique id</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Activities.has_log">
+      <param name="self">The instance of GPS.Activities</param>
+      <return>A boolean</return>
+      <description>Returns true if the activity has a log present</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Activities.log_file">
+      <param name="self">The instance of GPS.Activities</param>
+      <return>A file</return>
+      <description>Returns the activity's log file</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Activities.log">
+      <param name="self">The instance of GPS.Activities</param>
+      <return>A string</return>
+      <description>Returns the activity's log content</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Activities.is_closed">
+      <param name="self">The instance of GPS.Activities</param>
+      <return>A boolean</return>
+      <description>Returns true if the activity is closed</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Activities.set_closed">
+      <param name="self">The instance of GPS.Activities</param>
+      <param name="status">A boolean</param>
+      <description>Set the activity's closed status</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Activities.group_commit">
+      <param name="self">The instance of GPS.Activities</param>
+      <return>A boolean</return>
+      <description>Returns true if the activity will be commit atomically</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Activities.toggle_group_commit">
+      <param name="self">The instance of GPS.Activities</param>
+      <description>Change the activity's group commit status</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Activities.files">
+      <param name="self">The instance of GPS.Activities</param>
+      <return>A list of files</return>
+      <description>Returns the activity's files list</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Activities.add_file">
+      <param name="self">The instance of GPS.Activities</param>
+      <param name="file">An instance of GPS.File</param>
+      <description>Adds the file into the activity</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Activities.remove_file">
+      <param name="self">The instance of GPS.Activities</param>
+      <param name="file">An instance of GPS.File</param>
+      <description>Removes the file into the activity</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Activities.vcs">
+      <param name="self">The instance of GPS.Activities</param>
+      <return>A string</return>
+      <description>Returns the activity's VCS name</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Activities.commit">
+      <param name="self">The instance of GPS.Activities</param>
+      <description>Commit the activity</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Activities.diff">
+      <param name="self">The instance of GPS.Activities</param>
+      <description>Diff all activity's files</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Activities.query_status">
+      <param name="self">The instance of GPS.Activities</param>
+      <description>Query status of all activity's files</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Activities.update">
+      <param name="self">The instance of GPS.Activities</param>
+      <description>Update all activity's files</description>
+  </shell_doc>
+
+  <!--#################################################################
     ####  Revision class
     ###################################################################-->
 
@@ -2410,7 +2550,6 @@ If the line and column are not specified, then the current selection is returned
       <return>An instance of GPS.Entity</return>
       <description>Return the entity stored in the context</description>
   </shell_doc>
-
 
   <!--#################################################################
     ####   Help class
@@ -2548,7 +2687,6 @@ Access the various suggested fixes through the methods of the Codefix class</des
               ['Builder results']
       </example>
   </shell_doc>
-
 
   <!--#################################################################
     ####   CodeAnalysis class
@@ -2998,7 +3136,6 @@ class My_Gdb (GPS.Process):
        self.id = "from class"
        GPS.Process.__init__ (self, "gdb", "^\\(gdb\\)", on_match=My_Gdb.matched, on_exit=My_Gdb.exited)
 
-
 My_Gdb()
       </example>
       <see_also name="GPS.Process.__init__()" />
@@ -3334,7 +3471,6 @@ This function adds a widget inside the MDI of GPS. The resulting window can then
   <shell_doc name="GPS.MDI.show">
       <description>Shows the graphical interface of GPS.</description>
   </shell_doc>
-
 
   <!--#################################################################
     ####   MDIWindow class
@@ -4290,7 +4426,6 @@ It is possible to close all editors at once using a command like
        <param name="self">An instance of GPS.EditorBuffer</param>
        <description>Cancel the current selection in the buffer</description>
   </shell_doc>
-
 
   <shell_doc name="GPS.EditorBuffer.selection_start">
        <param name="self">An instance of GPS.EditorBuffer</param>
