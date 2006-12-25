@@ -513,12 +513,17 @@ package body VCS_Activities is
    -- Set_Name --
    --------------
 
-   procedure Set_Name (Activity : Activity_Id; Name : String) is
+   procedure Set_Name
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Activity : Activity_Id;
+      Name     : String)
+   is
       Item : Activity_Record := Get (Activity);
    begin
       Free (Item.Name);
       Item.Name := new String'(Name);
       Set (Activity, Item);
+      Save_Activities (Kernel);
    end Set_Name;
 
    -----------------------
