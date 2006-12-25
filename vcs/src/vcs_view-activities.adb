@@ -157,7 +157,7 @@ package body VCS_View.Activities is
 
       --  Set value in the activities registry and save it
 
-      Set_Name (Activity, Get_String (Text_Value));
+      Set_Name (K, Activity, Get_String (Text_Value));
       Save_Activities (K);
 
       Refresh (Get_Explorer (K, False, False));
