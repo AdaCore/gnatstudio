@@ -132,6 +132,11 @@ package body VCS_Module is
       Command : String);
    --  Handler for VCS commands that take no parameter
 
+   procedure VCS_Activities_Class_Command_Handler
+     (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
+      Command : String);
+   --  Handler for VCS Activities commands that take no parameter
+
    -----------------------
    -- On_Open_Interface --
    -----------------------
@@ -256,7 +261,7 @@ package body VCS_Module is
       if Command = "supported_systems" then
          declare
             Systems : constant Argument_List :=
-              Get_VCS_List (Module_ID (VCS_Module_ID));
+                        Get_VCS_List (Module_ID (VCS_Module_ID));
          begin
             Set_Return_Value_As_List (Data);
             for S in Systems'Range loop
@@ -348,6 +353,68 @@ package body VCS_Module is
       return VCS_View_API.Context_Factory (Get_Kernel (Module.all), Child);
    end Default_Context_Factory;
 
+   ------------------------------------------
+   -- VCS_Activities_Class_Command_Handler --
+   ------------------------------------------
+
+   procedure VCS_Activities_Class_Command_Handler
+     (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
+      Command : String)
+   is
+      Kernel               : constant Kernel_Handle := Get_Kernel (Data);
+      VCS_Activities_Class : constant Class_Type :=
+                               New_Class (Kernel, "Activities");
+      Inst                 : Class_Instance;
+   begin
+      if Command = Constructor_Method then
+         Inst := Nth_Arg (Data, 1, VCS_Activities_Class);
+         Set_Data (Inst, VCS_Activities_Class, Nth_Arg (Data, 2, ""));
+
+      elsif Command = "create" then
+         declare
+            A : Activity_Id;
+         begin
+            A := New_Activity (Kernel);
+            Set_Name (Kernel, A, Nth_Arg (Data, 1, ""));
+
+            Inst := New_Instance (Get_Script (Data), VCS_Activities_Class);
+            Set_Data (Inst, VCS_Activities_Class, Image (A));
+            Set_Return_Value (Data, Inst);
+         end;
+         Refresh (Get_Activities_Explorer (Kernel));
+
+      elsif Command = "list" then
+         declare
+            A : Activity_Id;
+         begin
+            Set_Return_Value_As_List (Data);
+
+            A := First;
+            while A /= No_Activity loop
+               if Project_Path
+                 (Get_Root_Project
+                    (Get_Registry (Kernel).all)) = Get_Project_Path (A)
+               then
+                  Set_Return_Value (Data, Image (A));
+               end if;
+               A := Next;
+            end loop;
+         end;
+
+      elsif Command = "from_file" then
+         declare
+            A : Activity_Id;
+         begin
+            Inst := New_Instance (Get_Script (Data), VCS_Activities_Class);
+            A := Get_File_Activity (Get_Data (Data, 1));
+            if A /= No_Activity then
+               Set_Data (Inst, VCS_Activities_Class, Image (A));
+               Set_Return_Value (Data, Inst);
+            end if;
+         end;
+      end if;
+   end VCS_Activities_Class_Command_Handler;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -355,21 +422,24 @@ package body VCS_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      VCS_Class   : constant Class_Type := New_Class (Kernel, "VCS");
-      VCS_Menu    : constant String := "/_" & (-"VCS");
-      Tools_Menu  : constant String := -"Tools" & '/' & (-"Views");
-      Command     : Generic_Kernel_Command_Access;
+      VCS_Class            : constant Class_Type := New_Class (Kernel, "VCS");
+      VCS_Activities_Class : constant Class_Type :=
+                               New_Class (Kernel, "Activities");
+      VCS_Menu             : constant String := "/_" & (-"VCS");
+      Tools_Menu           : constant String := -"Tools" & '/' & (-"Views");
 
-      VCS_Action_Context : constant Action_Filter := Action_Filter (Create);
+      VCS_Action_Context   : constant Action_Filter := Action_Filter (Create);
 
-      File_Filter : constant Action_Filter := Lookup_Filter (Kernel, "File");
-      Dir_Filter  : constant Action_Filter :=
-                      Lookup_Filter (Kernel, "Directory");
-      Prj_Filter  : constant Action_Filter :=
-                      Lookup_Filter (Kernel, "Project");
+      File_Filter          : constant Action_Filter :=
+                               Lookup_Filter (Kernel, "File");
+      Dir_Filter           : constant Action_Filter :=
+                               Lookup_Filter (Kernel, "Directory");
+      Prj_Filter           : constant Action_Filter :=
+                               Lookup_Filter (Kernel, "Project");
 
-      Filter : Action_Filter;
-      Mitem  : Gtk_Menu_Item;
+      Command : Generic_Kernel_Command_Access;
+      Filter  : Action_Filter;
+      Mitem   : Gtk_Menu_Item;
 
       procedure Register_Action_Menu
         (Action_Label : String;
@@ -452,6 +522,9 @@ package body VCS_Module is
                 Name => "vcs.file_status_changed");
 
       Load_Cache (Kernel, VCS_Module_ID.Cached_Status);
+
+      Register_Hook_No_Args (Kernel, Commit_Done_Hook);
+      Register_Hook_No_Args (Kernel, Activity_Checked_Hook);
 
       --  Register VCS commands
 
@@ -558,6 +631,96 @@ package body VCS_Module is
          Class         => VCS_Class,
          Static_Method => True,
          Handler       => Revision_Parse_Handler'Access);
+
+      --  Register VCS Activities commands
+
+      Register_Command
+        (Kernel, Constructor_Method,
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Class         => VCS_Activities_Class,
+         Handler       => VCS_Activities_Class_Command_Handler'Access);
+      Register_Command
+        (Kernel, "create",
+         Class         => VCS_Activities_Class,
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Static_Method => True,
+         Handler       => VCS_Activities_Class_Command_Handler'Access);
+      Register_Command
+        (Kernel, "from_file",
+         Class         => VCS_Activities_Class,
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Static_Method => True,
+         Handler       => VCS_Activities_Class_Command_Handler'Access);
+      Register_Command
+        (Kernel, "list",
+         Class         => VCS_Activities_Class,
+         Static_Method => True,
+         Handler       => VCS_Activities_Class_Command_Handler'Access);
+      Register_Command
+        (Kernel, "id",
+         Class         => VCS_Activities_Class,
+         Handler       => VCS_Activities_Command_Handler'Access);
+      Register_Command
+        (Kernel, "name",
+         Class         => VCS_Activities_Class,
+         Handler       => VCS_Activities_Command_Handler'Access);
+      Register_Command
+        (Kernel, "has_log",
+         Class         => VCS_Activities_Class,
+         Handler       => VCS_Activities_Command_Handler'Access);
+      Register_Command
+        (Kernel, "log_file",
+         Class         => VCS_Activities_Class,
+         Handler       => VCS_Activities_Command_Handler'Access);
+      Register_Command
+        (Kernel, "log",
+         Class         => VCS_Activities_Class,
+         Handler       => VCS_Activities_Command_Handler'Access);
+      Register_Command
+        (Kernel, "is_closed",
+         Class         => VCS_Activities_Class,
+         Handler       => VCS_Activities_Command_Handler'Access);
+      Register_Command
+        (Kernel, "set_closed",
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Class         => VCS_Activities_Class,
+         Handler       => VCS_Activities_Command_Handler'Access);
+      Register_Command
+        (Kernel, "group_commit",
+         Class         => VCS_Activities_Class,
+         Handler       => VCS_Activities_Command_Handler'Access);
+      Register_Command
+        (Kernel, "toggle_group_commit",
+         Class         => VCS_Activities_Class,
+         Handler       => VCS_Activities_Command_Handler'Access);
+      Register_Command
+        (Kernel, "files",
+         Class         => VCS_Activities_Class,
+         Handler       => VCS_Activities_Command_Handler'Access);
+      Register_Command
+        (Kernel, "commit",
+         Class         => VCS_Activities_Class,
+         Handler       => VCS_Activities_Command_Handler'Access);
+      Register_Command
+        (Kernel, "vcs",
+         Class         => VCS_Activities_Class,
+         Handler       => VCS_Activities_Command_Handler'Access);
+      Register_Command
+        (Kernel, "add_file",
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Class         => VCS_Activities_Class,
+         Handler       => VCS_Activities_Command_Handler'Access);
+      Register_Command
+        (Kernel, "remove_file",
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Class         => VCS_Activities_Class,
+         Handler       => VCS_Activities_Command_Handler'Access);
 
       --  Register the main VCS menu and the VCS actions
 
@@ -1078,8 +1241,8 @@ package body VCS_Module is
          Refresh
            (Get_Activities_Explorer
               (Kernel_Handle (Kernel), Raise_Child => False));
-
       end if;
+
    exception
       when E : others =>
          Trace (Exception_Handle,
