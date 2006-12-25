@@ -164,7 +164,7 @@ class DocGenerator:
            prefix += "<img src='childtree2.png' alt='  '/>" + \
              "<img src='childtree.png' alt='_'/>"
 
-           for c in sorted (children):
+           for c in children.sort():
             output += "  <li>" + prefix + self.full_name (c) + "</li>\n"
  
            output += "</ul></td></tr>"
