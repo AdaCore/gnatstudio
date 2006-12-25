@@ -591,5 +591,3 @@ def on_clipboard_changed (hook):
     cancel_mark_command ()
 
 GPS.Hook ("gps_started").add (on_gps_started)
-
-

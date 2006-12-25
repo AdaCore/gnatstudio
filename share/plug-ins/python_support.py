@@ -210,4 +210,3 @@ GPS.parse_xml ("""
 GPS.Hook ("project_view_changed").add (project_recomputed)
 GPS.Hook ("before_exit_action_hook").add (before_exit)
 GPS.Hook ("context_changed").add (context_changed)
-

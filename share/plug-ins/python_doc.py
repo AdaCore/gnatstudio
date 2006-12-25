@@ -616,5 +616,3 @@ def on_gps_started (hook_name):
     </documentation_file>""")
 
 GPS.Hook ("gps_started").add (on_gps_started)
-
-

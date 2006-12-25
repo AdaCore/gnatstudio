@@ -208,4 +208,3 @@ parse_xml ("""
 """)
 
 Hook ("context_changed").add (context_changed)
-
