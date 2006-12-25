@@ -36,13 +36,13 @@ with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with Commands;                  use Commands;
 with Log_Utils;                 use Log_Utils;
 with String_List_Utils;         use String_List_Utils;
 with Traces;                    use Traces;
 with VCS;                       use VCS;
+with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
 with VCS_Activities;            use VCS_Activities;
 with VCS_Module;                use VCS_Module;
 with VCS_View.Explorer;
@@ -50,6 +50,26 @@ with VCS_View;                  use VCS_View;
 with VFS;                       use VFS;
 
 package body VCS_Activities_View_API is
+
+   procedure Commit_Activity
+     (Kernel   : Kernel_Handle;
+      Activity : Activity_Id);
+   --  Commit the given activity
+
+   procedure Query_Status_Activity
+     (Kernel   : Kernel_Handle;
+      Activity : Activity_Id);
+   --  Query status of the given activity
+
+   procedure Update_Activity
+     (Kernel   : Kernel_Handle;
+      Activity : Activity_Id);
+   --  Update the given activity
+
+   procedure Diff_Activity
+     (Kernel   : Kernel_Handle;
+      Activity : Activity_Id);
+   --  Diff the given activity against head
 
    procedure On_Menu_Create_Activity
      (Widget  : access GObject_Record'Class;
@@ -264,6 +284,27 @@ package body VCS_Activities_View_API is
                 "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Remove_From_Activity;
 
+   ---------------------------
+   -- Query_Status_Activity --
+   ---------------------------
+
+   procedure Query_Status_Activity
+     (Kernel   : Kernel_Handle;
+      Activity : Activity_Id)
+   is
+      Files : String_List.List;
+   begin
+      Files := Get_Files_In_Activity (Activity);
+
+      if String_List.Is_Empty (Files) then
+         Console.Insert
+           (Kernel, -"VCS: No file in activity, cannot commit", Mode => Error);
+         return;
+      end if;
+
+      Get_Status (Get_VCS_For_Activity (Kernel, Activity), Files);
+   end Query_Status_Activity;
+
    -----------------------------------
    -- On_Menu_Query_Status_Activity --
    -----------------------------------
@@ -276,7 +317,23 @@ package body VCS_Activities_View_API is
       Kernel    : constant Kernel_Handle := Get_Kernel (Context);
       Activity  : constant Activity_Id :=
                     Value (Activity_Information (Context));
-      Files     : String_List.List;
+   begin
+      Query_Status_Activity (Kernel, Activity);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Menu_Query_Status_Activity;
+
+   ---------------------
+   -- Update_Activity --
+   ---------------------
+
+   procedure Update_Activity
+     (Kernel   : Kernel_Handle;
+      Activity : Activity_Id)
+   is
+      Files : String_List.List;
    begin
       Files := Get_Files_In_Activity (Activity);
 
@@ -286,12 +343,9 @@ package body VCS_Activities_View_API is
          return;
       end if;
 
+      Update (Get_VCS_For_Activity (Kernel, Activity), Files);
       Get_Status (Get_VCS_For_Activity (Kernel, Activity), Files);
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end On_Menu_Query_Status_Activity;
+   end Update_Activity;
 
    -----------------------------
    -- On_Menu_Update_Activity --
@@ -305,41 +359,27 @@ package body VCS_Activities_View_API is
       Kernel    : constant Kernel_Handle := Get_Kernel (Context);
       Activity  : constant Activity_Id :=
                     Value (Activity_Information (Context));
-      Files     : String_List.List;
    begin
-      Files := Get_Files_In_Activity (Activity);
-
-      if String_List.Is_Empty (Files) then
-         Console.Insert
-           (Kernel, -"VCS: No file in activity, cannot commit", Mode => Error);
-         return;
-      end if;
-
-      Update (Get_VCS_For_Activity (Kernel, Activity), Files);
-      Get_Status (Get_VCS_For_Activity (Kernel, Activity), Files);
+      Update_Activity (Kernel, Activity);
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Update_Activity;
 
-   -----------------------------
-   -- On_Menu_Commit_Activity --
-   -----------------------------
+   ---------------------
+   -- Commit_Activity --
+   ---------------------
 
-   procedure On_Menu_Commit_Activity
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context)
+   procedure Commit_Activity
+     (Kernel   : Kernel_Handle;
+      Activity : Activity_Id)
    is
-      pragma Unreferenced (Widget);
-      Kernel         : constant Kernel_Handle := Get_Kernel (Context);
-      Activity       : constant Activity_Id :=
-                         Value (Activity_Information (Context));
-      Files          : String_List.List;
-      All_Logs_Exist : Boolean := True;
-
       use String_List;
       use type String_List.List_Node;
+
+      Files          : String_List.List;
+      All_Logs_Exist : Boolean := True;
    begin
       Files := Get_Files_In_Activity (Activity);
 
@@ -368,11 +408,49 @@ package body VCS_Activities_View_API is
            (Kernel, Get_VCS_For_Activity (Kernel, Activity),
             Commit, Files, Activity);
       end if;
+   end Commit_Activity;
+
+   -----------------------------
+   -- On_Menu_Commit_Activity --
+   -----------------------------
+
+   procedure On_Menu_Commit_Activity
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context)
+   is
+      pragma Unreferenced (Widget);
+      Kernel         : constant Kernel_Handle := Get_Kernel (Context);
+      Activity       : constant Activity_Id :=
+                         Value (Activity_Information (Context));
+   begin
+      Commit_Activity (Kernel, Activity);
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Commit_Activity;
+
+   -------------------
+   -- Diff_Activity --
+   -------------------
+
+   procedure Diff_Activity
+     (Kernel   : Kernel_Handle;
+      Activity : Activity_Id)
+   is
+      VCS   : constant VCS_Access := Get_VCS_For_Activity (Kernel, Activity);
+      Files : constant String_List.List := Get_Files_In_Activity (Activity);
+      Iter  : String_List.List_Node;
+   begin
+      --  For each file we get the diff
+
+      Iter := String_List.First (Files);
+
+      for K in 1 .. String_List.Length (Files) loop
+         Diff (VCS, Create (String_List.Data (Iter)));
+         Iter := String_List.Next (Iter);
+      end loop;
+   end Diff_Activity;
 
    ---------------------------
    -- On_Menu_Diff_Activity --
@@ -386,21 +464,8 @@ package body VCS_Activities_View_API is
       Kernel    : constant Kernel_Handle := Get_Kernel (Context);
       Activity  : constant Activity_Id :=
                     Value (Activity_Information (Context));
-      VCS       : constant VCS_Access :=
-                    Get_VCS_For_Activity (Kernel, Activity);
-      Files     : constant String_List.List :=
-                    Get_Files_In_Activity (Activity);
-      Iter      : String_List.List_Node;
    begin
-      --  For each file we get the diff
-
-      Iter := String_List.First (Files);
-
-      for K in 1 .. String_List.Length (Files) loop
-         Diff (VCS, Create (String_List.Data (Iter)));
-         Iter := String_List.Next (Iter);
-      end loop;
-
+      Diff_Activity (Kernel, Activity);
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -810,5 +875,113 @@ package body VCS_Activities_View_API is
          Set_Sensitive (Item, True);
       end if;
    end VCS_Activities_Contextual_Menu;
+
+   ------------------------------------
+   -- VCS_Activities_Command_Handler --
+   ------------------------------------
+
+   procedure VCS_Activities_Command_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String)
+   is
+      use type String_List.List_Node;
+
+      Kernel               : constant Kernel_Handle := Get_Kernel (Data);
+      VCS_Activities_Class : constant Class_Type :=
+                               New_Class (Kernel, "Activities");
+      Inst                 : constant Class_Instance :=
+                               Nth_Arg (Data, 1, VCS_Activities_Class);
+      Image_Id             : constant String :=
+                               Get_Data (Inst, VCS_Activities_Class);
+      Activity             : constant Activity_Id :=
+                               Get_Activity_From_Name (Image_Id);
+      Refresh_Explorer     : Boolean := False;
+   begin
+      if Activity = No_Activity then
+         Set_Error_Msg (Data, -("Cannot find Activity " & Image_Id));
+         return;
+      end if;
+
+      if Command = "name" then
+         Set_Return_Value (Data, Get_Name (Activity));
+
+      elsif Command = "id" then
+         Set_Return_Value (Data, Image (Activity));
+
+      elsif Command = "has_log" then
+         Set_Return_Value (Data, Has_Log (Kernel, Activity));
+
+      elsif Command = "log_file" then
+         Set_Return_Value
+           (Data,
+            Create_File (Get_Script (Data), Get_Log_File (Kernel, Activity)));
+
+      elsif Command = "log" then
+         Refresh_Explorer := True;
+         Set_Return_Value (Data, Get_Log (Kernel, Activity));
+
+      elsif Command = "is_closed" then
+         Set_Return_Value (Data, Is_Closed (Activity));
+
+      elsif Command = "set_closed" then
+         Refresh_Explorer := True;
+         Set_Closed (Kernel, Activity, Nth_Arg (Data, 2));
+
+      elsif Command = "group_commit" then
+         Set_Return_Value (Data, Get_Group_Commit (Activity));
+
+      elsif Command = "toggle_group_commit" then
+         Toggle_Group_Commit (Kernel, Activity);
+
+      elsif Command = "files" then
+         Set_Return_Value_As_List (Data);
+
+         declare
+            Node : String_List.List_Node :=
+                     String_List.First (Get_Files_In_Activity (Activity));
+         begin
+            while Node /= String_List.Null_Node loop
+               Set_Return_Value (Data, String_List.Data (Node));
+               Node := String_List.Next (Node);
+            end loop;
+         end;
+
+      elsif Command = "add_file" then
+         Refresh_Explorer := True;
+         Add_File (Kernel, Activity, Get_Data (Data, 2));
+
+      elsif Command = "remove_file" then
+         Refresh_Explorer := True;
+         Remove_File (Kernel, Activity, Get_Data (Data, 2));
+
+      elsif Command = "vcs" then
+         declare
+            VCS : constant VCS_Access :=
+                    Get_VCS_For_Activity (Kernel, Activity);
+         begin
+            if VCS = null then
+               Set_Return_Value (Data, Name (Unknown_VCS_Reference));
+            else
+               Set_Return_Value (Data, Name (VCS));
+            end if;
+         end;
+
+      elsif Command = "commit" then
+         Commit_Activity (Kernel, Activity);
+
+      elsif Command = "diff" then
+         Diff_Activity (Kernel, Activity);
+
+      elsif Command = "query_status" then
+         Query_Status_Activity (Kernel, Activity);
+
+      elsif Command = "update" then
+         Update_Activity (Kernel, Activity);
+      end if;
+
+      if Refresh_Explorer then
+         Refresh (Get_Activities_Explorer (Kernel));
+      end if;
+   end VCS_Activities_Command_Handler;
 
 end VCS_Activities_View_API;
