@@ -22,6 +22,7 @@ with Glib.Object;         use Glib.Object;
 with Gtk.Menu;            use Gtk.Menu;
 
 with GPS.Kernel;          use GPS.Kernel;
+with GPS.Kernel.Scripts;  use GPS.Kernel.Scripts;
 with VCS_View.Activities; use VCS_View.Activities;
 
 package VCS_Activities_View_API is
@@ -66,5 +67,10 @@ package VCS_Activities_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context);
    --  Change Activity's status to/from closed/opened
+
+   procedure VCS_Activities_Command_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String);
+   --  VCS Activities class command handler
 
 end VCS_Activities_View_API;
