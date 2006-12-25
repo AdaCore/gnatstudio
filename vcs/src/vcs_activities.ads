@@ -61,7 +61,10 @@ package VCS_Activities is
    function Get_Name (Activity : Activity_Id) return String;
    --  Returns the name for this activity or the empty string if No_Activity
 
-   procedure Set_Name (Activity : Activity_Id; Name : String);
+   procedure Set_Name
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Activity : Activity_Id;
+      Name     : String);
    --  Set the name of the activity
 
    procedure Set_Closed
