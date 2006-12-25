@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -34,6 +34,12 @@ with VCS_Status;          use VCS_Status;
 package VCS_Module is
 
    VCS_Module_Name : constant String := "VCS_Interface";
+
+   Commit_Done_Hook : constant String := "commit_done_hook";
+   --  Raised when a commit has been done
+
+   Activity_Checked_Hook : constant String := "activity_checked_hook";
+   --  Raised when an activity status has been checked
 
    type VCS_Module_ID_Record is new Module_ID_Record with record
       VCS_List         : Argument_List_Access;
