@@ -811,7 +811,7 @@ package body Log_Utils is
 
       --  Create the Commit command
 
-      Create (Commit_Command, Ref, Action, Files, Logs);
+      Create (Commit_Command, Kernel, Ref, Action, Files, Logs);
 
       --  Create the Get_Status command
 
