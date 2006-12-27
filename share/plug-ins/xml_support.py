@@ -170,12 +170,12 @@ parse_xml ("""
   <Language>
     <Name>XML</Name>
     <Spec_Suffix>.xml</Spec_Suffix>
-    <Keywords>&lt;/?\w+&gt;?</Keywords>
+    <Keywords>(&lt;/?\w+&gt;?)|(/?&gt;)</Keywords>
     <Wordchars>&lt;&gt;/</Wordchars>
     <Context>
       <Comment_Start>&lt;!--</Comment_Start>
       <Comment_End>--&gt;</Comment_End>
-      <String_Delimiter>"</String_Delimiter>
+      <String_Delimiter>&quot;</String_Delimiter>
       <Can_Indent>True</Can_Indent>
       <Syntax_Highlighting>True</Syntax_Highlighting>
       <Case_Sensitive>True</Case_Sensitive>
