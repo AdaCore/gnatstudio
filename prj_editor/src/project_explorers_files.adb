@@ -18,63 +18,62 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;            use Ada.Exceptions;
-with GNAT.Case_Util;            use GNAT.Case_Util;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with Ada.Exceptions;             use Ada.Exceptions;
+with Ada.Unchecked_Deallocation; use Ada;
+
+with GNAT.Case_Util;             use GNAT.Case_Util;
+with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
+with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Strings;
 
-with Glib;                      use Glib;
-with Glib.Convert;              use Glib.Convert;
-with Glib.Object;               use Glib.Object;
-with Glib.Values;               use Glib.Values;
-with Glib.Xml_Int;              use Glib.Xml_Int;
-with Gdk.Dnd;                   use Gdk.Dnd;
-with Gdk.Event;                 use Gdk.Event;
-with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
-with Gtk.Dnd;                   use Gtk.Dnd;
-with Gtk.Handlers;              use Gtk.Handlers;
-with Gtk.Main;                  use Gtk.Main;
-with Gtk.Tree_View;             use Gtk.Tree_View;
-with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
-with Gtk.Tree_Store;            use Gtk.Tree_Store;
-with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
-with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Menu;                  use Gtk.Menu;
-with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
-with Gtk.Tree_Model;            use Gtk.Tree_Model;
-with Gtk.Widget;                use Gtk.Widget;
-with Gtkada.MDI;                use Gtkada.MDI;
-with Gtkada.Handlers;           use Gtkada.Handlers;
+with Glib;                       use Glib;
+with Glib.Convert;               use Glib.Convert;
+with Glib.Object;                use Glib.Object;
+with Glib.Values;                use Glib.Values;
+with Glib.Xml_Int;               use Glib.Xml_Int;
+with Gdk.Dnd;                    use Gdk.Dnd;
+with Gdk.Event;                  use Gdk.Event;
+with Gtk.Check_Menu_Item;        use Gtk.Check_Menu_Item;
+with Gtk.Dnd;                    use Gtk.Dnd;
+with Gtk.Handlers;               use Gtk.Handlers;
+with Gtk.Main;                   use Gtk.Main;
+with Gtk.Tree_View;              use Gtk.Tree_View;
+with Gtk.Tree_Selection;         use Gtk.Tree_Selection;
+with Gtk.Tree_Store;             use Gtk.Tree_Store;
+with Gtk.Cell_Renderer_Text;     use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Pixbuf;   use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Enums;                  use Gtk.Enums;
+with Gtk.Menu;                   use Gtk.Menu;
+with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
+with Gtk.Tree_View_Column;       use Gtk.Tree_View_Column;
+with Gtk.Tree_Model;             use Gtk.Tree_Model;
+with Gtk.Widget;                 use Gtk.Widget;
+with Gtkada.MDI;                 use Gtkada.MDI;
+with Gtkada.Handlers;            use Gtkada.Handlers;
 
-with Unchecked_Deallocation;
+with VFS;                        use VFS;
+with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
+with GPS.Kernel.Project;         use GPS.Kernel.Project;
+with GPS.Kernel;                 use GPS.Kernel;
+with GPS.Intl;                   use GPS.Intl;
+with Projects;                   use Projects;
+with Projects.Registry;          use Projects.Registry;
+with Remote;                     use Remote;
+with String_List_Utils;          use String_List_Utils;
+with File_Utils;                 use File_Utils;
+with GUI_Utils;                  use GUI_Utils;
+with OS_Utils;                   use OS_Utils;
+with Traces;                     use Traces;
+with Histories;                  use Histories;
+with Project_Explorers_Common;   use Project_Explorers_Common;
 
-with VFS;                      use VFS;
-with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
-with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
-with GPS.Kernel.Project;       use GPS.Kernel.Project;
-with GPS.Kernel;               use GPS.Kernel;
-with GPS.Intl;                 use GPS.Intl;
-with Projects;                 use Projects;
-with Projects.Registry;        use Projects.Registry;
-with Remote;                   use Remote;
-with String_List_Utils;        use String_List_Utils;
-with File_Utils;               use File_Utils;
-with GUI_Utils;                use GUI_Utils;
-with OS_Utils;                 use OS_Utils;
-with Traces;                   use Traces;
-with Histories;                use Histories;
-
-with Namet;                    use Namet;
-
-with Project_Explorers_Common; use Project_Explorers_Common;
+with Namet;                      use Namet;
 
 package body Project_Explorers_Files is
 
-   Explorer_Files_Module_Id   : Module_ID;
+   Explorer_Files_Module_Id     : Module_ID;
 
    File_View_Shows_Only_Project : constant History_Key :=
      "explorers-file-show-project-only";
@@ -104,11 +103,11 @@ package body Project_Explorers_Files is
                                  Append_Directory_Idle_Data_Access);
 
    procedure Set_Column_Types (Tree : Gtk_Tree_View);
-   --  Sets the types of columns to be displayed in the tree_view.
+   --  Sets the types of columns to be displayed in the tree_view
 
    function Parse_Path
      (Path : String) return String_List_Utils.String_List.List;
-   --  Parse a path string and return a list of all directories in it.
+   --  Parse a path string and return a list of all directories in it
 
    procedure File_Append_Directory
      (Explorer      : access Project_Explorer_Files_Record'Class;
@@ -132,40 +131,40 @@ package body Project_Explorers_Files is
    function Expose_Event_Cb
      (Explorer : access Glib.Object.GObject_Record'Class;
       Values   : GValues) return Boolean;
-   --  Scroll the explorer to the current directory.
+   --  Scroll the explorer to the current directory
 
    procedure File_Tree_Collapse_Row_Cb
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
       Values   : GValues);
-   --  Called every time a node is collapsed in the file view.
+   --  Called every time a node is collapsed in the file view
 
    procedure On_File_Destroy
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues);
-   --  Callback for the "destroy" event on the file view.
+   --  Callback for the "destroy" event on the file view
 
    procedure File_Remove_Idle_Calls
      (Explorer : access Project_Explorer_Files_Record'Class);
-   --  Remove the idle calls for filling the file view.
+   --  Remove the idle calls for filling the file view
 
    function File_Button_Press
      (Explorer : access Gtk_Widget_Record'Class;
       Event    : Gdk_Event) return Boolean;
-   --  Callback for the "button_press" event on the file view.
+   --  Callback for the "button_press" event on the file view
 
    function File_Key_Press
      (Explorer : access Gtk_Widget_Record'Class;
       Event    : Gdk_Event) return Boolean;
-   --  Callback for the "key_press" event on the file view.
+   --  Callback for the "key_press" event on the file view
 
    procedure File_Selection_Changed
      (Explorer : access Gtk_Widget_Record'Class);
-   --  Callback for the "button_press" event on the file view.
+   --  Callback for the "button_press" event on the file view
 
    procedure Free_Children
      (T    : Project_Explorer_Files;
       Iter : Gtk_Tree_Iter);
-   --  Free all the children of iter Iter in the file view.
+   --  Free all the children of iter Iter in the file view
 
    function Read_Directory
      (D : Append_Directory_Idle_Data_Access) return Boolean;
@@ -187,16 +186,16 @@ package body Project_Explorers_Files is
 
    function Greatest_Common_Path
      (L : String_List_Utils.String_List.List) return String;
-   --  Return the greatest common path to a list of directories.
+   --  Return the greatest common path to a list of directories
 
    procedure Refresh (Files : access Gtk.Widget.Gtk_Widget_Record'Class);
-   --  Refresh the contents of the explorer.
+   --  Refresh the contents of the explorer
 
    function Load_Desktop
      (MDI  : MDI_Window;
       Node : Node_Ptr;
       User : Kernel_Handle) return MDI_Child;
-   --  Restore the status of the explorer from a saved XML tree.
+   --  Restore the status of the explorer from a saved XML tree
 
    function Save_Desktop
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
@@ -205,9 +204,9 @@ package body Project_Explorers_Files is
    --  Save the status of the project explorer to an XML tree
 
    procedure On_Open_Explorer
-     (Widget       : access GObject_Record'Class;
-      Kernel       : Kernel_Handle);
-   --  Raise the existing explorer, or open a new one.
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle);
+   --  Raise the existing explorer, or open a new one
 
    -----------------------------
    -- Default_Context_Factory --
@@ -559,10 +558,10 @@ package body Project_Explorers_Files is
    ----------------------
 
    procedure Set_Column_Types (Tree : Gtk_Tree_View) is
-      Col           : Gtk_Tree_View_Column;
-      Text_Rend     : Gtk_Cell_Renderer_Text;
-      Pixbuf_Rend   : Gtk_Cell_Renderer_Pixbuf;
-      Dummy         : Gint;
+      Col         : Gtk_Tree_View_Column;
+      Text_Rend   : Gtk_Cell_Renderer_Text;
+      Pixbuf_Rend : Gtk_Cell_Renderer_Pixbuf;
+      Dummy       : Gint;
       pragma Unreferenced (Dummy);
 
    begin
@@ -753,11 +752,11 @@ package body Project_Explorers_Files is
 
    procedure On_File_Destroy
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Params : Glib.Values.GValues)
+      Params   : Glib.Values.GValues)
    is
       pragma Unreferenced (Params);
       E : constant Project_Explorer_Files :=
-        Project_Explorer_Files (Explorer);
+            Project_Explorer_Files (Explorer);
    begin
       File_Remove_Idle_Calls (E);
    end On_File_Destroy;
@@ -771,9 +770,9 @@ package body Project_Explorers_Files is
       Values   : GValues)
    is
       T    : constant Project_Explorer_Files :=
-        Project_Explorer_Files (Explorer);
+               Project_Explorer_Files (Explorer);
       Path : constant Gtk_Tree_Path :=
-        Gtk_Tree_Path (Get_Proxy (Nth (Values, 2)));
+               Gtk_Tree_Path (Get_Proxy (Nth (Values, 2)));
       Iter : Gtk_Tree_Iter;
 
    begin
@@ -972,7 +971,7 @@ package body Project_Explorers_Files is
 
    procedure Refresh (Files : access Gtk.Widget.Gtk_Widget_Record'Class) is
       Explorer     : constant Project_Explorer_Files :=
-        Project_Explorer_Files (Files);
+                       Project_Explorer_Files (Files);
       Buffer       : aliased String (1 .. 1024);
       Last, Len    : Integer;
       Cur_Dir      : constant String := Get_Current_Dir;
@@ -1184,9 +1183,9 @@ package body Project_Explorers_Files is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Files    : Project_Explorer_Files;
-      Child    : MDI_Child;
-      C2       : MDI_Explorer_Child;
+      Files : Project_Explorer_Files;
+      Child : MDI_Child;
+      C2    : MDI_Explorer_Child;
    begin
       --  Start with the files view, so that if both are needed, the project
       --  view ends up on top of the files view
@@ -1266,10 +1265,10 @@ package body Project_Explorers_Files is
    begin
       Explorer_Files_Module_Id := new Explorer_Module_Record;
       Register_Module
-        (Module                  => Explorer_Files_Module_Id,
-         Kernel                  => Kernel,
-         Module_Name             => "Files_View",
-         Priority                => GPS.Kernel.Modules.Default_Priority);
+        (Module      => Explorer_Files_Module_Id,
+         Kernel      => Kernel,
+         Module_Name => "Files_View",
+         Priority    => GPS.Kernel.Modules.Default_Priority);
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
       Register_Menu
