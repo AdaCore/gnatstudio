@@ -2295,14 +2295,13 @@ If the line and column are not specified, then the current selection is returned
 
   <shell_doc name="GPS.Activities.__init__">
       <param name="self">The instance being constructed</param>
-      <param name="id">Activity's id associated with this instance</param>
+      <param name="name">Activity's name to be given to this instance</param>
       <return>An instance of GPS.Activities</return>
-      <description>Returns the instance of the activity with the given id</description>
+      <description>Creates a new activity and returns its instance</description>
       <example lang="python">
-         a=GPS.Activities("20061115193904785")
-         print a.name()
+         a=GPS.Activities("Fix loading order")
+         print a.id()
       </example>
-      <see_also name="GPS.Activities.list()"/>
   </shell_doc>
 
   <shell_doc name="GPS.Activities.list">
@@ -2310,10 +2309,11 @@ If the line and column are not specified, then the current selection is returned
       <description>Returns the list of all activities's id</description>
   </shell_doc>
 
-  <shell_doc name="GPS.Activities.create">
-      <param name="name">The activity's name</param>
+  <shell_doc name="GPS.Activities.get">
+      <param name="id">The unique activity's id</param>
       <return>An instance of GPS.Activities</return>
-      <description>Create a new activity and returns it</description>
+      <description>Returns the activity given its id</description>
+      <see_also name="GPS.Activities.list()"/>
   </shell_doc>
 
   <shell_doc name="GPS.Activities.from_file">
