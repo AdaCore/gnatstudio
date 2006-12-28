@@ -54,6 +54,7 @@ package body VCS_Activities is
    type Activity_Record is record
       Project      : Virtual_File;
       Name         : String_Access;
+      Instance     : Class_Instance;
       Id           : Activity_Id;
       VCS          : VCS_Access;
       Group_Commit : Boolean := False;
@@ -63,7 +64,7 @@ package body VCS_Activities is
    end record;
 
    Empty_Activity : constant Activity_Record :=
-                      (VFS.No_File, null, No_Activity,
+                      (VFS.No_File, null, No_Class_Instance, No_Activity,
                        null, False, False, null, String_List.Null_List);
 
    subtype Hash_Header is Positive range 1 .. 123;
@@ -143,7 +144,7 @@ package body VCS_Activities is
          Item         : Activity_Record;
       begin
          Item := (Create (Project),
-                  new String'(Name), Value (Id),
+                  new String'(Name), No_Class_Instance, Value (Id),
                   null, Group_Commit,
                   Committed or Closed,
                   new String_Hash_Table.HTable, String_List.Null_List);
@@ -293,6 +294,7 @@ package body VCS_Activities is
                  (Project_Path
                     (Get_Root_Project (Get_Registry (Kernel).all)),
                   new String'("New Activity"),
+                  No_Class_Instance,
                   UID,
                   null,
                   False, False,
@@ -392,22 +394,6 @@ package body VCS_Activities is
       OS_Lib.Delete_File (File_Name, Success);
    end Delete_Activity;
 
-   ----------------------------
-   -- Get_Activity_From_Name --
-   ----------------------------
-
-   function Get_Activity_From_Name (Name : String) return Activity_Id is
-      Item : Activity_Record := Get_First;
-   begin
-      while Item /= Empty_Activity loop
-         if String (Item.Id) = Name then
-            return Item.Id;
-         end if;
-         Item := Get_Next;
-      end loop;
-      return No_Activity;
-   end Get_Activity_From_Name;
-
    -------------
    -- Has_Log --
    -------------
@@ -495,6 +481,28 @@ package body VCS_Activities is
    begin
       return Get_Next.Id;
    end Next;
+
+   ------------------
+   -- Set_Instance --
+   ------------------
+
+   procedure Set_Instance
+     (Activity : Activity_Id; Instance : Class_Instance)
+   is
+      Item : Activity_Record := Get (Activity);
+   begin
+      Item.Instance := Instance;
+      Set (Activity, Item);
+   end Set_Instance;
+
+   ------------------
+   -- Get_Instance --
+   ------------------
+
+   function Get_Instance (Activity : Activity_Id) return Class_Instance is
+   begin
+      return Get (Activity).Instance;
+   end Get_Instance;
 
    --------------
    -- Get_Name --
