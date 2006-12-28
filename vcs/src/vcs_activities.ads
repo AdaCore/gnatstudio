@@ -18,10 +18,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Kernel;        use GPS.Kernel;
-with String_List_Utils; use String_List_Utils;
-with VFS;               use VFS;
-with VCS;               use VCS;
+with GPS.Kernel;         use GPS.Kernel;
+with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
+with String_List_Utils;  use String_List_Utils;
+with VFS;                use VFS;
+with VCS;                use VCS;
 
 package VCS_Activities is
 
@@ -49,14 +50,17 @@ package VCS_Activities is
      (Kernel : access Kernel_Handle_Record'Class; Activity : Activity_Id);
    --  Create a new activity with a uniq id
 
-   function Get_Activity_From_Name (Name : String) return Activity_Id;
-   --  Returns the activity id for Name or No_Activity if not found
-
    function First return Activity_Id;
    --  Returns the first activity or No_Activity if there is no activity
 
    function Next return Activity_Id;
    --  Returns the next activity or No_Activity if we have reached the last
+
+   procedure Set_Instance (Activity : Activity_Id; Instance : Class_Instance);
+   --  Sets the activity's class instance
+
+   function Get_Instance (Activity : Activity_Id) return Class_Instance;
+   --  Returns the activity's class instance
 
    function Get_Name (Activity : Activity_Id) return String;
    --  Returns the name for this activity or the empty string if No_Activity
