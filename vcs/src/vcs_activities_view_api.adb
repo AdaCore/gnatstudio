@@ -893,8 +893,7 @@ package body VCS_Activities_View_API is
                                Nth_Arg (Data, 1, VCS_Activities_Class);
       Image_Id             : constant String :=
                                Get_Data (Inst, VCS_Activities_Class);
-      Activity             : constant Activity_Id :=
-                               Get_Activity_From_Name (Image_Id);
+      Activity             : constant Activity_Id := Value (Image_Id);
       Refresh_Explorer     : Boolean := False;
    begin
       if Activity = No_Activity then
