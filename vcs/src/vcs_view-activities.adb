@@ -805,8 +805,7 @@ package body VCS_View.Activities is
          declare
             File_Name : constant String :=
                           Log_Name (Log_Name'First .. Log_Name'Last - 4);
-            Activity  : constant Activity_Id :=
-                          Get_Activity_From_Name (File_Name);
+            Activity  : constant Activity_Id := Value (File_Name);
          begin
             if Activity = No_Activity then
                --  This is a file
