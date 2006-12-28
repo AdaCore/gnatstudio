@@ -367,20 +367,37 @@ package body VCS_Module is
       Inst                 : Class_Instance;
    begin
       if Command = Constructor_Method then
-         Inst := Nth_Arg (Data, 1, VCS_Activities_Class);
-         Set_Data (Inst, VCS_Activities_Class, Nth_Arg (Data, 2, ""));
-
-      elsif Command = "create" then
          declare
-            A : Activity_Id;
+            A : constant Activity_Id := New_Activity (Kernel);
          begin
-            A := New_Activity (Kernel);
-            Set_Name (Kernel, A, Nth_Arg (Data, 1, ""));
-
-            Inst := New_Instance (Get_Script (Data), VCS_Activities_Class);
+            Set_Name (Kernel, A, Nth_Arg (Data, 2, ""));
+            Inst := Nth_Arg (Data, 1, VCS_Activities_Class);
             Set_Data (Inst, VCS_Activities_Class, Image (A));
+            Set_Instance (A, Inst);
+         end;
+
+      elsif Command = "get" then
+         declare
+            A : constant Activity_Id := Value (Nth_Arg (Data, 1, ""));
+         begin
+            Inst := No_Class_Instance;
+
+            if A /= No_Activity then
+               --  Get class instance
+
+               Inst := Get_Instance (A);
+
+               if Inst = No_Class_Instance then
+                  Inst := New_Instance
+                    (Get_Script (Data), VCS_Activities_Class);
+                  Set_Data (Inst, VCS_Activities_Class, Image (A));
+                  Set_Instance (A, Inst);
+               end if;
+            end if;
+
             Set_Return_Value (Data, Inst);
          end;
+
          Refresh (Get_Activities_Explorer (Kernel));
 
       elsif Command = "list" then
@@ -403,14 +420,23 @@ package body VCS_Module is
 
       elsif Command = "from_file" then
          declare
-            A : Activity_Id;
+            A : constant Activity_Id := Get_File_Activity (Get_Data (Data, 1));
          begin
-            Inst := New_Instance (Get_Script (Data), VCS_Activities_Class);
-            A := Get_File_Activity (Get_Data (Data, 1));
-            if A /= No_Activity then
-               Set_Data (Inst, VCS_Activities_Class, Image (A));
-               Set_Return_Value (Data, Inst);
+            if A = No_Activity then
+               Inst := No_Class_Instance;
+
+            else
+               Inst := Get_Instance (A);
+
+               if Inst = No_Class_Instance then
+                  Inst := New_Instance
+                    (Get_Script (Data), VCS_Activities_Class);
+                  Set_Data (Inst, VCS_Activities_Class, Image (A));
+                  Set_Instance (A, Inst);
+               end if;
             end if;
+
+            Set_Return_Value (Data, Inst);
          end;
       end if;
    end VCS_Activities_Class_Command_Handler;
@@ -641,7 +667,7 @@ package body VCS_Module is
          Class         => VCS_Activities_Class,
          Handler       => VCS_Activities_Class_Command_Handler'Access);
       Register_Command
-        (Kernel, "create",
+        (Kernel, "get",
          Class         => VCS_Activities_Class,
          Minimum_Args  => 1,
          Maximum_Args  => 1,
