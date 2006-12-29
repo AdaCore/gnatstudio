@@ -253,13 +253,13 @@ package GPS.Kernel.Modules is
    ------------------
 
    procedure Free (Module : in out Module_ID);
-   --  Free memory associated to a Module_ID.
+   --  Free memory associated to a Module_ID
 
    package Module_List is new Generic_List (Module_ID);
 
    function List_Of_Modules (Kernel : access Kernel_Handle_Record'Class)
       return Module_List.List;
-   --  Return the list of currently loaded modules.
+   --  Return the list of currently loaded modules
 
    -----------
    -- Types --
@@ -320,7 +320,7 @@ package GPS.Kernel.Modules is
    --  Return the name of the module registered as ID
 
    procedure Free_Modules (Kernel : access Kernel_Handle_Record'Class);
-   --  Free all the registered modules, and call Destroy for each of these.
+   --  Free all the registered modules, and call Destroy for each of these
 
    function Get_Priority
      (ID : access Module_ID_Record'Class) return Module_Priority;
@@ -392,7 +392,7 @@ package GPS.Kernel.Modules is
    type Custom_Expansion is access function
      (Context : Selection_Context) return String;
    --  Provide the custom expansion for %C when expanding a label. If the
-   --  empty string is returned, the contextual entry will not be displayed
+   --  empty string is returned, the contextual entry will not be displayed.
 
    procedure Register_Contextual_Menu
      (Kernel      : access Kernel_Handle_Record'Class;
@@ -526,7 +526,7 @@ package GPS.Kernel.Modules is
      (Kernel  : access Kernel_Handle_Record'Class)
       return GNAT.Strings.String_List_Access;
    --  Return the list of registered contextual menus. The returned array must
-   --  be freed by the caller
+   --  be freed by the caller.
 
    procedure Create_Contextual_Menu
      (Kernel  : Kernel_Handle;
@@ -557,7 +557,7 @@ package GPS.Kernel.Modules is
      (Kernel  : access Kernel_Handle_Record'Class;
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
-   --  Callback that fills Menu according to Context.
+   --  Callback that fills Menu according to Context
 
    procedure Register_Menu
      (Kernel      : access Kernel_Handle_Record'Class;
@@ -628,9 +628,8 @@ package GPS.Kernel.Modules is
       Add_Before  : Boolean := True;
       Sensitive   : Boolean := True;
       Action      : Action_Record_Access := null;
-      Filter      : Action_Filter  := null)
-      return Gtk.Menu_Item.Gtk_Menu_Item;
-   --  Same as above, but returns the menu item that was created.
+      Filter      : Action_Filter  := null) return Gtk.Menu_Item.Gtk_Menu_Item;
+   --  Same as above, but returns the menu item that was created
 
    procedure Register_Dynamic_Menu
      (Kernel      : access Kernel_Handle_Record'Class;
@@ -640,7 +639,7 @@ package GPS.Kernel.Modules is
       Ref_Item    : String := "";
       Add_Before  : Boolean := True;
       Factory     : Dynamic_Menu_Factory);
-   --  Register a menu that will be generated using Factory.
+   --  Register a menu that will be generated using Factory
 
    function Find_Menu_Item
      (Kernel : access Kernel_Handle_Record'Class;
@@ -659,7 +658,7 @@ package GPS.Kernel.Modules is
       Command : Interactive_Command_Access := null;
       Image   : Gtk.Image.Gtk_Image := null;
       Tooltip : String := "");
-   --  Add a button at the end of the toolbar.
+   --  Add a button at the end of the toolbar
 
    procedure Register_Button
      (Kernel   : access Kernel_Handle_Record'Class;
@@ -686,10 +685,11 @@ package GPS.Kernel.Modules is
    --  or CR/LF separated list of files.
 
 private
+
    type Module_ID_Record is new Abstract_Module_ID_Record with record
-      Kernel                : Kernel_Handle;
-      Priority              : Module_Priority;
-      Name                  : GNAT.Strings.String_Access;
+      Kernel   : Kernel_Handle;
+      Priority : Module_Priority;
+      Name     : GNAT.Strings.String_Access;
    end record;
 
 end GPS.Kernel.Modules;
