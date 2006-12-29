@@ -1,8 +1,9 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+
+--                      Copyright (C) 2001-2006                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,7 +19,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  This package contains the files view for the explorer,
+--  This package contains the files view for the explorer
 
 with GPS.Kernel;
 with Gtk.Main;
@@ -40,12 +41,12 @@ package Project_Explorers_Files is
    procedure Gtk_New
      (Explorer : out Project_Explorer_Files;
       Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Create a new explorer.
+   --  Create a new explorer
 
    procedure Initialize
      (Explorer : access Project_Explorer_Files_Record'Class;
       Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Internal initialization procedure.
+   --  Internal initialization procedure
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
@@ -64,7 +65,7 @@ private
 
    type Append_Directory_Idle_Data;
    type Append_Directory_Idle_Data_Access is access Append_Directory_Idle_Data;
-   --  Custom data for the asynchronous fill function.
+   --  Custom data for the asynchronous fill function
 
    package File_Append_Directory_Timeout is
       new Gtk.Main.Timeout (Append_Directory_Idle_Data_Access);
@@ -76,16 +77,16 @@ private
    type Project_Explorer_Files_Record is new
      Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record with
    record
-      Kernel     : GPS.Kernel.Kernel_Handle;
-      File_Tree  : Gtk.Tree_View.Gtk_Tree_View;
-      File_Model : Gtk.Tree_Store.Gtk_Tree_Store;
-      Expanding  : Boolean := False;
+      Kernel              : GPS.Kernel.Kernel_Handle;
+      File_Tree           : Gtk.Tree_View.Gtk_Tree_View;
+      File_Model          : Gtk.Tree_Store.Gtk_Tree_Store;
+      Expanding           : Boolean := False;
 
       Scroll_To_Directory : Boolean := False;
       Path                : Gtk.Tree_Model.Gtk_Tree_Path;
       Realize_Cb_Id       : Gtk.Handlers.Handler_Id;
 
-      Fill_Timeout_Ids : Timeout_Id_List.List;
+      Fill_Timeout_Ids    : Timeout_Id_List.List;
       --  ??? This is implemented as a list of handlers instead of just one
       --  handler, in case the fill function should call itself recursively :
       --  to be investigated.
