@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                     Copyright (C) 2001-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1500,7 +1500,7 @@ procedure GPS.Main is
          " (" & Config.Source_Date &
          (-") hosted on ") & Config.Target & ASCII.LF &
          (-"the GNAT Programming Studio") & ASCII.LF & About_Contents.all &
-         "(c) 2001-2006 AdaCore" & ASCII.LF);
+         "(c) 2001-2007 AdaCore" & ASCII.LF);
       Free (About_Contents);
 
       --  We now make sure we have a project loaded, so that opening editors
