@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2006 AdaCore                    --
+--                     Copyright (C) 2006-2007 AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -27,6 +27,7 @@ with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with GPS.Kernel;           use GPS.Kernel;
 with GPS.Kernel.Custom;    use GPS.Kernel.Custom;
 with GPS.Kernel.Modules;   use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Intl;             use GPS.Intl;
 with GPS.Main_Window;      use GPS.Main_Window;
 with Gtkada.Handlers;      use Gtkada.Handlers;
@@ -427,6 +428,7 @@ package body Startup_Module is
       Add (Scrolled, Text);
       Set_Wrap_Mode (Text, Wrap_None);
       Set_Editable (Text, False);
+      Modify_Font (Text, Get_Pref_Font (Default_Style));
 
       Gtk_New (Scrolled);
       Gtk_New (Label, -"Initialization");
@@ -449,6 +451,7 @@ package body Startup_Module is
       Add (Scrolled, Text);
       Set_Wrap_Mode (Text, Wrap_None);
       Set_Editable (Text, False);
+      Modify_Font (Text, Get_Pref_Font (Default_Style));
 
       List := Get_Cell_Renderers (Get_Column (Editor.Tree, Column_Load));
       Add_Attribute
