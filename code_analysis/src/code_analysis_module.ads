@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006                         --
+--                      Copyright (C) 2006-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
@@ -38,7 +38,6 @@ with Gdk.Event;            use Gdk.Event;
 with Gtk.Box;              use Gtk.Box;
 with Gtk.Tree_View;        use Gtk.Tree_View;
 with Gtk.Tree_Store;       use Gtk.Tree_Store;
-with Gtk.Tree_Model;       use Gtk.Tree_Model;
 with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
 with Gtk.Widget;           use Gtk.Widget;
 with Gtk.Menu;             use Gtk.Menu;
