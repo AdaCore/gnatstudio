@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                     Copyright (C) 2001-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -692,7 +692,7 @@ package body Src_Editor_Buffer is
 
       Success      : Boolean;
       Counter      : Natural;
-      Counter_Max  : constant := 4096;
+      Counter_Max  : constant := 8192;
       --  ??? Should that be a preference ?
 
       Stack        : Natural;
