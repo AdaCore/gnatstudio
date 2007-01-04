@@ -35,6 +35,9 @@ import xml.sax, xml.sax.handler, xml.sax.saxutils, traceback
 
 xml_menu = None
 
+class StopProcessing (Exception):
+   pass
+
 class GPSErrorHandler (xml.sax.handler.ErrorHandler):
    def __init__ (self):
       self.output = ""
@@ -48,6 +51,7 @@ class GPSErrorHandler (xml.sax.handler.ErrorHandler):
       self.add_error ("error:", exception)
    def fatalError (self, exception):
       self.add_error ("fatal error:", exception)
+      raise StopProcessing
    def warning (self, exception):
       self.add_error ("warning:", exception)
 
@@ -65,6 +69,8 @@ def check_wf (menu):
       else:
          Console().write (errors.output)
          Locations.parse (errors.output, "XML well-formedness")
+   except StopProcessing:
+      Locations.parse (errors.output, "XML well-formedness")
    except xml.sax.SAXParseException, inst:
       Console().write ("Unexpected error while parsing the XML document")
    except:
