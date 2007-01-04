@@ -113,6 +113,12 @@ package body Command_Window is
    --  Handles focus events on Window. This is used to grab key events in the
    --  command window, while allowing users to scroll editors.
 
+   function Command_Window_Event_Handler
+     (Event : Gdk_Event; Kernel : access Kernel_Handle_Record'Class)
+      return Boolean;
+   --  Called when any even is processed by GPS. This is used to cancel the
+   --  command window when appropriate.
+
    Prompt_Cst      : aliased constant String := "prompt";
    Global_Cst      : aliased constant String := "global_window";
    On_Changed_Cst  : aliased constant String := "on_changed";
@@ -159,6 +165,7 @@ package body Command_Window is
       if (Key >= GDK_Shift_L and then Key <= GDK_Hyper_R)
         or else Key = GDK_Num_Lock
         or else Key = GDK_ISO_Level3_Shift  --  alt-gr
+        or else Key = GDK_Mode_Switch       --  alt-gr on some keyboards
       then
          return True;
       end if;
@@ -301,7 +308,7 @@ package body Command_Window is
       end if;
 
       Keyboard_Ungrab;
-
+      Remove_Event_Handler (Win.Kernel, Command_Window_Event_Handler'Access);
       KeyManager_Module.Unblock_Key_Shortcuts (Win.Kernel);
 
    exception
@@ -435,12 +442,36 @@ package body Command_Window is
         (Get_Toplevel (Applies_To), "configure_event", On_Focus_Out'Access,
          Window);
 
+      Add_Event_Handler (Kernel, Command_Window_Event_Handler'Access);
+
       Show_All (Window);
 
       Grab_Focus (Window.Line);
 
       KeyManager_Module.Block_Key_Shortcuts (Kernel);
    end Gtk_New;
+
+   ----------------------------------
+   -- Command_Window_Event_Handler --
+   ----------------------------------
+
+   function Command_Window_Event_Handler
+     (Event : Gdk_Event; Kernel : access Kernel_Handle_Record'Class)
+      return Boolean
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      if CW_Module.Window /= null then
+         case Get_Event_Type (Event) is
+            when Button_Press =>
+               Destroy (CW_Module.Window);
+               return True;
+            when others =>
+               return False;
+         end case;
+      end if;
+      return False;
+   end Command_Window_Event_Handler;
 
    ---------------------
    -- Command_Handler --
