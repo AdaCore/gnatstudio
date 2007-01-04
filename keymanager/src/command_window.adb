@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2006                            --
+--                     Copyright (C) 2006-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -51,7 +51,6 @@ with KeyManager_Module;      use KeyManager_Module;
 with Traces;                 use Traces;
 
 package body Command_Window is
-
    type Command_Window_Record is new Gtk_Window_Record with record
       Kernel      : Kernel_Handle;
       Box         : Gtk_Box;
@@ -156,8 +155,9 @@ package body Command_Window is
       --  be associated to them anyway, so this is slightly more efficient,
       --  and this also avoids resetting the last command.
       --  Note that Modif might be different of 0 on Windows in this case.
-      if Key >= GDK_Shift_L
-        and then Key <= GDK_Hyper_R
+      if (Key >= GDK_Shift_L and then Key <= GDK_Hyper_R)
+        or else Key = GDK_Num_Lock
+        or else Key = GDK_ISO_Level3_Shift  --  alt-gr
       then
          return True;
       end if;
