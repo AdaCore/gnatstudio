@@ -51,6 +51,7 @@ with KeyManager_Module;      use KeyManager_Module;
 with Traces;                 use Traces;
 
 package body Command_Window is
+
    type Command_Window_Record is new Gtk_Window_Record with record
       Kernel      : Kernel_Handle;
       Box         : Gtk_Box;
@@ -429,6 +430,10 @@ package body Command_Window is
       Size_Request     (Frame, Requisition);
       Y := Y + Get_Allocation_Height (Applies_To) - Requisition.Height;
       Set_UPosition (Window, X, Y);
+
+      Return_Callback.Object_Connect
+        (Get_Toplevel (Applies_To), "configure_event", On_Focus_Out'Access,
+         Window);
 
       Show_All (Window);
 
