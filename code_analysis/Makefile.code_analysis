@@ -26,14 +26,14 @@ ADA_SOURCES = code_analysis_test.adb
 
 PROJECT_FILE = code_analysis
 
-#ifneq ($(strip $(CODE_ANALYSIS_SRCS)),)
-#   LIBS := $(CODE_ANALYSIS_OBJ_DIR)/libsyntax$(AR_EXT) $(LIBS)
-#endif
+ifneq ($(strip $(CODE_ANALYSIS_SRCS)),)
+   LIBS := $(CODE_ANALYSIS_OBJ_DIR)/libcode_analysis$(AR_EXT) $(LIBS)
+endif
 
 ifeq ($(CODE_ANALYSIS_ROOT),True)
    include ../builder/src/Makefile.generic
 else
-   DEPS_PROJECTS += $(CODE_ANALYSIS_BASE_DIR)/syntax
+   DEPS_PROJECTS += $(CODE_ANALYSIS_BASE_DIR)/code_analysis
 endif
 
 endif
