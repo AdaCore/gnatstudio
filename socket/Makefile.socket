@@ -13,10 +13,6 @@ BASE_DIR=$(SOCKET_BASE_DIR)/../gtkada
 include $(BASE_DIR)/Makefile.gtkada
 BASE_DIR=$(SOCKET_BASE_DIR)/../kernel
 include $(BASE_DIR)/Makefile.kernel
-BASE_DIR=$(SOCKET_BASE_DIR)/../gvd
-include $(BASE_DIR)/Makefile.gvd_common
-BASE_DIR=$(SOCKET_BASE_DIR)/../widgets
-include $(BASE_DIR)/Makefile.widgets
 
 SOCKET_SRC_DIRS = $(SOCKET_BASE_DIR)/src
 SRC_DIRS += $(SOCKET_SRC_DIRS)
@@ -26,8 +22,6 @@ SOCKET_SRCS := \
   $(foreach name,$(SOCKET_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
 SOCKET_OBJ_DIR = $(SOCKET_BASE_DIR)/obj
 OBJ_DIR = $(SOCKET_OBJ_DIR)
-
-CFLAGS = -g -O2
 
 PROJECT_FILE = socket
 
