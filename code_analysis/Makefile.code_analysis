@@ -16,7 +16,7 @@ CODE_ANALYSIS_SRC_DIRS = $(CODE_ANALYSIS_BASE_DIR)/src
 SRC_DIRS += $(CODE_ANALYSIS_SRC_DIRS)
 C_SRCS = \
   $(foreach name,$(CODE_ANALYSIS_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
-AUNIT_SRCS := \
+CODE_ANALYSIS_SRCS := \
   $(foreach name,$(CODE_ANALYSIS_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
 CODE_ANALYSIS_OBJ_DIR = $(CODE_ANALYSIS_BASE_DIR)/obj
 OBJ_DIR = $(CODE_ANALYSIS_OBJ_DIR)

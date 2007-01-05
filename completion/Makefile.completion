@@ -20,7 +20,7 @@ COMPLETION_SRC_DIRS = $(COMPLETION_BASE_DIR)/src
 SRC_DIRS += $(COMPLETION_SRC_DIRS)
 C_SRCS = \
   $(foreach name,$(COMPLETION_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
-AUNIT_SRCS := \
+COMPLETION_SRCS := \
   $(foreach name,$(COMPLETION_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
 COMPLETION_OBJ_DIR = $(COMPLETION_BASE_DIR)/obj
 OBJ_DIR = $(COMPLETION_OBJ_DIR)
@@ -30,9 +30,9 @@ ADA_SOURCES = completion-test.adb
 
 PROJECT_FILE = completion
 
-#ifneq ($(strip $(COMPLETION_SRCS)),)
-#   LIBS := $(COMPLETION_OBJ_DIR)/libcompletion$(AR_EXT) $(LIBS)
-#endif
+ifneq ($(strip $(COMPLETION_SRCS)),)
+   LIBS := $(COMPLETION_OBJ_DIR)/libcompletion$(AR_EXT) $(LIBS)
+endif
 
 ifeq ($(COMPLETION_ROOT),True)
    include ../builder/src/Makefile.generic
