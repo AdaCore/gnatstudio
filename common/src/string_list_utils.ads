@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2005                      --
+--                      Copyright (C) 2001-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -34,7 +34,7 @@ package String_List_Utils is
    --  Return a deep copy of S
 
    procedure Sort is new List_Utils.Sort (String_List);
-   --  Sort L alphabetically.
+   --  Sort L alphabetically
 
    function Less_Than_Case_Insensitive (Item1, Item2 : String) return Boolean;
    --  Compare two strings case insensitive

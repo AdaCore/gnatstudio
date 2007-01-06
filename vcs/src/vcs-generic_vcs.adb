@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
+--                      Copyright (C) 2001-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -501,12 +501,12 @@ package body VCS.Generic_VCS is
 
             Custom := Create_Proxy
               (The_Action.Command,
-               (Event       => null,
-                Context     => No_Context,
-                Synchronous => False,
-                Dir         => Dir,
-                Args        => Args,
-                Label       => new String'(Describe_Action (Ref, Action)),
+               (Event            => null,
+                Context          => No_Context,
+                Synchronous      => False,
+                Dir              => Dir,
+                Args             => Args,
+                Label            => new String'(Describe_Action (Ref, Action)),
                 Repeat_Count     => 1,
                 Remaining_Repeat => 0));
 

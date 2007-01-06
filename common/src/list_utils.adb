@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002                            --
---                            ACT-Europe                             --
+--                      Copyright (C) 2002-2007                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -41,7 +41,7 @@ package body List_Utils is
       procedure Split
         (L : in out List_Pkg.List; L1, L2 : out List_Pkg.List)
       is
-         Ln : List_Node := First (L);
+         Ln           : List_Node := First (L);
          Target_Is_L1 : Boolean := True;
       begin
          while Ln /= Null_Node loop
@@ -108,5 +108,3 @@ package body List_Utils is
    end Sort;
 
 end List_Utils;
-
-
