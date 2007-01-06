@@ -959,7 +959,7 @@ package body Code_Analysis_Module is
         (Item, "activate", Show_Flat_List_Of_Files'Access,
          View, After => False);
       Append (Menu, Item);
-      Gtk_New (Item, -"Show flat list of Subprograms");
+      Gtk_New (Item, -"Show flat list of subprograms");
       Gtkada.Handlers.Widget_Callback.Object_Connect
         (Item, "activate", Show_Flat_List_Of_Subprograms'Access,
          View, After => False);
