@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006                           --
+--                      Copyright (C) 2007                           --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -103,7 +103,7 @@ package Language.Tree is
    --  position is 'Enclosing'.
 
    function Get_Child_Number (Iter : Construct_Tree_Iterator) return Natural;
-   --  Return the number of childs in the construct pointed by this iterator
+   --  Return the number of children in the construct pointed by this iterator
 
    type Scope_Navigation is (Jump_Over, Jump_Into);
 
