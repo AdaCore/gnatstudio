@@ -662,7 +662,7 @@ package body Help_Module is
    procedure On_Load_HTML
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      Item      : constant String_Menu_Item := String_Menu_Item (Widget);
+      Item : constant String_Menu_Item := String_Menu_Item (Widget);
    begin
       if Item.URL /= null and then Item.URL.all /= "" then
          Trace (Me, "Loading HTML file " & Item.URL.all);
