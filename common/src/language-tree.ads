@@ -115,7 +115,7 @@ package Language.Tree is
    --  Return the next element of the tree. If Scope_Policy is Jump_Over, then
    --  the next function will not enter in any nested block, and will jump
    --  directly to the next element in the current scope. If there is no next
-   --  element, then this function will return Null_Construct_Iterator.
+   --  element, then this function will return Null_Construct_Tree_Iterator.
 
    function Prev
      (Tree         : Construct_Tree;
@@ -126,7 +126,7 @@ package Language.Tree is
    --  If Scope_Policy is Jump_Over, Prev will not enter in any nested block
    --  and will jump directly to the previous element in the current scope.
    --  If there is no previous element,  this function will return
-   --  Null_Construct_Iterator.
+   --  Null_Construct_Tree_Iterator.
 
    function Has_Children (Iter : Construct_Tree_Iterator) return Boolean;
    --  Return true if the constrcut pointed by the iterator has any child
