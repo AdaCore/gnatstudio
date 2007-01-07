@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2006                      --
+--                      Copyright (C) 2002-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -214,9 +214,10 @@ package body Log_Utils is
 
       procedure Add_Header (Pos : Positive; Date_Header : Boolean) is
          Header   : constant String :=
-           Date_Tag & "  " & Get_GPS_User & ASCII.LF;
+                      Date_Tag & "  " & Get_GPS_User & ASCII.LF;
          F_Header : constant String :=
-           ASCII.HT & "* " & Base_Name & ':' & ASCII.LF & ASCII.HT & ASCII.LF;
+                      ASCII.HT & "* " & Base_Name & ':' & ASCII.LF &
+                      ASCII.HT & ASCII.LF;
 
          Old      : String_Access := CL;
          New_Size : Natural;
@@ -456,7 +457,7 @@ package body Log_Utils is
 
       ChangeLog : constant String := Dir_Name (File_Name).all & "ChangeLog";
       Log_File  : constant Virtual_File :=
-        Get_Log_From_File (Kernel, File_Name, False);
+                    Get_Log_From_File (Kernel, File_Name, False);
    begin
       if Log_File = VFS.No_File then
          declare
@@ -612,7 +613,7 @@ package body Log_Utils is
       --  Need to call Name_As_Directory below, to properly handle windows
       --  directories.
       Logs_Dir : constant String :=
-        Name_As_Directory (Get_Home_Dir (Kernel) & "log_files");
+                   Name_As_Directory (Get_Home_Dir (Kernel) & "log_files");
       Mapper   : File_Mapper_Access := Get_Logs_Mapper (Kernel);
    begin
       Remove_Entry (Mapper, Full_Name (File_Name, Normalize => True).all);
@@ -758,7 +759,8 @@ package body Log_Utils is
 
          if Get_Group_Commit (Activity) then
             declare
-               L : Unbounded_String;
+               L       : Unbounded_String;
+               Has_Log : Boolean;
             begin
                while Files_Temp /= Null_Node loop
                   --  Save any open log editors, and then get the corresponding
@@ -767,16 +769,17 @@ package body Log_Utils is
                   File := Create (Full_Filename => Data (Files_Temp));
                   Append (L, "* " & Base_Name (File) & ":" & ASCII.LF);
 
-                  if Get_Log_From_File (Kernel, File, False)
-                    /= VFS.No_File
-                  then
+                  Has_Log :=
+                    Get_Log_From_File (Kernel, File, False) /= VFS.No_File;
+
+                  if Has_Log then
                      Append (L, Add_LF_To_Log (Get_Log (Kernel, File)));
                   end if;
 
                   Files_Temp := Next (Files_Temp);
 
-                  if Files_Temp /= Null_Node then
-                     --  Skip a line between each files
+                  if Files_Temp /= Null_Node and then Has_Log then
+                     --  Skip a line between each file log
                      Append (L, ASCII.LF);
                   end if;
                end loop;
