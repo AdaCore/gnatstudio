@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
+--                      Copyright (C) 2001-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -129,10 +129,10 @@ package body Commands.VCS is
    is
       use String_List;
 
-      Node : List_Node;
-      Log  : List_Node;
+      Node  : List_Node;
+      Log   : List_Node;
 
-      File : List;
+      Files : List;
    begin
       --  If we have a single element in Log, then the same log must be used
       --  for all files.
@@ -155,30 +155,40 @@ package body Commands.VCS is
          end case;
 
       else
-         --  Log is not shared, launch one command for each commit
+         --  Log is not shared, launch one command for each commit having the
+         --  same log.
 
          Node := First (Command.Filenames);
 
          while Node /= Null_Node loop
-            Append (File, Data (Node));
 
-            case Command.Action is
-               when Commit =>
-                  Commit (Command.Rep, File, Data (Log));
+            declare
+               Log_Content : constant String := Data (Log);
+            begin
+               loop
+                  Append (Files, Data (Node));
+                  Node := Next (Node);
+                  Log  := Next (Log);
 
-               when Add =>
-                  Add (Command.Rep, File, Data (Log));
+                  exit when Log = Null_Node or else Data (Log) /= Log_Content;
+               end loop;
 
-               when Remove =>
-                  Remove (Command.Rep, File, Data (Log));
+               case Command.Action is
+                  when Commit =>
+                     Commit (Command.Rep, Files, Log_Content);
 
-               when others =>
-                  raise Program_Error;
-            end case;
+                  when Add =>
+                     Add (Command.Rep, Files, Log_Content);
 
-            Free (File);
-            Node := Next (Node);
-            Log  := Next (Log);
+                  when Remove =>
+                     Remove (Command.Rep, Files, Log_Content);
+
+                  when others =>
+                     raise Program_Error;
+               end case;
+
+               Free (Files);
+            end;
          end loop;
       end if;
 
