@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2006                      --
+--                      Copyright (C) 2005-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -61,11 +61,12 @@ package body VCS_Activities is
       Closed       : Boolean := False;
       Keys         : Key_Hash_Access;
       Files        : String_List.List;
+      Sorted       : Boolean;
    end record;
 
    Empty_Activity : constant Activity_Record :=
                       (VFS.No_File, null, No_Class_Instance, No_Activity,
-                       null, False, False, null, String_List.Null_List);
+                       null, False, False, null, String_List.Null_List, False);
 
    subtype Hash_Header is Positive range 1 .. 123;
 
@@ -147,7 +148,7 @@ package body VCS_Activities is
                   new String'(Name), No_Class_Instance, Value (Id),
                   null, Group_Commit,
                   Committed or Closed,
-                  new String_Hash_Table.HTable, String_List.Null_List);
+                  new String_Hash_Table.HTable, String_List.Null_List, False);
 
          while Child /= null loop
             if Child.Tag.all = "file" then
@@ -299,7 +300,7 @@ package body VCS_Activities is
                   null,
                   False, False,
                   new String_Hash_Table.HTable,
-                  String_List.Null_List));
+                  String_List.Null_List, False));
 
                Save_Activities (Kernel);
 
@@ -560,9 +561,17 @@ package body VCS_Activities is
    ---------------------------
 
    function Get_Files_In_Activity
-     (Activity : Activity_Id) return String_List.List is
+     (Activity : Activity_Id) return String_List.List
+   is
+      Item : Activity_Record := Get (Activity);
    begin
-      return Get (Activity).Files;
+      if not Item.Sorted then
+         String_List_Utils.Sort (Item.Files);
+         Item.Sorted := True;
+         Set (Activity, Item);
+      end if;
+
+      return Item.Files;
    end Get_Files_In_Activity;
 
    --------------
@@ -605,6 +614,7 @@ package body VCS_Activities is
 
             String_Hash_Table.Set (Item.Keys.all, File_Key (File), Item_Tag);
             String_List.Append (Item.Files, Full_Name (File, False).all);
+            Item.Sorted := False;
 
             Set (Activity, Item);
 
