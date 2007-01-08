@@ -196,11 +196,11 @@ package body Help_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       URL    : String;
       Anchor : String := "");
-   --  Open an URL.
+   --  Open an URL
 
    procedure Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
-   --  Handler for HTML commands.
+   --  Handler for HTML commands
 
    procedure On_About
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -253,6 +253,11 @@ package body Help_Module is
      (Name   : Glib.UTF8_String;
       Kernel : access Kernel_Handle_Record'Class) return Glib.UTF8_String
    is
+      --  We still pass Kernel as a parameter so that we can easily one day
+      --  query the module from the kernel instead of keeping a global
+      --  variable to store it.
+      pragma Unreferenced (Kernel);
+
       function To_Slashes (S : String) return String;
       --  Transforms '\' to '/'
 
@@ -272,10 +277,6 @@ package body Help_Module is
          return Str;
       end To_Slashes;
 
-      --  We still pass Kernel as a parameter so that we can easily one day
-      --  query the module from the kernel instead of keeping a global
-      --  variable to store it.
-      pragma Unreferenced (Kernel);
       File     : VFS.Virtual_File;
       Anchor   : Natural := Index (Name, "#");
       Protocol : constant Natural := Index (Name, "://");
@@ -307,7 +308,7 @@ package body Help_Module is
    ---------------
 
    function Find_File (Name : Glib.UTF8_String) return VFS.Virtual_File is
-      Full   : GNAT.Strings.String_Access;
+      Full : GNAT.Strings.String_Access;
    begin
       if Is_Absolute_Path (Name) then
          return Create (Name);
@@ -318,6 +319,7 @@ package body Help_Module is
 
       if Full = null then
          return VFS.No_File;
+
       else
          declare
             F : constant String := Locale_To_UTF8 (Full.all);
@@ -526,7 +528,7 @@ package body Help_Module is
 
          XML := XML_Property (Get_Property (Inst, Help_Class_Name)).XML;
          if XML = null then
-            XML  := Initialize_XML_Doc (Kernel);
+            XML := Initialize_XML_Doc (Kernel);
             Set_Property
               (Inst, Help_Class_Name, XML_Property'(XML => XML));
          end if;
@@ -587,8 +589,8 @@ package body Help_Module is
       Directory : String)
    is
       Old  : GNAT.Strings.String_Access := Help_Module_ID.Doc_Path;
-      Dir  : constant String := Normalize_Pathname
-        (Directory, Get_System_Dir (Kernel));
+      Dir  : constant String :=
+               Normalize_Pathname (Directory, Get_System_Dir (Kernel));
       Iter : Path_Iterator;
    begin
       if Directory /= "" then
@@ -752,6 +754,7 @@ package body Help_Module is
                Item        => Gtk_Menu_Item (Item),
                Ref_Item    => Menu_Before,
                Add_Before  => True);
+
          elsif Menu_After /= "" then
             Register_Menu
               (Kernel      => Kernel,
@@ -957,16 +960,21 @@ package body Help_Module is
          while Field /= null loop
             if Field.Tag.all = "name" then
                Name := Field;
+
             elsif Field.Tag.all = "descr" then
                Descr := Field;
+
             elsif Field.Tag.all = "menu" then
                Menu := Field;
+
             elsif Field.Tag.all = "category" then
                Cat := Field;
+
             elsif Field.Tag.all = "shell" then
                Shell := new String'(Field.Value.all);
                Shell_Lang := new String'
                  (Get_Attribute (Field, "lang", "shell"));
+
             else
                Insert
                  (Kernel,
@@ -1001,6 +1009,7 @@ package body Help_Module is
                      Menu_Path   => Menu.Value.all);
                end if;
             end;
+
          else
             if Shell = null then
                Insert
@@ -1008,6 +1017,7 @@ package body Help_Module is
                   -("<documentation_file> customization must specify either"
                     & " a <name> or a <shell> node"),
                   Mode => Error);
+
             else
                Register_Help
                  (Kernel,
@@ -1047,6 +1057,7 @@ package body Help_Module is
          if Node = null then
             Insert (Kernel, Err.all, Mode => Error);
             Free (Err);
+
          else
             N := Node.Child;
             while N /= null loop
@@ -1066,17 +1077,17 @@ package body Help_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      File     : constant Virtual_File := Find_File (Template_Index);
-      Buffer   : GNAT.Strings.String_Access := Read_File (File);
-      Index    : Natural;
-      Str      : Unbounded_String;
-      In_Category : Unbounded_String;
-      Cat      : Help_Category_List.List_Node;
-      F        : Help_File_List.List_Node;
       Contents_Marker : constant String := ASCII.LF & "@@CONTENTS@@";
-      Output   : constant Virtual_File :=
-        Create (Get_Home_Dir (Kernel) & "help_index.html");
-      Output_Write : Writable_File;
+      Output          : constant Virtual_File :=
+                          Create (Get_Home_Dir (Kernel) & "help_index.html");
+      File            : constant Virtual_File := Find_File (Template_Index);
+      Buffer          : GNAT.Strings.String_Access := Read_File (File);
+      Index           : Natural;
+      Str             : Unbounded_String;
+      In_Category     : Unbounded_String;
+      Cat             : Help_Category_List.List_Node;
+      F               : Help_File_List.List_Node;
+      Output_Write    : Writable_File;
 
    begin
       Trace (Me, "loading file: " & Full_Name (File).all);
@@ -1166,7 +1177,7 @@ package body Help_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Help             : constant String := "/_" & (-"Help") & '/';
+      Help : constant String := "/_" & (-"Help") & '/';
    begin
       Help_Module_ID := new Help_Module_ID_Record;
       Register_Module
