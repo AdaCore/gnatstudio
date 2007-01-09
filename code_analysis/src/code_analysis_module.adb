@@ -47,6 +47,10 @@ with GPS.Location_View;          use GPS.Location_View;
 with VFS;                        use VFS;
 with Projects;                   use Projects;
 with Projects.Registry;          use Projects.Registry;
+with Language_Handlers;          use Language_Handlers;
+with Language;                   use Language;
+with Language.Tree;              use Language.Tree;
+with Language.Tree.Database;     use Language.Tree.Database;
 with Code_Coverage;              use Code_Coverage;
 with Code_Analysis_Tree_Model;   use Code_Analysis_Tree_Model;
 
@@ -162,10 +166,26 @@ package body Code_Analysis_Module is
       File_Node     := Get_Or_Create (Project_Node, VFS_Src_File);
       File_Node.Analysis_Data.Coverage_Data := new Node_Coverage;
       File_Contents := Read_File (VFS_Cov_File);
-      Read_Gcov_Info (File_Node, File_Contents,
+      Add_File_Info (File_Node, File_Contents,
                       Node_Coverage
                         (File_Node.Analysis_Data.Coverage_Data.all).Children,
-                      File_Node.Analysis_Data.Coverage_Data.Coverage);
+                     File_Node.Analysis_Data.Coverage_Data.Coverage);
+      declare
+         Handler   : constant Language_Handler
+           := Get_Language_Handler (Code_Analysis_Module_ID.Kernel);
+         Database  : constant Construct_Database_Access
+           := Get_Construct_Database (Code_Analysis_Module_ID.Kernel);
+         Tree_Lang : constant Tree_Language_Access
+           := Get_Tree_Language_From_File (Handler, File_Node.Name, False);
+         Data_File : constant Structured_File_Access :=
+                           Language.Tree.Database.Get_Or_Create
+                             (Db   => Database,
+                              File => File_Node.Name,
+                              Lang => Tree_Lang);
+      begin
+         Add_Subprogram_Info (Data_File, File_Node);
+      end;
+
       Compute_Project_Coverage (Project_Node);
       Free (File_Contents);
       GPS.Kernel.Scripts.Set_Property (Instance, Code_Analysis_Cst_Str,
@@ -245,9 +265,9 @@ package body Code_Analysis_Module is
       Show_Analysis_Report (C.Instance, Property, C.Context);
    end Show_Analysis_Report_From_Context;
 
-   --------------------
-   -- Show_Tree_View --
-   --------------------
+   --------------------------
+   -- Show_Analysis_Report --
+   --------------------------
 
    procedure Show_Analysis_Report
      (Instance : Class_Instance;
