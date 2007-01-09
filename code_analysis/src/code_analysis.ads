@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006                         --
+--                        Copyright (C) 2006-2007                    --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
@@ -47,18 +47,19 @@ package Code_Analysis is
    end record;
    --  Basic code coverage information
    --  Record the Line's execution counts
+   --  and the Subprogram, File and Project number of not covered lines
 
    type Node_Coverage is new Coverage with record
       Children : Natural := 99;
    end record;
    --  Extra node coverage information
-   --  The Covered value will be covered child count, and the Children value
-   --  will be the total children count.
+   --  Children is the Subprogram, File or Project children count
 
    type Subprogram_Coverage is new Node_Coverage with record
       Called : Natural;
    end record;
    --  Specific Subprogram extra info
+   --  The number of time the subprogram has been called
 
    type Coverage_Access is access all Coverage'Class;
 
