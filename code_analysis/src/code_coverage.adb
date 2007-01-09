@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006                         --
+--                        Copyright (C) 2006-2007                    --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
@@ -18,36 +18,32 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Text_IO;       use Ada.Text_IO;
-with GNAT.Regpat;       use GNAT.Regpat;
-with String_Utils;      use String_Utils;
-with Ada.Strings;       use Ada.Strings;
-with Ada.Strings.Fixed; use Ada.Strings.Fixed;
-with VFS;               use VFS;
+with Ada.Text_IO;            use Ada.Text_IO;
+with Ada.Strings;            use Ada.Strings;
+with Ada.Strings.Fixed;      use Ada.Strings.Fixed;
+with GNAT.Regpat;            use GNAT.Regpat;
 with Glib;
+with String_Utils;           use String_Utils;
+with VFS;                    use VFS;
+with Language;               use Language;
+with Language.Tree;          use Language.Tree;
 
 package body Code_Coverage is
 
    Int_Image_Padding : constant Positive := 5;
    --  Size of padding wanted with String_Utils.Image
 
-   --------------------
-   -- Read_Gcov_Info --
-   --------------------
+   -------------------
+   -- Add_File_Info --
+   -------------------
 
-   procedure Read_Gcov_Info
+   procedure Add_File_Info
      (File_Node     : Code_Analysis.File_Access;
       File_Contents : String_Access;
       Lines_Count   : out Natural;
       Not_Cov_Count : out Natural)
    is
-      Subp_Regexp       : constant Pattern_Matcher :=
-                             Compile ("^function (\w+)([.]\d+)? called (\d+)",
-                                      Multiple_Lines);
-      Subp_Matches      : Match_Array (0 .. 3);
       Current           : Natural;
-      Subprogram        : String_Access;
-      Subp_Node         : Subprogram_Access;
       Line_Regexp       : constant Pattern_Matcher :=
                              Compile ("^ +(\d+|#####): *(\d+):(.*$)",
                                       Multiple_Lines);
@@ -57,42 +53,9 @@ package body Code_Coverage is
       Last_Line_Matches : Match_Array (0 .. 1);
       Line_Num          : Natural;
       Bad_Gcov_File     : exception;
-
    begin
-      --  ??? should have one or several CE/exception handlers in this code,
-      --  in case matching do not work "as expected"
-
-      Current       := File_Contents'First;
       Lines_Count   := 0;
       Not_Cov_Count := 0;
-
-      loop
-         Match (Subp_Regexp, File_Contents.all, Subp_Matches, Current);
-         exit when Subp_Matches (0) = No_Match;
-
-         Subprogram := new String'(File_Contents (
-           Subp_Matches (1).First .. Subp_Matches (1).Last));
-         Subp_Node  := Get_Or_Create (File_Node, Subprogram);
-         Match (Line_Regexp,
-                File_Contents.all,
-                Line_Matches,
-                Subp_Matches (3).Last);
-
-         if Line_Matches (0) = No_Match then
-            raise Bad_Gcov_File with "Gcov file has bad format after "
-              & Subprogram.all
-              & " subprogram body declaration.";
-         end if;
-
-         Subp_Node.Body_Line := Natural'Value
-           (File_Contents (Line_Matches (2).First .. Line_Matches (2).Last));
-         Subp_Node.Analysis_Data.Coverage_Data := new Subprogram_Coverage;
-         Subprogram_Coverage (Subp_Node.Analysis_Data.Coverage_Data.all).Called
-           := Natural'Value
-             (File_Contents (Subp_Matches (3).First .. Subp_Matches (3).Last));
-         Current := Subp_Matches (3).Last + 1;
-      end loop;
-
       Current := File_Contents'Last;
       Current := Index
         (File_Contents.all, (1 => ASCII.LF), Current, Backward);
@@ -171,7 +134,46 @@ package body Code_Coverage is
 
          Current := Line_Matches (0).Last + 1;
       end loop;
-   end Read_Gcov_Info;
+   end Add_File_Info;
+
+   -------------------------
+   -- Add_Subprogram_Info --
+   -------------------------
+
+   procedure Add_Subprogram_Info
+     (Data_File : Structured_File_Access;
+      File_Node : Code_Analysis.File_Access)
+   is
+      Tree      : constant Construct_Tree := Get_Full_Tree (Data_File);
+      Node      : Construct_Tree_Iterator := First (Tree);
+      Node_Info : Simple_Construct_Information;
+      Subp_Node : Subprogram_Access;
+   begin
+      loop
+         Node_Info := Get_Construct (Node);
+         if Node_Info.Category in Subprogram_Category then
+            Subp_Node := Get_Or_Create (File_Node, Node_Info.Name);
+            Subp_Node.Analysis_Data.Coverage_Data := new Subprogram_Coverage'
+              (Coverage => 0,
+               Called   => 99, -- ??? intended crazy value
+               Children =>
+                 Node_Info.Sloc_End.Line - Node_Info.Sloc_Start.Line);
+            for J in Node_Info.Sloc_Start.Line .. Node_Info.Sloc_End.Line loop
+               if File_Node.Lines (J).Analysis_Data.Coverage_Data /= null then
+                  if File_Node.Lines (J).Analysis_Data.Coverage_Data.Coverage =
+                    0 then
+                     Subp_Node.Analysis_Data.Coverage_Data.Coverage :=
+                       Subp_Node.Analysis_Data.Coverage_Data.Coverage + 1;
+                  end if;
+               end if;
+            end loop;
+         end if;
+
+         Node := Next (Tree, Node);
+
+         exit when Node = Null_Construct_Tree_Iterator;
+      end loop;
+   end Add_Subprogram_Info;
 
    ------------------------------
    -- Compute_Project_Coverage --
