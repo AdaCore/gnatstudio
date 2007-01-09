@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006                         --
+--                        Copyright (C) 2006-2007                    --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
@@ -22,15 +22,16 @@
 --  This package provides a user level code coverage API
 --  </description>
 
-with Code_Analysis;   use Code_Analysis;
+with GNAT.OS_Lib;            use GNAT.OS_Lib;
+with Gtk.Tree_Store;         use Gtk.Tree_Store;
+with Gtk.Tree_Model;         use Gtk.Tree_Model;
 
-with GNAT.OS_Lib;     use GNAT.OS_Lib;
-with Gtk.Tree_Store;  use Gtk.Tree_Store;
-with Gtk.Tree_Model;  use Gtk.Tree_Model;
+with Language.Tree.Database; use Language.Tree.Database;
+with Code_Analysis;          use Code_Analysis;
 
 package Code_Coverage is
 
-   procedure Read_Gcov_Info
+   procedure Add_File_Info
      (File_Node     : Code_Analysis.File_Access;
       File_Contents : String_Access;
       Lines_Count   : out Natural;
@@ -38,21 +39,27 @@ package Code_Coverage is
    --  Parse the File_Contents and fill the File_Node with gcov info
    --  And set Line_Count and Covered_Lines
 
+   procedure Add_Subprogram_Info
+     (Data_File : Structured_File_Access;
+      File_Node : Code_Analysis.File_Access);
+   --  Add the subprogram nodes of the given file node, and compute it coverage
+   --  information
+
    procedure Compute_Project_Coverage (Project_Node : in out Project_Access);
-   --  Compute the nodes coverage informations of the single given project from
-   --  the coverage informations of its File children
+   --  Compute the node coverage information of the single given project from
+   --  the coverage information of its File children
 
    procedure Dump_Node_Coverage (Coverage : Coverage_Access);
-   --  Currently dump to the standard output coverage information stored
-   --  in a Code_Analysis.Coverage for the types before Line, ie the tree nodes
+   --  Currently dump to the standard output coverage information stored in a
+   --  Code_Analysis. Coverage of the types before Line, ie the tree nodes
 
    procedure Dump_Line_Coverage (Coverage : Coverage_Access);
    --  Currently dump to the standard output coverage information stored
-   --  in a Code_Analysis.Coverage record for the Line type
+   --  in a Code_Analysis. Coverage record of the Line type
 
    procedure Dump_Subp_Coverage (Coverage : Coverage_Access);
    --  Currently dump to the standard output coverage information stored in a
-   --  Code_Analysis.Coverage for the Subprogram nodes, ie with extra Called
+   --  Code_Analysis. Coverage of the Subprogram nodes, ie with extra Called
 
    function Line_Coverage_Info (Coverage : Coverage_Access)
                                 return String_Access;
