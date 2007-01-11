@@ -40,7 +40,6 @@ GNAT_SOURCES= \
   mlib.adb \
   mlib-tgt.ads \
   mlib-tgt.adb \
-  mlib-tgt-linux.adb \
   mlib-tgt-specific.ads \
   mlib-tgt-specific.adb \
   mlib-utl.ads \
