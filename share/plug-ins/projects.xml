@@ -1,8 +1,13 @@
 <?xml version="1.0" ?>
+<!--  Defines the standard project attributes.
 
-<!--  This file describes the various standard project_attributes for projects,
-      as well as how they should be edited through the project properties
-      editor -->
+      YOU MUST LOAD THIS SCRIPT.
+
+      This script defines the standard project attributes, and how they should
+      be edited graphically in the project properties editor. If you do not
+      load this script, GPS will display a number of warnings in its Messages
+      window when a project is loaded
+-->
 
 <GPS>
    <project_attribute
@@ -31,6 +36,7 @@
           <choice>powerpc-wrs-vxworks-gnatmake</choice>
           <choice>powerpc-wrs-vxworksae-gnatmake</choice>
           <choice>powerpc-elf-gnatmake</choice>
+          <choice>powerpc-eabispe-gnatmake</choice>
           <choice>i586-wrs-vxworks-gnatmake</choice>
           <choice>m68k-wrs-vxworks-gnatmake</choice>
           <choice>mips-wrs-vxworks-gnatmake</choice>
@@ -40,6 +46,7 @@
           <choice>powerpc-xcoff-lynxos-gnatmake</choice>
           <choice>erc32-elf-gnatmake</choice>
           <choice>leon-elf-gnatmake</choice>
+          <choice>dotnet-gnatmake</choice>
           <choice>gnaampmake</choice>
           <string />
       </specialized_index>
@@ -61,6 +68,7 @@
        <choice>powerpc-wrs-vxworks-gnatls</choice>
        <choice>powerpc-wrs-vxworksae-gnatls</choice>
        <choice>powerpc-elf-gnatls</choice>
+       <choice>powerpc-eabispe-gnatls</choice>
        <choice>i586-wrs-vxworks-gnatls</choice>
        <choice>m68k-wrs-vxworks-gnatls</choice>
        <choice>mips-wrs-vxworks-gnatls</choice>
@@ -70,6 +78,7 @@
        <choice>powerpc-xcoff-lynxos-gnatls</choice>
        <choice>erc32-elf-gnatls</choice>
        <choice>leon-elf-gnatls</choice>
+       <choice>dotnet-gnatls</choice>
        <choice>gnaampls</choice>
        <string />
    </project_attribute>
@@ -86,6 +95,7 @@
        <choice>powerpc-wrs-vxworks-gnat</choice>
        <choice>powerpc-wrs-vxworksae-gnat</choice>
        <choice>powerpc-elf-gnat</choice>
+       <choice>powerpc-eabispe-gnat</choice>
        <choice>i586-wrs-vxworks-gnat</choice>
        <choice>m68k-wrs-vxworks-gnat</choice>
        <choice>mips-wrs-vxworks-gnat</choice>
@@ -95,6 +105,7 @@
        <choice>powerpc-xcoff-lynxos-gnat</choice>
        <choice>erc32-elf-gnat</choice>
        <choice>leon-elf-gnat</choice>
+       <choice>dotnet-gnat</choice>
        <choice>gnaamp</choice>
        <string />
    </project_attribute>
@@ -112,6 +123,7 @@
        <choice>powerpc-wrs-vxworksae-gdb</choice>
        <choice>powerpc-wrs-vxworks6-gdb</choice>
        <choice>powerpc-elf-gdb</choice>
+       <choice>powerpc-eabispe-gdb</choice>
        <choice>i586-wrs-vxworks-gdb</choice>
        <choice>m68k-wrs-vxworks-gdb</choice>
        <choice>mips-wrs-vxworks-gdb</choice>
