@@ -45,6 +45,7 @@
           <choice>powerpc-xcoff-lynxos-gnatmake</choice>
           <choice>erc32-elf-gnatmake</choice>
           <choice>leon-elf-gnatmake</choice>
+          <choice>dotnet-gnatmake</choice>
           <choice>gnaampmake</choice>
           <string />
       </specialized_index>
@@ -75,6 +76,7 @@
        <choice>powerpc-xcoff-lynxos-gnatls</choice>
        <choice>erc32-elf-gnatls</choice>
        <choice>leon-elf-gnatls</choice>
+       <choice>dotnet-gnatls</choice>
        <choice>gnaampls</choice>
        <string />
    </project_attribute>
@@ -100,6 +102,7 @@
        <choice>powerpc-xcoff-lynxos-gnat</choice>
        <choice>erc32-elf-gnat</choice>
        <choice>leon-elf-gnat</choice>
+       <choice>dotnet-gnat</choice>
        <choice>gnaamp</choice>
        <string />
    </project_attribute>
