@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2006                      --
+--                      Copyright (C) 2000-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -316,13 +316,13 @@ package body Language.Custom is
 
          declare
             Comment   : constant String_Ptr :=
-              Get_Field (Top, "Comment_Line");
+                          Get_Field (Top, "Comment_Line");
             Parse_C   : constant String_Ptr :=
-              Get_Field (Top, "Parse_Constructs");
+                          Get_Field (Top, "Parse_Constructs");
             Format    : constant String_Ptr :=
-              Get_Field (Top, "Format_Buffer");
+                          Get_Field (Top, "Format_Buffer");
             Parse_E   : constant String_Ptr :=
-              Get_Field (Top, "Parse_Entities");
+                          Get_Field (Top, "Parse_Entities");
             Success   : Boolean;
 
          begin
@@ -389,12 +389,16 @@ package body Language.Custom is
          begin
             if Lang_Name = "ada" then
                Lang.Parent := Language.Ada.Ada_Lang;
+
             elsif Lang_Name = "c" then
                Lang.Parent := Language.C.C_Lang;
+
             elsif Lang_Name = "c++" then
                Lang.Parent := Language.Cpp.Cpp_Lang;
+
             elsif Lang_Name = "java" then
                Lang.Parent := Language.Java.Java_Lang;
+
             else
                --  loop through custom languages to find parent
                --  Skip first language, since this is Lang itself
@@ -556,6 +560,7 @@ package body Language.Custom is
       if Keyword_Append
         and then Lang.Parent /= null
         and then Strings.String_Access'(Keywords (Lang.Parent)) /= null
+        and then Keywords (Lang.Parent).all /= ""
       then
          Lang.Keywords_Regexp :=
            new String'(Keywords (Lang.Parent).all & '|' & To_String (Str));
