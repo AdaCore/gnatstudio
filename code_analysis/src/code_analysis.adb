@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006-2007                    --
+--                       Copyright (C) 2006-2007                     --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
@@ -241,6 +241,7 @@ package body Code_Analysis is
    procedure Free_Subprogram (Sub_Node : in out Subprogram_Access) is
    begin
       Free_Analysis (Sub_Node.Analysis_Data);
+      Unchecked_Free (Sub_Node.Name);
       Unchecked_Free (Sub_Node);
    end Free_Subprogram;
 
