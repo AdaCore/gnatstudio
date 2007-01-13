@@ -148,16 +148,20 @@ package body Code_Coverage is
       Node      : Construct_Tree_Iterator := First (Tree);
       Node_Info : Simple_Construct_Information;
       Subp_Node : Subprogram_Access;
+      Subp_Name : String_Access;
    begin
       loop
          Node_Info := Get_Construct (Node);
+
          if Node_Info.Category in Subprogram_Category then
-            Subp_Node := Get_Or_Create (File_Node, Node_Info.Name);
+            Subp_Name := new String'(Node_Info.Name.all);
+            Subp_Node := Get_Or_Create (File_Node, Subp_Name);
             Subp_Node.Analysis_Data.Coverage_Data := new Subprogram_Coverage'
               (Coverage => 0,
                Called   => 99, -- ??? intended crazy value
                Children =>
                  Node_Info.Sloc_End.Line - Node_Info.Sloc_Start.Line);
+
             for J in Node_Info.Sloc_Start.Line .. Node_Info.Sloc_End.Line loop
                if File_Node.Lines (J).Analysis_Data.Coverage_Data /= null then
                   if File_Node.Lines (J).Analysis_Data.Coverage_Data.Coverage =
