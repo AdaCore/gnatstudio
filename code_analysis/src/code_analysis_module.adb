@@ -51,6 +51,7 @@ with Language_Handlers;          use Language_Handlers;
 with Language;                   use Language;
 with Language.Tree;              use Language.Tree;
 with Language.Tree.Database;     use Language.Tree.Database;
+with Entities;                   use Entities;
 with Code_Coverage;              use Code_Coverage;
 with Code_Analysis_Tree_Model;   use Code_Analysis_Tree_Model;
 
@@ -416,7 +417,19 @@ package body Code_Analysis_Module is
          end if;
          --  Find in the tree the context's file
 
-         --  ??? Here miss subprogram handling (coming soon)
+         if Has_Entity_Name_Information (Context) and then
+           Is_Subprogram (Get_Entity (Context)) then
+            --  So we have a subprogram information according to
+            --  Filter_Matches_Primitives
+            Iter := Children (Property.View.Model, Iter);
+
+            loop
+               exit when Get_String (Property.View.Model, Iter, Num_Col) =
+                 Entity_Name_Information (Context);
+               Next (Property.View.Model, Iter);
+            end loop;
+         end if;
+         --  Find in the tree the context's subprogram
 
          Path := Get_Path (Property.View.Model, Iter);
          Collapse_All (Property.View.Tree);
@@ -1018,9 +1031,10 @@ package body Code_Analysis_Module is
    is
       pragma Unreferenced (Filter);
    begin
-      return (Has_Project_Information (Context)
-              or else Has_File_Information (Context)
-              or else Has_Entity_Name_Information (Context));
+      return (Has_Project_Information (Context) or else
+        Has_File_Information (Context) or else
+          (Has_Entity_Name_Information (Context) and then
+           Is_Subprogram (Get_Entity (Context))));
    end Filter_Matches_Primitive;
 
    --------------------
