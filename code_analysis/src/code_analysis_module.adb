@@ -42,9 +42,9 @@ with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Styles;          use GPS.Kernel.Styles;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
+with GPS.Kernel.Console;
 with GPS.Location_View;          use GPS.Location_View;
 
-with VFS;                        use VFS;
 with Projects;                   use Projects;
 with Projects.Registry;          use Projects.Registry;
 with Language_Handlers;          use Language_Handlers;
@@ -58,11 +58,16 @@ with Code_Analysis_Tree_Model;   use Code_Analysis_Tree_Model;
 package body Code_Analysis_Module is
 
    Src_File_Cst : aliased constant String := "src";
-   --  Constant string that represents the name of the source file parameter
-   --  of the GPS.CodeAnalysis.add_gcov_info subprogram
+   --  Constant String that represents the name of the source file parameter
+   --  of the GPS.CodeAnalysis.add_gcov_file_info subprogram
    Cov_File_Cst : aliased constant String := "cov";
-   --  Constant string that represents the name of the .gcov file parameter
-   --  of the GPS.CodeAnalysis.add_gcov_info subprogram
+   --  Constant String that represents the name of the .gcov file parameter
+   --  of the GPS.CodeAnalysis.add_gcov_file_info subprogram
+   Prj_File_Cst : aliased constant String := "prj";
+   --  Constant String that represents the name of the .gpr file parameter
+   --  of the GPS.CodeAnalysis.add_gcov_project_info subprogram
+   Gcov_Extension_Cst : constant String := ".gcov";
+   --  Constant String that represents the extension of GCOV files
 
    ------------
    -- Create --
@@ -106,96 +111,234 @@ package body Code_Analysis_Module is
       end if;
    end Create;
 
-   ------------------------------
-   -- Add_Gcov_Info_From_Shell --
-   ------------------------------
+   -------------------------------------
+   -- Add_Gcov_File_Info_From_Context --
+   -------------------------------------
 
-   procedure Add_Gcov_Info_From_Shell
+   procedure Add_Gcov_File_Info_From_Context
+     (Widget : access Glib.Object.GObject_Record'Class;
+      C      : Context_And_Instance)
+   is
+      pragma Unreferenced (Widget);
+      Property     : Code_Analysis_Property_Record;
+      Project_Name : constant Project_Type := Project_Information (C.Context);
+      Project_Node : Project_Access;
+      Src_File     : constant VFS.Virtual_File := File_Information (C.Context);
+      Cov_File     : VFS.Virtual_File;
+   begin
+      Property     := Code_Analysis_Property_Record
+        (Get_Property (C.Instance, Code_Analysis_Cst_Str));
+      Project_Node := Get_Or_Create (Property.Projects, Project_Name);
+      Cov_File     := Create (Object_Path (Project_Name, False, False) &
+                              "/" & Base_Name (Src_File) & Gcov_Extension_Cst);
+
+      if not Is_Regular_File (Cov_File) then
+         GPS.Kernel.Console.Insert
+           (Code_Analysis_Module_ID.Kernel,
+            "There is no loadable GCOV information" &
+            " associated with " & Base_Name (Src_File),
+            Mode => GPS.Kernel.Console.Error);
+         return;
+      end if;
+
+      Add_Gcov_File_Info (Src_File, Cov_File, Project_Node);
+      Compute_Project_Coverage (Project_Node);
+   end Add_Gcov_File_Info_From_Context;
+
+   -----------------------------------
+   -- Add_Gcov_File_Info_From_Shell --
+   -----------------------------------
+
+   procedure Add_Gcov_File_Info_From_Shell
      (Data    : in out Callback_Data'Class;
       Command : String)
    is
       pragma Unreferenced (Command);
-      Property      : Code_Analysis_Property_Record;
-      Instance      : Class_Instance;
-      File_Contents : GNAT.Strings.String_Access;
-      Project_Name  : Project_Type;
-      Project_Node  : Project_Access;
-      Src_File      : Class_Instance;
-      Cov_File      : Class_Instance;
-      VFS_Src_File  : VFS.Virtual_File;
-      VFS_Cov_File  : VFS.Virtual_File;
-      File_Node     : Code_Analysis.File_Access;
+      Property     : Code_Analysis_Property_Record;
+      Instance     : Class_Instance;
+      Src_Instance : Class_Instance;
+      Cov_Instance : Class_Instance;
+      Src_File     : VFS.Virtual_File;
+      Cov_File     : VFS.Virtual_File;
+      Project_Name : Project_Type;
+      Project_Node : Project_Access;
    begin
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
       Property := Code_Analysis_Property_Record
         (Get_Property (Instance, Code_Analysis_Cst_Str));
       Name_Parameters (Data, (2 => Src_File_Cst'Access,
                               3 => Cov_File_Cst'Access));
-      Src_File := Nth_Arg
+      Src_Instance := Nth_Arg
            (Data, 2, Get_File_Class (Code_Analysis_Module_ID.Kernel),
             Default => No_Class_Instance, Allow_Null => True);
 
-      if Src_File = No_Class_Instance then
-         VFS_Src_File := VFS.No_File;
+      if Src_Instance = No_Class_Instance then
+         Src_File := VFS.No_File;
       else
-         VFS_Src_File := Get_Data (Src_File);
+         Src_File := Get_Data (Src_Instance);
       end if;
 
-      if not Is_Regular_File (VFS_Src_File) then
+      if not Is_Regular_File (Src_File) then
          Set_Error_Msg (Data, "The name given for 'src' file is wrong");
          return;
       end if;
 
-      Cov_File := Nth_Arg
+      Cov_Instance := Nth_Arg
            (Data, 3, Get_File_Class (Code_Analysis_Module_ID.Kernel),
             Default => No_Class_Instance, Allow_Null => True);
 
-      if Cov_File = No_Class_Instance then
-         VFS_Cov_File := VFS.No_File;
+      if Cov_Instance = No_Class_Instance then
+         Cov_File := VFS.No_File;
       else
-         VFS_Cov_File := Get_Data (Cov_File);
+         Cov_File := Get_Data (Cov_Instance);
       end if;
 
-      if not Is_Regular_File (VFS_Cov_File) then
+      if not Is_Regular_File (Cov_File) then
          Set_Error_Msg (Data, "The name given for 'cov' file is wrong");
          return;
       end if;
 
       Project_Name  := Get_Project_From_File
-        (Get_Registry (Code_Analysis_Module_ID.Kernel).all, VFS_Src_File);
+        (Get_Registry (Code_Analysis_Module_ID.Kernel).all, Src_File);
       Project_Node  := Get_Or_Create (Property.Projects, Project_Name);
-      File_Node     := Get_Or_Create (Project_Node, VFS_Src_File);
-      File_Node.Analysis_Data.Coverage_Data := new Node_Coverage;
-      File_Contents := Read_File (VFS_Cov_File);
-      Add_File_Info (File_Node, File_Contents,
-                      Node_Coverage
-                        (File_Node.Analysis_Data.Coverage_Data.all).Children,
-                     File_Node.Analysis_Data.Coverage_Data.Coverage);
-      declare
-         Handler   : constant Language_Handler
-           := Get_Language_Handler (Code_Analysis_Module_ID.Kernel);
-         Database  : constant Construct_Database_Access
-           := Get_Construct_Database (Code_Analysis_Module_ID.Kernel);
-         Tree_Lang : constant Tree_Language_Access
-           := Get_Tree_Language_From_File (Handler, File_Node.Name, False);
-         Data_File : constant Structured_File_Access :=
-                           Language.Tree.Database.Get_Or_Create
-                             (Db   => Database,
-                              File => File_Node.Name,
-                              Lang => Tree_Lang);
-      begin
-         Add_Subprogram_Info (Data_File, File_Node);
-      end;
-
+      Add_Gcov_File_Info (Src_File, Cov_File, Project_Node);
       Compute_Project_Coverage (Project_Node);
-      Free (File_Contents);
       GPS.Kernel.Scripts.Set_Property (Instance, Code_Analysis_Cst_Str,
                                        Instance_Property_Record (Property));
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
-   end Add_Gcov_Info_From_Shell;
+   end Add_Gcov_File_Info_From_Shell;
+
+   ------------------------
+   -- Add_Gcov_File_Info --
+   ------------------------
+
+   procedure Add_Gcov_File_Info
+     (Src_File     : VFS.Virtual_File;
+      Cov_File     : VFS.Virtual_File;
+      Project_Node : Project_Access)
+   is
+      File_Contents : GNAT.Strings.String_Access := Read_File (Cov_File);
+      File_Node     : constant Code_Analysis.File_Access :=
+                        Get_Or_Create (Project_Node, Src_File);
+      Handler       : constant Language_Handler
+        := Get_Language_Handler (Code_Analysis_Module_ID.Kernel);
+      Database      : constant Construct_Database_Access
+        := Get_Construct_Database (Code_Analysis_Module_ID.Kernel);
+      Tree_Lang     : constant Tree_Language_Access
+        := Get_Tree_Language_From_File (Handler, File_Node.Name, False);
+      Data_File     : constant Structured_File_Access :=
+                        Language.Tree.Database.Get_Or_Create
+                          (Db   => Database,
+                           File => File_Node.Name,
+                           Lang => Tree_Lang);
+   begin
+      File_Node.Analysis_Data.Coverage_Data := new Node_Coverage;
+      Add_File_Info (File_Node, File_Contents,
+                      Node_Coverage
+                        (File_Node.Analysis_Data.Coverage_Data.all).Children,
+                     File_Node.Analysis_Data.Coverage_Data.Coverage);
+      Add_Subprogram_Info (Data_File, File_Node);
+      Free (File_Contents);
+   end Add_Gcov_File_Info;
+
+   ----------------------------------------
+   -- Add_Gcov_Project_Info_From_Context --
+   ----------------------------------------
+
+   procedure Add_Gcov_Project_Info_From_Context
+     (Widget : access Glib.Object.GObject_Record'Class;
+      C      : Context_And_Instance)
+   is
+      pragma Unreferenced (Widget);
+      Property : Code_Analysis_Property_Record;
+      Prj_Name : constant Project_Type := Project_Information (C.Context);
+      Prj_Node : Project_Access;
+   begin
+      Property     := Code_Analysis_Property_Record
+        (Get_Property (C.Instance, Code_Analysis_Cst_Str));
+      Prj_Node := Get_Or_Create (Property.Projects, Prj_Name);
+      Add_Gcov_Project_Info (Prj_Node);
+   end Add_Gcov_Project_Info_From_Context;
+
+   --------------------------------------
+   -- Add_Gcov_Project_Info_From_Shell --
+   --------------------------------------
+
+   procedure Add_Gcov_Project_Info_From_Shell
+     (Data    : in out Callback_Data'Class;
+      Command : String)
+   is
+      pragma Unreferenced (Command);
+      Property : Code_Analysis_Property_Record;
+      Instance : Class_Instance;
+      Prj_Inst : Class_Instance;
+      Prj_File : VFS.Virtual_File;
+      Prj_Name : Project_Type;
+      Prj_Node : Project_Access;
+   begin
+      Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
+      Property := Code_Analysis_Property_Record
+        (Get_Property (Instance, Code_Analysis_Cst_Str));
+      Name_Parameters (Data, (2 => Prj_File_Cst'Access));
+      Prj_Inst := Nth_Arg
+        (Data, 2, Get_File_Class (Code_Analysis_Module_ID.Kernel),
+         Default => No_Class_Instance, Allow_Null => True);
+
+      if Prj_Inst = No_Class_Instance then
+         Prj_File := VFS.No_File;
+      else
+         Prj_File := Get_Data (Prj_Inst);
+      end if;
+
+      if not Is_Regular_File (Prj_File) then
+         Set_Error_Msg (Data, "The name given for 'prj' file is wrong");
+         return;
+      end if;
+
+      Prj_Name  := Load_Or_Find
+        (Get_Registry (Code_Analysis_Module_ID.Kernel).all,
+         Locale_Full_Name (Prj_File));
+      Prj_Node  := Get_Or_Create (Property.Projects, Prj_Name);
+      Add_Gcov_Project_Info (Prj_Node);
+      GPS.Kernel.Scripts.Set_Property (Instance, Code_Analysis_Cst_Str,
+                                       Instance_Property_Record (Property));
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end Add_Gcov_Project_Info_From_Shell;
+
+   ---------------------------
+   -- Add_Gcov_Project_Info --
+   ---------------------------
+
+   procedure Add_Gcov_Project_Info
+     (Project_Node : Project_Access)
+   is
+      Src_Files : VFS.File_Array_Access;
+      Src_File  : VFS.Virtual_File;
+      Cov_File  : VFS.Virtual_File;
+   begin
+      --  get every source files of the project
+      --  check if they are associated with gcov info
+      --  load their info
+      Src_Files := Get_Source_Files (Project_Node.Name, Recursive => False);
+
+      for J in Src_Files'First .. Src_Files'Last loop
+         Src_File := Src_Files (J);
+         Cov_File := Create (Object_Path (Project_Node.Name, False, False) &
+                             "/" & Base_Name (Src_File) & Gcov_Extension_Cst);
+
+         if Is_Regular_File (Cov_File) then
+            Add_Gcov_File_Info (Src_File, Cov_File, Project_Node);
+         end if;
+      end loop;
+
+      Compute_Project_Coverage (Project_Node);
+   end Add_Gcov_Project_Info;
 
    ---------------------------------------
    -- List_Lines_Not_Covered_From_Shell --
@@ -1120,12 +1263,13 @@ package body Code_Analysis_Module is
                  (Item, "activate", Context_And_Instance_CB.To_Marshaller
                     (Show_Analysis_Report_From_Context'Access), C);
             else
-               Gtk_New (Item, -"Load coverage information");
+               Gtk_New (Item, -"Load " &
+                        Locale_Base_Name (File_Information (C.Context))
+                        & " coverage information");
                Append (Submenu, Item);
                Context_And_Instance_CB.Connect
                  (Item, "activate", Context_And_Instance_CB.To_Marshaller
-                    (Load_Coverage_Information'Access), C);
-               --  ??? Will be a Load_File_Coverage_Information
+                    (Add_Gcov_File_Info_From_Context'Access), C);
             end if;
          end;
       else
@@ -1141,12 +1285,13 @@ package body Code_Analysis_Module is
               (Item, "activate", Context_And_Instance_CB.To_Marshaller
                  (Show_Analysis_Report_From_Context'Access), C);
          else
-            Gtk_New (Item, -"Load coverage information");
+            Gtk_New (Item, -"Load " &
+                     Project_Name (Project_Information (C.Context))
+                     & " coverage information");
             Append (Submenu, Item);
             Context_And_Instance_CB.Connect
               (Item, "activate", Context_And_Instance_CB.To_Marshaller
-                 (Load_Coverage_Information'Access), C);
-            --  ??? Will be a Load_Project_Coverage_Information
+                 (Add_Gcov_Project_Info_From_Context'Access), C);
          end if;
       end if;
    end Append_Submenu;
@@ -1235,11 +1380,17 @@ package body Code_Analysis_Module is
          Class        => Code_Analysis_Class,
          Handler      => Create'Access);
       Register_Command
-        (Kernel, "add_gcov_info",
+        (Kernel, "add_gcov_project_info",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Class        => Code_Analysis_Class,
+         Handler      => Add_Gcov_Project_Info_From_Shell'Access);
+      Register_Command
+        (Kernel, "add_gcov_file_info",
          Minimum_Args => 2,
          Maximum_Args => 2,
          Class        => Code_Analysis_Class,
-         Handler      => Add_Gcov_Info_From_Shell'Access);
+         Handler      => Add_Gcov_File_Info_From_Shell'Access);
       Register_Command
         (Kernel, "list_lines_not_covered",
          Class        => Code_Analysis_Class,
