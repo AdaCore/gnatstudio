@@ -49,6 +49,7 @@ with GPS.Kernel.Scripts;   use GPS.Kernel.Scripts;
 with GPS.Kernel.MDI;       use GPS.Kernel.MDI;
 with GPS.Intl;             use GPS.Intl;
 
+with VFS;                  use VFS;
 with Traces;               use Traces;
 with Code_Analysis;        use Code_Analysis;
 
@@ -131,7 +132,8 @@ private
      (Instance : Class_Instance;
       Property : in out Code_Analysis_Property_Record;
       Context  : Selection_Context := No_Context);
-   --  Actually builds and shows the tree view report
+   --  Actually builds and shows the tree view report. Should be called by
+   --  Show_Analysis_Report_From_Context and Show_Analysis_Report_From_Shell
 
    type Code_Analysis_Property is access all Code_Analysis_Property_Record;
 
@@ -194,10 +196,41 @@ private
       Command : String);
    --  Create a new instance of Code_Analysis data structure
 
-   procedure Add_Gcov_Info_From_Shell
+   procedure Add_Gcov_File_Info_From_Context
+     (Widget : access Glib.Object.GObject_Record'Class;
+      C      : Context_And_Instance);
+   --  Looks for a corresponding GCOV file, and adds its node and coverage info
+   --  into the current code_analysis structure
+
+   procedure Add_Gcov_File_Info_From_Shell
      (Data    : in out Callback_Data'Class;
       Command : String);
    --  Add node and coverage info provided by a gcov file parsing
+
+   procedure Add_Gcov_File_Info
+     (Src_File     : VFS.Virtual_File;
+      Cov_File     : VFS.Virtual_File;
+      Project_Node : Project_Access);
+   --  Actually adds the node and coverage info provided by the gcov file
+   --  parsing. Should be called by Add_Gcov_File_Info_From_Shell or
+   --  Add_Gcov_File_Info_From_Context
+
+   procedure Add_Gcov_Project_Info_From_Context
+     (Widget : access Glib.Object.GObject_Record'Class;
+      C      : Context_And_Instance);
+   --  Basically do an Add_Gcov_File_Info on every files of the project in
+   --  Context
+
+   procedure Add_Gcov_Project_Info_From_Shell
+     (Data    : in out Callback_Data'Class;
+      Command : String);
+   --  Basically do an Add_Gcov_File_Info on every files of the given project
+
+   procedure Add_Gcov_Project_Info
+     (Project_Node : Project_Access);
+   --  Actually look for project source files, and corresponding .gcov files
+   --  And when its possible, add every file coverage information to the
+   --  Code_Analysis structure of given Project_Node
 
    procedure List_Lines_Not_Covered_From_Shell
      (Data    : in out Callback_Data'Class;
@@ -208,7 +241,7 @@ private
    procedure Show_Analysis_Report_From_Shell
      (Data    : in out Callback_Data'Class;
       Command : String);
-   --  Creata an display a Code_Analysis tree view within a MDI Child
+   --  Create and display a Code_Analysis tree view within a MDI Child
 
    procedure Destroy
      (Data    : in out Callback_Data'Class;
