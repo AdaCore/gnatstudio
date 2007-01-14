@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006-2007                    --
+--                      Copyright (C) 2006-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
@@ -183,7 +183,7 @@ package body Code_Coverage is
    -- Compute_Project_Coverage --
    ------------------------------
 
-   procedure Compute_Project_Coverage (Project_Node : in out Project_Access) is
+   procedure Compute_Project_Coverage (Project_Node : Project_Access) is
       Cur       : File_Maps.Cursor;
       File_Node : Code_Analysis.File_Access;
       use File_Maps;
