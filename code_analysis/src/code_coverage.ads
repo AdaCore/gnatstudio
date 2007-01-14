@@ -45,7 +45,7 @@ package Code_Coverage is
    --  Add the subprogram nodes of the given file node, and compute it coverage
    --  information
 
-   procedure Compute_Project_Coverage (Project_Node : in out Project_Access);
+   procedure Compute_Project_Coverage (Project_Node : Project_Access);
    --  Compute the node coverage information of the single given project from
    --  the coverage information of its File children
 
