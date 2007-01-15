@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006                         --
+--                        Copyright (C) 2006-2007                    --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
@@ -45,7 +45,7 @@ package body Code_Analysis_Dump is
       Put ("Project " & Project_Name (Project_Node.Name));
 
       if Project_Node.Analysis_Data.Coverage_Data /= null then
-         Dump_Node_Coverage (Project_Node.Analysis_Data.Coverage_Data);
+         Dump_Subp_Coverage (Project_Node.Analysis_Data.Coverage_Data);
       end if;
 
       New_Line;
