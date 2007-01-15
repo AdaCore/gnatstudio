@@ -56,9 +56,13 @@ package body Code_Coverage is
    begin
       Lines_Count   := 0;
       Not_Cov_Count := 0;
+
+      --------------------------------------
+      -- Determination of the line number --
+      --------------------------------------
+
       Current := File_Contents'Last;
-      Current := Index
-        (File_Contents.all, (1 => ASCII.LF), Current, Backward);
+      Current := Index (File_Contents.all, (1 => ASCII.LF), Current, Backward);
 
       if Current = File_Contents'Last then
          if Current > 0 then
@@ -99,6 +103,11 @@ package body Code_Coverage is
       Lines_Count := Natural'Value
         (File_Contents
            (Last_Line_Matches (1).First .. Last_Line_Matches (1).Last));
+
+      -------------------------------
+      -- line coverage information --
+      -------------------------------
+
       File_Node.Lines := new Line_Array (1 .. Lines_Count);
       --  Create a Line_Array with exactly the number of elements corresponding
       --  to the number of code lines in the original source code file.
@@ -135,6 +144,39 @@ package body Code_Coverage is
          Current := Line_Matches (0).Last + 1;
       end loop;
    end Add_File_Info;
+
+   -----------------------------
+   -- Get_Runs_Info_From_File --
+   -----------------------------
+
+   function Get_Runs_Info_From_File (File_Node     : Code_Analysis.File_Access;
+                                     File_Contents : String_Access)
+                                     return Positive is
+      Current       : Natural;
+      Runs_Regexp   : constant Pattern_Matcher :=
+                            Compile ("^ +-: +0:Runs:(\d+)", Multiple_Lines);
+      Runs_Matches  : Match_Array (0 .. 1);
+      Bad_Gcov_File : exception;
+   begin
+
+      Current := File_Contents'First;
+
+      for J in 1 .. 4 loop
+         Current := Index
+           (File_Contents.all, (1 => ASCII.LF), Current, Forward);
+      end loop;
+
+      Match (Runs_Regexp, File_Contents.all, Runs_Matches, Current);
+
+      if Runs_Matches (0) = No_Match then
+         raise Bad_Gcov_File with VFS.Base_Name (File_Node.Name)
+           & ".gcov is not a valid Gcov file."
+           & " No runs quantity information found.";
+      end if;
+
+      return Positive'Value
+        (File_Contents (Runs_Matches (1).First .. Runs_Matches (1).Last));
+   end Get_Runs_Info_From_File;
 
    -------------------------
    -- Add_Subprogram_Info --
@@ -192,7 +234,7 @@ package body Code_Coverage is
       Cur := Project_Node.Files.First;
 
       if Project_Node.Analysis_Data.Coverage_Data = null then
-         Project_Node.Analysis_Data.Coverage_Data := new Node_Coverage;
+         Project_Node.Analysis_Data.Coverage_Data := new Subprogram_Coverage;
       end if;
 
       declare
