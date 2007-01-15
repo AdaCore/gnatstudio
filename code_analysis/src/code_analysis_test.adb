@@ -164,7 +164,10 @@ procedure Code_Analysis_Test is
       Data_File := Get_Or_Create (Database, File_Node.Name, Ada_Tree_Lang);
       Add_Subprogram_Info (Data_File, File_Node);
 
-      Project_Node.Analysis_Data.Coverage_Data := new Node_Coverage;
+      Project_Node.Analysis_Data.Coverage_Data := new Subprogram_Coverage;
+      Subprogram_Coverage
+        (Project_Node.Analysis_Data.Coverage_Data.all).Called :=
+        Get_Runs_Info_From_File (File_Node, File_Contents);
       Compute_Project_Coverage (Project_Node);
       Free (File_Contents);
       return Project_Node;
