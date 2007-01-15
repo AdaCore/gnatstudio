@@ -240,6 +240,15 @@ package body Code_Analysis_Module is
                       Node_Coverage
                         (File_Node.Analysis_Data.Coverage_Data.all).Children,
                      File_Node.Analysis_Data.Coverage_Data.Coverage);
+
+      if Project_Node.Analysis_Data.Coverage_Data = null then
+         Project_Node.Analysis_Data.Coverage_Data := new Subprogram_Coverage;
+         Subprogram_Coverage
+           (Project_Node.Analysis_Data.Coverage_Data.all).Called :=
+           Get_Runs_Info_From_File (File_Node, File_Contents);
+      end if;
+      --  Check for project Called info
+
       Add_Subprogram_Info (Data_File, File_Node);
       Free (File_Contents);
    end Add_Gcov_File_Info;
