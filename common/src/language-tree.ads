@@ -81,6 +81,8 @@ package Language.Tree is
    function Get_Construct
      (Iter : Construct_Tree_Iterator) return Simple_Construct_Information;
    --  Return the construct pointed by the iterator given in parameter.
+   --  The user should not free the fields of the returned
+   --  Simple_Construct_Information
 
    type Category_Array is array (Natural range <>) of Language_Category;
    Null_Category_Array : Category_Array (1 .. 0) := (others => Cat_Unknown);
