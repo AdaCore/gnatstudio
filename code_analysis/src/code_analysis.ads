@@ -136,8 +136,9 @@ package Code_Analysis is
    type Line_Array_Access is access Line_Array;
 
    type Subprogram is new Node with record
-      Name      : String_Access;
-      Body_Line : Natural := 1;
+      Name   : String_Access;
+      Line   : Natural := 1;
+      Column : Natural := 1;
    end record;
    --  A Subprogram is identified in the Subprograms' maps of every File record
    --  by a string type
@@ -162,15 +163,21 @@ package Code_Analysis is
    Node_Col : constant := 2;
    --  Gtk_Tree_Model column number dedicated to the nodes of code_analysis
    --  structure
-   Cov_Col  : constant := 3;
+   File_Col : constant := 3;
+   --  Gtk_Tree_Model column number dedicated to the node corresponding files
+   --  nodes of the code_analysis structure (usefull for flat views)
+   --   - nothing if the node is a project
+   --   - the file_node itself if its a file
+   --   - the parent file_node if its a subprogram
+   Cov_Col  : constant := 4;
    --  Gtk_Tree_Model column number dedicated to the coverage information
    --  contained in the node coverage records
-   Cov_Sort : constant := 4;
+   Cov_Sort : constant := 5;
    --  Gtk_Tree_Model column number dedicated to some raw coverage information
    --  used to sort rows by not covered lines amount order
-   Cov_Bar_Txt : constant := 5;
+   Cov_Bar_Txt : constant := 6;
    --  Ctk_Tree_Model column number dedicated to the coverage percentage column
-   Cov_Bar_Val : constant := 6;
+   Cov_Bar_Val : constant := 7;
    --  Gtk_Tree_Model column number dedicated to the raw coverage percentage
    --  values, in order to be use in sorting operations
 
