@@ -33,7 +33,6 @@ with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Window;                 use Gtk.Window;
 with Gtk.Menu_Item;              use Gtk.Menu_Item;
-with Gtk.Tree_Model;             use Gtk.Tree_Model;
 with Gtk.Tree_Selection;         use Gtk.Tree_Selection;
 with Gtkada.MDI;                 use Gtkada.MDI;
 with Gtkada.Handlers;            use Gtkada.Handlers;
@@ -45,6 +44,7 @@ with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.Console;
 with GPS.Location_View;          use GPS.Location_View;
 
+with Basic_Types;                use Basic_Types;
 with Projects;                   use Projects;
 with Projects.Registry;          use Projects.Registry;
 with Language_Handlers;          use Language_Handlers;
@@ -68,6 +68,10 @@ package body Code_Analysis_Module is
    --  of the GPS.CodeAnalysis.add_gcov_project_info subprogram
    Gcov_Extension_Cst : constant String := ".gcov";
    --  Constant String that represents the extension of GCOV files
+
+   Progress_Bar_Width_Cst : constant Gint := 150;
+   --  Constant used to set the width of the progress bars of the analysis
+   --  report
 
    ------------
    -- Create --
@@ -448,6 +452,7 @@ package body Code_Analysis_Module is
              (Pix_Col     => Gdk.Pixbuf.Get_Type,
               Name_Col    => GType_String,
               Node_Col    => GType_Pointer,
+              File_Col    => GType_Pointer,
               Cov_Col     => GType_String,
               Cov_Sort    => GType_Int,
               Cov_Bar_Txt => GType_String,
@@ -491,7 +496,9 @@ package body Code_Analysis_Module is
            Append_Column (Property.View.Tree, Property.View.Cov_Percent);
          Gtk_New (Bar_Render);
          Glib.Properties.Set_Property
-           (Bar_Render, Gtk.Cell_Renderer.Width_Property, Gint (100));
+           (Bar_Render,
+            Gtk.Cell_Renderer.Width_Property,
+            Progress_Bar_Width_Cst);
          Pack_Start (Property.View.Cov_Percent, Bar_Render, False);
          Add_Attribute
            (Property.View.Cov_Percent, Bar_Render, "text", Cov_Bar_Txt);
@@ -652,8 +659,7 @@ package body Code_Analysis_Module is
       Iter      : Gtk_Tree_Iter;
       Model     : Gtk_Tree_Model;
       Path      : Gtk_Tree_Path;
-      File_Node : Code_Analysis.File_Access;
-      Subp_Node : Subprogram_Access;
+      use GType_File;
    begin
       if Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Gdk_2button_Press
@@ -661,20 +667,18 @@ package body Code_Analysis_Module is
          Get_Selected (Get_Selection (V.Tree), Model, Iter);
          Path := Get_Path (Model, Iter);
 
-         if Get_Depth (Path) = 2 then
-            File_Node := Code_Analysis.File_Access
-              (GType_File.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
-            Open_File_Editor (Code_Analysis_Module_ID.Kernel, File_Node.Name);
+         if Get_Depth (Path) = 1 and then not Has_Child (V.Model, Iter) then
+            if GType_File.Get (Gtk_Tree_Store (Model), Iter, Node_Col) =
+              GType_File.Get (Gtk_Tree_Store (Model), Iter, File_Col)
+            then
+               Open_File_Editor_On_File (Model, Iter);
+            else
+               Open_File_Editor_On_Subprogram (Model, Iter);
+            end if;
+         elsif Get_Depth (Path) = 2 then
+            Open_File_Editor_On_File (Model, Iter);
          elsif Get_Depth (Path) = 3 then
-            File_Node := Code_Analysis.File_Access
-              (GType_File.Get
-                 (Gtk_Tree_Store (Model), Parent (Model, Iter), Node_Col));
-            Subp_Node := Subprogram_Access
-              (GType_Subprogram.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
-            Open_File_Editor
-              (Code_Analysis_Module_ID.Kernel,
-               File_Node.Name,
-               Subp_Node.Body_Line);
+            Open_File_Editor_On_Subprogram (Model, Iter);
          end if;
 
          return True;
@@ -688,6 +692,39 @@ package body Code_Analysis_Module is
          return False;
    end On_Double_Click;
 
+   ------------------------------
+   -- Open_File_Editor_On_File --
+   ------------------------------
+
+   procedure Open_File_Editor_On_File
+     (Model : Gtk_Tree_Model; Iter : Gtk_Tree_Iter)
+   is
+      File_Node : constant File_Access := File_Access
+        (GType_File.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
+   begin
+      Open_File_Editor
+        (Code_Analysis_Module_ID.Kernel, File_Node.Name);
+   end Open_File_Editor_On_File;
+
+   ------------------------------------
+   -- Open_File_Editor_On_Subprogram --
+   ------------------------------------
+
+   procedure Open_File_Editor_On_Subprogram
+     (Model : Gtk_Tree_Model; Iter : Gtk_Tree_Iter)
+   is
+      File_Node : constant File_Access := File_Access
+        (GType_File.Get (Gtk_Tree_Store (Model), Iter, File_Col));
+      Subp_Node : constant Subprogram_Access := Subprogram_Access
+        (GType_Subprogram.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
+   begin
+      Open_File_Editor
+        (Code_Analysis_Module_ID.Kernel,
+         File_Node.Name,
+         Subp_Node.Line,
+         Basic_Types.Visible_Column_Type (Subp_Node.Column));
+   end Open_File_Editor_On_Subprogram;
+
    ------------------------------------------
    -- Add_Coverage_Annotations_From_Report --
    ------------------------------------------
@@ -695,34 +732,32 @@ package body Code_Analysis_Module is
    procedure Add_Coverage_Annotations_From_Report
      (Object : access Gtk_Widget_Record'Class)
    is
-      View       : constant Code_Analysis_View := Code_Analysis_View (Object);
-      Iter       : Gtk_Tree_Iter;
-      Path       : Gtk_Tree_Path;
-      File_Node  : Code_Analysis.File_Access;
-      Subp_Node  : Subprogram_Access;
+      View      : constant Code_Analysis_View := Code_Analysis_View (Object);
+      Iter      : Gtk_Tree_Iter;
+      Path      : Gtk_Tree_Path;
+      File_Node : Code_Analysis.File_Access;
+      use GType_File;
    begin
       Get_Selected
         (Get_Selection (View.Tree), Gtk_Tree_Model (View.Model), Iter);
       Path := Get_Path (View.Model, Iter);
 
-      if Get_Depth (Path) = 2 then
-         File_Node := Code_Analysis.File_Access
-           (GType_File.Get (Gtk_Tree_Store (View.Model), Iter, Node_Col));
-         Open_File_Editor (Code_Analysis_Module_ID.Kernel, File_Node.Name);
-
+      if Get_Depth (Path) = 1 and then not Has_Child (View.Model, Iter) then
+         if GType_File.Get (Gtk_Tree_Store (View.Model), Iter, Node_Col) =
+           GType_File.Get (Gtk_Tree_Store (View.Model), Iter, File_Col)
+         then
+            Open_File_Editor_On_File (Gtk_Tree_Model (View.Model), Iter);
+         else
+            Open_File_Editor_On_Subprogram (Gtk_Tree_Model (View.Model), Iter);
+         end if;
+      elsif Get_Depth (Path) = 2 then
+         Open_File_Editor_On_File (Gtk_Tree_Model (View.Model), Iter);
       elsif Get_Depth (Path) = 3 then
-         File_Node := Code_Analysis.File_Access
-           (GType_File.Get (Gtk_Tree_Store (View.Model),
-            Parent (View.Model, Iter), Node_Col));
-         Subp_Node := Subprogram_Access
-           (GType_Subprogram.Get (Gtk_Tree_Store (View.Model),
-            Iter, Node_Col));
-         Open_File_Editor
-           (Code_Analysis_Module_ID.Kernel,
-            File_Node.Name,
-            Subp_Node.Body_Line);
+         Open_File_Editor_On_Subprogram (Gtk_Tree_Model (View.Model), Iter);
       end if;
 
+      File_Node := Code_Analysis.File_Access
+        (GType_File.Get (Gtk_Tree_Store (View.Model), Iter, File_Col));
       Add_Coverage_Annotations (File_Node);
    exception
       when E : others =>
@@ -808,23 +843,13 @@ package body Code_Analysis_Module is
    is
       View      : constant Code_Analysis_View := Code_Analysis_View (Object);
       Iter      : Gtk_Tree_Iter;
-      Path      : Gtk_Tree_Path;
       File_Node : Code_Analysis.File_Access;
    begin
       Get_Selected
         (Get_Selection (View.Tree), Gtk_Tree_Model (View.Model), Iter);
-      Path := Get_Path (View.Model, Iter);
-
-      if Get_Depth (Path) = 2 then
-         File_Node := Code_Analysis.File_Access
-           (GType_File.Get (Gtk_Tree_Store (View.Model), Iter, Node_Col));
-         Open_File_Editor (Code_Analysis_Module_ID.Kernel, File_Node.Name);
-      elsif Get_Depth (Path) = 3 then
-         File_Node := Code_Analysis.File_Access
-           (GType_File.Get (Gtk_Tree_Store (View.Model),
-            Parent (View.Model, Iter), Node_Col));
-      end if;
-
+      File_Node := Code_Analysis.File_Access
+        (GType_File.Get (Gtk_Tree_Store (View.Model), Iter, File_Col));
+      Open_File_Editor (Code_Analysis_Module_ID.Kernel, File_Node.Name);
       Remove_Coverage_Annotations (File_Node);
    exception
       when E : others =>
@@ -939,7 +964,7 @@ package body Code_Analysis_Module is
       Get_Selected
         (Get_Selection (View.Tree), Gtk_Tree_Model (View.Model), Iter);
       File_Node := Code_Analysis.File_Access
-        (GType_File.Get (Gtk_Tree_Store (View.Model), Iter, Node_Col));
+        (GType_File.Get (Gtk_Tree_Store (View.Model), Iter, File_Col));
       Open_File_Editor (Code_Analysis_Module_ID.Kernel, File_Node.Name);
       List_Lines_Not_Covered_In_File (File_Node);
    exception
@@ -1026,6 +1051,28 @@ package body Code_Analysis_Module is
       end loop;
    end List_Lines_Not_Covered_In_File;
 
+   ----------------------------
+   -- Expand_All_From_Report --
+   ----------------------------
+
+   procedure Expand_All_From_Report (Object : access Gtk_Widget_Record'Class)
+   is
+      View : constant Code_Analysis_View := Code_Analysis_View (Object);
+   begin
+      Expand_All (View.Tree);
+   end Expand_All_From_Report;
+
+   ------------------------------
+   -- Collapse_All_From_Report --
+   ------------------------------
+
+   procedure Collapse_All_From_Report (Object : access Gtk_Widget_Record'Class)
+   is
+      View : constant Code_Analysis_View := Code_Analysis_View (Object);
+   begin
+      Collapse_All (View.Tree);
+   end Collapse_All_From_Report;
+
    --------------------
    -- Show_Full_Tree --
    --------------------
@@ -1088,6 +1135,7 @@ package body Code_Analysis_Module is
       Buffer_Y  : Gint;
       Row_Found : Boolean;
       Item      : Gtk_Menu_Item;
+      Iter      : constant Gtk_Tree_Iter := Get_Iter_First (View.Model);
    begin
 
       Get_Path_At_Pos
@@ -1103,7 +1151,7 @@ package body Code_Analysis_Module is
       if Path /= null then
          Select_Path (Get_Selection (View.Tree), Path);
 
-         if Get_Depth (Path) > 1 then
+         if Get_Depth (Path) > 1 or else not Has_Child (View.Model, Iter) then
             Gtk_New (Item, -"View with coverage annotations");
             Gtkada.Handlers.Widget_Callback.Object_Connect
               (Item, "activate", Add_Coverage_Annotations_From_Report'Access,
@@ -1117,16 +1165,14 @@ package body Code_Analysis_Module is
             Append (Menu, Item);
          end if;
 
-         if Get_Depth (Path) = 1 then
+         if Get_Depth (Path) = 1 and then Has_Child (View.Model, Iter) then
             Gtk_New (Item, -"List lines not covered");
             Gtkada.Handlers.Widget_Callback.Object_Connect
               (Item, "activate",
                List_Lines_Not_Covered_In_Project_From_Report'Access,
                View, After => False);
             Append (Menu, Item);
-         end if;
-
-         if Get_Depth (Path) = 2 then
+         else
             Gtk_New (Item, -"List lines not covered");
             Gtkada.Handlers.Widget_Callback.Object_Connect
               (Item, "activate",
@@ -1149,29 +1195,28 @@ package body Code_Analysis_Module is
         (Item, "activate", Show_Flat_List_Of_Subprograms'Access,
          View, After => False);
       Append (Menu, Item);
-      Gtk_New (Item, -"Show full tree");
-      Gtkada.Handlers.Widget_Callback.Object_Connect
-        (Item, "activate", Show_Full_Tree'Access,
-         View, After => False);
-      Append (Menu, Item);
+
+      if not Has_Child (View.Model, Iter) then
+         Gtk_New (Item, -"Show full tree");
+         Gtkada.Handlers.Widget_Callback.Object_Connect
+           (Item, "activate", Show_Full_Tree'Access,
+            View, After => False);
+         Append (Menu, Item);
+      else
+         Gtk_New (Item);
+         Append (Menu, Item);
+         Gtk_New (Item, -"Expand all");
+         Gtkada.Handlers.Widget_Callback.Object_Connect
+           (Item, "activate", Expand_All_From_Report'Access,
+            View, After => False);
+         Append (Menu, Item);
+         Gtk_New (Item, -"Collapse all");
+         Gtkada.Handlers.Widget_Callback.Object_Connect
+           (Item, "activate", Collapse_All_From_Report'Access,
+            View, After => False);
+         Append (Menu, Item);
+      end if;
    end Context_Func;
-
-   -------------------------------
-   -- Load_Coverage_Information --
-   -------------------------------
-
-   procedure Load_Coverage_Information
-     (Widget : access Glib.Object.GObject_Record'Class;
-      C      : Context_And_Instance)
-   is
-      pragma Unreferenced (Widget, C);
-   begin
-      Trace (Me, "Load_Coverage_Information : not implemented yet");
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end Load_Coverage_Information;
 
    ------------------------------
    -- Filter_Matches_Primitive --
@@ -1273,8 +1318,8 @@ package body Code_Analysis_Module is
                     (Show_Analysis_Report_From_Context'Access), C);
             else
                Gtk_New (Item, -"Load " &
-                        Locale_Base_Name (File_Information (C.Context))
-                        & " coverage information");
+                        Locale_Base_Name (File_Information (C.Context)) &
+                        "'s data");
                Append (Submenu, Item);
                Context_And_Instance_CB.Connect
                  (Item, "activate", Context_And_Instance_CB.To_Marshaller
@@ -1293,15 +1338,17 @@ package body Code_Analysis_Module is
             Context_And_Instance_CB.Connect
               (Item, "activate", Context_And_Instance_CB.To_Marshaller
                  (Show_Analysis_Report_From_Context'Access), C);
-         else
-            Gtk_New (Item, -"Load " &
-                     Project_Name (Project_Information (C.Context))
-                     & " coverage information");
+            Gtk_New (Item);
             Append (Submenu, Item);
-            Context_And_Instance_CB.Connect
-              (Item, "activate", Context_And_Instance_CB.To_Marshaller
-                 (Add_Gcov_Project_Info_From_Context'Access), C);
          end if;
+
+         Gtk_New (Item, -"Load full " &
+                  Project_Name (Project_Information (C.Context)) &
+                  "'s data");
+         Append (Submenu, Item);
+         Context_And_Instance_CB.Connect
+           (Item, "activate", Context_And_Instance_CB.To_Marshaller
+              (Add_Gcov_Project_Info_From_Context'Access), C);
       end if;
    end Append_Submenu;
 
