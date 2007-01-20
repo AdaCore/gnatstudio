@@ -198,6 +198,8 @@ package body Code_Coverage is
          if Node_Info.Category in Subprogram_Category then
             Subp_Name := new String'(Node_Info.Name.all);
             Subp_Node := Get_Or_Create (File_Node, Subp_Name);
+            Subp_Node.Line   := Node_Info.Sloc_Entity.Line;
+            Subp_Node.Column := Node_Info.Sloc_Entity.Column;
             Subp_Node.Analysis_Data.Coverage_Data := new Subprogram_Coverage'
               (Coverage => 0,
                Called   => 99, -- ??? intended crazy value
