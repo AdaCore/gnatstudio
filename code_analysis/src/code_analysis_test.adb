@@ -67,12 +67,10 @@ procedure Code_Analysis_Test is
    --  Correct usage: code_analysis_test source_file build_display_destroy
    --  Example:
    --  $ code_analysis_test main.adb build_display_destroy
-   --  Project Dummy_Project_Name
-   --    File main.adb
-   --      Subprogram main__read_file 0 / 0 1 call(s)
-   --      Subprogram main 0 / 0 2 call(s)
-   --      Subprogram main___clean 0 / 0 1 call(s)
-   --      Subprogram main__read_file___clean 0 / 0 1 call(s)
+   --  Project Dummy_Project_Name 22 / 24 1 call(s)
+   --    File main.adb 22 / 24
+   --      Subprogram Read_File 10 / 10 1 call(s)
+   --      Subprogram Main 12 / 14 2 call(s)
    --        Line 1
    --        Line 2
    --        Line 3 4 execution(s)
