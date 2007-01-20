@@ -340,6 +340,13 @@ private
    --  Add to the location view the unexecuted lines of the given File of a
    --  Coverage Report.
 
+   procedure Expand_All_From_Report (Object : access Gtk_Widget_Record'Class);
+   --  Expand the whole tree vien in a code_analysis report
+
+   procedure Collapse_All_From_Report
+     (Object : access Gtk_Widget_Record'Class);
+   --  Collapse the whole tree vien in a code_analysis report
+
    procedure Show_Full_Tree (Object : access Gtk_Widget_Record'Class);
    --  Fill again the Gtk_Tree_Store with the full tree
 
@@ -354,12 +361,4 @@ private
      (Widget : access Glib.Object.GObject_Record'Class;
       C      : Context_And_Instance);
    --  Contextual menu callback that call Show_Report
-
-   procedure Load_Coverage_Information
-     (Widget : access Glib.Object.GObject_Record'Class;
-      C      : Context_And_Instance);
-   --  Not yet implemented
-   --  Will try to load every .gcov files of the project in the
-   --  Selection_Context of the Context_And_Code_Analysis in its Code_Analysis
-   --  structure
 end Code_Analysis_Module;
