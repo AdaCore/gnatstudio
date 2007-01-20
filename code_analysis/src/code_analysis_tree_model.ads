@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006                         --
+--                        Copyright (C) 2006-2007                    --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
@@ -61,6 +61,13 @@ package Code_Analysis_Tree_Model is
       Parent    : Gtk_Tree_Iter;
       Subp_Node : Subprogram_Access);
    --  Fill the Gtk_Tree_Store with the given Subprogram node
+
+   procedure Fill_Iter_With_Subprograms
+     (Model     : in out Gtk_Tree_Store;
+      Iter      : in out Gtk_Tree_Iter;
+      File_Node : Code_Analysis.File_Access;
+      Subp_Node : Subprogram_Access);
+   --  Fill the Gtk_Tree_Store with the given parentless Subprogram node
 
    procedure Fill_Iter
      (Model     : in out Gtk_Tree_Store;
