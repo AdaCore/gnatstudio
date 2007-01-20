@@ -41,6 +41,7 @@ with Gtk.Tree_Store;       use Gtk.Tree_Store;
 with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
 with Gtk.Widget;           use Gtk.Widget;
 with Gtk.Menu;             use Gtk.Menu;
+with Gtk.Tree_Model;       use Gtk.Tree_Model;
 with Gtk.Handlers;         use Gtk.Handlers;
 
 with GPS.Kernel;           use GPS.Kernel;
@@ -270,6 +271,15 @@ private
       Menu         : Gtk.Menu.Gtk_Menu);
    --  Determine the content of the contextual menu displays for the Coverage
    --  Report MDI child nodes
+
+   procedure Open_File_Editor_On_File
+     (Model : Gtk_Tree_Model; Iter : Gtk_Tree_Iter);
+   --  Opens a file editor on the source file pointed out by Iter in Model
+
+   procedure Open_File_Editor_On_Subprogram
+     (Model : Gtk_Tree_Model; Iter : Gtk_Tree_Iter);
+   --  Opens a file editor on the source file containing the Subprogram
+   --  pointed out by Iter in Model
 
    procedure Add_Coverage_Annotations_From_Report
      (Object : access Gtk_Widget_Record'Class);
