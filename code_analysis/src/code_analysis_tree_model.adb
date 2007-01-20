@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006                         --
+--                        Copyright (C) 2006-2007                    --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
@@ -43,6 +43,12 @@ package body Code_Analysis_Tree_Model is
    begin
       if Analysis_Id.Coverage_Data /= null then
          Fill_Iter (Model, Iter, Analysis_Id.Coverage_Data);
+      else
+         Set (Model, Iter, Cov_Col,
+              " Coverage information not available");
+         Set (Model, Iter, Cov_Sort, Glib.Gint (0));
+         Set (Model, Iter, Cov_Bar_Val, Glib.Gint (100));
+         Set (Model, Iter, Cov_Bar_Txt, "n/a");
       end if;
    end Fill_Iter;
 
@@ -56,14 +62,36 @@ package body Code_Analysis_Tree_Model is
       Parent    : Gtk_Tree_Iter;
       Subp_Node : Subprogram_Access)
    is
+      File_Node : constant File_Access := File_Access
+        (GType_File.Get (Model, Parent, Node_Col));
    begin
       Append (Model, Iter, Parent);
       Set (Model, Iter, Pix_Col, C_Proxy
            (Code_Analysis_Module_ID.Subp_Pixbuf));
       Set (Model, Iter, Name_Col, String (Subp_Node.Name.all));
       GType_Subprogram.Set (Model, Iter, Node_Col, Subp_Node.all'Access);
+      GType_File.Set (Model, Iter, File_Col, File_Node.all'Access);
       Fill_Iter (Model, Iter, Subp_Node.Analysis_Data);
    end Fill_Iter;
+
+   --------------------------------
+   -- Fill_Iter_With_Subprograms --
+   --------------------------------
+
+   procedure Fill_Iter_With_Subprograms
+     (Model     : in out Gtk_Tree_Store;
+      Iter      : in out Gtk_Tree_Iter;
+      File_Node : Code_Analysis.File_Access;
+      Subp_Node : Subprogram_Access) is
+   begin
+      Append (Model, Iter, Null_Iter);
+      Set (Model, Iter, Pix_Col, C_Proxy
+           (Code_Analysis_Module_ID.Subp_Pixbuf));
+      Set (Model, Iter, Name_Col, String (Subp_Node.Name.all));
+      GType_Subprogram.Set (Model, Iter, Node_Col, Subp_Node.all'Access);
+      GType_File.Set (Model, Iter, File_Col, File_Node.all'Access);
+      Fill_Iter (Model, Iter, Subp_Node.Analysis_Data);
+   end Fill_Iter_With_Subprograms;
 
    ---------------
    -- Fill_Iter --
@@ -88,6 +116,7 @@ package body Code_Analysis_Tree_Model is
       Gtk.Tree_Store.Set
         (Model, Iter, Name_Col, VFS.Base_Name (File_Node.Name));
       GType_File.Set (Model, Iter, Node_Col, File_Node.all'Access);
+      GType_File.Set (Model, Iter, File_Col, File_Node.all'Access);
       Fill_Iter (Model, Iter, File_Node.Analysis_Data);
 
       for J in Sort_Arr'Range loop
@@ -117,6 +146,7 @@ package body Code_Analysis_Tree_Model is
       Gtk.Tree_Store.Set
         (Model, Iter, Name_Col, VFS.Base_Name (File_Node.Name));
       GType_File.Set (Model, Iter, Node_Col, File_Node.all'Access);
+      GType_File.Set (Model, Iter, File_Col, File_Node.all'Access);
       Fill_Iter (Model, Iter, File_Node.Analysis_Data);
    end Fill_Iter_With_Files;
 
@@ -142,7 +172,7 @@ package body Code_Analysis_Tree_Model is
       Sort_Subprograms (Sort_Arr);
 
       for J in Sort_Arr'Range loop
-         Fill_Iter (Model, Iter, Null_Iter, Sort_Arr (J));
+         Fill_Iter_With_Subprograms (Model, Iter, File_Node, Sort_Arr (J));
       end loop;
    end Fill_Iter_With_Subprograms;
 
