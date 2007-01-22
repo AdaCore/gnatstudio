@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
+--                      Copyright (C) 2001-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1204,7 +1204,10 @@ package body Src_Editor_Box is
               (Editor.Source_View, Event, Line, Column, Out_Of_Bounds);
          end if;
 
-         if Out_Of_Bounds then
+         Get_Selection_Bounds
+           (Editor.Source_Buffer, Start_Iter, End_Iter, Has_Selection);
+
+         if Out_Of_Bounds and then not Has_Selection then
             --  Invalid position: the cursor is outside the text
             Get_Iter_At_Line_Offset
               (Editor.Source_Buffer, Start_Iter, Line, Column);
@@ -1213,10 +1216,6 @@ package body Src_Editor_Box is
             Place_Cursor (Editor.Source_Buffer, Start_Iter);
 
          else
-            --  Check whether there is a selection
-
-            Get_Selection_Bounds
-              (Editor.Source_Buffer, Start_Iter, End_Iter, Has_Selection);
 
             Get_Iter_At_Line_Offset
               (Editor.Source_Buffer, Entity_Start, Line, Column);
@@ -2361,15 +2360,30 @@ package body Src_Editor_Box is
    is
       Normalized_Line : Editable_Line_Type := Line;
       Block           : Block_Record;
+      Subprogram      : Entity_Information;
+      Is_Private      : Boolean := False;
+
    begin
       if Normalized_Line = Editable_Line_Type'Last then
          Normalized_Line := Editor.Current_Line;
       end if;
 
       Block := Get_Subprogram_Block (Editor.Source_Buffer, Normalized_Line);
+      Subprogram := Get_Subprogram (Editor, Normalized_Line);
+
+      if Subprogram /= null then
+            Is_Private := not Get_Attributes (Subprogram) (Global);
+            --  ??? It seems that we should write
+            --      Is_Private := Get_Attributes (Subprogram) (Private_Field);
+            --  but the Private_Field flag is never set.
+      end if;
 
       if Block.Name /= null then
-         return Block.Name.all;
+         if Is_Private then
+            return Block.Name.all & " (private)";
+         else
+            return Block.Name.all;
+         end if;
       else
          return "";
       end if;
