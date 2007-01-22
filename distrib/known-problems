@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.1.0
 
+- G119-004 Selection lost on rigth click after end of line
+  Problem:    In the editor, if you select several lines, each line gets
+              selected entirely and even after the last character. If you
+              right click on a selected line after the last character, the
+              selection is removed.
+
 - FC13-014 Debugger menu items not made insensitive while debugger is running
   Problem:    While the program is running, some items in the "Debug" menu,
               such as "Run..." or "Next", should be greyed out. Activating
