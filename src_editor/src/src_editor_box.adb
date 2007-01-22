@@ -1216,7 +1216,6 @@ package body Src_Editor_Box is
             Place_Cursor (Editor.Source_Buffer, Start_Iter);
 
          else
-
             Get_Iter_At_Line_Offset
               (Editor.Source_Buffer, Entity_Start, Line, Column);
 
@@ -2360,30 +2359,15 @@ package body Src_Editor_Box is
    is
       Normalized_Line : Editable_Line_Type := Line;
       Block           : Block_Record;
-      Subprogram      : Entity_Information;
-      Is_Private      : Boolean := False;
-
    begin
       if Normalized_Line = Editable_Line_Type'Last then
          Normalized_Line := Editor.Current_Line;
       end if;
 
       Block := Get_Subprogram_Block (Editor.Source_Buffer, Normalized_Line);
-      Subprogram := Get_Subprogram (Editor, Normalized_Line);
-
-      if Subprogram /= null then
-            Is_Private := not Get_Attributes (Subprogram) (Global);
-            --  ??? It seems that we should write
-            --      Is_Private := Get_Attributes (Subprogram) (Private_Field);
-            --  but the Private_Field flag is never set.
-      end if;
 
       if Block.Name /= null then
-         if Is_Private then
-            return Block.Name.all & " (private)";
-         else
-            return Block.Name.all;
-         end if;
+         return Block.Name.all;
       else
          return "";
       end if;
