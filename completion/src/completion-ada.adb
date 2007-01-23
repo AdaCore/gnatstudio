@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006                         --
+--                        Copyright (C) 2006, 2007                   --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -165,6 +165,13 @@ package body Completion.Ada is
                end if;
 
             when Tok_Open_Parenthesis =>
+               if Previous_Proposal.Profile = null then
+                  --  There is no possible profile completion here, drop the
+                  --  proposal
+
+                  return;
+               end if;
+
                declare
                   Current_Token : Token_List.List_Node := Next (Token);
                   Success : Boolean;
@@ -192,9 +199,7 @@ package body Completion.Ada is
                   end loop;
                end;
 
-               if Previous_Proposal.Profile /= null then
-                  Previous_Proposal.Profile.Is_In_Profile := True;
-               end if;
+               Previous_Proposal.Profile.Is_In_Profile := True;
 
             when Tok_With | Tok_Use =>
                pragma Assert (Token = First (Completing_Expression));
