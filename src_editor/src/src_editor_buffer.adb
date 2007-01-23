@@ -851,7 +851,7 @@ package body Src_Editor_Buffer is
          Counter    := 0;
          Stack      := 1;
          String_Tag := False;
-         C          := ASCII.Nul;
+         C          := ASCII.NUL;
 
          Forward_Char (Current, Success);
 
