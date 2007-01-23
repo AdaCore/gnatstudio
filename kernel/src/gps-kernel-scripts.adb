@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2006                      --
+--                      Copyright (C) 2003-2007                      --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1598,6 +1598,8 @@ package body GPS.Kernel.Scripts is
       end loop;
 
       Unchecked_Free (List);
+      Scripting_Data (Kernel.Scripts).Scripting_Languages := null;
+
       --  Various classes instances stored in the kernel are freed when this
       --  table is freed.
       Classes_Hash.String_Hash_Table.Reset
