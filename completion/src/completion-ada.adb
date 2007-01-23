@@ -192,7 +192,9 @@ package body Completion.Ada is
                   end loop;
                end;
 
-               Previous_Proposal.Profile.Is_In_Profile := True;
+               if Previous_Proposal.Profile /= null then
+                  Previous_Proposal.Profile.Is_In_Profile := True;
+               end if;
 
             when Tok_With | Tok_Use =>
                pragma Assert (Token = First (Completing_Expression));
