@@ -603,7 +603,7 @@ package body GPS.Kernel.Scripts is
    begin
       Class := Get (Scripting_Data (Kernel.Scripts).Classes, Name);
 
-      if Class = No_Class then
+      if Class = No_Class and then Tmp /= null then
          for T in Tmp'Range loop
             Register_Class (Tmp (T), Name, Base);
          end loop;
