@@ -199,6 +199,26 @@ package body Completion.Ada is
                   end loop;
                end;
 
+               declare
+                  Parameter_Left : Boolean := False;
+               begin
+                  for J in Previous_Proposal.Profile.Parameters'Range loop
+                     if not Previous_Proposal.Profile.
+                       Parameters (J).Is_Written
+                     then
+                        Parameter_Left := True;
+
+                        exit;
+                     end if;
+                  end loop;
+
+                  if not Parameter_Left then
+                     --  There is nothing to complete here, drop the proposal.
+
+                     return;
+                  end if;
+               end;
+
                Previous_Proposal.Profile.Is_In_Profile := True;
 
             when Tok_With | Tok_Use =>
