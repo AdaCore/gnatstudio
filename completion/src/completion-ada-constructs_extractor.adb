@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006                         --
+--                       Copyright (C) 2006, 2007                    --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -391,7 +391,12 @@ package body Completion.Ada.Constructs_Extractor is
             Parent_Sloc_End,
             Parent_Found);
 
-         if Parent_Found then
+         if Parent_Found
+           and then not Is_Excluded
+             (Construct_Completion_Resolver
+                  (Proposal.Resolver.all)'Access,
+              (Proposal.Tree_Node, Proposal.Tree, Proposal.Buffer))
+         then
             Push_Excluded_Construct
               (Construct_Completion_Resolver (Proposal.Resolver.all)'Access,
                (Proposal.Tree_Node, Proposal.Tree, Proposal.Buffer));
