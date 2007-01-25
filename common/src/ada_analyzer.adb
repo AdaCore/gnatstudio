@@ -1276,15 +1276,13 @@ package body Ada_Analyzer is
             return;
          end if;
 
-         if Prev_Token = Tok_Vertical_Bar then
-            if Top_Tok = Tok_When then
-               --  Indent multiple-line when statements specially:
-               --  case Foo is
-               --     when A |
-               --          B =>  --  from Indent_When
+         if Prev_Token = Tok_Vertical_Bar and then Top_Tok = Tok_When then
+            --  Indent multiple-line when statements specially:
+            --  case Foo is
+            --     when A |
+            --          B =>  --  from Indent_When
 
-               Do_Indent (Prec, Num_Spaces - Indent_Level + Indent_When);
-            end if;
+            Do_Indent (Prec, Num_Spaces - Indent_Level + Indent_When);
 
          elsif Prev_Token = Tok_Comma then
             if Top_Tok = Tok_Declare
