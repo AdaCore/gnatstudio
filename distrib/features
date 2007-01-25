@@ -226,8 +226,8 @@ F727-011 Fix "two consecutive underlines not permitted" (2006-07-27)
 
 F721-007 New incremental search module (2006-07-25)
 
-  On platforms where python is available, a new module is provided to
-  emulate Emacs' incremental search feature in editors
+  A new module is provided to emulate Emacs' incremental search feature in
+  editors (isearch.py).
 
 F720-008 Improved Emacs emulation (2006-07-21)
 
