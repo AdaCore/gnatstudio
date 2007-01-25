@@ -6,7 +6,7 @@ inside the source editor.
 It requires that the "aspell" executable be visible in the PATH.
 Two types of menus are provided in this example:
   - Static menu: the menu will be a simple menu entry, which, when
-    clicked, starts ispell and displays, in the console, the possible
+    clicked, starts aspell and displays, in the console, the possible
     replacements for a word
   - Dynamic menu: a submenu is created, with one entry per possible
     replacement. When the user selects one of these entries, the current
@@ -18,7 +18,7 @@ keys are recognized:
   - "i": Accept the current word in your personal dictionnary, to be
          remembered across sessions
   - "a": Accept this word during this session. This setting will be
-         remembered until you either kill the ispell process in the
+         remembered until you either kill the aspell process in the
          task manager, or exit GPS
   - "r": Replace current word with typed-in value. The replacement
          is rechecked after insertion
