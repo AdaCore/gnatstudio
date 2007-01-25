@@ -1774,6 +1774,7 @@ package body Commands.Custom is
             end if;
 
             if C < Editor.Components'Last
+              and then Parent /= Null_Iter
               and then
                 (Editor.Components (C).On_Failure_For >
                    Editor.Components (C + 1).On_Failure_For
