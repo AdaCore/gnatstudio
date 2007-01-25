@@ -6,6 +6,13 @@ Known Problems fixed in GPS 4.1.0
               right click on a selected line after the last character, the
               selection is removed.
 
+- G102-005 Wrong indentation in some Ada constructs
+  Problem:    When trying to indent an Ada construct such as the following:
+                  (B |
+                   C=>D))
+              GPS will sometimes incorrectly replace text in the second line.
+  Workaround: Disable the 'Format operators/delimiters' preference.
+
 - FC13-014 Debugger menu items not made insensitive while debugger is running
   Problem:    While the program is running, some items in the "Debug" menu,
               such as "Run..." or "Next", should be greyed out. Activating
