@@ -8,10 +8,11 @@ Known Problems fixed in GPS 4.1.0
 
 - G102-005 Wrong indentation in some Ada constructs
   Problem:    When trying to indent an Ada construct such as the following:
+                (A =>
                   (B |
                    C=>D))
               GPS will sometimes incorrectly replace text in the second line.
-  Workaround: Disable the 'Format operators/delimiters' preference.
+  Workaround: Disable the 'Align associations on arrows' preference.
 
 - FC13-014 Debugger menu items not made insensitive while debugger is running
   Problem:    While the program is running, some items in the "Debug" menu,
