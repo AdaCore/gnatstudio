@@ -5966,7 +5966,7 @@ package body Src_Editor_Buffer is
       J       : Natural;
 
    begin
-      if Column = 0 then
+      if Column = 0 or else Line not in Buffer.Editable_Lines'Range then
          return 0;
       end if;
 
