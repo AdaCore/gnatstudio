@@ -3,7 +3,7 @@
 This script demonstrates how to add a spell-checking contextual menu.
 This menu should only be visible when the user has clicked on a word
 inside the source editor.
-It requires that the "ispell" executable be visible in the PATH.
+It requires that the "aspell" executable be visible in the PATH.
 Two types of menus are provided in this example:
   - Static menu: the menu will be a simple menu entry, which, when
     clicked, starts ispell and displays, in the console, the possible
