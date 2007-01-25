@@ -95,11 +95,14 @@ class Ispell:
 
    def restart_if_needed (self):
       if self.proc == None:
-        ## Do not display the process in the task manager, since it will run
-        ## forever in any case.
-        self.proc = GPS.Process \
-           (ispell_command, before_kill=self.before_kill, task_manager=False)
-        result = self.proc.expect ("^.*\\n", timeout=2000)
+        try:
+           ## Do not display the process in the task manager, since it will run
+           ## forever in any case.
+           self.proc = GPS.Process \
+              (ispell_command, before_kill=self.before_kill, task_manager=False)
+           result = self.proc.expect ("^.*\\n", timeout=2000)
+        except:
+           GPS.Console ("Messages").write ("Could not start external command: " + ispell_command)
 
    def read (self, words):
       """Run ispell to find out the possible correction for the words.
