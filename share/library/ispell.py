@@ -360,11 +360,15 @@ class SpellCheckBuffer (GPS.CommandWindow):
          self.write (suggest, 0)
  
       except StopIteration:
-        self.destroy()
+         if self.has_window:
+            self.destroy()
+            self.has_window = False
       except:
         GPS.Logger ("ISPELL").log (traceback.format_exc())
         try:
-           self.destroy()
+           if self.has_window:
+             self.destroy()
+             self.has_window = False
         except:
            pass  # already destroyed
 
