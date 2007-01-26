@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------
                                G P S                               --
                                                                    --
-                     Copyright (C) 2003-2006                       --
+                     Copyright (C) 2003-2007                       --
                             AdaCore                                --
                                                                    --
  GPS is free  software; you can  redistribute it and/or modify  it --
@@ -300,7 +300,9 @@ ada_pyclass_name(PyObject* obj)
 int
 ada_pyclass_is_subclass (PyObject* class, PyObject* base)
 {
-  if (PyClass_Check (class)) {
+  if (!class || !base) {
+    return -1;
+  } else if (PyClass_Check (class)) {
       return PyClass_IsSubclass (class, base);
   } else {
       return PyObject_TypeCheck (class, base->ob_type);
