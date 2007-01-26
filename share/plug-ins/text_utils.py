@@ -171,6 +171,9 @@ def add_subprogram_box():
    initial = loc.create_mark()
    min     = buffer.beginning_of_buffer()
 
+   if loc.block_type() == "CAT_UNKNOWN":
+      return
+
    while (not subprogram_box_blocks.has_key (loc.block_type())) and (loc > min):
       loc = loc.block_start() - 1
 
@@ -178,7 +181,7 @@ def add_subprogram_box():
       name = loc.block_name()
       loc = loc.block_start().beginning_of_line();
       dashes = '-' * (len (name) + 6)
-      box = dashes + "\n" + "-- " + name + " --\n" + dashes + "\n\n" 
+      box = dashes + "\n" + "-- " + name + " --\n" + dashes + "\n\n"
 
       # Start an undo group so that the whole process can be undone with a
       # single click
@@ -187,7 +190,7 @@ def add_subprogram_box():
       buffer.indent (loc, loc.forward_line (3))
       buffer.current_view().goto (initial.location())
       buffer.finish_undo_group()
-   
+
 def delete_forward():
    """Delete the character just after the cursor in the current editor"""
    buffer = GPS.EditorBuffer.get()
@@ -398,7 +401,7 @@ class BlockIterator:
               cursor = loc.buffer().current_view().cursor()
               start = cursor
               while not start.starts_word(): start = start - 1
-              while not cursor.ends_word() : cursor = cursor + 1 
+              while not cursor.ends_word() : cursor = cursor + 1
               return (start, cursor)
            else:
               return (loc.buffer().beginning_of_buffer(),
@@ -521,15 +524,15 @@ try:
        override (LEFT,     gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_WORDS, -1, select)
        override (KP_LEFT,  gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_WORDS, -1, select)
 
-       override (UP,       0, gtk.MOVEMENT_DISPLAY_LINES, -1, select)  
-       override (KP_UP,    0, gtk.MOVEMENT_DISPLAY_LINES, -1, select)  
-       override (DOWN,     0, gtk.MOVEMENT_DISPLAY_LINES, 1, select)  
-       override (KP_DOWN,  0, gtk.MOVEMENT_DISPLAY_LINES, 1, select)  
+       override (UP,       0, gtk.MOVEMENT_DISPLAY_LINES, -1, select)
+       override (KP_UP,    0, gtk.MOVEMENT_DISPLAY_LINES, -1, select)
+       override (DOWN,     0, gtk.MOVEMENT_DISPLAY_LINES, 1, select)
+       override (KP_DOWN,  0, gtk.MOVEMENT_DISPLAY_LINES, 1, select)
 
-       override (UP,      gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_PARAGRAPHS, -1, select)  
-       override (KP_UP,   gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_PARAGRAPHS, -1, select)  
-       override (DOWN,    gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_PARAGRAPHS, 1, select)  
-       override (KP_DOWN, gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_PARAGRAPHS, 1, select)  
+       override (UP,      gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_PARAGRAPHS, -1, select)
+       override (KP_UP,   gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_PARAGRAPHS, -1, select)
+       override (DOWN,    gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_PARAGRAPHS, 1, select)
+       override (KP_DOWN, gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_PARAGRAPHS, 1, select)
 
        override (HOME,    0, gtk.MOVEMENT_DISPLAY_LINE_ENDS, -1, select)
        override (KP_HOME, 0, gtk.MOVEMENT_DISPLAY_LINE_ENDS, -1, select)
@@ -545,7 +548,7 @@ try:
        override (KP_PAGE_UP,   0, gtk.MOVEMENT_PAGES, -1, select)
        override (PAGE_DOWN,    0, gtk.MOVEMENT_PAGES, 1, select)
        override (KP_PAGE_DOWN, 0, gtk.MOVEMENT_PAGES, 1, select)
- 
+
        override (PAGE_UP,      gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_HORIZONTAL_PAGES, -1, select)
        override (KP_PAGE_UP,   gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_HORIZONTAL_PAGES, -1, select)
        override (PAGE_DOWN,    gtk.gdk.CONTROL_MASK, gtk.MOVEMENT_HORIZONTAL_PAGES, 1, select)
