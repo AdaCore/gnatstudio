@@ -27,6 +27,14 @@ Known Problems fixed in GPS 4.1.0
               entries in the Preferences dialog, GPS might crash.
   Workaround: Use the font chooser dialog to select the fonts
 
+- FB29-024 GPS complains about a missing gnatls executable
+  Problem:    When using a cross GNAT compiler with no gnatls executable,
+              GPS will complain at start up:
+                Could not locate executable on path: gnatls
+                Could not compute predefined paths for this project
+  Workaround: This message can be safely ignored, assuming you have set
+              the gnatlist project property.
+
 - FB28-020 Regexp searching for ^ and $ blocks on empty lines
   Problem:    If you are searching for the regular expression "^" or "$,
               the search will be blocked on empty lines (ie GPS will keep
