@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
+--                      Copyright (C) 2001-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free software; you can redistribute it and/or modify  it   --
@@ -207,8 +207,8 @@ package body GPS.Kernel is
                 On_Main_Window_Destroyed'Access,
                 Handle.all'Address);
 
-      Handle.Home_Dir     := new String'(Name_As_Directory (Home_Dir));
-      Handle.Prefix       := new String'(Name_As_Directory (Prefix_Directory));
+      Handle.Home_Dir := new String'(Name_As_Directory (Home_Dir));
+      Handle.Prefix   := new String'(Name_As_Directory (Prefix_Directory));
 
       --  Create the language handler.
 
@@ -1358,7 +1358,6 @@ package body GPS.Kernel is
       Reset (Handle.Styles);
       Hooks_Hash.String_Hash_Table.Reset (Handle.Hooks);
       Tools_Htable.String_Hash_Table.Reset (Handle.Tools);
-      GPS.Kernel.Scripts.Finalize (Handle);
 
       Destroy (Language_Handler (Handle.Lang_Handler));
       --  Destroy (Handle.Database);
