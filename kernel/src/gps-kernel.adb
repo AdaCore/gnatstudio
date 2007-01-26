@@ -411,10 +411,14 @@ package body GPS.Kernel is
      (Handle : access Kernel_Handle_Record;
       File   : VFS.Virtual_File)
    is
-      Files : File_Array_Access := Handle.Open_Files;
+      Files : File_Array_Access;
       Data  : aliased File_Hooks_Args := (Hooks_Data with File => File);
    begin
       Run_Hook (Handle, File_Closed_Hook, Data'Unchecked_Access);
+
+      --  We must compute the open files after having run the hook, in case
+      --  the file array has been reallocated.
+      Files := Handle.Open_Files;
 
       if Files /= null then
          for F in Files'Range loop
