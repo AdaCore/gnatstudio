@@ -1359,6 +1359,10 @@ package body GPS.Kernel is
       Hooks_Hash.String_Hash_Table.Reset (Handle.Hooks);
       Tools_Htable.String_Hash_Table.Reset (Handle.Tools);
 
+      --  We do not finalize the scripts module anymore in order to allow
+      --  user scripts to perform some very last processing.
+      --  GPS.Kernel.Scripts.Fdinalize (Handle);
+
       Destroy (Language_Handler (Handle.Lang_Handler));
       --  Destroy (Handle.Database);
       Free (Handle.Logs_Mapper);
