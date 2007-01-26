@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2006                      --
+--                      Copyright (C) 2002-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -2001,6 +2001,17 @@ package body Projects.Registry is
    -- Compute_Predefined_Paths --
    ------------------------------
 
+   Gnatls_Called : Boolean := False;
+   --  Flag used to avoid generating an error message the first time
+   --  GPS is launched, and only a cross-gnatls is available.
+   --  The second time, assuming the project properly defined the Gnatlist
+   --  attribute, everything will work properly. Otherwise, we will generate
+   --  an error message at this point.
+   --  ??? If no Gnatlist attribute is defined, Compute_Predefined_Paths
+   --  won't be called a second time, but it's better to hide messages about
+   --  gnatls being not found to users rather than confuse them for the case
+   --  above (cross-gnatls only).
+
    procedure Compute_Predefined_Paths
      (Registry     : in out Project_Registry;
       GNAT_Version : out GNAT.Strings.String_Access;
@@ -2059,9 +2070,15 @@ package body Projects.Registry is
             begin
                if Gnatls_Path = null then
                   Success := False;
-                  Report (E_Handler,
-                          -"Could not locate exec " &
-                          Gnatls_Args (Gnatls_Args'First).all);
+
+                  Trace (Me, "Could not locate exec " &
+                         Gnatls_Args (Gnatls_Args'First).all);
+
+                  if Gnatls_Called then
+                     Report (E_Handler,
+                             -"Could not locate exec " &
+                             Gnatls_Args (Gnatls_Args'First).all);
+                  end if;
                else
                   Fd := new TTY_Process_Descriptor;
                   Non_Blocking_Spawn
@@ -2086,14 +2103,19 @@ package body Projects.Registry is
       end;
 
       if not Success then
-         Report (E_Handler,
-                 -"Could not compute predefined paths for this project.");
-         Report (E_Handler,
-                 -("Subprojects might be incorrectly loaded, please make " &
-                   "sure they are in your ADA_PROJECT_PATH"));
+         if Gnatls_Called then
+            Report (E_Handler,
+                    -"Could not compute predefined paths for this project.");
+            Report (E_Handler,
+              -("Subprojects might be incorrectly loaded, please make " &
+                "sure they are in your ADA_PROJECT_PATH"));
+         end if;
+
+         Gnatls_Called := True;
          return;
       end if;
 
+      Gnatls_Called := True;
       Expect (Fd.all, Result, "GNATLS .+(\n| )Copyright", Timeout => 10000);
 
       declare
