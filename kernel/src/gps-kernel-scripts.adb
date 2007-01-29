@@ -874,6 +874,9 @@ package body GPS.Kernel.Scripts is
       elsif Command = "set_busy" then
          Push_State (Kernel, Processing);
 
+      elsif Command = "get_busy" then
+         Set_Return_Value (Data, Get_Busy (Kernel));
+
       elsif Command = "unset_busy" then
          Pop_State (Kernel);
 
@@ -1940,6 +1943,9 @@ package body GPS.Kernel.Scripts is
          Handler      => Default_Command_Handler'Access);
       Register_Command
         (Kernel, "set_busy",
+         Handler      => Default_Command_Handler'Access);
+      Register_Command
+        (Kernel, "get_busy",
          Handler      => Default_Command_Handler'Access);
       Register_Command
         (Kernel, "unset_busy",
