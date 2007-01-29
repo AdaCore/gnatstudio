@@ -641,11 +641,19 @@ Optionally you can also pass the full contents of an XML file, starting from the
   <shell_doc name="GPS.set_busy">
      <description>Activate the "busy" state in GPS by animating the GPS icon. This command can be called recursively, and GPS.unset_busy should be called a corresponding number of time to stop the animation.</description>
      <see_also>GPS.unset_busy()</see_also>
+     <see_also>GPS.get_busy()</see_also>
   </shell_doc>
 
   <shell_doc name="GPS.unset_busy">
      <description>Reset the "busy" state</description>
      <see_also>GPS.set_busy()</see_also>
+     <see_also>GPS.get_busy()</see_also>
+  </shell_doc>
+
+  <shell_doc name="GPS.get_busy">
+     <description>Return the "busy" state</description>
+     <see_also>GPS.set_busy()</see_also>
+     <see_also>GPS.unset_busy()</see_also>  
   </shell_doc>
 
   <shell_doc name="GPS.save_persistent_properties">
