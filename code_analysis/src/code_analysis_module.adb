@@ -104,11 +104,11 @@ package body Code_Analysis_Module is
            (Get_Main_Window (Code_Analysis_Module_ID.Kernel),
             "gps-project-closed", Gtk.Enums.Icon_Size_Menu);
          Code_Analysis_Module_ID.File_Pixbuf := Render_Icon
-           (Get_Main_Window (Code_Analysis_Module_ID.Kernel), "gps-file",
-            Gtk.Enums.Icon_Size_Menu);
+           (Get_Main_Window (Code_Analysis_Module_ID.Kernel),
+            "gps-file", Gtk.Enums.Icon_Size_Menu);
          Code_Analysis_Module_ID.Subp_Pixbuf := Render_Icon
-           (Get_Main_Window (Code_Analysis_Module_ID.Kernel), "gps-box",
-            Gtk.Enums.Icon_Size_Menu);
+           (Get_Main_Window (Code_Analysis_Module_ID.Kernel),
+            "gps-entity-subprogram", Gtk.Enums.Icon_Size_Menu);
          Code_Analysis_Module_ID.Warn_Pixbuf := Render_Icon
            (Get_Main_Window (Code_Analysis_Module_ID.Kernel),
             "gps-warning", Gtk.Enums.Icon_Size_Menu);
@@ -552,9 +552,10 @@ package body Code_Analysis_Module is
       -- Selection of the context caller --
       -------------------------------------
 
+      Iter := Get_Iter_First (Property.View.Model);
+
       if Context /= No_Context then
          --  So we have some project information
-         Iter := Get_Iter_First (Property.View.Model);
          Num_Col := 1;
 
          loop
@@ -578,7 +579,7 @@ package body Code_Analysis_Module is
 
          if Has_Entity_Name_Information (Context) and then
            Is_Subprogram (Get_Entity (Context)) then
-            --  So we have a subprogram information according to
+            --  So we have a subprogram information accordingly to
             --  Filter_Matches_Primitives
             Iter := Children (Property.View.Model, Iter);
 
@@ -589,14 +590,13 @@ package body Code_Analysis_Module is
             end loop;
          end if;
          --  Find in the tree the context's subprogram
-
-         Path := Get_Path (Property.View.Model, Iter);
-         Collapse_All (Property.View.Tree);
-         Expand_To_Path (Property.View.Tree, Path);
-         Select_Path (Get_Selection (Property.View.Tree), Path);
-         Path_Free (Path);
       end if;
 
+      Path := Get_Path (Property.View.Model, Iter);
+      Collapse_All (Property.View.Tree);
+      Expand_To_Path (Property.View.Tree, Path);
+      Select_Path (Get_Selection (Property.View.Tree), Path);
+      Path_Free (Path);
       Raise_Child (Property.Child);
    exception
       when E : others =>
@@ -798,8 +798,11 @@ package body Code_Analysis_Module is
 
    procedure Add_Coverage_Annotations
      (File_Node : Code_Analysis.File_Access) is
-      Line_Info  : Line_Information_Data;
-      Line_Icons : Line_Information_Data;
+      Line_Info      : Line_Information_Data;
+      Line_Info_Cst  : constant String := "Coverage Analysis";
+      Line_Icons     : Line_Information_Data;
+      Line_Icons_Cst : constant String := "Coverage Icons";
+
    begin
       Line_Info  := new Line_Information_Array (File_Node.Lines'Range);
       Line_Icons := new Line_Information_Array (File_Node.Lines'Range);
@@ -818,17 +821,17 @@ package body Code_Analysis_Module is
 
       Create_Line_Information_Column
         (Code_Analysis_Module_ID.Kernel,
-         File_Node.Name, "Coverage Icons");
+         File_Node.Name, Line_Icons_Cst);
       Add_Line_Information
         (Code_Analysis_Module_ID.Kernel,
-         File_Node.Name, "Coverage Icons",
+         File_Node.Name, Line_Icons_Cst,
          Line_Icons);
       Create_Line_Information_Column
         (Code_Analysis_Module_ID.Kernel,
-         File_Node.Name, "Coverage Analysis");
+         File_Node.Name, Line_Info_Cst);
       Add_Line_Information
         (Code_Analysis_Module_ID.Kernel,
-         File_Node.Name, "Coverage Analysis",
+         File_Node.Name, Line_Info_Cst,
          Line_Info);
       Unchecked_Free (Line_Info);
       Unchecked_Free (Line_Icons);
@@ -1081,9 +1084,16 @@ package body Code_Analysis_Module is
    is
       View : constant Code_Analysis_View := Code_Analysis_View (Object);
       Iter : Gtk_Tree_Iter := Get_Iter_First (View.Model);
+      Path : Gtk_Tree_Path;
    begin
       Clear (View.Model);
       Fill_Iter (View.Model, Iter, View.Projects);
+      Iter := Get_Iter_First (View.Model);
+      Path := Get_Path (View.Model, Iter);
+      Collapse_All (View.Tree);
+      Expand_To_Path (View.Tree, Path);
+      Select_Path (Get_Selection (View.Tree), Path);
+      Path_Free (Path);
    end Show_Full_Tree;
 
    -----------------------------
@@ -1152,7 +1162,7 @@ package body Code_Analysis_Module is
          Select_Path (Get_Selection (View.Tree), Path);
 
          if Get_Depth (Path) > 1 or else not Has_Child (View.Model, Iter) then
-            Gtk_New (Item, -"View with coverage annotations");
+            Gtk_New (Item, -"Add coverage annotations");
             Gtkada.Handlers.Widget_Callback.Object_Connect
               (Item, "activate", Add_Coverage_Annotations_From_Report'Access,
                View, After => False);
@@ -1296,7 +1306,7 @@ package body Code_Analysis_Module is
               (Project_Node, File_Information (C.Context));
          begin
             if File_Node.Analysis_Data.Coverage_Data /= null then
-               Gtk_New (Item, -"View with coverage annotations");
+               Gtk_New (Item, -"Add coverage annotations");
                Append (Submenu, Item);
                Context_And_Instance_CB.Connect
                  (Item, "activate", Context_And_Instance_CB.To_Marshaller
