@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                     Copyright (C) 2001-2007                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1989,33 +1989,24 @@ package body GVD_Module is
          --  or it could have been destroyed from a python script
          Item := Find_Menu_Item (Kernel, Debug & (-"Debug"));
          if Item /= null then
-            if GVD_Module_ID.Cont_Button /= null then
-               Set_Sensitive (GVD_Module_ID.Cont_Button, Available);
-               Set_Sensitive (GVD_Module_ID.Step_Button, Available);
-               Set_Sensitive (GVD_Module_ID.Next_Button, Available);
-               Set_Sensitive (GVD_Module_ID.Finish_Button, Available);
-               Set_Sensitive (GVD_Module_ID.Up_Button, Available);
-               Set_Sensitive (GVD_Module_ID.Down_Button, Available);
-            end if;
-
             Set_Sensitive (Item, Available);
             Set_Sensitive
               (Find_Menu_Item (Kernel, Debug & (-"Data")), Available);
             Set_Sensitive
               (Find_Menu_Item (Kernel, Debug & (-"Run...")), Available);
             Set_Sensitive
-              (Find_Menu_Item (Kernel, Debug & (-"Step")), Available);
+              (Find_Menu_Item (Kernel, Debug & (-"Step")), Sensitive);
             Set_Sensitive (Find_Menu_Item
-              (Kernel, Debug & (-"Step Instruction")), Available);
+              (Kernel, Debug & (-"Step Instruction")), Sensitive);
             Set_Sensitive
-              (Find_Menu_Item (Kernel, Debug & (-"Next")), Available);
+              (Find_Menu_Item (Kernel, Debug & (-"Next")), Sensitive);
             Set_Sensitive
               (Find_Menu_Item
-                 (Kernel, Debug & (-"Next Instruction")), Available);
+                 (Kernel, Debug & (-"Next Instruction")), Sensitive);
             Set_Sensitive
-              (Find_Menu_Item (Kernel, Debug & (-"Finish")), Available);
+              (Find_Menu_Item (Kernel, Debug & (-"Finish")), Sensitive);
             Set_Sensitive
-              (Find_Menu_Item (Kernel, Debug & (-"Continue")), Available);
+              (Find_Menu_Item (Kernel, Debug & (-"Continue")), Sensitive);
             Set_Sensitive
               (Find_Menu_Item
                  (Kernel, Debug & (-"Interrupt")), State = Debug_Busy);
