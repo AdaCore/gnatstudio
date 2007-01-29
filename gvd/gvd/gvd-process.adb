@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2006                       --
+--                     Copyright (C) 2000-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1647,6 +1647,12 @@ package body GVD.Process is
       Force_Refresh : Boolean := False) is
    begin
       Set_Busy_Cursor (Get_Window (Debugger.Window), Busy, Force_Refresh);
+
+      if Busy then
+         Push_State (Get_Kernel (Debugger), Processing);
+      else
+         Pop_State (Get_Kernel (Debugger));
+      end if;
    end Set_Busy;
 
    -------------
