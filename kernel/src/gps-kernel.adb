@@ -974,6 +974,15 @@ package body GPS.Kernel is
       return False;
    end Process_Anim;
 
+   --------------
+   -- Get_Busy --
+   --------------
+
+   function Get_Busy (Handle : Kernel_Handle) return Boolean is
+   begin
+      return GPS_Window (Handle.Main_Window).State_Level > 0;
+   end Get_Busy;
+
    ----------------
    -- Push_State --
    ----------------

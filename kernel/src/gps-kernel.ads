@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
+--                      Copyright (C) 2001-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
@@ -162,6 +162,9 @@ package GPS.Kernel is
 
    procedure Pop_State (Handle : Kernel_Handle);
    --  Undo previous state.
+
+   function Get_Busy (Handle : Kernel_Handle) return Boolean;
+   --  Return whether the current state of the Kernel is a processing state.
 
    function Get_Home_Dir (Handle : access Kernel_Handle_Record) return String;
    --  Return the Home directory. (eg ~/.gps/).
