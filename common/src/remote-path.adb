@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006                         --
+--                      Copyright (C) 2006-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with Traces; use Traces;
-
+with GNAT.Strings; use GNAT.Strings;
 package body Remote.Path is
 
    Me : constant Debug_Handle := Create ("Remote.Path");
@@ -260,9 +260,9 @@ package body Remote.Path is
    ---------
 
    function "=" (M1, M2 : Mirror_Path) return Boolean is
-      function Same (P1, P2 : Glib.String_Ptr) return Boolean;
+      function Same (P1, P2 : String_Access) return Boolean;
 
-      function Same (P1, P2 : Glib.String_Ptr) return Boolean is
+      function Same (P1, P2 : String_Access) return Boolean is
       begin
          if P1 = null then
             return P2 = null;
