@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006                         --
+--                      Copyright (C) 2006-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -135,7 +135,7 @@ package body GPS.Kernel.Remote is
 
    type Connection_Debug is new Connection_Debugger_Record with record
       Kernel  : Kernel_Handle;
-      Title   : String_Ptr;
+      Title   : GNAT.Expect.TTY.Remote.String_Ptr;
       Console : Interactive_Console;
    end record;
 
@@ -220,7 +220,8 @@ package body GPS.Kernel.Remote is
    Enter_Local_Path_String  : constant String := -"<enter local path here>";
    Enter_Remote_Path_String : constant String := -"<enter remote path here>";
 
-   Synchronisation_String : constant array (Synchronisation_Type) of String_Ptr
+   Synchronisation_String : constant array (Synchronisation_Type)
+   of GNAT.Expect.TTY.Remote.String_Ptr
      := (Never          => new String'("Never"),
          Once_To_Local  => new String'("Once to local"),
          Once_To_Remote => new String'("Once to remote"),
@@ -388,7 +389,7 @@ package body GPS.Kernel.Remote is
    type Server_Config is record
       Is_Local : Boolean := True;
       --  Is_Local Tells if the server is the local machine or not
-      Nickname : String_Ptr;
+      Nickname : GNAT.Expect.TTY.Remote.String_Ptr;
       --  Identifier of the server
    end record;
    type Servers_Config is array (Distant_Server_Type) of Server_Config;
@@ -475,7 +476,7 @@ package body GPS.Kernel.Remote is
                              Get_Attribute (Node, "remote_sync", "rsync");
       Debug_Console      : constant String :=
                              Get_Attribute (Node, "debug_console", "false");
-      Field              : String_Ptr;
+      Field              : Glib.String_Ptr;
       Max_Nb_Connections : Natural;
       User_Name          : String_Access;
       Timeout            : Natural;
@@ -2895,13 +2896,13 @@ package body GPS.Kernel.Remote is
    is
       pragma Unreferenced (Level);
       Child                     : Node_Ptr;
-      Name                      : String_Ptr;
-      Start_Command             : String_Ptr;
+      Name                      : Glib.String_Ptr;
+      Start_Command             : Glib.String_Ptr;
       Start_Command_Common_Args : String_List_Access;
       Start_Command_User_Args   : String_List_Access;
-      User_Prompt_Ptrn          : String_Ptr;
-      Password_Prompt_Ptrn      : String_Ptr;
-      Passphrase_Prompt_Ptrn    : String_Ptr;
+      User_Prompt_Ptrn          : Glib.String_Ptr;
+      Password_Prompt_Ptrn      : Glib.String_Ptr;
+      Passphrase_Prompt_Ptrn    : Glib.String_Ptr;
       Extra_Ptrn_Length         : Natural;
       Use_Cr_Lf                 : Boolean;
       Use_Pipes                 : Boolean;
@@ -2923,12 +2924,12 @@ package body GPS.Kernel.Remote is
          declare
             Shell_Name             : constant String
                                       := Get_Attribute (Node, "name", "");
-            Shell_Cmd              : String_Ptr;
+            Shell_Cmd              : Glib.String_Ptr;
             Default_Generic_Prompt : aliased String
                                       := "^[^\n]*[#$%>] *$";
-            Generic_Prompt         : String_Ptr;
-            GPS_Prompt             : String_Ptr;
-            FS_Str                 : String_Ptr;
+            Generic_Prompt         : Glib.String_Ptr;
+            GPS_Prompt             : Glib.String_Ptr;
+            FS_Str                 : Glib.String_Ptr;
             Windows_FS             : aliased Windows_Filesystem_Record;
             Unix_FS                : aliased Unix_Filesystem_Record;
             FS                     : Filesystem_Access;
@@ -2936,9 +2937,9 @@ package body GPS.Kernel.Remote is
             Exit_Cmds_Child        : Node_Ptr;
             Nb_Init_Cmds           : Natural;
             Nb_Exit_Cmds           : Natural;
-            Cd_Cmd                 : String_Ptr;
-            Get_Status_Cmd         : String_Ptr;
-            Get_Status_Ptrn        : String_Ptr;
+            Cd_Cmd                 : Glib.String_Ptr;
+            Get_Status_Cmd         : Glib.String_Ptr;
+            Get_Status_Ptrn        : Glib.String_Ptr;
 
          begin
             if Shell_Name = "" then
@@ -3131,7 +3132,7 @@ package body GPS.Kernel.Remote is
          Passphrase_Prompt_Ptrn := Get_Field (Node, "passphrase_prompt_ptrn");
 
          declare
-            Use_Cr_Lf_String_Access : constant String_Ptr :=
+            Use_Cr_Lf_String_Access : constant Glib.String_Ptr :=
                                       Get_Field (Node, "use_cr_lf");
          begin
             if Use_Cr_Lf_String_Access = null then
@@ -3159,7 +3160,7 @@ package body GPS.Kernel.Remote is
          declare
             Extra_Ptrns : Extra_Prompts (1 .. Extra_Ptrn_Length);
             Auto_Answer : Boolean;
-            Str_Access  : String_Ptr;
+            Str_Access  : Glib.String_Ptr;
 
          begin
             Child := Node.Child;
@@ -3197,9 +3198,12 @@ package body GPS.Kernel.Remote is
                Start_Command             => Start_Command.all,
                Start_Command_Common_Args => Start_Command_Common_Args.all,
                Start_Command_User_Args   => Start_Command_User_Args.all,
-               User_Prompt_Ptrn          => User_Prompt_Ptrn,
-               Password_Prompt_Ptrn      => Password_Prompt_Ptrn,
-               Passphrase_Prompt_Ptrn    => Passphrase_Prompt_Ptrn,
+               User_Prompt_Ptrn          =>
+                 GNAT.Expect.TTY.Remote.String_Ptr (User_Prompt_Ptrn),
+               Password_Prompt_Ptrn      =>
+                 GNAT.Expect.TTY.Remote.String_Ptr (Password_Prompt_Ptrn),
+               Passphrase_Prompt_Ptrn    =>
+                 GNAT.Expect.TTY.Remote.String_Ptr (Passphrase_Prompt_Ptrn),
                Extra_Prompt_Array        => Extra_Ptrns,
                Use_Cr_Lf                 => Use_Cr_Lf,
                Use_Pipes                 => Use_Pipes);
