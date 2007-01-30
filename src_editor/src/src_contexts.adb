@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                     Copyright (C) 2001-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -206,6 +206,39 @@ package body Src_Contexts is
 
    function Locations_Category_Name (Look_For : String) return String;
    --  Return the name of the category to use in the Locations window
+
+   procedure Search_From_File
+     (Context       : access File_Search_Context'Class;
+      Handler       : access Language_Handler_Record'Class;
+      Kernel        : Kernel_Handle;
+      Callback      : Scan_Callback;
+      File          : VFS.Virtual_File;
+      More_Matches  : out Boolean;
+      Matches_Found : out Boolean);
+   --  Call Callback on matches found in the file given in parmeter.
+
+   function Replace_From_Editor
+     (Context         : access File_Search_Context'Class;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Replace_String  : String;
+      Search_Backward : Boolean;
+      Give_Focus      : Boolean;
+      Child           : MDI_Child) return Boolean;
+   --  Replace the matches by the string given in parameter, from the editor
+   --  contained in Child. Return True if there is matches still to be
+   --  replaced, false otherwise.
+
+   function Replace_From_File
+     (Context         : access Abstract_Files_Context'Class;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Replace_String  : String;
+      Search_Backward : Boolean;
+      Give_Focus      : Boolean;
+      File            : VFS.Virtual_File) return Boolean;
+   --  Replace the matches by the string given in parameter, from the file
+   --  given in parameter. If there's an editor opened on this file, this
+   --  editor will be taken instead. Return True if there is matches still to
+   --  be replaced, false otherwise.
 
    -----------------
    -- Scan_Buffer --
@@ -1041,37 +1074,18 @@ package body Src_Contexts is
       All_Occurrences   : Boolean;
       Scope             : Search_Scope := Whole) return Search_Context_Access
    is
-      Child    : MDI_Child;
-      Editor   : Source_Editor_Box;
-      Context  : Current_File_Context_Access;
-      Context2 : Files_Project_Context_Access;
+      pragma Unreferenced (Kernel);
 
+      Context  : Current_File_Context_Access;
    begin
       --  If we are looking for all the occurrences, we simply reuse another
       --  context, instead of the interactive Current_File_Context
 
-      if All_Occurrences then
-         Child := Find_Current_Editor (Kernel);
+      Context := new Current_File_Context;
+      Context.All_Occurrences := All_Occurrences;
+      Context.Scope := Scope;
+      return Search_Context_Access (Context);
 
-         if Child = null then
-            return null;
-         end if;
-
-         Editor := Get_Source_Box_From_MDI (Child);
-
-         Context2 := new Files_Project_Context;
-         Context2.Scope := Scope;
-         Context2.All_Occurrences := True;
-         Set_File_List
-           (Context2, new File_Array'(1 => Get_Filename (Editor)));
-         return Search_Context_Access (Context2);
-
-      else
-         Context := new Current_File_Context;
-         Context.All_Occurrences := False;
-         Context.Scope := Scope;
-         return Search_Context_Access (Context);
-      end if;
    end Current_File_Factory;
 
    --------------------------------
@@ -1358,9 +1372,33 @@ package body Src_Contexts is
       Child  : constant MDI_Child := Find_Current_Editor (Kernel);
       Editor : Source_Editor_Box;
 
+      function Interactive_Callback (Match : Match_Result) return Boolean;
+      --  Callbacks for the general search function
+      --  ??? This should be factorized somehow with the Search fonction
+      --  from the Abstract_File_Context.
+
+      --------------------------
+      -- Interactive_Callback --
+      --------------------------
+
+      function Interactive_Callback (Match : Match_Result) return Boolean is
+      begin
+         Found := True;
+         Highlight_Result
+           (Kernel      => Kernel,
+            File_Name   => Get_Filename (Editor),
+            Look_For    => Context_Look_For (Context),
+            Match       => Match,
+            Give_Focus  => Give_Focus,
+            Interactive => not Context.All_Occurrences);
+         return True;
+      end Interactive_Callback;
+
+      Dummy_Boolean : Boolean;
    begin
+      Found := False;
+
       if Child = null then
-         Found := False;
          Continue := False;
          return;
       end if;
@@ -1369,10 +1407,20 @@ package body Src_Contexts is
 
       Raise_Child (Child, Give_Focus);
 
-      Found := Auxiliary_Search
-        (Context, Editor, Kernel, Search_Backward);
-      Continue := False; --  ??? Dummy boolean.
-
+      if not Context.All_Occurrences then
+         Found := Auxiliary_Search
+           (Context, Editor, Kernel, Search_Backward);
+         Continue := False; --  ??? Dummy boolean.
+      else
+         Search_From_File
+           (Context,
+            Get_Language_Handler (Kernel),
+            Kernel_Handle (Kernel),
+            Interactive_Callback'Unrestricted_Access,
+            Get_Filename (Editor),
+            Continue,
+            Dummy_Boolean);
+      end if;
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -1382,6 +1430,217 @@ package body Src_Contexts is
          Continue := False;
          return;
    end Search;
+
+   -------------------------
+   -- Replace_From_Editor --
+   -------------------------
+
+   function Replace_From_Editor
+     (Context         : access File_Search_Context'Class;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Replace_String  : String;
+      Search_Backward : Boolean;
+      Give_Focus      : Boolean;
+      Child           : MDI_Child) return Boolean
+   is
+      Editor          : Source_Editor_Box;
+      Current_Matches : Boolean;
+      Matches         : Match_Result_Array_Access;
+   begin
+      Raise_Child (Child, Give_Focus);
+      Editor := Get_Source_Box_From_MDI (Child);
+
+      if Context.All_Occurrences then
+
+         Matches := Scan_And_Store
+           (Context => Context,
+            Handler => Get_Language_Handler (Kernel),
+            Kernel  => Kernel_Handle (Kernel),
+            Str     => Get_Buffer (Editor),
+            File    => VFS.No_File,
+            Scope   => Context.Scope,
+            Lang    => Get_Language (Get_Buffer (Editor)));
+
+         if Matches /= null then
+            --  Replace starting from the end, so as to preserve lines and
+            --  columns
+
+            for M in reverse Matches'Range loop
+               Replace_Slice
+                 (Get_Buffer (Editor),
+                  Editable_Line_Type (Matches (M).Begin_Line),
+                  Matches (M).Begin_Column,
+                  Editable_Line_Type (Matches (M).End_Line),
+                  Matches (M).End_Column,
+                  Replace_String);
+            end loop;
+
+            Free (Matches);
+
+            return True;
+         else
+            return False;
+         end if;
+      else
+         --  Test whether the current context text contains the search string.
+         --  Warning: we cannot use selection here, since apparently there can
+         --  be only one selection in the whole GPS window, and the selection
+         --  in the source buffer will be erased when the focus is given to the
+         --  search dialog.
+
+         if Context.Begin_Line > 0
+           and then Context.Begin_Column > 0
+         then
+            if Get_Options (Context).Regexp then
+               Current_Matches := Match
+                 (Context,
+                  Get_Text
+                    (Get_Buffer (Editor),
+                     Context.Begin_Line,
+                     Context.Begin_Column)) /= -1;
+
+            elsif Get_Options (Context).Case_Sensitive then
+               Current_Matches := Get_Text
+                 (Get_Buffer (Editor),
+                  Context.Begin_Line, Context.Begin_Column,
+                  Context.End_Line, Context.End_Column) =
+                 Context_As_String (Context);
+            else
+               Current_Matches := UTF8_Strdown
+                 (Get_Text
+                    (Get_Buffer (Editor),
+                     Context.Begin_Line, Context.Begin_Column,
+                     Context.End_Line, Context.End_Column)) =
+                 UTF8_Strdown (Context_As_String (Context));
+            end if;
+
+            if Current_Matches then
+               Replace_Slice
+                 (Get_Buffer (Editor),
+                  Context.Begin_Line,
+                  Context.Begin_Column,
+                  Context.End_Line,
+                  Context.End_Column,
+                  Replace_String);
+
+               Forward_Position
+                 (Get_Buffer (Editor),
+                  Context.Begin_Line,
+                  Context.Begin_Column,
+                  Replace_String'Length,
+                  Context.End_Line,
+                  Context.End_Column);
+
+               Push_Current_Editor_Location_In_History (Kernel);
+
+               if Search_Backward then
+                  Context.End_Line := Context.Begin_Line;
+                  Context.End_Column := Context.Begin_Column;
+               else
+                  Context.Begin_Line := Context.End_Line;
+                  Context.Begin_Column := Context.End_Column;
+               end if;
+
+               Set_Cursor_Position
+                 (Get_Buffer (Editor),
+                  Context.Begin_Line,
+                  Context.Begin_Column,
+                  True);
+
+               Save_Cursor_Position (Get_View (Editor));
+            end if;
+         end if;
+      end if;
+
+      return True;
+   end Replace_From_Editor;
+
+   ------------------------
+   --  Replace_From_File --
+   ------------------------
+
+   function Replace_From_File
+     (Context         : access Abstract_Files_Context'Class;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Replace_String  : String;
+      Search_Backward : Boolean;
+      Give_Focus      : Boolean;
+      File            : VFS.Virtual_File) return Boolean
+   is
+      Matches : Match_Result_Array_Access;
+      Child   : MDI_Child;
+   begin
+      --  If the file is loaded in an editor, do the replacement directly
+      --  there.
+
+      Child := Find_Editor (Kernel, File);
+
+      if Child /= null then
+         return Replace_From_Editor
+           (Context,
+            Kernel,
+            Replace_String,
+            Search_Backward,
+            Give_Focus,
+            Child);
+
+         --  Else, file isn't loaded, so we replace directly in the physical
+         --  file.
+      else
+         --  ??? Could be more efficient, since we have already read the
+         --  file to do the search
+
+         Matches := Scan_And_Store
+           (Context => Context,
+            Handler => Get_Language_Handler (Kernel),
+            Kernel  => Kernel_Handle (Kernel),
+            File    => File,
+            Scope   => Context.Scope,
+            Lang    => Get_Language_From_File
+              (Get_Language_Handler (Kernel), File));
+
+         if Matches /= null then
+            declare
+               Buffer   : GNAT.Strings.String_Access;
+               FD       : File_Descriptor;
+               Len      : Natural;
+
+            begin
+               Buffer := Read_File (File);
+
+               if Buffer /= null then
+                  --  ???  Should use VFS.Write_File
+                  FD := Create_File
+                    (Locale_Full_Name (File), Binary);
+                  Len := Write (FD, Buffer (1)'Address,
+                                Matches (Matches'First).Index - 1);
+                  Len := Write (FD, Replace_String'Address,
+                                Replace_String'Length);
+
+                  for M in Matches'First + 1 .. Matches'Last loop
+                     Len := Matches (M - 1).Index
+                       + Matches (M - 1).Pattern_Length;
+                     Len := Write
+                       (FD, Buffer (Len)'Address, Matches (M).Index - Len);
+                     Len := Write (FD, Replace_String'Address,
+                                   Replace_String'Length);
+                  end loop;
+
+                  Len := Matches (Matches'Last).Index
+                    + Matches (Matches'Last).Pattern_Length;
+                  Len := Write
+                    (FD, Buffer (Len)'Address, Buffer'Last - Len + 1);
+                  Close (FD);
+                  Free (Buffer);
+               end if;
+            end;
+         end if;
+
+         Free (Matches);
+      end if;
+
+      return True;
+   end Replace_From_File;
 
    -------------
    -- Replace --
@@ -1395,87 +1654,13 @@ package body Src_Contexts is
       Give_Focus      : Boolean) return Boolean
    is
       Child   : constant MDI_Child := Find_Current_Editor (Kernel);
-      Editor  : Source_Editor_Box;
-      Current_Matches : Boolean;
-
    begin
       if Child = null then
          return False;
       end if;
 
-      Editor := Get_Source_Box_From_MDI (Child);
-      Raise_Child (Child, Give_Focus);
-
-      --  Test whether the current context text contains the search string.
-      --  Warning: we cannot use selection here, since apparently there can
-      --  be only one selection in the whole GPS window, and the selection in
-      --  the source buffer will be erased when the focus is given to the
-      --  search dialog.
-
-      if Context.Begin_Line > 0
-        and then Context.Begin_Column > 0
-      then
-         if Get_Options (Context).Regexp then
-            Current_Matches := Match
-              (Context,
-               Get_Text
-                 (Get_Buffer (Editor),
-                  Context.Begin_Line,
-                  Context.Begin_Column)) /= -1;
-
-         elsif Get_Options (Context).Case_Sensitive then
-            Current_Matches := Get_Text
-              (Get_Buffer (Editor),
-               Context.Begin_Line, Context.Begin_Column,
-               Context.End_Line, Context.End_Column) =
-              Context_As_String (Context);
-         else
-            Current_Matches := UTF8_Strdown
-              (Get_Text
-                 (Get_Buffer (Editor),
-                  Context.Begin_Line, Context.Begin_Column,
-                  Context.End_Line, Context.End_Column)) =
-              UTF8_Strdown (Context_As_String (Context));
-         end if;
-
-         if Current_Matches then
-            Replace_Slice
-              (Get_Buffer (Editor),
-               Context.Begin_Line,
-               Context.Begin_Column,
-               Context.End_Line,
-               Context.End_Column,
-               Replace_String);
-
-            Forward_Position
-              (Get_Buffer (Editor),
-               Context.Begin_Line,
-               Context.Begin_Column,
-               Replace_String'Length,
-               Context.End_Line,
-               Context.End_Column);
-
-            Push_Current_Editor_Location_In_History (Kernel);
-
-            if Search_Backward then
-               Context.End_Line := Context.Begin_Line;
-               Context.End_Column := Context.Begin_Column;
-            else
-               Context.Begin_Line := Context.End_Line;
-               Context.Begin_Column := Context.End_Column;
-            end if;
-
-            Set_Cursor_Position
-              (Get_Buffer (Editor),
-               Context.Begin_Line,
-               Context.Begin_Column,
-               True);
-
-            Save_Cursor_Position (Get_View (Editor));
-         end if;
-      end if;
-
-      return True;
+      return Replace_From_Editor
+        (Context, Kernel, Replace_String, Search_Backward, Give_Focus, Child);
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -1483,26 +1668,28 @@ package body Src_Contexts is
          return False;
    end Replace;
 
-   ------------
-   -- Search --
-   ------------
+   ----------------------
+   -- Search_From_File --
+   ----------------------
 
-   function Search
-     (Context  : access Abstract_Files_Context;
-      Handler  : access Language_Handler_Record'Class;
-      Kernel   : Kernel_Handle;
-      Callback : Scan_Callback)
-      return Boolean
+   procedure Search_From_File
+     (Context       : access File_Search_Context'Class;
+      Handler       : access Language_Handler_Record'Class;
+      Kernel        : Kernel_Handle;
+      Callback      : Scan_Callback;
+      File          : VFS.Virtual_File;
+      More_Matches  : out Boolean;
+      Matches_Found : out Boolean)
    is
       Match  : Match_Result_Access;
-      C      : constant Abstract_Files_Context_Access :=
-                 Abstract_Files_Context_Access (Context);
-      --  For dispatching purposes
-
-      Button : Message_Dialog_Buttons;
-      Tmp : Boolean;
-
    begin
+      More_Matches := False;
+      Matches_Found := False;
+
+      if File = VFS.No_File then
+         return;
+      end if;
+
       if not Context.All_Occurrences then
          --  Are there any more match in the current file ?
          --  Stop looking in this file if the editor was closed (we know it was
@@ -1513,7 +1700,7 @@ package body Src_Contexts is
               (Context       => Context,
                Handler       => Handler,
                Kernel        => Kernel,
-               Name          => Current_File (C),
+               Name          => File,
                Scope         => Context.Scope,
                Lexical_State => Context.Current_Lexical,
                Start_Line    => Context.Begin_Line,
@@ -1526,76 +1713,112 @@ package body Src_Contexts is
                Context.Begin_Column := Match.Begin_Column;
                Context.End_Line     := Editable_Line_Type (Match.End_Line);
                Context.End_Column   := Match.End_Column;
-               Tmp := Callback (Match.all);
+               More_Matches := Callback (Match.all);
+               Matches_Found := True;
                Unchecked_Free (Match);
-               return Tmp;
+
+               return;
             end if;
          end if;
 
+         More_Matches := False;
+
+         --  Non interactive mode
+      else
+         declare
+            State : Recognized_Lexical_States := Statements;
+            Was_Partial : Boolean;
+         begin
+            Scan_File
+              (Context,
+               Handler,
+               Kernel,
+               File, Callback, Context.Scope,
+               Lexical_State => State,
+               Force_Read    => Kernel = null,
+               Was_Partial   => Was_Partial);
+
+            Matches_Found := True;
+            More_Matches := Was_Partial;
+         end;
+      end if;
+   end Search_From_File;
+
+   ------------
+   -- Search --
+   ------------
+
+   function Search
+     (Context  : access Abstract_Files_Context;
+      Handler  : access Language_Handler_Record'Class;
+      Kernel   : Kernel_Handle;
+      Callback : Scan_Callback)
+      return Boolean
+   is
+      C      : constant Abstract_Files_Context_Access :=
+                 Abstract_Files_Context_Access (Context);
+      --  For dispatching purposes
+
+      Button : Message_Dialog_Buttons;
+
+      More_Matches : Boolean := False;
+      Matches_Found : Boolean := False;
+
+   begin
+      if not Context.All_Occurrences then
          loop
-            --  Move to next file
-            Move_To_Next_File (C);
-            if Current_File (C) = VFS.No_File then
-               Button := Message_Dialog
-                 (Msg     => (-"No more occurrences of '")
-                  & Context_As_String (C) &
-                    (-("' found."
-                       & ASCII.LF
-                       & "Search from the beginning ?")),
-                  Title   => -"Search",
-                  Buttons => Button_Yes or Button_No,
-                  Justification => Justify_Left,
-                  Parent  => Get_Current_Window (Kernel));
+            Search_From_File
+              (Context, Handler, Kernel, Callback, Current_File (C),
+               More_Matches, Matches_Found);
 
-               if Button = Button_Yes then
-                  Move_To_First_File (C);
-               else
-                  return False;
+            if not Matches_Found then
+               Move_To_Next_File (C);
+
+               Context.Begin_Line := 1;
+               Context.Begin_Column := 0;
+
+               if Current_File (C) = VFS.No_File then
+                  Button := Message_Dialog
+                    (Msg           => (-"No more occurrences of '")
+                     & Context_As_String (C) &
+                     (-("' found."
+                        & ASCII.LF
+                        & "Search from the beginning ?")),
+                     Title         => -"Search",
+                     Buttons       => Button_Yes or Button_No,
+                     Justification => Justify_Left,
+                     Parent        => Get_Current_Window (Kernel));
+
+                  if Button = Button_Yes then
+                     Move_To_First_File (C);
+                  else
+                     return False;
+                  end if;
                end if;
-            end if;
-
-            First_Match
-              (Context       => Context,
-               Handler       => Handler,
-               Kernel        => Kernel,
-               Name          => Current_File (C),
-               Scope         => Context.Scope,
-               Lexical_State => Context.Current_Lexical,
-               Result        => Match,
-               Force_Read    => Kernel = null);
-
-            if Match /= null then
-               Context.Begin_Line   := Editable_Line_Type (Match.Begin_Line);
-               Context.Begin_Column := Match.Begin_Column;
-               Context.End_Line     := Editable_Line_Type (Match.End_Line);
-               Context.End_Column   := Match.End_Column;
-               Tmp := Callback (Match.all);
-               Unchecked_Free (Match);
-               return Tmp;
+            else
+               return True;
             end if;
          end loop;
+
+         return False;
 
       --  Non interactive mode
       else
          Move_To_Next_File (C);
+
          if Current_File (C) = VFS.No_File then
             return False;
 
          else
-            declare
-               State : Recognized_Lexical_States := Statements;
-               Was_Partial : Boolean;
-            begin
-               Scan_File
-                 (Context,
-                  Handler,
-                  Kernel,
-                  Current_File (C), Callback, Context.Scope,
-                  Lexical_State => State,
-                  Force_Read    => Kernel = null,
-                  Was_Partial   => Was_Partial);
-               return not Was_Partial;
-            end;
+            More_Matches := True;
+
+            while More_Matches loop
+               Search_From_File
+                 (Context, Handler, Kernel, Callback, Current_File (C),
+                  More_Matches, Matches_Found);
+            end loop;
+
+            return True;
          end if;
       end if;
    end Search;
@@ -1669,7 +1892,6 @@ package body Src_Contexts is
       Search_Backward : Boolean;
       Give_Focus      : Boolean) return Boolean
    is
-      pragma Unreferenced (Give_Focus);
       C            : constant Abstract_Files_Context_Access :=
                        Abstract_Files_Context_Access (Context);
       --  For dispatching purposes
@@ -1677,14 +1899,6 @@ package body Src_Contexts is
       Interactive  : constant Boolean := not Context.All_Occurrences;
 
       Child        : MDI_Child;
-      Editor       : Source_Editor_Box;
-      Start_Line   : Editable_Line_Type;
-      Start_Column : Character_Offset_Type;
-      End_Line     : Editable_Line_Type;
-      End_Column   : Character_Offset_Type;
-      Success      : Boolean;
-      Matches      : Match_Result_Array_Access;
-
    begin
       --  If we already have an occurrence, and the file is still open, the
       --  selection still there,... (which means the user hasn't touched
@@ -1697,55 +1911,13 @@ package body Src_Contexts is
             Child := Find_Current_Editor (Kernel);
 
             if Child /= null then
-               Editor := Get_Source_Box_From_MDI (Child);
-
-               if Get_Filename (Editor) = Current_File (C) then
-                  Get_Selection_Bounds
-                    (Get_Buffer (Editor),
-                     Start_Line, Start_Column, End_Line, End_Column,
-                     Success);
-
-                  if Success
-                    and then Context.Begin_Line   = Start_Line
-                    and then Context.Begin_Column = Start_Column
-                    and then Context.End_Line     = End_Line
-                    and then Context.End_Column   = End_Column
-                  then
-                     Replace_Slice
-                       (Get_Buffer (Editor),
-                        Start_Line, Start_Column, End_Line, End_Column,
-                        Replace_String);
-
-                     Context.Begin_Line := Start_Line;
-                     Context.Begin_Column := Start_Column;
-
-                     Forward_Position
-                       (Get_Buffer (Editor),
-                        Context.Begin_Line,
-                        Context.Begin_Column,
-                        Replace_String'Length,
-                        Context.End_Line,
-                        Context.End_Column);
-
-                     Push_Current_Editor_Location_In_History (Kernel);
-
-                     if Search_Backward then
-                        Context.End_Line := Context.Begin_Line;
-                        Context.End_Column := Context.Begin_Column;
-                     else
-                        Context.Begin_Line := Context.End_Line;
-                        Context.Begin_Column := Context.End_Column;
-                     end if;
-
-                     Set_Cursor_Position
-                       (Get_Buffer (Editor),
-                        Context.Begin_Line,
-                        Context.Begin_Column,
-                        True);
-
-                     Save_Cursor_Position (Get_View (Editor));
-                  end if;
-               end if;
+               return Replace_From_Editor
+                 (Context,
+                  Kernel,
+                  Replace_String,
+                  Search_Backward,
+                  Give_Focus,
+                  Child);
             end if;
          end if;
 
@@ -1754,87 +1926,18 @@ package body Src_Contexts is
       --  Non interactive case
       else
          Move_To_Next_File (C);
+
          if Current_File (C) = VFS.No_File then
             return False;
          end if;
 
-         Matches := Scan_And_Store
-           (Context => Context,
-            Handler => Get_Language_Handler (Kernel),
-            Kernel  => Kernel_Handle (Kernel),
-            File    => Current_File (C),
-            Scope   => Context.Scope,
-            Lang    => Get_Language_From_File
-            (Get_Language_Handler (Kernel), Current_File (C)));
-
-         if Matches /= null then
-            --  If the file is loaded in an editor, do the replacement directly
-            --  there.
-
-            Child := Find_Editor (Kernel, Current_File (C));
-
-            if Child /= null then
-               Editor := Get_Source_Box_From_MDI (Child);
-
-               --  Replace starting from the end, so as to preserve lines and
-               --  columns
-               for M in reverse Matches'Range loop
-                  Replace_Slice
-                    (Get_Buffer (Editor),
-                     Editable_Line_Type (Matches (M).Begin_Line),
-                     Matches (M).Begin_Column,
-                     Editable_Line_Type (Matches (M).End_Line),
-                     Matches (M).End_Column,
-                     Replace_String);
-               end loop;
-
-            --  Else, file isn't loaded, so we replace directly in the physical
-            --  file.
-
-            else
-               --  ??? Could be more efficient, since we have already read the
-               --  file to do the search
-
-               declare
-                  Buffer   : GNAT.Strings.String_Access;
-                  FD       : File_Descriptor;
-                  Len      : Natural;
-
-               begin
-                  Buffer := Read_File (Current_File (C));
-
-                  if Buffer /= null then
-                     --  ???  Should use VFS.Write_File
-                     FD := Create_File
-                       (Locale_Full_Name (Current_File (C)), Binary);
-                     Len := Write (FD, Buffer (1)'Address,
-                                   Matches (Matches'First).Index - 1);
-                     Len := Write (FD, Replace_String'Address,
-                                   Replace_String'Length);
-
-                     for M in Matches'First + 1 .. Matches'Last loop
-                        Len := Matches (M - 1).Index
-                          + Matches (M - 1).Pattern_Length;
-                        Len := Write
-                          (FD, Buffer (Len)'Address, Matches (M).Index - Len);
-                        Len := Write (FD, Replace_String'Address,
-                                      Replace_String'Length);
-                     end loop;
-
-                     Len := Matches (Matches'Last).Index
-                       + Matches (Matches'Last).Pattern_Length;
-                     Len := Write
-                       (FD, Buffer (Len)'Address, Buffer'Last - Len + 1);
-                     Close (FD);
-                     Free (Buffer);
-                  end if;
-               end;
-            end if;
-
-            Free (Matches);
-         end if;
-
-         return True;
+         return Replace_From_File
+           (Context,
+            Kernel,
+            Replace_String,
+            Search_Backward,
+            Give_Focus,
+            Current_File (C));
       end if;
    end Replace;
 
