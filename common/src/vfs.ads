@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2006                       --
+--                     Copyright (C) 2003-2007                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -30,7 +30,6 @@ with GNAT.OS_Lib;
 with GNAT.Strings;
 
 with Glib;               use Glib;
-with Glib.Values;
 
 with Filesystem;
 
@@ -294,21 +293,6 @@ package VFS is
    function Locale_Dir_Name (File : Virtual_File) return String;
    --  Same as Dir_Name
 
-   -------------
-   -- Gvalues --
-   -------------
-   --  The following subprograms are provided to encapsulate a virtual file
-   --  in a GValue.
-
-   procedure Set_File (Value : in out Glib.Values.GValue; File : Virtual_File);
-   --  Store File into Value
-
-   function Get_File (Value : Glib.Values.GValue) return Virtual_File;
-   --  Retrieve the file stored in Value
-
-   function Get_Virtual_File_Type return Glib.GType;
-   --  Return the gtype to use for virtual files
-
 private
    --  This type is implemented as a controlled type, to ease the memory
    --  management (so that we can have gtk+ callbacks that take a Virtual
@@ -380,5 +364,8 @@ private
      ((Ada.Finalization.Controlled with Value => null),
       null,
       0);
+
+   procedure Finalize (Value : in out Contents_Access);
+   --  Internal version of Finalize
 
 end VFS;

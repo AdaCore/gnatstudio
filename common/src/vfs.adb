@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2006                      --
+--                      Copyright (C) 2003-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -42,7 +42,6 @@ with Interfaces.C.Strings;      use Interfaces.C.Strings;
 
 with Glib.Convert;              use Glib.Convert;
 with Glib.Unicode;              use Glib.Unicode;
-with Glib.Values;               use Glib.Values;
 
 with Filesystem;                use Filesystem;
 with File_Utils;                use File_Utils;
@@ -61,33 +60,12 @@ package body VFS is
 
    Empty_String : constant Cst_UTF8_String_Access := new String'("");
 
-   Virtual_File_Type : Glib.GType := Glib.GType_None;
-   --  Initialized only the first time this is needed, since we need glib
-   --  initialized for this.
-   --  ??? Could this be made a local variable
-
    procedure Ensure_Normalized (File : Virtual_File);
    --  Ensure that the information for the normalized file have been correctly
    --  computed.
 
-   procedure Finalize (Value : in out Contents_Access);
-   --  Internal version of Finalize
-
-   function Virtual_File_Boxed_Copy
-     (Boxed : System.Address) return System.Address;
-   pragma Convention (C, Virtual_File_Boxed_Copy);
-   procedure Virtual_File_Boxed_Free (Boxed : System.Address);
-   pragma Convention (C, Virtual_File_Boxed_Free);
-   --  Subprograms required for the support of GValue
-
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Contents_Record, Contents_Access);
-
-   pragma Warnings (Off);
-   --  This UC is safe aliasing-wise, so kill warning
-   function To_Contents_Access is new Ada.Unchecked_Conversion
-     (System.Address, Contents_Access);
-   pragma Warnings (On);
 
    --------------
    -- Is_Local --
@@ -1343,78 +1321,5 @@ package body VFS is
    begin
       Sort (Files'Length, Xchg'Unrestricted_Access, Lt'Unrestricted_Access);
    end Sort;
-
-   -----------------------------
-   -- Virtual_File_Boxed_Copy --
-   -----------------------------
-
-   function Virtual_File_Boxed_Copy
-     (Boxed : System.Address) return System.Address
-   is
-      Value : constant Contents_Access := To_Contents_Access (Boxed);
-   begin
-      if Value /= null then
-         Value.Ref_Count := Value.Ref_Count + 1;
-      end if;
-
-      return Boxed;
-   end Virtual_File_Boxed_Copy;
-
-   -----------------------------
-   -- Virtual_File_Boxed_Free --
-   -----------------------------
-
-   procedure Virtual_File_Boxed_Free (Boxed : System.Address) is
-      Value : Contents_Access := To_Contents_Access (Boxed);
-   begin
-      Finalize (Value);
-   end Virtual_File_Boxed_Free;
-
-   --------------
-   -- Set_File --
-   --------------
-
-   procedure Set_File
-     (Value : in out Glib.Values.GValue; File : Virtual_File) is
-   begin
-      Init (Value, Get_Virtual_File_Type);
-
-      if File.Value = null then
-         Set_Boxed (Value, System.Null_Address);
-      else
-         Set_Boxed (Value, File.Value.all'Address);
-      end if;
-   end Set_File;
-
-   --------------
-   -- Get_File --
-   --------------
-
-   function Get_File (Value : Glib.Values.GValue) return Virtual_File is
-      File : Virtual_File;
-   begin
-      File.Value := To_Contents_Access (Get_Boxed (Value));
-
-      if File.Value /= null then
-         File.Value.Ref_Count := File.Value.Ref_Count + 1;
-      end if;
-
-      return File;
-   end Get_File;
-
-   ---------------------------
-   -- Get_Virtual_File_Type --
-   ---------------------------
-
-   function Get_Virtual_File_Type return Glib.GType is
-   begin
-      if Virtual_File_Type = GType_None then
-         Virtual_File_Type := Boxed_Type_Register_Static
-           ("Virtual_File", Virtual_File_Boxed_Copy'Access,
-            Virtual_File_Boxed_Free'Access);
-      end if;
-
-      return Virtual_File_Type;
-   end Get_Virtual_File_Type;
 
 end VFS;
