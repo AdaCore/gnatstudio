@@ -135,7 +135,7 @@ package body GPS.Kernel.Remote is
 
    type Connection_Debug is new Connection_Debugger_Record with record
       Kernel  : Kernel_Handle;
-      Title   : GNAT.Expect.TTY.Remote.String_Ptr;
+      Title   : String_Access;
       Console : Interactive_Console;
    end record;
 
@@ -221,7 +221,7 @@ package body GPS.Kernel.Remote is
    Enter_Remote_Path_String : constant String := -"<enter remote path here>";
 
    Synchronisation_String : constant array (Synchronisation_Type)
-   of GNAT.Expect.TTY.Remote.String_Ptr
+   of String_Access
      := (Never          => new String'("Never"),
          Once_To_Local  => new String'("Once to local"),
          Once_To_Remote => new String'("Once to remote"),
@@ -389,7 +389,7 @@ package body GPS.Kernel.Remote is
    type Server_Config is record
       Is_Local : Boolean := True;
       --  Is_Local Tells if the server is the local machine or not
-      Nickname : GNAT.Expect.TTY.Remote.String_Ptr;
+      Nickname : String_Access;
       --  Identifier of the server
    end record;
    type Servers_Config is array (Distant_Server_Type) of Server_Config;
@@ -3198,12 +3198,11 @@ package body GPS.Kernel.Remote is
                Start_Command             => Start_Command.all,
                Start_Command_Common_Args => Start_Command_Common_Args.all,
                Start_Command_User_Args   => Start_Command_User_Args.all,
-               User_Prompt_Ptrn          =>
-                 GNAT.Expect.TTY.Remote.String_Ptr (User_Prompt_Ptrn),
+               User_Prompt_Ptrn          => String_Access (User_Prompt_Ptrn),
                Password_Prompt_Ptrn      =>
-                 GNAT.Expect.TTY.Remote.String_Ptr (Password_Prompt_Ptrn),
+                 String_Access (Password_Prompt_Ptrn),
                Passphrase_Prompt_Ptrn    =>
-                 GNAT.Expect.TTY.Remote.String_Ptr (Passphrase_Prompt_Ptrn),
+                 String_Access (Passphrase_Prompt_Ptrn),
                Extra_Prompt_Array        => Extra_Ptrns,
                Use_Cr_Lf                 => Use_Cr_Lf,
                Use_Pipes                 => Use_Pipes);
