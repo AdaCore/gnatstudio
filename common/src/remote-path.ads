@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006                         --
+--                     Copyright (C) 2006-2007                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -20,8 +20,7 @@
 --  This package defines the remote path element needed for path translation
 --  between remote and local host.
 
-with Glib; use Glib;
-
+with GNAT.Strings;
 package Remote.Path is
 
    type Synchronisation_Type is (Never,
@@ -77,9 +76,9 @@ package Remote.Path is
 private
 
    type Mirror_Path_Record is record
-      Local_Path  : Glib.String_Ptr      := null;
-      Remote_Path : Glib.String_Ptr      := null;
-      Sync        : Synchronisation_Type := Never;
+      Local_Path  : GNAT.Strings.String_Access := null;
+      Remote_Path : GNAT.Strings.String_Access := null;
+      Sync        : Synchronisation_Type       := Never;
    end record;
 
    --  ??? should be a controlled type
