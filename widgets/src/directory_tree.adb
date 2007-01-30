@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                     Copyright (C) 2001-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -57,6 +57,7 @@ with Gtk.Window;                use Gtk.Window;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
 with VFS;                       use VFS;
+with VFS.Values;                use VFS.Values;
 with File_Utils;                use File_Utils;
 with Filesystem;                use Filesystem;
 with GUI_Utils;                 use GUI_Utils;
@@ -338,7 +339,7 @@ package body Directory_Tree is
             Value : GValue;
          begin
             Get_Value (Tree.File_Model, Iter, File_Column, Value);
-            Tree.Current_Dir := VFS.Get_File (Value);
+            Tree.Current_Dir := VFS.Values.Get_File (Value);
          end;
       end if;
    end On_Tree_Select_Row;
@@ -1351,7 +1352,7 @@ package body Directory_Tree is
    begin
       return GType_Array'
         (Icon_Column      => Gdk.Pixbuf.Get_Type,
-         File_Column      => VFS.Get_Virtual_File_Type,
+         File_Column      => VFS.Values.Get_Virtual_File_Type,
          Base_Name_Column => GType_String);
    end Columns_Types;
 
