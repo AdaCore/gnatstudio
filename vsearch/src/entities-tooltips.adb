@@ -21,6 +21,7 @@
 with Ada.Strings.Unbounded;
 
 with Glib;                      use Glib;
+with Glib.Convert;              use Glib.Convert;
 with Gdk.Color;                 use Gdk, Gdk.Color;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.GC;                    use Gdk.GC;
@@ -192,7 +193,8 @@ package body Entities.Tooltips is
 
    function Get_Header (Entity : Entity_Information) return String is
    begin
-      return  "<b>" & Get_Full_Name (Entity, ".") & "</b>" & ASCII.LF
+      return  "<b>" & Escape_Text (Get_Full_Name (Entity, "."))
+        & "</b>" & ASCII.LF
         & Attributes_To_String (Get_Attributes (Entity)) &
         ' ' & (-Kind_To_String (Get_Kind (Entity))) & ' ' &
       (-"declared at ") &
