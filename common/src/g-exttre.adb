@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---                        Copyright (C) 2006 AdaCore                        --
+--                     Copyright (C) 2006-2007 AdaCore                      --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -25,7 +25,6 @@
 
 with Ada.Exceptions;       use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
-with Ada.Unchecked_Deallocation;
 with Ada.Strings.Fixed;    use Ada.Strings.Fixed;
 
 with Config;               use Config;
