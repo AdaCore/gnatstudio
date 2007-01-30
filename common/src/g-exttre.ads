@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---                         Copyright (C) 2006 AdaCore                       --
+--                      Copyright (C) 2006-2007 AdaCore                     --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -28,10 +28,10 @@ with GNAT.Expect.TTY; use GNAT.Expect.TTY;
 with GNAT.Regpat;     use GNAT.Regpat;
 with GNAT.Strings;    use GNAT.Strings;
 
-with Glib;            use Glib;
-
 with Filesystem;      use Filesystem;
 with System;          use System;
+
+with Ada.Unchecked_Deallocation;
 
 package GNAT.Expect.TTY.Remote is
 
@@ -40,6 +40,11 @@ package GNAT.Expect.TTY.Remote is
 
    Null_String_List : constant String_List (1 .. 0) := (others => null);
    --  Null string list
+
+   type String_Ptr is access all String;
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Object => String, Name => String_Ptr);
 
    -------------------------
    -- Connection Debugger --
