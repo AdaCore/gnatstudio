@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2006                      --
+--                      Copyright (C) 2005-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -46,6 +46,7 @@ with Basic_Types;                 use Basic_Types;
 with Commands.Interactive;        use Commands, Commands.Interactive;
 with Entities.Commands;           use Entities.Commands;
 with Entities;                    use Entities;
+with Entities.Values;             use Entities.Values;
 with Generic_Views;
 with GPS.Kernel;                  use GPS.Kernel;
 with GPS.Kernel.Contexts;         use GPS.Kernel.Contexts;
@@ -59,6 +60,7 @@ with Histories;                   use Histories;
 with String_Utils;                use String_Utils;
 with Traces;                      use Traces;
 with VFS;                         use VFS;
+with VFS.Values;                  use VFS.Values;
 with Glib.Xml_Int;                use Glib.Xml_Int;
 
 with Generic_List;
