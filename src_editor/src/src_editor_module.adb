@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
+--                      Copyright (C) 2001-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -82,6 +82,7 @@ with GPS.Kernel.Timeout;                use GPS.Kernel.Timeout;
 with Histories;                         use Histories;
 with Language;                          use Language;
 with Language_Handlers;                 use Language_Handlers;
+with Language_Handlers.GUI;             use Language_Handlers.GUI;
 with Projects.Registry;                 use Projects, Projects.Registry;
 with Remote;                            use Remote;
 with Src_Contexts;                      use Src_Contexts;
