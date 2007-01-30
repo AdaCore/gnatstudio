@@ -539,7 +539,7 @@ package body GNAT.Expect.TTY.Remote is
                end if;
 
                declare
-                  Password : String_Ptr;
+                  Password : String_Access;
                begin
                   if Res = 3 then
                      --  Password
@@ -1430,9 +1430,9 @@ package body GNAT.Expect.TTY.Remote is
       Start_Command             : String;
       Start_Command_Common_Args : String_List;
       Start_Command_User_Args   : String_List;
-      User_Prompt_Ptrn          : String_Ptr;
-      Password_Prompt_Ptrn      : String_Ptr;
-      Passphrase_Prompt_Ptrn    : String_Ptr;
+      User_Prompt_Ptrn          : String_Access;
+      Password_Prompt_Ptrn      : String_Access;
+      Passphrase_Prompt_Ptrn    : String_Access;
       Extra_Prompt_Array        : Extra_Prompts := Null_Extra_Prompts;
       Use_Cr_Lf                 : Boolean := False;
       Use_Pipes                 : Boolean := False)
