@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                       Copyright (C) 2006                          --
+--                     Copyright (C) 2006-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,14 +18,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib; use Glib;
+with GNAT.Strings; use GNAT.Strings;
 
 package body Remote is
 
    type Server_Config is record
       Is_Local : Boolean := True;
       --  Is_Local Tells if the server is the local machine or not
-      Nickname : String_Ptr;
+      Nickname : String_Access;
       --  Identifier of the server
    end record;
 
@@ -45,7 +45,7 @@ package body Remote is
       Nickname : String)
    is
    begin
-      Glib.Free (Servers (Server).Nickname);
+      Free (Servers (Server).Nickname);
       if Nickname /= "" and then Nickname /= Local_Nickname then
          Servers (Server) := (Is_Local => False,
                               Nickname => new String'(Nickname));
