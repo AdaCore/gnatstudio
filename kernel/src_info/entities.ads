@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2006                       --
+--                     Copyright (C) 2003-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Calendar;
-with Glib.Values;
 with GNAT.Strings;
 with HTables;
 with VFS;
@@ -807,24 +806,6 @@ package Entities is
    --  Free the memory associated to the iterator.
 
    Null_LI_Entities_Iterator : constant LI_Entities_Iterator;
-
-   -------------
-   -- GValues --
-   -------------
-   --  The following subprograms can be used to store an entity in a GValue,
-   --  for instance to store it in a tree view
-
-   function To_GValue (Entity : Entity_Information) return Glib.Values.GValue;
-   function From_GValue (Value : Glib.Values.GValue) return Entity_Information;
-   --  Store an entity in a GValue, or get its value back. This properly
-   --  handles reference counting, so that while the GValue is in use, the
-   --  entity remains valid. The returned entity has a borrow reference, and
-   --  thus needs to be Ref'ed if you want to keep it. Removing the row in the
-   --  tree for instance makes the entity invalid.
-
-   function Get_Entity_Information_Type return Glib.GType;
-   --  Return the type associated with an entity. This is the type that should
-   --  be used when creating the tree model.
 
 private
 
