@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                     Copyright (C) 2001-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -63,6 +63,7 @@ with String_List_Utils;        use String_List_Utils;
 with String_Utils;             use String_Utils;
 with Traces;                   use Traces;
 with VFS;                      use VFS;
+with VFS.Values;               use VFS.Values;
 
 package body GPS.Location_View is
 
