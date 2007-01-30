@@ -41,11 +41,6 @@ package GNAT.Expect.TTY.Remote is
    Null_String_List : constant String_List (1 .. 0) := (others => null);
    --  Null string list
 
-   type String_Ptr is access all String;
-
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Object => String, Name => String_Ptr);
-
    -------------------------
    -- Connection Debugger --
    -------------------------
@@ -103,9 +98,9 @@ package GNAT.Expect.TTY.Remote is
       Start_Command             : String;
       Start_Command_Common_Args : String_List;
       Start_Command_User_Args   : String_List;
-      User_Prompt_Ptrn          : String_Ptr;
-      Password_Prompt_Ptrn      : String_Ptr;
-      Passphrase_Prompt_Ptrn    : String_Ptr;
+      User_Prompt_Ptrn          : String_Access;
+      Password_Prompt_Ptrn      : String_Access;
+      Passphrase_Prompt_Ptrn    : String_Access;
       Extra_Prompt_Array        : Extra_Prompts := Null_Extra_Prompts;
       Use_Cr_Lf                 : Boolean := False;
       Use_Pipes                 : Boolean := False);
