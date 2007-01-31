@@ -1,5 +1,16 @@
 Known Problems fixed in GPS 4.1.0
 
+- G129-037 GPS cannot launch external HTML browsers.
+  Problem:    On some distributons of Linux, and possibly some UNIX plaforms,
+              GPS cannot launch external HTML browsers, such as Nautilus or
+              Firefox: for instance, when using the Help menu to display the
+              tutorial or manuals, a line appears in the Messages window
+              indicating that a browser is being launched, but nothing happens.
+              This occurs when the environment variable LD_LIBRARY_PATH is
+              unset or empty.
+  Workaround: Set your variable LD_LIBRARY_PATH to a dummy value prior to
+              launching GPS.
+
 - G119-004 Selection lost on rigth click after end of line
   Problem:    In the editor, if you select several lines, each line gets
               selected entirely and even after the last character. If you
