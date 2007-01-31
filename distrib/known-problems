@@ -327,3 +327,9 @@ Known Problems fixed in GPS 4.1.0
               leading 1.
   Workaround: This problem can be safely ignored, and disappears when adding
               or removing a line.
+
+- EA19-015 Slowness when executing external processes
+  Problem:    When GPS has to launch external programs that emit lot of output,
+              for instance the Version Control operation "Add annotation", GPS
+              takes a long time to process the output.
+  Workaround: Launch the corresponding processes in an external terminal.
