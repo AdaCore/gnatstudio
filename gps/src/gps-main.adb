@@ -391,6 +391,14 @@ procedure GPS.Main is
       Make_Root   : String_Access;
       Python_Home : String_Access;
       Tmp         : String_Access;
+
+      Launched_Through_Script : Boolean;
+      --  There are two scenarios for launching GPS:
+      --    1) through the gps script (for released versions under UNIX)
+      --    2) calling directly the executable (for instance when developing)
+      --  Launched_Through_Script is set to True if we are launching through
+      --  the script.
+
       Ignored     : Log_Handler_Id;
       pragma Unreferenced (Ignored);
 
@@ -402,17 +410,25 @@ procedure GPS.Main is
       --  starting GPS will generally imply a change in LD_LIBRARY_PATH and
       --  PATH to point to the right libraries
 
-      Tmp := Getenv ("GPS_STARTUP_LD_LIBRARY_PATH");
-      if Tmp.all /= "" then
-         Setenv ("LD_LIBRARY_PATH", Tmp.all);
-      end if;
-      Free (Tmp);
-
       Tmp := Getenv ("GPS_STARTUP_PATH");
-      if Tmp.all /= "" then
+
+      --  We assume that the GPS_STARTUP_PATH variable is only set through the
+      --  startup script, and that the PATH is never empty. Therefore, if
+      --  GPS_STARTUP_PATH contains something, this means we're launching
+      --  through the script.
+      if Tmp.all = "" then
+         Launched_Through_Script := False;
+      else
+         Launched_Through_Script := True;
          Setenv ("PATH", Tmp.all);
       end if;
       Free (Tmp);
+
+      if Launched_Through_Script then
+         Tmp := Getenv ("GPS_STARTUP_LD_LIBRARY_PATH");
+         Setenv ("LD_LIBRARY_PATH", Tmp.all);
+         Free (Tmp);
+      end if;
 
       --  Reset any artificial memory limit
 
