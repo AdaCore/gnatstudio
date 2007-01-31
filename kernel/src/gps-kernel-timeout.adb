@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
+--                      Copyright (C) 2001-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -350,42 +350,47 @@ package body GPS.Kernel.Timeout is
 
       Fd := Data.D.Descriptor;
       if Fd /= null then
-         Expect (Fd.all, Result, Data.Expect_Regexp.all, Timeout => 1);
+         loop
+            Expect (Fd.all, Result, Data.Expect_Regexp.all, Timeout => 1);
 
-         if Result /= Expect_Timeout then
-            --  Received something. Cancel timeout.
-            Data.Timeout := -1;
+            if Result /= Expect_Timeout then
+               --  Received something. Cancel timeout.
+               Data.Timeout := -1;
 
-            declare
-               Output : constant String :=
-                          Conditional_Strip_CR (Expect_Out (Fd.all));
-            begin
-               if Data.Console /= null
-                 and then Data.Show_Output
+               declare
+                  Output : constant String :=
+                    Conditional_Strip_CR (Expect_Out (Fd.all));
+               begin
+                  if Data.Console /= null
+                    and then Data.Show_Output
+                  then
+                     Insert (Data.Console, Output, Add_LF => False);
+
+                     --  ??? This might be costly, we could cache this MDI
+                     --  Child
+                     Highlight_Child
+                       (Find_MDI_Child
+                          (Get_MDI (Data.D.Kernel), Data.Console));
+                  end if;
+
+                  if Data.D.Callback /= null then
+                     Data.D.Callback (Data.D, Output);
+                  end if;
+               end;
+
+            else
+               if Data.Timeout /= -1
+                 and then Ada.Calendar.Clock - Data.Start_Time >
+                   Duration (Data.Timeout) /  1000.0
                then
-                  Insert (Data.Console, Output, Add_LF => False);
-
-                  --  ??? This might be costly, we could cache this MDI
-                  --  Child
-                  Highlight_Child
-                    (Find_MDI_Child
-                       (Get_MDI (Data.D.Kernel), Data.Console));
+                  --  Make sure the process is killed. Just interrupting it is
+                  --  sometimes not enough
+                  Close (Fd.all);
                end if;
 
-               if Data.D.Callback /= null then
-                  Data.D.Callback (Data.D, Output);
-               end if;
-            end;
-
-         elsif Data.Timeout /= -1
-           and then Ada.Calendar.Clock - Data.Start_Time >
-             Duration (Data.Timeout) /  1000.0
-         then
-            --  Make sure the process is killed. Just interrupting it is
-            --  sometimes not enough
-            Close (Fd.all);
-         end if;
-
+               exit;
+            end if;
+         end loop;
       else
          raise Process_Died;
       end if;
