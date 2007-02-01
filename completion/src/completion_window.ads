@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006                         --
+--                      Copyright (C) 2006-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -157,6 +157,9 @@ private
 
       Iter           : Completion_Iterator;
       --  The iter corresponding to the current completion engine, if any.
+
+      Pattern : String_Access;
+      --  The currently typed pattern.
    end record;
 
 end Completion_Window;
