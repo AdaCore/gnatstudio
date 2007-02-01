@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                         Copyright (C) 2006                        --
+--                       Copyright (C) 2006-2007                     --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1542,8 +1542,8 @@ package body Language.Tree.Ada is
                return Greater_Than;
             end if;
 
-            Left_Param := Next (Left_Tree, Left_Iter, Jump_Over);
-            Right_Param := Next (Right_Tree, Right_Iter, Jump_Over);
+            Left_Param := Next (Left_Tree, Left_Param, Jump_Over);
+            Right_Param := Next (Right_Tree, Right_Param, Jump_Over);
          end loop;
 
          --  Then check the actual names and types
@@ -1572,8 +1572,8 @@ package body Language.Tree.Ada is
                return Tmp_Result;
             end if;
 
-            Left_Param := Next (Left_Tree, Left_Iter, Jump_Over);
-            Right_Param := Next (Right_Tree, Right_Iter, Jump_Over);
+            Left_Param := Next (Left_Tree, Left_Param, Jump_Over);
+            Right_Param := Next (Right_Tree, Right_Param, Jump_Over);
          end loop;
 
          if Left_Category = Cat_Function then
