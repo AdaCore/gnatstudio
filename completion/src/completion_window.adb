@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006                         --
+--                      Copyright (C) 2006-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -27,6 +27,7 @@ with Gdk.Window;             use Gdk.Window;
 with Gdk.Types;              use Gdk.Types;
 with Gdk.Types.Keysyms;      use Gdk.Types.Keysyms;
 
+with Gtk.Adjustment;         use Gtk.Adjustment;
 with Gtk.Box;                use Gtk.Box;
 with Gtk.Handlers;           use Gtk.Handlers;
 with Gtk.Frame;              use Gtk.Frame;
@@ -129,15 +130,12 @@ package body Completion_Window is
      (Window : access Completion_Window_Record'Class);
    --  Callback on a click on the location button
 
-   procedure Adjust_Selected
-     (Window : access Completion_Window_Record'Class;
-      UTF8   : String);
-   --  Show only the items that begin with UTF8. Delete the window if there is
-   --  none.
+   procedure Adjust_Selected (Window : access Completion_Window_Record'Class);
+   --  Show only the items that begin with the current pattern filter.
+   --  Delete the window if there is no item to show.
 
    procedure Expand_Selection
      (Window      : access Completion_Window_Record'Class;
-      UTF8_Filter : String;
       Number      : Natural);
    --  Expand the current selection until Number entries have been added or
    --  the completion iter has reach the end.
@@ -224,7 +222,6 @@ package body Completion_Window is
 
    procedure Expand_Selection
      (Window      : access Completion_Window_Record'Class;
-      UTF8_Filter : String;
       Number      : Natural)
    is
       Added : Natural := 0;
@@ -307,7 +304,7 @@ package body Completion_Window is
          end if;
          --  ??? End of code duplication
 
-         if Is_Prefix (UTF8_Filter, Info.Text.all) then
+         if Is_Prefix (Window.Pattern.all, Info.Text.all) then
             --  ??? some code duplication with Add_Contents
             Append (Window.Model, Iter);
             Set (Window.Model, Iter, Markup_Column, Info.Markup.all);
@@ -334,8 +331,7 @@ package body Completion_Window is
    ---------------------
 
    procedure Adjust_Selected
-     (Window : access Completion_Window_Record'Class;
-      UTF8   : String)
+     (Window : access Completion_Window_Record'Class)
    is
       Prev   : Gtk_Tree_Iter;
       Curr   : Gtk_Tree_Iter;
@@ -359,6 +355,7 @@ package body Completion_Window is
          end if;
       end Equals;
 
+      UTF8 : constant String := Window.Pattern.all;
    begin
       Selection := Get_Selection (Window.View);
 
@@ -403,7 +400,7 @@ package body Completion_Window is
 
       --  Expand the selection to show more items, if needed.
       if Appended < Minimal_Items_To_Show then
-         Expand_Selection (Window, UTF8, Minimal_Items_To_Show - Appended);
+         Expand_Selection (Window, Minimal_Items_To_Show - Appended);
       end if;
 
       --  Re-select the item previously selected, or, if there was none,
@@ -468,7 +465,9 @@ package body Completion_Window is
       Get_Text_Iter (Nth (Params, 1), Iter);
       Move_Mark (Window.Buffer, Window.Cursor_Mark, Iter);
       Get_Iter_At_Mark (Window.Buffer, Beg, Window.Mark);
-      Adjust_Selected (Window, Get_Text (Window.Buffer, Beg, Iter));
+      Free (Window.Pattern);
+      Window.Pattern := new String'(Get_Text (Window.Buffer, Beg, Iter));
+      Adjust_Selected (Window);
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -526,11 +525,9 @@ package body Completion_Window is
       if Get_Offset (Iter) < Window.Initial_Offset then
          Delete (Window);
       else
-         declare
-            UTF8 : constant UTF8_String := Get_Text (Window.Buffer, Beg, Iter);
-         begin
-            Adjust_Selected (Window, UTF8);
-         end;
+         Free (Window.Pattern);
+         Window.Pattern := new String'(Get_Text (Window.Buffer, Beg, Iter));
+         Adjust_Selected (Window);
       end if;
 
    exception
@@ -618,7 +615,7 @@ package body Completion_Window is
 
          if Prev (Path) then
             Iter := Get_Iter (Window.Model, Path);
-            Expand_Selection (Window, "", Minimal_Items_To_Show);
+            Expand_Selection (Window, Minimal_Items_To_Show);
             Select_Iter (Sel, Iter);
          end if;
 
@@ -818,11 +815,64 @@ package body Completion_Window is
      (Window : access Completion_Window_Record'Class;
       Event  : Gdk_Event) return Boolean
    is
-      Key   : Gdk_Key_Type;
-      Sel   : Gtk_Tree_Selection;
-      Iter  : Gtk_Tree_Iter;
-      Model : Gtk_Tree_Model;
-      Path  : Gtk_Tree_Path;
+      Key      : Gdk_Key_Type;
+      Sel      : Gtk_Tree_Selection;
+      Iter     : Gtk_Tree_Iter;
+      Model    : Gtk_Tree_Model;
+      Path     : Gtk_Tree_Path;
+      End_Path : Gtk_Tree_Path;
+      Success  : Boolean;
+
+      type Page_Direction is (Up, Down);
+
+      procedure Move_Page (Where : Page_Direction);
+      --  Move the selection up or down one page.
+
+      ---------------
+      -- Move_Page --
+      ---------------
+
+      procedure Move_Page (Where : Page_Direction) is
+         Adj  : Gtk_Adjustment;
+         Page : Gdouble;
+      begin
+         if Where = Down then
+            Expand_Selection
+              (Window => Window,
+               Number => Minimal_Items_To_Show);
+         end if;
+
+         Adj := Get_Vadjustment (Window.View);
+         Page := Get_Page_Increment (Adj);
+
+         if Where = Up then
+            Set_Value (Adj, Gdouble'Max
+                       (Get_Lower (Adj), Get_Value (Adj) - Page));
+         else
+            Set_Value (Adj, Gdouble'Min
+                       (Get_Upper (Adj) - Page, Get_Value (Adj) + Page));
+         end if;
+
+         Set_Vadjustment (Window.View, Adj);
+
+         Get_Visible_Range (Window.View, Path, End_Path, Success);
+
+         if Success then
+            if Where = Up then
+               Iter := Get_Iter (Window.Model, Path);
+            else
+               Iter := Get_Iter (Window.Model, End_Path);
+            end if;
+
+            if Iter /= Null_Iter then
+               Sel := Get_Selection (Window.View);
+               Select_Iter (Sel, Iter);
+            end if;
+
+            Path_Free (Path);
+            Path_Free (End_Path);
+         end if;
+      end Move_Page;
 
    begin
       Key := Get_Key_Val (Event);
@@ -832,7 +882,6 @@ package body Completion_Window is
       case Key is
          when GDK_Escape | GDK_Left | GDK_Right =>
             Delete (Window);
-            return True;
 
          when GDK_Return =>
             Sel := Get_Selection (Window.View);
@@ -843,7 +892,6 @@ package body Completion_Window is
             end if;
 
             Complete_And_Exit (Window);
-            return True;
 
          when GDK_Down | GDK_KP_Down =>
             Sel := Get_Selection (Window.View);
@@ -859,7 +907,8 @@ package body Completion_Window is
                Select_Iter (Sel, Iter);
             end if;
 
-            return True;
+         when GDK_Page_Down =>
+            Move_Page (Down);
 
          when GDK_Up | GDK_KP_Up =>
             Sel := Get_Selection (Window.View);
@@ -880,13 +929,14 @@ package body Completion_Window is
                Path_Free (Path);
             end if;
 
-            return True;
+         when GDK_Page_Up =>
+            Move_Page (Up);
 
          when others =>
-            null;
+            return False;
       end case;
 
-      return False;
+      return True;
 
    exception
       when E : others =>
@@ -1178,7 +1228,8 @@ package body Completion_Window is
          To_Marshaller (On_Selection_Changed'Access), Window,
          After => True);
 
-      Expand_Selection (Window, "", Minimal_Items_To_Show);
+      Window.Pattern := new String'("");
+      Expand_Selection (Window, Minimal_Items_To_Show);
 
       Tree_Iter := Get_Iter_First (Window.Model);
 
