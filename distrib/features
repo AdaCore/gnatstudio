@@ -261,6 +261,11 @@ F704-013 Fix "end loop Name; expected" (2006-07-27)
   It's now possible to fix automatically messages like "end loop Name;
   expected".
 
+F605-005 Key navigation supprot in the Smart Completion Window (2007-02-01)
+
+  Using page up and page down keys are now supported in the Smart Completion
+  Window.
+
 F428-015 Smart completion completes subprograms profiles (2006-11-08)
 
   When writing a subprogram call, hitting the completion key on a comma or an
