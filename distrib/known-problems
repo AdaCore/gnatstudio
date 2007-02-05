@@ -1,5 +1,15 @@
 Known Problems fixed in GPS 4.1.0
 
+- G202-018 Searching backward for "Files in Project"
+  Problem:    If you are doing a search in the context "Files in Project" or
+              "Files...", and you press ctrl-p to go to the previous
+              occurrence, then GPS would in fact go to the next occurrence.
+              Since GPS doesn't in fact know how to search backward in such
+              cases, ctrl-p now has no effect.
+  Workaround: If you might have to use search backward, then instead search
+              for all occurrences, and use the Location window to navigate
+              between matches.
+
 - G129-037 GPS cannot launch external HTML browsers.
   Problem:    On some distributons of Linux, and possibly some UNIX plaforms,
               GPS cannot launch external HTML browsers, such as Nautilus or
