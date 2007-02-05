@@ -1847,7 +1847,6 @@ package body Src_Contexts is
       Found           : out Boolean;
       Continue        : out Boolean)
    is
-      pragma Unreferenced (Search_Backward);
       C : constant Abstract_Files_Context_Access :=
         Abstract_Files_Context_Access (Context);
       --  For dispatching purposes
@@ -1874,11 +1873,14 @@ package body Src_Contexts is
 
    begin
       Found := False;
-      Continue := Search
-        (Context,
-         Get_Language_Handler (Kernel),
-         Kernel_Handle (Kernel),
-         Interactive_Callback'Unrestricted_Access);
+      Continue := False;
+      if not Search_Backward then
+         Continue := Search
+           (Context,
+            Get_Language_Handler (Kernel),
+            Kernel_Handle (Kernel),
+            Interactive_Callback'Unrestricted_Access);
+      end if;
    end Search;
 
    -------------
