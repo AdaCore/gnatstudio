@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                         Copyright (C) 2005-2006                   --
+--                         Copyright (C) 2005-2007                   --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,27 +18,27 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;       use Ada.Exceptions;
+with Ada.Exceptions;         use Ada.Exceptions;
 
-with Glib;                 use Glib;
-with Glib.Object;          use Glib.Object;
-with Gdk.Event;            use Gdk.Event;
-with Gdk.Pixbuf;           use Gdk.Pixbuf;
-with Gdk.Types;            use Gdk.Types;
-with Gtk.Check_Menu_Item;  use Gtk.Check_Menu_Item;
-with Gtk.Enums;            use Gtk.Enums;
-with Gtk.Handlers;         use Gtk.Handlers;
-with Gtk.Menu;             use Gtk.Menu;
-with Gtk.Notebook;         use Gtk.Notebook;
-with Gtk.Scrolled_Window;  use Gtk.Scrolled_Window;
-with Gtk.Tree_View;        use Gtk.Tree_View;
-with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
-with Gtk.Tree_Selection;   use Gtk.Tree_Selection;
-with Gtk.Tree_Store;       use Gtk.Tree_Store;
-with Gtk.Tree_Model;       use Gtk.Tree_Model;
-with Gtk.Widget;           use Gtk.Widget;
-with Gtkada.Handlers;      use Gtkada.Handlers;
-with Gtkada.MDI;           use Gtkada.MDI;
+with Glib;                   use Glib;
+with Glib.Object;            use Glib.Object;
+with Gdk.Event;              use Gdk.Event;
+with Gdk.Pixbuf;             use Gdk.Pixbuf;
+with Gdk.Types;              use Gdk.Types;
+with Gtk.Check_Menu_Item;    use Gtk.Check_Menu_Item;
+with Gtk.Enums;              use Gtk.Enums;
+with Gtk.Handlers;           use Gtk.Handlers;
+with Gtk.Menu;               use Gtk.Menu;
+with Gtk.Notebook;           use Gtk.Notebook;
+with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
+with Gtk.Tree_View;          use Gtk.Tree_View;
+with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
+with Gtk.Tree_Selection;     use Gtk.Tree_Selection;
+with Gtk.Tree_Store;         use Gtk.Tree_Store;
+with Gtk.Tree_Model;         use Gtk.Tree_Model;
+with Gtk.Widget;             use Gtk.Widget;
+with Gtkada.Handlers;        use Gtkada.Handlers;
+with Gtkada.MDI;             use Gtkada.MDI;
 
 with Generic_Views;
 with GPS.Kernel;             use GPS.Kernel;
@@ -55,6 +55,7 @@ with Traces;                 use Traces;
 with Commands.Interactive;   use Commands, Commands.Interactive;
 
 package body Buffer_Views is
+
    Icon_Column : constant := 0;
    Name_Column : constant := 1;
    Data_Column : constant := 2;
@@ -71,9 +72,9 @@ package body Buffer_Views is
    --  Used to store the current view settings in histories
 
    type Buffer_View_Record is new Generic_Views.View_Record with record
-      Tree   : Gtk_Tree_View;
-      Kernel : Kernel_Handle;
-      File   : Virtual_File; -- current selected file (cache)
+      Tree              : Gtk_Tree_View;
+      Kernel            : Kernel_Handle;
+      File              : Virtual_File; -- current selected file (cache)
       Child_Selected_Id : Gtk.Handlers.Handler_Id;
    end record;
 
@@ -263,22 +264,11 @@ package body Buffer_Views is
                then
                   if Get_Event_Type (Event) = Gdk_2button_Press then
                      Raise_Child (Child, Give_Focus => True);
-                     return True;
-
                   elsif Get_Event_Type (Event) = Button_Press then
                      Child_Drag_Begin (Child => Child, Event => Event);
                      Raise_Child (Child, Give_Focus => True);
-                     return True;
                   end if;
 
-               elsif (Get_State (Event) and Control_Mask) /= 0 then
-                  if Iter_Is_Selected
-                    (Get_Selection (Explorer.Tree), Iter)
-                  then
-                     Unselect_Iter (Get_Selection (Explorer.Tree), Iter);
-                  else
-                     Select_Iter (Get_Selection (Explorer.Tree), Iter);
-                  end if;
                   return True;
                end if;
             end if;
@@ -307,7 +297,9 @@ package body Buffer_Views is
       --  If we are in the buffers view, do not show it, since otherwise that
       --  breaks the selection of multiple lines
 
-      if Child /= null then
+      if Child /= null
+        and then Get_Widget (Child) /= Gtk_Widget (V)
+      then
          declare
             Selected : constant String := Get_Title (Child);
          begin
