@@ -647,7 +647,8 @@ package body GNAT.Expect.TTY.Remote is
          end if;
       end My_Send;
 
-      Res : Expect_Match;
+      Res          : Expect_Match;
+      Found_U      : Boolean;
 
    begin
       --  Search for READY or OFF sessions
@@ -706,26 +707,75 @@ package body GNAT.Expect.TTY.Remote is
               (1 => Remote_Desc.Start_Cmd);
          end if;
 
-         --  Set user argument
-
-         if Descriptor.Machine.Desc.User_Name.all /= "" then
-            New_Args := new GNAT.OS_Lib.Argument_List'
-              (Old_Args.all &
-               Process_Arg_List
-                 (Remote_Desc.Start_Cmd_User_Args.all));
-            Simple_Free (Old_Args);
-            Old_Args := New_Args;
-         end if;
-
-         --  Set common arguments and remote command
+         --  Set common arguments
 
          New_Args := new GNAT.OS_Lib.Argument_List'
            (Old_Args.all &
             Process_Arg_List
-              (Remote_Desc.Start_Cmd_Common_Args.all) &
-            Descriptor.Shell.Start_Cmd);
+              (Remote_Desc.Start_Cmd_Common_Args.all));
          Simple_Free (Old_Args);
          Old_Args := New_Args;
+
+         --  Set user argument
+
+         Found_U := False;
+
+         for J in Old_Args'Range loop
+            if Old_Args (J).all = "%U" then
+               Found_U := True;
+
+               if Descriptor.Machine.Desc.User_Name.all /= "" then
+                  --  Replace %U with user arguments.
+                  New_Args := new GNAT.OS_Lib.Argument_List'
+                    (Old_Args (Old_Args'First .. J - 1) &
+                     Process_Arg_List
+                       (Remote_Desc.Start_Cmd_User_Args.all) &
+                     Old_Args (J + 1 .. Old_Args'Last));
+               else
+                  --  Remove %U: no user specified
+                  New_Args := new GNAT.OS_Lib.Argument_List'
+                    (Old_Args (Old_Args'First .. J - 1) &
+                     Old_Args (J + 1 .. Old_Args'Last));
+               end if;
+
+               Free (Old_Args (J));
+               Simple_Free (Old_Args);
+               Old_Args := New_Args;
+
+               exit;
+            end if;
+         end loop;
+
+         if not Found_U
+           and then Descriptor.Machine.Desc.User_Name.all /= ""
+         then
+            --  Compatibility: if %U was not found, then add user arguments at
+            --  the begining of the args list.
+            New_Args := new GNAT.OS_Lib.Argument_List'
+              (Process_Arg_List
+                 (Remote_Desc.Start_Cmd_User_Args.all) &
+               Old_Args.all);
+
+            Simple_Free (Old_Args);
+            Old_Args := New_Args;
+         end if;
+
+         --  Set Command argument, if supported
+
+         for J in Old_Args'Range loop
+            if Old_Args (J).all = "%C" then
+               New_Args := new GNAT.OS_Lib.Argument_List'
+                 (Old_Args (Old_Args'First .. J - 1) &
+                  new String'(Descriptor.Shell.Start_Cmd.all) &
+                  Old_Args (J + 1 .. Old_Args'Last));
+
+               Free (Old_Args (J));
+               Simple_Free (Old_Args);
+               Old_Args := New_Args;
+
+               exit;
+            end if;
+         end loop;
 
          --  Remove empty arguments
 
