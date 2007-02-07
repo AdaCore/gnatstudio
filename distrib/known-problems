@@ -51,6 +51,12 @@ Known Problems fixed in GPS 4.0.2
               with paths pretty long.
   Workaround: Ignore in the remote browser the paths that have strange names.
 
+- FB03-025 Shift left click does not work in the Windows view
+  Problem:    Selecting multiple entries in the Windows view by using
+              shift + left click does not work as expected.
+  Workaround: Use control + left click to select multiple entries in the
+              Windows view.
+
 - FA17-010 Editing project naming scheme has no visible effect
   Problem:    If you change the naming scheme in the project properties editor
               for languages other than Ada and C/C++ (for instance for a custom
