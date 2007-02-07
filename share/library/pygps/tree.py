@@ -42,7 +42,8 @@ try:
          pygps.process_all_events()
 
    def click_in_tree (view, path=None, column=0, button=1, \
-                      events=pygps.single_click_events, process_events=True):
+                      events=pygps.single_click_events, process_events=True, \
+                      control=False, alt=False, shift=False):
       """Simulate a click in the TreeView on the given path and column.
          This event is sent asynchronously, and you should check its
          result in an idle callback, or call process_all_events() immediately
@@ -68,6 +69,12 @@ try:
            (rect.x + rect.width / 2, rect.y + rect.height / 2)
          event.x = float (x)
          event.y = float (y)
+
+         event.state = 0
+         if control: event.state = event.state or gtk.gdk.CONTROL_MASK
+         if shift:   event.state = event.state or gtk.gdk.SHIFT_MASK
+         if alt:     event.state = event.state or gtk.gdk.MOD1_MASK
+
          event.put()
 
       if process_events:
