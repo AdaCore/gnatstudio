@@ -21,6 +21,15 @@ Known Problems fixed in GPS 4.1.0
   Workaround: Set your variable LD_LIBRARY_PATH to a dummy value prior to
               launching GPS.
 
+- G119-024 GPS Remote mode and rsh problems
+  Problem:    When trying to connect to a remote machine using the rsh tool,
+              specifying a remote command line to execute will make the rsh
+              tool to actually use the rexec protocol, which is refused by
+              most servers. The password in this case is never asked.
+  Workaround: Either setup a passwordless rexec connection on the server side,
+              or create a new shell for GPS, specifying an empty string as
+              start command.
+
 - G119-004 Selection lost on rigth click after end of line
   Problem:    In the editor, if you select several lines, each line gets
               selected entirely and even after the last character. If you
@@ -47,6 +56,13 @@ Known Problems fixed in GPS 4.1.0
   Problem:    After entering an empty or invalid text in the font selection
               entries in the Preferences dialog, GPS might crash.
   Workaround: Use the font chooser dialog to select the fonts
+
+- FC07-018 GPS Remote mode is not working on Windows when a user is specified
+  Problem:    The Microsoft's rsh tool on Windows expects the user to be
+              specified after the host name. When specified before, the
+              connection is refused.
+  Workaround: Use the same user name on Windows and on the remote machine, and
+              don't specify any in GPS.
 
 - FB29-024 GPS complains about a missing gnatls executable
   Problem:    When using a cross GNAT compiler with no gnatls executable,
