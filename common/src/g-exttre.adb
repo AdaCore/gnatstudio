@@ -712,7 +712,7 @@ package body GNAT.Expect.TTY.Remote is
          Found_U := False;
 
          for J in Remote_Desc.Start_Cmd_Common_Args'Range loop
-            if Remote_Desc.Start_Cmd_Common_Args (J) = "%u" then
+            if Remote_Desc.Start_Cmd_Common_Args (J).all = "%u" then
                Found_U := True;
                exit;
             end if;
