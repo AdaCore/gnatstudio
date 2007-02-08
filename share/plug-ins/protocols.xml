@@ -22,7 +22,7 @@
   <!-- RSH -->
 
   <!-- rsh will ignore the shell start command, as otherwise it uses rexec
-    -- protocol instead of rsh protocol if any command arg is furnished
+       protocol instead of rsh protocol if any command arg is furnished
     -->
   <remote_connection_config name="rsh">
     <start_command use_pipes="false">rsh</start_command>
@@ -33,7 +33,7 @@
   <!-- TELNET -->
 
   <!-- rsh will ignore the shell start command, as remote commands are not
-    -- supported by this tool
+       supported by this tool
     -->
   <remote_connection_config name="telnet">
     <start_command use_pipes="false">telnet</start_command>
