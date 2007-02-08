@@ -707,6 +707,17 @@ package body GNAT.Expect.TTY.Remote is
               (1 => Remote_Desc.Start_Cmd);
          end if;
 
+         --  Does the common arguments allow user input ?
+
+         Found_U := False;
+
+         for J in Remote_Desc.Start_Cmd_Common_Args'Range loop
+            if Remote_Desc.Start_Cmd_Common_Args (J) = "%u" then
+               Found_U := True;
+               exit;
+            end if;
+         end loop;
+
          --  Set common arguments
 
          New_Args := new GNAT.OS_Lib.Argument_List'
@@ -717,8 +728,6 @@ package body GNAT.Expect.TTY.Remote is
          Old_Args := New_Args;
 
          --  Set user argument
-
-         Found_U := False;
 
          for J in Old_Args'Range loop
             if Old_Args (J).all = "%U" then
