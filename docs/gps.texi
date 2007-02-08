@@ -12828,10 +12828,26 @@ use a tty emulation, which is a bit slower but allow
 Note that this argument has effects only on Windows platforms.
 
 @item start_command_common_args (optional)
-The common arguments that are provided to the tool.
+The arguments that are provided to the tool. This string can contain the
+following replacement macros:
+@table @code
+@item %C
+is replaced by the command executed on the remote host (e.g. the shell command)
+@item %h
+is replaced by the remote host name
+@item %U
+is replaced by the start_command_user_args, if a user is specified
+@item %u
+is replaced by the user name
+@end table
+
+Note that if neither %u nor %U is found, and a user is specified in the remote
+connection configuration, then the start_command_user_args is placed at the
+beginning of the arguments.
 
 @item start_command_user_args (optional)
-The arguments used to define a specific user during connection.
+The arguments used to define a specific user during connection. %u is replaced
+ by the user name
 
 @item user_prompt_ptrn (optional)
 A regular expression, used to catch user name prompts from the
