@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                     Copyright (C) 2001-2007                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1889,7 +1889,9 @@ package body Ada_Analyzer is
            and then Top_Token.Token /= Tok_Subtype
            and then (Reserved = Tok_New
                      or else Reserved = Tok_Abstract
-                     or else Reserved = Tok_Separate)
+                     or else Reserved = Tok_Separate
+                     or else (Reserved = Tok_Null
+                              and then Top_Token.Token = Tok_Procedure))
          then
             --  Handle indentation of e.g.
             --
@@ -1911,10 +1913,11 @@ package body Ada_Analyzer is
 
             Pop (Tokens);
 
-            --  unindent since this is a declaration, e.g:
+            --  Unindent since this is a declaration, e.g:
             --  package ... is new ...;
             --  function ... is abstract;
             --  function ... is separate;
+            --  procedure ... is null;
 
             Num_Spaces := Num_Spaces - Indent_Level;
 
