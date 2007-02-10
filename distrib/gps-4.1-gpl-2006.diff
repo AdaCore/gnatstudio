@@ -1,0 +1,152 @@
+*** shared.gpr.old	Tue Oct  1 18:21:51 2002
+--- shared.gpr	Tue Oct  1 18:22:03 2002
+***************
+*** 4,10 ****
+     OS : OS_Type := External ("OS", "unix");
+  
+     type Build_Type is ("Debug", "Production");
+!    Build : Build_Type := External ("Build", "Debug");
+  
+     for Source_Dirs use ();
+  
+--- 4,10 ----
+     OS : OS_Type := External ("OS", "unix");
+  
+     type Build_Type is ("Debug", "Production");
+!    Build : Build_Type := External ("Build", "Production");
+  
+     for Source_Dirs use ();
+  
+--- gnat_src/osint.ads	8 Jan 2007 17:00:09 -0000	1.147
++++ gnat_src/osint.ads	10 Feb 2007 11:56:42 -0000
+@@ -29,10 +29,10 @@
+ 
+ with Types; use Types;
+ 
+-with System.OS_Lib; use System.OS_Lib;
+-with System;        use System;
++with GNAT.OS_Lib; use GNAT.OS_Lib;
++with System;      use System;
+ 
+-pragma Elaborate_All (System.OS_Lib);
++pragma Elaborate_All (GNAT.OS_Lib);
+ --  For the call to function Get_Target_Object_Suffix in the private part
+ 
+ package Osint is
+--- gnat_src/opt.ads	8 Feb 2007 14:09:33 -0000	1.335
++++ gnat_src/opt.ads	10 Feb 2007 11:56:43 -0000
+@@ -39,7 +39,7 @@
+ with Hostparm; use Hostparm;
+ with Types;    use Types;
+ 
+-with System.Strings; use System.Strings;
++with GNAT.Strings; use GNAT.Strings;
+ with System.WCh_Con; use System.WCh_Con;
+ 
+ package Opt is
+--- gnat_src/tree_io.ads	8 Jan 2007 17:00:43 -0000	1.9
++++ gnat_src/tree_io.ads	10 Feb 2007 11:56:43 -0000
+@@ -38,8 +38,8 @@
+ 
+ with Types; use Types;
+ 
+-with System;        use System;
+-with System.OS_Lib; use System.OS_Lib;
++with System;      use System;
++with GNAT.OS_Lib; use GNAT.OS_Lib;
+ 
+ package Tree_IO is
+ 
+--- gnat_src/switch-m.ads	8 Jan 2007 17:00:33 -0000	1.7
++++ gnat_src/switch-m.ads	10 Feb 2007 11:56:43 -0000
+@@ -30,7 +30,7 @@
+ --  switches that are recognized. In addition, package Debug documents
+ --  the otherwise undocumented debug switches that are also recognized.
+ 
+-with System.OS_Lib; use System.OS_Lib;
++with GNAT.OS_Lib; use GNAT.OS_Lib;
+ 
+ package Switch.M is
+ 
+--- gnat_src/osint.adb	8 Jan 2007 17:00:07 -0000	1.341
++++ gnat_src/osint.adb	10 Feb 2007 11:56:45 -0000
+@@ -859,7 +859,7 @@
+       --  directory prefix.
+ 
+       return Get_Install_Dir
+-        (System.OS_Lib.Locate_Exec_On_Path (Exec_Name.all).all);
++        (GNAT.OS_Lib.Locate_Exec_On_Path (Exec_Name.all).all);
+    end Executable_Prefix;
+ 
+    ------------------
+--- gnat_src/tempdir.ads	8 Jan 2007 17:00:39 -0000	1.5
++++ gnat_src/tempdir.ads	10 Feb 2007 11:56:45 -0000
+@@ -31,7 +31,7 @@
+ 
+ with Types; use Types;
+ 
+-with System.OS_Lib; use System.OS_Lib;
++with GNAT.OS_Lib; use GNAT.OS_Lib;
+ 
+ package Tempdir is
+ 
+--- gnat_src/output.adb	8 Jan 2007 17:00:12 -0000	1.56
++++ gnat_src/output.adb	10 Feb 2007 11:56:45 -0000
+@@ -31,7 +31,7 @@
+ --                                                                          --
+ ------------------------------------------------------------------------------
+ 
+-with System.OS_Lib; use System.OS_Lib;
++with GNAT.OS_Lib; use GNAT.OS_Lib;
+ 
+ package body Output is
+ 
+--- gnat_src/opt.adb	8 Jan 2007 17:12:58 -0000	1.55
++++ gnat_src/opt.adb	10 Feb 2007 11:56:45 -0000
+@@ -201,7 +201,7 @@
+       begin
+          Tree_Read_Data
+            (Tmp'Address, Tree_Version_String_Len);
+-         System.Strings.Free (Tree_Version_String);
++         GNAT.Strings.Free (Tree_Version_String);
+          Free (Tree_Version_String);
+          Tree_Version_String := new String'(Tmp);
+       end;
+--- gnat_src/scng.adb	7 Jan 2007 12:49:09 -0000	1.59
++++ gnat_src/scng.adb	10 Feb 2007 11:56:46 -0000
+@@ -38,8 +38,9 @@
+ with Urealp;   use Urealp;
+ with Widechar; use Widechar;
+ 
++with GNAT.UTF_32; use GNAT.UTF_32;
++
+ with System.CRC32;
+-with System.UTF_32;  use System.UTF_32;
+ with System.WCh_Con; use System.WCh_Con;
+ 
+ package body Scng is
+--- gnat_src/fmap.adb	8 Jan 2007 16:59:05 -0000	1.25
++++ gnat_src/fmap.adb	10 Feb 2007 11:56:46 -0000
+@@ -30,10 +30,9 @@
+ with Output; use Output;
+ with Table;
+ 
+-with System.OS_Lib; use System.OS_Lib;
+-
+ with Unchecked_Conversion;
+ 
++with GNAT.OS_Lib; use GNAT.OS_Lib;
+ with GNAT.HTable;
+ 
+ package body Fmap is
+--- gnat_src/sinput-c.adb	8 Jan 2007 17:00:31 -0000	1.14
++++ gnat_src/sinput-c.adb	10 Feb 2007 11:56:46 -0000
+@@ -30,7 +30,7 @@
+ 
+ with Ada.Unchecked_Conversion;
+ 
+-with System.OS_Lib; use System.OS_Lib;
++with GNAT.OS_Lib; use GNAT.OS_Lib;
+ 
+ package body Sinput.C is
+ 
