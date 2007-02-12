@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006                         --
+--                     Copyright (C) 2006-2007                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -22,7 +22,7 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote; use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 
-with Glib;         use Glib;
+with GNAT.Strings; use GNAT.Strings;
 
 with Filesystem;   use Filesystem;
 with Traces;       use Traces;
@@ -40,7 +40,7 @@ package body Remote.Path.Translator is
    type Mirrors_List_Record;
    type Mirrors_List_Access is access all Mirrors_List_Record;
    type Mirrors_List_Record is record
-      Nickname : Glib.String_Ptr;
+      Nickname : GNAT.Strings.String_Access;
       List     : Mirror_List_Access;
       Next     : Mirrors_List_Access;
    end record;
