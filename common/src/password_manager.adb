@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006                         --
+--                      Copyright (C) 2006-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                 use Glib;
+with GNAT.Strings;         use GNAT.Strings;
 with User_Interface_Tools; use User_Interface_Tools;
 
 package body Password_Manager is
@@ -33,21 +33,21 @@ package body Password_Manager is
    type Tool_Access is access all Tool_Record;
 
    type Password_Record is record
-      Machine   : String_Ptr;
-      User_Name : String_Ptr;
-      Password  : String_Ptr;
+      Machine   : String_Access;
+      User_Name : String_Access;
+      Password  : String_Access;
       Next      : Password_Access;
    end record;
 
    type Passphrase_Record is record
-      Key_Id     : String_Ptr;
-      Passphrase : String_Ptr;
+      Key_Id     : String_Access;
+      Passphrase : String_Access;
       Next       : Passphrase_Access;
    end record;
 
    type Tool_Record is record
-      Tool_Name : String_Ptr;
-      Password  : String_Ptr;
+      Tool_Name : String_Access;
+      Password  : String_Access;
       Next      : Tool_Access;
    end record;
 
