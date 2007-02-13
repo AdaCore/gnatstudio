@@ -292,6 +292,15 @@ E516-027 Support for rectangular block selection (2006-07-27)
   Edit->Startup Scripts) to perform block selection and cut/copy/paste
   operations on it.
 
+D808-003 Ability to specify line number on command line (2007-02-13)
+
+  It is now possible to specify on the command line the line number of a
+  source file to load it directly at that line, via the +line switch, e.g:
+
+  gps +43 main.adb
+
+  will open main.adb at line 43.
+
 D524-003 Closing window when double-clicking on left title bar icon (2006-11-08)
 
   Windows can now be closed by double-clicking on the icon to the left of their
