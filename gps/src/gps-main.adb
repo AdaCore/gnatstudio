@@ -858,9 +858,12 @@ procedure GPS.Main is
         Config.Source_Date & ")" &
         (-", the GNAT Programming Studio.") & LF
         & (-"Usage:") & LF
-        & (-"   gps [options] [-Pproject-file] [source1] [source2] ...") & LF
+        & (-"   gps [options] [-Pproject-file] [[+line1] source1] " &
+            "[[+line2 source2] ...") & LF
         & ("source1, source2,...") & LF
         & (-"    Name of files to load. Start with '=' to load from project")
+        & LF
+        & (-"    and use +line to go to <line> directly, e.g. +40 source1")
         & LF
         & (-"Options:") & LF
         & (-"   --help              Show this help message and exit") & LF
@@ -1169,6 +1172,7 @@ procedure GPS.Main is
 
       procedure Load_Sources is
          New_Dir : constant String := Get_Current_Dir;
+         Line    : Natural := 1;
       begin
          --  Temporarily restore start-up dir, so that relative paths are
          --  properly computed
@@ -1194,20 +1198,38 @@ procedure GPS.Main is
                if S (S'First) = '=' then
                   Open_File_Editor
                     (GPS_Main.Kernel,
-                     Create (S (S'First + 1 .. S'Last),
-                             GPS_Main.Kernel,
-                             Use_Source_Path => True,
-                             Use_Object_Path => False));
+                     Create
+                       (S (S'First + 1 .. S'Last),
+                        GPS_Main.Kernel,
+                        Use_Source_Path => True,
+                        Use_Object_Path => False),
+                    Line);
+                  File_Opened := True;
+                  Line := 1;
+
+               elsif S (S'First) = '+' then
+                  begin
+                     Line := Natural'Value (S (S'First + 1 .. S'Last));
+                  exception
+                     when Constraint_Error =>
+                        Console.Insert
+                          (GPS_Main.Kernel,
+                           "Invalid switch: " & S,
+                           Mode => Error);
+                        Line := 1;
+                  end;
                else
                   Open_File_Editor
                     (GPS_Main.Kernel,
-                     Create (S,
-                             GPS_Main.Kernel,
-                             Use_Source_Path => False,
-                             Use_Object_Path => False));
+                     Create
+                       (S,
+                        GPS_Main.Kernel,
+                        Use_Source_Path => False,
+                        Use_Object_Path => False),
+                     Line);
+                  File_Opened := True;
+                  Line := 1;
                end if;
-
-               File_Opened := True;
             end;
          end loop;
 
