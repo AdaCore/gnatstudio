@@ -115,6 +115,12 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "a-clrefi.ads"</shell>
+   <descr>Ada.Command_Line.Response_File</descr>
+   <menu>/Help/GNAT Runtime/Ada/Command__Line/Response__File</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "a-coteio.ads"</shell>
    <descr>Ada.Complex_Text_IO</descr>
    <menu>/Help/GNAT Runtime/Ada 2005/Ada/Complex__Text__IO</menu>
@@ -304,6 +310,18 @@
    <shell>Editor.edit "a-exctra.ads"</shell>
    <descr>Ada.Exceptions.Traceback</descr>
    <menu>/Help/GNAT Runtime/Ada/Exceptions/Traceback</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-exetim.ads"</shell>
+   <descr>Ada.Execution_Time</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Execution__Time/&lt;Execution__Time&gt;</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-extiti.ads"</shell>
+   <descr>Ada.Execution_Time.Timers</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Execution__Time/Timers</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -1699,39 +1717,15 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
-   <shell>Editor.edit "i-os2lib.ads"</shell>
-   <descr>Interfaces.Os2lib</descr>
-   <menu>/Help/GNAT Runtime/Interfaces/Os2lib/&lt;Os2lib&gt;</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "i-os2err.ads"</shell>
-   <descr>Interfaces.Os2lib.Errors</descr>
-   <menu>/Help/GNAT Runtime/Interfaces/Os2lib/Errors</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "i-os2syn.ads"</shell>
-   <descr>Interfaces.Os2lib.Synchronization</descr>
-   <menu>/Help/GNAT Runtime/Interfaces/Os2lib/Synchronization</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "i-os2thr.ads"</shell>
-   <descr>Interfaces.Os2lib.Threads</descr>
-   <menu>/Help/GNAT Runtime/Interfaces/Os2lib/Threads</menu>
+   <shell>Editor.edit "i-java.ads"</shell>
+   <descr>Interfaces.Java</descr>
+   <menu>/Help/GNAT Runtime/Interfaces/Java</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
    <shell>Editor.edit "i-pacdec.ads"</shell>
    <descr>Interfaces.Packed_Decimal</descr>
    <menu>/Help/GNAT Runtime/Interfaces/Packed__Decimal</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "i-vthrea.ads"</shell>
-   <descr>Interfaces.Vthreads</descr>
-   <menu>/Help/GNAT Runtime/Interfaces/Vthreads</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -1780,6 +1774,12 @@
    <shell>Editor.edit "s-memory.ads"</shell>
    <descr>System.Memory</descr>
    <menu>/Help/GNAT Runtime/System/Memory</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "s-os_lib.ads"</shell>
+   <descr>System.Os_Lib</descr>
+   <menu>/Help/GNAT Runtime/System/Os__Lib</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
