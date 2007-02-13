@@ -1151,6 +1151,10 @@ package body Vsearch is
             end if;
 
          else
+            --  Let the widget compute its natural size (otherwise previous
+            --  calls to Set_Size might have called Set_Size_Request already,
+            --  and the widget won't be resized).
+            Set_Size_Request (Child, -1, -1);
             Size_Request (Child, Req);
             Set_Size
               (Get_MDI (Vsearch.Kernel),
