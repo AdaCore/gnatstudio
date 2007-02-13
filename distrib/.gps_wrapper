@@ -6,6 +6,12 @@
 prog=`basename $0`
 root=`dirname $0`
 
+## Run with "gps debug ..." to run under the debugger
+debug=${1:-false}
+if [ $debug = debug ]; then
+   shift;
+fi
+
 if [ "$root" = "." ]; then
    root=`pwd`
 fi
@@ -43,4 +49,8 @@ if [ "$CHARSET" = "" ]; then
 fi
 
 export LD_LIBRARY_PATH GTK_DATA_PREFIX GTK_EXE_PREFIX
-exec $root/bin/${prog}_exe "$@"
+if [ $debug = debug ]; then
+   gdb -args $root/bin/${prog}_exe "$@"
+else
+   exec $root/bin/${prog}_exe "$@"
+fi
