@@ -363,11 +363,6 @@ ada_py_arg_parsetuple_ptr5
 
 /******************************************************
  Support for pygtk
- The code below is duplicated from pygobject.h. However,
- since we do not want to depend on the latter when compiling
- GPS, we have simply copied it here. This means that we
- might not be compatible with pygtk for ever. This was
- tested with pygtk 2.4 and 2.6
 *******************************************************/
 
 #ifdef PYGTK
