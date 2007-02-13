@@ -2248,9 +2248,13 @@ package body Python_Module is
 
       if Item_Class = null then
          Trace (Me, "Nth_Arg: Couldn't find class of instance");
+         Raise_Exception
+           (Invalid_Parameter'Identity,
+            "Parameter" & Integer'Image (N) & " should be an instance of "
+            & Get_Name (Class) & " but has no __class__");
       end if;
 
-      if not PyClass_IsSubclass (Item_Class, Base => C) then
+      if C = null or else not PyClass_IsSubclass (Item_Class, Base => C) then
          Py_DECREF (Item_Class);
          Raise_Exception
            (Invalid_Parameter'Identity,
