@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005 - 2006                     --
+--                     Copyright (C) 2005 - 2007                     --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -769,6 +769,8 @@ package body Completion_Module is
             Constructs : aliased Construct_List;
 
          begin
+            Kernel.Push_State (Busy);
+
             Data.Manager := new Ada_Completion_Manager;
             Data.The_Text := Get_String (Buffer);
             Constructs := Get_Constructs (Buffer, Exact);
@@ -826,6 +828,7 @@ package body Completion_Module is
             if At_End (First (Data.Result)) then
                Trace (Me_Adv, "No completions found");
                On_Completion_Destroy (View, Data);
+               Kernel.Pop_State;
                return Commands.Success;
             end if;
 
@@ -868,6 +871,8 @@ package body Completion_Module is
                Get_Language_Context
                  (Get_Language (Buffer)).Case_Sensitive,
                Complete);
+
+            Kernel.Pop_State;
          end;
       end if;
 
