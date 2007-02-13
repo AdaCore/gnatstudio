@@ -1781,9 +1781,11 @@ package body Entities is
             Trie_Tree_Index       => 0);
          Append (UEI.List.all, E);
 
-         if File.Handler /= null then
-            Insert (File.Handler, E);
-         end if;
+         --  ??? Trie trees are not used for completion, and potentially
+         --  dangerous
+--           if File.Handler /= null then
+--              Insert (File.Handler, E);
+--           end if;
 
          if Must_Add_To_File then
             Set (File.Entities, UEI);
