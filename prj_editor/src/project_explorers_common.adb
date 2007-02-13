@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
+--                      Copyright (C) 2001-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -33,6 +33,7 @@ with Entities;                  use Entities;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Intl;                  use GPS.Intl;
 with GUI_Utils;                 use GUI_Utils;
 with Language.Unknown;          use Language.Unknown;
 with Language.Icons;            use Language.Icons;
@@ -317,6 +318,7 @@ package body Project_Explorers_Common is
                      Language_Handler (Get_Language_Handler (Kernel));
 
       N, N2      : Gtk_Tree_Iter;
+      Iter       : Gtk_Tree_Iter;
 
       Lang       : Language_Access;
       Constructs : Construct_List;
@@ -326,6 +328,8 @@ package body Project_Explorers_Common is
         of Gtk_Tree_Iter;
       Categories : Gtk_Tree_Iter_Array := (others => Null_Iter);
       Handler    : LI_Handler;
+
+      Node_Appended : Boolean := False;
 
    begin
       --  Mark the file information as up-to-date
@@ -377,11 +381,24 @@ package body Project_Explorers_Common is
                   N := Append_Entity_Node
                     (Model, File_Name,
                      Constructs.Current.all, Categories (Category));
+
+                  Node_Appended := True;
                end if;
             end if;
 
             Constructs.Current := Constructs.Current.Next;
          end loop;
+
+         --  If no node was appended, add a "no entity" node.
+         if not Node_Appended then
+            Append (Model, Iter, Node);
+            Set (Model, Iter, Base_Name_Column,
+                 "<span foreground=""#555555"">"
+                 & (-"(no entity)")
+                 & "</span>");
+            Set (Model, Iter, Node_Type_Column,
+                 Gint (Node_Types'Pos (Category_Node)));
+         end if;
 
          Free (Constructs);
       else
