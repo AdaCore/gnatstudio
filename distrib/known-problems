@@ -36,6 +36,14 @@ Known Problems fixed in GPS 4.1.0
               right click on a selected line after the last character, the
               selection is removed.
 
+- G118-008 Search dialog incorrectly resized when tabs are displayed
+  Problem:    If you have chosen to always display the notebook tabs in the
+              GPS MDI, then the search dialog is incorrectly resized when you
+              change the "look in" field. This happens only when the search
+              dialog is not floating.
+  Workaround: Resize manually by dragging the bottom border of the search
+              dialog.
+
 - G102-005 Wrong indentation in some Ada constructs
   Problem:    When trying to indent an Ada construct such as the following:
                 (A =>
