@@ -72,8 +72,8 @@ package body GPS.Location_View is
    Non_Leaf_Color_Name : constant String := "blue";
    --  <preference> color to use for category and file names
 
-   Items_Count_Matcher : constant Pattern_Matcher := Compile
-     ("( \([0-9]+ item[s]?\))$");
+   Items_Count_Matcher : constant Pattern_Matcher :=
+                           Compile ("( \([0-9]+ item[s]?\))$");
 
    type Location_View_Module is new Module_ID_Record with null record;
    Location_View_Module_Id : Module_ID;
@@ -167,7 +167,7 @@ package body GPS.Location_View is
    end record;
 
    procedure Free (X : in out Location);
-   --  Free memory associated to X.
+   --  Free memory associated to X
 
    package Locations_List is new Generic_List (Location, Free);
    use Locations_List;
@@ -179,7 +179,7 @@ package body GPS.Location_View is
    procedure Dump_To_File
      (Kernel : access Kernel_Handle_Record'Class;
       File   : VFS.Virtual_File);
-   --  Dump the contents of the Locations View in File, in XML format.
+   --  Dump the contents of the Locations View in File, in XML format
 
    procedure Read_Secondary_Pattern_Preferences
      (View : access Location_View_Record'Class);
@@ -189,7 +189,7 @@ package body GPS.Location_View is
    function Extract_Locations
      (View    : access Location_View_Record'Class;
       Message : String) return Locations_List.List;
-   --  Return a list of file locations contained in Message.
+   --  Return a list of file locations contained in Message
 
    function To_Style is new Ada.Unchecked_Conversion
      (System.Address, Style_Access);
@@ -199,17 +199,17 @@ package body GPS.Location_View is
    function Get_Message
      (View : access Location_View_Record'Class;
       Iter : Gtk_Tree_Iter) return String;
-   --  Return the message stored at Iter.
+   --  Return the message stored at Iter
 
    function Get_Highlighting_Style
      (View : access Location_View_Record'Class;
       Iter : Gtk_Tree_Iter) return Style_Access;
-   --  Return the highlighting style stored at Iter.
+   --  Return the highlighting style stored at Iter
 
    function Get_File
      (View : access Location_View_Record'Class;
       Iter : Gtk_Tree_Iter) return VFS.Virtual_File;
-   --  Return the file stored at Iter.
+   --  Return the file stored at Iter
 
    procedure Remove_Category
      (View       : access Location_View_Record'Class;
@@ -220,7 +220,7 @@ package body GPS.Location_View is
    --  Identifier is the escaped string.
 
    procedure Set_Column_Types (View : access Location_View_Record'Class);
-   --  Sets the types of columns to be displayed in the tree_view.
+   --  Sets the types of columns to be displayed in the tree_view
 
    procedure Get_Category_File
      (View          : access Location_View_Record'Class;
@@ -296,33 +296,32 @@ package body GPS.Location_View is
 
    function Button_Press
      (View  : access Gtk_Widget_Record'Class;
-      Event : Gdk_Event)
-      return Boolean;
-   --  Callback for the "button_press" event.
+      Event : Gdk_Event) return Boolean;
+   --  Callback for the "button_press" event
 
-   procedure Goto_Location (Object   : access Gtk_Widget_Record'Class);
-   --  Goto the selected location in the Location_View.
+   procedure Goto_Location (Object : access Gtk_Widget_Record'Class);
+   --  Goto the selected location in the Location_View
 
    procedure Remove_Category_Or_File_Iter
      (View : Location_View;
       Iter : in out Gtk_Tree_Iter);
-   --  Clear all the marks and highlightings in file or category.
+   --  Clear all the marks and highlightings in file or category
 
-   procedure Remove_Category (Object   : access Gtk_Widget_Record'Class);
-   --  Remove the selected category in the Location_View.
+   procedure Remove_Category (Object : access Gtk_Widget_Record'Class);
+   --  Remove the selected category in the Location_View
 
-   procedure Expand_Category (Object   : access Gtk_Widget_Record'Class);
-   --  Expand all files in the selected Category.
+   procedure Expand_Category (Object : access Gtk_Widget_Record'Class);
+   --  Expand all files in the selected Category
 
-   procedure Collapse (Object   : access Gtk_Widget_Record'Class);
-   --  Collapse all categories in the Location View.
+   procedure Collapse (Object : access Gtk_Widget_Record'Class);
+   --  Collapse all categories in the Location View
 
    type Clear_Locations_View_Command is new Interactive_Command
       with null record;
    function Execute
      (Command : access Clear_Locations_View_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Remove everything in the Location_View.
+   --  Remove everything in the Location_View
 
    procedure On_Destroy (View : access Gtk_Widget_Record'Class);
    --  Callback for the "destroy" signal
@@ -334,7 +333,7 @@ package body GPS.Location_View is
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu);
-   --  Default context factory.
+   --  Default context factory
 
    function Create_Mark
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -362,12 +361,11 @@ package body GPS.Location_View is
    procedure On_Row_Expanded
      (Widget : access Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues);
-   --  Callback for the "row_expanded" signal.
+   --  Callback for the "row_expanded" signal
 
    function Get_Or_Create_Location_View_MDI
      (Kernel         : access Kernel_Handle_Record'Class;
-      Allow_Creation : Boolean := True)
-      return MDI_Child;
+      Allow_Creation : Boolean := True) return MDI_Child;
    --  Internal version of Get_Or_Create_Location_View
 
    function Location_Hook
@@ -379,28 +377,27 @@ package body GPS.Location_View is
      (MDI  : MDI_Window;
       Node : Node_Ptr;
       User : Kernel_Handle) return MDI_Child;
-   --  Restore the status of the explorer from a saved XML tree.
+   --  Restore the status of the explorer from a saved XML tree
 
    function Save_Desktop
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle)
-      return Node_Ptr;
+      User   : Kernel_Handle) return Node_Ptr;
    --  Save the status of the project explorer to an XML tree
 
    procedure Default_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
-   --  Interactive shell command handler.
+   --  Interactive shell command handler
 
    procedure Redraw_Totals
      (View : access Location_View_Record'Class);
-   --  Reset the columns corresponding to the "total" items.
+   --  Reset the columns corresponding to the "total" items
 
    function Idle_Redraw (View : Location_View) return Boolean;
-   --  Redraw the "total" items.
+   --  Redraw the "total" items
 
    procedure Toggle_Sort
      (Widget : access Gtk_Widget_Record'Class);
-   --  Callback for the activation of the sort contextual menu item.
+   --  Callback for the activation of the sort contextual menu item
 
    function Get_Category_Name
      (Model    : access Gtk_Tree_Store_Record'Class;
@@ -409,7 +406,7 @@ package body GPS.Location_View is
 
    procedure Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class);
-   --  Called when the preferences have changed.
+   --  Called when the preferences have changed
 
    -----------
    -- Hooks --
@@ -423,7 +420,7 @@ package body GPS.Location_View is
      (Hook   : File_Edited_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
-   --  Callback for the "file_edited" hook.
+   --  Callback for the "file_edited" hook
 
    -------------
    -- Execute --
@@ -582,14 +579,13 @@ package body GPS.Location_View is
       Length   : Natural := 0) return String
    is
       Args : GNAT.Strings.String_List :=
-        (1 => new String'(Full_Name (Filename).all),
-         2 => new String'(Image (Line)),
-         3 => new String'(Image (Integer (Column))),
-         4 => new String'(Image (Length)));
+               (1 => new String'(Full_Name (Filename).all),
+                2 => new String'(Image (Line)),
+                3 => new String'(Image (Integer (Column))),
+                4 => new String'(Image (Length)));
       Location : constant String :=
-                   Execute_GPS_Shell_Command (Kernel,
-                                              "Editor.create_mark", Args);
-
+                   Execute_GPS_Shell_Command
+                     (Kernel, "Editor.create_mark", Args);
    begin
       Free (Args);
       return Location;
@@ -609,11 +605,11 @@ package body GPS.Location_View is
       Highlight          : Boolean := True)
    is
       Args    : GNAT.Strings.String_List (1 .. 5) :=
-        (1 => new String'(Full_Name (Filename).all),
-         2 => new String'(Get_Name (Highlight_Category)),
-         3 => new String'(Image (Line)),
-         4 => new String'(Image (Integer (Column))),
-         5 => new String'(Image (Integer (Column) + Length)));
+                  (1 => new String'(Full_Name (Filename).all),
+                   2 => new String'(Get_Name (Highlight_Category)),
+                   3 => new String'(Image (Line)),
+                   4 => new String'(Image (Integer (Column))),
+                   5 => new String'(Image (Integer (Column) + Length)));
       Command : GNAT.Strings.String_Access;
 
    begin
@@ -654,10 +650,10 @@ package body GPS.Location_View is
    -------------------
 
    procedure Goto_Location (Object   : access Gtk_Widget_Record'Class) is
-      View  : constant Location_View := Location_View (Object);
-      Iter  : Gtk_Tree_Iter;
-      Model : Gtk_Tree_Model;
-      Path  : Gtk_Tree_Path;
+      View    : constant Location_View := Location_View (Object);
+      Iter    : Gtk_Tree_Iter;
+      Model   : Gtk_Tree_Model;
+      Path    : Gtk_Tree_Path;
       Success : Boolean := True;
    begin
       Get_Selected (Get_Selection (View.Tree), Model, Iter);
@@ -713,7 +709,7 @@ package body GPS.Location_View is
       Loc_Iter  : Gtk_Tree_Iter;
 
       Removing_Category : Boolean := False;
-      --  Indicates whether we are removing a whole category or just a file.
+      --  Indicates whether we are removing a whole category or just a file
 
       use String_List;
       Categories : String_List.List;
@@ -741,7 +737,7 @@ package body GPS.Location_View is
       Path_Free (File_Path);
 
       while File_Iter /= Null_Iter loop
-         --  Delete the marks corresponding to all locations in this file.
+         --  Delete the marks corresponding to all locations in this file
          Loc_Iter := Children (View.Tree.Model, File_Iter);
 
          while Loc_Iter /= Null_Iter loop
@@ -831,8 +827,8 @@ package body GPS.Location_View is
    -- Collapse --
    --------------
 
-   procedure Collapse (Object   : access Gtk_Widget_Record'Class) is
-      View  : constant Location_View := Location_View (Object);
+   procedure Collapse (Object : access Gtk_Widget_Record'Class) is
+      View : constant Location_View := Location_View (Object);
    begin
       Collapse_All (View.Tree);
    exception
@@ -845,7 +841,7 @@ package body GPS.Location_View is
    -- Remove_Category --
    ---------------------
 
-   procedure Remove_Category (Object   : access Gtk_Widget_Record'Class) is
+   procedure Remove_Category (Object : access Gtk_Widget_Record'Class) is
       View  : constant Location_View := Location_View (Object);
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_Tree_Model;
@@ -967,7 +963,7 @@ package body GPS.Location_View is
 
       Path := Get_Path (View.Tree.Model, Iter);
 
-      --  Expand to the next path corresponding to a location node.
+      --  Expand to the next path corresponding to a location node
 
       while Success and then Get_Depth (Path) < 3 loop
          Success := Expand_Row (View.Tree, Path, False);
@@ -1045,10 +1041,10 @@ package body GPS.Location_View is
      (Model    : access Gtk_Tree_Store_Record'Class;
       Category : Gtk_Tree_Iter) return String
    is
+      Message : constant String :=
+                  Get_String (Model, Category, Base_Name_Column);
       Matches : Match_Array (0 .. 1);
       Cut     : Integer;
-      Message : constant String := Get_String
-        (Model, Category, Base_Name_Column);
    begin
       Match (Items_Count_Matcher, Message, Matches);
 
@@ -1114,7 +1110,7 @@ package body GPS.Location_View is
          Next (Model, File_Iter);
       end loop;
 
-      --  When we reach this point, we need to create a new sub-category.
+      --  When we reach this point, we need to create a new sub-category
 
       if Create then
          Append (Model, File_Iter, Category_Iter);
@@ -1171,7 +1167,7 @@ package body GPS.Location_View is
         (View, Model, Category, Highlight_Category,
          File, Category_Iter, File_Iter, Category_Created);
 
-      --  Check whether the same item already exists.
+      --  Check whether the same item already exists
 
       if Remove_Duplicates then
          if Category_Iter /= Null_Iter
@@ -1224,7 +1220,7 @@ package body GPS.Location_View is
            (View.Kernel, File, Line, Column, Length, Highlight_Category);
       end if;
 
-      --  Look for secondary file information and loop on information found.
+      --  Look for secondary file information and loop on information found
       if Look_For_Secondary then
          Locs := Extract_Locations (View, Message);
          Has_Secondary_Location := not Is_Empty (Locs);
@@ -1266,7 +1262,7 @@ package body GPS.Location_View is
                  and then Get_Int (Model, Parent_Iter, Column_Column) =
                  Gint (Column)
                then
-                  --  We have an acceptable potential parent.
+                  --  We have an acceptable potential parent
                   Potential_Parent := Parent_Iter;
                end if;
             end if;
@@ -1341,7 +1337,7 @@ package body GPS.Location_View is
             Iter := Potential_Parent;
 
          else
-            --  Fill Iter with main information.
+            --  Fill Iter with main information
 
             if not Added then
                Append (Model, Iter, File_Iter);
@@ -1448,7 +1444,7 @@ package body GPS.Location_View is
          Base_Name_Column          => GType_String,
 
          Mark_Column               => GType_Int,
-         --  Number of the mark, -1 if no mark is set.
+         --  Number of the mark, -1 if no mark is set
 
          Line_Column               => GType_Int,
          Column_Column             => GType_Int,
@@ -1471,7 +1467,7 @@ package body GPS.Location_View is
       V    : constant Location_View := Location_View (View);
       Iter : Gtk_Tree_Iter;
    begin
-      --  Remove all categories.
+      --  Remove all categories
 
       Iter := Get_Iter_First (V.Tree.Model);
 
@@ -1673,7 +1669,7 @@ package body GPS.Location_View is
       View.File_Pixbuf     := Render_Icon
         (Get_Main_Window (Kernel), "gps-file", Gtk.Enums.Icon_Size_Menu);
 
-      --  Initialize the tree.
+      --  Initialize the tree
 
       Gtk_New (View.Tree, Columns_Types);
       Set_Column_Types (View);
@@ -1991,7 +1987,8 @@ package body GPS.Location_View is
       else
          Grab_Focus (Explorer.Tree);
 
-         --  If there is no selection, select the item under the cursor.
+         --  If there is no selection, select the item under the cursor
+
          Get_Path_At_Pos
            (Explorer.Tree,
             Gint (X),
@@ -2049,7 +2046,7 @@ package body GPS.Location_View is
       Escaped_Message : constant String := Glib.Convert.Escape_Text (Message);
 
       function Escaped_Compare (S1, S2 : String) return Boolean;
-      --  Compare S1 and S2, abstracting any pango markup or escape sequence.
+      --  Compare S1 and S2, abstracting any pango markup or escape sequence
 
       ---------------------
       -- Escaped_Compare --
@@ -2262,9 +2259,9 @@ package body GPS.Location_View is
      (Kernel    : access Kernel_Handle_Record'Class;
       Data      : access Hooks_Data'Class) return Boolean
    is
-      View : constant Location_View := Get_Or_Create_Location_View
-        (Kernel, False);
-      D : constant Location_Hooks_Args := Location_Hooks_Args (Data.all);
+      View : constant Location_View :=
+               Get_Or_Create_Location_View (Kernel, False);
+      D    : constant Location_Hooks_Args := Location_Hooks_Args (Data.all);
    begin
       Add_Action_Item
         (View, D.Identifier, D.Category, null, D.File,
@@ -2300,13 +2297,13 @@ package body GPS.Location_View is
    procedure Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      View  : Location_View;
-      Child : MDI_Child;
-      Node, Sub  : Location_List.List_Node;
-      Loc   : Location_Record;
+      View              : Location_View;
+      Child             : MDI_Child;
+      Node, Sub         : Location_List.List_Node;
+      Loc               : Location_Record;
       Iter, Parent_Iter : Gtk_Tree_Iter := Null_Iter;
-      Appended : Boolean;
-      Path : Gtk_Tree_Path;
+      Appended          : Boolean;
+      Path              : Gtk_Tree_Path;
    begin
       Child := Get_Or_Create_Location_View_MDI
         (Kernel, Allow_Creation => False);
@@ -2324,15 +2321,15 @@ package body GPS.Location_View is
       while Node /= Location_List.Null_Node loop
          Loc := Data (Node).all;
          Add_Location
-           (View     => View,
-            Model    => View.Tree.Model,
-            Category => Loc.Category.all,
-            File     => Loc.File,
-            Line     => Loc.Line,
-            Column   => Loc.Column,
-            Length   => Loc.Length,
-            Highlight => Loc.Highlight,
-            Message  => Loc.Message.all,
+           (View               => View,
+            Model              => View.Tree.Model,
+            Category           => Loc.Category.all,
+            File               => Loc.File,
+            Line               => Loc.Line,
+            Column             => Loc.Column,
+            Length             => Loc.Length,
+            Highlight          => Loc.Highlight,
+            Message            => Loc.Message.all,
             Highlight_Category => Get_Or_Create_Style
               (Kernel_Handle (Kernel), Loc.Highlight_Category.all, False),
             Quiet              => True,
@@ -2386,15 +2383,19 @@ package body GPS.Location_View is
       User : Kernel_Handle) return MDI_Child
    is
       pragma Unreferenced (MDI);
-      Child : MDI_Child;
-      View : Location_View;
+      Child                    : MDI_Child;
+      View                     : Location_View;
       Category, File, Location : Node_Ptr;
 
       procedure Read_Location
         (Iter     : Node_Ptr;
          L        : in out Location_List.List;
          Category : String);
-      --  Read a file location recursively;
+      --  Read a file location recursively
+
+      -------------------
+      -- Read_Location --
+      -------------------
 
       procedure Read_Location
         (Iter     : Node_Ptr;
@@ -2476,17 +2477,21 @@ package body GPS.Location_View is
       User   : Kernel_Handle) return Node_Ptr
    is
       pragma Unreferenced (User);
-      N : Node_Ptr;
-      View : Location_View;
+      N               : Node_Ptr;
+      View            : Location_View;
       Category, File  : Node_Ptr;
-      Category_Iter : Gtk_Tree_Iter;
-      File_Iter     : Gtk_Tree_Iter;
-      Location_Iter : Gtk_Tree_Iter;
+      Category_Iter   : Gtk_Tree_Iter;
+      File_Iter       : Gtk_Tree_Iter;
+      Location_Iter   : Gtk_Tree_Iter;
 
       procedure Add_Location_Iter
         (Iter     : Gtk_Tree_Iter;
          Parent   : Node_Ptr);
-      --  Add the location and children recursively.
+      --  Add the location and children recursively
+
+      -----------------------
+      -- Add_Location_Iter --
+      -----------------------
 
       procedure Add_Location_Iter
         (Iter     : Gtk_Tree_Iter;
@@ -2611,7 +2616,7 @@ package body GPS.Location_View is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Module_Name : constant String := "Location View";
-      Command : Interactive_Command_Access;
+      Command     : Interactive_Command_Access;
    begin
       Location_View_Module_Id := new Location_View_Module;
       Register_Module
@@ -2628,10 +2633,10 @@ package body GPS.Location_View is
       Command := new Clear_Locations_View_Command;
       Register_Contextual_Menu
         (Kernel,
-         Name        => "Clear Locations View",
-         Label       => -"Clear Locations View",
-         Filter      => Create (Module => Module_Name),
-         Action      => Command);
+         Name   => "Clear Locations View",
+         Label  => -"Clear Locations View",
+         Filter => Create (Module => Module_Name),
+         Action => Command);
    end Register_Module;
 
    -----------------------
@@ -2639,8 +2644,7 @@ package body GPS.Location_View is
    -----------------------
 
    procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class) is
-      Locations_Class : constant Class_Type := New_Class
-        (Kernel, "Locations");
+      Locations_Class : constant Class_Type := New_Class (Kernel, "Locations");
    begin
       Register_Command
         (Kernel, "parse",
@@ -2772,9 +2776,9 @@ package body GPS.Location_View is
      (Kernel : access Kernel_Handle_Record'Class;
       File   : VFS.Virtual_File)
    is
-      View   : constant Location_View :=
-        Get_Or_Create_Location_View (Kernel);
-      N      : Node_Ptr;
+      View : constant Location_View :=
+                 Get_Or_Create_Location_View (Kernel);
+      N    : Node_Ptr;
    begin
       N := Save_Desktop (View, Kernel_Handle (Kernel));
       Print (N, Full_Name (File).all);
@@ -3026,8 +3030,8 @@ package body GPS.Location_View is
      (View : access Location_View_Record'Class;
       Iter : Gtk_Tree_Iter) return String
    is
-      M : constant String := Get_String
-        (View.Tree.Model, Iter, Base_Name_Column);
+      M : constant String :=
+            Get_String (View.Tree.Model, Iter, Base_Name_Column);
    begin
       if M'Length > Messages_Padding then
          return M (M'First + Messages_Padding + 7 .. M'Last);
@@ -3064,8 +3068,7 @@ package body GPS.Location_View is
       Result : Style_Access;
       Value  : GValue;
    begin
-      Get_Value
-        (View.Tree.Model, Iter, Highlight_Category_Column, Value);
+      Get_Value (View.Tree.Model, Iter, Highlight_Category_Column, Value);
       Result := To_Style (Get_Address (Value));
       Unset (Value);
 
@@ -3090,8 +3093,7 @@ package body GPS.Location_View is
      (View    : access Location_View_Record'Class;
       Message : String) return Locations_List.List
    is
-      Result : Locations_List.List;
-
+      Result  : Locations_List.List;
       Matched : Match_Array (0 .. 9);
       Loc     : Location;
       Start   : Natural := Message'First;
