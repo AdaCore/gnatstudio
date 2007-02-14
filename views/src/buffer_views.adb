@@ -239,7 +239,13 @@ package body Buffer_Views is
       Iter     : Gtk_Tree_Iter;
       Child    : MDI_Child;
    begin
-      if Path /= null then
+      if Get_State (Event) /= 0 then
+         --  If there is a key modifier present, (such as ctrl or shift for
+         --  example), grab the focus on the tree so that ctrl-clicking and
+         --  shift-clicking extend the multiple selection as expected.
+         Grab_Focus (Explorer.Tree);
+
+      elsif Path /= null then
          Iter := Get_Iter (Model, Path);
          Path_Free (Path);
 
@@ -254,23 +260,14 @@ package body Buffer_Views is
                return False;
 
             elsif Get_Button (Event) = 1 then
-               --  If there is any modified, don't do anything. The user is
-               --  trying to select multiple line. Note that Get_State behaves
-               --  differently under Linux and Windows, it returns Button1_Mask
-               --  or Button2_Mask on Windows.
-
-               if (Get_State (Event) and Shift_Mask) = 0
-                 and then (Get_State (Event) and Control_Mask) = 0
-               then
-                  if Get_Event_Type (Event) = Gdk_2button_Press then
-                     Raise_Child (Child, Give_Focus => True);
-                  elsif Get_Event_Type (Event) = Button_Press then
-                     Child_Drag_Begin (Child => Child, Event => Event);
-                     Raise_Child (Child, Give_Focus => True);
-                  end if;
-
-                  return True;
+               if Get_Event_Type (Event) = Gdk_2button_Press then
+                  Raise_Child (Child, Give_Focus => True);
+               elsif Get_Event_Type (Event) = Button_Press then
+                  Child_Drag_Begin (Child => Child, Event => Event);
+                  Raise_Child (Child, Give_Focus => True);
                end if;
+
+               return True;
             end if;
          end if;
       end if;
