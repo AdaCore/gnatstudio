@@ -940,6 +940,8 @@ package body Src_Editor_Module is
 
       Editors_Hash.Set
         (Id.Editors, Get_Filename (Box), (Child => MDI_Child (Child)));
+
+      Reset_Contextual_Menu (Get_Kernel (Box));
    end Update_Cache_On_Focus;
 
    --------------
