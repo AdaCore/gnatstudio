@@ -141,6 +141,12 @@ Known Problems fixed in GPS 4.1.0
               using it without seeing the line, or remove it by pressing
               "escape".
 
+- FB03-025 Shift left click does not work in the Windows view
+  Problem:    Selecting multiple entries in the Windows view by using
+              shift + left click does not work as expected.
+  Workaround: Use control + left click to select multiple entries in the
+              Windows view.
+
 - FB03-022 Location view always looks for secondary location
   Problem:    The location view is always looking for secondary locations, even
               when the text displayed is a random text, e.g. the result of a
