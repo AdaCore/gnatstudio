@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.1.0
 
+- G213-005 Menu items not properly updated
+  Problem:    After a contextual menu is requested from the editor view, the
+              menu items are not properly updated upon focus change.
+  Workaround: Right click on the focused window to make the contextual menu
+              appear, the menu items are then updated.
+
 - G202-018 Searching backward for "Files in Project"
   Problem:    If you are doing a search in the context "Files in Project" or
               "Files...", and you press ctrl-p to go to the previous
