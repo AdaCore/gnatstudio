@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2006                      --
+--                      Copyright (C) 2005-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -513,10 +513,10 @@ package body Bookmark_Views is
       Result : Boolean;
       pragma Unreferenced (Result);
    begin
-      if Get_State (Event) /= 0 then
-         --  If there is a key modifier present, (such as ctrl or shift for
-         --  example), grab the focus on the tree so that ctrl-clicking and
-         --  shift-clicking extend the multiple selection as expected.
+      if (Get_State (Event) and (Control_Mask or Shift_Mask)) /= 0 then
+         --  If there is a ctrl or shift key modifier present, grab the focus
+         --  on the tree so that ctrl-clicking and shift-clicking extend the
+         --  multiple selection as expected.
          Grab_Focus (View.Tree);
       elsif Get_Button (Event) = 1 then
          Iter := Find_Iter_For_Event (View.Tree, Model, Event);
