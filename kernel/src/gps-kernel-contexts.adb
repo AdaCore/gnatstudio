@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2006                       --
+--                     Copyright (C) 2003-2007                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -181,6 +181,7 @@ package body GPS.Kernel.Contexts is
       Tag               : String := "") is
    begin
       Context.Data.Data.File                     := File;
+      Context.Data.Data.File_Checked             := False;
       Context.Data.Data.Line                     := Line;
       Context.Data.Data.Column                   := Column;
       Context.Data.Data.Creator_Provided_Project := Project /= No_Project;
