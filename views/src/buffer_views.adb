@@ -239,10 +239,10 @@ package body Buffer_Views is
       Iter     : Gtk_Tree_Iter;
       Child    : MDI_Child;
    begin
-      if Get_State (Event) /= 0 then
-         --  If there is a key modifier present, (such as ctrl or shift for
-         --  example), grab the focus on the tree so that ctrl-clicking and
-         --  shift-clicking extend the multiple selection as expected.
+      if (Get_State (Event) and (Control_Mask or Shift_Mask)) /= 0 then
+         --  If there is a ctrl or shift key modifier present, grab the focus
+         --  on the tree so that ctrl-clicking and shift-clicking extend the
+         --  multiple selection as expected.
          Grab_Focus (Explorer.Tree);
 
       elsif Path /= null then
