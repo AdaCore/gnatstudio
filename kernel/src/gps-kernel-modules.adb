@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                     Copyright (C) 2001-2007                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1016,6 +1016,17 @@ package body GPS.Kernel.Modules is
                 & Exception_Information (E));
          Destroy (Menu);
    end Create_Contextual_Menu;
+
+   ---------------------------
+   -- Reset_Contextual_Menu --
+   ---------------------------
+
+   procedure Reset_Contextual_Menu
+     (Kernel : Kernel_Handle) is
+   begin
+      Kernel.Last_Context_For_Contextual := No_Context;
+      Kernel.Last_Context_From_Contextual := False;
+   end Reset_Contextual_Menu;
 
    ----------------------------
    -- Create_Contextual_Menu --
