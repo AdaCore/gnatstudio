@@ -538,8 +538,9 @@ package GPS.Kernel.Modules is
 
    procedure Reset_Contextual_Menu
      (Kernel : Kernel_Handle);
+   --  Reset cache associated with a contextual menu.
    --  The contextual menu is saved in order to be useable from other views
-   --  then the editor view. This cache should be reset sometimes...
+   --  than the editor view, and sometimes need to be reset explicitely.
 
    --------------
    -- Tooltips --
