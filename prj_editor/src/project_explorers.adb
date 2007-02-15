@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
+--                      Copyright (C) 2001-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,8 +18,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Directories;           use Ada.Directories;
+
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Regpat;               use GNAT.Regpat;
 
 with Glib;                      use Glib;
 with Glib.Convert;              use Glib.Convert;
@@ -62,6 +65,7 @@ with Namet;                     use Namet;
 with Types;                     use Types;
 
 with Commands.Interactive;      use Commands, Commands.Interactive;
+with Entities;
 with Find_Utils;                use Find_Utils;
 with File_Utils;                use File_Utils;
 with Histories;                 use Histories;
@@ -78,6 +82,7 @@ with GUI_Utils;                 use GUI_Utils;
 with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
 with Projects;                  use Projects;
+with Project_Explorers_Common;  use Project_Explorers_Common;
 with Remote;                    use Remote;
 with String_Hash;
 with String_List_Utils;
@@ -85,10 +90,6 @@ with String_Utils;              use String_Utils;
 with Tooltips;
 with Traces;                    use Traces;
 with VFS;                       use VFS;
-
-with Entities;
-
-with Project_Explorers_Common;  use Project_Explorers_Common;
 
 package body Project_Explorers is
 
@@ -98,13 +99,15 @@ package body Project_Explorers is
    Explorer_Module_ID : Module_ID := null;
    --  Id for the explorer module
 
-   Explorers_Tooltips : constant Debug_Handle :=
+   Explorers_Tooltips  : constant Debug_Handle :=
                           Create ("Explorers.Tooltips", Off);
 
    Show_Absolute_Paths : constant History_Key :=
                            "explorer-show-absolute-paths";
-   Show_Flat_View : constant History_Key :=
-                      "explorer-show-flat-view";
+   Show_Flat_View      : constant History_Key :=
+                           "explorer-show-flat-view";
+   Show_Hidden_Dirs    : constant History_Key :=
+                           "explorer-show-hidden-directories";
 
    Projects_Before_Directories : constant Boolean := False;
    --  <preference> True if the projects should be displayed, when sorted,
@@ -132,7 +135,7 @@ package body Project_Explorers is
    No_Match     : constant Search_Status := 0;
    Unknown      : constant Search_Status := -1;
 
-   procedure Nop (X : in out Search_Status);
+   procedure Nop (X : in out Search_Status) is null;
    --  Do nothing, required for instantiation of string_boolean_hash
 
    package String_Status_Hash is new String_Hash
@@ -194,7 +197,7 @@ package body Project_Explorers is
 
    procedure Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class);
-   --  Called when the preferences have changed.
+   --  Called when the preferences have changed
 
    --------------
    -- Tooltips --
@@ -215,7 +218,7 @@ package body Project_Explorers is
    -----------------------
 
    procedure Set_Column_Types (Tree : Gtk_Tree_View);
-   --  Sets the types of columns to be displayed in the tree_view.
+   --  Sets the types of columns to be displayed in the tree_view
 
    ------------------
    -- Adding nodes --
@@ -223,7 +226,7 @@ package body Project_Explorers is
 
    procedure Add_Or_Update_Flat_View_Root_Node
      (Explorer : access Project_Explorer_Record'Class);
-   --  Add the root node for the flat view.
+   --  Add the root node for the flat view
 
    function Add_Project_Node
      (Explorer     : access Project_Explorer_Record'Class;
@@ -240,14 +243,14 @@ package body Project_Explorers is
    procedure Compute_Children
      (Explorer : access Project_Explorer_Record'Class;
       Node     : Gtk_Tree_Iter);
-   --  Compute the children of Node, if they haven't been computed yet.
+   --  Compute the children of Node, if they haven't been computed yet
 
    procedure Add_Object_Directories
      (Explorer : access Project_Explorer_Record'Class;
       Node     : Gtk_Tree_Iter;
       Project  : Project_Type);
    --  Add the object and exec directory nodes for Node. They are added
-   --  unconditionally
+   --  unconditionally.
 
    procedure Set_Directory_Node_Attributes
      (Explorer  : access Project_Explorer_Record'Class;
@@ -336,9 +339,10 @@ package body Project_Explorers is
    --  Update the text for all directory nodes in the tree, mostly after the
    --  "show absolute path" setting has changed.
 
-   procedure Update_Flat_View
+   procedure Update_View
      (Explorer : access Gtk_Widget_Record'Class);
-   --  Update the tree when "show flat view" setting has changed
+   --  Update the tree when "show flat view" or "show hidden directories"
+   --  setting have changed.
 
    ----------------------------
    -- Retrieving information --
@@ -406,7 +410,7 @@ package body Project_Explorers is
      (MDI  : MDI_Window;
       Node : Node_Ptr;
       User : Kernel_Handle) return MDI_Child;
-   --  Restore the status of the explorer from a saved XML tree.
+   --  Restore the status of the explorer from a saved XML tree
 
    function Save_Desktop
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
@@ -915,8 +919,23 @@ package body Project_Explorers is
            (Get_History (Kernel).all, Show_Flat_View, Check);
          Append (Menu, Check);
          Widget_Callback.Object_Connect
-           (Check, "toggled", Update_Flat_View'Access,
+           (Check, "toggled", Update_View'Access,
             Slot_Object => T);
+
+         Gtk_New (Check, Label => -"Show hidden directories");
+         Create_New_Boolean_Key_If_Necessary
+           (Get_History (Kernel).all,
+            Key           => Show_Hidden_Dirs,
+            Default_Value => True);
+         Associate
+           (Get_History (Kernel).all, Show_Hidden_Dirs, Check);
+         Append (Menu, Check);
+         Widget_Callback.Object_Connect
+           (Check, "toggled", Update_View'Access,
+            Slot_Object => T);
+
+         Gtk_New (Item);
+         Append (Menu, Item);
       end if;
 
       if (Node_Type = Project_Node
@@ -961,14 +980,15 @@ package body Project_Explorers is
       Parent_Node : Gtk_Tree_Iter := Null_Iter;
       Name_Suffix : String := "") return Gtk_Tree_Iter
    is
+      Is_Leaf   : constant Boolean :=
+                    not Has_Imported_Projects (Project)
+                    and then Get_Attribute_Value
+                      (Project, Obj_Dir_Attribute) = ""
+                    and then Source_Dirs (Project)'Length = 0;
+      Node_Text : constant String := Project_Name (Project);
+      Node_Type : Node_Types := Project_Node;
       N         : Gtk_Tree_Iter;
       Ref       : Gtk_Tree_Iter := Null_Iter;
-      Is_Leaf   : constant Boolean :=
-        not Has_Imported_Projects (Project)
-        and then Get_Attribute_Value (Project, Obj_Dir_Attribute) = ""
-        and then Source_Dirs (Project)'Length = 0;
-      Node_Type : Node_Types := Project_Node;
-      Node_Text : constant String := Project_Name (Project);
 
    begin
       if Project = No_Project then
@@ -985,7 +1005,7 @@ package body Project_Explorers is
       if Parent_Node /= Null_Iter then
          Ref := Children (Explorer.Tree.Model, Parent_Node);
 
-         --  Insert the nodes sorted.
+         --  Insert the nodes sorted
 
          while Ref /= Null_Iter
            and then
@@ -1060,6 +1080,7 @@ package body Project_Explorers is
      (Explorer : access Gtk_Widget_Record'Class)
    is
       Exp : constant Project_Explorer := Project_Explorer (Explorer);
+
       procedure Process_Node (Iter : Gtk_Tree_Iter; Project : Project_Type);
       --  Recursively process node
 
@@ -1099,18 +1120,18 @@ package body Project_Explorers is
       end loop;
    end Update_Absolute_Paths;
 
-   ----------------------
-   -- Update_Flat_View --
-   ----------------------
+   -----------------
+   -- Update_View --
+   -----------------
 
-   procedure Update_Flat_View
+   procedure Update_View
      (Explorer : access Gtk_Widget_Record'Class)
    is
       Tree : constant Project_Explorer := Project_Explorer (Explorer);
    begin
       Clear (Tree.Tree.Model);
       Refresh (Explorer);
-   end Update_Flat_View;
+   end Update_View;
 
    -----------------------------------
    -- Set_Directory_Node_Attributes --
@@ -1638,40 +1659,74 @@ package body Project_Explorers is
       Files    : File_Array_Access;
       Node     : Gtk_Tree_Iter)
    is
+      use String_List_Utils.String_List;
+
       procedure Add_Projects;
       --  Add the subprojects that weren't present for the previous view
 
       procedure Add_Remaining_Source_Dirs;
       --  Add all remaining source directories
 
-      N, N2 : Gtk_Tree_Iter;
-      use String_List_Utils.String_List;
+      function Is_Hidden (Dir : String) return Boolean;
+      --  Return true if Dir contains an hidden directory (a directory starting
+      --  with a dot).
+
+      Hidden_File_Matcher : constant Pattern_Matcher :=
+                              Compile (Get_Pref (Hidden_Directories_Pattern));
+      Project  : constant Project_Type :=
+                   Get_Project_From_Node
+                     (Explorer.Tree.Model, Explorer.Kernel, Node, False);
+
+      N, N2    : Gtk_Tree_Iter;
       Index    : Natural;
       Prj      : Project_Type;
       Dirs     : String_List_Utils.String_List.List;
       Dir_Node : String_List_Utils.String_List.List_Node;
-      Project  : constant Project_Type := Get_Project_From_Node
-        (Explorer.Tree.Model, Explorer.Kernel, Node, False);
       Imported : Project_Type_Array := Get_Imported_Projects (Project);
 
-      procedure Do_Nothing (B : in out Boolean);
+      procedure Do_Nothing (B : in out Boolean) is null;
       package Boolean_String_Hash is new String_Hash
         (Boolean, Do_Nothing, False,
          Case_Sensitive => Is_Case_Sensitive (Server => Build_Server));
       use Boolean_String_Hash.String_Hash_Table;
-      Sources  : Boolean_String_Hash.String_Hash_Table.HTable;
+
       Sources_D    : constant Name_Id_Array := Source_Dirs (Project);
+      Sources      : Boolean_String_Hash.String_Hash_Table.HTable;
       Sources_Iter : Boolean_String_Hash.String_Hash_Table.Iterator;
 
-      ----------------
-      -- Do_Nothing --
-      ----------------
+      ---------------
+      -- Is_Hidden --
+      ---------------
 
-      procedure Do_Nothing (B : in out Boolean) is
-         pragma Unreferenced (B);
+      function Is_Hidden (Dir : String) return Boolean is
+
+         D : constant String := Dir (Dir'First .. Dir'Last - 1);
+
+         function Is_Hidden (CD, Dir : String) return Boolean;
+         --  Return true if path name is hidden
+
+         ---------------
+         -- Is_Hidden --
+         ---------------
+
+         function Is_Hidden (CD, Dir : String) return Boolean is
+         begin
+            if Dir = "" then
+               return False;
+
+            elsif CD = "" then
+               return Match (Hidden_File_Matcher, Dir);
+
+            else
+               return Match (Hidden_File_Matcher, Dir)
+                 or else Is_Hidden
+                   (Containing_Directory (CD), Simple_Name (CD));
+            end if;
+         end Is_Hidden;
+
       begin
-         null;
-      end Do_Nothing;
+         return Is_Hidden (Containing_Directory (D), Simple_Name (D));
+      end Is_Hidden;
 
       ------------------
       -- Add_Projects --
@@ -1700,22 +1755,27 @@ package body Project_Explorers is
       procedure Add_Remaining_Source_Dirs is
       begin
          while Dir_Node /= Null_Node loop
-            Insert_Before
-              (Explorer.Tree.Model,
-               Iter    => N2,
-               Parent  => Node,
-               Sibling => N);
-            Set_Directory_Node_Attributes
-              (Explorer  => Explorer,
-               Directory => Data (Dir_Node),
-               Node      => N2,
-               Project   => Project,
-               Node_Type => Directory_Node);
-            Add_Files_In_Directory
-              (Explorer         => Explorer,
-               Directory        => Data (Dir_Node),
-               Files_In_Project => Files,
-               Node             => N2);
+            if Get_History
+              (Get_History (Explorer.Kernel).all, Show_Hidden_Dirs)
+              or else not Is_Hidden (Data (Dir_Node))
+            then
+               Insert_Before
+                 (Explorer.Tree.Model,
+                  Iter    => N2,
+                  Parent  => Node,
+                  Sibling => N);
+               Set_Directory_Node_Attributes
+                 (Explorer  => Explorer,
+                  Directory => Data (Dir_Node),
+                  Node      => N2,
+                  Project   => Project,
+                  Node_Type => Directory_Node);
+               Add_Files_In_Directory
+                 (Explorer         => Explorer,
+                  Directory        => Data (Dir_Node),
+                  Files_In_Project => Files,
+                  Node             => N2);
+            end if;
             Dir_Node := Next (Dir_Node);
          end loop;
       end Add_Remaining_Source_Dirs;
@@ -1764,9 +1824,18 @@ package body Project_Explorers is
          case Get_Node_Type (Explorer.Tree.Model, N) is
             when Directory_Node =>
                declare
-                  Dir  : constant String :=
-                    Get_Directory_From_Node (Explorer.Tree.Model, N);
+                  Dir : constant String :=
+                          Get_Directory_From_Node (Explorer.Tree.Model, N);
                begin
+                  --  Do not display hidden directories if not requested
+
+                  if not Get_History
+                    (Get_History (Explorer.Kernel).all, Show_Hidden_Dirs)
+                    and then Is_Hidden (Data (Dir_Node))
+                  then
+                     return;
+                  end if;
+
                   --  If the directory is no longer part of the sources, remove
                   --  it.
                   --  ??? Should be case insensitive compare
@@ -1884,9 +1953,10 @@ package body Project_Explorers is
       --  current state (expanded or not), while doing the update.
 
       --  Remove from the tree all the files that are no longer in the
-      --  project
+      --  project.
 
       N := Children (Explorer.Tree.Model, Node);
+
       while N /= Null_Iter loop
          N2 := N;
          Next (Explorer.Tree.Model, N2);
@@ -2034,16 +2104,18 @@ package body Project_Explorers is
      (Explorer : access Project_Explorer_Record'Class)
    is
       Iter2, Iter3 : Gtk_Tree_Iter;
-      Imported     : Project_Type_Array := Get_Imported_Projects
-        (Get_Project (Explorer.Kernel),
-         Direct_Only     => False,
-         Include_Project => True);
+      Imported     : Project_Type_Array :=
+                       Get_Imported_Projects
+                         (Get_Project (Explorer.Kernel),
+                          Direct_Only     => False,
+                          Include_Project => True);
       Name         : Name_Id;
       Found        : Boolean;
       Id           : Gint;
       pragma Unreferenced (Id);
    begin
       Iter2 := Get_Iter_First (Explorer.Tree.Model);
+
       while Iter2 /= Null_Iter loop
          Name := Name_Id
            (Get_Int (Explorer.Tree.Model, Iter2, Project_Column));
@@ -2175,6 +2247,7 @@ package body Project_Explorers is
          Set_Focus_Child (C2);
          Raise_Child (C2);
          return Explorer;
+
       else
          Raise_Child (Child);
          Set_Focus_Child (Get_MDI (Kernel), Child);
@@ -2304,9 +2377,9 @@ package body Project_Explorers is
    is
       pragma Unreferenced (Search_Backward, Give_Focus, Continue);
       C        : constant Explorer_Search_Context_Access :=
-        Explorer_Search_Context_Access (Context);
+                   Explorer_Search_Context_Access (Context);
       Explorer : constant Project_Explorer :=
-        Get_Or_Create_Project_View (Kernel);
+                   Get_Or_Create_Project_View (Kernel);
 
       procedure Initialize_Parser;
       --  Compute all the matching files and mark them in the htable.
@@ -2879,23 +2952,24 @@ package body Project_Explorers is
       Extra   : Explorer_Search_Extra;
       Box     : Gtk_Box;
 
-      Project_Node_Filter : constant Action_Filter :=
-        new Project_Node_Filter_Record;
+      Project_Node_Filter   : constant Action_Filter :=
+                                new Project_Node_Filter_Record;
       Directory_Node_Filter : constant Action_Filter :=
-        new Directory_Node_Filter_Record;
-      File_Node_Filter : constant Action_Filter :=
-        new File_Node_Filter_Record;
-      Entity_Node_Filter : constant Action_Filter :=
-        new Entity_Node_Filter_Record;
-      Command : Interactive_Command_Access;
+                                new Directory_Node_Filter_Record;
+      File_Node_Filter      : constant Action_Filter :=
+                                new File_Node_Filter_Record;
+      Entity_Node_Filter    : constant Action_Filter :=
+                                new Entity_Node_Filter_Record;
+      Command               : Interactive_Command_Access;
 
    begin
       Explorer_Module_ID := new Explorer_Module_Record;
       Register_Module
-        (Module                  => Explorer_Module_ID,
-         Kernel                  => Kernel,
-         Module_Name             => Explorer_Module_Name,
-         Priority                => GPS.Kernel.Modules.Default_Priority);
+        (Module      => Explorer_Module_ID,
+         Kernel      => Kernel,
+         Module_Name => Explorer_Module_Name,
+         Priority    => GPS.Kernel.Modules.Default_Priority);
+
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
@@ -2989,15 +3063,5 @@ package body Project_Explorers is
                      Last_Of_Module => No_Search_History_Key));
       end;
    end Register_Module;
-
-   ---------
-   -- Nop --
-   ---------
-
-   procedure Nop (X : in out Search_Status) is
-      pragma Unreferenced (X);
-   begin
-      null;
-   end Nop;
 
 end Project_Explorers;
