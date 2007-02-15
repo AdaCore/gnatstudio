@@ -1635,7 +1635,7 @@ package body GPS.Kernel.Modules is
                then
                   File := Create
                     (Locale_To_UTF8 (GNAT.OS_Lib.Normalize_Pathname
-                       (Files (First + 8 .. Last - 1))));
+                       (URL_Decode (Files (First + 8 .. Last - 1)))));
 
                   if Is_Regular_File (File) then
                      if File_Extension (File) = Project_File_Extension then
