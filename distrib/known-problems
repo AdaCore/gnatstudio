@@ -340,7 +340,7 @@ Known Problems fixed in GPS 4.1.0
               context of the original project, but should really compile in
               the context of the extending project.
   Workaround: Use the menu /Build/Make/Custom... to enter your own custom
-              compilation command
+              compilation command.
 
 - F629-007 Status bar says line 0 when indentation disabled
   Problem:    Let's consider a source editor for which no automatic indentation
@@ -378,4 +378,11 @@ Known Problems fixed in GPS 4.1.0
   Problem:    When GPS has to launch external programs that emit lot of output,
               for instance the Version Control operation "Add annotation", GPS
               takes a long time to process the output.
-  Workaround: Launch the corresponding processes in an external terminal.
+  Workaround: Launch the corresponding processes in an external terminal
+
+- E610-017 Drag and drop of a file does not work with spaces
+  Problem:    Under Windows, when trying to drop a file (from e.g. the Windows
+              explorer) in the GPS project explorer, if the file pathname
+              contains spaces, then this file is not opened.
+  Workaround: Open the file using File->Open or the File view instead
+
