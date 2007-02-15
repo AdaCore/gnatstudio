@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               GPS                                 --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
+--                      Copyright (C) 2001-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is  free software;  you can redistribute it and/or modify  it --
@@ -65,6 +65,7 @@ package body Scenario_Views is
       Table         : Gtk.Table.Gtk_Table;
       Kernel        : GPS.Kernel.Kernel_Handle;
       Empty_Event   : Gtk.Event_Box.Gtk_Event_Box;
+      Empty_Label   : Gtk.Label.Gtk_Label;
       Combo_Is_Open : Boolean := False;
       --  Flag temporarily set to True when a user is modifying the value of
       --  one of the scenario variable through the combo boxes.
@@ -170,7 +171,6 @@ package body Scenario_Views is
       Kernel : access Kernel_Handle_Record'Class)
    is
       Hook : Refresh_Hook;
-      Label : Gtk_Label;
       Viewport : Gtk_Viewport;
    begin
       View.Kernel := Kernel_Handle (Kernel);
@@ -199,9 +199,9 @@ package body Scenario_Views is
       Set_Col_Spacing (View.Table, 1, 1);
 
       Gtk_New (View.Empty_Event);
-      Gtk_New (Label,
+      Gtk_New (View.Empty_Label,
                -"The project contains no scenario variables");
-      Add (View.Empty_Event, Label);
+      Add (View.Empty_Event, View.Empty_Label);
       Pack_Start (View.Vbox, View.Empty_Event, Expand => True);
 
       --  We do not need to connect to "project_changed", since it is always
@@ -381,8 +381,8 @@ package body Scenario_Views is
       if Get_Project (Kernel) = No_Project then
          Resize (V.Table, Rows => 1, Columns => 4);
          Hide_All (V.Table);
-         Show_All (V.Empty_Event);
-         Set_Child_Visible (V.Empty_Event, True);
+         Show_All (V.Empty_Label);
+         Set_Child_Visible (V.Empty_Label, True);
 
       else
          declare
@@ -390,13 +390,13 @@ package body Scenario_Views is
               Scenario_Variables (Kernel);
          begin
             if Scenar_Var'Length = 0 then
-               Show_All (V.Empty_Event);
-               Set_Child_Visible (V.Empty_Event, True);
+               Show_All (V.Empty_Label);
+               Set_Child_Visible (V.Empty_Label, True);
                Set_USize (V.Empty_Event, -1, -1);
                Hide_All (V.Table);
             else
-               Hide_All (V.Empty_Event);
-               Set_Child_Visible (V.Empty_Event, False);
+               Hide_All (V.Empty_Label);
+               Set_Child_Visible (V.Empty_Label, False);
                Resize (V.Table,
                        Rows => Guint (Scenar_Var'Length) + 1, Columns => 4);
 
