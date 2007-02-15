@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2006                       --
+--                     Copyright (C) 2002-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -853,7 +853,7 @@ package Codefix.Errors_Parser is
    --  Fix messages about bad indentation.
 
    type Main_With_Missing is new Error_Parser
-     (new String'("Missing_With"), 3)
+     (new String'("Missing_With"), 6)
    with null record;
 
    overriding
