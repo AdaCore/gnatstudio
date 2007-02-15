@@ -331,7 +331,7 @@ package body Language.Tree.Database is
       File : Virtual_File;
       Lang : Tree_Language_Access) return Structured_File_Access is
    begin
-      if Lang /= Ada_Tree_Lang then
+      if Lang /= Ada_Tree_Lang or else not Is_Regular_File (File) then
          return null;
       end if;
 
