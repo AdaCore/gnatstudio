@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
+--                      Copyright (C) 2001-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -26,6 +26,10 @@ with Interfaces.C.Strings;
 with Glib;
 
 package String_Utils is
+
+   function Hex_Value (Hex : String) return Natural;
+   --  Return the value for the hexadecimal number Hex. Raises
+   --  Constraint_Error is Hex is not an hexadecimal number.
 
    procedure Skip_Blanks
      (Type_Str : String;
@@ -382,6 +386,16 @@ package String_Utils is
    function Unprotect (S : String) return String;
    --  Unprotect an argument: remove the leading and ending '"',
    --  and un-escape the "\" when necessary.
+
+   ----------------------
+   -- URL manipulation --
+   ----------------------
+
+   function URL_Decode (URL : String) return String;
+   --  Decode URL into a regular string. Many characters are forbiden into an
+   --  URL and needs to be encoded. A character is encoded by %XY where XY is
+   --  the character's ASCII hexadecimal code. For example a space is encoded
+   --  as %20.
 
 private
    pragma Inline (Is_Blank);

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2006                      --
+--                      Copyright (C) 2000-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1520,5 +1520,49 @@ package body String_Utils is
          return Result (Result'First .. Index - 1);
       end if;
    end Unprotect;
+
+   ---------------
+   -- Hex_Value --
+   ---------------
+
+   function Hex_Value (Hex : String) return Natural is
+   begin
+      return Integer'Value ("16#" & Hex & "#");
+   end Hex_Value;
+
+   ------------
+   -- Decode --
+   ------------
+
+   function URL_Decode (URL : String) return String is
+      Res : String (1 .. URL'Length);
+      K   : Natural := 0;
+      J   : Positive := URL'First;
+
+   begin
+      if URL = "" then
+         return "";
+      end if;
+
+      loop
+         K := K + 1;
+
+         if URL (J) = '%'
+           and then J + 2 <= URL'Last
+           and then Is_Hexadecimal_Digit (URL (J + 1))
+           and then Is_Hexadecimal_Digit (URL (J + 2))
+         then
+            Res (K) := Character'Val (Hex_Value (URL (J + 1 .. J + 2)));
+            J := J + 2;
+         else
+            Res (K) := URL (J);
+         end if;
+
+         J := J + 1;
+         exit when J > URL'Last;
+      end loop;
+
+      return Res (1 .. K);
+   end URL_Decode;
 
 end String_Utils;
