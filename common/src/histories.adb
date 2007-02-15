@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2006                      --
+--                      Copyright (C) 2002-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -139,8 +139,8 @@ package body Histories is
    -----------------------------------------
 
    procedure Create_New_Boolean_Key_If_Necessary
-     (Hist     : in out History_Record;
-      Key      : History_Key;
+     (Hist          : in out History_Record;
+      Key           : History_Key;
       Default_Value : Boolean)
    is
       Value : History_Key_Access := Get (Hist.Table.all, String (Key));
@@ -307,8 +307,8 @@ package body Histories is
 
    procedure Save (Hist : in out History_Record; File_Name : String) is
       File, Key, N : Node_Ptr;
-      Iter : Iterator;
-      Value : History_Key_Access;
+      Iter         : Iterator;
+      Value        : History_Key_Access;
    begin
       File := new Node;
       File.Tag := new String'("History");
@@ -363,18 +363,8 @@ package body Histories is
    -- Free --
    ----------
 
-   procedure Free (Notifier : in out Changed_Notifier_Record) is
-      pragma Unreferenced (Notifier);
-   begin
-      null;
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
    procedure Free (Hist : in out History_Record) is
-      Iter : Iterator;
+      Iter  : Iterator;
       Value : History_Key_Access;
    begin
       Get_First (Hist.Table.all, Iter);
@@ -425,9 +415,9 @@ package body Histories is
       Clear_Combo : Boolean := True;
       Prepend     : Boolean := False)
    is
-      Item  : Gtk_List_Item;
       List  : constant Gtk_List := Get_List (Combo);
       Value : constant String_List_Access := Get_History (Hist, Key);
+      Item  : Gtk_List_Item;
    begin
       if Clear_Combo then
          Clear_Items (List, 0, -1);
@@ -470,8 +460,8 @@ package body Histories is
    is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (String_List, String_List_Access);
-      Value : constant History_Key_Access := Create_New_Key_If_Necessary
-        (Hist, Key, Strings);
+      Value : constant History_Key_Access :=
+                Create_New_Key_If_Necessary (Hist, Key, Strings);
       Tmp   : String_Access;
       Tmp2  : String_List_Access;
    begin
@@ -525,16 +515,6 @@ package body Histories is
          Value.List := new String_List'(1 => new String'(New_Entry));
       end if;
    end Add_To_History;
-
-   -------------
-   -- No_Free --
-   -------------
-
-   procedure No_Free (A : in out History_Key_Access) is
-      pragma Unreferenced (A);
-   begin
-      null;
-   end No_Free;
 
    -----------------
    -- Set_History --
@@ -650,16 +630,6 @@ package body Histories is
       On_Changed (Notifier, Hist, Key);
    end Associate;
 
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Callback : in out Menu_Callback_Record) is
-      pragma Unreferenced (Callback);
-   begin
-      null;
-   end Free;
-
    ---------------------
    -- On_Menu_Destroy --
    ---------------------
@@ -669,8 +639,8 @@ package body Histories is
       Notifier : Changed_Notifier)
    is
       pragma Unreferenced (Menu);
-      Notif : constant Menu_Changed_Notifier :=
-        Menu_Changed_Notifier (Notifier);
+      Notif         : constant Menu_Changed_Notifier :=
+                        Menu_Changed_Notifier (Notifier);
       Changed_Notif : Changed_Notifier := Changed_Notifier (Notif);
    begin
       Free (Notif.Callback.all);
@@ -689,7 +659,7 @@ package body Histories is
       Notifier  : Changed_Notifier)
    is
       Notif : constant Menu_Changed_Notifier :=
-        Menu_Changed_Notifier (Notifier);
+                Menu_Changed_Notifier (Notifier);
    begin
       Activate (Notif.Callback, Get_Path (Full_Path_Menu_Item (Menu_Item)));
    end On_Menu_Selected;

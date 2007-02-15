@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2006                      --
+--                      Copyright (C) 2002-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -122,7 +122,7 @@ package Histories is
    --  Called by the menu entries created by Associate below. User-data should
    --  be stored in Callback directly.
 
-   procedure Free (Callback : in out Menu_Callback_Record);
+   procedure Free (Callback : in out Menu_Callback_Record) is null;
    --  Called when the menu associated with callback is destroyed
 
    procedure Associate
@@ -182,7 +182,7 @@ private
      (Notifier : access Changed_Notifier_Record;
       Hist     : in out History_Record;
       Key      : History_Key) is abstract;
-   procedure Free (Notifier : in out Changed_Notifier_Record);
+   procedure Free (Notifier : in out Changed_Notifier_Record) is null;
 
    type History_Key_Record (Typ : History_Key_Type := Strings) is record
       Notifier : Changed_Notifier;
@@ -204,8 +204,7 @@ private
 
    type History_Key_Access is access History_Key_Record;
 
-   procedure No_Free (A : in out History_Key_Access);
-   --  Does nothing
+   procedure No_Free (A : in out History_Key_Access) is null;
 
    Null_History : constant History_Key_Access := null;
 
