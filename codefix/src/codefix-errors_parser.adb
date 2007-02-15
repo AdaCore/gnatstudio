@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2006                      --
+--                      Copyright (C) 2002-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -646,14 +646,11 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List, Options);
 
-      Str_Red : String_Access;
+      Str_Red : constant String :=
+        Get_Message (Message) (Matches (1).First .. Matches (1).Last);
    begin
-      Assign
-        (Str_Red,
-         Get_Message (Message) (Matches (1).First .. Matches (1).Last));
-
-      if Str_Red.all = "return" or else Str_Red.all = "RETURN"
-        or else Str_Red.all = "begin" or else Str_Red.all = "BEGIN"
+      if Str_Red = "return" or else Str_Red = "RETURN"
+        or else Str_Red = "begin" or else Str_Red = "BEGIN"
       then
          raise Uncorrectable_Message;
       end if;
@@ -661,7 +658,7 @@ package body Codefix.Errors_Parser is
       Solutions := Expected
         (Current_Text,
          Message,
-         Get_Message (Message) (Matches (1).First .. Matches (1).Last));
+         Str_Red);
    end Fix;
 
    -----------------
@@ -691,10 +688,12 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (Errors_List, Options);
       Wrong_Matches : Match_Array (0 .. 1);
+      Str_Red : constant String :=
+        Get_Message (Message) (Matches (1).First .. Matches (1).Last);
    begin
       Match
         (This.Wrong_Form.all,
-         Get_Message (Message) (Matches (1).First .. Matches (1).Last),
+         Str_Red,
          Wrong_Matches);
 
       if Wrong_Matches (0) /= No_Match then
@@ -704,7 +703,7 @@ package body Codefix.Errors_Parser is
       Solutions := Expected
         (Current_Text,
          Message,
-         Get_Message (Message) (Matches (1).First .. Matches (1).Last),
+         Str_Red,
          False);
    end Fix;
 
@@ -976,22 +975,16 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List, Options);
 
-      Str_Red : String_Access;
+      Str_Red : constant String := Get_Message (Message)
+        (Matches (1).First .. Matches (1).Last);
    begin
-      Str_Red := new String'(Get_Message (Message)
-                   (Matches (1).First .. Matches (1).Last));
-
-      if Str_Red.all = "colon" then
+      if Str_Red = "colon" then
          Solutions := Unexpected (Current_Text, Message, ":");
-      elsif Str_Red.all = """then""" then
+      elsif Str_Red = """then""" then
          Solutions := Unexpected (Current_Text, Message, "then");
       else
-         Free (Str_Red);
          raise Uncorrectable_Message;
       end if;
-
-      Free (Str_Red);
-
    end Fix;
 
    --------------------
@@ -1042,27 +1035,18 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List, Options);
 
-      Str_Red_1, Str_Red_2 : String_Access;
+      Str_Red_1 : constant String := Get_Message (Message)
+        (Matches (1).First .. Matches (1).Last);
+      Str_Red_2 : constant String := Get_Message (Message)
+        (Matches (2).First .. Matches (2).Last);
    begin
-      Str_Red_1 := new String'(Get_Message (Message)
-                                 (Matches (1).First .. Matches (1).Last));
-
-      Str_Red_2 := new String'(Get_Message (Message)
-                                 (Matches (2).First .. Matches (2).Last));
-
-      if Str_Red_1.all = "semicolon" and then Str_Red_2.all = "ignored" then
+      if Str_Red_1 = "semicolon" and then Str_Red_2 = "ignored" then
          Solutions := Unexpected (Current_Text, Message, ";");
-      elsif Str_Red_1.all = "right" and then Str_Red_2.all = "parenthesis" then
+      elsif Str_Red_1 = "right" and then Str_Red_2 = "parenthesis" then
          Solutions := Unexpected (Current_Text, Message, ")");
       else
-         Free (Str_Red_1);
-         Free (Str_Red_2);
          raise Uncorrectable_Message;
       end if;
-
-      Free (Str_Red_1);
-      Free (Str_Red_2);
-
    end Fix;
 
    --------------------
@@ -1294,11 +1278,17 @@ package body Codefix.Errors_Parser is
    begin
       This.Matcher :=
         (new Pattern_Matcher'
-           (Compile ("missing with for ""([^""]+)""")),
+           (Compile ("missing (with) for ""([^""]+)""()()")),
          new Pattern_Matcher'
-           (Compile ("possible missing with of ([\w]+)")),
+           (Compile ("possible missing (with) of ([\w]+)()()")),
          new Pattern_Matcher'
-           (Compile ("missing with_clause on ""([^""])""")));
+           (Compile ("missing (with)_clause on ""([^""])""()()")),
+         new Pattern_Matcher'
+           (Compile ("missing ""(with) ([^;]+)(;)""()")),
+         new Pattern_Matcher'
+           (Compile ("possible missing ""(with) ([^;]+)(;)""()")),
+         new Pattern_Matcher'
+           (Compile ("possible missing ""(with) ([^;]+)(;) (use) [^;]+""")));
    end Initialize;
 
    procedure Fix
@@ -1311,11 +1301,25 @@ package body Codefix.Errors_Parser is
       Matches      : Match_Array)
    is
       pragma Unreferenced (This, Errors_List, Options);
+
+      With_Str : constant String :=
+        Get_Message (Message) (Matches (1).First .. Matches (1).Last);
+      Pckg_Str : constant String :=
+        Get_Message (Message) (Matches (2).First .. Matches (2).Last);
+      Column_Str : constant String :=
+        Get_Message (Message) (Matches (3).First .. Matches (3).Last);
+      Use_Str : constant String :=
+        Get_Message (Message) (Matches (4).First .. Matches (4).Last);
+
+      --  Messages that are coming with a semicolo are new messages, other ones
+      --  should systematically add use & with clauses.
    begin
-      Solutions := With_Clause_Missing
+      Solutions := Clause_Missing
         (Current_Text,
          Message,
-         Get_Message (Message) (Matches (1).First .. Matches (1).Last));
+         Pckg_Str,
+         With_Str = "with",
+         Column_Str /= ";" or else Use_Str = "use");
    end Fix;
 
    -------------------------
