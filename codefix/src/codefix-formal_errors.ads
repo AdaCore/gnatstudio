@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002-2006                    --
+--                        Copyright (C) 2002-2007                    --
 --                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -143,10 +143,12 @@ package Codefix.Formal_Errors is
       Column_Expected : Column_Index := 0) return Solution_List;
    --  Try re-indent the line
 
-   function With_Clause_Missing
+   function Clause_Missing
      (Current_Text   : Text_Navigator_Abstr'Class;
       Cursor         : File_Cursor'Class;
-      Missing_Clause : String) return Solution_List;
+      Missing_Clause : String;
+      Add_With       : Boolean;
+      Add_Use        : Boolean) return Solution_List;
    --  Add the missing clause in the text
 
    function Bad_Casing
@@ -239,7 +241,8 @@ package Codefix.Formal_Errors is
    function Change_To_Tick_Valid
      (Current_Text : Text_Navigator_Abstr'Class; Cursor : File_Cursor'Class)
       return Solution_List;
-   --  Change the code given at the cursor by the corresponding 'Valid
+   --  Proposes to change the code given at the cursor by the corresponding
+   --  'Valid
 
    function Clone (This : Error_Message) return Error_Message;
    --  Duplicate all the information used in Error_Message, specially the
