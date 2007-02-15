@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2004-2006                       --
+--                     Copyright (C) 2004-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -74,11 +74,11 @@ package body Creation_Wizard.Dependencies is
      (Page : access Dependency_Project_Page;
       Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget;
    procedure Generate_Project
-     (Page    : access Dependency_Project_Page;
-      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+     (Page               : access Dependency_Project_Page;
+      Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
-      Project : in out Projects.Project_Type;
-      Changed : in out Boolean);
+      Project            : in out Projects.Project_Type;
+      Changed            : in out Boolean);
    --  See inherited documentation
 
    Cst_Project_Name : aliased String := "Project Name";
@@ -124,16 +124,16 @@ package body Creation_Wizard.Dependencies is
    --  Add all projects imported by Project to the tree
 
    procedure Add_Single_Project
-     (Project               : Project_Type;
-      Imported              : Project_Type;
-      Model                 : access Gtk_Tree_Store_Record'Class;
-      Ignore_If_Imported    : Boolean := False;
-      Column_Project_Name   : Gint;
-      Column_Is_Limited     : Gint;
-      Column_Directory      : Gint;
+     (Project                   : Project_Type;
+      Imported                  : Project_Type;
+      Model                     : access Gtk_Tree_Store_Record'Class;
+      Ignore_If_Imported        : Boolean := False;
+      Column_Project_Name       : Gint;
+      Column_Is_Limited         : Gint;
+      Column_Directory          : Gint;
       Column_Can_Change_Limited : Gint;
-      Column_Full_Path      : Gint;
-      Column_Selected       : Gint := -1);
+      Column_Full_Path          : Gint;
+      Column_Selected           : Gint := -1);
    --  Add a single project to the tree.
    --  The tree contains all projects relative to Project
    --  If Ignore_If_Imported is true, then projects already imported by
@@ -176,13 +176,15 @@ package body Creation_Wizard.Dependencies is
 
       Base : constant Virtual_File := Project_Directory (Importing_Project);
       Use_Relative_Path : constant Boolean :=
-        Get_Paths_Type (Importing_Project) = Projects.Relative
-        or else (Get_Paths_Type (Importing_Project) = From_Pref
-                 and then Get_Pref (Generate_Relative_Paths));
-      Changed : Import_Project_Error;
-      Result : Message_Dialog_Buttons;
-      Must_Recompute : Boolean := False;
-      Imported_Project : Project_Type;
+                            Get_Paths_Type
+                              (Importing_Project) = Projects.Relative
+                            or else
+                              (Get_Paths_Type (Importing_Project) = From_Pref
+                               and then Get_Pref (Generate_Relative_Paths));
+      Changed           : Import_Project_Error;
+      Result            : Message_Dialog_Buttons;
+      Must_Recompute    : Boolean := False;
+      Imported_Project  : Project_Type;
 
    begin
       loop
@@ -250,11 +252,13 @@ package body Creation_Wizard.Dependencies is
       Imported : Imported_Project_Iterator;
    begin
       Path_Iter := Start (Project_Path);
+
       while not At_End (Project_Path, Path_Iter) loop
          declare
-            Directory : constant String := Current (Project_Path, Path_Iter);
-            Found     : Boolean := False;
-            Iter2     : Path_Iterator := Start (Project_Path);
+            Directory    : constant String :=
+                             Current (Project_Path, Path_Iter);
+            Found        : Boolean := False;
+            Iter2        : Path_Iterator := Start (Project_Path);
             Imported_Prj : Project_Type;
          begin
             if Directory /= "." then
@@ -363,11 +367,11 @@ package body Creation_Wizard.Dependencies is
       Column_Full_Path      : Gint;
       Column_Selected       : Gint := -1)
    is
-      Iter          : Gtk_Tree_Iter;
-      Is_Imported   : Boolean;
-      Is_Limited    : Boolean;
+      Iter            : Gtk_Tree_Iter;
+      Is_Imported     : Boolean;
+      Is_Limited      : Boolean;
       Must_Be_Limited : Boolean := False;
-      Imported_Iter : Imported_Project_Iterator;
+      Imported_Iter   : Imported_Project_Iterator;
    begin
       if Imported /= Project then
          Project_Imports
@@ -389,9 +393,9 @@ package body Creation_Wizard.Dependencies is
             end loop;
 
             Append (Model, Iter, Null_Iter);
-            Set (Model, Iter, Column_Project_Name,   Project_Name (Imported));
-            Set (Model, Iter, Column_Is_Limited,     Is_Limited
-                 or else Must_Be_Limited);
+            Set (Model, Iter, Column_Project_Name, Project_Name (Imported));
+            Set (Model, Iter, Column_Is_Limited,
+                 Is_Limited or else Must_Be_Limited);
             Set (Model, Iter, Column_Full_Path,
                  Full_Name (Project_Path (Imported)).all);
 
@@ -420,13 +424,13 @@ package body Creation_Wizard.Dependencies is
      (Page : access Dependency_Project_Page;
       Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget
    is
-      Model : Gtk_Tree_Store;
-      Box, Hbox   : Gtk_Box;
-      Bbox        : Gtk_Vbutton_Box;
-      Label       : Gtk_Label;
-      Button      : Gtk_Button;
-      Scrolled    : Gtk_Scrolled_Window;
-      List        : Cell_Renderer_List.Glist;
+      Model     : Gtk_Tree_Store;
+      Box, Hbox : Gtk_Box;
+      Bbox      : Gtk_Vbutton_Box;
+      Label     : Gtk_Label;
+      Button    : Gtk_Button;
+      Scrolled  : Gtk_Scrolled_Window;
+      List      : Cell_Renderer_List.Glist;
    begin
       Page.Kernel := Get_Kernel (Wiz);
       Page.Project := Get_Project (Project_Wizard (Wiz));
