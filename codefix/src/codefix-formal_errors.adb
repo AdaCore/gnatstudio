@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2006                      --
+--                      Copyright (C) 2002-2007                      --
 --                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -448,36 +448,50 @@ package body Codefix.Formal_Errors is
       return Result;
    end Wrong_Column;
 
-   -------------------------
-   -- With_Clause_Missing --
-   -------------------------
+   ---------------------
+   -- Clauses_Missing --
+   ---------------------
 
-   function With_Clause_Missing
+   function Clause_Missing
      (Current_Text   : Text_Navigator_Abstr'Class;
       Cursor         : File_Cursor'Class;
-      Missing_Clause : String) return Solution_List
+      Missing_Clause : String;
+      Add_With       : Boolean;
+      Add_Use        : Boolean) return Solution_List
    is
-      Word_With   : Word_Cursor;
-      New_Command : Insert_Word_Cmd;
+      New_Command : Add_Line_Cmd;
       Result      : Solution_List;
+
+      With_Text : constant String := "with " & Missing_Clause & ";";
+      Use_Text  : constant String := "use " & Missing_Clause & ";";
+      Full_Text : constant String := With_Text & " " & Use_Text;
+
+      Text_Start, Text_Stop : Integer;
    begin
-      Set_File (Word_With, Get_File (Cursor));
-      Set_Location (Word_With, 0, 1);
-      Set_Word (Word_With,
-                "with " & Missing_Clause & "; use " & Missing_Clause & ";",
-                Text_Ascii);
+      if Add_With and Add_Use then
+         Text_Start := Full_Text'First;
+         Text_Stop := Full_Text'Last;
+      elsif Add_Use then
+         Text_Start := Full_Text'First + With_Text'Length + 1;
+         Text_Stop := Full_Text'Last;
+      else
+         Text_Start := Full_Text'First;
+         Text_Stop := Full_Text'Last - Use_Text'Length - 1;
+      end if;
 
       Initialize
-        (New_Command, Current_Text, Word_With, File_Cursor (Word_With));
+        (New_Command,
+         Current_Text,
+         Get_Next_With_Position (Current_Text, Get_File (Cursor)),
+         Full_Text (Text_Start .. Text_Stop));
+
       Set_Caption
         (New_Command,
-         "Add with and use clause for package """ & Missing_Clause &
-         """ at the begining of the file");
+         "Add missing clauses for package """ & Missing_Clause & ".");
       Append (Result, New_Command);
-      Free (Word_With);
 
       return Result;
-   end With_Clause_Missing;
+   end Clause_Missing;
 
    ----------------
    -- Bad_Casing --
@@ -1350,6 +1364,7 @@ package body Codefix.Formal_Errors is
       if not No_Fix then
          Initialize
            (Command, Current_Text, Begin_Cursor, End_Cursor, "'Valid");
+         Set_Caption (Command, "Change 'in' expression by 'Valid");
          Append (Result, Command);
       end if;
 
