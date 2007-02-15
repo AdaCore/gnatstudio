@@ -978,7 +978,8 @@ package body GPS.Kernel is
    -- Get_Busy --
    --------------
 
-   function Get_Busy (Handle : Kernel_Handle) return Boolean is
+   function Get_Busy
+     (Handle : access Kernel_Handle_Record'Class) return Boolean is
    begin
       return GPS_Window (Handle.Main_Window).State_Level > 0;
    end Get_Busy;
@@ -988,7 +989,7 @@ package body GPS.Kernel is
    ----------------
 
    procedure Push_State
-     (Handle : Kernel_Handle;
+     (Handle : access Kernel_Handle_Record'Class;
       State  : Action_Kernel_State)
    is
       Window : GPS_Window;
@@ -1017,7 +1018,7 @@ package body GPS.Kernel is
          Window.Animation_Timeout := Process_Timeout.Add
            (Guint32 (Get_Delay_Time (Window.Animation_Iter)),
             Process_Anim'Access,
-            (Handle, null, null, null, null, null, False));
+            (Kernel_Handle (Handle), null, null, null, null, null, False));
       end if;
 
       Window.State_Level := Window.State_Level + 1;
@@ -1027,7 +1028,7 @@ package body GPS.Kernel is
    -- Pop_State --
    ---------------
 
-   procedure Pop_State (Handle : Kernel_Handle) is
+   procedure Pop_State (Handle : access Kernel_Handle_Record'Class) is
       Window : GPS_Window;
    begin
       if Handle = null then
@@ -1059,7 +1060,7 @@ package body GPS.Kernel is
          then
             Timeout_Remove (Window.Animation_Timeout);
             Window.Animation_Timeout := 0;
-            Display_Default_Image (Handle);
+            Display_Default_Image (Kernel_Handle (Handle));
          end if;
       end if;
    end Pop_State;
