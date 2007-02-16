@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2006                      --
+--                      Copyright (C) 2003-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -913,6 +913,9 @@ package body Task_Manager.GUI is
       --  Initialize the tree.
 
       Gtk_New (View.Tree, Columns_Types);
+
+      Set_Name (View.Tree, "Task Manager Tree");  --  For testsuite
+
       Set_Column_Types (View);
       Set_Headers_Visible (View.Tree, True);
 
