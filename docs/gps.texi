@@ -605,11 +605,6 @@ through the @code{Show absolute paths} contextual menu.
 Special nodes are created for object and executables directories. No
 files are shown for these.
 
-@cindex Show hidden directories
-The contextual menu entry @code{Show hidden directories} can be used to filter
-the directories considered as hidden. This can be used to not display the
-version control directories like @file{CVS} or @file{.svn} for example.
-
 @item files
 @cindex file
 @cindex file view
@@ -9394,11 +9389,6 @@ The restrictions are the following:
 @cindex load xref info on project load
 Whether the Xref information should be automatically loaded into memory when
 a new project is loaded. @xref{Support for Cross-References}.
-
-@item Hidden directories pattern
-@cindex hidden directories pattern
-A regular expression used to macth hidden directories. Such directories
-are not displayed by default in the project explorer.
 
 @end table
 

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -244,7 +244,6 @@ package GPS.Kernel.Preferences is
    Generate_Relative_Paths         : Param_Spec_Boolean;
    Trusted_Mode                    : Param_Spec_Boolean;
    Automatic_Xrefs_Load            : Param_Spec_Boolean;
-   Hidden_Directories_Pattern      : Param_Spec_String;
 
    -- Wizards --
    Wizard_Title_Font : Param_Spec_Font;

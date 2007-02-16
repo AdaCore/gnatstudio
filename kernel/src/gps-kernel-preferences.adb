@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
+--                      Copyright (C) 2001-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1061,23 +1061,6 @@ package body GPS.Kernel.Preferences is
             Nick    => -"Load Xref info automatically"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Automatic_Xrefs_Load), -"Project");
-
-      Hidden_Directories_Pattern := Param_Spec_String
-        (Gnew_String
-           (Name  => "Project-Hidden-Directories-Regexp",
-            Nick  => -"Hidden directories pattern",
-            Blurb =>
-              -"Directories matching this pattern are removed from the project"
-              & " explorer. This preference is really OS dependent, for"
-              & " example on UNIX based systems, files and directories"
-              & " starting with a dot are considered as hidden. This regular"
-              & " expression is also used to remove VCS specific directories"
-              & " like CVS.",
-            Default =>
-              "^((\..+)|CVS)$"));
-      Register_Property
-        (Kernel.Preferences,
-         Param_Spec (Hidden_Directories_Pattern), -"Project");
 
       -- Wizards --
 
