@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.1.0
 
+- G216-026 Outline View tooltips appearing outside of Outline View.
+  Problem:    When the Outline View tooltips are enabled, it is possible that
+              outline view tooltips appear even when the mouse pointer is out
+              of the Outline View.
+  Workaround: Move the mouse over the Outline View to cancel the tooltips, or
+              disable the tooltips in the Outline View.
+
 - G213-005 Menu items not properly updated
   Problem:    After a contextual menu is requested from the editor view, the
               menu items are not properly updated upon focus change.
