@@ -1711,17 +1711,22 @@ package body Project_Explorers is
 
          function Is_Hidden (CD, Dir : String) return Boolean is
          begin
+            if Match (Hidden_File_Matcher, Dir) then
+               return True;
+            end if;
+
+            --  If Dir has no name or CD is first dir, exit here
             if Dir = "" then
                return False;
 
-            elsif CD = "" then
-               return Match (Hidden_File_Matcher, Dir);
-
-            else
-               return Match (Hidden_File_Matcher, Dir)
-                 or else Is_Hidden
-                   (Containing_Directory (CD), Simple_Name (CD));
+            --  Note that we test for Simple_Name (CD) = CD instead of
+            --  simply let the recursive call pursue because of G216-009
+            elsif Simple_Name (CD) = CD then
+               return Match (CD, Dir);
             end if;
+
+            return Is_Hidden
+              (Containing_Directory (CD), Simple_Name (CD));
          end Is_Hidden;
 
       begin
