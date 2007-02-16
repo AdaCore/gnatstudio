@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2006                       --
+--                     Copyright (C) 2000-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -336,7 +336,8 @@ package body Tooltips is
       Tooltip.Widget  := Gtk_Widget (On_Widget);
       Add_Events
         (On_Widget,
-         Pointer_Motion_Mask or Enter_Notify_Mask or Focus_Change_Mask);
+         Pointer_Motion_Mask or Enter_Notify_Mask or Focus_Change_Mask
+         or Leave_Notify_Mask);
       Tooltip_Handler.Connect
         (On_Widget, "button_press_event",
          Tooltip_Handler.To_Marshaller (Tooltip_Event_Cb'Access),
@@ -351,6 +352,10 @@ package body Tooltips is
          User_Data => Tooltips_Access (Tooltip));
       Tooltip_Handler.Connect
         (On_Widget, "motion_notify_event",
+         Tooltip_Handler.To_Marshaller (Tooltip_Event_Cb'Access),
+         User_Data => Tooltips_Access (Tooltip));
+      Tooltip_Handler.Connect
+        (On_Widget, "leave_notify_event",
          Tooltip_Handler.To_Marshaller (Tooltip_Event_Cb'Access),
          User_Data => Tooltips_Access (Tooltip));
       Tooltip_Handler.Connect
