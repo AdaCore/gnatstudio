@@ -143,7 +143,7 @@ class Makefile:
       os.chdir (dirname (project.file().name()))
 
       args = switches + " " + extra_make_switches + " " \
-         + " -f " + self.makefile + " " + target \
+         + " -f " + self.makefile + " " + target + " " \
          + project.scenario_variables_cmd_line ("")
       return Console_Process (make, args) 
 
