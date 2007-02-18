@@ -15855,7 +15855,7 @@ Connection closed by foreign host.
 @cindex example
 @smallexample
 Usage:
-   gps [options] [-P project-file] [source1] [source2] ...
+   gps [options] [-Pproject-file] [[+line] source1] [[+line] source2] ...
 Options:
    --help              Show this help message and exit
    --version           Show the GPS version and exit
@@ -15880,8 +15880,13 @@ Options:
 Source files can be absolute or relative pathnames.
 If you prepend a file name with '=', this file will be
 searched anywhere on the project's source path
+
+To open a file at a given line, use the '+line' prefix, e.g.
+gps +40 source.adb
+
 @code{tools_host} corresponds to a remote host's nickname as defined in
 @ref{Setup the remote servers}.
+
 @end smallexample
 
 @c --------------------------------------------------------------------
