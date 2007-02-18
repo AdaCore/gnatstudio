@@ -4,7 +4,7 @@
 @settitle GNAT Programming Studio Tutorial
 @syncodeindex fn cp
 
-@set GPSVersion 4.1.0
+@set GPSVersion 4.2.0
 
 @titlepage
 
