@@ -19,7 +19,7 @@ Example of use:
 ############################################################################
 # Customization variables
 # These variables can be changed in the initialization commands associated
-# with this script (see /Edit/Startup Scripts)
+# with this script (see /Tools/Scripts)
 
 action_name = "Block Completion"
 menu_name   = "/Edit/Complete Block"

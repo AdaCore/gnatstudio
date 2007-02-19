@@ -17,7 +17,7 @@ following are provided:
 ############################################################################
 # Customization variables
 # These variables can be changed in the initialization commands associated
-# with this script (see /Edit/Startup Scripts)
+# with this script (see /Tools/Scripts)
 
 pydoc_port = 9432
 ## Port that should be used for the pydoc daemon.

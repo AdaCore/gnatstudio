@@ -11,7 +11,7 @@ one of the two menus:
 ############################################################################
 # Customization variables
 # These variables can be changed in the initialization commands associated
-# with this script (see /Edit/Startup Scripts)
+# with this script (see /Tools/Scripts)
 
 menu_name1 = "/Edit/Sort Descending"
 menu_name2 = "/Edit/Sort Ascending"
