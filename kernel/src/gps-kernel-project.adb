@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                     Copyright (C) 2001-2007                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -29,6 +29,7 @@ with Ada.Unchecked_Deallocation;
 with Projects;                  use Projects;
 with Projects.Editor;           use Projects.Editor;
 with Projects.Registry;         use Projects.Registry;
+with Projects.Registry.Queries;
 with Basic_Types;
 with Entities;
 with Glib.Xml_Int;              use Glib.Xml_Int;
@@ -259,8 +260,8 @@ package body GPS.Kernel.Project is
          Error_Handler.Handle := Kernel_Handle (Handle);
          Error_Handler.Mode   := Info;
 
-         Projects.Registry.Compute_Predefined_Paths
-           (Handle.Registry.all,
+         Projects.Registry.Queries.Compute_Predefined_Paths
+           (Handle.Registry,
             Handle.GNAT_Version,
             Gnatls_Args,
             Error_Handler'Unchecked_Access);
