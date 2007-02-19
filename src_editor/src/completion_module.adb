@@ -1085,7 +1085,7 @@ package body Completion_Module is
          -("Complete current identifier based on the contents of the editor"),
          Category => "Editor",
          Filter   => Src_Action_Context);
-      Register_Menu (Kernel, Edit, -"Complete _Identifier",
+      Register_Menu (Kernel, Edit, -"Co_mplete Identifier",
                      Ref_Item   => -"Refill",
                      Accel_Key  => GDK_slash,
                      Accel_Mods => Control_Mask,
@@ -1100,8 +1100,8 @@ package body Completion_Module is
          -("Complete current identifier based on advanced entities database"),
          Category => "Editor",
          Filter   => Src_Action_Context);
-      Register_Menu (Kernel, Edit, -"Smart Completion",
-                     Ref_Item   => -"Complete _Identifier",
+      Register_Menu (Kernel, Edit, -"Smar_t Completion",
+                     Ref_Item   => -"Complete Identifier",
                      Accel_Key  => GDK_space,
                      Accel_Mods => Control_Mask,
                      Callback   => null,
