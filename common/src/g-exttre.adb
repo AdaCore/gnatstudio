@@ -74,6 +74,7 @@ package body GNAT.Expect.TTY.Remote is
    function Get_Machine_Descriptor
      (Nickname : String) return Remote_Machine_Descriptor_Access;
    --  Get machine descriptor from nickname
+   --  Raise Invalid_Nickname if the machine was not found.
 
    procedure Internal_Handle_Exceptions
      (Desc : in out Remote_Process_Descriptor);
@@ -1434,7 +1435,6 @@ package body GNAT.Expect.TTY.Remote is
    -------------------
 
    function Is_Configured (Nickname : String) return Boolean is
-      Desc : Remote_Machine_Descriptor_Access;
    begin
       --  Local machine is always configured
 
@@ -1442,9 +1442,15 @@ package body GNAT.Expect.TTY.Remote is
          return True;
       end if;
 
-      Desc := Get_Machine_Descriptor (Nickname);
+      declare
+         Desc : Remote_Machine_Descriptor_Access;
+      begin
+         Desc := Get_Machine_Descriptor (Nickname);
+      exception
+         when Invalid_Nickname => return False;
+      end;
 
-      return Desc /= null;
+      return True;
    end Is_Configured;
 
    ----------------------
