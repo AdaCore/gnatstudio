@@ -115,9 +115,9 @@ package body Machine_Descriptors is
       Desc := null;
    end Remove_Machine_Descriptor;
 
-   -------------------------------
-   -- Remove_Machine_Descriptor --
-   -------------------------------
+   ------------------------------------
+   -- Remove_All_Machine_Descriptors --
+   ------------------------------------
 
    procedure Remove_All_Machine_Descriptors is
       Current : Machine_Descriptor_Access;
