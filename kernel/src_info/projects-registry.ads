@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2006                      --
+--                      Copyright (C) 2002-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -86,14 +86,6 @@ package Projects.Registry is
    --  The following subprograms are used to access the predefined environment
    --  for all the languages. This includes for instance the run time library
    --  for Ada, or the C library (/usr/include/...) for C files.
-
-   procedure Compute_Predefined_Paths
-     (Registry     : in out Project_Registry;
-      GNAT_Version : out GNAT.Strings.String_Access;
-      Gnatls_Args  : GNAT.OS_Lib.Argument_List_Access;
-      E_Handler    : Error_Handler := Null_E_Handler);
-   --  Compute the predefined paths for the GNAT runtime, and return the
-   --  GNAT version that is used.
 
    function Get_Predefined_Source_Path
      (Registry : Project_Registry) return String;
