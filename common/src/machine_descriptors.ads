@@ -83,6 +83,7 @@ package Machine_Descriptors is
    function Get_Machine_Descriptor_Access
      (Nickname : String) return Machine_Descriptor_Access;
    --  Get machine descriptor from nickname
+   --  Raise Invalid_Nickname if the machine was not found.
 
    function Get_Machine_Descriptor (N : Natural) return Machine_Descriptor;
    --  Retrieve the descriptor of the Nth configured machine
