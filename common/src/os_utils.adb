@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
+--                      Copyright (C) 2001-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -23,10 +23,6 @@ with Interfaces.C;              use Interfaces.C;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 
 with GNAT.Case_Util;            use GNAT.Case_Util;
-with GNAT.Expect;               use GNAT.Expect;
-pragma Warnings (Off);
-with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
-pragma Warnings (On);
 with GNAT.Directory_Operations; use GNAT, GNAT.Directory_Operations;
 
 with Glib.Convert;              use Glib.Convert;
