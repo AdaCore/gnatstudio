@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --               GtkAda - Ada95 binding for Gtk+/Gnome               --
 --                                                                   --
---                   Copyright (C) 2001-2006 AdaCore                 --
+--                   Copyright (C) 2001-2007 AdaCore                 --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -30,9 +30,6 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Expect;               use GNAT.Expect;
-pragma Warnings (Off);
-with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
-pragma Warnings (On);
 with GNAT.Regexp;               use GNAT.Regexp;
 with GNAT.Strings;
 with Interfaces.C.Strings;
@@ -67,6 +64,7 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.Intl;               use Gtkada.Intl;
 with Gtkada.Types;              use Gtkada.Types;
 
+with Shell_Descriptors;         use Shell_Descriptors;
 with File_Utils;                use File_Utils;
 with GUI_Utils;                 use GUI_Utils;
 with Histories;                 use Histories;
@@ -74,6 +72,8 @@ with Remote;                    use Remote;
 with Traces;                    use Traces;
 with Unchecked_Deallocation;
 with VFS;                       use VFS;
+
+with Machine_Descriptors;       use Machine_Descriptors;
 
 package body Gtkada.File_Selector is
 
