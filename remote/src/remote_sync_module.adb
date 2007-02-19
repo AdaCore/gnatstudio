@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006                         --
+--                      Copyright (C) 2006-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -22,9 +22,6 @@ with Ada.Exceptions;         use Ada.Exceptions;
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
 with GNAT.Regpat;            use GNAT.Regpat;
 with GNAT.Expect;            use GNAT.Expect;
-pragma Warnings (Off);
-with GNAT.Expect.TTY.Remote; use GNAT.Expect.TTY.Remote;
-pragma Warnings (On);
 with GNAT.Strings;
 with Ada.Strings.Unbounded;
 
@@ -49,11 +46,14 @@ with GPS.Kernel.Timeout; use GPS.Kernel.Timeout;
 
 with Commands;           use Commands;
 with Filesystem;         use Filesystem;
+with Filesystem.Queries; use Filesystem.Queries;
 with Filesystem.Windows; use Filesystem.Windows;
 with Password_Manager;   use Password_Manager;
 with String_Utils;       use String_Utils;
 with Traces;             use Traces;
 with VFS;                use VFS;
+
+with Machine_Descriptors; use Machine_Descriptors;
 
 package body Remote_Sync_Module is
 
