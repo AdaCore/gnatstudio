@@ -27,7 +27,6 @@ with Ada.Exceptions;       use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with Ada.Strings.Fixed;    use Ada.Strings.Fixed;
 
-with Config;               use Config;
 with Filesystem.Unix;
 with Filesystem.Windows;
 with Password_Manager;     use Password_Manager;
@@ -35,39 +34,16 @@ with String_Utils;         use String_Utils;
 with Traces;               use Traces;
 with User_Interface_Tools; use User_Interface_Tools;
 
+with Remote_Descriptors;   use Remote_Descriptors;
+with Connection_Debuggers; use Connection_Debuggers;
+
 package body GNAT.Expect.TTY.Remote is
 
    Me : constant Debug_Handle := Create ("GNAT.Expect.TTY.Remote");
 
    Finalized : Boolean := False;
 
-   Login_Regexp : constant Pattern_Matcher :=
-                    Compile ("^[^\n]*([Ll]ogin|[Nn]ame)[^\n]*: *$",
-                             Multiple_Lines or Single_Line);
-   --  Default regexp for login prompt
-
    type Compiled_Regexp_Array_Access is access Compiled_Regexp_Array;
-
-   type Shell_State_Type is (OFF, BUSY, READY);
-   --  The state of a session.
-   --  OFF: the session has not been launched
-   --  BUSY: the session is busy processing a remote program
-   --  READY: the session has been launched, and is waiting on a shell prompt
-
-   type Session is record
-      Pd    : TTY_Process_Descriptor;
-      State : Shell_State_Type := OFF;
-   end record;
-   --  This record represents a machine's session. A session is an opened
-   --  connection that can be reused to launch successive remote programs.
-
-   type Session_Array is
-     array (Natural range <>) of Session;
-
-   type Remote_Descriptor;
-   type Remote_Descriptor_Access is access all Remote_Descriptor;
-
-   type Extra_Prompts_Access is access all Extra_Prompts;
 
    Test_Echo_Cmd : constant String := "echo foo";
    Echoing_Regexps : constant Compiled_Regexp_Array
@@ -75,51 +51,6 @@ package body GNAT.Expect.TTY.Remote is
            (Compile ("^echo foo", Multiple_Lines or Single_Line)),
          2 => new Pattern_Matcher'
            (Compile ("^foo", Multiple_Lines or Single_Line)));
-
-   type Remote_Descriptor is record
-      Name                   : String_Access            := null;
-      Start_Cmd              : String_Access            := null;
-      Start_Cmd_Common_Args  : String_List_Access       := null;
-      Start_Cmd_User_Args    : String_List_Access       := null;
-      User_Prompt_Ptrn       : Pattern_Matcher_Access   := null;
-      Password_Prompt_Ptrn   : Pattern_Matcher_Access   := null;
-      Passphrase_Prompt_Ptrn : Pattern_Matcher_Access   := null;
-      Extra_Prompt_Array     : Extra_Prompts_Access     := null;
-      Use_Cr_Lf              : Boolean                  := False;
-      Use_Pipes              : Boolean                  := False;
-      Max_Password_Prompt    : Natural                  := 3;
-      Next                   : Remote_Descriptor_Access := null;
-   end record;
-
-   type Shell_Descriptor is record
-      Name             : String_Access                := null;
-      Filesystem       : Filesystem_Access            := null;
-      Start_Cmd        : String_Access                := null;
-      Init_Cmds        : String_List_Access           := null;
-      Exit_Cmds        : String_List_Access           := null;
-      Cd_Cmd           : String_Access                := null;
-      Get_Status_Cmd   : String_Access                := null;
-      Get_Status_Ptrn  : Pattern_Matcher_Access       := null;
-      Generic_Prompt   : Pattern_Matcher_Access       := null;
-      Prompt           : Pattern_Matcher_Access       := null;
-      Next             : Shell_Descriptor_Access      := null;
-   end record;
-
-   type Machine_Descriptor_Item (Max_Nb_Connections : Natural) is record
-      Desc              : Machine_Descriptor;
-      Sessions          : Session_Array (1 .. Max_Nb_Connections);
-      Echoing           : Boolean := False;
-      Determine_Echoing : Boolean := True;
-      Next              : Machine_Descriptor_Access;
-   end record;
-
-   Remote_Descriptor_List  : Remote_Descriptor_Access := null;
-   Shell_Descriptor_List   : Shell_Descriptor_Access := null;
-   Machine_Descriptor_List : Machine_Descriptor_Access := null;
-   --  ??? Should get rid of these global variables
-
-   procedure Close (Desc : Machine_Descriptor_Access);
-   --  Close all machine sessions
 
    procedure Simple_Free is new Ada.Unchecked_Deallocation
      (String_List, String_List_Access);
@@ -141,12 +72,8 @@ package body GNAT.Expect.TTY.Remote is
    --  Used to filter the shell output (removes shell commands)
 
    function Get_Machine_Descriptor
-     (Nickname : String) return Machine_Descriptor_Access;
+     (Nickname : String) return Remote_Machine_Descriptor_Access;
    --  Get machine descriptor from nickname
-
-   function Get_Shell_Descriptor
-     (Nickname : String) return Shell_Descriptor_Access;
-   --  Get shell descriptor from nickname
 
    procedure Internal_Handle_Exceptions
      (Desc : in out Remote_Process_Descriptor);
@@ -672,14 +599,8 @@ package body GNAT.Expect.TTY.Remote is
 
       Descriptor.Session_Nb := Session_Nb;
 
-      Remote_Desc := Remote_Descriptor_List;
-
-      while Remote_Desc /= null loop
-         exit when Remote_Desc.Name.all =
-           Descriptor.Machine.Desc.Access_Name.all;
-
-         Remote_Desc := Remote_Desc.Next;
-      end loop;
+      Remote_Desc := Get_Descriptor_From_Name
+        (Descriptor.Machine.Desc.Access_Name.all);
 
       if Remote_Desc = null then
          raise Invalid_Nickname with
@@ -948,21 +869,10 @@ package body GNAT.Expect.TTY.Remote is
          Desc : Remote_Process_Descriptor
                   renames Remote_Process_Descriptor (Descriptor.all);
       begin
-
          Desc.Machine := Get_Machine_Descriptor (Target_Nickname);
 
-         declare
-            Shell_Desc  : Shell_Descriptor_Access  := Shell_Descriptor_List;
-         begin
-            Desc.Shell := null;
-            while Shell_Desc /= null loop
-               if Shell_Desc.Name.all = Desc.Machine.Desc.Shell_Name.all then
-                  Desc.Shell := Shell_Desc;
-                  exit;
-               end if;
-               Shell_Desc := Shell_Desc.Next;
-            end loop;
-         end;
+         Desc.Shell := Get_Descriptor_From_Name
+           (Desc.Machine.Desc.Shell_Name.all);
 
          if Desc.Shell = null then
             raise Invalid_Nickname with
@@ -1420,7 +1330,7 @@ package body GNAT.Expect.TTY.Remote is
    -- Close --
    -----------
 
-   procedure Close (Desc : Machine_Descriptor_Access) is
+   procedure Close (Desc : access Remote_Machine_Descriptor_Item) is
       Shell_Desc : Shell_Descriptor_Access;
    begin
       for J in Desc.Sessions'Range loop
@@ -1430,7 +1340,7 @@ package body GNAT.Expect.TTY.Remote is
                null;
 
             when READY =>
-               Shell_Desc := Get_Shell_Descriptor
+               Shell_Desc := Get_Descriptor_From_Name
                  (Desc.Desc.Nickname.all);
 
                if Shell_Desc.Exit_Cmds'Length /= 0 then
@@ -1467,164 +1377,14 @@ package body GNAT.Expect.TTY.Remote is
    ---------------
 
    procedure Close_All is
-      Machine : Machine_Descriptor_Access := Machine_Descriptor_List;
    begin
       --  Be careful to not trace anything in here. This is called after
       --  the kernel is destroyed, and then cannot trace anymore
 
       Finalized := True;
 
-      while Machine /= null loop
-         Close (Machine);
-         Machine := Machine.Next;
-      end loop;
+      Machine_Descriptors.Close_All;
    end Close_All;
-
-   ----------------------------------
-   -- Add_Remote_Access_Descriptor --
-   ----------------------------------
-
-   procedure Add_Remote_Access_Descriptor
-     (Name                      : String;
-      Start_Command             : String;
-      Start_Command_Common_Args : String_List;
-      Start_Command_User_Args   : String_List;
-      User_Prompt_Ptrn          : String_Access;
-      Password_Prompt_Ptrn      : String_Access;
-      Passphrase_Prompt_Ptrn    : String_Access;
-      Extra_Prompt_Array        : Extra_Prompts := Null_Extra_Prompts;
-      Use_Cr_Lf                 : Boolean := False;
-      Use_Pipes                 : Boolean := False)
-   is
-      --  ??? Add max_password_prompt in parameters
-      Remote          : constant Remote_Descriptor_Access :=
-                          new Remote_Descriptor;
-      Full_Exec       : String_Access;
-      Password_Ptrn   : Pattern_Matcher_Access;
-      Passphrase_Ptrn : Pattern_Matcher_Access;
-      Login_Ptrn      : Pattern_Matcher_Access;
-
-   begin
-      Full_Exec := GNAT.OS_Lib.Locate_Exec_On_Path (Start_Command);
-
-      if Full_Exec = null then
-         return;
-      end if;
-
-      if User_Prompt_Ptrn = null then
-         Login_Ptrn := new Pattern_Matcher'(Login_Regexp);
-      else
-         Login_Ptrn := new Pattern_Matcher'(Compile (
-           User_Prompt_Ptrn.all,
-           Single_Line + Multiple_Lines));
-      end if;
-
-      if Password_Prompt_Ptrn = null then
-         Password_Ptrn := new Pattern_Matcher'(Get_Default_Password_Regexp);
-      else
-         Password_Ptrn := new Pattern_Matcher'(Compile (
-           Password_Prompt_Ptrn.all,
-           Single_Line + Multiple_Lines));
-      end if;
-
-      if Passphrase_Prompt_Ptrn = null then
-         Passphrase_Ptrn :=
-           new Pattern_Matcher'(Get_Default_Passphrase_Regexp);
-      else
-         Passphrase_Ptrn := new Pattern_Matcher'(Compile (
-           Passphrase_Prompt_Ptrn.all,
-           Single_Line + Multiple_Lines));
-      end if;
-
-      Remote.all :=
-        (Name => new String'(Name),
-         Start_Cmd              => Full_Exec,
-         Start_Cmd_Common_Args  => new String_List'(Start_Command_Common_Args),
-         Start_Cmd_User_Args    => new String_List'(Start_Command_User_Args),
-         User_Prompt_Ptrn       => Login_Ptrn,
-         Password_Prompt_Ptrn   => Password_Ptrn,
-         Passphrase_Prompt_Ptrn => Passphrase_Ptrn,
-         Extra_Prompt_Array     => new Extra_Prompts'(Extra_Prompt_Array),
-         Use_Cr_Lf              => Use_Cr_Lf,
-         Use_Pipes              => Use_Pipes,
-         Max_Password_Prompt    => 3,
-         Next                   => Remote_Descriptor_List);
-      Remote_Descriptor_List := Remote;
-   end Add_Remote_Access_Descriptor;
-
-   --------------------------
-   -- Add_Shell_Descriptor --
-   --------------------------
-
-   procedure Add_Shell_Descriptor
-     (Name                : String;
-      Start_Command       : String             := "";
-      Generic_Prompt      : String             := "";
-      Configured_Prompt   : String             := "";
-      FS                  : Filesystem_Record'Class;
-      Init_Commands       : String_List        := Null_String_List;
-      Exit_Commands       : String_List        := Null_String_List;
-      Cd_Command          : String             := "";
-      Get_Status_Command  : String             := "";
-      Get_Status_Ptrn     : String             := "")
-   is
-      Shell : constant Shell_Descriptor_Access := new Shell_Descriptor;
-      Item  : Shell_Descriptor_Access;
-   begin
-      Shell.all :=
-        (Name             => new String'(Name),
-         Filesystem       => new Filesystem_Record'Class'(FS),
-         Start_Cmd        => new String'(Start_Command),
-         Init_Cmds        => new String_List'(Init_Commands),
-         Exit_Cmds        => new String_List'(Exit_Commands),
-         Cd_Cmd           => new String'(Cd_Command),
-         Get_Status_Cmd   => new String'(Get_Status_Command),
-         Get_Status_Ptrn  => new Pattern_Matcher'
-           (Compile (Get_Status_Ptrn, Single_Line + Multiple_Lines)),
-         Generic_Prompt   => new Pattern_Matcher'
-           (Compile (Generic_Prompt, Single_Line + Multiple_Lines)),
-         Prompt           => new Pattern_Matcher'
-           (Compile (Configured_Prompt, Single_Line + Multiple_Lines)),
-         Next             => null);
-
-      Item := Shell_Descriptor_List;
-
-      if Item = null or else Item.Name.all > Name then
-         Shell.Next := Shell_Descriptor_List;
-         Shell_Descriptor_List := Shell;
-      else
-         while Item /= null loop
-            if Item.Next = null or else Item.Next.Name.all > Name then
-               Shell.Next := Item.Next;
-               Item.Next := Shell;
-               exit;
-            end if;
-            Item := Item.Next;
-         end loop;
-      end if;
-   end Add_Shell_Descriptor;
-
-   -----------
-   -- Unref --
-   -----------
-
-   procedure Unref (Desc : in out Machine_Descriptor) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Machine_Descriptor_Record'Class, Machine_Descriptor);
-   begin
-      if Desc.Ref <= 1 then
-         Free (Desc.Nickname);
-         Free (Desc.Network_Name);
-         Free (Desc.Access_Name);
-         Free (Desc.Shell_Name);
-         Free (Desc.Extra_Init_Commands);
-         Free (Desc.User_Name);
-         --  ??? Free Desc.Dbg if any.
-         Unchecked_Free (Desc);
-      else
-         Desc.Ref := Desc.Ref - 1;
-      end if;
-   end Unref;
 
    ----------------------------
    -- Add_Machine_Descriptor --
@@ -1634,14 +1394,12 @@ package body GNAT.Expect.TTY.Remote is
      (Desc : Machine_Descriptor)
    is
       Descriptor : Machine_Descriptor_Access;
-      Current    : Machine_Descriptor_Access;
-      Prev       : Machine_Descriptor_Access;
       Pd         : constant TTY_Process_Descriptor :=
                      (Process_Descriptor with
                       Process   => System.Null_Address,
                       Use_Pipes => False);
    begin
-      Descriptor := new Machine_Descriptor_Item'
+      Descriptor := new Remote_Machine_Descriptor_Item'
         (Max_Nb_Connections => Desc.Max_Nb_Connections,
          Desc               => Desc,
          Echoing            => False,
@@ -1650,300 +1408,33 @@ package body GNAT.Expect.TTY.Remote is
          Sessions           => (others => (Pd, OFF)));
       Desc.Ref := Desc.Ref + 1;
 
-      --  Place the new machine in an alphabetically ordered list.
-      Current := Machine_Descriptor_List;
-      Prev := null;
-
-      while Current /= null loop
-
-         if Current.Desc.Nickname.all = Desc.Nickname.all then
-            --  Same nickname : replace it
-            Descriptor.Next := Current.Next;
-
-            if Prev /= null then
-               Prev.Next := Descriptor;
-            else
-               Machine_Descriptor_List := Descriptor;
-            end if;
-
-            Close (Current);
-            Unref (Current.Desc);
-
-            return;
-
-         elsif Current.Desc.Nickname.all > Desc.Nickname.all then
-            Descriptor.Next := Current;
-
-            if Prev /= null then
-               Prev.Next := Descriptor;
-            else
-               Machine_Descriptor_List := Descriptor;
-            end if;
-
-            return;
-         end if;
-
-         Prev := Current;
-         Current := Current.Next;
-      end loop;
-
-      --  Place the new Descriptor at the end of the list
-      if Prev /= null then
-         Prev.Next := Descriptor;
-      else
-         Machine_Descriptor_List := Descriptor;
-      end if;
+      Register_Machine_Descriptor (Desc, Descriptor);
    end Add_Machine_Descriptor;
-
-   -------------------------------
-   -- Remove_Machine_Descriptor --
-   -------------------------------
-
-   procedure Remove_Machine_Descriptor (Desc : in out Machine_Descriptor) is
-      Current : Machine_Descriptor_Access;
-      Prev    : Machine_Descriptor_Access;
-   begin
-      Current := Machine_Descriptor_List;
-      Prev := null;
-
-      while Current /= null loop
-         if Current.Desc = Desc then
-            if Prev /= null then
-               Prev.Next := Current.Next;
-            else
-               Machine_Descriptor_List := Current.Next;
-            end if;
-            Close (Current);
-            Unref (Current.Desc);
-            exit;
-         end if;
-
-         Prev := Current;
-         Current := Current.Next;
-      end loop;
-
-      Desc := null;
-   end Remove_Machine_Descriptor;
-
-   -------------------------------
-   -- Remove_Machine_Descriptor --
-   -------------------------------
-
-   procedure Remove_All_Machine_Descriptors is
-      Current : Machine_Descriptor_Access;
-      Next    : Machine_Descriptor_Access;
-   begin
-      Current := Machine_Descriptor_List;
-
-      while Current /= null loop
-         Next := Current.Next;
-         Close (Current);
-         Unref (Current.Desc);
-         Current := Next;
-      end loop;
-
-      Machine_Descriptor_List := null;
-   end Remove_All_Machine_Descriptors;
-
-   -----------------------------
-   -- Get_Nb_Shell_Descriptor --
-   -----------------------------
-
-   function Get_Nb_Shell_Descriptor return Natural is
-      N : Natural;
-      Desc : Shell_Descriptor_Access;
-   begin
-      N := 0;
-
-      Desc := Shell_Descriptor_List;
-
-      while Desc /= null loop
-         N := N + 1;
-         Desc := Desc.Next;
-      end loop;
-
-      return N;
-   end Get_Nb_Shell_Descriptor;
-
-   -------------------------------
-   -- Get_Shell_Descriptor_Name --
-   -------------------------------
-
-   function Get_Shell_Descriptor_Name (N : Natural) return String is
-      Desc : Shell_Descriptor_Access;
-   begin
-      Desc := Shell_Descriptor_List;
-
-      for J in 2 .. N loop
-         Desc := Desc.Next;
-      end loop;
-
-      return Desc.Name.all;
-   end Get_Shell_Descriptor_Name;
-
-   -------------------------------
-   -- Get_Filesystem_From_Shell --
-   -------------------------------
-
-   function Get_Filesystem_From_Shell
-     (Shell : String) return Filesystem_Record'Class
-   is
-      Desc : Shell_Descriptor_Access;
-   begin
-      Desc := Shell_Descriptor_List;
-
-      while Desc /= null loop
-         if Desc.Name.all = Shell then
-            return Desc.Filesystem.all;
-         end if;
-
-         Desc := Desc.Next;
-      end loop;
-
-      return Get_Local_Filesystem;
-   end Get_Filesystem_From_Shell;
-
-   -------------------------------------
-   -- Get_Nb_Remote_Access_Descriptor --
-   -------------------------------------
-
-   function Get_Nb_Remote_Access_Descriptor return Natural is
-      N : Natural;
-      Desc : Remote_Descriptor_Access;
-   begin
-      N := 0;
-      Desc := Remote_Descriptor_List;
-
-      while Desc /= null loop
-         N := N + 1;
-         Desc := Desc.Next;
-      end loop;
-
-      return N;
-   end Get_Nb_Remote_Access_Descriptor;
-
-   ----------------------------
-   -- Get_Remote_Access_Name --
-   ----------------------------
-
-   function Get_Remote_Access_Name (N : Natural) return String is
-      Desc : Remote_Descriptor_Access;
-   begin
-      Desc := Remote_Descriptor_List;
-
-      for J in 2 .. N loop
-         Desc := Desc.Next;
-      end loop;
-
-      return Desc.Name.all;
-   end Get_Remote_Access_Name;
-
-   -------------------------------
-   -- Get_Nb_Machine_Descriptor --
-   -------------------------------
-
-   function Get_Nb_Machine_Descriptor return Natural is
-      Nb : Natural := 0;
-      Desc : Machine_Descriptor_Access := Machine_Descriptor_List;
-   begin
-      while Desc /= null loop
-         Nb := Nb + 1;
-         Desc := Desc.Next;
-      end loop;
-
-      return Nb;
-   end Get_Nb_Machine_Descriptor;
-
-   ----------------------------
-   -- Get_Machine_Descriptor --
-   ----------------------------
-
-   function Get_Machine_Descriptor (N : Natural) return Machine_Descriptor is
-      Nb   : Natural := 1;
-      Desc : Machine_Descriptor_Access := Machine_Descriptor_List;
-   begin
-      while Desc /= null loop
-         if Nb = N then
-            return Desc.Desc;
-         end if;
-
-         Nb := Nb + 1;
-         Desc := Desc.Next;
-      end loop;
-
-      raise Invalid_Nickname;
-   end Get_Machine_Descriptor;
 
    ----------------------------
    -- Get_Machine_Descriptor --
    ----------------------------
 
    function Get_Machine_Descriptor
-     (Nickname : String) return Machine_Descriptor
+     (Nickname : String) return Remote_Machine_Descriptor_Access
    is
       Desc : Machine_Descriptor_Access;
    begin
-      Desc := Get_Machine_Descriptor (Nickname);
-      return Desc.Desc;
-   end Get_Machine_Descriptor;
+      Desc := Get_Machine_Descriptor_Access (Nickname);
 
-   ------------------
-   -- Get_Nickname --
-   ------------------
-
-   function Get_Nickname (N : Natural) return String is
-   begin
-      return Get_Machine_Descriptor (N).Nickname.all;
-   end Get_Nickname;
-
-   ----------------------------
-   -- Get_Machine_Descriptor --
-   ----------------------------
-
-   function Get_Machine_Descriptor
-     (Nickname : String) return Machine_Descriptor_Access
-   is
-      Desc : Machine_Descriptor_Access := Machine_Descriptor_List;
-   begin
-      while Desc /= null loop
-         if Desc.Desc.Nickname.all = Nickname then
-            return Desc;
-         end if;
-
-         Desc := Desc.Next;
-      end loop;
+      if Desc.all in Remote_Machine_Descriptor_Item'Class then
+         return Remote_Machine_Descriptor_Access (Desc);
+      end if;
 
       raise Invalid_Nickname;
    end Get_Machine_Descriptor;
-
-   --------------------------
-   -- Get_Shell_Descriptor --
-   --------------------------
-
-   function Get_Shell_Descriptor
-     (Nickname : String) return Shell_Descriptor_Access
-   is
-      Desc       : Shell_Descriptor_Access := Shell_Descriptor_List;
-      Shell_Name : constant String :=
-                     Get_Machine_Descriptor (Nickname).Desc.Shell_Name.all;
-   begin
-      while Desc /= null loop
-         if Desc.Name.all = Shell_Name then
-            return Desc;
-         end if;
-
-         Desc := Desc.Next;
-      end loop;
-
-      raise Invalid_Nickname;
-   end Get_Shell_Descriptor;
 
    -------------------
    -- Is_Configured --
    -------------------
 
    function Is_Configured (Nickname : String) return Boolean is
-      Desc : Machine_Descriptor_Access := Machine_Descriptor_List;
+      Desc : Remote_Machine_Descriptor_Access;
    begin
       --  Local machine is always configured
 
@@ -1951,15 +1442,9 @@ package body GNAT.Expect.TTY.Remote is
          return True;
       end if;
 
-      while Desc /= null loop
-         if Desc.Desc.Nickname.all = Nickname then
-            return True;
-         end if;
+      Desc := Get_Machine_Descriptor (Nickname);
 
-         Desc := Desc.Next;
-      end loop;
-
-      return False;
+      return Desc /= null;
    end Is_Configured;
 
    ----------------------
@@ -1967,7 +1452,7 @@ package body GNAT.Expect.TTY.Remote is
    ----------------------
 
    function Is_Ready_Session (Nickname : String) return Boolean is
-      Desc : Machine_Descriptor_Access;
+      Desc : Remote_Machine_Descriptor_Access;
    begin
       Desc := Get_Machine_Descriptor (Nickname);
 
@@ -1989,39 +1474,12 @@ package body GNAT.Expect.TTY.Remote is
    ----------------------
 
    function Get_Network_Name (Nickname : String) return String is
+      M : Remote_Machine_Descriptor_Access;
    begin
-      return Get_Machine_Descriptor (Nickname).Desc.Network_Name.all;
+      M := Get_Machine_Descriptor (Nickname);
+
+      return M.Desc.Network_Name.all;
    end Get_Network_Name;
-
-   --------------------
-   -- Get_Filesystem --
-   --------------------
-
-   function Get_Filesystem
-     (Nickname : String) return Filesystem_Record'Class is
-   begin
-      if Nickname = "" then
-         return Get_Local_Filesystem;
-      else
-         return Get_Shell_Descriptor (Nickname).Filesystem.all;
-      end if;
-   end Get_Filesystem;
-
-   --------------------------
-   -- Get_Local_Filesystem --
-   --------------------------
-
-   function Get_Local_Filesystem return Filesystem_Record'Class is
-      Windows_FS : Filesystem.Windows.Windows_Filesystem_Record;
-      Unix_FS    : Filesystem.Unix.Unix_Filesystem_Record;
-   begin
-      if Host = Config.Windows then
-         return Windows_FS;
-      else
-         --  Unix and windows support only
-         return Unix_FS;
-      end if;
-   end Get_Local_Filesystem;
 
    ------------
    -- Expect --

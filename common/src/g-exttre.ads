@@ -28,203 +28,23 @@ with GNAT.Expect.TTY; use GNAT.Expect.TTY;
 with GNAT.Regpat;     use GNAT.Regpat;
 with GNAT.Strings;    use GNAT.Strings;
 
-with Filesystem;      use Filesystem;
 with System;          use System;
 
 with Ada.Unchecked_Deallocation;
 
+with Shell_Descriptors;   use Shell_Descriptors;
+with Machine_Descriptors; use Machine_Descriptors;
+
 package GNAT.Expect.TTY.Remote is
 
-   Invalid_Nickname : exception;
    No_Session_Available : exception;
-
-   Null_String_List : constant String_List (1 .. 0) := (others => null);
-   --  Null string list
-
-   -------------------------
-   -- Connection Debugger --
-   -------------------------
-
-   type Connection_Debugger_Record is abstract tagged null record;
-   type Connection_Debugger is access all Connection_Debugger_Record'Class;
-
-   procedure Create (Dbg   : access Connection_Debugger_Record'Class;
-                     Title : String) is abstract;
-   --  Create a new Connection Debugger with furnished title
-
-   type Mode_Type is (Input, Output);
-
-   procedure Print (Dbg  : access Connection_Debugger_Record;
-                    Str  : String;
-                    Mode : Mode_Type) is abstract;
-   --  Display Str in the connection debugger
 
    -----------------------------
    -- Configuration functions --
    -----------------------------
 
-   type Extra_Prompt (Auto_Answer : Boolean := False) is record
-      Ptrn : Pattern_Matcher_Access;
-
-      case Auto_Answer is
-         when True =>
-            Answer : String_Access;
-         when False =>
-            Question : String_Access;
-      end case;
-   end record;
-   --  Used to handle extra prompts received from a remote access tool
-   --  Auto_Answer: Tells if we shall automatically send an answer to this
-   --   prompt.
-   --  Ptrn: The pattern to expect
-   --  Answer: The automatic answer to send to the remote access tool.
-   --  Question: The question GPS will ask to the user. The user's response
-   --   will then be sent to the remote access tool.
-
-   Null_Extra_Prompt : constant Extra_Prompt :=
-     (Auto_Answer => True,
-      Ptrn        => null,
-      Answer      => null);
-
-   --  Tool specific prompt. If Auto_Answer is set, then the GPS user will not
-   --  be asked for anything, and Answer will be sent to the tool.
-   --  Else, the User will be asked the User_Question.
-   type Extra_Prompts is array (Natural range <>) of Extra_Prompt;
-   Null_Extra_Prompts : constant Extra_Prompts (1 .. 0)
-     := (others => Null_Extra_Prompt);
-
-   procedure Add_Remote_Access_Descriptor
-     (Name                      : String;
-      Start_Command             : String;
-      Start_Command_Common_Args : String_List;
-      Start_Command_User_Args   : String_List;
-      User_Prompt_Ptrn          : String_Access;
-      Password_Prompt_Ptrn      : String_Access;
-      Passphrase_Prompt_Ptrn    : String_Access;
-      Extra_Prompt_Array        : Extra_Prompts := Null_Extra_Prompts;
-      Use_Cr_Lf                 : Boolean := False;
-      Use_Pipes                 : Boolean := False);
-   --  Adds a new Remote Access Descriptor
-   --  Name : identifier of this descriptor
-   --  Start_Command : command used to launch the remote access utility
-   --  Start_Command_Common_Args : arguments always provided to this utility
-   --  Start_Command_User_Arg    : if user is specified, this argument will
-   --   be used (%u replaced by actual user)
-   --  User_Prompt_Ptrn          : regular expression for user prompt
-   --                              if null, the default user prompt is used
-   --  Password_Prompt_Ptrn      : regular expression for password prompt
-   --                              if null, the default password prompt is used
-   --  Passphrase_Prompt_Ptrn    : regular expression for passphrases. This
-   --                              expression shall isolate the key_id with
-   --                              parenthesis
-   --  Extra_Prompt_Array        : extra specific prompts.
-   --  Use_Cr_Lf                 : tell if CR character needs to be added when
-   --                               sending commands to the tool.
-   --  Use_Pipes                 : tell if the tool is launched in pipe or tty
-   --                               mode. Only applicable on Windows (no effect
-   --                               on other machines)
-
-   procedure Add_Shell_Descriptor
-     (Name                : String;
-      Start_Command       : String             := "";
-      Generic_Prompt      : String             := "";
-      Configured_Prompt   : String             := "";
-      FS                  : Filesystem_Record'Class;
-      Init_Commands       : String_List        := Null_String_List;
-      Exit_Commands       : String_List        := Null_String_List;
-      Cd_Command          : String             := "";
-      Get_Status_Command  : String             := "";
-      Get_Status_Ptrn     : String             := "");
-   --  This function is used to add a new shell descriptor
-   --  - Name                : name in the program descriptor table
-   --  - Start_Command       : name of the program to be launched
-   --  - Start_Command_Args  : arguments passed to the program (note %h
-   --                         is a special argument and is replaced by the
-   --                         target network name...)
-   --  - Start_Timeout       : timeout used during launch
-   --  - Init_Commands       : list of commands sent just after program is
-   --                         launched
-   --  - Exit_Commands       : idem but for Quit
-   --  - Cd_Command          : change working directory (%d is replaced by dir)
-   --  - Get_Status_Command  : command used to retrieve the terminated
-   --                          program's status
-   --  - Get_Status_Ptrn     : regular expression used to retrieve the result
-   --                          of Get_Status_Command
-   --  - General_Prompt      : prompt expected during init phase
-   --  - Prompt              : regexp that match the prompt
-   --  - Buffer_Size         : size of the expect buffer
-   --  - Use_TTY             : if set to true use TTY version of GNAT.Expect
-   --  - Output_Processor    : processing of the output ... (to get for example
-   --                          the exit status)
-   --
-   --  For all Commands, %h is replaced by target host, %d is replaced by
-   --  working directory
-
-   type Machine_Descriptor_Record is tagged record
-      Nickname            : String_Access;
-      --  Identifier of the machine
-      Network_Name        : String_Access;
-      --  Used to access the server using the network
-      Access_Name         : String_Access;
-      --  Tool used to remotely access the server
-      Shell_Name          : String_Access;
-      --  Shell used on the remote server
-      Extra_Init_Commands : GNAT.OS_Lib.Argument_List_Access := null;
-      --  User specific init commands
-      User_Name           : String_Access;
-      --  User name used for connection
-      Timeout             : Natural := 5000;
-      --  Timeout value used when connecting to the machine (in ms)
-      Max_Nb_Connections  : Natural := 3;
-      --  Maximum number of simultaneous connections on the machine
-      Ref                 : Natural := 0;
-      --  Ref counter
-      Dbg                 : Connection_Debugger := null;
-      --  Connection debug console.
-   end record;
-   type Machine_Descriptor is access all Machine_Descriptor_Record'Class;
-
-   procedure Unref (Desc : in out Machine_Descriptor);
-   --  Does Ref - 1. Free allocated memory for the descriptor if ref=0
-
    procedure Add_Machine_Descriptor (Desc : Machine_Descriptor);
    --  Adds a new machine descriptor.
-
-   procedure Remove_Machine_Descriptor (Desc : in out Machine_Descriptor);
-   --  Removes a machine descriptor.
-
-   procedure Remove_All_Machine_Descriptors;
-   --  Removes all machine descriptors.
-
-   function Get_Nb_Shell_Descriptor return Natural;
-   --  Get the total number of shell descriptor configured
-
-   function Get_Shell_Descriptor_Name (N : Natural) return String;
-   --  Get the Nth shell descriptor name
-
-   function Get_Filesystem_From_Shell
-     (Shell : String) return Filesystem_Record'Class;
-   --  Get the filesystem corresponding to shell
-
-   function Get_Nb_Remote_Access_Descriptor return Natural;
-   --  Get the total number of remote access descriptor configured
-
-   function Get_Remote_Access_Name (N : Natural) return String;
-   --  Get the Nth remote access descriptor name
-
-   function Get_Nb_Machine_Descriptor return Natural;
-   --  Get the total number of Machine Descriptor configured
-
-   function Get_Machine_Descriptor (N : Natural) return Machine_Descriptor;
-   --  Retrieve the descriptor of the Nth configured machine
-
-   function Get_Machine_Descriptor
-     (Nickname : String) return Machine_Descriptor;
-   --  Get machine descriptor from nickname
-
-   function Get_Nickname (N : Natural) return String;
-   --  Retrieve the nickname of the Nth configured machine
-   --  Raise Invalid_Nickname if N does not correspond to a server
 
    function Is_Configured (Nickname : String) return Boolean;
    --  Tells if server Nickname exists
@@ -235,13 +55,6 @@ package GNAT.Expect.TTY.Remote is
    function Get_Network_Name (Nickname : String) return String;
    --  Retrieve the network name of the specified server.
    --  Raise Invalid_Nickname if Nickname does not correspond to a server
-
-   function Get_Filesystem (Nickname : String) return Filesystem_Record'Class;
-   --  Retrieve the filesystem of the specified server
-   --  Raise Invalid_Nickname if Nickname does not correspond to a server
-
-   function Get_Local_Filesystem return Filesystem_Record'Class;
-   --  Retrieve the local filesystem type
 
    ----------------------
    -- Expect interface --
@@ -330,7 +143,7 @@ package GNAT.Expect.TTY.Remote is
    --  Same as above, except that the program output is also returned
 
    procedure Close_All;
-   --  Closes all opened connection.
+   --  Closes all opened connections.
 
    --  Note on the following expect procedures. Contrary to its ancestor,
    --  this package does not handle nicely the timeout value of -1 (infinite
@@ -418,11 +231,34 @@ private
 
    procedure Interrupt (Descriptor : in out Remote_Process_Descriptor);
 
-   type Shell_Descriptor;
-   type Shell_Descriptor_Access is access all Shell_Descriptor;
+   type Shell_State_Type is (OFF, BUSY, READY);
+   --  The state of a session.
+   --  OFF: the session has not been launched
+   --  BUSY: the session is busy processing a remote program
+   --  READY: the session has been launched, and is waiting on a shell prompt
 
-   type Machine_Descriptor_Item;
-   type Machine_Descriptor_Access is access all Machine_Descriptor_Item;
+   type Session is record
+      Pd    : TTY_Process_Descriptor;
+      State : Shell_State_Type := OFF;
+   end record;
+   --  This record represents a machine's session. A session is an opened
+   --  connection that can be reused to launch successive remote programs.
+
+   type Session_Array is
+     array (Natural range <>) of Session;
+
+   type Remote_Machine_Descriptor_Item (Max_Nb_Connections : Natural) is
+     new Machine_Descriptor_Item
+   with record
+      Sessions          : Session_Array (1 .. Max_Nb_Connections);
+      Echoing           : Boolean := False;
+      Determine_Echoing : Boolean := True;
+   end record;
+   type Remote_Machine_Descriptor_Access is
+     access all Remote_Machine_Descriptor_Item;
+
+   procedure Close (Desc : access Remote_Machine_Descriptor_Item);
+   --  Close all machine sessions
 
    type Remote_Process_Descriptor is new TTY_Process_Descriptor with record
       Busy                 : Boolean                   := False;
@@ -431,7 +267,7 @@ private
       --  Tells if the command we've sent has been echoed or not.
       Shell                : Shell_Descriptor_Access   := null;
       --  What shell is on the remote server
-      Machine              : Machine_Descriptor_Access := null;
+      Machine              : Remote_Machine_Descriptor_Access := null;
       --  What machine this descriptor is connected to
       Use_Cr_Lf            : Boolean := False;
       --  Tell if CR shall be sent along with LF
