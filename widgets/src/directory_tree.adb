@@ -20,9 +20,6 @@
 
 with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-pragma Warnings (Off);
-with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
-pragma Warnings (On);
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Glib;                      use Glib;
 with Glib.Convert;              use Glib.Convert;
@@ -60,6 +57,8 @@ with VFS;                       use VFS;
 with VFS.Values;                use VFS.Values;
 with File_Utils;                use File_Utils;
 with Filesystem;                use Filesystem;
+with Filesystem.Queries;        use Filesystem.Queries;
+
 with GUI_Utils;                 use GUI_Utils;
 with OS_Utils;                  use OS_Utils;
 with Traces;                    use Traces;
