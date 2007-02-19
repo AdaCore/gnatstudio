@@ -27,7 +27,6 @@ with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNAT.Expect;                use GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
-with GNAT.Expect.TTY.Remote;     use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Regpat;                use GNAT.Regpat;
@@ -84,14 +83,20 @@ with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 
 with Filesystem.Unix;            use Filesystem.Unix;
 with Filesystem.Windows;         use Filesystem.Windows;
+with Filesystem.Queries;         use Filesystem.Queries;
 with GUI_Utils;                  use GUI_Utils;
 with Interactive_Consoles;       use Interactive_Consoles;
 with Projects;                   use Projects;
 with Remote.Path.Translator;     use Remote.Path, Remote.Path.Translator;
+with Shell_Descriptors;          use Shell_Descriptors;
 with String_Utils;               use String_Utils;
 with Traces;                     use Traces;
 with VFS;                        use VFS;
 with XML_Parsers;
+
+with Remote_Descriptors;         use Remote_Descriptors;
+with Connection_Debuggers;       use Connection_Debuggers;
+with Machine_Descriptors;        use Machine_Descriptors;
 
 package body GPS.Kernel.Remote is
 
@@ -178,7 +183,7 @@ package body GPS.Kernel.Remote is
    ------------------------
 
    type Machine_Descriptor_Record is
-     new GNAT.Expect.TTY.Remote.Machine_Descriptor_Record
+     new Machine_Descriptors.Machine_Descriptor_Record
    with record
       Attribute  : Descriptor_Attribute;
       Rsync_Func : GNAT.Strings.String_Access;
