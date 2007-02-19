@@ -60,7 +60,7 @@ package body Startup_Module is
 
    procedure On_Edit_Startup_Scripts
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Called when the user selects the menu to edit startup scripts
+   --  Called when the user selects the menu to edit startup plug-ins
 
    Column_Load       : constant := 0;
    Column_Name       : constant := 1;
@@ -380,7 +380,7 @@ package body Startup_Module is
       Editor.Kernel := Kernel_Handle (Kernel);
       Initialize
         (Editor,
-         Title  => -"Edit Startup Scripts",
+         Title  => -"Startup Plug-ins",
          Parent => Get_Main_Window (Kernel),
          Flags  => Destroy_With_Parent);
       Set_Default_Size (Editor, 800, 600);
@@ -526,14 +526,14 @@ package body Startup_Module is
       Module : Module_ID;
    begin
       Module := new Module_ID_Record;
-      Register_Module (Module, Kernel, "Startup scripts manager");
+      Register_Module (Module, Kernel, "Plug-ins manager");
 
       Register_Menu
-        (Kernel, '/' & (-"Edit"),
-         -"S_tartup Scripts",
+        (Kernel, '/' & (-"Tools"),
+         -"_Plug-ins",
          Callback => On_Edit_Startup_Scripts'Access,
-         Ref_Item => "Preferences",
-         Add_Before => True);
+         Ref_Item => "Macro",
+         Add_Before => False);
    end Register_Module;
 
 end Startup_Module;
