@@ -1,7 +1,7 @@
 GPS NEW FEATURES LIST
 =====================
 
-Copyright (c) 2005-2006, AdaCore
+Copyright (c) 2006-2007, AdaCore
 
 This file contains a list of new features introduced in GPS.
 A full description of all GPS features can be found in the GPS
@@ -28,17 +28,17 @@ FC12-004 Improvements in the Bookmarks View (2006-12-13)
 FC02-001 Python documentation now include inheriting classes (2006-12-04)
 
   The documentation for the python extensions now includes the list of
-  inheriting classes in the inheritance tree
+  inheriting classes in the inheritance tree.
 
-FB29-006 New startup script to save and restore last position (2006-11-29)
+FB29-006 New plug-in to save and restore last position (2006-11-29)
 
-  A new startup script (see /Edit/Startup Scripts) is now provided that
+  A new plug-in (see /Tools/Plug-ins) is now provided that
   allows you to automatically remember the last position viewed in a file,
-  and automatically restore it when the file is reopened
+  and automatically restore it when the file is reopened.
 
-FB28-013 New startup script to process text through shell command (2006-11-28)
+FB28-013 New plug-in to process text through shell command (2006-11-28)
 
-  A new startup script (see /Edit/Startup Scripts) has been provided that
+  A new plug-in (see /Tools/Plug-ins) has been provided that
   allows you to replace a chunk of text by the result of a shell command run
   on it. In particular, you can run it through the "fmt", "sort",... command
   line utilities. This is similar to vi's ! command.
@@ -75,13 +75,13 @@ FB23-008 Improved Smart Completion window (2006-11-23)
 
 FB23-011 Project dependencies analyzer (2006-11-21)
 
-  GPS now has an optional script that you can use to analyze your project
+  GPS now has an optional plug-in that you can use to analyze your project
   dependencies. It will point out dependencies that are no longer needed,
   or indirect dependencies between projects.
 
 FB23-010 Local history of files (2006-11-20)
 
-  GPS now has an optional script that you can use to keep a local history
+  GPS now has an optional plug-in that you can use to keep a local history
   of all changes inside your files, and easily revert to a previous version
   even if it wasn't committed into the projects' VCS system.
 
@@ -98,7 +98,7 @@ FB10-014 New action to repeat a key stroke several times (2006-11-10)
   next action several times (similar to ctrl-u in Emacs, or numeric
   prefix in vi)
 
-FB07-010 Changing env. variables before reloading the project (2006-11-07)
+FB07-010 Changing env variables before reloading the project (2006-11-07)
 
   In some cases, you might have a need for updating some environment
   variables, for instance ADA_PROJECT_PATH, before loading a project. This
@@ -109,13 +109,13 @@ FB07-007 Drag-and-drop to create new view from Project View (2006-11-07)
 
   From the Project View or the Files View, you can drag-and-drop a file
   anywhere in GPS. In this new release, you can now also press shift to
-  create a new view of the file if the file is already edited elsewhere
+  create a new view of the file if the file is already edited elsewhere.
 
 FB06-004 Macros support and repeating actions (2006-11-15)
 
-  It is now possible to record sequences of key presses, and replay them
-  later on. This is available through the /Tools/Macros menu.
-  It is now also possible to repeat the next key press a number of times,
+  It is now possible to record sequences of key stokes, and replay them.
+  This is available through the /Tools/Macros menu.
+  It is also possible to repeat the next key press a number of times,
   through the default control-u binding.
 
 FA30-018 Editing file extensions for custom languages (2006-1107)
@@ -170,7 +170,7 @@ F912-027 Allow any character in scenario variable names (2006-09-16)
 
   The list of valid character for names of scenario variables is no longer
   limited to alphanumeric characters. In particular on VMS, it is standard to
-  use names like GNAT$PLATFORM
+  use names like GNAT$PLATFORM.
 
 F912-002 The File Selection dialog uses the current context (2006-09-14)
 
@@ -193,7 +193,7 @@ F906-007 Project wizard and properties check for empty object dir (2006-09-16)
 
 F822-013 Disable the "replace all" confirmation with a preference (2006-09-12)
 
-  A new preference has been added, in the search pannel of the GPS preferences,
+  A new preference has been added, in the search panel of the GPS preferences,
   'Confirmation for "Replace all"'. By default, this preference is enabled, and
   pressing "Replace all" from the search window displays a confirmation dialog.
   It's possible to disable this either by unchecking the checkbox in the
@@ -230,9 +230,9 @@ F727-011 Fix "two consecutive underlines not permitted" (2006-07-27)
   GPS will provide auto fixes for "two consecutive underlines not permitted"
   message, by removing extra underlines.
 
-F721-007 New incremental search module (2006-07-25)
+F721-007 New incremental search plug-in (2006-07-25)
 
-  A new module is provided to emulate Emacs' incremental search feature in
+  A new plug-in is provided to emulate Emacs' incremental search feature in
   editors (isearch.py).
 
 F720-008 Improved Emacs emulation (2006-07-21)
@@ -246,10 +246,10 @@ F719-014 Improved support for "no title bar" (2006-08-21)
   full name of the current editor in the main title bar, to ease working
   in this mode, and differenciate files with the same base name.
 
-F719-012 New dialog /Edit/Startup Script Editor (2006-08-04)
+F719-012 New dialog /Tools/Plug-ins (2006-08-04)
 
-  This new dialog allows you to chose which scripts GPS should load on
-  startup. We have also made more scripts optionally loadable through this
+  This new dialog allows you to chose which plug-ins GPS should load on
+  startup. We have also made more plug-ins optionally loadable through this
   dialog, when you previously had to copy them manually from the examples
   directory.
 
@@ -260,14 +260,14 @@ F719-012 Removed support for old customization directories (2006-08-04)
   and the file $prefix/share/gps/python/autoexec.py.
   GPS 3.x was no longer creating these directories, although still reading
   them if it found scripts in there. GPS now ignores these directories.
-  Use $prefix/share/gps/plug-ins and ~/.gps/plug-ins instead
+  Use $prefix/share/gps/plug-ins and ~/.gps/plug-ins instead.
 
 F704-013 Fix "end loop Name; expected" (2006-07-27)
 
   It's now possible to fix automatically messages like "end loop Name;
   expected".
 
-F605-005 Key navigation supprot in the Smart Completion Window (2007-02-01)
+F605-005 Key navigation support in the Smart Completion Window (2007-02-01)
 
   Using page up and page down keys are now supported in the Smart Completion
   Window.
@@ -295,7 +295,7 @@ EA14-021 Fix "use 'Valid attribute instead" (2006-07-28)
 E516-027 Support for rectangular block selection (2006-07-27)
 
   A python plug-in (rectangles.py) can now be enabled (via e.g.
-  Edit->Startup Scripts) to perform block selection and cut/copy/paste
+  Edit->Plug-ins) to perform block selection and cut/copy/paste
   operations on it.
 
 D808-003 Ability to specify line number on command line (2007-02-13)
@@ -310,4 +310,5 @@ D808-003 Ability to specify line number on command line (2007-02-13)
 D524-003 Closing window when double-clicking on left title bar icon (2006-11-08)
 
   Windows can now be closed by double-clicking on the icon to the left of their
-  title bar, when such an icon exits
+  title bar, when such an icon exits.
+
