@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2006                       --
+--                     Copyright (C) 2003-2007                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -37,12 +37,9 @@ with Projects.Editor;           use Projects.Editor;
 with Projects.Registry;         use Projects.Registry;
 with Glib.Convert;              use Glib.Convert;
 with Filesystem;                use Filesystem;
+with Filesystem.Queries;        use Filesystem.Queries;
 with File_Utils;                use File_Utils;
 with Remote;                    use Remote;
-
-pragma Warnings (Off);
-with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
-pragma Warnings (On);
 
 with ALI;                       use ALI;
 with Types;                     use Types;
