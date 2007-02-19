@@ -201,7 +201,7 @@ Customizing and Extending GPS
 * The Preferences Dialog::
 * GPS Themes::
 * The Key Manager Dialog::
-* The Startup Scripts Editor::
+* The Plug-ins Editor::
 * Customizing through XML and Python files::
 * Adding support for new tools::
 * Customization examples::
@@ -2414,7 +2414,7 @@ For instance, the following sequence @key{control-u 79 -} will insert
 79 characters '-' in the current editor. This proves often useful to
 insert separators.
 
-If you are using the emacs mode (see @code{/Edit/Startup Scripts} menu),
+If you are using the emacs mode (see @code{/Tools/Plug-ins} menu),
 you can also use the sequence @key{control-u 30 control-k} to delete
 30 lines.
 
@@ -4981,7 +4981,7 @@ and right-clicking on any of these lines gives the possibility to interrupt
 that process.
 
 If your application is build through a Makefile, you should probably load
-the @file{Makefile.py} startup script (see the menu @code{/Edit/Startup scripts}).
+the @file{Makefile.py} startup script (see the menu @code{/Tools/Plug-ins}).
 
 @c --------------------------------------------------------------------
 @node Source Browsing
@@ -7590,6 +7590,14 @@ Open a python console to access the python interpreter.
 @cindex metrics
 @xref{Metrics}.
 
+@item Macro
+@cindex macros
+@xref{Recording and replaying macros}.
+
+@item Plug-ins
+@cindex plug-ins
+@xref{The Plug-ins Editor}.
+
 @item Interrupt
 @cindex interrupt
 Interrupt the last task launched (e.g. compilation, vcs query, @dots{}).
@@ -8345,7 +8353,7 @@ still access it using cmd.exe (@xref{Connection settings}.)
 * The Preferences Dialog::
 * GPS Themes::
 * The Key Manager Dialog::
-* The Startup Scripts Editor::
+* The Plug-ins Editor::
 * Customizing through XML and Python files::
 * Adding support for new tools::
 * Customization examples::
@@ -9552,14 +9560,15 @@ When you assign a new shortcut to an action, the following happens:
 @end itemize
 
 @c -----------------------------------------------------------------
-@node The Startup Scripts Editor
-@section The Startup Scripts Editor
+@node The Plug-ins Editor
+@section The Plug-ins Editor
+cindex plug-ins
 @c -----------------------------------------------------------------
 
 @noindent
-GPS can be extensively customized through external scripts. You can
-write your own scripts (@pxref{Customization files and plugins}), but
-GPS also comes with its own collection of scripts.
+GPS can be extensively customized through external plug-ins. You can
+write your own plug-ins (@pxref{Customization files and plugins}), but
+GPS also comes with its own collection of plug-ins.
 
 Some of them are loaded by default when GPS starts (for instance the
 support for the CVS version management system or support for
@@ -9567,71 +9576,71 @@ highlighting in various programming languages); others are available
 for any user but not loaded automatically by GPS, for instance an
 Emacs emulation mode.
 
-Among the scripts that are provided with GPS, you will find:
+Among the plug-ins that are provided with GPS, you will find:
 @itemize @bullet
 @item Emacs emulation
   @cindex Emacs
-  several scripts emulate some of the functions provided by Emacs, such
+  Several plug-ins emulate some of the functions provided by Emacs, such
   as the interactive search, manipulation of rectangles, navigation in
   the editor, and of course the usual Emacs key shortcuts
 
   This emacs mode used to be activated in the preferences dialog, on the
   Themes page, but you should now activate it by loading the @file{emacs.xml}
-  startup script
+  plug-in.
 
 @item Makefile support
   @cindex Makefile
-  a script is provided that parses a Makefile and creates menus for each of
-  its possible targets, so that you can easily start a make command
+  A plug-in is provided that parses a Makefile and creates menus for each of
+  its possible targets, so that you can easily start a make command.
 
 @item Cross-references enhancements
-  Various scripts take advantage of GPS's cross-references information to
+  Various plug-ins take advantage of GPS's cross-references information to
   create additional menus to navigate (for instance to jump to the primitive
   operations of Ada tagged types, to the body of Ada separate entities, @dots{})
 
 @item Text manipulation
-  Several scripts provide support for advanced text manipulation in the
+  Several plug-ins provide support for advanced text manipulation in the
   editors, for instance to be able to align a set of lines based on various
-  criteria, or to manipulate a rectangular selection of text
+  criteria, or to manipulate a rectangular selection of text.
 @end itemize
 
-You can chose graphically which scripts should or should not be loaded
-on startup. To do so, select the menu @code{/Edit/Startup Scripts}.
+You can chose graphically which plug-ins should or should not be loaded
+on startup. To do so, select the menu @code{/Tools/Plug-ins}.
 This brings up a new window, containing two parts:
 
 @itemize @bullet
-@item On the left is the list of all known scripts.
+@item On the left is the list of all known plug-ins.
 
 As described in @xref{Customization files and plugins}, GPS will
 search for candidates in various directories, and based on these
-directories decide whether to automatically load the script or not.
+directories decide whether to automatically load the plug-in or not.
 
-This list indicates the name of the script, and whether it has been
+This list indicates the name of the plug-in, and whether it has been
 loaded in this GPS session (when the toggle button is checked).
 
-@item On the right are the details for the selected script
+@item On the right are the details for the selected plug-in
 
 This window is displayed as a notebook with two pages: on the first
-one you will see the exact location of the script, the reason why it
-was loaded or not, and, more importantly, the source of the script.
-By convention, each script starts with a general comment that
-indicates the purpose of this script, and some more detailed
+one you will see the exact location of the plug-in, the reason why it
+was loaded or not, and, more importantly, the source of the plug-in.
+By convention, each plug-in starts with a general comment that
+indicates the purpose of this plug-in, and some more detailed
 documentation on its usage.
 
-For those interested, this also contains the script itself, so that
+For those interested, this also contains the plug-in itself, so that
 this can act as an example to create your own customization script.
 
 The second page in the notebook can be used to edit the initialization
 commands. This commands will be executed after the module has been
 loaded (and never if the module is not loaded). This will typically be
-used to change some of the configuration variables for the script (as
-documented in the script itself).
+used to change some of the configuration variables for the plug-in (as
+documented in the plug-in itself).
 
-Technically, the list of scripts to load or not to load, and their
+Technically, the list of plug-in to load or not to load, and their
 initialization commands are stored in the file
 @file{HOME/.gps/startup.xml}. The list of initialization commands has
 the same format as used when creating GPS actions (@pxref{Defining
-Actions}). The graphical editor in the Startup Scripts Editor makes it
+Actions}). The graphical editor in the Plug-Ins Editor makes it
 easier to edit the commands.
 
 There are currently three kinds of commands that you can execute (you
@@ -9652,7 +9661,7 @@ command, and click @code{Add} again. If you then want to add a command
 to execute when the first external command succeeded, select that
 external command.
 
-If you have modified anything through this dialog (the list of scripts
+If you have modified anything through this dialog (the list of plug-ins
 to load or unload, or any of the initialization commands), you will
 need to restart GPS. GPS cannot unload a module, since it can have too
 many possible effects on GPS (adding menus, overriding key
@@ -9661,7 +9670,7 @@ immediately might be too late, since once they are running some of the
 scripts might not take the changes into account.
 
 A dialog is displayed asking you whether you would like to exit GPS
-now. This will properly save all your files, of course.
+now. This will properly save all your files.
 
 @end itemize
 
@@ -9710,8 +9719,8 @@ and integrate your own tools in the GPS platform.
 These customization files are searched for at startup in several different
 places. Depending on the location where they are found, these files will either
 be automatically loaded by GPS (and thus can immediately modify things in GPS),
-or will simply be made visible in the Startup Scripts Editor
-(@pxref{The Startup Scripts Editor}).
+or will simply be made visible in the Plug-ins Editor
+(@pxref{The Plug-ins Editor}).
 
 These directories are searched for in the order given below. Any script loaded
 latter can override setups done by previously loaded scripts. For instance,
@@ -9733,14 +9742,14 @@ files in the same directory.
 
 The @file{INSTALL/share/gps/plug-ins} directory should contain the files that
 GPS will automatically load by default (unless overriden by the user through
-the Startup Scripts Editor). These scripts are visible to any user on the
+the Plug-ins Editor). These plug-ins are visible to any user on the
 system that uses the same GPS installation. This directory should be reserved
-for critical scripts that almost every one should use.
+for critical plug-ins that almost every one should use.
 
 @item Not automatically system wide modules
 
 The @file{INSTALL/share/gps/library} directory should contain the files that
-GPS should show in the Startup Scripts Editor, but not load automatically.
+GPS should show in the Plug-ins Editor, but not load automatically.
 Typically, these would be files that add optional capabilities to GPS, for
 instance an emacs emulation mode, or additional editor capabilities that a lot
 of users would not generally use.
@@ -9751,7 +9760,7 @@ This environment variable can be set before launching GPS. It should contain
 a list of directories, separated by semicolons (';') on Windows systems and
 colons (':') on Unix systems. All the files in these directories with the
 appropriate extensions will be automatically loaded by default by GPS,
-unless overriden by the user through the Startup Scripts Editor.
+unless overriden by the user through the Plug-ins Editor.
 
 This is a convenient way to have project-specific customization files. You can
 for instance create scripts, or icons, that set the appropriate value for the
@@ -9762,7 +9771,7 @@ load specific aliases which do not make sense for other projects.
 
 The directory @file{HOME/.gps/plug-ins} is searched last. Any script
 found in there will be automatically loaded unless overriden in the
-Startup Scripts Editor.
+Plug-ins Editor.
 
 This is a convenient way for users to create their own plug-ins, or
 test them before they are made available to the whole system by
@@ -9777,11 +9786,11 @@ users.
 
 @subsubsection Python files
 
-Although the format of the python scripts is free (as long as it can
+Although the format of the python plug-ins is free (as long as it can
 be executed by Python), the following organization is suggested. These
-scripts will be visible in the Startup Scripts Editor, and therefore having
+plug-ins will be visible in the Plug-ins Editor, and therefore having
 a common format makes it easier for users to understand the goal of the
-scripts:
+plug-ins:
 
 @itemize @bullet
 @item Comment
@@ -9800,7 +9809,7 @@ scripts:
 
   If your script can be configured by the user by changing some global
   variables, they should be listed in their own section, and fully
-  documented. The user can then, through the /Edit/Startup Scripts editor
+  documented. The user can then, through the /Tools/Plug-ins editor
   change the value of these variables
 
 @item Implementation
@@ -9858,7 +9867,7 @@ left to your consideration. The general format is therefore
 
 It is also recommended that the first line after the @code{<?xml?>} tag
 contains a general comment describing the purpose and usage of the script.
-This comment will be made visible in the Startup Scripts editor.
+This comment will be made visible in the Plug-ins editor.
 
 The list of valid XML nodes that can be specified under <root> is
 described in later sections. It includes:
@@ -16099,7 +16108,7 @@ loaded automatically at start-up.
    @item @i{prefix}/share/gps/library
 Directory containing files with system-wide plug-ins (xml and python files)
 that are not loaded automatically at startup, but can be selected in the
-Startup Scripts editor.
+Plug-ins editor.
 
    @item @i{prefix}/share/gps/gps-animation.png
 @cindex png
