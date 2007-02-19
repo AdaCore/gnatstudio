@@ -674,7 +674,7 @@ package body KeyManager_Module.Macros is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Macro_Menu : constant String := "/" & (-"Tools/Macro");
+      Macro_Menu : constant String := "/" & (-"Tools/M_acro");
       Command    : Interactive_Command_Access;
       Action     : Action_Record_Access;
    begin
