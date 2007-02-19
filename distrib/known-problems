@@ -23,7 +23,7 @@ Known Problems fixed in GPS 4.1.0
               for all occurrences, and use the Location window to navigate
               between matches.
 
-- G129-037 GPS cannot launch external HTML browsers.
+- G129-037 GPS cannot launch external HTML browsers
   Problem:    On some distributons of Linux, and possibly some UNIX plaforms,
               GPS cannot launch external HTML browsers, such as Nautilus or
               Firefox: for instance, when using the Help menu to display the
@@ -139,7 +139,7 @@ Known Problems fixed in GPS 4.1.0
               action.
   Workaround: Issue two undo actions.
 
-- FB10-013 Interactive selection dialog causes crash.
+- FB10-013 Interactive selection dialog causes crash
   Problem:    When closing windows using a key shortcut while in the window
               selection dialog, GPS might crash if selecting in the list one of
               the editors that has been closed.
