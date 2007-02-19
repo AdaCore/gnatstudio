@@ -4375,6 +4375,8 @@ If file is not specified, the current editor is returned, ie the last one that h
 
 If the file is not currently open, the behavior depends on the open parameter: if true, a new editor is created for that file, otherwise None is returned.
 
+When a file is returned, it has gained received the focus.
+
 If force is set to true, a reload is forced in case the file is already open.
       </description>
       <example lang="python">
