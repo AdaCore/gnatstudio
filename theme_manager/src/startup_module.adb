@@ -384,7 +384,7 @@ package body Startup_Module is
          Parent => Get_Main_Window (Kernel),
          Flags  => Destroy_With_Parent);
       Set_Default_Size (Editor, 800, 600);
-      Set_Name (Editor, "Startup Scripts Editor");
+      Set_Name (Editor, "Startup Plug-ins Editor");
 
       Gtk_New_Hpaned (Pane);
       Pack_Start (Get_Vbox (Editor), Pane, Expand => True, Fill => True);
