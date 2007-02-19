@@ -18,14 +18,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-pragma Warnings (Off);
-with GNAT.Expect.TTY.Remote; use GNAT.Expect.TTY.Remote;
-pragma Warnings (On);
-
 with GNAT.Strings; use GNAT.Strings;
 
-with Filesystem;   use Filesystem;
-with Traces;       use Traces;
+with Filesystem;         use Filesystem;
+with Filesystem.Queries; use Filesystem.Queries;
+with Traces;             use Traces;
 
 package body Remote.Path.Translator is
 
