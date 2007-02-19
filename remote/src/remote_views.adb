@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006                            --
+--                      Copyright (C) 2006-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -64,6 +64,8 @@ with Projects;               use Projects;
 with Remote.Path.Translator; use Remote, Remote.Path.Translator;
 with Traces;                 use Traces;
 with VFS;                    use VFS;
+
+with Machine_Descriptors;    use Machine_Descriptors;
 
 package body Remote_Views is
 
