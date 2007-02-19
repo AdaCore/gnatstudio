@@ -15,7 +15,7 @@ See also emacs.xml
 ###########################################################################
 # Customization variables
 # These variables can be changed in the initialization commands associated
-# with this script (see /Edit/Startup Scripts)
+# with this script (see /Tools/Scripts)
 
 transient_mark_mode = False
 ## If set to False, then the region is never unselected when the clipboard is
