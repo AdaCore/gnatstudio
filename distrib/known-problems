@@ -13,11 +13,6 @@ Known Problems fixed in GPS 4.1.0
   Workaround: Right click on the focused window to make the contextual menu
               appear, the menu items are then updated.
 
-- G210-001 List of files from project grow after project reloading
-  Problem:    After doing a reload project, additional files where added to
-              the list of files from project.
-  Workaround: Restart GPS instead of doing a project reloading.
-
 - G202-018 Searching backward for "Files in Project"
   Problem:    If you are doing a search in the context "Files in Project" or
               "Files...", and you press ctrl-p to go to the previous
