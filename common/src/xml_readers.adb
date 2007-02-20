@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2004                          --
---                            ACT-Europe                             --
+--                    Copyright (C) 2004-2007                        --
+--                             AdaCore                               --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -157,7 +157,13 @@ package body XML_Readers is
    begin
       if Handler.Current_Node /= null then
          if Handler.Current_Node.Value /= null then
-            S := new String'(Handler.Current_Node.Value.all & Ch);
+            --  Take care not to allocate anything on the stack here, as
+            --  read values might be very large.
+            S := new String
+              (1 .. Handler.Current_Node.Value'Length + Ch'Length);
+            S (1 .. Handler.Current_Node.Value'Length) :=
+              Handler.Current_Node.Value.all;
+            S (Handler.Current_Node.Value'Length + 1 .. S'Last) := Ch;
             Glib.Free (Handler.Current_Node.Value);
             Handler.Current_Node.Value := S;
          else
