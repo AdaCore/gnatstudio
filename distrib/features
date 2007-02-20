@@ -14,6 +14,13 @@ of the feature.
 New features in GPS 4.2.0
 -------------------------
 
+G213-014 Add support for Project Explorer filters (2007-02-20)
+
+  It is now possible to filter out directories on the Project
+  Explorer based on a given regular expression. This has been
+  designed to filter out version control specific directories
+  like CVS or .svn for example.
+
 New features in GPS 4.1.0
 -------------------------
 
