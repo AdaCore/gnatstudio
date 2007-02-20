@@ -57,6 +57,11 @@ Known Problems fixed in GPS 4.1.0
   Workaround: Resize manually by dragging the bottom border of the search
               dialog.
 
+- G210-001 List of files from project grow after project reloading
+  Problem:    After doing a reload project, additional files where added to
+              the list of files from project.
+  Workaround: Restart GPS instead of doing a project reloading.
+
 - G102-005 Wrong indentation in some Ada constructs
   Problem:    When trying to indent an Ada construct such as the following:
                 (A =>
