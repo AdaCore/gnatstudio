@@ -1789,11 +1789,12 @@ In addition, there are several ways to define new key bindings, see
 @ref{Defining text aliases} and @ref{Binding actions to keys}.
 
 @table @key
-@item Ctrl-Shift-
+@item Ctrl-Shift-u
 @cindex hexadecimal
 @cindex ASCII
-Pressing these two keys allow you to enter characters using their hexadecimal
-value. For example, pressing @key{Ctrl-Shift-2-0} will insert a space
+Pressing these three keys and then holding Ctrl-Shift allow you to enter
+characters using their hexadecimal
+value. For example, pressing @key{Ctrl-Shift-u-2-0} will insert a space
 character (ASCII 32, which is 20 in hexadecimal).
 
 @item Ctrl-x / Shift-delete
