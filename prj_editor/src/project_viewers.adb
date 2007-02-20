@@ -23,6 +23,7 @@ with Ada.Exceptions;               use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 with GNAT.Case_Util;               use GNAT.Case_Util;
 with GNAT.Strings;                 use GNAT.Strings;
+with GNAT.OS_Lib;
 
 with Gdk.Color;                    use Gdk.Color;
 with Gdk.Event;                    use Gdk.Event;
@@ -83,7 +84,6 @@ with Traces;                       use Traces;
 with Types;                        use Types;
 with VFS;                          use VFS;
 with Variable_Editors;             use Variable_Editors;
-with GNAT.OS_Lib;
 
 package body Project_Viewers is
 
@@ -94,8 +94,8 @@ package body Project_Viewers is
    type Project_Editor_Page_Array_Access is access Project_Editor_Page_Array;
 
    type Switches_Page_Creator_Data is record
-      Creator  : Switches_Page_Creator;
-      Page     : Switches_Editors.Switches_Editor_Page;
+      Creator : Switches_Page_Creator;
+      Page    : Switches_Editors.Switches_Editor_Page;
    end record;
    --  Page is the cached version of the page. It is created lazily, and never
    --  destroyed afterwards.
@@ -160,7 +160,7 @@ package body Project_Viewers is
    Name_Cst      : aliased constant String := "name";
    Path_Cst      : aliased constant String := "path";
    Sources_Cmd_Parameters : constant GPS.Kernel.Scripts.Cst_Argument_List :=
-     (1 => Recursive_Cst'Access);
+                              (1 => Recursive_Cst'Access);
    Source_Dirs_Cmd_Parameters : constant GPS.Kernel.Scripts.Cst_Argument_List
      := (1 => Recursive_Cst'Access);
    Languages_Cmd_Parameters : constant GPS.Kernel.Scripts.Cst_Argument_List
@@ -175,7 +175,7 @@ package body Project_Viewers is
    Rename_Cmd_Parameters : constant GPS.Kernel.Scripts.Cst_Argument_List :=
      (1 => Name_Cst'Access, 2 => Path_Cst'Access);
    Add_Dep_Cmd_Parameters : constant GPS.Kernel.Scripts.Cst_Argument_List :=
-     (1 => Path_Cst'Access);
+                              (1 => Path_Cst'Access);
 
    Base_File_Name_Column     : constant := 0;
    Absolute_File_Name_Column : constant := 1;
@@ -191,7 +191,7 @@ package body Project_Viewers is
       --  Color to use when displaying switches that are set at the project
       --  level, rather than file specific
 
-      Kernel  : GPS.Kernel.Kernel_Handle;
+      Kernel : GPS.Kernel.Kernel_Handle;
 
       View_Changed_Blocked : Boolean := False;
       --  True if the hook for "project_view_changed" should be ignored
@@ -204,15 +204,15 @@ package body Project_Viewers is
    type Project_Viewer is access all Project_Viewer_Record'Class;
 
    procedure Gtk_New
-     (Viewer  : out Project_Viewer;
-      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
+     (Viewer : out Project_Viewer;
+      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Create a new project viewer.
    --  Every time the selection in Explorer changes, the info displayed in
    --  the viewer is changed.
 
    procedure Initialize
      (Viewer : access Project_Viewer_Record'Class;
-      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
+      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Internal subprogram for creating widgets
 
    procedure Show_Project
@@ -309,18 +309,18 @@ package body Project_Viewers is
    --  Directory and File act as filters for the information that is displayed.
 
    procedure Project_Viewers_Set
-     (Viewer            : access Project_Viewer_Record'Class;
-      Iter              : Gtk_Tree_Iter);
+     (Viewer : access Project_Viewer_Record'Class;
+      Iter   : Gtk_Tree_Iter);
    --  Set the contents of the line Iter in the model. It is assumed the file
    --  name has already been set on that line
 
    procedure Parsing_Switches_XML
-     (Kernel : access Kernel_Handle_Record'Class;
-      Page   : Switches_Editor_Page;
-      Table  : access Gtk_Table_Record'Class;
-      Lines  : Natural;
-      Cols   : Natural;
-      Node   : Node_Ptr;
+     (Kernel            : access Kernel_Handle_Record'Class;
+      Page              : Switches_Editor_Page;
+      Table             : access Gtk_Table_Record'Class;
+      Lines             : Natural;
+      Cols              : Natural;
+      Node              : Node_Ptr;
       Default_Separator : String);
    --  Subprogram for Parse_Switches_Page, this is used to handle both the
    --  <switches> and the <popup> tags
@@ -347,8 +347,8 @@ package body Project_Viewers is
    -- Project editor pages --
    --------------------------
 
-   type Switches_Editor_Record is new Project_Editor_Page_Record
-   with null record;
+   type Switches_Editor_Record is
+     new Project_Editor_Page_Record with null record;
 --     function Create_Content
 --       (Page : access Switches_Editor_Record;
 --        Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget;
@@ -468,16 +468,15 @@ package body Project_Viewers is
          Col3  : Gint; Value3 : Gdk_Color);
       pragma Import (C, Internal, "ada_gtk_tree_store_set_ptr_ptr");
 
-      File_Name  : constant Virtual_File :=
-        Create
-          (Get_String (Viewer.Model, Iter, Absolute_File_Name_Column));
-      Color      : Gdk_Color;
-      Value      : Prj.Variable_Value;
-      Is_Default : Boolean;
+      File_Name  : constant Virtual_File := Create
+        (Get_String (Viewer.Model, Iter, Absolute_File_Name_Column));
       Language   : constant Name_Id := Get_String
         (Get_Language_From_File
          (Language_Handler (Get_Language_Handler (Viewer.Kernel)),
           File_Name));
+      Color      : Gdk_Color;
+      Value      : Prj.Variable_Value;
+      Is_Default : Boolean;
    begin
       Get_Switches
         (Viewer.Current_Project, Compiler_Package, File_Name,
@@ -506,8 +505,7 @@ package body Project_Viewers is
       File_Name        : VFS.Virtual_File;
       Directory_Filter : String := "")
    is
-      Iter       : Gtk_Tree_Iter;
-
+      Iter : Gtk_Tree_Iter;
    begin
       if Directory_Filter = ""
         or else Dir_Name (File_Name).all = Name_As_Directory (Directory_Filter)
@@ -533,8 +531,8 @@ package body Project_Viewers is
      (Viewer : access Gtk_Widget_Record'Class; Event : Gdk_Event)
       return Boolean
    is
-      V     : constant Project_Viewer := Project_Viewer (Viewer);
-      Iter  : Gtk_Tree_Iter;
+      V    : constant Project_Viewer := Project_Viewer (Viewer);
+      Iter : Gtk_Tree_Iter;
    begin
       if Get_Event_Type (Event) = Gdk_2button_Press
         and then Get_Button (Event) = 1
@@ -676,7 +674,7 @@ package body Project_Viewers is
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      D : constant Context_Hooks_Args := Context_Hooks_Args (Data.all);
+      D     : constant Context_Hooks_Args := Context_Hooks_Args (Data.all);
       Child : constant MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
    begin
       --  Do nothing if we forced the selection change ourselves. For instance,
@@ -706,22 +704,22 @@ package body Project_Viewers is
    ----------------
 
    procedure Initialize
-     (Viewer   : access Project_Viewer_Record'Class;
-      Kernel   : access Kernel_Handle_Record'Class)
+     (Viewer : access Project_Viewer_Record'Class;
+      Kernel : access Kernel_Handle_Record'Class)
    is
       Column_Types : constant GType_Array :=
-        (Base_File_Name_Column     => GType_String,
-         Absolute_File_Name_Column => GType_String,
-         Compiler_Switches_Column  => GType_String,
-         Compiler_Color_Column     => Gdk_Color_Type);
+                       (Base_File_Name_Column     => GType_String,
+                        Absolute_File_Name_Column => GType_String,
+                        Compiler_Switches_Column  => GType_String,
+                        Compiler_Color_Column     => Gdk_Color_Type);
 
-      Scrolled   : Gtk_Scrolled_Window;
-      Col        : Gtk_Tree_View_Column;
-      Render     : Gtk_Cell_Renderer_Text;
-      Col_Number : Gint;
-      Hook       : Preferences_Hook;
-      Hook2      : Project_View_Hook;
-      Hook3      : Context_Hook;
+      Scrolled     : Gtk_Scrolled_Window;
+      Col          : Gtk_Tree_View_Column;
+      Render       : Gtk_Cell_Renderer_Text;
+      Col_Number   : Gint;
+      Hook         : Preferences_Hook;
+      Hook2        : Project_View_Hook;
+      Hook3        : Context_Hook;
       pragma Unreferenced (Col_Number);
    begin
       Gtk.Box.Initialize_Hbox (Viewer);
@@ -800,7 +798,7 @@ package body Project_Viewers is
    -------------
 
    procedure Execute
-     (Hook : Preferences_Hook_Record;
+     (Hook   : Preferences_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Kernel);
@@ -819,8 +817,8 @@ package body Project_Viewers is
       Project_Filter   : Project_Type;
       Directory_Filter : String := "")
    is
-      Files : File_Array_Access := Get_Source_Files
-        (Project_Filter, Recursive => False);
+      Files : File_Array_Access :=
+                Get_Source_Files (Project_Filter, Recursive => False);
    begin
       Viewer.Current_Project := Project_Filter;
 
@@ -840,9 +838,9 @@ package body Project_Viewers is
       Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
+      Context : constant Selection_Context := Get_Current_Context (Kernel);
       Child   : GPS_MDI_Child;
       Viewer  : Project_Viewer;
-      Context : constant Selection_Context := Get_Current_Context (Kernel);
 
    begin
       Child := GPS_MDI_Child (Find_MDI_Child_By_Tag
@@ -888,8 +886,7 @@ package body Project_Viewers is
       Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Context : constant Selection_Context :=
-        Get_Current_Context (Kernel);
+      Context : constant Selection_Context := Get_Current_Context (Kernel);
       Project : Project_Type;
 
    begin
@@ -956,7 +953,7 @@ package body Project_Viewers is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
       Open_File_Editor
         (Kernel, Project_Path (Project_Information (Context.Context)));
@@ -976,9 +973,9 @@ package body Project_Viewers is
       Menu         : Gtk.Menu.Gtk_Menu)
    is
       pragma Unreferenced (Event_Widget, Kernel);
-      V       : constant Project_Viewer := Project_Viewer (Object);
-      Item    : Gtk_Menu_Item;
-      Iter    : Gtk_Tree_Iter;
+      V    : constant Project_Viewer := Project_Viewer (Object);
+      Item : Gtk_Menu_Item;
+      Iter : Gtk_Tree_Iter;
 
    begin
       --  ??? Should call Project_Editor_Contextual
@@ -1085,11 +1082,10 @@ package body Project_Viewers is
    --------------------
 
    function Widget_Factory
-     (Page : access Switches_Editor_Record;
-      Project : Project_Type;
+     (Page         : access Switches_Editor_Record;
+      Project      : Project_Type;
       Full_Project : String;
-      Kernel : access Kernel_Handle_Record'Class)
-      return Gtk_Widget
+      Kernel       : access Kernel_Handle_Record'Class) return Gtk_Widget
    is
       pragma Unreferenced (Page, Full_Project);
       Switches : Switches_Editors.Switches_Edit;
@@ -1112,14 +1108,13 @@ package body Project_Viewers is
    --------------------
 
    function Project_Editor
-     (Page         : access Switches_Editor_Record;
-      Project      : Project_Type;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Widget       : access Gtk_Widget_Record'Class;
-      Languages    : GNAT.Strings.String_List;
+     (Page               : access Switches_Editor_Record;
+      Project            : Project_Type;
+      Kernel             : access Kernel_Handle_Record'Class;
+      Widget             : access Gtk_Widget_Record'Class;
+      Languages          : GNAT.Strings.String_List;
       Scenario_Variables : Scenario_Variable_Array;
-      Ref_Project  : Project_Type)
-      return Boolean
+      Ref_Project        : Project_Type) return Boolean
    is
       pragma Unreferenced (Kernel, Page, Ref_Project);
    begin
@@ -1142,10 +1137,10 @@ package body Project_Viewers is
    -------------
 
    procedure Refresh
-     (Page         : access Switches_Editor_Record;
-      Widget       : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Project      : Project_Type := No_Project;
-      Languages    : GNAT.Strings.String_List)
+     (Page      : access Switches_Editor_Record;
+      Widget    : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Project   : Project_Type := No_Project;
+      Languages : GNAT.Strings.String_List)
    is
       pragma Unreferenced (Page, Project);
    begin
@@ -1189,14 +1184,13 @@ package body Project_Viewers is
    --------------------
 
    function Project_Editor
-     (Page         : access Naming_Editor_Record;
-      Project      : Project_Type;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Widget       : access Gtk_Widget_Record'Class;
-      Languages    : GNAT.Strings.String_List;
+     (Page               : access Naming_Editor_Record;
+      Project            : Project_Type;
+      Kernel             : access Kernel_Handle_Record'Class;
+      Widget             : access Gtk_Widget_Record'Class;
+      Languages          : GNAT.Strings.String_List;
       Scenario_Variables : Scenario_Variable_Array;
-      Ref_Project  : Project_Type)
-      return Boolean
+      Ref_Project        : Project_Type) return Boolean
    is
       pragma Unreferenced (Page, Kernel, Ref_Project);
    begin
@@ -1218,10 +1212,10 @@ package body Project_Viewers is
    -------------
 
    procedure Refresh
-     (Page         : access Naming_Editor_Record;
-      Widget       : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Project      : Project_Type := No_Project;
-      Languages    : GNAT.Strings.String_List) is
+     (Page      : access Naming_Editor_Record;
+      Widget    : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Project   : Project_Type := No_Project;
+      Languages : GNAT.Strings.String_List) is
    begin
       Set_Visible_Pages
         (Naming_Editor (Widget), Page.Kernel, Languages, Project);
@@ -1234,12 +1228,16 @@ package body Project_Viewers is
    procedure Project_Static_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Kernel     : constant Kernel_Handle := Get_Kernel (Data);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Data);
 
       function Remove_Redundant_Directories
         (Old_Path, New_Path : String) return String;
       --  Return New_Path after having removed the directories that have been
       --  found on Old_Path.
+
+      ----------------------------------
+      -- Remove_Redundant_Directories --
+      ----------------------------------
 
       function Remove_Redundant_Directories
         (Old_Path, New_Path : String) return String
@@ -1326,8 +1324,8 @@ package body Project_Viewers is
    procedure Project_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Kernel     : constant Kernel_Handle := Get_Kernel (Data);
-      Project    : constant Project_Type := Get_Data (Data, 1);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Data);
+      Project : constant Project_Type := Get_Data (Data, 1);
 
       procedure Set_Error_Tmp (Str : String);
       --  Set an error
@@ -1599,11 +1597,11 @@ package body Project_Viewers is
    ----------------------------------
 
    procedure Register_Project_Editor_Page
-     (Kernel : access Kernel_Handle_Record'Class;
-      Page   : Project_Editor_Page;
-      Label  : String;
-      Toc    : String;
-      Title  : String;
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Page      : Project_Editor_Page;
+      Label     : String;
+      Toc       : String;
+      Title     : String;
       Flags     : Selector_Flags := Multiple_Projects or Multiple_Scenarios;
       Ref_Page  : String := "";
       Add_After : Boolean := True)
@@ -1728,8 +1726,8 @@ package body Project_Viewers is
       Num    : Positive)
       return Switches_Editors.Switches_Editor_Page
    is
-      Pages  : constant Page_Array_Access :=
-        Prj_Editor_Module_ID.Switches_Pages;
+      Pages : constant Page_Array_Access :=
+                Prj_Editor_Module_ID.Switches_Pages;
    begin
       if Pages = null or else Num not in Pages'Range then
          return null;
@@ -1797,13 +1795,14 @@ package body Project_Viewers is
       Creator  : Naming_Scheme_Editor_Creator)
    is
       pragma Unreferenced (Kernel);
-      Tmp : Naming_Pages_Array_Access;
+      Tmp  : Naming_Pages_Array_Access;
       Lang : constant Name_Id := Get_String (To_Lower (Language));
    begin
       if Prj_Editor_Module_ID /= null then
          if Prj_Editor_Module_ID.Naming_Pages = null then
             Prj_Editor_Module_ID.Naming_Pages :=
               new Naming_Pages_Array'(1 => (Lang, Creator));
+
          else
             Tmp := Prj_Editor_Module_ID.Naming_Pages;
             Prj_Editor_Module_ID.Naming_Pages := new Naming_Pages_Array'
@@ -1841,12 +1840,12 @@ package body Project_Viewers is
    --------------------------
 
    procedure Parsing_Switches_XML
-     (Kernel : access Kernel_Handle_Record'Class;
-      Page   : Switches_Editor_Page;
-      Table  : access Gtk_Table_Record'Class;
-      Lines  : Natural;
-      Cols   : Natural;
-      Node   : Node_Ptr;
+     (Kernel            : access Kernel_Handle_Record'Class;
+      Page              : Switches_Editor_Page;
+      Table             : access Gtk_Table_Record'Class;
+      Lines             : Natural;
+      Cols              : Natural;
+      Node              : Node_Ptr;
       Default_Separator : String)
    is
       type Frame_Array is array (1 .. Lines, 1 .. Cols) of Gtk_Frame;
@@ -1923,10 +1922,10 @@ package body Project_Viewers is
 
       procedure Process_Title_Node (N : Node_Ptr) is
          Line, Col : Natural;
-         Line_Span : constant Integer := Safe_Value
-           (Get_Attribute (N, "line-span", "1"));
-         Col_Span : constant Integer := Safe_Value
-           (Get_Attribute (N, "column-span", "1"));
+         Line_Span : constant Integer :=
+                       Safe_Value (Get_Attribute (N, "line-span", "1"));
+         Col_Span  : constant Integer :=
+                       Safe_Value (Get_Attribute (N, "column-span", "1"));
       begin
          Coordinates_From_Node (N, Line, Col);
          Set_Label (Frames (Line, Col), N.Value.all);
@@ -1957,9 +1956,9 @@ package body Project_Viewers is
          Slave_Page    : constant String := Get_Attribute (N, "slave-page");
          Slave_Switch  : constant String := Get_Attribute (N, "slave-switch");
          Master_Status : constant String :=
-           Get_Attribute (N, "master-status", "true");
+                           Get_Attribute (N, "master-status", "true");
          Slave_Status  : constant String :=
-           Get_Attribute (N, "slave-status", "true");
+                           Get_Attribute (N, "slave-status", "true");
       begin
          if Master_Page = ""
            or else Master_Switch = ""
@@ -1991,7 +1990,7 @@ package body Project_Viewers is
       function Process_Radio_Entry_Nodes
         (Parent : Node_Ptr) return Radio_Switch_Array
       is
-         N : Node_Ptr := Parent.Child;
+         N            : Node_Ptr := Parent.Child;
          Num_Children : Natural := 0;
       begin
          while N /= null loop
@@ -2011,9 +2010,9 @@ package body Project_Viewers is
                end loop;
 
                declare
-                  Label   : constant String := Get_Attribute (N, "label");
-                  Switch  : constant String := Get_Attribute (N, "switch");
-                  Tip     : constant String := Get_Attribute (N, "tip");
+                  Label  : constant String := Get_Attribute (N, "label");
+                  Switch : constant String := Get_Attribute (N, "switch");
+                  Tip    : constant String := Get_Attribute (N, "tip");
                begin
                   if Label = "" then
                      Insert
@@ -2048,7 +2047,7 @@ package body Project_Viewers is
       function Process_Combo_Entry_Nodes
         (Parent : Node_Ptr) return Combo_Switch_Array
       is
-         N : Node_Ptr := Parent.Child;
+         N            : Node_Ptr := Parent.Child;
          Num_Children : Natural := 0;
       begin
          while N /= null loop
@@ -2112,10 +2111,10 @@ package body Project_Viewers is
          Line, Col : Natural;
          Label     : constant String := Get_Attribute (N, "label");
          Table     : Gtk_Table;
-         Lines : constant Integer :=
-           Safe_Value (Get_Attribute (N, "lines", "1"));
-         Cols  : constant Integer :=
-           Safe_Value (Get_Attribute (N, "columns", "1"));
+         Lines     : constant Integer :=
+                       Safe_Value (Get_Attribute (N, "lines", "1"));
+         Cols      : constant Integer :=
+                       Safe_Value (Get_Attribute (N, "columns", "1"));
       begin
          Coordinates_From_Node (N, Line, Col);
          if Label = "" then
@@ -2147,7 +2146,7 @@ package body Project_Viewers is
          No_Switch : constant String := Get_Attribute (N, "noswitch");
          No_Digit  : constant String := Get_Attribute (N, "nodigit");
          Sep       : constant String :=
-           Get_Attribute (N, "separator", Default_Separator);
+                       Get_Attribute (N, "separator", Default_Separator);
       begin
          Coordinates_From_Node (N, Line, Col);
 
@@ -2186,11 +2185,11 @@ package body Project_Viewers is
          Switch  : constant String := Get_Attribute (N, "switch");
          Tip     : constant String := Get_Attribute (N, "tip");
          As_Dir  : constant Boolean :=
-           Get_Attribute (N, "as-directory", "false") = "true";
+                       Get_Attribute (N, "as-directory", "false") = "true";
          As_File : constant Boolean :=
-           Get_Attribute (N, "as-file", "false") = "true";
+                       Get_Attribute (N, "as-file", "false") = "true";
          Sep     : constant String :=
-           Get_Attribute (N, "separator", Default_Separator);
+                       Get_Attribute (N, "separator", Default_Separator);
       begin
          Coordinates_From_Node (N, Line, Col);
 
@@ -2220,17 +2219,17 @@ package body Project_Viewers is
 
       procedure Process_Spin_Node  (N : Node_Ptr) is
          Line, Col : Natural;
-         Label   : constant String := Get_Attribute (N, "label");
-         Switch  : constant String := Get_Attribute (N, "switch");
-         Tip     : constant String := Get_Attribute (N, "tip");
-         Min     : constant Integer := Safe_Value
-           (Get_Attribute (N, "min", "1"));
-         Max     : constant Integer := Safe_Value
-           (Get_Attribute (N, "max", "1"));
-         Default : constant Integer := Safe_Value
-           (Get_Attribute (N, "default", "1"));
-         Sep     : constant String :=
-           Get_Attribute (N, "separator", Default_Separator);
+         Label     : constant String := Get_Attribute (N, "label");
+         Switch    : constant String := Get_Attribute (N, "switch");
+         Tip       : constant String := Get_Attribute (N, "tip");
+         Min       : constant Integer :=
+                      Safe_Value (Get_Attribute (N, "min", "1"));
+         Max       : constant Integer :=
+                       Safe_Value (Get_Attribute (N, "max", "1"));
+         Default   : constant Integer :=
+                       Safe_Value (Get_Attribute (N, "default", "1"));
+         Sep       : constant String :=
+                       Get_Attribute (N, "separator", Default_Separator);
       begin
          Coordinates_From_Node (N, Line, Col);
 
@@ -2257,9 +2256,9 @@ package body Project_Viewers is
 
       procedure Process_Check_Node (N : Node_Ptr) is
          Line, Col : Natural;
-         Label   : constant String := Get_Attribute (N, "label");
-         Switch  : constant String := Get_Attribute (N, "switch");
-         Tip     : constant String := Get_Attribute (N, "tip");
+         Label     : constant String := Get_Attribute (N, "label");
+         Switch    : constant String := Get_Attribute (N, "switch");
+         Tip       : constant String := Get_Attribute (N, "tip");
       begin
          Coordinates_From_Node (N, Line, Col);
 
@@ -2283,9 +2282,9 @@ package body Project_Viewers is
       ----------------------------
 
       procedure Process_Expansion_Node (N : Node_Ptr) is
-         Switch : constant String := Get_Attribute (N, "switch");
-         Alias  : constant String := Get_Attribute (N, "alias");
-         N2 : Node_Ptr := N.Child;
+         Switch       : constant String := Get_Attribute (N, "switch");
+         Alias        : constant String := Get_Attribute (N, "alias");
+         N2           : Node_Ptr := N.Child;
          Num_Children : Natural := 0;
       begin
          if Switch = "" then
@@ -2396,15 +2395,16 @@ package body Project_Viewers is
       Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Switches_Editors.Switches_Editor_Page
    is
-      Lines : constant Integer :=
-        Safe_Value (Get_Attribute (Creator.XML_Node, "lines", "1"));
-      Cols : constant Integer :=
-        Safe_Value (Get_Attribute (Creator.XML_Node, "columns", "1"));
+      Lines             : constant Integer := Safe_Value
+        (Get_Attribute (Creator.XML_Node, "lines", "1"));
+      Cols              : constant Integer := Safe_Value
+        (Get_Attribute (Creator.XML_Node, "columns", "1"));
       Default_Separator : constant String :=
-        Get_Attribute (Creator.XML_Node, "separator", "");
-      Page : Switches_Editor_Page;
-      Tool : constant Tool_Properties_Record :=
-        Get_Tool_Properties (Kernel, Creator.Tool_Name.all);
+                            Get_Attribute (Creator.XML_Node, "separator", "");
+      Page              : Switches_Editor_Page;
+      Tool              : constant Tool_Properties_Record :=
+                            Get_Tool_Properties
+                              (Kernel, Creator.Tool_Name.all);
    begin
       Gtk_New (Page, Kernel, Creator.Tool_Name.all,
                Tool.Project_Package.all,
@@ -2467,8 +2467,8 @@ package body Project_Viewers is
    is
       pragma Unreferenced (Level, File);
       N2, Child : Node_Ptr;
-      Creator : XML_Switches;
-      Valid : Boolean;
+      Creator   : XML_Switches;
+      Valid     : Boolean;
    begin
       if Node.Tag.all = "tool" then
          declare
