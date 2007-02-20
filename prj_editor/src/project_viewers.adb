@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                     Copyright (C) 2001-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1235,6 +1235,62 @@ package body Project_Viewers is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Kernel     : constant Kernel_Handle := Get_Kernel (Data);
+
+      function Remove_Redundant_Directories
+        (Old_Path, New_Path : String) return String;
+      --  Return New_Path after having removed the directories that have been
+      --  found on Old_Path.
+
+      function Remove_Redundant_Directories
+        (Old_Path, New_Path : String) return String
+      is
+         Returned_Path        : String (1 .. New_Path'Length);
+         Returned_Path_Length : Integer := 0;
+         New_It               : Path_Iterator := Start (New_Path);
+         Old_It               : Path_Iterator;
+         Found                : Boolean;
+      begin
+         while not At_End (New_Path, New_It) loop
+            Old_It := Start (Old_Path);
+
+            Found := False;
+
+            declare
+               New_Path_Item : constant String := Current (New_Path, New_It);
+            begin
+               while not At_End (Old_Path, Old_It) loop
+                  if Current (Old_Path, Old_It) = New_Path_Item then
+                     Found := True;
+                     exit;
+                  end if;
+
+                  Old_It := Next (Old_Path, Old_It);
+               end loop;
+
+               if not Found then
+                  if Returned_Path_Length /= 0 then
+                     Returned_Path (Returned_Path_Length + 1) :=
+                       GNAT.OS_Lib.Path_Separator;
+
+                     Returned_Path_Length := Returned_Path_Length + 1;
+                  end if;
+
+                  Returned_Path
+                    (Returned_Path_Length + 1
+                     .. Returned_Path_Length + New_Path_Item'Length) :=
+                    New_Path_Item;
+
+                  Returned_Path_Length := Returned_Path_Length
+                    + New_Path_Item'Length;
+               end if;
+            end;
+
+            New_It := Next (New_Path, New_It);
+         end loop;
+
+         return Returned_Path (1 .. Returned_Path_Length);
+      end Remove_Redundant_Directories;
+
    begin
       if Command = "add_predefined_paths" then
          Name_Parameters (Data, Add_Predefined_Parameters);
@@ -1243,8 +1299,10 @@ package body Project_Viewers is
               Get_Predefined_Source_Path (Get_Registry (Kernel).all);
             Old_Obj : constant String :=
               Get_Predefined_Object_Path (Get_Registry (Kernel).all);
-            New_Src : constant String := Nth_Arg (Data, 1, "");
-            New_Obj : constant String := Nth_Arg (Data, 2, "");
+            New_Src : constant String :=
+              Remove_Redundant_Directories (Old_Src, Nth_Arg (Data, 1, ""));
+            New_Obj : constant String :=
+              Remove_Redundant_Directories (Old_Obj, Nth_Arg (Data, 2, ""));
          begin
             if New_Src /= "" then
                Set_Predefined_Source_Path
@@ -1271,17 +1329,17 @@ package body Project_Viewers is
       Kernel     : constant Kernel_Handle := Get_Kernel (Data);
       Project    : constant Project_Type := Get_Data (Data, 1);
 
-      procedure Set_Error (Str : String);
+      procedure Set_Error_Tmp (Str : String);
       --  Set an error
 
       ---------------
       -- Set_Error --
       ---------------
 
-      procedure Set_Error (Str : String) is
+      procedure Set_Error_Tmp (Str : String) is
       begin
          Set_Error_Msg (Data, Str);
-      end Set_Error;
+      end Set_Error_Tmp;
 
    begin
       if Command = "add_main_unit" then
@@ -1315,7 +1373,7 @@ package body Project_Viewers is
                Project       => Project,
                New_Name      => Name,
                New_Path      => Create (Path),
-               Report_Errors => Set_Error'Unrestricted_Access);
+               Report_Errors => Set_Error_Tmp'Unrestricted_Access);
             Run_Hook (Kernel, Project_Changed_Hook);
          end;
 
@@ -1343,7 +1401,7 @@ package body Project_Viewers is
               (Root_Project              => Get_Project (Kernel),
                Project                   => Project,
                Imported_Project_Location => Create (Project2),
-               Report_Errors             => Set_Error'Unrestricted_Access,
+               Report_Errors             => Set_Error_Tmp'Unrestricted_Access,
                Use_Relative_Path         => Relative);
          end;
 
