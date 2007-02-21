@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2006                      --
+--                      Copyright (C) 2000-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -27,6 +27,7 @@ with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with Glib.Convert;             use Glib.Convert;
 with Glib.Object;              use Glib.Object;
 with Glib.Properties;          use Glib.Properties;
+with Glib.Unicode;             use Glib.Unicode;
 with Glib.Values;              use Glib.Values;
 
 with Gdk.Color;                use Gdk.Color;
@@ -38,6 +39,7 @@ with Gdk.Keyval;               use Gdk.Keyval;
 with Gdk.Main;                 use Gdk.Main;
 with Gdk.Pixbuf;               use Gdk.Pixbuf;
 with Gdk.Pixmap;               use Gdk.Pixmap;
+with Gdk.Screen;               use Gdk.Screen;
 with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
 with Gdk.Types;                use Gdk.Types;
 with Gdk.Window;               use Gdk.Window;
@@ -83,6 +85,7 @@ with Gtk.Widget;               use Gtk.Widget;
 
 with Gtkada.Handlers;          use Gtkada.Handlers;
 
+with Pango.Context;            use Pango.Context;
 with Pango.Enums;              use Pango.Enums;
 with Pango.Font;               use Pango.Font;
 with Pango.Layout;             use Pango.Layout;
@@ -826,6 +829,16 @@ package body GUI_Utils is
       GC            : Gdk_GC;
       Layout        : Pango_Layout;
       Width, Height : Gint;
+      Line_Height   : Gint;
+      Font_Rec      : Pango_Font;
+      Font_Metrics  : Pango_Font_Metrics;
+      Max_Height    : Gint;
+      Max_Lines     : Gint;
+      Nb_Lines      : Gint;
+      Last          : Natural;
+      Ellipsis      : String (1 .. 6);
+      Ellipsis_Last : Integer;
+
    begin
       if Text = "" then
          Pixmap := null;
@@ -835,17 +848,56 @@ package body GUI_Utils is
       Gdk_New (GC, Get_Window (Widget));
       Set_Foreground (GC, Bg_Color);
 
-      if Use_Markup then
-         Layout := Create_Pango_Layout (Widget, "");
-         Set_Markup (Layout, Text);
-      else
-         Layout := Create_Pango_Layout (Widget, Text);
-      end if;
+      Layout := Create_Pango_Layout (Widget);
       Set_Font_Description (Layout, Font);
+
+      --  First, we will ensure that the tooltip is not greater than the screen
+      --  height: this could lead to X11 error and violent crash (G221-010)
+
+      --  We determine a line's height
+      Font_Rec := Load_Font (Get_Pango_Context (Widget), Font);
+      Font_Metrics := Get_Metrics (Font_Rec);
+
+      Line_Height := (Pango.Font.Get_Ascent (Font_Metrics) +
+                        Pango.Font.Get_Descent (Font_Metrics)) / 1024;
+      --  ??? 1024 is PANGO_SCALE. We should retrieve it from C macro.
+
+      Pango.Font.Unref (Font_Metrics);
+      Unref (Font_Rec);
+
+      --  We retrieve the screen's height
+      Max_Height := Gdk.Screen.Get_Height (Gdk.Screen.Get_Default);
+
+      --  And then we determine the maximum number of lines in the tooltip.
+      Max_Lines := Max_Height / Line_Height - 1;
+
+      Nb_Lines := 1;
+      Ellipsis_Last := Ellipsis'First - 1;
+      for J in Text'Range loop
+         if Text (J) = ASCII.LF then
+            Nb_Lines := Nb_Lines + 1;
+
+            if Nb_Lines = Max_Lines then
+               Last := J;
+               Unichar_To_UTF8 (8230, Ellipsis, Ellipsis_Last);
+               exit;
+            end if;
+         end if;
+
+         Last := J;
+      end loop;
 
       if Wrap_Width /= -1 then
          Set_Wrap (Layout, Pango_Wrap_Char);
          Set_Width (Layout, Wrap_Width * Pango_Scale);
+      end if;
+
+      if Use_Markup then
+         Set_Markup (Layout, Text (Text'First .. Last) &
+                     Ellipsis (1 .. Ellipsis_Last));
+      else
+         Set_Text (Layout, Text (Text'First .. Last) &
+                   Ellipsis (1 .. Ellipsis_Last));
       end if;
 
       Get_Pixel_Size (Layout, Width, Height);
@@ -1340,7 +1392,9 @@ package body GUI_Utils is
    function Query_User
      (Parent        : Gtk.Window.Gtk_Window;
       Prompt        : String;
-      Password_Mode : Boolean) return String
+      Password_Mode : Boolean;
+      Urgent        : Boolean := True;
+      Default       : String := "") return String
    is
       Dialog : Gtk_Dialog;
       Button : Gtk_Widget;
@@ -1362,6 +1416,7 @@ package body GUI_Utils is
       if Password_Mode then
          Set_Visibility (GEntry, Visible => False);
       end if;
+      Set_Text (GEntry, Default);
 
       Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
       Grab_Default (Button);
@@ -1370,7 +1425,11 @@ package body GUI_Utils is
       Show_All (Dialog);
       --  Make sure the dialog is presented to the user.
       Present (Dialog);
-      Set_Urgency_Hint (Dialog, True);
+
+      if Urgent then
+         Set_Urgency_Hint (Dialog, True);
+      end if;
+
       Set_Keep_Above (Dialog, True);
 
       if Run (Dialog) = Gtk_Response_OK then
