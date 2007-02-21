@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 4.1.0
 
+- G216-042 Very large clipboard data prevents GPS from starting.
+  Problem:    When a very large amount of data is present in GPS's clipboard
+              during exit, GPS won't be able to start the next time.
+  Workaround: Remove the .gps/clipboard.xml file.
+
 - G216-026 Outline View tooltips appearing outside of Outline View.
   Problem:    When the Outline View tooltips are enabled, it is possible that
               outline view tooltips appear even when the mouse pointer is out
