@@ -1357,11 +1357,7 @@ package body Code_Analysis_Module is
               (List_Lines_Not_Covered_In_File_From_Context'Access),
             Cont_N_Inst);
          if Is_Contextual then
-            Gtk_New (Item, -"Show Analysis Report");
-            Append (Submenu, Item);
-            Context_And_Instance_CB.Connect
-              (Item, "activate", Context_And_Instance_CB.To_Marshaller
-                 (Show_Analysis_Report_From_Context'Access), Cont_N_Inst);
+            Append_Show_Analysis_Report (Cont_N_Inst, Submenu);
          end if;
       else
          Gtk_New (Item, -"Load " &
@@ -1399,11 +1395,7 @@ package body Code_Analysis_Module is
            (Item, "activate", Context_And_Instance_CB.To_Marshaller
               (List_Lines_Not_Covered_In_Project_From_Context'Access),
             Cont_N_Inst);
-         Gtk_New (Item, -"Show Analysis Report");
-         Append (Submenu, Item);
-         Context_And_Instance_CB.Connect
-           (Item, "activate", Context_And_Instance_CB.To_Marshaller
-              (Show_Analysis_Report_From_Context'Access), Cont_N_Inst);
+         Append_Show_Analysis_Report (Cont_N_Inst, Submenu);
       else
          Gtk_New (Item, -"Load full " &
                   Project_Name (Project_Information (Cont_N_Inst.Context)) &
@@ -1474,6 +1466,90 @@ package body Code_Analysis_Module is
       end loop;
    end Dynamic_Tools_Menu_Factory;
 
+   --------------------------------
+   -- Dynamic_Views_Menu_Factory --
+   --------------------------------
+
+   procedure Dynamic_Views_Menu_Factory
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Context : Selection_Context;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      use Code_Analysis_Class_Instance_Sets;
+
+      procedure Has_Coverage_Information
+        (Cont_N_Inst : Context_And_Instance;
+         Property    : Code_Analysis_Property_Record;
+         Menu        : access Gtk.Menu.Gtk_Menu_Record'Class);
+      --  Check if coverage informations are stored in the given Instance and
+      --  and fills the given Gtk_Menu with different contents following the
+      --  case
+
+      ------------------------------
+      -- Has_Coverage_Information --
+      ------------------------------
+
+      procedure Has_Coverage_Information
+        (Cont_N_Inst : Context_And_Instance;
+         Property    : Code_Analysis_Property_Record;
+         Menu        : access Gtk.Menu.Gtk_Menu_Record'Class)
+      is
+         Project_Node : Code_Analysis.Project_Access;
+         Item         : Gtk_Menu_Item;
+      begin
+         Project_Node := Get_Or_Create
+           (Property.Projects, Project_Information (Cont_N_Inst.Context));
+
+         if Project_Node.Analysis_Data.Coverage_Data /= null then
+            Append_Show_Analysis_Report (Cont_N_Inst, Menu);
+         else
+            Gtk_New (Item, -"You should load information in this coverage" &
+                     " instance using the Tools/Coverage menu before.");
+            Append (Menu, Item);
+         end if;
+      end Has_Coverage_Information;
+
+      Cont_N_Inst : Context_And_Instance;
+      Property    : Code_Analysis_Property_Record;
+      Submenu     : Gtk_Menu;
+      Item        : Gtk_Menu_Item;
+      Cur         : Cursor := Code_Analysis_Module_ID.Instances.First;
+   begin
+
+      if Context = No_Context then
+         Cont_N_Inst.Context := Get_Current_Context (Kernel);
+      else
+         Cont_N_Inst.Context := Context;
+      end if;
+
+      if Cur = No_Element then
+         Gtk_New (Item, -"You should create a coverage instance using the" &
+                  " Tools/Coverage menu before.");
+         Append (Menu, Item);
+         return;
+      end if;
+
+      loop
+         exit when Cur = No_Element;
+            Cont_N_Inst.Instance := Element (Cur);
+            Property             := Code_Analysis_Property_Record
+              (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
+
+         if Code_Analysis_Module_ID.Instances.Length > 1 then
+            Gtk_New (Item, -(Property.Instance_Name.all));
+            Append (Menu, Item);
+            Gtk_New (Submenu);
+            Set_Submenu (Item, Submenu);
+            Set_Sensitive (Item, True);
+            Has_Coverage_Information (Cont_N_Inst, Property, Submenu);
+         else
+            Has_Coverage_Information (Cont_N_Inst, Property, Menu);
+         end if;
+
+         Next (Cur);
+      end loop;
+   end Dynamic_Views_Menu_Factory;
+
    -----------------------
    -- Append_To_Submenu --
    -----------------------
@@ -1497,6 +1573,23 @@ package body Code_Analysis_Module is
          end;
       end if;
    end Append_To_Submenu;
+
+   ---------------------------------
+   -- Append_Show_Analysis_Report --
+   ---------------------------------
+
+   procedure Append_Show_Analysis_Report
+     (Cont_N_Inst  : Context_And_Instance;
+      Submenu      : access Gtk_Menu_Record'Class)
+   is
+      Item : Gtk_Menu_Item;
+   begin
+      Gtk_New (Item, -"Show Analysis Report");
+      Append (Submenu, Item);
+      Context_And_Instance_CB.Connect
+        (Item, "activate", Context_And_Instance_CB.To_Marshaller
+           (Show_Analysis_Report_From_Context'Access), Cont_N_Inst);
+   end Append_Show_Analysis_Report;
 
    ---------------------------
    -- Less_Case_Insensitive --
@@ -1580,6 +1673,13 @@ package body Code_Analysis_Module is
          Ref_Item    => -"Documentation",
          Add_Before  => False,
          Factory     => Dynamic_Tools_Menu_Factory'Access);
+      Register_Dynamic_Menu
+        (Kernel      => Kernel,
+         Parent_Path => '/' & (-"Tools" & ('/' & (-"Views"))),
+         Text        => -"Covera_ge",
+         Ref_Item    => -"Clipboard",
+         Add_Before  => False,
+         Factory     => Dynamic_Views_Menu_Factory'Access);
       Register_Module
         (Module      => Code_Analysis_Module_ID,
          Kernel      => Kernel,
