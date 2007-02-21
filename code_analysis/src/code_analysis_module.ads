@@ -190,6 +190,11 @@ private
    --  Allows to fill the given Submenu, in the appropriate order for Tools
    --  menu
 
+   procedure Append_Show_Analysis_Report
+     (Cont_N_Inst  : Context_And_Instance;
+      Submenu      : access Gtk_Menu_Record'Class);
+   --  Actually fills the given Submenu, with the "Show Analysis Report" entry
+
    procedure Append_File_Menu_Entries
      (Cont_N_Inst   : Context_And_Instance;
       Submenu       : access Gtk_Menu_Record'Class;
@@ -211,8 +216,17 @@ private
      (Kernel  : access Kernel_Handle_Record'Class;
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
-   --  Determines wether we add entries directly in the menu, or in a
-   --  generated submenu. Submenus are created if many instances are loaded
+   --  Determines wether we add entries directly in the "Tools/Coverage" menu,
+   --  or in a generated submenu. Submenus are created if many instances are
+   --  loaded
+
+   procedure Dynamic_Views_Menu_Factory
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Context : Selection_Context;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
+   --  Determines wether we add entries directly in the "Tools/Views/Coverage"
+   --  menu, or in a generated submenu. Submenus are created if many instances
+   --  are loaded
 
    Code_Analysis_Cst_Str : constant String := "CodeAnalysis";
    Coverage_Category     : constant Glib.UTF8_String := -"Lines not covered";
