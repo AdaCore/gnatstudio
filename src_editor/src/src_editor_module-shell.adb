@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2006                      --
+--                      Copyright (C) 2005-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -3051,7 +3051,7 @@ package body Src_Editor_Module.Shell is
       Register_Command
         (Kernel, Constructor_Method, 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "get", 0, 2, Buffer_Cmds'Access, EditorBuffer, True);
+        (Kernel, "get", 0, 3, Buffer_Cmds'Access, EditorBuffer, True);
       Register_Command
         (Kernel, "list", 0, 0, Buffer_Cmds'Access, EditorBuffer, True);
       Register_Command
