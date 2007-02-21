@@ -1469,10 +1469,11 @@ package body GPS.Kernel.Modules is
       Add_Before  : Boolean := True;
       Factory     : Dynamic_Menu_Factory)
    is
-      Item  : Gtk_Menu_Item;
-      Image : Gtk_Image_Menu_Item;
-      Pix   : Gtk_Image;
-      Menu  : Gtk_Menu;
+      Item, Parent, Pred : Gtk_Menu_Item;
+      Image              : Gtk_Image_Menu_Item;
+      Pix                : Gtk_Image;
+      Menu, Parent_Menu  : Gtk_Menu;
+      Index              : Gint;
 
    begin
       if Stock_Image = "" then
@@ -1484,17 +1485,39 @@ package body GPS.Kernel.Modules is
          Item := Gtk_Menu_Item (Image);
       end if;
 
-      Item := Find_Or_Create_Menu_Tree
-        (Menu_Bar     => GPS_Window (Kernel.Main_Window).Menu_Bar,
-         Menu         => null,
-         Path         => Name_As_Directory (Parent_Path, UNIX),
-         Accelerators => Get_Default_Accelerators (Kernel),
-         Add_Before   => Add_Before,
-         Ref_Item     => Ref_Item,
-         Allow_Create => True);
-
       Gtk_New (Menu);
       Set_Submenu (Item, Menu);
+
+      Parent := Find_Or_Create_Menu_Tree
+        (Menu_Bar      => GPS_Window (Kernel.Main_Window).Menu_Bar,
+         Menu          => null,
+         Path          => Name_As_Directory (Parent_Path, UNIX),
+         Accelerators  => Get_Default_Accelerators (Kernel),
+         Add_Before    => Add_Before,
+         Ref_Item      => Ref_Item,
+         Allow_Create => True);
+
+      if Parent = null then
+         Trace (Me, "Register_Dynamic_Menu: Parent menu not found for " &
+                Parent_Path);
+         Parent_Menu := null;
+      else
+         Parent_Menu := Gtk_Menu (Get_Submenu (Parent));
+         if Parent_Menu = null then
+            Gtk_New (Parent_Menu);
+            Set_Submenu (Parent, Parent_Menu);
+         end if;
+      end if;
+
+      Find_Menu_Item_By_Name
+        (GPS_Window (Kernel.Main_Window).Menu_Bar,
+         Parent_Menu, Ref_Item, Pred, Index, False);
+      Add_Menu (Parent     => Parent_Menu,
+                Menu_Bar   => GPS_Window (Kernel.Main_Window).Menu_Bar,
+                Item       => Item,
+                Index      => Index,
+                Add_Before => Add_Before);
+      Show_All (Item);
 
       if Factory /= null then
          Menu_Factory_Callback.Connect
