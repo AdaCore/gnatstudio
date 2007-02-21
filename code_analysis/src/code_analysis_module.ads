@@ -164,25 +164,55 @@ private
       Object  : access Glib.Object.GObject_Record'Class;
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
-   --  Determine wether we add entries directly in the menu, or in a generated
-   --  submenu. Submenus are created if many instances are loaded
-   --  See Append_Submenu
+   --  Determines wether we add entries directly in the contextual menu, or in
+   --  a generated submenu. Submenus are created if many instances are loaded
 
    type Context_And_Instance is record
-      Context       : Selection_Context;
-      Instance      : Class_Instance;
+      Context  : Selection_Context;
+      Instance : Class_Instance;
    end record;
-
-   procedure Append_Submenu
-     (C            : Context_And_Instance;
-      Submenu      : access Gtk_Menu_Record'Class;
-      Project_Node : Project_Access);
-   --  Actually fills the given Submenu with the appropriate coverage action
-   --  entries (Add/Remove coverage annotations, Show coverage report, ...)
 
    package Context_And_Instance_CB is new User_Callback
      (Glib.Object.GObject_Record, Context_And_Instance);
    --  Used to connect handlers on the global Coverage contextual menu
+
+   procedure Append_To_Contextual_Submenu
+     (Cont_N_Inst  : Context_And_Instance;
+      Submenu      : access Gtk_Menu_Record'Class;
+      Project_Node : Project_Access);
+   --  Allows to fill the given Submenu, in the appropriate order for
+   --  contextual menu
+
+   procedure Append_To_Submenu
+     (Cont_N_Inst  : Context_And_Instance;
+      Submenu      : access Gtk_Menu_Record'Class;
+      Project_Node : Project_Access);
+   --  Allows to fill the given Submenu, in the appropriate order for Tools
+   --  menu
+
+   procedure Append_File_Menu_Entries
+     (Cont_N_Inst   : Context_And_Instance;
+      Submenu       : access Gtk_Menu_Record'Class;
+      File_Node     : File_Access;
+      Is_Contextual : Boolean := True);
+   --  Actually fills the given Submenu with the appropriate coverage action
+   --  entries to handle files (Add/Remove coverage annotations,
+   --  Show coverage report, ...)
+
+   procedure Append_Project_Menu_Entries
+     (Cont_N_Inst  : Context_And_Instance;
+      Submenu      : access Gtk_Menu_Record'Class;
+      Project_Node : Project_Access);
+   --  Actually fills the given Submenu with the appropriate coverage action
+   --  entries to handle projects (Add/Remove coverage annotations,
+   --  Show coverage report, Load full data...)
+
+   procedure Dynamic_Tools_Menu_Factory
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Context : Selection_Context;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
+   --  Determines wether we add entries directly in the menu, or in a
+   --  generated submenu. Submenus are created if many instances are loaded
 
    Code_Analysis_Cst_Str : constant String := "CodeAnalysis";
    Coverage_Category     : constant Glib.UTF8_String := -"Lines not covered";
@@ -198,8 +228,8 @@ private
    --  Create a new instance of Code_Analysis data structure
 
    procedure Add_Gcov_File_Info_From_Context
-     (Widget : access Glib.Object.GObject_Record'Class;
-      C      : Context_And_Instance);
+     (Widget      : access Glib.Object.GObject_Record'Class;
+      Cont_N_Inst : Context_And_Instance);
    --  Looks for a corresponding GCOV file, and adds its node and coverage info
    --  into the current code_analysis structure
 
@@ -217,8 +247,8 @@ private
    --  Add_Gcov_File_Info_From_Context
 
    procedure Add_Gcov_Project_Info_From_Context
-     (Widget : access Glib.Object.GObject_Record'Class;
-      C      : Context_And_Instance);
+     (Widget      : access Glib.Object.GObject_Record'Class;
+      Cont_N_Inst : Context_And_Instance);
    --  Basically do an Add_Gcov_File_Info on every files of the project in
    --  Context
 
@@ -253,8 +283,8 @@ private
    -- Callbacks --
    ---------------
 
-   procedure On_Destroy (Widget : access Glib.Object.GObject_Record'Class;
-                         C      : Context_And_Instance);
+   procedure On_Destroy (Widget      : access Glib.Object.GObject_Record'Class;
+                         Cont_N_Inst : Context_And_Instance);
    --  Callback for the "destroy" signal that cleanly destroy the widget
 
    function On_Double_Click (View  : access Gtk_Widget_Record'Class;
@@ -287,8 +317,8 @@ private
    --  menu entry of a File or Subprogram nodes in a Coverage Report
 
    procedure Add_Coverage_Annotations_From_Context
-     (Widget : access Glib.Object.GObject_Record'Class;
-      C      : Context_And_Instance);
+     (Widget      : access Glib.Object.GObject_Record'Class;
+      Cont_N_Inst : Context_And_Instance);
    --  Add coverage annotations to source file editor
    --  Callback to the global contextual menu entry
    --  "View with coverage annotations"
@@ -303,8 +333,8 @@ private
    --  menu entry of a File or Subprogram nodes in a Coverage Report
 
    procedure Remove_Coverage_Annotations_From_Context
-     (Widget : access Glib.Object.GObject_Record'Class;
-      C      : Context_And_Instance);
+     (Widget      : access Glib.Object.GObject_Record'Class;
+      Cont_N_Inst : Context_And_Instance);
    --  Callback attached to the "Remove coverage annotations" contextual
    --  menu entry of every objects that have File or Subprogram information in
    --  its context
@@ -321,8 +351,8 @@ private
    --  selected Project.
 
    procedure List_Lines_Not_Covered_In_Project_From_Context
-     (Widget : access Glib.Object.GObject_Record'Class;
-      C      : Context_And_Instance);
+     (Widget      : access Glib.Object.GObject_Record'Class;
+      Cont_N_Inst : Context_And_Instance);
    --  Callback of the "List lines not covered" entry of the global "Coverage"
    --  submenu when the Context only contains Project information.
    --  Just call the subprogram List_Lines_Not_Covered_In_File
@@ -334,8 +364,8 @@ private
    --  List_Lines_Not_Covered_In_File.
 
    procedure List_Lines_Not_Covered_In_File_From_Context
-     (Widget : access Glib.Object.GObject_Record'Class;
-      C      : Context_And_Instance);
+     (Widget      : access Glib.Object.GObject_Record'Class;
+      Cont_N_Inst : Context_And_Instance);
    --  Callback of the "List lines not covered" entry of the global "Coverage"
    --  submenu when the Context contains file information.
    --  Just call the List_Lines_Not_Covered_In_File subprogram
@@ -368,7 +398,7 @@ private
    --  Fill the Gtk_Tree_Store with only on level of subprograms
 
    procedure Show_Analysis_Report_From_Context
-     (Widget : access Glib.Object.GObject_Record'Class;
-      C      : Context_And_Instance);
+     (Widget      : access Glib.Object.GObject_Record'Class;
+      Cont_N_Inst : Context_And_Instance);
    --  Contextual menu callback that call Show_Report
 end Code_Analysis_Module;
