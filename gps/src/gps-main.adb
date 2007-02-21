@@ -1408,10 +1408,6 @@ procedure GPS.Main is
          VFS_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
-      if Active (Code_Analysis_Trace) then
-         Code_Analysis_Module.Register_Module (GPS_Main.Kernel);
-      end if;
-
       if Active (Codefix_Trace) then
          Codefix_Module.Register_Module (GPS_Main.Kernel);
       end if;
@@ -1428,6 +1424,10 @@ procedure GPS.Main is
 
       if Active (Docgen_Trace) then
          Docgen_Module.Register_Module (GPS_Main.Kernel);
+      end if;
+
+      if Active (Code_Analysis_Trace) then
+         Code_Analysis_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
       --  Register the supported languages and their associated LI handlers
