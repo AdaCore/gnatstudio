@@ -1392,9 +1392,7 @@ package body GUI_Utils is
    function Query_User
      (Parent        : Gtk.Window.Gtk_Window;
       Prompt        : String;
-      Password_Mode : Boolean;
-      Urgent        : Boolean := True;
-      Default       : String := "") return String
+      Password_Mode : Boolean) return String
    is
       Dialog : Gtk_Dialog;
       Button : Gtk_Widget;
@@ -1416,7 +1414,6 @@ package body GUI_Utils is
       if Password_Mode then
          Set_Visibility (GEntry, Visible => False);
       end if;
-      Set_Text (GEntry, Default);
 
       Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
       Grab_Default (Button);
@@ -1425,11 +1422,7 @@ package body GUI_Utils is
       Show_All (Dialog);
       --  Make sure the dialog is presented to the user.
       Present (Dialog);
-
-      if Urgent then
-         Set_Urgency_Hint (Dialog, True);
-      end if;
-
+      Set_Urgency_Hint (Dialog, True);
       Set_Keep_Above (Dialog, True);
 
       if Run (Dialog) = Gtk_Response_OK then
