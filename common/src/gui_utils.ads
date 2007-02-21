@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2006                      --
+--                      Copyright (C) 2000-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -391,6 +391,9 @@ package GUI_Utils is
    --  This procedure handles multi-lines text, as well as alignment of
    --  tabulations, right-to-left writting, ...
    --  Text must be a correct Utf8 text, see Glib.Convert
+   --
+   --  If the displayed text's height is greater than the screen's height, it
+   --  will be truncated.
    --
    --  The maximal width of the text is Wrap_Width.
    --
