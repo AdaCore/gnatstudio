@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006                         --
+--                        Copyright (C) 2006-2007                    --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -35,7 +35,7 @@ package Completion.Ada.Constructs_Extractor is
      (Construct_Db   : Construct_Database_Access;
       Current_File   : Virtual_File;
       Current_Buffer : String_Access)
-      return Construct_Completion_Resolver;
+      return Completion_Resolver_Access;
    --  Create a new resolver, based on a construct tree, and the current
    --  analyzed file.
 
