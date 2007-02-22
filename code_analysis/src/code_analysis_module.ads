@@ -190,10 +190,17 @@ private
    --  Allows to fill the given Submenu, in the appropriate order for Tools
    --  menu
 
-   procedure Append_Show_Analysis_Report
+   procedure Append_Show_Analysis_Report_To_Context
      (Cont_N_Inst  : Context_And_Instance;
       Submenu      : access Gtk_Menu_Record'Class);
    --  Actually fills the given Submenu, with the "Show Analysis Report" entry
+   --  With context information, so the current relevant node will be expanded
+
+   procedure Append_Show_Analysis_Report_To_Menu
+     (Cont_N_Inst  : Context_And_Instance;
+      Submenu      : access Gtk_Menu_Record'Class);
+   --  Actually fills the given Submenu, with the "Show Analysis Report" entry
+   --  With no context information, so the 1st node will be expanded
 
    procedure Append_File_Menu_Entries
      (Cont_N_Inst   : Context_And_Instance;
@@ -205,9 +212,10 @@ private
    --  Show coverage report, ...)
 
    procedure Append_Project_Menu_Entries
-     (Cont_N_Inst  : Context_And_Instance;
-      Submenu      : access Gtk_Menu_Record'Class;
-      Project_Node : Project_Access);
+     (Cont_N_Inst   : Context_And_Instance;
+      Submenu       : access Gtk_Menu_Record'Class;
+      Project_Node  : Project_Access;
+      Is_Contextual : Boolean := True);
    --  Actually fills the given Submenu with the appropriate coverage action
    --  entries to handle projects (Add/Remove coverage annotations,
    --  Show coverage report, Load full data...)
@@ -240,6 +248,11 @@ private
      (Data    : in out Callback_Data'Class;
       Command : String);
    --  Create a new instance of Code_Analysis data structure
+
+   procedure Create_From_Menu
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class);
+   --  Create a new instance of Code_Analysis data structure from
+   --  "Tools/Coverage" menu
 
    procedure Add_Gcov_File_Info_From_Context
      (Widget      : access Glib.Object.GObject_Record'Class;
@@ -414,5 +427,12 @@ private
    procedure Show_Analysis_Report_From_Context
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Inst : Context_And_Instance);
-   --  Contextual menu callback that call Show_Report
+   --  Contextual menu callback that calls Show_Analysis_Report with context
+   --  info
+
+   procedure Show_Analysis_Report_From_Menu
+     (Widget      : access Glib.Object.GObject_Record'Class;
+      Cont_N_Inst : Context_And_Instance);
+   --  Menu callback that calls Show_Analysis_Report with no context info
+
 end Code_Analysis_Module;
