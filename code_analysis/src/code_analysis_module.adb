@@ -1394,9 +1394,8 @@ package body Code_Analysis_Module is
       Item : Gtk_Menu_Item;
    begin
       if File_Node.Analysis_Data.Coverage_Data /= null then
-         Gtk_New (Item, -"Reload " &
-                  Locale_Base_Name (File_Information (Cont_N_Inst.Context)) &
-                  "'s data");
+         Gtk_New (Item, -"Reload data for " &
+                  Locale_Base_Name (File_Information (Cont_N_Inst.Context)));
          Append (Submenu, Item);
          Context_And_Instance_CB.Connect
            (Item, "activate", Context_And_Instance_CB.To_Marshaller
@@ -1422,9 +1421,8 @@ package body Code_Analysis_Module is
             Append_Show_Analysis_Report_To_Context (Cont_N_Inst, Submenu);
          end if;
       else
-         Gtk_New (Item, -"Load " &
-                  Locale_Base_Name (File_Information (Cont_N_Inst.Context)) &
-                  "'s data");
+         Gtk_New (Item, -"Load data for " &
+                  Locale_Base_Name (File_Information (Cont_N_Inst.Context)));
          Append (Submenu, Item);
          Context_And_Instance_CB.Connect
            (Item, "activate", Context_And_Instance_CB.To_Marshaller
@@ -1445,9 +1443,8 @@ package body Code_Analysis_Module is
       Item : Gtk_Menu_Item;
    begin
       if Project_Node.Analysis_Data.Coverage_Data /= null then
-         Gtk_New (Item, -"Reload full " &
-                  Project_Name (Project_Information (Cont_N_Inst.Context)) &
-                  "'s data");
+         Gtk_New (Item, -"Reload data for project " &
+                  Project_Name (Project_Information (Cont_N_Inst.Context)));
          Append (Submenu, Item);
          Context_And_Instance_CB.Connect
            (Item, "activate", Context_And_Instance_CB.To_Marshaller
@@ -1465,9 +1462,8 @@ package body Code_Analysis_Module is
             Append_Show_Analysis_Report_To_Menu (Cont_N_Inst, Submenu);
          end if;
       else
-         Gtk_New (Item, -"Load full " &
-                  Project_Name (Project_Information (Cont_N_Inst.Context)) &
-                  "'s data");
+         Gtk_New (Item, -"Load data for project " &
+                  Project_Name (Project_Information (Cont_N_Inst.Context)));
          Append (Submenu, Item);
          Context_And_Instance_CB.Connect
            (Item, "activate", Context_And_Instance_CB.To_Marshaller
