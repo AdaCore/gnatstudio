@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2006                      --
+--                      Copyright (C) 2000-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -513,7 +513,7 @@ package Language is
    Last_Gen_Att : constant Construct_Att_Key := 2;
 
    type Construct_Information;
-   type Construct_Access is access Construct_Information;
+   type Construct_Access is access all Construct_Information;
 
    type Construct_Information is record
       Category       : Language_Category;
