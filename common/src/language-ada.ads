@@ -150,7 +150,7 @@ package Language.Ada is
    Ada_Record_Attribute    : constant Construct_Att_Key :=
                                Ada_Analyzer.Ada_Record_Attribute;
    Ada_Tagged_Attribute    : constant Construct_Att_Key :=
-     Ada_Analyzer.Ada_Tagged_Attribute;
+                               Ada_Analyzer.Ada_Tagged_Attribute;
 
    function Get_Name (Lang : access Ada_Language) return String;
 
