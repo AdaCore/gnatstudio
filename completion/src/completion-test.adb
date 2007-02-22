@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006                         --
+--                        Copyright (C) 2006-2007                    --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -269,11 +269,10 @@ procedure Completion.Test is
       Current_File := Get_Or_Create
         (Construct_Db, File, Ada_Tree_Lang);
 
-      return new Construct_Completion_Resolver'
-        (New_Construct_Completion_Resolver
-           (Construct_Db,
-            File,
-            Get_Buffer (Current_File)));
+      return New_Construct_Completion_Resolver
+        (Construct_Db,
+         File,
+         Get_Buffer (Current_File));
    end Get_New_Construct_Extractor;
 
    ------------------------

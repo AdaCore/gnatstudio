@@ -42,9 +42,12 @@ package body Completion.Ada.Constructs_Extractor is
      (Construct_Db   : Construct_Database_Access;
       Current_File   : Virtual_File;
       Current_Buffer : GNAT.Strings.String_Access)
-      return Construct_Completion_Resolver
+      return Completion_Resolver_Access
    is
-      Resolver : Construct_Completion_Resolver;
+      Resolver_Acc : constant Completion_Resolver_Access :=
+        new Construct_Completion_Resolver;
+      Resolver : Construct_Completion_Resolver renames
+        Construct_Completion_Resolver (Resolver_Acc.all);
    begin
       Resolver.Manager := null;
       Resolver.Construct_Db := Construct_Db;
@@ -52,7 +55,7 @@ package body Completion.Ada.Constructs_Extractor is
         (Construct_Db, Current_File, Ada_Tree_Lang);
       Resolver.Current_Buffer := Current_Buffer;
 
-      return Resolver;
+      return Resolver_Acc;
    end New_Construct_Completion_Resolver;
 
    --------------------
