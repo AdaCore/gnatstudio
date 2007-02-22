@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2006                       --
+--                     Copyright (C) 2000-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -150,12 +150,12 @@ package Language.Ada is
    Ada_Record_Attribute    : constant Construct_Att_Key :=
                                Ada_Analyzer.Ada_Record_Attribute;
    Ada_Tagged_Attribute    : constant Construct_Att_Key :=
-                               Ada_Analyzer.Ada_Tagged_Attribute;
+     Ada_Analyzer.Ada_Tagged_Attribute;
+
+   function Get_Name (Lang : access Ada_Language) return String;
 
 private
    type Ada_Language is new Language_Root with null record;
-
-   function Get_Name (Lang : access Ada_Language) return String;
    function Comment_Line
      (Lang    : access Ada_Language;
       Line    : String;
