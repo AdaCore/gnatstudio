@@ -397,6 +397,10 @@ package body Code_Analysis_Module is
       end loop;
 
       Compute_Project_Coverage (Project_Node);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Add_Gcov_Project_Info;
 
    ---------------------------------------
