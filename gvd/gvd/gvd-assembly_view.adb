@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2006                      --
+--                      Copyright (C) 2000-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -24,7 +24,6 @@ with GNAT.Regpat;             use GNAT.Regpat;
 
 with Gdk.Color;               use Gdk.Color;
 with Gdk.Event;               use Gdk.Event;
-with Gdk.Font;                use Gdk.Font;
 with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
 with Glib;                    use Glib;
 
@@ -253,7 +252,6 @@ package body GVD.Assembly_View is
      (Assembly_View : access GVD_Assembly_View_Record'Class) is
    begin
       Assembly_View.View := null;
-      Unref (Assembly_View.Font);
    end Destroy_Cb;
 
    ---------------------
@@ -386,25 +384,8 @@ package body GVD.Assembly_View is
 
    procedure Set_Font
      (Assembly_View : GVD_Assembly_View;
-      Font          : Pango_Font_Description)
-   is
-      F : Gdk_Font;
-      use Gdk;
+      Font          : Pango_Font_Description) is
    begin
-      F := From_Description (Font);
-
-      if F /= Assembly_View.Font then
-         Assembly_View.Font := F;
-         --  ??? Unfortunately, it is not possible currently to specify the
-         --  step_increment for the adjustments, since this is overridden in
-         --  several places in the text widget.
-         --  Set_Step_Increment
-         --   (Get_Vadj (Editor.Text),
-         --    Gfloat (Get_Ascent (Editor.Font) + Get_Descent (Editor.Font)));
-         Assembly_View.Line_Height :=
-           Get_Ascent (Assembly_View.Font) + Get_Descent (Assembly_View.Font);
-      end if;
-
       Modify_Font (Assembly_View.View, Font);
    end Set_Font;
 
