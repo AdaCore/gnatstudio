@@ -775,11 +775,10 @@ package body Completion_Module is
             Data.The_Text := Get_String (Buffer);
             Constructs := Get_Constructs (Buffer, Exact);
 
-            Data.Constructs_Resolver := new Construct_Completion_Resolver'
-              (New_Construct_Completion_Resolver
+            Data.Constructs_Resolver := New_Construct_Completion_Resolver
                  (Get_Construct_Database (Kernel),
                   Get_Filename (Buffer),
-                  GNAT.Strings.String_Access (Data.The_Text)));
+                  GNAT.Strings.String_Access (Data.The_Text));
 
             Register_Resolver (Data.Manager, Data.Constructs_Resolver);
 
