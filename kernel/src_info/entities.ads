@@ -294,7 +294,7 @@ package Entities is
    -------------
 
    type LI_File_Record is tagged private;
-   type LI_File is access LI_File_Record'Class;
+   type LI_File is access all LI_File_Record'Class;
 
    function Get_LI_Filename (LI : LI_File) return VFS.Virtual_File;
    --  Return the name of the file
