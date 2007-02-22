@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2006                      --
+--                      Copyright (C) 2000-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -25,7 +25,6 @@ with GNAT.Strings;
 
 with Glib;
 with Glib.Object;
-with Gdk.Font;
 with Gtk.Box;
 with Gtk.Menu;
 with Gtk.Text_Tag;
@@ -139,12 +138,6 @@ private
       --  The range of assembly code being displayed.
 
       Current_Line        : Natural := 0;
-      --  ??? Not sure we need to keep that.
-
-      Font                : Gdk.Font.Gdk_Font;
-
-      Line_Height         : Glib.Gint;
-      --  Height in pixel of a single line in the editor
       --  ??? Not sure we need to keep that.
 
       Highlight_Tag       : Gtk.Text_Tag.Gtk_Text_Tag;
