@@ -448,6 +448,7 @@ package Language is
       Cat_Select_Statement,
       Cat_Accept_Statement,
       Cat_Declare_Block,
+      Cat_Return_Block,
       Cat_Simple_Block,
 
       --------------------

@@ -1659,6 +1659,9 @@ package body Ada_Analyzer is
                      Constructs.Current.Category := Cat_Declare_Block;
                   when Tok_Begin =>
                      Constructs.Current.Category := Cat_Simple_Block;
+                  when Tok_Return =>
+                     Constructs.Current.Category := Cat_Return_Block;
+
                   when Tok_Exception =>
                      Constructs.Current.Category := Cat_Exception_Handler;
                   when others =>
@@ -2114,8 +2117,18 @@ package body Ada_Analyzer is
             --  begin    <--
             --     ...
 
-            if Reserved = Tok_Do and then Top_Token.Token = Tok_Accept then
-               Top_Token.Token := Tok_Do;
+            if Reserved = Tok_Do then
+               if Top_Token.Token = Tok_Accept then
+                  Top_Token.Token := Tok_Do;
+               else
+                  --  Extended return statement:
+                  --  return X : xxx do
+                  --     ...
+                  --  end;
+
+                  Temp.Token := Tok_Return;
+                  Push (Tokens, Temp);
+               end if;
             end if;
 
             if Reserved = Tok_Select then
