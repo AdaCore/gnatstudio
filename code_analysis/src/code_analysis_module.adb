@@ -510,16 +510,6 @@ package body Code_Analysis_Module is
          Build_Analysis_Report (Instance, Property);
          Clear (Property.View.Model);
          Iter := Get_Iter_First (Property.View.Model);
-         Append (Property.View.Model, Iter, Null_Iter);
-         Gtk.Tree_Store.Set (Property.View.Model, Iter, Name_Col,
-           UTF8_String (-"This is an empty analysis report." & ASCII.LF &
-             "You should have created a coverage" & ASCII.LF &
-             " instance using the Tools/Coverage menu before" & ASCII.LF &
-             " trying to show its report ;-)" & ASCII.LF &
-             " Now you have an empty coverage instance that" & ASCII.LF &
-             " you can populate using the " & '"' & "Load data..." & '"' &
-             ASCII.LF &
-             " entries of the Tools/Coverage or contextual menus."));
       else
          Property := Code_Analysis_Property_Record
            (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
@@ -530,14 +520,14 @@ package body Code_Analysis_Module is
 
          Clear (Property.View.Model);
          Iter := Get_Iter_First (Property.View.Model);
-         Append (Property.View.Model, Iter, Null_Iter);
-         Gtk.Tree_Store.Set (Property.View.Model, Iter, Name_Col,
-           UTF8_String (-"This is an empty coverage instance." & ASCII.LF &
-             "You should populate it using the " & '"' & "Load data..." & '"' &
-             ASCII.LF &
-             " entries of the Tools/Coverage or contextual menus."));
       end if;
 
+      Append (Property.View.Model, Iter, Null_Iter);
+      Gtk.Tree_Store.Set (Property.View.Model, Iter, Name_Col,
+        UTF8_String (-"This analysis report is empty." & ASCII.LF &
+          (-"Please populate it with the " & '"' & (-"Load data..." & '"' &
+          ASCII.LF &
+          (-"entries of the /Tools/Coverage or contextual menu.")))));
       Raise_Child (Property.Child);
    end Show_Empty_Analysis_Report_From_Menu;
 
@@ -1299,32 +1289,32 @@ package body Code_Analysis_Module is
          Select_Path (Get_Selection (View.Tree), Path);
 
          if Get_Depth (Path) > 1 or else not Has_Child (View.Model, Iter) then
+            --  So we are on a file or subprogram
             Gtk_New (Item, -"Add coverage annotations");
             Gtkada.Handlers.Widget_Callback.Object_Connect
               (Item, "activate", Add_Coverage_Annotations_From_Report'Access,
-               View, After => False);
+               View);
             Append (Menu, Item);
             Gtk_New (Item, -"Remove coverage annotations");
             Gtkada.Handlers.Widget_Callback.Object_Connect
               (Item, "activate",
-               Remove_Coverage_Annotations_From_Report'Access,
-               View, After => False);
+               Remove_Coverage_Annotations_From_Report'Access, View);
             Append (Menu, Item);
          end if;
 
          if Get_Depth (Path) = 1 and then Has_Child (View.Model, Iter) then
+            --  So we are on a project node
             Gtk_New (Item, -"List lines not covered");
             Gtkada.Handlers.Widget_Callback.Object_Connect
               (Item, "activate",
-               List_Lines_Not_Covered_In_Project_From_Report'Access,
-               View, After => False);
+               List_Lines_Not_Covered_In_Project_From_Report'Access, View);
             Append (Menu, Item);
          else
+            --  So we are on a file or subprogram node
             Gtk_New (Item, -"List lines not covered");
             Gtkada.Handlers.Widget_Callback.Object_Connect
               (Item, "activate",
-               List_Lines_Not_Covered_In_File_From_Report'Access,
-               View, After => False);
+               List_Lines_Not_Covered_In_File_From_Report'Access, View);
             Append (Menu, Item);
          end if;
 
@@ -1339,28 +1329,24 @@ package body Code_Analysis_Module is
       Append (Menu, Item);
       Gtk_New (Item, -"Show flat list of subprograms");
       Gtkada.Handlers.Widget_Callback.Object_Connect
-        (Item, "activate", Show_Flat_List_Of_Subprograms'Access,
-         View, After => False);
+        (Item, "activate", Show_Flat_List_Of_Subprograms'Access, View);
       Append (Menu, Item);
 
       if not Has_Child (View.Model, Iter) then
          Gtk_New (Item, -"Show full tree");
          Gtkada.Handlers.Widget_Callback.Object_Connect
-           (Item, "activate", Show_Full_Tree'Access,
-            View, After => False);
+           (Item, "activate", Show_Full_Tree'Access, View);
          Append (Menu, Item);
       else
          Gtk_New (Item);
          Append (Menu, Item);
          Gtk_New (Item, -"Expand all");
          Gtkada.Handlers.Widget_Callback.Object_Connect
-           (Item, "activate", Expand_All_From_Report'Access,
-            View, After => False);
+           (Item, "activate", Expand_All_From_Report'Access, View);
          Append (Menu, Item);
          Gtk_New (Item, -"Collapse all");
          Gtkada.Handlers.Widget_Callback.Object_Connect
-           (Item, "activate", Collapse_All_From_Report'Access,
-            View, After => False);
+           (Item, "activate", Collapse_All_From_Report'Access, View);
          Append (Menu, Item);
       end if;
    end Context_Func;
@@ -1554,6 +1540,7 @@ package body Code_Analysis_Module is
       Cont_N_Inst  : Context_And_Instance;
       Property     : Code_Analysis_Property_Record;
       Project_Node : Project_Access;
+      Project_Name : Project_Type;
       Submenu      : Gtk_Menu;
       Item         : Gtk_Menu_Item;
       Cur          : Cursor := Code_Analysis_Module_ID.Instances.First;
@@ -1565,13 +1552,19 @@ package body Code_Analysis_Module is
          Cont_N_Inst.Context := Context;
       end if;
 
+      if Has_Project_Information (Cont_N_Inst.Context) then
+         Project_Name := Project_Information (Cont_N_Inst.Context);
+      else
+         Project_Name := Get_Project (Code_Analysis_Module_ID.Kernel);
+      end if;
+
       loop
          exit when Cur = No_Element;
          Cont_N_Inst.Instance := Element (Cur);
          Property             := Code_Analysis_Property_Record
            (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
          Project_Node         := Get_Or_Create
-           (Property.Projects, Get_Project (Code_Analysis_Module_ID.Kernel));
+           (Property.Projects, Project_Name);
 
          if Code_Analysis_Module_ID.Instances.Length > 1 then
             Gtk_New (Item, -(Property.Instance_Name.all));
