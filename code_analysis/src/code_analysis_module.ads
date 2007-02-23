@@ -133,8 +133,15 @@ private
      (Instance : Class_Instance;
       Property : in out Code_Analysis_Property_Record;
       Context  : Selection_Context := No_Context);
-   --  Actually builds and shows the tree view report. Should be called by
-   --  Show_Analysis_Report_From_Context and Show_Analysis_Report_From_Shell
+   --  Call to build the tree view report and then populate it and expand the
+   --  the appropriate item and finally insert it in the MDI. Should be called
+   --  by Show_Analysis_Report_From_Context and Show_Analysis_Report_From_Shell
+
+   procedure Build_Analysis_Report
+     (Instance : Class_Instance;
+      Property : in out Code_Analysis_Property_Record);
+   --  Actually builds the tree view report. Should be called by
+   --  Show_Analysis_Report or Show_Empty_Analysis_Report_From_Menu
 
    type Code_Analysis_Property is access all Code_Analysis_Property_Record;
 
@@ -235,6 +242,12 @@ private
    --  Determines wether we add entries directly in the "Tools/Views/Coverage"
    --  menu, or in a generated submenu. Submenus are created if many instances
    --  are loaded
+
+   procedure Show_Empty_Analysis_Report_From_Menu
+     (Widget      : access Glib.Object.GObject_Record'Class;
+      Cont_N_Inst : Context_And_Instance);
+   --  Call to build the tree view report and then put inside it an error
+   --  message
 
    Code_Analysis_Cst_Str : constant String := "CodeAnalysis";
    Coverage_Category     : constant Glib.UTF8_String := -"Lines not covered";
