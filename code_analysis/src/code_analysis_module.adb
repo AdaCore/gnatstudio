@@ -316,7 +316,7 @@ package body Code_Analysis_Module is
                    Project_Information (Cont_N_Inst.Context);
       Prj_Node : Project_Access;
    begin
-      Property     := Code_Analysis_Property_Record
+      Property := Code_Analysis_Property_Record
         (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
       Prj_Node := Get_Or_Create (Property.Projects, Prj_Name);
       Add_Gcov_Project_Info (Prj_Node);
@@ -487,6 +487,60 @@ package body Code_Analysis_Module is
       Show_Analysis_Report (Cont_N_Inst.Instance, Property);
    end Show_Analysis_Report_From_Menu;
 
+   ------------------------------------------
+   -- Show_Empty_Analysis_Report_From_Menu --
+   ------------------------------------------
+
+   procedure Show_Empty_Analysis_Report_From_Menu
+     (Widget      : access Glib.Object.GObject_Record'Class;
+      Cont_N_Inst : Context_And_Instance)
+   is
+      pragma Unreferenced (Widget);
+      Property : Code_Analysis_Property_Record;
+      Instance : Class_Instance;
+      Iter     : Gtk_Tree_Iter;
+   begin
+
+      if Cont_N_Inst.Instance = No_Class_Instance then
+         Create_From_Menu (null);
+         Instance := Code_Analysis_Class_Instance_Sets.First_Element
+           (Code_Analysis_Module_ID.Instances);
+         Property := Code_Analysis_Property_Record
+           (Get_Property (Instance, Code_Analysis_Cst_Str));
+         Build_Analysis_Report (Instance, Property);
+         Clear (Property.View.Model);
+         Iter := Get_Iter_First (Property.View.Model);
+         Append (Property.View.Model, Iter, Null_Iter);
+         Gtk.Tree_Store.Set (Property.View.Model, Iter, Name_Col,
+           UTF8_String (-"This is an empty analysis report." & ASCII.LF &
+             "You should have created a coverage" & ASCII.LF &
+             " instance using the Tools/Coverage menu before" & ASCII.LF &
+             " trying to show its report ;-)" & ASCII.LF &
+             " Now you have an empty coverage instance that" & ASCII.LF &
+             " you can populate using the " & '"' & "Load data..." & '"' &
+             ASCII.LF &
+             " entries of the Tools/Coverage or contextual menus."));
+      else
+         Property := Code_Analysis_Property_Record
+           (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
+
+         if Property.View = null then
+            Build_Analysis_Report (Cont_N_Inst.Instance, Property);
+         end if;
+
+         Clear (Property.View.Model);
+         Iter := Get_Iter_First (Property.View.Model);
+         Append (Property.View.Model, Iter, Null_Iter);
+         Gtk.Tree_Store.Set (Property.View.Model, Iter, Name_Col,
+           UTF8_String (-"This is an empty coverage instance." & ASCII.LF &
+             "You should populate it using the " & '"' & "Load data..." & '"' &
+             ASCII.LF &
+             " entries of the Tools/Coverage or contextual menus."));
+      end if;
+
+      Raise_Child (Property.Child);
+   end Show_Empty_Analysis_Report_From_Menu;
+
    --------------------------
    -- Show_Analysis_Report --
    --------------------------
@@ -496,118 +550,13 @@ package body Code_Analysis_Module is
       Property : in out Code_Analysis_Property_Record;
       Context  : Selection_Context := No_Context)
    is
-      Project_Node : Project_Access;
-      Scrolled     : Gtk_Scrolled_Window;
-      Text_Render  : Gtk_Cell_Renderer_Text;
-      Pixbuf_Rend  : Gtk_Cell_Renderer_Pixbuf;
-      Bar_Render   : Gtk_Cell_Renderer_Progress;
-      Iter         : Gtk_Tree_Iter;
-      Path         : Gtk_Tree_Path;
-      C            : Context_And_Instance :=
-                       (Context => Context, Instance => Instance);
-      Num_Col      : Gint;
-      pragma Unreferenced (Project_Node);
+      Iter    : Gtk_Tree_Iter;
+      Num_Col : Gint;
+      Path    : Gtk_Tree_Path;
    begin
 
       if Property.View = null then
-         Property.View := new Code_Analysis_View_Record;
-         Initialize_Hbox (Property.View);
-         Property.View.Projects := Property.Projects;
-         Gtk_New (Property.View.Model, GType_Array'
-             (Pix_Col     => Gdk.Pixbuf.Get_Type,
-              Name_Col    => GType_String,
-              Node_Col    => GType_Pointer,
-              File_Col    => GType_Pointer,
-              Cov_Col     => GType_String,
-              Cov_Sort    => GType_Int,
-              Cov_Bar_Txt => GType_String,
-              Cov_Bar_Val => GType_Int));
-         Gtk_New (Property.View.Tree, Gtk_Tree_Model (Property.View.Model));
-         Set_Name (Property.View.Tree, "Code Analysis Tree"); --  For testsuite
-
-         -----------------
-         -- Node column --
-         -----------------
-
-         Gtk_New (Property.View.Node_Column);
-         Gtk_New (Pixbuf_Rend);
-         Pack_Start (Property.View.Node_Column, Pixbuf_Rend, False);
-         Add_Attribute
-           (Property.View.Node_Column, Pixbuf_Rend, "pixbuf", Pix_Col);
-         Gtk_New (Text_Render);
-         Pack_Start (Property.View.Node_Column, Text_Render, False);
-         Add_Attribute
-           (Property.View.Node_Column, Text_Render, "text", Name_Col);
-         Num_Col := Append_Column
-           (Property.View.Tree, Property.View.Node_Column);
-         Set_Title (Property.View.Node_Column, -"Entities");
-         Set_Resizable (Property.View.Node_Column, True);
-         Set_Sort_Column_Id (Property.View.Node_Column, Name_Col);
-
-         ----------------------
-         -- Coverage columns --
-         ----------------------
-
-         Gtk_New (Property.View.Cov_Column);
-         Num_Col :=
-           Append_Column (Property.View.Tree, Property.View.Cov_Column);
-         Gtk_New (Text_Render);
-         Pack_Start (Property.View.Cov_Column, Text_Render, False);
-         Add_Attribute
-           (Property.View.Cov_Column, Text_Render, "text", Cov_Col);
-         Set_Title (Property.View.Cov_Column, -"Coverage");
-         Set_Sort_Column_Id (Property.View.Cov_Column, Cov_Sort);
-         Gtk_New (Property.View.Cov_Percent);
-         Num_Col :=
-           Append_Column (Property.View.Tree, Property.View.Cov_Percent);
-         Gtk_New (Bar_Render);
-         Glib.Properties.Set_Property
-           (Bar_Render,
-            Gtk.Cell_Renderer.Width_Property,
-            Progress_Bar_Width_Cst);
-         Pack_Start (Property.View.Cov_Percent, Bar_Render, False);
-         Add_Attribute
-           (Property.View.Cov_Percent, Bar_Render, "text", Cov_Bar_Txt);
-         Add_Attribute
-           (Property.View.Cov_Percent, Bar_Render, "value", Cov_Bar_Val);
-         Set_Title (Property.View.Cov_Percent, -"Coverage Percentage");
-         Set_Sort_Column_Id (Property.View.Cov_Percent, Cov_Bar_Val);
-         Gtk_New (Scrolled);
-         Set_Policy
-           (Scrolled, Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
-         Add (Scrolled, Property.View.Tree);
-         Add (Property.View, Scrolled);
-
-         ---------------
-         -- MDI child --
-         ---------------
-
-         GPS.Kernel.MDI.Gtk_New
-           (Property.Child, Property.View,
-            Group  => Group_VCS_Explorer,
-            Module => Code_Analysis_Module_ID);
-         Set_Title
-           (Property.Child, -("Report of " & Property.Instance_Name.all));
-         Register_Contextual_Menu
-           (Code_Analysis_Module_ID.Kernel,
-            Event_On_Widget => Property.View.Tree,
-            Object          => Property.View,
-            ID              => Module_ID (Code_Analysis_Module_ID),
-            Context_Func    => Context_Func'Access);
-         Gtkada.Handlers.Return_Callback.Object_Connect
-           (Property.View.Tree,
-            "button_press_event",
-            Gtkada.Handlers.Return_Callback.To_Marshaller
-              (On_Double_Click'Access),
-            Property.View,
-            After => False);
-         Context_And_Instance_CB.Connect
-           (Property.View, "destroy", Context_And_Instance_CB.To_Marshaller
-              (On_Destroy'Access), C);
-         Put (Get_MDI (Code_Analysis_Module_ID.Kernel), Property.Child);
-         GPS.Kernel.Scripts.Set_Property
-           (Instance, Code_Analysis_Cst_Str,
-            Instance_Property_Record (Property));
+         Build_Analysis_Report (Instance, Property);
       end if;
 
       Clear (Property.View.Model);
@@ -669,6 +618,123 @@ package body Code_Analysis_Module is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end Show_Analysis_Report;
+
+   ---------------------------
+   -- Build_Analysis_Report --
+   ---------------------------
+
+   procedure Build_Analysis_Report
+     (Instance : Class_Instance;
+      Property : in out Code_Analysis_Property_Record)
+   is
+      Scrolled    : Gtk_Scrolled_Window;
+      Text_Render : Gtk_Cell_Renderer_Text;
+      Pixbuf_Rend : Gtk_Cell_Renderer_Pixbuf;
+      Bar_Render  : Gtk_Cell_Renderer_Progress;
+      Dummy       : Gint;
+      Cont_N_Inst : Context_And_Instance :=
+                      (Context => No_Context, Instance => Instance);
+      pragma Unreferenced (Dummy);
+   begin
+      Property.View := new Code_Analysis_View_Record;
+      Initialize_Hbox (Property.View);
+      Property.View.Projects := Property.Projects;
+      Gtk_New (Property.View.Model, GType_Array'
+          (Pix_Col     => Gdk.Pixbuf.Get_Type,
+           Name_Col    => GType_String,
+           Node_Col    => GType_Pointer,
+           File_Col    => GType_Pointer,
+           Cov_Col     => GType_String,
+           Cov_Sort    => GType_Int,
+           Cov_Bar_Txt => GType_String,
+           Cov_Bar_Val => GType_Int));
+      Gtk_New (Property.View.Tree, Gtk_Tree_Model (Property.View.Model));
+      Set_Name (Property.View.Tree, "Code Analysis Tree"); --  For testsuite
+
+      -----------------
+      -- Node column --
+      -----------------
+
+      Gtk_New (Property.View.Node_Column);
+      Gtk_New (Pixbuf_Rend);
+      Pack_Start (Property.View.Node_Column, Pixbuf_Rend, False);
+      Add_Attribute
+        (Property.View.Node_Column, Pixbuf_Rend, "pixbuf", Pix_Col);
+      Gtk_New (Text_Render);
+      Pack_Start (Property.View.Node_Column, Text_Render, False);
+      Add_Attribute
+        (Property.View.Node_Column, Text_Render, "text", Name_Col);
+      Dummy := Append_Column
+        (Property.View.Tree, Property.View.Node_Column);
+      Set_Title (Property.View.Node_Column, -"Entities");
+      Set_Resizable (Property.View.Node_Column, True);
+      Set_Sort_Column_Id (Property.View.Node_Column, Name_Col);
+
+      ----------------------
+      -- Coverage columns --
+      ----------------------
+
+      Gtk_New (Property.View.Cov_Column);
+      Dummy :=
+        Append_Column (Property.View.Tree, Property.View.Cov_Column);
+      Gtk_New (Text_Render);
+      Pack_Start (Property.View.Cov_Column, Text_Render, False);
+      Add_Attribute
+        (Property.View.Cov_Column, Text_Render, "text", Cov_Col);
+      Set_Title (Property.View.Cov_Column, -"Coverage");
+      Set_Sort_Column_Id (Property.View.Cov_Column, Cov_Sort);
+      Gtk_New (Property.View.Cov_Percent);
+      Dummy :=
+        Append_Column (Property.View.Tree, Property.View.Cov_Percent);
+      Gtk_New (Bar_Render);
+      Glib.Properties.Set_Property
+        (Bar_Render,
+         Gtk.Cell_Renderer.Width_Property,
+         Progress_Bar_Width_Cst);
+      Pack_Start (Property.View.Cov_Percent, Bar_Render, False);
+      Add_Attribute
+        (Property.View.Cov_Percent, Bar_Render, "text", Cov_Bar_Txt);
+      Add_Attribute
+        (Property.View.Cov_Percent, Bar_Render, "value", Cov_Bar_Val);
+      Set_Title (Property.View.Cov_Percent, -"Coverage Percentage");
+      Set_Sort_Column_Id (Property.View.Cov_Percent, Cov_Bar_Val);
+      Gtk_New (Scrolled);
+      Set_Policy
+        (Scrolled, Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
+      Add (Scrolled, Property.View.Tree);
+      Add (Property.View, Scrolled);
+
+      ---------------
+      -- MDI child --
+      ---------------
+
+      GPS.Kernel.MDI.Gtk_New
+        (Property.Child, Property.View,
+         Group  => Group_VCS_Explorer,
+         Module => Code_Analysis_Module_ID);
+      Set_Title
+        (Property.Child, -("Report of " & Property.Instance_Name.all));
+      Register_Contextual_Menu
+        (Code_Analysis_Module_ID.Kernel,
+         Event_On_Widget => Property.View.Tree,
+         Object          => Property.View,
+         ID              => Module_ID (Code_Analysis_Module_ID),
+         Context_Func    => Context_Func'Access);
+      Gtkada.Handlers.Return_Callback.Object_Connect
+        (Property.View.Tree,
+         "button_press_event",
+         Gtkada.Handlers.Return_Callback.To_Marshaller
+           (On_Double_Click'Access),
+         Property.View,
+         After => False);
+      Context_And_Instance_CB.Connect
+        (Property.View, "destroy", Context_And_Instance_CB.To_Marshaller
+           (On_Destroy'Access), Cont_N_Inst);
+      Put (Get_MDI (Code_Analysis_Module_ID.Kernel), Property.Child);
+      GPS.Kernel.Scripts.Set_Property
+        (Instance, Code_Analysis_Cst_Str,
+         Instance_Property_Record (Property));
+   end Build_Analysis_Report;
 
    -------------
    -- Destroy --
@@ -1564,9 +1630,11 @@ package body Code_Analysis_Module is
          if Project_Node.Analysis_Data.Coverage_Data /= null then
             Append_Show_Analysis_Report_To_Menu (Cont_N_Inst, Menu);
          else
-            Gtk_New (Item, -"You should load information in this coverage" &
-                     " instance using the Tools/Coverage menu before.");
+            Gtk_New (Item, -"Show Analysis Report");
             Append (Menu, Item);
+            Context_And_Instance_CB.Connect
+              (Item, "activate", Context_And_Instance_CB.To_Marshaller
+                 (Show_Empty_Analysis_Report_From_Menu'Access), Cont_N_Inst);
          end if;
       end Has_Coverage_Information;
 
@@ -1584,9 +1652,12 @@ package body Code_Analysis_Module is
       end if;
 
       if Cur = No_Element then
-         Gtk_New (Item, -"You should create a coverage instance using the" &
-                  " Tools/Coverage menu before.");
+         Cont_N_Inst.Instance := No_Class_Instance;
+         Gtk_New (Item, -"Show Analysis Report");
          Append (Menu, Item);
+         Context_And_Instance_CB.Connect
+           (Item, "activate", Context_And_Instance_CB.To_Marshaller
+              (Show_Empty_Analysis_Report_From_Menu'Access), Cont_N_Inst);
          return;
       end if;
 
