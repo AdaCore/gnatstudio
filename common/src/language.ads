@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2006                      --
+--                      Copyright (C) 2000-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -448,6 +448,7 @@ package Language is
       Cat_Select_Statement,
       Cat_Accept_Statement,
       Cat_Declare_Block,
+      Cat_Return_Block,
       Cat_Simple_Block,
 
       --------------------

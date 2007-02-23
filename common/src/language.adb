@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2006                      --
+--                      Copyright (C) 2000-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -742,13 +742,7 @@ package body Language is
          when Cat_With                  => return "with";
          when Cat_Use                   => return "use";
          when Cat_Include               => return "include";
-         when Cat_Loop_Statement        => return "";
-         when Cat_If_Statement          => return "";
-         when Cat_Case_Statement        => return "";
-         when Cat_Select_Statement      => return "";
-         when Cat_Accept_Statement      => return "";
-         when Cat_Declare_Block         => return "";
-         when Cat_Simple_Block          => return "";
+         when Construct_Category        => return "";
          when Cat_Exception_Handler     => return "";
       end case;
    end Category_Name;
