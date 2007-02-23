@@ -1,5 +1,9 @@
 Known Problems fixed in GPS 4.1.0
 
+- G219-025 GDI Object leak on Windows when the debugger is used
+  Problem:    The debugger module of GPS has GDI object leaks on Windows.
+  Workaround: If too many GDI objects are in use, exit GPS and restart it.
+
 - G216-042 Very large clipboard data prevents GPS from starting.
   Problem:    When a very large amount of data is present in GPS's clipboard
               during exit, GPS won't be able to start the next time.
