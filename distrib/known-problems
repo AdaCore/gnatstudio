@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 4.1.0
 
+- G222-003 Bad indentation of extended return statements
+  Problem:    When indenting Ada 2005 extended return statements, GPS
+              may get confused and incorrectly indent following constructs.
+  Workaround: Use simple return statements, or fix indentation manually.
+
 - G219-025 GDI Object leak on Windows when the debugger is used
   Problem:    The debugger module of GPS has GDI object leaks on Windows.
   Workaround: If too many GDI objects are in use, exit GPS and restart it.
@@ -111,21 +116,21 @@ Known Problems fixed in GPS 4.1.0
   Problem:    If you are searching for the regular expression "^" or "$,
               the search will be blocked on empty lines (ie GPS will keep
               matching the same place)
-  Workaround: Move the cursor one character forward, and restart the search
+  Workaround: Move the cursor one character forward, and restart the search.
 
 - FB27-017 Default shortcuts for /File/Save More
   Problem:    The shortcut "Alt-f o" is the same for /File/Open and
               /File/Save More, making it harder to access these from
               the keyboards. The latter has been changed to "Alt-f m"
               and the /File/Messages has been changed to "Alt-f g"
-  Workaround: Press "o" until the appropriate menu is selected
+  Workaround: Press "o" until the appropriate menu is selected.
 
 - FB23-029 Floating windows should be raised when they gain focus
   Problem:    If you are using floating windows, and select one of them
               through the Window menu, it should be raised to become
               fully visible
   Workaround: Select the window through your environment's usual method
-              (alt-tab, taskbar,...)
+              (alt-tab, taskbar,...).
 
 - FB14-001 GPS.Process.expect returns only matched text
   Problem:    Calling the python function GPS.Process.expect only returns
@@ -187,13 +192,15 @@ Known Problems fixed in GPS 4.1.0
   Problem:    If you bind the function "Move to next window" to shift-tab,
               then the dialog is not closed when shift is released, as
               opposed to what would happen if you had used control-tab
-  Workaround: press Esc to close the dialog
+  Workaround: press Esc to close the dialog.
 
 - FB03-003 Pretty printer and files not from project
   Problem:    When running the pretty printer for an Ada file that doesn't
               belong to the project, it is expected that no project is passed
               to gnatpp. However, if the file had the same base name as a file
               from the project, an incorrect -P project was given to gnatpp
+  Workaround: Add the file to the project, or remove the file with the same
+              base name.
 
 - FB03-002 C files incorrectly displayed in project explorer
   Problem:    In case you have two C (or any other language that is not Ada)
@@ -211,6 +218,7 @@ Known Problems fixed in GPS 4.1.0
               empty editor is opended and could cause some instabilities.
               GPS now inserts an appropriate entry in the Messages window
               instead.
+  Workaround: Close the empty editor, or avoid clicking on these locations.
 
 - FB02-011 Smart Completion window not disappearing on Delete
   Problem:    When pressing "delete" or when executing an action that deletes
@@ -224,13 +232,13 @@ Known Problems fixed in GPS 4.1.0
               either Long_Integer'First or Long_Integer'Last. This appears in
               particular with multi-dimensional arrays with index ranges of
               enumerated types that include the first enumeration value.
-  Workaround: Let us assume you want to display the value of an array variable
+  Workaround: Assuming you want to display the value of an array variable
               named My_Array, type in the debugger console:
-                 (gdb) graph display `print my_array`
+                 (gdb) graph display `print my_array`
               The result of the print command will be displayed as a canvas
               item in the data window and will be refreshed every time the
-              debugger stops. See section 11.8 of Using GNAT Programming Studio
-              for more information on the debugger console.
+              debugger stops. See the documentation for more information on
+              the debugger console.
 
 - FA24-025 Part of the Scenario View is hidden
   Problem:    When the Scenario View doesn't have sufficient width, parts of
@@ -270,7 +278,7 @@ Known Problems fixed in GPS 4.1.0
   Problem:    If you select the menu Help/Python Extensions, and click on a
               link to a global routine like GPS.current_context, the link was
               incorrectly generated
-  Workaround: Click on "Global routines" on the left frame
+  Workaround: Click on "Global routines" on the left frame.
 
 - F905-004 Executables listed twice for extending projects
   Problem:    If the project that is currently loaded explicitely mentions
@@ -311,28 +319,28 @@ Known Problems fixed in GPS 4.1.0
 - F817-018 Cannot create custom toolbar separators
   Problem:    If you create an XML file with "<button/>" to insert a separator,
               nothing is done by GPS
-  Workaround: None
+  Workaround: None.
 
 - F816-014 Incorrect support of non-ASCII characters in file names
   Problem:    If the name of the source files includes non-ASCII characters,
               and the file system is not UTF8-encoded, then GPS will
               incorrectly display the list of source files in various places,
               such as the Project View
-  Workaround: Avoid non-ASCII characters in file names
+  Workaround: Avoid non-ASCII characters in file names.
 
 - F804-008 Cannot create key shortcuts for menus created from python
   Problem:    When a menu is created in python with GPS.Menu.create(), no
               key bindings can be defined for them through the
               /Edit/Key Shortcuts menu or gtk+'s dynamic key binding
   Workaround: Create an action (through "<action>" in XML), then associate a
-              menu to it, and possibly a key shortcut as well
+              menu to it, and possibly a key shortcut as well.
 
 - F731-006 Cannot unset the F4 keybinding
   Problem:    F4 is by default assigning to building the first main unit.
               You cannot currently unset this key shortcuts through the dialog
               in /Edit/Key shortcuts, since GPS will keep recreating it from
-              one session to the next
-  Workaround: None found
+              one session to the next.
+  Workaround: None found.
 
 - F731-004 Cannot change font for Window view and Project view
   Problem:    The font used in these views comes from the global gtk+
@@ -353,7 +361,7 @@ Known Problems fixed in GPS 4.1.0
                     debugger.send ("foo\\<horizontal tab>")
               where <horizontal tab> represents the character emitted when
               pressing the tabulation key and <enter> the enter one.
-  Workaround: Avoid typing '\' or 'tab' at the end of a debugger command
+  Workaround: Avoid typing '\' or 'tab' at the end of a debugger command.
 
 - F703-013 Compiling a file ignores extending projects
   Problem:    If you are using extending projects, and compile a file that is
@@ -379,7 +387,7 @@ Known Problems fixed in GPS 4.1.0
               shortcut matches one of the mnemonics used by gtk+ for menus, for
               instance alt-w for the Window menu, then the key shortcut is
               incorrectly displayed in the menus.
-  Workaround: Although not visible, the shortcut works as expected
+  Workaround: Although not visible, the shortcut works as expected.
 
 - F421-003 Duplicated files in the project explorer
   Problem:    Ada files that contains several compilation units are duplicated
@@ -399,11 +407,11 @@ Known Problems fixed in GPS 4.1.0
   Problem:    When GPS has to launch external programs that emit lot of output,
               for instance the Version Control operation "Add annotation", GPS
               takes a long time to process the output.
-  Workaround: Launch the corresponding processes in an external terminal
+  Workaround: Launch the corresponding processes in an external terminal.
 
 - E610-017 Drag and drop of a file does not work with spaces
   Problem:    Under Windows, when trying to drop a file (from e.g. the Windows
               explorer) in the GPS project explorer, if the file pathname
               contains spaces, then this file is not opened.
-  Workaround: Open the file using File->Open or the File view instead
+  Workaround: Open the file using File->Open or the File view instead.
 
