@@ -252,7 +252,6 @@ package body GVD.Assembly_View is
      (Assembly_View : access GVD_Assembly_View_Record'Class) is
    begin
       Assembly_View.View := null;
-      Unref (Assembly_View.Font);
    end Destroy_Cb;
 
    ---------------------
