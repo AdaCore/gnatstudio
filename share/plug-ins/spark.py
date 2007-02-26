@@ -1,7 +1,7 @@
 ## This file provides utilities used by the SPARK plug-in for GPS.
-## Copyright (c) 2004-2006 Praxis High Integrity Systems Limited
-## Copyright (c) 2005-2006 AdaCore
-
+## Copyright (c) 2004-2007 Praxis High Integrity Systems Limited
+## Copyright (c) 2005-2007 AdaCore
+
 #####################################
 # SPARK Toolset Customization for GPS
 # -----------------------------------
@@ -12,10 +12,10 @@
 # This package is a customization of AdaCore's GPS system for use with the
 # SPARK language and toolset.
 #
-# The customization is intended for use with Release 7.2 of the
+# The customization is intended for use with Release 7.4 of the
 # SPARK Toolset.  The customization depends on the presence of the
 # "brief output" Examiner switch, which is not available
-# in earlier releases.  If you don't have release 7.2 or better,
+# in earlier releases.  If you don't have release 7.4 or better,
 # please contact Praxis High Integrity Systems: sparkinfo@praxis-his.com
 #
 # This customization remains a work-in-progress, and there is lots of
@@ -48,8 +48,6 @@
 #   - Better EMACS integration (particularly on Windows...)
 #
 ######################################
-
-
 
 a = """<?xml version="1.0"?>
 <!--  Note: do not use the ampersand character in XML comments!!       -->
@@ -164,7 +162,7 @@ a = """<?xml version="1.0"?>
       </radio>
       <title column="2" line="3">Error Explanations</title>
       <radio column="2" line="3">
-        <radio-entry label="Off" switch="~error_explanations=off" />
+        <radio-entry label="Off" switch="" />
         <radio-entry label="First Occurrence" switch="~error_explanations=first" />
 	<radio-entry label="Every Occurrence" switch="~error_explanations=every" />
       </radio>
@@ -230,7 +228,7 @@ a = """<?xml version="1.0"?>
       </radio>
       <title line="2">Function globals</title>
       <radio line="2">
-            <radio-entry label="Unchanged" switch=" " />
+            <radio-entry label="Unchanged" switch="" />
             <radio-entry label="Force 'in'" switch="~d=i" />
             <radio-entry label="Force unmoded" switch="~d=u" />
       </radio>
@@ -245,7 +243,13 @@ a = """<?xml version="1.0"?>
         <field line="5" label="Globals indentation" switch="~global_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for the global variables, or state 'inline' (default 'inline')" />
 		<field line="5" label="Exports indentation" switch="~export_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for the export variables, or state 'inline' (default 'inline')" />
 		<field line="5" label="Imports indentation" switch="~import_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for the import variables, or state 'inline' (default 'inline')" />
-		<field line="5" label="Seperators indentation" switch="~separator_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for the separators ('from' and ampersand, or state 'inline' (default 'inline')" />
+		<field line="5" label="Seperators indentation" switch="~separator_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for the separators ('from' and ampersand), or state 'inline' (default 'inline')" />
+        <field line="5" label="Inherits indentation" switch="~inherit_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for the package names, or state 'inline' (default 'inline')" />
+        <field line="5" label="Own indentation" switch="~own_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for own variables, or state 'inline' (default 'inline')" />
+        <field line="5" label="Refinement indentation" switch="~refinement_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for own variables, or state 'inline' (default 'inline')" />
+        <field line="5" label="Constituent indentation" switch="~constituent_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for constituents, or state 'inline' (default 'inline')" />
+        <field line="5" label="Initialization indentation" switch="~initialization_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for own variables, or state 'inline' (default 'inline')" />
+        <field line="5" label="Properties indentation" switch="~properties_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for own variables, or state 'inline' (default 'inline')" />
     </switches>
   </tool>
 
@@ -287,7 +291,10 @@ a = """<?xml version="1.0"?>
 	 <shell>Locations.remove_category Examiner</shell>  <!-- clears the Location window to remove previous errors -->
      <shell>Project %p</shell>
      <shell>Project.get_tool_switches_as_string %1 "Examiner" </shell>
-     <external output="SPARK Output">spark %1 ~brief %f</external> <!-- force /brief option as can't parse output otherwise -->
+     <external output="SPARK Output">spark %1 ~brief "%F"</external> <!-- force /brief option as can't parse output otherwise -->
+     <on-failure>
+          <shell>Locations.parse &quot;&quot;&quot;%1 &quot;&quot;&quot; Examiner</shell>
+     </on-failure>
      <shell>Locations.parse &quot;&quot;&quot;%1 &quot;&quot;&quot; Examiner</shell>
   </action>
 
@@ -308,6 +315,9 @@ a = """<?xml version="1.0"?>
      <shell>Project %p</shell>
      <shell>Project.get_tool_switches_as_string %1 "Examiner" </shell>
      <external output="SPARK Output">spark %1 ~brief @%f</external>
+     <on-failure>
+          <shell>Locations.parse &quot;&quot;&quot;%1 &quot;&quot;&quot; Examiner</shell>
+     </on-failure>
      <shell>Locations.parse &quot;&quot;&quot;%1 &quot;&quot;&quot; Examiner</shell>
   </action>
 
