@@ -134,6 +134,11 @@ package body KeyManager_Module.Macros is
    --  Event handler called before even gtk can do its dispatching. This
    --  intercepts all events going through the application
 
+   procedure Play_Current_Event_And_Timeout
+     (Kernel : Kernel_Handle;
+      Events : Event_Set_Access);
+   --  Play the current event, and start a timeout that will play the next
+
    procedure Macro_Command_Handler
      (Data    : in out Callback_Data'Class;
       Command : String);
@@ -152,6 +157,11 @@ package body KeyManager_Module.Macros is
       Macro  : Event_Set_Access);
    --  Play current set of events.
 
+   procedure Stop_Macro
+     (Kernel : Kernel_Handle;
+      Events : Event_Set_Access);
+   --  Stop the current macro
+
    function Load_Macro
      (Kernel  : access Kernel_Handle_Record'Class;
       File    : Virtual_File) return Event_Set_Access;
@@ -166,7 +176,7 @@ package body KeyManager_Module.Macros is
    --  Save last set of events recorded.
 
    function Play_Macro_Timer (Events : Event_Set_Access) return Boolean;
-   --  Timer used by On_Play_Macro
+   --  Move to next event, and play it
 
    type Macro_Command_Action is
      (Action_Start_Keyboard,
@@ -275,14 +285,28 @@ package body KeyManager_Module.Macros is
    begin
       case Command.Action is
          when Action_Start_Keyboard =>
-            if not Keymanager_Macro_Module.Recording then
+            --  If we are not recording a macro and not playing one
+            if not Keymanager_Macro_Module.Recording
+              and then
+                (Keymanager_Macro_Module.Current_Macro = null
+                 or else Keymanager_Macro_Module.Current_Macro.Current_Event =
+                 null)
+            then
+               Trace (Me, "Start recording keyboard macro");
                Free (Keymanager_Macro_Module.Current_Macro);
                Keymanager_Macro_Module.Current_Macro := Record_Macro
                  (Command.Kernel, All_Keyboard_Events);
             end if;
 
          when Action_Start_Mouse =>
-            if not Keymanager_Macro_Module.Recording then
+            --  If we are not recording a macro and not playing one
+            if not Keymanager_Macro_Module.Recording
+              and then
+                (Keymanager_Macro_Module.Current_Macro = null
+                 or else Keymanager_Macro_Module.Current_Macro.Current_Event =
+                 null)
+            then
+               Trace (Me, "Start recording mouse macro");
                Free (Keymanager_Macro_Module.Current_Macro);
                Keymanager_Macro_Module.Current_Macro := Record_Macro
                  (Command.Kernel, All_Keyboard_Events or All_Mouse_Events);
@@ -293,6 +317,7 @@ package body KeyManager_Module.Macros is
                declare
                   Macro : constant String := '/' & (-"Tools/Macro") & '/';
                begin
+                  Trace (Me, "Stop recording macro");
                   Keymanager_Macro_Module.Recording := False;
                   Remove_Event_Handler
                     (Command.Kernel, General_Event_Handler'Access);
@@ -315,6 +340,7 @@ package body KeyManager_Module.Macros is
 
          when Action_Play =>
             if not Keymanager_Macro_Module.Recording then
+               Trace (Me, "Play macro");
                --  ??? We should check in the macro itself whether there are
                --  mouse events
                if Active (Mouse_Macro_Support) then
@@ -369,37 +395,25 @@ package body KeyManager_Module.Macros is
       return Events;
    end Record_Macro;
 
-   ----------------------
-   -- Play_Macro_Timer --
-   ----------------------
+   ------------------------------------
+   -- Play_Current_Event_And_Timeout --
+   ------------------------------------
 
-   function Play_Macro_Timer (Events : Event_Set_Access) return Boolean is
-      Kernel        : constant Kernel_Handle :=
-        Get_Kernel (Keymanager_Macro_Module.all);
-      Macro         : constant String := '/' & (-"Tools/Macro") & '/';
+   procedure Play_Current_Event_And_Timeout
+     (Kernel : Kernel_Handle;
+      Events : Event_Set_Access)
+   is
       Current_Event : Macro_Item_Access renames Events.Current_Event;
       Timeout       : Guint;
       Wait          : Duration;
       Success       : Boolean;
       Id            : G_Source_Id;
       pragma Unreferenced (Id, Success);
-
    begin
       if Current_Event /= null then
          Success := Play_Event
            (Current_Event.all, Gtk_Widget (Get_Main_Window (Kernel)));
-         Current_Event := Current_Event.Next;
-      end if;
 
-      if Current_Event = null then
-         Set_Sensitive
-           (Find_Menu_Item (Kernel, Macro & (-"Play")), True);
-
-         if Events.Child /= null then
-            End_Group (Get_Command_Queue (Events.Child));
-         end if;
-
-      else
          --  Compute proper timeout value, taking into account the time
          --  spent to handle each event manually.
 
@@ -415,8 +429,40 @@ package body KeyManager_Module.Macros is
             Timeout := 0;
          end if;
 
+         --  Play low priority, so that it plays after the event we just sent
+         --  has been processed. In particular, this ensures that if we select
+         --  the "Start Recording Macro" menu through keyboard shortcuts, we
+         --  can properly detect we are still processing a macro, and do
+         --  nothing in that case (FC14-014)
+
          Id := Event_Timeout.Timeout_Add
-           (Timeout, Play_Macro_Timer'Access, Events);
+           (Timeout, Play_Macro_Timer'Access, Events,
+            Priority => Priority_Low);
+      end if;
+   end Play_Current_Event_And_Timeout;
+
+   ----------------------
+   -- Play_Macro_Timer --
+   ----------------------
+
+   function Play_Macro_Timer (Events : Event_Set_Access) return Boolean is
+      Kernel        : constant Kernel_Handle :=
+        Get_Kernel (Keymanager_Macro_Module.all);
+      Current_Event : Macro_Item_Access renames Events.Current_Event;
+      Success       : Boolean;
+      Id            : G_Source_Id;
+      pragma Unreferenced (Id, Success);
+
+   begin
+      --  Move to next event
+      if Current_Event /= null then
+         Current_Event := Current_Event.Next;
+      end if;
+
+      if Current_Event = null then
+         Stop_Macro (Kernel, Events);
+      else
+         Play_Current_Event_And_Timeout (Kernel, Events);
       end if;
 
       return False;
@@ -427,6 +473,24 @@ package body KeyManager_Module.Macros is
                 "Unexpected exception " & Exception_Information (E));
          return False;
    end Play_Macro_Timer;
+
+   ----------------
+   -- Stop_Macro --
+   ----------------
+
+   procedure Stop_Macro
+     (Kernel : Kernel_Handle;
+      Events : Event_Set_Access)
+   is
+      Macro         : constant String := '/' & (-"Tools/Macro") & '/';
+   begin
+      Events.Current_Event := null;
+
+      Set_Sensitive (Find_Menu_Item (Kernel, Macro & (-"Play")), True);
+      if Events.Child /= null then
+         End_Group (Get_Command_Queue (Events.Child));
+      end if;
+   end Stop_Macro;
 
    ----------------
    -- Play_Macro --
@@ -444,25 +508,34 @@ package body KeyManager_Module.Macros is
 
    begin
       if Macro /= null then
-         Macro.Current_Event := Macro.Events;
+         if Keymanager_Macro_Module.Current_Macro /= null
+           and then Keymanager_Macro_Module.Current_Macro.Current_Event /= null
+         then
+            --  Stop the current macro instead (FC14-014)
+            Trace (Me, "Play_Macro: a macro is already playing, stopping it"
+                   & " and cancelling new call to play");
+            Stop_Macro (Kernel, Keymanager_Macro_Module.Current_Macro);
+         else
+            Macro.Current_Event := Macro.Events;
 
-         if Macro.Current_Event /= null then
-            C := Get_Focus_Child (Get_MDI (Kernel));
-            if C.all in GPS_MDI_Child_Record'Class then
-               Macro.Child := GPS_MDI_Child (C);
+            if Macro.Current_Event /= null then
+               C := Get_Focus_Child (Get_MDI (Kernel));
+               if C.all in GPS_MDI_Child_Record'Class then
+                  Macro.Child := GPS_MDI_Child (C);
+               end if;
+
+               if Macro.Child /= null then
+                  Start_Group (Get_Command_Queue (Macro.Child));
+               end if;
+
+               Set_Sensitive
+                 (Find_Menu_Item (Kernel, Macro_Menu & (-"Play")), False);
+               Keymanager_Macro_Module.Start_Clock := Clock;
+               Keymanager_Macro_Module.Time_Spent  := 0;
+               Macro.Speed                         := Speed;
+
+               Play_Current_Event_And_Timeout (Kernel, Macro);
             end if;
-
-            if Macro.Child /= null then
-               Start_Group (Get_Command_Queue (Macro.Child));
-            end if;
-
-            Set_Sensitive
-              (Find_Menu_Item (Kernel, Macro_Menu & (-"Play")), False);
-            Keymanager_Macro_Module.Start_Clock := Clock;
-            Keymanager_Macro_Module.Time_Spent  := 0;
-            Macro.Speed                         := Speed;
-            Id :=
-              Event_Timeout.Timeout_Add (0, Play_Macro_Timer'Access, Macro);
          end if;
       end if;
    end Play_Macro;
