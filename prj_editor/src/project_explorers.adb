@@ -326,7 +326,7 @@ package body Project_Explorers is
    --  Recompute the files for the directory. This procedure tries to keep the
    --  existing files if they are in the project view, so as to keep the
    --  expanded status
-   --  Data must be the user data associated with Node
+   --  Data must be the user data associated with Node.
 
    procedure Update_Directory_Node_Text
      (Explorer : access Project_Explorer_Record'Class;
@@ -421,11 +421,11 @@ package body Project_Explorers is
    procedure On_Open_Explorer
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle);
-   --  Raise the existing explorer, or open a new one.
+   --  Raise the existing explorer, or open a new one
 
    function Get_Or_Create_Project_View
      (Kernel : access Kernel_Handle_Record'Class) return Project_Explorer;
-   --  Make sure a project view exists, and raise it.
+   --  Make sure a project view exists, and raise it
 
    procedure Child_Selected
      (Explorer : access Gtk_Widget_Record'Class; Args : GValues);
@@ -433,7 +433,7 @@ package body Project_Explorers is
    --  that the selected node in the explorer doesn't reflect false information
 
    procedure On_Parse_Xref (Explorer : access Gtk_Widget_Record'Class);
-   --  Parse all the LI information contained in the selected project.
+   --  Parse all the LI information contained in the selected project
 
    function Get_Imported_Projects
      (Project         : Project_Type;
@@ -1542,7 +1542,7 @@ package body Project_Explorers is
          end if;
       end if;
 
-      --  Set back the cursor to the parent node.
+      --  Set back the cursor to the parent node
       Set_Cursor (T.Tree, Path, null, False);
       T.Expanding := False;
 
@@ -1565,7 +1565,7 @@ package body Project_Explorers is
                Gtk_Tree_Path (Get_Proxy (Nth (Args, 2)));
       Node : constant Gtk_Tree_Iter := Get_Iter (E.Tree.Model, Path);
    begin
-      --  Redraw the pixmap.
+      --  Redraw the pixmap
 
       Set_Node_Type
         (E.Tree.Model,
@@ -2042,7 +2042,7 @@ package body Project_Explorers is
 
       --  If the information about the node hasn't been computed before,
       --  then we don't need to do anything. This will be done when the
-      --  node is actually expanded by the user
+      --  node is actually expanded by the user.
 
       if Is_Up_To_Date (Explorer.Tree.Model, Node) then
          --  Likewise, if a node is not expanded, we simply remove all
@@ -2079,7 +2079,7 @@ package body Project_Explorers is
 
       --  Has to be done whether the node is expanded or not, and whether it is
       --  up-to-date or not, as long as its icon is visible.
-      --  Change the icons to reflect the modified state of the project
+      --  Change the icons to reflect the modified state of the project.
       if Node_Type = Project_Node
         or else Node_Type = Modified_Project_Node
       then
@@ -2196,7 +2196,7 @@ package body Project_Explorers is
          Add_Or_Update_Flat_View_Root_Node (T);
 
       --  If the tree is empty, this simply means we never created it, so we
-      --  need to do it now
+      --  need to do it now.
 
       elsif Get_Iter_First (T.Tree.Model) = Null_Iter then
          Iter := Add_Project_Node (T, Get_Project (T.Kernel));
@@ -2386,7 +2386,7 @@ package body Project_Explorers is
                    Get_Or_Create_Project_View (Kernel);
 
       procedure Initialize_Parser;
-      --  Compute all the matching files and mark them in the htable.
+      --  Compute all the matching files and mark them in the htable
 
       function Next return Gtk_Tree_Iter;
       --  Return the next matching node
@@ -2413,7 +2413,7 @@ package body Project_Explorers is
       function Check_Entities (File : VFS.Virtual_File) return Boolean;
       pragma Inline (Check_Entities);
       --  Check if File contains any entity matching C.
-      --  Return True if there is a match
+      --  Return True if there is a match.
 
       procedure Mark_File_And_Projects
         (File           : Virtual_File;
@@ -2692,8 +2692,8 @@ package body Project_Explorers is
          end if;
 
          if not Project_Marked then
-            --  Mark the current project and all its importing
-            --  projects as matching
+            --  Mark the current project and all its importing projects as
+            --  matching.
 
             declare
                N : constant String := Project_Name (Project);
@@ -2813,7 +2813,7 @@ package body Project_Explorers is
       Expand : Boolean;
 
       procedure Expand_Recursive (The_Path : Gtk_Tree_Path);
-      --  Expand Path and all parents of Path that are not expanded.
+      --  Expand Path and all parents of Path that are not expanded
 
       ----------------------
       -- Expand_Recursive --
