@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2006                      --
+--                      Copyright (C) 2003-2007                      --
 --                               AdaCore                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -42,20 +42,20 @@ package body Task_Manager is
       Active     : Boolean;
       Show_Bar   : Boolean;
       Block_Exit : Boolean) return Integer;
-   --  Return an index in Manager.Queues corresponding to Queue_Id;
+   --  Return an index in Manager.Queues corresponding to Queue_Id
 
    function Active_Incremental
      (Manager : in Task_Manager_Access) return Boolean;
-   --  Incremental function for the active loop.
+   --  Incremental function for the active loop
 
    function Passive_Incremental
      (Manager : in Task_Manager_Access) return Boolean;
-   --  Incremental function for the passive loop.
+   --  Incremental function for the passive loop
 
    function Execute_Incremental
      (Manager : in Task_Manager_Access;
       Active  : Boolean) return Boolean;
-   --  Incremental function to execute the task manager.
+   --  Incremental function to execute the task manager
 
    function Safe_Execute
      (Command : Command_Access) return Command_Return_Type;
@@ -85,14 +85,14 @@ package body Task_Manager is
    function Active_Incremental
      (Manager : in Task_Manager_Access) return Boolean
    is
-      Result : Boolean;
+      Result      : Boolean;
       Return_Type : Command_Return_Type;
       pragma Unreferenced (Result, Return_Type);
 
    begin
       Result := Execute_Incremental (Manager, True);
 
-      --  The active loop ends when there are no more active queues left.
+      --  The active loop ends when there are no more active queues left
 
       if Manager.Queues /= null
         and then Manager.Passive_Index > Manager.Queues'First
@@ -129,7 +129,7 @@ package body Task_Manager is
    function Passive_Incremental
      (Manager : in Task_Manager_Access) return Boolean
    is
-      Result : Boolean;
+      Result      : Boolean;
       Return_Type : Command_Return_Type;
       pragma Unreferenced (Result, Return_Type);
    begin
@@ -137,7 +137,7 @@ package body Task_Manager is
 
       Refresh (Manager);
 
-      --  The passive loop ends when there are no more queues left.
+      --  The passive loop ends when there are no more queues left
 
       if Manager.Queues /= null then
          return True;
@@ -226,7 +226,7 @@ package body Task_Manager is
 
          case Result is
             when Success | Failure =>
-               --  ??? add the command to the list of done or failed commands.
+               --  ??? add the command to the list of done or failed commands
 
                if Queue.Status = Interrupted then
                   Command_Queues.Free (Queue.Queue);
@@ -262,7 +262,7 @@ package body Task_Manager is
 
                   Queue.Done := Queue.Done + 1;
                end if;
-               --  If it was the last command in the queue, free the queue.
+               --  If it was the last command in the queue, free the queue
 
                if Command_Queues.Is_Empty (Queue.Queue) then
                   GNAT.Strings.Free (Queue.Id);
@@ -285,7 +285,7 @@ package body Task_Manager is
                           (Manager.Queues'First .. Manager.Queues'Last - 1);
                         Index      : Integer := -1;
                      begin
-                        --  Find the index of the current running queue.
+                        --  Find the index of the current running queue
 
                         for J in Manager.Queues'Range loop
                            if Manager.Queues (J) = Queue then
@@ -474,8 +474,8 @@ package body Task_Manager is
       Block_Exit : Boolean := True)
    is
       Task_Queue : constant Integer :=
-        Get_Or_Create_Task_Queue
-          (Manager, Queue_Id, Active, Show_Bar, Block_Exit);
+                     Get_Or_Create_Task_Queue
+                       (Manager, Queue_Id, Active, Show_Bar, Block_Exit);
    begin
       Command_Queues.Append (Manager.Queues (Task_Queue).Queue, Command);
 
@@ -603,10 +603,7 @@ package body Task_Manager is
    -- Set_GUI --
    -------------
 
-   procedure Set_GUI
-     (Manager : Task_Manager_Access;
-      GUI     : Gtk_Widget)
-   is
+   procedure Set_GUI (Manager : Task_Manager_Access; GUI : Gtk_Widget) is
    begin
       Manager.GUI := GUI;
    end Set_GUI;
@@ -669,7 +666,7 @@ package body Task_Manager is
    is
       use Commands.Command_Queues;
 
-      Total : Integer := 0;
+      Total       : Integer := 0;
       Empty_Array : Command_Array (1 .. 0);
    begin
       if Manager.Queues = null then
