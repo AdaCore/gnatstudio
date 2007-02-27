@@ -1360,11 +1360,20 @@ package body Code_Analysis_Module is
       Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
+      Entity : Entity_Information;
    begin
-      return (Has_Project_Information (Context) or else
-        Has_File_Information (Context) or else
-          (Has_Entity_Name_Information (Context) and then
-           Is_Subprogram (Get_Entity (Context))));
+      if Has_Project_Information (Context)
+        or else Has_File_Information (Context)
+      then
+         return True;
+
+      elsif Has_Entity_Name_Information (Context) then
+         Entity := Get_Entity (Context);
+
+         return Entity /= null and then Is_Subprogram (Entity);
+      end if;
+
+      return False;
    end Filter_Matches_Primitive;
 
    --------------------
