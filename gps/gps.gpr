@@ -32,7 +32,7 @@ with "../completion/completion";
 with "../code_analysis/code_analysis";
 with "../plugins";
 with "../docs/docs";
-with "../distrib/distrib";
+with "../distrib";
 
 project GPS is
 
