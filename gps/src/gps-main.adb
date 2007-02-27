@@ -173,7 +173,7 @@ procedure GPS.Main is
    Action_Editor_Trace    : constant Debug_Handle :=
                               Create ("MODULE.Action_Editor", Off);
    Code_Analysis_Trace    : constant Debug_Handle :=
-                                       Create ("MODULE.Code_Analysis", On);
+                                       Create ("MODULE.Code_Analysis", Off);
    Codefix_Trace          : constant Debug_Handle :=
                                        Create ("MODULE.Codefix", On);
    Builder_Trace          : constant Debug_Handle :=
