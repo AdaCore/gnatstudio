@@ -48,7 +48,8 @@ if [ "$CHARSET" = "" ]; then
   export CHARSET
 fi
 
-export LD_LIBRARY_PATH GTK_DATA_PREFIX GTK_EXE_PREFIX
+PYTHONHOME=$root
+export LD_LIBRARY_PATH GTK_DATA_PREFIX GTK_EXE_PREFIX PYTHONHOME
 if [ $debug = debug ]; then
    gdb -args $root/bin/${prog}_exe "$@"
 else
