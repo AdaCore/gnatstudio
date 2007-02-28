@@ -1710,14 +1710,34 @@ package body Project_Explorers is
          ---------------
 
          function Is_Hidden (CD, Dir : String) return Boolean is
+
+            function Is_Root (Dir : String) return Boolean;
+            --  Returns True if Dir is a root directory
+
+            -------------
+            -- Is_Root --
+            -------------
+
+            function Is_Root (Dir : String) return Boolean is
+            begin
+               return (Dir'Length = 1 and then Dir (Dir'First) = '/')
+                 or else (Dir'Length = 3
+                          and then Dir (Dir'First + 1 .. Dir'First + 2) = ":\"
+                          and then (Dir (Dir'First) in 'a' .. 'z'
+                                    or else Dir (Dir'First) in 'A' .. 'Z'));
+            end Is_Root;
+
          begin
             if Dir = "" then
                return False;
 
-            elsif CD = ""
+            elsif Is_Root (CD)
+              or else CD = ""
               or else (CD'Length = 2 and then CD (CD'First + 1) = ':')
-            --  ??? test needed to workaround an Ada.Directories problem with
-            --  GNAT 6.0.1 on Windows (G216-009).
+            --  ??? both tests above are needed to workaround an
+            --  Ada.Directories problem with GNAT 6.0.1 on Windows (G216-009).
+            --  Is_Root is the only test needed with a proper Ada.Directories
+            --  implementation.
             then
                return Match (Hidden_File_Matcher, Dir);
 
