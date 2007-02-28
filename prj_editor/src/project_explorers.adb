@@ -1749,7 +1749,11 @@ package body Project_Explorers is
          end Is_Hidden;
 
       begin
-         return Is_Hidden (Containing_Directory (D), Simple_Name (D));
+         if D = "" then
+            return False;
+         else
+            return Is_Hidden (Containing_Directory (D), Simple_Name (D));
+         end if;
       end Is_Hidden;
 
       ------------------
