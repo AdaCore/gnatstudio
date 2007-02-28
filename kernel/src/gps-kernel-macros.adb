@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005-2006                       --
+--                     Copyright (C) 2005-2007                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -153,9 +153,9 @@ package body GPS.Kernel.Macros is
               (Base_Name (File_Information (Context)),
                Protect_Quotes => Quoted);
          elsif Param = "fk" then
-            return Krunch (String_Utils.Protect
-              (Base_Name (File_Information (Context)),
-               Protect_Quotes => Quoted));
+            return String_Utils.Protect
+              (Krunch (Base_Name (File_Information (Context))),
+               Protect_Quotes => Quoted);
          else
             return String_Utils.Protect
               (To_Remote (Full_Name (File_Information (Context)).all, Server),
@@ -168,9 +168,9 @@ package body GPS.Kernel.Macros is
             Protect_Quotes => Quoted);
 
       elsif Param = "dk" then
-         return Krunch (String_Utils.Protect
-             (To_Remote (Directory_Information (Context), Server),
-              Protect_Quotes => Quoted));
+         return String_Utils.Protect
+           (Krunch (To_Remote (Directory_Information (Context), Server)),
+            Protect_Quotes => Quoted);
 
       elsif Param = "e" then
          Entity := Get_Entity (Context);
@@ -210,8 +210,8 @@ package body GPS.Kernel.Macros is
          end if;
 
       elsif Param = "ek" then
-         return Krunch (String_Utils.Protect
-           (Entity_Name_Information (Context)));
+         return String_Utils.Protect
+           (Krunch (Entity_Name_Information (Context)));
 
       elsif Param (Param'First) = 'P' or else Param (Param'First) = 'p' then
          Project := Project_From_Param (Param, Context);
