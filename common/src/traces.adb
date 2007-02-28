@@ -220,6 +220,11 @@ package body Traces is
    Location         : constant Debug_Handle := Create ("DEBUG.LOCATION");
    Count            : constant Debug_Handle := Create ("DEBUG.COUNT");
 
+   Finalize_Traces  : constant Debug_Handle :=
+     Create ("DEBUG.FINALIZE_TRACES", On);
+   --  If set to Off, this module will not be finalized, and traces will still
+   --  be activated when the program itself is finalized by GNAT
+
    ---------------
    -- Unit_Name --
    ---------------
@@ -744,41 +749,46 @@ package body Traces is
       Next : Debug_Handle;
       Tmp2 : Debug_Handle;
    begin
-      while Tmp /= null loop
-         Next := Tmp.Next;
+      if Active (Finalize_Traces) then
+         Trace
+           (Finalize_Traces,
+            "Finalize traces -- no more traces after this point");
+         while Tmp /= null loop
+            Next := Tmp.Next;
 
-         if Tmp.Finalize then
-            Free (Tmp.Name);
+            if Tmp.Finalize then
+               Free (Tmp.Name);
 
-            if Tmp.Stream /= null
-              and then Tmp.Stream /= Default_Output
-            then
-               --  Streams can be shared, so avoid freeing and closing them
-               --  multiple times.
-               Tmp2 := Tmp.Next;
+               if Tmp.Stream /= null
+                 and then Tmp.Stream /= Default_Output
+               then
+                  --  Streams can be shared, so avoid freeing and closing them
+                  --  multiple times.
+                  Tmp2 := Tmp.Next;
 
-               while Tmp2 /= null loop
-                  if Tmp2.Stream = Tmp.Stream then
-                     Tmp2.Stream := null;
-                  end if;
+                  while Tmp2 /= null loop
+                     if Tmp2.Stream = Tmp.Stream then
+                        Tmp2.Stream := null;
+                     end if;
 
-                  Tmp2 := Tmp2.Next;
-               end loop;
+                     Tmp2 := Tmp2.Next;
+                  end loop;
 
-               Close (Tmp.Stream.all);
-               Unchecked_Free (Tmp.Stream);
+                  Close (Tmp.Stream.all);
+                  Unchecked_Free (Tmp.Stream);
+               end if;
+
+               Unchecked_Free (Tmp);
             end if;
 
-            Unchecked_Free (Tmp);
+            Tmp := Next;
+         end loop;
+
+         Handles_List := null;
+
+         if Default_Output /= Convert (Ada.Text_IO.Standard_Output) then
+            Close (Default_Output.all);
          end if;
-
-         Tmp := Next;
-      end loop;
-
-      Handles_List := null;
-
-      if Default_Output /= Convert (Ada.Text_IO.Standard_Output) then
-         Close (Default_Output.all);
       end if;
    end Finalize;
 
