@@ -750,9 +750,6 @@ package body Traces is
       Tmp2 : Debug_Handle;
    begin
       if Active (Finalize_Traces) then
-         Trace
-           (Finalize_Traces,
-            "Finalize traces -- no more traces after this point");
          while Tmp /= null loop
             Next := Tmp.Next;
 
