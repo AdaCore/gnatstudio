@@ -19,6 +19,13 @@ G222-031 New version of the Spark integration plug-in (2007-02-26)
   A new version of the integration with the Spark toolset is provided, with
   support for more recent versions of Spark.
 
+G219-035 Use the root project when compiling individual files (2007-03-01)
+
+  When compiling an individual source file, GPS now uses the main project
+  file instead of the project containing the source file, so that the builder
+  switches and configuration pragmas are used from this main project.
+  This change is not compatible with GNAT 3.15.
+
 G214-033 Improvements in the Scenario View (2007-02-15)
 
   The scenario view has been improved: it is now possible to create a new
