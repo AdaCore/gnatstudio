@@ -808,11 +808,7 @@ package body Builder_Module is
       Shadow      : Boolean := False;
       Extra_Args  : Argument_List_Access := null)
    is
-      Prj             : constant Project_Type :=
-                          Extending_Project
-                            (Get_Project_From_File
-                               (Get_Registry (Kernel).all, File),
-                             Recurse => True);
+      Prj             : constant Project_Type := Get_Project (Kernel);
       Old_Dir         : constant Dir_Name_Str := Get_Current_Dir;
       Cmd             : String_Access;
       Fd              : Process_Descriptor_Access;
