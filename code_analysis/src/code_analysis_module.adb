@@ -113,6 +113,10 @@ package body Code_Analysis_Module is
            (Get_Main_Window (Code_Analysis_Module_ID.Kernel),
             "gps-warning", Gtk.Enums.Icon_Size_Menu);
       end if;
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Create;
 
    ----------------------
@@ -156,6 +160,10 @@ package body Code_Analysis_Module is
            (Get_Main_Window (Code_Analysis_Module_ID.Kernel),
             "gps-warning", Gtk.Enums.Icon_Size_Menu);
       end if;
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Create_From_Menu;
 
    -------------------------------------
@@ -192,6 +200,10 @@ package body Code_Analysis_Module is
 
       Add_Gcov_File_Info (Src_File, Cov_File, Project_Node);
       Compute_Project_Coverage (Project_Node);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Add_Gcov_File_Info_From_Context;
 
    -----------------------------------
@@ -320,6 +332,10 @@ package body Code_Analysis_Module is
         (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
       Prj_Node := Get_Or_Create (Property.Projects, Prj_Name);
       Add_Gcov_Project_Info (Prj_Node);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Add_Gcov_Project_Info_From_Context;
 
    --------------------------------------
@@ -470,6 +486,10 @@ package body Code_Analysis_Module is
    begin
       Show_Analysis_Report
         (Cont_N_Inst.Instance, Property, Cont_N_Inst.Context);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Show_Analysis_Report_From_Context;
 
    ------------------------------------
@@ -485,6 +505,10 @@ package body Code_Analysis_Module is
         (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
    begin
       Show_Analysis_Report (Cont_N_Inst.Instance, Property);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Show_Analysis_Report_From_Menu;
 
    ------------------------------------------
@@ -529,6 +553,10 @@ package body Code_Analysis_Module is
           ASCII.LF &
           (-"entries of the /Tools/Coverage or contextual menu.")))));
       Raise_Child (Property.Child);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Show_Empty_Analysis_Report_From_Menu;
 
    --------------------------
@@ -603,10 +631,6 @@ package body Code_Analysis_Module is
       Select_Path (Get_Selection (Property.View.Tree), Path);
       Path_Free (Path);
       Raise_Child (Property.Child);
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
    end Show_Analysis_Report;
 
    ---------------------------
@@ -1186,6 +1210,10 @@ package body Code_Analysis_Module is
       View : constant Code_Analysis_View := Code_Analysis_View (Object);
    begin
       Expand_All (View.Tree);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Expand_All_From_Report;
 
    ------------------------------
@@ -1197,6 +1225,10 @@ package body Code_Analysis_Module is
       View : constant Code_Analysis_View := Code_Analysis_View (Object);
    begin
       Collapse_All (View.Tree);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Collapse_All_From_Report;
 
    --------------------
@@ -1217,6 +1249,10 @@ package body Code_Analysis_Module is
       Expand_To_Path (View.Tree, Path);
       Select_Path (Get_Selection (View.Tree), Path);
       Path_Free (Path);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Show_Full_Tree;
 
    -----------------------------
@@ -1230,6 +1266,10 @@ package body Code_Analysis_Module is
    begin
       Clear (View.Model);
       Fill_Iter_With_Files (View.Model, Iter, View.Projects);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Show_Flat_List_Of_Files;
 
    -----------------------------------
@@ -1244,6 +1284,10 @@ package body Code_Analysis_Module is
    begin
       Clear (View.Model);
       Fill_Iter_With_Subprograms (View.Model, Iter, View.Projects);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Show_Flat_List_Of_Subprograms;
 
    -----------------------------
@@ -1549,23 +1593,24 @@ package body Code_Analysis_Module is
       Cont_N_Inst  : Context_And_Instance;
       Property     : Code_Analysis_Property_Record;
       Project_Node : Project_Access;
-      Project_Name : Project_Type;
       Submenu      : Gtk_Menu;
       Item         : Gtk_Menu_Item;
       Cur          : Cursor := Code_Analysis_Module_ID.Instances.First;
    begin
 
+      --  Check context and have it usable
       if Context = No_Context then
          Cont_N_Inst.Context := Get_Current_Context (Kernel);
       else
          Cont_N_Inst.Context := Context;
       end if;
 
-      if Has_Project_Information (Cont_N_Inst.Context) then
-         Project_Name := Project_Information (Cont_N_Inst.Context);
-      else
-         Project_Name := Get_Project (Code_Analysis_Module_ID.Kernel);
+      if not Has_Project_Information (Cont_N_Inst.Context) then
+         Set_File_Information
+           (Cont_N_Inst.Context,
+            Project => Get_Project (Code_Analysis_Module_ID.Kernel));
       end if;
+      --  context is correct
 
       loop
          exit when Cur = No_Element;
@@ -1573,7 +1618,7 @@ package body Code_Analysis_Module is
          Property             := Code_Analysis_Property_Record
            (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
          Project_Node         := Get_Or_Create
-           (Property.Projects, Project_Name);
+           (Property.Projects, Project_Information (Cont_N_Inst.Context));
 
          if Code_Analysis_Module_ID.Instances.Length > 1 then
             Gtk_New (Item, -(Property.Instance_Name.all));
