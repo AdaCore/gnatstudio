@@ -68,6 +68,10 @@ package body Projects.Registry is
    --  3.15a1, False if they only need to be compatible with GNAT 3.16 >=
    --  20021024
 
+   Unknown_Language : Name_Id;
+   --  Constant used to mark source files set in the project, but for which no
+   --  matching language has been found.
+
    Keywords_Initialized : Boolean := False;
    --  Whether we have already initialized the Ada keywords list. This is only
    --  used by Is_Valid_Project_Name
@@ -1295,6 +1299,9 @@ package body Projects.Registry is
             null;
 
          elsif Src.Lang = No_Name then
+            Set (Registry.Data.Sources,
+                 K => F,
+                 E => (Project, Unknown_Language, No_Name));
             --  ???
             --  Here we used to do the following:
             --    Set (Registry.Data.Sources,
@@ -1417,14 +1424,16 @@ package body Projects.Registry is
             --  The project manager duplicates files that contain several
             --  units. Only add them once in the project sources.
 
-            Append
-              (Source_File_List,
-               Create (File, Project, Use_Object_Path => False));
+            if not Get (Seen, File) then
+               Append
+                 (Source_File_List,
+                  Create (File, Project, Use_Object_Path => False));
 
-            --  We must set the source has seen so that it does not appear
-            --  twice in the project explorer which happens for project
-            --  that uses both Source_Files and Source_Dirs attributes.
-            Set (Seen, File, True);
+               --  We must set the source has seen so that it does not appear
+               --  twice in the project explorer which happens for project
+               --  that uses both Source_Files and Source_Dirs attributes.
+               Set (Seen, File, True);
+            end if;
          end;
 
          Src := String_Elements (Registry) (Src).Next;
@@ -1971,6 +1980,7 @@ package body Projects.Registry is
 
       Name_C_Plus_Plus := Get_String (Cpp_String);
       Any_Attribute_Name := Get_String (Any_Attribute);
+      Unknown_Language := Get_String ("unknown");
    end Initialize;
 
    --------------
