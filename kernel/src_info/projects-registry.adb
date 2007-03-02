@@ -68,10 +68,6 @@ package body Projects.Registry is
    --  3.15a1, False if they only need to be compatible with GNAT 3.16 >=
    --  20021024
 
-   Unknown_Language : Name_Id;
-   --  Constant used to mark source files set in the project, but for which no
-   --  matching language has been found.
-
    Keywords_Initialized : Boolean := False;
    --  Whether we have already initialized the Ada keywords list. This is only
    --  used by Is_Valid_Project_Name
@@ -1232,6 +1228,8 @@ package body Projects.Registry is
    is
       Sources_Specified       : Boolean := False;
       Specified_Sources_Count : Natural := 0;
+      Seen                    : Boolean_Htable.String_Hash_Table.HTable;
+      use Boolean_Htable.String_Hash_Table;
 
       package Virtual_File_List is new Ada.Containers.Doubly_Linked_Lists
         (Element_Type => Virtual_File);
@@ -1263,27 +1261,48 @@ package body Projects.Registry is
          F   : String := File;
          Src : Source_File_Data;
       begin
+         if Get (Seen, File) then
+            return;
+         end if;
+
          Canonical_Case_File_Name (F);
          Specified_Sources_Count := Specified_Sources_Count + 1;
 
          Src := Get (Registry.Data.Sources, F);
 
-         if Src = No_Source_File_Data then
-            Append
-              (Source_File_List,
-               Create (File, Project, Use_Object_Path => False));
-         else
-            Append (Source_File_List, VFS.Create (Get_String (Src.Full_Name)));
-         end if;
+         declare
+            F : Virtual_File;
+         begin
+            if Src = No_Source_File_Data then
+               F := Create (File, Project, Use_Object_Path => False);
+            else
+               F := Create (Get_String (Src.Full_Name));
+            end if;
+
+            --  We only add sources that can be found. In case of a debugger
+            --  project, it can appears that some of the explicit sources
+            --  (returned by the debugger itself) cannot be found (they were
+            --  used to compile the run-time for example but are not part of
+            --  the compiler distribution).
+            if F /= VFS.No_File then
+               Append (Source_File_List, F);
+               Set (Seen, File, True);
+            end if;
+         end;
 
          if Src.Lang = Name_Ada then
             --  No warning, this was already processed
             null;
 
          elsif Src.Lang = No_Name then
-            Set (Registry.Data.Sources,
-                 K => F,
-                 E => (Project, Unknown_Language, No_Name));
+            --  ???
+            --  Here we used to do the following:
+            --    Set (Registry.Data.Sources,
+            --         K => F,
+            --         E => (Project, Unknown_Language, No_Name));
+            --  Unfortunately this results in each explicit source listed in
+            --  a debugger project to have an unknown language.
+            null;
 
          elsif Src.Project /= No_Project then
             Errors (-("Warning, duplicate source file ") & F
@@ -1380,9 +1399,6 @@ package body Projects.Registry is
       Has_File  : Boolean;
       Dirs_List : String_List_Id;
       Src       : String_List_Id;
-      Seen      : Boolean_Htable.String_Hash_Table.HTable;
-
-      use Boolean_Htable.String_Hash_Table;
 
    begin
       --  We already know if the directories contain Ada files. Update the
@@ -1398,21 +1414,21 @@ package body Projects.Registry is
             File : constant String :=
                      Locale_To_UTF8 (Name_Buffer (1 .. Name_Len));
          begin
-            --  The project manager duplicates files that contain sevral units.
-            --  Only add them once in the project sources.
+            --  The project manager duplicates files that contain several
+            --  units. Only add them once in the project sources.
 
-            if not Get (Seen, File) then
-               Append
-                 (Source_File_List,
-                  Create (File, Project, Use_Object_Path => False));
-               Set (Seen, File, True);
-            end if;
+            Append
+              (Source_File_List,
+               Create (File, Project, Use_Object_Path => False));
+
+            --  We must set the source has seen so that it does not appear
+            --  twice in the project explorer which happens for project
+            --  that uses both Source_Files and Source_Dirs attributes.
+            Set (Seen, File, True);
          end;
 
          Src := String_Elements (Registry) (Src).Next;
       end loop;
-
-      Reset (Seen);
 
       Dirs_List := Projects_Table (Registry)(Get_View (Project)).Source_Dirs;
 
@@ -1955,7 +1971,6 @@ package body Projects.Registry is
 
       Name_C_Plus_Plus := Get_String (Cpp_String);
       Any_Attribute_Name := Get_String (Any_Attribute);
-      Unknown_Language := Get_String ("unknown");
    end Initialize;
 
    --------------
