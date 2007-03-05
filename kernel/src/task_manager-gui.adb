@@ -110,6 +110,11 @@ package body Task_Manager.GUI is
       Event  : Gdk_Event) return Boolean;
    --  Callback for a "button_press_event".
 
+   procedure On_Progress_Bar_Destroy
+     (Object  : access GObject_Record'Class;
+      Manager : Manager_Index_Record);
+   --  Called when a progress bar is destroyed.
+
    function On_Progress_Bar_Button_Pressed
      (Object  : access Gtk_Widget_Record'Class;
       Params  : GValues;
@@ -164,6 +169,19 @@ package body Task_Manager.GUI is
       Params  : GValues;
       Manager : Manager_Index_Record);
    --  Resume the referenced command in the task manager.
+
+   -----------------------------
+   -- On_Progress_Bar_Destroy --
+   -----------------------------
+
+   procedure On_Progress_Bar_Destroy
+     (Object  : access GObject_Record'Class;
+      Manager : Manager_Index_Record)
+   is
+      pragma Unreferenced (Object);
+   begin
+      Pop_State (Manager.Manager);
+   end On_Progress_Bar_Destroy;
 
    ------------------------------------
    -- On_Progress_Bar_Button_Pressed --
@@ -666,11 +684,20 @@ package body Task_Manager.GUI is
                   Fill    => True,
                   Padding => 0);
 
+               Push_State (Manager);
+
                Manager_Contextual_Menus.Contextual_Callback.Connect
                  (Manager.Queues (J).Bar,
                   "button_press_event",
                   On_Progress_Bar_Button_Pressed'Access,
                   (null, null, (Manager, J)));
+
+               Task_Manager_Handler.Connect
+                 (Manager.Queues (J).Bar,
+                  "destroy",
+                  Task_Manager_Handler.To_Marshaller
+                    (On_Progress_Bar_Destroy'Access),
+                  (Manager, J));
 
                Task_Manager_Handler.Connect
                  (Button, "clicked",
@@ -957,5 +984,27 @@ package body Task_Manager.GUI is
         (View.Tree, (View.Manager, -1),
          Menu_Create'Access, Menu_Destroy'Access);
    end Initialize;
+
+   ---------------
+   -- Pop_State --
+   ---------------
+
+   procedure Pop_State (Manager : Task_Manager_Access) is
+      Dummy : Command_Return_Type;
+      pragma Unreferenced (Dummy);
+   begin
+      Dummy := Execute (Manager.Pop_Command);
+   end Pop_State;
+
+   ----------------
+   -- Push_State --
+   ----------------
+
+   procedure Push_State (Manager : Task_Manager_Access) is
+      Dummy : Command_Return_Type;
+      pragma Unreferenced (Dummy);
+   begin
+      Dummy := Execute (Manager.Push_Command);
+   end Push_State;
 
 end Task_Manager.GUI;
