@@ -3008,7 +3008,7 @@ package body Project_Explorers is
          Filter => Action_Filter
            (Lookup_Filter (Kernel, "In project")
             and not Create (Module => Explorer_Module_Name)),
-         Label  => "Locate in explorer: %f");
+         Label  => "Locate in Project View: %f");
 
       Command := new Locate_Project_In_Explorer_Command;
       Register_Contextual_Menu
@@ -3017,7 +3017,7 @@ package body Project_Explorers is
          Filter => Action_Filter
            (Lookup_Filter (Kernel, "Project only")
             and not Create (Module => Explorer_Module_Name)),
-         Label  => "Locate in explorer: %p");
+         Label  => "Locate in Project View: %p");
 
       Register_Menu
         (Kernel, Project, -"Project _View", "", On_Open_Explorer'Access);
