@@ -3047,16 +3047,6 @@ package body Src_Editor_Module is
          Register_Search_Function
            (Kernel => Kernel,
             Data   =>
-              (Length            => Name'Length,
-               Label             => Name,
-               Factory           => Current_File_Factory'Access,
-               Extra_Information => Gtk_Widget (Selector),
-               Id                => Abstract_Module_ID (Src_Editor_Module_Id),
-               Mask              => All_Options,
-               Last_Of_Module    => Search_Context_Current_File));
-         Register_Search_Function
-           (Kernel => Kernel,
-            Data   =>
               (Length            => Name2'Length,
                Label             => Name2,
                Factory           => Files_From_Project_Factory'Access,
@@ -3084,6 +3074,16 @@ package body Src_Editor_Module is
                Id                => Abstract_Module_ID (Src_Editor_Module_Id),
                Mask              => All_Options and not Search_Backward,
                Last_Of_Module    => Search_Context_Open_Files));
+         Register_Search_Function
+           (Kernel => Kernel,
+            Data   =>
+              (Length            => Name'Length,
+               Label             => Name,
+               Factory           => Current_File_Factory'Access,
+               Extra_Information => Gtk_Widget (Selector),
+               Id                => Abstract_Module_ID (Src_Editor_Module_Id),
+               Mask              => All_Options,
+               Last_Of_Module    => Search_Context_Current_File));
 
          Create_New_Boolean_Key_If_Necessary
            (Get_History (Kernel).all, Search_Context_Current_File, True);
