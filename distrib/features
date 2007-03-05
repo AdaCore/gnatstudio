@@ -14,6 +14,12 @@ of the feature.
 New features in GPS 4.1.0
 -------------------------
 
+G301-012 Introduction of preference "Preserve Search Context" (2007-03-05)
+
+  A new preference has been introduced in the Search section. When this
+  preference is enabled, GPS remembers the state of the "Look in:" field in
+  the Search dialog between consecutive searches.
+
 G222-031 New version of the Spark integration plug-in (2007-02-26)
 
   A new version of the integration with the Spark toolset is provided, with
