@@ -1,7 +1,7 @@
 \input texinfo   @c -*-texinfo-*-
 @input texiplus
 
-@c For uniformity, screenshots are generated using the following set up:
+@c For uniformity, screenshots are generated using the following setup:
 @c   - Under Windows XP, using the default XP theme
 @c   - Using the standard Windows screen or window capture
 @c     (using e.g Ctrl-PrntScrn)
