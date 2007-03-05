@@ -675,7 +675,7 @@ either a file or an entity. Note that searching for an entity can be slow
 if you have lots of files, and/or big files.
 
 @cindex view
-@cindex locate in view
+@cindex locate in project view
 A contextual menu, named @code{Locate in Project View}, is also provided when
 inside a source editor. This will automatically search for the first entry for
 this file in the project view. This contextual menu is also available in other
