@@ -52,7 +52,7 @@ unmodified in any copy.
 * Building applications::
 * Source Navigation::
 * Search Dialog::
-* Project Explorer (entities)::
+* Project view (entities)::
 * Back to Source Navigation::
 * Code Completion::
 * Run::
@@ -106,8 +106,8 @@ several areas:
 @item a menu bar at the top
 @item a tool bar under the menu bar
 @item a scenario view under the tool bar, on the left side
-@item a project explorer under the scenario view, on the left side
-@item a working area on the right of the project explorer
+@item a project view under the scenario view, on the left side
+@item a working area on the right of the project view
 @item a messages window under the working area
 @item a status bar at the bottom left
 @end itemize
@@ -119,7 +119,7 @@ several areas:
 
 @noindent
 
-In the project explorer, open the @code{common} directory by clicking
+In the project view, open the @code{common} directory by clicking
 on the @code{[+]} sign (a triangle under unix systems) on the left of
 @code{common}.
 This will open the directory and display a list of source files located
@@ -237,9 +237,9 @@ then click on @code{Goto declaration of Next}: we're now in the package
 Select the menu @code{Navigate->Find or Replace...}: this will open a search
 dialog.
 In the @code{Search for:} text entry type @file{tokens.ads}. Then
-select @code{Project explorer} in the @code{Look in:} area. The search
+select @code{Project view} in the @code{Look in:} area. The search
 area provides an easy way to search for text or regular expressions in
-several contexts including the current file, the project explorer, @dots{}
+several contexts including the current file, the project view, @dots{}
 
 Now click on @code{Find}. The file @file{tokens.ads}, in directory @code{struct}
 is highlighted.
@@ -247,17 +247,17 @@ is highlighted.
 Close the search dialog by clicking on the @code{Close} button.
 
 Note that in this specific case, a simpler way to locate a file in the
-explorer is to use the contextual menu from the source editor:
-@code{Locate in explorer: tokens.ads}.
+project view is to use the contextual menu from the source editor:
+@code{Locate in Project View: tokens.ads}.
 
 @c --------------------------------------------------------------------
-@node Project Explorer (entities)
-@chapter Project Explorer (entities)
+@node Project View (entities)
+@chapter Project View (entities)
 @c --------------------------------------------------------------------
 
 @noindent
 Click on the @code{[+]} sign (or triangle) to open @file{tokens.ads} entities.
-When you click on a file in the explorer, you get
+When you click on a file in the project view, you get
 language sensitive information about the file, such as
 @code{packages}, @code{subprograms}, @code{tasks}, ... for @code{Ada}.
 
@@ -296,23 +296,23 @@ As with the undo/redo capability in the source editor, the
 @noindent
 
 Go on the line 38 of sdc.adb. You can see that there is a null instruction for
-the case of Stack.Overflow. We are going to add some code here, using the 
+the case of Stack.Overflow. We are going to add some code here, using the
 code assist capabilities.
 
-Type @code{Scr} and hit @key{Ctrl+Space}. If you've never used 
+Type @code{Scr} and hit @key{Ctrl+Space}. If you've never used
 auto-completion before, GPS will pop a window asking you if you want to enable
 the auto-completion engine. Answer "yes". You will see at the bottom right of
-GPS a progress bar, showing the status of the completion database load. Note 
-that you can still work during this operation. The auto completion mechanism 
+GPS a progress bar, showing the status of the completion database load. Note
+that you can still work during this operation. The auto completion mechanism
 can be disabled from the preferences if needed.
 
 Wait until the progress bar disappears, and then hit @key{Ctrl+Space} again.
 A completion popup will be displayed, showing all the entities of the project
-begining with @code{Scr}. Select @code{Screen_Output}. The code will be 
-automatically completed in the editor. Then add a dot in your code. The 
-completion popup will be automatically triggered, and will offer you to 
-complete your code with the entities contained in the @code{Screen_Output} 
-package. Select @code{Msg}, and add an open parenthesis. Once again, the 
+begining with @code{Scr}. Select @code{Screen_Output}. The code will be
+automatically completed in the editor. Then add a dot in your code. The
+completion popup will be automatically triggered, and will offer you to
+complete your code with the entities contained in the @code{Screen_Output}
+package. Select @code{Msg}, and add an open parenthesis. Once again, the
 completion popup will pop, and show you the possible parameters for msg. If you
 choose the first entry of the completion list ("params of Msg"), the call will
 be automatically completed by a list of named parameters. Complete the list by
@@ -498,7 +498,7 @@ Rebuild by pressing the @key{F4} key.
 @c --------------------------------------------------------------------
 
 @c @noindent
-@c From the project explorer, contextual menu on project @i{sdc}, select
+@c From the project view, contextual menu on project @i{sdc}, select
 @c @code{Version Control->Query status for project}. The VCS Explorer is
 @c opened, listing the files in the project.
 @c => Explain the use of icons for status, log files, ...
@@ -615,7 +615,7 @@ and loaded it in GPS.
 @section Project properties
 @noindent
 
-In the project explorer, on the project @i{sdc}, use the contextual menu
+In the project view, on the project @i{sdc}, use the contextual menu
 @code{Project->Properties}.
 All the properties set in the project wizard can be found here as well.
 You can switch between pages by clicking on the tabs located along the
@@ -680,13 +680,13 @@ Click on the right arrow of @file{tokens.ads} to display the files that
 @section Project dependencies
 @noindent
 
-Back in the project explorer, on the @i{Sdc} project, select the contextual
+Back in the project view, on the @i{Sdc} project, select the contextual
 menu @code{Project->Dependencies}, then on the @code{Add From File},
 then open the @i{tutorial}
 directory and click on the @code{projects} subdirectory. Select the file
 @code{prj1.gpr}. Click on @code{Apply} to validate the change.
 
-You can see the new dependency added in the project explorer, as a tree of
+You can see the new dependency added in the project view, as a tree of
 projects. In particular, project dependencies are duplicated: if you open
 the @code{prj1} icon by clicking on the @code{[+]} sign (or triangle), and then
 similarly open the @code{prj2} icon, you will notice that the project

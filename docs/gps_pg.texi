@@ -335,7 +335,7 @@ rest of GPS.
 
 @noindent
 As described above, GPS is organized into largely independent
-modules. For instance, the various explorers, browsers, help, vcs
+modules. For instance, the various views, browsers, help, vcs
 support,... are separate modules, that can either be loaded at startup
 or not.
 
@@ -399,7 +399,7 @@ A module can choose to emit the signal to report changes to its
 context by emitting the signal. Other modules can they update their
 content accordingly. This is how the switches editor updates the
 project/directory/file it is showing when a new selection is done in
-the explorer.
+the project view.
 
 @item hooks and action hooks
 Hooks are similar to the usual gtk+ signals.

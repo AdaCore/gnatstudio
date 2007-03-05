@@ -1068,7 +1068,7 @@ package body GPS.Kernel.Preferences is
             Nick  => -"Hidden directories pattern",
             Blurb =>
               -"Directories matching this pattern are removed from the project"
-              & " explorer. This preference is really OS dependent, for"
+              & " view. This preference is really OS dependent, for"
               & " example on UNIX based systems, files and directories"
               & " starting with a dot are considered as hidden. This regular"
               & " expression is also used to remove VCS specific directories"
