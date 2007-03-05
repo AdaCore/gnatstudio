@@ -9159,6 +9159,12 @@ found.
 If this option is enabled, the focus will be given to the editor when a match
 is found.
 
+@item Preserve Search Context
+@cindex search
+If this option is enabled, the contents of the "Look in:" field will be
+preserved between consecutive searches. Note that this search context still
+depends on the selected window.
+
 @end table
 
 @item @b{Browsers}
