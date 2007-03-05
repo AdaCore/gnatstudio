@@ -2434,7 +2434,7 @@ package body Vsearch is
         Glib.Properties.Creation.Param_Spec_Boolean
           (Gnew_Boolean
              (Name  => "keep-previous-search-context",
-              Nick  => -"Preserve search context",
+              Nick  => -"Preserve Search Context",
               Blurb => -("Preserve the contents of the ""Look in"" entry"
                 & " between consecutive searches."),
               Default => False));
