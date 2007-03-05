@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
+--                      Copyright (C) 2001-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -86,6 +86,7 @@ package body Vsearch is
    Ask_Confirmation_For_Replace_All : Param_Spec_Boolean;
    Close_On_Match                   : Param_Spec_Boolean;
    Select_On_Match                  : Param_Spec_Boolean;
+   Keep_Previous_Search_Context     : Param_Spec_Boolean;
    --  The preferences
 
    Close_On_Match_Description : constant String :=
@@ -2151,9 +2152,11 @@ package body Vsearch is
          if Data (List).Id = Abstract_Module_ID (Id) then
             Last_Matching_Node := List;
 
-            if Data (List).Last_Of_Module /= No_Search_History_Key
-              and then Get_History
-                (Get_History (Handle).all, Data (List).Last_Of_Module)
+            if (not Get_Pref (Keep_Previous_Search_Context))
+              or else
+                (Data (List).Last_Of_Module /= No_Search_History_Key
+                 and then Get_History
+                   (Get_History (Handle).all, Data (List).Last_Of_Module))
             then
                return Data (List);
             end if;
@@ -2179,6 +2182,10 @@ package body Vsearch is
    is
       List : List_Node := First (Vsearch_Module_Id.Search_Modules);
    begin
+      if not Get_Pref (Keep_Previous_Search_Context) then
+         return;
+      end if;
+
       while List /= Null_Node loop
          if Data (List).Id = Search_Data.Id then
             if Data (List).Last_Of_Module /= No_Search_History_Key then
@@ -2422,6 +2429,17 @@ package body Vsearch is
               Default => True));
       Register_Property
         (Kernel, Param_Spec (Ask_Confirmation_For_Replace_All), -"Search");
+
+      Keep_Previous_Search_Context :=
+        Glib.Properties.Creation.Param_Spec_Boolean
+          (Gnew_Boolean
+             (Name  => "keep-previous-search-context",
+              Nick  => -"Preserve search context",
+              Blurb => -("Preserve the contents of the ""Look in"" entry"
+                & " between consecutive searches."),
+              Default => False));
+      Register_Property
+        (Kernel, Param_Spec (Keep_Previous_Search_Context), -"Search");
 
       Close_On_Match :=
         Glib.Properties.Creation.Param_Spec_Boolean
