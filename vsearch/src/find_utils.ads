@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                     Copyright (C) 2001-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -360,6 +360,9 @@ package Find_Utils is
    --  Register a new search function.
    --  This will be available under the title Label in the search combo box.
    --  This emits the kernel signal "search_functions_changed".
+   --  The search function registered is the one that will be returned by
+   --  default when the preference to "save the state of the search context"
+   --  is disabled.
 
    procedure Reset_Search
      (Object : access Glib.Object.GObject_Record'Class;
