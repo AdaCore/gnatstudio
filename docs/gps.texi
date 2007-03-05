@@ -141,7 +141,7 @@ Project Handling
 * Supported Languages::
 * Scenarios and Configuration Variables::
 * Extending Projects::
-* The Project Explorer::
+* The Project View::
 * Disabling Project Edition Features::
 * The Project Menu::
 * The Project Wizard::
@@ -512,21 +512,21 @@ The whole work space is based on a multiple document interface,
 @c --------------------------------------------------------------------
 @node The Project View
 @section The Project View
-@cindex project explorer
+@cindex project view
 @cindex project view
 @cindex project
 @c --------------------------------------------------------------------
 
 @noindent
-The project explorer provides a view of the various components of your project
-hierarchy, as listed below.
+The project view provides a representation of the various components of your
+project hierarchy, as listed below.
 It is displayed by default on the left side of the main window, and can
 be selected by using the @code{Project->Project View} or
 @code{Tools->Views->Project} menu items.
 
 @cindex drag-n-drop
 Under Windows, it is possible to drop files (coming e.g. from the Explorer)
-in the project explorer with the following behavior: a project file dropped
+in the project view with the following behavior: a project file dropped
 will be loaded; any other file will be opened in a new source editor.
 
 @iftex
@@ -540,13 +540,13 @@ will be loaded; any other file will be opened in a new source editor.
 @end ifhtml
 
 @cindex interactive search
-The project explorer, as well as the file and outline view provide an
+The project view, as well as the file and outline view provide an
 interactive search capability allowing you to quickly
 search in the information currently displayed. The default key
 to start an interactive search is @key{control-f}.
 @anchor{Interactive Search}
 This will open a small window
-at the bottom of the explorer where you can interactively type names.
+at the bottom of the view where you can interactively type names.
 The first matching name in the tree will be selected while you type it.
 You can then also use the @key{up} and @key{down} keys to navigate through
 all the items matching the current text.
@@ -576,9 +576,9 @@ A given project might appear multiple times in the
 @code{Project View}, if it is imported by several other projects.
 
 There exists a second display for this project view, which lists
-all projects with no hierarchy: all projects appear only once in the explorer,
+all projects with no hierarchy: all projects appear only once in the view,
 at the top level. This display might be useful for deep project hierarchies, to
-make it easier to find projects in the explorer.
+make it easier to find projects in the project view.
 
 @cindex Show flat view
 This display is activated through the contextual menu entry
@@ -647,7 +647,7 @@ a new view of the existing editor is created instead.
 
 @c ??? Following is currently disabled
 @c Moving the mouse over the different components displayed on the
-@c project explorer view will open tooltips with some more information
+@c project view will open tooltips with some more information
 @c depending on the type of component:
 
 @c @table @b
@@ -670,15 +670,15 @@ a new view of the existing editor is created instead.
 @cindex search
 @cindex find
 If you open the search dialog through the @code{Navigate->Find or Replace...}
-menu, you have the possibility to search for anything in the explorer,
+menu, you have the possibility to search for anything in the project view,
 either a file or an entity. Note that searching for an entity can be slow
 if you have lots of files, and/or big files.
 
-@cindex explorer
-@cindex locate in explorer
-A contextual menu, named @code{Locate in Explorer}, is also provided when
+@cindex view
+@cindex locate in view
+A contextual menu, named @code{Locate in Project View}, is also provided when
 inside a source editor. This will automatically search for the first entry for
-this file in the explorer. This contextual menu is also available in other
+this file in the project view. This contextual menu is also available in other
 modules, e.g. when selecting a file in the @code{Dependency Browser}.
 
 
@@ -1309,7 +1309,7 @@ windows are put into a bigger window which is itself under control of
 the system or the windows manager.
 
 This means that, by default, no matter how many editors, browsers,
-explorers, @dots{} windows you have opened, your system will still see only
+views, @dots{} windows you have opened, your system will still see only
 one window (On Windows systems, the task bar shows only one
 icon). However, you can organize the GPS windows exactly the way you
 want, all inside the GPS main window.
@@ -2023,7 +2023,7 @@ projects in your hierarchy, some files may be redefined in some
 extending project. In this case, only the files from the extending
 project are shown, and you cannot have access through this dialog to
 the overridden files of the extended project. Of course, you can still
-use the project explorer or the standard @code{File->Open} menu to
+use the project view or the standard @code{File->Open} menu to
 open these files.
 
 @item Recent
@@ -3026,7 +3026,7 @@ In addition, one special case cannot be handled automatically. This
 is for separate units, whose file names have been crunched through the
 @command{gnatkr} command. To handle this, you should force GPS to parse
 all the @file{ALI files} in the appropriate object directory. This is
-done by right-clicking on the object directory in the explorer
+done by right-clicking on the object directory in the project view
 (left-side panel on the main window), and selecting the menu "Parse
 all xref information".
 
@@ -3343,7 +3343,7 @@ how such projects can be created and maintained.
 * Supported Languages::
 * Scenarios and Configuration Variables::
 * Extending Projects::
-* The Project Explorer::
+* The Project View::
 * Disabling Project Edition Features::
 * The Project Menu::
 * The Project Wizard::
@@ -3650,7 +3650,7 @@ appropriate scenario (@ref{The Project Properties Editor}).
 
 @noindent
 Creating a new scenario variable is done through the contextual menu
-(right-click) in the Project Explorer or the Scenario View itself. Select the
+(right-click) in the Project View or the Scenario View itself. Select the
 menu @code{Project->Add Configuration Variable}. This opens the following
 dialog:
 
@@ -3725,7 +3725,7 @@ pop-up window with the list of possible values, from which you select
 the one you wish to use.
 
 As soon as a new value is selected, GPS will recompute the project
-explorer (in case source directories, object directories or list
+view (in case source directories, object directories or list
 of source files have changed). A number of things will also be updated
 (like the list of executables in the @code{Compile}, @code{Run} and
 @code{Debug} menus).
@@ -3830,22 +3830,22 @@ Note that open editors will still be editing the same file they were before,
 so you should open the new file if needed.
 
 @c -------------------------------------------------------------------
-@node The Project Explorer
-@section The Project Explorer
-@cindex project explorer
+@node The Project View
+@section The Project View
+@cindex project view
 @c -------------------------------------------------------------------
 
 @noindent
-The project explorer, as mentioned in the general description of the
-GPS window, is one of the explorers found by default on the left
+The project view, as mentioned in the general description of the
+GPS window, is one of the views found by default on the left
 of the window. It shows in a tree structure the project hierarchy,
 along with all the source files belonging to the project, and the
 entities declared in the source files.
 
-It is worth noting that the explorer provides a tree representation of
+It is worth noting that the project view provides a tree representation of
 the project hierarchy. If a project is imported by multiple other
 projects in the hierarchy, then this project will appear multiple times
-in the explorer.
+in the project view.
 
 @cindex limited with
 Likewise, if you have edited the project manually and have used the
@@ -3856,7 +3856,7 @@ project @file{a} through a @code{limited with} clause, then expanding
 the node for @file{a} will show @file{b}. In turn, expanding the node
 for @file{b} will show a node for @file{a}, and so on.
 
-The contextual menu in this explorer provides a number of items to
+The contextual menu in this projevt view provides a number of items to
 modify the project hierarchy (what each project imports), as well as
 to visualize and modify the attributes for each projects (compilation
 switches, naming scheme, @dots{})
@@ -3906,11 +3906,11 @@ compilation artifacts associated to the current project.
 
 @cindex saving projects
 Any time one or several projects are modified, the contents of the
-explorer is automatically refreshed. No project is automatically
+project view is automatically refreshed. No project is automatically
 saved. This provides a simple way to temporarily test new values for
 the project attributes.
 Unsaved modified projects are shown with a special icon in the project
-explorer, displaying a pen mark on top of the standard
+view, displaying a pen mark on top of the standard
 icon:
 
 @iftex
@@ -3965,11 +3965,11 @@ responsible for project edition.
 
 The menu bar item @code{Project} contains several commands that
 generally act on the whole project hierarchy. If you only want to act
-on a single project, use the contextual menu in the project explorer.
+on a single project, use the contextual menu in the project view.
 
 Some of these menus apply to the currently selected project. This
 notion depends on what window is currently active in GPS: if it is the
-project explorer, the selected project is either the selected node (if
+project view, the selected project is either the selected node (if
 it is a project), or its parent project (for a file, directory, @dots{}).
 If the currently active window is an editor, the selected project is
 the one that contains the file.
@@ -4025,7 +4025,7 @@ directories.
 This isn't needed for modifications made through GPS.
 
 @item Project View
-Open (or raise if it is already open) the project explorer on the left side
+Open (or raise if it is already open) the project view on the left side
 of the GPS window.
 
 @end table
@@ -4046,7 +4046,7 @@ The typical way to access this wizard is through the
 
 The project wizard is also launched when a new dependency is created
 between two projects, through the contextual menu in the project
-explorer.
+view.
 
 @iftex
 @cindex screen shot
@@ -4394,7 +4394,7 @@ tool when it is called, without trying to represent it graphically.
 
 @noindent
 You can edit the dependencies between projects through the contextual
-menu @code{Project->Dependencies...} in the Project Explorer.
+menu @code{Project->Dependencies...} in the Project View.
 
 This view makes it easy to indicate that your project depends on external
 libraries, or other modules in your source code. For instance, you can
@@ -4511,7 +4511,7 @@ the projects.
 This selector has two different possible presentations, chosen by the
 toggle button on top: you can either get a sorted list of all the
 projects, each one appearing only once. Or you can have the same
-project hierarchy as displayed in the project explorer.
+project hierarchy as displayed in the project view.
 
 @item The scenario selector
 This area, in the bottom-right corner of the properties editor, lists
@@ -4579,7 +4579,7 @@ project hierarchy. Two items in this browser will be linked if one of
 them imports the other.
 
 @cindex examine projects imported by
-It is accessed through the contextual menu in the project explorer, by
+It is accessed through the contextual menu in the project view, by
 selecting the @code{Show projects imported by...} item, when
 right-clicking on a project node.
 
@@ -4592,7 +4592,7 @@ The contextual menu obtained by right-clicking on a project item
 contains several items. Most of them are added by the project editor,
 and gives direct access to editing the properties of the project,
 adding dependencies@dots{}
-@xref{The Project Explorer}.
+@xref{The Project View}.
 
 @iftex
 @cindex screen shot
@@ -4607,9 +4607,9 @@ adding dependencies@dots{}
 Some new items are added to the menu:
 
 @table @command
-@item Locate in explorer
-@cindex locate in explorer
-Selecting this item will switch the focus to the project explorer, and
+@item Locate in Project View
+@cindex locate in Project View
+Selecting this item will switch the focus to the project view, and
 highlight the first project node found that matches the project in the
 browser item. This is a convenient way to get information like the
 list of directories or source files for that project.
@@ -4645,9 +4645,9 @@ GPS provides extensive search capabilities among its different
 elements. For instance, it is possible to search in the currently
 edited source file, or in all the source files belonging to the
 project, even those that are not currently open. It is also possible
-to search in the project explorer (on the left side of the main GPS
+to search in the project view (on the left side of the main GPS
 window), @dots{}
-@cindex project explorer
+@cindex project view
 
 @cindex menu
 @cindex key
@@ -4718,8 +4718,8 @@ Clicking on the arrow on the right will display the list of all
 possible contexts. This list includes:
 
 @table @code
-@item Project Explorer
-Search in the project explorer. An extra @i{Scope} box will be displayed
+@item Project View
+Search in the project view. An extra @i{Scope} box will be displayed
 where you can specify the scope of your search, which can be a set of:
 @code{Projects, Directories, Files, Entities}. The search in entities
 may take a long time, search each file is parsed during the search.
@@ -5158,7 +5158,7 @@ Clicking on the left arrow will display all the entities that call the
 selected item (i.e. its callers).
 
 This browser is accessible through the contextual menu in the project
-explorer and source editor, by selecting one of the items:
+view and source editor, by selecting one of the items:
 
 All boxes in this browser list several information: the location of their
 declaration, and the list of all their references in the other entities
@@ -5197,8 +5197,8 @@ declaration of the entity.
 Selecting this item will open a source editor that displays the
 body of the entity.
 
-@item Locate in explorer
-Selecting this menu entry will move the focus to the project explorer,
+@item Locate in Project View
+Selecting this menu entry will move the focus to the project view,
 and select the first node representing the file in which the entity is
 declared. This makes it easier to see which other entities are
 declared in the same file.
@@ -5235,7 +5235,7 @@ Clicking on the left arrow in the title bar will display the list of
 files that depend on the selected file.
 
 This browser is accessible through the contextual menu in the
-explorer and the source editor, by selecting one of the following items:
+project view and the source editor, by selecting one of the following items:
 
 @table @command
 @item Show dependencies for @i{file}
@@ -5286,7 +5286,7 @@ This menu entry indicates whether standard system files (runtime files
 for instance in the case of Ada) are displayed in the browser. By
 default, these files will only be displayed if you explicitly select
 them through the @code{Open file} menu, or the contextual menu in the
-project explorer.
+project view.
 
 @item Show implicit dependencies
 @cindex show implicit dependencies
@@ -5317,7 +5317,7 @@ would generally go from a @file{.h} file to a @file{.c} file and back.
 @item Show dependencies for @i{file}
 @cindex show files depending on file
 
-These play the same role as in the project explorer contextual menu
+These play the same role as in the project view contextual menu
 
 @end table
 
@@ -5364,7 +5364,7 @@ The list of all the entities declared in that package is displayed
 @end ifhtml
 
 This browser is accessible through the contextual menu in the
-explorer and source editor, when clicking on an entity:
+project view and source editor, when clicking on an entity:
 
 @table @command
 @item Browsers/Examine entity @i{entity}
@@ -7158,7 +7158,7 @@ For a description of the other entries in the VCS menu, see
 @noindent
 This section describes the version control contextual menu displayed when you
 right-click on an entity (e.g. a file, a directory, a project) from various
-parts of GPS, including the project explorer, the source editor and the VCS
+parts of GPS, including the project view, the source editor and the VCS
 Explorer.
 
 Depending on the context, some of the items described in this section won't
@@ -9411,7 +9411,7 @@ a new project is loaded. @xref{Support for Cross-References}.
 @item Hidden directories pattern
 @cindex hidden directories pattern
 A regular expression used to macth hidden directories. Such directories
-are not displayed by default in the project explorer.
+are not displayed by default in the project view.
 
 @end table
 
@@ -10499,7 +10499,7 @@ shell commands or external commands for that action.
 For instance, if you have specified @code{%F} as a parameter to one of the
 commands, GPS will check prior to running the action that there is a current
 file. This can be either a currently selected file editor, or for instance that
-the project explorer is selected, and a file node inside it is also selected.
+the project view is selected, and a file node inside it is also selected.
 
 You do not have to specify anything else, this filtering is automatic
 
@@ -10665,7 +10665,7 @@ possible with @code{id}), they must all match for the action to be executed.
 
   <!--  An action with an anonymous filter. It will be executed if the
         selected file is in Ada, even if the file was selected through
-        the project explorer  -->
+        the project view  -->
 
   <action name="Test for Ada files" >
       <filter language="ada" />
@@ -11356,7 +11356,7 @@ defined.
 @noindent
 You can define new languages in a custom file by using the @code{Language}
 tag. Defining languages gives GPS the ability to highlight the syntax of a
-file, explore a file (using e.g. the project explorer), find files
+file, explore a file (using e.g. the project view), find files
 associated with a given language, @dots{}
 
 As described previously for menu items, any file in the @file{plug-ins}
@@ -11446,7 +11446,7 @@ Name of a symbol in the specified shared library corresponding to a
 function that will parse constructs of a given buffer.
 
 This procedure is used by GPS to implement several capabilities such as
-listing constructs in the project explorer, highlighting the current block of
+listing constructs in the project view, highlighting the current block of
 code, going to the next or previous procedure, @dots{}
 
 @item Format_Buffer
@@ -11508,7 +11508,7 @@ Describes the context used to highlight the syntax of a file.
    @end table
 
 @item Categories
-Optional node to describe the categories supported by the project explorer
+Optional node to describe the categories supported by the project view
 for the current language. This node contains a list of @code{Category} nodes,
 each describing the characteristics of a given category, with the following
 nodes:
@@ -16300,7 +16300,7 @@ instance compiling in "debug" mode or "production" mode), and change
 the source directories depending on this setup.  Such projects can be
 edited directly from GPS (in the project properties editor, this is
 the right part of the window, as described in this documentation). On
-top of the project explorer (left part of the GPS main window), you
+top of the project view (left part of the GPS main window), you
 have a combo box displayed for each of the variable, allowing a simple
 switch between scenarios depending on what you want to build.
 
