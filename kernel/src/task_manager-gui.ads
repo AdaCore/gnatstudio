@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2005                      --
+--                      Copyright (C) 2003-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -86,5 +86,9 @@ private
 
       Progress_Layout        : Pango_Layout;
    end record;
+
+   procedure Push_State (Manager : Task_Manager_Access);
+   procedure Pop_State (Manager : Task_Manager_Access);
+   --  Push and pop the "busy" state of the task manager.
 
 end Task_Manager.GUI;
