@@ -106,12 +106,10 @@ package body Task_Manager is
          end loop;
 
          Manager.Running_Active := False;
-         Return_Type := Execute (Manager.Pop_Command);
          return False;
 
       else
          Manager.Running_Active := False;
-         Return_Type := Execute (Manager.Pop_Command);
          return False;
       end if;
 
@@ -142,7 +140,6 @@ package body Task_Manager is
       if Manager.Queues /= null then
          return True;
       else
-         Return_Type := Execute (Manager.Pop_Command);
          Manager.Running_Passive := False;
          return False;
       end if;
@@ -359,8 +356,6 @@ package body Task_Manager is
          Timeout_Handler := Task_Manager_Timeout.Timeout_Add
            (Timeout, Passive_Incremental'Access, Manager,
             Priority => Glib.Main.Priority_Default_Idle);
-
-         Result := Execute (Manager.Push_Command);
       end if;
 
       if Active
@@ -372,8 +367,6 @@ package body Task_Manager is
             Idle_Handler := Task_Manager_Idle.Add
               (Active_Incremental'Access, Manager);
          end if;
-
-         Result := Execute (Manager.Push_Command);
       end if;
    end Run;
 
