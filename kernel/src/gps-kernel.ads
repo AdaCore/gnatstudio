@@ -778,7 +778,6 @@ private
    --  Selection_Context should not be visibly tagged, otherwise we would have
    --  operations dispatching on multiple types above
 
-   pragma Finalize_Storage_Only (Selection_Context_Controlled);
    procedure Adjust   (Context : in out Selection_Context_Controlled);
    procedure Finalize (Context : in out Selection_Context_Controlled);
    --  See inherited documentation
