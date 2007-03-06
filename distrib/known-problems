@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.1.0
 
+- G305-005 Custom menu filters preventing menu display
+  Problem:    When you create custom menus in python, and set a filter for
+              these menus so that they are not always active, then the
+              menu might not properly pop up
+  Workaround: remove the filter, and test explicitly in the code associated
+              with the callback for this menu
+
 - G222-003 Bad indentation of extended return statements
   Problem:    When indenting Ada 2005 extended return statements, GPS
               may get confused and incorrectly indent following constructs.
