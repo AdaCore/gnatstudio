@@ -79,7 +79,6 @@ package body GPS.Kernel.Scripts is
    function To_Address is new Ada.Unchecked_Conversion
      (Selection_Context_Data, System.Address);
 
-
    -----------------------------------
    -- Data stored in class_instance --
    -----------------------------------
