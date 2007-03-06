@@ -89,13 +89,15 @@ with Namet;                     use Namet;
 with Prj.Attr;                  use Prj.Attr;
 with Projects.Registry;         use Projects, Projects.Registry;
 with String_Utils;              use String_Utils;
+with System.Address_Image;
 with Traces;                    use Traces;
 with VFS;                       use VFS;
 with XML_Parsers;
 
 package body GPS.Kernel is
 
-   Me : constant Debug_Handle := Create ("gps_kernel");
+   Me     : constant Debug_Handle := Create ("gps_kernel");
+   Ref_Me : constant Debug_Handle := Create ("Scripts.Ref", Off);
 
    History_Max_Length : constant Positive := 10;
    --  <preferences> Maximum number of entries to store in each history
@@ -103,6 +105,9 @@ package body GPS.Kernel is
    Desktop_Name : constant String := "desktop.xml";
 
    use Action_Filters_Htable.String_Hash_Table;
+
+   function To_Address is new Ada.Unchecked_Conversion
+     (Selection_Context_Data, System.Address);
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Project_Registry'Class, Project_Registry_Access);
@@ -819,19 +824,45 @@ package body GPS.Kernel is
       Garbage : Selection_Context_Data;
    begin
       if Context.Data /= null then
+         if Active (Ref_Me) then
+            Trace (Ref_Me, "Before decref context: ("
+                   & System.Address_Image (To_Address (Context.Data))
+                   & " " & Context.Data.Ref_Count'Img & ")");
+         end if;
+
          Context.Data.Ref_Count := Context.Data.Ref_Count - 1;
 
          if Context.Data.Ref_Count = 0 then
+            if Active (Ref_Me) then
+               Increase_Indent
+                 (Ref_Me, "Destroy selection context ("
+                  & System.Address_Image (To_Address (Context.Data)) & ")");
+            end if;
+
             Garbage := Context.Data;
             Context.Data := null;
             Free (Garbage.all);
             Unchecked_Free (Garbage);
+
+            if Active (Ref_Me) then
+               Decrease_Indent (Ref_Me, "Done destroying selection context");
+            end if;
          end if;
+
+         --  In any case, Context is no longer used, so we reset Data to null.
+         --  Not sure why, but Finalize seems to be called multiple time when
+         --  GNAT finalizes the controlled objects.
+
+         Context.Data := null;
       end if;
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
+
+         if Active (Ref_Me) then
+            Decrease_Indent;
+         end if;
    end Finalize;
 
    ------------
@@ -842,6 +873,12 @@ package body GPS.Kernel is
    begin
       if Context.Data /= null then
          Context.Data.Ref_Count := Context.Data.Ref_Count + 1;
+         if Active (Ref_Me) then
+            Trace
+              (Ref_Me, "Adjust selection_context="
+               & System.Address_Image (To_Address (Context.Data))
+               & " " & Context.Data.Ref_Count'Img & ")");
+         end if;
       end if;
    exception
       when E : others =>
