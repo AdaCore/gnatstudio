@@ -1531,7 +1531,14 @@ package body GPS.Kernel is
             if Get (Iter) /= null
               and then Is_Floating (Get (Iter))
             then
-               W := Get_Focus (Gtk_Window (Get_Toplevel (Get (Iter))));
+               --  The toplevel widget is not necessarily a GtkWindow. In some
+               --  cases, for instance, it will be a Editor_Child_Record, when
+               --  the editor is floating (since in that case the MDI_Child is
+               --  detached from the MDI, and its own child is put in a
+               --  toplevel window.
+
+               W := Get_Toplevel (Get_Widget (Get (Iter)));
+               W := Get_Focus (Gtk_Window (W));
             else
                W := Get_Focus (Get_Main_Window (Kernel));
             end if;
