@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2006                       --
+--                     Copyright (C) 2000-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -682,6 +682,7 @@ package body Debugger.Gdb is
 
    procedure Spawn
      (Debugger        : access Gdb_Debugger;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Executable      : VFS.Virtual_File := VFS.No_File;
       Debugger_Args   : GNAT.OS_Lib.Argument_List;
       Executable_Args : String;
@@ -710,10 +711,10 @@ package body Debugger.Gdb is
 
       if Debugger_Name = "" then
          General_Spawn
-           (Debugger, Local_Arguments, Gdb_Command, Proxy);
+           (Debugger, Kernel, Local_Arguments, Gdb_Command, Proxy);
       else
          General_Spawn
-           (Debugger, Local_Arguments, Debugger_Name, Proxy);
+           (Debugger, Kernel, Local_Arguments, Debugger_Name, Proxy);
       end if;
 
       Free (Debugger.Executable_Args);
