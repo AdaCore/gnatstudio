@@ -342,29 +342,6 @@ package GPS.Kernel.Scripts is
    function Get_Script (Instance : Class_Instance) return Scripting_Language;
    --  Return the scripting language that created this instance
 
-   type Instance_Property_Record is abstract tagged null record;
-   type Instance_Property is access all Instance_Property_Record'Class;
-   procedure Destroy (Prop : in out Instance_Property_Record);
-   --  Type of data that can be associated with a class_instance. This is a
-   --  general type, but simpler types are provided already
-
-   procedure Set_Property
-     (Instance : Class_Instance;
-      Name     : String;
-      Property : Instance_Property_Record'Class);
-   --  Associate user data with Instance. Multiple data can be stored in a
-   --  given instance, each associated with a different Name. Typically, GPS
-   --  classes use the class name as the property name to avoid conflicts.
-   --  When the property is no longer needed (either because it is replaced by
-   --  another one with the same name, or because Instance is destroyed), the
-   --  Destroy operation is called on Property.
-   --  Note that a copy of Property is stored, not Property itself.
-
-   function Get_Property
-     (Instance : Class_Instance;
-      Name     : String) return Instance_Property_Record'Class;
-   --  Return a general property associated with the widget
-
    function Get_Data
      (Instance : Class_Instance; Name : Class_Type) return Integer;
    function Get_Data
@@ -481,7 +458,7 @@ package GPS.Kernel.Scripts is
    --  Stores the instance created for some GPS internal data, so that the same
    --  script instance is reused every time we reference the same Ada object.
 
-   type Instance_List_Access is access Instance_List;
+   type Instance_List_Access is access all Instance_List;
    --  This type should be convertible to a System.Address for storage in
    --  a selection_context
 
@@ -505,6 +482,47 @@ package GPS.Kernel.Scripts is
 
    function Get_Instances (List : Instance_List) return Instance_Array;
    --  Return the instance array contained in the given list
+
+   -------------------------
+   -- Instance properties --
+   -------------------------
+
+   type Instance_Property_Record is abstract tagged null record;
+   type Instance_Property is access all Instance_Property_Record'Class;
+
+   procedure Destroy (Prop : in out Instance_Property_Record);
+   --  Type of data that can be associated with a class_instance. This is a
+   --  general type, but simpler types are provided already
+
+   function Get_Instances
+     (Prop : Instance_Property_Record) return Instance_List_Access;
+   --  When a component of Prop stores some data that has a list of instances
+   --  associated with it, returns that list of instances.
+   --  (for instance, a selection_context has such a list to ensure that every
+   --  time the user calls the python GPS.Context* constructor we return the
+   --  same existing instance).
+   --  Some special handling of these types is needed, to properly ensure
+   --  refcounting in these mutually dependent types (the context owns a
+   --  reference to the context, which itself owns a reference to the instance
+   --  through its Instances field).
+   --  The default is to return null.
+
+   procedure Set_Property
+     (Instance : Class_Instance;
+      Name     : String;
+      Property : Instance_Property_Record'Class);
+   --  Associate user data with Instance. Multiple data can be stored in a
+   --  given instance, each associated with a different Name. Typically, GPS
+   --  classes use the class name as the property name to avoid conflicts.
+   --  When the property is no longer needed (either because it is replaced by
+   --  another one with the same name, or because Instance is destroyed), the
+   --  Destroy operation is called on Property.
+   --  Note that a copy of Property is stored, not Property itself.
+
+   function Get_Property
+     (Instance : Class_Instance;
+      Name     : String) return Instance_Property_Record'Class;
+   --  Return a general property associated with the widget
 
    -------------------------
    -- Callback_Data lists --
@@ -982,9 +1000,8 @@ private
    --  We use a discriminated type so that we can declare No_Class_Instance.
    --  Otherwise, Adjust is called before its body is seen.
 
-   pragma Finalize_Storage_Only (Class_Instance_Data);
-   procedure Adjust   (CI : in out Class_Instance_Data);
-   procedure Finalize (CI : in out Class_Instance_Data);
+   overriding procedure Adjust   (CI : in out Class_Instance_Data);
+   overriding procedure Finalize (CI : in out Class_Instance_Data);
    function "="       (CI1, CI2 : Class_Instance_Data) return Boolean;
    --  Takes care of the reference counting for a Class_Instance
 
