@@ -2282,7 +2282,7 @@ package body Python_Module is
    procedure Decref (Inst : access Python_Class_Instance_Record) is
    begin
       if Active (Ref) then
-         Trace (Ref, "Before Decref " & Print_Refcount (Inst));
+         Trace (Ref, "Before Py.Decref " & Print_Refcount (Inst));
       end if;
       if Inst.Data /= null then
          Py_DECREF (Inst.Data);
@@ -2313,13 +2313,22 @@ package body Python_Module is
          Trace (Ref, "On_PyObject_Data_Destroy " & Print_Refcount (D));
       end if;
 
-      --  D.Data := null;  --  Avoid manipulating the python type after this,
-      --  ??? When this is called because the Data has been changed (as opposed
-      --  to the object being destroyed), we do want to Unref D.Data.
-      --  Since it seems to work even when the object is destroyed, leave the
-      --  call commented for now.
+      --  When this function is called, the pyObject D.Data is being destroyed,
+      --  so we make sure that we will not try in the future to access it.
+      --
+      --  We do not need to decrease the refcounting for D, since python owns
+      --  a reference to that type through a user data, and that refs is
+      --  automatically releases when the user data is freed (through
+      --  controlled typed).
+      --  ??? Is the above really true: in Set_CI, we did an explicit
+      --  Incref, so it seems we should have an explicit Decref here. However,
+      --  when we put it we get a Storage_Error in the automatic testsuite.
+      --  More likely, since we did an unchecked_conversion, we didn't
+      --  increase the refcount once more in this procedure, and since there is
+      --  a call to Finalize for D, this takes care of the refcounting.
 
-      Decref (D);
+      D.Data := null;
+      --  Decref (D);
    end On_PyObject_Data_Destroy;
 
    ------------
@@ -2330,7 +2339,10 @@ package body Python_Module is
       Data : constant PyObject := PyCObject_FromVoidPtr
         (Get_CIR (CI).all'Address, On_PyObject_Data_Destroy'Access);
    begin
+      --  Python owns a reference to the CI, so that the latter can never be
+      --  freed while the python object exists.
       Incref (Get_CIR (CI));
+
       PyObject_SetAttrString
         (Python_Class_Instance (Get_CIR (CI)).Data, "__gps_data", Data);
       Py_DECREF (Data);
@@ -2378,10 +2390,14 @@ package body Python_Module is
          end if;
          CIR := PyCObject_AsVoidPtr (Item);
          Py_DECREF (Item);
-         Result := From_Instance
-           (Python_Module_Id.Script, Convert (CIR));
-         if Active (Ref) then
-            Trace (Ref, "After Get_CI " & Print_Refcount (Get_CIR (Result)));
+
+         if Python_Module_Id /= null then
+            Result := From_Instance
+              (Python_Module_Id.Script, Convert (CIR));
+            if Active (Ref) then
+               Trace
+                 (Ref, "After Get_CI " & Print_Refcount (Get_CIR (Result)));
+            end if;
          end if;
          return Result;
       end if;
@@ -2635,6 +2651,7 @@ package body Python_Module is
 
       --  The PyObject should have a single reference in the end, owned by
       --  the class instance itself.
+
       Py_DECREF (Python_Class_Instance (Get_CIR (Inst)).Data);
       return Inst;
    end New_Instance;
@@ -2646,8 +2663,13 @@ package body Python_Module is
    function Print_Refcount
      (Instance : access Python_Class_Instance_Record) return String is
    begin
-      return Print_Refcount (Class_Instance_Record (Instance.all)'Access)
-        & " Py=" & Value (Refcount_Msg (Instance.Data));
+      if Instance.Data /= null then
+         return Print_Refcount (Class_Instance_Record (Instance.all)'Access)
+           & " Py=" & Value (Refcount_Msg (Instance.Data));
+      else
+         return Print_Refcount (Class_Instance_Record (Instance.all)'Access)
+           & " Py=<None>";
+      end if;
    end Print_Refcount;
 
    -------------
