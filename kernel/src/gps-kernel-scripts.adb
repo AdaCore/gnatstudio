@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;          use Ada.Exceptions;
+with Ada.Tags;                use Ada.Tags;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 
@@ -55,6 +56,7 @@ with Projects;                use Projects;
 with String_List_Utils;
 with String_Utils;            use String_Utils;
 with System;                  use System;
+with System.Address_Image;
 with System.Assertions;
 with Traces;                  use Traces;
 with VFS;                     use VFS;
@@ -71,6 +73,12 @@ package body GPS.Kernel.Scripts is
    Context_Class_Name       : constant String := "Context";
    File_Location_Class_Name : constant String := "FileLocation";
    Logger_Class_Name        : constant String := "Logger";
+
+   function To_Address is new Ada.Unchecked_Conversion
+     (Class_Instance_Record_Access, System.Address);
+   function To_Address is new Ada.Unchecked_Conversion
+     (Selection_Context_Data, System.Address);
+
 
    -----------------------------------
    -- Data stored in class_instance --
@@ -113,8 +121,9 @@ package body GPS.Kernel.Scripts is
    end record;
 
    type Scalar_Properties is access all Scalar_Properties_Record'Class;
-
-   procedure Destroy (Prop : in out Scalar_Properties_Record);
+   overriding procedure Destroy (Prop : in out Scalar_Properties_Record);
+   overriding function Get_Instances
+     (Prop : Scalar_Properties_Record) return Instance_List_Access;
    --  See inherited documentation
 
    -----------------
@@ -319,6 +328,25 @@ package body GPS.Kernel.Scripts is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Instance_Array, Instance_Array_Access);
    begin
+      --  When a selection is freed, all associated class instances must
+      --  already have been destroyed, otherwise we have dangling pointers.
+      --  ??? Unfortunately, this assertion seems no longer true when GNAT is
+      --  finalizing all global controlled types...
+
+      if False and then Active (Ref_Me) and then List.List /= null then
+         for L in List.List'Range loop
+            if List.List (L).Initialized then
+               Assert (Ref_Me, False,
+                       "A class instance still exists when we destroy the"
+                       & " instance_list. This means that the instance will"
+                       & " now reference an invalid Ada object. CI="
+                       & System.Address_Image
+                         (To_Address (List.List (L).Data.Data)),
+                       Raise_Exception => False);
+            end if;
+         end loop;
+      end if;
+
       --  Class_Instance are automatically Finalized by the compiler
       Unchecked_Free (List.List);
    end Free;
@@ -366,6 +394,12 @@ package body GPS.Kernel.Scripts is
       for T in Tmp'Range loop
          if Tmp (T) = Scripting_Language (Script) then
             List.List (T) := Inst;
+
+            if Active (Ref_Me) then
+               Trace (Ref_Me,
+                      "After Set in Instance_List Inst="
+                      & Print_Refcount (Inst.Data.Data));
+            end if;
             exit;
          end if;
       end loop;
@@ -1437,6 +1471,8 @@ package body GPS.Kernel.Scripts is
       end Recursive_Analyze_Menu;
 
    begin
+      Trace (Me, "Executing " & Command);
+
       if Command = Constructor_Method then
          Set_Error_Msg (Data, -"Cannot create an instance of this class");
 
@@ -1585,29 +1621,6 @@ package body GPS.Kernel.Scripts is
    begin
       Kernel.Scripts := new Scripting_Data_Record;
    end Initialize;
-
-   --------------
-   -- Finalize --
-   --------------
-
-   procedure Finalize
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
-      List : Scripting_Language_List :=
-               Scripting_Data (Kernel.Scripts).Scripting_Languages;
-   begin
-      for L in List'Range loop
-         Destroy (List (L));
-      end loop;
-
-      Unchecked_Free (List);
-      Scripting_Data (Kernel.Scripts).Scripting_Languages := null;
-
-      --  Various classes instances stored in the kernel are freed when this
-      --  table is freed.
-      Classes_Hash.String_Hash_Table.Reset
-        (Scripting_Data (Kernel.Scripts).Classes);
-   end Finalize;
 
    -------------
    -- Destroy --
@@ -2693,9 +2706,19 @@ package body GPS.Kernel.Scripts is
          raise Invalid_Data;
       end if;
 
+      if Active (Ref_Me) then
+         Increase_Indent (Ref_Me, "Before set_data, Inst="
+                          & Print_Refcount (Instance.Data.Data));
+      end if;
+
       Set_Property
         (Instance, Context_Class_Name,
          Scalar_Properties_Record'(Typ => Contexts, Context => Context));
+
+      if Active (Ref_Me) then
+         Decrease_Indent (Ref_Me, "After set_Data, Inst="
+                          & Print_Refcount (Instance.Data.Data));
+      end if;
    end Set_Data;
 
    ---------------------------
@@ -2709,7 +2732,15 @@ package body GPS.Kernel.Scripts is
       return Class_Instance
    is
       Instance : Class_Instance;
+      Initial_Ref      : constant Integer := Context.Data.Data.Ref_Count;
    begin
+      if Active (Ref_Me) then
+         Increase_Indent
+           (Ref_Me, "Get_Or_Create_Context, context=("
+            & System.Address_Image (To_Address (Context.Data.Data))
+            & Initial_Ref'Img & ")");
+      end if;
+
       if Context.Data.Data.Instances = null then
          Context.Data.Data.Instances := new Instance_List'(Null_Instance_List);
       end if;
@@ -2723,6 +2754,31 @@ package body GPS.Kernel.Scripts is
          Set_Data (Instance, Context);
          Set (Instance_List (Context.Data.Data.Instances.all),
               Script, Instance);
+
+         if Active (Ref_Me) then
+            Assert (Ref_Me,
+                    Instance.Data.Data.Refcount = 3,
+                    "After Get_Or_Create_Context, CI.refcount ("
+                    & Instance.Data.Data.Refcount'Img
+                    & ") should be 3", Raise_Exception => False);
+            Assert (Ref_Me,
+                    Context.Data.Data.Ref_Count = Initial_Ref + 1,
+                    "After Get_Or_Create_Context, context.refcount ("
+                    & Context.Data.Data.Ref_Count'Img
+                    & ") should be 1+" & Initial_Ref'Img,
+                    Raise_Exception => False);
+         end if;
+
+      else
+         if Active (Ref_Me) then
+            Trace
+              (Ref_Me, "Get_Or_Create_Context: context already has instance");
+         end if;
+      end if;
+
+      if Active (Ref_Me) then
+         Decrease_Indent (Ref_Me, "End of Get_Or_Create_Context "
+                          & Print_Refcount (Instance.Data.Data));
       end if;
 
       return Instance;
@@ -2862,7 +2918,13 @@ package body GPS.Kernel.Scripts is
                Prop.Obj := null;
             end if;
 
-         when Integers | Files | Projects | Debug_Handles | Contexts =>
+         when Contexts =>
+            --  Nothing to do either. The ref to the class instance that is
+            --  hold by the context will be automatically freed when the
+            --  context itself is destroyed.
+            null;
+
+         when Integers | Files | Projects | Debug_Handles =>
             null;
 
          when Entities =>
@@ -2874,6 +2936,40 @@ package body GPS.Kernel.Scripts is
       end case;
    end Destroy;
 
+   -------------------
+   -- Get_Instances --
+   -------------------
+
+   function Get_Instances
+     (Prop : Instance_Property_Record) return Instance_List_Access
+   is
+      pragma Unreferenced (Prop);
+   begin
+      return null;
+   end Get_Instances;
+
+   -------------------
+   -- Get_Instances --
+   -------------------
+
+   function Get_Instances
+     (Prop : Scalar_Properties_Record) return Instance_List_Access
+   is
+   begin
+      case Prop.Typ is
+         when Contexts =>
+            if Prop.Context.Data.Data /= null then
+               return Instance_List_Access (Prop.Context.Data.Data.Instances);
+            end if;
+
+         when Strings | Objects | Integers | Files | Entities | Projects
+            | File_Locations | Debug_Handles =>
+            null;
+      end case;
+
+      return null;
+   end Get_Instances;
+
    ------------
    -- Decref --
    ------------
@@ -2881,21 +2977,102 @@ package body GPS.Kernel.Scripts is
    procedure Decref (Inst : access Class_Instance_Record) is
       Data : User_Data_List;
       Ptr  : Class_Instance_Record_Access;
+      L    : Instance_Array_Access;
+      Instances : Instance_List_Access;
+      Refs_In_User_Data : Natural := 0;
    begin
+      --  We are already in the process of destroying the class instance, so
+      --  nothing else to do
+
+      if Inst.Refcount = Natural'Last then
+         return;
+      end if;
+
+      if Active (Ref_Me) then
+         Increase_Indent (Ref_Me, "CI.Decref " & Print_Refcount (Inst));
+      end if;
+
+      --  If the instance has only one reference left, and that is owned by
+      --  the user data (for instance when it is a selection), we will be able
+      --  to kill the CI instances anyway.
+
+      Data := Inst.User_Data;
+      while Data /= null loop
+         Instances := Get_Instances (Data.Prop.all);
+         if Instances /= null and then Instances.List /= null then
+            L := Instances.List;
+            for C in L'Range loop
+               if L (C).Initialized
+                 and then L (C).Data.Data = Class_Instance_Record_Access (Inst)
+               then
+                  Refs_In_User_Data := Refs_In_User_Data + 1;
+               end if;
+            end loop;
+         end if;
+         Data := Data.Next;
+      end loop;
+
+      if Active (Ref_Me) then
+         Trace (Ref_Me, "CI.Decref, Refs_In_User=" & Refs_In_User_Data'Img);
+      end if;
+
       Inst.Refcount := Inst.Refcount - 1;
+
+      if Inst.Refcount = Refs_In_User_Data then
+         --  Reset the references to the CI in the instances of all its user
+         --  data. This might result in a recursive call to Decref, which will
+         --  set Refcount to 0. To prevent this, and for more efficiency,
+         --  we simulate a different refcount, and finalize the CI ourselves
+
+         Inst.Refcount := Natural'Last;
+
+         Data := Inst.User_Data;
+         while Data /= null loop
+            Instances := Get_Instances (Data.Prop.all);
+            if Instances /= null and then Instances.List /= null then
+               L := Instances.List;
+               for C in L'Range loop
+                  if L (C).Initialized
+                    and then L (C).Data.Data =
+                       Class_Instance_Record_Access (Inst)
+                  then
+                     if Active (Ref_Me) then
+                        Trace (Ref_Me, "Reset Instances in user data:"
+                               & " CI=" & Print_Refcount (L (C).Data.Data));
+                     end if;
+
+                     L (C) := No_Class_Instance;
+                     exit;
+                  end if;
+               end loop;
+            end if;
+            Data := Data.Next;
+         end loop;
+
+         Inst.Refcount := 0;
+      end if;
+
       if Inst.Refcount = 0 then
          if Active (Ref_Me) then
-            Trace (Ref_Me, "Decref Destroying instance "
+            Trace (Ref_Me, "Decref Destroying CI "
                    & Print_Refcount (Class_Instance_Record_Access (Inst)));
          end if;
 
-         --  Free user data
+         Inst.Refcount := Natural'Last;
 
          while Inst.User_Data /= null loop
+            if Active (Ref_Me) then
+               Trace (Ref_Me, "Destroying user_data: name="
+                      & Inst.User_Data.Name & " type="
+                      & External_Tag (Inst.User_Data.Prop'Tag));
+            end if;
+
             Data := Inst.User_Data.Next;
             Free_User_Data (Inst.User_Data);
             Inst.User_Data := Data;
          end loop;
+
+         Inst.Refcount := 0;
 
          Ptr := Inst.all'Access;
          --  The above isn't dangerous: We know there are no more
@@ -2903,9 +3080,14 @@ package body GPS.Kernel.Scripts is
          --  destroying it. As a result, it is safe to free the memory here
 
          Unchecked_Free (Ptr);
+
       elsif Active (Ref_Me) then
          Trace (Ref_Me, "After Decref "
                 & Print_Refcount (Class_Instance_Record_Access (Inst)));
+      end if;
+
+      if Active (Ref_Me) then
+         Decrease_Indent (Ref_Me, "Done CI.Decref");
       end if;
 
    exception
@@ -2931,7 +3113,7 @@ package body GPS.Kernel.Scripts is
    begin
       Incref (CI.Data);
       if Active (Ref_Me) then
-         Trace (Ref_Me, "After Adjust " & Print_Refcount (CI.Data));
+         Trace (Ref_Me, "After CI.Adjust " & Print_Refcount (CI.Data));
       end if;
    end Adjust;
 
@@ -2948,9 +3130,13 @@ package body GPS.Kernel.Scripts is
 
       if CI.Data /= null then
          if Active (Ref_Me) then
-            Trace (Ref_Me, "Finalize " & Print_Refcount (CI.Data));
+            Increase_Indent
+              (Ref_Me, "CI.Finalize " & Print_Refcount (CI.Data));
          end if;
          Decref (CI.Data);
+         if Active (Ref_Me) then
+            Decrease_Indent (Ref_Me, "Done CI.Finalize");
+         end if;
       end if;
    end Finalize;
 
@@ -2982,9 +3168,34 @@ package body GPS.Kernel.Scripts is
    --------------------
 
    function Print_Refcount
-     (Instance : access Class_Instance_Record) return String is
+     (Instance : access Class_Instance_Record) return String
+   is
+      Data : User_Data_List := Instance.User_Data;
+      Context : Selection_Context_Data;
    begin
-      return "CI.rc=" & Integer'Image (Instance.Refcount);
+      if Active (Ref_Me) then
+         while Data /= null loop
+            if Data.Prop.all in Scalar_Properties_Record'Class
+              and then Scalar_Properties_Record (Data.Prop.all).Typ = Contexts
+            then
+               Context :=
+                 Scalar_Properties_Record (Data.Prop.all).Context.Data.Data;
+               if Context /= null then
+                  return "CI=(" & System.Address_Image
+                    (To_Address (Class_Instance_Record_Access (Instance)))
+                    & Integer'Image (Instance.Refcount)
+                    & ") ctx=("
+                    & System.Address_Image (To_Address (Context))
+                    & Context.Ref_Count'Img & ")";
+               end if;
+            end if;
+            Data := Data.Next;
+         end loop;
+      end if;
+
+      return "CI=(" & System.Address_Image
+        (To_Address (Class_Instance_Record_Access (Instance)))
+        & Integer'Image (Instance.Refcount) & ")";
    end Print_Refcount;
 
    -------------------
