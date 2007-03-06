@@ -290,6 +290,13 @@ Known Problems fixed in GPS 4.1.0
               inheritance clause will not solve the problem since the entry
               that will remain in the menu will be the wrong one.
 
+- F831-012 Copy pasting in floating editors
+  Problem:    If you are copy-pasting using the /Edit/ menu and one of the
+              editors involved is floating, then GPS fails to perform the
+              operation
+  Workaround: Use key shortcuts (through /Edit/Key Shortcuts) to perform
+              the operation.
+
 - F823-029 GPS can't commit activity with capital letter files on win32
   Problem:    On Windows, using Cygwin based Subversion, it is not
               possible to check-in an activity (as an atomic commit) if
