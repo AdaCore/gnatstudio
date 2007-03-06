@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2006                      --
+--                      Copyright (C) 2003-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -35,6 +35,7 @@ with Glib.Object;             use Glib.Object;
 with Glib.Xml_Int;            use Glib.Xml_Int;
 with Glib.Values;             use Glib.Values;
 with Glib;                    use Glib;
+with Glib.Main;
 
 with Gtk.Accel_Group;         use Gtk.Accel_Group;
 with Gtk.Accel_Map;           use Gtk.Accel_Map;
@@ -380,17 +381,19 @@ package body KeyManager_Module is
       --  it is called very often, so when using setjmp/longjmp, the cost
       --  may not be negligible.
 
-      if Event_Type = Key_Press or else Event_Type = Key_Release then
-         if Process_Event (Convert (Kernel), Event) then
-            return;
-         end if;
+      if Glib.Main.Depth = 1 then
+         if Event_Type = Key_Press or else Event_Type = Key_Release then
+            if Process_Event (Convert (Kernel), Event) then
+               return;
+            end if;
 
-      elsif Event_Type = Button_Release then
-         --  The command will be executed by gtk, we don't know exactly how
-         if Keymanager_Module.Last_Command /= null then
-            Free (Keymanager_Module.Last_User_Command);
+         elsif Event_Type = Button_Release then
+            --  The command will be executed by gtk, we don't know exactly how
+            if Keymanager_Module.Last_Command /= null then
+               Free (Keymanager_Module.Last_User_Command);
+            end if;
+            Keymanager_Module.Last_Command := null;
          end if;
-         Keymanager_Module.Last_Command := null;
       end if;
 
       --  Dispatch the event in the standard gtk+ main loop
