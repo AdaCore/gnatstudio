@@ -337,6 +337,7 @@ package body Python.GUI is
       Grab_Widget    : Gtk_Widget;
       use type Gdk_Window;
 
+      Took_Grab : Boolean := False;
       Ignored : Boolean;
       pragma Unreferenced (Ignored);
 
@@ -399,7 +400,17 @@ package body Python.GUI is
             Ref (Grab_Widget);
 
             if Get_Window (Grab_Widget) /= null then
-               Gtk.Main.Grab_Add (Grab_Widget);
+
+               --  If we already have a grab (for instance when the user is
+               --  displaying a menu and we are running the python command as a
+               --  filter for that menu), no need to take another. In fact,
+               --  taking another would break the above scenario, since in
+               --  gtkmenu.c the handler for grab_notify cancels the menu when
+               --  another grab is taken (G305-005)
+               if Gtk.Main.Grab_Get_Current = null then
+                  Gtk.Main.Grab_Add (Grab_Widget);
+                  Took_Grab := True;
+               end if;
             end if;
          end if;
 
@@ -414,7 +425,9 @@ package body Python.GUI is
          --  we need to check that it still exists.
 
          if Grab_Widget /= null then
-            Gtk.Main.Grab_Remove (Grab_Widget);
+            if Took_Grab then
+               Gtk.Main.Grab_Remove (Grab_Widget);
+            end if;
             Unref (Grab_Widget);
          end if;
 
