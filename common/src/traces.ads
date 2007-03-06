@@ -176,6 +176,20 @@ package Traces is
    --  The extra begin...end block can be used to limit the impact on the
    --  heap for the evaluation of Expensive_Compuation.
 
+   procedure Increase_Indent
+     (Handle : Debug_Handle := null; Msg : String := "");
+   procedure Decrease_Indent
+     (Handle : Debug_Handle := null; Msg : String := "");
+   --  Change the indentation level for traces. This is so that traces that
+   --  result from other subprogram be slightly indented, so as to make the
+   --  output more readable. The output would for instance look like:
+   --       [HANDLE1] Message 1
+   --       [HANDLE2]    Message 2
+   --       [HANDLE1] End of Message 1
+   --  If Handle and Msg are specified, a message is output on that handle to
+   --  explain the change of indentation. The message is only displayed if the
+   --  handle is active, but the indentation is always changed.
+
    ------------------------
    -- Predefined handles --
    ------------------------

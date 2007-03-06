@@ -87,6 +87,8 @@ package body Traces is
    Default_Activation : Boolean := False;
    --  Default activation status for debug handles
 
+   Indentation : Natural := 0;
+
    function Find_Handle (Unit_Name_Upper_Case : String) return Debug_Handle;
    --  Return the debug handle associated with Unit_Name_Upper_Case,
    --  or null if there is none. The case of Unit_Name_Upper_Case is
@@ -281,6 +283,42 @@ package body Traces is
       end if;
    end Assert;
 
+   ---------------------
+   -- Increase_Indent --
+   ---------------------
+
+   procedure Increase_Indent
+     (Handle : Debug_Handle := null; Msg : String := "")
+   is
+   begin
+      if Handle /= null and then Msg /= "" then
+         Trace (Handle, Msg);
+      end if;
+      Indentation := Indentation + 1;
+   end Increase_Indent;
+
+   ---------------------
+   -- Decrease_Indent --
+   ---------------------
+
+   procedure Decrease_Indent
+     (Handle : Debug_Handle := null; Msg : String := "") is
+   begin
+      if Indentation > 0 then
+         Indentation := Indentation - 1;
+         if Handle /= null and then Msg /= "" then
+            Trace (Handle, Msg);
+         end if;
+      else
+         if Handle /= null then
+            Trace (Handle, "Indentation error: two many decrease");
+            if Msg /= "" then
+               Trace (Handle, Msg);
+            end if;
+         end if;
+      end if;
+   end Decrease_Indent;
+
    ----------------
    -- Set_Active --
    ----------------
@@ -370,6 +408,10 @@ package body Traces is
       end if;
 
       Lock;
+
+      if Indentation > 0 then
+         Put (Handle.Stream.all, String'(1 .. Indentation * 3 => ' '));
+      end if;
 
       if Colors.Active then
          Put (Handle.Stream.all, Cyan_Fg);
