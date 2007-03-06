@@ -399,6 +399,7 @@ package body GPS.Kernel.Scripts is
                       "After Set in Instance_List Inst="
                       & Print_Refcount (Inst.Data.Data));
             end if;
+
             exit;
          end if;
       end loop;
@@ -2996,10 +2997,13 @@ package body GPS.Kernel.Scripts is
       --  to kill the CI instances anyway.
 
       Data := Inst.User_Data;
+
       while Data /= null loop
          Instances := Get_Instances (Data.Prop.all);
+
          if Instances /= null and then Instances.List /= null then
             L := Instances.List;
+
             for C in L'Range loop
                if L (C).Initialized
                  and then L (C).Data.Data = Class_Instance_Record_Access (Inst)
@@ -3008,6 +3012,7 @@ package body GPS.Kernel.Scripts is
                end if;
             end loop;
          end if;
+
          Data := Data.Next;
       end loop;
 
