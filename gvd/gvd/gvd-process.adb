@@ -1008,6 +1008,7 @@ package body GVD.Process is
 
       Spawn
         (Process.Debugger,
+         Window.Kernel,
          Executable,
          Debugger_Args,
          Executable_Args,
