@@ -409,6 +409,10 @@ package body Traces is
 
       Lock;
 
+      if Indentation > 0 then
+         Put (Handle.Stream.all, String'(1 .. Indentation * 3 => ' '));
+      end if;
+
       if Colors.Active then
          Put (Handle.Stream.all, Cyan_Fg);
       end if;
@@ -428,10 +432,6 @@ package body Traces is
 
       if Colors.Active then
          Put (Handle.Stream.all, Message_Color);
-      end if;
-
-      if Indentation > 0 then
-         Put (Handle.Stream.all, String'(1 .. Indentation * 3 => ' '));
       end if;
 
       Start := Message'First;
