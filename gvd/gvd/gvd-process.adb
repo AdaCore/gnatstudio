@@ -1008,6 +1008,7 @@ package body GVD.Process is
 
       Spawn
         (Process.Debugger,
+         Window.Kernel,
          Executable,
          Debugger_Args,
          Executable_Args,
@@ -1889,7 +1890,7 @@ package body GVD.Process is
 
    begin
       --  Do nothing unless the current project was already generated from an
-      --  executable
+      --  executable.
 
       if Status (Project) /= From_Executable then
          return;
@@ -1898,8 +1899,7 @@ package body GVD.Process is
       Exec := Get_Executable (Debugger.Debugger);
 
       declare
-         List : Argument_List := Get_Attribute_Value
-           (Project, Main_Attribute);
+         List : Argument_List := Get_Attribute_Value (Project, Main_Attribute);
       begin
          for L in List'Range loop
             if List (L).all = Full_Name (Exec).all then
@@ -1973,6 +1973,8 @@ package body GVD.Process is
          Lang_Index : Natural := Langs'First;
 
       begin
+         --  Source_Files
+
          for L in List'Range loop
             Bases (L) := new String'(Base_Name (List (L).all));
          end loop;
@@ -1983,6 +1985,8 @@ package body GVD.Process is
             Attribute          => Source_Files_Attribute,
             Values             => Bases);
          Free (Bases);
+
+         --  Source_Dirs
 
          for L in List'Range loop
             declare
@@ -2012,6 +2016,8 @@ package body GVD.Process is
             Attribute          => Source_Dirs_Attribute,
             Values             => Dirs (Dirs'First .. Dirs_Index - 1));
          Free (Dirs);
+
+         --  Languages
 
          for L in List'Range loop
             declare
@@ -2043,6 +2049,8 @@ package body GVD.Process is
             Values             => Langs (Langs'First .. Lang_Index - 1));
          Free (Langs);
 
+         --  Object_Dir, Exec_Dir, Main
+
          if Exec /= VFS.No_File then
             Update_Attribute_Value_In_Scenario
               (Project,
@@ -2066,7 +2074,7 @@ package body GVD.Process is
          Free (List);
       end;
 
-      --  Is the information for this executable already cached ? If yes,
+      --  Is the information for this executable already cached? If yes,
       --  we simply reuse it to avoid the need to interact with the debugger.
 
       Load_Custom_Project

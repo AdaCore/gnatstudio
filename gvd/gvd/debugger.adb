@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2006                      --
+--                      Copyright (C) 2000-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -42,7 +42,6 @@ with GVD.Process;                use GVD.Process;
 with GVD.Source_Editor;          use GVD.Source_Editor;
 with GVD.Scripts;                use GVD.Scripts;
 with GVD.Types;                  use GVD.Types;
-with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.Remote;          use GPS.Kernel.Remote;
 with GPS.Intl;                   use GPS.Intl;
 with Items;                      use Items;
@@ -232,6 +231,7 @@ package body Debugger is
 
    procedure General_Spawn
      (Debugger       : access Debugger_Root'Class;
+      Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
       Arguments      : GNAT.OS_Lib.Argument_List;
       Debugger_Name  : String;
       Proxy          : Process_Proxies.Process_Proxy_Access)
@@ -247,34 +247,19 @@ package body Debugger is
       --  not control the length of what gdb will return...
 
       Debugger.Process := Proxy;
+      Debugger.Kernel  := Kernel_Handle (Kernel);
 
-      begin
-         GPS.Kernel.Remote.Spawn
-           (Kernel        => Debugger.Kernel,
-            Arguments     => The_Args,
-            Server        => Debug_Server,
-            Pd            => Descriptor,
-            Success       => Success);
-         Free (The_Args (The_Args'First));
+      GPS.Kernel.Remote.Spawn
+        (Kernel        => Debugger.Kernel,
+         Arguments     => The_Args,
+         Server        => Debug_Server,
+         Pd            => Descriptor,
+         Success       => Success);
+      Free (The_Args (The_Args'First));
 
-         if not Success then
-            Insert (Debugger.Kernel,
-                    -("Could not find executable ") &
-                    '"' & Debugger_Name & '"' & (-" in path."),
-                    Mode => Error);
-            raise Spawn_Error;
-         end if;
-
-      exception
-         when Invalid_Process =>
-            Insert (Debugger.Kernel,
-                    (-"Could not spawn the process: ") & ASCII.LF
-                    & (-"  debugger: ") & Debugger_Name,
-                    Mode => Error);
-            raise Spawn_Error;
-      end;
-
-      if Get_Pid (Descriptor.all) = GNAT.Expect.Invalid_Pid then
+      if not Success
+        or else Get_Pid (Descriptor.all) = GNAT.Expect.Invalid_Pid
+      then
          raise Spawn_Error;
       end if;
 

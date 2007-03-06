@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2006                       --
+--                     Copyright (C) 2000-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -43,6 +43,7 @@ package Debugger is
 
    procedure Spawn
      (Debugger        : access Debugger_Root;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Executable      : VFS.Virtual_File;
       Debugger_Args   : GNAT.Strings.String_List;
       Executable_Args : String;
@@ -82,6 +83,7 @@ package Debugger is
 
    procedure General_Spawn
      (Debugger       : access Debugger_Root'Class;
+      Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
       Arguments      : GNAT.Strings.String_List;
       Debugger_Name  : String;
       Proxy          : Process_Proxies.Process_Proxy_Access);
