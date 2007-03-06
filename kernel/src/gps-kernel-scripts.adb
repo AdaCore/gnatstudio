@@ -1471,8 +1471,6 @@ package body GPS.Kernel.Scripts is
       end Recursive_Analyze_Menu;
 
    begin
-      Trace (Me, "Executing " & Command);
-
       if Command = Constructor_Method then
          Set_Error_Msg (Data, -"Cannot create an instance of this class");
 
