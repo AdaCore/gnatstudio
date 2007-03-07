@@ -68,10 +68,6 @@ package body Projects.Registry is
    --  3.15a1, False if they only need to be compatible with GNAT 3.16 >=
    --  20021024
 
-   Unknown_Language : Name_Id;
-   --  Constant used to mark source files set in the project, but for which no
-   --  matching language has been found.
-
    Keywords_Initialized : Boolean := False;
    --  Whether we have already initialized the Ada keywords list. This is only
    --  used by Is_Valid_Project_Name
@@ -954,8 +950,8 @@ package body Projects.Registry is
          exit when P = No_Project;
 
          declare
-            Ls : constant String := Get_Attribute_Value
-              (P, Gnatlist_Attribute);
+            Ls : constant String :=
+                   Get_Attribute_Value (P, Gnatlist_Attribute);
          begin
             if Ls /= "" and then Ls /= Gnatls and then Errors /= null then
                Errors
@@ -1022,8 +1018,7 @@ package body Projects.Registry is
                   if Unit /= No_Unit_Project then
                      for S in Spec_Or_Body'Range loop
                         if Registry.Data.View_Tree.Units.Table
-                          (Unit.Unit).File_Names (S).Name =
-                          Current_Source
+                          (Unit.Unit).File_Names (S).Name = Current_Source
                         then
                            Directory := Registry.Data.View_Tree.Units.Table
                              (Unit.Unit).File_Names (S).Display_Path;
@@ -1294,21 +1289,28 @@ package body Projects.Registry is
             end if;
          end;
 
+         if Src.Lang = No_Name then
+            --  Language not found from the project, check the default
+            --  list of extensions.
+
+            declare
+               Ext : constant String := File_Extension (F);
+            begin
+               if Ext = "" then
+                  --  No extension, use Base_Name to find the
+                  --  proper language for this file. This is needed
+                  --  for makefile and ChangeLog files for example.
+                  Src.Lang := Languages_Htable.String_Hash_Table.Get
+                    (Registry.Data.Extensions, To_Lower (F));
+               else
+                  Src.Lang := Languages_Htable.String_Hash_Table.Get
+                    (Registry.Data.Extensions, Ext);
+               end if;
+            end;
+         end if;
+
          if Src.Lang = Name_Ada then
             --  No warning, this was already processed
-            null;
-
-         elsif Src.Lang = No_Name then
-            Set (Registry.Data.Sources,
-                 K => F,
-                 E => (Project, Unknown_Language, No_Name));
-            --  ???
-            --  Here we used to do the following:
-            --    Set (Registry.Data.Sources,
-            --         K => F,
-            --         E => (Project, Unknown_Language, No_Name));
-            --  Unfortunately this results in each explicit source listed in
-            --  a debugger project to have an unknown language.
             null;
 
          elsif Src.Project /= No_Project then
@@ -1318,9 +1320,9 @@ package body Projects.Registry is
                     Get_View (Project),
                    Registry.Data.View_Tree);
          else
-            Errors (-("Warning, duplicate source file ")
-                    & F, Get_View (Project),
-                    Registry.Data.View_Tree);
+            Set (Registry.Data.Sources,
+                 K => F,
+                 E => (Project, Src.Lang, No_Name));
          end if;
       end Process_Explicit_Source;
 
@@ -1575,12 +1577,12 @@ package body Projects.Registry is
                        (UTF8, Project, Part, Unit_Name, Lang);
 
                      --  Language not found from the project, check the default
-                     --  list of extensions
+                     --  list of extensions.
                      --  ??? FA30-018: Do not check the default extensions: the
                      --  project attributes already default to those, and the
                      --  user can override. Otherwise there is no way for him
                      --  not to see the files with what happens to be
-                     --   a default extension for a custom language.
+                     --  a default extension for a custom language.
 
                      if False and then Lang = No_Name then
                         declare
@@ -1980,7 +1982,6 @@ package body Projects.Registry is
 
       Name_C_Plus_Plus := Get_String (Cpp_String);
       Any_Attribute_Name := Get_String (Any_Attribute);
-      Unknown_Language := Get_String ("unknown");
    end Initialize;
 
    --------------
