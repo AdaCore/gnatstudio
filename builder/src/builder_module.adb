@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                     Copyright (C) 2001-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1853,7 +1853,7 @@ package body Builder_Module is
         (Mitem, "activate", On_Build'Access,
          Slot_Object => Kernel,
          User_Data => File_Project_Record'
-           (Project => No_Project,
+           (Project => Get_Project (Kernel),
             File    => VFS.No_File));
 
       Mitem := new Dynamic_Menu_Item_Record;
