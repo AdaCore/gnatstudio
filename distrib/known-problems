@@ -7,6 +7,12 @@ Known Problems fixed in GPS 4.1.0
   Workaround: remove the filter, and test explicitly in the code associated
               with the callback for this menu
 
+- G227-035 GPS takes full cpu usage when displaying contextual menu on editor
+  Problem:    If you right click in an editor that didn't have the focus yet,
+              GPS will take 100% of the CPU until you click to disable the
+              menu.
+  Workaround: Left-click to cancel the contextual menu, and right-click again
+
 - G222-003 Bad indentation of extended return statements
   Problem:    When indenting Ada 2005 extended return statements, GPS
               may get confused and incorrectly indent following constructs.
