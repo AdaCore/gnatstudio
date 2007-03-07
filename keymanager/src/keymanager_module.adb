@@ -384,6 +384,10 @@ package body KeyManager_Module is
 
       if Event_Type = Key_Press or else Event_Type = Key_Release then
          --  Check that the current input window is not modal.
+         --  In the case that we have a modal dialog, we do not want to
+         --  interpret key shortcuts. For instance, if a "Continue Search?"
+         --  dialog is open, and the user hits ctrl-n, we don't want
+         --  another "Continue Search?" dialog to appear.
 
          declare
             Current : constant Gtk_Widget := Grab_Get_Current;
