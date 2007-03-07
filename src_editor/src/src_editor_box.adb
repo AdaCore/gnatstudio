@@ -1010,7 +1010,12 @@ package body Src_Editor_Box is
       --  is checked after the button release.
 
       if Pointer_Is_Grabbed then
-         return True;
+         --  No need to try again if the file is up-to-date. Otherwise, we'll
+         --  need to try again. One issue here is that while displaying a
+         --  contextual menu for an editor that didn't have the focus before,
+         --  and the file on disk has been modified, the idle callback is
+         --  called in a loop, and that takes 100% of CPU (G227-035).
+         return not Check_Timestamp (B.Source_Buffer, Update => False);
       end if;
 
       B.Check_Timestamp_Registered := False;
