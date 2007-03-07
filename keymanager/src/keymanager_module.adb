@@ -30,12 +30,12 @@ with System.Assertions;       use System.Assertions;
 with Gdk.Event;               use Gdk.Event;
 with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
 with Gdk.Types;               use Gdk.Types;
+with Gdk.Window;              use Gdk.Window;
 
 with Glib.Object;             use Glib.Object;
 with Glib.Xml_Int;            use Glib.Xml_Int;
 with Glib.Values;             use Glib.Values;
 with Glib;                    use Glib;
-with Glib.Main;
 
 with Gtk.Accel_Group;         use Gtk.Accel_Group;
 with Gtk.Accel_Map;           use Gtk.Accel_Map;
@@ -43,6 +43,7 @@ with Gtk.Arguments;           use Gtk.Arguments;
 with Gtk.Handlers;            use Gtk.Handlers;
 with Gtk.Main;                use Gtk.Main;
 with Gtk.Window;              use Gtk.Window;
+with Gtk.Widget;              use Gtk.Widget;
 
 with Gtkada.MDI;              use Gtkada.MDI;
 
@@ -381,19 +382,27 @@ package body KeyManager_Module is
       --  it is called very often, so when using setjmp/longjmp, the cost
       --  may not be negligible.
 
-      if Glib.Main.Depth = 1 then
-         if Event_Type = Key_Press or else Event_Type = Key_Release then
-            if Process_Event (Convert (Kernel), Event) then
-               return;
-            end if;
+      if Event_Type = Key_Press or else Event_Type = Key_Release then
+         --  Check that the current input window is not modal.
 
-         elsif Event_Type = Button_Release then
-            --  The command will be executed by gtk, we don't know exactly how
-            if Keymanager_Module.Last_Command /= null then
-               Free (Keymanager_Module.Last_User_Command);
+         declare
+            Current : constant Gtk_Widget := Grab_Get_Current;
+         begin
+            if Current = null
+              or else not Get_Modal (Gtk_Window (Get_Toplevel (Current)))
+            then
+               if Process_Event (Convert (Kernel), Event) then
+                  return;
+               end if;
             end if;
-            Keymanager_Module.Last_Command := null;
+         end;
+
+      elsif Event_Type = Button_Release then
+         --  The command will be executed by gtk, we don't know exactly how
+         if Keymanager_Module.Last_Command /= null then
+            Free (Keymanager_Module.Last_User_Command);
          end if;
+         Keymanager_Module.Last_Command := null;
       end if;
 
       --  Dispatch the event in the standard gtk+ main loop
