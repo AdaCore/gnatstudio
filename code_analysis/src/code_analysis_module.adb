@@ -1650,44 +1650,9 @@ package body Code_Analysis_Module is
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       use Code_Analysis_Class_Instance_Sets;
-
-      procedure Has_Coverage_Information
-        (Cont_N_Inst : Context_And_Instance;
-         Property    : Code_Analysis_Property_Record;
-         Menu        : access Gtk.Menu.Gtk_Menu_Record'Class);
-      --  Check if coverage informations are stored in the given Instance and
-      --  and fills the given Gtk_Menu with different contents following the
-      --  case
-
-      ------------------------------
-      -- Has_Coverage_Information --
-      ------------------------------
-
-      procedure Has_Coverage_Information
-        (Cont_N_Inst : Context_And_Instance;
-         Property    : Code_Analysis_Property_Record;
-         Menu        : access Gtk.Menu.Gtk_Menu_Record'Class)
-      is
-         Project_Node : Code_Analysis.Project_Access;
-         Item         : Gtk_Menu_Item;
-      begin
-         Project_Node := Get_Or_Create
-           (Property.Projects, Project_Information (Cont_N_Inst.Context));
-
-         if Project_Node.Analysis_Data.Coverage_Data /= null then
-            Append_Show_Analysis_Report_To_Menu (Cont_N_Inst, Menu);
-         else
-            Gtk_New (Item, -"Show Analysis Report");
-            Append (Menu, Item);
-            Context_And_Instance_CB.Connect
-              (Item, "activate", Context_And_Instance_CB.To_Marshaller
-                 (Show_Empty_Analysis_Report_From_Menu'Access), Cont_N_Inst);
-         end if;
-      end Has_Coverage_Information;
-
       Cont_N_Inst : Context_And_Instance;
       Property    : Code_Analysis_Property_Record;
-      Submenu     : Gtk_Menu;
+      Prj_Node    : Code_Analysis.Project_Access;
       Item        : Gtk_Menu_Item;
       Cur         : Cursor := Code_Analysis_Module_ID.Instances.First;
    begin
@@ -1713,16 +1678,17 @@ package body Code_Analysis_Module is
          Cont_N_Inst.Instance := Element (Cur);
          Property             := Code_Analysis_Property_Record
            (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
+         Prj_Node             := Get_Or_Create
+           (Property.Projects, Project_Information (Cont_N_Inst.Context));
 
-         if Code_Analysis_Module_ID.Instances.Length > 1 then
-            Gtk_New (Item, -(Property.Instance_Name.all));
-            Append (Menu, Item);
-            Gtk_New (Submenu);
-            Set_Submenu (Item, Submenu);
-            Set_Sensitive (Item, True);
-            Has_Coverage_Information (Cont_N_Inst, Property, Submenu);
+         if Prj_Node.Analysis_Data.Coverage_Data /= null then
+            Append_Show_Analysis_Report_To_Menu (Cont_N_Inst, Menu);
          else
-            Has_Coverage_Information (Cont_N_Inst, Property, Menu);
+            Gtk_New (Item, -"Show Report of " & Property.Instance_Name.all);
+            Append (Menu, Item);
+            Context_And_Instance_CB.Connect
+              (Item, "activate", Context_And_Instance_CB.To_Marshaller
+                 (Show_Empty_Analysis_Report_From_Menu'Access), Cont_N_Inst);
          end if;
 
          Next (Cur);
@@ -1761,9 +1727,11 @@ package body Code_Analysis_Module is
      (Cont_N_Inst : Context_And_Instance;
       Submenu     : access Gtk_Menu_Record'Class)
    is
-      Item : Gtk_Menu_Item;
+      Item     : Gtk_Menu_Item;
+      Property : Code_Analysis_Property_Record := Code_Analysis_Property_Record
+        (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
    begin
-      Gtk_New (Item, -"Show Analysis Report");
+      Gtk_New (Item, -"Show Report of " & Property.Instance_Name.all);
       Append (Submenu, Item);
       Context_And_Instance_CB.Connect
         (Item, "activate", Context_And_Instance_CB.To_Marshaller
@@ -1778,9 +1746,11 @@ package body Code_Analysis_Module is
      (Cont_N_Inst : Context_And_Instance;
       Submenu     : access Gtk_Menu_Record'Class)
    is
-      Item : Gtk_Menu_Item;
+      Item     : Gtk_Menu_Item;
+      Property : Code_Analysis_Property_Record := Code_Analysis_Property_Record
+        (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
    begin
-      Gtk_New (Item, -"Show Analysis Report");
+      Gtk_New (Item, -"Show Report of " & Property.Instance_Name.all);
       Append (Submenu, Item);
       Context_And_Instance_CB.Connect
         (Item, "activate", Context_And_Instance_CB.To_Marshaller
