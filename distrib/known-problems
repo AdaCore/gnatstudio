@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.2.0
 
+- G306-007, G305-030 Multiple dialogs appearing on key shortcuts.
+  Problem:    Some dialogs, such as the "Continue Search?" dialog or the
+              "Open File" dialog, might appear multiple times when launched
+              through key shortcuts.
+  Workaround: The extraneous dialogs can be closed safely.
+
 Known Problems fixed in GPS 4.1.0
 
 - G216-026 Outline View tooltips appearing outside of Outline View.
