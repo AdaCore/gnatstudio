@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                     Copyright (C) 2001-2007                       --
 --                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -820,11 +820,11 @@ package body Browsers.Entities is
       if Get_Kind (Entity).Is_Abstract then
          Initialize
            (Item, Browser,
-            Get_Name (Entity).all & ASCII.LF & "   " & UML_Abstract,
+            Get_Full_Name (Entity) & ASCII.LF & "   " & UML_Abstract,
             Find_Parent_Types'Access, Find_Child_Types'Access);
       else
          Initialize
-           (Item, Browser, Get_Name (Entity).all,
+           (Item, Browser, Get_Full_Name (Entity),
             Find_Parent_Types'Access, Find_Child_Types'Access);
       end if;
       Ref (Entity);
@@ -1441,7 +1441,7 @@ package body Browsers.Entities is
       Added                          : Boolean;
 
    begin
-      Trace (Me, "Resize_And_Draw: " & Get_Name (Item.Entity).all);
+      Trace (Me, "Resize_And_Draw: " & Get_Full_Name (Item.Entity));
       Update_Xref (Get_File (Get_Declaration_Of (Item.Entity)));
 
       Add_Line (General_Lines, -Kind_To_String (Get_Kind (Item.Entity)));
