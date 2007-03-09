@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2006                      --
+--                      Copyright (C) 2003-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -752,6 +752,27 @@ package body GPS.Kernel.Standard_Hooks is
    begin
       Set_Nth_Arg (D.all, 1, Hook_Name);
       Set_Nth_Arg (D.all, 2, F);
+      return D;
+   end Create_Callback_Data;
+
+   --------------------------
+   -- Create_Callback_Data --
+   --------------------------
+
+   function Create_Callback_Data
+     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+      Hook_Name : String;
+      Data      : access Files_2_Hooks_Args)
+      return GPS.Kernel.Scripts.Callback_Data_Access
+   is
+      F  : constant Class_Instance := Create_File (Script, Data.File);
+      F2 : constant Class_Instance := Create_File (Script, Data.Renamed);
+      D  : constant Callback_Data_Access :=
+             new Callback_Data'Class'(Create (Script, 3));
+   begin
+      Set_Nth_Arg (D.all, 1, Hook_Name);
+      Set_Nth_Arg (D.all, 2, F);
+      Set_Nth_Arg (D.all, 3, F2);
       return D;
    end Create_Callback_Data;
 

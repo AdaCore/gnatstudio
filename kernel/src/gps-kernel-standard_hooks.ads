@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2006                      --
+--                      Copyright (C) 2003-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -143,6 +143,22 @@ package GPS.Kernel.Standard_Hooks is
    Location_Changed_Hook : constant String := "location_changed";
    --  Hook called when the location in the current editor has changed. Its
    --  arguments are of type File_Location_Hooks_Args'Class
+
+   ------------------------
+   -- Files_2_Hooks --
+   ------------------------
+
+   Files_2_Hook_Type : constant String := "file_renamed_hooks";
+   type Files_2_Hooks_Args is new File_Hooks_Args with record
+      Renamed : VFS.Virtual_File;
+   end record;
+   function Create_Callback_Data
+     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+      Hook_Name : String;
+      Data      : access Files_2_Hooks_Args)
+      return GPS.Kernel.Scripts.Callback_Data_Access;
+   --  Base type for hooks that take two files in parameter
+   --  See inherited doc
 
    ------------------
    -- Action hooks --
