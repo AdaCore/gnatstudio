@@ -616,6 +616,17 @@ package GPS.Kernel is
       File   : VFS.Virtual_File);
    --  Runs the "file_closed" hook
 
+   procedure File_Deleted
+     (Handle : access Kernel_Handle_Record;
+      File   : VFS.Virtual_File);
+   --  Runs the "file_deleted" hook
+
+   procedure File_Renamed
+     (Handle   : access Kernel_Handle_Record;
+      File     : VFS.Virtual_File;
+      New_Path : VFS.Virtual_File);
+   --  Runs the "file_renamed" hook
+
    procedure File_Changed_On_Disk
      (Handle : access Kernel_Handle_Record;
       File   : VFS.Virtual_File);
@@ -656,6 +667,8 @@ package GPS.Kernel is
    File_Edited_Hook              : constant String := "file_edited";
    File_Saved_Hook               : constant String := "file_saved";
    File_Closed_Hook              : constant String := "file_closed";
+   File_Deleted_Hook             : constant String := "file_deleted";
+   File_Renamed_Hook             : constant String := "file_renamed";
    File_Changed_Detected_Hook    : constant String := "file_changed_detected";
    File_Changed_On_Disk_Hook     : constant String := "file_changed_on_disk";
    Compilation_Finished_Hook     : constant String := "compilation_finished";
