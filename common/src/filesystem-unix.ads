@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2006                            --
+--                      Copyright (C) 2006-2007                      --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -53,6 +53,10 @@ package Filesystem.Unix is
       Path : String) return String;
 
    function Get_Root
+     (FS   : Unix_Filesystem_Record;
+      Path : String) return String;
+
+   function Get_Parent
      (FS   : Unix_Filesystem_Record;
       Path : String) return String;
 

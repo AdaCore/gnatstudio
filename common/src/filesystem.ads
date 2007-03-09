@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                         Copyright (C) 2006                        --
+--                      Copyright (C) 2006-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -86,6 +86,11 @@ package Filesystem is
      (FS   : Filesystem_Record;
       Path : String) return String is abstract;
    --  Return the root directory of the path
+
+   function Get_Parent
+     (FS   : Filesystem_Record;
+      Path : String) return String is abstract;
+   --  Return the parent directory of the path
 
    function Ensure_Directory
      (FS   : Filesystem_Record;

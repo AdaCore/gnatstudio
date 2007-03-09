@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006                         --
+--                      Copyright (C) 2006-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -176,6 +176,21 @@ package body Filesystem.Windows is
          return "C:\";
       end if;
    end Get_Root;
+
+   ----------------
+   -- Get_Parent --
+   ----------------
+
+   function Get_Parent
+     (FS   : Windows_Filesystem_Record;
+      Path : String) return String is
+   begin
+      if Path (Path'Last) = '\' then
+         return Dir_Name (FS, Path (Path'First .. Path'Last - 1));
+      else
+         return Dir_Name (FS, Path);
+      end if;
+   end Get_Parent;
 
    ----------------------
    -- Ensure_Directory --
