@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                     Copyright (C) 2001-2007                       --
 --                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -53,9 +53,11 @@ with Gtkada.Handlers;            use Gtkada.Handlers;
 
 with VFS;                        use VFS;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
+with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Intl;                   use GPS.Intl;
 with Projects;                   use Projects;
@@ -207,6 +209,70 @@ package body Project_Explorers_Files is
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle);
    --  Raise the existing explorer, or open a new one
+
+   type File_View_Filter_Record is new Action_Filter_Record
+      with null record;
+   function Filter_Matches_Primitive
+     (Context : access File_View_Filter_Record;
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
+
+   -----------
+   -- Hooks --
+   -----------
+
+   type Internal_Hook_Record is abstract new Function_With_Args with record
+      View : Project_Explorer_Files;
+   end record;
+
+   type File_Deleted_Hook_Record is new Internal_Hook_Record with null record;
+   type File_Deleted_Hook is access File_Deleted_Hook_Record'Class;
+
+   type File_Saved_Hook_Record is new Internal_Hook_Record with null record;
+   type File_Saved_Hook is access File_Saved_Hook_Record'Class;
+
+   type File_Renamed_Hook_Record is new Internal_Hook_Record with null record;
+   type File_Renamed_Hook is access File_Renamed_Hook_Record'Class;
+
+   procedure Execute
+     (Hook   : File_Deleted_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Callback for the "file_deleted" hook
+
+   procedure Execute
+     (Hook   : File_Saved_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Callback for the "file_saved" hook
+
+   procedure Execute
+     (Hook   : File_Renamed_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Callback for the "file_renamed" hook
+
+   procedure Remove_File
+     (View : Project_Explorer_Files;
+      File : VFS.Virtual_File);
+   --  Remove a file or directory node from the tree
+
+   procedure Add_File
+     (View : Project_Explorer_Files;
+      File : VFS.Virtual_File);
+   --  Add a file or directory node in the tree
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   function Filter_Matches_Primitive
+     (Context : access File_View_Filter_Record;
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Context);
+   begin
+      return Module_ID (Get_Creator (Ctxt)) = Explorer_Files_Module_Id;
+   end Filter_Matches_Primitive;
 
    -----------------------------
    -- Default_Context_Factory --
@@ -1175,6 +1241,246 @@ package body Project_Explorers_Files is
       end if;
    end Free_Children;
 
+   -----------------
+   -- Remove_File --
+   -----------------
+
+   procedure Remove_File
+     (View : Project_Explorer_Files;
+      File : VFS.Virtual_File)
+   is
+      Iter      : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Next_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Path      : Gtk_Tree_Path;
+   begin
+      Iter := Get_Iter_First (View.File_Model);
+
+      while Iter /= Null_Iter loop
+         if File_Equal
+           (Get_String (View.File_Model, Iter, Absolute_Name_Column),
+            File.Full_Name.all)
+         then
+            --  First select the parent and set the 'scroll to dir' state
+            Path := Get_Path (View.File_Model,
+                              Parent (View.File_Model, Iter));
+            Set_Cursor (View.File_Tree, Path, null, False);
+            View.Scroll_To_Directory := True;
+
+            --  Now remove the node, this will invoke the expose event, that
+            --  will scroll to the parent directory.
+            Remove (View.File_Model, Iter);
+            exit;
+         end if;
+
+         --  We look through the tree: first dir node, then children,
+         --  then parent's next item.
+         if Has_Child (View.File_Model, Iter) then
+            Iter := Children (View.File_Model, Iter);
+         else
+            loop
+               Next_Iter := Iter;
+               Next (View.File_Model, Next_Iter);
+
+               if Next_Iter = Null_Iter then
+                  Iter := Parent (View.File_Model, Iter);
+                  exit when Iter = Null_Iter;
+               else
+                  Iter := Next_Iter;
+                  exit;
+               end if;
+            end loop;
+         end if;
+      end loop;
+   end Remove_File;
+
+   --------------
+   -- Add_File --
+   --------------
+
+   procedure Add_File
+     (View : Project_Explorer_Files;
+      File : VFS.Virtual_File)
+   is
+      Iter      : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Next_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Iter2     : Gtk.Tree_Model.Gtk_Tree_Iter := Null_Iter;
+      Dir       : VFS.Virtual_File := VFS.Dir (File);
+      Path      : Gtk_Tree_Path;
+      Dead      : Boolean;
+      Done      : Boolean;
+      pragma Unreferenced (Dead);
+
+   begin
+      Iter := Get_Iter_First (View.File_Model);
+
+      if Is_Directory (File) then
+         Dir := VFS.Get_Parent (File);
+      end if;
+
+      while Iter /= Null_Iter loop
+         if File_Equal
+           (Get_String (View.File_Model, Iter, Absolute_Name_Column),
+            Dir.Full_Name.all)
+         then
+            --  We found the file's directory.
+
+            Path := Get_Path (View.File_Model, Iter);
+            if not Row_Expanded (View.File_Tree, Path)
+              and then Children (View.File_Model, Iter) /= Null_Iter then
+               --  File's directory is not expanded. Return now.
+
+               --  Note that we need to test if dir node has children: in the
+               --  normal case, a non expanded dir always has a dummy child.
+               --  When we rename a directory, we might have deleted the only
+               --  dir's child, then this dir won't have children at all. We
+               --  don't want to fall back in this case here.
+               return;
+            end if;
+
+            --  file's directory is expanded. Let's look at the children.
+            Next_Iter := Children (View.File_Model, Iter);
+
+            while Next_Iter /= Null_Iter loop
+               if File_Equal
+                 (Get_String
+                    (View.File_Model, Next_Iter, Absolute_Name_Column),
+                  File.Full_Name.all)
+               then
+                  --  File already present. Do nothing.
+                  return;
+               end if;
+
+               Next (View.File_Model, Next_Iter);
+            end loop;
+
+            --  If we are here, then this means that the saved file is not
+            --  present in the view. Let's insert it.
+
+            if Is_Directory (File) then
+               Next_Iter := Children (View.File_Model, Iter);
+               Done := False;
+
+               while Next_Iter /= Null_Iter loop
+
+                  if Get_Node_Type (View.File_Model, Next_Iter) =
+                    Directory_Node
+                  then
+                     declare
+                        Name : constant String :=
+                                 Get_Base_Name (View.File_Model, Next_Iter);
+                     begin
+                        if Name > File.Base_Dir_Name then
+                           Insert_Before
+                             (View.File_Model, Iter2, Iter, Next_Iter);
+                           Done := True;
+
+                           exit;
+                        end if;
+                     end;
+                  elsif Get_Node_Type (View.File_Model, Next_Iter) =
+                    File_Node
+                  then
+                     Insert_Before
+                       (View.File_Model, Iter2, Iter, Next_Iter);
+                     Done := True;
+
+                     exit;
+                  end if;
+
+                  Next (View.File_Model, Next_Iter);
+               end loop;
+
+               if not Done then
+                  Append (View.File_Model, Iter2, Iter);
+               end if;
+
+               Set (View.File_Model, Iter2, Absolute_Name_Column,
+                    File.Full_Name.all);
+               Set (View.File_Model, Iter2, Base_Name_Column,
+                    File.Base_Dir_Name);
+               Set (View.File_Model, Iter2, Node_Type_Column,
+                    Gint (Node_Types'Pos (Directory_Node)));
+               Set (View.File_Model, Iter2, Icon_Column,
+                    C_Proxy (Close_Pixbufs (Directory_Node)));
+               File_Append_Directory (View, File.Full_Name.all, Iter2);
+            else
+               Append_File
+                 (View.Kernel,
+                  View.File_Model,
+                  Iter,
+                  File,
+                  Sorted => True);
+            end if;
+
+            Dead := Expand_Row (View.File_Tree, Path, False);
+
+            return;
+         end if;
+
+         --  We look through the tree: first dir node, then children,
+         --  then parent's next item.
+         if Has_Child (View.File_Model, Iter) then
+            Iter := Children (View.File_Model, Iter);
+         else
+            loop
+               Next_Iter := Iter;
+               Next (View.File_Model, Next_Iter);
+
+               if Next_Iter = Null_Iter then
+                  Iter := Parent (View.File_Model, Iter);
+                  exit when Iter = Null_Iter;
+               else
+                  Iter := Next_Iter;
+                  exit;
+               end if;
+            end loop;
+         end if;
+      end loop;
+   end Add_File;
+
+   -------------
+   -- Execute --
+   -------------
+
+   procedure Execute
+     (Hook   : File_Deleted_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      Remove_File (Hook.View, File_Hooks_Args (Data.all).File);
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   procedure Execute
+     (Hook   : File_Saved_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      Add_File (Hook.View, File_Hooks_Args (Data.all).File);
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   procedure Execute
+     (Hook   : File_Renamed_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      Remove_File (Hook.View, Files_2_Hooks_Args (Data.all).File);
+      Add_File (Hook.View, Files_2_Hooks_Args (Data.all).Renamed);
+   end Execute;
+
    ----------------------
    -- On_Open_Explorer --
    ----------------------
@@ -1183,9 +1489,12 @@ package body Project_Explorers_Files is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Files : Project_Explorer_Files;
-      Child : MDI_Child;
-      C2    : MDI_Explorer_Child;
+      Files        : Project_Explorer_Files;
+      Child        : MDI_Child;
+      C2           : MDI_Explorer_Child;
+      Deleted_Hook : File_Deleted_Hook;
+      Saved_Hook   : File_Saved_Hook;
+      Renamed_Hook : File_Renamed_Hook;
    begin
       --  Start with the files view, so that if both are needed, the project
       --  view ends up on top of the files view
@@ -1202,12 +1511,30 @@ package body Project_Explorers_Files is
                      Module         => Explorer_Files_Module_Id);
          Set_Title (C2, -"File View",  -"File View");
          Put (Get_MDI (Kernel), C2, Initial_Position => Position_Left);
-         Set_Focus_Child (C2);
-         Raise_Child (C2);
-      else
-         Raise_Child (Child);
-         Set_Focus_Child (Get_MDI (Kernel), Child);
+         Child := MDI_Child (C2);
+
+         Deleted_Hook := new File_Deleted_Hook_Record;
+         Deleted_Hook.View := Files;
+         Add_Hook (Kernel, GPS.Kernel.File_Deleted_Hook,
+                   Deleted_Hook,
+                   Name  => "project_explorers_files.file_deleted",
+                   Watch => GObject (Files));
+         Saved_Hook := new File_Saved_Hook_Record;
+         Saved_Hook.View := Files;
+         Add_Hook (Kernel, GPS.Kernel.File_Saved_Hook,
+                   Saved_Hook,
+                   Name  => "project_explorers_files.file_saved",
+                   Watch => GObject (Files));
+         Renamed_Hook := new File_Renamed_Hook_Record;
+         Renamed_Hook.View := Files;
+         Add_Hook (Kernel, GPS.Kernel.File_Renamed_Hook,
+                   Renamed_Hook,
+                   Name  => "project_explorers_files.file_renamed",
+                   Watch => GObject (Files));
       end if;
+
+      Raise_Child (Child);
+      Set_Focus_Child (Get_MDI (Kernel), Child);
 
    exception
       when E : others =>
@@ -1262,6 +1589,8 @@ package body Project_Explorers_Files is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Tools : constant String := '/' & (-"Tools") & '/' & (-"Views");
+      File_View_Filter : constant Action_Filter :=
+                           new File_View_Filter_Record;
    begin
       Explorer_Files_Module_Id := new Explorer_Module_Record;
       Register_Module
@@ -1274,6 +1603,10 @@ package body Project_Explorers_Files is
       Register_Menu
         (Kernel, Tools, -"_Files", "", On_Open_Explorer'Access,
          Ref_Item => -"Remote");
+      Register_Filter
+        (Kernel,
+         Filter => File_View_Filter,
+         Name   => "File_View");
    end Register_Module;
 
 end Project_Explorers_Files;
