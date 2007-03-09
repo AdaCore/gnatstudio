@@ -464,6 +464,8 @@ package body Project_Explorers is
    -- Filters --
    -------------
 
+   type Project_View_Filter_Record is new Action_Filter_Record
+      with null record;
    type Project_Node_Filter_Record is new Action_Filter_Record
       with null record;
    type Directory_Node_Filter_Record is new Action_Filter_Record
@@ -472,6 +474,9 @@ package body Project_Explorers is
       with null record;
    type Entity_Node_Filter_Record is new Action_Filter_Record
       with null record;
+   function Filter_Matches_Primitive
+     (Context : access Project_View_Filter_Record;
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
    function Filter_Matches_Primitive
      (Context : access Project_Node_Filter_Record;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
@@ -484,6 +489,19 @@ package body Project_Explorers is
    function Filter_Matches_Primitive
      (Context : access Entity_Node_Filter_Record;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   function Filter_Matches_Primitive
+     (Context : access Project_View_Filter_Record;
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Context);
+   begin
+      return Module_ID (Get_Creator (Ctxt)) = Explorer_Module_ID;
+   end Filter_Matches_Primitive;
 
    ------------------------------
    -- Filter_Matches_Primitive --
@@ -1859,6 +1877,7 @@ package body Project_Explorers is
 
                   if not Get_History
                     (Get_History (Explorer.Kernel).all, Show_Hidden_Dirs)
+                    and then Dir_Node /= Null_Node
                     and then Is_Hidden (Data (Dir_Node))
                   then
                      return;
@@ -2024,7 +2043,8 @@ package body Project_Explorers is
               (Explorer.Kernel,
                Explorer.Tree.Model,
                Node,
-               Files_In_Project (J));
+               Files_In_Project (J),
+               Sorted => True);
          end if;
       end loop;
 
@@ -2980,6 +3000,8 @@ package body Project_Explorers is
       Extra   : Explorer_Search_Extra;
       Box     : Gtk_Box;
 
+      Project_View_Filter   : constant Action_Filter :=
+                                new Project_View_Filter_Record;
       Project_Node_Filter   : constant Action_Filter :=
                                 new Project_Node_Filter_Record;
       Directory_Node_Filter : constant Action_Filter :=
@@ -3059,6 +3081,10 @@ package body Project_Explorers is
         (Extra.Include_Entities, "toggled",
          Reset_Search'Access, Kernel_Handle (Kernel));
 
+      Register_Filter
+        (Kernel,
+         Filter => Project_View_Filter,
+         Name   => "Explorer_View");
       Register_Filter
         (Kernel,
          Filter => Project_Node_Filter,
