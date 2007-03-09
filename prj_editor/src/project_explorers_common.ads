@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                     Copyright (C) 2001-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -114,7 +114,8 @@ package Project_Explorers_Common is
      (Kernel : Kernel_Handle;
       Model  : Gtk_Tree_Store;
       Base   : Gtk_Tree_Iter;
-      File   : VFS.Virtual_File);
+      File   : VFS.Virtual_File;
+      Sorted : Boolean := False);
    --  Append a file node to Base in the model.
    --  File must be an absolute file name.
 

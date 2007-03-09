@@ -124,12 +124,45 @@ package body Project_Explorers_Common is
      (Kernel : Kernel_Handle;
       Model  : Gtk_Tree_Store;
       Base   : Gtk_Tree_Iter;
-      File   : VFS.Virtual_File)
+      File   : VFS.Virtual_File;
+      Sorted : Boolean := False)
    is
-      Iter : Gtk_Tree_Iter;
-      Lang : Language_Access;
+      Iter  : Gtk_Tree_Iter;
+      Iter2 : Gtk_Tree_Iter;
+      Lang  : Language_Access;
+      Done  : Boolean;
    begin
-      Append (Model, Iter, Base);
+      if Sorted then
+         Iter := Children (Model, Base);
+         Done := False;
+
+         while Iter /= Null_Iter loop
+            Iter2 := Iter;
+
+            if Get_Node_Type (Model, Iter) = File_Node then
+               declare
+                  Name : constant String := Get_Base_Name (Model, Iter);
+               begin
+                  if Name > File.Base_Name then
+                     Insert_Before (Model, Iter2, Base, Iter);
+                     Iter := Iter2;
+                     Done := True;
+
+                     exit;
+                  end if;
+               end;
+            end if;
+
+            Next (Model, Iter);
+         end loop;
+
+         if not Done then
+            Append (Model, Iter, Base);
+         end if;
+      else
+
+         Append (Model, Iter, Base);
+      end if;
 
       Set (Model, Iter, Absolute_Name_Column, Full_Name (File).all);
       Set (Model, Iter, Base_Name_Column, Base_Name (File));
