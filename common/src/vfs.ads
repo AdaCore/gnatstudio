@@ -98,8 +98,8 @@ package VFS is
    --  Compare two files, possibly case insensitively on file systems that
    --  require this.
 
-   function Get_Filesystem (File : Virtual_File)
-                            return Filesystem.Filesystem_Record'Class;
+   function Get_Filesystem
+     (File : Virtual_File) return Filesystem.Filesystem_Record'Class;
    --  Return the filesystem of the file
 
    function Is_Parent (Parent, Child : Virtual_File) return Boolean;
@@ -124,8 +124,8 @@ package VFS is
    --  If file names are case insensitive, the normalized name will always
    --  be all lower cases.
 
-   function Full_Name_Hash (Key : Virtual_File)
-                            return Ada.Containers.Hash_Type;
+   function Full_Name_Hash
+     (Key : Virtual_File) return Ada.Containers.Hash_Type;
    --  Return a Hash_Type computed from the full name of the given VFS.
    --  Could be used to instantiate an Ada 2005 container that uses a VFS as
    --  key and requires a hash function.
@@ -144,12 +144,13 @@ package VFS is
    --  on the protocol, so that relative files names are properly found.
 
    function Dir (File : Virtual_File) return Virtual_File;
-   --  Return the virtual file corresponding to the directory of the file.
+   --  Return the virtual file corresponding to the directory of the file
 
-   procedure Rename (File      : Virtual_File;
-                     Full_Name : String;
-                     Success   : out Boolean);
-   --  Rename a file or directory. This does not work for remote files.
+   procedure Rename
+     (File      : Virtual_File;
+      Full_Name : String;
+      Success   : out Boolean);
+   --  Rename a file or directory. This does not work for remote files
 
    procedure Delete (File : Virtual_File; Success : out Boolean);
    --  Remove file from the disk. This also works for remote files
@@ -228,8 +229,7 @@ package VFS is
 
    function Read_Dir
      (Dir    : Virtual_File;
-      Filter : Read_Dir_Filter := All_Files)
-      return File_Array_Access;
+      Filter : Read_Dir_Filter := All_Files) return File_Array_Access;
    --  Reads all entries from the directory and returns a File_Array containing
    --  those entries, according to filter. The list of files returned
    --  includes directories in systems providing a hierarchical directory

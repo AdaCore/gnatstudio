@@ -81,6 +81,15 @@ package body VFS_Module is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  See doc from inherited subprogram
 
+   procedure Check_Prj
+     (Project  : Projects.Project_Type;
+      File_In  : String;
+      Success  : out Boolean;
+      Prj_List : out Unbounded_String);
+   --  Check if the project contains File_In path.
+   --  If Success, then Prj_List will contain a printable list of (sub)projects
+   --  containing File_In.
+
    --------------------------
    -- VFS_Command_Handler --
    --------------------------
@@ -89,7 +98,7 @@ package body VFS_Module is
      (Data    : in out Callback_Data'Class;
       Command : String)
    is
-      Success  : Boolean;
+      Success : Boolean;
 
       procedure List_Files (Pattern : String);
       --  List files following Pattern
@@ -255,28 +264,20 @@ package body VFS_Module is
       end if;
    end VFS_Command_Handler;
 
-   procedure Check_Prj (Project  : Projects.Project_Type;
-                        File_In  : String;
-                        Success  : out Boolean;
-                        Prj_List : out Unbounded_String);
-   --  Check if the project contains File_In path.
-   --  If Success, then Prj_List will contain a printable list of (sub)projects
-   --  containing File_In
-
    ---------------
    -- Check_Prj --
    ---------------
 
-   procedure Check_Prj (Project  : Projects.Project_Type;
-                        File_In  : String;
-                        Success  : out Boolean;
-                        Prj_List : out Unbounded_String)
+   procedure Check_Prj
+     (Project  : Projects.Project_Type;
+      File_In  : String;
+      Success  : out Boolean;
+      Prj_List : out Unbounded_String)
    is
-      Iter     : Projects.Imported_Project_Iterator :=
-        Projects.Start (Project,
-                        Include_Extended => False);
-      Prj      : Projects.Project_Type;
-      First    : Boolean := True;
+      Iter  : Projects.Imported_Project_Iterator :=
+                Projects.Start (Project, Include_Extended => False);
+      Prj   : Projects.Project_Type;
+      First : Boolean := True;
 
    begin
       Prj_List := To_Unbounded_String ("");
@@ -407,23 +408,22 @@ package body VFS_Module is
       Is_Dir   : Boolean;
       Prj_List : Unbounded_String;
 
-      procedure Actual_Rename (File_In     : VFS.Virtual_File;
-                               Success     : out Boolean;
-                               Prj_Changed : out Boolean);
+      procedure Actual_Rename
+        (File_In     : VFS.Virtual_File;
+         Success     : out Boolean;
+         Prj_Changed : out Boolean);
       --  Performs the actual renaming
 
-      procedure Rename_In_Prj (File_In  : String;
-                               File_Out : String;
-                               Success  : out Boolean);
-      --  Rename the path in the projects.
+      procedure Rename_In_Prj
+        (File_In, File_Out : String; Success : out Boolean);
+      --  Rename the path in the projects
 
       -------------------
       -- Rename_In_Prj --
       -------------------
 
-      procedure Rename_In_Prj (File_In  : String;
-                               File_Out : String;
-                               Success  : out Boolean)
+      procedure Rename_In_Prj
+        (File_In, File_Out : String; Success : out Boolean)
       is
          Project  : constant Projects.Project_Type :=
                       Get_Project (Get_Kernel (Context.Context));
@@ -455,9 +455,10 @@ package body VFS_Module is
       -- Actual_Rename --
       -------------------
 
-      procedure Actual_Rename (File_In     : VFS.Virtual_File;
-                               Success     : out Boolean;
-                               Prj_Changed : out Boolean)
+      procedure Actual_Rename
+        (File_In     : VFS.Virtual_File;
+         Success     : out Boolean;
+         Prj_Changed : out Boolean)
       is
          Renamed : Unbounded_String;
          To_File : VFS.Virtual_File;
@@ -475,6 +476,7 @@ package body VFS_Module is
                Renamed :=
                  To_Unbounded_String (File_In.Get_Parent.Full_Name.all) & Res;
             end;
+
          else
             declare
                Res : constant String :=
@@ -635,7 +637,6 @@ package body VFS_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Command : Interactive_Command_Access;
       Explorer_Filter : constant Action_Filter :=
                           Lookup_Filter (Kernel, "Explorer_View")
                           or  Lookup_Filter (Kernel, "File_View");
@@ -643,6 +644,7 @@ package body VFS_Module is
                           new File_Filter_Record;
       Dir_Filter      : constant Action_Filter :=
                           new Dir_Filter_Record;
+      Command         : Interactive_Command_Access;
    begin
       VFS_Module_Id := new Module_ID_Record;
 

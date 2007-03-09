@@ -87,15 +87,20 @@ package body VFS is
    begin
       if File1.Value = null then
          return File2.Value = null;
+
       elsif File2.Value = null then
          return False;
+
       elsif File1.Value = File2.Value then
          return True;
+
       elsif File1.Value.Server.all /= File2.Value.Server.all then
          return False;
+
       else
          Ensure_Normalized (File1);
          Ensure_Normalized (File2);
+
          if File1.Value.Server.all = "" then
             Case_Sensitive := Is_Case_Sensitive (GPS_Server);
          else
@@ -116,8 +121,7 @@ package body VFS is
    function Create (Full_Filename : UTF8_String) return Virtual_File is
 
    begin
-      return Create (Host          => "",
-                     Full_Filename => Full_Filename);
+      return Create (Host => "", Full_Filename => Full_Filename);
    end Create;
 
    ------------
@@ -174,12 +178,13 @@ package body VFS is
       Base_Name : UTF8_String) return Virtual_File is
    begin
       Ensure_Directory (Dir);
+
       if Is_Local (Dir) then
          return Create (Dir.Full_Name (True).all & Base_Name);
       else
-         return Create (Get_Host (Dir),
-                        Dir.Get_Filesystem.Concat
-                          (Dir.Full_Name (True).all, Base_Name));
+         return Create
+           (Get_Host (Dir),
+            Dir.Get_Filesystem.Concat (Dir.Full_Name (True).all, Base_Name));
       end if;
    end Create_From_Dir;
 
@@ -347,14 +352,14 @@ package body VFS is
    -- Full_Name_Hash --
    --------------------
 
-   function Full_Name_Hash (Key : Virtual_File)
-                            return Ada.Containers.Hash_Type is
+   function Full_Name_Hash
+     (Key : Virtual_File) return Ada.Containers.Hash_Type is
    begin
       if Is_Case_Sensitive (Get_Filesystem (Key)) then
          return Ada.Strings.Hash (Full_Name (Key, True).all);
       else
-         return Ada.Strings.Hash (Ada.Characters.Handling.To_Lower
-                                  (Full_Name (Key, True).all));
+         return Ada.Strings.Hash
+           (Ada.Characters.Handling.To_Lower (Full_Name (Key, True).all));
       end if;
    end Full_Name_Hash;
 
@@ -462,8 +467,10 @@ package body VFS is
    begin
       if File.Value = null then
          return False;
+
       elsif File.Is_Local then
          return Is_Regular_File (File.Locale_Full_Name);
+
       else
          return File.Get_Filesystem.Is_Regular_File
            (File.Value.Server.all,
@@ -475,9 +482,10 @@ package body VFS is
    -- Rename --
    ------------
 
-   procedure Rename (File      : Virtual_File;
-                     Full_Name : String;
-                     Success   : out Boolean) is
+   procedure Rename
+     (File      : Virtual_File;
+      Full_Name : String;
+      Success   : out Boolean) is
    begin
       if Is_Local (File) then
          Rename_File (Locale_Full_Name (File), Full_Name, Success);
@@ -615,10 +623,13 @@ package body VFS is
    begin
       if File.Value = null then
          return null;
+
       elsif File.Value.Kind = Directory then
          return null;
+
       elsif File.Is_Local then
          return Read_File (File.Full_Name.all);
+
       else
          return File.Get_Filesystem.Read_File
            (File.Value.Server.all,
@@ -791,8 +802,8 @@ package body VFS is
    function Get_Current_Dir return Virtual_File is
       File : Virtual_File;
    begin
-      File := Create (Locale_To_UTF8
-                      (GNAT.Directory_Operations.Get_Current_Dir));
+      File := Create
+        (Locale_To_UTF8 (GNAT.Directory_Operations.Get_Current_Dir));
       File.Value.Kind := Directory;
       return File;
    end Get_Current_Dir;
@@ -1005,8 +1016,7 @@ package body VFS is
 
    function Read_Dir
      (Dir    : in Virtual_File;
-      Filter : Read_Dir_Filter := All_Files)
-      return File_Array_Access
+      Filter : Read_Dir_Filter := All_Files) return File_Array_Access
    is
       Nb_Files  : Natural := 0;
       Tmp       : File_Array_Access;
@@ -1220,16 +1230,19 @@ package body VFS is
    ---------
 
    function "<" (File1, File2 : Virtual_File) return Boolean is
-      C1, C2 : Character;
-      Ind1, Ind2 : Integer;
+      C1, C2         : Character;
+      Ind1, Ind2     : Integer;
       Case_Sensitive : Boolean;
    begin
       if File1 = File2 then
          return False;
+
       elsif File1.Value = null then
          return True;
+
       elsif File2.Value = null then
          return False;
+
       else
          Case_Sensitive := File1.Get_Filesystem.Is_Case_Sensitive
            and then File2.Get_Filesystem.Is_Case_Sensitive;
@@ -1271,8 +1284,8 @@ package body VFS is
    -- Get_Filesystem --
    --------------------
 
-   function Get_Filesystem (File : Virtual_File)
-                            return Filesystem_Record'Class is
+   function Get_Filesystem
+     (File : Virtual_File) return Filesystem_Record'Class is
    begin
       if Is_Local (File) then
          return Get_Local_Filesystem;
@@ -1335,10 +1348,10 @@ package body VFS is
       --  provide other choices for sorting ?
 
       procedure Xchg (Op1, Op2 : Natural);
-      --  Exchanges two items in the array.
+      --  Exchanges two items in the array
 
       function Lt (Op1, Op2 : Natural) return Boolean;
-      --  Return True if the first item is to be sorted before the second.
+      --  Return True if the first item is to be sorted before the second
 
       ----------
       -- Xchg --
