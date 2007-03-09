@@ -66,11 +66,15 @@ package GUI_Utils is
    function Query_User
      (Parent        : Gtk.Window.Gtk_Window;
       Prompt        : String;
-      Password_Mode : Boolean) return String;
+      Password_Mode : Boolean;
+      Urgent        : Boolean := True;
+      Default       : String := "") return String;
    --  Open a new Dialog to query a response to the user.
    --  If Password_Mode is set, then the query will print * instead of
    --   the entered characters.
-   --  Return "" if the user hasn't entered anything
+   --  If Urgent is set, then the Urgency_Hint will be set for the dialog.
+   --  Default is the default string set in the user entry.
+   --  Return "" if the user pressed cancel or did not enter anything
 
    -------------
    -- Buttons --
