@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2006                      --
+--                      Copyright (C) 2002-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -155,6 +155,19 @@ package Projects.Editor is
    -----------
    -- Paths --
    -----------
+
+   function Contains_Path
+     (Project : Project_Type;
+      Path    : String) return Boolean;
+   --  Return value is True if the path is defined in the project
+
+   function Rename_Path
+     (Project            : Project_Type;
+      Old_Path           : String;
+      New_Path           : String;
+      Use_Relative_Paths : Boolean) return Boolean;
+   --  Renames the path to New_Path.
+   --  Return value is True if the directory path could be renamed.
 
    function Convert_Paths
      (Project                : Project_Type;

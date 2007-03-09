@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2006                      --
+--                      Copyright (C) 2002-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -2390,6 +2390,158 @@ package body Projects.Editor is
    end Create_Variable_Reference;
 
    -------------------
+   -- Contains_Path --
+   -------------------
+
+   function Contains_Path
+     (Project : Project_Type;
+      Path    : String) return Boolean
+   is
+      Tree   : constant Project_Node_Tree_Ref := Project.Tree;
+      Result : Boolean;
+
+      function Normalize (P : String) return String;
+      --  Normalizes the paths before comparison
+
+      procedure Test_P (Node : Project_Node_Id);
+      --  Test the project's node for existing path
+
+      ---------------
+      -- Normalize --
+      ---------------
+
+      function Normalize (P : String) return String is
+      begin
+         if Is_Absolute_Path_Or_URL (P) then
+            declare
+               Conv : constant String :=
+                        Relative_Path_Name
+                          (P,
+                           Dir (Project_Path (Project)).Full_Name.all,
+                           Build_Server);
+            begin
+               return Conv;
+            end;
+         end if;
+
+         return P;
+      end Normalize;
+
+      The_Path : constant String := Normalize (Path);
+
+      ------------
+      -- Test_P --
+      ------------
+
+      procedure Test_P (Node : Project_Node_Id) is
+         Node_P : constant String :=
+                    Normalize (Get_String (String_Value_Of (Node, Tree)));
+      begin
+         --  Test if Node_P is a subdir of The_Path
+         if Node_P'Length >= The_Path'Length
+           and then File_Equal
+             (Node_P (Node_P'First ..  Node_P'First + The_Path'Length - 1),
+              The_Path, Build_Server)
+         then
+            Result := True;
+         end if;
+      end Test_P;
+
+   begin
+      Result := False;
+      --  Test all paths
+      For_Each_Directory_Node (Project, Test_P'Unrestricted_Access);
+
+      return Result;
+   end Contains_Path;
+
+   -----------------
+   -- Rename_Path --
+   -----------------
+
+   function Rename_Path
+     (Project            : Project_Type;
+      Old_Path           : String;
+      New_Path           : String;
+      Use_Relative_Paths : Boolean) return Boolean
+   is
+      Tree    : constant Project_Node_Tree_Ref := Project.Tree;
+      Changed : Boolean := False;
+
+      procedure Rename_P (Node : Project_Node_Id);
+      --  Convert the path to an absolute path
+
+      function Path (P : String) return String;
+      --  Returns the path with relative or absolute convention
+
+      ----------
+      -- Path --
+      ----------
+
+      function Path (P : String) return String is
+      begin
+         if Use_Relative_Paths
+           and then Is_Absolute_Path_Or_URL (P)
+         then
+            declare
+               Conv : constant String :=
+                        Relative_Path_Name
+                          (P,
+                           Dir (Project_Path (Project)).Full_Name.all,
+                           Build_Server);
+            begin
+               return Conv;
+            end;
+         elsif not Use_Relative_Paths then
+            declare
+               Conv : constant String := Normalize_Pathname
+                 (P, Dir (Project_Path (Project)).Full_Name.all);
+            begin
+               return Conv;
+            end;
+         end if;
+
+         return P;
+      end Path;
+
+      Old_P    : constant String := Path (Old_Path);
+      New_P    : constant String := Path (New_Path);
+
+      --------------
+      -- Rename_P --
+      --------------
+
+      procedure Rename_P (Node : Project_Node_Id) is
+         Node_P : constant String :=
+                    Path (Get_String (String_Value_Of (Node, Tree)));
+      begin
+         if Node_P'Length >= Old_P'Length
+           and then File_Equal
+             (Node_P (Node_P'First ..  Node_P'First + Old_P'Length - 1),
+              Old_P, Build_Server)
+         then
+            Set_String_Value_Of
+              (Node, Tree,
+               Get_String
+                 (New_P &
+                  Node_P (Node_P'First + Old_P'Length .. Node_P'Last)));
+            Changed := True;
+         end if;
+      end Rename_P;
+
+   begin
+
+      --  Replace all the paths
+      For_Each_Directory_Node (Project, Rename_P'Unrestricted_Access);
+
+      if Changed then
+         Set_Project_Modified (Project, True);
+      end if;
+
+      return Changed;
+   end Rename_Path;
+
+   -------------------
    -- Convert_Paths --
    -------------------
 
@@ -2398,7 +2550,7 @@ package body Projects.Editor is
       Use_Relative_Paths     : Boolean := False;
       Update_With_Statements : Boolean := False) return Boolean
    is
-      Tree : constant Project_Node_Tree_Ref := Project.Tree;
+      Tree     : constant Project_Node_Tree_Ref := Project.Tree;
 
       procedure Convert_Path (Node : Project_Node_Id);
       --  Convert the path to an absolute path
