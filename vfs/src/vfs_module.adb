@@ -1,7 +1,7 @@
------------------------------------------------------------------------
+---------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2006                      --
+--                      Copyright (C) 2002-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,18 +18,27 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Regexp;               use GNAT.Regexp;
 with GNAT.Strings;
 
+with Gtkada.Dialogs;            use Gtkada.Dialogs;
+
 with File_Utils;                use File_Utils;
+with GUI_Utils;                 use GUI_Utils;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with Projects;                  use Projects;
+with Projects.Editor;           use Projects.Editor;
 with Remote;                    use Remote;
 with Traces;                    use Traces;
 with VFS;                       use VFS;
@@ -63,6 +72,12 @@ package body VFS_Module is
    type Delete_Command is new Interactive_Command with null record;
    function Execute
      (Command : access Delete_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  See doc from inherited subprogram
+
+   type Rename_Command is new Interactive_Command with null record;
+   function Execute
+     (Command : access Rename_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  See doc from inherited subprogram
 
@@ -240,6 +255,53 @@ package body VFS_Module is
       end if;
    end VFS_Command_Handler;
 
+   procedure Check_Prj (Project  : Projects.Project_Type;
+                        File_In  : String;
+                        Success  : out Boolean;
+                        Prj_List : out Unbounded_String);
+   --  Check if the project contains File_In path.
+   --  If Success, then Prj_List will contain a printable list of (sub)projects
+   --  containing File_In
+
+   ---------------
+   -- Check_Prj --
+   ---------------
+
+   procedure Check_Prj (Project  : Projects.Project_Type;
+                        File_In  : String;
+                        Success  : out Boolean;
+                        Prj_List : out Unbounded_String)
+   is
+      Iter     : Projects.Imported_Project_Iterator :=
+        Projects.Start (Project,
+                        Include_Extended => False);
+      Prj      : Projects.Project_Type;
+      First    : Boolean := True;
+
+   begin
+      Prj_List := To_Unbounded_String ("");
+      Success  := False;
+
+      loop
+         Prj := Projects.Current (Iter);
+
+         exit when Prj = Projects.No_Project;
+
+         Projects.Next (Iter);
+
+         if Projects.Editor.Contains_Path (Prj, File_In) then
+            Success := True;
+
+            if not First then
+               Prj_List := Prj_List & ", ";
+            end if;
+
+            First := False;
+            Prj_List := Prj_List & "'" & Project_Name (Prj) & "'";
+         end if;
+      end loop;
+   end Check_Prj;
+
    -------------
    -- Execute --
    -------------
@@ -251,30 +313,320 @@ package body VFS_Module is
       pragma Unreferenced (Command);
       Dir     : constant String := Directory_Information (Context.Context);
       Success : Boolean;
+      Res     : Gtkada.Dialogs.Message_Dialog_Buttons;
+      File    : VFS.Virtual_File;
+      List    : Unbounded_String;
 
    begin
-      Push_State (Get_Kernel (Context.Context), Busy);
       Trace (Me, "deleting "
              & Full_Name (File_Information (Context.Context)).all);
+      Push_State (Get_Kernel (Context.Context), Busy);
 
       if Has_File_Information (Context.Context) then
-         Delete (File_Information (Context.Context), Success);
-      else
-         begin
-            Remove_Dir (Dir, True);
-         exception
-            when Directory_Error =>
+         Res := Gtkada.Dialogs.Message_Dialog
+           (-"Are you sure you want to delete " &
+            File_Information (Context.Context).Full_Name.all &
+            " ?",
+            Gtkada.Dialogs.Confirmation,
+            Gtkada.Dialogs.Button_Yes or Gtkada.Dialogs.Button_No);
+
+         if Res = Gtkada.Dialogs.Button_Yes then
+            File := File_Information (Context.Context);
+            Delete (File, Success);
+
+            if not Success then
                Console.Insert
                  (Get_Kernel (Context.Context),
-                  (-"Cannot remove directory: ") & Dir,
+                  (-"Cannot remove file: ") &
+                  File.Full_Name.all,
                   Mode => Error);
-         end;
+            end if;
+         else
+            Success := False;
+         end if;
+
+      else
+         Res := Gtkada.Dialogs.Message_Dialog
+           (-"Are you sure you want to delete the directory " &
+            Dir & (-" and all its subdirectories ?"),
+            Gtkada.Dialogs.Confirmation,
+            Gtkada.Dialogs.Button_Yes or Gtkada.Dialogs.Button_No);
+
+         if Res = Gtkada.Dialogs.Button_Yes then
+            begin
+               File := Create (Dir);
+               --  Is_Directory marks File as directory. This is important
+               --  because File cannot be marked as such after deletion of the
+               --  physical dir.
+               if Is_Directory (File) then
+                  Remove_Dir (Dir, True);
+                  Success := True;
+               else
+                  Success :=  False;
+               end if;
+            exception
+               when Directory_Error =>
+                  Success := False;
+                  Console.Insert
+                    (Get_Kernel (Context.Context),
+                     (-"Cannot remove directory: ") & Dir,
+                     Mode => Error);
+            end;
+         else
+            Success := False;
+         end if;
       end if;
 
-      --  ??? Need also to update project/file views
+      --  Need also to update project/file views
+      if Success then
+         Get_Kernel (Context.Context).File_Deleted (File);
+         Check_Prj (Get_Project (Get_Kernel (Context.Context)),
+                    Dir, Success, List);
+         if Success then
+            Reload_Project_If_Needed (Get_Kernel (Context.Context));
+            Recompute_View (Get_Kernel (Context.Context));
+         end if;
+      end if;
+
       Pop_State (Get_Kernel (Context.Context));
       return Commands.Success;
    end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Rename_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Dir      : constant String := Directory_Information (Context.Context);
+      Success  : Boolean;
+      Button   : Gtkada.Dialogs.Message_Dialog_Buttons;
+      Is_Dir   : Boolean;
+      Prj_List : Unbounded_String;
+
+      procedure Actual_Rename (File_In     : VFS.Virtual_File;
+                               Success     : out Boolean;
+                               Prj_Changed : out Boolean);
+      --  Performs the actual renaming
+
+      procedure Rename_In_Prj (File_In  : String;
+                               File_Out : String;
+                               Success  : out Boolean);
+      --  Rename the path in the projects.
+
+      -------------------
+      -- Rename_In_Prj --
+      -------------------
+
+      procedure Rename_In_Prj (File_In  : String;
+                               File_Out : String;
+                               Success  : out Boolean)
+      is
+         Project  : constant Projects.Project_Type :=
+                      Get_Project (Get_Kernel (Context.Context));
+         Relative : Boolean;
+         Iter     : Projects.Imported_Project_Iterator :=
+                      Projects.Start (Project,
+                                      Include_Extended => False);
+         Prj      : Projects.Project_Type;
+      begin
+         Success     := False;
+
+         loop
+            Prj := Projects.Current (Iter);
+
+            exit when Prj = Projects.No_Project;
+
+            Projects.Next (Iter);
+            Relative :=
+              Get_Paths_Type (Prj) = Projects.Relative
+              or else (Get_Paths_Type (Prj) = From_Pref
+                       and then Get_Pref (Generate_Relative_Paths));
+
+            Success := Success or else Projects.Editor.Rename_Path
+              (Prj, File_In, File_Out, Relative);
+         end loop;
+      end Rename_In_Prj;
+
+      -------------------
+      -- Actual_Rename --
+      -------------------
+
+      procedure Actual_Rename (File_In     : VFS.Virtual_File;
+                               Success     : out Boolean;
+                               Prj_Changed : out Boolean)
+      is
+         Renamed : Unbounded_String;
+         To_File : VFS.Virtual_File;
+      begin
+         if Is_Directory (File_In) then
+            declare
+               Res : constant String :=
+                 GUI_Utils.Query_User
+                   (Get_Kernel (Context.Context).Get_Main_Window,
+                    (-"Please enter the directory's new name:"),
+                    Password_Mode => False,
+                    Urgent        => False,
+                    Default       => File_In.Base_Dir_Name);
+            begin
+               Renamed :=
+                 To_Unbounded_String (File_In.Get_Parent.Full_Name.all) & Res;
+            end;
+         else
+            declare
+               Res : constant String :=
+                 GUI_Utils.Query_User
+                   (Get_Kernel (Context.Context).Get_Main_Window,
+                    (-"Please enter the file's new name:"),
+                    Password_Mode => False,
+                    Urgent        => False,
+                    Default       => File_In.Base_Name);
+            begin
+               Renamed :=
+                 To_Unbounded_String (File_In.Dir.Full_Name.all) & Res;
+            end;
+         end if;
+
+         declare
+            Res : constant String :=
+                    To_String (Renamed);
+         begin
+            if Res = File_In.Full_Name.all or else Res = "" then
+               Success     := True;
+               Prj_Changed := False;
+
+               return;
+            end if;
+
+            Rename (File_In, Res, Success);
+
+            if not Success then
+               Console.Insert
+                 (Get_Kernel (Context.Context),
+                  (-"Cannot rename ") &
+                  File_In.Full_Name.all &
+                  (-" into ") &
+                  Res,
+                  Mode => Error);
+
+               return;
+            end if;
+
+            --  Run the 'file_renamed' hook
+            To_File := Create (Res);
+
+            if Is_Directory (File_In) then
+               Ensure_Directory (To_File);
+            end if;
+
+            Get_Kernel (Context.Context).File_Renamed (File_In, To_File);
+
+            --  We need to change the paths defined in the projects
+            if Is_Directory (File_In) then
+               --  First try to rename the paths in the projects.
+               Check_Prj
+                 (Get_Project (Get_Kernel (Context.Context)),
+                  File_In.Full_Name.all, Prj_Changed, Prj_List);
+
+               if Prj_Changed then
+                  Button := Gtkada.Dialogs.Message_Dialog
+                    (-("The directory is referenced in the project(s) ") &
+                     To_String (Prj_List) & ASCII.LF &
+                     (-("Do you want GPS to modify these projects to " &
+                        "reference its new name ?")),
+                     Gtkada.Dialogs.Confirmation,
+                     Button_Yes or Button_No);
+
+                  if Button = Button_Yes then
+                     Rename_In_Prj
+                       (File_In.Full_Name.all, Res, Prj_Changed);
+                  else
+                     Prj_Changed := False;
+                  end if;
+               end if;
+            else
+               --  See if the file is in a path defined in an opened project
+               Check_Prj
+                 (Get_Project (Get_Kernel (Context.Context)),
+                  File_In.Dir.Full_Name.all, Prj_Changed, Prj_List);
+            end if;
+         end;
+
+      end Actual_Rename;
+
+      Prj_Changed : Boolean;
+      Dir_File    : VFS.Virtual_File;
+
+   begin
+      Trace (Me, "renaming "
+             & Full_Name (File_Information (Context.Context)).all);
+      Push_State (Get_Kernel (Context.Context), Busy);
+
+      Is_Dir := not Has_File_Information (Context.Context);
+      if Is_Dir then
+         Dir_File := VFS.Create (Dir);
+         Ensure_Directory (Dir_File);
+         Actual_Rename (Dir_File, Success, Prj_Changed);
+
+      else
+         Actual_Rename
+           (File_Information (Context.Context), Success, Prj_Changed);
+      end if;
+
+      --  Need also to update project/file view
+      if Success and then Prj_Changed then
+         Recompute_View (Get_Kernel (Context.Context));
+      end if;
+
+      Pop_State (Get_Kernel (Context.Context));
+
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Filters --
+   -------------
+
+   type File_Filter_Record is new Action_Filter_Record with null record;
+   type Dir_Filter_Record is new Action_Filter_Record with null record;
+
+   function Filter_Matches_Primitive
+     (Context : access File_Filter_Record;
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
+   function Filter_Matches_Primitive
+     (Context : access Dir_Filter_Record;
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   function Filter_Matches_Primitive
+     (Context : access File_Filter_Record;
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Context);
+   begin
+      return Has_File_Information (Ctxt)
+        and then not Has_Entity_Name_Information (Ctxt);
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   function Filter_Matches_Primitive
+     (Context : access Dir_Filter_Record;
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Context);
+   begin
+      return Has_Directory_Information (Ctxt)
+        and then not Has_File_Information (Ctxt);
+   end Filter_Matches_Primitive;
 
    ---------------------
    -- Register_Module --
@@ -283,7 +635,14 @@ package body VFS_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      --  Command : Interactive_Command_Access;
+      Command : Interactive_Command_Access;
+      Explorer_Filter : constant Action_Filter :=
+                          Lookup_Filter (Kernel, "Explorer_View")
+                          or  Lookup_Filter (Kernel, "File_View");
+      File_Filter     : constant Action_Filter :=
+                          new File_Filter_Record;
+      Dir_Filter      : constant Action_Filter :=
+                          new Dir_Filter_Record;
    begin
       VFS_Module_Id := new Module_ID_Record;
 
@@ -293,17 +652,32 @@ package body VFS_Module is
          Module_Name => VFS_Module_Name,
          Priority    => Default_Priority);
 
-      --  ??? these commands are not integrated yet properly:
-      --  missing confirmation dialog, as well as project recomputing
-      --  Command := new Delete_Command;
-      --  Register_Contextual_Menu
-      --    (Kernel, "Delete file",
-      --     Action => Command,
-      --     Filter => Lookup_Filter (Kernel, "Explorer_File_Node"));
-      --  Register_Contextual_Menu
-      --    (Kernel, "Delete directory recursively",
-      --     Action => Command,
-      --     Filter => Lookup_Filter (Kernel, "Explorer_Directory_Node"));
+      Command := new Rename_Command;
+      Register_Contextual_Menu
+        (Kernel, "Rename file",
+         Action => Command,
+         Filter => Explorer_Filter and File_Filter,
+         Label  => "File operations/Rename file %f",
+         Group  => 1);
+      Register_Contextual_Menu
+        (Kernel, "Rename directory",
+         Action => Command,
+         Filter => Explorer_Filter and Dir_Filter,
+         Label  => "File operations/Rename directory",
+         Group  => 1);
+      Command := new Delete_Command;
+      Register_Contextual_Menu
+        (Kernel, "Delete file",
+         Action => Command,
+         Filter => Explorer_Filter and File_Filter,
+         Label  => "File operations/Delete file %f",
+         Group  => 1);
+      Register_Contextual_Menu
+        (Kernel, "Delete directory",
+         Action => Command,
+         Filter => Explorer_Filter and Dir_Filter,
+         Label  => "File operations/Delete directory recursively",
+         Group  => 1);
 
       Register_Command
         (Kernel, "pwd",
