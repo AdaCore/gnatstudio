@@ -472,6 +472,21 @@ package body VFS is
    end Is_Regular_File;
 
    ------------
+   -- Rename --
+   ------------
+
+   procedure Rename (File      : Virtual_File;
+                     Full_Name : String;
+                     Success   : out Boolean) is
+   begin
+      if Is_Local (File) then
+         Rename_File (Locale_Full_Name (File), Full_Name, Success);
+      else
+         Success := False;
+      end if;
+   end Rename;
+
+   ------------
    -- Delete --
    ------------
 
@@ -872,6 +887,37 @@ package body VFS is
          return Dir;
       end if;
    end Get_Root;
+
+   ----------------
+   -- Get_Parent --
+   ----------------
+
+   function Get_Parent (Dir : Virtual_File) return Virtual_File is
+   begin
+      if Dir.Value = null
+        or else Dir.Value.Full_Name = null
+        or else Dir.Value.Full_Name.all = ""
+      then
+         return No_File;
+      end if;
+
+      if Is_Local (Dir) then
+         if Dir.Value.Full_Name (Dir.Value.Full_Name'Last) = '/'
+           or else Dir.Value.Full_Name (Dir.Value.Full_Name'Last) = '\'
+         then
+            return VFS.Dir
+              (Create
+                 (Dir.Get_Host,
+                  Dir.Full_Name
+                    (Dir.Full_Name'First .. Dir.Full_Name'Last - 1)));
+         else
+            return VFS.Dir (Dir);
+         end if;
+      else
+         return Create
+           (Dir.Get_Host, Dir.Get_Filesystem.Get_Parent (Dir.Full_Name.all));
+      end if;
+   end Get_Parent;
 
    -------------
    -- Sub_Dir --

@@ -146,6 +146,11 @@ package VFS is
    function Dir (File : Virtual_File) return Virtual_File;
    --  Return the virtual file corresponding to the directory of the file.
 
+   procedure Rename (File      : Virtual_File;
+                     Full_Name : String;
+                     Success   : out Boolean);
+   --  Rename a file or directory. This does not work for remote files.
+
    procedure Delete (File : Virtual_File; Success : out Boolean);
    --  Remove file from the disk. This also works for remote files
 
@@ -203,6 +208,9 @@ package VFS is
 
    function Get_Root (File : Virtual_File) return Virtual_File;
    --  returns root directory of the file
+
+   function Get_Parent (Dir : Virtual_File) return Virtual_File;
+   --  return the parent directory if it exists, else No_File is returned.
 
    function Sub_Dir
      (Dir : Virtual_File; Name : UTF8_String) return Virtual_File;
