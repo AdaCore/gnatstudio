@@ -441,6 +441,35 @@ package body GPS.Kernel is
       end if;
    end File_Closed;
 
+   ------------------
+   -- File_Deleted --
+   ------------------
+
+   procedure File_Deleted
+     (Handle : access Kernel_Handle_Record;
+      File   : VFS.Virtual_File)
+   is
+      Data : aliased File_Hooks_Args := (Hooks_Data with File => File);
+   begin
+      Run_Hook (Handle, File_Deleted_Hook, Data'Unchecked_Access);
+   end File_Deleted;
+
+   ------------------
+   -- File_Renamed --
+   ------------------
+
+   procedure File_Renamed
+     (Handle   : access Kernel_Handle_Record;
+      File     : VFS.Virtual_File;
+      New_Path : VFS.Virtual_File)
+   is
+      Data : aliased Files_2_Hooks_Args := (Hooks_Data with
+                                                 File    => File,
+                                                 Renamed => New_Path);
+   begin
+      Run_Hook (Handle, File_Renamed_Hook, Data'Unchecked_Access);
+   end File_Renamed;
+
    --------------------------
    -- File_Changed_On_Disk --
    --------------------------
