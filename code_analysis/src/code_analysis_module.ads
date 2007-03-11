@@ -198,16 +198,23 @@ private
    --  menu
 
    procedure Append_Show_Analysis_Report_To_Context
-     (Cont_N_Inst  : Context_And_Instance;
-      Submenu      : access Gtk_Menu_Record'Class);
-   --  Actually fills the given Submenu, with the "Show Analysis Report" entry
+     (Cont_N_Inst : Context_And_Instance;
+      Menu        : access Gtk_Menu_Record'Class);
+   --  Actually fills the given Menu, with the "Show Analysis Report" entry
    --  With context information, so the current relevant node will be expanded
 
    procedure Append_Show_Analysis_Report_To_Menu
-     (Cont_N_Inst  : Context_And_Instance;
-      Submenu      : access Gtk_Menu_Record'Class);
-   --  Actually fills the given Submenu, with the "Show Analysis Report" entry
+     (Cont_N_Inst : Context_And_Instance;
+      Menu        : access Gtk_Menu_Record'Class);
+   --  Actually fills the given Menu, with the "Show Analysis Report" entry
    --  With no context information, so the 1st node will be expanded
+
+   procedure Append_Show_Empty_Analysis_Report
+     (Cont_N_Inst : Context_And_Instance;
+      Menu        : access Gtk_Menu_Record'Class);
+   --  Actually fills the given Menu with the "Show Analysis Report" entry
+   --  which deals with empty Instances (when there is no code_analysis entity
+   --  present) by displaying an error message
 
    procedure Append_File_Menu_Entries
      (Cont_N_Inst   : Context_And_Instance;
@@ -260,12 +267,18 @@ private
    procedure Create
      (Data    : in out Callback_Data'Class;
       Command : String);
-   --  Create a new instance of Code_Analysis data structure
+   --  Create a new instance of Code_Analysis data structure from shell cmd
 
    procedure Create_From_Menu
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class);
    --  Create a new instance of Code_Analysis data structure from
    --  "Tools/Coverage" menu
+
+   function Create_Instance return Class_Instance;
+   --  Create a new instance of Code_Analysis data structure
+   --  This sets its property with a date and a name
+   --  Then, the instance is inserted in the Instances set of the Code_Analysis
+   --  Module_ID
 
    procedure Add_Gcov_File_Info_From_Context
      (Widget      : access Glib.Object.GObject_Record'Class;
@@ -297,8 +310,7 @@ private
       Command : String);
    --  Basically do an Add_Gcov_File_Info on every files of the given project
 
-   procedure Add_Gcov_Project_Info
-     (Project_Node : Project_Access);
+   procedure Add_Gcov_Project_Info (Prj_Node : Project_Access);
    --  Actually look for project source files, and corresponding .gcov files
    --  And when its possible, add every file coverage information to the
    --  Code_Analysis structure of given Project_Node
@@ -330,7 +342,7 @@ private
    function On_Double_Click (View  : access Gtk_Widget_Record'Class;
                              Event : Gdk_Event) return Boolean;
    --  Callback for the "2button_press" signal that show the File or Subprogram
-   --  indicated by the selected Coverage Report tree node
+   --  indicated by the selected Report of Analysis tree node
 
    procedure Context_Func
      (Context      : in out Selection_Context;
@@ -339,8 +351,9 @@ private
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu);
-   --  Determine the content of the contextual menu displays for the Coverage
-   --  Report MDI child nodes
+   --  Determines the content of the contextual menu displayed on the Report of
+   --  Analysis MDI child, using its selected node and sets project and file
+   --  information to the given context
 
    procedure Open_File_Editor_On_File
      (Model : Gtk_Tree_Model; Iter : Gtk_Tree_Iter);
