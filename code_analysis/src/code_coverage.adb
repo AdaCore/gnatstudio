@@ -228,10 +228,9 @@ package body Code_Coverage is
    ------------------------------
 
    procedure Compute_Project_Coverage (Project_Node : Project_Access) is
+      use File_Maps;
       Cur       : File_Maps.Cursor;
       File_Node : Code_Analysis.File_Access;
-      use File_Maps;
-
    begin
       Cur := Project_Node.Files.First;
 
@@ -260,6 +259,12 @@ package body Code_Coverage is
                  File_Node.Analysis_Data.Coverage_Data.Coverage;
             end if;
          end loop;
+
+         --  if nothing had been computed, then Project_Node must not have a
+         --  Coverage_Data attached to him
+         if Data.Children = 0 then
+            Unchecked_Free (Project_Node.Analysis_Data.Coverage_Data);
+         end if;
       end;
    end Compute_Project_Coverage;
 
