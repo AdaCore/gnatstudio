@@ -91,7 +91,7 @@ package body Code_Analysis_Module is
       Date := Clock;
       Property.Date := Date;
       Property.Instance_Name :=
-        new String'("Analysis" & Integer'Image
+        new String'(-"Analysis" & Integer'Image
                     (Integer (Code_Analysis_Module_ID.Instances.Length + 1)));
       Property.Projects := new Project_Maps.Map;
       GPS.Kernel.Scripts.Set_Property
@@ -99,6 +99,8 @@ package body Code_Analysis_Module is
          Instance_Property_Record (Property.all));
       Code_Analysis_Module_ID.Instances.Insert (Instance);
 
+      --  Loading the Pixbufs if it has not already been done
+      --  We do it here because it can't be done at loading module time
       if Code_Analysis_Module_ID.Project_Pixbuf = null then
          Code_Analysis_Module_ID.Project_Pixbuf := Render_Icon
            (Get_Main_Window (Code_Analysis_Module_ID.Kernel),
@@ -126,7 +128,21 @@ package body Code_Analysis_Module is
    procedure Create_From_Menu
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
-      pragma Unreferenced (Widget);
+      Dummy : Class_Instance;
+      pragma Unreferenced (Widget, Dummy);
+   begin
+      Dummy := Create_Instance;
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end Create_From_Menu;
+
+   ---------------------
+   -- Create_Instance --
+   ---------------------
+
+   function Create_Instance return Class_Instance is
       Property : constant Code_Analysis_Property
         := new Code_Analysis_Property_Record;
       Scripts  : constant Scripting_Language_Array :=
@@ -138,7 +154,7 @@ package body Code_Analysis_Module is
       Date := Clock;
       Property.Date := Date;
       Property.Instance_Name :=
-        new String'("Analysis" & Integer'Image
+        new String'(-"Analysis" & Integer'Image
                     (Integer (Code_Analysis_Module_ID.Instances.Length + 1)));
       Property.Projects := new Project_Maps.Map;
       GPS.Kernel.Scripts.Set_Property
@@ -146,6 +162,8 @@ package body Code_Analysis_Module is
          Instance_Property_Record (Property.all));
       Code_Analysis_Module_ID.Instances.Insert (Instance);
 
+      --  Loading the Pixbufs if it has not already been done
+      --  We do it here because it can't be done at loading module time
       if Code_Analysis_Module_ID.Project_Pixbuf = null then
          Code_Analysis_Module_ID.Project_Pixbuf := Render_Icon
            (Get_Main_Window (Code_Analysis_Module_ID.Kernel),
@@ -160,11 +178,9 @@ package body Code_Analysis_Module is
            (Get_Main_Window (Code_Analysis_Module_ID.Kernel),
             "gps-warning", Gtk.Enums.Icon_Size_Menu);
       end if;
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end Create_From_Menu;
+
+      return Instance;
+   end Create_Instance;
 
    -------------------------------------
    -- Add_Gcov_File_Info_From_Context --
@@ -175,18 +191,25 @@ package body Code_Analysis_Module is
       Cont_N_Inst : Context_And_Instance)
    is
       pragma Unreferenced (Widget);
-      Property     : Code_Analysis_Property_Record;
-      Project_Name : constant Project_Type :=
-                       Project_Information (Cont_N_Inst.Context);
-      Project_Node : Project_Access;
-      Src_File     : constant VFS.Virtual_File :=
-                       File_Information (Cont_N_Inst.Context);
-      Cov_File     : VFS.Virtual_File;
+      Property : Code_Analysis_Property_Record;
+      Prj_Name : constant Project_Type :=
+                   Project_Information (Cont_N_Inst.Context);
+      Prj_Node : Project_Access;
+      Src_File : constant VFS.Virtual_File :=
+                   File_Information (Cont_N_Inst.Context);
+      Cov_File : VFS.Virtual_File;
+      Instance : Class_Instance;
    begin
-      Property     := Code_Analysis_Property_Record
-        (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
-      Project_Node := Get_Or_Create (Property.Projects, Project_Name);
-      Cov_File     := Create (Object_Path (Project_Name, False, False) &
+      if Cont_N_Inst.Instance = No_Class_Instance then
+         Instance := Create_Instance;
+      else
+         Instance := Cont_N_Inst.Instance;
+      end if;
+
+      Property := Code_Analysis_Property_Record
+        (Get_Property (Instance, Code_Analysis_Cst_Str));
+      Prj_Node := Get_Or_Create (Property.Projects, Prj_Name);
+      Cov_File := Create (Object_Path (Prj_Name, False, False) &
                               "/" & Base_Name (Src_File) & Gcov_Extension_Cst);
 
       if not Is_Regular_File (Cov_File) then
@@ -198,8 +221,8 @@ package body Code_Analysis_Module is
          return;
       end if;
 
-      Add_Gcov_File_Info (Src_File, Cov_File, Project_Node);
-      Compute_Project_Coverage (Project_Node);
+      Add_Gcov_File_Info (Src_File, Cov_File, Prj_Node);
+      Compute_Project_Coverage (Prj_Node);
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -264,8 +287,6 @@ package body Code_Analysis_Module is
       Project_Node  := Get_Or_Create (Property.Projects, Project_Name);
       Add_Gcov_File_Info (Src_File, Cov_File, Project_Node);
       Compute_Project_Coverage (Project_Node);
-      GPS.Kernel.Scripts.Set_Property (Instance, Code_Analysis_Cst_Str,
-                                       Instance_Property_Record (Property));
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -296,7 +317,10 @@ package body Code_Analysis_Module is
                            File => File_Node.Name,
                            Lang => Tree_Lang);
    begin
-      File_Node.Analysis_Data.Coverage_Data := new Node_Coverage;
+      if File_Node.Analysis_Data.Coverage_Data = null then
+         File_Node.Analysis_Data.Coverage_Data := new Node_Coverage;
+      end if;
+
       Add_File_Info (File_Node, File_Contents,
                       Node_Coverage
                         (File_Node.Analysis_Data.Coverage_Data.all).Children,
@@ -324,12 +348,19 @@ package body Code_Analysis_Module is
    is
       pragma Unreferenced (Widget);
       Property : Code_Analysis_Property_Record;
+      Instance : Class_Instance;
+      Prj_Node : Project_Access;
       Prj_Name : constant Project_Type :=
                    Project_Information (Cont_N_Inst.Context);
-      Prj_Node : Project_Access;
    begin
+      if Cont_N_Inst.Instance = No_Class_Instance then
+         Instance := Create_Instance;
+      else
+         Instance := Cont_N_Inst.Instance;
+      end if;
+
       Property := Code_Analysis_Property_Record
-        (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
+        (Get_Property (Instance, Code_Analysis_Cst_Str));
       Prj_Node := Get_Or_Create (Property.Projects, Prj_Name);
       Add_Gcov_Project_Info (Prj_Node);
    exception
@@ -378,8 +409,6 @@ package body Code_Analysis_Module is
          Locale_Full_Name (Prj_File));
       Prj_Node  := Get_Or_Create (Property.Projects, Prj_Name);
       Add_Gcov_Project_Info (Prj_Node);
-      GPS.Kernel.Scripts.Set_Property (Instance, Code_Analysis_Cst_Str,
-                                       Instance_Property_Record (Property));
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -390,9 +419,7 @@ package body Code_Analysis_Module is
    -- Add_Gcov_Project_Info --
    ---------------------------
 
-   procedure Add_Gcov_Project_Info
-     (Project_Node : Project_Access)
-   is
+   procedure Add_Gcov_Project_Info (Prj_Node : Project_Access) is
       Src_Files : VFS.File_Array_Access;
       Src_File  : VFS.Virtual_File;
       Cov_File  : VFS.Virtual_File;
@@ -400,19 +427,25 @@ package body Code_Analysis_Module is
       --  get every source files of the project
       --  check if they are associated with gcov info
       --  load their info
-      Src_Files := Get_Source_Files (Project_Node.Name, Recursive => False);
+      Src_Files := Get_Source_Files (Prj_Node.Name, Recursive => False);
 
       for J in Src_Files'First .. Src_Files'Last loop
          Src_File := Src_Files (J);
-         Cov_File := Create (Object_Path (Project_Node.Name, False, False) &
+         Cov_File := Create (Object_Path (Prj_Node.Name, False, False) &
                              "/" & Base_Name (Src_File) & Gcov_Extension_Cst);
 
          if Is_Regular_File (Cov_File) then
-            Add_Gcov_File_Info (Src_File, Cov_File, Project_Node);
+            Add_Gcov_File_Info (Src_File, Cov_File, Prj_Node);
+         else
+            GPS.Kernel.Console.Insert
+              (Code_Analysis_Module_ID.Kernel,
+               "There is no loadable GCOV information" &
+               " associated with " & Base_Name (Src_File),
+               Mode => GPS.Kernel.Console.Error);
          end if;
       end loop;
 
-      Compute_Project_Coverage (Project_Node);
+      Compute_Project_Coverage (Prj_Node);
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -631,6 +664,8 @@ package body Code_Analysis_Module is
       Select_Path (Get_Selection (Property.View.Tree), Path);
       Path_Free (Path);
       Raise_Child (Property.Child);
+      GPS.Kernel.Scripts.Set_Property
+        (Instance, Code_Analysis_Cst_Str, Instance_Property_Record (Property));
    end Show_Analysis_Report;
 
    ---------------------------
@@ -748,6 +783,8 @@ package body Code_Analysis_Module is
       GPS.Kernel.Scripts.Set_Property
         (Instance, Code_Analysis_Cst_Str,
          Instance_Property_Record (Property));
+      GPS.Kernel.Scripts.Set_Property
+        (Instance, Code_Analysis_Cst_Str, Instance_Property_Record (Property));
    end Build_Analysis_Report;
 
    -------------
@@ -780,15 +817,16 @@ package body Code_Analysis_Module is
    ----------------
 
    procedure On_Destroy (Widget      : access Glib.Object.GObject_Record'Class;
-                         Cont_N_Inst : Context_And_Instance) is
+                         Cont_N_Inst : Context_And_Instance)
+   is
+      pragma Unreferenced (Widget);
       Property : Code_Analysis_Property_Record := Code_Analysis_Property_Record
         (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
-      pragma Unreferenced (Widget);
    begin
       Property.View := null;
-      GPS.Kernel.Scripts.Set_Property (Cont_N_Inst.Instance,
-                                       Code_Analysis_Cst_Str,
-                                       Instance_Property_Record (Property));
+      GPS.Kernel.Scripts.Set_Property
+        (Cont_N_Inst.Instance, Code_Analysis_Cst_Str,
+         Instance_Property_Record (Property));
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -802,11 +840,11 @@ package body Code_Analysis_Module is
    function On_Double_Click (View  : access Gtk_Widget_Record'Class;
                              Event : Gdk_Event) return Boolean
    is
-      V         : constant Code_Analysis_View := Code_Analysis_View (View);
-      Iter      : Gtk_Tree_Iter;
-      Model     : Gtk_Tree_Model;
-      Path      : Gtk_Tree_Path;
       use GType_File;
+      V     : constant Code_Analysis_View := Code_Analysis_View (View);
+      Iter  : Gtk_Tree_Iter;
+      Model : Gtk_Tree_Model;
+      Path  : Gtk_Tree_Path;
    begin
       if Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Gdk_2button_Press
@@ -879,11 +917,11 @@ package body Code_Analysis_Module is
    procedure Add_Coverage_Annotations_From_Report
      (Object : access Gtk_Widget_Record'Class)
    is
+      use GType_File;
       View      : constant Code_Analysis_View := Code_Analysis_View (Object);
       Iter      : Gtk_Tree_Iter;
       Path      : Gtk_Tree_Path;
       File_Node : Code_Analysis.File_Access;
-      use GType_File;
    begin
       Get_Selected
         (Get_Selection (View.Tree), Gtk_Tree_Model (View.Model), Iter);
@@ -920,12 +958,12 @@ package body Code_Analysis_Module is
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Inst : Context_And_Instance)
    is
+      pragma Unreferenced (Widget);
+      Project_Node : Project_Access;
+      File_Node    : Code_Analysis.File_Access;
       Property     : Code_Analysis_Property_Record
         := Code_Analysis_Property_Record
           (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
-      Project_Node : Project_Access;
-      File_Node    : Code_Analysis.File_Access;
-      pragma Unreferenced (Widget);
    begin
       Project_Node := Get_Or_Create
         (Property.Projects, Project_Information (Cont_N_Inst.Context));
@@ -1015,12 +1053,12 @@ package body Code_Analysis_Module is
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Inst : Context_And_Instance)
    is
+      pragma Unreferenced (Widget);
+      Project_Node : Project_Access;
+      File_Node    : Code_Analysis.File_Access;
       Property     : Code_Analysis_Property_Record
         := Code_Analysis_Property_Record
           (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
-      Project_Node : Project_Access;
-      File_Node    : Code_Analysis.File_Access;
-      pragma Unreferenced (Widget);
    begin
       Project_Node := Get_Or_Create
         (Property.Projects, Project_Information (Cont_N_Inst.Context));
@@ -1085,11 +1123,11 @@ package body Code_Analysis_Module is
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Inst : Context_And_Instance)
    is
+      pragma Unreferenced (Widget);
+      Project_Node : Project_Access;
       Property     : Code_Analysis_Property_Record
         := Code_Analysis_Property_Record
           (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
-      Project_Node : Project_Access;
-      pragma Unreferenced (Widget);
    begin
       Project_Node := Get_Or_Create
         (Property.Projects, Project_Information (Cont_N_Inst.Context));
@@ -1131,12 +1169,12 @@ package body Code_Analysis_Module is
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Inst : Context_And_Instance)
    is
+      pragma Unreferenced (Widget);
+      Project_Node : Project_Access;
+      File_Node    : Code_Analysis.File_Access;
       Property     : Code_Analysis_Property_Record
         := Code_Analysis_Property_Record
           (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
-      Project_Node : Project_Access;
-      File_Node    : Code_Analysis.File_Access;
-      pragma Unreferenced (Widget);
    begin
       Project_Node := Get_Or_Create
         (Property.Projects, Project_Information (Cont_N_Inst.Context));
@@ -1482,7 +1520,7 @@ package body Code_Analysis_Module is
             Append_File_Menu_Entries (Cont_N_Inst, Submenu, File_Node);
          end;
       else
-            Append_Project_Menu_Entries (Cont_N_Inst, Submenu, Project_Node);
+         Append_Project_Menu_Entries (Cont_N_Inst, Submenu, Project_Node);
       end if;
    end Append_To_Contextual_Submenu;
 
@@ -1540,9 +1578,9 @@ package body Code_Analysis_Module is
    ---------------------------------
 
    procedure Append_Project_Menu_Entries
-     (Cont_N_Inst  : Context_And_Instance;
-      Submenu      : access Gtk_Menu_Record'Class;
-      Project_Node : Project_Access;
+     (Cont_N_Inst   : Context_And_Instance;
+      Submenu       : access Gtk_Menu_Record'Class;
+      Project_Node  : Project_Access;
       Is_Contextual : Boolean := True)
    is
       Item : Gtk_Menu_Item;
@@ -1565,6 +1603,11 @@ package body Code_Analysis_Module is
             Append_Show_Analysis_Report_To_Context (Cont_N_Inst, Submenu);
          else
             Append_Show_Analysis_Report_To_Menu (Cont_N_Inst, Submenu);
+
+            if Has_File_Information (Cont_N_Inst.Context) then
+               Gtk_New (Item);
+               Append (Submenu, Item);
+            end if;
          end if;
       else
          Gtk_New (Item, -"Load data for project " &
@@ -1598,7 +1641,7 @@ package body Code_Analysis_Module is
       Cur          : Cursor := Code_Analysis_Module_ID.Instances.First;
    begin
 
-      --  Check context and have it usable
+      --  Check context and make it usable
       if Context = No_Context then
          Cont_N_Inst.Context := Get_Current_Context (Kernel);
       else
@@ -1608,32 +1651,55 @@ package body Code_Analysis_Module is
       if not Has_Project_Information (Cont_N_Inst.Context) then
          Set_File_Information
            (Cont_N_Inst.Context,
+            File    => File_Information (Cont_N_Inst.Context),
             Project => Get_Project (Code_Analysis_Module_ID.Kernel));
       end if;
       --  context is correct
 
-      loop
-         exit when Cur = No_Element;
-         Cont_N_Inst.Instance := Element (Cur);
-         Property             := Code_Analysis_Property_Record
-           (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
-         Project_Node         := Get_Or_Create
-           (Property.Projects, Project_Information (Cont_N_Inst.Context));
+      if Cur = No_Element then
+         Cont_N_Inst.Instance := No_Class_Instance;
+         Gtk_New (Item, -"Load data for project " &
+                  Project_Name (Project_Information (Cont_N_Inst.Context)));
+         Append (Menu, Item);
+         Context_And_Instance_CB.Connect
+           (Item, "activate", Context_And_Instance_CB.To_Marshaller
+              (Add_Gcov_Project_Info_From_Context'Access), Cont_N_Inst);
 
-         if Code_Analysis_Module_ID.Instances.Length > 1 then
-            Gtk_New (Item, -(Property.Instance_Name.all));
+         if Has_File_Information (Cont_N_Inst.Context) then
+            Gtk_New
+              (Item, -"Load data for " &
+               Locale_Base_Name (File_Information (Cont_N_Inst.Context)));
             Append (Menu, Item);
-            Gtk_New (Submenu);
-            Set_Submenu (Item, Submenu);
-            Set_Sensitive (Item, True);
-            Append_To_Submenu (Cont_N_Inst, Submenu, Project_Node);
-         else
-            Append_To_Submenu (Cont_N_Inst, Menu, Project_Node);
+            Context_And_Instance_CB.Connect
+              (Item, "activate", Context_And_Instance_CB.To_Marshaller
+                 (Add_Gcov_File_Info_From_Context'Access), Cont_N_Inst);
          end if;
+      else
+         loop
+            exit when Cur = No_Element;
+            Cont_N_Inst.Instance := Element (Cur);
+            Property             := Code_Analysis_Property_Record
+              (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
+            Project_Node         := Get_Or_Create
+              (Property.Projects, Project_Information (Cont_N_Inst.Context));
 
-         Next (Cur);
-      end loop;
+            if Code_Analysis_Module_ID.Instances.Length > 1 then
+               Gtk_New (Item, -(Property.Instance_Name.all));
+               Append (Menu, Item);
+               Gtk_New (Submenu);
+               Set_Submenu (Item, Submenu);
+               Set_Sensitive (Item, True);
+               Append_To_Submenu (Cont_N_Inst, Submenu, Project_Node);
+            else
+               Append_To_Submenu (Cont_N_Inst, Menu, Project_Node);
+            end if;
 
+            Next (Cur);
+         end loop;
+      end if;
+
+      Gtk_New (Item);
+      Append (Menu, Item);
       Gtk_New (Item, -"Create code analysis instance");
       Append (Menu, Item);
       Gtkada.Handlers.Widget_Callback.Connect
@@ -1651,9 +1717,6 @@ package body Code_Analysis_Module is
    is
       use Code_Analysis_Class_Instance_Sets;
       Cont_N_Inst : Context_And_Instance;
-      Property    : Code_Analysis_Property_Record;
-      Prj_Node    : Code_Analysis.Project_Access;
-      Item        : Gtk_Menu_Item;
       Cur         : Cursor := Code_Analysis_Module_ID.Instances.First;
    begin
 
@@ -1665,32 +1728,14 @@ package body Code_Analysis_Module is
 
       if Cur = No_Element then
          Cont_N_Inst.Instance := No_Class_Instance;
-         Gtk_New (Item, -"Show Analysis Report");
-         Append (Menu, Item);
-         Context_And_Instance_CB.Connect
-           (Item, "activate", Context_And_Instance_CB.To_Marshaller
-              (Show_Empty_Analysis_Report_From_Menu'Access), Cont_N_Inst);
+         Append_Show_Empty_Analysis_Report (Cont_N_Inst, Menu);
          return;
       end if;
 
       loop
          exit when Cur = No_Element;
          Cont_N_Inst.Instance := Element (Cur);
-         Property             := Code_Analysis_Property_Record
-           (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
-         Prj_Node             := Get_Or_Create
-           (Property.Projects, Project_Information (Cont_N_Inst.Context));
-
-         if Prj_Node.Analysis_Data.Coverage_Data /= null then
-            Append_Show_Analysis_Report_To_Menu (Cont_N_Inst, Menu);
-         else
-            Gtk_New (Item, -"Show Report of " & Property.Instance_Name.all);
-            Append (Menu, Item);
-            Context_And_Instance_CB.Connect
-              (Item, "activate", Context_And_Instance_CB.To_Marshaller
-                 (Show_Empty_Analysis_Report_From_Menu'Access), Cont_N_Inst);
-         end if;
-
+         Append_Show_Analysis_Report_To_Menu (Cont_N_Inst, Menu);
          Next (Cur);
       end loop;
    end Dynamic_Views_Menu_Factory;
@@ -1710,10 +1755,7 @@ package body Code_Analysis_Module is
          declare
             File_Node : constant Code_Analysis.File_Access := Get_Or_Create
               (Project_Node, File_Information (Cont_N_Inst.Context));
-            Item      : Gtk_Menu_Item;
          begin
-            Gtk_New (Item);
-            Append (Submenu, Item);
             Append_File_Menu_Entries (Cont_N_Inst, Submenu, File_Node, False);
          end;
       end if;
@@ -1725,14 +1767,14 @@ package body Code_Analysis_Module is
 
    procedure Append_Show_Analysis_Report_To_Context
      (Cont_N_Inst : Context_And_Instance;
-      Submenu     : access Gtk_Menu_Record'Class)
+      Menu        : access Gtk_Menu_Record'Class)
    is
       Item     : Gtk_Menu_Item;
       Property : Code_Analysis_Property_Record := Code_Analysis_Property_Record
         (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
    begin
       Gtk_New (Item, -"Show Report of " & Property.Instance_Name.all);
-      Append (Submenu, Item);
+      Append (Menu, Item);
       Context_And_Instance_CB.Connect
         (Item, "activate", Context_And_Instance_CB.To_Marshaller
            (Show_Analysis_Report_From_Context'Access), Cont_N_Inst);
@@ -1744,18 +1786,44 @@ package body Code_Analysis_Module is
 
    procedure Append_Show_Analysis_Report_To_Menu
      (Cont_N_Inst : Context_And_Instance;
-      Submenu     : access Gtk_Menu_Record'Class)
+      Menu        : access Gtk_Menu_Record'Class)
    is
       Item     : Gtk_Menu_Item;
       Property : Code_Analysis_Property_Record := Code_Analysis_Property_Record
         (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
+      Prj_Node : constant Code_Analysis.Project_Access := Get_Or_Create
+        (Property.Projects, Project_Information (Cont_N_Inst.Context));
    begin
       Gtk_New (Item, -"Show Report of " & Property.Instance_Name.all);
-      Append (Submenu, Item);
+      Append (Menu, Item);
+
+      if Prj_Node.Analysis_Data.Coverage_Data /= null then
+         Context_And_Instance_CB.Connect
+           (Item, "activate", Context_And_Instance_CB.To_Marshaller
+              (Show_Analysis_Report_From_Menu'Access), Cont_N_Inst);
+      else
+         Context_And_Instance_CB.Connect
+           (Item, "activate", Context_And_Instance_CB.To_Marshaller
+              (Show_Empty_Analysis_Report_From_Menu'Access), Cont_N_Inst);
+      end if;
+   end Append_Show_Analysis_Report_To_Menu;
+
+   ---------------------------------------
+   -- Append_Show_Empty_Analysis_Report --
+   ---------------------------------------
+
+   procedure Append_Show_Empty_Analysis_Report
+     (Cont_N_Inst : Context_And_Instance;
+      Menu        : access Gtk_Menu_Record'Class)
+   is
+      Item : Gtk_Menu_Item;
+   begin
+      Gtk_New (Item, -"Show Report of Analysis");
+      Append (Menu, Item);
       Context_And_Instance_CB.Connect
         (Item, "activate", Context_And_Instance_CB.To_Marshaller
-           (Show_Analysis_Report_From_Menu'Access), Cont_N_Inst);
-   end Append_Show_Analysis_Report_To_Menu;
+           (Show_Empty_Analysis_Report_From_Menu'Access), Cont_N_Inst);
+   end Append_Show_Empty_Analysis_Report;
 
    ---------------------------
    -- Less_Case_Insensitive --
