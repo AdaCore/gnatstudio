@@ -73,7 +73,7 @@ package Code_Analysis is
    --  ??? In the future, we want a more flexible data structure where each
    --  module can store their data without having visibility on all these
    --  modules in code_analysis.
-   --  As this stage, we don't want to elaborate something more complicated.
+   --  At this stage, we don't want to elaborate something more complicated.
    --  Furthermore we will need to have visibility on all structures within a
    --  same module when writing advanced tools which will cross information
    --  coming from different code analysis tools.
@@ -234,6 +234,9 @@ package Code_Analysis is
    procedure Free_Code_Analysis (Projects : Code_Analysis_Tree);
    --  Free a whole code analysis structure
 
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Coverage'Class, Coverage_Access);
+
 private
 
    -------------
@@ -259,9 +262,6 @@ private
 
    procedure Unchecked_Free is new
      Ada.Unchecked_Deallocation (String, String_Access);
-
-   procedure Unchecked_Free is new
-     Ada.Unchecked_Deallocation (Coverage'Class, Coverage_Access);
 
    procedure Unchecked_Free is new
      Ada.Unchecked_Deallocation (Subprogram, Subprogram_Access);
