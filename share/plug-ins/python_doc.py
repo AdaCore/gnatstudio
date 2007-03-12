@@ -613,6 +613,6 @@ def on_gps_started (hook_name):
        <descr>GPS'extensions for Python</descr>
        <menu before="About">/Help/Python extensions</menu>
        <category>Scripts</category>
-    </documentation_file>""")
+  </documentation_file>""")
 
 GPS.Hook ("gps_started").add (on_gps_started)
