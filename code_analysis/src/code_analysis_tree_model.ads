@@ -65,6 +65,7 @@ package Code_Analysis_Tree_Model is
    procedure Fill_Iter_With_Subprograms
      (Model     : in out Gtk_Tree_Store;
       Iter      : in out Gtk_Tree_Iter;
+      Prj_Node  : Project_Access;
       File_Node : Code_Analysis.File_Access;
       Subp_Node : Subprogram_Access);
    --  Fill the Gtk_Tree_Store with the given parentless Subprogram node
@@ -80,32 +81,34 @@ package Code_Analysis_Tree_Model is
    procedure Fill_Iter_With_Files
      (Model     : in out Gtk_Tree_Store;
       Iter      : in out Gtk_Tree_Iter;
+      Prj_Node  : Project_Access;
       File_Node : File_Access);
    --  Fill the Gtk_Tree_Store with the given File node and stop
 
    procedure Fill_Iter_With_Subprograms
      (Model     : in out Gtk_Tree_Store;
       Iter      : in out Gtk_Tree_Iter;
+      Prj_Node  : Project_Access;
       File_Node : File_Access);
    --  Fill the Gtk_Tree_Store with the children of the given File node
 
    procedure Fill_Iter
-     (Model        : in out Gtk_Tree_Store;
-      Iter         : in out Gtk_Tree_Iter;
-      Project_Node : Project_Access);
+     (Model    : in out Gtk_Tree_Store;
+      Iter     : in out Gtk_Tree_Iter;
+      Prj_Node : Project_Access);
    --  Fill the Gtk_Tree_Store with the given Project node and recurse on its
    --  children
 
    procedure Fill_Iter_With_Files
-     (Model        : in out Gtk_Tree_Store;
-      Iter         : in out Gtk_Tree_Iter;
-      Project_Node : Project_Access);
+     (Model    : in out Gtk_Tree_Store;
+      Iter     : in out Gtk_Tree_Iter;
+      Prj_Node : Project_Access);
    --  Fill the Gtk_Tree_Store with the children of the given Project node
 
    procedure Fill_Iter_With_Subprograms
-     (Model        : in out Gtk_Tree_Store;
-      Iter         : in out Gtk_Tree_Iter;
-      Project_Node : Project_Access);
+     (Model    : in out Gtk_Tree_Store;
+      Iter     : in out Gtk_Tree_Iter;
+      Prj_Node : Project_Access);
    --  Fill the Gtk_Tree_Store with the subprograms of the file children of the
    --  given Project node
 
