@@ -197,12 +197,6 @@ private
    --  Allows to fill the given Submenu, in the appropriate order for Tools
    --  menu
 
-   procedure Append_Show_Analysis_Report_To_Context
-     (Cont_N_Inst : Context_And_Instance;
-      Menu        : access Gtk_Menu_Record'Class);
-   --  Actually fills the given Menu, with the "Show Analysis Report" entry
-   --  With context information, so the current relevant node will be expanded
-
    procedure Append_Show_Analysis_Report_To_Menu
      (Cont_N_Inst : Context_And_Instance;
       Menu        : access Gtk_Menu_Record'Class);
@@ -219,8 +213,7 @@ private
    procedure Append_File_Menu_Entries
      (Cont_N_Inst   : Context_And_Instance;
       Submenu       : access Gtk_Menu_Record'Class;
-      File_Node     : File_Access;
-      Is_Contextual : Boolean := True);
+      File_Node     : File_Access);
    --  Actually fills the given Submenu with the appropriate coverage action
    --  entries to handle files (Add/Remove coverage annotations,
    --  Show coverage report, ...)
@@ -233,6 +226,11 @@ private
    --  Actually fills the given Submenu with the appropriate coverage action
    --  entries to handle projects (Add/Remove coverage annotations,
    --  Show coverage report, Load full data...)
+
+   function Check_Context
+     (Given_Context : Selection_Context) return Selection_Context;
+   --  Check and correct the presence of project information in the
+   --  Given_Context
 
    procedure Dynamic_Tools_Menu_Factory
      (Kernel  : access Kernel_Handle_Record'Class;
@@ -449,12 +447,6 @@ private
    procedure Show_Flat_List_Of_Subprograms
      (Object : access Gtk_Widget_Record'Class);
    --  Fill the Gtk_Tree_Store with only on level of subprograms
-
-   procedure Show_Analysis_Report_From_Context
-     (Widget      : access Glib.Object.GObject_Record'Class;
-      Cont_N_Inst : Context_And_Instance);
-   --  Contextual menu callback that calls Show_Analysis_Report with context
-   --  info
 
    procedure Show_Analysis_Report_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
