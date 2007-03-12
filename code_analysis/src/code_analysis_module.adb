@@ -223,6 +223,8 @@ package body Code_Analysis_Module is
 
       Add_Gcov_File_Info (Src_File, Cov_File, Prj_Node);
       Compute_Project_Coverage (Prj_Node);
+      --  Build/Refresh Report of Analysis
+      Show_Analysis_Report (Instance, Property, Cont_N_Inst.Context);
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -363,6 +365,8 @@ package body Code_Analysis_Module is
         (Get_Property (Instance, Code_Analysis_Cst_Str));
       Prj_Node := Get_Or_Create (Property.Projects, Prj_Name);
       Add_Gcov_Project_Info (Prj_Node);
+      --  Build/Refresh Report of Analysis
+      Show_Analysis_Report (Instance, Property, Cont_N_Inst.Context);
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -505,26 +509,6 @@ package body Code_Analysis_Module is
       Show_Analysis_Report (Instance, Property);
    end Show_Analysis_Report_From_Shell;
 
-   ---------------------------------
-   -- Show_Tree_View_From_Context --
-   ---------------------------------
-
-   procedure Show_Analysis_Report_From_Context
-     (Widget      : access Glib.Object.GObject_Record'Class;
-      Cont_N_Inst : Context_And_Instance)
-   is
-      pragma Unreferenced (Widget);
-      Property : Code_Analysis_Property_Record := Code_Analysis_Property_Record
-        (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
-   begin
-      Show_Analysis_Report
-        (Cont_N_Inst.Instance, Property, Cont_N_Inst.Context);
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end Show_Analysis_Report_From_Context;
-
    ------------------------------------
    -- Show_Analysis_Report_From_Menu --
    ------------------------------------
@@ -643,17 +627,22 @@ package body Code_Analysis_Module is
          end if;
          --  Find in the tree the context's file
 
-         if Has_Entity_Name_Information (Context) and then
-           Is_Subprogram (Get_Entity (Context)) then
-            --  So we have a subprogram information accordingly to
-            --  Filter_Matches_Primitives
-            Iter := Children (Property.View.Model, Iter);
+         if Has_Entity_Name_Information (Context) then
+            declare
+               Entity : constant Entities.Entity_Information :=
+                          Get_Entity (Context);
+            begin
+               if Entity /= null and then Is_Subprogram (Entity) then
+                  --  So we have a subprogram information
+                  Iter := Children (Property.View.Model, Iter);
 
-            loop
-               exit when Get_String (Property.View.Model, Iter, Num_Col) =
-                 Entity_Name_Information (Context);
-               Next (Property.View.Model, Iter);
-            end loop;
+                  loop
+                     exit when Get_String (Property.View.Model, Iter, Num_Col)
+                       = Entity_Name_Information (Context);
+                     Next (Property.View.Model, Iter);
+                  end loop;
+               end if;
+            end;
          end if;
          --  Find in the tree the context's subprogram
       end if;
@@ -663,7 +652,11 @@ package body Code_Analysis_Module is
       Expand_To_Path (Property.View.Tree, Path);
       Select_Path (Get_Selection (Property.View.Tree), Path);
       Path_Free (Path);
-      Raise_Child (Property.Child);
+
+      if Context = No_Context then
+         Raise_Child (Property.Child);
+      end if;
+
       GPS.Kernel.Scripts.Set_Property
         (Instance, Code_Analysis_Cst_Str, Instance_Property_Record (Property));
    end Show_Analysis_Report;
@@ -693,6 +686,7 @@ package body Code_Analysis_Module is
            Name_Col    => GType_String,
            Node_Col    => GType_Pointer,
            File_Col    => GType_Pointer,
+           Prj_Col     => GType_Pointer,
            Cov_Col     => GType_String,
            Cov_Sort    => GType_Int,
            Cov_Bar_Txt => GType_String,
@@ -1344,70 +1338,31 @@ package body Code_Analysis_Module is
       Event        : Gdk_Event;
       Menu         : Gtk_Menu)
    is
-      pragma Unreferenced (Kernel, Event_Widget, Context);
+      pragma Unreferenced (Kernel, Event_Widget);
       View      : constant Code_Analysis_View := Code_Analysis_View (Object);
       X         : constant Gdouble := Get_X (Event);
       Y         : constant Gdouble := Get_Y (Event);
       Path      : Gtk_Tree_Path;
+      Prj_Node  : Code_Analysis.Project_Access;
+      File_Node : Code_Analysis.File_Access;
       Column    : Gtk_Tree_View_Column;
       Buffer_X  : Gint;
       Buffer_Y  : Gint;
       Row_Found : Boolean;
       Item      : Gtk_Menu_Item;
-      Iter      : constant Gtk_Tree_Iter := Get_Iter_First (View.Model);
+      Iter      : Gtk_Tree_Iter := Get_Iter_First (View.Model);
    begin
 
-      Get_Path_At_Pos
-        (View.Tree,
-         Gint (X),
-         Gint (Y),
-         Path,
-         Column,
-         Buffer_X,
-         Buffer_Y,
-         Row_Found);
+      Get_Path_At_Pos (View.Tree, Gint (X), Gint (Y), Path, Column,
+                       Buffer_X, Buffer_Y, Row_Found);
 
-      if Path /= null then
-         Select_Path (Get_Selection (View.Tree), Path);
-
-         if Get_Depth (Path) > 1 or else not Has_Child (View.Model, Iter) then
-            --  So we are on a file or subprogram
-            Gtk_New (Item, -"Add coverage annotations");
-            Gtkada.Handlers.Widget_Callback.Object_Connect
-              (Item, "activate", Add_Coverage_Annotations_From_Report'Access,
-               View);
-            Append (Menu, Item);
-            Gtk_New (Item, -"Remove coverage annotations");
-            Gtkada.Handlers.Widget_Callback.Object_Connect
-              (Item, "activate",
-               Remove_Coverage_Annotations_From_Report'Access, View);
-            Append (Menu, Item);
-         end if;
-
-         if Get_Depth (Path) = 1 and then Has_Child (View.Model, Iter) then
-            --  So we are on a project node
-            Gtk_New (Item, -"List lines not covered");
-            Gtkada.Handlers.Widget_Callback.Object_Connect
-              (Item, "activate",
-               List_Lines_Not_Covered_In_Project_From_Report'Access, View);
-            Append (Menu, Item);
-         else
-            --  So we are on a file or subprogram node
-            Gtk_New (Item, -"List lines not covered");
-            Gtkada.Handlers.Widget_Callback.Object_Connect
-              (Item, "activate",
-               List_Lines_Not_Covered_In_File_From_Report'Access, View);
-            Append (Menu, Item);
-         end if;
-
-         Gtk_New (Item);
-         Append (Menu, Item);
-      end if;
+      ---------------------------------------------------------------
+      --  Insert Report of Analysis # specific contextual entries  --
+      ---------------------------------------------------------------
 
       Gtk_New (Item, -"Show flat list of files");
       Gtkada.Handlers.Widget_Callback.Object_Connect
-        (Item, "activate", Show_Flat_List_Of_Files'Access,
-         View, After => False);
+        (Item, "activate", Show_Flat_List_Of_Files'Access, View);
       Append (Menu, Item);
       Gtk_New (Item, -"Show flat list of subprograms");
       Gtkada.Handlers.Widget_Callback.Object_Connect
@@ -1420,8 +1375,6 @@ package body Code_Analysis_Module is
            (Item, "activate", Show_Full_Tree'Access, View);
          Append (Menu, Item);
       else
-         Gtk_New (Item);
-         Append (Menu, Item);
          Gtk_New (Item, -"Expand all");
          Gtkada.Handlers.Widget_Callback.Object_Connect
            (Item, "activate", Expand_All_From_Report'Access, View);
@@ -1430,6 +1383,53 @@ package body Code_Analysis_Module is
          Gtkada.Handlers.Widget_Callback.Object_Connect
            (Item, "activate", Collapse_All_From_Report'Access, View);
          Append (Menu, Item);
+      end if;
+
+      ----------------------------------
+      --  Set up context information  --
+      ----------------------------------
+
+      if Path /= null then
+         Gtk_New (Item);
+         Append (Menu, Item);
+         Select_Path (Get_Selection (View.Tree), Path);
+         Iter := Get_Iter (Gtk_Tree_Model (View.Model), Path);
+
+         if Get_Depth (Path) = 1 then
+            if Has_Child (View.Model, Iter) then
+               --  So we are on a project node
+               --  Context receive project information
+               Prj_Node := Code_Analysis.Project_Access
+                 (GType_Project.Get (Gtk_Tree_Store (View.Model),
+                  Iter, Node_Col));
+               Set_File_Information (Context, Project => Prj_Node.Name);
+            else
+               --  So we are in a flat view
+               --  Context receive project and file information
+               File_Node := Code_Analysis.File_Access
+                 (GType_File.Get (Gtk_Tree_Store (View.Model),
+                  Iter, File_Col));
+               Prj_Node  := Project_Access
+                 (GType_Project.Get (Gtk_Tree_Store (View.Model),
+                  Iter, Prj_Col));
+               Set_File_Information (Context, File_Node.Name, Prj_Node.Name);
+            end if;
+         elsif Get_Depth (Path) > 1 then
+            --  So we are on a file or subprogram node
+            --  Context receive project and file information
+
+            if Get_Depth (Path) = 3 then
+               Iter   := Parent (Gtk_Tree_Store (View.Model), Iter);
+            end if;
+
+            File_Node := Code_Analysis.File_Access
+              (GType_File.Get (Gtk_Tree_Store (View.Model),
+               Iter, Node_Col));
+            Prj_Node  := Project_Access
+              (GType_Project.Get (Gtk_Tree_Store (View.Model),
+               Parent (Gtk_Tree_Store (View.Model), Iter), Node_Col));
+            Set_File_Information (Context, File_Node.Name, Prj_Node.Name);
+         end if;
       end if;
    end Context_Func;
 
@@ -1531,8 +1531,7 @@ package body Code_Analysis_Module is
    procedure Append_File_Menu_Entries
      (Cont_N_Inst   : Context_And_Instance;
       Submenu       : access Gtk_Menu_Record'Class;
-      File_Node     : Code_Analysis.File_Access;
-      Is_Contextual : Boolean := True)
+      File_Node     : Code_Analysis.File_Access)
    is
       Item : Gtk_Menu_Item;
    begin
@@ -1559,10 +1558,6 @@ package body Code_Analysis_Module is
            (Item, "activate", Context_And_Instance_CB.To_Marshaller
               (List_Lines_Not_Covered_In_File_From_Context'Access),
             Cont_N_Inst);
-
-         if Is_Contextual then
-            Append_Show_Analysis_Report_To_Context (Cont_N_Inst, Submenu);
-         end if;
       else
          Gtk_New (Item, -"Load data for " &
                   Locale_Base_Name (File_Information (Cont_N_Inst.Context)));
@@ -1586,6 +1581,12 @@ package body Code_Analysis_Module is
       Item : Gtk_Menu_Item;
    begin
       if Project_Node.Analysis_Data.Coverage_Data /= null then
+         if not Is_Contextual then
+            Append_Show_Analysis_Report_To_Menu (Cont_N_Inst, Submenu);
+            Gtk_New (Item);
+            Append (Submenu, Item);
+         end if;
+
          Gtk_New (Item, -"Reload data for project " &
                   Project_Name (Project_Information (Cont_N_Inst.Context)));
          Append (Submenu, Item);
@@ -1599,15 +1600,10 @@ package body Code_Analysis_Module is
               (List_Lines_Not_Covered_In_Project_From_Context'Access),
             Cont_N_Inst);
 
-         if Is_Contextual then
-            Append_Show_Analysis_Report_To_Context (Cont_N_Inst, Submenu);
-         else
-            Append_Show_Analysis_Report_To_Menu (Cont_N_Inst, Submenu);
-
-            if Has_File_Information (Cont_N_Inst.Context) then
-               Gtk_New (Item);
-               Append (Submenu, Item);
-            end if;
+         if not Is_Contextual and then
+           Has_File_Information (Cont_N_Inst.Context) then
+            Gtk_New (Item);
+            Append (Submenu, Item);
          end if;
       else
          Gtk_New (Item, -"Load data for project " &
@@ -1623,6 +1619,28 @@ package body Code_Analysis_Module is
    -- Menu entries --
    ------------------
 
+   function Check_Context
+     (Given_Context : Selection_Context) return Selection_Context
+   is
+      Checked_Context : Selection_Context;
+   begin
+      if Given_Context = No_Context then
+         Checked_Context := Get_Current_Context
+           (Code_Analysis_Module_ID.Kernel);
+      else
+         Checked_Context := Given_Context;
+      end if;
+
+      if not Has_Project_Information (Checked_Context) then
+         Set_File_Information
+           (Checked_Context,
+            File    => File_Information (Checked_Context),
+            Project => Get_Project (Code_Analysis_Module_ID.Kernel));
+      end if;
+
+      return Checked_Context;
+   end Check_Context;
+
    --------------------------------
    -- Dynamic_Tools_Menu_Factory --
    --------------------------------
@@ -1632,6 +1650,7 @@ package body Code_Analysis_Module is
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
+      pragma Unreferenced (Kernel);
       use Code_Analysis_Class_Instance_Sets;
       Cont_N_Inst  : Context_And_Instance;
       Property     : Code_Analysis_Property_Record;
@@ -1640,21 +1659,7 @@ package body Code_Analysis_Module is
       Item         : Gtk_Menu_Item;
       Cur          : Cursor := Code_Analysis_Module_ID.Instances.First;
    begin
-
-      --  Check context and make it usable
-      if Context = No_Context then
-         Cont_N_Inst.Context := Get_Current_Context (Kernel);
-      else
-         Cont_N_Inst.Context := Context;
-      end if;
-
-      if not Has_Project_Information (Cont_N_Inst.Context) then
-         Set_File_Information
-           (Cont_N_Inst.Context,
-            File    => File_Information (Cont_N_Inst.Context),
-            Project => Get_Project (Code_Analysis_Module_ID.Kernel));
-      end if;
-      --  context is correct
+      Cont_N_Inst.Context := Check_Context (Context);
 
       if Cur = No_Element then
          Cont_N_Inst.Instance := No_Class_Instance;
@@ -1715,16 +1720,12 @@ package body Code_Analysis_Module is
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
+      pragma Unreferenced (Kernel);
       use Code_Analysis_Class_Instance_Sets;
       Cont_N_Inst : Context_And_Instance;
       Cur         : Cursor := Code_Analysis_Module_ID.Instances.First;
    begin
-
-      if Context = No_Context then
-         Cont_N_Inst.Context := Get_Current_Context (Kernel);
-      else
-         Cont_N_Inst.Context := Context;
-      end if;
+      Cont_N_Inst.Context := Check_Context (Context);
 
       if Cur = No_Element then
          Cont_N_Inst.Instance := No_Class_Instance;
@@ -1756,29 +1757,10 @@ package body Code_Analysis_Module is
             File_Node : constant Code_Analysis.File_Access := Get_Or_Create
               (Project_Node, File_Information (Cont_N_Inst.Context));
          begin
-            Append_File_Menu_Entries (Cont_N_Inst, Submenu, File_Node, False);
+            Append_File_Menu_Entries (Cont_N_Inst, Submenu, File_Node);
          end;
       end if;
    end Append_To_Submenu;
-
-   --------------------------------------------
-   -- Append_Show_Analysis_Report_To_Context --
-   --------------------------------------------
-
-   procedure Append_Show_Analysis_Report_To_Context
-     (Cont_N_Inst : Context_And_Instance;
-      Menu        : access Gtk_Menu_Record'Class)
-   is
-      Item     : Gtk_Menu_Item;
-      Property : Code_Analysis_Property_Record := Code_Analysis_Property_Record
-        (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
-   begin
-      Gtk_New (Item, -"Show Report of " & Property.Instance_Name.all);
-      Append (Menu, Item);
-      Context_And_Instance_CB.Connect
-        (Item, "activate", Context_And_Instance_CB.To_Marshaller
-           (Show_Analysis_Report_From_Context'Access), Cont_N_Inst);
-   end Append_Show_Analysis_Report_To_Context;
 
    -----------------------------------------
    -- Append_Show_Analysis_Report_To_Menu --
