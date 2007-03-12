@@ -164,20 +164,25 @@ package Code_Analysis is
    --  Gtk_Tree_Model column number dedicated to the nodes of code_analysis
    --  structure
    File_Col : constant := 3;
-   --  Gtk_Tree_Model column number dedicated to the node corresponding files
-   --  nodes of the code_analysis structure (usefull for flat views)
+   --  Gtk_Tree_Model column number dedicated to the node corresponding file
+   --  of the code_analysis structure (usefull for flat views)
+   --  It is filled with :
    --   - nothing if the node is a project
    --   - the file_node itself if its a file
    --   - the parent file_node if its a subprogram
-   Cov_Col  : constant := 4;
+   Prj_Col  : constant := 4;
+   --  Gtk_Tree_Model column number dedicated to the node corresponding project
+   --  of the code_analysis structure in every circumstance
+   --  (usefull for flat views)
+   Cov_Col  : constant := 5;
    --  Gtk_Tree_Model column number dedicated to the coverage information
    --  contained in the node coverage records
-   Cov_Sort : constant := 5;
+   Cov_Sort : constant := 6;
    --  Gtk_Tree_Model column number dedicated to some raw coverage information
    --  used to sort rows by not covered lines amount order
-   Cov_Bar_Txt : constant := 6;
+   Cov_Bar_Txt : constant := 7;
    --  Ctk_Tree_Model column number dedicated to the coverage percentage column
-   Cov_Bar_Val : constant := 7;
+   Cov_Bar_Val : constant := 8;
    --  Gtk_Tree_Model column number dedicated to the raw coverage percentage
    --  values, in order to be use in sorting operations
 
