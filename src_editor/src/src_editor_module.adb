@@ -680,6 +680,11 @@ package body Src_Editor_Module is
          File_Modified_Pixbuf := Render_Icon
            (Get_Main_Window (Handle), "gps-file-modified", Icon_Size_Menu);
       end if;
+
+      if File_Unsaved_Pixbuf = Null_Pixbuf then
+         File_Unsaved_Pixbuf := Render_Icon
+           (Get_Main_Window (Handle), "gtk-new", Icon_Size_Menu);
+      end if;
    end Create_Files_Pixbufs_If_Needed;
 
    ------------------
@@ -1190,9 +1195,12 @@ package body Src_Editor_Module is
          Put (Get_MDI (Kernel), Child, Initial_Position => Initial_Position);
          Set_Child (Get_View (Editor), Child);
 
-         if Get_Modified (Get_Buffer (Editor)) then
+         if Get_Status (Get_Buffer (Editor)) = Modified then
             Set_Icon (Child, File_Modified_Pixbuf);
             Ref (File_Modified_Pixbuf);
+         elsif Get_Status (Get_Buffer (Editor)) = Unsaved then
+            Set_Icon (Child, File_Unsaved_Pixbuf);
+            Ref (File_Unsaved_Pixbuf);
          else
             Set_Icon (Child, File_Pixbuf);
             Ref (File_Pixbuf);
@@ -3296,6 +3304,10 @@ package body Src_Editor_Module is
 
       if File_Modified_Pixbuf /= null then
          Unref (File_Modified_Pixbuf);
+      end if;
+
+      if File_Unsaved_Pixbuf /= null then
+         Unref (File_Unsaved_Pixbuf);
       end if;
 
       Src_Editor_Module_Id := null;
