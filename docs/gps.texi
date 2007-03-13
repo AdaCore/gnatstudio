@@ -35,7 +35,7 @@
 @page
 @vskip 0pt plus 1filll
 
-Copyright @copyright{} 2001-2006, AdaCore.
+Copyright @copyright{} 2001-2007, AdaCore.
 
 This document may be copied, in whole or in part, in any form or by any
 means, as is or with alterations, provided that (1) alterations are clearly
@@ -58,7 +58,7 @@ Version @value{GPSVersion}
 
 Date: $Date$
 
-Copyright @copyright{} 2001-2006, AdaCore
+Copyright @copyright{} 2001-2007, AdaCore
 This document may be copied, in whole or in part, in any form or by any
 means, as is or with alterations, provided that (1) alterations are clearly
 marked as alterations and (2) this copyright notice is included
@@ -2301,15 +2301,13 @@ will be "B =>, C => )".
 
 Limitations:
 
-@table @i
-@item GPS is not able to complete identifiers declared in the private part of
-a package.
+@table @bullet
+@item GPS is not able to complete identifiers declared in the private part of a package.
 
 @item Completion does not work with generics.
 
-@item This feature is currently only available for Ada. Using the smart
-completion on non Ada files behaves as the identifier completion does. See
-below.
+@item This feature is currently only available for Ada.
+Using the smart completion on non Ada files behaves as the identifier completion does. See below.
 
 @end table
 
@@ -9577,7 +9575,7 @@ When you assign a new shortcut to an action, the following happens:
 @c -----------------------------------------------------------------
 @node The Plug-ins Editor
 @section The Plug-ins Editor
-cindex plug-ins
+@cindex plug-ins
 @c -----------------------------------------------------------------
 
 @noindent
