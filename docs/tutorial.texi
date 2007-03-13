@@ -213,13 +213,13 @@ looking at the @file{sdc.adb} editor: there's a loop, the main processing is
 done by the functions Process and Next (at line 30).
 
 Click around line 30, move the mouse over @code{Process} and let a tool tip
-appear (@code{global procedure tokens.process declared at tokens.ads:19}): this
+appear (@code{Tokens.Process global procedure declared at tokens.ads:19}): this
 gives information about the kind of entity and the location (file and line) of
 the declaration of this procedure, the profile of the parameters, and
 documentation for this function, as extracted from the comments surrounding
 the procedure declaration.
 
-Do the same for @code{Next} (@code{global function tokens.next declared at
+Do the same for @code{Next} (@code{Tokens.Next global function declared at
 tokens.ads:15}).
 
 Keeping the mouse over @code{Next}, display the contextual menu by clicking on
@@ -628,8 +628,9 @@ button to close the properties window.
 @section Variable editor
 @noindent
 
-Select the window titled "Scenario View". This window contains a @code{Build}
-label.
+Select the window titled "Scenario View".  If not available, you can open it
+using the menu @code{Tools->Views->Scenario}.
+This window contains a @code{Build} label.
 
 This is a configuration variable. With GPS and the GNAT
 project facility, you can define as many configuration variables as you want,
