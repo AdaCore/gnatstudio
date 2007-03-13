@@ -57,6 +57,7 @@ with Remote.Path.Translator; use Remote, Remote.Path.Translator;
 with String_Utils;        use String_Utils;
 with VFS;                 use VFS;
 
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 
 package body Debugger.Gdb is
@@ -239,6 +240,32 @@ package body Debugger.Gdb is
    --  Return the name of the module contained in Executable
    --  Assume that the name of the module is the executable file
    --  with no path information and no extension.
+
+   procedure Detect_Debugger_Mode (Debugger : access Gdb_Debugger);
+   --  This detects the debugger mode depending on the remote protocol being
+   --  used. Ideally, it should be called every time we change the remote
+   --  protocol.
+
+   --------------------------
+   -- Detect_Debugger_Mode --
+   --------------------------
+
+   procedure Detect_Debugger_Mode (Debugger : access Gdb_Debugger) is
+   begin
+      if Debugger.Remote_Protocol = null
+        or else Debugger.Remote_Protocol.all = ""
+      then
+         Debugger.Mode := Native;
+      elsif To_Lower (Debugger.Remote_Protocol.all) = "wtx"
+        or else To_Lower (Debugger.Remote_Protocol.all) = "dfw"
+        or else To_Lower (Debugger.Remote_Protocol.all) = "dfw-rtp"
+        or else To_Lower (Debugger.Remote_Protocol.all) = "vxworks"
+      then
+         Debugger.Mode := VxWorks;
+      else
+         Debugger.Mode := Cross;
+      end if;
+   end Detect_Debugger_Mode;
 
    ---------------------
    -- Language_Filter --
@@ -523,6 +550,7 @@ package body Debugger.Gdb is
          if K < Cmd'Last then
             Free (Debugger.Remote_Protocol);
             Debugger.Remote_Protocol := new String'(Cmd (J .. K - 1));
+            Detect_Debugger_Mode (Debugger);
 
             J := K + 1;
             Skip_Blanks (Cmd, J);
@@ -701,6 +729,20 @@ package body Debugger.Gdb is
       procedure Free is new Standard.Ada.Unchecked_Deallocation
         (Argument_List, Argument_List_Access);
 
+      function Contains (S : String; Substring : String) return Boolean;
+      --  Return True if S contains Substring.
+
+      function Contains (S : String; Substring : String) return Boolean is
+         N : Natural := S'First;
+      begin
+         if S'Length < Substring'Length then
+            return False;
+         end if;
+
+         Skip_To_String (S, N, Substring);
+         return Substring'Length <= S'Last + 1 - N;
+      end Contains;
+
    begin
       Debugger.Window := Window;
 
@@ -734,6 +776,13 @@ package body Debugger.Gdb is
       if Remote_Target /= "" then
          Debugger.Remote_Target := new String'(Remote_Target);
          Debugger.Remote_Protocol := new String'(Remote_Protocol);
+         Detect_Debugger_Mode (Debugger);
+      end if;
+
+      --  Perform an additional guess of the mode of gdb from the name of the
+      --  executable launched.
+      if Contains (Debugger_Name, "vxworks") then
+         Debugger.Mode := VxWorks;
       end if;
 
       --  Set up an output filter to detect changes of the current language
@@ -817,28 +866,6 @@ package body Debugger.Gdb is
       --  Make sure gdb will not ask too much interactive questions.
       --  Interactive questions are better left to the GUI itself.
       Send (Debugger, "set confirm off", Mode => Internal);
-
-      --  Connect to the remote target if needed.
-
-      if Debugger.Remote_Target /= null then
-         declare
-            Cmd : constant String :=
-              "target " & Debugger.Remote_Protocol.all & " " &
-              Debugger.Remote_Target.all;
-         begin
-            if Debugger.Window = null then
-               Send (Debugger, Cmd, Mode => Internal);
-            else
-               Output_Text
-                 (Convert (Debugger.Window, Debugger),
-                  Send (Debugger, Cmd, Mode => Internal) & ASCII.LF);
-            end if;
-
-            if Debugger.Remote_Protocol.all = "remote" then
-               Set_Is_Started (Debugger, True);
-            end if;
-         end;
-      end if;
 
       --  Load the module to debug, if any.
 
@@ -1018,7 +1045,7 @@ package body Debugger.Gdb is
         Compile ("No such file or directory.");
       --  Note that this pattern should work even when LANG isn't english
       --  because gdb does not seem to take into account this variable at all.
-      Cmd                 : GNAT.Strings.String_Access;
+
       Process             : Visual_Debugger;
       Remote_Exec         : constant String :=
                               To_Remote (Full_Name (Executable, True).all,
@@ -1026,42 +1053,77 @@ package body Debugger.Gdb is
       Exec_Has_Spaces     : constant Boolean :=
                               Index (Remote_Exec, " ") /= 0;
 
+      procedure Launch_Command_And_Output (Command : String);
+      --  Launch a "file" or "load" command and display it if relevant.
+
+      procedure Launch_Command_And_Output (Command : String) is
+         Cmd : GNAT.Strings.String_Access;
+      begin
+         if Exec_Has_Spaces then
+            Cmd := new String'(Command & " """ & Remote_Exec & '"');
+         else
+            Cmd := new String'(Command & " " & Remote_Exec);
+         end if;
+
+         if Debugger.Window /= null then
+            Process := Convert (Debugger.Window, Debugger);
+            Output_Text (Process, Cmd.all & ASCII.LF, Set_Position => True);
+         end if;
+
+         declare
+            S : constant String := Send (Debugger, Cmd.all, Mode => Hidden);
+         begin
+            Free (Cmd);
+
+            if Match (No_Such_File_Regexp, S) /= 0 then
+               raise Executable_Not_Found;
+            end if;
+
+            if Process /= null and then S /= "" then
+               Output_Text (Process, S & ASCII.LF, Set_Position => True);
+            end if;
+         end;
+      end Launch_Command_And_Output;
    begin
       Debugger.Executable := Executable;
 
-      if Exec_Has_Spaces then
-         if Debugger.Remote_Target = null then
-            Cmd := new String'("file """ & Remote_Exec & '"');
-         else
-            Cmd := new String'("load """ & Remote_Exec & '"');
-         end if;
+      --  Send the "file" command if needed
 
-      else
-         if Debugger.Remote_Target = null then
-            Cmd := new String'("file " & Remote_Exec);
-         else
-            Cmd := new String'("load " & Remote_Exec);
-         end if;
+      if Debugger.Mode /= VxWorks then
+         Launch_Command_And_Output ("file");
       end if;
 
-      if Debugger.Window /= null then
-         Process := Convert (Debugger.Window, Debugger);
-         Output_Text (Process, Cmd.all & ASCII.LF, Set_Position => True);
+      --  Connect to the remote target if needed.
+
+      if Debugger.Remote_Target /= null
+        and then not Debugger.Target_Connected
+      then
+         declare
+            Cmd : constant String :=
+              "target " & Debugger.Remote_Protocol.all & " " &
+              Debugger.Remote_Target.all;
+         begin
+            if Debugger.Window = null then
+               Send (Debugger, Cmd, Mode => Internal);
+            else
+               Output_Text
+                 (Convert (Debugger.Window, Debugger),
+                  Send (Debugger, Cmd, Mode => Internal) & ASCII.LF);
+            end if;
+
+            if Debugger.Remote_Protocol.all = "remote" then
+               Set_Is_Started (Debugger, True);
+            end if;
+         end;
+
+         Debugger.Target_Connected := True;
       end if;
 
-      declare
-         S : constant String := Send (Debugger, Cmd.all, Mode => Hidden);
-      begin
-         Free (Cmd);
+      --  Send the "load" command if needed
 
-         if Match (No_Such_File_Regexp, S) /= 0 then
-            raise Executable_Not_Found;
-         end if;
-
-         if Process /= null and then S /= "" then
-            Output_Text (Process, S & ASCII.LF, Set_Position => True);
-         end if;
-      end;
+      if Debugger.Mode /= Native then
+         Launch_Command_And_Output ("load");
+      end if;
 
       if Debugger.Window /= null then
          Display_Prompt (Debugger);
