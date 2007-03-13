@@ -448,7 +448,7 @@ package GPS.Kernel.Standard_Hooks is
    -- Status_Changed_Hook --
    -------------------------
 
-   type File_Status is (Modified, Unmodified, Saved);
+   type File_Status is (Modified, Unmodified, Unsaved, Saved);
 
    type File_Status_Changed_Hooks_Args is new File_Hooks_Args with record
       Status : File_Status;
