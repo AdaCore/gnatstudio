@@ -3103,7 +3103,7 @@ package body Project_Explorers is
          Name   => "Explorer_Entity_Node");
 
       declare
-         Name : constant String := -"Project Explorer";
+         Name : constant String := -"Project View";
       begin
          Find_Utils.Register_Search_Function
            (Kernel            => Kernel,
