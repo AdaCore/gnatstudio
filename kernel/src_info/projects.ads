@@ -531,7 +531,8 @@ package Projects is
    function Enum_Values_Of
      (Var : Scenario_Variable; Reg : Abstract_Registry'Class)
       return GNAT.Strings.String_List;
-   --  Same as above.
+   --  Same as above. Used by GNATbench, since we can't currently bind generic
+   --  instances.
 
    procedure Set_Value (Var : Scenario_Variable; Value : String);
    --  Set the value of the external variable. You need to call Recompute_View
