@@ -412,6 +412,19 @@ private
       Wait_For_Prompt : Boolean := True;
       Mode            : GVD.Types.Command_Type := GVD.Types.Hidden);
 
+   type Remote_GDB_Mode is (Native, Cross, VxWorks);
+   --  Indicates the type of remote access.
+   --  This controls the behavior of the debugger when doing file load
+   --  operations.
+   --  Here are the commands that are launched:
+   --
+   --   Native  :  "file"
+   --   Cross   :  "file" -> "target" * -> "load"
+   --   VxWorks :            "target" * -> "load"
+   --
+   --  * Note: "target" is only launched if the debugger is not already
+   --    connected to a target.
+
    type Gdb_Debugger is new Debugger.Debugger_Root with record
       Executable       : VFS.Virtual_File;
       Executable_Args  : GNAT.Strings.String_Access;
@@ -425,6 +438,10 @@ private
       Debuggee_Pid     : Integer := 0;
       Has_Symbol_List  : Integer := -1;
       Has_Start_Cmd    : Integer := -1;
+
+      Mode             : Remote_GDB_Mode := Native;
+      Target_Connected : Boolean := False;
+      --  Whether we have connected to a target.
    end record;
 
    procedure Internal_Parse_Value
