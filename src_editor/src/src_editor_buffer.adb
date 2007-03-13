@@ -136,7 +136,8 @@ package body Src_Editor_Buffer is
       3 => New_String ("side_column_configuration_changed"),
       4 => New_String ("line_highlights_changed"),
       5 => New_String ("status_changed"),
-      6 => New_String ("buffer_information_changed"));
+      6 => New_String ("filename_changed"),
+      7 => New_String ("buffer_information_changed"));
    --  The list of new signals supported by this GObject
 
    Signal_Parameters : constant Glib.Object.Signal_Parameter_Types :=
@@ -145,7 +146,8 @@ package body Src_Editor_Buffer is
       3 => (GType_None, GType_None),
       4 => (GType_None, GType_None),
       5 => (GType_None, GType_None),
-      6 => (GType_None, GType_None));
+      6 => (GType_None, GType_None),
+      7 => (GType_None, GType_None));
    --  The parameters associated to each new signal
 
    package Buffer_Callback is new Gtk.Handlers.Callback
@@ -463,6 +465,116 @@ package body Src_Editor_Buffer is
 
    procedure Highlight_Parenthesis (Buffer : Source_Buffer);
    --  Highlight the matching parenthesis that are next to the cursor, if any.
+
+   -----------
+   -- Hooks --
+   -----------
+
+   type Internal_Hook_Record is abstract new Function_With_Args with record
+      Buffer : Source_Buffer;
+   end record;
+
+   type File_Deleted_Hook_Record is new Internal_Hook_Record with null record;
+   type File_Deleted_Hook is access File_Deleted_Hook_Record'Class;
+
+   type File_Renamed_Hook_Record is new Internal_Hook_Record with null record;
+   type File_Renamed_Hook is access File_Renamed_Hook_Record'Class;
+
+   procedure Execute
+     (Hook   : File_Deleted_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Callback for the "file_deleted" hook
+
+   procedure Execute
+     (Hook   : File_Renamed_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Callback for the "file_renamed" hook
+
+   -------------
+   -- Execute --
+   -------------
+
+   procedure Execute
+     (Hook   : File_Deleted_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      pragma Unreferenced (Kernel);
+      File        : constant VFS.Virtual_File :=
+                      File_Hooks_Args (Data.all).File;
+      Edited      : constant VFS.Virtual_File := Hook.Buffer.Filename;
+      Need_Action : Boolean := False;
+   begin
+
+      if Edited /= VFS.No_File then
+         if Is_Directory (File)
+           and then Edited.Full_Name'Length > File.Full_Name'Length
+           and then Create (Edited.Full_Name.all
+               (Edited.Full_Name'First ..
+                  Edited.Full_Name'First + File.Full_Name'Length - 1)) = File
+         then
+            Need_Action := True;
+         elsif not Is_Directory (File) and then File = Edited then
+            Need_Action := True;
+         end if;
+      end if;
+
+      if Need_Action then
+         Hook.Buffer.Saved_Position := -1;
+         Hook.Buffer.Status_Changed;
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected Exception: " & Exception_Information (E));
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   procedure Execute
+     (Hook   : File_Renamed_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      pragma Unreferenced (Kernel);
+      File   : constant VFS.Virtual_File := Files_2_Hooks_Args (Data.all).File;
+      Edited : constant VFS.Virtual_File := Hook.Buffer.Filename;
+      Dest   : VFS.Virtual_File;
+   begin
+
+      if Edited /= VFS.No_File then
+         if Is_Directory (File)
+           and then Edited.Full_Name'Length > File.Full_Name'Length
+           and then Create (Edited.Full_Name.all
+               (Edited.Full_Name'First ..
+                  Edited.Full_Name'First + File.Full_Name'Length - 1)) = File
+         then
+            Dest := Create
+              (Files_2_Hooks_Args (Data.all).Renamed.Full_Name.all &
+               Edited.Full_Name.all
+                 (Edited.Full_Name'First + File.Full_Name'Length ..
+                    Edited.Full_Name'Last));
+            Hook.Buffer.Filename := Dest;
+            Hook.Buffer.Filename_Changed;
+
+         elsif not Is_Directory (File)
+           and then Edited.Full_Name.all = File.Full_Name.all
+         then
+            Hook.Buffer.Filename := Files_2_Hooks_Args (Data.all).Renamed;
+            Hook.Buffer.Filename_Changed;
+         end if;
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected Exception: " & Exception_Information (E));
+   end Execute;
 
    ----------------------
    -- Free_Column_Info --
@@ -1764,6 +1876,16 @@ package body Src_Editor_Buffer is
       Emit_By_Name (Get_Object (Buffer), "status_changed" & ASCII.NUL);
    end Status_Changed;
 
+   ----------------------
+   -- Filename_Changed --
+   ----------------------
+
+   procedure Filename_Changed
+     (Buffer : access Source_Buffer_Record'Class) is
+   begin
+      Emit_By_Name (Get_Object (Buffer), "filename_changed" & ASCII.NUL);
+   end Filename_Changed;
+
    ---------------------
    -- Get_Last_Status --
    ---------------------
@@ -2227,9 +2349,11 @@ package body Src_Editor_Buffer is
       Kernel : GPS.Kernel.Kernel_Handle;
       Lang   : Language.Language_Access := null)
    is
-      Tags    : Gtk_Text_Tag_Table;
-      Command : Check_Modified_State;
-      P_Hook  : Preferences_Hook;
+      Tags         : Gtk_Text_Tag_Table;
+      Command      : Check_Modified_State;
+      P_Hook       : Preferences_Hook;
+      Deleted_Hook : File_Deleted_Hook;
+      Renamed_Hook : File_Renamed_Hook;
    begin
       Gtkada.Text_Buffer.Initialize (Buffer);
 
@@ -2254,6 +2378,20 @@ package body Src_Editor_Buffer is
          Name => "src_editor_buffer.preferences_changed",
          Watch => GObject (Buffer));
       Execute (P_Hook.all, Kernel);
+
+      --  File hooks
+      Deleted_Hook := new File_Deleted_Hook_Record;
+      Deleted_Hook.Buffer := Source_Buffer (Buffer);
+      Add_Hook
+        (Kernel, GPS.Kernel.File_Deleted_Hook, Deleted_Hook,
+         Name  => "project_explorers_files.file_deleted",
+         Watch => GObject (Buffer));
+      Renamed_Hook := new File_Renamed_Hook_Record;
+      Renamed_Hook.Buffer := Source_Buffer (Buffer);
+      Add_Hook
+        (Kernel, GPS.Kernel.File_Renamed_Hook, Renamed_Hook,
+         Name  => "project_explorers_files.file_renamed",
+         Watch => GObject (Buffer));
 
       for Entity_Kind in Standout_Language_Entity'Range loop
          Text_Tag_Table.Add (Tags, Buffer.Syntax_Tags (Entity_Kind));
@@ -2710,11 +2848,10 @@ package body Src_Editor_Buffer is
          Buffer.Line_Terminator := LF;
       end if;
 
-      if not Recovering then
-         Set_Modified (Buffer, False);
+      if Recovering then
+         Buffer.Saved_Position := -1;
       else
-         Set_Modified (Buffer, True);
-         File_Edited (Buffer.Kernel, Filename);
+         Buffer.Saved_Position := 0;
       end if;
 
       Buffer.Inserting := False;
@@ -2908,8 +3045,18 @@ package body Src_Editor_Buffer is
       --  automatic saves.
 
       if Success
-        and then Filename = Buffer.Filename
+        and then not Internal
       then
+         if Buffer.Filename /= Filename then
+            --  If we "save as" the buffer, we emit a closed for the previous
+            --  name
+            if Buffer.Filename = VFS.No_File then
+               File_Closed (Buffer.Kernel, Buffer.File_Identifier);
+            end if;
+
+            Buffer.Filename := Filename;
+         end if;
+
          File_Saved (Buffer.Kernel, Filename);
 
          for J in Buffer.Editable_Lines'Range loop
@@ -2925,16 +3072,6 @@ package body Src_Editor_Buffer is
          Buffer.Saved_Position := Get_Position (Buffer.Queue);
          Buffer.Current_Status := Saved;
          Status_Changed (Buffer);
-
-      elsif Success
-        and then Filename /= Buffer.Filename
-        and then not Internal
-      then
-         if Buffer.Filename /= VFS.No_File then
-            File_Closed (Buffer.Kernel, Buffer.Filename);
-         end if;
-
-         File_Edited (Buffer.Kernel, Filename);
       end if;
 
       --  If the file mode was forced to writable, reset it to read-only.
@@ -2970,27 +3107,11 @@ package body Src_Editor_Buffer is
       Result            : Boolean;
       Original_Filename : VFS.Virtual_File := Buffer.Filename;
    begin
-      if not Internal then
-         if Name_Changed then
-            --  If we are saving to a real name an Untitled editor, emit
-            --  a "closed" signal for this editor.
-
-            if Buffer.Filename = VFS.No_File then
-               File_Closed (Buffer.Kernel, Buffer.File_Identifier);
-            end if;
-
-            Buffer.Filename := Filename;
-         end if;
-      end if;
 
       Internal_Save_To_File
         (Source_Buffer (Buffer), Filename, Internal, Success);
 
-      if not Internal then
-         if not Success then
-            return;
-         end if;
-
+      if Success and then not Internal then
          Buffer.Timestamp := File_Time_Stamp (Get_Filename (Buffer));
 
          if Name_Changed then
@@ -3010,13 +3131,15 @@ package body Src_Editor_Buffer is
                Get_Language_From_File
                  (Get_Language_Handler (Buffer.Kernel),
                   Buffer.Filename));
+
+            --  Emit the "filename_changed" signal
+            Buffer.Filename_Changed;
          end if;
 
          if Original_Filename /= VFS.No_File then
             Delete (Autosaved_File (Original_Filename), Result);
          end if;
 
-         Set_Modified (Buffer, False);
          Buffer.Modified_Auto := False;
       end if;
 
@@ -3110,7 +3233,9 @@ package body Src_Editor_Buffer is
          GNAT.Strings.Free (Buffer.Charset);
          Buffer.Charset := new String'(Charset);
 
-         if Get_Status (Buffer) = Modified then
+         if Get_Status (Buffer) = Modified
+           or else Get_Status (Buffer) = Unsaved
+         then
             Buttons := Message_Dialog
               (Msg => -("The character set has been modified."
                & ASCII.LF
@@ -4151,6 +4276,10 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record; Name : VFS.Virtual_File) is
    begin
       Buffer.Filename := Name;
+
+      if not Is_Regular_File (Name) then
+         Buffer.Saved_Position := -1;
+      end if;
    end Set_Filename;
 
    -------------------------
@@ -4372,7 +4501,10 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record'Class)
       return Boolean is
    begin
-      return Get_Status (Buffer) = Modified;
+      --  Only modified and non-empty unsaved buffers need to be saved.
+      return Get_Status (Buffer) = Modified
+        or else (Get_Status (Buffer) = Unsaved
+                   and then Get_Char_Count (Buffer) > 0);
    end Needs_To_Be_Saved;
 
    ----------------
@@ -4383,19 +4515,31 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record)
       return Status_Type is
    begin
+      --  If the buffer has an empty queue (no modifications performed),
+      --  and a saved position = 0 (loaded from a file) => unmodified
+      --  Else, if saved position = current queue position => saved
+      --  Else, if the queue is not empty => modified
+      --  Else => unsaved (queue empty, and not loaded from a file, not saved).
       if (Undo_Queue_Empty (Buffer.Queue)
-          and then Redo_Queue_Empty (Buffer.Queue))
+          and then Redo_Queue_Empty (Buffer.Queue)
+          and then Buffer.Saved_Position /= -1)
         or else
           (Buffer.Saved_Position = Get_Position (Buffer.Queue)
            and then Buffer.Saved_Position = 0)
       then
          return Unmodified;
+
+      --  Else
+      elsif Buffer.Saved_Position = Get_Position (Buffer.Queue) then
+         return Saved;
+
+      elsif not Undo_Queue_Empty (Buffer.Queue)
+        or else not Redo_Queue_Empty (Buffer.Queue)
+      then
+         return Modified;
+
       else
-         if Buffer.Saved_Position = Get_Position (Buffer.Queue) then
-            return Saved;
-         else
-            return Modified;
-         end if;
+         return Unsaved;
       end if;
    end Get_Status;
 
