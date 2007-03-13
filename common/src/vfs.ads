@@ -55,7 +55,7 @@ package VFS is
    type Virtual_File_Access is access constant Virtual_File;
 
    type File_Array is array (Natural range <>) of Virtual_File;
-   type File_Array_Access is access File_Array;
+   type File_Array_Access is access all File_Array;
    procedure Unchecked_Free (Arr : in out File_Array_Access);
 
    function Create (Full_Filename : UTF8_String) return Virtual_File;
