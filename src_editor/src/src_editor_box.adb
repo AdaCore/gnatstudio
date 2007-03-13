@@ -151,6 +151,12 @@ package body Src_Editor_Box is
       Box    : Source_Editor_Box);
    --  Reflect the change in buffer status
 
+   procedure Filename_Changed_Handler
+     (Buffer : access Glib.Object.GObject_Record'Class;
+      Params : Glib.Values.GValues;
+      Box    : Source_Editor_Box);
+   --  Reflect the change in buffer filename
+
    procedure On_Box_Destroy
      (Object : access Glib.Object.GObject_Record'Class;
       Params : Glib.Values.GValues;
@@ -550,25 +556,65 @@ package body Src_Editor_Box is
       case Get_Status (Box.Source_Buffer) is
          when Unmodified =>
             Set_Text (Box.Modified_Label, -"Unmodified");
-            Set_Icon (Child, File_Pixbuf);
-            Ref (File_Pixbuf);
+            if Child /= null then
+               Set_Icon (Child, File_Pixbuf);
+               Ref (File_Pixbuf);
+            end if;
+
+         when Unsaved =>
+            Set_Text (Box.Modified_Label, -"Unsaved");
+            if Child /= null then
+               Set_Icon (Child, File_Unsaved_Pixbuf);
+               Ref (File_Unsaved_Pixbuf);
+            end if;
 
          when Saved =>
             Set_Text (Box.Modified_Label, -"Saved");
-            Set_Icon (Child, File_Pixbuf);
-            Ref (File_Pixbuf);
+            if Child /= null then
+               Set_Icon (Child, File_Pixbuf);
+               Ref (File_Pixbuf);
+            end if;
 
          when Modified =>
             Set_Text (Box.Modified_Label, -"Modified");
-            Set_Icon (Child, File_Modified_Pixbuf);
-            Ref (File_Modified_Pixbuf);
+            if Child /= null then
+               Set_Icon (Child, File_Modified_Pixbuf);
+               Ref (File_Modified_Pixbuf);
+            end if;
       end case;
 
       File_Status_Changed
         (Get_Kernel (Box),
          Get_Filename (Box.Source_Buffer),
          Get_Status (Box.Source_Buffer));
+   exception
+      when E : others =>
+         Trace (Exception_Handle, "Unexpected exception: " &
+                Ada.Exceptions.Exception_Information (E));
    end Status_Changed_Handler;
+
+   ------------------------------
+   -- Filename_Changed_Handler --
+   ------------------------------
+
+   procedure Filename_Changed_Handler
+     (Buffer : access Glib.Object.GObject_Record'Class;
+      Params : Glib.Values.GValues;
+      Box    : Source_Editor_Box)
+   is
+      pragma Unreferenced (Buffer, Params);
+      Child : constant MDI_Child := Find_Child (Box.Kernel, Box);
+   begin
+      --  Update the title
+      Set_Title
+        (Child,
+         Box.Source_Buffer.Get_Filename.Full_Name.all,
+         Box.Source_Buffer.Get_Filename.Base_Name);
+   exception
+      when E : others =>
+         Trace (Exception_Handle, "Unexpected exception: " &
+                Ada.Exceptions.Exception_Information (E));
+   end Filename_Changed_Handler;
 
    --------------------------------
    -- Buffer_Information_Handler --
@@ -914,6 +960,13 @@ package body Src_Editor_Box is
         (Box.Source_Buffer,
          "status_changed",
          Status_Changed_Handler'Access,
+         User_Data => Source_Editor_Box (Box),
+         After     => True);
+
+      Box.Status_Handler := Box_Callback.Connect
+        (Box.Source_Buffer,
+         "filename_changed",
+         Filename_Changed_Handler'Access,
          User_Data => Source_Editor_Box (Box),
          After     => True);
 
@@ -1759,7 +1812,7 @@ package body Src_Editor_Box is
       if Success then
          Set_Cursor_Location (Editor, 1, 1, Force_Focus);
          Set_Filename (Editor.Source_Buffer, Filename);
-         Set_Text (Editor.Modified_Label, -"Unmodified");
+         Editor.Source_Buffer.Status_Changed;
 
          if Read_Only_Set then
             Set_Writable (Editor, False);
@@ -1810,9 +1863,6 @@ package body Src_Editor_Box is
       Part          : Projects.Unit_Part;
 
       Buffer        : GNAT.Strings.String_Access;
-      Old_Name      : constant Virtual_File := Get_Filename (Editor);
-      Child         : constant MDI_Child := Find_MDI_Child
-        (Get_MDI (Get_Kernel (Editor)), Editor);
 
    begin
       --  Do not authorize saving a read-only file, unless we save it to
@@ -1944,24 +1994,6 @@ package body Src_Editor_Box is
             Save_To_File (Editor.Source_Buffer, Filename, Success);
          end if;
       end if;
-
-      if Success then
-         Set_Text (Editor.Modified_Label, -"Saved");
-      end if;
-
-      declare
-         New_Name : constant Virtual_File := Get_Filename (Editor);
-      begin
-         --  Update the title, in case "save as..." was used, or a new file is
-         --  created
-
-         if Old_Name /= New_Name then
-            Set_Title
-              (Child,
-               Full_Name (New_Name).all,
-               Base_Name (New_Name));
-         end if;
-      end;
    end Save_To_File;
 
    --------------------------------
