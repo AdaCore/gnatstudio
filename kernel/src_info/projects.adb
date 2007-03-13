@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2006                      --
+--                      Copyright (C) 2002-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -2479,6 +2479,34 @@ package body Projects is
       end loop;
 
       return Values;
+   end Enum_Values_Of;
+
+   --------------------
+   -- Enum_Values_Of --
+   --------------------
+
+   function Enum_Values_Of
+     (Var : Scenario_Variable; Reg : Abstract_Registry'Class)
+      return GNAT.Strings.String_List
+   is
+      use String_List_Utils.String_List;
+
+      List : String_List_Utils.String_List.List :=
+        Enum_Values_Of (Var, Reg);
+      Result : GNAT.Strings.String_List (1 .. Length (List));
+      It     : String_List_Utils.String_List.List_Node := First (List);
+      Index  : Integer := 1;
+   begin
+      while It /= String_List_Utils.String_List.Null_Node loop
+         Result (Index) := new String'(Data (It));
+
+         Index := Index + 1;
+         It := Next (It);
+      end loop;
+
+      Free (List);
+
+      return Result;
    end Enum_Values_Of;
 
    ----------------
