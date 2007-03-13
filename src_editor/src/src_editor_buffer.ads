@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
+--                      Copyright (C) 2001-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -470,6 +470,10 @@ package Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record;
       Name   : VFS.Virtual_File);
    --  Set the name of the file associated with Buffer to Name
+
+   procedure Filename_Changed
+     (Buffer : access Source_Buffer_Record'Class);
+   --  Emit the "filename_changed" signal
 
    function Get_File_Identifier
      (Buffer : access Source_Buffer_Record) return VFS.Virtual_File;
