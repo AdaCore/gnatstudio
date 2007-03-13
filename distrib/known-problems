@@ -12,3 +12,11 @@ Known Problems fixed in GPS 4.2.0
               indicator in the top-right corner show a busy state while the
               process is running.
   Workaround: Refer to the Task Manager to determine activity status of GPS.
+
+- DB25-010 Symbols not loaded when initializing cross debugger
+  Problem:    When using GPS in a remote debugging configuration (ie, with the
+              debugger running on a machine other than the executable being
+              debugged) other than VxWorks environments, the underlying
+              debugger does not load the debug symbols.
+  Workaround: Load the symbols manually using the appropriate "file", "target"
+              and "load" commands in the debugger console.
