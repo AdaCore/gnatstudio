@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                     Copyright (C) 2001-2007                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -69,6 +69,7 @@ package Src_Editor_Module is
 
    File_Pixbuf               : Gdk_Pixbuf := Null_Pixbuf;
    File_Modified_Pixbuf      : Gdk_Pixbuf := Null_Pixbuf;
+   File_Unsaved_Pixbuf       : Gdk_Pixbuf := Null_Pixbuf;
 
    -----------------------
    -- Local subprograms --
