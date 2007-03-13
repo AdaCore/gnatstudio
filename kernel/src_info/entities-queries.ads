@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2006                       --
+--                     Copyright (C) 2003-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -126,7 +126,8 @@ package Entities.Queries is
    ----------------
 
    type Entity_Reference_Iterator is private;
-   type Entity_Reference_Iterator_Access is access Entity_Reference_Iterator;
+   type Entity_Reference_Iterator_Access is
+     access all Entity_Reference_Iterator;
 
    procedure Find_All_References
      (Iter                  : out Entity_Reference_Iterator;
@@ -267,7 +268,7 @@ package Entities.Queries is
    ---------------------------
 
    type Dependency_Iterator is private;
-   type Dependency_Iterator_Access is access Dependency_Iterator;
+   type Dependency_Iterator_Access is access all Dependency_Iterator;
 
    procedure Find_Ancestor_Dependencies
      (Iter                  : out Dependency_Iterator;
