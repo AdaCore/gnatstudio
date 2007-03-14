@@ -11,7 +11,7 @@ def delayed_exit (t):
    if len (Command.list()) == 0:
       exit()
 
-# Set the preferences.
+# Set the preferences. You can adjust them at your convenience.
 Preference ("Doc-Process-Body").set (True)
 Preference ("Doc-Xref-All").set (True)
 Preference ("Doc-Tagged").set (True)
