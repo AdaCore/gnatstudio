@@ -81,6 +81,14 @@ package body VFS_Module is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  See doc from inherited subprogram
 
+   type Create_Command is new Interactive_Command with record
+      Create_Dir : Boolean;
+   end record;
+   function Execute
+     (Command : access Create_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  See doc from inherited subprogram
+
    procedure Check_Prj
      (Project  : Projects.Project_Type;
       File_In  : VFS.Virtual_File;
@@ -618,6 +626,7 @@ package body VFS_Module is
       Push_State (Get_Kernel (Context.Context), Busy);
 
       Is_Dir := not Has_File_Information (Context.Context);
+
       if Is_Dir then
          Dir_File := VFS.Create (Dir);
          Ensure_Directory (Dir_File);
@@ -634,6 +643,82 @@ package body VFS_Module is
       end if;
 
       Pop_State (Get_Kernel (Context.Context));
+
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Create_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      Dir         : constant String := Directory_Information (Context.Context);
+      File        : VFS.Virtual_File;
+      Prj_Changed : Boolean;
+      Prj_List    : Unbounded_String;
+
+   begin
+      if Command.Create_Dir then
+         declare
+            Res : constant String :=
+                    GUI_Utils.Query_User
+                      (Get_Kernel (Context.Context).Get_Main_Window,
+                       (-"Please enter the new directory's name:"),
+                       Password_Mode => False,
+                       Urgent        => False,
+                       Default       => "");
+         begin
+            if Res /= "" then
+               File := Create (Dir & Res);
+               Make_Dir (File);
+            end if;
+         exception
+            when Directory_Error =>
+               Console.Insert
+                 (Get_Kernel (Context.Context),
+                  (-"Cannot create dir ") &
+                  File.Full_Name.all,
+                  Mode => Error);
+               return Commands.Failure;
+         end;
+      else
+         declare
+            Res : constant String :=
+                    GUI_Utils.Query_User
+                      (Get_Kernel (Context.Context).Get_Main_Window,
+                       (-"Please enter the new file's name:"),
+                       Password_Mode => False,
+                       Urgent        => False,
+                       Default       => "");
+            W_File : VFS.Writable_File;
+         begin
+            if Res /= "" then
+               File := Create (Dir & Res);
+               W_File := VFS.Write_File (File);
+               VFS.Close (W_File);
+            end if;
+         exception
+            when others =>
+               Console.Insert
+                 (Get_Kernel (Context.Context),
+                  (-"Cannot create file ") &
+                  File.Full_Name.all,
+                  Mode => Error);
+               return Commands.Failure;
+         end;
+      end if;
+
+      GPS.Kernel.File_Saved (Get_Kernel (Context.Context), File);
+      Check_Prj
+        (Get_Project (Get_Kernel (Context.Context)),
+         Create (Dir), Prj_Changed, Prj_List);
+
+      if Prj_Changed then
+         Recompute_View (Get_Kernel (Context.Context));
+      end if;
 
       return Commands.Success;
    end Execute;
@@ -704,32 +789,42 @@ package body VFS_Module is
          Module_Name => VFS_Module_Name,
          Priority    => Default_Priority);
 
+      Command := new Create_Command;
+      Create_Command (Command.all).Create_Dir := False;
+      Register_Contextual_Menu
+        (Kernel, "Create File",
+         Action => Command,
+         Filter => Lookup_Filter (Kernel, "File_View") and Dir_Filter,
+         Label  => "File operations/Create a new file");
+      Command := new Create_Command;
+      Create_Command (Command.all).Create_Dir := True;
+      Register_Contextual_Menu
+        (Kernel, "Create dir",
+         Action => Command,
+         Filter => Lookup_Filter (Kernel, "File_View") and Dir_Filter,
+         Label  => "File operations/Create a subdirectory");
       Command := new Rename_Command;
       Register_Contextual_Menu
         (Kernel, "Rename file",
          Action => Command,
          Filter => Explorer_Filter and File_Filter,
-         Label  => "File operations/Rename file %f",
-         Group  => 1);
+         Label  => "File operations/Rename file %f");
       Register_Contextual_Menu
         (Kernel, "Rename directory",
          Action => Command,
          Filter => Explorer_Filter and Dir_Filter,
-         Label  => "File operations/Rename directory",
-         Group  => 1);
+         Label  => "File operations/Rename directory");
       Command := new Delete_Command;
       Register_Contextual_Menu
         (Kernel, "Delete file",
          Action => Command,
          Filter => Explorer_Filter and File_Filter,
-         Label  => "File operations/Delete file %f",
-         Group  => 1);
+         Label  => "File operations/Delete file %f");
       Register_Contextual_Menu
         (Kernel, "Delete directory",
          Action => Command,
          Filter => Explorer_Filter and Dir_Filter,
-         Label  => "File operations/Delete directory recursively",
-         Group  => 1);
+         Label  => "File operations/Delete directory recursively");
 
       Register_Command
         (Kernel, "pwd",
