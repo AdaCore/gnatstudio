@@ -83,12 +83,12 @@ package body VFS_Module is
 
    procedure Check_Prj
      (Project  : Projects.Project_Type;
-      File_In  : String;
+      File_In  : VFS.Virtual_File;
       Success  : out Boolean;
       Prj_List : out Unbounded_String);
-   --  Check if the project contains File_In path.
+   --  Check if the project contains File_In directory or file.
    --  If Success, then Prj_List will contain a printable list of (sub)projects
-   --  containing File_In.
+   --  referencing File_In.
 
    --------------------------
    -- VFS_Command_Handler --
@@ -270,7 +270,7 @@ package body VFS_Module is
 
    procedure Check_Prj
      (Project  : Projects.Project_Type;
-      File_In  : String;
+      File_In  : VFS.Virtual_File;
       Success  : out Boolean;
       Prj_List : out Unbounded_String)
    is
@@ -278,6 +278,7 @@ package body VFS_Module is
                 Projects.Start (Project, Include_Extended => False);
       Prj   : Projects.Project_Type;
       First : Boolean := True;
+      Found : Boolean;
 
    begin
       Prj_List := To_Unbounded_String ("");
@@ -290,9 +291,44 @@ package body VFS_Module is
 
          Projects.Next (Iter);
 
-         if Projects.Editor.Contains_Path (Prj, File_In) then
-            Success := True;
+         Found := False;
 
+         --  Check directories.
+         if Is_Directory (File_In)
+           and then Projects.Editor.Contains_Path (Prj, File_In.Full_Name.all)
+         then
+            Success := True;
+            Found := True;
+
+         --  Check files
+         elsif not Is_Directory (File_In) then
+
+            --  First check if the file is a project file.
+            if File_In = Project_Path (Prj) then
+               Success := True;
+               Found := True;
+
+            --  Then check if the file is a source file.
+            else
+               declare
+                  Files   : File_Array_Access :=
+                              Projects.Get_Source_Files
+                                (Prj, Recursive => False);
+               begin
+                  for J in Files'Range loop
+                     if Files (J) = File_In then
+                        Success := True;
+                        Found := True;
+                        exit;
+                     end if;
+                  end loop;
+
+                  Unchecked_Free (Files);
+               end;
+            end if;
+         end if;
+
+         if Found then
             if not First then
                Prj_List := Prj_List & ", ";
             end if;
@@ -315,7 +351,7 @@ package body VFS_Module is
       Dir     : constant String := Directory_Information (Context.Context);
       Success : Boolean;
       Res     : Gtkada.Dialogs.Message_Dialog_Buttons;
-      File    : VFS.Virtual_File;
+      File    : VFS.Virtual_File := VFS.No_File;
       List    : Unbounded_String;
 
    begin
@@ -324,15 +360,16 @@ package body VFS_Module is
       Push_State (Get_Kernel (Context.Context), Busy);
 
       if Has_File_Information (Context.Context) then
+         File := File_Information (Context.Context);
+
          Res := Gtkada.Dialogs.Message_Dialog
            (-"Are you sure you want to delete " &
-            File_Information (Context.Context).Full_Name.all &
+            File.Full_Name.all &
             " ?",
             Gtkada.Dialogs.Confirmation,
             Gtkada.Dialogs.Button_Yes or Gtkada.Dialogs.Button_No);
 
          if Res = Gtkada.Dialogs.Button_Yes then
-            File := File_Information (Context.Context);
             Delete (File, Success);
 
             if not Success then
@@ -381,9 +418,18 @@ package body VFS_Module is
       --  Need also to update project/file views
       if Success then
          Get_Kernel (Context.Context).File_Deleted (File);
-         Check_Prj (Get_Project (Get_Kernel (Context.Context)),
-                    Dir, Success, List);
+         Check_Prj
+           (Get_Project (Get_Kernel (Context.Context)),
+            File, Success, List);
+
          if Success then
+            Res := Gtkada.Dialogs.Message_Dialog
+              (-"A file or directory belonging to the project(s) " &
+               To_String (List) &
+               (-" has been deleted.") & ASCII.LF &
+               (-"The project might require modifications."),
+               Gtkada.Dialogs.Warning,
+               Gtkada.Dialogs.Button_Yes);
             Reload_Project_If_Needed (Get_Kernel (Context.Context));
             Recompute_View (Get_Kernel (Context.Context));
          end if;
@@ -526,14 +572,15 @@ package body VFS_Module is
 
             Get_Kernel (Context.Context).File_Renamed (File_In, To_File);
 
-            --  We need to change the paths defined in the projects
-            if Is_Directory (File_In) then
-               --  First try to rename the paths in the projects.
-               Check_Prj
-                 (Get_Project (Get_Kernel (Context.Context)),
-                  File_In.Full_Name.all, Prj_Changed, Prj_List);
+            --  First check if file_in is defined in the projects.
+            Check_Prj
+              (Get_Project (Get_Kernel (Context.Context)),
+               File_In, Prj_Changed, Prj_List);
 
-               if Prj_Changed then
+            if Prj_Changed then
+               if Is_Directory (File_In) then
+                  --  We need to change the paths defined in the projects
+
                   Button := Gtkada.Dialogs.Message_Dialog
                     (-("The directory is referenced in the project(s) ") &
                      To_String (Prj_List) & ASCII.LF &
@@ -548,12 +595,15 @@ package body VFS_Module is
                   else
                      Prj_Changed := False;
                   end if;
+               else
+                  Button := Gtkada.Dialogs.Message_Dialog
+                    (-("The file is referenced in the project(s) ") &
+                     To_String (Prj_List) & ASCII.LF &
+                     (-"The project(s) might require manual modifications."),
+                     Gtkada.Dialogs.Warning,
+                     Button_OK);
+                  Prj_Changed := True;
                end if;
-            else
-               --  See if the file is in a path defined in an opened project
-               Check_Prj
-                 (Get_Project (Get_Kernel (Context.Context)),
-                  File_In.Dir.Full_Name.all, Prj_Changed, Prj_List);
             end if;
          end;
 
