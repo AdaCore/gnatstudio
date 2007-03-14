@@ -141,7 +141,7 @@ Project Handling
 * Supported Languages::
 * Scenarios and Configuration Variables::
 * Extending Projects::
-* The Project View::
+* Project View::
 * Disabling Project Edition Features::
 * The Project Menu::
 * The Project Wizard::
@@ -761,6 +761,9 @@ hierarchy by using the contextual menu @code{Show files from project only}.
 Each source file can also be explored as described in
 @ref{The Project View}. Drag and drop of files is also possible from the
 files view, to conveniently open a file.
+
+The contextual menu also allow you to create, rename and delete files and
+directories. Some of those operations are also available from the Project View.
 
 @c --------------------------------------------------------------------
 @node The Window View
@@ -3341,7 +3344,7 @@ how such projects can be created and maintained.
 * Supported Languages::
 * Scenarios and Configuration Variables::
 * Extending Projects::
-* The Project View::
+* Project View::
 * Disabling Project Edition Features::
 * The Project Menu::
 * The Project Wizard::
@@ -3828,7 +3831,7 @@ Note that open editors will still be editing the same file they were before,
 so you should open the new file if needed.
 
 @c -------------------------------------------------------------------
-@node The Project View
+@node Project View
 @section The Project View
 @cindex project view
 @c -------------------------------------------------------------------
@@ -3854,7 +3857,7 @@ project @file{a} through a @code{limited with} clause, then expanding
 the node for @file{a} will show @file{b}. In turn, expanding the node
 for @file{b} will show a node for @file{a}, and so on.
 
-The contextual menu in this projevt view provides a number of items to
+The contextual menu in this project view provides a number of items to
 modify the project hierarchy (what each project imports), as well as
 to visualize and modify the attributes for each projects (compilation
 switches, naming scheme, @dots{})
