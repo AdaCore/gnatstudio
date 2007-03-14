@@ -662,7 +662,11 @@ package body Project_Explorers_Files is
 
    procedure Initialize
      (Explorer : access Project_Explorer_Files_Record'Class;
-      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class) is
+      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      Deleted_Hook : File_Deleted_Hook;
+      Saved_Hook   : File_Saved_Hook;
+      Renamed_Hook : File_Renamed_Hook;
    begin
       Gtk.Scrolled_Window.Initialize (Explorer);
       Set_Policy (Explorer, Policy_Automatic, Policy_Automatic);
@@ -738,6 +742,25 @@ package body Project_Explorers_Files is
       Kernel_Callback.Connect
         (Explorer.File_Tree, "drag_data_received",
          Drag_Data_Received'Access, Kernel_Handle (Kernel));
+
+      Deleted_Hook := new File_Deleted_Hook_Record;
+      Deleted_Hook.View := Project_Explorer_Files (Explorer);
+      Add_Hook (Kernel, GPS.Kernel.File_Deleted_Hook,
+                Deleted_Hook,
+                Name  => "project_explorers_files.file_deleted",
+                Watch => GObject (Explorer));
+      Saved_Hook := new File_Saved_Hook_Record;
+      Saved_Hook.View := Project_Explorer_Files (Explorer);
+      Add_Hook (Kernel, GPS.Kernel.File_Saved_Hook,
+                Saved_Hook,
+                Name  => "project_explorers_files.file_saved",
+                Watch => GObject (Explorer));
+      Renamed_Hook := new File_Renamed_Hook_Record;
+      Renamed_Hook.View := Project_Explorer_Files (Explorer);
+      Add_Hook (Kernel, GPS.Kernel.File_Renamed_Hook,
+                Renamed_Hook,
+                Name  => "project_explorers_files.file_renamed",
+                Watch => GObject (Explorer));
    end Initialize;
 
    ------------------------------
@@ -1492,9 +1515,6 @@ package body Project_Explorers_Files is
       Files        : Project_Explorer_Files;
       Child        : MDI_Child;
       C2           : MDI_Explorer_Child;
-      Deleted_Hook : File_Deleted_Hook;
-      Saved_Hook   : File_Saved_Hook;
-      Renamed_Hook : File_Renamed_Hook;
    begin
       --  Start with the files view, so that if both are needed, the project
       --  view ends up on top of the files view
@@ -1512,25 +1532,6 @@ package body Project_Explorers_Files is
          Set_Title (C2, -"File View",  -"File View");
          Put (Get_MDI (Kernel), C2, Initial_Position => Position_Left);
          Child := MDI_Child (C2);
-
-         Deleted_Hook := new File_Deleted_Hook_Record;
-         Deleted_Hook.View := Files;
-         Add_Hook (Kernel, GPS.Kernel.File_Deleted_Hook,
-                   Deleted_Hook,
-                   Name  => "project_explorers_files.file_deleted",
-                   Watch => GObject (Files));
-         Saved_Hook := new File_Saved_Hook_Record;
-         Saved_Hook.View := Files;
-         Add_Hook (Kernel, GPS.Kernel.File_Saved_Hook,
-                   Saved_Hook,
-                   Name  => "project_explorers_files.file_saved",
-                   Watch => GObject (Files));
-         Renamed_Hook := new File_Renamed_Hook_Record;
-         Renamed_Hook.View := Files;
-         Add_Hook (Kernel, GPS.Kernel.File_Renamed_Hook,
-                   Renamed_Hook,
-                   Name  => "project_explorers_files.file_renamed",
-                   Watch => GObject (Files));
       end if;
 
       Raise_Child (Child);
