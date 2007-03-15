@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2006                       --
+--                     Copyright (C) 2000-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -258,6 +258,7 @@ package body Display_Items is
               (Item.Debugger.Debugger,
                Item.Name.all,
                Item.Entity,
+               Format      => Item.Format,
                Value_Found => Value_Found);
             Set_Valid (Item.Entity, Value_Found);
 
