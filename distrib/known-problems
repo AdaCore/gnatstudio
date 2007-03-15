@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.2.0
 
+- G315-003 Selecting a display option on debug datas has no effect.
+  Problem:    When a data is displayed in the debug data window, a contextual
+              menu allow to specify how to display it. This menu has no effect.
+  Workaround: Type "graph display `p /x the_var`" in the debugger console to
+              display the variable 'the_var' in hexadecimal. Use /o for octal,
+              /t for binary.
+
 - G306-007 Multiple dialogs appearing on key shortcuts.
   Problem:    Some dialogs, such as the "Continue Search?" dialog or the
               "Open File" dialog, might appear multiple times when launched
