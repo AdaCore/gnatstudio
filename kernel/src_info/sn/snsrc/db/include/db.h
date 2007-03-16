@@ -38,13 +38,6 @@
 
 #include <sys/types.h>
 #include <cdefs.h>
-
-#ifdef _WIN32
-#define u_int unsigned int
-#define u_long unsigned long
-#define u_char unsigned char
-#endif
-
 #include <limits.h>
 
 #ifdef __DBINTERFACE_PRIVATE
