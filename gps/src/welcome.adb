@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                     Copyright (C) 2001-2007                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -397,9 +397,9 @@ package body Welcome is
    --------------------
 
    procedure On_Browse_Load (Screen : access Gtk_Widget_Record'Class) is
-      S : constant Welcome_Screen := Welcome_Screen (Screen);
+      S            : constant Welcome_Screen := Welcome_Screen (Screen);
       Project_Name : constant String := Get_Text (Get_Entry (S.Open_Project));
-      Dir : Virtual_File;
+      Dir          : Virtual_File;
    begin
       Push_State (S.Kernel, Busy);
       if Project_Name = "" then
