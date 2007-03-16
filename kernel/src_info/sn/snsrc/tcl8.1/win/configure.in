@@ -100,7 +100,12 @@ fi
 # Tcl8.1 requires writable strings for gcc
 
 if test "$GCC" = "yes"; then
-   TCL_CFLAGS=-fwritable-strings
+   GCCVER=`$CC -dumpversion | cut -b1`
+   if test "$GCCVER" = "4"; then
+      TCL_CFLAGS=
+   else
+      TCL_CFLAGS=-fwritable-strings
+   fi
 else
    TCL_CFLAGS=
 fi
