@@ -653,7 +653,7 @@ Optionally you can also pass the full contents of an XML file, starting from the
   <shell_doc name="GPS.get_busy">
      <description>Return the "busy" state</description>
      <see_also>GPS.set_busy()</see_also>
-     <see_also>GPS.unset_busy()</see_also>  
+     <see_also>GPS.unset_busy()</see_also>
   </shell_doc>
 
   <shell_doc name="GPS.save_persistent_properties">
@@ -2712,6 +2712,11 @@ Access the various suggested fixes through the methods of the Codefix class</des
       <param name="self">The GPS.CodeAnalysis instance to build</param>
       <return>An instance of GPS.CodeAnalysis</return>
       <description>Creates an empty CodeAnalysis data structure. Data can be put in this structure by using one of the primitive operations.</description>
+      <example lang="python">
+          i = GPS.CodeAnalysis ()
+          i.add_all_gcov_project_info ()
+          i.list_lines_not_covered ()
+      </example>
   </shell_doc>
 
   <shell_doc name="GPS.CodeAnalysis.add_gcov_file_info">
@@ -2719,13 +2724,26 @@ Access the various suggested fixes through the methods of the Codefix class</des
       <param name="src">A GPS.File instance</param>
       <param name="cov">A GPS.File instance</param>
       <description>Adds coverage information provided by a .gcov file parsing. The data is read from the cov parameter, that should have been created from the specified src file.</description>
+      <see_also name="GPS.CodeAnalysis.add_all_gcov_project_info" />
       <see_also name="GPS.CodeAnalysis.add_gcov_project_info" />
+      <example lang="python">
+          i = GPS.CodeAnalysis ()
+          i.add_gcov_file_info (src=GPS.File ("source_file.adb"), cov=GPS.File ("source_file.adb.gcov"))
+      </example>
   </shell_doc>
 
   <shell_doc name="GPS.CodeAnalysis.add_gcov_project_info">
       <param name="self">An instance of GPS.CodeAnalysis</param>
       <param name="prj">A GPS.File instance</param>
       <description>Adds coverage information of every source files referenced in the given 'prj' gnat project file (.gpr).</description>
+      <see_also name="GPS.CodeAnalysis.add_all_gcov_project_info" />
+      <see_also name="GPS.CodeAnalysis.add_gcov_file_info" />
+  </shell_doc>
+
+    <shell_doc name="GPS.CodeAnalysis.add_all_gcov_project_info">
+      <param name="self">An instance of GPS.CodeAnalysis</param>
+      <description>Adds coverage information of every source files referenced in the current project loaded in GPS, and every imported projects.</description>
+      <see_also name="GPS.CodeAnalysis.add_gcov_project_info" />
       <see_also name="GPS.CodeAnalysis.add_gcov_file_info" />
   </shell_doc>
 
