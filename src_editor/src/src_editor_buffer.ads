@@ -112,7 +112,7 @@ package Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record;
       Line   : Editable_Line_Type;
       Column : Visible_Column_Type) return Character_Offset_Type;
-   --  Return the character position corresponding to the visible column.
+   --  Return the character position corresponding to the visible column
 
    procedure Load_File
      (Buffer          : access Source_Buffer_Record;
