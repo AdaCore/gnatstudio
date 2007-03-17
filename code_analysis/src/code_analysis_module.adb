@@ -522,8 +522,6 @@ package body Code_Analysis_Module is
       Property : Code_Analysis_Property_Record;
       Instance : Class_Instance;
       Context  : Selection_Context;
-      Prj_Inst : Class_Instance;
-      Prj_File : VFS.Virtual_File;
       Prj_Name : Project_Type;
       Prj_Node : Project_Access;
       Prj_Iter : Imported_Project_Iterator;
@@ -531,25 +529,8 @@ package body Code_Analysis_Module is
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
       Property := Code_Analysis_Property_Record
         (Get_Property (Instance, Code_Analysis_Cst_Str));
-      Name_Parameters (Data, (2 => Prj_File_Cst'Access));
-      Prj_Inst := Nth_Arg
-        (Data, 2, Get_File_Class (Code_Analysis_Module_ID.Kernel),
-         Default => No_Class_Instance, Allow_Null => True);
 
-      if Prj_Inst = No_Class_Instance then
-         Prj_File := VFS.No_File;
-      else
-         Prj_File := Get_Data (Prj_Inst);
-      end if;
-
-      if not Is_Regular_File (Prj_File) then
-         Set_Error_Msg (Data, "The name given for 'prj' file is wrong");
-         return;
-      end if;
-
-      Prj_Name  := Load_Or_Find
-        (Get_Registry (Code_Analysis_Module_ID.Kernel).all,
-         Locale_Full_Name (Prj_File));
+      Prj_Name := Get_Project (Code_Analysis_Module_ID.Kernel);
       Prj_Iter := Start (Prj_Name);
 
       loop
@@ -2049,10 +2030,8 @@ package body Code_Analysis_Module is
          Handler      => Create'Access);
       Register_Command
         (Kernel, "add_all_gcov_project_info",
-         Minimum_Args => 1,
-         Maximum_Args => 1,
          Class        => Code_Analysis_Class,
-         Handler      => Add_Gcov_Project_Info_From_Shell'Access);
+         Handler      => Add_All_Gcov_Project_Info_From_Shell'Access);
       Register_Command
         (Kernel, "add_gcov_project_info",
          Minimum_Args => 1,
