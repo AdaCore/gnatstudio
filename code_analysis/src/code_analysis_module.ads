@@ -210,6 +210,14 @@ private
    --  which deals with empty Instances (when there is no code_analysis entity
    --  present) by displaying an error message
 
+   procedure Append_Load_Data_For_All_Projects
+     (Cont_N_Inst : Context_And_Instance;
+      Menu        : access Gtk_Menu_Record'Class;
+      Kernel      : access Kernel_Handle_Record'Class);
+   --  Actually fills the given Menu with the "Load data for all projecs" entry
+   --  This entry try to load coverage data for root project and every imported
+   --  projects.
+
    procedure Append_File_Menu_Entries
      (Cont_N_Inst   : Context_And_Instance;
       Submenu       : access Gtk_Menu_Record'Class;
@@ -312,6 +320,18 @@ private
    --  Actually look for project source files, and corresponding .gcov files
    --  And when its possible, add every file coverage information to the
    --  Code_Analysis structure of given Project_Node
+
+   procedure Add_All_Gcov_Project_Info_From_Context
+     (Widget      : access Glib.Object.GObject_Record'Class;
+      Cont_N_Inst : Context_And_Instance);
+   --  Try to load gcov info for every file of the Root_Project and every
+   --  imported projects
+
+   procedure Add_All_Gcov_Project_Info_From_Shell
+     (Data    : in out Callback_Data'Class;
+      Command : String);
+   --  Try to load gcov info for every file of the Root_Project and every
+   --  imported projects
 
    procedure List_Lines_Not_Covered_From_Shell
      (Data    : in out Callback_Data'Class;
