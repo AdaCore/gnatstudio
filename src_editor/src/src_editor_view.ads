@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
+--                      Copyright (C) 2001-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -45,8 +45,7 @@ with Completion_Window;      use Completion_Window;
 
 package Src_Editor_View is
 
-   type Source_View_Record is new Gtkada_Text_View_Record
-     with private;
+   type Source_View_Record is new Gtkada_Text_View_Record with private;
    type Source_View is access all Source_View_Record'Class;
 
    procedure Gtk_New
@@ -113,7 +112,7 @@ package Src_Editor_View is
    --  and Out_Of_Bounds is set to True.
 
    procedure Delete (View : access Source_View_Record);
-   --  Free memory associated to View.
+   --  Free memory associated to View
 
    procedure Set_Synchronized_Editor
      (View  : access Source_View_Record;
@@ -131,20 +130,18 @@ package Src_Editor_View is
    procedure Set_Child
      (View  : access Source_View_Record;
       Child : GPS.Kernel.MDI.GPS_MDI_Child);
-   --  Inform View that it is being contained in Child.
+   --  Inform View that it is being contained in Child
 
-   procedure Acquire_Focus
-     (View : access Source_View_Record);
+   procedure Acquire_Focus (View : access Source_View_Record);
    --  Get the MDI focus on the view
 
-   procedure Save_Cursor_Position
-     (View : access Source_View_Record'Class);
+   procedure Save_Cursor_Position (View : access Source_View_Record'Class);
    --  Save the cursor position
 
    procedure Get_Cursor_Position
      (View : access Source_View_Record'Class;
       Iter : out Gtk.Text_Iter.Gtk_Text_Iter);
-   --  Return the cursor location in that view.
+   --  Return the cursor location in that view
 
    procedure Start_Completion
      (View : access Source_View_Record'Class;
@@ -154,21 +151,19 @@ package Src_Editor_View is
 
    function In_Completion
      (View : access Source_View_Record'Class) return Boolean;
-   --  Return whether the view is currently completing.
+   --  Return whether the view is currently completing
 
    procedure Stop_Selection_Drag (View : access Source_View_Record'Class);
    --  Stop the selection drag if it's currently in done
 
 private
 
-   type Source_View_Record is
-     new Gtkada_Text_View_Record
-   with record
+   type Source_View_Record is new Gtkada_Text_View_Record with record
       Scroll              : Gtk.Scrolled_Window.Gtk_Scrolled_Window := null;
-      --  The Gtk_Scrolled_Window that contains the source view.
+      --  The Gtk_Scrolled_Window that contains the source view
 
       Area                : Gtk.Drawing_Area.Gtk_Drawing_Area;
-      --  The drawing area used for the speed column.
+      --  The drawing area used for the speed column
 
       Kernel              : GPS.Kernel.Kernel_Handle;
       Saved_Cursor_Mark   : Gtk_Text_Mark;
@@ -194,7 +189,7 @@ private
       Connect_Expose_Id : Gtk.Main.Idle_Handler_Id := 0;
       --  Handler ID for the Connect_Expose idle callback
       Connect_Expose_Registered : Boolean := False;
-      --  Whether the Connect_Expose idle callback has been registered.
+      --  Whether the Connect_Expose idle callback has been registered
 
       Idle_Redraw_Id : Gtk.Main.Idle_Handler_Id := 0;
       --  Handler ID for Idle redraw of the side columns
@@ -252,16 +247,16 @@ private
       --  Stores a copy of the last button press event for button 1
 
       Cursor_Position      : Gdouble := Gdouble'Last;
-      --  Stores the cursor position relative to the screen.
+      --  Stores the cursor position relative to the screen
 
       Child                : GPS.Kernel.MDI.GPS_MDI_Child := null;
-      --  The child that contains Editor.
+      --  The child that contains Editor
 
       In_Completion        : Boolean := False;
-      --  Whether we are in an autocompletion loop.
+      --  Whether we are in an autocompletion loop
 
       Completion_Window    : Completion_Window_Access;
-      --  The current completion window.
+      --  The current completion window
    end record;
 
 end Src_Editor_View;

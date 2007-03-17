@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                    Copyright (C) 2003-2004                        --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2007                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,10 +26,10 @@ with Commands.Interactive; use Commands.Interactive;
 
 package Src_Editor_Buffer.Buffer_Commands is
 
-   type Jump_To_Delimiter_Command is new Interactive_Command
-      with record
-         Kernel : GPS.Kernel.Kernel_Handle;
-      end record;
+   type Jump_To_Delimiter_Command is new Interactive_Command with record
+      Kernel : GPS.Kernel.Kernel_Handle;
+   end record;
+
    function Execute
      (Command : access Jump_To_Delimiter_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;

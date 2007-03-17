@@ -28,6 +28,9 @@
 with Ada.Unchecked_Deallocation;
 with Ada.Calendar;
 with System;
+
+with GNAT.Strings;
+
 with Gdk.GC;                    use Gdk.GC;
 with Glib;                      use Glib;
 with Gtk;
@@ -46,12 +49,10 @@ with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
 with Language;
 with Src_Highlighting;
 with VFS;
-with GNAT.Strings;
 
 package Src_Editor_Buffer is
 
-   type Source_Buffer_Record is new Gtkada_Text_Buffer_Record
-     with private;
+   type Source_Buffer_Record is new Gtkada_Text_Buffer_Record with private;
    type Source_Buffer is access all Source_Buffer_Record'Class;
 
    procedure Gtk_New
@@ -203,7 +204,7 @@ package Src_Editor_Buffer is
       Line   : Editable_Line_Type;
       Column : Visible_Column_Type) return Boolean;
    pragma Inline (Is_Valid_Position);
-   --  Same as above.
+   --  Same as above
 
    procedure Set_Cursor_Position
      (Buffer : access Source_Buffer_Record;
@@ -318,7 +319,7 @@ package Src_Editor_Buffer is
       Length       : Integer;
       End_Line     : out Editable_Line_Type;
       End_Column   : out Character_Offset_Type);
-   --  Return the position Length characters after Start_Line/Start_Column.
+   --  Return the position Length characters after Start_Line/Start_Column
 
    procedure Insert
      (Buffer      : access Source_Buffer_Record;
@@ -380,7 +381,7 @@ package Src_Editor_Buffer is
       Cursor_Iter  : Gtk.Text_Iter.Gtk_Text_Iter;
       Bound_Iter   : Gtk.Text_Iter.Gtk_Text_Iter);
    --  Select the region between the two iterators, and leave the cursor on
-   --  Cursor_Iter
+   --  Cursor_Iter.
 
    procedure Select_Region
      (Buffer       : access Source_Buffer_Record;
@@ -399,7 +400,7 @@ package Src_Editor_Buffer is
       Start_Column : Character_Offset_Type;
       End_Line     : Editable_Line_Type;
       End_Column   : Character_Offset_Type);
-   --  Select the given region.
+   --  Select the given region
 
    procedure Select_Region
      (Buffer       : access Source_Buffer_Record;
@@ -407,7 +408,7 @@ package Src_Editor_Buffer is
       Start_Column : Visible_Column_Type;
       End_Line     : Editable_Line_Type;
       End_Column   : Visible_Column_Type);
-   --  Same as above, working with user columns.
+   --  Same as above, working with user columns
 
    procedure External_End_Action (Buffer : access Source_Buffer_Record);
    --  This procedure should be called every time that an external
@@ -547,17 +548,17 @@ package Src_Editor_Buffer is
 
    type Constructs_State_Type is
      (Not_Parsed,
-      --  The constructs are not parsed.
+      --  The constructs are not parsed
 
       Approximate,
-      --  The buffer has changed since the previous constructs computation.
+      --  The buffer has changed since the previous constructs computation
 
       Line_Exact,
       --  The buffer has changed since the previous constructs computation,
       --  but no lines have been added or removed.
 
       Exact
-      --  The constructs match the contents of the buffer.
+      --  The constructs match the contents of the buffer
      );
    --  Describes the state of constructs cached in the editor.
    --  Note: the implementation relies on this type being ordered from least
@@ -573,7 +574,7 @@ package Src_Editor_Buffer is
 
    function Get_Constructs_State
      (Buffer : access Source_Buffer_Record) return Constructs_State_Type;
-   --  Return the state of cached constructs.
+   --  Return the state of cached constructs
 
    -----------------------
    -- Extra Information --
@@ -729,7 +730,7 @@ package Src_Editor_Buffer is
 
    function Has_Block_Information
      (Editor : access Source_Buffer_Record) return Boolean;
-   --  Returh whether the buffer has relevant block information.
+   --  Returh whether the buffer has relevant block information
 
    type Src_Editor_Action_Context is new GPS.Kernel.Action_Filter_Record
       with null record;
@@ -794,7 +795,7 @@ package Src_Editor_Buffer is
      (Buffer     : access Source_Buffer_Record'Class;
       Start_Line : Editable_Line_Type;
       End_Line   : Editable_Line_Type) return GNAT.Strings.String_Access;
-   --  Return the text from Start_Line to End_Line, included.
+   --  Return the text from Start_Line to End_Line, included
 
    function Get_Editable_Line
      (Buffer : access Source_Buffer_Record;
@@ -827,11 +828,11 @@ package Src_Editor_Buffer is
 
    function In_Destruction_Is_Set
      (Buffer : access Source_Buffer_Record'Class) return Boolean;
-   --  Similar to Gtk.Object.In_Destruction_Is_Set.
+   --  Similar to Gtk.Object.In_Destruction_Is_Set
 
    function Get_Command_Queue
      (Buffer : access Source_Buffer_Record'Class) return Command_Queue;
-   --  Return the command queue associated to Buffer.
+   --  Return the command queue associated to Buffer
 
    procedure Prevent_CR_Insertion
      (Buffer  : access Source_Buffer_Record'Class;
@@ -895,7 +896,7 @@ private
 
    procedure Buffer_Information_Changed
      (Buffer : access Source_Buffer_Record'Class);
-   --  Emit the "buffer_information_changed" signal.
+   --  Emit the "buffer_information_changed" signal
 
    procedure Register_Edit_Timeout
      (Buffer : access Source_Buffer_Record'Class);
@@ -930,11 +931,11 @@ private
    procedure Create_Side_Info
      (Buffer : access Source_Buffer_Record;
       Line   : Editable_Line_Type);
-   --  Create blank Side_Info_Data.
+   --  Create blank Side_Info_Data
 
    type Line_Data_Record is record
       Editable_Line      : Editable_Line_Type;
-      --  The line in the real buffer.
+      --  The line in the real buffer
 
       --  The following corresponds to line highlighting. This is the category
       --  to use for highlighting. We cannot store the GC directly, since GPS
@@ -961,7 +962,7 @@ private
       --  ??? Should be part of the highlight category, since otherwise we do
       --  not know for sure what category this applies to if the line is
       --  associated with multiple categories. Might have conflict with the use
-      --  of Mark_In_Speedbar in the category, though
+      --  of Mark_In_Speedbar in the category, though.
    end record;
 
    New_Line_Data : constant Line_Data_Record :=
@@ -1054,14 +1055,14 @@ private
       --  The current editor command. Belongs to Queue, defined above
 
       Current_Status  : Status_Type := Unmodified;
-      --  The current buffer status.
+      --  The current buffer status
 
       Timestamp : Ada.Calendar.Time := VFS.No_Time;
       --  Timestamp of the file the last time it was checked. It it used to
       --  detect cases where the file was edited by an external editor.
 
       Number_Of_Views : Integer := 0;
-      --  The number of objects viewing the buffer.
+      --  The number of objects viewing the buffer
 
       Modified_Auto : Boolean := False;
       --  Whether the buffer has been modified since last auto save
@@ -1080,7 +1081,7 @@ private
 
       Start_Delimiters_Highlight : Gtk.Text_Mark.Gtk_Text_Mark;
       End_Delimiters_Highlight   : Gtk.Text_Mark.Gtk_Text_Mark;
-      --  Bounds for the parenthesis highlighting.
+      --  Bounds for the parenthesis highlighting
 
       Controls_Set : Boolean := False;
       --  Whether the Queue is currently connected to the
@@ -1110,10 +1111,10 @@ private
       --  highlighting, indentation, collapsing, etc.
 
       Original_Lines_Number : Buffer_Line_Type := 1;
-      --  The number of lines in the file on disk.
+      --  The number of lines in the file on disk
 
       Total_Column_Width : Natural := 0;
-      --  Width of the Left Window, in pixels.
+      --  Width of the Left Window, in pixels
 
       Line_Numbers_Width : Natural := 0;
       --  Width allocated to line numbers in the Left Window, in pixels
@@ -1214,7 +1215,7 @@ private
 
       Explicit_Writable_Set : Boolean := False;
       --  Whether the user has manually toggled the editor read-only
-      --  or writable
+      --  or writable.
 
       Prevent_CR_Insertion : Boolean := False;
       --  Whether the buffer should monitor every text inserted and strip it
