@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2006                       --
---                             AdaCore                               --
+--                      Copyright (C) 2002-2007                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -110,17 +110,17 @@ package body Navigation_Module is
      (Location_Marker_Array, Location_Marker_Array_Access);
 
    procedure Destroy (Id : in out Navigation_Module_Record);
-   --  Free memory associated to Id.
+   --  Free memory associated to Id
 
    procedure Refresh_Location_Buttons
      (Handle : access Kernel_Handle_Record'Class);
-   --  Refresh the active/inactive state of the location buttons.
+   --  Refresh the active/inactive state of the location buttons
 
    procedure On_Back
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    procedure On_Forward
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Callbacks for the back/forward buttons.
+   --  Callbacks for the back/forward buttons
 
    procedure On_Other_File
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -129,39 +129,39 @@ package body Navigation_Module is
 
    procedure On_Next_Result
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Callback for Navigate->Next Result menu.
+   --  Callback for Navigate->Next Result menu
 
    procedure On_Previous_Result
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Callback for Navigate->Previous Result menu.
+   --  Callback for Navigate->Previous Result menu
 
    procedure On_Start_Statement
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Callback for Navigate->Start Statement menu.
+   --  Callback for Navigate->Start Statement menu
 
    procedure On_End_Statement
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Callback for Navigate->End Statement menu.
+   --  Callback for Navigate->End Statement menu
 
    procedure On_Next_Subprogram
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Callback for Navigate->Next Subprogram menu.
+   --  Callback for Navigate->Next Subprogram menu
 
    procedure On_Previous_Subprogram
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Callback for Navigate->Previous Subprogram menu.
+   --  Callback for Navigate->Previous Subprogram menu
 
    procedure Command_Handler
      (Data    : in out Callback_Data'Class;
       Command : String);
-   --  Interactive command handler for the navigation module.
+   --  Interactive command handler for the navigation module
 
-   --  Interfaces to GPS commands used by some navigation procedures.
+   --  Interfaces to GPS commands used by some navigation procedures
 
    function Get_Current_Line
      (Kernel : Kernel_Handle;
       File   : Virtual_File) return Natural;
-   --  Returns current line in File.
+   --  Returns current line in File
 
    procedure Set_Current_Line
      (Kernel : Kernel_Handle;
@@ -174,25 +174,25 @@ package body Navigation_Module is
    function Get_Last_Line
      (Kernel : Kernel_Handle;
       File   : Virtual_File) return Natural;
-   --  Returns last line index.
+   --  Returns last line index
 
    function Get_Block_Start
      (Kernel : Kernel_Handle;
       File   : Virtual_File;
       Line   : Natural) return Natural;
-   --  Returns first line for block enclosing Line.
+   --  Returns first line for block enclosing Line
 
    function Get_Block_End
      (Kernel : Kernel_Handle;
       File   : Virtual_File;
       Line   : Natural) return Natural;
-   --  Returns last line for block enclosing Line.
+   --  Returns last line for block enclosing Line
 
    function Get_Block_Type
      (Kernel : Kernel_Handle;
       File   : Virtual_File;
       Line   : Natural) return Language_Category;
-   --  Returns type for block enclosing Line.
+   --  Returns type for block enclosing Line
 
    procedure On_Marker_Added_In_History
      (Kernel : access Kernel_Handle_Record'Class;
@@ -210,7 +210,7 @@ package body Navigation_Module is
      (Kernel    : access Kernel_Handle_Record'Class;
       Move_Back : Boolean);
    --  Move backward or forward in the list of markers. The effect is
-   --  immediately visible in the GPS interface
+   --  immediately visible in the GPS interface.
 
    procedure Go_To_Current_Marker (Kernel : access Kernel_Handle_Record'Class);
    --  Go to the location pointed to by the current marker in the history
@@ -231,7 +231,8 @@ package body Navigation_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      D : constant Marker_Hooks_Args_Access := Marker_Hooks_Args_Access (Data);
+      D      : constant Marker_Hooks_Args_Access :=
+                 Marker_Hooks_Args_Access (Data);
       Module : constant Navigation_Module :=
                  Navigation_Module (Navigation_Module_ID);
    begin
@@ -243,6 +244,7 @@ package body Navigation_Module is
       end if;
 
       Module.Current_Marker := Module.Current_Marker + 1;
+
       if Module.Current_Marker > Module.Markers'Last then
          Destroy (Module.Markers (Module.Markers'First).all);
          Unchecked_Free (Module.Markers (Module.Markers'First));
@@ -250,6 +252,7 @@ package body Navigation_Module is
            Module.Markers (Module.Markers'First + 1 .. Module.Markers'Last);
          Module.Current_Marker := Module.Markers'Last;
       end if;
+
       Module.Markers (Module.Current_Marker) := Location_Marker (D.Marker);
       Module.Last_Marker := Module.Current_Marker;
       Refresh_Location_Buttons (Kernel);
@@ -669,12 +672,10 @@ package body Navigation_Module is
    is
       pragma Unreferenced (Widget);
 
-      Context : constant Selection_Context :=
-                  Get_Current_Context (Kernel);
-
+      Context : constant Selection_Context := Get_Current_Context (Kernel);
       File    : Virtual_File;
-      Line    : Natural;           -- Current line being processed.
-      B_Start : Natural;           -- Block's first line.
+      Line    : Natural;           -- Current line being processed
+      B_Start : Natural;           -- Block's first line
       B_Type  : Language_Category; -- Block's category
 
    begin
@@ -692,7 +693,21 @@ package body Navigation_Module is
             B_Start := Get_Block_Start (Kernel, File, Line);
 
             if B_Start /= 0 then
-               Set_Current_Line (Kernel, File, B_Start);
+               if B_Start /= Line then
+                  Set_Current_Line (Kernel, File, B_Start);
+               else
+                  --  We are already at the start of the block, look for
+                  --  enclosing block.
+                  declare
+                     EB_Start : Natural;
+                  begin
+                     EB_Start := Get_Block_Start (Kernel, File, Line - 1);
+
+                     if EB_Start /= 0 then
+                        Set_Current_Line (Kernel, File, EB_Start);
+                     end if;
+                  end;
+               end if;
             end if;
          end if;
       end if;
@@ -712,12 +727,10 @@ package body Navigation_Module is
    is
       pragma Unreferenced (Widget);
 
-      Context : constant Selection_Context :=
-                  Get_Current_Context (Kernel);
-
+      Context : constant Selection_Context := Get_Current_Context (Kernel);
       File    : Virtual_File;
-      Line    : Natural;           -- Current line being processed.
-      B_End   : Natural;           -- Block's first line.
+      Line    : Natural;           -- Current line being processed
+      B_End   : Natural;           -- Block's first line
       B_Type  : Language_Category; -- Block's category
 
    begin
@@ -735,7 +748,21 @@ package body Navigation_Module is
             B_End := Get_Block_End (Kernel, File, Line);
 
             if B_End /= 0 then
-               Set_Current_Line (Kernel, File, B_End);
+               if B_End /= Line then
+                  Set_Current_Line (Kernel, File, B_End);
+               else
+                  --  We are already at the end of the block, look for
+                  --  enclosing block.
+                  declare
+                     EB_End : Natural;
+                  begin
+                     EB_End := Get_Block_End (Kernel, File, Line + 1);
+
+                     if EB_End /= 0 then
+                        Set_Current_Line (Kernel, File, EB_End);
+                     end if;
+                  end;
+               end if;
             end if;
          end if;
       end if;
@@ -755,13 +782,11 @@ package body Navigation_Module is
    is
       pragma Unreferenced (Widget);
 
-      Context   : constant Selection_Context :=
-                    Get_Current_Context (Kernel);
-
+      Context   : constant Selection_Context := Get_Current_Context (Kernel);
       File      : Virtual_File;
-      Line      : Natural;           -- Current line being processed.
-      Last_Line : Natural;           -- Last line in the buffer.
-      B_Start   : Natural;           -- Block's first line.
+      Line      : Natural;           -- Current line being processed
+      Last_Line : Natural;           -- Last line in the buffer
+      B_Start   : Natural;           -- Block's first line
       B_Type    : Language_Category; -- Block's category
 
    begin
@@ -783,7 +808,7 @@ package body Navigation_Module is
          end loop;
 
          if Line < Last_Line then
-            --  A block has been found, set cursor to its first line.
+            --  A block has been found, set cursor to its first line
             Set_Current_Line (Kernel, File, Line, Center => True);
          end if;
       end if;
@@ -825,13 +850,11 @@ package body Navigation_Module is
    is
       pragma Unreferenced (Widget);
 
-      Context : constant Selection_Context :=
-                  Get_Current_Context (Kernel);
-
+      Context : constant Selection_Context := Get_Current_Context (Kernel);
       File    : Virtual_File;
-      Line    : Natural;           -- Current line being processed.
-      B_Start : Natural;           -- Block's first line.
-      B_Type  : Language_Category; -- Block's category.
+      Line    : Natural;           -- Current line being processed
+      B_Start : Natural;           -- Block's first line
+      B_Type  : Language_Category; -- Block's category
 
    begin
       if Has_File_Information (Context)
@@ -851,7 +874,7 @@ package body Navigation_Module is
          end loop;
 
          if Line > 1 then
-            --  A block has been found, set cursor to its first line.
+            --  A block has been found, set cursor to its first line
             Set_Current_Line (Kernel, File, Line, Center => True);
          end if;
       end if;
@@ -892,8 +915,7 @@ package body Navigation_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Context : constant Selection_Context :=
-                  Get_Current_Context (Kernel);
+      Context : constant Selection_Context := Get_Current_Context (Kernel);
    begin
       Push_State (Kernel, Busy);
 
@@ -931,15 +953,15 @@ package body Navigation_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Toolbar   : constant Gtk_Toolbar := Get_Toolbar (Kernel);
-      Button    : Gtk_Tool_Button;
-      Space     : Gtk_Separator_Tool_Item;
-      Navigate  : constant String := "/_" & (-"Navigate");
-      Menu_Item : Gtk_Menu_Item;
+      Toolbar            : constant Gtk_Toolbar := Get_Toolbar (Kernel);
+      Navigate           : constant String := "/_" & (-"Navigate");
       Src_Action_Context : constant Action_Filter :=
                              Lookup_Filter (Kernel, "Source editor");
+      Menu_Item          : Gtk_Menu_Item;
+      Button             : Gtk_Tool_Button;
+      Space              : Gtk_Separator_Tool_Item;
       --  Memory is never freed, but this is needed for the whole life of
-      --  the application
+      --  the application.
    begin
       Navigation_Module_ID := new Navigation_Module_Record;
 
