@@ -369,8 +369,8 @@ package body GPS.Location_View is
    --  Internal version of Get_Or_Create_Location_View
 
    function Location_Hook
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Data      : access Hooks_Data'Class) return Boolean;
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class) return Boolean;
    --  Called when the user executes Location_Action_Hook
 
    function Load_Desktop
@@ -555,8 +555,7 @@ package body GPS.Location_View is
    -- Redraw_Totals --
    -------------------
 
-   procedure Redraw_Totals
-     (View : access Location_View_Record'Class) is
+   procedure Redraw_Totals (View : access Location_View_Record'Class) is
    begin
       if View.Idle_Registered then
          return;
@@ -799,7 +798,7 @@ package body GPS.Location_View is
    -- Expand_Category --
    ---------------------
 
-   procedure Expand_Category (Object   : access Gtk_Widget_Record'Class) is
+   procedure Expand_Category (Object : access Gtk_Widget_Record'Class) is
       View  : constant Location_View := Location_View (Object);
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_Tree_Model;
@@ -1651,10 +1650,10 @@ package body GPS.Location_View is
       Kernel : Kernel_Handle;
       Module : Abstract_Module_ID)
    is
-      Scrolled : Gtk_Scrolled_Window;
-      Success  : Boolean;
-
+      Scrolled  : Gtk_Scrolled_Window;
+      Success   : Boolean;
       File_Hook : File_Edited_Hook;
+
    begin
       Initialize_Hbox (View);
 
@@ -1808,8 +1807,8 @@ package body GPS.Location_View is
      (Kernel   : access Kernel_Handle_Record'Class;
       Category : String)
    is
-      View : constant Location_View :=
-               Get_Or_Create_Location_View (Kernel, Allow_Creation => False);
+      View  : constant Location_View :=
+                Get_Or_Create_Location_View (Kernel, Allow_Creation => False);
       Cat   : Gtk_Tree_Iter;
       Iter  : Gtk_Tree_Iter;
       Dummy : Boolean;
@@ -1855,7 +1854,7 @@ package body GPS.Location_View is
       File     : VFS.Virtual_File := VFS.No_File)
    is
       View : constant Location_View :=
-        Get_Or_Create_Location_View (Kernel, Allow_Creation => False);
+               Get_Or_Create_Location_View (Kernel, Allow_Creation => False);
    begin
       if View /= null then
          Remove_Category (View, Glib.Convert.Escape_Text (Category), File);
@@ -1871,9 +1870,9 @@ package body GPS.Location_View is
       Identifier : String;
       File       : VFS.Virtual_File)
    is
-      Iter       : Gtk_Tree_Iter;
-      File_Iter  : Gtk_Tree_Iter;
-      Dummy      : Boolean;
+      Iter      : Gtk_Tree_Iter;
+      File_Iter : Gtk_Tree_Iter;
+      Dummy     : Boolean;
    begin
       Get_Category_File
         (View,
@@ -2033,17 +2032,16 @@ package body GPS.Location_View is
       Message       : String;
       Action        : Action_Item)
    is
-      Category_Iter : Gtk_Tree_Iter;
-      File_Iter     : Gtk_Tree_Iter;
-      Created       : Boolean;
-      Line_Iter     : Gtk_Tree_Iter;
-      Children_Iter : Gtk_Tree_Iter;
-      Next_Iter     : Gtk_Tree_Iter;
-      Main_Line_Iter : Gtk_Tree_Iter;
-
-      Value         : GValue;
-      Old_Action    : Action_Item;
       Escaped_Message : constant String := Glib.Convert.Escape_Text (Message);
+      Category_Iter   : Gtk_Tree_Iter;
+      File_Iter       : Gtk_Tree_Iter;
+      Created         : Boolean;
+      Line_Iter       : Gtk_Tree_Iter;
+      Children_Iter   : Gtk_Tree_Iter;
+      Next_Iter       : Gtk_Tree_Iter;
+      Main_Line_Iter  : Gtk_Tree_Iter;
+      Value           : GValue;
+      Old_Action      : Action_Item;
 
       function Escaped_Compare (S1, S2 : String) return Boolean;
       --  Compare S1 and S2, abstracting any pango markup or escape sequence
@@ -2057,6 +2055,10 @@ package body GPS.Location_View is
 
          procedure Advance (J : in out Natural; S : String);
          --  Auxiliary function;
+
+         -------------
+         -- Advance --
+         -------------
 
          procedure Advance (J : in out Natural; S : String) is
          begin
@@ -2132,6 +2134,7 @@ package body GPS.Location_View is
          Main_Line_Iter := Line_Iter;
          Next_Iter := File_Iter;
          Next (View.Tree.Model, Next_Iter);
+
          while Line_Iter /= Null_Iter loop
             if Get_Int
               (View.Tree.Model, Main_Line_Iter, Line_Column) = Gint (Line)
@@ -2204,8 +2207,7 @@ package body GPS.Location_View is
 
    function Get_Or_Create_Location_View
      (Kernel         : access Kernel_Handle_Record'Class;
-      Allow_Creation : Boolean := True)
-      return Location_View
+      Allow_Creation : Boolean := True) return Location_View
    is
       Child : MDI_Child;
    begin
@@ -2256,8 +2258,8 @@ package body GPS.Location_View is
    -------------------
 
    function Location_Hook
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Data      : access Hooks_Data'Class) return Boolean
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class) return Boolean
    is
       View : constant Location_View :=
                Get_Or_Create_Location_View (Kernel, False);
@@ -2477,16 +2479,16 @@ package body GPS.Location_View is
       User   : Kernel_Handle) return Node_Ptr
    is
       pragma Unreferenced (User);
-      N               : Node_Ptr;
-      View            : Location_View;
-      Category, File  : Node_Ptr;
-      Category_Iter   : Gtk_Tree_Iter;
-      File_Iter       : Gtk_Tree_Iter;
-      Location_Iter   : Gtk_Tree_Iter;
+      N              : Node_Ptr;
+      View           : Location_View;
+      Category, File : Node_Ptr;
+      Category_Iter  : Gtk_Tree_Iter;
+      File_Iter      : Gtk_Tree_Iter;
+      Location_Iter  : Gtk_Tree_Iter;
 
       procedure Add_Location_Iter
-        (Iter     : Gtk_Tree_Iter;
-         Parent   : Node_Ptr);
+        (Iter   : Gtk_Tree_Iter;
+         Parent : Node_Ptr);
       --  Add the location and children recursively
 
       -----------------------
@@ -2494,8 +2496,8 @@ package body GPS.Location_View is
       -----------------------
 
       procedure Add_Location_Iter
-        (Iter     : Gtk_Tree_Iter;
-         Parent   : Node_Ptr)
+        (Iter   : Gtk_Tree_Iter;
+         Parent : Node_Ptr)
       is
          Child  : Gtk_Tree_Iter;
          Loc    : Node_Ptr;
@@ -2597,7 +2599,8 @@ package body GPS.Location_View is
    is
       pragma Unreferenced (Command);
       View : constant Location_View :=
-        Get_Or_Create_Location_View (Get_Kernel (Context.Context), False);
+               Get_Or_Create_Location_View
+                 (Get_Kernel (Context.Context), False);
       Iter : Gtk_Tree_Iter;
    begin
       loop
@@ -2860,11 +2863,11 @@ package body GPS.Location_View is
 
       File_Location : constant Pattern_Matcher := Get_File_Location;
       File_Index    : constant Integer :=
-        Get_Index (File_Pattern_Index, File_Index_In_Regexp);
+                        Get_Index (File_Pattern_Index, File_Index_In_Regexp);
       Line_Index    : constant Integer :=
-        Get_Index (Line_Pattern_Index, Line_Index_In_Regexp);
+                        Get_Index (Line_Pattern_Index, Line_Index_In_Regexp);
       Col_Index     : constant Integer :=
-        Get_Index (Column_Pattern_Index, Col_Index_In_Regexp);
+                        Get_Index (Column_Pattern_Index, Col_Index_In_Regexp);
 
       Msg_Index     : constant Integer :=
                         Get_Index (Message_Pattern_Index, Msg_Index_In_Regexp);
@@ -2873,15 +2876,14 @@ package body GPS.Location_View is
       Warning_Index : constant Integer :=
                         Get_Index
                           (Warning_Pattern_Index, Warning_Index_In_Regexp);
-      Matched    : Match_Array (0 .. Max);
-      Start      : Natural := Text'First;
-      Last       : Natural;
-      Real_Last  : Natural;
-      Line       : Natural := 1;
-      Column     : Visible_Column_Type := 1;
-
-      Length     : Natural := 0;
-      C          : Style_Access;
+      Matched       : Match_Array (0 .. Max);
+      Start         : Natural := Text'First;
+      Last          : Natural;
+      Real_Last     : Natural;
+      Line          : Natural := 1;
+      Column        : Visible_Column_Type := 1;
+      Length        : Natural := 0;
+      C             : Style_Access;
 
       -----------------
       -- Get_Message --

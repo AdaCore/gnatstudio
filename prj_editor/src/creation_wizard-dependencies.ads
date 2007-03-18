@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2004-2007                       --
---                             AdaCore                               --
+--                      Copyright (C) 2004-2007                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -36,7 +36,7 @@ package Creation_Wizard.Dependencies is
 
    type Project_Dependency_Wizard_Command
      is new Commands.Interactive.Interactive_Command with null record;
-   --  Opens and run a wizard for editing the dependencies for a project.
+   --  Opens and run a wizard for editing the dependencies for a project
 
 private
    function Execute
