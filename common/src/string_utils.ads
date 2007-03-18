@@ -245,7 +245,7 @@ package String_Utils is
    -------------------
 
    function Argument_List_To_String
-     (List : GNAT.Strings.String_List;
+     (List           : GNAT.Strings.String_List;
       Protect_Quotes : Boolean := True) return String;
    --  Concatenate all the elements in List into a single string.
    --    Argument_String_To_List (Argument_List_To_String (X)) = X
@@ -315,9 +315,7 @@ package String_Utils is
    --                    results in   "c%b" otherwise
 
    type Substitute_Callback is access
-     function
-       (Param  : String;
-        Quoted : Boolean) return String;
+     function (Param : String; Quoted : Boolean) return String;
    --  A callback for Substitute below. It is called once for each '%...'
    --  parameter found in the string. Param doesn't include the leading '%'
    --  sign.
@@ -354,8 +352,8 @@ package String_Utils is
    ----------------------------
 
    function Argument_List_To_Quoted_String
-     (Args  : GNAT.Strings.String_List;
-      Quote : Character := '"';
+     (Args            : GNAT.Strings.String_List;
+      Quote           : Character := '"';
       Quote_Backslash : Boolean := True) return String;
    --  Return the arguments as a full string.
    --  Arguments that contain spaces but do not already contain quotes

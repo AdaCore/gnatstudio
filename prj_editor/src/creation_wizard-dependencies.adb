@@ -18,26 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Location_View;         use GPS.Location_View;
-with Projects;                  use Projects;
-with Projects.Editor;           use Projects.Editor;
-with Projects.Registry;         use Projects.Registry;
-with Gtkada.Dialogs;            use Gtkada.Dialogs;
-with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GPS.Intl;                  use GPS.Intl;
-with Creation_Wizard.Full;      use Creation_Wizard, Creation_Wizard.Full;
-with Wizards;                   use Wizards;
-with VFS;                       use VFS;
-with File_Utils;                use File_Utils;
-with Commands.Interactive;      use Commands, Commands.Interactive;
+
 with Glib;                      use Glib;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
@@ -56,6 +39,25 @@ with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Vbutton_Box;           use Gtk.Vbutton_Box;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
+with Gtkada.Dialogs;            use Gtkada.Dialogs;
+with Gtkada.File_Selector;      use Gtkada.File_Selector;
+
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Location_View;         use GPS.Location_View;
+with Projects;                  use Projects;
+with Projects.Editor;           use Projects.Editor;
+with Projects.Registry;         use Projects.Registry;
+with GPS.Intl;                  use GPS.Intl;
+with Creation_Wizard.Full;      use Creation_Wizard, Creation_Wizard.Full;
+with Wizards;                   use Wizards;
+with VFS;                       use VFS;
+with File_Utils;                use File_Utils;
+with Commands.Interactive;      use Commands, Commands.Interactive;
 with GUI_Utils;                 use GUI_Utils;
 
 package body Creation_Wizard.Dependencies is
@@ -249,7 +251,7 @@ package body Creation_Wizard.Dependencies is
       Dir              : Dir_Type;
       File             : String (1 .. 1024);
       Last             : Integer;
-      Imported : Imported_Project_Iterator;
+      Imported         : Imported_Project_Iterator;
    begin
       Path_Iter := Start (Project_Path);
 
@@ -356,16 +358,16 @@ package body Creation_Wizard.Dependencies is
    ------------------------
 
    procedure Add_Single_Project
-     (Project               : Project_Type;
-      Imported              : Project_Type;
-      Model                 : access Gtk_Tree_Store_Record'Class;
-      Ignore_If_Imported    : Boolean := False;
-      Column_Project_Name   : Gint;
-      Column_Is_Limited     : Gint;
-      Column_Directory      : Gint;
+     (Project                   : Project_Type;
+      Imported                  : Project_Type;
+      Model                     : access Gtk_Tree_Store_Record'Class;
+      Ignore_If_Imported        : Boolean := False;
+      Column_Project_Name       : Gint;
+      Column_Is_Limited         : Gint;
+      Column_Directory          : Gint;
       Column_Can_Change_Limited : Gint;
-      Column_Full_Path      : Gint;
-      Column_Selected       : Gint := -1)
+      Column_Full_Path          : Gint;
+      Column_Selected           : Gint := -1)
    is
       Iter            : Gtk_Tree_Iter;
       Is_Imported     : Boolean;
@@ -774,7 +776,7 @@ package body Creation_Wizard.Dependencies is
       return Commands.Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Wiz  : Project_Wizard;
+      Wiz : Project_Wizard;
    begin
       Gtk_New (Wiz, Get_Kernel (Context.Context),
                Project           => Project_Information (Context.Context),

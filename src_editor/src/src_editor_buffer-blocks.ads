@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                        Copyright (C) 2003                         --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2007                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -27,6 +27,6 @@ package Src_Editor_Buffer.Blocks is
    procedure Calculate_Screen_Offset
      (Buffer : access Source_Buffer_Record'Class;
       Block  : in out Block_Record);
-   --  Return the screen position, after TAB expansion, of the block.
+   --  Return the screen position, after TAB expansion, of the block
 
 end Src_Editor_Buffer.Blocks;

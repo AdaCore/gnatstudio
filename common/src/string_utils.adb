@@ -489,6 +489,7 @@ package body String_Utils is
                   Index := Index + 2;
                   Str (S_Index) := '"';
                   S_Index := S_Index + 1;
+
                else
                   In_String := not In_String;
                   Index := Index + 1;
@@ -515,6 +516,7 @@ package body String_Utils is
 
                   S_Index := S_Index + 1;
                   Index := Index + 1;
+
                else
                   Index := Index + 1;  --  skips initial '''
                   Parse_Next_Char (Index, Char);
@@ -684,11 +686,11 @@ package body String_Utils is
      (S                 : String;
       Max_String_Length : Positive := 20) return String
    is
-      Half          : Integer;
       Ellipsis_UTF8 : constant UTF8_String :=
                         Character'Val (16#E2#) & Character'Val (16#80#)
                         & Character'Val (16#A6#);
       --  UTF8 encoding for the ellipsis character (8230 in Decimal)
+      Half          : Integer;
 
    begin
       if S'Length <= Max_String_Length then
@@ -1072,8 +1074,9 @@ package body String_Utils is
    -- Append --
    ------------
 
-   procedure Append (List  : in out GNAT.Strings.String_List_Access;
-                     List2 : GNAT.Strings.String_List)
+   procedure Append
+     (List  : in out GNAT.Strings.String_List_Access;
+      List2 : GNAT.Strings.String_List)
    is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (String_List, String_List_Access);
@@ -1151,6 +1154,7 @@ package body String_Utils is
             loop
                First := First + 1;
             end loop;
+
          else
             --  Special case for -, since it used for $2-, and *.
             while First <= Str'Last
@@ -1178,6 +1182,7 @@ package body String_Utils is
                   Result := Result & Sub;
                end if;
             end;
+
          else
             Result := Result & Str (Last .. First - 1);
          end if;
@@ -1332,8 +1337,7 @@ package body String_Utils is
    -- Safe_Value --
    ----------------
 
-   function Safe_Value
-     (S : String; Default : Integer := 1) return Integer is
+   function Safe_Value (S : String; Default : Integer := 1) return Integer is
    begin
       if S = "" then
          return Default;

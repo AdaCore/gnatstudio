@@ -19,12 +19,13 @@
 -----------------------------------------------------------------------
 
 with Glib.Properties.Creation; use Glib.Properties.Creation;
-with Default_Preferences;      use Default_Preferences;
+with Glib.Generic_Properties;
 with Gdk.Color;
 with Gdk.Types;
 with Pango.Font;
+
+with Default_Preferences;      use Default_Preferences;
 with Language;
-with Glib.Generic_Properties;
 
 package GPS.Kernel.Preferences is
 

@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
---                             AdaCore                               --
+--                      Copyright (C) 2001-2007                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,6 +26,8 @@
 --        - the current file name
 --        - the line and column number of the insert cursor
 --  </description>
+
+with Ada.Unchecked_Deallocation;
 
 with Glib;
 with Glib.Object;
@@ -51,8 +53,6 @@ with Src_Editor_View;
 with VFS;
 with Entities;
 with Commands.Interactive;  use Commands, Commands.Interactive;
-
-with Ada.Unchecked_Deallocation;
 
 package Src_Editor_Box is
 
@@ -346,8 +346,8 @@ package Src_Editor_Box is
      GPS.Kernel.Modules.Contextual_Menu_Label_Creator_Record
      with null record;
    function Get_Label
-     (Creator   : access Goto_Body_Menu_Label;
-      Context   : GPS.Kernel.Selection_Context) return String;
+     (Creator : access Goto_Body_Menu_Label;
+      Context : GPS.Kernel.Selection_Context) return String;
    --  Return the label to use for the contextual menu "Goto body"
 
    type Goto_Type_Command is new Interactive_Command with null record;
