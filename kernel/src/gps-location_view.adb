@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                             AdaCore                               --
+--                      Copyright (C) 2001-2007                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -131,29 +131,29 @@ package body GPS.Location_View is
    Style_Cat_Cst     : aliased constant String := "style_category";
    Warning_Cat_Cst   : aliased constant String := "warning_category";
 
-   Parse_Location_Parameters : constant Cst_Argument_List :=
-     (1  => Output_Cst'Access,
-      2  => Category_Cst'Access,
-      3  => Regexp_Cst'Access,
-      4  => File_Index_Cst'Access,
-      5  => Line_Index_Cst'Access,
-      6  => Col_Index_Cst'Access,
-      7  => Msg_Index_Cst'Access,
-      8  => Style_Index_Cst'Access,
-      9  => Warning_Index_Cst'Access,
-      10 => Highlight_Cat_Cst'Access,
-      11 => Style_Cat_Cst'Access,
-      12 => Warning_Cat_Cst'Access);
+   Parse_Location_Parameters  : constant Cst_Argument_List :=
+                                  (1  => Output_Cst'Access,
+                                   2  => Category_Cst'Access,
+                                   3  => Regexp_Cst'Access,
+                                   4  => File_Index_Cst'Access,
+                                   5  => Line_Index_Cst'Access,
+                                   6  => Col_Index_Cst'Access,
+                                   7  => Msg_Index_Cst'Access,
+                                   8  => Style_Index_Cst'Access,
+                                   9  => Warning_Index_Cst'Access,
+                                   10 => Highlight_Cat_Cst'Access,
+                                   11 => Style_Cat_Cst'Access,
+                                   12 => Warning_Cat_Cst'Access);
    Remove_Category_Parameters : constant Cst_Argument_List :=
-     (1 => Category_Cst'Access);
-   Locations_Add_Parameters : constant Cst_Argument_List :=
-     (1 => Category_Cst'Access,
-      2 => File_Cst'Access,
-      3 => Line_Cst'Access,
-      4 => Column_Cst'Access,
-      5 => Message_Cst'Access,
-      6 => Highlight_Cst'Access,
-      7 => Length_Cst'Access);
+                                  (1 => Category_Cst'Access);
+   Locations_Add_Parameters   : constant Cst_Argument_List :=
+                                  (1 => Category_Cst'Access,
+                                   2 => File_Cst'Access,
+                                   3 => Line_Cst'Access,
+                                   4 => Column_Cst'Access,
+                                   5 => Message_Cst'Access,
+                                   6 => Highlight_Cst'Access,
+                                   7 => Length_Cst'Access);
 
    -----------------
    -- Local types --
