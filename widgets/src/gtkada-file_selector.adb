@@ -112,8 +112,8 @@ package body Gtkada.File_Selector is
    pragma Import (C, NativeFileSelection, "NativeFileSelection");
 
    function NativeDirSelection
-     (Title       : String;
-      Basedir     : String) return Chars_Ptr;
+     (Title   : String;
+      Basedir : String) return Chars_Ptr;
    pragma Import (C, NativeDirSelection, "NativeDirSelection");
 
    procedure c_free (S : Chars_Ptr);
@@ -132,10 +132,10 @@ package body Gtkada.File_Selector is
    --  Gets the location from the combo
 
    function Columns_Types return GType_Array;
-   --  Return the types of the columns in the list.
+   --  Return the types of the columns in the list
 
    procedure Set_Column_Types (Tree : Gtk_Tree_View);
-   --  Sets the types of columns to be displayed in the tree_view.
+   --  Sets the types of columns to be displayed in the tree_view
 
    procedure Change_Directory
      (Win : access File_Selector_Window_Record'Class;
@@ -149,7 +149,7 @@ package body Gtkada.File_Selector is
 
    function Read_File
      (Win : File_Selector_Window_Access) return Boolean;
-   --  Read one file from the current directory and insert it in Files.
+   --  Read one file from the current directory and insert it in Files
 
    function Display_File
      (Win : File_Selector_Window_Access) return Boolean;
@@ -173,16 +173,16 @@ package body Gtkada.File_Selector is
    --  filter.
 
    procedure Use_File_Filter
-     (Filter    : access Regexp_Filter_Record;
-      Win       : access File_Selector_Window_Record'Class;
-      File      : Virtual_File;
-      State     : out File_State;
-      Pixbuf    : out Gdk_Pixbuf;
-      Text      : out GNAT.Strings.String_Access);
-   --  See spec for more details on this dispatching routine.
+     (Filter : access Regexp_Filter_Record;
+      Win    : access File_Selector_Window_Record'Class;
+      File   : Virtual_File;
+      State  : out File_State;
+      Pixbuf : out Gdk_Pixbuf;
+      Text   : out GNAT.Strings.String_Access);
+   --  See spec for more details on this dispatching routine
 
    procedure Set_Busy (W : Gtk_Window; Busy : Boolean);
-   --  Set/Reset the busy cursor on the specified window.
+   --  Set/Reset the busy cursor on the specified window
 
    ---------------
    -- Callbacks --
@@ -214,8 +214,7 @@ package body Gtkada.File_Selector is
    procedure Directory_Selected (Object : access Gtk_Widget_Record'Class);
    --  ???
 
-   procedure Filter_Selected
-     (Object : access Gtk_Widget_Record'Class);
+   procedure Filter_Selected (Object : access Gtk_Widget_Record'Class);
    --  ???
 
    procedure On_Location_Combo_Entry_Activate
@@ -264,11 +263,10 @@ package body Gtkada.File_Selector is
 
    procedure On_Display_Idle_Destroy
      (Win : in out File_Selector_Window_Access);
-   --  Callback used to destroy the display idle loop.
+   --  Callback used to destroy the display idle loop
 
-   procedure On_Read_Idle_Destroy
-     (Win : in out File_Selector_Window_Access);
-   --  Callback used to destroy the read idle loop.
+   procedure On_Read_Idle_Destroy (Win : in out File_Selector_Window_Access);
+   --  Callback used to destroy the read idle loop
 
    procedure Name_Selected (File : access Gtk_Widget_Record'Class);
    --  Called when a new file has been selected.
@@ -425,6 +423,7 @@ package body Gtkada.File_Selector is
         or else Get_Text (Dialog.Selection_Entry) = ""
       then
          return VFS.No_File;
+
       else
          declare
             Filename : constant String := Get_Text (Dialog.Selection_Entry);
@@ -772,16 +771,16 @@ package body Gtkada.File_Selector is
    ------------------
 
    function Display_File (Win : File_Selector_Window_Access) return Boolean is
-      Text        : String_Access;
-      State       : File_State;
-      Pixbuf      : Gdk_Pixbuf;
-      Iter        : Gtk_Tree_Iter := Null_Iter;
-      Color       : Gdk_Color := Null_Color;
+      Text   : String_Access;
+      State  : File_State;
+      Pixbuf : Gdk_Pixbuf;
+      Iter   : Gtk_Tree_Iter := Null_Iter;
+      Color  : Gdk_Color := Null_Color;
 
       procedure Internal
         (Tree, Iter : System.Address;
-         Col   : Gint;
-         Value : Gdk_Color);
+         Col        : Gint;
+         Value      : Gdk_Color);
       pragma Import (C, Internal, "ada_gtk_tree_store_set_ptr");
 
    begin
@@ -855,8 +854,8 @@ package body Gtkada.File_Selector is
    ---------------
 
    function Read_File (Win : File_Selector_Window_Access) return Boolean is
-      Prev   : File_List.List_Node;
-      Node   : File_List.List_Node;
+      Prev : File_List.List_Node;
+      Node : File_List.List_Node;
 
    begin
       if Win.Current_Directory = No_File
@@ -1094,7 +1093,7 @@ package body Gtkada.File_Selector is
      (Object : access Gtk_Widget_Record'Class)
    is
       Win : constant File_Selector_Window_Access :=
-        File_Selector_Window_Access (Get_Toplevel (Object));
+              File_Selector_Window_Access (Get_Toplevel (Object));
       S   : Virtual_File;
 
    begin
@@ -1129,9 +1128,9 @@ package body Gtkada.File_Selector is
      (Object : access Gtk_Widget_Record'Class)
    is
       Win : constant File_Selector_Window_Access :=
-        File_Selector_Window_Access (Get_Toplevel (Object));
-
+              File_Selector_Window_Access (Get_Toplevel (Object));
       H   : Virtual_File := Get_Home_Dir (Get_Host (Win.Current_Directory));
+
    begin
       if H /= No_File then
          Change_Directory
@@ -1157,7 +1156,7 @@ package body Gtkada.File_Selector is
       use type Node_List.Glist;
 
       Win : constant File_Selector_Window_Access :=
-        File_Selector_Window_Access (Get_Toplevel (Object));
+              File_Selector_Window_Access (Get_Toplevel (Object));
 
    begin
       Show_Parent (Win.Explorer_Tree);
@@ -1178,7 +1177,7 @@ package body Gtkada.File_Selector is
       use type Node_List.Glist;
 
       Win : constant File_Selector_Window_Access :=
-        File_Selector_Window_Access (Get_Toplevel (Object));
+              File_Selector_Window_Access (Get_Toplevel (Object));
 
    begin
       Refresh_Files (Win);
@@ -1196,7 +1195,7 @@ package body Gtkada.File_Selector is
      (Object : access Gtk_Widget_Record'Class)
    is
       Win : constant File_Selector_Window_Access :=
-        File_Selector_Window_Access (Get_Toplevel (Object));
+              File_Selector_Window_Access (Get_Toplevel (Object));
       S   : Virtual_File;
 
    begin
@@ -1231,8 +1230,8 @@ package body Gtkada.File_Selector is
 
    procedure Host_Selected (Object : access Gtk_Widget_Record'Class)
    is
-      Win : constant File_Selector_Window_Access :=
-        File_Selector_Window_Access (Object);
+      Win  : constant File_Selector_Window_Access :=
+               File_Selector_Window_Access (Object);
       Host : constant String := Get_Text (Get_Entry (Win.Hosts_Combo));
       Dir  : Virtual_File;
       Dead : Message_Dialog_Buttons;
@@ -1279,7 +1278,7 @@ package body Gtkada.File_Selector is
      (Object : access Gtk_Widget_Record'Class)
    is
       Win : constant File_Selector_Window_Access :=
-        File_Selector_Window_Access (Get_Toplevel (Object));
+              File_Selector_Window_Access (Get_Toplevel (Object));
    begin
       Change_Directory
         (Win, Get_Location (Win.Location_Combo));
@@ -1297,7 +1296,7 @@ package body Gtkada.File_Selector is
      (Object : access Gtk_Widget_Record'Class)
    is
       Win : constant File_Selector_Window_Access :=
-        File_Selector_Window_Access (Get_Toplevel (Object));
+              File_Selector_Window_Access (Get_Toplevel (Object));
    begin
       Refresh_Files (Win);
 
@@ -1314,7 +1313,7 @@ package body Gtkada.File_Selector is
      (Object : access Gtk_Widget_Record'Class)
    is
       Win : constant File_Selector_Window_Access :=
-        File_Selector_Window_Access (Get_Toplevel (Object));
+              File_Selector_Window_Access (Get_Toplevel (Object));
       S   : constant Virtual_File := Get_Location (Win.Location_Combo);
    begin
       if Is_Directory (S) then
@@ -1336,9 +1335,9 @@ package body Gtkada.File_Selector is
    is
       pragma Unreferenced (Params);
       Win : constant File_Selector_Window_Access :=
-        File_Selector_Window_Access (Object);
-
+              File_Selector_Window_Access (Object);
       Dir : constant Virtual_File := Get_Selection (Win.Explorer_Tree);
+
    begin
       if Dir /= No_File then
          Change_Directory (Win, Dir);
@@ -1354,8 +1353,8 @@ package body Gtkada.File_Selector is
    -------------------
 
    procedure Name_Selected (File : access Gtk_Widget_Record'Class) is
-      Win : constant File_Selector_Window_Access :=
-        File_Selector_Window_Access (File);
+      Win   : constant File_Selector_Window_Access :=
+                File_Selector_Window_Access (File);
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_Tree_Model;
    begin
@@ -1377,8 +1376,8 @@ package body Gtkada.File_Selector is
       Args   : Gtk_Args)
    is
       pragma Unreferenced (Args);
-      Win   : constant File_Selector_Window_Access :=
-        File_Selector_Window_Access (Get_Toplevel (Object));
+      Win : constant File_Selector_Window_Access :=
+              File_Selector_Window_Access (Get_Toplevel (Object));
    begin
       Name_Selected (Win);
       if Get_Text (Win.Selection_Entry) /= ""
@@ -1427,7 +1426,7 @@ package body Gtkada.File_Selector is
      (Object : access Gtk_Widget_Record'Class)
    is
       Win : constant File_Selector_Window_Access :=
-        File_Selector_Window_Access (Object);
+              File_Selector_Window_Access (Object);
    begin
       if Win.Selected_File /= null then
          Win.Selected_File.all := Get_Selection (Win);
@@ -1455,7 +1454,7 @@ package body Gtkada.File_Selector is
      (Object : access Gtk_Widget_Record'Class)
    is
       Win : constant File_Selector_Window_Access :=
-        File_Selector_Window_Access (Object);
+              File_Selector_Window_Access (Object);
    begin
       if Win /= null
         and then Win.Selection_Entry /= null
@@ -1480,7 +1479,7 @@ package body Gtkada.File_Selector is
      (Object : access Gtk_Widget_Record'Class)
    is
       Win : constant File_Selector_Window_Access :=
-        File_Selector_Window_Access (Get_Toplevel (Object));
+              File_Selector_Window_Access (Get_Toplevel (Object));
    begin
       Free (Win.Files);
       Free (Win.Filters);
@@ -1512,7 +1511,7 @@ package body Gtkada.File_Selector is
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
       Win   : constant File_Selector_Window_Access :=
-        File_Selector_Window_Access (Get_Toplevel (Object));
+                File_Selector_Window_Access (Get_Toplevel (Object));
       Event : constant Gdk_Event := To_Event (Params, 1);
       Iter  : Gtk_Tree_Iter;
 
@@ -1574,7 +1573,7 @@ package body Gtkada.File_Selector is
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
       Win   : constant File_Selector_Window_Access :=
-        File_Selector_Window_Access (Get_Toplevel (Object));
+                File_Selector_Window_Access (Get_Toplevel (Object));
       Event : constant Gdk_Event := To_Event (Params, 1);
 
       use Gdk.Types;
@@ -1603,13 +1602,12 @@ package body Gtkada.File_Selector is
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
       Win             : constant File_Selector_Window_Access :=
-        File_Selector_Window_Access (Get_Toplevel (Object));
-
-      Found           : Boolean := False;
+                          File_Selector_Window_Access (Get_Toplevel (Object));
       Event           : constant Gdk_Event := To_Event (Params, 1);
       S               : constant UTF8_String := Get_Text (Win.Selection_Entry);
       G               : constant String :=
-        Locale_From_UTF8 (Get_String (Event));
+                          Locale_From_UTF8 (Get_String (Event));
+      Found           : Boolean := False;
 
       First_Match     : Gtk_Tree_Iter := Null_Iter;
       --  The first column that completely matches S.
@@ -1846,10 +1844,10 @@ package body Gtkada.File_Selector is
    ----------------------
 
    procedure Set_Column_Types (Tree : Gtk_Tree_View) is
-      Col           : Gtk_Tree_View_Column;
-      Text_Rend     : Gtk_Cell_Renderer_Text;
-      Pixbuf_Rend   : Gtk_Cell_Renderer_Pixbuf;
-      Dummy         : Gint;
+      Col         : Gtk_Tree_View_Column;
+      Text_Rend   : Gtk_Cell_Renderer_Text;
+      Pixbuf_Rend : Gtk_Cell_Renderer_Pixbuf;
+      Dummy       : Gint;
       pragma Unreferenced (Dummy);
 
    begin
@@ -1891,22 +1889,21 @@ package body Gtkada.File_Selector is
    is
       pragma Suppress (All_Checks);
 
-      Toolbar1    : Gtk_Toolbar;
+      Toolbar1 : Gtk_Toolbar;
+      Label1   : Gtk_Label;
+      Item     : Gtk_List_Item;
 
-      Label1      : Gtk_Label;
-      Item        : Gtk_List_Item;
+      Hpaned1  : Gtk_Hpaned;
 
-      Hpaned1     : Gtk_Hpaned;
+      Hbox1    : Gtk_Hbox;
+      Hbox2    : Gtk_Hbox;
+      Hbox3    : Gtk_Hbox;
+      Hbox4    : Gtk_Hbox;
+      Hbox5    : Gtk_Hbox;
+      Hbox6    : Gtk_Hbox;
+      Hbox7    : Gtk_Hbox;
 
-      Hbox1       : Gtk_Hbox;
-      Hbox2       : Gtk_Hbox;
-      Hbox3       : Gtk_Hbox;
-      Hbox4       : Gtk_Hbox;
-      Hbox5       : Gtk_Hbox;
-      Hbox6       : Gtk_Hbox;
-      Hbox7       : Gtk_Hbox;
-
-      Success     : Boolean;
+      Success  : Boolean;
 
    begin
       Gtk.Dialog.Initialize (File_Selector_Window);
@@ -2029,6 +2026,7 @@ package body Gtkada.File_Selector is
             Gtk_New (Item, Locale_To_UTF8 (Get_Nickname (J)));
             Add (Get_List (File_Selector_Window.Hosts_Combo), Item);
          end loop;
+
          if Initial_Directory /= No_File
            and then not Is_Local (Initial_Directory)
          then

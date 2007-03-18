@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --               GtkAda - Ada95 binding for Gtk+/Gnome               --
 --                                                                   --
---                  Copyright (C) 2001-2006 AdaCore                  --
+--                  Copyright (C) 2001-2007 AdaCore                  --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -234,7 +234,7 @@ package Gtkada.File_Selector is
 
    type Filter_Show_All is new File_Filter_Record with null record;
    type Filter_Show_All_Access is access all Filter_Show_All;
-   --  This provides a basic filter that shows all files.
+   --  This provides a basic filter that shows all files
 
    -------------
    -- Dialogs --
@@ -298,86 +298,86 @@ private
    type VF_Access is access all VFS.Virtual_File;
 
    type File_Selector_Window_Record is new Gtk_Dialog_Record with record
-      Selected_File        : VF_Access;
+      Selected_File          : VF_Access;
       --  Contains the selected file upon close
       --  If the file is not furnished at initialize call, it is created.
 
-      Current_Directory    : VFS.Virtual_File := VFS.Create_From_Base ("");
+      Current_Directory      : VFS.Virtual_File := VFS.Create_From_Base ("");
       --  The directory that is currently being explored.
       --  Current_Directory must always be a Normalized path, ending with
       --  a directory separator.
 
-      Current_Host : String_Access;
+      Current_Host           : String_Access;
 
-      Files : File_List.List;
-      --  The list of files in the current directory.
+      Files                  : File_List.List;
+      --  The list of files in the current directory
 
-      Remaining_Files : File_List.List_Node;
+      Remaining_Files        : File_List.List_Node;
       --  The list of files that are in the current directory but not yet
       --  filtered nor shown in the file list.
       --  This list should never be allocated any memory explicitly, but
       --  should be a subset of Files.
 
-      Current_Filter : File_Filter;
-      --  The filter that is currently used for displaying files.
+      Current_Filter         : File_Filter;
+      --  The filter that is currently used for displaying files
 
-      Filters : Filter_List.List;
-      --  A list of all registered filters.
+      Filters                : Filter_List.List;
+      --  A list of all registered filters
 
-      Highlighted_Color : Gdk_Color := Null_Color;
-      Insensitive_Color : Gdk_Color := Null_Color;
+      Highlighted_Color      : Gdk_Color := Null_Color;
+      Insensitive_Color      : Gdk_Color := Null_Color;
 
       Moving_Through_History : Boolean := True;
-      --  Set to true in case we are navigating using the back/forward buttons.
+      --  Set to true in case we are navigating using the back/forward buttons
 
-      Own_Main_Loop : Boolean := False;
-      --  Whether the file selector is running in its own main loop or not.
+      Own_Main_Loop          : Boolean := False;
+      --  Whether the file selector is running in its own main loop or not
 
-      Read_Idle_Handler   : Idle_Handler_Id := 0;
-      --  Identifier for read idle loops.
+      Read_Idle_Handler      : Idle_Handler_Id := 0;
+      --  Identifier for read idle loops
 
       Display_Idle_Handler   : Idle_Handler_Id := 0;
-      --  Identifier for display idle loops.
+      --  Identifier for display idle loops
 
-      Home_Directory : VFS.Virtual_File := VFS.Get_Current_Dir;
+      Home_Directory         : VFS.Virtual_File := VFS.Get_Current_Dir;
 
-      Past_History : Simple_Stack;
-      Future_History : Simple_Stack;
-      Back_Button : Gtk_Button;
-      Forward_Button : Gtk_Button;
-      Home_Button : Gtk_Button;
+      Past_History           : Simple_Stack;
+      Future_History         : Simple_Stack;
+      Back_Button            : Gtk_Button;
+      Forward_Button         : Gtk_Button;
+      Home_Button            : Gtk_Button;
 
-      Up_Button : Gtk_Widget;
-      Up_Icon   : Gtk_Image;
+      Up_Button              : Gtk_Widget;
+      Up_Icon                : Gtk_Image;
 
-      Refresh_Button : Gtk_Widget;
-      Refresh_Icon   : Gtk_Image;
+      Refresh_Button         : Gtk_Widget;
+      Refresh_Icon           : Gtk_Image;
 
-      Hosts_Combo    : Gtkada_Combo;
+      Hosts_Combo            : Gtkada_Combo;
 
-      Location_Combo : Gtk_Combo;
-      Location_Combo_Entry : Gtk_Entry;
+      Location_Combo         : Gtk_Combo;
+      Location_Combo_Entry   : Gtk_Entry;
 
-      Explorer_Tree : Dir_Tree;
+      Explorer_Tree          : Dir_Tree;
 
-      Files_Scrolledwindow : Gtk_Scrolled_Window;
+      Files_Scrolledwindow   : Gtk_Scrolled_Window;
 
-      File_Tree  : Gtk_Tree_View;
-      File_Model : Gtk_Tree_Store;
+      File_Tree              : Gtk_Tree_View;
+      File_Model             : Gtk_Tree_Store;
 
-      File_Icon_Label : Gtk_Label;
-      File_Name_Label : Gtk_Label;
-      File_Text_Label : Gtk_Label;
+      File_Icon_Label        : Gtk_Label;
+      File_Name_Label        : Gtk_Label;
+      File_Text_Label        : Gtk_Label;
 
-      Filter_Combo : Gtk_Combo;
-      Filter_Combo_Entry : Gtk_Entry;
-      Selection_Entry : Gtk_Entry;
-      Ok_Button : Gtk_Button;
-      Cancel_Button : Gtk_Button;
+      Filter_Combo           : Gtk_Combo;
+      Filter_Combo_Entry     : Gtk_Entry;
+      Selection_Entry        : Gtk_Entry;
+      Ok_Button              : Gtk_Button;
+      Cancel_Button          : Gtk_Button;
 
-      History : Histories.History;
+      History                : Histories.History;
 
-      Display_Remote : Boolean;
+      Display_Remote         : Boolean;
    end record;
 
 end Gtkada.File_Selector;
