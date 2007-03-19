@@ -2552,7 +2552,28 @@ package body Src_Editor_Buffer is
          C1 := C2;
          C2 := Get_Char (Pos);
 
-         if C1 = Lang_Context.String_Delimiter
+         --  Take care of '"' case
+         if C1 = Lang_Context.Constant_Character
+           and then C2 = Lang_Context.String_Delimiter
+         then
+            Backward_Char (Pos, Result);
+
+            if not Result then
+               --  The string delimiter is the first character.
+               Quoted := not Quoted;
+               exit;
+            end if;
+
+            C2 := Get_Char (Pos);
+
+            --  Ignore string delimiters in Constant_Character quotes.
+            if C2 /= Lang_Context.Constant_Character
+              and then C2 /= Lang_Context.Quote_Character
+            then
+               Quoted := not Quoted;
+            end if;
+
+         elsif C1 = Lang_Context.String_Delimiter
            and then not (C2 = Lang_Context.Quote_Character)
          then
             Quoted := not Quoted;
