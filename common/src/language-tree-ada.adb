@@ -1714,7 +1714,13 @@ package body Language.Tree.Ada is
             Contents    => New_Tree.Contents (1 .. Index - 1),
             others => <>);
       begin
-         New_Tree.Contents := (others => Null_Construct_Tree_Node);
+         --  Aggregates are expanded into a copy on the stack, that's why we
+         --  have to do the manual copy here. Otherwise, we get a SEGV here
+         --  when calling this from a GNATbench thread.
+         for J in New_Tree.Contents'Range loop
+            New_Tree.Contents (J) := Null_Construct_Tree_Node;
+         end loop;
+
          Free (New_Tree);
          return Returned_Tree;
       end;
