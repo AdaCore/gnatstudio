@@ -673,6 +673,7 @@ package body Project_Explorers_Files is
 
       Gtk_New (Explorer.File_Model, Columns_Types);
       Gtk_New (Explorer.File_Tree, Explorer.File_Model);
+      Set_Name (Explorer.File_Tree, "File Explorer Tree");
 
       --  The model should be destroyed as soon as the tree view is destroyed
       Unref (Explorer.File_Model);
