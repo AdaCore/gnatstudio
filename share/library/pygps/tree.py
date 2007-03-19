@@ -65,10 +65,8 @@ try:
          event = gtk.gdk.Event (t)
          event.window = view.get_bin_window()
          event.button = button
-         x, y = view.tree_to_widget_coords \
-           (rect.x + rect.width / 2, rect.y + rect.height / 2)
-         event.x = float (x)
-         event.y = float (y)
+         event.x = float (rect.x + rect.width / 2)
+         event.y = float (rect.y + rect.height / 2)
 
          event.state = 0
          if control: event.state = event.state or gtk.gdk.CONTROL_MASK
