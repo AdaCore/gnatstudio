@@ -2831,9 +2831,9 @@ Access the various suggested fixes through the methods of the Codefix class</des
 
             import GPS
             class Console_Process (GPS.Console, GPS.Process):
-              def on_output (self, unmatched, matched):
+              def on_output (self, matched, unmatched):
                 self.write (unmatched + matched)
-              def on_exit (self, status, remaining_output):
+              def on_exit (self, status, full_output):
                 self.destroy ()
               def on_input (self, input):
                 self.send (input)
@@ -2860,7 +2860,7 @@ Access the various suggested fixes through the methods of the Codefix class</des
       <param name="self">The instance of GPS.Console</param>
       <param name="name">A string</param>
       <param name="force" default="False">A boolean</param>
-      <param name="on_input" default="">A subprogram, see GPS documentation</param>
+      <param name="on_input" default="">A subprogram, see the description below</param>
       <param name="on_destroy" default="">A subprogram</param>
       <param name="accept_input" default="True">A boolean</param>
       <description>Create a new instance of GPS.Console. GPS will try to reuse any existing console with the same name. If none exists yet, or the parameter force is set to True, then GPS will create a new console.
