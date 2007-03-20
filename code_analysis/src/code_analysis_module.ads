@@ -129,6 +129,8 @@ private
       Date          : Time;
    end record;
 
+   type Code_Analysis_Property is access all Code_Analysis_Property_Record;
+
    procedure Show_Analysis_Report
      (Instance : Class_Instance;
       Property : in out Code_Analysis_Property_Record;
@@ -142,8 +144,6 @@ private
       Property : in out Code_Analysis_Property_Record);
    --  Actually builds the tree view report. Should be called by
    --  Show_Analysis_Report or Show_Empty_Analysis_Report_From_Menu
-
-   type Code_Analysis_Property is access all Code_Analysis_Property_Record;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Code_Analysis_Property_Record, Code_Analysis_Property);
@@ -212,8 +212,7 @@ private
 
    procedure Append_Load_Data_For_All_Projects
      (Cont_N_Inst : Context_And_Instance;
-      Menu        : access Gtk_Menu_Record'Class;
-      Kernel      : access Kernel_Handle_Record'Class);
+      Menu        : access Gtk_Menu_Record'Class);
    --  Actually fills the given Menu with the "Load data for all projecs" entry
    --  This entry try to load coverage data for root project and every imported
    --  projects.
@@ -229,8 +228,7 @@ private
    procedure Append_Project_Menu_Entries
      (Cont_N_Inst   : Context_And_Instance;
       Submenu       : access Gtk_Menu_Record'Class;
-      Project_Node  : Project_Access;
-      Is_Contextual : Boolean := True);
+      Project_Node  : Project_Access);
    --  Actually fills the given Submenu with the appropriate coverage action
    --  entries to handle projects (Add/Remove coverage annotations,
    --  Show coverage report, Load full data...)
@@ -270,7 +268,7 @@ private
    -- Shell commands --
    --------------------
 
-   procedure Create
+   procedure Create_From_Shell
      (Data    : in out Callback_Data'Class;
       Command : String);
    --  Create a new instance of Code_Analysis data structure from shell cmd
@@ -344,10 +342,24 @@ private
       Command : String);
    --  Create and display a Code_Analysis tree view within a MDI Child
 
-   procedure Destroy
+   procedure Destroy_From_Shell
      (Data    : in out Callback_Data'Class;
       Command : String);
-   --  Free memory used by a Code_Analysis instance
+   --  Call Destroy_Instance
+
+   procedure Destroy_From_Menu
+     (Widget      : access Glib.Object.GObject_Record'Class;
+      Cont_N_Inst : Context_And_Instance);
+   --  Call Destroy_Instance
+
+   procedure Destroy_All_Instances_From_Menu
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class);
+   --  Call Destroy_Instance for every element in
+   --  Code_Analysis_Module_ID_Instances
+
+   procedure Destroy_Instance (Instance : Class_Instance);
+   --  Free the memory used by a Code_Analysis_Property_Record associated to a
+   --  a Code_Analysis Class_Instance
 
    ---------------
    -- Callbacks --
