@@ -822,7 +822,9 @@ package body GPS.Kernel.Project is
       Data : aliased Project_Hooks_Args :=
         (Hooks_Data with Project => Project);
    begin
-      if Save_Project (Project, Report_Error'Unrestricted_Access) then
+      if Save_Project
+        (Project, Report_Error => Report_Error'Unrestricted_Access)
+      then
          Run_Hook (Kernel, Project_Saved_Hook, Data'Access);
       end if;
 
