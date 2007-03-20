@@ -249,9 +249,12 @@ package body Projects is
 
    function Save_Project
      (Project       : Project_Type;
+      Path          : Virtual_File := VFS.No_File;
+      Force         : Boolean := False;
       Report_Error  : Error_Report := null) return Boolean
    is
-      File : Ada.Text_IO.File_Type;
+      File     : Ada.Text_IO.File_Type;
+      Filename : Virtual_File;
 
       procedure Internal_Write_Char (C : Character);
       procedure Internal_Write_Str (S : String);
@@ -287,6 +290,7 @@ package body Projects is
    begin
       if not Is_Regular_File (Project_Path (Project))
         or else Project_Modified (Project)
+        or else Force
       then
          if Is_Regular_File (Project_Path (Project))
            and then not Is_Writable (Project_Path (Project))
@@ -301,10 +305,14 @@ package body Projects is
             return False;
          end if;
 
-         declare
-            Filename : constant Virtual_File := Project_Path (Project);
-            Dirname  : constant String := Dir_Name (Filename).all;
+         if Path = VFS.No_File then
+            Filename :=  Project_Path (Project);
+         else
+            Filename := Path;
+         end if;
 
+         declare
+            Dirname  : constant String := Dir_Name (Filename).all;
          begin
             Trace (Me, "Save_Project: Creating new file "
                    & Full_Name (Filename).all);

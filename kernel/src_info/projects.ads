@@ -97,8 +97,12 @@ package Projects is
 
    function Save_Project
      (Project      : Project_Type;
+      Path         : VFS.Virtual_File := VFS.No_File;
+      Force        : Boolean := False;
       Report_Error : Error_Report := null) return Boolean;
-   --  Save the project to the corresponding file.
+   --  Save the project to the corresponding file. If path is equals to
+   --  VFS.No_Path, then the project will be saved in the current project
+   --  path.
    --  If Recursive is True, all the imported projects are saved as well.
    --  Return whether the project was modified and has been saved,
    --  Return False if the project either didn't need to be saved or couldn't
