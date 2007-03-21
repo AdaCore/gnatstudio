@@ -1790,10 +1790,22 @@ package body Code_Analysis_Module is
       end if;
 
       if not Has_Project_Information (Checked_Context) then
-         Set_File_Information
-           (Checked_Context,
-            File    => File_Information (Checked_Context),
-            Project => Get_Project (Code_Analysis_Module_ID.Kernel));
+         if Has_File_Information (Checked_Context) then
+            declare
+               Prj_Info  : Project_Type;
+               File_Info : VFS.Virtual_File :=
+                             File_Information (Checked_Context);
+            begin
+               Prj_Info := Get_Project_From_File
+                 (Get_Registry (Code_Analysis_Module_ID.Kernel).all,
+                  File_Info);
+               Set_File_Information (Checked_Context, File_Info, Prj_Info);
+            end;
+         else
+            Set_File_Information
+              (Checked_Context,
+               Project => Get_Project (Code_Analysis_Module_ID.Kernel));
+         end if;
       end if;
 
       return Checked_Context;
@@ -1998,9 +2010,12 @@ package body Code_Analysis_Module is
      (Cont_N_Inst : Context_And_Instance;
       Menu        : access Gtk_Menu_Record'Class)
    is
-      Cont_N_Inst_Root_Prj : Context_And_Instance := Cont_N_Inst;
+      Cont_N_Inst_Root_Prj : Context_And_Instance;
       Item                 : Gtk_Menu_Item;
    begin
+      Cont_N_Inst_Root_Prj.Instance := Cont_N_Inst.Instance;
+      Cont_N_Inst_Root_Prj.Context  := Get_Current_Context
+        (Code_Analysis_Module_ID.Kernel);
       Set_File_Information
         (Cont_N_Inst_Root_Prj.Context,
          Project => Get_Project (Code_Analysis_Module_ID.Kernel));
