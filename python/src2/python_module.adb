@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2005                       --
+--                     Copyright (C) 2003-2007                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -22,14 +22,17 @@ with GPS.Kernel; use GPS.Kernel;
 
 package body Python_Module is
 
-   -------------------
-   -- Initialize_IO --
-   -------------------
+   -------------------------
+   -- Override_Default_IO --
+   -------------------------
 
-   procedure Initialize_IO is
+   procedure Override_Default_IO
+     (Console : Interactive_Consoles.Interactive_Console)
+   is
+      pragma Unreferenced (Console);
    begin
       null;
-   end Initialize_IO;
+   end Override_Default_IO;
 
    ---------------------
    -- Register_Module --
@@ -43,17 +46,29 @@ package body Python_Module is
       null;
    end Register_Module;
 
-   -------------------------------
-   -- Load_Python_Startup_Files --
-   -------------------------------
+   ------------------------------------
+   -- Load_User_Python_Startup_Files --
+   ------------------------------------
 
-   procedure Load_Python_Startup_Files
+   procedure Load_User_Python_Startup_Files
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Kernel);
    begin
       null;
-   end Load_Python_Startup_Files;
+   end Load_User_Python_Startup_Files;
+
+   --------------------------------------
+   -- Load_System_Python_Startup_Files --
+   --------------------------------------
+
+   procedure Load_System_Python_Startup_Files
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      null;
+   end Load_System_Python_Startup_Files;
+
 
 end Python_Module;
-

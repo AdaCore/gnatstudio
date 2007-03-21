@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2005                       --
---                              AdaCore                              --
+--                     Copyright (C) 2003-2007                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,15 +19,32 @@
 -----------------------------------------------------------------------
 
 with GPS.Kernel;
+with Interactive_Consoles;
 
 package Python_Module is
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   procedure Initialize_IO;
-   procedure Load_Python_Startup_Files
+   --  Register the module into the list
+
+   procedure Override_Default_IO
+     (Console : Interactive_Consoles.Interactive_Console);
+   --  Override the console to which Python should write through "print"
+
+   procedure Load_System_Python_Startup_Files
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  See doc in ../src/python_module.ads
+   --  Load all the GPS's systems Python plug-ins.
+   --  This procedure should be called only after all standard modules
+   --  have been registered, so that if the user's startup files depend
+   --  on standard GPS functions these are already loaded.
+   --  This procedure does nothing if the python module hasn't been
+   --  registered.
+   --
+   --  ??? Ideally, we should have a hook run after all modules have been
+   --  registered
+
+   procedure Load_User_Python_Startup_Files
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  As above but load the user's Python plug-ins
 
 end Python_Module;
-
