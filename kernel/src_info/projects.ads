@@ -101,8 +101,10 @@ package Projects is
       Force        : Boolean := False;
       Report_Error : Error_Report := null) return Boolean;
    --  Save the project to the corresponding file. If path is equals to
-   --  VFS.No_Path, then the project will be saved in the current project
+   --  VFS.No_File, then the project will be saved in the current project
    --  path.
+   --  If Force is True, then the project will be saved even if it doesn't
+   --  need to.
    --  If Recursive is True, all the imported projects are saved as well.
    --  Return whether the project was modified and has been saved,
    --  Return False if the project either didn't need to be saved or couldn't
