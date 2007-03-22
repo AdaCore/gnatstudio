@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
+--                      Copyright (C) 2001-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -89,10 +89,8 @@ package body GPS.Kernel.Modules is
       Menu    : Gtk_Menu;
    end record;
 
-   type Contextual_Menu_Type is (Type_Command,
-                                 Type_Action,
-                                 Type_Submenu,
-                                 Type_Separator);
+   type Contextual_Menu_Type
+     is (Type_Command, Type_Action, Type_Submenu, Type_Separator);
    --  The type of the contextual menu
 
    type Contextual_Menu_Record;
@@ -745,7 +743,7 @@ package body GPS.Kernel.Modules is
          Item      : out Gtk_Menu_Item;
          Full_Name : out GNAT.Strings.String_Access);
       --  Create the menu item to use when displaying C.
-      --  Full_Name is the label of the menu
+      --  Full_Name is the label of the menu.
 
       function Label_Name
         (C       : Contextual_Menu_Access;
@@ -934,6 +932,7 @@ package body GPS.Kernel.Modules is
       Item        : Gtk_Menu_Item;
       Parent_Item : Gtk_Menu_Item;
       Parent_Menu : Gtk_Menu;
+
    begin
       Run_Hook (Kernel, Contextual_Menu_Open_Hook);
 
@@ -1036,8 +1035,8 @@ package body GPS.Kernel.Modules is
      (User  : Contextual_Menu_User_Data;
       Event : Gdk_Event) return Gtk_Menu
    is
-      Context     : Selection_Context := New_Context;
-      Menu        : Gtk_Menu := null;
+      Context : Selection_Context := New_Context;
+      Menu    : Gtk_Menu := null;
    begin
       --  Create the menu and add all the modules information
       Gtk_New (Menu);
@@ -1198,9 +1197,7 @@ package body GPS.Kernel.Modules is
             Command_Callback.Object_Connect
               (Get_Toplevel (Item), "map", Map_Menu'Access,
                Slot_Object => Item,
-               User_Data   => (Kernel_Handle (Kernel),
-                               null,
-                               Filter));
+               User_Data   => (Kernel_Handle (Kernel), null, Filter));
          end if;
       end if;
    end Register_Menu;
@@ -1224,7 +1221,7 @@ package body GPS.Kernel.Modules is
       Action      : Action_Record_Access := null;
       Filter      : Action_Filter  := null)
    is
-      Item  : Gtk_Menu_Item;
+      Item : Gtk_Menu_Item;
       pragma Unreferenced (Item);
    begin
       Item := Register_Menu
@@ -1242,7 +1239,7 @@ package body GPS.Kernel.Modules is
       Command : Interactive_Action)
    is
       Context : constant Selection_Context :=
-        Get_Current_Context (Kernel_Handle (Widget));
+                  Get_Current_Context (Kernel_Handle (Widget));
    begin
       if Context /= No_Context
         and then Filter_Matches (Command.Filter, Context)
@@ -1253,10 +1250,12 @@ package body GPS.Kernel.Modules is
               (Command.Command,
                (null, Context, False, null, null, null, 1, 0)),
             Destroy_On_Exit => False,
-            Active => True, Show_Bar => True, Queue_Id => "");
+            Active          => True, Show_Bar => True, Queue_Id => "");
+
       elsif Get_Error_Message (Command.Filter) /= "" then
          Insert (Kernel_Handle (Widget), Get_Error_Message (Command.Filter),
                  Mode => Error);
+
       else
          Insert (Kernel_Handle (Widget),
                  -"Invalid context for this action", Mode => Error);
@@ -1288,6 +1287,7 @@ package body GPS.Kernel.Modules is
       Filter      : Action_Filter  := null) return Gtk_Menu_Item
    is
       use type Kernel_Callback.Marshallers.Void_Marshaller.Handler;
+
       function Cleanup (Path : String) return String;
       --  Remove duplicate // in Path
 
@@ -1312,11 +1312,11 @@ package body GPS.Kernel.Modules is
          return Output (Output'First .. Index - 1);
       end Cleanup;
 
+      Accel_Path  : constant String :=
+                      Cleanup ("<gps>/" & Parent_Path & '/' & Text);
       Item        : Gtk_Menu_Item;
       Image       : Gtk_Image_Menu_Item;
       Pix         : Gtk_Image;
-      Accel_Path  : constant String :=
-                      Cleanup ("<gps>/" & Parent_Path & '/' & Text);
       Menu_Filter : Action_Filter := Filter;
 
    begin
@@ -1351,9 +1351,7 @@ package body GPS.Kernel.Modules is
          Command_Callback.Object_Connect
            (Item, "activate", Execute_Command'Access,
             Slot_Object => Kernel_Handle (Kernel),
-            User_Data   => (Kernel_Handle (Kernel),
-                            Command,
-                            Filter));
+            User_Data   => (Kernel_Handle (Kernel), Command, Filter));
       end if;
 
       if Action /= null then
@@ -1376,9 +1374,7 @@ package body GPS.Kernel.Modules is
          Command_Callback.Object_Connect
            (Get_Toplevel (Item), "map", Map_Menu'Access,
             Slot_Object => Item,
-            User_Data   => (Kernel_Handle (Kernel),
-                            null,
-                            Menu_Filter));
+            User_Data   => (Kernel_Handle (Kernel), null, Menu_Filter));
       end if;
 
       return Item;
@@ -1416,8 +1412,8 @@ package body GPS.Kernel.Modules is
    -----------------------
 
    procedure Menu_Button_Press
-     (Widget  : access GObject_Record'Class;
-      Data    : Menu_Factory_User_Data)
+     (Widget : access GObject_Record'Class;
+      Data   : Menu_Factory_User_Data)
    is
       pragma Unreferenced (Widget);
 
@@ -1571,7 +1567,7 @@ package body GPS.Kernel.Modules is
       Command  : Interactive_Command_Access := null;
       Tooltip  : String := "")
    is
-      Button  : Gtk_Tool_Button;
+      Button : Gtk_Tool_Button;
    begin
       Gtk_New_From_Stock (Button, Stock_Id);
       if Tooltip /= "" then
@@ -1961,8 +1957,8 @@ package body GPS.Kernel.Modules is
       Add_Before  : Boolean := True;
       Group       : Natural := 0)
    is
-      T : Contextual_Label_Param;
-      Pix : GNAT.Strings.String_Access;
+      T    : Contextual_Label_Param;
+      Pix  : GNAT.Strings.String_Access;
       Menu : Contextual_Menu_Access;
    begin
       if Label /= "" then
@@ -2016,8 +2012,8 @@ package body GPS.Kernel.Modules is
       Name    : String;
       Visible : Boolean)
    is
-      C : Contextual_Menu_Access := Find_Contextual_Menu_By_Name
-        (Kernel, Name);
+      C : Contextual_Menu_Access :=
+            Find_Contextual_Menu_By_Name (Kernel, Name);
    begin
       if C = null then
          Register_Contextual_Menu
@@ -2040,8 +2036,8 @@ package body GPS.Kernel.Modules is
       Name      : String;
       Sensitive : Boolean)
    is
-      C : Contextual_Menu_Access := Find_Contextual_Menu_By_Name
-        (Kernel, Name);
+      C : Contextual_Menu_Access :=
+            Find_Contextual_Menu_By_Name (Kernel, Name);
    begin
       if C = null then
          Register_Contextual_Menu
@@ -2092,14 +2088,14 @@ package body GPS.Kernel.Modules is
    ---------------------------------
 
    procedure Register_Contextual_Submenu
-     (Kernel        : access Kernel_Handle_Record'Class;
-      Name          : String;
-      Label         : String := "";
-      Filter        : GPS.Kernel.Action_Filter := null;
-      Submenu       : Submenu_Factory := null;
-      Ref_Item      : String := "";
-      Add_Before    : Boolean := True;
-      Group         : Natural := 0)
+     (Kernel     : access Kernel_Handle_Record'Class;
+      Name       : String;
+      Label      : String := "";
+      Filter     : GPS.Kernel.Action_Filter := null;
+      Submenu    : Submenu_Factory := null;
+      Ref_Item   : String := "";
+      Add_Before : Boolean := True;
+      Group      : Natural := 0)
    is
       T : Contextual_Label_Param;
    begin
