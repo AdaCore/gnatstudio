@@ -44,7 +44,7 @@
  * If your system doesn't typedef u_long, u_short, or u_char, change
  * the 0 to a 1.
  */
-#ifndef HAVE_UCHAR_T
+#if !defined (HAVE_UCHAR_T) && !defined (_WIN32)
 typedef unsigned char	u_char;		/* 4.[34]BSD names. */
 typedef unsigned int	u_int;
 typedef unsigned long	u_long;
