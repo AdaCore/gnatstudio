@@ -1,7 +1,7 @@
 Known Problems fixed in GPS 4.1.1
 
-- G322-032 Problems in code assist with incomplete units
-  Problem:    Code assist may fail to propose completions when it involves 
+- G322-032 Problems in completion with incomplete units
+  Problem:    Completion may fail to propose entries when it involves 
               files where the unit name can't be retreived (typically files
               with errors, or in the process of being modified). 
   Workaround: Fix the files. 
