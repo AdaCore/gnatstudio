@@ -7,6 +7,11 @@ Known Problems fixed in GPS 4.1.1
   Workaround: Edit the file to include the unit name, or ignore the missing
               completion.
 
+- G322-027 Crash when searching for all occurrences of a pattern
+  Problem:    GPS may crash when searching for all occurrences of a given
+              pattern in all files from the project.
+  Workaround: Use the "XXX is called by" contextual menu if appropriate.
+
 Known Problems fixed in GPS 4.1.0
 
 - G305-005 Custom menu filters preventing menu display
