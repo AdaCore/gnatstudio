@@ -2142,6 +2142,12 @@ package body Language.Tree.Ada is
       Spec_Unit := Get_Unit_Construct (Ada_Tree_Lang, Spec_Tree);
       Body_Unit := Get_Unit_Construct (Ada_Tree_Lang, Body_Tree);
 
+      if Spec_Unit = Null_Construct_Tree_Iterator
+        or else Body_Unit = Null_Construct_Tree_Iterator
+      then
+         return False;
+      end if;
+
       return To_Lower (Spec_Unit.Node.Construct.Name.all)
         = To_Lower (Body_Unit.Node.Construct.Name.all)
         and then Spec_Unit.Node.Construct.Is_Declaration
