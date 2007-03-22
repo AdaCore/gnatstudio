@@ -1036,7 +1036,7 @@ package body GPS.Kernel.Modules is
      (User  : Contextual_Menu_User_Data;
       Event : Gdk_Event) return Gtk_Menu
    is
-      Context     : Selection_Context;
+      Context     : Selection_Context := New_Context;
       Menu        : Gtk_Menu := null;
    begin
       --  Create the menu and add all the modules information
@@ -1044,7 +1044,11 @@ package body GPS.Kernel.Modules is
 
       Push_State (User.Kernel, Busy);
 
-      Context.Data.Data := new Selection_Context_Data_Record;
+      Set_Context_Information
+        (Context,
+         Kernel  => User.Kernel,
+         Creator => Abstract_Module_ID (User.ID));
+
       if User.Context_Func /= null then
          User.Context_Func
            (Context      => Context,
@@ -1055,12 +1059,6 @@ package body GPS.Kernel.Modules is
             Menu         => Menu);
       end if;
 
-      --  Override the previous value. No Ref is taken explicitly, so we do not
-      --  need to Unref either. This field is automatically reset to null when
-      --  the last holder of a ref calls Unref.
-
-      Trace (Me, "Set Last_Context_For_Contextual");
-
       User.Kernel.Last_Context_For_Contextual := Context;
       User.Kernel.Last_Context_From_Contextual := True;
 
@@ -1069,10 +1067,11 @@ package body GPS.Kernel.Modules is
       end if;
       Deep_Copy (From => Event, To => User.Kernel.Last_Event_For_Contextual);
 
-      Set_Context_Information
-        (Context,
-         Kernel  => User.Kernel,
-         Creator => Abstract_Module_ID (User.ID));
+      --  Override the previous value. No Ref is taken explicitly, so we do not
+      --  need to Unref either. This field is automatically reset to null when
+      --  the last holder of a ref calls Unref.
+
+      Trace (Me, "Set Last_Context_For_Contextual");
 
       Create_Contextual_Menu (User.Kernel, User.Object, Context, Menu);
 
