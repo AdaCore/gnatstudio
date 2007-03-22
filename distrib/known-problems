@@ -1,10 +1,12 @@
-Known Problems fixed in GPS 4.1.0
+Known Problems fixed in GPS 4.1.1
 
-- G322-032 Problems in completion with incomplete units
-  Problem:    GPS used to have an exception when the completion involve 
+- G322-032 Problems in code assist with incomplete units
+  Problem:    Code assist may fail to propose completions when it involves 
               files where the unit name can't be retreived (typically files
               with errors, or in the process of being modified). 
-  Workaround: Ignore the exception.
+  Workaround: Fix the files. 
+
+Known Problems fixed in GPS 4.1.0
 
 - G305-005 Custom menu filters preventing menu display
   Problem:    When you create custom menus in python, and set a filter for
