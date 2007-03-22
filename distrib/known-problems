@@ -1,10 +1,11 @@
 Known Problems fixed in GPS 4.1.1
 
 - G322-032 Problems in completion with incomplete units
-  Problem:    Completion may fail to propose entries when it involves 
-              files where the unit name can't be retreived (typically files
+  Problem:    Smart completion may fail to propose entries when it involves 
+              files where the unit name can't be retrieved (typically files
               with errors, or in the process of being modified). 
-  Workaround: Fix the files. 
+  Workaround: Edit the file to include the unit name, or ignore the missing
+              completion.
 
 Known Problems fixed in GPS 4.1.0
 
