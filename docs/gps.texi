@@ -3176,13 +3176,15 @@ This item is also accessible through the editor's contextual menu
 
 @item Start Of Statement
 @cindex Start Of Statement
-Move the cursor position to the start of the current statement, does
-nothing if the current position is not inside a statement.
+Move the cursor position to the start of the current statement, move
+to the start of the enclosing statement if the cursor position is
+already at the start of the statement.
 
 @item End Of Statement
 @cindex End Of Statement
-Move the current cursor position to the end of the statement, does
-nothing if the current position is not inside a statement.
+Move the current cursor position to the end of the statement, move
+to the end of the enclosing statement if the cursor position is
+already at the end of the statement.
 
 @item Previous Subprogram
 @cindex Previous Subprogram
