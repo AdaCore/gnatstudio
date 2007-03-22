@@ -82,39 +82,10 @@ package body Code_Analysis_Module is
       Command : String)
    is
       pragma Unreferenced (Command);
-      Property : constant Code_Analysis_Property
-        := new Code_Analysis_Property_Record;
       Instance  : Class_Instance;
-      Date      : Time;
    begin
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
-      Date := Clock;
-      Property.Date := Date;
-      Property.Instance_Name :=
-        new String'(-"Analysis" & Integer'Image
-                    (Integer (Code_Analysis_Module_ID.Instances.Length + 1)));
-      Property.Projects := new Project_Maps.Map;
-      GPS.Kernel.Scripts.Set_Property
-        (Instance, Code_Analysis_Cst_Str,
-         Instance_Property_Record (Property.all));
-      Code_Analysis_Module_ID.Instances.Insert (Instance);
-
-      --  Loading the Pixbufs if it has not already been done
-      --  We do it here because it can't be done at loading module time
-      if Code_Analysis_Module_ID.Project_Pixbuf = null then
-         Code_Analysis_Module_ID.Project_Pixbuf := Render_Icon
-           (Get_Main_Window (Code_Analysis_Module_ID.Kernel),
-            "gps-project-closed", Gtk.Enums.Icon_Size_Menu);
-         Code_Analysis_Module_ID.File_Pixbuf := Render_Icon
-           (Get_Main_Window (Code_Analysis_Module_ID.Kernel),
-            "gps-file", Gtk.Enums.Icon_Size_Menu);
-         Code_Analysis_Module_ID.Subp_Pixbuf := Render_Icon
-           (Get_Main_Window (Code_Analysis_Module_ID.Kernel),
-            "gps-entity-subprogram", Gtk.Enums.Icon_Size_Menu);
-         Code_Analysis_Module_ID.Warn_Pixbuf := Render_Icon
-           (Get_Main_Window (Code_Analysis_Module_ID.Kernel),
-            "gps-warning", Gtk.Enums.Icon_Size_Menu);
-      end if;
+      Initialize_Instance (Instance);
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -143,12 +114,22 @@ package body Code_Analysis_Module is
    ---------------------
 
    function Create_Instance return Class_Instance is
-      Property : constant Code_Analysis_Property
-        := new Code_Analysis_Property_Record;
       Scripts  : constant Scripting_Language_Array :=
                    Get_Scripting_Languages (Code_Analysis_Module_ID.Kernel);
       Instance : Class_Instance := New_Instance
         (Scripts (Scripts'First), Code_Analysis_Module_ID.Class);
+   begin
+      Initialize_Instance (Instance);
+      return Instance;
+   end Create_Instance;
+
+   -------------------------
+   -- Initialize_Instance --
+   -------------------------
+
+   procedure Initialize_Instance (Instance : in out Class_Instance) is
+      Property : constant Code_Analysis_Property
+        := new Code_Analysis_Property_Record;
       Date     : Time;
    begin
       Date := Clock;
@@ -178,9 +159,7 @@ package body Code_Analysis_Module is
            (Get_Main_Window (Code_Analysis_Module_ID.Kernel),
             "gps-warning", Gtk.Enums.Icon_Size_Menu);
       end if;
-
-      return Instance;
-   end Create_Instance;
+   end Initialize_Instance;
 
    -------------------------------------
    -- Add_Gcov_File_Info_From_Context --
@@ -961,7 +940,11 @@ package body Code_Analysis_Module is
       end if;
 
       Free_Code_Analysis (Property.Projects);
-      Code_Analysis_Module_ID.Instances.Delete (Instance);
+
+      if Code_Analysis_Module_ID.Instances.Contains (Instance) then
+         Code_Analysis_Module_ID.Instances.Delete (Instance);
+      end if;
+
       GNAT.Strings.Free (Property.Instance_Name);
    end Destroy_Instance;
 
