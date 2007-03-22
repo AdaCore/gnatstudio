@@ -1275,7 +1275,15 @@ package body Projects.Registry is
             if Src = No_Source_File_Data then
                F := Create (File, Project, Use_Object_Path => False);
             else
-               F := Create (Get_String (Src.Full_Name));
+               declare
+                  Full_Name : constant String := Get_String (Src.Full_Name);
+               begin
+                  if Full_Name /= "" then
+                     F := Create (Get_String (Src.Full_Name));
+                  else
+                     F := VFS.No_File;
+                  end if;
+               end;
             end if;
 
             --  We only add sources that can be found. In case of a debugger
