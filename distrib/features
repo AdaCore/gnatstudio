@@ -30,3 +30,9 @@ G213-014 Add support for Project Explorer filters (2007-02-20)
   Explorer based on a given regular expression. This has been
   designed to filter out version control specific directories
   like CVS or .svn for example.
+
+F716-001 Improve block navigation support (2007-03-18)
+
+  Now the "Start Of Statement" or "End Of Statement" actions move to
+  the enclosing block when the cursor is already at the start/end of
+  the current statement instead of doing nothing.
