@@ -213,6 +213,19 @@ GPS.Hook ("file_changed_detected").add (on_file_changed)
      <description>Hook called when some external action has changed the contents of a file on the disk, such as a VCS operation. The parameter might be a directory instead of a file, indicating that any file in that directory might have changed</description>
   </shell_doc>
 
+  <shell_doc name="@hook@ file_deleted">
+     <param name="hook">A string, the name of the hook</param>
+     <param name="file">An instance of GPS.File</param>
+     <description>Hook called whenever GPS detects that a file was deleted on the disk. The parameter might be a directory instead of a file, indicating that any file within that directory has been deleted.</description>
+  </shell_doc>
+
+  <shell_doc name="@hook@ file_renamed">
+     <param name="hook">A string, the name of the hook</param>
+     <param name="file">An instance of GPS.File</param>
+     <param name="renamed">An instance of GPS.File</param>
+     <description>Hook called whenever a GPS action renamed a file on the disk. The file parameter indicates the initial location of the file, while the renamed parameter indicates the new location. The parameters might be directories instead of files, indicating that the directory has been renamed, and thus any file within that directory have their path changed.</description>
+  </shell_doc>
+
   <shell_doc name="@hook@ compilation_starting">
      <param name="hook">A string, the name of the hook</param>
      <param name="category">A string, the location/highlighting category that contains the compilation output.</param>
