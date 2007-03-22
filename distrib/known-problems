@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.1.0
 
+- G322-032 Problems in completion with incomplete units
+  Problem:    GPS used to have an exception when the completion involve 
+              files where the unit name can't be retreived (typically files
+              with errors, or in the process of being modified). 
+  Workaround: Ignore the exception.
+
 - G305-005 Custom menu filters preventing menu display
   Problem:    When you create custom menus in python, and set a filter for
               these menus so that they are not always active, then the
