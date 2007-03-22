@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.2.0
 
+- G316-005 Auto-casing is confused by string quotes characters constants.
+  Problem:    When a string quote character constant is used ('"' in Ada), and
+              a string constant is following this character constant, then GPS
+              will apply the casing inside the string.
+  Workaround: Deactivate the auto-casing, or use a newline character after
+              then string quote charactere constant.
+
 - G315-003 Selecting a display option on debug datas has no effect.
   Problem:    When a data is displayed in the debug data window, a contextual
               menu allow to specify how to display it. This menu has no effect.
