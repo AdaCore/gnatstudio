@@ -1753,6 +1753,8 @@ procedure GPS.Main is
          return;
       end if;
 
+      Set_Destruction_Flag (Kernel, True);
+
       Cleanup_Needed := False;
       Exiting := True;
 
