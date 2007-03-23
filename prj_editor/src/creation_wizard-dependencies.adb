@@ -146,9 +146,9 @@ package body Creation_Wizard.Dependencies is
       Importing_Project     : Project_Type;
       Imported_Project_Path : String;
       Limited_With          : Boolean := False);
-   --  Internal function that creates a dependency between two projects. If
-   --  properly handle the case where a project with the same name as
-   --  Imported_Project_Path already exists in the project hierarchy
+   --  Internal function that creates a dependency between two projects. It
+   --  properly handles the case where a project with the same name as
+   --  Imported_Project_Path already exists in the project hierarchy.
 
    -----------------------------
    -- Add_Dependency_Internal --
