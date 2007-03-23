@@ -367,7 +367,7 @@ package body GPS.Kernel.Modules is
       C : MDI_Child;
       W : Gtk_Widget;
    begin
-      if Gtk.Object.In_Destruction_Is_Set (Get_MDI (Kernel)) then
+      if Is_In_Destruction (Kernel) then
          return null;
       end if;
 
