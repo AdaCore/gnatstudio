@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -3133,11 +3134,12 @@ package body Projects.Editor is
       Reset_Cache
         (Get_Project_From_Name
            (Project_Registry'Class (Get_Registry (Project)),
-            Get_String (Base_Name (Imported_Project_Location,
-                                   Project_File_Extension))),
+            Get_String
+              (To_Lower
+                 (Base_Name
+                    (Imported_Project_Location,  Project_File_Extension)))),
          Imported_By => True);
-      return Success;
-
+         return Success;
    exception
       when others =>
          Output.Set_Special_Output (null);
