@@ -1963,30 +1963,18 @@ package body GVD.Process is
       end;
 
       declare
-         List       : GNAT.Strings.String_List :=
-                        Source_Files_List (Debugger.Debugger);
-         Bases      : GNAT.OS_Lib.Argument_List (List'Range);
-         Dirs       : GNAT.OS_Lib.Argument_List (List'Range);
-         Dirs_Index : Natural := Dirs'First;
-         Main       : GNAT.OS_Lib.Argument_List (1 .. 1);
-         Langs      : GNAT.OS_Lib.Argument_List (List'Range);
-         Lang_Index : Natural := Langs'First;
+         List        : GNAT.Strings.String_List :=
+                         Source_Files_List (Debugger.Debugger);
+         Bases       : GNAT.OS_Lib.Argument_List (List'Range);
+         Bases_Index : Natural := Bases'First;
+         Dirs        : GNAT.OS_Lib.Argument_List (List'Range);
+         Dirs_Index  : Natural := Dirs'First;
+         Main        : GNAT.OS_Lib.Argument_List (1 .. 1);
+         Langs       : GNAT.OS_Lib.Argument_List (List'Range);
+         Lang_Index  : Natural := Langs'First;
 
       begin
-         --  Source_Files
-
-         for L in List'Range loop
-            Bases (L) := new String'(Base_Name (List (L).all));
-         end loop;
-
-         Update_Attribute_Value_In_Scenario
-           (Project,
-            Scenario_Variables => No_Scenario,
-            Attribute          => Source_Files_Attribute,
-            Values             => Bases);
-         Free (Bases);
-
-         --  Source_Dirs
+         --  Source_Files, Source_Dirs & Languages
 
          for L in List'Range loop
             declare
@@ -1994,18 +1982,56 @@ package body GVD.Process is
                  (Dir_Name (List (L).all),
                   Dir_Name (Exec).all,
                   Resolve_Links => False);
-               Found : Boolean := False;
+               Base  : constant String := Base_Name (List (L).all);
+               Lang  : constant String :=
+                         Get_Language_From_File
+                           (Get_Language_Handler (Kernel),
+                            Create (Full_Filename => List (L).all));
+               Found : Boolean;
             begin
-               for D in Dirs'First .. Dirs_Index - 1 loop
-                  if Dirs (D).all = Dir then
-                     Found := True;
-                     exit;
-                  end if;
-               end loop;
+               Found := False;
 
-               if not Found then
-                  Dirs (Dirs_Index) := new String'(Dir);
-                  Dirs_Index := Dirs_Index + 1;
+               if GNAT.OS_Lib.Is_Directory (Dir) then
+                  for D in Dirs'First .. Dirs_Index - 1 loop
+                     if Dirs (D).all = Dir then
+                        Found := True;
+                        exit;
+                     end if;
+                  end loop;
+
+                  if not Found then
+                     Dirs (Dirs_Index) := new String'(Dir);
+                     Dirs_Index := Dirs_Index + 1;
+                  end if;
+
+                  Found := False;
+                  for J in Bases'First .. Bases_Index - 1 loop
+                     if Bases (J).all = Base then
+                        Found := True;
+                        exit;
+                     end if;
+                  end loop;
+
+                  if not Found then
+                     Bases (Bases_Index) :=
+                       new String'(Base_Name (List (L).all));
+                     Bases_Index := Bases_Index + 1;
+                  end if;
+
+                  Found := False;
+                  if Lang /= "" then
+                     for La in Langs'First .. Lang_Index - 1 loop
+                        if Langs (La).all = Lang then
+                           Found := True;
+                           exit;
+                        end if;
+                     end loop;
+
+                     if not Found then
+                        Langs (Lang_Index) := new String'(Lang);
+                        Lang_Index := Lang_Index + 1;
+                     end if;
+                  end if;
                end if;
             end;
          end loop;
@@ -2016,32 +2042,12 @@ package body GVD.Process is
             Attribute          => Source_Dirs_Attribute,
             Values             => Dirs (Dirs'First .. Dirs_Index - 1));
          Free (Dirs);
-
-         --  Languages
-
-         for L in List'Range loop
-            declare
-               Lang : constant String := Get_Language_From_File
-                 (Get_Language_Handler (Kernel),
-                  Create (Full_Filename => List (L).all));
-               Found : Boolean := False;
-            begin
-               if Lang /= "" then
-                  for La in Langs'First .. Lang_Index - 1 loop
-                     if Langs (La).all = Lang then
-                        Found := True;
-                        exit;
-                     end if;
-                  end loop;
-
-                  if not Found then
-                     Langs (Lang_Index) := new String'(Lang);
-                     Lang_Index := Lang_Index + 1;
-                  end if;
-               end if;
-            end;
-         end loop;
-
+         Update_Attribute_Value_In_Scenario
+           (Project,
+            Scenario_Variables => No_Scenario,
+            Attribute          => Source_Files_Attribute,
+            Values             => Bases (Bases'First .. Bases_Index - 1));
+         Free (Bases);
          Update_Attribute_Value_In_Scenario
            (Project,
             Scenario_Variables => No_Scenario,
