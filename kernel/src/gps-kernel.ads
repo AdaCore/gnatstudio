@@ -201,6 +201,15 @@ package GPS.Kernel is
       return Gtk.Icon_Factory.Gtk_Icon_Factory;
    --  Return the default icon factory
 
+   procedure Set_Destruction_Flag
+     (Handle : access Kernel_Handle_Record;
+      Flag : Boolean);
+   --  Set the destruction flag in the kernel.
+
+   function Is_In_Destruction
+     (Handle : access Kernel_Handle_Record) return Boolean;
+   --  When return True, the kernel is in the process of being destroyed.
+
    -------------
    -- Modules --
    -------------
@@ -955,6 +964,9 @@ private
       Clipboard  : System.Address := System.Null_Address;
       --  The clipboard used in GPS (See GPS.Kernel.Clipboard on how to use
       --  this field).
+
+      Is_In_Destruction : Boolean := False;
+      --  Determies wether the kernel is being destroyed.
    end record;
 
 end GPS.Kernel;
