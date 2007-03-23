@@ -12,6 +12,11 @@ Known Problems fixed in GPS 4.1.1
               pattern in all files from the project.
   Workaround: Use the "XXX is called by" contextual menu if appropriate.
 
+- G322-011 Crash when closing GPS while entities are loaded
+  Problem:    Closing GPS when the entities database is loading causes GPS to
+              crash.
+  Workaround: Terminate manually the task before closing GPS.
+
 Known Problems fixed in GPS 4.1.0
 
 - G305-005 Custom menu filters preventing menu display
