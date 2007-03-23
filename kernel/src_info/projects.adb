@@ -2546,6 +2546,11 @@ package body Projects is
    begin
       Trace (Me, "Reseting cache for " & Project_Name (Project)
              & " Imported_by=" & Imported_By'Img);
+
+      if Project = No_Project then
+         return;
+      end if;
+
       if Imported_By then
          Unchecked_Free (Project.Data.Importing_Projects);
       else
