@@ -41,7 +41,7 @@ with Language_Handlers;         use Language_Handlers;
 with Projects.Registry;         use Projects, Projects.Registry;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
-with Types;                     use Types;
+with Namet;                     use Namet;
 with VFS;                       use VFS;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 

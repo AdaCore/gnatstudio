@@ -29,7 +29,6 @@ with Projects.Editor;   use Projects, Projects.Editor;
 with Projects.Registry; use Projects.Registry;
 with String_Utils;      use String_Utils;
 with Traces;            use Traces;
-with Types;             use Types;
 
 package body Projects.Editor.Normalize is
 

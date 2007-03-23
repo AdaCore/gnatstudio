@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Types;
+with Namet;
 with Prj.PP;
 with VFS;
 with Glib;
@@ -219,14 +219,14 @@ package Projects.Registry is
 
    procedure Reset_Project_Name_Hash
      (Registry : Project_Registry;
-      Name     : Types.Name_Id);
+      Name     : Namet.Name_Id);
    --  Reset the project that would be returned by calling
    --  Get_Project_From_Name. The next time that function is called, it will
    --  return a new Project_Type. This should really only be used by
    --  Projects.Editor
 
    function Get_Project_From_Name
-     (Registry : Project_Registry; Name : Types.Name_Id) return Project_Type;
+     (Registry : Project_Registry; Name : Namet.Name_Id) return Project_Type;
    --  Select a project by name
 
    function Get_Project_From_File
@@ -297,7 +297,7 @@ package Projects.Registry is
 
    function Get_Language_From_File_From_Project
      (Registry : Project_Registry; Source_Filename : VFS.Virtual_File)
-      return Types.Name_Id;
+      return Namet.Name_Id;
    --  Return the language for a file, according to the project's naming
    --  scheme. You shouldn't call this function directly, but use the one
    --  defined in language_handlers.ads, which correctly takes into account

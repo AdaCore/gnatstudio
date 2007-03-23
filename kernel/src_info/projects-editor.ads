@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Types;
+with Namet;
 with Prj.Tree;          use Prj, Prj.Tree;
 with Output;
 with Projects.Registry;
@@ -41,7 +41,7 @@ package Projects.Editor is
    --  the exception message is set to the internationalized text of the error.
 
    Any_Attribute : constant String := "@@";
-   Any_Attribute_Name : Types.Name_Id;
+   Any_Attribute_Name : Namet.Name_Id;
    --  Special value for all the subprograms that take an Attribute_Index
    --  parameter. When this is used, no matching is done on the indexes.
 
@@ -49,8 +49,14 @@ package Projects.Editor is
    -- Misc --
    ----------
 
-   function Get_String (Str : String) return Types.Name_Id;
+   function Get_String (Str : String) return Namet.Name_Id;
    --  Convert Str to a name_id
+
+   function Get_String (Str : String) return Namet.File_Name_Type;
+   --  Convert Str to a file_name_type
+
+   function Get_String (Str : String) return Namet.Path_Name_Type;
+   --  Convert Str to a path_name_type
 
    function Length
      (Tree : Prj.Project_Tree_Ref; List : Prj.String_List_Id) return Natural;
@@ -194,7 +200,7 @@ package Projects.Editor is
 
    function Get_Environment
      (Tree             : Project_Node_Tree_Ref;
-      Var_Or_Attribute : Project_Node_Id) return Types.Name_Id;
+      Var_Or_Attribute : Project_Node_Id) return Namet.Name_Id;
    --  Return the name of the environment variable associated with
    --  Var_Or_Attribute. No_String is returned in case there is no such
    --  variable.
@@ -220,7 +226,7 @@ package Projects.Editor is
    procedure Rename_External_Variable
      (Root_Project : Project_Type;
       Variable     : in out Scenario_Variable;
-      New_Name     : Types.Name_Id);
+      New_Name     : Namet.Name_Id);
    --  Rename all references to Old_Name in Root_Project and its imported
    --  projects.
    --  Old_Name is given as a string so that we don't need to allocate a new
@@ -229,7 +235,7 @@ package Projects.Editor is
    procedure Set_Default_Value_For_External_Variable
      (Root_Project      : Project_Type;
       Ext_Variable_Name : String;
-      Default           : Types.Name_Id);
+      Default           : Namet.Name_Id);
    --  Change the default value for all the scenario variables based on
    --  Ext_Variable_Name.
 
@@ -249,7 +255,7 @@ package Projects.Editor is
      (Root_Project      : Project_Type;
       Ext_Variable_Name : String;
       Old_Value_Name    : String;
-      New_Value_Name    : Types.Name_Id);
+      New_Value_Name    : Namet.Name_Id);
    --  Rename one of the choices in the list of possible values for the
    --  scenario variables asociated with Ext_Variable_Name. This also changes
    --  the default value for external references.
@@ -358,7 +364,7 @@ package Projects.Editor is
    function Data (Iter : String_List_Iterator) return Project_Node_Id;
    function Data
      (Tree : Prj.Tree.Project_Node_Tree_Ref;
-      Iter : String_List_Iterator) return Types.Name_Id;
+      Iter : String_List_Iterator) return Namet.Name_Id;
    --  Return the value pointed to by Iter.
    --  This could be either a N_String_Literal or a N_Expression node in the
    --  first case.
@@ -446,7 +452,7 @@ private
    procedure Add_Case_Item
      (Tree      : Prj.Tree.Project_Node_Tree_Ref;
       Case_Node : Prj.Tree.Project_Node_Id;
-      Choice    : Types.Name_Id);
+      Choice    : Namet.Name_Id);
    --  Create a new case item in case_node (which is associated with a
    --  "case var is" statement
 
@@ -486,14 +492,14 @@ private
    function Find_Type_Declaration
      (Tree    : Project_Node_Tree_Ref;
       Project : Project_Node_Id;
-      Name    : Types.Name_Id)
+      Name    : Namet.Name_Id)
       return Project_Node_Id;
    --  Return the declaration of the type whose name is Name.
 
    procedure Add_Possible_Value
      (Tree   : Project_Node_Tree_Ref;
       Typ    : Project_Node_Id;
-      Choice : Types.Name_Id);
+      Choice : Namet.Name_Id);
    --  Add a new choice in the list of possible values for the type Typ.
    --  If Choice is already available in Typ, then it is not added again.
 

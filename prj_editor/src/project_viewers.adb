@@ -72,6 +72,7 @@ with GPS.Kernel;                   use GPS.Kernel;
 with GUI_Utils;                    use GUI_Utils;
 with Language_Handlers;            use Language_Handlers;
 with Naming_Editors;               use Naming_Editors;
+with Namet;                        use Namet;
 with Prj;
 with Project_Properties;           use Project_Properties;
 with Projects.Editor;              use Projects, Projects.Editor;
@@ -81,7 +82,6 @@ with String_Utils;                 use String_Utils;
 with Switches_Editors;             use Switches_Editors;
 with System;
 with Traces;                       use Traces;
-with Types;                        use Types;
 with VFS;                          use VFS;
 with Variable_Editors;             use Variable_Editors;
 

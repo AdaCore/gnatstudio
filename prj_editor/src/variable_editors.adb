@@ -42,7 +42,7 @@ with GUI_Utils;                use GUI_Utils;
 with Gtkada.Dialogs;           use Gtkada.Dialogs;
 
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
-with Types;                    use Types;
+with Namet;                    use Namet;
 with Interfaces.C.Strings;     use Interfaces.C.Strings;
 with System;                   use System;
 

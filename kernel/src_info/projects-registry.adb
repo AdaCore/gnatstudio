@@ -1001,7 +1001,8 @@ package body Projects.Registry is
                String_Elements (Registry)(Sources).Display_Value := Name_Find;
 
                Unit := Files_Htable.Get
-                 (Registry.Data.View_Tree.Files_HT, Current_Source);
+                 (Registry.Data.View_Tree.Files_HT,
+                  File_Name_Type (Current_Source));
 
                --  If we are in the fast-project loading mode, then no symbolic
                --  link is resolved, and files are seen through links. We get
@@ -1018,10 +1019,12 @@ package body Projects.Registry is
                   if Unit /= No_Unit_Project then
                      for S in Spec_Or_Body'Range loop
                         if Registry.Data.View_Tree.Units.Table
-                          (Unit.Unit).File_Names (S).Name = Current_Source
+                          (Unit.Unit).File_Names (S).Name =
+                               File_Name_Type (Current_Source)
                         then
-                           Directory := Registry.Data.View_Tree.Units.Table
-                             (Unit.Unit).File_Names (S).Display_Path;
+                           Directory :=
+                             Name_Id (Registry.Data.View_Tree.Units.Table
+                             (Unit.Unit).File_Names (S).Display_Path);
 
                            --  Convert the directory name to UTF8 if needed.
                            --  This might unfortunately be costly, but there is
@@ -1514,8 +1517,9 @@ package body Projects.Registry is
 
             declare
                F : constant String :=
-                     Name_As_Directory (Get_String (Data.Directory)) &
-                       Get_String (Source_List_File.Value);
+                     Name_As_Directory
+                       (Get_String (Data.Directory)) &
+                        Get_String (Source_List_File.Value);
             begin
                if Is_Regular_File (F) then
                   Open (File, F);
@@ -1710,7 +1714,7 @@ package body Projects.Registry is
 
    procedure Reset_Project_Name_Hash
      (Registry : Project_Registry;
-      Name     : Types.Name_Id) is
+      Name     : Namet.Name_Id) is
    begin
       if Registry.Data /= null then
          Get_Name_String (Name);
@@ -1723,7 +1727,7 @@ package body Projects.Registry is
    ---------------------------
 
    function Get_Project_From_Name
-     (Registry : Project_Registry; Name : Types.Name_Id) return Project_Type
+     (Registry : Project_Registry; Name : Namet.Name_Id) return Project_Type
    is
       P    : Project_Type;
       Node : Project_Node_Id;
@@ -1809,7 +1813,7 @@ package body Projects.Registry is
 
    function Get_Language_From_File_From_Project
      (Registry : Project_Registry; Source_Filename : Virtual_File)
-      return Types.Name_Id
+      return Namet.Name_Id
    is
       Base_Name : constant String := VFS.Base_Name (Source_Filename);
       S         : constant Source_File_Data :=

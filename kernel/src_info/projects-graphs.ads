@@ -23,12 +23,12 @@
 
 with Glib.Graphs;
 with Prj.Tree;
-with Types;
+with Namet;
 
 private package Projects.Graphs is
 
    type Vertex_Factory is access function
-     (Project_Name : Types.Name_Id) return Glib.Graphs.Vertex_Access;
+     (Project_Name : Namet.Name_Id) return Glib.Graphs.Vertex_Access;
    --  This function should return a new vertex to put in the graph. You should
    --  pass your own factory if you want to put the item into the canvas
    --  afterwards.

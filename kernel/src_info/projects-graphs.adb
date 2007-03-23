@@ -20,8 +20,9 @@
 
 with Glib.Graphs;   use Glib.Graphs;
 with Prj.Tree;      use Prj.Tree;
-with Types;         use Types;
+with Namet;         use Namet;
 with HTables;
+with Types;         use Types;
 
 package body Projects.Graphs is
 
@@ -40,7 +41,7 @@ package body Projects.Graphs is
       No_Element   => null,
       Key          => Name_Id,
       Hash         => Hash,
-      Equal        => Types."=");
+      Equal        => Namet."=");
    use Vertex_Htable;
 
    type Name_Vertex is new Vertex with record

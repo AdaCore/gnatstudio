@@ -46,7 +46,7 @@ with Remote.Path.Translator;    use Remote, Remote.Path.Translator;
 with Snames;                    use Snames;
 with String_Hash;
 with Traces;                    use Traces;
-with Types;                     use Types;
+
 with VFS;                       use VFS;
 
 package body Projects is
@@ -414,14 +414,15 @@ package body Projects is
          return Create
            (Host,
             To_Remote
-              (Get_String (Path_Name_Of (Project.Node, Project.Tree)), Host));
+              (Get_String (Path_Name_Of (Project.Node, Project.Tree)),
+               Host));
 
       else
          return Create
            (Host,
             To_Remote
-              (Get_String
-                 (Projects_Table (Project)(View).Display_Path_Name), Host));
+              (Get_String (Projects_Table (Project)(View).Display_Path_Name),
+               Host));
       end if;
    end Project_Path;
 
@@ -566,14 +567,13 @@ package body Projects is
 
       elsif Including_Libraries
         and then Projects_Table (Project)(View).Library
-        and then Projects_Table (Project)(View).Library_ALI_Dir /= No_Name
+        and then Projects_Table (Project)(View).Library_ALI_Dir /= No_Path
       then
-         return Get_String
-           (Projects_Table (Project)(View).Library_ALI_Dir);
+         return Get_String (Projects_Table (Project)(View).Library_ALI_Dir);
 
-      elsif Projects_Table (Project)(View).Display_Object_Dir /= No_Name then
+      elsif Projects_Table (Project)(View).Display_Object_Dir /= No_Path then
          return Get_String
-           (Projects_Table (Project)(View).Display_Object_Dir);
+                  (Projects_Table (Project)(View).Display_Object_Dir);
 
       else
          return "";
@@ -1050,7 +1050,8 @@ package body Projects is
             when Unit_Separate =>
                declare
                   N : constant String := Unit_Name_Cased & Get_String
-                    (Projects_Table (Project)(View).Naming.Separate_Suffix);
+                    (Name_Id
+                      (Projects_Table (Project)(View).Naming.Separate_Suffix));
                begin
                   if not File_Must_Exist
                     or else Get_Project_From_File
@@ -1068,8 +1069,9 @@ package body Projects is
 
          declare
             Dot_Replacement : constant String := Get_String
-              (Projects_Table
-                 (Project)(Get_View (Project)).Naming.Dot_Replacement);
+              (Name_Id
+                (Projects_Table
+                 (Project)(Get_View (Project)).Naming.Dot_Replacement));
             Uname           : String := Substitute_Dot
               (Unit_Name_Cased, Dot_Replacement);
 
@@ -1232,14 +1234,14 @@ package body Projects is
 
       elsif Attribute = Separate_Suffix_Attribute then
          return Get_String
-           (Projects_Table (Project)(View).Naming.Separate_Suffix);
+                  (Projects_Table (Project)(View).Naming.Separate_Suffix);
 
       elsif Attribute = Casing_Attribute then
          return Prj.Image (Projects_Table (Project)(View).Naming.Casing);
 
       elsif Attribute = Dot_Replacement_Attribute then
          return Get_String
-           (Projects_Table (Project)(View).Naming.Dot_Replacement);
+                  (Projects_Table (Project)(View).Naming.Dot_Replacement);
 
       elsif Attribute = Old_Implementation_Attribute then
          Value := Value_Of
@@ -1481,7 +1483,8 @@ package body Projects is
       else
          declare
             Exec : constant String := Get_String
-              (Projects_Table (Project)(Get_View (Project)).Display_Exec_Dir);
+             (Name_Id
+              (Projects_Table (Project)(Get_View (Project)).Display_Exec_Dir));
          begin
             if Exec /= "" then
                return Name_As_Directory (Exec);
@@ -2373,7 +2376,7 @@ package body Projects is
      (Project          : Project_Type;
       In_Pkg           : String;
       File             : VFS.Virtual_File;
-      Language         : Types.Name_Id;
+      Language         : Namet.Name_Id;
       Value            : out Variable_Value;
       Is_Default_Value : out Boolean) is
    begin
@@ -2422,7 +2425,7 @@ package body Projects is
 
    function External_Reference_Of
      (Var  : Prj.Tree.Project_Node_Id;
-      Tree : Project_Node_Tree_Ref) return Types.Name_Id
+      Tree : Project_Node_Tree_Ref) return Namet.Name_Id
    is
       Expr : Project_Node_Id := Expression_Of (Var, Tree);
    begin
@@ -2521,9 +2524,54 @@ package body Projects is
    -- Get_String --
    ----------------
 
-   function Get_String (Id : Types.Name_Id) return String is
+   function Get_String (Id : Namet.Name_Id) return String is
    begin
       if Id = No_Name then
+         return "";
+      end if;
+
+      return Get_Name_String (Id);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+         return "";
+   end Get_String;
+
+   function Get_String (Id : Namet.File_Name_Type) return String is
+   begin
+      if Id = Namet.No_File then
+         return "";
+      end if;
+
+      return Get_Name_String (Id);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+         return "";
+   end Get_String;
+
+   function Get_String (Id : Namet.Path_Name_Type) return String is
+   begin
+      if Id = Namet.No_Path then
+         return "";
+      end if;
+
+      return Get_Name_String (Id);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+         return "";
+   end Get_String;
+
+   function Get_String (Id : Namet.Unit_Name_Type) return String is
+   begin
+      if Id = Namet.No_Unit_Name then
          return "";
       end if;
 

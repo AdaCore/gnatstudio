@@ -62,7 +62,6 @@ with Pango.Font;                use Pango.Font;
 with Pango.Layout;              use Pango.Layout;
 
 with Namet;                     use Namet;
-with Types;                     use Types;
 
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with Entities;

@@ -737,7 +737,7 @@ package body GPS.Kernel is
                                   Get_System_Dir (Handle) &
                                     "share/gps/desktop.xml";
       Node                    : Node_Ptr;
-      Project_Name            : Virtual_File := No_File;
+      Project_Name            : Virtual_File := VFS.No_File;
       Child                   : Node_Ptr;
       Desktop_Node            : Node_Ptr;
       Default_Desktop_Node    : Node_Ptr;

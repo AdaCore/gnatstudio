@@ -23,7 +23,7 @@ with GNAT.Strings;
 with GNAT.OS_Lib;
 with Prj.Tree;
 with String_List_Utils;
-with Types;
+with Namet;
 with VFS;
 with Glib;
 
@@ -39,7 +39,7 @@ package Projects is
    type Abstract_Registry is abstract tagged null record;
    type Abstract_Registry_Access is access all Abstract_Registry'Class;
 
-   type Name_Id_Array      is array (Positive range <>) of Types.Name_Id;
+   type Name_Id_Array      is array (Positive range <>) of Namet.Name_Id;
    type Project_Type_Array is array (Natural range <>) of Project_Type;
 
    type Error_Report is access procedure (Msg : String);
@@ -59,7 +59,7 @@ package Projects is
    C_String   : constant String := "c";    --  See also Snames.Name_C
    Cpp_String : constant String := "c++";  --  See also Name_C_Plus_Plus
 
-   Name_C_Plus_Plus : Types.Name_Id;
+   Name_C_Plus_Plus : Namet.Name_Id;
    --  The equivalent of Cpp_String. You should never use Name_CPP, which
    --  contains "cpp" instead of the expect "c++" in projects.
 
@@ -69,7 +69,10 @@ package Projects is
    -- Misc --
    ----------
 
-   function Get_String (Id : Types.Name_Id) return String;
+   function Get_String (Id : Namet.Name_Id)        return String;
+   function Get_String (Id : Namet.File_Name_Type) return String;
+   function Get_String (Id : Namet.Path_Name_Type) return String;
+   function Get_String (Id : Namet.Unit_Name_Type) return String;
    --  Return the string in Name
    --  Same as Namet.Get_Name_String, but return "" in case of
    --  failure, instead of raising Assert_Failure.
@@ -111,7 +114,7 @@ package Projects is
    --  be saved.
 
    function Project_Name (Project : Project_Type) return String;
-   function Project_Name (Project : Project_Type) return Types.Name_Id;
+   function Project_Name (Project : Project_Type) return Namet.Name_Id;
    --  Return the name of the project.
    --  "default" is returned if the project is the empty project or No_Project.
 
@@ -246,8 +249,8 @@ package Projects is
      (Filename  : Glib.UTF8_String;
       Project   : Project_Type;
       Part      : out Unit_Part;
-      Unit_Name : out Types.Name_Id;
-      Lang      : out Types.Name_Id);
+      Unit_Name : out Namet.Name_Id;
+      Lang      : out Namet.Name_Id);
    --  Return the unit name and unit part for Filename.
    --  This procedure doesn't fully handle krunched file name.
    --  Project can be No_Project, in which case the default naming scheme is
@@ -346,7 +349,7 @@ package Projects is
    Executable_Attribute                : constant Attribute_Pkg;
 
    type Associative_Array_Element is record
-      Index : Types.Name_Id;
+      Index : Namet.Name_Id;
       Value : Prj.Variable_Value;
    end record;
    type Associative_Array is array (Natural range <>)
@@ -408,7 +411,7 @@ package Projects is
      (Project          : Project_Type;
       In_Pkg           : String;
       File             : VFS.Virtual_File;
-      Language         : Types.Name_Id;
+      Language         : Namet.Name_Id;
       Value            : out Prj.Variable_Value;
       Is_Default_Value : out Boolean);
    --  Return the switches to use for a file in a given package (gnatmake,
@@ -678,7 +681,7 @@ private
 
    function External_Reference_Of
      (Var  : Prj.Tree.Project_Node_Id;
-      Tree : Prj.Tree.Project_Node_Tree_Ref) return Types.Name_Id;
+      Tree : Prj.Tree.Project_Node_Tree_Ref) return Namet.Name_Id;
    --  Returns the name of the external variable referenced by Var.
    --  No_String is returned if Var doesn't reference an external variable.
 
@@ -689,8 +692,8 @@ private
    --  package indicator
 
    type Scenario_Variable is record
-      Name        : Types.Name_Id;
-      Default     : Types.Name_Id;
+      Name        : Namet.Name_Id;
+      Default     : Namet.Name_Id;
       String_Type : Prj.Tree.Project_Node_Id;
    end record;
 
@@ -699,7 +702,7 @@ private
    --  of Importing. See projects.adb for the definition of these two caches
 
    No_Variable : constant Scenario_Variable :=
-     (Types.No_Name, Types.No_Name, Prj.Tree.Empty_Node);
+     (Namet.No_Name, Namet.No_Name, Prj.Tree.Empty_Node);
 
    No_Scenario : constant Scenario_Variable_Array (1 .. 0) :=
      (others => No_Variable);
@@ -708,7 +711,7 @@ private
                   (Prj.Tree.Empty_Node, null, null, null);
 
    All_Languages : constant Name_Id_Array :=
-     (1 .. 0 => Types.No_Name);
+     (1 .. 0 => Namet.No_Name);
 
    type Imported_Project_Iterator is record
       Root      : Project_Type;

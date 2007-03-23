@@ -90,7 +90,7 @@ with Remote;                    use Remote;
 with Scenario_Selectors;        use Scenario_Selectors;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
-with Types;
+with Namet;
 with VFS;                       use VFS;
 with Wizards;                   use Wizards;
 
@@ -1321,7 +1321,7 @@ package body Project_Properties is
       Scenario_Variables : Scenario_Variable_Array;
       Project_Changed    : in out Boolean)
    is
-      use type Types.Name_Id;
+      use type Namet.Name_Id;
       Iter  : Gtk_Tree_Iter := Get_Iter_First (Editor.Model);
       Attr  : constant Attribute_Pkg :=
                 Build
@@ -1339,11 +1339,11 @@ package body Project_Properties is
             Index : constant String := Get_String (Editor.Model, Iter, 0);
          begin
             for A in Assoc'Range loop
-               if Assoc (A).Index /= Types.No_Name then
+               if Assoc (A).Index /= Namet.No_Name then
                   if Equal (Get_String (Assoc (A).Index), Index,
                             Editor.Attribute.Case_Sensitive_Index)
                   then
-                     Assoc (A).Index := Types.No_Name;
+                     Assoc (A).Index := Namet.No_Name;
                      exit;
                   end if;
                end if;
@@ -1353,7 +1353,7 @@ package body Project_Properties is
       end loop;
 
       for A in Assoc'Range loop
-         if Assoc (A).Index /= Types.No_Name then
+         if Assoc (A).Index /= Namet.No_Name then
             Trace (Me, "Removing obsolete value "
                    & Editor.Attribute.Pkg.all
                    & ":" & Editor.Attribute.Name.all

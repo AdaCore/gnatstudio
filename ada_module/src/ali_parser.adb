@@ -422,9 +422,11 @@ package body ALI_Parser is
       Id      : Unit_Id) return Source_File
    is
       Base_Name : constant String :=
-                    Locale_To_UTF8 (Get_String (Units.Table (Id).Sfile));
+                    Locale_To_UTF8
+                      (Get_String (Units.Table (Id).Sfile));
       File      : Source_File;
-      Unit      : constant String := Get_String (Units.Table (Id).Uname);
+      Unit      : constant String :=
+                    Get_String (Units.Table (Id).Uname);
    begin
       Assert (Assert_Me, LI /= null, "Null LI file parsed");
 
@@ -478,7 +480,8 @@ package body ALI_Parser is
    is
       Dep         : Sdep_Record renames Sdep.Table (Dep_Id);
       Is_Separate : constant Boolean := Dep.Subunit_Name /= No_Name;
-      Base_Name   : constant String := Locale_To_UTF8 (Get_String (Dep.Sfile));
+      Base_Name   : constant String :=
+                      Locale_To_UTF8 (Get_String (Dep.Sfile));
       L           : LI_File := LI;
    begin
       --  Do we have one of the files belonging to LI itself ?
@@ -587,11 +590,11 @@ package body ALI_Parser is
    is
       Has_With   : array (Deps'Range) of Boolean := (others => False);
       With_Files : array (Units.Table (Unit).First_With ..
-                            Units.Table (Unit).Last_With) of Name_Id;
+                            Units.Table (Unit).Last_With) of File_Name_Type;
    begin
       for W in With_Files'Range loop
-         With_Files (W) := Filename_From_Unit
-           (Withs.Table (W).Uname, Imported_Projects);
+         With_Files (W) := File_Name_Type (Filename_From_Unit
+           (Withs.Table (W).Uname, Imported_Projects));
       end loop;
 
       if Units.Table (Unit).First_With /= No_With_Id then

@@ -25,7 +25,7 @@ with Language;                use Language;
 with Language.Ada;            use Language.Ada;
 with OS_Utils;                use OS_Utils;
 with Projects;                use Projects;
-with Types;                   use Types;
+with Namet;                   use Namet;
 
 package body Aunit_Filters is
 
@@ -229,8 +229,8 @@ package body Aunit_Filters is
    is
       pragma Unreferenced (Win);
       Part      : Unit_Part;
-      Unit_Name : Types.Name_Id;
-      Lang      : Types.Name_Id;
+      Unit_Name : Namet.Name_Id;
+      Lang      : Namet.Name_Id;
    begin
 
       Projects.Get_Unit_Part_And_Name_From_Filename

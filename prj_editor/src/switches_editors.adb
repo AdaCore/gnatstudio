@@ -70,7 +70,7 @@ with Snames;                    use Snames;
 with String_Utils;              use String_Utils;
 with Switch.M;                  use Switch.M;
 with Traces;                    use Traces;
-with Types;                     use Types;
+with Namet;                     use Namet;
 with VFS;                       use VFS;
 
 package body Switches_Editors is

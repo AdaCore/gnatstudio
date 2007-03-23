@@ -32,7 +32,7 @@ with Language.Tree;             use Language.Tree;
 with Projects.Registry;         use Projects.Registry;
 with Projects;                  use Projects;
 with Traces;                    use Traces;
-with Types;                     use Types;
+with Namet;                     use Namet;
 with VFS;                       use VFS;
 
 package body Language_Handlers is

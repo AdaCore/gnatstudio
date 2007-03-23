@@ -53,7 +53,7 @@ package body Projects.Editor is
    --------------
 
    function Find_Project_In_Hierarchy
-     (Root_Project : Project_Type; Name : Types.Name_Id)
+     (Root_Project : Project_Type; Name : Namet.Name_Id)
       return Project_Node_Id;
    --  Find in the project tree starting at Root_Project a subproject called
    --  Name.
@@ -166,8 +166,8 @@ package body Projects.Editor is
    function Find_Last_Declaration_Of
      (Tree       : Project_Node_Tree_Ref;
       Parent     : Project_Node_Id;
-      Attr_Name  : Types.Name_Id;
-      Attr_Index : Types.Name_Id := No_Name) return Project_Node_Id;
+      Attr_Name  : Namet.Name_Id;
+      Attr_Index : Namet.Name_Id := No_Name) return Project_Node_Id;
    --  Find the last declaration for the attribute Attr_Name, in the
    --  declarative list contained in Parent.
    --  The returned value is the last such declaration, or Empty_Node if there
@@ -224,7 +224,7 @@ package body Projects.Editor is
 
    function Find_Package_Declaration
      (Tree    : Project_Node_Tree_Ref;
-      Project : Project_Node_Id; Name : Types.Name_Id)
+      Project : Project_Node_Id; Name : Namet.Name_Id)
       return Project_Node_Id;
    --  Return the package whose name is Name, or Empty_Node if there is none
 
@@ -263,7 +263,7 @@ package body Projects.Editor is
    ----------
 
    function Create_Literal_String
-     (Str : Types.Name_Id; Tree : Project_Node_Tree_Ref)
+     (Str : Namet.Name_Id; Tree : Project_Node_Tree_Ref)
       return Project_Node_Id;
    --  Create a literal string whose value is Str.
 
@@ -288,8 +288,8 @@ package body Projects.Editor is
       Pkg                : Project_Node_Id;
       Case_Construct     : in out Project_Node_Id;
       Scenario_Variables : Scenario_Variable_Array;
-      Attribute_Name     : Types.Name_Id;
-      Attribute_Index    : Types.Name_Id := No_Name);
+      Attribute_Name     : Namet.Name_Id;
+      Attribute_Index    : Namet.Name_Id := No_Name);
    --  Move any declaration for the attribute from the common part of the
    --  project into each branch of the nested case construct. Nothing is done
    --  if there is no such declaration.
@@ -338,7 +338,7 @@ package body Projects.Editor is
    ---------------------------
 
    function Create_Literal_String
-     (Str : Types.Name_Id; Tree : Project_Node_Tree_Ref)
+     (Str : Namet.Name_Id; Tree : Project_Node_Tree_Ref)
       return Project_Node_Id
    is
       Node : Project_Node_Id;
@@ -382,7 +382,7 @@ package body Projects.Editor is
 
    function Find_Package_Declaration
      (Tree    : Project_Node_Tree_Ref;
-      Project : Project_Node_Id; Name : Types.Name_Id)
+      Project : Project_Node_Id; Name : Namet.Name_Id)
       return Project_Node_Id is
    begin
       return Find_Node_By_Name (Tree, Project, N_Package_Declaration, Name);
@@ -604,7 +604,7 @@ package body Projects.Editor is
    -------------------------------
 
    function Find_Project_In_Hierarchy
-     (Root_Project : Project_Type; Name : Types.Name_Id)
+     (Root_Project : Project_Type; Name : Namet.Name_Id)
       return Project_Node_Id
    is
       Iter : Imported_Project_Iterator := Start (Root_Project);
@@ -702,7 +702,7 @@ package body Projects.Editor is
 
    function Data
      (Tree : Project_Node_Tree_Ref;
-      Iter : String_List_Iterator) return Types.Name_Id is
+      Iter : String_List_Iterator) return Namet.Name_Id is
    begin
       pragma Assert (Kind_Of (Iter.Current, Tree) = N_Literal_String);
       return String_Value_Of (Iter.Current, Tree);
@@ -1226,8 +1226,8 @@ package body Projects.Editor is
       Pkg                : Project_Node_Id;
       Case_Construct     : in out Project_Node_Id;
       Scenario_Variables : Scenario_Variable_Array;
-      Attribute_Name     : Types.Name_Id;
-      Attribute_Index    : Types.Name_Id := No_Name)
+      Attribute_Name     : Namet.Name_Id;
+      Attribute_Index    : Namet.Name_Id := No_Name)
    is
       Parent          : Project_Node_Id;
       Node, Tmp       : Project_Node_Id;
@@ -1512,7 +1512,7 @@ package body Projects.Editor is
    function Find_Type_Declaration
      (Tree    : Project_Node_Tree_Ref;
       Project : Project_Node_Id;
-      Name    : Types.Name_Id)
+      Name    : Namet.Name_Id)
       return Project_Node_Id is
    begin
       return Find_Node_By_Name
@@ -1692,7 +1692,7 @@ package body Projects.Editor is
      (Root_Project      : Project_Type;
       Ext_Variable_Name : String;
       Old_Value_Name    : String;
-      New_Value_Name    : Types.Name_Id)
+      New_Value_Name    : Namet.Name_Id)
    is
       Tree : constant Project_Node_Tree_Ref := Root_Project.Tree;
       Old_V_Name : constant Name_Id := Get_String (Old_Value_Name);
@@ -2147,7 +2147,7 @@ package body Projects.Editor is
    procedure Rename_External_Variable
      (Root_Project : Project_Type;
       Variable     : in out Scenario_Variable;
-      New_Name     : Types.Name_Id)
+      New_Name     : Namet.Name_Id)
    is
       Tree : constant Project_Node_Tree_Ref := Root_Project.Tree;
       procedure Callback (Project, Parent, Node, Choice : Project_Node_Id);
@@ -2611,7 +2611,9 @@ package body Projects.Editor is
                begin
                   if Old /= Conv then
                      Set_Extended_Project_Path_Of
-                       (Project.Node, Tree, Get_String (Conv));
+                       (Project.Node,
+                        Tree,
+                        Get_String (Conv));
                      Changed := True;
                   end if;
                end;
@@ -2621,7 +2623,9 @@ package body Projects.Editor is
                begin
                   if Conv /= Old then
                      Set_Extended_Project_Path_Of
-                       (Project.Node, Tree, Get_String (Conv));
+                       (Project.Node,
+                        Tree,
+                        Get_String (Conv));
                      Changed := True;
                   end if;
                end;
@@ -3154,7 +3158,9 @@ package body Projects.Editor is
          Clause := Get_String
            (Relative_Path_Name
               (Imported_Project_Location,
-               Dir_Name (Get_String (Path_Name_Of (Importing_Project, Tree))),
+               Dir_Name
+                 (Get_String
+                    (Path_Name_Of (Importing_Project, Tree))),
                Build_Server));
       else
          Clause := Get_String (Imported_Project_Location);
@@ -3368,7 +3374,8 @@ package body Projects.Editor is
 
       if Dep_Name /= No_Project_Name_And_Node then
          if not File_Equal
-           (Format_Pathname (Get_String (Path_Name_Of (Dep_Name.Node, Tree))),
+           (Format_Pathname
+              (Get_String (Path_Name_Of (Dep_Name.Node, Tree))),
             Full_Name (Imported_Project_Location).all,
             Build_Server)
          then
@@ -3629,7 +3636,9 @@ package body Projects.Editor is
 
       Set_Name_Of (Project.Node, Tree, Name);
       Set_Directory_Of
-        (Project.Node, Tree, Get_String (Full_Name (New_Path).all));
+        (Project.Node,
+         Tree,
+         Get_String (Full_Name (New_Path).all));
       Set_Path_Name_Of (Project.Node, Tree, Get_String (D));
 
       --  We do not want to reread the display_name from the source, which is
@@ -3643,7 +3652,7 @@ package body Projects.Editor is
          Prj.Tree.Tree_Private_Part.Project_Name_And_Node'
          (Name           => Old_Name,
           Node           => Empty_Node,
-          Canonical_Path => Old_Name,
+          Canonical_Path => Path_Name_Type (Old_Name),
           Extended       => False));
 
       --  Register the new name
@@ -3699,7 +3708,8 @@ package body Projects.Editor is
       Set_Name_Of (Project, Tree, Project_Name);
 
       --  Adding the project path
-      Set_Directory_Of (Project, Tree, Get_String (Full_Name (Path).all));
+      Set_Directory_Of
+        (Project, Tree, Get_String (Full_Name (Path).all));
       Set_Path_Name_Of (Project, Tree, Get_String (D));
 
       --  Create the project declaration
@@ -3713,7 +3723,7 @@ package body Projects.Editor is
          Prj.Tree.Name_Of (Project, Tree),
          Prj.Tree.Tree_Private_Part.Project_Name_And_Node'
          (Name           => Project_Name,
-          Canonical_Path => Project_Name,
+          Canonical_Path => Path_Name_Type (Project_Name),
           Node           => Project,
           Extended       => False));
       Reset_Project_Name_Hash (Registry, Prj.Tree.Name_Of (Project, Tree));
@@ -3728,6 +3738,20 @@ package body Projects.Editor is
    ----------------
 
    function Get_String (Str : String) return Name_Id is
+   begin
+      Name_Len := Str'Length;
+      Name_Buffer (1 .. Name_Len) := Str;
+      return Name_Find;
+   end Get_String;
+
+   function Get_String (Str : String) return Namet.File_Name_Type is
+   begin
+      Name_Len := Str'Length;
+      Name_Buffer (1 .. Name_Len) := Str;
+      return Name_Find;
+   end Get_String;
+
+   function Get_String (Str : String) return Namet.Path_Name_Type is
    begin
       Name_Len := Str'Length;
       Name_Buffer (1 .. Name_Len) := Str;

@@ -831,7 +831,7 @@ package body VCS_View.Explorer is
 
             Set_File_Information
               (Context,
-               File    => No_File,
+               File    => VFS.No_File,
                Project => Project);
 
             Root_Node := True;

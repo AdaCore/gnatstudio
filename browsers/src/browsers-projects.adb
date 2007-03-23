@@ -40,7 +40,7 @@ with GPS.Intl;               use GPS.Intl;
 with Projects;               use Projects;
 with Projects.Registry;      use Projects.Registry;
 with Browsers.Canvas;        use Browsers.Canvas;
-with Types;                  use Types;
+with Namet;                  use Namet;
 with Traces;                 use Traces;
 with Find_Utils;             use Find_Utils;
 with Commands.Interactive;   use Commands, Commands.Interactive;
@@ -87,7 +87,7 @@ package body Browsers.Projects is
 
    type Browser_Project_Vertex is new Browsers.Canvas.Arrow_Item_Record with
       record
-         Name : Types.Name_Id;
+         Name : Namet.Name_Id;
       end record;
    type Browser_Project_Vertex_Access is access all Browser_Project_Vertex;
 
