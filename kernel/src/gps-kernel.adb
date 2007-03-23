@@ -164,6 +164,27 @@ package body GPS.Kernel is
       return Handle.Icon_Factory;
    end Get_Icon_Factory;
 
+   --------------------------
+   -- Set_Destruction_Flag --
+   --------------------------
+
+   procedure Set_Destruction_Flag
+     (Handle : access Kernel_Handle_Record;
+      Flag : Boolean) is
+   begin
+      Handle.Is_In_Destruction := Flag;
+   end Set_Destruction_Flag;
+
+   -----------------------
+   -- Is_In_Destruction --
+   -----------------------
+
+   function Is_In_Destruction
+     (Handle : access Kernel_Handle_Record) return Boolean is
+   begin
+      return Handle.Is_In_Destruction;
+   end Is_In_Destruction;
+
    ------------------
    -- GNAT_Version --
    ------------------
