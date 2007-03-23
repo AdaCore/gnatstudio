@@ -279,7 +279,10 @@ private
    --  "Tools/Coverage" menu
 
    function Create_Instance return Class_Instance;
-   --  Create a new instance of Code_Analysis data structure
+   --  Create a new instance of Code_Analysis data structure and call
+   --  Initialize_Instance on it
+
+   procedure Initialize_Instance (Instance : in out Class_Instance);
    --  This sets its property with a date and a name
    --  Then, the instance is inserted in the Instances set of the Code_Analysis
    --  Module_ID
