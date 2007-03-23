@@ -1278,15 +1278,7 @@ package body Projects.Registry is
             if Src = No_Source_File_Data then
                F := Create (File, Project, Use_Object_Path => False);
             else
-               declare
-                  Full_Name : constant String := Get_String (Src.Full_Name);
-               begin
-                  if Full_Name /= "" then
-                     F := Create (Get_String (Src.Full_Name));
-                  else
-                     F := VFS.No_File;
-                  end if;
-               end;
+               F := Create (Get_String (Src.Full_Name));
             end if;
 
             --  We only add sources that can be found. In case of a debugger
@@ -1294,7 +1286,7 @@ package body Projects.Registry is
             --  (returned by the debugger itself) cannot be found (they were
             --  used to compile the run-time for example but are not part of
             --  the compiler distribution).
-            if F /= VFS.No_File then
+            if F.Is_Regular_File then
                Append (Source_File_List, F);
                Set (Seen, File, True);
             end if;
