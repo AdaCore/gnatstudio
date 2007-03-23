@@ -17,6 +17,11 @@ Known Problems fixed in GPS 4.1.1
               crash.
   Workaround: Terminate manually the task before closing GPS.
 
+- G322-010 Cannot add a dependency on a mixed cased project file
+  Problem:    An internal error prevents GPS from being able to import projects
+              with file names not lower case.
+  Woraround:  Use lower case project file names.
+
 Known Problems fixed in GPS 4.1.0
 
 - G305-005 Custom menu filters preventing menu display
