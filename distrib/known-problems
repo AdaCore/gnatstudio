@@ -1,10 +1,5 @@
 Known Problems fixed in GPS 4.2.0
 
-- G322-010 Cannot add a dependency on a mixed cased project file
-  Problem:    An internal error prevents GPS from being able to import projects
-              with file names not lower case.
-  Woraround:  Use lower case project file names.
-
 - G316-005 Auto-casing is confused by string quotes characters constants.
   Problem:    When a string quote character is used ('"' in Ada or C), and
               a string constant is following this character constant, then GPS
