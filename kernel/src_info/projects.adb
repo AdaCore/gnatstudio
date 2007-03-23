@@ -239,8 +239,6 @@ package body Projects is
       Dir_Name  : String;
       Has_Files : Boolean) is
    begin
-      Trace (Me, "[Update_Directory_Cache] " & Dir_Name & " Has_Files => "
-               & Has_Files'Img);
       Set (Project.Data.Directories,
            Name_As_Directory (Dir_Name), (Has_Files => Has_Files));
    end Update_Directory_Cache;
