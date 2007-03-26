@@ -1683,7 +1683,12 @@ package body Gtkada.File_Selector is
 
             --  Handle the easy part: change to the longest directory available
 
-            File     := Create (Get_Host (Win.Current_Directory), S);
+            if S /= "" then
+               File := Create (Get_Host (Win.Current_Directory), S);
+            else
+               File := VFS.No_File;
+            end if;
+
             Sub_File := Create_From_Dir (Win.Current_Directory, S);
 
             if Is_Absolute_Path (File)
@@ -1694,7 +1699,8 @@ package body Gtkada.File_Selector is
                File := Sub_File;
                Change_Directory (Win, VFS.Dir (File));
                Set_Text (Win.Selection_Entry, Base_Dir_Name (File));
-               Set_Position (Win.Selection_Entry, Base_Dir_Name (File)'Length);
+               Set_Position
+                 (Win.Selection_Entry, Base_Dir_Name (File)'Length);
             else
                --  Dir is a non-existing directory: exit now
 
