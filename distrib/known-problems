@@ -8,19 +8,26 @@ Known Problems fixed in GPS 4.1.1
               completion.
 
 - G322-027 Crash when searching for all occurrences of a pattern
-  Problem:    GPS may crash when searching for all occurrences of a given
-              pattern in all files from the project.
+  Problem:    In some rare circumstances, GPS may crash when searching for all
+              occurrences of a given pattern in all files from the project.
   Workaround: Use the "XXX is called by" contextual menu if appropriate.
 
 - G322-011 Crash when closing GPS while entities are loaded
-  Problem:    Closing GPS when the entities database is loading causes GPS to
-              crash.
+  Problem:    Closing GPS when the entities database is loading may cause GPS
+              to crash.
   Workaround: Terminate manually the task before closing GPS.
 
 - G322-010 Cannot add a dependency on a mixed cased project file
   Problem:    An internal error prevents GPS from being able to import projects
               with file names not lower case.
-  Woraround:  Use lower case project file names.
+  Workaround:  Use lower case project file names.
+
+- G215-026 Wrong display of breakpoint condition
+  Problem:    The advanced breakpoint dialog will not always display
+              the condition associated with a breakpoint correctly.
+  Workaround: This is only a display glitch, which can be ignored. You can
+              double check the condition by typing 'info break' in the debugger
+              console.
 
 Known Problems fixed in GPS 4.1.0
 
