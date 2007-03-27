@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006                           --
+--                      Copyright (C) 2006-2007                      --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -23,6 +23,7 @@
 
 with Ada.Containers.Ordered_Maps;
 with Ada.Containers.Ordered_Multisets;
+with Ada.Unchecked_Deallocation;
 
 with Lazy_Vectors;
 with Tries;
@@ -80,6 +81,12 @@ package Language.Tree.Database is
 
    function Get_File_Path (File : Structured_File_Access) return Virtual_File;
    --  Return the file path of the given file node.
+
+   function Get_Offset_Of_Line
+     (File : Structured_File_Access; Line : Integer) return Integer;
+   --  Return the offset of the line given in parameter. For efficency, the
+   --  line offsets of all lines are cached when calling this function,
+   --  and freed either when the File is freed or updated.
 
    procedure Update_Contents (File : Structured_File_Access);
    --  This function will re-analyze the full contents of the file
@@ -234,6 +241,12 @@ private
 
    procedure Free (This : in out  Construct_Db_Data_Access);
 
+   type Line_Start_Indexes is array (Natural range <>) of Natural;
+   type Line_Start_Indexes_Access is access all Line_Start_Indexes;
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Line_Start_Indexes, Line_Start_Indexes_Access);
+
    type Structured_File is record
       File        : Virtual_File;
       Parent_File : Structured_File_Access;
@@ -244,6 +257,8 @@ private
 
       Cache_Tree   : Construct_Tree;
       Cache_Buffer : String_Access;
+
+      Line_Starts  : Line_Start_Indexes_Access;
 
       Db           : access Construct_Database;
    end record;
