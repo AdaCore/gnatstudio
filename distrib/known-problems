@@ -1,9 +1,9 @@
 Known Problems fixed in GPS 4.1.1
 
 - G322-032 Problems in completion with incomplete units
-  Problem:    Smart completion may fail to propose entries when it involves 
+  Problem:    Smart completion may fail to propose entries when it involves
               files where the unit name can't be retrieved (typically files
-              with errors, or in the process of being modified). 
+              with errors, or in the process of being modified).
   Workaround: Edit the file to include the unit name, or ignore the missing
               completion.
 
@@ -21,6 +21,11 @@ Known Problems fixed in GPS 4.1.1
   Problem:    An internal error prevents GPS from being able to import projects
               with file names not lower case.
   Workaround:  Use lower case project file names.
+
+- G321-011 Context is invalid in scripts when only a directory is concerned
+  Problem:    When a context only concerns a directory, then the Context in
+              script is not set to FileContext.
+  Workaround: Retrieve the context from files or projects.
 
 - G215-026 Wrong display of breakpoint condition
   Problem:    The advanced breakpoint dialog will not always display
