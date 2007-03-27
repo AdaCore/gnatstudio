@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006                           --
+--                      Copyright (C) 2006-2007                      --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,8 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Unchecked_Deallocation; use Ada;
-
 with Language.Tree.Ada; use Language.Tree.Ada;
 
 package body Language.Tree.Database is
@@ -34,7 +32,7 @@ package body Language.Tree.Database is
    ----------
 
    procedure Free (This : in out Buffer_Provider_Access) is
-      procedure Internal is new Unchecked_Deallocation
+      procedure Internal is new Standard.Ada.Unchecked_Deallocation
         (Buffer_Provider'Class, Buffer_Provider_Access);
    begin
       Free (This.all);
@@ -46,13 +44,14 @@ package body Language.Tree.Database is
    ----------
 
    procedure Free (File : in out Structured_File_Access) is
-      procedure Internal is new Unchecked_Deallocation
+      procedure Internal is new Standard.Ada.Unchecked_Deallocation
         (Structured_File, Structured_File_Access);
    begin
       Free (File.Cache_Tree);
       Free (File.Cache_Buffer);
       Free (File.Public_Tree);
       Free (File.Db_Data_Tree);
+      Free (File.Line_Starts);
 
       Internal (File);
    end Free;
@@ -129,6 +128,46 @@ package body Language.Tree.Database is
       return File.File;
    end Get_File_Path;
 
+   ------------------------
+   -- Get_Offset_Of_Line --
+   ------------------------
+
+   function Get_Offset_Of_Line
+     (File : Structured_File_Access; Line : Integer) return Integer is
+   begin
+      if File.Line_Starts = null then
+         declare
+            Lines       : Line_Start_Indexes_Access :=
+              new Line_Start_Indexes (1 .. 1000);
+            Buffer      : constant String_Access := Get_Buffer (File);
+            Lines_Index : Integer := 2;
+            Tmp_Lines   : Line_Start_Indexes_Access;
+         begin
+            Lines (1) := 1;
+
+            for J in Buffer'Range loop
+               if Buffer (J) = ASCII.LF then
+                  if Lines_Index > Lines'Last then
+                     Tmp_Lines := Lines;
+                     Lines := new Line_Start_Indexes (1 .. Lines'Last * 2);
+                     Lines (1 .. Tmp_Lines'Last) := Tmp_Lines.all;
+                     Free (Tmp_Lines);
+                  end if;
+
+                  Lines (Lines_Index) := J + 1;
+                  Lines_Index := Lines_Index + 1;
+               end if;
+            end loop;
+
+            File.Line_Starts := new Line_Start_Indexes'
+              (Lines (1 .. Lines_Index - 1));
+            Free (Lines);
+         end;
+      end if;
+
+      return File.Line_Starts (Line);
+   end Get_Offset_Of_Line;
+
    ---------------------
    -- Update_Contents --
    ---------------------
@@ -204,6 +243,7 @@ package body Language.Tree.Database is
          Free (File.Cache_Buffer);
          Free (File.Public_Tree);
          Free (File.Db_Data_Tree);
+         Free (File.Line_Starts);
          File.Parent_File := null;
       end if;
 
@@ -314,7 +354,7 @@ package body Language.Tree.Database is
    ----------
 
    procedure Free (This : in out Construct_Database_Access) is
-      procedure Internal is new Unchecked_Deallocation
+      procedure Internal is new Standard.Ada.Unchecked_Deallocation
         (Construct_Database, Construct_Database_Access);
    begin
       Clear (This);
@@ -438,7 +478,7 @@ package body Language.Tree.Database is
    ----------
 
    procedure Free (Node : in out Construct_Node_List_Access) is
-      procedure Internal is new Unchecked_Deallocation
+      procedure Internal is new Standard.Ada.Unchecked_Deallocation
         (Construct_Node_List, Construct_Node_List_Access);
    begin
       if Node /= null then
@@ -454,7 +494,7 @@ package body Language.Tree.Database is
    ----------
 
    procedure Free (This : in out Construct_Db_Data_Access) is
-      procedure Internal is new Unchecked_Deallocation
+      procedure Internal is new Standard.Ada.Unchecked_Deallocation
         (Construct_Db_Data_Array, Construct_Db_Data_Access);
    begin
       Internal (This);
