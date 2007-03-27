@@ -2608,6 +2608,7 @@ package body GPS.Kernel.Scripts is
 
       elsif Has_File_Information (Context)
         or else Has_Project_Information (Context)
+        or else Has_Directory_Information (Context)
       then
          return Get_Or_Create_Context
            (Script,
