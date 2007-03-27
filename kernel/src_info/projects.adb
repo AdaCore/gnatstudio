@@ -392,8 +392,8 @@ package body Projects is
    -- Project_Name_Hash --
    -----------------------
 
-   function Project_Name_Hash (Project : Project_Type)
-                               return Ada.Containers.Hash_Type is
+   function Project_Name_Hash
+     (Project : Project_Type) return Ada.Containers.Hash_Type is
    begin
       return Ada.Strings.Hash (Project_Name (Project));
    end Project_Name_Hash;
