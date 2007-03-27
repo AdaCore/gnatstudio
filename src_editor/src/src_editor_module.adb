@@ -2521,6 +2521,7 @@ package body Src_Editor_Module is
       Label              : Contextual_Menu_Label_Creator;
       Line_Numbers_Area_Filter : Action_Filter;
 
+      Has_Type           : constant Action_Filter := new Has_Type_Filter;
       Src_Action_Context : constant Action_Filter :=
                              new Src_Editor_Action_Context;
       --  Memory is never freed, but this is needed for the whole life of
@@ -2685,8 +2686,9 @@ package body Src_Editor_Module is
          Action     => Command,
          Label      => -"Goto declaration of %e",
          Filter     => Action_Filter
-           (not Line_Numbers_Area_Filter
-            and Create (Module => Src_Editor_Module_Name)));
+           ((not Line_Numbers_Area_Filter
+            and Create (Module => Src_Editor_Module_Name))
+            or Has_Type));
 
       Command := new Goto_Next_Body_Command;
       Filter  := new Has_Body_Filter;
@@ -2698,12 +2700,11 @@ package body Src_Editor_Module is
          Filter     => Filter);
 
       Command := new Goto_Type_Command;
-      Filter  := new Has_Type_Filter;
       Register_Contextual_Menu
         (Kernel, "Goto type of entity",
          Action     => Command,
          Label      => -"Goto type declaration of %e",
-         Filter     => Filter);
+         Filter     => Has_Type);
 
       Command := new Goto_Other_File_Command;
       Filter  := new Has_Other_File_Filter;
