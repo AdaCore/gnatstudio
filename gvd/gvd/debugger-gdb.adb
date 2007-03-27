@@ -139,11 +139,11 @@ package body Debugger.Gdb is
    --  How to detect subprogram names in the info given by "info breakpoint"
 
    Condition_In_Breakpoint   : constant Pattern_Matcher := Compile
-     ("^\tstop only if (.*)");
+     ("^\t?stop only if (.*)");
    --  How to detect breakpoint conditions in "info breakpoint"
 
    Ignore_In_Breakpoint      : constant Pattern_Matcher := Compile
-     ("^\tignore next (\d+) hits");
+     ("^\t?ignore next (\d+) hits");
    --  How to detect the ignore count in "info breakpoint"
 
    Breakpoint_Extra_Info     : constant Pattern_Matcher := Compile

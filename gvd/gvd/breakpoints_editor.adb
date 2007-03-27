@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2006                      --
+--                      Copyright (C) 2000-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -343,9 +343,9 @@ package body Breakpoints_Editor is
       end if;
 
       if Br.Condition /= null then
-         Set_Text (Get_Entry (Advanced.Condition_Combo), Br.Condition.all);
          Add_Unique_Combo_Entry
            (Advanced.Condition_Combo, Br.Condition.all);
+         Set_Text (Get_Entry (Advanced.Condition_Combo), Br.Condition.all);
       else
          Set_Text (Get_Entry (Advanced.Condition_Combo), "");
       end if;
