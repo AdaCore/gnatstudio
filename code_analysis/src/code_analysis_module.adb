@@ -863,7 +863,9 @@ package body Code_Analysis_Module is
       Instance : Class_Instance := Nth_Arg
         (Data, 1, Code_Analysis_Module_ID.Class);
    begin
-      Destroy_Instance (Instance);
+      if not Is_In_Destruction (Code_Analysis_Module_ID.Kernel) then
+         Destroy_Instance (Instance);
+      end if;
    exception
       when E : others =>
          Trace (Exception_Handle,
