@@ -658,8 +658,6 @@ package body Builder_Module is
 
       Free (Langs);
 
-      Prj := Extending_Project (Project, Recurse => True);
-
       --  If no file was specified in data, simply compile the current file
 
       if File = VFS.No_File and then Project = No_Project then
@@ -689,6 +687,7 @@ package body Builder_Module is
          end if;
 
       else
+         Prj := Extending_Project (Project, Recurse => True);
          Args := Compute_Arguments
            (Kernel, Prj, "", File,
             Unique_Project => not Main_Units,
@@ -1853,7 +1852,7 @@ package body Builder_Module is
         (Mitem, "activate", On_Build'Access,
          Slot_Object => Kernel,
          User_Data => File_Project_Record'
-           (Project => Get_Project (Kernel),
+           (Project => No_Project,
             File    => VFS.No_File));
 
       Mitem := new Dynamic_Menu_Item_Record;
