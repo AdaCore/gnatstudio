@@ -616,14 +616,10 @@ package body Code_Analysis_Module is
    begin
 
       if Cont_N_Inst.Instance = No_Class_Instance then
-         Create_From_Menu (null);
-         Instance := Code_Analysis_Class_Instance_Sets.First_Element
-           (Code_Analysis_Module_ID.Instances);
+         Instance := Create_Instance;
          Property := Code_Analysis_Property_Record
            (Get_Property (Instance, Code_Analysis_Cst_Str));
          Build_Analysis_Report (Instance, Property);
-         Clear (Property.View.Model);
-         Iter := Get_Iter_First (Property.View.Model);
       else
          Property := Code_Analysis_Property_Record
            (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
@@ -631,11 +627,10 @@ package body Code_Analysis_Module is
          if Property.View = null then
             Build_Analysis_Report (Cont_N_Inst.Instance, Property);
          end if;
-
-         Clear (Property.View.Model);
-         Iter := Get_Iter_First (Property.View.Model);
       end if;
 
+      Clear (Property.View.Model);
+      Iter := Get_Iter_First (Property.View.Model);
       Append (Property.View.Model, Iter, Null_Iter);
       Gtk.Tree_Store.Set (Property.View.Model, Iter, Name_Col,
         UTF8_String (-"This analysis report is empty." & ASCII.LF &
@@ -905,9 +900,6 @@ package body Code_Analysis_Module is
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
       pragma Unreferenced (Widget);
-      use Code_Analysis_Class_Instance_Sets;
-      Cur         : Cursor := Code_Analysis_Module_ID.Instances.First;
-      Instance    : Class_Instance;
       Analysis_Nb : constant Integer := Integer
         (Code_Analysis_Module_ID.Instances.Length);
    begin
@@ -916,18 +908,47 @@ package body Code_Analysis_Module is
          Confirmation, Button_Yes or Button_No, Justification => Justify_Left,
          Title => Integer'Image (Analysis_Nb) & (-" destructions?")) = 1
       then
-         loop
-            exit when Cur = No_Element;
-            Instance := Element (Cur);
-            Next (Cur);
-            Destroy_Instance (Instance);
-         end loop;
+         Destroy_All_Instances;
       end if;
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end Destroy_All_Instances_From_Menu;
+
+   ------------------------------------------------------
+   -- Destroy_All_Instances_From_Project_Changing_Hook --
+   ------------------------------------------------------
+
+   procedure Destroy_All_Instances_From_Project_Changing_Hook
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      pragma Unreferenced (Kernel, Data);
+   begin
+      Destroy_All_Instances;
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end Destroy_All_Instances_From_Project_Changing_Hook;
+
+   ---------------------------
+   -- Destroy_All_Instances --
+   ---------------------------
+
+   procedure Destroy_All_Instances is
+      use Code_Analysis_Class_Instance_Sets;
+      Cur         : Cursor := Code_Analysis_Module_ID.Instances.First;
+      Instance    : Class_Instance;
+   begin
+      loop
+         exit when Cur = No_Element;
+         Instance := Element (Cur);
+         Next (Cur);
+         Destroy_Instance (Instance);
+      end loop;
+   end Destroy_All_Instances;
 
    ----------------------
    -- Destroy_Instance --
@@ -2105,6 +2126,12 @@ package body Code_Analysis_Module is
          Ref_Item    => -"Clipboard",
          Add_Before  => False,
          Factory     => Dynamic_Views_Menu_Factory'Access);
+      Add_Hook
+        (Kernel => Kernel,
+         Hook   => Project_Changing_Hook,
+         Func   =>
+           Wrapper (Destroy_All_Instances_From_Project_Changing_Hook'Access),
+         Name   => "destroy_all_code_analysis");
       Register_Command
         (Kernel, Constructor_Method,
          Class        => Code_Analysis_Class,
