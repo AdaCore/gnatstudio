@@ -47,6 +47,7 @@ with Gtk.Handlers;         use Gtk.Handlers;
 with GPS.Kernel;           use GPS.Kernel;
 with GPS.Kernel.Modules;   use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;   use GPS.Kernel.Scripts;
+with GPS.Kernel.Hooks;     use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;       use GPS.Kernel.MDI;
 with GPS.Intl;             use GPS.Intl;
 
@@ -135,8 +136,9 @@ private
      (Instance : Class_Instance;
       Property : in out Code_Analysis_Property_Record;
       Context  : Selection_Context := No_Context);
-   --  Call to build the tree view report and then populate it and expand the
-   --  the appropriate item and finally insert it in the MDI. Should be called
+   --  Build the tree view of a Report of Analysis N, populate it, expand the
+   --  the appropriate item following given context information and finally
+   --  insert the new Report in the MDI. Should be called
    --  by Show_Analysis_Report_From_Context and Show_Analysis_Report_From_Shell
 
    procedure Build_Analysis_Report
@@ -357,8 +359,16 @@ private
 
    procedure Destroy_All_Instances_From_Menu
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class);
+   --  Call Destroy_All_Instances
+
+   procedure Destroy_All_Instances_From_Project_Changing_Hook
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Call Destroy_All_Instances
+
+   procedure Destroy_All_Instances;
    --  Call Destroy_Instance for every element in
-   --  Code_Analysis_Module_ID_Instances
+   --  Code_Analysis_Module_ID.Instances
 
    procedure Destroy_Instance (Instance : Class_Instance);
    --  Free the memory used by a Code_Analysis_Property_Record associated to a
