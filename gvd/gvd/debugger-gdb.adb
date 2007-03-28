@@ -18,47 +18,46 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Strings;         use Ada.Strings;
-with Ada.Strings.Fixed;   use Ada.Strings.Fixed;
-with Ada.Tags;            use Ada.Tags;
-
-with GNAT.Expect;         use GNAT.Expect;
-pragma Warnings (Off);
-with GNAT.Expect.TTY;     use GNAT.Expect.TTY;
-pragma Warnings (On);
-with GNAT.Regpat;         use GNAT.Regpat;
-
-with Gtk.Window;          use Gtk.Window;
-
-with Config;              use Config;
-with Debugger.Gdb.Ada;    use Debugger.Gdb.Ada;
-with Debugger.Gdb.C;      use Debugger.Gdb.C;
-with Debugger.Gdb.Cpp;    use Debugger.Gdb.Cpp;
-with Default_Preferences; use Default_Preferences;
-with File_Utils;          use File_Utils;
-with GNAT.OS_Lib;         use GNAT.OS_Lib;
-with GPS.Intl;            use GPS.Intl;
-with GPS.Main_Window;     use GPS.Main_Window;
-with GVD.Dialogs;         use GVD.Dialogs;
-with GVD.Preferences;     use GVD.Preferences;
-with GVD.Process;         use GVD.Process;
-with GVD.Scripts;         use GVD.Scripts;
-with GVD.Trace;           use GVD.Trace;
-with GVD.Types;           use GVD.Types;
-with Items.Arrays;        use Items.Arrays;
-with Items.Classes;       use Items.Classes;
-with Items.Records;       use Items.Records;
-with Items.Simples;       use Items.Simples;
-with Items;               use Items;
-with Language.Debugger;   use Language.Debugger;
-with Language;            use Language;
-with Process_Proxies;     use Process_Proxies;
-with Remote.Path.Translator; use Remote, Remote.Path.Translator;
-with String_Utils;        use String_Utils;
-with VFS;                 use VFS;
-
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Strings;             use Ada.Strings;
+with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
+with Ada.Tags;                use Ada.Tags;
 with Ada.Unchecked_Deallocation;
+
+with GNAT.Expect;             use GNAT.Expect;
+pragma Warnings (Off);
+with GNAT.Expect.TTY;         use GNAT.Expect.TTY;
+pragma Warnings (On);
+with GNAT.Regpat;             use GNAT.Regpat;
+
+with Gtk.Window;              use Gtk.Window;
+
+with Config;                  use Config;
+with Debugger.Gdb.Ada;        use Debugger.Gdb.Ada;
+with Debugger.Gdb.C;          use Debugger.Gdb.C;
+with Debugger.Gdb.Cpp;        use Debugger.Gdb.Cpp;
+with Default_Preferences;     use Default_Preferences;
+with File_Utils;              use File_Utils;
+with GNAT.OS_Lib;             use GNAT.OS_Lib;
+with GPS.Intl;                use GPS.Intl;
+with GPS.Main_Window;         use GPS.Main_Window;
+with GVD.Dialogs;             use GVD.Dialogs;
+with GVD.Preferences;         use GVD.Preferences;
+with GVD.Process;             use GVD.Process;
+with GVD.Scripts;             use GVD.Scripts;
+with GVD.Trace;               use GVD.Trace;
+with GVD.Types;               use GVD.Types;
+with Items.Arrays;            use Items.Arrays;
+with Items.Classes;           use Items.Classes;
+with Items.Records;           use Items.Records;
+with Items.Simples;           use Items.Simples;
+with Items;                   use Items;
+with Language.Debugger;       use Language.Debugger;
+with Language;                use Language;
+with Process_Proxies;         use Process_Proxies;
+with Remote.Path.Translator;  use Remote, Remote.Path.Translator;
+with String_Utils;            use String_Utils;
+with VFS;                     use VFS;
 
 package body Debugger.Gdb is
 
@@ -256,12 +255,14 @@ package body Debugger.Gdb is
         or else Debugger.Remote_Protocol.all = ""
       then
          Debugger.Mode := Native;
+
       elsif To_Lower (Debugger.Remote_Protocol.all) = "wtx"
         or else To_Lower (Debugger.Remote_Protocol.all) = "dfw"
         or else To_Lower (Debugger.Remote_Protocol.all) = "dfw-rtp"
         or else To_Lower (Debugger.Remote_Protocol.all) = "vxworks"
       then
          Debugger.Mode := VxWorks;
+
       else
          Debugger.Mode := Cross;
       end if;
@@ -293,6 +294,7 @@ package body Debugger.Gdb is
             --  Do not change the current language if gdb isn't able to
             --  tell what the new language is
             return;
+
          else
             Output_Error
               (GPS_Window (Process.Window).Kernel,
@@ -691,7 +693,7 @@ package body Debugger.Gdb is
       --  unexpected wrong aliases to be detected.
 
       S       : constant String :=
-        Send (Debugger, "print &(" & Entity & ")", Mode => Internal);
+                  Send (Debugger, "print &(" & Entity & ")", Mode => Internal);
       Matched : Match_Array (0 .. 1);
 
    begin
@@ -721,7 +723,7 @@ package body Debugger.Gdb is
       Debugger_Name   : String := "")
    is
       Gdb_Arguments   : Argument_List_Access :=
-        Argument_String_To_List (Gdb_Options);
+                          Argument_String_To_List (Gdb_Options);
       Num_Options     : constant Natural := Gdb_Arguments'Length;
       Local_Arguments : Argument_List
                           (1 .. Debugger_Args'Length + Num_Options);
@@ -730,7 +732,11 @@ package body Debugger.Gdb is
         (Argument_List, Argument_List_Access);
 
       function Contains (S : String; Substring : String) return Boolean;
-      --  Return True if S contains Substring.
+      --  Return True if S contains Substring
+
+      --------------
+      -- Contains --
+      --------------
 
       function Contains (S : String; Substring : String) return Boolean is
          N : Natural := S'First;
@@ -1042,19 +1048,23 @@ package body Debugger.Gdb is
       pragma Unreferenced (Mode);
 
       No_Such_File_Regexp : constant Pattern_Matcher :=
-        Compile ("No such file or directory.");
+                              Compile ("No such file or directory.");
       --  Note that this pattern should work even when LANG isn't english
       --  because gdb does not seem to take into account this variable at all.
 
-      Process             : Visual_Debugger;
       Remote_Exec         : constant String :=
                               To_Remote (Full_Name (Executable, True).all,
                                          Debug_Server, True);
       Exec_Has_Spaces     : constant Boolean :=
                               Index (Remote_Exec, " ") /= 0;
+      Process             : Visual_Debugger;
 
       procedure Launch_Command_And_Output (Command : String);
       --  Launch a "file" or "load" command and display it if relevant.
+
+      -------------------------------
+      -- Launch_Command_And_Output --
+      -------------------------------
 
       procedure Launch_Command_And_Output (Command : String) is
          Cmd : GNAT.Strings.String_Access;
@@ -1084,6 +1094,7 @@ package body Debugger.Gdb is
             end if;
          end;
       end Launch_Command_And_Output;
+
    begin
       Debugger.Executable := Executable;
 
@@ -1105,6 +1116,7 @@ package body Debugger.Gdb is
          begin
             if Debugger.Window = null then
                Send (Debugger, Cmd, Mode => Internal);
+
             else
                Output_Text
                  (Convert (Debugger.Window, Debugger),
@@ -1151,6 +1163,7 @@ package body Debugger.Gdb is
          Switch_Language (Debugger, "c");
          Send (Debugger, "list adainit", Mode => Internal);
          Restore_Language (Debugger);
+
       else
          Send (Debugger, "list main,main", Mode => Internal);
       end if;
@@ -1180,7 +1193,7 @@ package body Debugger.Gdb is
 
          declare
             Str         : constant String :=
-              Send (Debugger, "info line", Mode => Internal);
+                            Send (Debugger, "info line", Mode => Internal);
             Matched     : Match_Array (0 .. 2);
             File_First  : Natural := 0;
             File_Last   : Positive;
@@ -1374,7 +1387,7 @@ package body Debugger.Gdb is
    ----------------
 
    function Get_Module (Executable : VFS.Virtual_File) return String is
-      Exec : constant String := Base_Name (Executable);
+      Exec      : constant String := Base_Name (Executable);
       Dot_Index : Natural;
    begin
       --  Strip extensions (e.g .out)
@@ -1405,6 +1418,7 @@ package body Debugger.Gdb is
          begin
             Send (Debugger, "run " & Module, Mode => Mode);
          end;
+
       else
          Send (Debugger, "run " & Arguments, Mode => Mode);
       end if;
@@ -1453,6 +1467,7 @@ package body Debugger.Gdb is
                     " " & Module, Mode => Mode);
             end if;
          end;
+
       else
          if Debugger.Has_Start_Cmd = 1 then
             Send (Debugger, "start " & Arguments, Mode => Mode);
@@ -1529,7 +1544,7 @@ package body Debugger.Gdb is
    procedure Interrupt (Debugger : access Gdb_Debugger) is
       Proxy      : constant Process_Proxy_Access := Get_Process (Debugger);
       Descriptor : constant Process_Descriptor_Access :=
-        Get_Descriptor (Proxy);
+                     Get_Descriptor (Proxy);
 
       use GVD;
 
@@ -1591,6 +1606,7 @@ package body Debugger.Gdb is
       end if;
 
       Skip_Word (Command, Index);
+
       return    Command (Command'First .. Index - 1) = "step"
         or else Command (Command'First .. Index - 1) = "stepi"
         or else Command (Command'First .. Index - 1) = "s"
@@ -1643,7 +1659,7 @@ package body Debugger.Gdb is
 
    function Is_Break_Command
      (Debugger : access Gdb_Debugger;
-      Command : String) return Boolean
+      Command  : String) return Boolean
    is
       pragma Unreferenced (Debugger);
    begin
@@ -1841,10 +1857,10 @@ package body Debugger.Gdb is
    ------------------
 
    procedure Break_Regexp
-     (Debugger   : access Gdb_Debugger;
-      Regexp     : String;
-      Temporary  : Boolean := False;
-      Mode       : Command_Type := Hidden) is
+     (Debugger  : access Gdb_Debugger;
+      Regexp    : String;
+      Temporary : Boolean := False;
+      Mode      : Command_Type := Hidden) is
    begin
       if Temporary then
          raise Unknown_Command;
@@ -1862,9 +1878,9 @@ package body Debugger.Gdb is
      (Debugger : access Gdb_Debugger) return Breakpoint_Identifier
    is
       S            : constant String :=
-        Send (Debugger, "print $bpnum", Mode => Internal);
-      Index        : Integer := S'First;
+                       Send (Debugger, "print $bpnum", Mode => Internal);
       Error_String : constant String := "void";
+      Index        : Integer := S'First;
    begin
       Skip_To_String (S, Index, Error_String);
 
@@ -2095,9 +2111,9 @@ package body Debugger.Gdb is
       Info     : out Thread_Information_Array;
       Len      : out Natural)
    is
-      EOL         : Positive;
       Output      : constant String :=
-        Send (Debugger, "info tasks", Mode => Internal);
+                      Send (Debugger, "info tasks", Mode => Internal);
+      EOL         : Positive;
       Index       : Positive := Output'First;
 
    begin
@@ -2148,9 +2164,9 @@ package body Debugger.Gdb is
       Info     : out Thread_Information_Array;
       Len      : out Natural)
    is
-      EOL         : Natural;
       Output      : constant String :=
-        Send (Debugger, "info threads", Mode => Internal);
+                      Send (Debugger, "info threads", Mode => Internal);
+      EOL         : Natural;
       Index       : Integer := Output'Last;
 
    begin
@@ -2187,15 +2203,19 @@ package body Debugger.Gdb is
       Info     : out PD_Information_Array;
       Len      : out Natural)
    is
-      EOL         : Positive;
       Output      : constant String :=
-        Send (Debugger, "info pds", Mode => Internal);
+                      Send (Debugger, "info pds", Mode => Internal);
+      EOL         : Positive;
       Start       : Positive := Output'First;
       First       : Positive := Output'First;
       Second      : Positive := Output'First;
 
       function Is_Delimitor (C : Character) return Boolean;
       --  Return True if C is a delimiter
+
+      ------------------
+      -- Is_Delimitor --
+      ------------------
 
       function Is_Delimitor (C : Character) return Boolean is
       begin
@@ -2530,6 +2550,7 @@ package body Debugger.Gdb is
          else
             Message := No_Debug_Info;
          end if;
+
       else
          First := 0;
          Last  := 0;
@@ -2545,7 +2566,7 @@ package body Debugger.Gdb is
      (Debugger : access Gdb_Debugger) return GNAT.Strings.String_List
    is
       S         : constant String :=
-        Send (Debugger, "info sources", Mode => Internal);
+                    Send (Debugger, "info sources", Mode => Internal);
       Num_Files : Natural := 0;
 
    begin
@@ -3063,11 +3084,11 @@ package body Debugger.Gdb is
    function List_Breakpoints
      (Debugger  : access Gdb_Debugger) return Breakpoint_Array
    is
+      S               : constant String := Send
+        (Debugger, "info breakpoints", Mode => Internal);
       Num_Breakpoints : Natural := 0;
-      S : constant String :=
-        Send (Debugger, "info breakpoints", Mode => Internal);
-      Index : Natural := S'First;
-      Tmp   : Natural;
+      Index           : Natural := S'First;
+      Tmp             : Natural;
 
       WTX_Version : Natural;
 
@@ -3078,14 +3099,18 @@ package body Debugger.Gdb is
       --  Assign values of Scope and Action for the breakpoints in
       --  List as reported by the debugger.
 
+      -----------------------
+      -- Fill_Scope_Action --
+      -----------------------
+
       procedure Fill_Scope_Action
         (Debugger        : access Gdb_Debugger;
          List            : in out Breakpoint_Array;
          Num_Breakpoints : Natural)
       is
          S : constant String :=
-           Send (Debugger, "info breakpoints-extra-info",
-                 Mode => Internal);
+               Send (Debugger, "info breakpoints-extra-info",
+                     Mode => Internal);
 
          Index   : Natural := S'First;
          Matched : Match_Array (0 .. 4);
@@ -3202,8 +3227,8 @@ package body Debugger.Gdb is
                end case;
 
                case S (Matched (3).First) is
-                  when 'k' => Br (Num).Disposition := Keep;
-                  when 'd' => Br (Num).Disposition := Disable;
+                  when 'k'    => Br (Num).Disposition := Keep;
+                  when 'd'    => Br (Num).Disposition := Disable;
                   when others => Br (Num).Disposition := Delete;
                end case;
 
@@ -3320,6 +3345,7 @@ package body Debugger.Gdb is
 
          if WTX_Version = 3 then
             Fill_Scope_Action (Debugger, Br, Num_Breakpoints);
+
          else
             for J in 1 .. Num_Breakpoints loop
                Br (J).Scope := No_Scope;
@@ -3372,7 +3398,7 @@ package body Debugger.Gdb is
      return GVD.Types.Exception_Array
    is
       S     : constant String :=
-        Send (Debugger, "info exceptions", Mode => Internal);
+                Send (Debugger, "info exceptions", Mode => Internal);
       Nums  : Natural := 0;
    begin
       --  Count the number of exceptions listed
@@ -3393,7 +3419,7 @@ package body Debugger.Gdb is
       Nums := Nums - 1;
 
       declare
-         Arr : Exception_Array (1 .. Nums);
+         Arr   : Exception_Array (1 .. Nums);
          Index : Natural := S'First;
          Num   : Natural := 1;
          Start : Natural;
@@ -3405,9 +3431,7 @@ package body Debugger.Gdb is
          Skip_To_Char (S, Index, ASCII.LF);
          Index := Index + 1;
 
-         while Index <= S'Last
-           and then Num <= Nums
-         loop
+         while Index <= S'Last and then Num <= Nums loop
             Start := Index;
             Skip_To_Char (S, Index, ':');
             Arr (Num).Name := new String'(S (Start .. Index - 1));
@@ -3430,7 +3454,7 @@ package body Debugger.Gdb is
       Default   : String) return String
    is
       S : constant String :=
-        Send (Debugger, "whatis " & Entity, Mode => Internal);
+            Send (Debugger, "whatis " & Entity, Mode => Internal);
 
    begin
       if S'Length > 6
@@ -3576,10 +3600,10 @@ package body Debugger.Gdb is
    ----------------------
 
    procedure Get_Line_Address
-     (Debugger        : access Gdb_Debugger;
-      Line            : Natural;
-      Range_Start     : out Address_Type;
-      Range_End       : out Address_Type) is
+     (Debugger    : access Gdb_Debugger;
+      Line        : Natural;
+      Range_Start : out Address_Type;
+      Range_End   : out Address_Type) is
    begin
       Set_Parse_File_Name (Get_Process (Debugger), False);
       Switch_Language (Debugger, "c");
@@ -3618,19 +3642,18 @@ package body Debugger.Gdb is
       Size     : in Integer;
       Address  : in String) return String
    is
+      Endian       : constant Endian_Type := Get_Endian_Type (Debugger);
       Error_String : constant String := "Cannot access memory at";
-      Result       : String (1 .. Size * 2);
       Image        : constant String := Integer'Image (Size / 8);
       S            : constant String := Send
         (Debugger,
-         "x/"
-         & Image (Image'First + 1 .. Image'Last)
+         "x/" & Image (Image'First + 1 .. Image'Last)
          & "gx " & Address, Mode => Internal);
+      Result       : String (1 .. Size * 2);
       S_Index      : Integer := S'First + 2;
       Last_Index   : Integer := S'First + 2;
       Result_Index : Integer := 1;
       Last         : Integer := S'Last;
-      Endian       : constant Endian_Type := Get_Endian_Type (Debugger);
 
    begin
       --  Detect "Cannot access memory at ..."
@@ -3669,8 +3692,8 @@ package body Debugger.Gdb is
          for J in 1 .. Result'Length / 16 loop
             declare
                Block : constant String (1 .. 16) :=
-                 Result (Result'First + (J - 1) * 16 ..
-                         Result'First + J * 16 - 1);
+                         Result (Result'First + (J - 1) * 16 ..
+                                   Result'First + J * 16 - 1);
             begin
                for K in 1 .. 8 loop
                   Result (Result'First + (J - 1) * 16 + (K - 1) * 2
@@ -3708,8 +3731,8 @@ package body Debugger.Gdb is
    --------------------------
 
    function Get_Variable_Address
-     (Debugger  : access Gdb_Debugger;
-      Variable  : in String) return String
+     (Debugger : access Gdb_Debugger;
+      Variable : in String) return String
    is
       S         : constant String := Send
         (Debugger, "print &(" & Variable & ")", Mode => Internal);
@@ -3775,8 +3798,8 @@ package body Debugger.Gdb is
      (Debugger  : access Gdb_Debugger;
       Beginning : String) return GNAT.Strings.String_List
    is
-      S           : constant String :=
-        Send (Debugger, "complete " & Beginning, Mode => Internal);
+      S           : constant String := Send
+        (Debugger, "complete " & Beginning, Mode => Internal);
       First_Index : Integer := S'First;
       Last_Index  : Integer := S'First;
       Num         : Integer := 0;
@@ -3853,6 +3876,7 @@ package body Debugger.Gdb is
       if Debugger.WTX_List /= null then
          if Debugger.WTX_Index >= Debugger.WTX_List'Last then
             Success := False;
+
          else
             First := Debugger.WTX_Index;
             Skip_To_Blank (Debugger.WTX_List.all, Debugger.WTX_Index);
@@ -3913,7 +3937,7 @@ package body Debugger.Gdb is
       Language : in String)
    is
       S           : constant String :=
-        Send (Debugger, "show lang", Mode => Internal);
+                      Send (Debugger, "show lang", Mode => Internal);
       First_Index : Integer := S'First;
       End_Index   : Integer;
 
@@ -3922,9 +3946,7 @@ package body Debugger.Gdb is
       Skip_To_Char (S, First_Index, '"');
       End_Index := First_Index + 1;
 
-      while S (End_Index) /= '"'
-        and then S (End_Index) /= ';'
-      loop
+      while S (End_Index) /= '"' and then S (End_Index) /= ';' loop
          End_Index := End_Index + 1;
       end loop;
 
