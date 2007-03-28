@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 4.1.1
 
+- G328-011 Build->Make-><current file> not working
+  Problem:    This menu will launch gnatmake -Proot_project with no main
+              specified on the command line.
+  Workaround: Define your main in the project file.
+
 - G322-032 Problems in completion with incomplete units
   Problem:    Smart completion may fail to propose entries when it involves
               files where the unit name can't be retrieved (typically files
