@@ -1821,7 +1821,12 @@ package body GPS.Kernel.Remote is
          begin
             Skip_Blanks (Str, Idx);
             Skip_Blanks (Str, Idx_End, -1);
-            N_Lines := Lines_Count (Str (Idx .. Idx_End));
+
+            if Idx_End < Idx then
+               N_Lines := 0;
+            else
+               N_Lines := Lines_Count (Str (Idx .. Idx_End));
+            end if;
 
             declare
                Substr : constant String := Str (Idx .. Idx_End);
