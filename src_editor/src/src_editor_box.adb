@@ -1762,22 +1762,23 @@ package body Src_Editor_Box is
    --------------------
 
    procedure Check_Writable (Editor : access Source_Editor_Box_Record) is
-      Views : constant Views_Array := Get_Views (Editor.Source_Buffer);
+      Views    : constant Views_Array := Get_Views (Editor.Source_Buffer);
+      Writable : Boolean;
    begin
-      if Read_Only_Set
-        or else Get_Explicit_Writable_Set (Editor.Source_Buffer)
-      then
+      if Get_Explicit_Writable_Set (Editor.Source_Buffer) then
          return;
       end if;
 
-      Set_Writable
-        (Editor.Source_Buffer,
-         Get_Filename (Editor.Source_Buffer) = VFS.No_File
-         or else VFS.Is_Writable (Get_Filename (Editor.Source_Buffer))
+      if Read_Only_Set then
+         Writable := False;
+      else
+         Writable := Get_Filename (Editor.Source_Buffer) = VFS.No_File
+           or else VFS.Is_Writable (Get_Filename (Editor.Source_Buffer))
          or else (not Is_Regular_File (Get_Filename (Editor.Source_Buffer))
-           and then Get_Writable (Editor.Source_Buffer)),
-         Explicit => False);
+                    and then Get_Writable (Editor.Source_Buffer));
+      end if;
 
+      Set_Writable (Editor.Source_Buffer, Writable, Explicit => False);
       Set_Writable (Views, Get_Writable (Editor.Source_Buffer));
    end Check_Writable;
 
@@ -1815,12 +1816,7 @@ package body Src_Editor_Box is
          Set_Cursor_Location (Editor, 1, 1, Force_Focus);
          Set_Filename (Editor.Source_Buffer, Filename);
          Editor.Source_Buffer.Status_Changed;
-
-         if Read_Only_Set then
-            Set_Writable (Editor, False);
-         else
-            Check_Writable (Editor);
-         end if;
+         Check_Writable (Editor);
       end if;
    end Load_File;
 
