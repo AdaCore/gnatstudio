@@ -19,6 +19,7 @@ GTKADA_SRC_DIRS = $(GTK_PREFIX)/include/gtk-2.0 \
 	$(GLIB_PREFIX)/include/glib-2.0 \
 	$(GLIB_PREFIX)/lib/glib-2.0/include \
 	$(PANGO_PREFIX)/include/pango-1.0 \
+	$(CAIRO_PREFIX)/include/cairo \
 	$(ATK_PREFIX)/include/atk-1.0
 SRC_DIRS += $(GTKADA_SRC_DIRS)
 LDFLAGS += $(shell gtkada-config --libs)
