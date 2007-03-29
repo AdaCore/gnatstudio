@@ -6,6 +6,17 @@ Known Problems fixed in GPS 4.1.1
   Workaround: Start the debugging session without a main executable, then load
               it using the 'file' gdb command.
 
+- G328-024 The --readonly switch is broken
+  Problem:    When GPS is launched with the --readonly switch, source editors are
+              still editable although changes cannot be undone until there are
+              explicitely made writable. Furthermore, editors opened in this mode
+              have an empty label instead of one saying either "Writable" or
+              "Read Only".
+  Workaround: Click on the empty label at the bottom of the editor to make
+              it explicitely writable and then click on "Writable" to make
+              the editor read-only. At this moment the "Read Only" label should
+              be properly displayed.
+
 - G328-011 Build->Make-><current file> not working
   Problem:    This menu will launch gnatmake -Proot_project with no main
               specified on the command line.
