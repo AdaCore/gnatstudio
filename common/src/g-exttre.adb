@@ -1314,12 +1314,18 @@ package body GNAT.Expect.TTY.Remote is
    ---------------
 
    procedure Interrupt (Descriptor : in out Remote_Process_Descriptor) is
+      Remote_Desc : Remote_Descriptor_Access;
    begin
       if not Descriptor.Terminated then
-         --  Interrupt the session. The best case (unix) is that this SIGINT
-         --  is transmitted to the remote process. The worst case (windows) is
-         --  that the session is killed (thus terminating the remote process).
-         Interrupt (Descriptor.Machine.Sessions (Descriptor.Session_Nb).Pd);
+         Remote_Desc := Get_Descriptor_From_Name
+           (Descriptor.Machine.Desc.Access_Name.all);
+
+         if Remote_Desc.Send_Interrupt /= null then
+            Send (Descriptor, Remote_Desc.Send_Interrupt.all, Add_LF => False);
+         else
+            --  Interrupt the session.
+            Interrupt (Descriptor.Machine.Sessions (Descriptor.Session_Nb).Pd);
+         end if;
       end if;
 
    exception
