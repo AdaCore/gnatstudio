@@ -178,6 +178,7 @@ dnl
   GLIB="glib-2.0"
   PANGO="pango"
   ATK="atk"
+  CAIRO="cairo"
   if test "$PKG_CONFIG" = "no" ; then
     GTK_PREFIX=unknown
     AC_MSG_RESULT(not found)
@@ -186,7 +187,8 @@ dnl
     GLIB_PREFIX=`$PKG_CONFIG $GLIB --variable=prefix`
     ATK_PREFIX=`$PKG_CONFIG $ATK --variable=prefix`
     PANGO_PREFIX=`$PKG_CONFIG $PANGO --variable=prefix`
-    AC_MSG_RESULT($GTK_PREFIX $GLIB_PREFIX $ATK_PREFIX $PANGO_PREFIX)
+    CAIRO_PREFIX=`$PKG_CONFIG $CAIRO --variable=prefix`
+    AC_MSG_RESULT($GTK_PREFIX $GLIB_PREFIX $ATK_PREFIX $PANGO_PREFIX $CAIRO_PREFIX)
   fi
 
   AC_PATH_PROG(GTK_CONFIG, gtkada-config, no)
@@ -284,6 +286,7 @@ main ()
   AC_SUBST(GLIB_PREFIX)
   AC_SUBST(ATK_PREFIX)
   AC_SUBST(PANGO_PREFIX)
+  AC_SUBST(CAIRO_PREFIX)
   AC_SUBST(GTKADA_SRC)
   AC_SUBST(GTKADA_OBJ)
   AC_SUBST(GTK_CFLAGS)

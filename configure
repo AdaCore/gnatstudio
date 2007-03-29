@@ -310,7 +310,7 @@ ac_includes_default="\
 
 ac_subdirs_all="$ac_subdirs_all kernel/src_info/sn"
 ac_subdirs_all="$ac_subdirs_all kernel/src_info/sn/snsrc"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os XMLADA_GPR CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP GNATMAKE SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB DVIPS MAKEINFO TEXI2DVI PKG_CONFIG GTK_CONFIG GTK_PREFIX GLIB_PREFIX ATK_PREFIX PANGO_PREFIX GTKADA_SRC GTKADA_OBJ GTK_CFLAGS GTK_LIBS GTK_STATIC_LIBS PYTHON GPS_VERSION opsysfile TARGET EXEC_PREFIX STRIP_CR CAN_OUTPUT TARGET_CFLAGS TARGET_LFLAGS EXEC_COMMAND DEFAULT_PS DEFAULT_FONT PRINT_CMD DIFF_CMD PATCH_CMD OPAQUE_MDI HOST_TYPE EXECUTION_WINDOW PYTHON_BASE PYTHON_VERSION PYTHON_ADA_SOURCE PYTHON_DIR PYTHON_LIBS PYGTK_INCLUDE PATH_STYLE subdirs LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os XMLADA_GPR CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP GNATMAKE SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB DVIPS MAKEINFO TEXI2DVI PKG_CONFIG GTK_CONFIG GTK_PREFIX GLIB_PREFIX ATK_PREFIX PANGO_PREFIX CAIRO_PREFIX GTKADA_SRC GTKADA_OBJ GTK_CFLAGS GTK_LIBS GTK_STATIC_LIBS PYTHON GPS_VERSION opsysfile TARGET EXEC_PREFIX STRIP_CR CAN_OUTPUT TARGET_CFLAGS TARGET_LFLAGS EXEC_COMMAND DEFAULT_PS DEFAULT_FONT PRINT_CMD DIFF_CMD PATCH_CMD OPAQUE_MDI HOST_TYPE EXECUTION_WINDOW PYTHON_BASE PYTHON_VERSION PYTHON_ADA_SOURCE PYTHON_DIR PYTHON_LIBS PYGTK_INCLUDE PATH_STYLE subdirs LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -3268,6 +3268,7 @@ echo $ECHO_N "checking GTK GLIB ATK PANGO prefix... $ECHO_C" >&6
   GLIB="glib-2.0"
   PANGO="pango"
   ATK="atk"
+  CAIRO="cairo"
   if test "$PKG_CONFIG" = "no" ; then
     GTK_PREFIX=unknown
     echo "$as_me:$LINENO: result: not found" >&5
@@ -3277,8 +3278,9 @@ echo "${ECHO_T}not found" >&6
     GLIB_PREFIX=`$PKG_CONFIG $GLIB --variable=prefix`
     ATK_PREFIX=`$PKG_CONFIG $ATK --variable=prefix`
     PANGO_PREFIX=`$PKG_CONFIG $PANGO --variable=prefix`
-    echo "$as_me:$LINENO: result: $GTK_PREFIX $GLIB_PREFIX $ATK_PREFIX $PANGO_PREFIX" >&5
-echo "${ECHO_T}$GTK_PREFIX $GLIB_PREFIX $ATK_PREFIX $PANGO_PREFIX" >&6
+    CAIRO_PREFIX=`$PKG_CONFIG $CAIRO --variable=prefix`
+    echo "$as_me:$LINENO: result: $GTK_PREFIX $GLIB_PREFIX $ATK_PREFIX $PANGO_PREFIX $CAIRO_PREFIX" >&5
+echo "${ECHO_T}$GTK_PREFIX $GLIB_PREFIX $ATK_PREFIX $PANGO_PREFIX $CAIRO_PREFIX" >&6
   fi
 
   # Extract the first word of "gtkada-config", so it can be a program name with args.
@@ -3445,6 +3447,7 @@ echo "${ECHO_T}no" >&6
 echo "$as_me: error: Test for GtkAda failed. See the file 'INSTALL' for help." >&2;}
    { (exit 1); exit 1; }; }
   fi
+
 
 
 
@@ -5680,6 +5683,7 @@ s,@GTK_PREFIX@,$GTK_PREFIX,;t t
 s,@GLIB_PREFIX@,$GLIB_PREFIX,;t t
 s,@ATK_PREFIX@,$ATK_PREFIX,;t t
 s,@PANGO_PREFIX@,$PANGO_PREFIX,;t t
+s,@CAIRO_PREFIX@,$CAIRO_PREFIX,;t t
 s,@GTKADA_SRC@,$GTKADA_SRC,;t t
 s,@GTKADA_OBJ@,$GTKADA_OBJ,;t t
 s,@GTK_CFLAGS@,$GTK_CFLAGS,;t t
