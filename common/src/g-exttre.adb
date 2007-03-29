@@ -81,6 +81,7 @@ package body GNAT.Expect.TTY.Remote is
       Start_Cmd              : String_Access            := null;
       Start_Cmd_Common_Args  : String_List_Access       := null;
       Start_Cmd_User_Args    : String_List_Access       := null;
+      Send_Interrupt         : String_Access            := null;
       User_Prompt_Ptrn       : Pattern_Matcher_Access   := null;
       Password_Prompt_Ptrn   : Pattern_Matcher_Access   := null;
       Passphrase_Prompt_Ptrn : Pattern_Matcher_Access   := null;
@@ -318,8 +319,8 @@ package body GNAT.Expect.TTY.Remote is
       Add_LF       : Boolean := True;
       Empty_Buffer : Boolean := False)
    is
-      TTY_Descriptor : TTY_Process_Descriptor
-      renames TTY_Process_Descriptor (Descriptor);
+      TTY_Descriptor : TTY_Process_Descriptor renames
+                        TTY_Process_Descriptor (Descriptor);
    begin
       if Str /= "" then
          if Descriptor.Machine.Desc.Dbg /= null then
@@ -1403,12 +1404,27 @@ package body GNAT.Expect.TTY.Remote is
    ---------------
 
    procedure Interrupt (Descriptor : in out Remote_Process_Descriptor) is
+      Remote_Desc : Remote_Descriptor_Access;
    begin
       if not Descriptor.Terminated then
-         --  Interrupt the session. The best case (unix) is that this SIGINT
-         --  is transmitted to the remote process. The worst case (windows) is
-         --  that the session is killed (thus terminating the remote process).
-         Interrupt (Descriptor.Machine.Sessions (Descriptor.Session_Nb).Pd);
+         Remote_Desc := Remote_Descriptor_List;
+
+         while Remote_Desc /= null loop
+            exit when Remote_Desc.Name.all =
+              Descriptor.Machine.Desc.Access_Name.all;
+
+            Remote_Desc := Remote_Desc.Next;
+         end loop;
+
+         if Remote_Desc.Send_Interrupt /= null then
+            --  Interrupt characters are understood when they are at the
+            --  beginning of a line. Send LF first then.
+            Send (Descriptor.Machine.Sessions (Descriptor.Session_Nb).Pd,
+                  ASCII.LF & Remote_Desc.Send_Interrupt.all, Add_LF => False);
+         else
+            --  Interrupt the session.
+            Interrupt (Descriptor.Machine.Sessions (Descriptor.Session_Nb).Pd);
+         end if;
       end if;
 
    exception
@@ -1489,6 +1505,7 @@ package body GNAT.Expect.TTY.Remote is
       Start_Command             : String;
       Start_Command_Common_Args : String_List;
       Start_Command_User_Args   : String_List;
+      Send_Interrupt            : String_Access;
       User_Prompt_Ptrn          : String_Access;
       Password_Prompt_Ptrn      : String_Access;
       Passphrase_Prompt_Ptrn    : String_Access;
@@ -1503,12 +1520,19 @@ package body GNAT.Expect.TTY.Remote is
       Password_Ptrn   : Pattern_Matcher_Access;
       Passphrase_Ptrn : Pattern_Matcher_Access;
       Login_Ptrn      : Pattern_Matcher_Access;
+      Send_Intr       : String_Access;
 
    begin
       Full_Exec := GNAT.OS_Lib.Locate_Exec_On_Path (Start_Command);
 
       if Full_Exec = null then
          return;
+      end if;
+
+      if Send_Interrupt = null then
+         Send_Intr := null;
+      else
+         Send_Intr := new String'(Send_Interrupt.all);
       end if;
 
       if User_Prompt_Ptrn = null then
@@ -1537,10 +1561,11 @@ package body GNAT.Expect.TTY.Remote is
       end if;
 
       Remote.all :=
-        (Name => new String'(Name),
+        (Name                   => new String'(Name),
          Start_Cmd              => Full_Exec,
          Start_Cmd_Common_Args  => new String_List'(Start_Command_Common_Args),
          Start_Cmd_User_Args    => new String_List'(Start_Command_User_Args),
+         Send_Interrupt         => Send_Intr,
          User_Prompt_Ptrn       => Login_Ptrn,
          Password_Prompt_Ptrn   => Password_Ptrn,
          Passphrase_Prompt_Ptrn => Passphrase_Ptrn,
