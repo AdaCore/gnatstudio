@@ -19,11 +19,11 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;         use Ada.Exceptions;
+with Ada.Strings.Unbounded;
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
 with GNAT.Regpat;            use GNAT.Regpat;
 with GNAT.Expect;            use GNAT.Expect;
 with GNAT.Strings;
-with Ada.Strings.Unbounded;
 
 with Glib;               use Glib;
 with Glib.Xml_Int;       use Glib.Xml_Int;
@@ -59,9 +59,15 @@ package body Remote_Sync_Module is
 
    Me : constant Debug_Handle := Create ("remote_sync_module");
 
+   type Return_Data is record
+      Status : Integer;
+   end record;
+   type Return_Data_Access is access all Return_Data;
+
    type Rsync_Module_Record is new Module_ID_Record with record
       Kernel     : Kernel_Handle;
       Rsync_Args : GNAT.Strings.String_List_Access;
+      Ret_Data   : Return_Data_Access;
    end record;
    type Rsync_Module_ID is access all Rsync_Module_Record'Class;
 
@@ -86,11 +92,6 @@ package body Remote_Sync_Module is
                       Kernel : access Kernel_Handle_Record'Class;
                       Src_Path, Dest_Path : String);
    --  Creates a new Rsync_Dialog
-
-   type Return_Data is record
-      Status : Integer;
-   end record;
-   type Return_Data_Access is access all Return_Data;
 
    type Rsync_Callback_Data is new Callback_Data_Record with record
       Network_Name      : GNAT.Strings.String_Access;
@@ -126,6 +127,7 @@ package body Remote_Sync_Module is
       --  Register the module
       Rsync_Module := new Rsync_Module_Record;
       Rsync_Module.Kernel := Kernel;
+      Rsync_Module.Ret_Data := new Return_Data'(Status => 0);
       Register_Module (Rsync_Module, Kernel, "rsync");
 
       Add_Hook
@@ -206,7 +208,6 @@ package body Remote_Sync_Module is
       Machine           : Machine_Descriptor;
       Success           : Boolean;
       Cb_Data           : Rsync_Callback_Data;
-      Ret_Data          : aliased Return_Data;
       Real_Print_Output : Boolean;
 
       function Build_Arg return GNAT.Strings.String_List;
@@ -361,14 +362,14 @@ package body Remote_Sync_Module is
          return False;
       end if;
 
-      Ret_Data.Status := 0;
+      Rsync_Module.Ret_Data.Status := 0;
       Cb_Data := (Network_Name      => Machine.Network_Name,
                   User_Name         => Machine.User_Name,
                   Nb_Password_Tries => 0,
                   Synchronous       => Rsync_Data.Synchronous,
                   Dialog            => null,
                   Dialog_Running    => False,
-                  Ret_Data          => Ret_Data'Unchecked_Access,
+                  Ret_Data          => Rsync_Module.Ret_Data,
                   Buffer            => null);
 
       if Rsync_Data.Synchronous then
@@ -412,7 +413,8 @@ package body Remote_Sync_Module is
          Strip_CR      => False,
          Use_Pipes     => False);
 
-      return Ret_Data.Status = 0 and then Success;
+      Success := Rsync_Module.Ret_Data.Status = 0 and then Success;
+      return Success;
    end On_Rsync_Hook;
 
    ----------------------
