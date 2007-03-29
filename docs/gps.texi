@@ -12864,6 +12864,11 @@ beginning of the arguments.
 The arguments used to define a specific user during connection. %u is replaced
  by the user name
 
+@item send_interrupt (optional)
+The characters sequence to send to the remote tool to interrupt the remote
+application. If unset, then an Interrupt signal is sent directly to the remote
+tool.
+
 @item user_prompt_ptrn (optional)
 A regular expression, used to catch user name prompts from the
 connection tool. If undefined, a default regular expression is used.
