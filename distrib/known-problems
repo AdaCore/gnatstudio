@@ -6,6 +6,12 @@ Known Problems fixed in GPS 4.1.1
   Workaround: Start the debugging session without a main executable, then load
               it using the 'file' gdb command.
 
+- G329-014 Remote debugging is terminated when interrupt is pressed
+  Problem:    On some configuration, ssh will just terminate when receiving
+              SIGINT instead of passing the signal to the remote application.
+  Workaround: Send ~B to the debugger console to interrupt the remote
+              application.
+
 - G328-024 --readonly switch mishandled
   Problem:    When GPS is launched with the --readonly switch, source editors
               are still editable although changes cannot be undone until there
