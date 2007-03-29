@@ -14,6 +14,11 @@ of the feature.
 New features in GPS 4.2.0
 -------------------------
 
+G328-030 title attribute of <button> now acts as a tooltip (2007-03-29)
+
+  If you add a button to the toolbar through an XML file, the title attribute
+  now also acts as the tooltip to use for that button.
+
 G307-006 File & Directories operations from file and project views (2007-03-14)
 
   File & directories can now be manipulated (created, renamed, deleted) from
