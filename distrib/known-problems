@@ -5,6 +5,12 @@ Known Problems fixed in GPS 4.1.1
               specified on the command line.
   Workaround: Define your main in the project file.
 
+- G328-001: File changed on disk not detected properly
+  Problem:    In some cases, GPS would not properly check whether the
+              currently edited file was modified on the disk, and thus didn't
+              open the usual confirmation dialog
+  Workaround: Reload the file through /File/Recent when it has been modified 
+
 - G322-032 Problems in completion with incomplete units
   Problem:    Smart completion may fail to propose entries when it involves
               files where the unit name can't be retrieved (typically files
