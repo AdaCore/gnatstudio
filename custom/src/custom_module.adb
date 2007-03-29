@@ -752,7 +752,8 @@ package body Custom_Module is
                  (Kernel,
                   Title.all,
                   Command.Command,
-                  Image);
+                  Image,
+                  Tooltip => Title.all);
             end if;
 
          else
