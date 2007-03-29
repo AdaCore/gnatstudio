@@ -10940,7 +10940,9 @@ or @code{xpm}) to be used as icon for the button. An empty
 @code{<button>} tag indicates a separator in the tool bar.
 
 A title can also be specified with @code{<title>}. This will be visible only
-if the user choses to see both text and icons in the tool bar.
+if the user choses to see both text and icons (or text only) in the tool bar.
+This title also acts as a tooltip (popup help message) when the button is
+displayed as an icon only.
 
 The following example defines a new button:
 
