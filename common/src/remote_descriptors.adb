@@ -42,6 +42,7 @@ package body Remote_Descriptors is
       Start_Command             : String;
       Start_Command_Common_Args : String_List;
       Start_Command_User_Args   : String_List;
+      Send_Interrupt            : String_Access;
       User_Prompt_Ptrn          : String_Access;
       Password_Prompt_Ptrn      : String_Access;
       Passphrase_Prompt_Ptrn    : String_Access;
@@ -94,6 +95,7 @@ package body Remote_Descriptors is
          Start_Cmd              => Full_Exec,
          Start_Cmd_Common_Args  => new String_List'(Start_Command_Common_Args),
          Start_Cmd_User_Args    => new String_List'(Start_Command_User_Args),
+         Send_Interrupt         => Send_Interrupt,
          User_Prompt_Ptrn       => Login_Ptrn,
          Password_Prompt_Ptrn   => Password_Ptrn,
          Passphrase_Prompt_Ptrn => Passphrase_Ptrn,

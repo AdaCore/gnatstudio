@@ -60,6 +60,7 @@ package Remote_Descriptors is
       Start_Command             : String;
       Start_Command_Common_Args : String_List;
       Start_Command_User_Args   : String_List;
+      Send_Interrupt            : String_Access;
       User_Prompt_Ptrn          : String_Access;
       Password_Prompt_Ptrn      : String_Access;
       Passphrase_Prompt_Ptrn    : String_Access;
@@ -96,6 +97,7 @@ package Remote_Descriptors is
       Start_Cmd              : String_Access            := null;
       Start_Cmd_Common_Args  : String_List_Access       := null;
       Start_Cmd_User_Args    : String_List_Access       := null;
+      Send_Interrupt         : String_Access            := null;
       User_Prompt_Ptrn       : Pattern_Matcher_Access   := null;
       Password_Prompt_Ptrn   : Pattern_Matcher_Access   := null;
       Passphrase_Prompt_Ptrn : Pattern_Matcher_Access   := null;
