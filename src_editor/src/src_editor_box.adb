@@ -1015,7 +1015,9 @@ package body Src_Editor_Box is
          --  contextual menu for an editor that didn't have the focus before,
          --  and the file on disk has been modified, the idle callback is
          --  called in a loop, and that takes 100% of CPU (G227-035).
-         return not Check_Timestamp (B.Source_Buffer, Update => False);
+         B.Check_Timestamp_Registered :=
+           not Check_Timestamp (B.Source_Buffer, Update => False);
+         return B.Check_Timestamp_Registered;
       end if;
 
       B.Check_Timestamp_Registered := False;
