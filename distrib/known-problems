@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.1.1
 
+- G329-015 Remote debugging session does not start if startup is long
+  Problem:    Starting a remote debugging session might fail if the debugged
+              program is long to load by gdb.
+  Workaround: Start the debugging session without a main executable, then load
+              it using the 'file' gdb command.
+
 - G328-011 Build->Make-><current file> not working
   Problem:    This menu will launch gnatmake -Proot_project with no main
               specified on the command line.
@@ -9,7 +15,7 @@ Known Problems fixed in GPS 4.1.1
   Problem:    In some cases, GPS would not properly check whether the
               currently edited file was modified on the disk, and thus didn't
               open the usual confirmation dialog
-  Workaround: Reload the file through /File/Recent when it has been modified 
+  Workaround: Reload the file through /File/Recent when it has been modified
 
 - G322-032 Problems in completion with incomplete units
   Problem:    Smart completion may fail to propose entries when it involves
