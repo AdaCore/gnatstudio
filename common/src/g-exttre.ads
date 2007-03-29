@@ -98,6 +98,7 @@ package GNAT.Expect.TTY.Remote is
       Start_Command             : String;
       Start_Command_Common_Args : String_List;
       Start_Command_User_Args   : String_List;
+      Send_Interrupt            : String_Access;
       User_Prompt_Ptrn          : String_Access;
       Password_Prompt_Ptrn      : String_Access;
       Passphrase_Prompt_Ptrn    : String_Access;
@@ -105,11 +106,14 @@ package GNAT.Expect.TTY.Remote is
       Use_Cr_Lf                 : Boolean := False;
       Use_Pipes                 : Boolean := False);
    --  Adds a new Remote Access Descriptor
+   --  It is the responsibility to the caller to free all access types.
    --  Name : identifier of this descriptor
    --  Start_Command : command used to launch the remote access utility
    --  Start_Command_Common_Args : arguments always provided to this utility
    --  Start_Command_User_Arg    : if user is specified, this argument will
    --   be used (%u replaced by actual user)
+   --  Send_Interrupt            : the characters sequence used to remotely
+   --                              send SIGINT.
    --  User_Prompt_Ptrn          : regular expression for user prompt
    --                              if null, the default user prompt is used
    --  Password_Prompt_Ptrn      : regular expression for password prompt
