@@ -54,6 +54,7 @@ package body Remote_Descriptors is
       Remote          : constant Remote_Descriptor_Access :=
                           new Remote_Descriptor_Record;
       Full_Exec       : String_Access;
+      Send_Intr       : String_Access;
       Password_Ptrn   : Pattern_Matcher_Access;
       Passphrase_Ptrn : Pattern_Matcher_Access;
       Login_Ptrn      : Pattern_Matcher_Access;
@@ -63,6 +64,12 @@ package body Remote_Descriptors is
 
       if Full_Exec = null then
          return;
+      end if;
+
+      if Send_Interrupt = null then
+         Send_Intr := null;
+      else
+         Send_Intr := new String'(Send_Interrupt.all);
       end if;
 
       if User_Prompt_Ptrn = null then
@@ -95,7 +102,7 @@ package body Remote_Descriptors is
          Start_Cmd              => Full_Exec,
          Start_Cmd_Common_Args  => new String_List'(Start_Command_Common_Args),
          Start_Cmd_User_Args    => new String_List'(Start_Command_User_Args),
-         Send_Interrupt         => Send_Interrupt,
+         Send_Interrupt         => Send_Intr,
          User_Prompt_Ptrn       => Login_Ptrn,
          Password_Prompt_Ptrn   => Password_Ptrn,
          Passphrase_Prompt_Ptrn => Passphrase_Ptrn,
