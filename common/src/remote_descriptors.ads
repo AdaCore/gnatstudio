@@ -73,6 +73,8 @@ package Remote_Descriptors is
    --  Start_Command_Common_Args : arguments always provided to this utility
    --  Start_Command_User_Arg    : if user is specified, this argument will
    --   be used (%u replaced by actual user)
+   --  Send_Interrupt            : the characters sequence used to remotely
+   --                              send SIGINT.
    --  User_Prompt_Ptrn          : regular expression for user prompt
    --                              if null, the default user prompt is used
    --  Password_Prompt_Ptrn      : regular expression for password prompt
