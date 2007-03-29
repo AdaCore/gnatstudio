@@ -1517,7 +1517,10 @@ package body GNAT.Expect.TTY.Remote is
          Timeout := 1;
 
       elsif Timeout <= 0 then
-         Timeout := 1000;
+         --  We wanted infinite timeout. This is too risky in remote mode,
+         --  because of remote connections possible problems. Let's change it
+         --  to a long timeout.
+         Timeout := 60000;
       end if;
    end Handle_Pre_Disconnect;
 
