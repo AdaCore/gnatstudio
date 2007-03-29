@@ -11,6 +11,14 @@ An ISO date (YYYY-MM-DD) appears in parentheses after the
 description line. This date shows the implementation date
 of the feature.
 
+New features in GPS 4.1.1
+-------------------------
+
+G328-030 title attribute of <button> now acts as a tooltip (2007-03-29)
+
+  If you add a button to the toolbar through an XML file, the title attribute
+  now also acts as the tooltip to use for that button.
+
 New features in GPS 4.1.0
 -------------------------
 
