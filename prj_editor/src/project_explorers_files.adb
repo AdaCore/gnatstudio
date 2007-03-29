@@ -1422,10 +1422,7 @@ package body Project_Explorers_Files is
                     File.Full_Name.all);
                Set (View.File_Model, Iter2, Base_Name_Column,
                     File.Base_Dir_Name);
-               Set (View.File_Model, Iter2, Node_Type_Column,
-                    Gint (Node_Types'Pos (Directory_Node)));
-               Set (View.File_Model, Iter2, Icon_Column,
-                    C_Proxy (Close_Pixbufs (Directory_Node)));
+               Set_Node_Type (View.File_Model, Iter2, Directory_Node, False);
                File_Append_Directory (View, File.Full_Name.all, Iter2);
             else
                Append_File
