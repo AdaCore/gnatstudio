@@ -1321,7 +1321,10 @@ package body GNAT.Expect.TTY.Remote is
            (Descriptor.Machine.Desc.Access_Name.all);
 
          if Remote_Desc.Send_Interrupt /= null then
-            Send (Descriptor, Remote_Desc.Send_Interrupt.all, Add_LF => False);
+            --  Interrupt characters are understood when they are at the
+            --  beginning of a line. Send LF first then.
+            Send (Descriptor, ASCII.LF & Remote_Desc.Send_Interrupt.all,
+                  Add_LF => False);
          else
             --  Interrupt the session.
             Interrupt (Descriptor.Machine.Sessions (Descriptor.Session_Nb).Pd);
