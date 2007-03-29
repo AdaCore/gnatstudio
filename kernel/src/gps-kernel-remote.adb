@@ -2910,6 +2910,7 @@ package body GPS.Kernel.Remote is
       Start_Command             : Glib.String_Ptr;
       Start_Command_Common_Args : String_List_Access;
       Start_Command_User_Args   : String_List_Access;
+      Interrupt                 : Glib.String_Ptr;
       User_Prompt_Ptrn          : Glib.String_Ptr;
       Password_Prompt_Ptrn      : Glib.String_Ptr;
       Passphrase_Prompt_Ptrn    : Glib.String_Ptr;
@@ -3136,6 +3137,7 @@ package body GPS.Kernel.Remote is
            (Get_Field (Node, "start_command_common_args").all);
          Start_Command_User_Args := Argument_String_To_List
            (Get_Field (Node, "start_command_user_args").all);
+         Interrupt              := Get_Field (Node, "send_interrupt");
          --  If null, the default value will be used in Add_Remote_Access_Desc.
          User_Prompt_Ptrn       := Get_Field (Node, "user_prompt_ptrn");
          Password_Prompt_Ptrn   := Get_Field (Node, "password_prompt_ptrn");
@@ -3208,6 +3210,7 @@ package body GPS.Kernel.Remote is
                Start_Command             => Start_Command.all,
                Start_Command_Common_Args => Start_Command_Common_Args.all,
                Start_Command_User_Args   => Start_Command_User_Args.all,
+               Send_Interrupt            => String_Access (Interrupt),
                User_Prompt_Ptrn          => String_Access (User_Prompt_Ptrn),
                Password_Prompt_Ptrn      =>
                  String_Access (Password_Prompt_Ptrn),
