@@ -1342,7 +1342,7 @@ package body GNAT.Expect.TTY.Remote is
 
             when READY =>
                Shell_Desc := Get_Descriptor_From_Name
-                 (Desc.Desc.Nickname.all);
+                 (Desc.Desc.Shell_Name.all);
 
                if Shell_Desc.Exit_Cmds'Length /= 0 then
                   for K in Shell_Desc.Exit_Cmds'Range loop
