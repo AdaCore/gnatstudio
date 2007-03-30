@@ -48,6 +48,7 @@
           <choice>leon-elf-gnatmake</choice>
           <choice>dotnet-gnatmake</choice>
           <choice>gnaampmake</choice>
+          <choice>jgnatmake</choice>
           <string />
       </specialized_index>
       <specialized_index value="C">
@@ -80,6 +81,7 @@
        <choice>leon-elf-gnatls</choice>
        <choice>dotnet-gnatls</choice>
        <choice>gnaampls</choice>
+       <choice>jgnatls</choice>
        <string />
    </project_attribute>
 
@@ -106,7 +108,7 @@
        <choice>erc32-elf-gnat</choice>
        <choice>leon-elf-gnat</choice>
        <choice>dotnet-gnat</choice>
-       <choice>gnaamp</choice>
+       <choice>jgnatcmd</choice>
        <string />
    </project_attribute>
 
@@ -121,6 +123,7 @@
        <choice default="true" >gdb</choice>
        <choice>powerpc-wrs-vxworks-gdb</choice>
        <choice>powerpc-wrs-vxworksae-gdb</choice>
+       <choice>powerpc-wrs-vxworksae_wtx4-gdb</choice>
        <choice>powerpc-wrs-vxworks6-gdb</choice>
        <choice>powerpc-elf-gdb</choice>
        <choice>powerpc-eabispe-gdb</choice>
