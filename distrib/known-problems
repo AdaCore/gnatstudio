@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.1.1
 
+- G330-007 Bad display of notebook tabs
+  Problem:    When notebook tabs are displayed at the bottom and a window
+              is displayed/moved on top, the tabs are not properly displayed.
+  Workaround: Display the tabs at the top (from the preferences), or click
+              on any tab to force a refresh.
+
 - G329-015 Remote debugging session does not start if startup is long
   Problem:    Starting a remote debugging session might fail if the debugged
               program is long to load by gdb.
