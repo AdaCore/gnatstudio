@@ -24,30 +24,31 @@ with Ada.Strings;                use Ada.Strings;
 with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
 with Ada.Strings.Hash;
 with Ada.Strings.Maps.Constants; use Ada.Strings.Maps.Constants;
-with Ada.Text_IO;                use Ada.Text_IO;
+with Ada.Text_IO;                use Ada, Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
-with Basic_Types;               use Basic_Types;
-with Casing;                    use Casing;
-with File_Utils;                use File_Utils;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with Namet;                     use Namet;
-with Osint;                     use Osint;
-with OS_Utils;                  use OS_Utils;
-with Prj.Env;                   use Prj, Prj.Env;
-with Prj.Ext;
-with Prj.PP;                    use Prj.PP;
-with Prj.Tree;                  use Prj.Tree;
-with Prj.Util;                  use Prj.Util;
-with Projects.Graphs;           use Projects.Graphs;
-with Projects.Editor;           use Projects.Editor;
-with Projects.Registry;         use Projects.Registry;
-with Remote.Path.Translator;    use Remote, Remote.Path.Translator;
-with Snames;                    use Snames;
-with String_Hash;
-with Traces;                    use Traces;
 
-with VFS;                       use VFS;
+with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
+with GNAT.OS_Lib;                use GNAT.OS_Lib;
+
+with Basic_Types;                use Basic_Types;
+with Casing;                     use Casing;
+with File_Utils;                 use File_Utils;
+with Namet;                      use Namet;
+with Osint;                      use Osint;
+with OS_Utils;                   use OS_Utils;
+with Prj.Env;                    use Prj, Prj.Env;
+with Prj.Ext;
+with Prj.PP;                     use Prj.PP;
+with Prj.Tree;                   use Prj.Tree;
+with Prj.Util;                   use Prj.Util;
+with Projects.Graphs;            use Projects.Graphs;
+with Projects.Editor;            use Projects.Editor;
+with Projects.Registry;          use Projects.Registry;
+with Remote.Path.Translator;     use Remote, Remote.Path.Translator;
+with Snames;                     use Snames;
+with String_Hash;
+with Traces;                     use Traces;
+with VFS;                        use VFS;
 
 package body Projects is
 
@@ -57,7 +58,7 @@ package body Projects is
    type Name_Id_Array_Access is access Name_Id_Array;
 
    type Directory_Info is record
-      Has_Files  : Boolean;
+      Has_Files : Boolean;
    end record;
    No_Directory_Info : constant Directory_Info := (Has_Files => False);
 
@@ -116,9 +117,9 @@ package body Projects is
    --  Return the project view for the project Name
 
    function Check_Full_File
-     (Tree    : Prj.Project_Tree_Ref;
-      File    : Name_Id;
-      List    : Array_Element_Id) return Array_Element_Id;
+     (Tree : Prj.Project_Tree_Ref;
+      File : Name_Id;
+      List : Array_Element_Id) return Array_Element_Id;
    --  Check whether File is in the List. Return the index in the list
 
    type External_Variable_Callback is access function
@@ -253,7 +254,7 @@ package body Projects is
       Force         : Boolean := False;
       Report_Error  : Error_Report := null) return Boolean
    is
-      File     : Ada.Text_IO.File_Type;
+      File     : Text_IO.File_Type;
       Filename : Virtual_File;
 
       procedure Internal_Write_Char (C : Character);
@@ -366,9 +367,11 @@ package body Projects is
    begin
       if Project = No_Project then
          return "default";
+
       elsif Get_View (Project) /= Prj.No_Project then
          return Get_String
-           (Projects_Table (Project)(Get_View (Project)).Display_Name);
+           (Projects_Table (Project) (Get_View (Project)).Display_Name);
+
       else
          return Get_String
            (Prj.Tree.Name_Of (Project.Node, Project.Tree));
@@ -395,7 +398,7 @@ package body Projects is
    function Project_Name_Hash
      (Project : Project_Type) return Ada.Containers.Hash_Type is
    begin
-      return Ada.Strings.Hash (Project_Name (Project));
+      return Strings.Hash (Project_Name (Project));
    end Project_Name_Hash;
 
    ------------------
@@ -1142,11 +1145,14 @@ package body Projects is
       --  that a project has its own naming scheme, but still references files
       --  in the runtime with the default naming scheme.
 
-      if GNAT.Directory_Operations.File_Extension (Filename) = ".ads" then
-         return Filename'Last - 4;
-      elsif GNAT.Directory_Operations.File_Extension (Filename) = ".adb" then
-         return Filename'Last - 4;
-      end if;
+      declare
+         Ext : constant String :=
+                 GNAT.Directory_Operations.File_Extension (Filename);
+      begin
+         if  Ext = ".ads" or else Ext = ".adb" then
+            return Filename'Last - 4;
+         end if;
+      end;
 
       return Filename'Last;
    end Delete_File_Suffix;
@@ -1274,8 +1280,8 @@ package body Projects is
    -------------------------
 
    function Get_Attribute_Value
-     (Project        : Project_Type;
-      Attribute      : Attribute_Pkg) return Associative_Array
+     (Project   : Project_Type;
+      Attribute : Attribute_Pkg) return Associative_Array
    is
       Sep            : constant Natural := Split_Package (Attribute);
       Pkg_Name       : constant String :=
@@ -1339,11 +1345,11 @@ package body Projects is
    -------------------------
 
    function Get_Attribute_Value
-     (Project        : Project_Type;
-      Attribute      : Attribute_Pkg;
-      Index          : String := "") return GNAT.OS_Lib.Argument_List
+     (Project   : Project_Type;
+      Attribute : Attribute_Pkg;
+      Index     : String := "") return GNAT.OS_Lib.Argument_List
    is
-      Value    : constant Variable_Value := Get_Attribute_Value
+      Value : constant Variable_Value := Get_Attribute_Value
         (Project, Attribute, Index);
    begin
       return To_Argument_List (Project.View_Tree, Value);
@@ -1504,8 +1510,7 @@ package body Projects is
      (Root_Project     : Project_Type;
       Recursive        : Boolean := True;
       Direct_Only      : Boolean := False;
-      Include_Extended : Boolean := True)
-      return Imported_Project_Iterator
+      Include_Extended : Boolean := True) return Imported_Project_Iterator
    is
       Iter : Imported_Project_Iterator;
    begin
@@ -1608,14 +1613,14 @@ package body Projects is
       Project      : Project_Type)
    is
       type Boolean_Array is array (Positive range <>) of Boolean;
-      Imported : Name_Id_Array_Access renames
+      Imported  : Name_Id_Array_Access renames
         Root_Project.Data.Imported_Projects;
-      Current  : Project_Type;
-      Start    : Project_Type;
-      Include  : Boolean_Array (Imported'Range) := (others => False);
-      Name     : Name_Id;
-      Index    : Integer;
-      Parent   : Project_Type;
+      Current   : Project_Type;
+      Start     : Project_Type;
+      Include   : Boolean_Array (Imported'Range) := (others => False);
+      Name      : Name_Id;
+      Index     : Integer;
+      Parent    : Project_Type;
       Decl, N   : Project_Node_Id;
       Importing : Name_Id_Array_Access;
       Imports, Is_Limited_With : Boolean;
@@ -1851,6 +1856,7 @@ package body Projects is
             Include_Extended => False,
             Imports          => Imports,
             Is_Limited_With  => Is_Limited_With);
+
       else
          Project_Imports
            (Iterator.Root, Current (Iterator),
@@ -2193,6 +2199,7 @@ package body Projects is
    begin
       if Project.Node = Empty_Node then
          return Prj.No_Project;
+
       elsif Project.Data.View = Prj.No_Project then
          Project.Data.View :=
            Get_View (Project.View_Tree,
@@ -2656,8 +2663,7 @@ package body Projects is
    -----------------------
 
    function Extending_Project
-     (Project : Project_Type; Recurse : Boolean := False)
-      return Project_Type
+     (Project : Project_Type; Recurse : Boolean := False) return Project_Type
    is
       Extend : Project_Node_Id;
    begin
@@ -2764,7 +2770,7 @@ package body Projects is
 
                declare
                   Base_Id : constant Name_Id := Get_String (Base);
-                  Args  : constant Associative_Array := Get_Attribute_Value
+                  Args    : constant Associative_Array := Get_Attribute_Value
                     (Project, Attribute => Implementation_Attribute);
                begin
                   for A in Args'Range loop
