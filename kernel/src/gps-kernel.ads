@@ -203,7 +203,7 @@ package GPS.Kernel is
 
    procedure Set_Destruction_Flag
      (Handle : access Kernel_Handle_Record;
-      Flag : Boolean);
+      Flag   : Boolean);
    --  Set the destruction flag in the kernel.
 
    function Is_In_Destruction

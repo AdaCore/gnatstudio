@@ -153,7 +153,7 @@ package Projects.Registry is
    --  It is recommended that you call Reset before this function, to free
    --  the memory.
 
-   procedure Load_Empty_Project (Registry  : in out Project_Registry);
+   procedure Load_Empty_Project (Registry : in out Project_Registry);
    --  Load an empty project.
    --  Recompute_View must be called afterwards.
    --  Used only when initializing other GPS components (e.g. kernel).
@@ -184,8 +184,7 @@ package Projects.Registry is
    --  changed, and that the project views need to be recomputed.
 
    function Scenario_Variables
-     (Registry : Project_Registry)
-      return Projects.Scenario_Variable_Array;
+     (Registry : Project_Registry) return Projects.Scenario_Variable_Array;
    --  Return the list of scenario variables used in the whole project
    --  hierarchy. The result is cached for efficiency
 
@@ -232,13 +231,11 @@ package Projects.Registry is
    function Get_Project_From_File
      (Registry          : Project_Registry;
       Source_Filename   : VFS.Virtual_File;
-      Root_If_Not_Found : Boolean := True)
-      return Project_Type;
+      Root_If_Not_Found : Boolean := True) return Project_Type;
    function Get_Project_From_File
      (Registry          : Project_Registry;
       Base_Name         : String;
-      Root_If_Not_Found : Boolean := True)
-      return Project_Type;
+      Root_If_Not_Found : Boolean := True) return Project_Type;
    --  Select a project by one of its source files. If no project was found and
    --  Root_If_Not_Found is true, the root project is returned instead.
    --  Source_Filename can either be the full pathname or the base name.

@@ -200,7 +200,7 @@ package Debugger.Gdb is
 
    function Is_Break_Command
      (Debugger : access Gdb_Debugger;
-      Command : String) return Boolean;
+      Command  : String) return Boolean;
 
    procedure Stack_Down
      (Debugger : access Gdb_Debugger;

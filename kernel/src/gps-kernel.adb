@@ -113,7 +113,7 @@ package body GPS.Kernel is
      (Project_Registry'Class, Project_Registry_Access);
 
    function Process_Anim (Data : Process_Data) return Boolean;
-   --  Process_Timeout callback to handle image animations.
+   --  Process_Timeout callback to handle image animations
 
    procedure Row_Activated (Widget : access Gtk_Widget_Record'Class);
    --  Called when a specific entity declaration has been selected in the
@@ -170,7 +170,7 @@ package body GPS.Kernel is
 
    procedure Set_Destruction_Flag
      (Handle : access Kernel_Handle_Record;
-      Flag : Boolean) is
+      Flag   : Boolean) is
    begin
       Handle.Is_In_Destruction := Flag;
    end Set_Destruction_Flag;

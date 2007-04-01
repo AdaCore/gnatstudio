@@ -1113,6 +1113,7 @@ package body Projects.Editor is
          else
             Rename_Prj := Project;
          end if;
+
       else
          Rename_Prj := Project;
          Pkg := Empty_Node;

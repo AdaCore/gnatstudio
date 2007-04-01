@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2007                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,8 +19,10 @@
 -----------------------------------------------------------------------
 
 with GNAT.Strings;
-with GPS.Kernel;
+
 with Gtk.Widget;
+
+with GPS.Kernel;
 with Projects;
 with Switches_Editors;
 with Naming_Editors;
@@ -66,13 +68,13 @@ package Project_Viewers is
    --  Refresh is always called just after Widget_Factory.
 
    function Project_Editor
-     (Page          : access Project_Editor_Page_Record;
-      Project       : Projects.Project_Type;
-      Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Widget        : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Languages     : GNAT.Strings.String_List;
+     (Page               : access Project_Editor_Page_Record;
+      Project            : Projects.Project_Type;
+      Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Widget             : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Languages          : GNAT.Strings.String_List;
       Scenario_Variables : Projects.Scenario_Variable_Array;
-      Ref_Project   : Projects.Project_Type) return Boolean is abstract;
+      Ref_Project        : Projects.Project_Type) return Boolean is abstract;
    --  Modifies Project given the data in Widget. Widget is the same that was
    --  created through a Project_Editor_Page_Factor.
    --

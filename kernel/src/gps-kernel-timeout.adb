@@ -534,8 +534,8 @@ package body GPS.Kernel.Timeout is
       Use_Pipes            : Boolean := True;
       Created_Command      : out Scheduled_Command_Access)
    is
-      C             : Monitor_Command_Access;
       Q_Id          : constant String := Get_New_Queue_Id (Queue_Id);
+      C             : Monitor_Command_Access;
       No_Handler    : Handler_Id;
       Expect_Regexp : GNAT.Expect.Pattern_Matcher_Access;
    begin
@@ -562,8 +562,8 @@ package body GPS.Kernel.Timeout is
       end if;
 
       C.Name := new String'(Command);
-      C.Data.Args             := new String_List'((1 => new String'(Command)) &
-                                                  Clone (Arguments));
+      C.Data.Args                 := new String_List'
+        ((1 => new String'(Command)) & Clone (Arguments));
       C.Data.Server               := Server;
       C.Data.Console              := Console;
       C.Data.Use_Ext_Terminal     := Use_Ext_Terminal;
@@ -594,6 +594,7 @@ package body GPS.Kernel.Timeout is
       if Synchronous then
          Launch_Monitor_Command_Synchronous (Command_Access (C), 0.1);
          Destroy (Command_Access (C));
+
       else
          --  ??? Add_Alternate_Action: sync even if main action fails
 --           Add_Alternate_Action
@@ -671,6 +672,7 @@ package body GPS.Kernel.Timeout is
          Show_Exit_Status     => Show_Exit_Status,
          Use_Pipes            => Use_Pipes,
          Created_Command      => Created_Command);
+
       if Success
         and then Execute (Monitor_Command_Access
                             (Get_Command (Created_Command)))

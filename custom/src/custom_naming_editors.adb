@@ -1,7 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2006, AdaCore              --
+--                      Copyright (C) 2003-2007                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,10 +19,9 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling;          use Ada.Characters.Handling;
-with Basic_Types;                      use Basic_Types;
+
 with GNAT.Strings;                     use GNAT.Strings;
-with GPS.Intl;                         use GPS.Intl;
-with GPS.Kernel.Project;               use GPS.Kernel, GPS.Kernel.Project;
+
 with Gtk.Box;                          use Gtk.Box;
 with Gtk.Frame;                        use Gtk.Frame;
 with Gtk.GEntry;                       use Gtk.GEntry;
@@ -29,6 +29,10 @@ with Gtk.Label;                        use Gtk.Label;
 with Gtk.Size_Group;                   use Gtk.Size_Group;
 with Gtk.Tooltips;                     use Gtk.Tooltips;
 with Gtk.Widget;                       use Gtk.Widget;
+
+with Basic_Types;                      use Basic_Types;
+with GPS.Intl;                         use GPS.Intl;
+with GPS.Kernel.Project;               use GPS.Kernel, GPS.Kernel.Project;
 with Projects.Editor;                  use Projects, Projects.Editor;
 with Projects.Registry;                use Projects.Registry;
 with Naming_Exceptions;                use Naming_Exceptions;
@@ -169,9 +173,9 @@ package body Custom_Naming_Editors is
    begin
       if Project = No_Project
         or else Get_Attribute_Value
-          (Project        => Project,
-           Attribute      => Spec_Suffix_Attribute,
-           Index          => To_Lower (Editor.Language.all)) /=
+          (Project   => Project,
+           Attribute => Spec_Suffix_Attribute,
+           Index     => To_Lower (Editor.Language.all)) /=
         Get_Text (Editor.Spec_Extension)
       then
          Update_Attribute_Value_In_Scenario
@@ -185,9 +189,9 @@ package body Custom_Naming_Editors is
 
       if Project = No_Project
         or else Get_Attribute_Value
-          (Project        => Project,
-           Attribute      => Impl_Suffix_Attribute,
-           Index          => To_Lower (Editor.Language.all)) /=
+          (Project   => Project,
+           Attribute => Impl_Suffix_Attribute,
+           Index     => To_Lower (Editor.Language.all)) /=
         Get_Text (Editor.Impl_Extension)
       then
          Update_Attribute_Value_In_Scenario

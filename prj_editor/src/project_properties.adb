@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2002-2006                       --
+--                     Copyright (C) 2002-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -5026,10 +5026,10 @@ package body Project_Properties is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Wizard_Page_Record'Class, Wizard_Page);
 
-      Editor  : Properties_Editor;
-      Changed : Boolean := False;
-      Response : Gtk_Response_Type;
-      Response2 : Message_Dialog_Buttons;
+      Editor                   : Properties_Editor;
+      Changed                  : Boolean := False;
+      Response                 : Gtk_Response_Type;
+      Response2                : Message_Dialog_Buttons;
       Project_Renamed_Or_Moved : Boolean := False;
 
    begin
@@ -5111,7 +5111,7 @@ package body Project_Properties is
       if Response = Gtk_Response_OK then
          declare
             Vars         : constant Scenario_Variable_Array :=
-              Scenario_Variables (Kernel);
+                             Scenario_Variables (Kernel);
             Saved_Values : Argument_List := Get_Current_Scenario (Vars);
             Prj_Iter     : Project_Iterator := Start (Editor.Prj_Selector);
             Ed           : Project_Editor_Page;
@@ -5203,7 +5203,7 @@ package body Project_Properties is
          declare
             New_Name : constant String := Get_Text (Editor.Name);
             New_Path : constant String :=
-              Name_As_Directory (Get_Text (Editor.Path));
+                         Name_As_Directory (Get_Text (Editor.Path));
          begin
             if New_Name /= Project_Name (Project)
               or else New_Path /= Full_Name (Project_Directory (Project)).all

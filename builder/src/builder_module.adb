@@ -23,7 +23,7 @@ with Ada.Unchecked_Deallocation;
 with Ada.Tags;                  use Ada.Tags;
 with Ada.Strings;               use Ada.Strings;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
-with Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with System;
 
 with GNAT.Expect;               use GNAT.Expect;
@@ -31,7 +31,7 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.OS_Lib;               use GNAT; use GNAT.OS_Lib;
 with GNAT.Strings;
 with GNAT.Case_Util;            use GNAT.Case_Util;
 
@@ -128,7 +128,7 @@ package body Builder_Module is
    type Files_Callback_Data is new Callback_Data_Record with record
       Files  : File_Array_Access;
 
-      Buffer : Ada.Strings.Unbounded.Unbounded_String;
+      Buffer : Unbounded_String;
       --  This field is used to store uncomplete lines got during the
       --  processing of the compilation output.
    end record;
@@ -150,7 +150,7 @@ package body Builder_Module is
 
    procedure Interrupt_Xrefs_Loading
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Interrupts all xrefs loading.
+   --  Interrupts all xrefs loading
 
    --------------------------------
    -- Computing cross-references --
@@ -164,7 +164,7 @@ package body Builder_Module is
    type Compute_Xref_Data_Access is access Compute_Xref_Data;
 
    procedure Deep_Free (D : in out Compute_Xref_Data_Access);
-   --  Free memory associated to D;
+   --  Free memory associated to D
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (LI_Handler_Iterator_Access, LI_Handler_Iterator_Access_Access);
@@ -176,7 +176,7 @@ package body Builder_Module is
      (Xref_Data : in out Compute_Xref_Data_Access;
       Command   : Command_Access;
       Result    : out Command_Return_Type);
-   --  Query the Xref information for the next files in the project.
+   --  Query the Xref information for the next files in the project
 
    package Xref_Commands is new Commands.Generic_Asynchronous
      (Data_Type => Compute_Xref_Data_Access,
@@ -195,7 +195,7 @@ package body Builder_Module is
 
    procedure Free (Ar : in out String_List);
    procedure Free (Ar : in out String_List_Access);
-   --  Free the memory associate with Ar.
+   --  Free the memory associate with Ar
 
    type Command_Syntax is (GNAT_Syntax, Make_Syntax);
    --  Type used in Scenario_Variables_Cmd_Line to determine the command line
@@ -267,12 +267,10 @@ package body Builder_Module is
    procedure Cleanup_Accel_Map (Kernel : access Kernel_Handle_Record'Class);
    --  Remove from the accel_map the key bindings set for previous projects
 
-   procedure Parse_Compiler_Output
-     (Data : Process_Data; Output : String);
+   procedure Parse_Compiler_Output (Data : Process_Data; Output : String);
    --  Called whenever new output from the compiler is available
 
-   procedure Free_Temporary_Files
-     (Data : Process_Data; Status : Integer);
+   procedure Free_Temporary_Files (Data : Process_Data; Status : Integer);
    --  Free the temporary files that were created for the compilation. The
    --  list is stored in Data.Callback_Data.
 
@@ -527,9 +525,7 @@ package body Builder_Module is
    -- Parse_Compiler_Output --
    ---------------------------
 
-   procedure Parse_Compiler_Output
-     (Data : Process_Data; Output : String)
-   is
+   procedure Parse_Compiler_Output (Data : Process_Data; Output : String) is
       Last_EOL : Natural := 1;
    begin
       if not Data.Process_Died then
@@ -539,12 +535,11 @@ package body Builder_Module is
          --  in the current buffer.
 
          if Last_EOL = 0 then
-            Ada.Strings.Unbounded.Append
-              (Files_Callback_Data (Data.Callback_Data.all).Buffer,
-               Output);
-
+            Append
+              (Files_Callback_Data (Data.Callback_Data.all).Buffer, Output);
             return;
          end if;
+
       else
          if Output'Length > 0 then
             Last_EOL := Output'Length + 1;
@@ -555,24 +550,24 @@ package body Builder_Module is
          Process_Builder_Output
            (Kernel  => Data.Kernel,
             Command => Data.Command,
-            Output  => Ada.Strings.Unbounded.To_String
+            Output  => To_String
               (Files_Callback_Data (Data.Callback_Data.all).Buffer)
                & Output (Output'First .. Last_EOL - 1) & ASCII.LF,
             Quiet   => False);
 
          Files_Callback_Data (Data.Callback_Data.all).Buffer :=
-           Ada.Strings.Unbounded.To_Unbounded_String
-             (Output (Last_EOL + 1 .. Output'Last));
+           To_Unbounded_String (Output (Last_EOL + 1 .. Output'Last));
+
       elsif Data.Process_Died then
          Process_Builder_Output
            (Kernel  => Data.Kernel,
             Command => Data.Command,
-            Output  => Ada.Strings.Unbounded.To_String
+            Output  => To_String
               (Files_Callback_Data (Data.Callback_Data.all).Buffer) & ASCII.LF,
             Quiet   => False);
 
          Files_Callback_Data (Data.Callback_Data.all).Buffer :=
-           Ada.Strings.Unbounded.Null_Unbounded_String;
+           Null_Unbounded_String;
       end if;
    end Parse_Compiler_Output;
 
@@ -614,7 +609,7 @@ package body Builder_Module is
       Extra_Args  : Argument_List_Access := null)
    is
       Old_Dir     : constant Dir_Name_Str := Get_Current_Dir;
-      Cmd         : String_Access;
+      Cmd         : OS_Lib.String_Access;
       Args        : Argument_List_Access;
 
       Context     : Selection_Context;
@@ -642,8 +637,10 @@ package body Builder_Module is
 
       if Langs'Length = 1 and then Langs (Langs'First).all = "ada" then
          Syntax := GNAT_Syntax;
+
       elsif Get_Pref (Multi_Language_Build) then
          Syntax := Make_Syntax;
+
       else
          Syntax := Make_Syntax;
 
@@ -809,15 +806,15 @@ package body Builder_Module is
    is
       Prj             : constant Project_Type := Get_Project (Kernel);
       Old_Dir         : constant Dir_Name_Str := Get_Current_Dir;
-      Cmd             : String_Access;
+      Cmd             : OS_Lib.String_Access;
       Fd              : Process_Descriptor_Access;
-      Local_File      : String_Access;
+      Local_File      : OS_Lib.String_Access;
       Lang            : String :=
                           Get_Language_From_File
                             (Get_Language_Handler (Kernel), File);
       Common_Args     : Argument_List_Access;
       Args            : Argument_List_Access;
-      Shadow_Path     : String_Access;
+      Shadow_Path     : OS_Lib.String_Access;
       Compilable_File : Virtual_File := File;
       Success         : Boolean;
       Cb_Data         : Files_Callback_Data_Access;
@@ -997,9 +994,9 @@ package body Builder_Module is
       Command : String)
    is
       use String_List_Utils.String_List;
+      Kernel     : constant Kernel_Handle := Get_Kernel (Data);
       Node       : List_Node;
       Info       : Virtual_File;
-      Kernel     : constant Kernel_Handle := Get_Kernel (Data);
       C          : Xref_Commands.Generic_Asynchronous_Command_Access;
       Extra_Args : Argument_List_Access;
    begin

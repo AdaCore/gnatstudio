@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2006                       --
+--                      Copyright (C) 2003-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free software; you can redistribute it and/or modify  it   --
@@ -153,6 +153,7 @@ package body Commands.Builder is
          Append (Buffer, Output (Start .. Matched (0).First - 1));
          Start := Matched (0).Last + 1;
       end loop;
+
       Append (Buffer, Output (Start .. Output'Last));
 
       if Length (Buffer) /= 0 then

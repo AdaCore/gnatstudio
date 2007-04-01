@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003                            --
---                            ACT-Europe                             --
+--                      Copyright (C) 2003-2007                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,10 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Projects;               use Projects;
-with Projects.Editor;        use Projects.Editor;
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
-with GPS.Intl;             use GPS.Intl;
+
 with Glib;                   use Glib;
 with Gdk.Event;              use Gdk.Event;
 with Gdk.Types.Keysyms;      use Gdk.Types, Gdk.Types.Keysyms;
@@ -38,6 +36,10 @@ with Gtk.Tree_Selection;     use Gtk.Tree_Selection;
 with Gtk.Tree_Store;         use Gtk.Tree_Store;
 with Gtk.Widget;             use Gtk.Widget;
 with Gtkada.Handlers;        use Gtkada.Handlers;
+
+with Projects;               use Projects;
+with Projects.Editor;        use Projects.Editor;
+with GPS.Intl;               use GPS.Intl;
 with Basic_Types;
 with GUI_Utils;              use GUI_Utils;
 
@@ -78,9 +80,9 @@ package body Naming_Exceptions is
    ----------------------
 
    procedure Exception_Edited (Editor : access Gtk_Widget_Record'Class) is
-      Ed       : constant Exceptions_Editor := Exceptions_Editor (Editor);
-      Iter     : Gtk_Tree_Iter;
-      Model    : Gtk_Tree_Model;
+      Ed    : constant Exceptions_Editor := Exceptions_Editor (Editor);
+      Iter  : Gtk_Tree_Iter;
+      Model : Gtk_Tree_Model;
    begin
       Get_Selected (Get_Selection (Ed.Exceptions_List), Model, Iter);
       if Iter /= Null_Iter then
@@ -98,9 +100,9 @@ package body Naming_Exceptions is
      (Editor : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean
    is
-      Ed       : constant Exceptions_Editor := Exceptions_Editor (Editor);
-      Iter     : Gtk_Tree_Iter;
-      Model    : Gtk_Tree_Model;
+      Ed    : constant Exceptions_Editor := Exceptions_Editor (Editor);
+      Iter  : Gtk_Tree_Iter;
+      Model : Gtk_Tree_Model;
    begin
       if Get_Event_Type (Event) = Key_Press
         and then (Get_Key_Val (Event) = GDK_BackSpace
@@ -177,11 +179,11 @@ package body Naming_Exceptions is
      (Editor   : out Exceptions_Editor;
       Language : String)
    is
-      Render : Gtk_Cell_Renderer_Text;
-      Col    : Gtk_Tree_View_Column;
-      Num    : Gint;
-      Box    : Gtk_Box;
-      Button : Gtk_Button;
+      Render   : Gtk_Cell_Renderer_Text;
+      Col      : Gtk_Tree_View_Column;
+      Num      : Gint;
+      Box      : Gtk_Box;
+      Button   : Gtk_Button;
       Scrolled : Gtk_Scrolled_Window;
       pragma Unreferenced (Num);
    begin
@@ -263,9 +265,9 @@ package body Naming_Exceptions is
       else
          declare
             Old_Exceptions : Argument_List := Get_Attribute_Value
-              (Project        => Project,
-               Attribute      => Impl_Exception_Attribute,
-               Index          => Editor.Language.all);
+              (Project   => Project,
+               Attribute => Impl_Exception_Attribute,
+               Index     => Editor.Language.all);
          begin
             Changed := not Basic_Types.Is_Equal (Bodies, Old_Exceptions);
             Basic_Types.Free (Old_Exceptions);
@@ -275,11 +277,11 @@ package body Naming_Exceptions is
       if Changed then
          if Num_Rows /= 0 then
             Update_Attribute_Value_In_Scenario
-              (Project           => Project,
+              (Project            => Project,
                Scenario_Variables => Scenario_Variables,
-               Attribute         => Impl_Exception_Attribute,
-               Values            => Bodies,
-               Attribute_Index   => Editor.Language.all);
+               Attribute          => Impl_Exception_Attribute,
+               Values             => Bodies,
+               Attribute_Index    => Editor.Language.all);
          else
             Delete_Attribute
               (Project            => Project,
@@ -311,8 +313,8 @@ package body Naming_Exceptions is
          declare
             Bodies : Argument_List := Get_Attribute_Value
               (Project,
-               Attribute      => Impl_Exception_Attribute,
-               Index          => Editor.Language.all);
+               Attribute => Impl_Exception_Attribute,
+               Index     => Editor.Language.all);
          begin
             Freeze := Freeze_Sort (Editor.Exceptions);
             for B in Bodies'Range loop

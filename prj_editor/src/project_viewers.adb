@@ -359,24 +359,22 @@ package body Project_Viewers is
       Kernel       : access Kernel_Handle_Record'Class)
       return Gtk_Widget;
    function Project_Editor
-     (Page         : access Switches_Editor_Record;
-      Project      : Project_Type;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Widget       : access Gtk_Widget_Record'Class;
-      Languages    : GNAT.Strings.String_List;
+     (Page               : access Switches_Editor_Record;
+      Project            : Project_Type;
+      Kernel             : access Kernel_Handle_Record'Class;
+      Widget             : access Gtk_Widget_Record'Class;
+      Languages          : GNAT.Strings.String_List;
       Scenario_Variables : Scenario_Variable_Array;
-      Ref_Project  : Project_Type)
-      return Boolean;
+      Ref_Project        : Project_Type) return Boolean;
    procedure Refresh
-     (Page         : access Switches_Editor_Record;
-      Widget       : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Project      : Project_Type := No_Project;
-      Languages    : GNAT.Strings.String_List);
+     (Page      : access Switches_Editor_Record;
+      Widget    : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Project   : Project_Type := No_Project;
+      Languages : GNAT.Strings.String_List);
 
-   type Naming_Editor_Record is new Project_Editor_Page_Record
-     with record
-        Kernel : Kernel_Handle;
-     end record;
+   type Naming_Editor_Record is new Project_Editor_Page_Record with record
+      Kernel : Kernel_Handle;
+   end record;
    function Widget_Factory
      (Page         : access Naming_Editor_Record;
       Project      : Project_Type;
@@ -384,18 +382,18 @@ package body Project_Viewers is
       Kernel       : access Kernel_Handle_Record'Class)
       return Gtk_Widget;
    function Project_Editor
-     (Page         : access Naming_Editor_Record;
-      Project      : Project_Type;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Widget       : access Gtk_Widget_Record'Class;
-      Languages    : GNAT.Strings.String_List;
+     (Page               : access Naming_Editor_Record;
+      Project            : Project_Type;
+      Kernel             : access Kernel_Handle_Record'Class;
+      Widget             : access Gtk_Widget_Record'Class;
+      Languages          : GNAT.Strings.String_List;
       Scenario_Variables : Scenario_Variable_Array;
-      Ref_Project  : Project_Type) return Boolean;
+      Ref_Project        : Project_Type) return Boolean;
    procedure Refresh
-     (Page         : access Naming_Editor_Record;
-      Widget       : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Project      : Project_Type := No_Project;
-      Languages    : GNAT.Strings.String_List);
+     (Page      : access Naming_Editor_Record;
+      Widget    : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Project   : Project_Type := No_Project;
+      Languages : GNAT.Strings.String_List);
 
    ----------------------
    -- Contextual menus --
