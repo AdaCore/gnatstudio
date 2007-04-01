@@ -25,21 +25,27 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 
-with ALI;
-with Atree;
-with Basic_Types;               use Basic_Types;
-with Csets;
-with Errout;
-with File_Utils;                use File_Utils;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Case_Util;            use GNAT.Case_Util;
-with GPS.Intl;                  use GPS.Intl;
-with Glib.Convert;              use Glib.Convert;
+
+with ALI;
+with Atree;
 with Namet;                     use Namet;
 with Opt;                       use Opt;
 with Output;                    use Output;
 with Osint;                     use Osint;
+with Scans;                     use Scans;
+with Snames;                    use Snames;
+with Stringt;
+
+with Glib.Convert;              use Glib.Convert;
+
+with Basic_Types;               use Basic_Types;
+with Csets;
+with Errout;
+with File_Utils;                use File_Utils;
+with GPS.Intl;                  use GPS.Intl;
 with OS_Utils;                  use OS_Utils;
 with Prj.Com;                   use Prj.Com;
 with Prj.Ext;                   use Prj.Ext;
@@ -51,9 +57,6 @@ with Prj.Tree;                  use Prj.Tree;
 with Prj;                       use Prj;
 with Projects.Editor;           use Projects.Editor;
 with Remote;                    use Remote;
-with Scans;                     use Scans;
-with Snames;                    use Snames;
-with Stringt;
 with String_Hash;
 with Traces;                    use Traces;
 with Types;                     use Types;
@@ -473,13 +476,19 @@ package body Projects.Registry is
       if View_Only then
          Naming := Registry.Data.Naming_Schemes;
          while Naming /= null loop
-            Prj.Register_Default_Naming_Scheme
-              (Language            => Get_String (Naming.Language.all),
-               Default_Spec_Suffix =>
-                 Get_String (Naming.Default_Spec_Suffix.all),
-               Default_Body_Suffix =>
-                 Get_String (Naming.Default_Body_Suffix.all),
-               In_Tree             => Registry.Data.View_Tree);
+            declare
+               Spec_Suffix : String := Naming.Default_Spec_Suffix.all;
+               Body_Suffix : String := Naming.Default_Body_Suffix.all;
+            begin
+               Canonical_Case_File_Name (Spec_Suffix);
+               Canonical_Case_File_Name (Body_Suffix);
+
+               Prj.Register_Default_Naming_Scheme
+                 (Language            => Get_String (Naming.Language.all),
+                  Default_Spec_Suffix => Get_String (Spec_Suffix),
+                  Default_Body_Suffix => Get_String (Body_Suffix),
+                  In_Tree             => Registry.Data.View_Tree);
+            end;
 
             Add_Language_Extension
               (Registry, Naming.Language.all, Naming.Default_Spec_Suffix.all);
@@ -522,9 +531,14 @@ package body Projects.Registry is
    ----------------------------
 
    function Normalize_Project_Path (Path : String) return String is
+
       function Extension return String;
       --  Return the extension to add to the file name (.gpr if not already
       --  there)
+
+      ---------------
+      -- Extension --
+      ---------------
 
       function Extension return String is
       begin
@@ -851,6 +865,7 @@ package body Projects.Registry is
       View    : Project_Id;
       Success : Boolean;
       Iter    : Imported_Project_Iterator := Start (Registry.Data.Root);
+
    begin
       while Current (Iter) /= No_Project loop
          Set_View_Is_Complete (Current (Iter), True);
@@ -870,7 +885,7 @@ package body Projects.Registry is
          Registry.Data.Root.Node,
          Registry.Data.Tree,
          Report_Error'Unrestricted_Access,
-         Follow_Links => not Registry.Data.Trusted_Mode,
+         Follow_Links    => not Registry.Data.Trusted_Mode,
          When_No_Sources => Warning);
 
       --  Lower case the languages attribute
@@ -1367,8 +1382,7 @@ package body Projects.Registry is
       begin
          if Sources_Specified then
             Data := Get (Registry.Data.Sources, File);
-            return Data.Lang /= No_Name
-              and then Data.Project = Project;
+            return Data.Lang /= No_Name and then Data.Project = Project;
          else
             return True;
          end if;
@@ -1419,8 +1433,7 @@ package body Projects.Registry is
       Src := Projects_Table (Registry) (Get_View (Project)).Sources;
 
       while Src /= Nil_String loop
-         Get_Name_String
-           (String_Elements (Registry) (Src).Display_Value);
+         Get_Name_String (String_Elements (Registry) (Src).Display_Value);
 
          declare
             File : constant String :=
@@ -1499,9 +1512,9 @@ package body Projects.Registry is
                               Prj.Util.Value_Of
                                 (Name_Source_List_File, Data.Decl.Attributes,
                                  Registry.Data.View_Tree);
-         File : Prj.Util.Text_File;
-         Line : String (1 .. 2000);
-         Last : Natural;
+         File             : Prj.Util.Text_File;
+         Line             : String (1 .. 2000);
+         Last             : Natural;
 
       begin
          if not Source_List_File.Default then
@@ -1579,31 +1592,6 @@ package body Projects.Registry is
                      --  naming scheme overrides GPS's default
                      Get_Unit_Part_And_Name_From_Filename
                        (UTF8, Project, Part, Unit_Name, Lang);
-
-                     --  Language not found from the project, check the default
-                     --  list of extensions.
-                     --  ??? FA30-018: Do not check the default extensions: the
-                     --  project attributes already default to those, and the
-                     --  user can override. Otherwise there is no way for him
-                     --  not to see the files with what happens to be
-                     --  a default extension for a custom language.
-
-                     if False and then Lang = No_Name then
-                        declare
-                           Ext : constant String := File_Extension (UTF8);
-                        begin
-                           if Ext = "" then
-                              --  No extension, use Base_Name to find the
-                              --  proper language for this file. This is needed
-                              --  for makefile and ChangeLog files for example.
-                              Lang := Languages_Htable.String_Hash_Table.Get
-                                (Registry.Data.Extensions, To_Lower (UTF8));
-                           else
-                              Lang := Languages_Htable.String_Hash_Table.Get
-                                (Registry.Data.Extensions, Ext);
-                           end if;
-                        end;
-                     end if;
 
                      --  Check if the returned language belongs to the
                      --  supported languages for the project.
@@ -1764,7 +1752,7 @@ package body Projects.Registry is
       return Project_Type
    is
       S : constant Source_File_Data :=
-        Get (Registry.Data.Sources, Base_Name (Source_Filename));
+            Get (Registry.Data.Sources, Base_Name (Source_Filename));
       P : Project_Type := S.Project;
    begin
       --  Make sure the file we found has the same full name, since it might
@@ -1845,6 +1833,7 @@ package body Projects.Registry is
                  (Registry.Data.Extensions, File_Extension (Source_Filename));
             end if;
          end;
+
       else
          return S.Lang;
       end if;
@@ -1877,9 +1866,12 @@ package body Projects.Registry is
       Extension     : String)
    is
       Lang : constant Name_Id := Get_String (To_Lower (Language_Name));
+      Ext  : String := Extension;
    begin
+      Canonical_Case_File_Name (Ext);
+
       Languages_Htable.String_Hash_Table.Set
-        (Registry.Data.Extensions, Extension, Lang);
+        (Registry.Data.Extensions, Ext, Lang);
    end Add_Language_Extension;
 
    -------------------------------
