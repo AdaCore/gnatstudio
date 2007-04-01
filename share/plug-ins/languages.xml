@@ -17,7 +17,7 @@
     <Wordchars>@</Wordchars>
     <Context>
       <New_Line_Comment_Start>@c </New_Line_Comment_Start>
-      <String_Delimiter>"</String_Delimiter>
+      <String_Delimiter>&quot;</String_Delimiter>
       <Can_Indent>False</Can_Indent>
       <Syntax_Highlighting>True</Syntax_Highlighting>
       <Case_Sensitive>True</Case_Sensitive>
@@ -38,7 +38,7 @@
     <Keywords>^(AC_(SUBST|DEFINE(_UNQUOTED)?)\((\w+)|A[CM]_\w+)\b</Keywords>
     <Context>
       <New_Line_Comment_Start>dnl </New_Line_Comment_Start>
-      <String_Delimiter>"</String_Delimiter>
+      <String_Delimiter>&quot;</String_Delimiter>
       <Can_Indent>False</Can_Indent>
       <Syntax_Highlighting>True</Syntax_Highlighting>
       <Case_Sensitive>True</Case_Sensitive>
@@ -51,7 +51,7 @@
     <Keywords>^(BEGIN|END|ARG(C|IND|V)|CONVFMT|E(NVIRON|RRNO)|FI(ELDWIDTHS|LENAME)|F(NR|S)|IGNORECASE|N(F|R)|O(F(MT|S)|RS)|R(LENGTH|S|START|UBSEP)|break|continue|delete|e(xit|lse)|f(or|unction)|getline|if|next|printf?|return|while|atan2|c(lose|os|time)|exp|gsub|in(dex|t)|l(ength|og)|match|rand|s(in|plit|printf|qrt|rand|ub(str)?|ystem)|t(ime|o(lower|upper)))\b</Keywords>
     <Context>
       <New_Line_Comment_Start># </New_Line_Comment_Start>
-      <String_Delimiter>"</String_Delimiter>
+      <String_Delimiter>&quot;</String_Delimiter>
       <Can_Indent>False</Can_Indent>
       <Syntax_Highlighting>True</Syntax_Highlighting>
       <Case_Sensitive>True</Case_Sensitive>
@@ -64,7 +64,7 @@
     <Keywords>^(if|until|while|els(if|e)|unless|d(o|ump)|for(each)?|exit|die|BEGIN|END|return|exec|eval|local|my|continue|goto|last|next|redo)\b</Keywords>
     <Context>
       <New_Line_Comment_Start>#</New_Line_Comment_Start>
-      <String_Delimiter>"</String_Delimiter>
+      <String_Delimiter>&quot;</String_Delimiter>
       <Can_Indent>False</Can_Indent>
       <Syntax_Highlighting>True</Syntax_Highlighting>
       <Case_Sensitive>True</Case_Sensitive>
@@ -116,7 +116,7 @@
 
     <Context>
       <New_Line_Comment_Start>!</New_Line_Comment_Start>
-      <String_Delimiter>"</String_Delimiter>
+      <String_Delimiter>&quot;</String_Delimiter>
       <Can_Indent>False</Can_Indent>
       <Syntax_Highlighting>True</Syntax_Highlighting>
       <Case_Sensitive>False</Case_Sensitive>
@@ -151,7 +151,7 @@
     <Keywords>^(m4_)?(builtin|change(com|quote|word)|d(e(bug(file|mode)|cr|f(ine|n))|iv(ert|num)|nl|umpdef)|e(rrprint|syscmd|val)|f(ile|ormat)|gnu|i(f(def|else)|n(c(lude|r)|d(ex|ir)))|l(en|ine)|m(4(exit|wrap)|aketemp)|p(atsubst|opdef|ushdef)|regexp|s(hift|include|ubstr|ys(cmd|val))|tra(ceo(ff|n)|nslit)|un(d(efine|ivert)|ix))\b</Keywords>
     <Context>
       <New_Line_Comment_Start>dnl </New_Line_Comment_Start>
-      <String_Delimiter>"</String_Delimiter>
+      <String_Delimiter>&quot;</String_Delimiter>
       <Can_Indent>False</Can_Indent>
       <Syntax_Highlighting>True</Syntax_Highlighting>
       <Case_Sensitive>True</Case_Sensitive>
@@ -164,7 +164,7 @@
     <Keywords>^((s?include|if(n?(eq|def))?|e(lse|ndif))\b|\n[^#]+:)</Keywords>
     <Context>
       <New_Line_Comment_Start>#</New_Line_Comment_Start>
-      <String_Delimiter>"</String_Delimiter>
+      <String_Delimiter>&quot;</String_Delimiter>
       <Can_Indent>False</Can_Indent>
       <Syntax_Highlighting>True</Syntax_Highlighting>
       <Case_Sensitive>True</Case_Sensitive>
@@ -186,7 +186,7 @@
     <Keywords>^(e(cho|xport|val)|getopts|newgrp|pwd|read(only)?|t(est|imes|ype|hen|rap)|ulimit|hash|cd|s(et|hift)|u(mask|nset)|wait|do|el(if|se)|if|until|while|function|done|esac|f(i|or)|in|return|CDPATH|IFS|OPT(ARG|IND)|PS(1|2)|COLUMNS|EDITOR|H(OME|USHLOGIN)|L(ANG|C_(COLLATE|CTYPE|MESSAGES|MONETARY|NUMERIC|TIME)|INES|OGNAME)|MAIL(CHECK|PATH)?|PA(GER|TH)|SHELL|TERM(CAP|INFO)?|VISUAL)\b</Keywords>
     <Context>
       <New_Line_Comment_Start>#</New_Line_Comment_Start>
-      <String_Delimiter>"</String_Delimiter>
+      <String_Delimiter>&quot;</String_Delimiter>
       <Can_Indent>True</Can_Indent>
       <Syntax_Highlighting>True</Syntax_Highlighting>
       <Case_Sensitive>True</Case_Sensitive>
@@ -209,7 +209,7 @@
 
     <Context>
       <New_Line_Comment_Start>#</New_Line_Comment_Start>
-      <String_Delimiter>"</String_Delimiter>
+      <String_Delimiter>&quot;</String_Delimiter>
       <Can_Indent>True</Can_Indent>
       <Syntax_Highlighting>True</Syntax_Highlighting>
       <Case_Sensitive>True</Case_Sensitive>
@@ -224,7 +224,7 @@
       <New_Line_Comment_Start>//</New_Line_Comment_Start>
       <Comment_Start>/*</Comment_Start>
       <Comment_End>*/</Comment_End>
-      <String_Delimiter>"</String_Delimiter>
+      <String_Delimiter>&quot;</String_Delimiter>
       <Can_Indent>True</Can_Indent>
       <Syntax_Highlighting>True</Syntax_Highlighting>
       <Case_Sensitive>True</Case_Sensitive>
