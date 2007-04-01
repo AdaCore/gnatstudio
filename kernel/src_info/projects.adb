@@ -82,7 +82,7 @@ package body Projects is
       --  paths.
 
       Normalized : Boolean := False;
-      --  True if the project has been normalized.
+      --  True if the project has been normalized
 
       Imported_Projects  : Name_Id_Array_Access;
       Importing_Projects : Name_Id_Array_Access;
@@ -93,7 +93,7 @@ package body Projects is
       --  Information for the various directories of the project
 
       Non_Recursive_Include_Path : GNAT.Strings.String_Access;
-      --  The include path for this project.
+      --  The include path for this project
 
       Registry   : Project_Registry_Access;
       --  Needed so that we can return other projects like imported projects
@@ -710,22 +710,28 @@ package body Projects is
          --  We first need to check the naming schemes for the supported
          --  languages (in case they redefine some of the predefined naming
          --  schemes, such as .h for c++ files). If this is not found in the
-         --  list of supported languages, then return any match we had
+         --  list of supported languages, then return any match we had.
 
-         L := Langs;
-         if Suffix_Matches (Filename, Name_Buffer (1 .. Name_Len)) then
-            while L /= Nil_String loop
-               if Tree.String_Elements.Table (L).Value = Lang then
-                  Len := Name_Len;
-                  return;
-               end if;
+         declare
+            Ext : String := Name_Buffer (1 .. Name_Len);
+         begin
+            Canonical_Case_File_Name (Ext);
 
-               L := Tree.String_Elements.Table (L).Next;
-            end loop;
+            L := Langs;
+            if Suffix_Matches (Filename, Ext) then
+               while L /= Nil_String loop
+                  if Tree.String_Elements.Table (L).Value = Lang then
+                     Len := Name_Len;
+                     return;
+                  end if;
 
-            Candidate     := List;
-            Candidate_Len := Name_Len;
-         end if;
+                  L := Tree.String_Elements.Table (L).Next;
+               end loop;
+
+               Candidate     := List;
+               Candidate_Len := Name_Len;
+            end if;
+         end;
 
          List := Tree.Array_Elements.Table (List).Next;
       end loop;
@@ -856,6 +862,7 @@ package body Projects is
          Unit_Name := Get_String (Base_Name (Filename, ".ads"));
          Lang      := Name_Ada;
          return;
+
       elsif GNAT.Directory_Operations.File_Extension (F) = ".adb" then
          Part      := Unit_Spec;
          Unit_Name := Get_String (Base_Name (Filename, ".ads"));
@@ -1162,8 +1169,7 @@ package body Projects is
    --------------------------
 
    function Other_File_Base_Name
-     (Project : Project_Type; Source_Filename : Virtual_File)
-      return String
+     (Project : Project_Type; Source_Filename : Virtual_File) return String
    is
       Unit, Part : Unit_Part;
       Name, Lang : Name_Id;
@@ -1275,10 +1281,6 @@ package body Projects is
       end case;
    end Get_Attribute_Value;
 
-   -------------------------
-   -- Get_Attribute_Value --
-   -------------------------
-
    function Get_Attribute_Value
      (Project   : Project_Type;
       Attribute : Attribute_Pkg) return Associative_Array
@@ -1309,6 +1311,7 @@ package body Projects is
             return (1 .. 0 => (No_Name, Nil_Variable_Value));
          end if;
          Arr := Packages (Project)(Pkg).Decl.Arrays;
+
       else
          Arr := Projects_Table (Project)(Project_View).Decl.Arrays;
       end if;
@@ -1339,10 +1342,6 @@ package body Projects is
          return Result;
       end;
    end Get_Attribute_Value;
-
-   -------------------------
-   -- Get_Attribute_Value --
-   -------------------------
 
    function Get_Attribute_Value
      (Project   : Project_Type;
