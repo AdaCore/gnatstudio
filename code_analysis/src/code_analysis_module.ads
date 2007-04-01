@@ -132,14 +132,36 @@ private
 
    type Code_Analysis_Property is access all Code_Analysis_Property_Record;
 
-   procedure Show_Analysis_Report
+   type Context_And_Instance is record
+      Context  : Selection_Context;
+      Instance : Class_Instance;
+   end record;
+
+   package Context_And_Instance_CB is new User_Callback
+     (Glib.Object.GObject_Record, Context_And_Instance);
+   --  Used to connect handlers on the global Coverage contextual menu
+
+   procedure Show_Empty_Analysis_Report
      (Instance : Class_Instance;
-      Property : in out Code_Analysis_Property_Record;
-      Context  : Selection_Context := No_Context);
-   --  Build the tree view of a Report of Analysis N, populate it, expand the
+      Property : in out Code_Analysis_Property_Record);
+   --  Build an error stating Report of Analysis and insert it in the MDI
+
+   procedure Show_Analysis_Report
+     (Cont_N_Inst  : Context_And_Instance;
+      Property     : in out Code_Analysis_Property_Record;
+      Raise_Report : Boolean := True);
+   --  Check if the context pointed project has data in the current
+   --  code_analysis instance, if not, tries to find a project that has some
+   --  and if it's not possible, show an error report
+   --  Then Build the Report of Analysis N, populate it, expand the
    --  the appropriate item following given context information and finally
-   --  insert the new Report in the MDI. Should be called
-   --  by Show_Analysis_Report_From_Context and Show_Analysis_Report_From_Shell
+   --  insert the new Report in the MDI.
+   --  If Raise_Report is set to True, the Report of Analysis N will be raised
+   --  at the end of the treatment
+   --  Should be called by :
+   --   - Show_Analysis_Report_From_Context
+   --   - Show_Analysis_Report_From_Shell
+   --   - and at every addition of data to code_analysis from file or projects
 
    procedure Build_Analysis_Report
      (Instance : Class_Instance;
@@ -176,15 +198,6 @@ private
    --  Determines wether we add entries directly in the contextual menu, or in
    --  a generated submenu. Submenus are created if many instances are loaded
 
-   type Context_And_Instance is record
-      Context  : Selection_Context;
-      Instance : Class_Instance;
-   end record;
-
-   package Context_And_Instance_CB is new User_Callback
-     (Glib.Object.GObject_Record, Context_And_Instance);
-   --  Used to connect handlers on the global Coverage contextual menu
-
    procedure Append_To_Contextual_Submenu
      (Cont_N_Inst  : Context_And_Instance;
       Submenu      : access Gtk_Menu_Record'Class;
@@ -205,13 +218,6 @@ private
    --  Actually fills the given Menu, with the "Show Analysis Report" entry
    --  With no context information, so the 1st node will be expanded
 
-   procedure Append_Show_Empty_Analysis_Report
-     (Cont_N_Inst : Context_And_Instance;
-      Menu        : access Gtk_Menu_Record'Class);
-   --  Actually fills the given Menu with the "Show Analysis Report" entry
-   --  which deals with empty Instances (when there is no code_analysis entity
-   --  present) by displaying an error message
-
    procedure Append_Load_Data_For_All_Projects
      (Cont_N_Inst : Context_And_Instance;
       Menu        : access Gtk_Menu_Record'Class);
@@ -220,17 +226,17 @@ private
    --  projects.
 
    procedure Append_File_Menu_Entries
-     (Cont_N_Inst   : Context_And_Instance;
-      Submenu       : access Gtk_Menu_Record'Class;
-      File_Node     : File_Access);
+     (Cont_N_Inst : Context_And_Instance;
+      Submenu     : access Gtk_Menu_Record'Class;
+      File_Node   : File_Access);
    --  Actually fills the given Submenu with the appropriate coverage action
    --  entries to handle files (Add/Remove coverage annotations,
    --  Show coverage report, ...)
 
    procedure Append_Project_Menu_Entries
-     (Cont_N_Inst   : Context_And_Instance;
-      Submenu       : access Gtk_Menu_Record'Class;
-      Project_Node  : Project_Access);
+     (Cont_N_Inst  : Context_And_Instance;
+      Submenu      : access Gtk_Menu_Record'Class;
+      Project_Node : Project_Access);
    --  Actually fills the given Submenu with the appropriate coverage action
    --  entries to handle projects (Add/Remove coverage annotations,
    --  Show coverage report, Load full data...)
@@ -257,8 +263,7 @@ private
    --  are loaded
 
    procedure Show_Empty_Analysis_Report_From_Menu
-     (Widget      : access Glib.Object.GObject_Record'Class;
-      Cont_N_Inst : Context_And_Instance);
+     (Widget : access Glib.Object.GObject_Record'Class);
    --  Call to build the tree view report and then put inside it an error
    --  message
 
