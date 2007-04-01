@@ -197,13 +197,15 @@ package body Code_Analysis_Module is
             "There is no loadable GCOV information" &
             " associated with " & Base_Name (Src_File),
             Mode => GPS.Kernel.Console.Error);
-         return;
+      else
+         Add_Gcov_File_Info (Src_File, Cov_File, Prj_Node);
+         Compute_Project_Coverage (Prj_Node);
       end if;
 
-      Add_Gcov_File_Info (Src_File, Cov_File, Prj_Node);
-      Compute_Project_Coverage (Prj_Node);
       --  Build/Refresh Report of Analysis
-      Show_Analysis_Report (Instance, Property, Cont_N_Inst.Context);
+      Show_Analysis_Report
+        (Context_And_Instance'(Cont_N_Inst.Context, Instance),
+         Property, Raise_Report => False);
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -271,10 +273,10 @@ package body Code_Analysis_Module is
       Compute_Project_Coverage (Prj_Node);
       --  Build/Refresh Report of Analysis
       Context := Get_Current_Context (Code_Analysis_Module_ID.Kernel);
-      Set_File_Information (Context,
-                            Project => Prj_Name,
-                            File    => Src_File);
-      Show_Analysis_Report (Instance, Property, Context);
+      Set_File_Information
+        (Context, Project => Prj_Name, File => Src_File);
+      Show_Analysis_Report
+        (Context_And_Instance'(Context, Instance), Property);
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -352,7 +354,9 @@ package body Code_Analysis_Module is
       Prj_Node := Get_Or_Create (Property.Projects, Prj_Name);
       Add_Gcov_Project_Info (Prj_Node);
       --  Build/Refresh Report of Analysis
-      Show_Analysis_Report (Instance, Property, Cont_N_Inst.Context);
+      Show_Analysis_Report
+        (Context_And_Instance'(Cont_N_Inst.Context, Instance),
+         Property, Raise_Report => False);
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -404,7 +408,8 @@ package body Code_Analysis_Module is
       --  Build/Refresh Report of Analysis
       Context := Get_Current_Context (Code_Analysis_Module_ID.Kernel);
       Set_File_Information (Context, Project => Prj_Name);
-      Show_Analysis_Report (Instance, Property, Context);
+      Show_Analysis_Report
+        (Context_And_Instance'(Context, Instance), Property);
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -482,7 +487,9 @@ package body Code_Analysis_Module is
       end loop;
 
       --  Build/Refresh Report of Analysis
-      Show_Analysis_Report (Instance, Property, Cont_N_Inst.Context);
+      Show_Analysis_Report
+        (Context_And_Instance'(No_Context, Instance),
+         Property, Raise_Report => False);
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -500,7 +507,6 @@ package body Code_Analysis_Module is
       pragma Unreferenced (Command);
       Property : Code_Analysis_Property_Record;
       Instance : Class_Instance;
-      Context  : Selection_Context;
       Prj_Name : Project_Type;
       Prj_Node : Project_Access;
       Prj_Iter : Imported_Project_Iterator;
@@ -520,9 +526,8 @@ package body Code_Analysis_Module is
       end loop;
 
       --  Build/Refresh Report of Analysis
-      Context := Get_Current_Context (Code_Analysis_Module_ID.Kernel);
-      Set_File_Information (Context, Project => Prj_Name);
-      Show_Analysis_Report (Instance, Property, Context);
+      Show_Analysis_Report
+        (Context_And_Instance'(No_Context, Instance), Property);
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -579,7 +584,8 @@ package body Code_Analysis_Module is
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
       Property := Code_Analysis_Property_Record
         (Get_Property (Instance, Code_Analysis_Cst_Str));
-      Show_Analysis_Report (Instance, Property);
+      Show_Analysis_Report
+        (Context_And_Instance'(No_Context, Instance), Property);
    end Show_Analysis_Report_From_Shell;
 
    ------------------------------------
@@ -594,7 +600,7 @@ package body Code_Analysis_Module is
       Property : Code_Analysis_Property_Record := Code_Analysis_Property_Record
         (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
    begin
-      Show_Analysis_Report (Cont_N_Inst.Instance, Property);
+      Show_Analysis_Report (Cont_N_Inst, Property);
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -606,30 +612,38 @@ package body Code_Analysis_Module is
    ------------------------------------------
 
    procedure Show_Empty_Analysis_Report_From_Menu
-     (Widget      : access Glib.Object.GObject_Record'Class;
-      Cont_N_Inst : Context_And_Instance)
+     (Widget : access Glib.Object.GObject_Record'Class)
    is
       pragma Unreferenced (Widget);
-      Property : Code_Analysis_Property_Record;
-      Instance : Class_Instance;
-      Iter     : Gtk_Tree_Iter;
+      Instance : Class_Instance := Create_Instance;
+      Property : Code_Analysis_Property_Record := Code_Analysis_Property_Record
+        (Get_Property (Instance, Code_Analysis_Cst_Str));
    begin
+      Show_Empty_Analysis_Report (Instance, Property);
+      GPS.Kernel.Scripts.Set_Property
+        (Instance, Code_Analysis_Cst_Str, Instance_Property_Record (Property));
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end Show_Empty_Analysis_Report_From_Menu;
 
-      if Cont_N_Inst.Instance = No_Class_Instance then
-         Instance := Create_Instance;
-         Property := Code_Analysis_Property_Record
-           (Get_Property (Instance, Code_Analysis_Cst_Str));
+   --------------------------------
+   -- Show_Empty_Analysis_Report --
+   --------------------------------
+
+   procedure Show_Empty_Analysis_Report
+     (Instance : Class_Instance;
+      Property : in out Code_Analysis_Property_Record)
+   is
+      Iter : Gtk_Tree_Iter;
+   begin
+      if Property.View = null then
          Build_Analysis_Report (Instance, Property);
       else
-         Property := Code_Analysis_Property_Record
-           (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
-
-         if Property.View = null then
-            Build_Analysis_Report (Cont_N_Inst.Instance, Property);
-         end if;
+         Clear (Property.View.Model);
       end if;
 
-      Clear (Property.View.Model);
       Iter := Get_Iter_First (Property.View.Model);
       Append (Property.View.Model, Iter, Null_Iter);
       Gtk.Tree_Store.Set (Property.View.Model, Iter, Name_Col,
@@ -638,82 +652,119 @@ package body Code_Analysis_Module is
           ASCII.LF &
           (-"entries of the /Tools/Coverage or contextual menu.")))));
       Raise_Child (Property.Child);
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end Show_Empty_Analysis_Report_From_Menu;
+   end Show_Empty_Analysis_Report;
 
    --------------------------
    -- Show_Analysis_Report --
    --------------------------
 
    procedure Show_Analysis_Report
-     (Instance : Class_Instance;
-      Property : in out Code_Analysis_Property_Record;
-      Context  : Selection_Context := No_Context)
+     (Cont_N_Inst  : Context_And_Instance;
+      Property     : in out Code_Analysis_Property_Record;
+      Raise_Report : Boolean := True)
    is
-      Iter    : Gtk_Tree_Iter;
-      Num_Col : Gint;
-      Path    : Gtk_Tree_Path;
+      Local_Context : Selection_Context := Cont_N_Inst.Context;
+      Prj_Node      : Code_Analysis.Project_Access;
+      Iter          : Gtk_Tree_Iter;
+      Num_Col       : constant Gint := 1;
+      Path          : Gtk_Tree_Path;
    begin
 
+      --------------------------------------
+      --  Check for analysis information  --
+      --------------------------------------
+      if Local_Context = No_Context then
+         Local_Context := Check_Context (No_Context);
+      end if;
+
+      Prj_Node := Get_Or_Create
+        (Property.Projects, Project_Information (Local_Context));
+
+      if Prj_Node.Analysis_Data.Coverage_Data = null then
+         --  If the current context project has no coverage data, it has
+         --  to be modified
+         declare
+            use Project_Maps;
+            Map_Cur : Project_Maps.Cursor := Property.Projects.First;
+         begin
+            loop
+               exit when Prj_Node.Analysis_Data.Coverage_Data /= null
+                 or else Map_Cur = No_Element;
+               Prj_Node := Element (Map_Cur);
+               Next (Map_Cur);
+            end loop;
+
+            if Map_Cur /= No_Element then
+               --  Set in the context the 1st project that has analysis
+               --  data
+               Set_File_Information
+                 (Local_Context, Project => Prj_Node.Name);
+            else
+               Show_Empty_Analysis_Report
+                 (Cont_N_Inst.Instance, Property);
+               return;
+            end if;
+         end;
+      end if;
+
+      --  Here we have a context that point on elements that will be added to
+      --  the report of analysis
+
+      --------------------------
+      --  Building the report --
+      --------------------------
+
       if Property.View = null then
-         Build_Analysis_Report (Instance, Property);
+         Build_Analysis_Report (Cont_N_Inst.Instance, Property);
       end if;
 
       Clear (Property.View.Model);
       Iter := Get_Iter_First (Property.View.Model);
       Fill_Iter (Property.View.Model, Iter, Property.Projects);
 
-      -------------------------------------
-      -- Selection of the context caller --
-      -------------------------------------
+      --------------------------------------
+      --  Selection of the context caller --
+      --------------------------------------
 
       Iter := Get_Iter_First (Property.View.Model);
 
-      if Context /= No_Context then
-         --  So we have some project information
-         Num_Col := 1;
+      loop
+         exit when Get_String (Property.View.Model, Iter, Num_Col) =
+           Project_Name (Project_Information (Local_Context));
+         Next (Property.View.Model, Iter);
+      end loop;
+      --  Find in the tree the context's project
+
+      if Has_File_Information (Local_Context) then
+         --  So we also have file information
+         Iter := Children (Property.View.Model, Iter);
 
          loop
             exit when Get_String (Property.View.Model, Iter, Num_Col) =
-              Project_Name (Project_Information (Context));
+              Base_Name (File_Information (Local_Context));
             Next (Property.View.Model, Iter);
          end loop;
-         --  Find in the tree the context's project
-
-         if Has_File_Information (Context) then
-            --  So we also have file information
-            Iter := Children (Property.View.Model, Iter);
-
-            loop
-               exit when Get_String (Property.View.Model, Iter, Num_Col) =
-                 Base_Name (File_Information (Context));
-               Next (Property.View.Model, Iter);
-            end loop;
-         end if;
-         --  Find in the tree the context's file
-
-         if Has_Entity_Name_Information (Context) then
-            declare
-               Entity : constant Entities.Entity_Information :=
-                          Get_Entity (Context);
-            begin
-               if Entity /= null and then Is_Subprogram (Entity) then
-                  --  So we have a subprogram information
-                  Iter := Children (Property.View.Model, Iter);
-
-                  loop
-                     exit when Get_String (Property.View.Model, Iter, Num_Col)
-                       = Entity_Name_Information (Context);
-                     Next (Property.View.Model, Iter);
-                  end loop;
-               end if;
-            end;
-         end if;
-         --  Find in the tree the context's subprogram
       end if;
+      --  Find in the tree the context's file
+
+      if Has_Entity_Name_Information (Local_Context) then
+         declare
+            Entity : constant Entities.Entity_Information :=
+                       Get_Entity (Local_Context);
+         begin
+            if Entity /= null and then Is_Subprogram (Entity) then
+               --  So we have a subprogram information
+               Iter := Children (Property.View.Model, Iter);
+
+               loop
+                  exit when Get_String (Property.View.Model, Iter, Num_Col)
+                    = Entity_Name_Information (Local_Context);
+                  Next (Property.View.Model, Iter);
+               end loop;
+            end if;
+         end;
+      end if;
+      --  Find in the tree the context's subprogram
 
       Path := Get_Path (Property.View.Model, Iter);
       Collapse_All (Property.View.Tree);
@@ -721,12 +772,9 @@ package body Code_Analysis_Module is
       Select_Path (Get_Selection (Property.View.Tree), Path);
       Path_Free (Path);
 
-      if Context = No_Context then
+      if Raise_Report then
          Raise_Child (Property.Child);
       end if;
-
-      GPS.Kernel.Scripts.Set_Property
-        (Instance, Code_Analysis_Cst_Str, Instance_Property_Record (Property));
    end Show_Analysis_Report;
 
    ---------------------------
@@ -1908,21 +1956,24 @@ package body Code_Analysis_Module is
    is
       pragma Unreferenced (Kernel);
       use Code_Analysis_Class_Instance_Sets;
-      Cont_N_Inst : Context_And_Instance;
-      Cur         : Cursor := Code_Analysis_Module_ID.Instances.First;
+      Cur      : Cursor := Code_Analysis_Module_ID.Instances.First;
+      Item     : Gtk_Menu_Item;
+      Instance : Class_Instance;
    begin
-      Cont_N_Inst.Context := Check_Context (Context);
-
       if Cur = No_Element then
-         Cont_N_Inst.Instance := No_Class_Instance;
-         Append_Show_Empty_Analysis_Report (Cont_N_Inst, Menu);
+         --  So there's currently no instances
+         Gtk_New (Item, -"Show Report of Analysis");
+         Append (Menu, Item);
+         Gtkada.Handlers.Object_Callback.Connect
+           (Item, "activate", Show_Empty_Analysis_Report_From_Menu'Access);
          return;
       end if;
 
       loop
          exit when Cur = No_Element;
-         Cont_N_Inst.Instance := Element (Cur);
-         Append_Show_Analysis_Report_To_Menu (Cont_N_Inst, Menu);
+         Instance := Element (Cur);
+         Append_Show_Analysis_Report_To_Menu
+           (Context_And_Instance'(Context, Instance), Menu);
          Next (Cur);
       end loop;
    end Dynamic_Views_Menu_Factory;
@@ -1974,39 +2025,13 @@ package body Code_Analysis_Module is
       Item     : Gtk_Menu_Item;
       Property : Code_Analysis_Property_Record := Code_Analysis_Property_Record
         (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
-      Prj_Node : constant Code_Analysis.Project_Access := Get_Or_Create
-        (Property.Projects, Project_Information (Cont_N_Inst.Context));
    begin
       Gtk_New (Item, -"Show Report of " & Property.Instance_Name.all);
       Append (Menu, Item);
-
-      if Prj_Node.Analysis_Data.Coverage_Data /= null then
-         Context_And_Instance_CB.Connect
-           (Item, "activate", Context_And_Instance_CB.To_Marshaller
-              (Show_Analysis_Report_From_Menu'Access), Cont_N_Inst);
-      else
-         Context_And_Instance_CB.Connect
-           (Item, "activate", Context_And_Instance_CB.To_Marshaller
-              (Show_Empty_Analysis_Report_From_Menu'Access), Cont_N_Inst);
-      end if;
-   end Append_Show_Analysis_Report_To_Menu;
-
-   ---------------------------------------
-   -- Append_Show_Empty_Analysis_Report --
-   ---------------------------------------
-
-   procedure Append_Show_Empty_Analysis_Report
-     (Cont_N_Inst : Context_And_Instance;
-      Menu        : access Gtk_Menu_Record'Class)
-   is
-      Item : Gtk_Menu_Item;
-   begin
-      Gtk_New (Item, -"Show Report of Analysis");
-      Append (Menu, Item);
       Context_And_Instance_CB.Connect
         (Item, "activate", Context_And_Instance_CB.To_Marshaller
-           (Show_Empty_Analysis_Report_From_Menu'Access), Cont_N_Inst);
-   end Append_Show_Empty_Analysis_Report;
+           (Show_Analysis_Report_From_Menu'Access), Cont_N_Inst);
+   end Append_Show_Analysis_Report_To_Menu;
 
    ---------------------------------------
    -- Append_Load_Data_For_All_Projects --
