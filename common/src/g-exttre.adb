@@ -1418,9 +1418,11 @@ package body GNAT.Expect.TTY.Remote is
 
          if Remote_Desc.Send_Interrupt /= null then
             --  Interrupt characters are understood when they are at the
-            --  beginning of a line. Send LF first then.
+            --  beginning of a line. Send LF first then, preceded by a space
+            --  so that gdb do not try to execute the last command, if any.
             Send (Descriptor.Machine.Sessions (Descriptor.Session_Nb).Pd,
-                  ASCII.LF & Remote_Desc.Send_Interrupt.all, Add_LF => False);
+                  ' ' & ASCII.LF & Remote_Desc.Send_Interrupt.all,
+                  Add_LF => False);
          else
             --  Interrupt the session.
             Interrupt (Descriptor.Machine.Sessions (Descriptor.Session_Nb).Pd);
@@ -1529,7 +1531,7 @@ package body GNAT.Expect.TTY.Remote is
          return;
       end if;
 
-      if Send_Interrupt = null then
+      if Send_Interrupt = null or else Send_Interrupt.all = "" then
          Send_Intr := null;
       else
          Send_Intr := new String'(Send_Interrupt.all);
