@@ -66,7 +66,7 @@ package body Remote_Descriptors is
          return;
       end if;
 
-      if Send_Interrupt = null then
+      if Send_Interrupt = null or else Send_Interrupt.all = "" then
          Send_Intr := null;
       else
          Send_Intr := new String'(Send_Interrupt.all);
