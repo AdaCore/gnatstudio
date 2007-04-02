@@ -11,6 +11,7 @@ TARGET_LFLAGS=""
 EXEC_COMMAND="xterm -e"
 DEFAULT_FONT="sans 9"
 PATH_STYLE=UNIX
+SSH_ESCAPE='~'
 
 ## We need to double the quotes here, since this is inserted in an Ada file
 DEFAULT_PS='sh -c """"""ps x 2> /dev/null || ps -u \$USER 2> /dev/null || ps""""""'
@@ -66,7 +67,7 @@ AC_CHECK_LIB(util,openpty,
   [AC_DEFINE(HAVE_OPENPTY) TARGET_LFLAGS="$TARGET_LFLAGS -lbsd"],
   [AC_CHECK_FUNCS(openpty)]
  ])
-)    
+)
 
 AC_CHECK_FUNCS(_getpty)
 AC_CHECK_FUNCS(ptsname)
@@ -235,6 +236,7 @@ case "${host}" in
 	OPAQUE_MDI=True
 	HOST_TYPE=Windows
 	PATH_STYLE=CYGWIN
+	SSH_ESCAPE=\'~\'
 	;;
 
       *-darwin* )
@@ -283,6 +285,7 @@ AC_SUBST(PYTHON_DIR)
 AC_SUBST(PYTHON_LIBS)
 AC_SUBST(PYGTK_INCLUDE)
 AC_SUBST(PATH_STYLE)
+AC_SUBST(SSH_ESCAPE)
 
 AC_CONFIG_SUBDIRS(kernel/src_info/sn)
 AC_CONFIG_SUBDIRS(kernel/src_info/sn/snsrc)
@@ -300,4 +303,4 @@ echo "       xmlada: $XMLADA_GPR"
 echo "           uses ADA_PROJECT_PATH to find xmlada.gpr"
 echo ""
 
-AC_OUTPUT(Makefile Makefile.common gnat/sdefault/sdefault.adb docs/Makefile po/Makefile common/Makefile.common common/src/config.ads python/Makefile.python python/python.gpr gtkada/gtkada.gpr common/expect/Makefile common/common.gpr:common/common_${XMLADA_GPR}.gpr.in share/plug-ins/subversion.xml)
+AC_OUTPUT(Makefile Makefile.common gnat/sdefault/sdefault.adb docs/Makefile po/Makefile common/Makefile.common common/src/config.ads python/Makefile.python python/python.gpr gtkada/gtkada.gpr common/expect/Makefile common/common.gpr:common/common_${XMLADA_GPR}.gpr.in share/plug-ins/subversion.xml share/plug-ins/protocols.xml)
