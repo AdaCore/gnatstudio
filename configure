@@ -1385,7 +1385,7 @@ TARGET_LFLAGS=""
 EXEC_COMMAND="xterm -e"
 DEFAULT_FONT="sans 9"
 PATH_STYLE=UNIX
-SSH_ESCAPE=~
+SSH_ESCAPE="~"
 
 ## We need to double the quotes here, since this is inserted in an Ada file
 DEFAULT_PS='sh -c """"""ps x 2> /dev/null || ps -u \$USER 2> /dev/null || ps""""""'
