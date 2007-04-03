@@ -2728,7 +2728,7 @@ Access the various suggested fixes through the methods of the Codefix class</des
       <example lang="python">
           i = GPS.CodeAnalysis ()
           i.add_all_gcov_project_info ()
-          i.list_lines_not_covered ()
+          i.list_lines_not_covered_in_all_projects ()
       </example>
   </shell_doc>
 
@@ -2765,7 +2765,7 @@ Access the various suggested fixes through the methods of the Codefix class</des
       <description>Displays the data stored in the CodeAnalysis instance into a new MDI window. This window contains a tree view that can be interactively manipulated to analyze the results of the code analysis (Coverage, ...).</description>
   </shell_doc>
 
-  <shell_doc name="GPS.CodeAnalysis.list_lines_not_covered">
+  <shell_doc name="GPS.CodeAnalysis.list_lines_not_covered_in_all_projects">
       <param name="self">An instance of GPS.CodeAnalysis</param>
       <description>Lists in the Locations view the lines that are not covered in the files loaded in the CodeAnalysis instance. The lines are also highlighted in the corresponding source files currently edited.</description>
       <see_also name="GPS.CodeAnalysis" />
