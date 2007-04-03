@@ -53,6 +53,7 @@ with GPS.Intl;             use GPS.Intl;
 
 with VFS;                  use VFS;
 with Traces;               use Traces;
+with Projects;             use Projects;
 with Code_Analysis;        use Code_Analysis;
 
 package Code_Analysis_Module is
@@ -172,6 +173,17 @@ private
    --  If Is_Error is True, then the Report of Analysis will be built with an
    --  emptiness warning header.
    --  Should be called by Show_Analysis_Report or Show_Empty_Analysis_Report
+
+   procedure List_Lines_Not_Covered_In_All_Projects
+     (Property : Code_Analysis_Property_Record);
+   --  Call List_Lines_Not_Covered_In_Project for every projects of the given
+   --  code analysis Instance
+
+   function First_Project_With_Coverage_Data
+     (Property : Code_Analysis_Property_Record) return Project_Type;
+   --  Return the 1st project that contains coverage data from the given
+   --  analysis.
+   --  Return No_Project if no project contains such data
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Code_Analysis_Property_Record, Code_Analysis_Property);
@@ -345,7 +357,7 @@ private
    --  Try to load gcov info for every file of the Root_Project and every
    --  imported projects
 
-   procedure List_Lines_Not_Covered_From_Shell
+   procedure List_Lines_Not_Covered_In_All_Projects_From_Shell
      (Data    : in out Callback_Data'Class;
       Command : String);
    --  Add in the location view every not covered lines of any projects loaded
@@ -474,6 +486,12 @@ private
    --  Callback of the "List lines not covered" entry of the global "Coverage"
    --  submenu when the Context contains file information.
    --  Just call the List_Lines_Not_Covered_In_File subprogram
+
+   procedure List_Lines_Not_Covered_In_All_Projects_From_Menu
+     (Widget      : access Glib.Object.GObject_Record'Class;
+      Cont_N_Inst : Context_And_Instance);
+   --  Callback of the "List lines not covered in all projects" menu entry
+   --  Calls List_Lines_Not_Covered_In_All_Projects
 
    procedure List_Lines_Not_Covered_In_Project
      (Project_Node : Project_Access);
