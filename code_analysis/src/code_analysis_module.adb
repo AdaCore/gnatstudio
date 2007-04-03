@@ -50,7 +50,6 @@ with GPS.Kernel.Console;
 with GPS.Location_View;          use GPS.Location_View;
 
 with Basic_Types;                use Basic_Types;
-with Projects;                   use Projects;
 with Projects.Registry;          use Projects.Registry;
 with Language_Handlers;          use Language_Handlers;
 with Language;                   use Language;
@@ -538,44 +537,71 @@ package body Code_Analysis_Module is
                 "Unexpected exception: " & Exception_Information (E));
    end Add_All_Gcov_Project_Info_From_Shell;
 
-   ---------------------------------------
-   -- List_Lines_Not_Covered_From_Shell --
-   ---------------------------------------
+   -------------------------------------------------------
+   -- List_Lines_Not_Covered_In_All_Projects_From_Shell --
+   -------------------------------------------------------
 
-   procedure List_Lines_Not_Covered_From_Shell
+   procedure List_Lines_Not_Covered_In_All_Projects_From_Shell
      (Data    : in out Callback_Data'Class;
       Command : String)
    is
       pragma Unreferenced (Command);
-      use Project_Maps;
       Property : Code_Analysis_Property_Record;
       Instance : Class_Instance;
-      Map_Cur  : Project_Maps.Cursor;
    begin
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
       Property := Code_Analysis_Property_Record
         (Get_Property (Instance, Code_Analysis_Cst_Str));
-      declare
-         Sort_Arr : Project_Array (1 .. Integer (Property.Projects.Length));
-      begin
-         Map_Cur  := Property.Projects.First;
-
-         for J in Sort_Arr'Range loop
-            Sort_Arr (J) := Element (Map_Cur);
-            Next (Map_Cur);
-         end loop;
-
-         Sort_Projects (Sort_Arr);
-
-         for J in Sort_Arr'Range loop
-            List_Lines_Not_Covered_In_Project (Sort_Arr (J));
-         end loop;
-      end;
+      List_Lines_Not_Covered_In_All_Projects (Property);
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
-   end List_Lines_Not_Covered_From_Shell;
+   end List_Lines_Not_Covered_In_All_Projects_From_Shell;
+
+   ------------------------------------------------------
+   -- List_Lines_Not_Covered_In_All_Projects_From_Menu --
+   ------------------------------------------------------
+
+   procedure List_Lines_Not_Covered_In_All_Projects_From_Menu
+     (Widget      : access Glib.Object.GObject_Record'Class;
+      Cont_N_Inst : Context_And_Instance)
+   is
+      pragma Unreferenced (Widget);
+      Property : Code_Analysis_Property_Record := Code_Analysis_Property_Record
+        (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
+   begin
+      List_Lines_Not_Covered_In_All_Projects (Property);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end List_Lines_Not_Covered_In_All_Projects_From_Menu;
+
+   --------------------------------------------
+   -- List_Lines_Not_Covered_In_All_Projects --
+   --------------------------------------------
+
+   procedure List_Lines_Not_Covered_In_All_Projects
+     (Property : Code_Analysis_Property_Record)
+   is
+      use Project_Maps;
+      Map_Cur  : Project_Maps.Cursor;
+      Sort_Arr : Project_Array (1 .. Integer (Property.Projects.Length));
+   begin
+      Map_Cur  := Property.Projects.First;
+
+      for J in Sort_Arr'Range loop
+         Sort_Arr (J) := Element (Map_Cur);
+         Next (Map_Cur);
+      end loop;
+
+      Sort_Projects (Sort_Arr);
+
+      for J in Sort_Arr'Range loop
+         List_Lines_Not_Covered_In_Project (Sort_Arr (J));
+      end loop;
+   end List_Lines_Not_Covered_In_All_Projects;
 
    -------------------------------------
    -- Show_Analysis_Report_From_Shell --
@@ -659,6 +685,37 @@ package body Code_Analysis_Module is
       Raise_Child (Property.Child);
    end Show_Empty_Analysis_Report;
 
+   --------------------------------------
+   -- First_Project_With_Coverage_Data --
+   --------------------------------------
+
+   function First_Project_With_Coverage_Data
+     (Property : Code_Analysis_Property_Record) return Project_Type
+   is
+      use Project_Maps;
+      Prj_Node : Code_Analysis.Project_Access;
+      Prj_Cur  : Project_Maps.Cursor := Property.Projects.First;
+   begin
+      if Prj_Cur /= No_Element then
+         Prj_Node := Element (Prj_Cur);
+      else
+         return No_Project;
+      end if;
+
+      loop
+         exit when Prj_Node.Analysis_Data.Coverage_Data /= null
+           or else Prj_Cur = No_Element;
+         Prj_Node := Element (Prj_Cur);
+         Next (Prj_Cur);
+      end loop;
+
+      if Prj_Cur /= No_Element then
+         return Prj_Node.Name;
+      else
+         return No_Project;
+      end if;
+   end First_Project_With_Coverage_Data;
+
    --------------------------
    -- Show_Analysis_Report --
    --------------------------
@@ -669,7 +726,6 @@ package body Code_Analysis_Module is
       Raise_Report : Boolean := True)
    is
       Local_Context : Selection_Context := Cont_N_Inst.Context;
-      Prj_Node      : Code_Analysis.Project_Access;
       Iter          : Gtk_Tree_Iter;
       Num_Col       : constant Gint := 1;
       Path          : Gtk_Tree_Path;
@@ -683,35 +739,30 @@ package body Code_Analysis_Module is
          Local_Context := Check_Context (No_Context);
       end if;
 
-      Prj_Node := Get_Or_Create
-        (Property.Projects, Project_Information (Local_Context));
+      declare
+         Prj_Name : Project_Type;
+         Prj_Node : Code_Analysis.Project_Access;
+      begin
+         Prj_Node := Get_Or_Create
+           (Property.Projects, Project_Information (Local_Context));
 
-      if Prj_Node.Analysis_Data.Coverage_Data = null then
-         --  If the current context project has no coverage data, it has
-         --  to be modified
-         declare
-            use Project_Maps;
-            Map_Cur : Project_Maps.Cursor := Property.Projects.First;
-         begin
-            loop
-               exit when Prj_Node.Analysis_Data.Coverage_Data /= null
-                 or else Map_Cur = No_Element;
-               Prj_Node := Element (Map_Cur);
-               Next (Map_Cur);
-            end loop;
+         if Prj_Node.Analysis_Data.Coverage_Data = null then
+            --  If the current context's project has no coverage data, it has
+            --  to be modified or an erro message is shown
+            Prj_Name := First_Project_With_Coverage_Data (Property);
 
-            if Map_Cur /= No_Element then
+            if Prj_Name /= No_Project then
                --  Set in the context the 1st project that has analysis
                --  data
                Set_File_Information
-                 (Local_Context, Project => Prj_Node.Name);
+                 (Local_Context, Project => Prj_Name);
             else
                Show_Empty_Analysis_Report
                  (Cont_N_Inst.Instance, Property);
                return;
             end if;
-         end;
-      end if;
+         end if;
+      end;
 
       --  Here we have a context that point on elements that will be added to
       --  the report of analysis
@@ -2050,6 +2101,16 @@ package body Code_Analysis_Module is
       Gtk_New (Item);
       Append (Submenu, Item);
       Append_Load_Data_For_All_Projects (Cont_N_Inst, Submenu);
+
+      if First_Project_With_Coverage_Data (Property) /= No_Project then
+         Gtk_New (Item, "List lines not covered in all projects");
+         Append (Submenu, Item);
+         Context_And_Instance_CB.Connect
+           (Item, "activate", Context_And_Instance_CB.To_Marshaller
+              (List_Lines_Not_Covered_In_All_Projects_From_Menu'Access),
+            Cont_N_Inst);
+      end if;
+
       Append_Project_Menu_Entries (Cont_N_Inst, Submenu, Project_Node);
 
       if Has_File_Information (Cont_N_Inst.Context) then
@@ -2183,10 +2244,10 @@ package body Code_Analysis_Module is
          Kernel      => Kernel,
          Module_Name => Code_Analysis_Cst_Str);
       Register_Contextual_Submenu
-        (Kernel  => Code_Analysis_Module_ID.Kernel,
-         Name    => -"Coverage",
-         Filter  => new Has_Coverage_Filter,
-         Submenu => Submenu_Factory (Contextual_Menu));
+        (Kernel   => Code_Analysis_Module_ID.Kernel,
+         Name     => -"Coverage",
+         Filter   => new Has_Coverage_Filter,
+         Submenu  => Submenu_Factory (Contextual_Menu));
       Register_Dynamic_Menu
         (Kernel      => Kernel,
          Parent_Path => '/' & (-"Tools"),
@@ -2202,19 +2263,19 @@ package body Code_Analysis_Module is
          Add_Before  => False,
          Factory     => Dynamic_Views_Menu_Factory'Access);
       Add_Hook
-        (Kernel => Kernel,
-         Hook   => Project_Changing_Hook,
-         Func   =>
+        (Kernel  => Kernel,
+         Hook    => Project_Changing_Hook,
+         Func    =>
            Wrapper (Destroy_All_Instances_From_Project_Changing_Hook'Access),
-         Name   => "destroy_all_code_analysis");
+         Name    => "destroy_all_code_analysis");
       Register_Command
         (Kernel, Constructor_Method,
-         Class        => Code_Analysis_Class,
-         Handler      => Create_From_Shell'Access);
+         Class   => Code_Analysis_Class,
+         Handler => Create_From_Shell'Access);
       Register_Command
         (Kernel, "add_all_gcov_project_info",
-         Class        => Code_Analysis_Class,
-         Handler      => Add_All_Gcov_Project_Info_From_Shell'Access);
+         Class   => Code_Analysis_Class,
+         Handler => Add_All_Gcov_Project_Info_From_Shell'Access);
       Register_Command
         (Kernel, "add_gcov_project_info",
          Minimum_Args => 1,
@@ -2228,17 +2289,17 @@ package body Code_Analysis_Module is
          Class        => Code_Analysis_Class,
          Handler      => Add_Gcov_File_Info_From_Shell'Access);
       Register_Command
-        (Kernel, "list_lines_not_covered",
-         Class        => Code_Analysis_Class,
-         Handler      => List_Lines_Not_Covered_From_Shell'Access);
+        (Kernel, "list_lines_not_covered_in_all_projects",
+         Class   => Code_Analysis_Class,
+         Handler => List_Lines_Not_Covered_In_All_Projects_From_Shell'Access);
       Register_Command
         (Kernel, "show_analysis_report",
-         Class        => Code_Analysis_Class,
-         Handler      => Show_Analysis_Report_From_Shell'Access);
+         Class   => Code_Analysis_Class,
+         Handler => Show_Analysis_Report_From_Shell'Access);
       Register_Command
         (Kernel, Destructor_Method,
-         Class        => Code_Analysis_Class,
-         Handler      => Destroy_From_Shell'Access);
+         Class   => Code_Analysis_Class,
+         Handler => Destroy_From_Shell'Access);
    end Register_Module;
 
 end Code_Analysis_Module;
