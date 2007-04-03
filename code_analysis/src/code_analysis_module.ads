@@ -103,12 +103,13 @@ private
    -- Tree view --
    ---------------
 
-   type Code_Analysis_View_Record is new Gtk_Hbox_Record with record
+   type Code_Analysis_View_Record is new Gtk_Vbox_Record with record
       Tree        : Gtk_Tree_View;
       Model       : Gtk_Tree_Store;
       Node_Column : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       Cov_Column  : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       Cov_Percent : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
+      Error_Box   : Gtk_Hbox;
       Projects    : Code_Analysis_Tree;
    end record;
 
@@ -165,9 +166,12 @@ private
 
    procedure Build_Analysis_Report
      (Instance : Class_Instance;
-      Property : in out Code_Analysis_Property_Record);
-   --  Actually builds the tree view report. Should be called by
-   --  Show_Analysis_Report or Show_Empty_Analysis_Report_From_Menu
+      Property : in out Code_Analysis_Property_Record;
+      Is_Error : Boolean := False);
+   --  Actually builds the tree view report.
+   --  If Is_Error is True, then the Report of Analysis will be built with an
+   --  emptiness warning header.
+   --  Should be called by Show_Analysis_Report or Show_Empty_Analysis_Report
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Code_Analysis_Property_Record, Code_Analysis_Property);
