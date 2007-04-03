@@ -18,9 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;             use Ada.Exceptions;
 with Ada.Strings.Less_Case_Insensitive;
 with Ada.Strings.Equal_Case_Insensitive;
+with Ada.Exceptions;             use Ada.Exceptions;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
 with Glib;                       use Glib;
@@ -31,9 +31,13 @@ with Gtk.Cell_Renderer_Pixbuf;   use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Progress; use Gtk.Cell_Renderer_Progress;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Enums;                  use Gtk.Enums;
+with Gtk.Stock;                  use Gtk.Stock;
 with Gtk.Window;                 use Gtk.Window;
 with Gtk.Menu_Item;              use Gtk.Menu_Item;
 with Gtk.Tree_Selection;         use Gtk.Tree_Selection;
+with Gtk.Button;                 use Gtk.Button;
+with Gtk.Label;                  use Gtk.Label;
+with Gtk.Image;                  use Gtk.Image;
 with Gtkada.MDI;                 use Gtkada.MDI;
 with Gtkada.Handlers;            use Gtkada.Handlers;
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
@@ -567,6 +571,10 @@ package body Code_Analysis_Module is
             List_Lines_Not_Covered_In_Project (Sort_Arr (J));
          end loop;
       end;
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end List_Lines_Not_Covered_From_Shell;
 
    -------------------------------------
@@ -586,6 +594,10 @@ package body Code_Analysis_Module is
         (Get_Property (Instance, Code_Analysis_Cst_Str));
       Show_Analysis_Report
         (Context_And_Instance'(No_Context, Instance), Property);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Show_Analysis_Report_From_Shell;
 
    ------------------------------------
@@ -634,23 +646,16 @@ package body Code_Analysis_Module is
 
    procedure Show_Empty_Analysis_Report
      (Instance : Class_Instance;
-      Property : in out Code_Analysis_Property_Record)
-   is
-      Iter : Gtk_Tree_Iter;
+      Property : in out Code_Analysis_Property_Record) is
    begin
-      if Property.View = null then
-         Build_Analysis_Report (Instance, Property);
-      else
-         Clear (Property.View.Model);
+      if Property.View /= null and then Property.View.Error_Box = null then
+            Close_Child (Property.Child, Force => True);
       end if;
 
-      Iter := Get_Iter_First (Property.View.Model);
-      Append (Property.View.Model, Iter, Null_Iter);
-      Gtk.Tree_Store.Set (Property.View.Model, Iter, Name_Col,
-        UTF8_String (-"This analysis report is empty." & ASCII.LF &
-          (-"Please populate it with the " & '"' & (-"Load data..." & '"' &
-          ASCII.LF &
-          (-"entries of the /Tools/Coverage or contextual menu.")))));
+      if Property.View = null then
+         Build_Analysis_Report (Instance, Property, Is_Error => True);
+      end if;
+
       Raise_Child (Property.Child);
    end Show_Empty_Analysis_Report;
 
@@ -673,6 +678,7 @@ package body Code_Analysis_Module is
       --------------------------------------
       --  Check for analysis information  --
       --------------------------------------
+
       if Local_Context = No_Context then
          Local_Context := Check_Context (No_Context);
       end if;
@@ -716,6 +722,9 @@ package body Code_Analysis_Module is
 
       if Property.View = null then
          Build_Analysis_Report (Cont_N_Inst.Instance, Property);
+      elsif Property.View.Error_Box /= null then
+         Destroy_Cb (Property.View.Error_Box);
+         Property.View.Error_Box := null;
       end if;
 
       Clear (Property.View.Model);
@@ -783,7 +792,8 @@ package body Code_Analysis_Module is
 
    procedure Build_Analysis_Report
      (Instance : Class_Instance;
-      Property : in out Code_Analysis_Property_Record)
+      Property : in out Code_Analysis_Property_Record;
+      Is_Error : Boolean := False)
    is
       Scrolled    : Gtk_Scrolled_Window;
       Text_Render : Gtk_Cell_Renderer_Text;
@@ -795,7 +805,7 @@ package body Code_Analysis_Module is
       pragma Unreferenced (Dummy);
    begin
       Property.View := new Code_Analysis_View_Record;
-      Initialize_Hbox (Property.View);
+      Initialize_Vbox (Property.View, False, 7);
       Property.View.Projects := Property.Projects;
       Gtk_New (Property.View.Model, GType_Array'
           (Pix_Col     => Gdk.Pixbuf.Get_Type,
@@ -809,6 +819,46 @@ package body Code_Analysis_Module is
            Cov_Bar_Val => GType_Int));
       Gtk_New (Property.View.Tree, Gtk_Tree_Model (Property.View.Model));
       Set_Name (Property.View.Tree, "Code Analysis Tree"); --  For testsuite
+
+      if Is_Error then
+         declare
+            Warning_Image    : Gtk_Image;
+            Error_Label      : Gtk_Label;
+            Label_And_Button : Gtk_Vbox;
+            Button_Box       : Gtk_Hbox;
+            Load_Data_Button : Gtk_Button;
+         begin
+            Gtk_New_Hbox (Property.View.Error_Box, False, 7);
+            Gtk_New_Vbox (Label_And_Button, False, 7);
+            Gtk_New_Hbox (Button_Box);
+            Gtk_New_From_Icon_Name
+              (Warning_Image, Stock_Dialog_Warning, Icon_Size_Dialog);
+            Gtk_New
+              (Error_Label,
+               -"This analysis report is empty. You can populate it with the "
+               & '"' & (-"Load data..." & '"' &
+                 (-" entries of the /Tools/Coverage menu or the button below."
+                   )));
+            Set_Line_Wrap (Error_Label, True);
+            Set_Justify (Error_Label, Justify_Left);
+            Gtk_New (Load_Data_Button, -"Load data for all projects");
+            Context_And_Instance_CB.Connect
+              (Load_Data_Button, "clicked",
+               Context_And_Instance_CB.To_Marshaller
+                 (Add_All_Gcov_Project_Info_From_Context'Access),
+               Context_And_Instance'
+                 (Check_Context (No_Context), Cont_N_Inst.Instance));
+            Pack_Start
+              (Property.View.Error_Box, Warning_Image, False, False, 7);
+            Pack_Start (Label_And_Button, Error_Label, False, True, 7);
+            Pack_Start (Button_Box, Load_Data_Button, False, False, 0);
+            Pack_Start (Label_And_Button, Button_Box, False, True, 0);
+            Pack_Start
+              (Property.View.Error_Box, Label_And_Button, False, True, 0);
+            Pack_Start
+              (Property.View, Property.View.Error_Box, False, True, 0);
+         end;
+      end if;
 
       -----------------
       -- Node column --
