@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2006                      --
+--                      Copyright (C) 2000-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.IO;  use GNAT.IO;
+with GNAT.IO;      use GNAT.IO;
 
 with Glib;         use Glib;
 with Gdk.Drawable; use Gdk.Drawable;
@@ -158,8 +158,10 @@ package body Items.Records is
          if (Contains'Length = 0
              and then Item.Fields (Field).Variant_Part (J).Fields'Length = 0)
            or else
-           Item.Fields (Field).Variant_Part (J).Fields (1).Name.all =
-           Contains
+             (Item.Fields (Field).Variant_Part (J).Fields'Length /= 0
+              and then
+                Item.Fields (Field).Variant_Part (J).Fields (1).Name.all =
+                Contains)
          then
             Item.Fields (Field).Variant_Part (J).Valid := True;
             return Generic_Type_Access (Item.Fields (Field).Variant_Part (J));
