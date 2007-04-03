@@ -1,5 +1,26 @@
 Known Problems fixed in GPS 4.2.0
 
+- G328-021 Problem displaying variant record in debugger
+  Problem:    GPS was not properly displaying variables of a type with a
+              variant record having an enumerated type discriminant eg
+                 type Foo (D : Discriminant) is record
+                    case D is
+                    when Bool =>
+                       A_Boolean : Boolean;
+                    when Int  =>
+                       An_Int    : Integer;
+                    when Real =>
+                       A_Real    : Float;
+                    end case;
+                 end record;
+              were type Discriminant is declared as
+                 type Discriminanant is (Bool, Int, Real);
+  Workaround: Let us say you want to display variable Var. What you can do is
+              issue the following command in the debugger console:
+                 (gdb) graph display `print Var`
+              As a result, the output of the command "print Var" will be
+              displayed in the debugger data canvas.
+
 - G316-005 Auto-casing is confused by string quotes characters constants.
   Problem:    When a string quote character is used ('"' in Ada or C), and
               a string constant is following this character constant, then GPS
