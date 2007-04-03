@@ -2054,6 +2054,11 @@ package body Ada_Analyzer is
                end case;
 
                Pop (Tokens);
+
+            elsif Top_Token.Token = Tok_Then
+              and then Reserved = Tok_Elsif
+            then
+               Top_Token.Token := Tok_If;
             end if;
 
             Num_Spaces := Num_Spaces - Indent_Level;
