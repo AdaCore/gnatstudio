@@ -818,7 +818,7 @@ package body Code_Analysis_Module is
            Cov_Bar_Txt => GType_String,
            Cov_Bar_Val => GType_Int));
       Gtk_New (Property.View.Tree, Gtk_Tree_Model (Property.View.Model));
-      Set_Name (Property.View.Tree, "Code Analysis Tree"); --  For testsuite
+      Set_Name (Property.View.Tree, Property.Instance_Name.all); --  testsuite
 
       if Is_Error then
          declare
