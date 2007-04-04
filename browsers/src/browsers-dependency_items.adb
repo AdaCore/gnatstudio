@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
+--                      Copyright (C) 2001-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1093,7 +1093,7 @@ package body Browsers.Dependency_Items is
          Label  => -"Analyze other file (spec or body)",
          Action => Command,
          Filter => Action_Filter
-           (Create (Module => Dependency_Browser_Module_Name)));
+           (Create (Module => Dependency_Browser_Module_Name)) and Filter);
 
       Register_Menu (Kernel, Tools, -"_Dependency", "",
                      On_Dependency_Browser'Access);
