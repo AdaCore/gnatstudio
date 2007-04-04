@@ -2289,7 +2289,7 @@ package body Code_Analysis_Module is
          Class        => Code_Analysis_Class,
          Handler      => Add_Gcov_File_Info_From_Shell'Access);
       Register_Command
-        (Kernel, "list_lines_not_covered_in_all_projects",
+        (Kernel, "list_lines_not_covered",
          Class   => Code_Analysis_Class,
          Handler => List_Lines_Not_Covered_In_All_Projects_From_Shell'Access);
       Register_Command
