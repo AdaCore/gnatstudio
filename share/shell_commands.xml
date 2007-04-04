@@ -1003,6 +1003,7 @@ local to the current directory.</description>
   <shell_doc name="GPS.File.imported_by">
       <param name="self">The instance of GPS.File</param>
       <param name="recursive">A boolean</param>
+      <return>A list of files</return>
       <description>Return the list of files that depends on file_name. This command might take some time to execute since GPS needs to parse the cross-reference information for multiple source files. If recursive is true, then return dependencies recursively.</description>
       <see_also name="GPS.File.imports()" />
   </shell_doc>
