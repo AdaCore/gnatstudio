@@ -1,3 +1,12 @@
+Known Problems fixed in GPS 4.1.2
+
+- G315-003 Selecting a display option on debug datas has no effect.
+  Problem:    When a data is displayed in the debug data window, a contextual
+              menu allow to specify how to display it. This menu has no effect.
+  Workaround: Type "graph display `p /x the_var`" in the debugger console to
+              display the variable 'the_var' in hexadecimal. Use /o for octal,
+              /t for binary.
+
 Known Problems fixed in GPS 4.1.1
 
 - G328-021 Problem displaying variant record in debugger
