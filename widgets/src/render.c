@@ -18,18 +18,9 @@
  * Place - Suite 330, Boston, MA 02111-1307, USA.                    *
  *********************************************************************/
 
+#ifndef _WIN32
+
 #include <gdk/gdk.h>
-
-#ifdef _WIN32
-
-int
-gps_have_render (GdkDrawable *drawable)
-{
-  return 1;
-}
-
-#else
-
 #include <gdk/gdkx.h>
 #include <cairo-xlib.h>
 
