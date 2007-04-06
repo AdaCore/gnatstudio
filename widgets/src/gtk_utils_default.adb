@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                                 G P S                             --
 --                                                                   --
---                        Copyright (C) 2005                         --
+--                     Copyright (C) 2005-2007                       --
 --                                AdaCore                            --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -54,5 +54,16 @@ package body Gtk_Utils is
    begin
       return Version;
    end Gtk_Micro_Version;
+
+   -----------------
+   -- Have_Render --
+   -----------------
+
+   function Have_Render (Window : Gdk.Gdk_Window) return Boolean;
+      function Internal (Window : Gdk.Gdk_Window) return Integer;
+      pragma Import (C, Internal, "gps_have_render");
+   begin
+      return Internal (Window) /= 0;
+   end Have_Render;
 
 end Gtk_Utils;
