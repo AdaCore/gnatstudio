@@ -984,6 +984,17 @@ procedure GPS.Main is
 
    function On_GPS_Started return Boolean is
    begin
+      --  Cannot call Have_Render earlier, since we need a valid Gdk Window
+      --  associated with GPS_Main, which happens only very late in the
+      --  processing
+
+      if not Have_Render (Get_Window (GPS_Main)) then
+         Trace (Me, "RENDER extension NOT detected");
+         Put_Line
+           ("Warning: X RENDER extension is not detected, " &
+            "display will be slow");
+      end if;
+
       Run_Hook (GPS_Main.Kernel, GPS_Started_Hook);
       return False;
    exception
