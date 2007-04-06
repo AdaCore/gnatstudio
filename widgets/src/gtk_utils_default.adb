@@ -59,7 +59,7 @@ package body Gtk_Utils is
    -- Have_Render --
    -----------------
 
-   function Have_Render (Window : Gdk.Gdk_Window) return Boolean;
+   function Have_Render (Window : Gdk.Gdk_Window) return Boolean is
       function Internal (Window : Gdk.Gdk_Window) return Integer;
       pragma Import (C, Internal, "gps_have_render");
    begin
