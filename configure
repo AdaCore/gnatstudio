@@ -4845,10 +4845,12 @@ case "${host}" in
                 ;;
       *-sunos5.5* | *-solaris2.5* )
 		PYTHON_LIBS="-lresolv -lsocket -lnsl -ldl -lm ${PYTHON_LIBS}"
+		TARGET_LFLAGS="$TARGET_LFLAGS -lXrender"
                 opsys=sol2-5
                 ;;
       *-sunos5* | *-solaris* )
 		PYTHON_LIBS="-lresolv -lsocket -lnsl -ldl -lm ${PYTHON_LIBS}"
+		TARGET_LFLAGS="$TARGET_LFLAGS -lXrender"
                 opsys=sol2-5
                 ;;
       *-linux-gnu* )
