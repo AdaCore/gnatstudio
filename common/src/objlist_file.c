@@ -18,6 +18,10 @@
  * Place - Suite 330, Boston, MA 02111-1307, USA.                    *
  *********************************************************************/
 
-/* Dummy version of __gnat_objlist_file_supported (needed by mlib-utl.adb) */
+/* Dummy versions of
+   __gnat_objlist_file_supported, __gnat_object_file_option and
+   __gnat_using_gnu_linker (needed by mlib-utl.adb) */
 
-unsigned char __gnat_objlist_file_supported = 1;
+unsigned char __gnat_objlist_file_supported = 0;
+const char *__gnat_object_file_option = "";
+unsugned char __gnat_using_gnu_linker = 0;
