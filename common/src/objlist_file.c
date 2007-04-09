@@ -24,4 +24,4 @@
 
 unsigned char __gnat_objlist_file_supported = 0;
 const char *__gnat_object_file_option = "";
-unsugned char __gnat_using_gnu_linker = 0;
+unsigned char __gnat_using_gnu_linker = 0;
