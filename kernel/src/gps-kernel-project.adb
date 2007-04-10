@@ -279,7 +279,6 @@ package body GPS.Kernel.Project is
                Name       => "gnatls",
                Property   => Prop_Access,
                Persistent => True);
-            Free (Property_Index.Nickname);
          end if;
 
       end if;
