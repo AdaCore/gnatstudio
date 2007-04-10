@@ -385,6 +385,9 @@ package String_Utils is
    --  Unprotect an argument: remove the leading and ending '"',
    --  and un-escape the "\" when necessary.
 
+   function Unquote (S : String) return String;
+   --  Remove the leading and ending '"' if present.
+
    ----------------------
    -- URL manipulation --
    ----------------------

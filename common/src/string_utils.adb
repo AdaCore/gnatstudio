@@ -1525,6 +1525,22 @@ package body String_Utils is
       end if;
    end Unprotect;
 
+   -------------
+   -- Unquote --
+   -------------
+
+   function Unquote (S : String) return String is
+   begin
+      if S'Length > 1
+        and then S (S'First) = '"'
+        and then S (S'Last) = '"'
+      then
+         return S (S'First + 1 .. S'Last - 1);
+      else
+         return S;
+      end if;
+   end Unquote;
+
    ---------------
    -- Hex_Value --
    ---------------
