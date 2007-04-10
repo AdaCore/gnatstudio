@@ -19,6 +19,11 @@ G328-030 title attribute of <button> now acts as a tooltip (2007-03-29)
   If you add a button to the toolbar through an XML file, the title attribute
   now also acts as the tooltip to use for that button.
 
+D914-018 support for spaces in diff preference
+
+  It is now possible to specify a pathname with spaces for the 'diff'
+  preference using quotes, e.g. "/usr/bin with space/diff"
+
 New features in GPS 4.1.0
 -------------------------
 
