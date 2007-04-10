@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2006                       --
+--                     Copyright (C) 2003-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -256,7 +256,7 @@ package body Diff_Utils2 is
 
    begin
       Cmd_Args := Argument_String_To_List (Diff_Command);
-      Cmd := Locate_Exec_On_Path (Cmd_Args (Cmd_Args'First).all);
+      Cmd := Locate_Exec_On_Path (Unquote (Cmd_Args (Cmd_Args'First).all));
 
       if Cmd = null or else Cmd.all = "" then
          Console.Insert
@@ -333,7 +333,8 @@ package body Diff_Utils2 is
 
    begin
       Cmd_Args := Argument_String_To_List (Patch_Command);
-      Cmd      := Locate_Exec_On_Path (Cmd_Args (Cmd_Args'First).all);
+      Cmd      :=
+        Locate_Exec_On_Path (Unquote (Cmd_Args (Cmd_Args'First).all));
 
       if Cmd = null or else Cmd.all = "" then
          Console.Insert
