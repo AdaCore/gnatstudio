@@ -210,13 +210,13 @@ package body GVD.Scripts is
       Command : String)
    is
       Kernel : constant Kernel_Handle := GPS.Kernel.Scripts.Get_Kernel (Data);
-      Arg_Cmd      : aliased constant String := "cmd";
-      Arg_ID       : aliased constant String := "id";
-      Arg_Exec     : aliased constant String := "executable";
-      Arg_Args     : aliased constant String := "args";
-      Arg_Output   : aliased constant String := "output";
-      Process : Visual_Debugger;
-      Inst    : Class_Instance;
+      Arg_Cmd    : aliased constant String := "cmd";
+      Arg_ID     : aliased constant String := "id";
+      Arg_Exec   : aliased constant String := "executable";
+      Arg_Args   : aliased constant String := "args";
+      Arg_Output : aliased constant String := "output";
+      Process    : Visual_Debugger;
+      Inst       : Class_Instance;
    begin
       if Command = Constructor_Method then
          Set_Error_Msg
@@ -234,6 +234,7 @@ package body GVD.Scripts is
          begin
             if Number_Of_Arguments (Data) = 0 then
                Process := Visual_Debugger (Get_Current_Debugger (Kernel));
+
             else
                Id := Nth_Arg (Data, 1);
                while List /= null loop

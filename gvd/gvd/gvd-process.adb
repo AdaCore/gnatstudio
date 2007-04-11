@@ -1818,10 +1818,10 @@ package body GVD.Process is
 
       declare
          Args : GNAT.OS_Lib.Argument_List_Access :=
-           GNAT.OS_Lib.Argument_String_To_List
-             (Get_Attribute_Value
-                (Project, Debugger_Command_Attribute,
-                 Default => "gdb"));
+                  GNAT.OS_Lib.Argument_String_To_List
+                    (Get_Attribute_Value
+                       (Project, Debugger_Command_Attribute,
+                        Default => "gdb"));
 
       begin
          Proxy := new GPS_Proxy;

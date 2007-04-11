@@ -856,9 +856,7 @@ package body Debugger.Gdb is
       Send (Debugger, "set height 0", Mode => Internal);
       Send (Debugger, "set annotate 1", Mode => Internal);
 
-      if Get_Pref (Execution_Window)
-        and then Is_Local (Debug_Server)
-      then
+      if Get_Pref (Execution_Window) and then Is_Local (Debug_Server) then
          if Host = Windows then
             Send (Debugger, "set new-console", Mode => Internal);
          end if;
@@ -877,6 +875,7 @@ package body Debugger.Gdb is
 
       if Debugger.Executable /= VFS.No_File then
          Set_Executable (Debugger, Debugger.Executable, Mode => Visible);
+
       else
          --  Indicate that a new executable is present (even if there is none,
          --  we still need to reset some data).
@@ -1111,8 +1110,8 @@ package body Debugger.Gdb is
       then
          declare
             Cmd : constant String :=
-              "target " & Debugger.Remote_Protocol.all & " " &
-              Debugger.Remote_Target.all;
+                    "target " & Debugger.Remote_Protocol.all & " "
+                      & Debugger.Remote_Target.all;
          begin
             if Debugger.Window = null then
                Send (Debugger, Cmd, Mode => Internal);

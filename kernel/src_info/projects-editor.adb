@@ -473,7 +473,7 @@ package body Projects.Editor is
       Kind       : Variable_Kind := List) return Project_Node_Id
    is
       Node : constant Project_Node_Id :=
-        Default_Project_Node (Tree, N_Attribute_Declaration, Kind);
+               Default_Project_Node (Tree, N_Attribute_Declaration, Kind);
    begin
       Set_Name_Of (Node, Tree, Name);
 

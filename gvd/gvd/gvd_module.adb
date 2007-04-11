@@ -2522,7 +2522,7 @@ package body GVD_Module is
       File_Project_Cb.Object_Connect
         (Mitem, "activate", On_Debug_Init'Access,
          Slot_Object => Kernel,
-         User_Data => File_Project_Record'
+         User_Data   => File_Project_Record'
            (Project => Get_Project (Kernel),
             File    => VFS.No_File));
       Set_Accel_Path (Mitem, Debug_Menu_Prefix & "<no main>", Group);

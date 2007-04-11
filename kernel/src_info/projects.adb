@@ -1485,6 +1485,7 @@ package body Projects is
    begin
       if Project = No_Project or else Get_View (Project) = Prj.No_Project then
          return "";
+
       else
          declare
             Exec : constant String := Get_String

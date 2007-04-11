@@ -1718,7 +1718,7 @@ package body Builder_Module is
       for M in reverse Mains'Range loop
          declare
             Exec : constant String :=
-              Get_Executable_Name (Project, Mains (M).all);
+                     Get_Executable_Name (Project, Mains (M).all);
          begin
             Mitem := new Dynamic_Menu_Item_Record;
             Gtk.Menu_Item.Initialize (Mitem, Exec);
