@@ -4918,7 +4918,10 @@ Tree.
    @item Custom...
    Display a text entry where you can enter any external command. This menu
    is very useful when you already have existing build scripts, make files,
-   @dots{} and want to invoke them from GPS.
+   @dots{} and want to invoke them from GPS. If the @code{SHELL} environment
+   variable is defined (to e.g. @code{/bin/sh}), then the syntax used to
+   execute the command is the one for this shell. Otherwise, the command
+   will be spawned directly by GPS without any shell interpretation.
 
    @end table
 
@@ -4975,6 +4978,10 @@ not needed, @xref{Support for Cross-References}.
 
    @item Custom...
    Similar to the entry above, except that you can run any arbitrary executable.
+   If the @code{SHELL} environment
+   variable is defined (to e.g. @code{/bin/sh}), then the syntax used to
+   execute the command is the one for this shell. Otherwise, the command
+   will be spawned directly by GPS without any shell interpretation.
    @end table
 
 @end table
