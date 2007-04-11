@@ -2305,8 +2305,6 @@ will be "B =>, C => )".
 Limitations:
 
 @table @bullet
-@item GPS is not able to complete identifiers declared in the private part of a package.
-
 @item Completion does not work with generics.
 
 @item This feature is currently only available for Ada.
