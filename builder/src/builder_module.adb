@@ -89,6 +89,8 @@ package body Builder_Module is
 
    Me : constant Debug_Handle := Create ("Builder");
 
+   Shell_Env : constant String := Getenv ("SHELL").all;
+
    Cst_Run_Arguments_History : constant History_Key := "gvd_run_arguments";
    --  The key in the history for the arguments to the run command.
    --  WARNING: this constant is shared with gvd-menu.adb, since we want to
@@ -1106,6 +1108,7 @@ package body Builder_Module is
          History  => Get_History (Kernel),
          Key      => "gps_custom_command");
       Success : Boolean;
+      Args    : Argument_List_Access;
 
    begin
       if Cmd = "" or else Cmd (Cmd'First) = ASCII.NUL then
@@ -1113,9 +1116,33 @@ package body Builder_Module is
       end if;
 
       if Compilation_Starting (Kernel, Error_Category, Quiet => False) then
-         declare
-            Args : Argument_List_Access := Argument_String_To_List (Cmd);
-         begin
+         if Shell_Env /= "" and then Is_Local (Build_Server) then
+            --  Launch "$SHELL -c cmd" if $SHELL is set and the build server
+            --  is local.
+
+            String_List_Utils.String_List.Append
+              (Builder_Module_ID.Output, Shell_Env & " -c " & Cmd);
+            Args := new Argument_List'(new String'("-c"), new String'(Cmd));
+            Launch_Process
+              (Kernel,
+               Command              => Shell_Env,
+               Arguments            => Args.all,
+               Server               => Build_Server,
+               Console              => Get_Console (Kernel),
+               Show_Command         => True,
+               Show_Output          => False,
+               Callback_Data        => new Files_Callback_Data,
+               Success              => Success,
+               Line_By_Line         => False,
+               Callback             => Parse_Compiler_Output'Access,
+               Exit_Cb              => Free_Temporary_Files'Access,
+               Show_In_Task_Manager => True,
+               Synchronous          => False,
+               Show_Exit_Status     => True);
+
+         else
+            Args := Argument_String_To_List (Cmd);
+
             --  ??? Is this always the Build_Server ? Should ask the user ?
             String_List_Utils.String_List.Append
               (Builder_Module_ID.Output,
@@ -1139,8 +1166,9 @@ package body Builder_Module is
                Show_In_Task_Manager => True,
                Synchronous          => False,
                Show_Exit_Status     => True);
-            Free (Args);
-         end;
+         end if;
+
+         Free (Args);
       end if;
 
    exception
@@ -1383,6 +1411,12 @@ package body Builder_Module is
          Title        : String);
       --  Launch Command (with Args) locally, or remotely if necessary
 
+      procedure Launch
+        (Command      : String;
+         Ext_Terminal : Boolean;
+         Title        : String);
+      --  Ditto, with command being a simple string (may contain parameters)
+
       ------------
       -- Launch --
       ------------
@@ -1397,7 +1431,9 @@ package body Builder_Module is
          Child   : MDI_Child;
       begin
          Console := Create_Interactive_Console (K, Title);
+         Clear (Console);
          Child := Find_MDI_Child (Get_MDI (K), Console);
+
          if Child /= null then
             Raise_Child (Child);
          end if;
@@ -1411,6 +1447,60 @@ package body Builder_Module is
             Success          => Success,
             Use_Ext_Terminal => Ext_Terminal,
             Show_Exit_Status => True);
+      end Launch;
+
+      procedure Launch
+        (Command      : String;
+         Ext_Terminal : Boolean;
+         Title        : String)
+      is
+         Console    : Interactive_Console;
+         Child      : MDI_Child;
+         Local_Args : Argument_List_Access;
+
+      begin
+         Console := Create_Interactive_Console (K, Title);
+         Clear (Console);
+         Child := Find_MDI_Child (Get_MDI (K), Console);
+
+         if Child /= null then
+            Raise_Child (Child);
+         end if;
+
+         if not Ext_Terminal
+           and then Shell_Env /= ""
+           and then Is_Local (Build_Server)
+         then
+            --  Launch "$SHELL -c cmd" if $SHELL is set and the build server
+            --  is local.
+
+            Local_Args :=
+              new Argument_List'(new String'("-c"), new String'(Command));
+            Launch_Process
+              (K,
+               Command              => Shell_Env,
+               Arguments            => Local_Args.all,
+               Server               => Execution_Server,
+               Console              => Console,
+               Success              => Success,
+               Use_Ext_Terminal     => Ext_Terminal,
+               Show_Exit_Status     => True);
+
+         else
+            Local_Args := Argument_String_To_List (Command);
+            Launch_Process
+              (K,
+               Command          => Local_Args (Local_Args'First).all,
+               Arguments        =>
+                 Local_Args (Local_Args'First + 1 .. Local_Args'Last),
+               Server           => Execution_Server,
+               Console          => Console,
+               Success          => Success,
+               Use_Ext_Terminal => Ext_Terminal,
+               Show_Exit_Status => True);
+         end if;
+
+         Free (Local_Args);
       end Launch;
 
    begin
@@ -1432,21 +1522,14 @@ package body Builder_Module is
             then
                return;
             else
-               Args := Argument_String_To_List (Command);
-
-               if not Is_Local (Execution_Server) then
-                  Launch
-                    (Args (Args'First).all,
-                     Args (Args'First + 1 .. Args'Last), Active,
-                     -"Run on " & Get_Nickname (Execution_Server) & ": " &
-                     Command);
+               if Is_Local (Execution_Server) then
+                  Launch (Command, Active, -"Run: " & Command);
                else
                   Launch
-                    (Args (Args'First).all,
-                     Args (Args'First + 1 .. Args'Last), Active,
-                     -"Run: " & Command);
+                    (Command, Active,
+                     -"Run on " & Get_Nickname (Execution_Server) & ": " &
+                     Command);
                end if;
-               Free (Args);
             end if;
          end;
 
@@ -1467,6 +1550,7 @@ package body Builder_Module is
               or else Arguments (Arguments'First) /= ASCII.NUL
             then
                Args := Argument_String_To_List (Arguments);
+
                if Is_Local (Execution_Server) then
                   Launch
                     (To_Remote (Full_Name (Data.File).all, Execution_Server),
