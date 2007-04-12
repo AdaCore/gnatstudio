@@ -240,6 +240,7 @@ package body Remote_Views is
 
    begin
       Gtk.Scrolled_Window.Initialize (View);
+      Set_Name (View, "remote_view");
       Set_Policy (View, Policy_Automatic, Policy_Automatic);
       Set_Shadow_Type (View, Shadow_None);
       Gtk_New (View.Main_Table, 3, 2, False);
@@ -269,27 +270,43 @@ package body Remote_Views is
       end if;
 
       for S in Server_Type'Range loop
-         case S is
-            when GPS_Server =>
-               Server_Label := null;
-            when Build_Server =>
-               Gtk_New (Server_Label, -("Build:"));
-            when Debug_Server =>
-               Gtk_New (Server_Label, -("Debug:"));
-            when Execution_Server =>
-               Gtk_New (Server_Label, -("Execution:"));
-         end case;
-
-         if Server_Label /= null then
-            Set_Alignment (Server_Label, 0.0, 0.5);
-         end if;
-
          Gtk_New (View.Servers_Combo (S));
          Set_Editable (Get_Entry (View.Servers_Combo (S)), False);
          Set_Width_Chars (Get_Entry (View.Servers_Combo (S)), 0);
          View_Callback.Connect
            (View.Servers_Combo (S), "changed", On_Combo_Changed'Access,
             (View => Remote_View (View), Server => S));
+
+         case S is
+            when GPS_Server =>
+               Server_Label := null;
+               Set_Name (View.Servers_Combo (S),
+                         "combo_remote_server_all");
+               Set_Name (View.Servers_Combo (S).Get_List,
+                         "combo_list_remote_server_all");
+            when Build_Server =>
+               Gtk_New (Server_Label, -("Build:"));
+               Set_Name (View.Servers_Combo (S),
+                         "combo_remote_server_build");
+               Set_Name (View.Servers_Combo (S).Get_List,
+                         "combo_list_remote_server_build");
+            when Debug_Server =>
+               Gtk_New (Server_Label, -("Debug:"));
+               Set_Name (View.Servers_Combo (S),
+                         "combo_remote_server_debug");
+               Set_Name (View.Servers_Combo (S).Get_List,
+                         "combo_list_remote_server_debug");
+            when Execution_Server =>
+               Gtk_New (Server_Label, -("Execution:"));
+               Set_Name (View.Servers_Combo (S),
+                         "combo_remote_server_exec");
+               Set_Name (View.Servers_Combo (S).Get_List,
+                         "combo_list_remote_server_exec");
+         end case;
+
+         if Server_Label /= null then
+            Set_Alignment (Server_Label, 0.0, 0.5);
+         end if;
 
          Gtk_New
            (To_Local_Img,
@@ -818,9 +835,9 @@ package body Remote_Views is
    is
       New_Build_Server : constant String := Get_Text
         (Get_Entry (User.View.Servers_Combo (Build_Server)));
-      Project          : constant String :=
-                           Full_Name (Project_Path (Get_Project
-                             (User.View.Kernel))).all;
+      Prj              : constant VFS.Virtual_File :=
+                           Project_Path (Get_Project (User.View.Kernel));
+      Project          : constant String := Prj.Full_Name.all;
       Reasons          : Ada.Strings.Unbounded.Unbounded_String;
       Failure          : Boolean := False;
       Res              : Message_Dialog_Buttons;
