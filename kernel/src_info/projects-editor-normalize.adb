@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                             G P S                                 --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                    Copyright (C) 2001-2007                        --
 --                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -58,8 +58,7 @@ package body Projects.Editor.Normalize is
      (Tree          : Project_Node_Tree_Ref;
       Project       : Project_Node_Id;
       External_Name : Name_Id;
-      Var_Type      : Project_Node_Id)
-      return Project_Node_Id;
+      Var_Type      : Project_Node_Id) return Project_Node_Id;
    --  Return a N_Case_Construction for the external variable Name.
    --  The declaration for the variable itself is added at the beginning of the
    --  project if no variable was found that already referenced Name.
@@ -103,8 +102,7 @@ package body Projects.Editor.Normalize is
    function External_Variable_Name
      (Tree            : Project_Node_Tree_Ref;
       Current_Project : Project_Node_Id;
-      Ref             : Project_Node_Id)
-      return Name_Id
+      Ref             : Project_Node_Id) return Name_Id
    is
       N              : constant Name_Id := Prj.Tree.Name_Of (Ref, Tree);
       Pkg            : Project_Node_Id;
@@ -572,12 +570,12 @@ package body Projects.Editor.Normalize is
    ---------------------------------
 
    procedure For_Each_Scenario_Case_Item
-     (Tree    : Project_Node_Tree_Ref;
-      Project : Prj.Tree.Project_Node_Id;
-      Pkg     : Prj.Tree.Project_Node_Id := Prj.Tree.Empty_Node;
-      Case_Construct : in out Prj.Tree.Project_Node_Id;
+     (Tree               : Project_Node_Tree_Ref;
+      Project            : Prj.Tree.Project_Node_Id;
+      Pkg                : Prj.Tree.Project_Node_Id := Prj.Tree.Empty_Node;
+      Case_Construct     : in out Prj.Tree.Project_Node_Id;
       Scenario_Variables : Projects.Scenario_Variable_Array;
-      Action  : Matching_Item_Callback)
+      Action             : Matching_Item_Callback)
    is
       Values : External_Variable_Value_Array (1 .. Scenario_Variables'Length);
       Last_Values : Natural := Values'First - 1;
@@ -604,8 +602,8 @@ package body Projects.Editor.Normalize is
       Pkg     : Prj.Tree.Project_Node_Id := Prj.Tree.Empty_Node)
       return Project_Node_Id
    is
-      Top       : Project_Node_Id;
-      Decl_Item : Project_Node_Id;
+      Top            : Project_Node_Id;
+      Decl_Item      : Project_Node_Id;
       Case_Construct : Project_Node_Id := Empty_Node;
    begin
       if Pkg /= Empty_Node then
@@ -671,15 +669,15 @@ package body Projects.Editor.Normalize is
    ---------------------------------
 
    procedure For_Each_Matching_Case_Item
-     (Tree    : Project_Node_Tree_Ref;
-      Project : Prj.Tree.Project_Node_Id;
-      Pkg     : Prj.Tree.Project_Node_Id := Prj.Tree.Empty_Node;
+     (Tree           : Project_Node_Tree_Ref;
+      Project        : Prj.Tree.Project_Node_Id;
+      Pkg            : Prj.Tree.Project_Node_Id := Prj.Tree.Empty_Node;
       Case_Construct : in out Prj.Tree.Project_Node_Id;
-      Values  : External_Variable_Value_Array;
-      Action  : Matching_Item_Callback)
+      Values         : External_Variable_Value_Array;
+      Action         : Matching_Item_Callback)
    is
       Var_Seen : External_Variable_Value_Array_Access :=
-        new External_Variable_Value_Array (Values'Range);
+                   new External_Variable_Value_Array (Values'Range);
       Last_Var_Seen : Natural := Var_Seen'First - 1;
       --  Only the Variable_Name is relevant here, and this is used to detect
       --  the variables that didn't play any role in the current case construct
@@ -699,7 +697,7 @@ package body Projects.Editor.Normalize is
       ------------------------------
 
       function Create_Case_If_Necessary return Project_Node_Id is
-         Match    : Boolean;
+         Match : Boolean;
       begin
          for J in Values'Range loop
             Match := False;
@@ -724,10 +722,10 @@ package body Projects.Editor.Normalize is
       ----------------------------
 
       procedure Process_Case_Recursive (Case_Stmt : Project_Node_Id) is
-         Name : constant Name_Id := External_Variable_Name
+         Name                   : constant Name_Id := External_Variable_Name
            (Tree, Project, Case_Variable_Reference_Of (Case_Stmt, Tree));
          Current_Item, New_Case : Project_Node_Id;
-         Handling_Done : Boolean;
+         Handling_Done          : Boolean;
 
       begin
          pragma Assert (Name /= No_Name);
@@ -735,8 +733,8 @@ package body Projects.Editor.Normalize is
          --  Memorise the name of the variable we are processing, so that we
          --  can create missing case constructions at the end
 
-         Add_Value (Var_Seen, Last_Var_Seen,
-                    (Empty_Node, Name, No_Name, False));
+         Add_Value
+           (Var_Seen, Last_Var_Seen, (Empty_Node, Name, No_Name, False));
 
          --  For all possible values of the variable
 
@@ -877,14 +875,13 @@ package body Projects.Editor.Normalize is
      (Tree          : Project_Node_Tree_Ref;
       Project       : Project_Node_Id;
       External_Name : Name_Id;
-      Var_Type      : Project_Node_Id)
-      return Project_Node_Id
+      Var_Type      : Project_Node_Id) return Project_Node_Id
    is
       Construct, Str : Project_Node_Id;
-      Item : Project_Node_Id := Empty_Node;
-      Ref : Name_Id;
-      Decl : Project_Node_Id;
-      New_Type : Project_Node_Id;
+      Item           : Project_Node_Id := Empty_Node;
+      Ref            : Name_Id;
+      Decl           : Project_Node_Id;
+      New_Type       : Project_Node_Id;
    begin
       --  Make sure there is a definition for this variable (and its type) at
       --  the top-level of the project (not in a package nor in another
@@ -904,8 +901,7 @@ package body Projects.Editor.Normalize is
          if Kind_Of (Item, Tree) = N_Typed_Variable_Declaration then
             Ref := External_Reference_Of (Item, Tree);
 
-            exit when Ref /= No_Name
-              and then Ref = External_Name;
+            exit when Ref /= No_Name and then Ref = External_Name;
          end if;
          Item := Empty_Node;
          Decl := Next_Declarative_Item (Decl, Tree);
