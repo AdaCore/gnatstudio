@@ -91,6 +91,7 @@ package Code_Analysis is
    type Subprogram_Access is access all Subprogram;
    type File_Access       is access all File;
    type Project_Access    is access all Project;
+   type Node_Access       is access all Node'Class;
 
    package Subprogram_Maps is
      new Indefinite_Hashed_Maps
@@ -118,7 +119,7 @@ package Code_Analysis is
 
    type Code_Analysis_Tree is access all Project_Maps.Map;
 
-   type Node is abstract tagged record
+   type Node is tagged record
       Analysis_Data : Analysis;
    end record;
    --  Abstract father type of all the following specific node types
@@ -139,9 +140,15 @@ package Code_Analysis is
       Name   : String_Access;
       Line   : Natural := 1;
       Column : Natural := 1;
+      Start  : Natural := 0;
+      Stop   : Natural := 0;
    end record;
    --  A Subprogram is identified in the Subprograms' maps of every File record
    --  by a string type
+   --  Line is the declaration line within the encapsulating file
+   --  Column is the declaration column within the encapsulation file
+   --  Start is the starting line of the definition of the subprogram
+   --  Stop is the ending line of the definition of the subprogram
 
    type File is new Node with record
       Name        : VFS.Virtual_File;
@@ -242,8 +249,6 @@ package Code_Analysis is
    procedure Unchecked_Free is new
      Ada.Unchecked_Deallocation (Coverage'Class, Coverage_Access);
 
-private
-
    -------------
    -- Free-er --
    -------------
@@ -264,6 +269,8 @@ private
    --  Free an Analysis record, so also a
    --  Coverage record if allocated
    --  and futur other specific analysis records should be added here
+
+private
 
    procedure Unchecked_Free is new
      Ada.Unchecked_Deallocation (String, String_Access);
