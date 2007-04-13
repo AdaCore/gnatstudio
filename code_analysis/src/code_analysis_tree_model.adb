@@ -60,10 +60,9 @@ package body Code_Analysis_Tree_Model is
      (Model     : in out Gtk_Tree_Store;
       Iter      : in out Gtk_Tree_Iter;
       Parent    : Gtk_Tree_Iter;
-      Subp_Node : Subprogram_Access)
-   is
-      File_Node : constant File_Access := File_Access
-        (GType_File.Get (Model, Parent, Node_Col));
+      Prj_Node  : Project_Access;
+      File_Node : File_Access;
+      Subp_Node : Subprogram_Access) is
    begin
       Append (Model, Iter, Parent);
       Set (Model, Iter, Pix_Col, C_Proxy
@@ -71,6 +70,7 @@ package body Code_Analysis_Tree_Model is
       Set (Model, Iter, Name_Col, String (Subp_Node.Name.all));
       GType_Subprogram.Set (Model, Iter, Node_Col, Subp_Node.all'Access);
       GType_File.Set (Model, Iter, File_Col, File_Node.all'Access);
+      GType_Project.Set (Model, Iter, Prj_Col, Prj_Node.all'Access);
       Fill_Iter (Model, Iter, Subp_Node.Analysis_Data);
    end Fill_Iter;
 
@@ -103,6 +103,7 @@ package body Code_Analysis_Tree_Model is
      (Model     : in out Gtk_Tree_Store;
       Iter      : in out Gtk_Tree_Iter;
       Parent    : Gtk_Tree_Iter;
+      Prj_Node  : Project_Access;
       File_Node : File_Access)
    is
       use Subprogram_Maps;
@@ -119,6 +120,7 @@ package body Code_Analysis_Tree_Model is
         (Model, Iter, Name_Col, VFS.Base_Name (File_Node.Name));
       GType_File.Set (Model, Iter, Node_Col, File_Node.all'Access);
       GType_File.Set (Model, Iter, File_Col, File_Node.all'Access);
+      GType_Project.Set (Model, Iter, Prj_Col, Prj_Node.all'Access);
       Fill_Iter (Model, Iter, File_Node.Analysis_Data);
 
       for J in Sort_Arr'Range loop
@@ -129,7 +131,7 @@ package body Code_Analysis_Tree_Model is
       Sort_Subprograms (Sort_Arr);
 
       for J in Sort_Arr'Range loop
-         Fill_Iter (Model, Iter, Self_Iter, Sort_Arr (J));
+         Fill_Iter (Model, Iter, Self_Iter, Prj_Node, File_Node, Sort_Arr (J));
       end loop;
    end Fill_Iter;
 
@@ -213,7 +215,7 @@ package body Code_Analysis_Tree_Model is
       Sort_Files (Sort_Arr);
 
       for J in Sort_Arr'Range loop
-         Fill_Iter (Model, Iter, Self_Iter, Sort_Arr (J));
+         Fill_Iter (Model, Iter, Self_Iter, Prj_Node, Sort_Arr (J));
       end loop;
    end Fill_Iter;
 
