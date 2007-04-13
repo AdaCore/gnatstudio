@@ -32,33 +32,24 @@ package Code_Analysis_Tree_Model is
    package GType_Subprogram is new Generic_Set (Code_Analysis.Subprogram);
    package GType_File is new Generic_Set (Code_Analysis.File);
    package GType_Project is new Generic_Set (Code_Analysis.Project);
+   package GType_Node is new Generic_Set (Code_Analysis.Node);
 
    ------------
    -- Filler --
    ------------
 
    procedure Fill_Iter
-     (Model    : in out Gtk_Tree_Store;
-      Iter     : in out Gtk_Tree_Iter;
-      Projects : Code_Analysis_Tree);
-   --  Fill the Gtk_Tree_Store with every nodes
-
-   procedure Fill_Iter_With_Files
-     (Model    : in out Gtk_Tree_Store;
-      Iter     : in out Gtk_Tree_Iter;
-      Projects : Code_Analysis_Tree);
-   --  Fill the Gtk_Tree_Store with file rows only
-
-   procedure Fill_Iter_With_Subprograms
-     (Model    : in out Gtk_Tree_Store;
-      Iter     : in out Gtk_Tree_Iter;
-      Projects : Code_Analysis_Tree);
-   --  Fill the Gtk_Tree_Store with subprogram rows only
+     (Model        : in out Gtk_Tree_Store;
+      Iter         : in out Gtk_Tree_Iter;
+      Analysis_Id  : Analysis);
+   --  Fill the Gtk_Tree_Store with the given Analysis record
 
    procedure Fill_Iter
      (Model     : in out Gtk_Tree_Store;
       Iter      : in out Gtk_Tree_Iter;
       Parent    : Gtk_Tree_Iter;
+      Prj_Node  : Project_Access;
+      File_Node : File_Access;
       Subp_Node : Subprogram_Access);
    --  Fill the Gtk_Tree_Store with the given Subprogram node
 
@@ -74,6 +65,7 @@ package Code_Analysis_Tree_Model is
      (Model     : in out Gtk_Tree_Store;
       Iter      : in out Gtk_Tree_Iter;
       Parent    : Gtk_Tree_Iter;
+      Prj_Node  : Project_Access;
       File_Node : File_Access);
    --  Fill the Gtk_Tree_Store with the given File node and recurse on its
    --  children
@@ -113,9 +105,21 @@ package Code_Analysis_Tree_Model is
    --  given Project node
 
    procedure Fill_Iter
-     (Model        : in out Gtk_Tree_Store;
-      Iter         : in out Gtk_Tree_Iter;
-      Analysis_Id  : Analysis);
-   --  Fill the Gtk_Tree_Store with the given Analysis record
+     (Model    : in out Gtk_Tree_Store;
+      Iter     : in out Gtk_Tree_Iter;
+      Projects : Code_Analysis_Tree);
+   --  Fill the Gtk_Tree_Store with every nodes
+
+   procedure Fill_Iter_With_Files
+     (Model    : in out Gtk_Tree_Store;
+      Iter     : in out Gtk_Tree_Iter;
+      Projects : Code_Analysis_Tree);
+   --  Fill the Gtk_Tree_Store with file rows only
+
+   procedure Fill_Iter_With_Subprograms
+     (Model    : in out Gtk_Tree_Store;
+      Iter     : in out Gtk_Tree_Iter;
+      Projects : Code_Analysis_Tree);
+   --  Fill the Gtk_Tree_Store with subprogram rows only
 
 end Code_Analysis_Tree_Model;
