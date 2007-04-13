@@ -40,9 +40,9 @@ package Code_Coverage is
    --  And set Line_Count and Covered_Lines
    --  Raise Bad_Gcov_File if information can't be found
 
-   function Get_Runs_Info_From_File (File_Node     : Code_Analysis.File_Access;
-                                     File_Contents : String_Access)
-                                     return Positive;
+   function Get_Runs_Info_From_File
+     (File_Node     : Code_Analysis.File_Access;
+      File_Contents : String_Access) return Positive;
    --  Reads and returns in the given .gcov file contents the number of
    --  execution(s) of the binary file produce by the analyzed sources
    --  This information is contained in every .gcov files
