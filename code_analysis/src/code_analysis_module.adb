@@ -675,7 +675,7 @@ package body Code_Analysis_Module is
       Property : in out Code_Analysis_Property_Record) is
    begin
       if Property.View /= null and then Property.View.Error_Box = null then
-            Close_Child (Property.Child, Force => True);
+         Close_Child (Property.Child, Force => True);
       end if;
 
       if Property.View = null then
@@ -716,6 +716,99 @@ package body Code_Analysis_Module is
       end if;
    end First_Project_With_Coverage_Data;
 
+   ---------------------------
+   -- Get_Iter_From_Context --
+   ---------------------------
+
+   function Get_Iter_From_Context
+     (Context : Selection_Context;
+      Model   : Gtk_Tree_Store) return Gtk_Tree_Iter
+   is
+      Iter    : Gtk_Tree_Iter := Get_Iter_First (Model);
+      Num_Col : constant Gint := 1;
+   begin
+      if Iter /= Null_Iter then
+         if not Has_Child (Model, Iter) then
+            --  So we are in a flat list
+            if Has_Entity_Name_Information (Context) then
+               declare
+                  Entity : constant Entities.Entity_Information :=
+                             Get_Entity (Context);
+               begin
+                  if (Entity /= null
+                      and then Is_Subprogram (Entity))
+                    or else Get_Creator (Context) = Abstract_Module_ID
+                    (Code_Analysis_Module_ID) then
+                     --  So we have a subprogram information
+                     --  Find in the list the context's subprogram
+                     loop
+                        exit when Get_String (Model, Iter, Num_Col) =
+                          Entity_Name_Information (Context);
+                        Next (Model, Iter);
+                     end loop;
+                  end if;
+               end;
+            elsif Has_File_Information (Context) then
+               --  Find in the list the context's file
+               loop
+                  exit when Get_String (Model, Iter, Num_Col) =
+                    Base_Name (File_Information (Context));
+                  Next (Model, Iter);
+               end loop;
+            else
+               --  Find in the list the context's project
+               loop
+                  exit when Get_String (Model, Iter, Num_Col) =
+                    Project_Name (Project_Information (Context));
+                  Next (Model, Iter);
+               end loop;
+            end if;
+         else
+            --  Find in the tree the context's project
+            loop
+               exit when Get_String (Model, Iter, Num_Col) =
+                 Project_Name (Project_Information (Context));
+               Next (Model, Iter);
+            end loop;
+
+            if Has_File_Information (Context) then
+               --  So we also have file information
+               Iter := Children (Model, Iter);
+
+               --  Find in the tree the context's file
+               loop
+                  exit when Get_String (Model, Iter, Num_Col) =
+                    Base_Name (File_Information (Context));
+                  Next (Model, Iter);
+               end loop;
+            end if;
+
+            if Has_Entity_Name_Information (Context) then
+               declare
+                  Entity : constant Entities.Entity_Information :=
+                             Get_Entity (Context);
+               begin
+                  if (Entity /= null
+                      and then Is_Subprogram (Entity))
+                    or else Get_Creator (Context) = Abstract_Module_ID
+                    (Code_Analysis_Module_ID) then
+                     --  So we have a subprogram information
+                     Iter := Children (Model, Iter);
+                     --  Find in the tree the context's subprogram
+                     loop
+                        exit when Get_String (Model, Iter, Num_Col) =
+                          Entity_Name_Information (Context);
+                        Next (Model, Iter);
+                     end loop;
+                  end if;
+               end;
+            end if;
+         end if;
+      end if;
+
+      return Iter;
+   end Get_Iter_From_Context;
+
    --------------------------
    -- Show_Analysis_Report --
    --------------------------
@@ -725,9 +818,8 @@ package body Code_Analysis_Module is
       Property     : in out Code_Analysis_Property_Record;
       Raise_Report : Boolean := True)
    is
-      Local_Context : Selection_Context := Cont_N_Inst.Context;
+      Local_Context : Selection_Context;
       Iter          : Gtk_Tree_Iter;
-      Num_Col       : constant Gint := 1;
       Path          : Gtk_Tree_Path;
    begin
 
@@ -786,45 +878,12 @@ package body Code_Analysis_Module is
       --  Selection of the context caller --
       --------------------------------------
 
-      Iter := Get_Iter_First (Property.View.Model);
+      Iter := Get_Iter_From_Context (Local_Context, Property.View.Model);
 
-      loop
-         exit when Get_String (Property.View.Model, Iter, Num_Col) =
-           Project_Name (Project_Information (Local_Context));
-         Next (Property.View.Model, Iter);
-      end loop;
-      --  Find in the tree the context's project
-
-      if Has_File_Information (Local_Context) then
-         --  So we also have file information
-         Iter := Children (Property.View.Model, Iter);
-
-         loop
-            exit when Get_String (Property.View.Model, Iter, Num_Col) =
-              Base_Name (File_Information (Local_Context));
-            Next (Property.View.Model, Iter);
-         end loop;
+      if Iter = Null_Iter then
+         Show_Empty_Analysis_Report (Cont_N_Inst.Instance, Property);
+         return;
       end if;
-      --  Find in the tree the context's file
-
-      if Has_Entity_Name_Information (Local_Context) then
-         declare
-            Entity : constant Entities.Entity_Information :=
-                       Get_Entity (Local_Context);
-         begin
-            if Entity /= null and then Is_Subprogram (Entity) then
-               --  So we have a subprogram information
-               Iter := Children (Property.View.Model, Iter);
-
-               loop
-                  exit when Get_String (Property.View.Model, Iter, Num_Col)
-                    = Entity_Name_Information (Local_Context);
-                  Next (Property.View.Model, Iter);
-               end loop;
-            end if;
-         end;
-      end if;
-      --  Find in the tree the context's subprogram
 
       Path := Get_Path (Property.View.Model, Iter);
       Collapse_All (Property.View.Tree);
@@ -1124,8 +1183,9 @@ package body Code_Analysis_Module is
    -- On_Destroy --
    ----------------
 
-   procedure On_Destroy (Widget      : access Glib.Object.GObject_Record'Class;
-                         Cont_N_Inst : Context_And_Instance)
+   procedure On_Destroy
+     (Widget      : access Glib.Object.GObject_Record'Class;
+      Cont_N_Inst : Context_And_Instance)
    is
       pragma Unreferenced (Widget);
       Property : Code_Analysis_Property_Record := Code_Analysis_Property_Record
@@ -1145,34 +1205,35 @@ package body Code_Analysis_Module is
    -- On_Double_Click --
    ---------------------
 
-   function On_Double_Click (View  : access Gtk_Widget_Record'Class;
-                             Event : Gdk_Event) return Boolean
+   function On_Double_Click
+     (View  : access Gtk_Widget_Record'Class;
+      Event : Gdk_Event) return Boolean
    is
       use GType_File;
       V     : constant Code_Analysis_View := Code_Analysis_View (View);
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_Tree_Model;
-      Path  : Gtk_Tree_Path;
    begin
       if Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Gdk_2button_Press
       then
          Get_Selected (Get_Selection (V.Tree), Model, Iter);
-         Path := Get_Path (Model, Iter);
 
-         if Get_Depth (Path) = 1 and then not Has_Child (V.Model, Iter) then
-            if GType_File.Get (Gtk_Tree_Store (Model), Iter, Node_Col) =
-              GType_File.Get (Gtk_Tree_Store (Model), Iter, File_Col)
-            then
+         declare
+            Node : constant Node_Access := Code_Analysis.Node_Access
+              (GType_Node.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
+         begin
+            if Node.all in Code_Analysis.Project'Class then
+               --  So we are on a project node
+               null;
+            elsif Node.all in Code_Analysis.File'Class then
+               --  So we are on a file node
                Open_File_Editor_On_File (Model, Iter);
-            else
+            elsif Node.all in Code_Analysis.Subprogram'Class then
+               --  So we are on a subprogram node
                Open_File_Editor_On_Subprogram (Model, Iter);
             end if;
-         elsif Get_Depth (Path) = 2 then
-            Open_File_Editor_On_File (Model, Iter);
-         elsif Get_Depth (Path) = 3 then
-            Open_File_Editor_On_Subprogram (Model, Iter);
-         end if;
+         end;
 
          return True;
       end if;
@@ -1217,46 +1278,6 @@ package body Code_Analysis_Module is
          Subp_Node.Line,
          Basic_Types.Visible_Column_Type (Subp_Node.Column));
    end Open_File_Editor_On_Subprogram;
-
-   ------------------------------------------
-   -- Add_Coverage_Annotations_From_Report --
-   ------------------------------------------
-
-   procedure Add_Coverage_Annotations_From_Report
-     (Object : access Gtk_Widget_Record'Class)
-   is
-      use GType_File;
-      View      : constant Code_Analysis_View := Code_Analysis_View (Object);
-      Iter      : Gtk_Tree_Iter;
-      Path      : Gtk_Tree_Path;
-      File_Node : Code_Analysis.File_Access;
-   begin
-      Get_Selected
-        (Get_Selection (View.Tree), Gtk_Tree_Model (View.Model), Iter);
-      Path := Get_Path (View.Model, Iter);
-
-      if Get_Depth (Path) = 1 and then not Has_Child (View.Model, Iter) then
-         if GType_File.Get (Gtk_Tree_Store (View.Model), Iter, Node_Col) =
-           GType_File.Get (Gtk_Tree_Store (View.Model), Iter, File_Col)
-         then
-            Open_File_Editor_On_File (Gtk_Tree_Model (View.Model), Iter);
-         else
-            Open_File_Editor_On_Subprogram (Gtk_Tree_Model (View.Model), Iter);
-         end if;
-      elsif Get_Depth (Path) = 2 then
-         Open_File_Editor_On_File (Gtk_Tree_Model (View.Model), Iter);
-      elsif Get_Depth (Path) = 3 then
-         Open_File_Editor_On_Subprogram (Gtk_Tree_Model (View.Model), Iter);
-      end if;
-
-      File_Node := Code_Analysis.File_Access
-        (GType_File.Get (Gtk_Tree_Store (View.Model), Iter, File_Col));
-      Add_Coverage_Annotations (File_Node);
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end Add_Coverage_Annotations_From_Report;
 
    -------------------------------------------
    -- Add_Coverage_Annotations_From_Context --
@@ -1330,29 +1351,6 @@ package body Code_Analysis_Module is
       Unchecked_Free (Line_Icons);
    end Add_Coverage_Annotations;
 
-   ---------------------------------------------
-   -- Remove_Coverage_Annotations_From_Report --
-   ---------------------------------------------
-
-   procedure Remove_Coverage_Annotations_From_Report
-     (Object : access Gtk_Widget_Record'Class)
-   is
-      View      : constant Code_Analysis_View := Code_Analysis_View (Object);
-      Iter      : Gtk_Tree_Iter;
-      File_Node : Code_Analysis.File_Access;
-   begin
-      Get_Selected
-        (Get_Selection (View.Tree), Gtk_Tree_Model (View.Model), Iter);
-      File_Node := Code_Analysis.File_Access
-        (GType_File.Get (Gtk_Tree_Store (View.Model), Iter, File_Col));
-      Open_File_Editor (Code_Analysis_Module_ID.Kernel, File_Node.Name);
-      Remove_Coverage_Annotations (File_Node);
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end Remove_Coverage_Annotations_From_Report;
-
    ----------------------------------------------
    -- Remove_Coverage_Annotations_From_Context --
    ----------------------------------------------
@@ -1401,28 +1399,6 @@ package body Code_Analysis_Module is
                 "Unexpected exception: " & Exception_Information (E));
    end Remove_Coverage_Annotations;
 
-   ---------------------------------------------------
-   -- List_Lines_Not_Covered_In_Project_From_Report --
-   ---------------------------------------------------
-
-   procedure List_Lines_Not_Covered_In_Project_From_Report
-     (Object : access Gtk_Widget_Record'Class)
-   is
-      View  : constant Code_Analysis_View := Code_Analysis_View (Object);
-      Iter  : Gtk_Tree_Iter;
-      Project_Node : Project_Access;
-   begin
-      Get_Selected
-        (Get_Selection (View.Tree), Gtk_Tree_Model (View.Model), Iter);
-      Project_Node := Project_Access
-        (GType_Project.Get (Gtk_Tree_Store (View.Model), Iter, Node_Col));
-      List_Lines_Not_Covered_In_Project (Project_Node);
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end List_Lines_Not_Covered_In_Project_From_Report;
-
    ----------------------------------------------------
    -- List_Lines_Not_Covered_In_Project_From_Context --
    ----------------------------------------------------
@@ -1446,29 +1422,6 @@ package body Code_Analysis_Module is
                 "Unexpected exception: " & Exception_Information (E));
    end List_Lines_Not_Covered_In_Project_From_Context;
 
-   ------------------------------------------------
-   -- List_Lines_Not_Covered_In_File_From_Report --
-   ------------------------------------------------
-
-   procedure List_Lines_Not_Covered_In_File_From_Report
-     (Object : access Gtk_Widget_Record'Class)
-   is
-      View      : constant Code_Analysis_View := Code_Analysis_View (Object);
-      Iter      : Gtk_Tree_Iter;
-      File_Node : Code_Analysis.File_Access;
-   begin
-      Get_Selected
-        (Get_Selection (View.Tree), Gtk_Tree_Model (View.Model), Iter);
-      File_Node := Code_Analysis.File_Access
-        (GType_File.Get (Gtk_Tree_Store (View.Model), Iter, File_Col));
-      Open_File_Editor (Code_Analysis_Module_ID.Kernel, File_Node.Name);
-      List_Lines_Not_Covered_In_File (File_Node);
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end List_Lines_Not_Covered_In_File_From_Report;
-
    -------------------------------------------------
    -- List_Lines_Not_Covered_In_File_From_Context --
    -------------------------------------------------
@@ -1478,16 +1431,14 @@ package body Code_Analysis_Module is
       Cont_N_Inst : Context_And_Instance)
    is
       pragma Unreferenced (Widget);
-      Project_Node : Project_Access;
-      File_Node    : Code_Analysis.File_Access;
-      Property     : Code_Analysis_Property_Record
+      Property  : Code_Analysis_Property_Record
         := Code_Analysis_Property_Record
           (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
-   begin
-      Project_Node := Get_Or_Create
+      Prj_Node  : constant Project_Access := Get_Or_Create
         (Property.Projects, Project_Information (Cont_N_Inst.Context));
-      File_Node := Get_Or_Create
-        (Project_Node, File_Information (Cont_N_Inst.Context));
+      File_Node : constant Code_Analysis.File_Access := Get_Or_Create
+        (Prj_Node, File_Information (Cont_N_Inst.Context));
+   begin
       Open_File_Editor (Code_Analysis_Module_ID.Kernel, File_Node.Name);
       List_Lines_Not_Covered_In_File (File_Node);
    exception
@@ -1546,6 +1497,180 @@ package body Code_Analysis_Module is
          end if;
       end loop;
    end List_Lines_Not_Covered_In_File;
+
+   -------------------------------------------------------
+   -- List_Lines_Not_Covered_In_Subprogram_From_Context --
+   -------------------------------------------------------
+
+   procedure List_Lines_Not_Covered_In_Subprogram_From_Context
+     (Widget      : access Glib.Object.GObject_Record'Class;
+      Cont_N_Inst : Context_And_Instance)
+   is
+      pragma Unreferenced (Widget);
+      Property  : Code_Analysis_Property_Record
+        := Code_Analysis_Property_Record
+          (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
+      Prj_Node  : constant Project_Access := Get_Or_Create
+        (Property.Projects, Project_Information (Cont_N_Inst.Context));
+      File_Node : constant Code_Analysis.File_Access := Get_Or_Create
+        (Prj_Node, File_Information (Cont_N_Inst.Context));
+      Subp_Node : constant Code_Analysis.Subprogram_Access := Get_Or_Create
+        (File_Node, new String'(Entity_Name_Information
+         (Cont_N_Inst.Context)));
+   begin
+      for J in Subp_Node.Start .. Subp_Node.Stop loop
+         if File_Node.Lines (J) /= Null_Line then
+            if File_Node.Lines (J).Analysis_Data.Coverage_Data.Coverage
+              = 0 then
+               Insert_Location
+                 (Kernel    => Code_Analysis_Module_ID.Kernel,
+                  Category  => Coverage_Category,
+                  File      => File_Node.Name,
+                  Text      => File_Node.Lines (J).Contents.all,
+                  Line      => J,
+                  Column    => 1,
+                  Highlight => True,
+                  Highlight_Category => Builder_Warnings_Style);
+            end if;
+         end if;
+      end loop;
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end List_Lines_Not_Covered_In_Subprogram_From_Context;
+
+   ---------------------------------
+   -- Remove_Subprogram_From_Menu --
+   ---------------------------------
+
+   procedure Remove_Subprogram_From_Menu
+      (Widget      : access Glib.Object.GObject_Record'Class;
+       Cont_N_Inst : Context_And_Instance)
+   is
+      pragma Unreferenced (Widget);
+      Property  : Code_Analysis_Property_Record
+        := Code_Analysis_Property_Record
+          (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
+      Prj_Node  : constant Project_Access := Get_Or_Create
+        (Property.Projects, Project_Information (Cont_N_Inst.Context));
+      File_Node : constant Code_Analysis.File_Access := Get_Or_Create
+        (Prj_Node, File_Information (Cont_N_Inst.Context));
+      Subp_Node : Code_Analysis.Subprogram_Access := Get_Or_Create
+        (File_Node, new String'(Entity_Name_Information
+         (Cont_N_Inst.Context)));
+      Iter      : Gtk_Tree_Iter;
+   begin
+      if Message_Dialog
+        ((-"Remove data of ") & Subp_Node.Name.all & (-"?"),
+         Confirmation, Button_Yes or Button_No,
+         Justification => Justify_Left,
+         Title         => (-"Remove ") & Subp_Node.Name.all & (-"?")) = 1
+      then
+         if Property.View = null then
+            Show_Analysis_Report (Cont_N_Inst, Property, False);
+         end if;
+
+         Iter := Get_Iter_From_Context
+           (Cont_N_Inst.Context, Property.View.Model);
+         --  Removes it from the report
+         Remove (Property.View.Model, Iter);
+         --  Removes it from its container
+         Subprogram_Maps.Delete (File_Node.Subprograms, Subp_Node.Name.all);
+         --  Free it
+         Free_Subprogram (Subp_Node);
+      end if;
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end Remove_Subprogram_From_Menu;
+
+   ---------------------------
+   -- Remove_File_From_Menu --
+   ---------------------------
+
+   procedure Remove_File_From_Menu
+     (Widget      : access Glib.Object.GObject_Record'Class;
+      Cont_N_Inst : Context_And_Instance)
+   is
+      pragma Unreferenced (Widget);
+      Property  : Code_Analysis_Property_Record
+        := Code_Analysis_Property_Record
+          (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
+      Prj_Node  : constant Project_Access := Get_Or_Create
+        (Property.Projects, Project_Information (Cont_N_Inst.Context));
+      File_Node : Code_Analysis.File_Access := Get_Or_Create
+        (Prj_Node, File_Information (Cont_N_Inst.Context));
+      Iter      : Gtk_Tree_Iter;
+   begin
+      if Message_Dialog
+        ((-"Remove data of ") & Base_Name (File_Node.Name) & (-"?"),
+         Confirmation, Button_Yes or Button_No,
+         Justification => Justify_Left,
+         Title         => (-"Remove ") & Base_Name (File_Node.Name) & (-"?"))
+        = 1
+      then
+         if Property.View = null then
+            Show_Analysis_Report (Cont_N_Inst, Property, False);
+         end if;
+
+         Iter := Get_Iter_From_Context
+           (Cont_N_Inst.Context, Property.View.Model);
+         --  Removes it from the report
+         Remove (Property.View.Model, Iter);
+         --  Removes it from its container
+         File_Maps.Delete (Prj_Node.Files, File_Node.Name);
+         --  Free it
+         Free_File (File_Node);
+      end if;
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end Remove_File_From_Menu;
+
+   ------------------------------
+   -- Remove_Project_From_Menu --
+   ------------------------------
+
+   procedure Remove_Project_From_Menu
+      (Widget      : access Glib.Object.GObject_Record'Class;
+      Cont_N_Inst : Context_And_Instance)
+   is
+      pragma Unreferenced (Widget);
+      Property : Code_Analysis_Property_Record
+        := Code_Analysis_Property_Record
+          (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
+      Prj_Node : Project_Access := Get_Or_Create
+        (Property.Projects, Project_Information (Cont_N_Inst.Context));
+      Iter     : Gtk_Tree_Iter;
+   begin
+      if Message_Dialog
+        ((-"Remove data of ") & Project_Name (Prj_Node.Name) & (-"?"),
+         Confirmation, Button_Yes or Button_No,
+         Justification => Justify_Left,
+         Title         => (-"Remove ") & Project_Name (Prj_Node.Name) & (-"?"))
+        = 1
+      then
+         if Property.View = null then
+            Show_Analysis_Report (Cont_N_Inst, Property, False);
+         end if;
+
+         Iter := Get_Iter_From_Context
+           (Cont_N_Inst.Context, Property.View.Model);
+         --  Removes it from the report
+         Remove (Property.View.Model, Iter);
+         --  Removes it from its container
+         Project_Maps.Delete (Property.Projects.all, Prj_Node.Name);
+         --  Free it
+         Free_Project (Prj_Node);
+      end if;
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end Remove_Project_From_Menu;
 
    ----------------------------
    -- Expand_All_From_Report --
@@ -1708,17 +1833,28 @@ package body Code_Analysis_Module is
          Select_Path (Get_Selection (View.Tree), Path);
          Iter := Get_Iter (Gtk_Tree_Model (View.Model), Path);
 
-         if Get_Depth (Path) = 1 then
-            if Has_Child (View.Model, Iter) then
+         declare
+            Node : constant Node_Access := Code_Analysis.Node_Access
+              (GType_Node.Get (Gtk_Tree_Store (View.Model), Iter, Node_Col));
+         begin
+            if Node.all in Code_Analysis.Project'Class then
                --  So we are on a project node
                --  Context receive project information
-               Prj_Node := Code_Analysis.Project_Access
-                 (GType_Project.Get (Gtk_Tree_Store (View.Model),
-                  Iter, Node_Col));
-               Set_File_Information (Context, Project => Prj_Node.Name);
-            else
-               --  So we are in a flat view
+               Set_File_Information
+                 (Context, Project => Project_Access (Node).Name);
+            elsif Node.all in Code_Analysis.File'Class then
+               --  So we are on a file node
                --  Context receive project and file information
+               Prj_Node := Project_Access
+                 (GType_Project.Get
+                    (Gtk_Tree_Store (View.Model), Iter, Prj_Col));
+               Set_File_Information
+                 (Context,
+                  File    => Code_Analysis.File_Access (Node).Name,
+                  Project => Prj_Node.Name);
+            elsif Node.all in Code_Analysis.Subprogram'Class then
+               --  So we are on a subprogram node
+               --  Context receive project, file and entity information
                File_Node := Code_Analysis.File_Access
                  (GType_File.Get (Gtk_Tree_Store (View.Model),
                   Iter, File_Col));
@@ -1726,23 +1862,10 @@ package body Code_Analysis_Module is
                  (GType_Project.Get (Gtk_Tree_Store (View.Model),
                   Iter, Prj_Col));
                Set_File_Information (Context, File_Node.Name, Prj_Node.Name);
+               Set_Entity_Information
+                 (Context, Subprogram_Access (Node).Name.all);
             end if;
-         elsif Get_Depth (Path) > 1 then
-            --  So we are on a file or subprogram node
-            --  Context receive project and file information
-
-            if Get_Depth (Path) = 3 then
-               Iter   := Parent (Gtk_Tree_Store (View.Model), Iter);
-            end if;
-
-            File_Node := Code_Analysis.File_Access
-              (GType_File.Get (Gtk_Tree_Store (View.Model),
-               Iter, Node_Col));
-            Prj_Node  := Project_Access
-              (GType_Project.Get (Gtk_Tree_Store (View.Model),
-               Parent (Gtk_Tree_Store (View.Model), Iter), Node_Col));
-            Set_File_Information (Context, File_Node.Name, Prj_Node.Name);
-         end if;
+         end;
       end if;
    end Context_Func;
 
@@ -1765,7 +1888,10 @@ package body Code_Analysis_Module is
       elsif Has_Entity_Name_Information (Context) then
          Entity := Get_Entity (Context);
 
-         return Entity /= null and then Is_Subprogram (Entity);
+         return (Entity /= null
+                 and then Is_Subprogram (Entity))
+           or else Get_Creator (Context) = Abstract_Module_ID
+           (Code_Analysis_Module_ID);
       end if;
 
       return False;
@@ -1832,7 +1958,31 @@ package body Code_Analysis_Module is
             File_Node : constant Code_Analysis.File_Access := Get_Or_Create
               (Project_Node, File_Information (Cont_N_Inst.Context));
          begin
-            Append_File_Menu_Entries (Cont_N_Inst, Submenu, File_Node);
+            if Has_Entity_Name_Information (Cont_N_Inst.Context) then
+               declare
+                  Entity : constant Entities.Entity_Information :=
+                             Get_Entity (Cont_N_Inst.Context);
+                  Subp_Node : Subprogram_Access;
+               begin
+                  if (Entity /= null
+                      and then Is_Subprogram (Entity))
+                    or else  Get_Creator (Cont_N_Inst.Context) =
+                    Abstract_Module_ID (Code_Analysis_Module_ID)
+                  then
+                     --  So we have a subprogram information
+                     Subp_Node := Get_Or_Create
+                       (File_Node, new String'(Entity_Name_Information
+                          (Cont_N_Inst.Context)));
+                     Append_Subprogram_Menu_Entries
+                       (Cont_N_Inst, Submenu, Subp_Node);
+                  else
+                     Append_File_Menu_Entries
+                       (Cont_N_Inst, Submenu, File_Node);
+                  end if;
+               end;
+            else
+               Append_File_Menu_Entries (Cont_N_Inst, Submenu, File_Node);
+            end if;
          end;
       else
          Append_Project_Menu_Entries (Cont_N_Inst, Submenu, Project_Node);
@@ -1846,14 +1996,48 @@ package body Code_Analysis_Module is
       end if;
    end Append_To_Contextual_Submenu;
 
+   ------------------------------------
+   -- Append_Subprogram_Menu_Entries --
+   ------------------------------------
+
+   procedure Append_Subprogram_Menu_Entries
+     (Cont_N_Inst : Context_And_Instance;
+      Submenu     : access Gtk_Menu_Record'Class;
+      Subp_Node   : Subprogram_Access)
+   is
+      Item : Gtk_Menu_Item;
+   begin
+      if Subp_Node.Analysis_Data.Coverage_Data /= null then
+         Gtk_New (Item, -"List lines not covered");
+         Append (Submenu, Item);
+         Context_And_Instance_CB.Connect
+           (Item, "activate", Context_And_Instance_CB.To_Marshaller
+              (List_Lines_Not_Covered_In_Subprogram_From_Context'Access),
+            Cont_N_Inst);
+         Gtk_New (Item, -"Remove data of " & Entity_Name_Information
+                  (Cont_N_Inst.Context));
+         Append (Submenu, Item);
+         Context_And_Instance_CB.Connect
+           (Item, "activate", Context_And_Instance_CB.To_Marshaller
+              (Remove_Subprogram_From_Menu'Access), Cont_N_Inst);
+      else
+         Gtk_New (Item, -"Load data for " &
+                  Locale_Base_Name (File_Information (Cont_N_Inst.Context)));
+         Append (Submenu, Item);
+         Context_And_Instance_CB.Connect
+           (Item, "activate", Context_And_Instance_CB.To_Marshaller
+              (Add_Gcov_File_Info_From_Context'Access), Cont_N_Inst);
+      end if;
+   end Append_Subprogram_Menu_Entries;
+
    ------------------------------
    -- Append_File_Menu_Entries --
    ------------------------------
 
    procedure Append_File_Menu_Entries
-     (Cont_N_Inst   : Context_And_Instance;
-      Submenu       : access Gtk_Menu_Record'Class;
-      File_Node     : Code_Analysis.File_Access)
+     (Cont_N_Inst : Context_And_Instance;
+      Submenu     : access Gtk_Menu_Record'Class;
+      File_Node   : Code_Analysis.File_Access)
    is
       Item : Gtk_Menu_Item;
    begin
@@ -1880,6 +2064,12 @@ package body Code_Analysis_Module is
            (Item, "activate", Context_And_Instance_CB.To_Marshaller
               (List_Lines_Not_Covered_In_File_From_Context'Access),
             Cont_N_Inst);
+         Gtk_New (Item, -"Remove data of " &
+                  Base_Name (File_Information (Cont_N_Inst.Context)));
+         Append (Submenu, Item);
+         Context_And_Instance_CB.Connect
+           (Item, "activate", Context_And_Instance_CB.To_Marshaller
+              (Remove_File_From_Menu'Access), Cont_N_Inst);
       else
          Gtk_New (Item, -"Load data for " &
                   Locale_Base_Name (File_Information (Cont_N_Inst.Context)));
@@ -1914,6 +2104,12 @@ package body Code_Analysis_Module is
            (Item, "activate", Context_And_Instance_CB.To_Marshaller
               (List_Lines_Not_Covered_In_Project_From_Context'Access),
             Cont_N_Inst);
+         Gtk_New (Item, -"Remove data of project " &
+                  Project_Name (Project_Information (Cont_N_Inst.Context)));
+         Append (Submenu, Item);
+         Context_And_Instance_CB.Connect
+           (Item, "activate", Context_And_Instance_CB.To_Marshaller
+              (Remove_Project_From_Menu'Access), Cont_N_Inst);
       else
          Gtk_New (Item, -"Load data for project " &
                   Project_Name (Project_Information (Cont_N_Inst.Context)));
