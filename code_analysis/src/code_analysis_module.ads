@@ -111,7 +111,7 @@ private
       Cov_Column  : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       Cov_Percent : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       Error_Box   : Gtk_Hbox;
-      Projects    : Code_Analysis_Tree;
+      Projects    : Code_Analysis_Tree;  -- Used by Show_Flat_List_* callbacks
    end record;
 
    type Code_Analysis_View is access all Code_Analysis_View_Record;
@@ -142,6 +142,13 @@ private
    package Context_And_Instance_CB is new User_Callback
      (Glib.Object.GObject_Record, Context_And_Instance);
    --  Used to connect handlers on the global Coverage contextual menu
+
+   function Get_Iter_From_Context
+     (Context : Selection_Context;
+      Model   : Gtk_Tree_Store) return Gtk_Tree_Iter;
+   --  Return the Gtk_Tree_Iter of the context described entity in the Report
+   --  of Analysis
+   --  Return Null_Iter if Model is empty
 
    procedure Show_Empty_Analysis_Report
      (Instance : Class_Instance;
@@ -240,6 +247,13 @@ private
    --  Actually fills the given Menu with the "Load data for all projecs" entry
    --  This entry try to load coverage data for root project and every imported
    --  projects.
+
+   procedure Append_Subprogram_Menu_Entries
+     (Cont_N_Inst : Context_And_Instance;
+      Submenu     : access Gtk_Menu_Record'Class;
+      Subp_Node   : Subprogram_Access);
+   --  Actually fills the given Submenu with the appropriate coverage action
+   --  entries to handle subprograms (List line not covered, Remove data of...)
 
    procedure Append_File_Menu_Entries
      (Cont_N_Inst : Context_And_Instance;
@@ -428,11 +442,6 @@ private
    --  Opens a file editor on the source file containing the Subprogram
    --  pointed out by Iter in Model
 
-   procedure Add_Coverage_Annotations_From_Report
-     (Object : access Gtk_Widget_Record'Class);
-   --  Callback attached to the "View with coverage annotations" contextual
-   --  menu entry of a File or Subprogram nodes in a Coverage Report
-
    procedure Add_Coverage_Annotations_From_Context
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Inst : Context_And_Instance);
@@ -443,11 +452,6 @@ private
    procedure Add_Coverage_Annotations
      (File_Node : Code_Analysis.File_Access);
    --  Actually add the annotation columns
-
-   procedure Remove_Coverage_Annotations_From_Report
-     (Object : access Gtk_Widget_Record'Class);
-   --  Callback attached to the "Remove coverage annotations" contextual
-   --  menu entry of a File or Subprogram nodes in a Coverage Report
 
    procedure Remove_Coverage_Annotations_From_Context
      (Widget      : access Glib.Object.GObject_Record'Class;
@@ -461,24 +465,13 @@ private
    --  Actually removes coverage annotations of src_editors of file represented
    --  by File_Node
 
-   procedure List_Lines_Not_Covered_In_Project_From_Report
-     (Object : access Gtk_Widget_Record'Class);
-   --  Callback of contextual menu for Project rows in a Coverage Report.
-   --  Add to the location view the unexecuted lines of all files of the
-   --  selected Project.
-
-   procedure List_Lines_Not_Covered_In_Project_From_Context
+   procedure List_Lines_Not_Covered_In_Subprogram_From_Context
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Inst : Context_And_Instance);
    --  Callback of the "List lines not covered" entry of the global "Coverage"
-   --  submenu when the Context only contains Project information.
-   --  Just call the subprogram List_Lines_Not_Covered_In_File
-
-   procedure List_Lines_Not_Covered_In_File_From_Report
-     (Object : access Gtk_Widget_Record'Class);
-   --  Callback of contextual menu for File rows in a Coverage Report. Opens
-   --  the select File in a source editor and call
-   --  List_Lines_Not_Covered_In_File.
+   --  submenu when the Context contains subprogram information.
+   --  Add to the location view the unexecuted lines of the given current
+   --  entity, that is a subprogram and has associated coverage information
 
    procedure List_Lines_Not_Covered_In_File_From_Context
      (Widget      : access Glib.Object.GObject_Record'Class;
@@ -486,6 +479,13 @@ private
    --  Callback of the "List lines not covered" entry of the global "Coverage"
    --  submenu when the Context contains file information.
    --  Just call the List_Lines_Not_Covered_In_File subprogram
+
+   procedure List_Lines_Not_Covered_In_Project_From_Context
+     (Widget      : access Glib.Object.GObject_Record'Class;
+      Cont_N_Inst : Context_And_Instance);
+   --  Callback of the "List lines not covered" entry of the global "Coverage"
+   --  submenu when the Context only contains Project information.
+   --  Just call the subprogram List_Lines_Not_Covered_In_File
 
    procedure List_Lines_Not_Covered_In_All_Projects_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
@@ -502,6 +502,21 @@ private
      (File_Node : Code_Analysis.File_Access);
    --  Add to the location view the unexecuted lines of the given File of a
    --  Coverage Report.
+
+   procedure Remove_Subprogram_From_Menu
+     (Widget      : access Glib.Object.GObject_Record'Class;
+      Cont_N_Inst : Context_And_Instance);
+   --  Remove the selected subprogram node from the related report and instance
+
+   procedure Remove_File_From_Menu
+     (Widget      : access Glib.Object.GObject_Record'Class;
+      Cont_N_Inst : Context_And_Instance);
+   --  Remove the selected file node from the related report and instance
+
+   procedure Remove_Project_From_Menu
+     (Widget      : access Glib.Object.GObject_Record'Class;
+      Cont_N_Inst : Context_And_Instance);
+   --  Remove the selected project node from the related report and instance
 
    procedure Expand_All_From_Report (Object : access Gtk_Widget_Record'Class);
    --  Expand the whole tree vien in a code_analysis report
