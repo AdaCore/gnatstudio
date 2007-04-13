@@ -149,9 +149,10 @@ package body Code_Coverage is
    -- Get_Runs_Info_From_File --
    -----------------------------
 
-   function Get_Runs_Info_From_File (File_Node     : Code_Analysis.File_Access;
-                                     File_Contents : String_Access)
-                                     return Positive is
+   function Get_Runs_Info_From_File
+     (File_Node     : Code_Analysis.File_Access;
+      File_Contents : String_Access) return Positive
+   is
       Current       : Natural;
       Runs_Regexp   : constant Pattern_Matcher :=
                             Compile ("^ +-: +0:Runs:(\d+)", Multiple_Lines);
@@ -200,6 +201,8 @@ package body Code_Coverage is
             Subp_Node := Get_Or_Create (File_Node, Subp_Name);
             Subp_Node.Line   := Node_Info.Sloc_Entity.Line;
             Subp_Node.Column := Node_Info.Sloc_Entity.Column;
+            Subp_Node.Start  := Node_Info.Sloc_Start.Line;
+            Subp_Node.Stop   := Node_Info.Sloc_End.Line;
             Subp_Node.Analysis_Data.Coverage_Data := new Subprogram_Coverage'
               (Coverage => 0,
                Called   => 99, -- ??? intended crazy value
