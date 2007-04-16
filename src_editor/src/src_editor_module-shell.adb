@@ -230,8 +230,8 @@ package body Src_Editor_Module.Shell is
 
    type Location_Info is record
       Buffer : Source_Buffer;
-      Line   : Gint;
-      Offset : Gint;
+      Line   : Editable_Line_Type;
+      Offset : Visible_Column_Type;
    end record;
    type Location_Info_Access is access Location_Info;
 
@@ -255,8 +255,8 @@ package body Src_Editor_Module.Shell is
    procedure Set_Location_Data
      (Inst   : Class_Instance;
       Buffer : Source_Buffer;
-      Line   : Gint;
-      Offset : Gint);
+      Line   : Editable_Line_Type;
+      Offset : Visible_Column_Type);
    --  Set the data stored in the instance of EditorLocation
 
    function Create_Editor_Location
@@ -265,8 +265,8 @@ package body Src_Editor_Module.Shell is
    function Create_Editor_Location
      (Script   : access Scripting_Language_Record'Class;
       Buffer   : Source_Buffer;
-      Line     : Gint;
-      Column   : Gint) return Class_Instance;
+      Line     : Editable_Line_Type;
+      Column   : Visible_Column_Type) return Class_Instance;
    --  Return an instance of EditorLocation
 
    procedure Get_Location
@@ -422,10 +422,10 @@ package body Src_Editor_Module.Shell is
             Success := False;
 
          else
-            Get_Iter_At_Line_Offset
+            Get_Iter_At_Screen_Position
               (Info.Buffer, Iter,
-               Line_Number => Info.Line,
-               Char_Offset => Info.Offset);
+               Line   => Info.Line,
+               Column => Info.Offset);
          end if;
       end if;
    end Get_Location;
@@ -579,8 +579,8 @@ package body Src_Editor_Module.Shell is
    procedure Set_Location_Data
      (Inst   : Class_Instance;
       Buffer : Source_Buffer;
-      Line   : Gint;
-      Offset : Gint)
+      Line   : Editable_Line_Type;
+      Offset : Visible_Column_Type)
    is
       Info : constant Location_Info_Access := new Location_Info'
         (Buffer => Buffer, Line => Line, Offset => Offset);
@@ -604,10 +604,13 @@ package body Src_Editor_Module.Shell is
                     New_Class
                       (Get_Kernel (Script), Editor_Location_Class_Name);
       Inst      : constant Class_Instance := New_Instance (Script, EditorLoc);
+      Line      : Editable_Line_Type;
+      Column    : Visible_Column_Type;
    begin
+      Get_Iter_Position
+        (Source_Buffer (Get_Buffer (Location)), Location, Line, Column);
       Set_Location_Data
-        (Inst, Source_Buffer (Get_Buffer (Location)),
-         Get_Line (Location), Get_Line_Offset (Location));
+        (Inst, Source_Buffer (Get_Buffer (Location)), Line, Column);
       return Inst;
    end Create_Editor_Location;
 
@@ -618,16 +621,15 @@ package body Src_Editor_Module.Shell is
    function Create_Editor_Location
      (Script   : access Scripting_Language_Record'Class;
       Buffer   : Source_Buffer;
-      Line     : Gint;
-      Column   : Gint) return Class_Instance
+      Line     : Editable_Line_Type;
+      Column   : Visible_Column_Type) return Class_Instance
    is
       EditorLoc : constant Class_Type :=
                     New_Class
                       (Get_Kernel (Script), Editor_Location_Class_Name);
       Inst      : constant Class_Instance := New_Instance (Script, EditorLoc);
    begin
-      --  Line numbers start at 0 in gtk+
-      Set_Location_Data (Inst, Buffer, Line - 1, Column - 1);
+      Set_Location_Data (Inst, Buffer, Line, Column);
       return Inst;
    end Create_Editor_Location;
 
@@ -2330,8 +2332,8 @@ package body Src_Editor_Module.Shell is
          Set_Location_Data
            (Inst,
             Buffer,
-            Line   => Gint (Integer'(Nth_Arg (Data, 3))) - 1,
-            Offset => Gint (Integer'(Nth_Arg (Data, 4))) - 1);
+            Line   => Editable_Line_Type (Integer'(Nth_Arg (Data, 3))),
+            Offset => Visible_Column_Type (Integer'(Nth_Arg (Data, 4))) - 1);
 
       elsif Command = Comparison_Method then
          Get_Location (Iter, Data, 1, Iter, Success);
@@ -2649,7 +2651,7 @@ package body Src_Editor_Module.Shell is
                     (Data, Create_Editor_Location
                        (Get_Script (Data),
                         Source_Buffer (Get_Buffer (Iter)),
-                        Line   => Gint (Block.First_Line),
+                        Line   => Block.First_Line,
                         Column => 1));
 
                elsif Command = "block_end" then
@@ -2900,12 +2902,19 @@ package body Src_Editor_Module.Shell is
             Get_Location (Iter, Data, 2, Iter, Success);
 
             if Success then
-               Set_Cursor_Location
-                 (Box,
-                  Line        => Editable_Line_Type (Get_Line (Iter) + 1),
-                  Column      => Character_Offset_Type
-                    (Get_Line_Offset (Iter) + 1),
-                  Force_Focus => False);
+               declare
+                  Line : Editable_Line_Type;
+                  Col  : Character_Offset_Type;
+               begin
+                  Get_Iter_Position (Get_Buffer (Box), Iter, Line, Col);
+
+                  Set_Cursor_Location
+                    (Box,
+                     Line        => Line,
+                     Column      => Col,
+                     Force_Focus => False);
+               end;
+
             end if;
          end if;
 
