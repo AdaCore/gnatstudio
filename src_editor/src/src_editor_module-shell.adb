@@ -2060,17 +2060,19 @@ package body Src_Editor_Module.Shell is
          Get_Buffer (Buffer, Data, 1);
          Get_Locations (Iter, Iter2, Buffer, Data, 2, 3);
          if Buffer /= null then
-            Set_Return_Value
-              (Data, Get_Chars
-                 (Buffer       => Buffer,
-                  Line_Begin   =>
-                    Editable_Line_Type (Get_Line (Iter) + 1),
-                  Column_Begin =>
-                    Character_Offset_Type (Get_Line_Offset (Iter) + 1),
-                  Line_End     =>
-                    Editable_Line_Type (Get_Line (Iter2) + 1),
-                  Column_End   =>
-                    Character_Offset_Type (Get_Line_Offset (Iter2) + 1)));
+            declare
+               Line_Begin, Line_End     : Editable_Line_Type;
+               Column_Begin, Column_End : Character_Offset_Type;
+            begin
+               Get_Iter_Position (Buffer, Iter, Line_Begin, Column_Begin);
+               Get_Iter_Position (Buffer, Iter2, Line_End, Column_End);
+
+               Set_Return_Value
+                 (Data, Get_Chars
+                    (Buffer,
+                     Line_Begin, Column_Begin,
+                     Line_End, Column_End));
+            end;
          end if;
 
       elsif Command = "insert" then
@@ -2332,8 +2334,8 @@ package body Src_Editor_Module.Shell is
          Set_Location_Data
            (Inst,
             Buffer,
-            Line   => Editable_Line_Type (Integer'(Nth_Arg (Data, 3))),
-            Offset => Visible_Column_Type (Integer'(Nth_Arg (Data, 4))));
+            Editable_Line_Type (Integer'Max (1, Nth_Arg (Data, 3))),
+            Visible_Column_Type (Integer'Max (1, Nth_Arg (Data, 4))));
 
       elsif Command = Comparison_Method then
          Get_Location (Iter, Data, 1, Iter, Success);
