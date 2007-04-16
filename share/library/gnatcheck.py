@@ -48,15 +48,24 @@ class rulesDialog (gtk.Dialog):
       scrolledWindow.add_with_viewport (vbox)
 
       self.rulesButton = []
+      none_active = True;
+      all_active = True;
       for rule in self.rules_list:
          button = gtk.CheckButton (rule[1])
          # check if the rule is in activeRules
          if self.rules.count (rule[0]) > 0:
+            none_active = False
             button.set_active (True)
+         else:
+            all_active = False
          # update the rules list upon toggle of the button
          button.connect ("toggled", self.on_toggled, rule[0])
          self.rulesButton.append(button)
          vbox.pack_start (button, expand=False, fill=False)
+
+      # udpate sensitivity of all/no checks buttons
+      self.allChecksButton.set_sensitive (not all_active)
+      self.noChecksButton.set_sensitive (not none_active)
 
       self.vbox.show_all()
 
