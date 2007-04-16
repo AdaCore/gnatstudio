@@ -840,6 +840,14 @@ package Src_Editor_Buffer is
    --  Whether the buffer should monitor the next text insertion and strip any
    --  CRs.
 
+   procedure Get_Iter_At_Screen_Position
+     (Buffer : access Source_Buffer_Record;
+      Iter   : out Gtk.Text_Iter.Gtk_Text_Iter;
+      Line   : Editable_Line_Type;
+      Column : Visible_Column_Type);
+   --  Return the iter at position (Line, Column), tab expansion included.
+   --  If Line is not in the text, return the Iter at beginning of text.
+
 private
 
    procedure Set_Cursor_Position
@@ -856,14 +864,6 @@ private
    --  this procedure. An incorrect position will cause an Assertion_Failure
    --  when compiled with assertion checks, or an undefined behavior otherwise.
    --  This is obsolete, Set_Cursor_Position above should be called.
-
-   procedure Get_Iter_At_Screen_Position
-     (Buffer : access Source_Buffer_Record;
-      Iter   : out Gtk.Text_Iter.Gtk_Text_Iter;
-      Line   : Editable_Line_Type;
-      Column : Visible_Column_Type);
-   --  Return the iter at position (Line, Column), tab expansion included.
-   --  If Line is not in the text, return the Iter at beginning of text.
 
    procedure Get_Iter_At_Screen_Position
      (Buffer : access Source_Buffer_Record;
