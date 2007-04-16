@@ -1,5 +1,14 @@
 Known Problems fixed in GPS 4.2.0
 
+- G413-018 Python/Shell commands related to EditorView not working
+  Problem:    Python/Shell commands related to the class EditorView, for
+              example EditorView.goto or EditorView.cursor, might not return
+              the right result when working on editors that contain folded
+              blocks or "blank" lines (such as editors involved in Visual
+              Comparisons).
+  Workaround: Unfold all blocks and remove comparisons when using such commands
+              on editors.
+
 - G316-005 Auto-casing is confused by string quotes characters constants.
   Problem:    When a string quote character is used ('"' in Ada or C), and
               a string constant is following this character constant, then GPS
