@@ -2333,7 +2333,7 @@ package body Src_Editor_Module.Shell is
            (Inst,
             Buffer,
             Line   => Editable_Line_Type (Integer'(Nth_Arg (Data, 3))),
-            Offset => Visible_Column_Type (Integer'(Nth_Arg (Data, 4))) - 1);
+            Offset => Visible_Column_Type (Integer'(Nth_Arg (Data, 4))));
 
       elsif Command = Comparison_Method then
          Get_Location (Iter, Data, 1, Iter, Success);
