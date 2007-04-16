@@ -199,12 +199,20 @@ class gnatCheck:
       self.init_gnatcheck_cmd ()
       if self.gnatcheckCmd == "":
          return
-      cmd = self.gnatcheckCmd + " -P" + GPS.Project.root().file().name() + " -dd " + file.name() + " -rules "
+      # launch gnat check with current project
+      cmd = self.gnatcheckCmd + " -P" + GPS.Project.root().file().name()
+      # define the scenario variables
+      scenario = GPS.Project.scenario_variables()
+      for i, j in scenario.iteritems():
+         cmd += " -X" + i + "=" + j
+      # use progress, specify the file name to check
+      cmd +=  " -dd " + file.name()
+      # retrieve the rules to check, from project
       opts = GPS.Project.root().get_tool_switches_as_string ("GnatCheck")
       if opts == "":
          print "Gnat check: no rules to check"
          return
-      cmd += opts
+      cmd += " -rules " + opts
 
       # clear the Checks category in the Locations view
       if GPS.Locations.list_categories().count (self.locations_string) > 0:
