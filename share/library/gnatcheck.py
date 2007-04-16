@@ -1,7 +1,7 @@
 #
 #  gnatcheck Python support for GPS integration
 #
-import GPS, os, os.path, re
+import GPS, os, os.path, re, string
 try:
    import gtk, gobject
 except ImportError:
@@ -13,6 +13,7 @@ def locate_exec_on_path (prog):
     for file in [os.path.join(dir,prog) for dir in alldirs]:
         if os.path.isfile(file) or os.path.isfile(file+".exe"):
             return file
+    return ""
 
 # Dialog allowing selection of the different gnatcheck rules
 class rulesDialog (gtk.Dialog):
@@ -144,8 +145,14 @@ class gnatCheck:
    def init_gnatcheck_cmd (self):
       driver = GPS.Project.root().get_attribute_as_string("gnat", "ide")
       if driver == "":
-        driver = "gnat"
-      self.gnatcheckCmd = driver + " check"
+         driver = "gnat"
+      if not os.path.isfile (driver):
+         driver = locate_exec_on_path (driver)
+      if driver == "":
+         GPS.Console ("Messages").write ("Error: 'gnat' is not in the path")
+         self.gnatcheckCmd = ""
+      else:
+         self.gnatcheckCmd = driver + " check"
 
    def add_rule (self, process, matched, unmatched):
       if re.search ("GNAT", matched):
@@ -168,9 +175,10 @@ class gnatCheck:
       self.init_gnatcheck_cmd ()
       self.rules = []
       self.rules_analysis_finished = False
-      process = GPS.Process (self.gnatcheckCmd + " -h", "^.+$",
-                             on_match=self.add_rule)
-      process.get_result()
+      if self.gnatcheckCmd != "":
+         process = GPS.Process (self.gnatcheckCmd + " -h", "^.+$",
+                                on_match=self.add_rule)
+         process.get_result()
       return self.rules_list
 
    def output (self, process, matched, unmatched):
@@ -180,6 +188,8 @@ class gnatCheck:
 
    def check_file (self, file):
       self.init_gnatcheck_cmd ()
+      if self.gnatcheckCmd == "":
+         return
       cmd = self.gnatcheckCmd + " -P" + GPS.Project.root().file().name() + " -dd " + file.name() + " -rules "
       opts = GPS.Project.root().get_tool_switches_as_string ("GnatCheck")
       if opts == "":
