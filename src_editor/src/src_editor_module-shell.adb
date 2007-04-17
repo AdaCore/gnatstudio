@@ -471,6 +471,8 @@ package body Src_Editor_Module.Shell is
                end if;
 
             else
+               --  ??? temporarily commented out, since it breaks ctrl-k in
+               --  Emacs mode (F707-004)
                --  if not (Is_End (Iter1) or else Ends_Line (Iter1)) then
                if not Is_End (Iter1) then
                   Forward_Char (Iter1, Success);
@@ -2060,19 +2062,7 @@ package body Src_Editor_Module.Shell is
          Get_Buffer (Buffer, Data, 1);
          Get_Locations (Iter, Iter2, Buffer, Data, 2, 3);
          if Buffer /= null then
-            declare
-               Line_Begin, Line_End     : Editable_Line_Type;
-               Column_Begin, Column_End : Character_Offset_Type;
-            begin
-               Get_Iter_Position (Buffer, Iter, Line_Begin, Column_Begin);
-               Get_Iter_Position (Buffer, Iter2, Line_End, Column_End);
-
-               Set_Return_Value
-                 (Data, Get_Chars
-                    (Buffer,
-                     Line_Begin, Column_Begin,
-                     Line_End, Column_End));
-            end;
+            Set_Return_Value (Data, Get_Text (Buffer, Iter, Iter2));
          end if;
 
       elsif Command = "insert" then
@@ -2189,10 +2179,8 @@ package body Src_Editor_Module.Shell is
             if Get_Writable (Buffer) then
                Select_Region
                  (Buffer,
-                  Start_Line   => Get_Line (Iter),
-                  Start_Column => Get_Line_Offset (Iter),
-                  End_Line     => Get_Line (Iter2),
-                  End_Column   => Get_Line_Offset (Iter2));
+                  Cursor_Iter  => Iter2,
+                  Bound_Iter   => Iter);
                if not Do_Refill (Buffer) then
                   Set_Error_Msg (Data, -"Error while refilling buffer");
                end if;
@@ -2352,7 +2340,14 @@ package body Src_Editor_Module.Shell is
       elsif Command = "line" then
          Get_Location (Iter, Data, 1, Iter, Success);
          if Success then
-            Set_Return_Value (Data, Integer (Get_Line (Iter)) + 1);
+            declare
+               Line : Editable_Line_Type;
+               Col  : Character_Offset_Type;
+            begin
+               Get_Iter_Position
+                 (Source_Buffer (Get_Buffer (Iter)), Iter, Line, Col);
+               Set_Return_Value (Data, Integer (Line));
+            end;
          else
             Set_Error_Msg (Data, -"Invalid location");
          end if;
@@ -2360,7 +2355,14 @@ package body Src_Editor_Module.Shell is
       elsif Command = "column" then
          Get_Location (Iter, Data, 1, Iter, Success);
          if Success then
-            Set_Return_Value (Data, Integer (Get_Line_Offset (Iter)) + 1);
+            declare
+               Line : Editable_Line_Type;
+               Col  : Visible_Column_Type;
+            begin
+               Get_Iter_Position
+                 (Source_Buffer (Get_Buffer (Iter)), Iter, Line, Col);
+               Set_Return_Value (Data, Integer (Col));
+            end;
          else
             Set_Error_Msg (Data, -"Invalid location");
          end if;
