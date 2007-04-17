@@ -29,6 +29,15 @@ Known Problems fixed in GPS 4.2.0
               process is running.
   Workaround: Refer to the Task Manager to determine activity status of GPS.
 
+- G119-006 Extra line reformatted with the "align" plugin
+  Problem:    When the low bound of the selection is located before the
+              first character of a line, this line gets reformatted although
+              this is not very intuitive.
+  Workaround: Be sure the cursor in on the last line you want to reformat.
+              You can move the cursor with the keyboard arrows (while pressing
+              SHIFT to keep the current selection) to make sure it is not
+              actually located on the following line.
+
 - DB25-010 Symbols not loaded when initializing cross debugger
   Problem:    When using GPS in a remote debugging configuration (ie, with the
               debugger running on a machine other than the executable being
