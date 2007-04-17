@@ -2467,8 +2467,16 @@ package body Src_Editor_Module.Shell is
          Name_Parameters (Data, (1 => Count_Cst'Access));
          Get_Location (Iter, Data, 1, Iter, Success);
          if Success then
-            Forward_Chars
-              (Iter, Gint (Integer'(Nth_Arg (Data, 2, 1))), Success);
+            declare
+               Chars : constant Gint := Gint (Integer'(Nth_Arg (Data, 2, 1)));
+            begin
+               if Chars >= 0 then
+                  Forward_Chars (Iter, Chars, Success);
+               else
+                  Backward_Chars (Iter, -Chars, Success);
+               end if;
+            end;
+
             Set_Return_Value
               (Data, Create_Editor_Location (Get_Script (Data), Iter));
          else
@@ -2531,7 +2539,7 @@ package body Src_Editor_Module.Shell is
 
       elsif Command = "starts_word" then
          Get_Location (Iter, Data, 1, Iter, Success);
-         if not Success then
+         if Success then
             Set_Return_Value (Data, Src_Editor_Buffer.Starts_Word (Iter));
          else
             Set_Error_Msg (Data, -"Invalid location");
