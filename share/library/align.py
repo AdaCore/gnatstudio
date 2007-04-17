@@ -105,6 +105,9 @@ def range_align_on (top, bottom, sep, replace_with=None):
       length in the editor, that is they will also be aligned.
    """
 
+   if bottom.beginning_of_line() == bottom:
+      bottom = bottom.forward_char(-1) 
+
    if not replace_with:
       replace_with = sep
    sep_re = re.compile (sep)
