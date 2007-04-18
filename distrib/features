@@ -31,6 +31,14 @@ G213-014 Add support for Project Explorer filters (2007-02-20)
   designed to filter out version control specific directories
   like CVS or .svn for example.
 
+F925-002 Short tiltes for floating window
+
+  A new preference has been added to control titles used for floating windows.
+  It is now possible to specify whether short or normal titles should be used.
+  In particular, base file names can be used for editors instead of full names.
+  The preference can be changed in the Windows section of the Preferences
+  dialog.
+
 F716-001 Improve block navigation support (2007-03-18)
 
   Now the "Start Of Statement" or "End Of Statement" actions move to
