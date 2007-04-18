@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2006                       --
+--                     Copyright (C) 2002-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -320,11 +320,12 @@ package body Codefix.Ada_Tools is
       while J <= Natural (Position) loop
          case Text (J) is
             when '"' =>
-               if Is_In_String
-                 and then J < Natural (Position)
-                 and then Text (J + 1) /= '"'
-               then
-                  Is_In_String := False;
+               if Is_In_String then
+                  if J < Natural (Position) and then Text (J + 1) = '"' then
+                     J := J + 1;
+                  else
+                     Is_In_String := False;
+                  end if;
                else
                   Is_In_String := True;
                end if;
