@@ -38,6 +38,12 @@ Known Problems fixed in GPS 4.2.0
               SHIFT to keep the current selection) to make sure it is not
               actually located on the following line.
 
+- F907-001 Code fixing doesn't work with double quotes
+  Problem:    When strings involves double quotes, the autofix process is
+              sometimes unable to locate precisely where the fix has to be
+              done.
+  Workaround: Manually fix the error. 
+
 - DB25-010 Symbols not loaded when initializing cross debugger
   Problem:    When using GPS in a remote debugging configuration (ie, with the
               debugger running on a machine other than the executable being
