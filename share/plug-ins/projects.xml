@@ -128,6 +128,7 @@
        <choice>powerpc-elf-gdb</choice>
        <choice>powerpc-eabispe-gdb</choice>
        <choice>i586-wrs-vxworks-gdb</choice>
+       <choice>i586-wrs-vxworks6-gdb</choice>
        <choice>m68k-wrs-vxworks-gdb</choice>
        <choice>mips-wrs-vxworks-gdb</choice>
        <choice>sparc64-wrs-vxworks-gdb</choice>
