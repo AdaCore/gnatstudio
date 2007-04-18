@@ -835,9 +835,12 @@ package body Remote_Views is
    is
       New_Build_Server : constant String := Get_Text
         (Get_Entry (User.View.Servers_Combo (Build_Server)));
+      --  ??? We used to have a single assignment for Prj and Project below,
+      --  but this caused a memory corruption (codegen bug ?), so work around
+      --  it for now
       Prj              : constant VFS.Virtual_File :=
                            Project_Path (Get_Project (User.View.Kernel));
-      Project          : constant String := Prj.Full_Name.all;
+      Project          : constant String := Full_Name (Prj).all;
       Reasons          : Ada.Strings.Unbounded.Unbounded_String;
       Failure          : Boolean := False;
       Res              : Message_Dialog_Buttons;
