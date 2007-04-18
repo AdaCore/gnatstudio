@@ -8553,6 +8553,11 @@ If True, then all the windows will be floating by default, i.e. be under the
 control of your system (Windows) or your window manager (Unix machines). This
 replaces the MDI.
 
+@item Short titles for floats
+@cindex float
+If True, all floating windows will have a short title. In particular, base
+file names will be used for editors instead of full names.
+
 @item Background color
 @cindex color
 Color to use for the background of the MDI.
