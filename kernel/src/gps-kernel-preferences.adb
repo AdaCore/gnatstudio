@@ -447,6 +447,16 @@ package body GPS.Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (MDI_All_Floating), -"Windows");
 
+      MDI_Float_Short_Title := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "MDI-Float-Short-Title",
+         Default => False,
+         Blurb   =>
+           -("If enabled, all floating windows will have a short title. In"
+           & " particular, base file names will be used for editors."),
+         Nick    => -"Short titles for floats"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (MDI_Float_Short_Title), -"Windows");
+
       MDI_Background_Color := Param_Spec_Color (Gnew_Color
         (Name    => "MDI-Background-Color",
          Default => "#666666",
