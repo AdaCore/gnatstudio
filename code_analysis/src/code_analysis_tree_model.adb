@@ -68,9 +68,9 @@ package body Code_Analysis_Tree_Model is
       Set (Model, Iter, Pix_Col, C_Proxy
            (Code_Analysis_Module_ID.Subp_Pixbuf));
       Set (Model, Iter, Name_Col, String (Subp_Node.Name.all));
-      GType_Subprogram.Set (Model, Iter, Node_Col, Subp_Node.all'Access);
-      GType_File.Set (Model, Iter, File_Col, File_Node.all'Access);
-      GType_Project.Set (Model, Iter, Prj_Col, Prj_Node.all'Access);
+      Subprogram_Set.Set (Model, Iter, Node_Col, Subp_Node.all'Access);
+      File_Set.Set (Model, Iter, File_Col, File_Node.all'Access);
+      Project_Set.Set (Model, Iter, Prj_Col, Prj_Node.all'Access);
       Fill_Iter (Model, Iter, Subp_Node.Analysis_Data);
    end Fill_Iter;
 
@@ -89,9 +89,9 @@ package body Code_Analysis_Tree_Model is
       Set (Model, Iter, Pix_Col, C_Proxy
            (Code_Analysis_Module_ID.Subp_Pixbuf));
       Set (Model, Iter, Name_Col, String (Subp_Node.Name.all));
-      GType_Subprogram.Set (Model, Iter, Node_Col, Subp_Node.all'Access);
-      GType_File.Set (Model, Iter, File_Col, File_Node.all'Access);
-      GType_Project.Set (Model, Iter, Prj_Col, Prj_Node.all'Access);
+      Subprogram_Set.Set (Model, Iter, Node_Col, Subp_Node.all'Access);
+      File_Set.Set (Model, Iter, File_Col, File_Node.all'Access);
+      Project_Set.Set (Model, Iter, Prj_Col, Prj_Node.all'Access);
       Fill_Iter (Model, Iter, Subp_Node.Analysis_Data);
    end Fill_Iter_With_Subprograms;
 
@@ -118,9 +118,9 @@ package body Code_Analysis_Tree_Model is
            (Code_Analysis_Module_ID.File_Pixbuf));
       Gtk.Tree_Store.Set
         (Model, Iter, Name_Col, VFS.Base_Name (File_Node.Name));
-      GType_File.Set (Model, Iter, Node_Col, File_Node.all'Access);
-      GType_File.Set (Model, Iter, File_Col, File_Node.all'Access);
-      GType_Project.Set (Model, Iter, Prj_Col, Prj_Node.all'Access);
+      File_Set.Set (Model, Iter, Node_Col, File_Node.all'Access);
+      File_Set.Set (Model, Iter, File_Col, File_Node.all'Access);
+      Project_Set.Set (Model, Iter, Prj_Col, Prj_Node.all'Access);
       Fill_Iter (Model, Iter, File_Node.Analysis_Data);
 
       for J in Sort_Arr'Range loop
@@ -150,9 +150,9 @@ package body Code_Analysis_Tree_Model is
            (Code_Analysis_Module_ID.File_Pixbuf));
       Gtk.Tree_Store.Set
         (Model, Iter, Name_Col, VFS.Base_Name (File_Node.Name));
-      GType_File.Set (Model, Iter, Node_Col, File_Node.all'Access);
-      GType_File.Set (Model, Iter, File_Col, File_Node.all'Access);
-      GType_Project.Set (Model, Iter, Prj_Col, Prj_Node.all'Access);
+      File_Set.Set (Model, Iter, Node_Col, File_Node.all'Access);
+      File_Set.Set (Model, Iter, File_Col, File_Node.all'Access);
+      Project_Set.Set (Model, Iter, Prj_Col, Prj_Node.all'Access);
       Fill_Iter (Model, Iter, File_Node.Analysis_Data);
    end Fill_Iter_With_Files;
 
@@ -204,7 +204,7 @@ package body Code_Analysis_Tree_Model is
            (Code_Analysis_Module_ID.Project_Pixbuf));
       Gtk.Tree_Store.Set (Model, Iter, Name_Col,
            UTF8_String (String'(Project_Name (Prj_Node.Name))));
-      GType_Project.Set (Model, Iter, Node_Col, Prj_Node.all'Access);
+      Project_Set.Set (Model, Iter, Node_Col, Prj_Node.all'Access);
       Fill_Iter (Model, Iter, Prj_Node.Analysis_Data);
 
       for J in Sort_Arr'Range loop

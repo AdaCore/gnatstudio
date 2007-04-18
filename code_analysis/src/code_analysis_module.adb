@@ -54,7 +54,7 @@ with Projects.Registry;          use Projects.Registry;
 with Language_Handlers;          use Language_Handlers;
 with Language;                   use Language;
 with Language.Tree;              use Language.Tree;
-with Language.Tree.Database;     use Language.Tree.Database;
+with Language.Tree.Database;
 with Entities;                   use Entities;
 with Code_Coverage;              use Code_Coverage;
 with Code_Analysis_Tree_Model;   use Code_Analysis_Tree_Model;
@@ -295,6 +295,7 @@ package body Code_Analysis_Module is
       Cov_File     : VFS.Virtual_File;
       Project_Node : Project_Access)
    is
+      use Language.Tree.Database;
       File_Contents : GNAT.Strings.String_Access := Read_File (Cov_File);
       File_Node     : constant Code_Analysis.File_Access :=
                         Get_Or_Create (Project_Node, Src_File);
@@ -1209,7 +1210,7 @@ package body Code_Analysis_Module is
      (View  : access Gtk_Widget_Record'Class;
       Event : Gdk_Event) return Boolean
    is
-      use GType_File;
+      use Code_Analysis_Tree_Model.File_Set;
       V     : constant Code_Analysis_View := Code_Analysis_View (View);
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_Tree_Model;
@@ -1221,7 +1222,7 @@ package body Code_Analysis_Module is
 
          declare
             Node : constant Node_Access := Code_Analysis.Node_Access
-              (GType_Node.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
+              (Node_Set.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
          begin
             if Node.all in Code_Analysis.Project'Class then
                --  So we are on a project node
@@ -1254,7 +1255,7 @@ package body Code_Analysis_Module is
      (Model : Gtk_Tree_Model; Iter : Gtk_Tree_Iter)
    is
       File_Node : constant File_Access := File_Access
-        (GType_File.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
+        (File_Set.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
    begin
       Open_File_Editor
         (Code_Analysis_Module_ID.Kernel, File_Node.Name);
@@ -1268,9 +1269,9 @@ package body Code_Analysis_Module is
      (Model : Gtk_Tree_Model; Iter : Gtk_Tree_Iter)
    is
       File_Node : constant File_Access := File_Access
-        (GType_File.Get (Gtk_Tree_Store (Model), Iter, File_Col));
+        (File_Set.Get (Gtk_Tree_Store (Model), Iter, File_Col));
       Subp_Node : constant Subprogram_Access := Subprogram_Access
-        (GType_Subprogram.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
+        (Subprogram_Set.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
    begin
       Open_File_Editor
         (Code_Analysis_Module_ID.Kernel,
@@ -1647,7 +1648,7 @@ package body Code_Analysis_Module is
       Iter     : Gtk_Tree_Iter;
    begin
       if Message_Dialog
-        ((-"Remove data of ") & Project_Name (Prj_Node.Name) & (-"?"),
+        ((-"Remove data of project ") & Project_Name (Prj_Node.Name) & (-"?"),
          Confirmation, Button_Yes or Button_No,
          Justification => Justify_Left,
          Title         => (-"Remove ") & Project_Name (Prj_Node.Name) & (-"?"))
@@ -1835,7 +1836,7 @@ package body Code_Analysis_Module is
 
          declare
             Node : constant Node_Access := Code_Analysis.Node_Access
-              (GType_Node.Get (Gtk_Tree_Store (View.Model), Iter, Node_Col));
+              (Node_Set.Get (Gtk_Tree_Store (View.Model), Iter, Node_Col));
          begin
             if Node.all in Code_Analysis.Project'Class then
                --  So we are on a project node
@@ -1846,7 +1847,7 @@ package body Code_Analysis_Module is
                --  So we are on a file node
                --  Context receive project and file information
                Prj_Node := Project_Access
-                 (GType_Project.Get
+                 (Project_Set.Get
                     (Gtk_Tree_Store (View.Model), Iter, Prj_Col));
                Set_File_Information
                  (Context,
@@ -1856,10 +1857,10 @@ package body Code_Analysis_Module is
                --  So we are on a subprogram node
                --  Context receive project, file and entity information
                File_Node := Code_Analysis.File_Access
-                 (GType_File.Get (Gtk_Tree_Store (View.Model),
+                 (File_Set.Get (Gtk_Tree_Store (View.Model),
                   Iter, File_Col));
                Prj_Node  := Project_Access
-                 (GType_Project.Get (Gtk_Tree_Store (View.Model),
+                 (Project_Set.Get (Gtk_Tree_Store (View.Model),
                   Iter, Prj_Col));
                Set_File_Information (Context, File_Node.Name, Prj_Node.Name);
                Set_Entity_Information
