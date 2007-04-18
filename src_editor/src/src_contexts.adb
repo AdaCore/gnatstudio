@@ -1538,7 +1538,7 @@ package body Src_Contexts is
                   Context.End_Column := Context.Begin_Column;
                else
                   Context.Begin_Line := Context.End_Line;
-                  Context.Begin_Column := Context.End_Column;
+                  Context.Begin_Column := Context.End_Column - 1;
                end if;
 
                Set_Cursor_Position
@@ -1653,14 +1653,18 @@ package body Src_Contexts is
       Search_Backward : Boolean;
       Give_Focus      : Boolean) return Boolean
    is
-      Child   : constant MDI_Child := Find_Current_Editor (Kernel);
+      Child : constant MDI_Child := Find_Current_Editor (Kernel);
+
+      Found : Boolean;
    begin
       if Child = null then
          return False;
       end if;
 
-      return Replace_From_Editor
+      Found := Replace_From_Editor
         (Context, Kernel, Replace_String, Search_Backward, Give_Focus, Child);
+
+      return not Context.All_Occurrences and then Found;
    exception
       when E : others =>
          Trace (Exception_Handle,
