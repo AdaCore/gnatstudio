@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                     Copyright (C) 2001-2007                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -454,6 +454,9 @@ package body GPS.Main_Window is
 
       Set_All_Floating_Mode
         (Get_MDI (Kernel), Get_Pref (MDI_All_Floating));
+
+      Use_Short_Titles_For_Floats
+        (Get_MDI (Kernel), Get_Pref (MDI_Float_Short_Title));
    end Preferences_Changed;
 
    ----------------
