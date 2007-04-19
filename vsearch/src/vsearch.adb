@@ -642,8 +642,9 @@ package body Vsearch is
 
          Result := Execute_Again;
       else
-         Insert (Data.Vsearch.Kernel,
-                 -"Finished replacing the string in all the files");
+         Insert
+           (Data.Vsearch.Kernel,
+            Get_Terminate_Message (Data.Context, Replace));
          Free (Data.Context);
          Free (Data.Replace_With);
          Set_Sensitive (Data.Vsearch.Search_Next_Button, True);
