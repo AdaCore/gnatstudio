@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                     Copyright (C) 2001-2007                       --
 --                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -114,6 +114,11 @@ package Src_Contexts is
    --  If Dialog_On_Failure is true, then a dialog is displayed on the screen
    --  in case of failure.
 
+   overriding
+   function Get_Terminate_Message
+     (Context : access Current_File_Context;
+      Kind    : Operation_Kind) return String;
+
    ----------------------------
    -- Abstract files context --
    ----------------------------
@@ -190,6 +195,11 @@ package Src_Contexts is
    --  testsuite.
    --  No list of files is set, you need to call Set_File_List appropriately
 
+   overriding
+   function Get_Terminate_Message
+     (Context : access Files_Context;
+      Kind    : Operation_Kind) return String;
+
    --------------------------------
    -- Files From Project context --
    --------------------------------
@@ -225,6 +235,11 @@ package Src_Contexts is
    --  Same as above, but suitable for use outside the GUI.
    --  No file is set, you need to call Set_File_List explicitely
 
+   overriding
+   function Get_Terminate_Message
+     (Context : access Files_Project_Context;
+      Kind    : Operation_Kind) return String;
+
    ------------------------
    -- Open Files context --
    ------------------------
@@ -251,6 +266,11 @@ package Src_Contexts is
       Extra_Information : Gtk.Widget.Gtk_Widget) return Search_Context_Access;
    --  Factory for "Open Files".
    --  The list of files is automatically set to the currently opend files
+
+   overriding
+   function Get_Terminate_Message
+     (Context : access Open_Files_Context;
+      Kind    : Operation_Kind) return String;
 
 private
 

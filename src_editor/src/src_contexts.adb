@@ -1125,6 +1125,24 @@ package body Src_Contexts is
       return Context;
    end Files_From_Project_Factory;
 
+   ---------------------------
+   -- Get_Terminate_Message --
+   ---------------------------
+
+   function Get_Terminate_Message
+     (Context : access Files_Project_Context;
+      Kind    : Operation_Kind) return String
+   is
+      pragma Unreferenced (Context);
+   begin
+      case Kind is
+         when Replace =>
+            return -"Finished replacing the string in files from project";
+         when Search =>
+            return "";
+      end case;
+   end Get_Terminate_Message;
+
    ------------------------
    -- Open_Files_Factory --
    ------------------------
@@ -1151,6 +1169,24 @@ package body Src_Contexts is
       Set_File_List (Context, Open_File_List);
       return Search_Context_Access (Context);
    end Open_Files_Factory;
+
+   ---------------------------
+   -- Get_Terminate_Message --
+   ---------------------------
+
+   function Get_Terminate_Message
+     (Context : access Open_Files_Context;
+      Kind    : Operation_Kind) return String
+   is
+      pragma Unreferenced (Context);
+   begin
+      case Kind is
+         when Replace =>
+            return -"Finished replacing the string in open files";
+         when Search =>
+            return "";
+      end case;
+   end Get_Terminate_Message;
 
    -------------------
    -- Files_Factory --
@@ -1209,6 +1245,24 @@ package body Src_Contexts is
       when Error_In_Regexp =>
          return null;
    end Files_Factory;
+
+   ---------------------------
+   -- Get_Terminate_Message --
+   ---------------------------
+
+   function Get_Terminate_Message
+     (Context : access Files_Context;
+      Kind    : Operation_Kind) return String
+   is
+      pragma Unreferenced (Context);
+   begin
+      case Kind is
+         when Replace =>
+            return -"Finished replacing the string in selected files";
+         when Search =>
+            return "";
+      end case;
+   end Get_Terminate_Message;
 
    ----------------------
    -- Search_In_Editor --
@@ -1299,6 +1353,24 @@ package body Src_Contexts is
          Context.End_Column := Context.Begin_Column;
       end if;
    end Search_In_Editor;
+
+   ---------------------------
+   -- Get_Terminate_Message --
+   ---------------------------
+
+   function Get_Terminate_Message
+     (Context : access Current_File_Context;
+      Kind    : Operation_Kind) return String
+   is
+      pragma Unreferenced (Context);
+   begin
+      case Kind is
+         when Replace =>
+            return -"Finished replacing the string in current file";
+         when Search =>
+            return "";
+      end case;
+   end Get_Terminate_Message;
 
    ----------------------
    -- Auxiliary_Search --
