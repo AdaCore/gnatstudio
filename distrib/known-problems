@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.1.1
 
+- G418-029 Bad indentation of 'if ... then abort' construct
+  Problem:    GPS does not indent correctly the following construct:
+              if xxx then
+                 abort T;
+              end if;
+  Workaround: Fix the indentation by hand, by adding an extra space
+
 - G328-021 Problem displaying variant record in debugger
   Problem:    GPS is not able to display variables of a type with a
               variant record having an enumerated type discriminant e.g.
