@@ -315,13 +315,14 @@ package body Project_Viewers is
    --  name has already been set on that line
 
    procedure Parsing_Switches_XML
-     (Kernel            : access Kernel_Handle_Record'Class;
-      Page              : Switches_Editor_Page;
-      Table             : access Gtk_Table_Record'Class;
-      Lines             : Natural;
-      Cols              : Natural;
-      Node              : Node_Ptr;
-      Default_Separator : String);
+     (Kernel               : access Kernel_Handle_Record'Class;
+      Page                 : Switches_Editor_Page;
+      Table                : access Gtk_Table_Record'Class;
+      Lines                : Natural;
+      Cols                 : Natural;
+      Node                 : Node_Ptr;
+      Default_Separator    : String;
+      Use_Scrolled_Windows : Boolean);
    --  Subprogram for Parse_Switches_Page, this is used to handle both the
    --  <switches> and the <popup> tags
 
@@ -1838,21 +1839,25 @@ package body Project_Viewers is
    --------------------------
 
    procedure Parsing_Switches_XML
-     (Kernel            : access Kernel_Handle_Record'Class;
-      Page              : Switches_Editor_Page;
-      Table             : access Gtk_Table_Record'Class;
-      Lines             : Natural;
-      Cols              : Natural;
-      Node              : Node_Ptr;
-      Default_Separator : String)
+     (Kernel               : access Kernel_Handle_Record'Class;
+      Page                 : Switches_Editor_Page;
+      Table                : access Gtk_Table_Record'Class;
+      Lines                : Natural;
+      Cols                 : Natural;
+      Node                 : Node_Ptr;
+      Default_Separator    : String;
+      Use_Scrolled_Windows : Boolean)
    is
       type Frame_Array is array (1 .. Lines, 1 .. Cols) of Gtk_Frame;
       type Box_Array   is array (1 .. Lines, 1 .. Cols) of Gtk_Box;
+      type S_Window_Array is array (1 .. Lines, 1 .. Cols) of
+        Gtk_Scrolled_Window;
       type Size_Group_Array is array (1 .. Lines, 1 .. Cols) of Gtk_Size_Group;
 
-      Frames : Frame_Array;
-      Boxes  : Box_Array;
-      Sizes  : Size_Group_Array;
+      Frames   : Frame_Array;
+      Boxes    : Box_Array;
+      S_Window : S_Window_Array;
+      Sizes    : Size_Group_Array;
 
       procedure Coordinates_From_Node
         (N : Node_Ptr; Line, Col : out Natural);
@@ -2113,6 +2118,8 @@ package body Project_Viewers is
                        Safe_Value (Get_Attribute (N, "lines", "1"));
          Cols      : constant Integer :=
                        Safe_Value (Get_Attribute (N, "columns", "1"));
+         Scrolled_Windows  : constant Boolean := Boolean'Value
+                       (Get_Attribute (N, "use_scrolled_window", "false"));
       begin
          Coordinates_From_Node (N, Line, Col);
          if Label = "" then
@@ -2126,7 +2133,8 @@ package body Project_Viewers is
 
          Gtk_New (Table, Guint (Lines), Guint (Cols), Homogeneous => False);
          Parsing_Switches_XML
-           (Kernel, Page, Table, Lines, Cols, N, Default_Separator);
+           (Kernel, Page, Table, Lines, Cols, N, Default_Separator,
+            Scrolled_Windows);
 
          Pack_Start
            (Boxes (Line, Col), Create_Popup (Label, Table), False, False);
@@ -2339,8 +2347,15 @@ package body Project_Viewers is
             Attach (Table, Frames (L, C), Guint (C - 1), Guint (C),
                     Guint (L - 1), Guint (L));
             Gtk_New_Vbox (Boxes (L, C), False, 0);
-            Add (Frames (L, C), Boxes (L, C));
-
+            if Use_Scrolled_Windows then
+               Gtk_New (S_Window (L, C));
+               Add (Frames (L, C), S_Window (L, C));
+               S_Window (L, C).Set_Policy
+                 (Policy_Automatic, Policy_Automatic);
+               Add_With_Viewport (S_Window (L, C), Boxes (L, C));
+            else
+               Add (Frames (L, C), Boxes (L, C));
+            end if;
             Gtk_New (Sizes (L, C));
          end loop;
       end loop;
@@ -2397,6 +2412,8 @@ package body Project_Viewers is
         (Get_Attribute (Creator.XML_Node, "lines", "1"));
       Cols              : constant Integer := Safe_Value
         (Get_Attribute (Creator.XML_Node, "columns", "1"));
+      Scrolled_Windows  : constant Boolean := Boolean'Value
+        (Get_Attribute (Creator.XML_Node, "use_scrolled_window", "false"));
       Default_Separator : constant String :=
                             Get_Attribute (Creator.XML_Node, "separator", "");
       Page              : Switches_Editor_Page;
@@ -2416,7 +2433,8 @@ package body Project_Viewers is
       end if;
 
       Parsing_Switches_XML
-        (Kernel, Page, Page, Lines, Cols, Creator.XML_Node, Default_Separator);
+        (Kernel, Page, Page, Lines, Cols, Creator.XML_Node,
+         Default_Separator, Scrolled_Windows);
       return Page;
    end Create;
 
