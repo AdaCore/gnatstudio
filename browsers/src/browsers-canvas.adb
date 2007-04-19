@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
+--                      Copyright (C) 2001-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -49,6 +49,7 @@ with Gtk.Hbutton_Box;                   use Gtk.Hbutton_Box;
 with Gtk.Image;                         use Gtk.Image;
 with Gtk.Menu;                          use Gtk.Menu;
 with Gtk.Menu_Item;                     use Gtk.Menu_Item;
+with Gtk.Object;                        use Gtk.Object;
 with Gtk.Scrolled_Window;               use Gtk.Scrolled_Window;
 with Gtk.Stock;                         use Gtk.Stock;
 with Gtk.Style;                         use Gtk.Style;
@@ -347,9 +348,9 @@ package body Browsers.Canvas is
       Parents_Pixmap  : String := Stock_Go_Back;
       Children_Pixmap : String := Stock_Go_Forward)
    is
-      Hook       : Preferences_Hook;
-      Scrolled   : Gtk_Scrolled_Window;
-      Canvas     : Image_Canvas;
+      Hook     : Preferences_Hook;
+      Scrolled : Gtk_Scrolled_Window;
+      Canvas   : Image_Canvas;
    begin
       Gtk.Box.Initialize_Vbox (Browser, Homogeneous => False);
 
@@ -362,7 +363,7 @@ package body Browsers.Canvas is
       Gtkada.Canvas.Initialize (Canvas);
       Browser.Canvas := Interactive_Canvas (Canvas);
 
-      Widget_Callback.Connect (Browser.Canvas, "zoomed", On_Zoom'Access);
+      Widget_Callback.Connect (Browser.Canvas, Signal_Zoomed, On_Zoom'Access);
 
       Add (Scrolled, Browser.Canvas);
       Add_Events (Browser.Canvas, Key_Press_Mask);
@@ -385,14 +386,14 @@ package body Browsers.Canvas is
         (Browser, Stock_Close, Icon_Size_Menu);
 
       Widget_Callback.Object_Connect
-        (Browser, "destroy", Destroyed'Access, Browser);
+        (Browser, Signal_Destroy, Destroyed'Access, Browser);
 
       Widget_Callback.Object_Connect
-        (Browser.Canvas, "realize",
+        (Browser.Canvas, Gtk.Widget.Signal_Realize,
          Widget_Callback.To_Marshaller (Realized'Access), Browser);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
-        (Browser.Canvas, "key_press_event",
+        (Browser.Canvas, Signal_Key_Press_Event,
          Gtkada.Handlers.Return_Callback.To_Marshaller (Key_Press'Access),
          Browser);
 
@@ -561,14 +562,14 @@ package body Browsers.Canvas is
          Add (Button, Image);
          Pack_End (Browser.Toolbar, Button, Expand => False);
          Widget_Callback.Object_Connect
-           (Button, "clicked", Zoom_Out'Access, Browser);
+           (Button, Signal_Clicked, Zoom_Out'Access, Browser);
 
          Gtk_New (Button);
          Gtk_New (Image, Stock_Zoom_In, Icon_Size_Small_Toolbar);
          Add (Button, Image);
          Pack_End (Browser.Toolbar, Button, Expand => False);
          Widget_Callback.Object_Connect
-           (Button, "clicked", Zoom_In'Access, Browser);
+           (Button, Signal_Clicked, Zoom_In'Access, Browser);
       end if;
    end Setup_Default_Toolbar;
 
@@ -682,13 +683,13 @@ package body Browsers.Canvas is
       Menu         : Gtk.Menu.Gtk_Menu)
    is
       pragma Unreferenced (Event_Widget);
-      B          : constant General_Browser := General_Browser (Object);
-      Mitem      : Gtk_Menu_Item;
-      Zooms_Menu : Gtk_Menu;
-      Item       : Canvas_Item;
-      Xr, Yr     : Gint;
+      B            : constant General_Browser := General_Browser (Object);
+      Mitem        : Gtk_Menu_Item;
+      Zooms_Menu   : Gtk_Menu;
+      Item         : Canvas_Item;
+      Xr, Yr       : Gint;
       Xsave, Ysave : Gdouble;
-      Success    : Boolean;
+      Success      : Boolean;
 
    begin
       if Get_Event_Type (Event) in Button_Press .. Button_Release then
@@ -710,13 +711,13 @@ package body Browsers.Canvas is
          end if;
          Append (Menu, Mitem);
          Contextual_Cb.Connect
-           (Mitem, "activate", Toggle_Links'Access,
+           (Mitem, Gtk.Menu_Item.Signal_Activate, Toggle_Links'Access,
             (Browser => B, Item => Item, Zoom => 100));
 
          Gtk_New (Mitem, Label => -"Remove all other items");
          Append (Menu, Mitem);
          Contextual_Cb.Connect
-           (Mitem, "activate", Set_Root'Access,
+           (Mitem, Gtk.Menu_Item.Signal_Activate, Set_Root'Access,
             (Browser => B, Item => Item, Zoom => 100));
 
          Xsave := Get_X (Event);
@@ -733,7 +734,7 @@ package body Browsers.Canvas is
          Gtk_New (Mitem, Label => -"Refresh Layout");
          Append (Menu, Mitem);
          Widget_Callback.Object_Connect
-           (Mitem, "activate", On_Refresh'Access, B);
+           (Mitem, Gtk.Menu_Item.Signal_Activate, On_Refresh'Access, B);
 
          if Get_Orthogonal_Links (Get_Canvas (B)) then
             Gtk_New (Mitem, Label => -"Straight links");
@@ -743,32 +744,32 @@ package body Browsers.Canvas is
 
          Append (Menu, Mitem);
          Widget_Callback.Object_Connect
-           (Mitem, "activate", Toggle_Orthogonal'Access, B);
+           (Mitem, Gtk.Menu_Item.Signal_Activate, Toggle_Orthogonal'Access, B);
 
          Gtk_New (Mitem, Label => -"Export to SVG...");
          Append (Menu, Mitem);
          Widget_Callback.Object_Connect
-           (Mitem, "activate", On_Export_To_SVG'Access, B);
+           (Mitem, Gtk.Menu_Item.Signal_Activate, On_Export_To_SVG'Access, B);
 
          Gtk_New (Mitem, Label => -"Export to PNG...");
          Append (Menu, Mitem);
          Widget_Callback.Object_Connect
-           (Mitem, "activate", On_Export'Access, B);
+           (Mitem, Gtk.Menu_Item.Signal_Activate, On_Export'Access, B);
 
          Gtk_New (Mitem, Label => -"Zoom in");
          Append (Menu, Mitem);
          Widget_Callback.Object_Connect
-           (Mitem, "activate", Zoom_In'Access, B);
+           (Mitem, Gtk.Menu_Item.Signal_Activate, Zoom_In'Access, B);
          Add_Accelerator
-           (Mitem, "activate",
+           (Mitem, Gtk.Menu_Item.Signal_Activate,
             Get_Default_Accelerators (Kernel), GDK_equal, 0, Accel_Visible);
 
          Gtk_New (Mitem, Label => -"Zoom out");
          Append (Menu, Mitem);
          Widget_Callback.Object_Connect
-           (Mitem, "activate", Zoom_Out'Access, B);
+           (Mitem, Gtk.Menu_Item.Signal_Activate, Zoom_Out'Access, B);
          Add_Accelerator
-           (Mitem, "activate",
+           (Mitem, Gtk.Menu_Item.Signal_Activate,
             Get_Default_Accelerators (Kernel), GDK_minus, 0, Accel_Visible);
 
          Gtk_New (Zooms_Menu);
@@ -777,7 +778,7 @@ package body Browsers.Canvas is
             Gtk_New (Mitem, Label => Guint'Image (Zoom_Levels (J)) & '%');
             Append (Zooms_Menu, Mitem);
             Contextual_Cb.Connect
-              (Mitem, "activate", Zoom_Level'Access,
+              (Mitem, Gtk.Menu_Item.Signal_Activate, Zoom_Level'Access,
                (Browser => B,
                 Item    => null,
                 Zoom    => Zoom_Levels (J)));
@@ -791,7 +792,7 @@ package body Browsers.Canvas is
       Gtk_New (Mitem, Label => -"Select all");
       Append (Menu, Mitem);
       Widget_Callback.Object_Connect
-        (Mitem, "activate", On_Select_All'Access, B);
+        (Mitem, Gtk.Menu_Item.Signal_Activate, On_Select_All'Access, B);
    end Default_Browser_Context_Factory;
 
    --------------

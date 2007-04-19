@@ -392,7 +392,7 @@ package body GUI_Utils is
 
          if Menu /= null then
             Contextual_Callback.Connect
-              (Menu, "unmap_event",
+              (Menu, Signal_Unmap_Event,
                Unmap_Menu'Access, Data);
 
             Grab_Focus (Widget);
@@ -438,7 +438,7 @@ package body GUI_Utils is
 
          if Menu /= null then
             Contextual_Callback.Connect
-              (Menu, "unmap_event", Unmap_Menu'Access, Data);
+              (Menu, Signal_Unmap_Event, Unmap_Menu'Access, Data);
 
             Grab_Focus (Widget);
             Show_All (Menu);
@@ -501,12 +501,12 @@ package body GUI_Utils is
       end if;
 
       Contextual_Callback.Connect
-        (Widget, "button_press_event",
+        (Widget, Signal_Button_Press_Event,
          Contextual_Callback.To_Marshaller
            (Button_Press_For_Contextual_Menu'Access),
          (Menu_Create, Menu_Destroy, Gtk_Widget (Widget)));
       Contextual_Callback.Connect
-        (Widget, "key_press_event",
+        (Widget, Signal_Key_Press_Event,
          Contextual_Callback.To_Marshaller
            (Key_Press_For_Contextual_Menu'Access),
          (Menu_Create, Menu_Destroy, Gtk_Widget (Widget)));
@@ -570,7 +570,7 @@ package body GUI_Utils is
 
             if Menu /= null then
                Contextual_Callback.Connect
-                 (Menu, "unmap_event",
+                 (Menu, Signal_Unmap_Event,
                   Unmap_User_Menu'Unrestricted_Access, User);
 
                Grab_Focus (Widget);
@@ -617,7 +617,7 @@ package body GUI_Utils is
 
             if Menu /= null then
                Contextual_Callback.Connect
-                 (Menu, "unmap_event",
+                 (Menu, Signal_Unmap_Event,
                   Unmap_User_Menu'Unrestricted_Access, User);
 
                Grab_Focus (Widget);
@@ -667,7 +667,7 @@ package body GUI_Utils is
          end if;
 
          Contextual_Callback.Connect
-           (Widget, "button_press_event",
+           (Widget, Signal_Button_Press_Event,
             Contextual_Callback.To_Marshaller
               (User_Contextual_Menus.Button_Press_For_Contextual_Menu'
                  Unrestricted_Access),
@@ -675,7 +675,7 @@ package body GUI_Utils is
              Menu_Destroy => Menu_Destroy,
              User         => User));
          Contextual_Callback.Connect
-           (Widget, "key_press_event",
+           (Widget, Signal_Key_Press_Event,
             Contextual_Callback.To_Marshaller
               (User_Contextual_Menus.Key_Press_For_Contextual_Menu'
                  Unrestricted_Access),
@@ -733,7 +733,7 @@ package body GUI_Utils is
       Set_Radio (Renderer, True);
 
       Tree_Model_Callback.Object_Connect
-        (Renderer, "toggled",
+        (Renderer, Signal_Toggled,
          Radio_Callback'Access, Slot_Object => Model, User_Data => Column);
    end Set_Radio_And_Callback;
 
@@ -785,7 +785,7 @@ package body GUI_Utils is
       Column   : Glib.Gint) is
    begin
       Tree_Model_Callback.Object_Connect
-        (Renderer, "edited", Edited_Callback'Access,
+        (Renderer, Signal_Edited, Edited_Callback'Access,
          Slot_Object => Model, User_Data => Column);
    end Set_Editable_And_Callback;
 
@@ -1226,7 +1226,7 @@ package body GUI_Utils is
       Grab_Focus (In_Widget);
 
       Id := Event_Callback.Connect
-        (In_Widget, "key_press_event",
+        (In_Widget, Signal_Key_Press_Event,
          Event_Callback.To_Marshaller (Key_Press_In_Grab'Access),
          User_Data => O);
 
@@ -1784,7 +1784,7 @@ package body GUI_Utils is
             Add_Attribute (Col, Toggle_Render, "active", Gint (N));
 
             Tree_Column_Callback.Connect
-              (Toggle_Render, "toggled",
+              (Toggle_Render, Signal_Toggled,
                Toggle_Callback'Access,
                User_Data => (Gtk_Tree_Model (Model), Gint (N)));
 
@@ -1799,7 +1799,7 @@ package body GUI_Utils is
                  and then Editable_Callback (Integer (ColNum)) /= null
                then
                   Widget_Callback.Object_Connect
-                    (Toggle_Render, "toggled",
+                    (Toggle_Render, Signal_Toggled,
                      Widget_Callback.Handler
                        (Editable_Callback (Integer (ColNum))),
                      Slot_Object => View, After => True);
@@ -1820,14 +1820,14 @@ package body GUI_Utils is
                  (Col, Text_Render, "editable",
                   Editable_Columns (Integer (ColNum)));
                Tree_Model_Callback.Object_Connect
-                 (Text_Render, "edited", Edited_Callback'Access,
+                 (Text_Render, Signal_Edited, Edited_Callback'Access,
                   Slot_Object => Model, User_Data => Gint (N));
 
                if Integer (ColNum) in Editable_Callback'Range
                  and then Editable_Callback (Integer (ColNum)) /= null
                then
                   Widget_Callback.Object_Connect
-                    (Text_Render, "edited",
+                    (Text_Render, Signal_Edited,
                      Widget_Callback.Handler
                        (Editable_Callback (Integer (ColNum))),
                      Slot_Object => View, After => True);

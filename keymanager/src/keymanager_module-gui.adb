@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
---                               G P S                               --
+--                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2003-2006                       --
+--                     Copyright (C) 2003-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -50,6 +50,7 @@ with Gtk.Text_Buffer;         use Gtk.Text_Buffer;
 with Gtk.Text_Iter;           use Gtk.Text_Iter;
 with Gtk.Text_Tag;            use Gtk.Text_Tag;
 with Gtk.Text_View;           use Gtk.Text_View;
+with Gtk.Toggle_Button;       use Gtk.Toggle_Button;
 with Gtk.Tooltips;            use Gtk.Tooltips;
 with Gtk.Tree_Model;          use Gtk.Tree_Model;
 with Gtk.Tree_Model_Filter;   use Gtk.Tree_Model_Filter;
@@ -863,7 +864,8 @@ package body KeyManager_Module.GUI is
       Set_Active (Editor.With_Shortcut_Only, False);
       Pack_Start (Filter_Box, Editor.With_Shortcut_Only, Expand => False);
       Widget_Callback.Object_Connect
-        (Editor.With_Shortcut_Only, "toggled", On_Toggle_Shortcuts_Only'Access,
+        (Editor.With_Shortcut_Only,
+         Gtk.Toggle_Button.Signal_Toggled, On_Toggle_Shortcuts_Only'Access,
          Editor);
 
       Gtk_New (Editor.Flat_List, -"Flat list");
@@ -875,7 +877,8 @@ package body KeyManager_Module.GUI is
       Set_Active (Editor.Flat_List, False);
       Pack_Start (Filter_Box, Editor.Flat_List, Expand => False);
       Widget_Callback.Object_Connect
-        (Editor.Flat_List, "toggled", On_Toggle_Flat_List'Access, Editor);
+        (Editor.Flat_List,
+         Signal_Toggled, On_Toggle_Flat_List'Access, Editor);
 
       --  ??? Will be implemented shortly
 --        Gtk_New_From_Stock (Button, Stock_Find);
@@ -929,16 +932,18 @@ package body KeyManager_Module.GUI is
       Set_Sensitive (Editor.Remove_Button, False);
       Pack_Start (Bbox, Editor.Remove_Button);
       Widget_Callback.Object_Connect
-        (Editor.Remove_Button, "clicked", On_Remove_Key'Access, Editor);
+        (Editor.Remove_Button,
+         Gtk.Button.Signal_Clicked, On_Remove_Key'Access, Editor);
 
       Gtk_New (Editor.Grab_Button, -"Grab");
       Set_Sensitive (Editor.Grab_Button, False);
       Pack_Start (Bbox, Editor.Grab_Button);
       Widget_Callback.Object_Connect
-        (Editor.Grab_Button, "clicked", On_Grab_Key'Access, Editor);
+        (Editor.Grab_Button,
+         Gtk.Button.Signal_Clicked, On_Grab_Key'Access, Editor);
 
       Widget_Callback.Object_Connect
-        (Get_Selection (Editor.View), "changed",
+        (Get_Selection (Editor.View), Gtk.Tree_Selection.Signal_Changed,
          Add_Selection_Changed'Access, Editor);
 
       Gtk_New_Hseparator (Sep);

@@ -31,9 +31,10 @@ with System;                     use System;
 
 with Glib.Object;                use Glib.Object;
 with Glib.Values;
+with Glib.Main;                  use Glib.Main;
 
 with Gtk.Handlers;               use Gtk.Handlers;
-with Glib.Main;                  use Glib.Main;
+with Gtk.Widget;                 use Gtk.Widget;
 
 with Gtkada.MDI;                 use Gtkada.MDI;
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
@@ -213,7 +214,7 @@ package body GPS.Kernel.Timeout is
             Set_Command_Handler (Command.Data.Console, Data_Handler'Access,
                                  Command.Data.all'Address);
             Command.Data.Delete_Id := Object_Return_Callback.Object_Connect
-              (Command.Data.Console, "delete_event",
+              (Command.Data.Console, Gtk.Widget.Signal_Delete_Event,
                Delete_Handler'Access, GObject (Command.Data));
          end if;
 

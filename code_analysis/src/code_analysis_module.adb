@@ -37,6 +37,7 @@ with Gtk.Menu_Item;              use Gtk.Menu_Item;
 with Gtk.Tree_Selection;         use Gtk.Tree_Selection;
 with Gtk.Button;                 use Gtk.Button;
 with Gtk.Label;                  use Gtk.Label;
+with Gtk.Object;                 use Gtk.Object;
 with Gtk.Image;                  use Gtk.Image;
 with Gtkada.MDI;                 use Gtkada.MDI;
 with Gtkada.Handlers;            use Gtkada.Handlers;
@@ -954,7 +955,7 @@ package body Code_Analysis_Module is
             Set_Justify (Error_Label, Justify_Left);
             Gtk_New (Load_Data_Button, -"Load data for all projects");
             Context_And_Instance_CB.Connect
-              (Load_Data_Button, "clicked",
+              (Load_Data_Button, Gtk.Button.Signal_Clicked,
                Context_And_Instance_CB.To_Marshaller
                  (Add_All_Gcov_Project_Info_From_Context'Access),
                Context_And_Instance'
@@ -1042,13 +1043,13 @@ package body Code_Analysis_Module is
          Context_Func    => Context_Func'Access);
       Gtkada.Handlers.Return_Callback.Object_Connect
         (Property.View.Tree,
-         "button_press_event",
+         Signal_Button_Press_Event,
          Gtkada.Handlers.Return_Callback.To_Marshaller
            (On_Double_Click'Access),
          Property.View,
          After => False);
       Context_And_Instance_CB.Connect
-        (Property.View, "destroy", Context_And_Instance_CB.To_Marshaller
+        (Property.View, Signal_Destroy, Context_And_Instance_CB.To_Marshaller
            (On_Destroy'Access), Cont_N_Inst);
       Put (Get_MDI (Code_Analysis_Module_ID.Kernel), Property.Child);
       GPS.Kernel.Scripts.Set_Property
@@ -1801,26 +1802,30 @@ package body Code_Analysis_Module is
 
       Gtk_New (Item, -"Show flat list of files");
       Gtkada.Handlers.Widget_Callback.Object_Connect
-        (Item, "activate", Show_Flat_List_Of_Files'Access, View);
+        (Item, Gtk.Menu_Item.Signal_Activate,
+         Show_Flat_List_Of_Files'Access, View);
       Append (Menu, Item);
       Gtk_New (Item, -"Show flat list of subprograms");
       Gtkada.Handlers.Widget_Callback.Object_Connect
-        (Item, "activate", Show_Flat_List_Of_Subprograms'Access, View);
+        (Item, Gtk.Menu_Item.Signal_Activate,
+         Show_Flat_List_Of_Subprograms'Access, View);
       Append (Menu, Item);
 
       if not Has_Child (View.Model, Iter) then
          Gtk_New (Item, -"Show full tree");
          Gtkada.Handlers.Widget_Callback.Object_Connect
-           (Item, "activate", Show_Full_Tree'Access, View);
+           (Item, Gtk.Menu_Item.Signal_Activate, Show_Full_Tree'Access, View);
          Append (Menu, Item);
       else
          Gtk_New (Item, -"Expand all");
          Gtkada.Handlers.Widget_Callback.Object_Connect
-           (Item, "activate", Expand_All_From_Report'Access, View);
+           (Item, Gtk.Menu_Item.Signal_Activate,
+            Expand_All_From_Report'Access, View);
          Append (Menu, Item);
          Gtk_New (Item, -"Collapse all");
          Gtkada.Handlers.Widget_Callback.Object_Connect
-           (Item, "activate", Collapse_All_From_Report'Access, View);
+           (Item, Gtk.Menu_Item.Signal_Activate,
+            Collapse_All_From_Report'Access, View);
          Append (Menu, Item);
       end if;
 
@@ -2012,21 +2017,24 @@ package body Code_Analysis_Module is
          Gtk_New (Item, -"List lines not covered");
          Append (Submenu, Item);
          Context_And_Instance_CB.Connect
-           (Item, "activate", Context_And_Instance_CB.To_Marshaller
+           (Item, Gtk.Menu_Item.Signal_Activate,
+            Context_And_Instance_CB.To_Marshaller
               (List_Lines_Not_Covered_In_Subprogram_From_Context'Access),
             Cont_N_Inst);
          Gtk_New (Item, -"Remove data of " & Entity_Name_Information
                   (Cont_N_Inst.Context));
          Append (Submenu, Item);
          Context_And_Instance_CB.Connect
-           (Item, "activate", Context_And_Instance_CB.To_Marshaller
+           (Item, Gtk.Menu_Item.Signal_Activate,
+            Context_And_Instance_CB.To_Marshaller
               (Remove_Subprogram_From_Menu'Access), Cont_N_Inst);
       else
          Gtk_New (Item, -"Load data for " &
                   Locale_Base_Name (File_Information (Cont_N_Inst.Context)));
          Append (Submenu, Item);
          Context_And_Instance_CB.Connect
-           (Item, "activate", Context_And_Instance_CB.To_Marshaller
+           (Item, Gtk.Menu_Item.Signal_Activate,
+            Context_And_Instance_CB.To_Marshaller
               (Add_Gcov_File_Info_From_Context'Access), Cont_N_Inst);
       end if;
    end Append_Subprogram_Menu_Entries;
@@ -2047,36 +2055,42 @@ package body Code_Analysis_Module is
                   Locale_Base_Name (File_Information (Cont_N_Inst.Context)));
          Append (Submenu, Item);
          Context_And_Instance_CB.Connect
-           (Item, "activate", Context_And_Instance_CB.To_Marshaller
+           (Item, Gtk.Menu_Item.Signal_Activate,
+            Context_And_Instance_CB.To_Marshaller
               (Add_Gcov_File_Info_From_Context'Access), Cont_N_Inst);
          Gtk_New (Item, -"Add coverage annotations");
          Append (Submenu, Item);
          Context_And_Instance_CB.Connect
-           (Item, "activate", Context_And_Instance_CB.To_Marshaller
+           (Item, Gtk.Menu_Item.Signal_Activate,
+            Context_And_Instance_CB.To_Marshaller
               (Add_Coverage_Annotations_From_Context'Access), Cont_N_Inst);
          Gtk_New (Item, -"Remove coverage annotations");
          Append (Submenu, Item);
          Context_And_Instance_CB.Connect
-           (Item, "activate", Context_And_Instance_CB.To_Marshaller
+           (Item, Gtk.Menu_Item.Signal_Activate,
+            Context_And_Instance_CB.To_Marshaller
               (Remove_Coverage_Annotations_From_Context'Access), Cont_N_Inst);
          Gtk_New (Item, -"List lines not covered");
          Append (Submenu, Item);
          Context_And_Instance_CB.Connect
-           (Item, "activate", Context_And_Instance_CB.To_Marshaller
+           (Item, Gtk.Menu_Item.Signal_Activate,
+            Context_And_Instance_CB.To_Marshaller
               (List_Lines_Not_Covered_In_File_From_Context'Access),
             Cont_N_Inst);
          Gtk_New (Item, -"Remove data of " &
                   Base_Name (File_Information (Cont_N_Inst.Context)));
          Append (Submenu, Item);
          Context_And_Instance_CB.Connect
-           (Item, "activate", Context_And_Instance_CB.To_Marshaller
+           (Item, Gtk.Menu_Item.Signal_Activate,
+            Context_And_Instance_CB.To_Marshaller
               (Remove_File_From_Menu'Access), Cont_N_Inst);
       else
          Gtk_New (Item, -"Load data for " &
                   Locale_Base_Name (File_Information (Cont_N_Inst.Context)));
          Append (Submenu, Item);
          Context_And_Instance_CB.Connect
-           (Item, "activate", Context_And_Instance_CB.To_Marshaller
+           (Item, Gtk.Menu_Item.Signal_Activate,
+            Context_And_Instance_CB.To_Marshaller
               (Add_Gcov_File_Info_From_Context'Access), Cont_N_Inst);
       end if;
    end Append_File_Menu_Entries;
@@ -2097,26 +2111,30 @@ package body Code_Analysis_Module is
                   Project_Name (Project_Information (Cont_N_Inst.Context)));
          Append (Submenu, Item);
          Context_And_Instance_CB.Connect
-           (Item, "activate", Context_And_Instance_CB.To_Marshaller
+           (Item, Gtk.Menu_Item.Signal_Activate,
+            Context_And_Instance_CB.To_Marshaller
               (Add_Gcov_Project_Info_From_Context'Access), Cont_N_Inst);
          Gtk_New (Item, -"List lines not covered");
          Append (Submenu, Item);
          Context_And_Instance_CB.Connect
-           (Item, "activate", Context_And_Instance_CB.To_Marshaller
+           (Item, Gtk.Menu_Item.Signal_Activate,
+            Context_And_Instance_CB.To_Marshaller
               (List_Lines_Not_Covered_In_Project_From_Context'Access),
             Cont_N_Inst);
          Gtk_New (Item, -"Remove data of project " &
                   Project_Name (Project_Information (Cont_N_Inst.Context)));
          Append (Submenu, Item);
          Context_And_Instance_CB.Connect
-           (Item, "activate", Context_And_Instance_CB.To_Marshaller
+           (Item, Gtk.Menu_Item.Signal_Activate,
+            Context_And_Instance_CB.To_Marshaller
               (Remove_Project_From_Menu'Access), Cont_N_Inst);
       else
          Gtk_New (Item, -"Load data for project " &
                   Project_Name (Project_Information (Cont_N_Inst.Context)));
          Append (Submenu, Item);
          Context_And_Instance_CB.Connect
-           (Item, "activate", Context_And_Instance_CB.To_Marshaller
+           (Item, Gtk.Menu_Item.Signal_Activate,
+            Context_And_Instance_CB.To_Marshaller
               (Add_Gcov_Project_Info_From_Context'Access), Cont_N_Inst);
       end if;
    end Append_Project_Menu_Entries;
@@ -2190,7 +2208,8 @@ package body Code_Analysis_Module is
                   Project_Name (Project_Information (Cont_N_Inst.Context)));
          Append (Menu, Item);
          Context_And_Instance_CB.Connect
-           (Item, "activate", Context_And_Instance_CB.To_Marshaller
+           (Item, Gtk.Menu_Item.Signal_Activate,
+            Context_And_Instance_CB.To_Marshaller
               (Add_Gcov_Project_Info_From_Context'Access), Cont_N_Inst);
 
          if Has_File_Information (Cont_N_Inst.Context) then
@@ -2199,7 +2218,8 @@ package body Code_Analysis_Module is
                Locale_Base_Name (File_Information (Cont_N_Inst.Context)));
             Append (Menu, Item);
             Context_And_Instance_CB.Connect
-              (Item, "activate", Context_And_Instance_CB.To_Marshaller
+              (Item, Gtk.Menu_Item.Signal_Activate,
+               Context_And_Instance_CB.To_Marshaller
                  (Add_Gcov_File_Info_From_Context'Access), Cont_N_Inst);
          end if;
 
@@ -2233,13 +2253,14 @@ package body Code_Analysis_Module is
       Gtk_New (Item, -"Create code analysis");
       Append (Menu, Item);
       Gtkada.Handlers.Widget_Callback.Connect
-        (Item, "activate", Create_From_Menu'Access);
+        (Item, Gtk.Menu_Item.Signal_Activate, Create_From_Menu'Access);
 
       if Code_Analysis_Module_ID.Instances.Length > 1 then
          Gtk_New (Item, -"Remove all analysis");
          Append (Menu, Item);
          Gtkada.Handlers.Widget_Callback.Connect
-           (Item, "activate", Destroy_All_Instances_From_Menu'Access);
+           (Item, Gtk.Menu_Item.Signal_Activate,
+            Destroy_All_Instances_From_Menu'Access);
       end if;
    end Dynamic_Tools_Menu_Factory;
 
@@ -2263,7 +2284,8 @@ package body Code_Analysis_Module is
          Gtk_New (Item, -"Show Report of Analysis");
          Append (Menu, Item);
          Gtkada.Handlers.Object_Callback.Connect
-           (Item, "activate", Show_Empty_Analysis_Report_From_Menu'Access);
+           (Item, Gtk.Menu_Item.Signal_Activate,
+            Show_Empty_Analysis_Report_From_Menu'Access);
          return;
       end if;
 
@@ -2293,7 +2315,8 @@ package body Code_Analysis_Module is
       Gtk_New (Item, "Remove " & Property.Instance_Name.all);
       Append (Submenu, Item);
       Context_And_Instance_CB.Connect
-        (Item, "activate", Context_And_Instance_CB.To_Marshaller
+        (Item, Gtk.Menu_Item.Signal_Activate,
+         Context_And_Instance_CB.To_Marshaller
            (Destroy_From_Menu'Access), Cont_N_Inst);
       Gtk_New (Item);
       Append (Submenu, Item);
@@ -2303,7 +2326,8 @@ package body Code_Analysis_Module is
          Gtk_New (Item, "List lines not covered in all projects");
          Append (Submenu, Item);
          Context_And_Instance_CB.Connect
-           (Item, "activate", Context_And_Instance_CB.To_Marshaller
+           (Item, Gtk.Menu_Item.Signal_Activate,
+            Context_And_Instance_CB.To_Marshaller
               (List_Lines_Not_Covered_In_All_Projects_From_Menu'Access),
             Cont_N_Inst);
       end if;
@@ -2337,7 +2361,8 @@ package body Code_Analysis_Module is
       Gtk_New (Item, -"Show Report of " & Property.Instance_Name.all);
       Append (Menu, Item);
       Context_And_Instance_CB.Connect
-        (Item, "activate", Context_And_Instance_CB.To_Marshaller
+        (Item, Gtk.Menu_Item.Signal_Activate,
+         Context_And_Instance_CB.To_Marshaller
            (Show_Analysis_Report_From_Menu'Access), Cont_N_Inst);
    end Append_Show_Analysis_Report_To_Menu;
 
@@ -2361,7 +2386,8 @@ package body Code_Analysis_Module is
       Gtk_New (Item, -"Load data for all projects");
       Append (Menu, Item);
       Context_And_Instance_CB.Connect
-        (Item, "activate", Context_And_Instance_CB.To_Marshaller
+        (Item, Gtk.Menu_Item.Signal_Activate,
+         Context_And_Instance_CB.To_Marshaller
            (Add_All_Gcov_Project_Info_From_Context'Access),
          Cont_N_Inst_Root_Prj);
    end Append_Load_Data_For_All_Projects;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006                         --
+--                      Copyright (C) 2006-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -33,6 +33,7 @@ with Gtk.Cell_Renderer;         use Gtk.Cell_Renderer;
 use Gtk.Cell_Renderer.Cell_Renderer_List;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Menu;                  use Gtk.Menu;
+with Gtk.Object;                use Gtk.Object;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
@@ -786,7 +787,7 @@ package body Revision_Views is
          Put (Get_MDI (Kernel), GPS_MDI_Child (Child));
          Set_Focus_Child (Child);
 
-         Widget_Callback.Connect (View, "destroy", On_Destroy'Access);
+         Widget_Callback.Connect (View, Signal_Destroy, On_Destroy'Access);
       end if;
 
       if View.Child /= null then

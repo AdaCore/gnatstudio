@@ -38,6 +38,7 @@ with Gtk.Arguments;              use Gtk.Arguments;
 with Gtk.Dialog;                 use Gtk.Dialog;
 with Gtk.Main;                   use Gtk.Main;
 with Gtk.Menu_Item;              use Gtk.Menu_Item;
+with Gtk.Object;                 use Gtk.Object;
 with Gtk.Widget;                 use Gtk.Widget;
 with Gtk.Window;                 use Gtk.Window;
 with Gtk;                        use Gtk;
@@ -890,7 +891,7 @@ package body GVD.Process is
 
       Gtk_New_Hbox (Process.Editor_Text, Process);
       Gtkada.Handlers.Object_Return_Callback.Object_Connect
-        (Process.Editor_Text, "delete_event",
+        (Process.Editor_Text, Gtk.Widget.Signal_Delete_Event,
          On_Editor_Text_Delete_Event'Access, Process);
 
       --  Initialize the code editor.
@@ -962,8 +963,7 @@ package body GVD.Process is
       Debugger_Name   : String := "";
       Success         : out Boolean)
    is
-      Window      : constant GPS_Window :=
-                      GPS_Window (Process.Window);
+      Window      : constant GPS_Window := GPS_Window (Process.Window);
       Buttons     : Message_Dialog_Buttons;
       pragma Unreferenced (Buttons);
       WTX_Version : Natural := 0;
@@ -976,7 +976,7 @@ package body GVD.Process is
       --  Destroying the console should kill the debugger
       if Process.Debugger_Text /= null then
          Kernel_Callback.Object_Connect
-           (Process.Debugger_Text, "destroy",
+           (Process.Debugger_Text, Signal_Destroy,
             On_Console_Destroy'Access,
             After       => True,
             User_Data   => null,

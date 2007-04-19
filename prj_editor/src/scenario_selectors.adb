@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2006                      --
+--                      Copyright (C) 2002-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -158,7 +158,7 @@ package body Scenario_Selectors is
         (Get_History (Kernel).all, "scenario_selector_show_as_hierarchy",
          Selector.Show_As_Hierarchy);
       Widget_Callback.Object_Connect
-        (Selector.Show_As_Hierarchy, "toggled",
+        (Selector.Show_As_Hierarchy, Signal_Toggled,
          Toggle_Hierarchy'Access, Selector);
 
       Gtk_New (Scrolled);
@@ -178,13 +178,14 @@ package body Scenario_Selectors is
       Set_Clickable (Col, True);
       Num := Append_Column (View, Col);
       Widget_Callback.Object_Connect
-        (Col, "clicked", Select_All_Project'Access, Slot_Object => Selector);
+        (Col, Signal_Clicked,
+         Select_All_Project'Access, Slot_Object => Selector);
 
       Gtk_New (Toggle_Render);
       Pack_Start (Col, Toggle_Render, False);
       Add_Attribute (Col, Toggle_Render, "active", Selected_Column);
       Widget_Callback.Object_Connect
-        (Toggle_Render, "toggled",
+        (Toggle_Render, Signal_Toggled,
          Project_Selected'Access,
          Slot_Object => Selector);
 
@@ -455,13 +456,13 @@ package body Scenario_Selectors is
       Set_Clickable (Col, True);
       Num := Append_Column (View, Col);
       Widget_Callback.Object_Connect
-        (Col, "clicked", Select_All_Var'Access, Slot_Object => Selector);
+        (Col, Signal_Clicked, Select_All_Var'Access, Slot_Object => Selector);
 
       Gtk_New (Toggle_Render);
       Pack_Start (Col, Toggle_Render, False);
       Add_Attribute (Col, Toggle_Render, "active", Selected_Column);
       Widget_Callback.Object_Connect
-        (Toggle_Render, "toggled",
+        (Toggle_Render, Signal_Toggled,
          Var_Selected'Access,
          Slot_Object => Selector);
 

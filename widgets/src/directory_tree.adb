@@ -40,6 +40,7 @@ with Gtk.Label;                 use Gtk.Label;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Object;                use Gtk.Object;
 with Gtk.Paned;                 use Gtk.Paned;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Tree_View;             use Gtk.Tree_View;
@@ -706,18 +707,21 @@ package body Directory_Tree is
          Gtk_New (Menu);
          Gtk_New (Item, "Add directory recursive");
          Widget_Callback.Object_Connect
-           (Item, "activate", Add_Directory_Cb'Access, Selector);
+           (Item, Gtk.Menu_Item.Signal_Activate,
+            Add_Directory_Cb'Access, Selector);
          Append (Menu, Item);
 
          Gtk_New (Item, "Add directory");
          Widget_Callback.Object_Connect
-           (Item, "activate", Add_Single_Directory_Cb'Access, Selector);
+           (Item, Gtk.Menu_Item.Signal_Activate,
+            Add_Single_Directory_Cb'Access, Selector);
          Append (Menu, Item);
 
          Gtk_New (Item, "Create new subdirectory");
          Append (Menu, Item);
          Widget_Callback.Object_Connect
-           (Item, "activate", Create_Directory_Cb'Access, Selector);
+           (Item, Gtk.Menu_Item.Signal_Activate,
+            Create_Directory_Cb'Access, Selector);
 
          return Menu;
       end if;
@@ -770,12 +774,14 @@ package body Directory_Tree is
          Gtk_New (Menu);
          Gtk_New (Item, "Remove directory recursive");
          Widget_Callback.Object_Connect
-           (Item, "activate", Remove_Directory_Cb'Access, Selector);
+           (Item, Gtk.Menu_Item.Signal_Activate,
+            Remove_Directory_Cb'Access, Selector);
          Append (Menu, Item);
 
          Gtk_New (Item, "Remove directory");
          Widget_Callback.Object_Connect
-           (Item, "activate", Remove_Single_Directory_Cb'Access, Selector);
+           (Item, Gtk.Menu_Item.Signal_Activate,
+            Remove_Single_Directory_Cb'Access, Selector);
          Append (Menu, Item);
       end if;
 
@@ -868,7 +874,8 @@ package body Directory_Tree is
       Gtk_New (Item, "Create new subdirectory");
       Append (Menu, Item);
       Widget_Callback.Object_Connect
-        (Item, "activate", Create_Directory_Cb'Access, Selector);
+        (Item, Gtk.Menu_Item.Signal_Activate,
+         Create_Directory_Cb'Access, Selector);
 
       return Menu;
    end Single_List_Contextual_Menu;
@@ -936,7 +943,8 @@ package body Directory_Tree is
          Add (Button, Arrow);
          Pack_Start (Bbox, Button, Expand => False, Fill => False);
          Widget_Callback.Object_Connect
-           (Button, "clicked", Add_Single_Directory_Cb'Access, Selector);
+           (Button, Gtk.Button.Signal_Clicked,
+            Add_Single_Directory_Cb'Access, Selector);
 
          Gtk_New (Button);
          Gtk_New (Arrow,
@@ -944,7 +952,8 @@ package body Directory_Tree is
          Add (Button, Arrow);
          Pack_Start (Bbox, Button, Expand => False, Fill => False);
          Widget_Callback.Object_Connect
-           (Button, "clicked", Remove_Single_Directory_Cb'Access, Selector);
+           (Button, Gtk.Button.Signal_Clicked,
+            Remove_Single_Directory_Cb'Access, Selector);
 
          Gtk_New (Scrolled);
          Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
@@ -1233,7 +1242,7 @@ package body Directory_Tree is
 
                      D.Explorer.Realize_Cb_Id :=
                        Gtkada.Handlers.Object_Return_Callback.Object_Connect
-                         (D.Explorer.File_Tree, "expose_event",
+                         (D.Explorer.File_Tree, Signal_Expose_Event,
                           Expose_Event_Cb'Access, D.Explorer, True);
                   end;
 
@@ -1394,7 +1403,7 @@ package body Directory_Tree is
 
       Gtkada.Handlers.Return_Callback.Object_Connect
         (Tree.File_Tree,
-         "button_press_event",
+         Signal_Button_Press_Event,
          Gtkada.Handlers.Return_Callback.To_Marshaller
            (File_Button_Press'Access),
          Slot_Object => Tree,
@@ -1405,15 +1414,15 @@ package body Directory_Tree is
       Init_Graphics (Gtk_Widget (Tree));
 
       Widget_Callback.Object_Connect
-        (Tree.File_Tree, "row_expanded",
+        (Tree.File_Tree, Signal_Row_Expanded,
          File_Tree_Expand_Row_Cb'Access, Tree, False);
 
       Widget_Callback.Object_Connect
-        (Tree.File_Tree, "row_collapsed",
+        (Tree.File_Tree, Signal_Row_Collapsed,
          File_Tree_Collapse_Row_Cb'Access, Tree, False);
 
       Widget_Callback.Object_Connect
-        (Tree.File_Tree, "destroy",
+        (Tree.File_Tree, Signal_Destroy,
          On_File_Destroy'Access, Tree, False);
 
       Set_Size_Request
@@ -1438,7 +1447,7 @@ package body Directory_Tree is
 
       Object_Callback.Object_Connect
         (Get_Selection (Tree.File_Tree),
-         "changed",
+         Signal_Changed,
          On_Tree_Select_Row'Access,
          Slot_Object => Tree,
          After => True);
@@ -1540,7 +1549,7 @@ package body Directory_Tree is
 
       Object_Callback.Object_Connect
         (T.File_Tree,
-         "size_allocate",
+         Signal_Size_Allocate,
          On_Tree_Size_Allocate'Access,
          Slot_Object => T,
          After => True);

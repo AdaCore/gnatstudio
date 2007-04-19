@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                      Copyright (C) 2001-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -38,6 +38,7 @@ with Gtk.Frame;                 use Gtk.Frame;
 with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
+with Gtk.Object;                use Gtk.Object;
 with Gtk.Paned;                 use Gtk.Paned;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Size_Group;            use Gtk.Size_Group;
@@ -1663,27 +1664,27 @@ package body Commands.Custom is
       Gtk_New_From_Stock_And_Label (Button, Stock_Add, -"Add Python");
       Pack_Start (Bbox, Button);
       Component_Type_And_Lang_Callback.Object_Connect
-        (Button, "clicked", On_Add'Access, Box,
+        (Button, Signal_Clicked, On_Add'Access, Box,
          (Component_Shell, Lookup_Scripting_Language (Kernel, "Python")));
 
       Gtk_New_From_Stock_And_Label (Button, Stock_Add, -"Add Shell");
       Pack_Start (Bbox, Button);
       Component_Type_And_Lang_Callback.Object_Connect
-        (Button, "clicked", On_Add'Access, Box,
+        (Button, Signal_Clicked, On_Add'Access, Box,
          (Component_Shell, Lookup_Scripting_Language (Kernel,
           GPS_Shell_Name)));
 
       Gtk_New_From_Stock_And_Label (Button, Stock_Add, -"Add External");
       Pack_Start (Bbox, Button);
       Component_Type_And_Lang_Callback.Object_Connect
-        (Button, "clicked", On_Add'Access, Box,
+        (Button, Signal_Clicked, On_Add'Access, Box,
          (Component_External, null));
 
       Gtk_New_From_Stock (Box.Button_Remove, Stock_Remove);
       Set_Sensitive (Box.Button_Remove, False);
       Pack_Start (Bbox, Box.Button_Remove);
       Widget_Callback.Object_Connect
-        (Box.Button_Remove, "clicked", On_Remove'Access, Box);
+        (Box.Button_Remove, Signal_Clicked, On_Remove'Access, Box);
 
       --  Now fill the tree
 
@@ -1711,13 +1712,13 @@ package body Commands.Custom is
       end loop;
 
       Widget_Callback.Object_Connect
-        (Get_Selection (Box.Tree), "changed",
+        (Get_Selection (Box.Tree), Gtk.Tree_Selection.Signal_Changed,
          On_Component_Changed'Access,
          Slot_Object => Box);
 
       Refresh_And_Select (Box, Selected => Command.Components'First);
 
-      Widget_Callback.Connect (Box, "destroy", On_Destroy'Access);
+      Widget_Callback.Connect (Box, Signal_Destroy, On_Destroy'Access);
 
       return Command_Editor (Box);
    end Create_Command_Editor;
@@ -2104,7 +2105,8 @@ package body Commands.Custom is
       end if;
 
       Widget_Callback.Object_Connect
-        (Editor.Command, "changed", On_Command_Changed'Access, Command);
+        (Editor.Command, Gtk.Text_Buffer.Signal_Changed,
+         On_Command_Changed'Access, Command);
 
       case Editor.The_Type is
          when Component_Shell =>

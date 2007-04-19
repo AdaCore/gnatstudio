@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --               GtkAda - Ada95 binding for Gtk+/Gnome               --
 --                                                                   --
---                Copyright (C) 2001-2006 AdaCore                    --
+--                Copyright (C) 2001-2007 AdaCore                    --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -275,14 +275,14 @@ package body Gtkada.Tree_View is
 
       Gtkada.Handlers.Object_Callback.Object_Connect
         (Widget,
-         "row_expanded",
+         Signal_Row_Expanded,
          Row_Expanded_Callback'Access,
          Widget,
          After => True);
 
       Gtkada.Handlers.Object_Callback.Object_Connect
         (Widget,
-         "row_collapsed",
+         Signal_Row_Collapsed,
          Row_Collapsed_Callback'Access,
          Widget,
          After => True);
@@ -292,7 +292,7 @@ package body Gtkada.Tree_View is
 
       Gtkada.Handlers.Object_Callback.Object_Connect
         (Widget.Model,
-         "row_inserted",
+         Signal_Row_Inserted,
          Row_Inserted_Callback'Access,
          Widget,
          After => True);

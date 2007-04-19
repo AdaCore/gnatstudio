@@ -39,6 +39,7 @@ with Gtk.Check_Menu_Item;      use Gtk.Check_Menu_Item;
 with Gtk.Enums;
 with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
+with Gtk.Object;               use Gtk.Object;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
@@ -1542,20 +1543,20 @@ package body GPS.Location_View is
       Set_Active (Check, Explorer.Sort_By_Category);
       Append (Menu, Check);
       Widget_Callback.Object_Connect
-         (Check, "activate", Toggle_Sort'Access, Explorer);
+        (Check, Signal_Activate, Toggle_Sort'Access, Explorer);
 
       Gtk_New (Mitem);
       Append (Menu, Mitem);
 
       Gtk_New (Mitem, -"Expand category");
       Gtkada.Handlers.Widget_Callback.Object_Connect
-        (Mitem, "activate", Expand_Category'Access, Explorer,
+        (Mitem, Signal_Activate, Expand_Category'Access, Explorer,
          After => False);
       Append (Menu, Mitem);
 
       Gtk_New (Mitem, -"Collapse all");
       Gtkada.Handlers.Widget_Callback.Object_Connect
-        (Mitem, "activate", Collapse'Access, Explorer,
+        (Mitem, Signal_Activate, Collapse'Access, Explorer,
          After => False);
       Append (Menu, Mitem);
 
@@ -1569,21 +1570,21 @@ package body GPS.Location_View is
       if Get_Depth (Path) = 1 then
          Gtk_New (Mitem, -"Remove category");
          Gtkada.Handlers.Widget_Callback.Object_Connect
-           (Mitem, "activate", Remove_Category'Access, Explorer,
+           (Mitem, Signal_Activate, Remove_Category'Access, Explorer,
             After => False);
          Append (Menu, Mitem);
 
       elsif Get_Depth (Path) = 2 then
          Gtk_New (Mitem, -"Remove File");
          Gtkada.Handlers.Widget_Callback.Object_Connect
-           (Mitem, "activate", Remove_Category'Access, Explorer,
+           (Mitem, Signal_Activate, Remove_Category'Access, Explorer,
             After => False);
          Append (Menu, Mitem);
 
       elsif Get_Depth (Path) >= 3 then
          Gtk_New (Mitem, -"Jump to location");
          Gtkada.Handlers.Widget_Callback.Object_Connect
-           (Mitem, "activate", Goto_Location'Access, Explorer,
+           (Mitem, Signal_Activate, Goto_Location'Access, Explorer,
             After => False);
 
          Append (Menu, Mitem);
@@ -1681,18 +1682,18 @@ package body GPS.Location_View is
 
       Add (View, Scrolled);
 
-      Widget_Callback.Connect (View, "destroy", On_Destroy'Access);
+      Widget_Callback.Connect (View, Signal_Destroy, On_Destroy'Access);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
         (View.Tree,
-         "button_press_event",
+         Signal_Button_Press_Event,
          Gtkada.Handlers.Return_Callback.To_Marshaller
            (Button_Press'Access),
          View,
          After => False);
 
       Widget_Callback.Connect
-        (View.Tree, "row_expanded", On_Row_Expanded'Access);
+        (View.Tree, Signal_Row_Expanded, On_Row_Expanded'Access);
 
       Register_Contextual_Menu
         (View.Kernel,

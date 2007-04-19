@@ -511,14 +511,14 @@ package body Buffer_Views is
          Associate (Get_History (Kernel).all, History_Editors_Only, Check);
          Append (Menu, Check);
          Widget_Callback.Object_Connect
-           (Check, "toggled", Refresh'Access, Slot_Object => V);
+           (Check, Signal_Toggled, Refresh'Access, Slot_Object => V);
 
          Gtk_New (Check, Label => -"Show notebooks");
          Associate
            (Get_History (Kernel).all, History_Show_Notebooks, Check);
          Append (Menu, Check);
          Widget_Callback.Object_Connect
-           (Check, "toggled", Refresh'Access, Slot_Object => V);
+           (Check, Signal_Toggled, Refresh'Access, Slot_Object => V);
       end if;
    end View_Context_Factory;
 
@@ -550,25 +550,26 @@ package body Buffer_Views is
       Modify_Font (View.Tree, Get_Pref (View_Fixed_Font));
 
       Widget_Callback.Object_Connect
-        (Get_MDI (Kernel), "child_added", Refresh'Access, Slot_Object => View);
+        (Get_MDI (Kernel), Signal_Child_Added,
+         Refresh'Access, Slot_Object => View);
       Widget_Callback.Object_Connect
-        (Get_MDI (Kernel), "child_removed", Refresh'Access,
+        (Get_MDI (Kernel), Signal_Child_Removed, Refresh'Access,
          Slot_Object => View);
       Widget_Callback.Object_Connect
-        (Get_MDI (Kernel), "child_title_changed", Refresh'Access, View);
+        (Get_MDI (Kernel), Signal_Child_Title_Changed, Refresh'Access, View);
       View.Child_Selected_Id := Widget_Callback.Object_Connect
-        (Get_MDI (Kernel), "child_selected",
+        (Get_MDI (Kernel), Signal_Child_Selected,
          Widget_Callback.To_Marshaller (Child_Selected'Access), View);
       Widget_Callback.Object_Connect
-        (Get_MDI (Kernel), "child_icon_changed", Refresh'Access, View);
+        (Get_MDI (Kernel), Signal_Child_Icon_Changed, Refresh'Access, View);
       Widget_Callback.Object_Connect
-        (Get_MDI (Kernel), "float_child", Refresh'Access, View);
+        (Get_MDI (Kernel), Signal_Float_Child, Refresh'Access, View);
       Widget_Callback.Object_Connect
-        (Get_MDI (Kernel), "children_reorganized", Refresh'Access, View);
+        (Get_MDI (Kernel), Signal_Children_Reorganized, Refresh'Access, View);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
         (View.Tree,
-         "button_press_event",
+         Signal_Button_Press_Event,
          Gtkada.Handlers.Return_Callback.To_Marshaller (Button_Press'Access),
          Slot_Object => View,
          After       => False);

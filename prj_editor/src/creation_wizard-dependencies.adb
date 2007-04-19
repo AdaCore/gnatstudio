@@ -481,25 +481,25 @@ package body Creation_Wizard.Dependencies is
       Gtk_New (Button, -"Add From File");
       Pack_Start (Bbox, Button);
       Wizard_Page_Handlers.Connect
-        (Button, "clicked", Add_New_Project'Access,
+        (Button, Gtk.Button.Signal_Clicked, Add_New_Project'Access,
          Project_Wizard_Page (Page));
 
       Gtk_New (Button, -"Add From Wizard");
       Pack_Start (Bbox, Button);
       Wizard_Page_Handlers.Connect
-        (Button, "clicked", Add_New_Project_From_Wizard'Access,
+        (Button, Gtk.Button.Signal_Clicked, Add_New_Project_From_Wizard'Access,
          Project_Wizard_Page (Page));
 
       Gtk_New (Button, -"Add From Known Projects");
       Pack_Start (Bbox, Button);
       Wizard_Page_Handlers.Connect
-        (Button, "clicked", Add_New_Project_From_Known'Access,
+        (Button, Gtk.Button.Signal_Clicked, Add_New_Project_From_Known'Access,
          Project_Wizard_Page (Page));
 
       Gtk_New_From_Stock (Button, Stock_Remove);
       Pack_Start (Bbox, Button);
       Wizard_Page_Handlers.Connect
-        (Button, "clicked", Remove_Project'Access,
+        (Button, Gtk.Button.Signal_Clicked, Remove_Project'Access,
          Project_Wizard_Page (Page));
 
       return Gtk_Widget (Box);

@@ -410,7 +410,7 @@ package body Scenario_Views is
                     (V.Table, Button, 0, 1,
                      Row, Row + 1, Xoptions => 0, Yoptions => 0);
                   View_Callback.Connect
-                    (Button, "clicked", Edit_Variable'Access,
+                    (Button, Signal_Clicked, Edit_Variable'Access,
                      (View => V, Var => Scenar_Var (J)));
                   Set_Tip (Get_Tooltips (V.Kernel), Button,
                            -"Edit variable properties");
@@ -424,7 +424,7 @@ package body Scenario_Views is
                   Set_Tip
                     (Get_Tooltips (V.Kernel), Button, -"Delete variable");
                   View_Callback.Connect
-                    (Button, "clicked", Delete_Variable'Access,
+                    (Button, Signal_Clicked, Delete_Variable'Access,
                      (View => V, Var => Scenar_Var (J)));
 
                   Gtk_New (Label, Locale_To_UTF8
@@ -443,7 +443,7 @@ package body Scenario_Views is
                   Set_Text (Get_Entry (Combo), Value_Of (Scenar_Var (J)));
 
                   View_Callback.Connect
-                    (Combo, "changed", Variable_Value_Changed'Access,
+                    (Combo, Signal_Changed, Variable_Value_Changed'Access,
                      (View => V, Var => Scenar_Var (J)));
                end loop;
 

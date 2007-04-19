@@ -1646,7 +1646,7 @@ package body Builder_Module is
          end if;
 
          File_Project_Cb.Object_Connect
-           (Mitem, "activate", On_Build'Access,
+           (Mitem, Signal_Activate, On_Build'Access,
             Slot_Object => Kernel,
             User_Data   => File_Project_Record'
               (Project => Project,
@@ -1681,7 +1681,7 @@ package body Builder_Module is
       end if;
 
       File_Project_Cb.Object_Connect
-        (Mitem, "activate", On_Build'Access,
+        (Mitem, Signal_Activate, On_Build'Access,
          Slot_Object => Kernel,
          User_Data   => File_Project_Record'
            (Project => Get_Project (Kernel),
@@ -1697,7 +1697,7 @@ package body Builder_Module is
       end if;
 
       File_Project_Cb.Object_Connect
-        (Mitem, "activate", On_Build_Project'Access,
+        (Mitem, Signal_Activate, On_Build_Project'Access,
          Slot_Object => Kernel,
          User_Data => File_Project_Record'
            (Project => Get_Project (Kernel),
@@ -1737,7 +1737,7 @@ package body Builder_Module is
             Gtk.Menu_Item.Initialize (Mitem, Exec);
             Prepend (Menu, Mitem);
             File_Project_Cb.Object_Connect
-              (Mitem, "activate", On_Run'Access,
+              (Mitem, Signal_Activate, On_Run'Access,
                Slot_Object => Kernel,
                User_Data => File_Project_Record'
                  (Project => Project,
@@ -1943,7 +1943,7 @@ package body Builder_Module is
       Set_Accel_Path
         (Mitem, Make_Menu_Prefix & Current_Make_Suffix, Group);
       File_Project_Cb.Object_Connect
-        (Mitem, "activate", On_Build'Access,
+        (Mitem, Signal_Activate, On_Build'Access,
          Slot_Object => Kernel,
          User_Data => File_Project_Record'
            (Project => No_Project,
@@ -1953,7 +1953,7 @@ package body Builder_Module is
       Gtk.Menu_Item.Initialize (Mitem, -Custom_Make_Suffix);
       Append (Menu1, Mitem);
       Kernel_Callback.Connect
-        (Mitem, "activate", On_Custom'Access,
+        (Mitem, Signal_Activate, On_Custom'Access,
          User_Data => Kernel_Handle (Kernel));
       Set_Accel_Path (Mitem, "<gps>/Build/Make/Custom...", Group);
 
@@ -1965,7 +1965,7 @@ package body Builder_Module is
                Set_Accel_Path
                  (Mitem, -(Run_Menu_Prefix) & (-Custom_Make_Suffix), Group);
       File_Project_Cb.Object_Connect
-        (Mitem, "activate", On_Run'Access,
+        (Mitem, Signal_Activate, On_Run'Access,
          Slot_Object => Kernel,
          User_Data   => File_Project_Record'
            (Project => Get_Project (Kernel), File => VFS.No_File));

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                     Copyright (C) 2001-2007                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -19,8 +19,9 @@
 -----------------------------------------------------------------------
 
 with Gtk;                 use Gtk;
-with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Box;             use Gtk.Box;
+with Gtk.Editable;        use Gtk.Editable;
+with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Stock;           use Gtk.Stock;
 
 with Callbacks_Aunit_Gui; use Callbacks_Aunit_Gui;
@@ -115,7 +116,7 @@ package body Make_Test_Window_Pkg is
       Pack_Start
         (Hbox2, Make_Test_Window.Browse_Directory, False, False, 3);
       Button_Callback.Connect
-        (Make_Test_Window.Browse_Directory, "clicked",
+        (Make_Test_Window.Browse_Directory, Signal_Clicked,
          On_Browse_Directory_Clicked'Access);
 
       Gtk_New (Make_Test_Window.Name_Entry);
@@ -125,7 +126,7 @@ package body Make_Test_Window_Pkg is
       Set_Visibility (Make_Test_Window.Name_Entry, True);
       Pack_Start (Vbox2, Make_Test_Window.Name_Entry, False, False, 3);
       Widget_Callback.Connect
-        (Make_Test_Window.Name_Entry, "changed",
+        (Make_Test_Window.Name_Entry, Signal_Changed,
          Check_Validity'Access);
 
       Gtk_New (Make_Test_Window.Description_Entry);
@@ -135,7 +136,7 @@ package body Make_Test_Window_Pkg is
       Set_Visibility (Make_Test_Window.Description_Entry, True);
       Pack_Start (Vbox2, Make_Test_Window.Description_Entry, False, False, 3);
       Widget_Callback.Connect
-        (Make_Test_Window.Description_Entry, "changed",
+        (Make_Test_Window.Description_Entry, Signal_Changed,
          Check_Validity'Access);
 
       Gtk_New (Make_Test_Window.Override_Tear_Down, -"Override Tear_Down");

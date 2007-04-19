@@ -1742,7 +1742,7 @@ package body Browsers.Entities is
          Gtk_New (Mitem, -"Show source");
          Add (Menu, Mitem);
          Item_Cb.Object_Connect
-           (Mitem, "activate", On_Show_Source'Access,
+           (Mitem, Signal_Activate, On_Show_Source'Access,
             Slot_Object => Browser,
             User_Data   => Browser_Item (Item));
       end if;

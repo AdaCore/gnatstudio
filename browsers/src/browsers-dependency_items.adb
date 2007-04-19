@@ -21,14 +21,15 @@
 with Ada.Exceptions;         use Ada.Exceptions;
 
 with Glib;                   use Glib;
-with Gdk.Event;              use Gdk.Event;
 with Glib.Object;            use Glib.Object;
 with Glib.Xml_Int;           use Glib.Xml_Int;
+with Gdk.Event;              use Gdk.Event;
 
 with Gtk.Check_Menu_Item;    use Gtk.Check_Menu_Item;
 with Gtk.Main;               use Gtk.Main;
 with Gtk.Menu;               use Gtk.Menu;
 with Gtk.Menu_Item;          use Gtk.Menu_Item;
+with Gtk.Object;             use Gtk.Object;
 with Gtk.Stock;              use Gtk.Stock;
 with Gtk.Widget;             use Gtk.Widget;
 with Gtk.Window;             use Gtk.Window;
@@ -410,26 +411,26 @@ package body Browsers.Dependency_Items is
          Gtk_New (Mitem, Label => -"Open file...");
          Append (Menu, Mitem);
          Context_Callback.Object_Connect
-           (Mitem, "activate", Open_File'Access,
+           (Mitem, Signal_Activate, Open_File'Access,
             Slot_Object => General_Browser (Object),
             User_Data   => Context);
 
          Gtk_New (Mitem, Label => -"Refresh");
          Append (Menu, Mitem);
          Widget_Callback.Object_Connect
-           (Mitem, "activate", Refresh_Browser'Access, Event_Widget);
+           (Mitem, Signal_Activate, Refresh_Browser'Access, Event_Widget);
 
          Gtk_New (Check, Label => -"Show system files");
          Associate (Get_History (Kernel).all, Show_System_Files_Key, Check);
          Append (Menu, Check);
          Widget_Callback.Object_Connect
-           (Check, "toggled", Refresh_Browser'Access, Event_Widget);
+           (Check, Signal_Toggled, Refresh_Browser'Access, Event_Widget);
 
          Gtk_New (Check, Label => -"Show implicit dependencies");
          Associate (Get_History (Kernel).all, Show_Implicit_Key, Check);
          Append (Menu, Check);
          Widget_Callback.Object_Connect
-           (Check, "toggled", Refresh_Browser'Access, Event_Widget);
+           (Check, Signal_Toggled, Refresh_Browser'Access, Event_Widget);
       end if;
    end Browser_Context_Factory;
 
@@ -452,7 +453,7 @@ package body Browsers.Dependency_Items is
          ID              => Dependency_Browser_Module_ID,
          Context_Func    => Browser_Context_Factory'Access);
 
-      Widget_Callback.Connect (Browser, "destroy", On_Destroy'Access);
+      Widget_Callback.Connect (Browser, Signal_Destroy, On_Destroy'Access);
       return Browser;
    end Create_Dependency_Browser;
 

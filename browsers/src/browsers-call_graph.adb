@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
+--                      Copyright (C) 2001-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -2021,12 +2021,12 @@ package body Browsers.Call_Graph is
       Gtk_New (Button, -"Select all");
       Pack_Start (Filter_Box, Button);
       Widget_Callback.Object_Connect
-        (Button, "clicked", Select_All_Filters'Access, Dialog);
+        (Button, Signal_Clicked, Select_All_Filters'Access, Dialog);
 
       Gtk_New (Button, -"Unselect all");
       Pack_Start (Filter_Box, Button);
       Widget_Callback.Object_Connect
-        (Button, "clicked", Unselect_All_Filters'Access, Dialog);
+        (Button, Signal_Clicked, Unselect_All_Filters'Access, Dialog);
 
       --  Extra info choice
 

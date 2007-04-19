@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                     Copyright (C) 2001-2007                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -883,7 +883,7 @@ package body VCS_View.Explorer is
 
          Append (Menu, Mitem);
          Context_Callback.Connect
-           (Mitem, "activate", On_Menu_Remove_Project'Access, Context);
+           (Mitem, Signal_Activate, On_Menu_Remove_Project'Access, Context);
          Set_Sensitive (Mitem, True);
       end if;
 
@@ -898,12 +898,12 @@ package body VCS_View.Explorer is
       Gtk_New (Mitem, -"Show all status");
       Append (Submenu, Mitem);
       Widget_Callback.Object_Connect
-         (Mitem, "activate", Show_All_Status'Access, Explorer);
+        (Mitem, Signal_Activate, Show_All_Status'Access, Explorer);
 
       Gtk_New (Mitem, -"Hide all status");
       Append (Submenu, Mitem);
       Widget_Callback.Object_Connect
-         (Mitem, "activate", Hide_All_Status'Access, Explorer);
+        (Mitem, Signal_Activate, Hide_All_Status'Access, Explorer);
 
       Gtk_New (Mitem);
       Append (Submenu, Mitem);
@@ -917,7 +917,7 @@ package body VCS_View.Explorer is
             Set_Active (Check, S (J).Display);
             Append (Submenu, Check);
             Page_Status_Callback.Object_Connect
-              (Check, "activate", Toggle_Show_Status'Access, Explorer, J);
+              (Check, Signal_Activate, Toggle_Show_Status'Access, Explorer, J);
             Associate
               (Get_History (Kernel).all,
                To_History_Key (S (J).Status.Label.all),

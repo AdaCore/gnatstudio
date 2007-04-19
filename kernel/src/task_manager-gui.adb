@@ -36,6 +36,7 @@ with Gtk.Handlers;
 with Gtk.Image;                use Gtk.Image;
 with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
+with Gtk.Object;               use Gtk.Object;
 with Gtk.Progress_Bar;         use Gtk.Progress_Bar;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Stock;                use Gtk.Stock;
@@ -297,13 +298,13 @@ package body Task_Manager.GUI is
 
       Gtk_New (Item, -"Pause");
       Task_Manager_Handler.Connect
-        (Item, "activate", On_Pause_Command'Access,
+        (Item, Gtk.Menu_Item.Signal_Activate, On_Pause_Command'Access,
           (View.Manager, View.Manager.Referenced_Command));
       Append (Menu, Item);
 
       Gtk_New (Item, -"Resume");
       Task_Manager_Handler.Connect
-        (Item, "activate", On_Resume_Command'Access,
+        (Item, Gtk.Menu_Item.Signal_Activate, On_Resume_Command'Access,
          (View.Manager, View.Manager.Referenced_Command));
       Append (Menu, Item);
 
@@ -312,7 +313,7 @@ package body Task_Manager.GUI is
 
       Gtk_New (Item, -"Interrupt");
       Task_Manager_Handler.Connect
-        (Item, "activate", On_Interrupt_Command'Access,
+        (Item, Gtk.Menu_Item.Signal_Activate, On_Interrupt_Command'Access,
          (View.Manager, View.Manager.Referenced_Command));
       Append (Menu, Item);
 
@@ -688,19 +689,19 @@ package body Task_Manager.GUI is
 
                Manager_Contextual_Menus.Contextual_Callback.Connect
                  (Manager.Queues (J).Bar,
-                  "button_press_event",
+                  Signal_Button_Press_Event,
                   On_Progress_Bar_Button_Pressed'Access,
                   (null, null, (Manager, J)));
 
                Task_Manager_Handler.Connect
                  (Manager.Queues (J).Bar,
-                  "destroy",
+                  Signal_Destroy,
                   Task_Manager_Handler.To_Marshaller
                     (On_Progress_Bar_Destroy'Access),
                   (Manager, J));
 
                Task_Manager_Handler.Connect
-                 (Button, "clicked",
+                 (Button, Gtk.Button.Signal_Clicked,
                   Interrupt_Task'Access,
                   User_Data => (Manager, J));
 
@@ -961,21 +962,21 @@ package body Task_Manager.GUI is
 
       Object_Callback.Object_Connect
         (View,
-         "destroy",
+         Signal_Destroy,
          On_View_Destroy'Access,
          GObject (View),
          After => False);
 
       Object_Callback.Object_Connect
         (View,
-         "realize",
+         Signal_Realize,
          On_View_Realize'Access,
          GObject (View),
          After => False);
 
       Return_Callback.Object_Connect
         (View.Tree,
-         "button_press_event",
+         Signal_Button_Press_Event,
          Return_Callback.To_Marshaller (On_Button_Press_Event'Access),
          View,
          After => False);

@@ -18,31 +18,33 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;  use Ada.Exceptions;
+with Ada.Exceptions;       use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 
-with Gdk.Drawable;    use Gdk.Drawable;
-with Gdk.Event;       use Gdk.Event;
-with Gdk.Pixmap;      use Gdk.Pixmap;
-with Gdk.Rectangle;   use Gdk.Rectangle;
-with Gdk.Types;       use Gdk.Types;
-with Gdk.Window;      use Gdk.Window;
+with Gdk.Drawable;         use Gdk.Drawable;
+with Gdk.Event;            use Gdk.Event;
+with Gdk.Pixmap;           use Gdk.Pixmap;
+with Gdk.Rectangle;        use Gdk.Rectangle;
+with Gdk.Types;            use Gdk.Types;
+with Gdk.Window;           use Gdk.Window;
 
-with Glib.Properties; use Glib.Properties;
-with Glib;            use Glib;
+with Glib.Properties;      use Glib.Properties;
+with Glib;                 use Glib;
 
-with Gtk.Enums;       use Gtk.Enums;
-with Gtk.Handlers;    use Gtk.Handlers;
-with Gtk.Main;        use Gtk.Main;
-with Gtk.Image;       use Gtk.Image;
-with Gtk.Tree_Model;  use Gtk.Tree_Model;
-with Gtk.Tree_View;   use Gtk.Tree_View;
+with Gtk.Enums;            use Gtk.Enums;
+with Gtk.Handlers;         use Gtk.Handlers;
+with Gtk.Main;             use Gtk.Main;
+with Gtk.Image;            use Gtk.Image;
+with Gtk.Object;           use Gtk.Object;
+with Gtk.Tree_Model;       use Gtk.Tree_Model;
+with Gtk.Tree_View;        use Gtk.Tree_View;
 with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
-with Gtk.Window;      use Gtk.Window;
+with Gtk.Window;           use Gtk.Window;
 
-with Traces;          use Traces;
+with Traces;               use Traces;
 
 package body Tooltips is
+
    package Tooltip_Handler is new Gtk.Handlers.User_Return_Callback
      (Widget_Type => Gtk.Widget.Gtk_Widget_Record,
       Return_Type => Boolean,
@@ -163,7 +165,7 @@ package body Tooltips is
 
          Add_Events (Tooltip.Display_Window, Leave_Notify_Mask);
          Tooltip_Handler.Connect
-           (Tooltip.Display_Window, "leave_notify_event",
+           (Tooltip.Display_Window, Signal_Leave_Notify_Event,
             Leave_Notify_Cb'Access, User_Data => Tooltip);
 
          Focus := Get_Focus (Gtk_Window (Get_Toplevel (Tooltip.Widget)));
@@ -172,7 +174,7 @@ package body Tooltips is
             Add_Watch
               (Tooltip_Handler.Connect
                  (Focus,
-                  "focus_out_event",
+                  Signal_Focus_Out_Event,
                   Tooltip_Handler.To_Marshaller (Tooltip_Event_Cb'Access),
                   User_Data => Tooltip),
                Object => Tooltip.Display_Window);
@@ -339,39 +341,39 @@ package body Tooltips is
          Pointer_Motion_Mask or Enter_Notify_Mask or Focus_Change_Mask
          or Leave_Notify_Mask);
       Tooltip_Handler.Connect
-        (On_Widget, "button_press_event",
+        (On_Widget, Signal_Button_Press_Event,
          Tooltip_Handler.To_Marshaller (Tooltip_Event_Cb'Access),
          User_Data => Tooltips_Access (Tooltip));
       Tooltip_Handler.Connect
-        (On_Widget, "key_press_event",
+        (On_Widget, Signal_Key_Press_Event,
          Tooltip_Handler.To_Marshaller (Tooltip_Event_Cb'Access),
          User_Data => Tooltips_Access (Tooltip));
       Tooltip_Handler.Connect
-        (On_Widget, "key_release_event",
+        (On_Widget, Signal_Key_Release_Event,
          Tooltip_Handler.To_Marshaller (Tooltip_Event_Cb'Access),
          User_Data => Tooltips_Access (Tooltip));
       Tooltip_Handler.Connect
-        (On_Widget, "motion_notify_event",
+        (On_Widget, Signal_Motion_Notify_Event,
          Tooltip_Handler.To_Marshaller (Tooltip_Event_Cb'Access),
          User_Data => Tooltips_Access (Tooltip));
       Tooltip_Handler.Connect
-        (On_Widget, "leave_notify_event",
+        (On_Widget, Signal_Leave_Notify_Event,
          Tooltip_Handler.To_Marshaller (Tooltip_Event_Cb'Access),
          User_Data => Tooltips_Access (Tooltip));
       Tooltip_Handler.Connect
-        (On_Widget, "scroll_event",
+        (On_Widget, Signal_Scroll_Event,
          Tooltip_Handler.To_Marshaller (Tooltip_Event_Cb'Access),
          User_Data => Tooltips_Access (Tooltip));
       Tooltip_Handler.Connect
-        (On_Widget, "focus_in_event",
+        (On_Widget, Signal_Focus_In_Event,
          Tooltip_Handler.To_Marshaller (Tooltip_Event_Cb'Access),
          User_Data => Tooltips_Access (Tooltip));
       Tooltip_Handler.Connect
-        (On_Widget, "focus_out_event",
+        (On_Widget, Signal_Focus_Out_Event,
          Tooltip_Handler.To_Marshaller (Tooltip_Event_Cb'Access),
          User_Data => Tooltips_Access (Tooltip));
       Destroy_Handler.Connect
-        (On_Widget, "destroy",
+        (On_Widget, Signal_Destroy,
          Destroy_Handler.To_Marshaller (Destroy_Cb'Access),
          User_Data => Tooltips_Access (Tooltip));
    end Set_Tooltip;

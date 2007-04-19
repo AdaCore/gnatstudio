@@ -377,7 +377,8 @@ package body Remote_Sync_Module is
            (Cb_Data.Dialog, Kernel,
             Rsync_Data.Src_Path, Rsync_Data.Dest_Path);
          Gtkada.Handlers.Widget_Callback.Object_Connect
-           (Cb_Data.Dialog.Abort_Button, "clicked", On_Abort_Clicked'Access,
+           (Cb_Data.Dialog.Abort_Button, Signal_Clicked,
+            On_Abort_Clicked'Access,
             Cb_Data.Dialog);
          Gtk.Main.Grab_Add (Cb_Data.Dialog);
       end if;

@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                       Copyright (C) 2003-2006                     --
---                             AdaCore                               --
+--                      Copyright (C) 2003-2007                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -31,6 +31,7 @@ with Gtk.Check_Menu_Item;    use Gtk.Check_Menu_Item;
 with Gtk.Enums;              use Gtk.Enums;
 with Gtk.Handlers;           use Gtk.Handlers;
 with Gtk.Menu;               use Gtk.Menu;
+with Gtk.Menu_Item;          use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
 with Gtk.Tree_Model;         use Gtk.Tree_Model;
 with Gtk.Tree_Selection;     use Gtk.Tree_Selection;
@@ -262,31 +263,32 @@ package body GVD.Call_Stack is
          Set_Active (Check, (Stack.Backtrace_Mask and Frame_Num) /= 0);
          Append (Menu, Check);
          Call_Stack_Cb.Object_Connect
-           (Check, "activate", Change_Mask'Access, Stack, Frame_Num);
+           (Check, Signal_Activate, Change_Mask'Access, Stack, Frame_Num);
 
          Gtk_New (Check, Label => -"Program Counter");
          Set_Active (Check, (Stack.Backtrace_Mask and Program_Counter) /= 0);
          Append (Menu, Check);
          Call_Stack_Cb.Object_Connect
-           (Check, "activate", Change_Mask'Access, Stack, Program_Counter);
+           (Check, Signal_Activate,
+            Change_Mask'Access, Stack, Program_Counter);
 
          Gtk_New (Check, Label => -"Subprogram Name");
          Set_Active (Check, (Stack.Backtrace_Mask and Subprog_Name) /= 0);
          Append (Menu, Check);
          Call_Stack_Cb.Object_Connect
-           (Check, "activate", Change_Mask'Access, Stack, Subprog_Name);
+           (Check, Signal_Activate, Change_Mask'Access, Stack, Subprog_Name);
 
          Gtk_New (Check, Label => -"Parameters");
          Set_Active (Check, (Stack.Backtrace_Mask and Params) /= 0);
          Append (Menu, Check);
          Call_Stack_Cb.Object_Connect
-           (Check, "activate", Change_Mask'Access, Stack, Params);
+           (Check, Signal_Activate, Change_Mask'Access, Stack, Params);
 
          Gtk_New (Check, Label => -"File Location");
          Set_Active (Check, (Stack.Backtrace_Mask and File_Location) /= 0);
          Append (Menu, Check);
          Call_Stack_Cb.Object_Connect
-           (Check, "activate", Change_Mask'Access, Stack, File_Location);
+           (Check, Signal_Activate, Change_Mask'Access, Stack, File_Location);
       end if;
    end Context_Factory;
 
@@ -353,7 +355,7 @@ package body GVD.Call_Stack is
          Context_Func    => Context_Factory'Access);
 
       Gtkada.Handlers.Object_Callback.Object_Connect
-        (Get_Selection (Widget.Tree), "changed",
+        (Get_Selection (Widget.Tree), Signal_Changed,
          On_Selection_Changed'Access, Widget);
    end Initialize;
 

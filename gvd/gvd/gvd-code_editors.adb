@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
---                                GPS                                --
+--                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
+--                      Copyright (C) 2000-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,14 +18,15 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                use Glib;
-with Gtk.Box;             use Gtk.Box;
-with Gtk.Widget;          use Gtk.Widget;
-with Gtkada.Handlers;     use Gtkada.Handlers;
+with Glib;            use Glib;
+with Gtk.Box;         use Gtk.Box;
+with Gtk.Object;      use Gtk.Object;
+with Gtk.Widget;      use Gtk.Widget;
+with Gtkada.Handlers; use Gtkada.Handlers;
 
-with Pango.Font;          use Pango.Font;
-with GVD.Types;           use GVD.Types;
-with VFS;                 use VFS;
+with Pango.Font;      use Pango.Font;
+with GVD.Types;       use GVD.Types;
+with VFS;             use VFS;
 
 package body GVD.Code_Editors is
 
@@ -64,7 +65,7 @@ package body GVD.Code_Editors is
       Gtk_New (Editor.Asm, Process);
       Ref (Editor.Asm);
       Widget_Callback.Connect
-        (Editor, "destroy",
+        (Editor, Signal_Destroy,
          Widget_Callback.To_Marshaller (On_Destroy'Access));
    end Initialize;
 

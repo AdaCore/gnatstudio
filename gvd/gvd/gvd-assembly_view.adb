@@ -33,6 +33,7 @@ with Gtk.Handlers;            use Gtk.Handlers;
 pragma Elaborate_All (Gtk.Handlers);
 with Gtk.Menu;                use Gtk.Menu;
 with Gtk.Menu_Item;           use Gtk.Menu_Item;
+with Gtk.Object;              use Gtk.Object;
 with Gtk.Scrolled_Window;     use Gtk.Scrolled_Window;
 with Gtk.Text_Buffer;         use Gtk.Text_Buffer;
 with Gtk.Text_Iter;           use Gtk.Text_Iter;
@@ -40,6 +41,7 @@ with Gtk.Text_Mark;           use Gtk.Text_Mark;
 with Gtk.Text_Tag;            use Gtk.Text_Tag;
 with Gtk.Text_Tag_Table;      use Gtk.Text_Tag_Table;
 with Gtk.Text_View;           use Gtk.Text_View;
+with Gtk.Widget;              use Gtk.Widget;
 
 with Pango.Font;              use Pango.Font;
 
@@ -185,10 +187,10 @@ package body GVD.Assembly_View is
       Add (Container => Scrolling_Area, Widget => Assembly_View.View);
 
       Assembly_View_Cb.Connect
-        (Assembly_View, "destroy",
+        (Assembly_View, Signal_Destroy,
          Assembly_View_Cb.To_Marshaller (Destroy_Cb'Access));
       Assembly_View_Event_Cb.Object_Connect
-        (Assembly_View.View, "key_press_event",
+        (Assembly_View.View, Signal_Key_Press_Event,
          Assembly_View_Event_Cb.To_Marshaller (Key_Press_Cb'Access),
          Assembly_View);
 
@@ -356,21 +358,21 @@ package body GVD.Assembly_View is
       Gtk_New (Menu_Item, Label => -"Show Current Location");
       Append (Menu, Menu_Item);
       Assembly_View_Cb.Object_Connect
-        (Menu_Item, "activate",
+        (Menu_Item, Signal_Activate,
          Assembly_View_Cb.To_Marshaller (Show_Current_Line_Menu'Access),
          Assembly_View);
 
       Gtk_New (Menu_Item, Label => -"Show Previous Page");
       Append (Menu, Menu_Item);
       Assembly_View_Cb.Object_Connect
-        (Menu_Item, "activate",
+        (Menu_Item, Signal_Activate,
          Assembly_View_Cb.To_Marshaller (Meta_Scroll_Up'Access),
          Assembly_View);
 
       Gtk_New (Menu_Item, Label => -"Show Next Page");
       Append (Menu, Menu_Item);
       Assembly_View_Cb.Object_Connect
-        (Menu_Item, "activate",
+        (Menu_Item, Signal_Activate,
          Assembly_View_Cb.To_Marshaller (Meta_Scroll_Down'Access),
          Assembly_View);
 

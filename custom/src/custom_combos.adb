@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
---                               G P S                               --
+--                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2004-2006                       --
+--                     Copyright (C) 2004-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -24,6 +24,7 @@ with Glib.Properties;    use Glib.Properties;
 with Gtk.Box;            use Gtk.Box;
 with Gtk.Button;         use Gtk.Button;
 with Gtk.Combo;          use Gtk.Combo;
+with Gtk.Editable;       use Gtk.Editable;
 with Gtk.GEntry;         use Gtk.GEntry;
 with Gtk.List_Item;      use Gtk.List_Item;
 with Gtk.Handlers;       use Gtk.Handlers;
@@ -332,7 +333,7 @@ package body Custom_Combos is
          Set_Editable (Get_Entry (Combo.Combo), False);
 
          Subprogram_Callback.Object_Connect
-           (Get_Entry (Combo.Combo), "changed", Combo_Changed'Access,
+           (Get_Entry (Combo.Combo), Signal_Changed, Combo_Changed'Access,
             Slot_Object => Combo,
             User_Data   => On_Changed,
             After       => True);
@@ -356,7 +357,7 @@ package body Custom_Combos is
    begin
       if On_Selected /= null then
          Item_Handlers.Connect
-           (Item, "button_release_event",
+           (Item, Signal_Button_Release_Event,
             Item_Handlers.To_Marshaller (Item_Selected'Access),
             User_Data   => (Combo       => Custom_Combo (Combo),
                             On_Selected => On_Selected),
@@ -519,7 +520,7 @@ package body Custom_Combos is
          Set_Data (Inst, Widget => GObject (Button));
          Show_All (Button);
          Subprogram_Callback.Connect
-           (Button, "clicked", On_Button_Clicked'Access,
+           (Button, Signal_Clicked, On_Button_Clicked'Access,
             User_Data => Nth_Arg (Data, 4));
 
       elsif Command = "set_text" then

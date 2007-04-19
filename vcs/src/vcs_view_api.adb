@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
+--                      Copyright (C) 2001-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -462,7 +462,8 @@ package body VCS_View_API is
       Gtk_New (Browse, -"Browse");
       Pack_Start (Box, Browse);
       Dialog_Callback.Connect
-        (Browse, "clicked", On_Select_Dir'Access, Switch_Tag_Dialog (Dialog));
+        (Browse, Signal_Clicked,
+         On_Select_Dir'Access, Switch_Tag_Dialog (Dialog));
 
       Gtk_New_Hbox (Box);
       Pack_Start (Get_Vbox (Dialog), Box, Expand => False);
@@ -508,7 +509,7 @@ package body VCS_View_API is
       Gtk_New (Browse, -"Browse");
       Pack_Start (Box, Browse);
       Dialog_Callback.Connect
-        (Browse, "clicked", On_Select_Dir'Access, Dialog);
+        (Browse, Signal_Clicked, On_Select_Dir'Access, Dialog);
 
       Gtk_New_Hbox (Box);
       Pack_Start (Get_Vbox (Dialog), Box, Expand => False);
@@ -668,7 +669,7 @@ package body VCS_View_API is
 
             Append (Menu, Item);
             Context_Callback.Connect
-              (Item, "activate",
+              (Item, Gtk.Menu_Item.Signal_Activate,
                Context_Callback.To_Marshaller (Callback),
                Context);
 
@@ -731,7 +732,8 @@ package body VCS_View_API is
                end if;
 
                Context_Callback.Connect
-                 (Item, "activate", On_Menu_Add_To_Activity'Access,
+                 (Item, Gtk.Menu_Item.Signal_Activate,
+                  On_Menu_Add_To_Activity'Access,
                   A_Context);
                Set_Sensitive (Item, Section_Active);
             end if;
@@ -809,20 +811,23 @@ package body VCS_View_API is
          Gtk_New (Item, Label => -"Expand all");
          Append (Menu, Item);
          Context_Callback.Connect
-           (Item, "activate", On_Menu_Expand_All'Access, Context);
+           (Item, Gtk.Menu_Item.Signal_Activate,
+            On_Menu_Expand_All'Access, Context);
          Set_Sensitive (Item, True);
 
          Gtk_New (Item, Label => -"Collapse all");
          Append (Menu, Item);
          Context_Callback.Connect
-           (Item, "activate", On_Menu_Collapse_All'Access, Context);
+           (Item, Gtk.Menu_Item.Signal_Activate,
+            On_Menu_Collapse_All'Access, Context);
          Set_Sensitive (Item, True);
 
          if not Has_Activity_Information (Context) then
             Gtk_New (Item, Label => -"Clear view");
             Append (Menu, Item);
             Context_Callback.Connect
-              (Item, "activate", On_Menu_Clear_Explorer'Access, Context);
+              (Item, Gtk.Menu_Item.Signal_Activate,
+               On_Menu_Clear_Explorer'Access, Context);
             Set_Sensitive (Item, True);
          end if;
 
@@ -863,28 +868,28 @@ package body VCS_View_API is
                   case Log_Action is
                      when Add =>
                         Context_Callback.Connect
-                          (Item, "activate", On_Menu_Add'Access,
-                           Context);
+                          (Item, Gtk.Menu_Item.Signal_Activate,
+                           On_Menu_Add'Access, Context);
 
                      when Add_No_Commit =>
                         Context_Callback.Connect
-                          (Item, "activate", On_Menu_Add_No_Commit'Access,
-                           Context);
+                          (Item, Gtk.Menu_Item.Signal_Activate,
+                           On_Menu_Add_No_Commit'Access, Context);
 
                      when Remove =>
                         Context_Callback.Connect
-                          (Item, "activate", On_Menu_Remove'Access,
-                           Context);
+                          (Item, Gtk.Menu_Item.Signal_Activate,
+                           On_Menu_Remove'Access, Context);
 
                      when Remove_No_Commit =>
                         Context_Callback.Connect
-                          (Item, "activate", On_Menu_Remove_No_Commit'Access,
-                           Context);
+                          (Item, Gtk.Menu_Item.Signal_Activate,
+                           On_Menu_Remove_No_Commit'Access, Context);
 
                      when others =>
                         Context_Callback.Connect
-                          (Item, "activate", On_Menu_Commit'Access,
-                           Context);
+                          (Item, Gtk.Menu_Item.Signal_Activate,
+                           On_Menu_Commit'Access, Context);
                   end case;
                end if;
             end;
@@ -929,13 +934,15 @@ package body VCS_View_API is
                Gtk_New (Item, Label => -"Add " & Actions (Annotate).all);
                Append (Menu, Item);
                Context_Callback.Connect
-                 (Item, "activate", On_Menu_Annotate'Access, Context);
+                 (Item, Gtk.Menu_Item.Signal_Activate,
+                  On_Menu_Annotate'Access, Context);
                Set_Sensitive (Item, Section_Active);
 
                Gtk_New (Item, Label => -"Remove " & Actions (Annotate).all);
                Append (Menu, Item);
                Context_Callback.Connect
-                 (Item, "activate", On_Menu_Remove_Annotate'Access, Context);
+                 (Item, Gtk.Menu_Item.Signal_Activate,
+                  On_Menu_Remove_Annotate'Access, Context);
 
                Set_Sensitive (Item, Section_Active);
             end if;
@@ -943,19 +950,22 @@ package body VCS_View_API is
             Gtk_New (Item, Label => -"Edit revision log");
             Append (Menu, Item);
             Context_Callback.Connect
-              (Item, "activate", On_Menu_Edit_Log'Access, Context);
+              (Item, Gtk.Menu_Item.Signal_Activate,
+               On_Menu_Edit_Log'Access, Context);
             Set_Sensitive (Item, Section_Active);
 
             Gtk_New (Item, Label => -"Edit global ChangeLog");
             Append (Menu, Item);
             Context_Callback.Connect
-              (Item, "activate", On_Menu_Edit_ChangeLog'Access, Context);
+              (Item, Gtk.Menu_Item.Signal_Activate,
+               On_Menu_Edit_ChangeLog'Access, Context);
             Set_Sensitive (Item, Section_Active);
 
             Gtk_New (Item, Label => -"Remove revision log");
             Append (Menu, Item);
             Context_Callback.Connect
-              (Item, "activate", On_Menu_Remove_Log'Access, Context);
+              (Item, Gtk.Menu_Item.Signal_Activate,
+               On_Menu_Remove_Log'Access, Context);
             Set_Sensitive (Item, Section_Active);
 
             Add_Separator;
@@ -1054,13 +1064,13 @@ package body VCS_View_API is
             Gtk_New (Item, -"Add/No commit");
             Append (Submenu, Item);
             Context_Callback.Connect
-              (Item, "activate",
+              (Item, Gtk.Menu_Item.Signal_Activate,
                On_Menu_Add_Directory_No_Commit'Access, Context);
 
             Gtk_New (Item, -"Remove/No commit");
             Append (Submenu, Item);
             Context_Callback.Connect
-              (Item, "activate",
+              (Item, Gtk.Menu_Item.Signal_Activate,
                On_Menu_Remove_Directory_No_Commit'Access, Context);
 
             if not Has_Activity_Information (Context) then
@@ -1071,7 +1081,8 @@ package body VCS_View_API is
                   Gtk_New (Item, -"Commit");
                   Append (Submenu, Item);
                   Context_Callback.Connect
-                    (Item, "activate", On_Menu_Commit'Access, Context);
+                    (Item, Gtk.Menu_Item.Signal_Activate,
+                     On_Menu_Commit'Access, Context);
 
                   declare
                      A_Menu    : Gtk_Menu;
@@ -1103,8 +1114,8 @@ package body VCS_View_API is
                Label => Actions (Status_Files).all & (-" for directory"));
             Append (Submenu, Item);
             Context_Callback.Connect
-              (Item, "activate", On_Menu_Get_Status_Dir'Access,
-               Context);
+              (Item, Gtk.Menu_Item.Signal_Activate,
+               On_Menu_Get_Status_Dir'Access, Context);
             Set_Sensitive (Item, Section_Active);
 
             Items_Inserted := True;
@@ -1115,7 +1126,7 @@ package body VCS_View_API is
               (Item, Label => Actions (Update).all & (-" directory"));
             Append (Submenu, Item);
             Context_Callback.Connect
-              (Item, "activate", On_Menu_Update_Dir'Access,
+              (Item, Gtk.Menu_Item.Signal_Activate, On_Menu_Update_Dir'Access,
                Context);
             Set_Sensitive (Item, Section_Active);
 
@@ -1128,8 +1139,8 @@ package body VCS_View_API is
                & (-" for directory recursively"));
             Append (Submenu, Item);
             Context_Callback.Connect
-              (Item, "activate", On_Menu_Get_Status_Dir_Recursive'Access,
-               Context);
+              (Item, Gtk.Menu_Item.Signal_Activate,
+               On_Menu_Get_Status_Dir_Recursive'Access, Context);
             Set_Sensitive (Item, Section_Active);
 
             Items_Inserted := True;
@@ -1141,8 +1152,8 @@ package body VCS_View_API is
                & (-" directory recursively"));
             Append (Submenu, Item);
             Context_Callback.Connect
-              (Item, "activate", On_Menu_Update_Dir_Recursive'Access,
-               Context);
+              (Item, Gtk.Menu_Item.Signal_Activate,
+               On_Menu_Update_Dir_Recursive'Access, Context);
             Set_Sensitive (Item, Section_Active);
 
             Items_Inserted := True;
@@ -1184,16 +1195,16 @@ package body VCS_View_API is
          Gtk_New (Item, Label => -"List all files in project");
          Append (Submenu, Item);
          Context_Callback.Connect
-           (Item, "activate", On_Menu_List_Project_Files'Access,
-            Context);
+           (Item, Gtk.Menu_Item.Signal_Activate,
+            On_Menu_List_Project_Files'Access, Context);
 
          if Actions (Status_Files) /= null then
             Gtk_New
               (Item, Label => Actions (Status_Files).all & (-" for project"));
             Append (Submenu, Item);
             Context_Callback.Connect
-              (Item, "activate", On_Menu_Get_Status_Project'Access,
-               Context);
+              (Item, Gtk.Menu_Item.Signal_Activate,
+               On_Menu_Get_Status_Project'Access, Context);
             Set_Sensitive (Item, Section_Active);
          end if;
 
@@ -1201,16 +1212,16 @@ package body VCS_View_API is
             Gtk_New (Item, Label => Actions (Update).all & (-" project"));
             Append (Submenu, Item);
             Context_Callback.Connect
-              (Item, "activate", On_Menu_Update_Project'Access,
-               Context);
+              (Item, Gtk.Menu_Item.Signal_Activate,
+               On_Menu_Update_Project'Access, Context);
             Set_Sensitive (Item, Section_Active);
          end if;
 
          Gtk_New (Item, Label => -"List all files in project and subprojects");
          Append (Submenu, Item);
          Context_Callback.Connect
-           (Item, "activate", On_Menu_List_Project_Files_Recursive'Access,
-            Context);
+           (Item, Gtk.Menu_Item.Signal_Activate,
+            On_Menu_List_Project_Files_Recursive'Access, Context);
 
          if Actions (Status_Files) /= null then
             Gtk_New
@@ -1218,8 +1229,8 @@ package body VCS_View_API is
                  (-" for project and subprojects"));
             Append (Submenu, Item);
             Context_Callback.Connect
-              (Item, "activate", On_Menu_Get_Status_Project_Recursive'Access,
-               Context);
+              (Item, Gtk.Menu_Item.Signal_Activate,
+               On_Menu_Get_Status_Project_Recursive'Access, Context);
             Set_Sensitive (Item, Section_Active);
          end if;
 
@@ -1229,8 +1240,8 @@ package body VCS_View_API is
                & (-" project and subprojects"));
             Append (Submenu, Item);
             Context_Callback.Connect
-              (Item, "activate", On_Menu_Update_Project_Recursive'Access,
-               Context);
+              (Item, Gtk.Menu_Item.Signal_Activate,
+               On_Menu_Update_Project_Recursive'Access, Context);
             Set_Sensitive (Item, Section_Active);
          end if;
 
@@ -1250,7 +1261,7 @@ package body VCS_View_API is
          Gtk_New (Item, Label => -"Select files same status");
          Append (Menu, Item);
          Context_Callback.Connect
-           (Item, "activate",
+           (Item, Gtk.Menu_Item.Signal_Activate,
             On_Menu_Select_Files_Same_Status'Access, Context);
          Set_Sensitive (Item, True);
       end if;
@@ -1264,9 +1275,9 @@ package body VCS_View_API is
      (Explorer : VCS_Explorer_View_Access;
       Context  : Selection_Context)
    is
-      Status    : File_Status_List.List;
-      Dirs      : String_List.List;
-      Ref       : VCS_Access;
+      Status : File_Status_List.List;
+      Dirs   : String_List.List;
+      Ref    : VCS_Access;
       use String_List;
    begin
       if Explorer = null then

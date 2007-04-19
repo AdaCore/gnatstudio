@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --              GtkAda - Ada95 binding for Gtk+/Gnome                --
 --                                                                   --
---                     Copyright (C) 2002                            --
---                         ACT-Europe                                --
+--                    Copyright (C) 2002-2007                        --
+--                            AdaCore                                --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -27,7 +27,6 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with Glib;                 use Glib;
 with Glib.Object;          use Glib.Object;
 with Gtk.Combo;            use Gtk.Combo;
 with Gtk.Widget;           use Gtk.Widget;
@@ -70,7 +69,7 @@ package body Gtkada.Combo is
       Set_Editable (Get_Entry (Combo), False);
 
       Widget_Callback.Object_Connect
-        (Get_Popup_Window (Combo), "hide", Selected'Access, Combo);
+        (Get_Popup_Window (Combo), Signal_Hide, Selected'Access, Combo);
    end Gtk_New;
 
 end Gtkada.Combo;

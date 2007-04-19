@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2005                       --
+--                     Copyright (C) 2000-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -48,7 +48,7 @@ package body Gtkada.Color_Combo is
 
    Combo_Class_Record : GObject_Class := Uninitialized_Class;
    Combo_Signals : constant chars_ptr_array :=
-     (1 => New_String ("color_changed"));
+                     (1 => New_String (String (Signal_Color_Changed)));
 
    --  ??? Should implement a destroy callback
 
@@ -86,7 +86,7 @@ package body Gtkada.Color_Combo is
 
    procedure Initialize (Combo : access Gtk_Color_Combo_Record'Class) is
       Signal_Parameters : constant Signal_Parameter_Types :=
-        (1 => (1 => GType_None));
+                            (1 => (1 => GType_None));
    begin
       Gtk.Extra.Combo_Button.Initialize (Combo);
 
@@ -98,16 +98,18 @@ package body Gtkada.Color_Combo is
          Parameters   => Signal_Parameters);
 
       Widget_Callback.Object_Connect
-        (Get_Button (Combo), "clicked",
+        (Get_Button (Combo), Signal_Clicked,
          Widget_Callback.To_Marshaller (Button_Clicked'Access), Combo);
 
       Gtk_New (Combo.Selection);
       Add (Get_Frame (Combo), Combo.Selection);
       Color_Cb.Object_Connect
-        (Combo.Selection, "color_changed", Color_Selected'Access, Combo);
-      Color_Cb.Connect (Combo, "map", Display_Button'Access, After => True);
+        (Combo.Selection, Signal_Color_Changed, Color_Selected'Access, Combo);
+      Color_Cb.Connect
+        (Combo, Signal_Map, Display_Button'Access, After => True);
       Color_Cb.Object_Connect
         (Get_Arrow (Combo), "toggled", Arrow_Selected'Access, Combo);
+      --  ??? can't find the toggled signal on a Gtk_Arrow!
       Show (Combo.Selection);
    end Initialize;
 
@@ -118,7 +120,7 @@ package body Gtkada.Color_Combo is
    procedure Button_Clicked (Combo : access Gtk_Widget_Record'Class) is
    begin
       Widget_Callback.Emit_By_Name
-        (Get_Arrow (Gtk_Color_Combo (Combo)), "clicked");
+        (Get_Arrow (Gtk_Color_Combo (Combo)), Signal_Clicked);
    end Button_Clicked;
 
    -------------------
@@ -127,7 +129,7 @@ package body Gtkada.Color_Combo is
 
    procedure Color_Changed (Combo : access Gtk_Color_Combo_Record'Class) is
    begin
-      Widget_Callback.Emit_By_Name (Combo, "color_changed");
+      Widget_Callback.Emit_By_Name (Combo, Signal_Color_Changed);
    end Color_Changed;
 
    ---------------

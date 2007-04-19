@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2005                       --
+--                     Copyright (C) 2000-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -27,6 +27,7 @@ with Gtk.Hbutton_Box;           use Gtk.Hbutton_Box;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Separator;             use Gtk.Separator;
 with Gtk.Stock;                 use Gtk.Stock;
+with Gtk.Toggle_Button;         use Gtk.Toggle_Button;
 with Gtk.Vbutton_Box;           use Gtk.Vbutton_Box;
 with Gtk.Widget;                use Gtk.Widget;
 
@@ -127,7 +128,7 @@ package body Memory_View_Pkg is
       Pack_Start
         (Vbox24, Memory_View.Address_Entry, False, False, 0);
       Entry_Callback.Connect
-        (Memory_View.Address_Entry, "activate",
+        (Memory_View.Address_Entry, Gtk.GEntry.Signal_Activate,
          Entry_Callback.To_Marshaller (On_Address_Entry_Activate'Access));
 
       Gtk_New (Memory_View.Search_Entry);
@@ -149,7 +150,7 @@ package body Memory_View_Pkg is
       Set_Relief (Memory_View.Address_View, Relief_Normal);
       Set_Flags (Memory_View.Address_View, Can_Default);
       Button_Callback.Connect
-        (Memory_View.Address_View, "clicked",
+        (Memory_View.Address_View, Signal_Clicked,
          Button_Callback.To_Marshaller (On_Address_View_Clicked'Access));
       Add (Vbuttonbox6, Memory_View.Address_View);
 
@@ -193,7 +194,7 @@ package body Memory_View_Pkg is
       Set_Text (Memory_View.Size_Entry, -"Byte");
       Set_Visibility (Memory_View.Size_Entry, True);
       Entry_Callback.Connect
-        (Memory_View.Size_Entry, "changed",
+        (Memory_View.Size_Entry, Signal_Changed,
          Entry_Callback.To_Marshaller (On_Size_Entry_Changed'Access));
 
       Gtk_New_Vseparator (Vseparator7);
@@ -224,7 +225,7 @@ package body Memory_View_Pkg is
       Set_Text (Memory_View.Data_Entry, -"Hex");
       Set_Visibility (Memory_View.Data_Entry, True);
       Entry_Callback.Connect
-        (Memory_View.Data_Entry, "changed",
+        (Memory_View.Data_Entry, Signal_Changed,
          Entry_Callback.To_Marshaller (On_Data_Entry_Changed'Access));
 
       Gtk_New_Vseparator (Vseparator10);
@@ -234,7 +235,7 @@ package body Memory_View_Pkg is
       Set_Active (Memory_View.Show_Ascii, True);
       Pack_Start (Hbox12, Memory_View.Show_Ascii, False, False, 0);
       Check_Button_Callback.Connect
-        (Memory_View.Show_Ascii, "toggled",
+        (Memory_View.Show_Ascii, Signal_Toggled,
          Check_Button_Callback.To_Marshaller (On_Show_Ascii_Toggled'Access));
 
       Gtk_New_Vseparator (Vseparator9);
@@ -245,7 +246,7 @@ package body Memory_View_Pkg is
       Set_Flags (Memory_View.Pgup, Can_Default);
       Pack_Start (Hbox12, Memory_View.Pgup, True, True, 0);
       Button_Callback.Connect
-        (Memory_View.Pgup, "clicked",
+        (Memory_View.Pgup, Signal_Clicked,
          Button_Callback.To_Marshaller (On_Pgup_Clicked'Access));
 
       Gtk_New (Arrow1, Arrow_Up, Shadow_Out);
@@ -258,7 +259,7 @@ package body Memory_View_Pkg is
       Set_Flags (Memory_View.Pgdn, Can_Default);
       Pack_Start (Hbox12, Memory_View.Pgdn, True, True, 0);
       Button_Callback.Connect
-        (Memory_View.Pgdn, "clicked",
+        (Memory_View.Pgdn, Signal_Clicked,
          Button_Callback.To_Marshaller (On_Pgdn_Clicked'Access));
 
       Gtk_New (Arrow2, Arrow_Down, Shadow_Out);
@@ -271,7 +272,7 @@ package body Memory_View_Pkg is
       Gtk_New
         (Memory_View.Lines_Spin, Adjustment, 0.0, 0);
       Entry_Return_Callback.Connect
-        (Gtk_Entry (Memory_View.Lines_Spin), "button_release_event",
+        (Gtk_Entry (Memory_View.Lines_Spin), Signal_Button_Release_Event,
          On_Button_Release'Access);
       Pack_Start (Hbox12, Memory_View.Lines_Spin, True, True, 0);
 
@@ -283,11 +284,13 @@ package body Memory_View_Pkg is
       Gtk_New (Memory_View.View);
       Set_Editable (Memory_View.View, True);
       Return_Callback.Connect
-        (Memory_View.View, "key_press_event", On_View_Key_Press_Event'Access);
+        (Memory_View.View, Signal_Key_Press_Event,
+         On_View_Key_Press_Event'Access);
       Text_Callback.Connect
-        (Memory_View.View, "move_cursor", On_View_Move_Cursor'Access);
+        (Memory_View.View, Gtk.Text_View.Signal_Move_Cursor,
+         On_View_Move_Cursor'Access);
       Return_Callback.Connect
-        (Memory_View.View, "button_release_event",
+        (Memory_View.View, Signal_Button_Release_Event,
          On_View_Button_Release_Event'Access);
       Add (Memory_View.Scrolledwindow, Memory_View.View);
 
@@ -305,7 +308,7 @@ package body Memory_View_Pkg is
       Set_Relief (Memory_View.Reset, Relief_Normal);
       Set_Flags (Memory_View.Reset, Can_Default);
       Button_Callback.Connect
-        (Memory_View.Reset, "clicked",
+        (Memory_View.Reset, Signal_Clicked,
          Button_Callback.To_Marshaller (On_Reset_Clicked'Access));
       Add (Hbuttonbox11, Memory_View.Reset);
 
@@ -313,14 +316,14 @@ package body Memory_View_Pkg is
       Set_Relief (Memory_View.Submit, Relief_Normal);
       Set_Flags (Memory_View.Submit, Can_Default);
       Button_Callback.Connect
-        (Memory_View.Submit, "clicked",
+        (Memory_View.Submit, Signal_Clicked,
          Button_Callback.To_Marshaller (On_Submit_Clicked'Access));
       Add (Hbuttonbox11, Memory_View.Submit);
 
       Gtk_New_From_Stock (Memory_View.Close, Stock_Close);
       Set_Flags (Memory_View.Close, Can_Default);
       Button_Callback.Connect
-        (Memory_View.Close, "clicked",
+        (Memory_View.Close, Signal_Clicked,
          Button_Callback.To_Marshaller (On_Close_Clicked'Access));
       Add (Hbuttonbox11, Memory_View.Close);
    end Initialize;

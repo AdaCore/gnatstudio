@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2004-2006                       --
+--                     Copyright (C) 2004-2007                       --
 --                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -23,6 +23,7 @@ with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
 with Gtk.Check_Button;          use Gtk.Check_Button;
 with Gtk.Dialog;                use Gtk.Dialog;
+with Gtk.Editable;              use Gtk.Editable;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Frame;                 use Gtk.Frame;
 with Gtk.GEntry;                use Gtk.GEntry;
@@ -196,7 +197,8 @@ package body Creation_Wizard is
       Grab_Focus (Page.Project_Name);
 
       Widget_Callback.Object_Connect
-        (Page.Project_Name, "changed", Update_Buttons_Sensitivity'Access, Wiz);
+        (Page.Project_Name,
+         Signal_Changed, Update_Buttons_Sensitivity'Access, Wiz);
 
       Set_Row_Spacing (Table, 1, 20);
 
@@ -210,13 +212,13 @@ package body Creation_Wizard is
       Attach (Table, Page.Project_Location, 0, 1, 3, 4);
       Set_Activates_Default (Page.Project_Location, True);
       Widget_Callback.Object_Connect
-        (Page.Project_Location, "changed",
+        (Page.Project_Location, Signal_Changed,
          Update_Buttons_Sensitivity'Access, Wiz);
 
       Gtk_New (Button, -"Browse");
       Attach (Table, Button, 1, 2, 3, 4, Xoptions => 0);
       Page_Handlers.Connect
-        (Button, "clicked", Advanced_Prj_Location'Access,
+        (Button, Signal_Clicked, Advanced_Prj_Location'Access,
          User_Data => Project_Wizard_Page (Page));
 
       if not Page.Force_Relative_Dirs then

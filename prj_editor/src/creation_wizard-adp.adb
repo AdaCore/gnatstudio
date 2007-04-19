@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2004                            --
---                             AdaCore                               --
+--                      Copyright (C) 2004-2007                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,6 +26,7 @@ with Projects;                  use Projects;
 with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
+with Gtk.Editable;              use Gtk.Editable;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
 with Gtk.Label;                 use Gtk.Label;
@@ -142,11 +143,11 @@ package body Creation_Wizard.Adp is
       Gtk_New (Button, -"Browse");
       Pack_Start (Box2, Button, Expand => False);
       Page_Handlers.Connect
-        (Button, "clicked", On_Browse'Access,
+        (Button, Signal_Clicked, On_Browse'Access,
          User_Data => Project_Wizard_Page (Page));
 
       Widget_Callback.Object_Connect
-        (Page.Adp_File_Name, "changed", Update_Buttons_Sensitivity'Access,
+        (Page.Adp_File_Name, Signal_Changed, Update_Buttons_Sensitivity'Access,
          Wiz);
 
       Grab_Focus (Page.Adp_File_Name);

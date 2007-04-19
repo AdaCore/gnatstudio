@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2006                      --
+--                      Copyright (C) 2002-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
@@ -18,19 +18,22 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib; use Glib;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Unchecked_Deallocation;
+
 with GNAT.Strings;            use GNAT.Strings;
+
+with Glib; use Glib;
 with Gtk.Label;               use Gtk.Label;
 with Gtk.Notebook;            use Gtk.Notebook;
+with Gtk.Object;              use Gtk.Object;
 with Gtk.Widget;              use Gtk.Widget;
+with Gtkada.Handlers;         use Gtkada.Handlers;
 with Basic_Types;
 with GPS.Kernel;              use GPS.Kernel;
 with Language_Handlers;       use Language_Handlers;
-with Gtkada.Handlers;         use Gtkada.Handlers;
 with Projects;                use Projects;
 with String_Utils;            use String_Utils;
-with Ada.Unchecked_Deallocation;
 with Project_Viewers;         use Project_Viewers;
 with Case_Handling;           use Case_Handling;
 
@@ -119,7 +122,7 @@ package body Naming_Editors is
       Set_Current_Page (Editor, 0);
       Set_Visible_Pages (Editor, Kernel, Languages, No_Project);
 
-      Widget_Callback.Connect (Editor, "destroy", On_Destroy'Access);
+      Widget_Callback.Connect (Editor, Signal_Destroy, On_Destroy'Access);
 
       Basic_Types.Free (Supported);
    end Gtk_New;

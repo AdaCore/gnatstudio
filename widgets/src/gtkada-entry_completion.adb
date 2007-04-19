@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2005                       --
+--                     Copyright (C) 2002-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -32,6 +32,7 @@ with Gtk.Combo;                  use Gtk.Combo;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.GEntry;                 use Gtk.GEntry;
 with Gtk.Frame;                  use Gtk.Frame;
+with Gtk.Object;                 use Gtk.Object;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Tree_Model;             use Gtk.Tree_Model;
 with Gtk.Tree_Selection;         use Gtk.Tree_Selection;
@@ -139,10 +140,10 @@ package body Gtkada.Entry_Completion is
                                 2 => GType_String));
       Set_Model (The_Entry.View, Gtk_Tree_Model (The_Entry.List));
       Return_Callback.Object_Connect
-        (The_Entry.View, "button_press_event",
+        (The_Entry.View, Signal_Button_Press_Event,
          Return_Callback.To_Marshaller (On_Button_Press'Access), The_Entry);
       Return_Callback.Object_Connect
-        (The_Entry.View, "key_press_event",
+        (The_Entry.View, Signal_Key_Press_Event,
          Return_Callback.To_Marshaller (On_Key_Press'Access), The_Entry);
 
       Gtk_New (Renderer);
@@ -170,13 +171,13 @@ package body Gtkada.Entry_Completion is
       Widget_List.Free (List);
 
       Widget_Callback.Object_Connect
-        (Get_Selection (The_Entry.View), "changed",
+        (Get_Selection (The_Entry.View), Signal_Changed,
          Selection_Changed'Access,
          Slot_Object => The_Entry);
 
-      Widget_Callback.Connect (The_Entry, "destroy", On_Destroy'Access);
+      Widget_Callback.Connect (The_Entry, Signal_Destroy, On_Destroy'Access);
       Return_Callback.Object_Connect
-        (Get_Entry (The_Entry), "key_press_event",
+        (Get_Entry (The_Entry), Signal_Key_Press_Event,
          Return_Callback.To_Marshaller (On_Entry_Tab'Access), The_Entry);
    end Initialize;
 

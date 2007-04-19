@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005 - 2006                    --
+--                      Copyright (C) 2005-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -221,10 +221,10 @@ package body Welcome_Page is
                   or Enter_Notify_Mask
                   or Leave_Notify_Mask);
 
-      Connect (Box, "enter_notify_event",
+      Connect (Box, Signal_Enter_Notify_Event,
                To_Marshaller (On_Enter'Access), Data);
 
-      Connect (Box, "leave_notify_event",
+      Connect (Box, Signal_Leave_Notify_Event,
                To_Marshaller (On_Leave'Access), Data);
 
       return Box;
@@ -291,7 +291,7 @@ package body Welcome_Page is
       Gtk_New_Vbox (Vbox);
       Pack_Start (Vbox, Box, False, False, 3);
       Connect
-        (Box, "button_press_event",
+        (Box, Signal_Button_Press_Event,
          To_Marshaller (On_Overview'Access), Kernel);
       Pack_Start (Hbox, Vbox, False, False, 3);
 
@@ -300,7 +300,7 @@ package body Welcome_Page is
       Gtk_New_Vbox (Vbox);
       Pack_Start (Vbox, Box, False, False, 3);
       Connect
-        (Box, "button_press_event",
+        (Box, Signal_Button_Press_Event,
          To_Marshaller (On_UG'Access), Kernel);
       Pack_Start (Hbox, Vbox, False, False, 3);
 
@@ -309,7 +309,7 @@ package body Welcome_Page is
       Gtk_New_Vbox (Vbox);
       Pack_Start (Vbox, Box, False, False, 3);
       Connect
-        (Box, "button_press_event",
+        (Box, Signal_Button_Press_Event,
          To_Marshaller (On_Tutorial'Access), Kernel);
       Pack_Start (Hbox, Vbox, False, False, 3);
 

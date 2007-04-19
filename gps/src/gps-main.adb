@@ -652,10 +652,10 @@ procedure GPS.Main is
       GPS.Menu.Register_Common_Menus (GPS_Main.Kernel);
 
       Kernel_Callback.Connect
-        (Get_MDI (GPS_Main.Kernel), "child_selected",
+        (Get_MDI (GPS_Main.Kernel), Signal_Child_Selected,
          Child_Selected'Unrestricted_Access, GPS_Main.Kernel);
       Kernel_Callback.Connect
-        (Get_MDI (GPS_Main.Kernel), "child_title_changed",
+        (Get_MDI (GPS_Main.Kernel), Signal_Child_Title_Changed,
          Title_Changed'Unrestricted_Access, GPS_Main.Kernel);
 
       DDE.Register_DDE_Server (GPS_Main.Kernel);

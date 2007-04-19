@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2006                       --
+--                     Copyright (C) 2000-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -19,20 +19,23 @@
 -----------------------------------------------------------------------
 
 with GNAT.Strings;
-with Gtk; use Gtk;
-with Gtk.Adjustment;   use Gtk.Adjustment;
-with Gtk.Stock;        use Gtk.Stock;
-with Gtk.Widget;       use Gtk.Widget;
-with Gtk.Enums;        use Gtk.Enums;
-with GPS.Intl;         use GPS.Intl;
+with Gtk;                       use Gtk;
+with Gtk.Adjustment;            use Gtk.Adjustment;
+with Gtk.Stock;                 use Gtk.Stock;
+with Gtk.Toggle_Button;         use Gtk.Toggle_Button;
+with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Enums;                 use Gtk.Enums;
+with GPS.Intl;                  use GPS.Intl;
 with Breakpoints_Pkg.Callbacks; use Breakpoints_Pkg.Callbacks;
-with Gtkada.Handlers;  use Gtkada.Handlers;
+with Gtkada.Handlers;           use Gtkada.Handlers;
 
-with GUI_Utils;        use GUI_Utils;
+with GUI_Utils;                 use GUI_Utils;
 
 package body Breakpoints_Pkg is
 
-   pragma Style_Checks (Off);
+   -------------
+   -- Gtk_New --
+   -------------
 
    procedure Gtk_New (Breakpoints : out Breakpoints_Access) is
    begin
@@ -40,16 +43,20 @@ package body Breakpoints_Pkg is
       Breakpoints_Pkg.Initialize (Breakpoints);
    end Gtk_New;
 
+   ----------------
+   -- Initialize --
+   ----------------
+
    procedure Initialize (Breakpoints : access Breakpoints_Record'Class) is
       pragma Suppress (All_Checks);
-      Vbox15_Group : Widget_SList.GSList;
-      File_Combo_Items : String_List.Glist;
-      Line_Spin_Adj : Gtk_Adjustment;
+      Vbox15_Group           : Widget_SList.GSlist;
+      File_Combo_Items       : String_List.Glist;
+      Line_Spin_Adj          : Gtk_Adjustment;
       Subprogram_Combo_Items : String_List.Glist;
-      Regexp_Combo_Items : String_List.Glist;
-      Watchpoint_Type_Items : String_List.Glist;
-      Exception_Name_Items : String_List.Glist;
-      Vbox9_Group : Widget_SList.GSList;
+      Regexp_Combo_Items     : String_List.Glist;
+      Watchpoint_Type_Items  : String_List.Glist;
+      Exception_Name_Items   : String_List.Glist;
+      Vbox9_Group            : Widget_SList.GSlist;
 
    begin
       Gtk.Window.Initialize (Breakpoints, Window_Toplevel);
@@ -58,9 +65,10 @@ package body Breakpoints_Pkg is
       Set_Position (Breakpoints, Win_Pos_Center);
       Set_Modal (Breakpoints, False);
       Return_Callback.Connect
-        (Breakpoints, "delete_event", On_Breakpoints_Delete_Event'Access);
+        (Breakpoints, Signal_Delete_Event, On_Breakpoints_Delete_Event'Access);
       Return_Callback.Connect
-        (Breakpoints, "key_press_event", On_Breakpoints_Key_Press_Event'Access);
+        (Breakpoints, Signal_Key_Press_Event,
+         On_Breakpoints_Key_Press_Event'Access);
 
       Gtk_New_Hbox (Breakpoints.Main_Box, False, 0);
       Add (Breakpoints, Breakpoints.Main_Box);
@@ -92,13 +100,16 @@ package body Breakpoints_Pkg is
       Set_Border_Width (Breakpoints.Vbox15, 3);
       Add (Breakpoints.Frame12, Breakpoints.Vbox15);
 
-      Gtk_New (Breakpoints.Location_Selected, Vbox15_Group, -"Source location");
+      Gtk_New (Breakpoints.Location_Selected,
+               Vbox15_Group, -"Source location");
       Vbox15_Group := Group (Breakpoints.Location_Selected);
       Set_Active (Breakpoints.Location_Selected, False);
-      Pack_Start (Breakpoints.Vbox15, Breakpoints.Location_Selected, False, False, 0);
+      Pack_Start (Breakpoints.Vbox15, Breakpoints.Location_Selected,
+                  False, False, 0);
       Widget_Callback.Object_Connect
-        (Breakpoints.Location_Selected, "toggled",
-         Widget_Callback.To_Marshaller (On_Location_Selected_Toggled'Access), Breakpoints);
+        (Breakpoints.Location_Selected, Signal_Toggled,
+         Widget_Callback.To_Marshaller (On_Location_Selected_Toggled'Access),
+         Breakpoints);
 
       Gtk_New
         (Breakpoints.Alignment5, 0.5, 0.5, 0.88,
@@ -146,13 +157,16 @@ package body Breakpoints_Pkg is
       Set_Wrap (Breakpoints.Line_Spin, False);
       Pack_Start (Breakpoints.Hbox5, Breakpoints.Line_Spin, True, True, 0);
 
-      Gtk_New (Breakpoints.Subprogram_Selected, Vbox15_Group, -"Subprogram Name");
+      Gtk_New (Breakpoints.Subprogram_Selected,
+               Vbox15_Group, -"Subprogram Name");
       Vbox15_Group := Group (Breakpoints.Subprogram_Selected);
       Set_Active (Breakpoints.Subprogram_Selected, False);
-      Pack_Start (Breakpoints.Vbox15, Breakpoints.Subprogram_Selected, False, False, 0);
+      Pack_Start (Breakpoints.Vbox15, Breakpoints.Subprogram_Selected,
+                  False, False, 0);
       Widget_Callback.Object_Connect
-        (Breakpoints.Subprogram_Selected, "toggled",
-         Widget_Callback.To_Marshaller (On_Subprogam_Selected_Toggled'Access), Breakpoints);
+        (Breakpoints.Subprogram_Selected, Signal_Toggled,
+         Widget_Callback.To_Marshaller (On_Subprogam_Selected_Toggled'Access),
+         Breakpoints);
 
       Gtk_New
         (Breakpoints.Alignment6, 0.5, 0.5, 0.88,
@@ -164,7 +178,8 @@ package body Breakpoints_Pkg is
       Set_Use_Arrows (Breakpoints.Subprogram_Combo, True);
       Set_Use_Arrows_Always (Breakpoints.Subprogram_Combo, False);
       String_List.Append (Subprogram_Combo_Items, -"");
-      Combo.Set_Popdown_Strings (Breakpoints.Subprogram_Combo, Subprogram_Combo_Items);
+      Combo.Set_Popdown_Strings
+        (Breakpoints.Subprogram_Combo, Subprogram_Combo_Items);
       Free_String_List (Subprogram_Combo_Items);
       Set_Sensitive (Breakpoints.Subprogram_Combo, False);
       Add (Breakpoints.Alignment6, Breakpoints.Subprogram_Combo);
@@ -178,10 +193,12 @@ package body Breakpoints_Pkg is
       Gtk_New (Breakpoints.Address_Selected, Vbox15_Group, -"Address");
       Vbox15_Group := Group (Breakpoints.Address_Selected);
       Set_Active (Breakpoints.Address_Selected, False);
-      Pack_Start (Breakpoints.Vbox15, Breakpoints.Address_Selected, False, False, 0);
+      Pack_Start
+        (Breakpoints.Vbox15, Breakpoints.Address_Selected, False, False, 0);
       Widget_Callback.Object_Connect
-        (Breakpoints.Address_Selected, "toggled",
-         Widget_Callback.To_Marshaller (On_Address_Selected_Toggled'Access), Breakpoints);
+        (Breakpoints.Address_Selected, Signal_Toggled,
+         Widget_Callback.To_Marshaller
+           (On_Address_Selected_Toggled'Access), Breakpoints);
 
       Gtk_New
         (Breakpoints.Alignment7, 0.5, 0.5, 0.88,
@@ -201,13 +218,16 @@ package body Breakpoints_Pkg is
       Set_Text (Breakpoints.Entry21, -"");
       Set_Visibility (Breakpoints.Entry21, True);
 
-      Gtk_New (Breakpoints.Regexp_Selected, Vbox15_Group, -"Regular expression");
+      Gtk_New (Breakpoints.Regexp_Selected,
+               Vbox15_Group, -"Regular expression");
       Vbox15_Group := Group (Breakpoints.Regexp_Selected);
       Set_Active (Breakpoints.Regexp_Selected, False);
-      Pack_Start (Breakpoints.Vbox15, Breakpoints.Regexp_Selected, False, False, 0);
+      Pack_Start (Breakpoints.Vbox15, Breakpoints.Regexp_Selected,
+                  False, False, 0);
       Widget_Callback.Object_Connect
-        (Breakpoints.Regexp_Selected, "toggled",
-         Widget_Callback.To_Marshaller (On_Regexp_Selected_Toggled'Access), Breakpoints);
+        (Breakpoints.Regexp_Selected, Signal_Toggled,
+         Widget_Callback.To_Marshaller (On_Regexp_Selected_Toggled'Access),
+         Breakpoints);
 
       Gtk_New
         (Breakpoints.Alignment8, 0.5, 0.5, 0.88,
@@ -232,7 +252,8 @@ package body Breakpoints_Pkg is
 
       Gtk_New (Breakpoints.Temporary_Location, -"Temporary breakpoint");
       Set_Active (Breakpoints.Temporary_Location, False);
-      Pack_Start (Breakpoints.Vbox2, Breakpoints.Temporary_Location, False, False, 5);
+      Pack_Start (Breakpoints.Vbox2, Breakpoints.Temporary_Location,
+                  False, False, 5);
 
       Gtk_New_Vseparator (Breakpoints.Vseparator1);
       Pack_Start (Breakpoints.Hbox2, Breakpoints.Vseparator1, False, False, 0);
@@ -247,8 +268,9 @@ package body Breakpoints_Pkg is
       Gtk_New_From_Stock (Breakpoints.Add_Location, Stock_Add);
       Set_Flags (Breakpoints.Add_Location, Can_Default);
       Widget_Callback.Object_Connect
-        (Breakpoints.Add_Location, "clicked",
-         Widget_Callback.To_Marshaller (On_Add_Location_Clicked'Access), Breakpoints);
+        (Breakpoints.Add_Location, Signal_Clicked,
+         Widget_Callback.To_Marshaller (On_Add_Location_Clicked'Access),
+         Breakpoints);
       Add (Breakpoints.Vbuttonbox2, Breakpoints.Add_Location);
 
       Gtk_New (Breakpoints.Location, -("Location"));
@@ -277,7 +299,8 @@ package body Breakpoints_Pkg is
       Set_Max_Length (Breakpoints.Watchpoint_Name, 0);
       Set_Text (Breakpoints.Watchpoint_Name, -"");
       Set_Visibility (Breakpoints.Watchpoint_Name, True);
-      Pack_Start (Breakpoints.Vbox7, Breakpoints.Watchpoint_Name, False, False, 0);
+      Pack_Start (Breakpoints.Vbox7, Breakpoints.Watchpoint_Name,
+                  False, False, 0);
 
       Gtk_New (Breakpoints.Label10, -("is"));
       Set_Alignment (Breakpoints.Label10, 0.0, 0.5);
@@ -293,9 +316,11 @@ package body Breakpoints_Pkg is
       String_List.Append (Watchpoint_Type_Items, -"written");
       String_List.Append (Watchpoint_Type_Items, -"read");
       String_List.Append (Watchpoint_Type_Items, -"read or written");
-      Combo.Set_Popdown_Strings (Breakpoints.Watchpoint_Type, Watchpoint_Type_Items);
+      Combo.Set_Popdown_Strings
+        (Breakpoints.Watchpoint_Type, Watchpoint_Type_Items);
       Free_String_List (Watchpoint_Type_Items);
-      Pack_Start (Breakpoints.Vbox7, Breakpoints.Watchpoint_Type, False, False, 0);
+      Pack_Start
+        (Breakpoints.Vbox7, Breakpoints.Watchpoint_Type, False, False, 0);
 
       Breakpoints.Combo_Entry3 := Get_Entry (Breakpoints.Watchpoint_Type);
       Set_Editable (Breakpoints.Combo_Entry3, False);
@@ -315,7 +340,8 @@ package body Breakpoints_Pkg is
       Set_Max_Length (Breakpoints.Watchpoint_Cond, 0);
       Set_Text (Breakpoints.Watchpoint_Cond, -"");
       Set_Visibility (Breakpoints.Watchpoint_Cond, True);
-      Pack_Start (Breakpoints.Vbox7, Breakpoints.Watchpoint_Cond, False, False, 0);
+      Pack_Start
+        (Breakpoints.Vbox7, Breakpoints.Watchpoint_Cond, False, False, 0);
 
       Gtk_New_Vseparator (Breakpoints.Vseparator2);
       Pack_Start (Breakpoints.Hbox3, Breakpoints.Vseparator2, False, False, 0);
@@ -330,8 +356,9 @@ package body Breakpoints_Pkg is
       Gtk_New_From_Stock (Breakpoints.Add_Watchpoint, Stock_Add);
       Set_Flags (Breakpoints.Add_Watchpoint, Can_Default);
       Widget_Callback.Object_Connect
-        (Breakpoints.Add_Watchpoint, "clicked",
-         Widget_Callback.To_Marshaller (On_Add_Watchpoint_Clicked'Access), Breakpoints);
+        (Breakpoints.Add_Watchpoint, Signal_Clicked,
+         Widget_Callback.To_Marshaller (On_Add_Watchpoint_Clicked'Access),
+         Breakpoints);
       Add (Breakpoints.Vbuttonbox3, Breakpoints.Add_Watchpoint);
 
       Gtk_New (Breakpoints.Watchpoint, -("Variable"));
@@ -364,9 +391,11 @@ package body Breakpoints_Pkg is
       Set_Use_Arrows (Breakpoints.Exception_Name, True);
       Set_Use_Arrows_Always (Breakpoints.Exception_Name, False);
       String_List.Append (Exception_Name_Items, -"");
-      Combo.Set_Popdown_Strings (Breakpoints.Exception_Name, Exception_Name_Items);
+      Combo.Set_Popdown_Strings
+        (Breakpoints.Exception_Name, Exception_Name_Items);
       Free_String_List (Exception_Name_Items);
-      Pack_Start (Breakpoints.Hbox14, Breakpoints.Exception_Name, True, True, 0);
+      Pack_Start
+        (Breakpoints.Hbox14, Breakpoints.Exception_Name, True, True, 0);
 
       Breakpoints.Combo_Entry25 := Get_Entry (Breakpoints.Exception_Name);
       Set_Editable (Breakpoints.Combo_Entry25, True);
@@ -376,14 +405,17 @@ package body Breakpoints_Pkg is
 
       Gtk_New (Breakpoints.Load_Exception_List, -"Load List");
       Set_Relief (Breakpoints.Load_Exception_List, Relief_Normal);
-      Pack_Start (Breakpoints.Hbox14, Breakpoints.Load_Exception_List, False, False, 0);
+      Pack_Start (Breakpoints.Hbox14,
+                  Breakpoints.Load_Exception_List, False, False, 0);
       Widget_Callback.Object_Connect
-        (Breakpoints.Load_Exception_List, "clicked",
-         Widget_Callback.To_Marshaller (On_Load_Exception_List_Clicked'Access), Breakpoints);
+        (Breakpoints.Load_Exception_List, Signal_Clicked,
+         Widget_Callback.To_Marshaller (On_Load_Exception_List_Clicked'Access),
+         Breakpoints);
 
       Gtk_New (Breakpoints.Temporary_Exception, -"Temporary breakpoint");
       Set_Active (Breakpoints.Temporary_Exception, False);
-      Pack_Start (Breakpoints.Vbox8, Breakpoints.Temporary_Exception, False, False, 0);
+      Pack_Start (Breakpoints.Vbox8, Breakpoints.Temporary_Exception,
+                  False, False, 0);
 
       Gtk_New (Breakpoints.Frame4, -"Action");
       Set_Shadow_Type (Breakpoints.Frame4, Shadow_Etched_In);
@@ -396,12 +428,15 @@ package body Breakpoints_Pkg is
       Gtk_New (Breakpoints.Stop_Always_Exception, Vbox9_Group, -"Stop always");
       Vbox9_Group := Group (Breakpoints.Stop_Always_Exception);
       Set_Active (Breakpoints.Stop_Always_Exception, True);
-      Pack_Start (Breakpoints.Vbox9, Breakpoints.Stop_Always_Exception, False, False, 0);
+      Pack_Start (Breakpoints.Vbox9, Breakpoints.Stop_Always_Exception,
+                  False, False, 0);
 
-      Gtk_New (Breakpoints.Stop_Not_Handled_Exception, Vbox9_Group, -"Stop if not handled");
+      Gtk_New (Breakpoints.Stop_Not_Handled_Exception,
+               Vbox9_Group, -"Stop if not handled");
       Vbox9_Group := Group (Breakpoints.Stop_Not_Handled_Exception);
       Set_Active (Breakpoints.Stop_Not_Handled_Exception, False);
-      Pack_Start (Breakpoints.Vbox9, Breakpoints.Stop_Not_Handled_Exception, False, False, 0);
+      Pack_Start (Breakpoints.Vbox9, Breakpoints.Stop_Not_Handled_Exception,
+                  False, False, 0);
 
       Gtk_New_Vseparator (Breakpoints.Vseparator3);
       Pack_Start (Breakpoints.Hbox4, Breakpoints.Vseparator3, False, False, 0);
@@ -416,8 +451,9 @@ package body Breakpoints_Pkg is
       Gtk_New_From_Stock (Breakpoints.Add_Exception, Stock_Add);
       Set_Flags (Breakpoints.Add_Exception, Can_Default);
       Widget_Callback.Object_Connect
-        (Breakpoints.Add_Exception, "clicked",
-         Widget_Callback.To_Marshaller (On_Add_Exception_Clicked'Access), Breakpoints);
+        (Breakpoints.Add_Exception, Signal_Clicked,
+         Widget_Callback.To_Marshaller (On_Add_Exception_Clicked'Access),
+         Breakpoints);
       Add (Breakpoints.Vbuttonbox4, Breakpoints.Add_Exception);
 
       Gtk_New (Breakpoints.Except, -("Exception"));
@@ -434,7 +470,8 @@ package body Breakpoints_Pkg is
       Gtk_New_Vbox (Breakpoints.Vbox16, False, 0);
       Add (Breakpoints.Frame11, Breakpoints.Vbox16);
 
-      Gtk_New (Breakpoints.Label72, -("Click in the 'Enb' column to change the status"));
+      Gtk_New (Breakpoints.Label72,
+               -("Click in the 'Enb' column to change the status"));
       Set_Alignment (Breakpoints.Label72, 0.05, 0.5);
       Set_Padding (Breakpoints.Label72, 0, 0);
       Set_Justify (Breakpoints.Label72, Justify_Center);
@@ -442,8 +479,10 @@ package body Breakpoints_Pkg is
       Pack_Start (Breakpoints.Vbox16, Breakpoints.Label72, False, False, 0);
 
       Gtk_New (Breakpoints.Scrolledwindow2);
-      Set_Policy (Breakpoints.Scrolledwindow2, Policy_Automatic, Policy_Always);
-      Pack_Start (Breakpoints.Vbox16, Breakpoints.Scrolledwindow2, True, True, 0);
+      Set_Policy
+        (Breakpoints.Scrolledwindow2, Policy_Automatic, Policy_Always);
+      Pack_Start
+        (Breakpoints.Vbox16, Breakpoints.Scrolledwindow2, True, True, 0);
 
       declare
          Column_Types : constant Glib.GType_Array (1 .. 8) :=
@@ -476,20 +515,22 @@ package body Breakpoints_Pkg is
       Set_Layout (Breakpoints.Hbuttonbox8, Buttonbox_Spread);
       Set_Child_Size (Breakpoints.Hbuttonbox8, 85, 27);
       Set_Child_Ipadding (Breakpoints.Hbuttonbox8, 7, 0);
-      Pack_Start (Breakpoints.Vbox16, Breakpoints.Hbuttonbox8, False, False, 0);
+      Pack_Start
+        (Breakpoints.Vbox16, Breakpoints.Hbuttonbox8, False, False, 0);
 
       Gtk_New_From_Stock (Breakpoints.Remove, Stock_Remove);
       Set_Flags (Breakpoints.Remove, Can_Default);
       Widget_Callback.Object_Connect
-        (Breakpoints.Remove, "clicked",
-         Widget_Callback.To_Marshaller (On_Remove_Clicked'Access), Breakpoints);
+        (Breakpoints.Remove, Signal_Clicked,
+         Widget_Callback.To_Marshaller (On_Remove_Clicked'Access),
+         Breakpoints);
       Add (Breakpoints.Hbuttonbox8, Breakpoints.Remove);
 
       Gtk_New (Breakpoints.View, -"View");
       Set_Relief (Breakpoints.View, Relief_Normal);
       Set_Flags (Breakpoints.View, Can_Default);
       Widget_Callback.Object_Connect
-        (Breakpoints.View, "clicked",
+        (Breakpoints.View, Signal_Clicked,
          Widget_Callback.To_Marshaller (On_View_Clicked'Access), Breakpoints);
       Add (Breakpoints.Hbuttonbox8, Breakpoints.View);
 
@@ -497,14 +538,15 @@ package body Breakpoints_Pkg is
       Set_Relief (Breakpoints.Advanced_Location, Relief_Normal);
       Set_Flags (Breakpoints.Advanced_Location, Can_Default);
       Widget_Callback.Object_Connect
-        (Breakpoints.Advanced_Location, "clicked",
-         Widget_Callback.To_Marshaller (On_Advanced_Location_Clicked'Access), Breakpoints);
+        (Breakpoints.Advanced_Location, Signal_Clicked,
+         Widget_Callback.To_Marshaller (On_Advanced_Location_Clicked'Access),
+         Breakpoints);
       Add (Breakpoints.Hbuttonbox8, Breakpoints.Advanced_Location);
 
       Gtk_New_From_Stock (Breakpoints.Ok_Button, Stock_Close);
       Set_Flags (Breakpoints.Ok_Button, Can_Default);
       Widget_Callback.Object_Connect
-        (Breakpoints.Ok_Button, "clicked",
+        (Breakpoints.Ok_Button, Signal_Clicked,
          Widget_Callback.To_Marshaller (On_Ok_Bp_Clicked'Access), Breakpoints);
       Add (Breakpoints.Hbuttonbox8, Breakpoints.Ok_Button);
    end Initialize;

@@ -610,7 +610,7 @@ package body GPS.Main_Window is
 
       Add (Vbox, Main_Window.MDI);
 
-      Widget_Callback.Connect (Main_Window, "destroy", On_Destroy'Access);
+      Widget_Callback.Connect (Main_Window, Signal_Destroy, On_Destroy'Access);
 
       Add_Hook (Main_Window.Kernel, Preferences_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
@@ -629,7 +629,7 @@ package body GPS.Main_Window is
                 Name => "main_window.projet_changed");
 
       Return_Callback.Object_Connect
-        (Main_Window, "delete_event",
+        (Main_Window, Gtk.Widget.Signal_Delete_Event,
          Delete_Callback'Access,
          Gtk_Widget (Main_Window),
          After => False);
@@ -639,7 +639,7 @@ package body GPS.Main_Window is
       Gtk.Dnd.Dest_Set
         (Main_Window, Dest_Default_All, Target_Table_Url, Action_Any);
       Kernel_Callback.Connect
-        (Main_Window, "drag_data_received",
+        (Main_Window, Signal_Drag_Data_Received,
          Drag_Data_Received'Access, Kernel_Handle (Main_Window.Kernel));
 
       --  Set the generic user interface

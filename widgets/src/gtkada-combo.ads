@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --              GtkAda - Ada95 binding for Gtk+/Gnome                --
 --                                                                   --
---                     Copyright (C) 2002                            --
---                         ACT-Europe                                --
+--                    Copyright (C) 2002-2007                        --
+--                            AdaCore                                --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -27,6 +27,7 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+with Glib;      use Glib;
 with Gtk.Combo;
 
 package Gtkada.Combo is
@@ -52,6 +53,8 @@ package Gtkada.Combo is
    --
    --    Emitted when the contents of the combo has changed
    --  </signals>
+
+   Signal_Changed : constant Signal_Name := "changed";
 
 private
    type Gtkada_Combo_Record is new Gtk.Combo.Gtk_Combo_Record with null record;

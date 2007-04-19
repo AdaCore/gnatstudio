@@ -775,7 +775,26 @@ package Src_Editor_Buffer is
    --    procedure Handler (Buffer : Gtk_Object_Record'Class);
    --    Emitted when the status of the buffer has been changed.
    --
+   --  - "filename_changed"
+   --    procedure Handler (Buffer : Gtk_Object_Record'Class);
+   --    Emitted when the filename has been changed.
+   --
    --  </signals>
+
+   Signal_Cursor_Position_Changed           : constant Signal_Name :=
+                                                "cursor_position_changed";
+   Signal_Side_Column_Changed               : constant Signal_Name :=
+                                                "side_column_changed";
+   Signal_Side_Column_Configuration_Changed : constant Signal_Name :=
+                                          "side_column_configuration_changed";
+   Signal_Line_Highlights_Changed           : constant Signal_Name :=
+                                                "line_highlights_changed";
+   Signal_Buffer_Information_Changed        : constant Signal_Name :=
+                                                "buffer_information_changed";
+   Signal_Status_Changed                    : constant Signal_Name :=
+                                                "status_changed";
+   Signal_Filename_Changed                  : constant Signal_Name :=
+                                                "filename_changed";
 
    function Get_Buffer_Line
      (Buffer : access Source_Buffer_Record;
@@ -1224,7 +1243,7 @@ private
 
    procedure Emit_By_Name
      (Object : System.Address;
-      Name   : String);
+      Name   : Signal_Name);
    pragma Import (C, Emit_By_Name, "ada_g_signal_emit_by_name");
 
 end Src_Editor_Buffer;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2006                       --
+--                     Copyright (C) 2000-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -110,7 +110,7 @@ package body List_Select_Pkg is
    begin
       Gtk.Window.Initialize (List_Select, Window_Toplevel);
       Return_Callback.Connect
-        (List_Select, "delete_event", On_Delete_Event'Access);
+        (List_Select, Signal_Delete_Event, On_Delete_Event'Access);
 
       List_Select.Help_Text := new String'(Help_Message);
 
@@ -136,7 +136,7 @@ package body List_Select_Pkg is
       Set_Column_Width (List_Select.List, 0, 80);
       Set_Column_Width (List_Select.List, 1, 80);
       Widget_Callback.Connect
-        (List_Select.List, "select_row", On_Clist_Select_Row'Access);
+        (List_Select.List, Signal_Select_Row, On_Clist_Select_Row'Access);
       Add_With_Viewport (List_Select.Scrolledwindow, List_Select.List);
 
       Gtk_New (List_Select.Label1);
@@ -154,7 +154,7 @@ package body List_Select_Pkg is
       Set_Visibility (List_Select.The_Entry, True);
       Pack_Start (List_Select.Hbox2, List_Select.The_Entry, True, True, 15);
       Entry_Callback.Connect
-        (List_Select.The_Entry, "activate",
+        (List_Select.The_Entry, Gtk.GEntry.Signal_Activate,
          Entry_Callback.To_Marshaller (On_The_Entry_Activate'Access));
 
       Gtk_New (List_Select.Hbuttonbox);
@@ -167,14 +167,14 @@ package body List_Select_Pkg is
       Gtk_New_From_Stock (List_Select.Ok, Stock_Ok);
       Set_Flags (List_Select.Ok, Can_Default);
       Button_Callback.Connect
-        (List_Select.Ok, "clicked",
+        (List_Select.Ok, Signal_Clicked,
          Button_Callback.To_Marshaller (On_Ok_Clicked'Access));
       Add (List_Select.Hbuttonbox, List_Select.Ok);
 
       Gtk_New_From_Stock (List_Select.Cancel, Stock_Cancel);
       Set_Flags (List_Select.Cancel, Can_Default);
       Button_Callback.Connect
-        (List_Select.Cancel, "clicked",
+        (List_Select.Cancel, Signal_Clicked,
          Button_Callback.To_Marshaller (On_Cancel_Clicked'Access));
       Add (List_Select.Hbuttonbox, List_Select.Cancel);
 
@@ -182,7 +182,7 @@ package body List_Select_Pkg is
          Gtk_New_From_Stock (List_Select.Help, Stock_Help);
          Set_Flags (List_Select.Help, Can_Default);
          Button_Callback.Connect
-           (List_Select.Help, "clicked",
+           (List_Select.Help, Signal_Clicked,
             Button_Callback.To_Marshaller (On_Help_Clicked'Access));
          Add (List_Select.Hbuttonbox, List_Select.Help);
       end if;
@@ -195,10 +195,10 @@ package body List_Select_Pkg is
       end if;
 
       Return_Callback.Connect
-        (List_Select.List, "button_press_event",
+        (List_Select.List, Signal_Button_Press_Event,
          Return_Callback.To_Marshaller (On_Clist_Button_Press'Access));
 
       Set_Title (List_Select, Title);
-
    end Initialize;
+
 end List_Select_Pkg;

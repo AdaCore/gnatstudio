@@ -34,6 +34,7 @@ with Gtk.List;            use Gtk.List;
 with Gtk.List_Item;       use Gtk.List_Item;
 with Gtk.Menu;            use Gtk.Menu;
 with Gtk.Menu_Item;       use Gtk.Menu_Item;
+with Gtk.Object;          use Gtk.Object;
 with Gtk.Toggle_Button;   use Gtk.Toggle_Button;
 with Gtk.Widget;          use Gtk.Widget;
 
@@ -576,16 +577,17 @@ package body Histories is
    ---------------
 
    procedure Associate
-     (Hist      : in out History_Record;
-      Key       : History_Key;
-      Button    : access Gtk.Toggle_Button.Gtk_Toggle_Button_Record'Class)
+     (Hist   : in out History_Record;
+      Key    : History_Key;
+      Button : access Gtk.Toggle_Button.Gtk_Toggle_Button_Record'Class)
    is
-      Val : constant History_Key_Access := Create_New_Key_If_Necessary
-        (Hist, Key, Booleans);
+      Val : constant History_Key_Access :=
+              Create_New_Key_If_Necessary (Hist, Key, Booleans);
    begin
       Set_Active (Button, Val.Value);
       Value_Callback.Connect
-        (Button, "toggled", Update_History'Access, User_Data => Val);
+        (Button, Gtk.Toggle_Button.Signal_Toggled,
+         Update_History'Access, User_Data => Val);
    end Associate;
 
    ---------------
@@ -597,12 +599,13 @@ package body Histories is
       Key  : History_Key;
       Item : access Gtk.Check_Menu_Item.Gtk_Check_Menu_Item_Record'Class)
    is
-      Val : constant History_Key_Access := Create_New_Key_If_Necessary
-        (Hist, Key, Booleans);
+      Val : constant History_Key_Access :=
+              Create_New_Key_If_Necessary (Hist, Key, Booleans);
    begin
       Set_Active (Item, Val.Value);
       Value_Callback.Connect
-        (Item, "toggled", Update_History_Item'Access, User_Data => Val);
+        (Item, Gtk.Toggle_Button.Signal_Toggled,
+         Update_History_Item'Access, User_Data => Val);
    end Associate;
 
    ---------------
@@ -615,8 +618,8 @@ package body Histories is
       Menu      : access Gtk.Menu_Item.Gtk_Menu_Item_Record'Class;
       Callback  : Menu_Callback)
    is
-      Val : constant History_Key_Access := Create_New_Key_If_Necessary
-        (Hist, Key, Strings);
+      Val      : constant History_Key_Access :=
+                   Create_New_Key_If_Necessary (Hist, Key, Strings);
       Notifier : constant Menu_Changed_Notifier :=
                    new Menu_Changed_Notifier_Record;
    begin
@@ -626,7 +629,8 @@ package body Histories is
       Val.Notifier      := Changed_Notifier (Notifier);
 
       Notifier_Callback.Connect
-        (Menu, "destroy", On_Menu_Destroy'Access, Changed_Notifier (Notifier));
+        (Menu, Signal_Destroy,
+         On_Menu_Destroy'Access, Changed_Notifier (Notifier));
       On_Changed (Notifier, Hist, Key);
    end Associate;
 
@@ -673,8 +677,8 @@ package body Histories is
       Hist     : in out History_Record;
       Key      : History_Key)
    is
-      Value : constant String_List_Access := Create_New_Key_If_Necessary
-        (Hist, Key, Strings).List;
+      Value : constant String_List_Access :=
+                Create_New_Key_If_Necessary (Hist, Key, Strings).List;
       Menu  : Gtk_Menu;
    begin
       if Get_Submenu (Notifier.Menu) /= null then
@@ -696,7 +700,7 @@ package body Histories is
                if Notifier.Callback /= null then
                   Notifier_Callback.Connect
                     (Mitem,
-                     "activate", On_Menu_Selected'Access,
+                     Gtk.Menu_Item.Signal_Activate, On_Menu_Selected'Access,
                      Changed_Notifier (Notifier));
                end if;
             end;

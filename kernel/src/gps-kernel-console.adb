@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                     Copyright (C) 2001-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -30,6 +30,7 @@ with Glib.Object;            use Glib.Object;
 with Glib.Xml_Int;           use Glib.Xml_Int;
 
 with Gtk.Enums;              use Gtk.Enums;
+with Gtk.Object;             use Gtk.Object;
 with Gtk.Text_View;          use Gtk.Text_View;
 with Gtk.Widget;             use Gtk.Widget;
 
@@ -387,9 +388,10 @@ package body GPS.Kernel.Console is
                 Watch => GObject (Console));
 
       Kernel_Callback.Connect
-        (Console, "destroy", Console_Destroyed'Access, Kernel_Handle (Kernel));
+        (Console, Signal_Destroy,
+         Console_Destroyed'Access, Kernel_Handle (Kernel));
       Return_Callback.Connect
-        (Console, "delete_event", Console_Delete_Event'Access);
+        (Console, Gtk.Widget.Signal_Delete_Event, Console_Delete_Event'Access);
    end Initialize_Console;
 
    --------------------------------

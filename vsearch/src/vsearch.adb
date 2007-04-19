@@ -44,6 +44,7 @@ with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
 with Gtk.Text_Iter;            use Gtk.Text_Iter;
 with Gtk.Text_View;            use Gtk.Text_View;
+with Gtk.Toggle_Button;        use Gtk.Toggle_Button;
 with Gtk.Tooltips;             use Gtk.Tooltips;
 with Gtk.Window;               use Gtk.Window;
 with Gtkada.Dialogs;           use Gtkada.Dialogs;
@@ -465,8 +466,7 @@ package body Vsearch is
 
    procedure Float_Vsearch (Search_Child : access Gtk_Widget_Record'Class) is
       Child   : constant MDI_Child := MDI_Child (Search_Child);
-      Vsearch : constant Vsearch_Access :=
-        Vsearch_Access (Get_Widget (Child));
+      Vsearch : constant Vsearch_Access := Vsearch_Access (Get_Widget (Child));
       Close_Button : Gtk_Button;
    begin
       if Is_Floating (Child) then
@@ -482,7 +482,7 @@ package body Vsearch is
          Set_Child_Visible (Vsearch.Auto_Hide_Check, True);
 
          Widget_Callback.Object_Connect
-           (Close_Button, "clicked", Close_Vsearch'Access, Vsearch);
+           (Close_Button, Signal_Clicked, Close_Vsearch'Access, Vsearch);
 
          --  Set the position of the floating window
          Restore_Position (Vsearch);
@@ -1630,7 +1630,8 @@ package body Vsearch is
       end if;
 
       Widget_Callback.Object_Connect
-        (Vsearch.Options_Box, "toggled", On_Toggled'Access, Vsearch);
+        (Vsearch.Options_Box,
+         Gtk.Toggle_Button.Signal_Toggled, On_Toggled'Access, Vsearch);
 
       Gtk_New_Vbox (Vsearch.Options_Frame, Homogeneous => False);
       Set_Expanded_Widget (Vsearch.Options_Box, Vsearch.Options_Frame);
@@ -1681,7 +1682,7 @@ package body Vsearch is
          Select_On_Match_Description);
       Set_Active (Vsearch.Select_Editor_Check, Get_Pref (Select_On_Match));
       Widget_Callback.Object_Connect
-        (Vsearch.Select_Editor_Check, "toggled",
+        (Vsearch.Select_Editor_Check, Gtk.Toggle_Button.Signal_Toggled,
          On_Select_On_Match_Toggled'Access, Vsearch);
       Attach (Vsearch.Options_Vbox, Vsearch.Select_Editor_Check, 1, 2, 1, 2);
 
@@ -1691,14 +1692,14 @@ package body Vsearch is
          -Close_On_Match_Description);
       Set_Active (Vsearch.Auto_Hide_Check, Get_Pref (Close_On_Match));
       Widget_Callback.Object_Connect
-        (Vsearch.Auto_Hide_Check, "toggled",
+        (Vsearch.Auto_Hide_Check, Gtk.Toggle_Button.Signal_Toggled,
          On_Close_On_Match_Toggled'Access, Vsearch);
       Attach (Vsearch.Options_Vbox, Vsearch.Auto_Hide_Check, 0, 2, 2, 3);
 
       --  Create the widget
 
       Widget_Callback.Object_Connect
-        (Vsearch.Context_Entry, "changed",
+        (Vsearch.Context_Entry, Gtk.Editable.Signal_Changed,
          On_Context_Entry_Changed'Access, Vsearch);
 
       Gtk_New_From_Stock (Vsearch.Search_Next_Button, Stock_Find);
@@ -1709,7 +1710,8 @@ package body Vsearch is
         (Get_Tooltips (Handle), Vsearch.Search_Next_Button,
          -"Search next occurrence");
       Widget_Callback.Object_Connect
-        (Vsearch.Search_Next_Button, "clicked", On_Search'Access, Vsearch);
+        (Vsearch.Search_Next_Button, Signal_Clicked,
+         On_Search'Access, Vsearch);
 
       Gtk_New_With_Mnemonic (Vsearch.Search_Previous_Button, -"_Previous");
       Attach
@@ -1719,7 +1721,7 @@ package body Vsearch is
         (Get_Tooltips (Handle), Vsearch.Search_Previous_Button,
          -"Search previous occurrence");
       Widget_Callback.Object_Connect
-        (Vsearch.Search_Previous_Button, "clicked",
+        (Vsearch.Search_Previous_Button, Signal_Clicked,
          On_Search_Previous'Access, Vsearch);
 
       Gtk_New_With_Mnemonic (Vsearch.Search_All_Button, -"Find All");
@@ -1729,7 +1731,7 @@ package body Vsearch is
         (Get_Tooltips (Handle),
          Vsearch.Search_All_Button, -"Find all occurences");
       Widget_Callback.Object_Connect
-        (Vsearch.Search_All_Button, "clicked",
+        (Vsearch.Search_All_Button, Signal_Clicked,
          On_Search_All'Access, Vsearch);
 
       Gtk_New (Vsearch.Replace_Button, -"Replace");
@@ -1740,7 +1742,7 @@ package body Vsearch is
         (Get_Tooltips (Handle), Vsearch.Replace_Button,
          -"Replace next occurrence");
       Widget_Callback.Object_Connect
-        (Vsearch.Replace_Button, "clicked",
+        (Vsearch.Replace_Button, Signal_Clicked,
          On_Replace'Access, Vsearch);
       Set_Sensitive (Vsearch_Access (Vsearch).Replace_Button, False);
 
@@ -1752,7 +1754,7 @@ package body Vsearch is
         (Get_Tooltips (Handle),
          Vsearch.Replace_Search_Button, -"Replace, then find next occurrence");
       Widget_Callback.Object_Connect
-        (Vsearch.Replace_Search_Button, "clicked",
+        (Vsearch.Replace_Search_Button, Signal_Clicked,
          On_Replace_Search'Access, Vsearch);
       Set_Sensitive (Vsearch_Access (Vsearch).Replace_Search_Button, False);
 
@@ -1763,7 +1765,7 @@ package body Vsearch is
         (Get_Tooltips (Handle),
          Vsearch.Replace_All_Button, -"Replace all occurences");
       Widget_Callback.Object_Connect
-        (Vsearch.Replace_All_Button, "clicked",
+        (Vsearch.Replace_All_Button, Signal_Clicked,
          On_Replace_All'Access, Vsearch);
 
       Gtk_New (Bbox);
@@ -1772,29 +1774,34 @@ package body Vsearch is
 
       --  Any change to the fields resets the search mode
       Return_Callback.Object_Connect
-        (Vsearch.Pattern_Entry, "key_press_event",
+        (Vsearch.Pattern_Entry, Signal_Key_Press_Event,
          Return_Callback.To_Marshaller (Key_Press'Access), Vsearch);
       Return_Callback.Object_Connect
-        (Vsearch.Replace_Entry, "key_press_event",
+        (Vsearch.Replace_Entry, Signal_Key_Press_Event,
          Return_Callback.To_Marshaller (Key_Press_Replace'Access), Vsearch);
       Kernel_Callback.Connect
-        (Vsearch.Pattern_Entry, "changed", Reset_Search'Access, Handle);
+        (Vsearch.Pattern_Entry, Gtk.Editable.Signal_Changed,
+         Reset_Search'Access, Handle);
       Widget_Callback.Object_Connect
-        (Vsearch.Replace_Entry, "changed",
+        (Vsearch.Replace_Entry, Gtk.Editable.Signal_Changed,
          Replace_Text_Changed'Access, Vsearch);
       Kernel_Callback.Connect
-        (Vsearch.Context_Entry, "changed", Reset_Search'Access, Handle);
+        (Vsearch.Context_Entry, Gtk.Editable.Signal_Changed,
+         Reset_Search'Access, Handle);
       Kernel_Callback.Connect
-        (Vsearch.Case_Check, "toggled", Reset_Search'Access, Handle);
+        (Vsearch.Case_Check,
+         Gtk.Toggle_Button.Signal_Toggled, Reset_Search'Access, Handle);
       Kernel_Callback.Connect
-        (Vsearch.Whole_Word_Check, "toggled", Reset_Search'Access, Handle);
+        (Vsearch.Whole_Word_Check, Gtk.Toggle_Button.Signal_Toggled,
+         Reset_Search'Access, Handle);
       Kernel_Callback.Connect
-        (Vsearch.Regexp_Check, "toggled", Reset_Search'Access, Handle);
+        (Vsearch.Regexp_Check,
+         Gtk.Toggle_Button.Signal_Toggled, Reset_Search'Access, Handle);
 
       --  Include all the patterns that have been predefined so far, and make
       --  sure that new patterns will be automatically added.
       Widget_Callback.Object_Connect
-        (Get_List (Vsearch.Pattern_Combo), "selection_changed",
+        (Get_List (Vsearch.Pattern_Combo), Signal_Selection_Changed,
          Selection_Changed'Access, Vsearch);
 
       --  Fill the replace combo first, so that the selection remains in
@@ -1948,7 +1955,8 @@ package body Vsearch is
             Ref (Vsearch_Module_Id.Search);
 
             Return_Callback.Connect
-              (Vsearch_Module_Id.Search, "delete_event", On_Delete'Access);
+              (Vsearch_Module_Id.Search,
+               Gtk.Widget.Signal_Delete_Event, On_Delete'Access);
          end if;
 
          Gtk_New (Child, Vsearch_Module_Id.Search,
@@ -1964,9 +1972,9 @@ package body Vsearch is
          Float_Vsearch (Child);
 
          Widget_Callback.Connect
-           (Child, "float_child", Float_Vsearch'Access);
+           (Child, Signal_Float_Child, Float_Vsearch'Access);
          Widget_Callback.Connect
-           (Child, "unfloat_child", Float_Vsearch'Access);
+           (Child, Signal_Unfloat_Child, Float_Vsearch'Access);
          Float_Child (Child, Float_Widget);
          Set_Focus_Child (Child);
       end if;

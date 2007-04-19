@@ -36,6 +36,7 @@ with Gtk.Label;                 use Gtk.Label;
 with Gtk.Table;                 use Gtk.Table;
 with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
+with Gtk.Toggle_Button;         use Gtk.Toggle_Button;
 with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtk.Widget;                use Gtk.Widget;
 
@@ -54,7 +55,7 @@ with GPS.Kernel;                use GPS.Kernel;
 with GPS.Location_View;         use GPS.Location_View;
 with GUI_Utils;                 use GUI_Utils;
 with Language;                  use Language;
-with Language_Handlers;     use Language_Handlers;
+with Language_Handlers;         use Language_Handlers;
 with OS_Utils;                  use OS_Utils;
 with Osint;                     use Osint;
 with Projects;                  use Projects;
@@ -2228,7 +2229,7 @@ package body Src_Contexts is
                -"Restrict the scope of the search");
 
       Kernel_Callback.Connect
-        (Get_Entry (Combo), "changed", Reset_Search'Access,
+        (Get_Entry (Combo), Signal_Changed, Reset_Search'Access,
          Kernel_Handle (Kernel));
    end Initialize_Scope_Combo;
 
@@ -2271,13 +2272,13 @@ package body Src_Contexts is
       Attach (Extra.Files_Table, Extra.Combo, 1, 3, 2, 3, Fill, 0);
 
       Kernel_Callback.Connect
-        (Extra.Subdirs_Check, "toggled", Reset_Search'Access,
+        (Extra.Subdirs_Check, Signal_Toggled, Reset_Search'Access,
          Kernel_Handle (Kernel));
       Kernel_Callback.Connect
-        (Extra.Files_Entry, "changed", Reset_Search'Access,
+        (Extra.Files_Entry, Signal_Changed, Reset_Search'Access,
          Kernel_Handle (Kernel));
       Kernel_Callback.Connect
-        (Extra.Directory_Entry, "changed", Reset_Search'Access,
+        (Extra.Directory_Entry, Signal_Changed, Reset_Search'Access,
          Kernel_Handle (Kernel));
    end Gtk_New;
 

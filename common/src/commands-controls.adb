@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                     Copyright (C) 2001-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -165,14 +165,14 @@ package body Commands.Controls is
          Command.UR := UR;
 
          Command.UR.Undo_Button_Handler_ID := Command_Callback.Connect
-           (UR.Undo_Button, "clicked", On_Undo'Access, Command, True);
+           (UR.Undo_Button, Signal_Clicked, On_Undo'Access, Command, True);
          Command.UR.Redo_Button_Handler_ID := Command_Callback.Connect
-           (UR.Redo_Button, "clicked", On_Redo'Access, Command, True);
+           (UR.Redo_Button, Signal_Clicked, On_Redo'Access, Command, True);
 
          Command.UR.Undo_Menu_Item_Handler_ID := Command_Callback.Connect
-           (UR.Undo_Menu_Item, "activate", On_Undo'Access, Command, True);
+           (UR.Undo_Menu_Item, Signal_Activate, On_Undo'Access, Command, True);
          Command.UR.Redo_Menu_Item_Handler_ID := Command_Callback.Connect
-           (UR.Redo_Menu_Item, "activate", On_Redo'Access, Command, True);
+           (UR.Redo_Menu_Item, Signal_Activate, On_Redo'Access, Command, True);
 
          Execute (Command);
          Add_Queue_Change_Hook (Queue, Command_Access (Command), "Controls");

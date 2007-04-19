@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2006                      --
+--                      Copyright (C) 2005-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -26,6 +26,7 @@ with Gdk.Window;                use Gdk.Window;
 
 with Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
+with Gtk.Object;                use Gtk.Object;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 
@@ -151,7 +152,7 @@ package body VCS_View is
 
       Gtkada.Handlers.Return_Callback.Object_Connect
         (Explorer.Tree,
-         "button_press_event",
+         Signal_Button_Press_Event,
          Gtkada.Handlers.Return_Callback.To_Marshaller (Button_Press'Access),
          Explorer,
          After => False);
@@ -165,17 +166,17 @@ package body VCS_View is
       Clicked (Explorer.File_Column);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
-        (Explorer, "delete_event",
+        (Explorer, Signal_Delete_Event,
          Gtkada.Handlers.Return_Callback.To_Marshaller (On_Delete'Access),
          Explorer, After => False);
 
       Gtkada.Handlers.Widget_Callback.Object_Connect
-        (Explorer, "destroy", On_Destroy'Access, Explorer);
+        (Explorer, Signal_Destroy, On_Destroy'Access, Explorer);
 
       --  Can't do this through the Focus_Widget parameter to Gtkada.MDI.Put,
       --  since the focus child is dynamic.
       Widget_Callback.Connect
-        (Explorer, "grab_focus", On_Selected'Access, After => True);
+        (Explorer, Signal_Grab_Focus, On_Selected'Access, After => True);
    end Initialize;
 
    -------------------

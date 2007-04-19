@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2004-2006                      --
+--                      Copyright (C) 2004-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -80,7 +80,6 @@ package body Action_Editor is
 
    procedure Destroy (Module : in out Action_Editor_Module_Record);
    --  Called when the module is destroyed
-
 
    No_Filter      : constant String := "<No filter>";   --  -"No filter"
    Unnamed_Filter : constant String := "<Unnamed filter>";
@@ -479,7 +478,7 @@ package body Action_Editor is
 
       Return_Callback.Object_Connect
         (Editor.View,
-         "button_press_event",
+         Signal_Button_Press_Event,
          Return_Callback.To_Marshaller (On_Button_Press'Access),
          Slot_Object => Editor);
 

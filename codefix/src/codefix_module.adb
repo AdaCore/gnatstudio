@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
+--                      Copyright (C) 2001-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1043,10 +1043,10 @@ package body Codefix_Module is
    --------------------
 
    procedure Create_Submenu
-     (Kernel       : access Kernel_Handle_Record'Class;
-      Menu         : access Gtk.Menu.Gtk_Menu_Record'Class;
-      Session      : access Codefix_Session_Record;
-      Error        : Error_Id)
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class;
+      Session : access Codefix_Session_Record;
+      Error   : Error_Id)
    is
       Solution_Node : Command_List.List_Node;
       Mitem         : Codefix_Menu_Item;
@@ -1061,7 +1061,7 @@ package body Codefix_Module is
          Mitem.Error        := Error;
          Mitem.Kernel       := Kernel_Handle (Kernel);
          Mitem.Session      := Codefix_Session (Session);
-         Widget_Callback.Connect (Mitem, "activate", On_Fix'Access);
+         Widget_Callback.Connect (Mitem, Signal_Activate, On_Fix'Access);
          Append (Menu, Mitem);
 
          Solution_Node := Next (Solution_Node);

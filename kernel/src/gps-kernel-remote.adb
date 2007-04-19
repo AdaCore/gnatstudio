@@ -41,6 +41,7 @@ with Gtk.Box;                    use Gtk.Box;
 with Gtk.Button;                 use Gtk.Button;
 with Gtk.Check_Button;           use Gtk.Check_Button;
 with Gtk.Dialog;                 use Gtk.Dialog;
+with Gtk.Editable;               use Gtk.Editable;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Event_Box;              use Gtk.Event_Box;
 with Gtk.Frame;                  use Gtk.Frame;
@@ -856,7 +857,7 @@ package body GPS.Kernel.Remote is
 
       Widget.List := Path_Row_List.Null_List;
       Widget_Callback.Object_Connect
-        (Widget.Add_Path_Button, "clicked",
+        (Widget.Add_Path_Button, Signal_Clicked,
          On_Add_Path_Clicked'Access, Widget);
    end Gtk_New;
 
@@ -1050,7 +1051,7 @@ package body GPS.Kernel.Remote is
          if Local = "" then
             Set_Text (Row.Local_Entry, Enter_Local_Path_String);
             Widget_Callback.Object_Connect
-              (Row.Local_Entry, "grab_focus",
+              (Row.Local_Entry, Signal_Grab_Focus,
                On_Path_Grab_Focus'Access, Row.Local_Entry);
          else
             Set_Text (Row.Local_Entry, Path.Get_Local_Path (True));
@@ -1059,7 +1060,7 @@ package body GPS.Kernel.Remote is
          if Remote = "" then
             Set_Text (Row.Remote_Entry, Enter_Remote_Path_String);
             Widget_Callback.Object_Connect
-              (Row.Remote_Entry, "grab_focus",
+              (Row.Remote_Entry, Signal_Grab_Focus,
                On_Path_Grab_Focus'Access, Row.Remote_Entry);
          else
             Set_Text (Row.Remote_Entry, Path.Get_Remote_Path (True));
@@ -1075,17 +1076,23 @@ package body GPS.Kernel.Remote is
       Data.Row    := Row;
 
       Widget_Boolean_Callback.Object_Connect
-        (Row.Local_Entry, "changed", On_Changed'Access, Widget.Dialog, False);
+        (Row.Local_Entry, Gtk.Editable.Signal_Changed,
+         On_Changed'Access, Widget.Dialog, False);
       Path_Callback.Object_Connect
-        (Row.Local_Browse_Button, "clicked", On_Browse_Local'Access, Data);
+        (Row.Local_Browse_Button, Signal_Clicked,
+         On_Browse_Local'Access, Data);
       Widget_Boolean_Callback.Object_Connect
-        (Row.Remote_Entry, "changed", On_Changed'Access, Widget.Dialog, False);
+        (Row.Remote_Entry, Gtk.Editable.Signal_Changed,
+         On_Changed'Access, Widget.Dialog, False);
       Path_Callback.Object_Connect
-        (Row.Remote_Browse_Button, "clicked", On_Browse_Remote'Access, Data);
+        (Row.Remote_Browse_Button, Signal_Clicked,
+         On_Browse_Remote'Access, Data);
       Widget_Boolean_Callback.Object_Connect
-        (Row.Sync_Combo, "changed", On_Changed'Access, Widget.Dialog, False);
+        (Row.Sync_Combo, Gtkada.Combo.Signal_Changed,
+         On_Changed'Access, Widget.Dialog, False);
       Path_Callback.Object_Connect
-        (Row.Remove_Button, "clicked", On_Remove_Path_Clicked'Access, Data);
+        (Row.Remove_Button, Signal_Clicked,
+         On_Remove_Path_Clicked'Access, Data);
       Show_All (Widget.Table);
    end Add_Path_Row;
 
@@ -1665,43 +1672,46 @@ package body GPS.Kernel.Remote is
       --  Callbacks connections
 
       Widget_Boolean_Callback.Object_Connect
-        (Dialog.Network_Name_Entry, "changed", On_Changed'Access,
-         Dialog, True);
+        (Dialog.Network_Name_Entry, Gtk.Editable.Signal_Changed,
+         On_Changed'Access, Dialog, True);
       Widget_Boolean_Callback.Object_Connect
-        (Dialog.User_Name_Entry, "changed", On_Changed'Access, Dialog, True);
+        (Dialog.User_Name_Entry, Gtk.Editable.Signal_Changed,
+         On_Changed'Access, Dialog, True);
       Widget_Boolean_Callback.Object_Connect
         (Get_Entry (Dialog.Remote_Access_Combo),
-         "changed", On_Changed'Access, Dialog, True);
+         Gtk.Editable.Signal_Changed, On_Changed'Access, Dialog, True);
       Widget_Boolean_Callback.Object_Connect
         (Get_Entry (Dialog.Remote_Shell_Combo),
-         "changed", On_Changed'Access, Dialog, True);
+         Gtk.Editable.Signal_Changed, On_Changed'Access, Dialog, True);
       Widget_Boolean_Callback.Object_Connect
         (Get_Entry (Dialog.Remote_Sync_Combo),
-         "changed", On_Changed'Access, Dialog, False);
+         Gtk.Editable.Signal_Changed, On_Changed'Access, Dialog, False);
       Widget_Boolean_Callback.Object_Connect
-        (Dialog.Max_Nb_Connected_Spin, "changed", On_Changed'Access, Dialog,
-         False);
-      Widget_Boolean_Callback.Object_Connect
-        (Dialog.Timeout_Spin, "changed", On_Changed'Access, Dialog, True);
-      Widget_Boolean_Callback.Object_Connect
-        (Get_Buffer (Dialog.Init_Cmds_View), "changed",
+        (Dialog.Max_Nb_Connected_Spin, Gtk.Editable.Signal_Changed,
          On_Changed'Access, Dialog, False);
       Widget_Boolean_Callback.Object_Connect
-        (Dialog.Debug_Button, "clicked", On_Changed'Access, Dialog, False);
+        (Dialog.Timeout_Spin, Gtk.Editable.Signal_Changed,
+         On_Changed'Access, Dialog, True);
+      Widget_Boolean_Callback.Object_Connect
+        (Get_Buffer (Dialog.Init_Cmds_View), Gtk.Text_Buffer.Signal_Changed,
+         On_Changed'Access, Dialog, False);
+      Widget_Boolean_Callback.Object_Connect
+        (Dialog.Debug_Button, Signal_Clicked,
+         On_Changed'Access, Dialog, False);
       Widget_Callback.Object_Connect
-        (Get_Selection (Dialog.Machine_Tree), "changed",
-         On_Selection_Changed'Access,
+        (Get_Selection (Dialog.Machine_Tree),
+         Gtk.Tree_Selection.Signal_Changed, On_Selection_Changed'Access,
          Dialog);
       Widget_Callback.Object_Connect
-        (Dialog.Add_Machine_Button, "clicked",
+        (Dialog.Add_Machine_Button, Signal_Clicked,
          On_Add_Machine_Clicked'Access,
          Dialog);
       Widget_Callback.Object_Connect
-        (Dialog.Restore_Button, "clicked",
+        (Dialog.Restore_Button, Signal_Clicked,
          On_Restore_Clicked'Access,
          Dialog);
       Widget_Callback.Object_Connect
-        (Dialog.Remove_Button, "clicked",
+        (Dialog.Remove_Button, Signal_Clicked,
          On_Remove_Clicked'Access,
          Dialog);
 

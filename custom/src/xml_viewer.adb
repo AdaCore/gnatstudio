@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2006                      --
+--                      Copyright (C) 2005-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -31,6 +31,7 @@ with Glib.Xml_Int;              use Glib.Xml_Int;
 with Gdk.Event;                 use Gdk.Event;
 
 with Gtk.Box;                   use Gtk.Box;
+with Gtk.Object;                use Gtk.Object;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
@@ -648,7 +649,7 @@ package body XML_Viewer is
       View.XML_Column     := Gint (Columns) + 2;
 
       Gtkada.Handlers.Return_Callback.Object_Connect
-        (View.Tree, "button_press_event",
+        (View.Tree, Signal_Button_Press_Event,
          Gtkada.Handlers.Return_Callback.To_Marshaller
            (On_Button_Press'Access),
          Slot_Object => View,
@@ -681,7 +682,7 @@ package body XML_Viewer is
          end if;
       end loop;
 
-      Widget_Callback.Connect (View, "destroy", On_Destroy'Access);
+      Widget_Callback.Connect (View, Signal_Destroy, On_Destroy'Access);
 
       Set_Title (View.Child, Name);
       Raise_Child (View.Child);

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2005                       --
+--                     Copyright (C) 2000-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -79,11 +79,11 @@ package body Std_Dialogs is
       Key             : History_Key := "") return String
    is
       use Widget_List;
-      Button   : Gtk_Widget;
+      Button : Gtk_Widget;
       pragma Unreferenced (Button);
 
-      Box      : Gtk_Box;
-      Vbox     : Gtk_Box;
+      Box    : Gtk_Box;
+      Vbox   : Gtk_Box;
 
    begin
       Set_Transient_For (Dialog, Parent);
@@ -105,7 +105,7 @@ package body Std_Dialogs is
       Pack_Start (Box, Dialog.Entry_Field, Padding => 10);
       Disable_Activate (Dialog.Entry_Field);
       Widget_Callback.Object_Connect
-        (Get_Entry (Dialog.Entry_Field), "activate",
+        (Get_Entry (Dialog.Entry_Field), Signal_Activate,
          Widget_Callback.To_Marshaller (Ok_Simple_Entry'Access),
          Dialog);
 

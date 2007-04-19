@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2006                       --
+--                      Copyright (C) 2003-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1038,7 +1038,7 @@ package body Aliases_Module is
                      if not Had_Focus then
                         Allocate (Event, Enter_Notify, Get_Window (W));
                         Result := Return_Callback.Emit_By_Name
-                          (W, "focus_in_event", Event);
+                          (W, Signal_Focus_In_Event, Event);
                         Free (Event);
                      end if;
 
@@ -1074,7 +1074,7 @@ package body Aliases_Module is
                      if not Had_Focus then
                         Allocate (Event, Leave_Notify, Get_Window (W));
                         Result := Return_Callback.Emit_By_Name
-                          (W, "focus_out_event", Event);
+                          (W, Signal_Focus_Out_Event, Event);
                         Free (Event);
                      end if;
                   end if;
@@ -1616,15 +1616,18 @@ package body Aliases_Module is
 
       Gtk_New (Item, View, -"Insert Parameter Reference", Special & "()");
       Add (Menu, Item);
-      Widget_Callback.Connect (Item, "activate", Insert_Special'Access);
+      Widget_Callback.Connect
+        (Item, Gtk.Menu_Item.Signal_Activate, Insert_Special'Access);
 
       Gtk_New (Item, View, -"Insert Cursor Position", Special & "_");
       Add (Menu, Item);
-      Widget_Callback.Connect (Item, "activate", Insert_Special'Access);
+      Widget_Callback.Connect
+        (Item, Gtk.Menu_Item.Signal_Activate, Insert_Special'Access);
 
       Gtk_New (Item, View, -"Insert Percent Sign", Special & Special);
       Add (Menu, Item);
-      Widget_Callback.Connect (Item, "activate", Insert_Special'Access);
+      Widget_Callback.Connect
+        (Item, Gtk.Menu_Item.Signal_Activate, Insert_Special'Access);
 
       for C in Aliases_Module_Id.Module_Funcs'Range loop
          Tmp := Aliases_Module_Id.Module_Funcs (C);
@@ -1633,7 +1636,7 @@ package body Aliases_Module is
             Gtk_New (Item, View, Tmp.Descr, Special & C);
             Add (Menu, Item);
             Widget_Callback.Connect
-              (Item, "activate", Insert_Special'Access);
+              (Item, Gtk.Menu_Item.Signal_Activate, Insert_Special'Access);
             Tmp := Tmp.Next;
          end loop;
       end loop;
@@ -1741,10 +1744,10 @@ package body Aliases_Module is
       Set_Editable_And_Callback (Editor.Aliases_Model, Render, 0);
 
       Widget_Callback.Object_Connect
-        (Get_Selection (Editor.Aliases), "changed",
+        (Get_Selection (Editor.Aliases), Gtk.Tree_Selection.Signal_Changed,
          Alias_Selection_Changed'Access, Editor);
       Widget_Callback.Object_Connect
-        (Render, "edited", Alias_Renamed'Access, Editor);
+        (Render, Signal_Edited, Alias_Renamed'Access, Editor);
 
       Gtk_New (Render);
       Pack_Start (Editor.Alias_Col, Render, False);
@@ -1760,7 +1763,7 @@ package body Aliases_Module is
                  Editor.Show_Read_Only);
       Pack_Start (Box, Editor.Show_Read_Only, Expand => False);
       Widget_Callback.Object_Connect
-        (Editor.Show_Read_Only, "toggled",
+        (Editor.Show_Read_Only, Signal_Toggled,
          Show_Read_Only_Toggled'Access, Editor);
 
       --  Right part
@@ -1818,7 +1821,7 @@ package body Aliases_Module is
       Add_Attribute (Col, Toggle_Render, "activatable", 5);
 
       Widget_Callback.Object_Connect
-        (Toggle_Render, "toggled", Param_Env_Changed'Access, Editor);
+        (Toggle_Render, Signal_Toggled, Param_Env_Changed'Access, Editor);
 
       Gtk_New (Render);
       Gtk_New (Col);
@@ -1854,10 +1857,12 @@ package body Aliases_Module is
          Menu_Destroy => Contextual_Destroy'Access);
 
       Widget_Callback.Object_Connect
-        (Expansion_Buffer, "insert_text", Expansion_Inserted'Access, Editor,
+        (Expansion_Buffer, Gtk.Text_Buffer.Signal_Insert_Text,
+         Expansion_Inserted'Access, Editor,
          After => True);
       Widget_Callback.Object_Connect
-        (Expansion_Buffer, "delete_range", Expansion_Deleted'Access, Editor,
+        (Expansion_Buffer, Signal_Delete_Range,
+         Expansion_Deleted'Access, Editor,
          After => True);
 
       --  Filters
@@ -1870,12 +1875,12 @@ package body Aliases_Module is
       Gtk_New_From_Stock (Button, Stock_New);
       Pack_Start (Get_Action_Area (Editor), Button, Expand => False);
       Widget_Callback.Object_Connect
-        (Button, "clicked", Alias_Created'Access, Editor);
+        (Button, Gtk.Button.Signal_Clicked, Alias_Created'Access, Editor);
 
       Gtk_New_From_Stock (Button, Stock_Delete);
       Pack_Start (Get_Action_Area (Editor), Button, Expand => False);
       Widget_Callback.Object_Connect
-        (Button, "clicked", Alias_Deleted'Access, Editor);
+        (Button, Gtk.Button.Signal_Clicked, Alias_Deleted'Access, Editor);
 
       Gtk_New_Vseparator (Sep);
       Pack_Start (Get_Action_Area (Editor), Sep, Expand => False);

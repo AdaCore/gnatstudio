@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2005                         --
+--                      Copyright (C) 2005-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -24,6 +24,7 @@ with Glib.Object;                use Glib.Object;
 with Glib.Properties.Creation;   use Glib.Properties.Creation;
 
 with Gtk.Combo;                  use Gtk.Combo;
+with Gtk.Editable;               use Gtk.Editable;
 with Gtk.GEntry;                 use Gtk.GEntry;
 with Gtk.Item;                   use Gtk.Item;
 with Gtk.List;                   use Gtk.List;
@@ -203,13 +204,13 @@ package body GPS.Kernel.Charsets is
       end if;
 
       Param_Spec_Handlers.Object_Connect
-        (Get_Entry (Combo), "changed",
+        (Get_Entry (Combo), Signal_Changed,
          Charset_Changed'Access,
          User_Data   => (Preferences_Manager (Manager), Param),
          Slot_Object => Combo,
          After       => True);
       Param_Spec_Handlers.Object_Connect
-        (Preferences_Editor, "preferences_changed",
+        (Preferences_Editor, Signal_Preferences_Changed,
          Update_Charset'Access,
          Slot_Object => Combo,
          User_Data => (Preferences_Manager (Manager), Param));

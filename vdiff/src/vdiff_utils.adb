@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
+--                      Copyright (C) 2001-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -33,6 +33,7 @@ with Glib.Values;
 with Gtk.Adjustment;            use Gtk.Adjustment;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Menu;
+with Gtk.Object;                use Gtk.Object;
 with Gtk.Style;                 use Gtk.Style;
 
 with Gtkada.Handlers;           use Gtkada.Handlers;
@@ -251,6 +252,10 @@ package body Vdiff_Utils is
       --  If Display is True, add the line in the list, otherwise only
       --  read the line in Infile.
 
+      --------------
+      -- Add_Line --
+      --------------
+
       procedure Add_Line
         (List  : access Gtk_Clist_Record'Class;
          Style : Gtk_Style;
@@ -263,6 +268,10 @@ package body Vdiff_Utils is
          Set_Cell_Style (List, Row, 1, Style);
          ICS.Free (Texts (1));
       end Add_Line;
+
+      ---------------
+      -- Read_Line --
+      ---------------
 
       procedure Read_Line
         (Infile  : File_Type;
@@ -289,7 +298,7 @@ package body Vdiff_Utils is
       Gtk_New (Info_2, Kernel_Handle (Kernel), File2);
 
       Object_Callback.Object_Connect
-        (List1, "destroy",
+        (List1, Signal_Destroy,
          On_Destroy'Access,
          Info_1);
 
@@ -565,7 +574,7 @@ package body Vdiff_Utils is
       Gtk_New (Info_2, Kernel_Handle (Kernel), VFS.No_File);
 
       Object_Callback.Object_Connect
-        (List1, "destroy",
+        (List1, Signal_Destroy,
          On_Destroy'Access,
          Info_1);
 

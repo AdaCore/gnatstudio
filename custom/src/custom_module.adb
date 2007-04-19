@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
+--                      Copyright (C) 2001-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -269,7 +269,7 @@ package body Custom_Module is
 
                Item.Index := L - List'First;
                Factory_Callback.Connect
-                 (Item, "activate", On_Dynamic_Menu_Activate'Access,
+                 (Item, Signal_Activate, On_Dynamic_Menu_Activate'Access,
                   User_Data =>
                     (Contextual => Create_Dynamic_Contextual_Access (Factory),
                      Context    => Create_Context (Script, Context)));
@@ -753,7 +753,7 @@ package body Custom_Module is
                   Title.all,
                   Command.Command,
                   Image,
-                 Tooltip => Title.all);
+                  Tooltip => Title.all);
             end if;
 
          else
@@ -1335,7 +1335,8 @@ package body Custom_Module is
                Menu := new Subprogram_Type_Menu_Record;
                Gtk.Menu_Item.Initialize (Menu, Label => Base);
                Menu.On_Activate := Nth_Arg (Data, 2, null);
-               Widget_Callback.Connect (Menu, "activate", On_Activate'Access);
+               Widget_Callback.Connect
+                 (Menu, Signal_Activate, On_Activate'Access);
                Set_Accel_Path
                  (Menu, "<gps>" & Path, Get_Default_Accelerators (Kernel));
 

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                     Copyright (C) 2001-2007                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -20,6 +20,7 @@
 
 with Gtk;                 use Gtk;
 with Gtk.Box;             use Gtk.Box;
+with Gtk.Editable;        use Gtk.Editable;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Stock;           use Gtk.Stock;
@@ -114,7 +115,7 @@ package body Make_Suite_Window_Pkg is
       Set_Visibility (Make_Suite_Window.Directory_Entry, True);
       Pack_Start (Hbox4, Make_Suite_Window.Directory_Entry, True, True, 3);
       Widget_Callback.Connect
-        (Make_Suite_Window.Directory_Entry, "changed",
+        (Make_Suite_Window.Directory_Entry, Signal_Changed,
          Check_Validity'Access);
 
       Gtk_New (Make_Suite_Window.Browse_Directory, -"Browse...");
@@ -122,7 +123,7 @@ package body Make_Suite_Window_Pkg is
       Pack_Start
         (Hbox4, Make_Suite_Window.Browse_Directory, False, False, 3);
       Button_Callback.Connect
-        (Make_Suite_Window.Browse_Directory, "clicked",
+        (Make_Suite_Window.Browse_Directory, Signal_Clicked,
          On_Browse_Directory_Clicked'Access);
 
       Gtk_New (Make_Suite_Window.Name_Entry);
@@ -132,7 +133,7 @@ package body Make_Suite_Window_Pkg is
       Set_Visibility (Make_Suite_Window.Name_Entry, True);
       Pack_Start (Vbox3, Make_Suite_Window.Name_Entry, False, False, 1);
       Widget_Callback.Connect
-        (Make_Suite_Window.Name_Entry, "changed",
+        (Make_Suite_Window.Name_Entry, Signal_Changed,
          Check_Validity'Access);
 
       Gtk_New_Hbox (Hbox3, False, 0);
@@ -181,7 +182,7 @@ package body Make_Suite_Window_Pkg is
       Set_Relief (Make_Suite_Window.Add, Relief_Normal);
       Set_Flags (Make_Suite_Window.Add, Can_Default);
       Button_Callback.Connect
-        (Make_Suite_Window.Add, "clicked",
+        (Make_Suite_Window.Add, Signal_Clicked,
          On_Add_Clicked'Access);
       Add (Vbuttonbox1, Make_Suite_Window.Add);
 
@@ -189,7 +190,7 @@ package body Make_Suite_Window_Pkg is
       Set_Relief (Make_Suite_Window.Remove, Relief_Normal);
       Set_Flags (Make_Suite_Window.Remove, Can_Default);
       Button_Callback.Connect
-        (Make_Suite_Window.Remove, "clicked",
+        (Make_Suite_Window.Remove, Signal_Clicked,
          On_Remove_Clicked'Access);
       Add (Vbuttonbox1, Make_Suite_Window.Remove);
 

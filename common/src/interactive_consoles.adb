@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                     Copyright (C) 2001-2007                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -34,7 +34,7 @@ with Gdk.Types.Keysyms;   use Gdk.Types.Keysyms;
 with Gdk.Event;           use Gdk.Event;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Main;            use Gtk.Main;
-with Gtk.Object;
+with Gtk.Object;          use Gtk.Object;
 with Gtk.Text_Buffer;     use Gtk.Text_Buffer;
 with Gtk.Text_View;       use Gtk.Text_View;
 with Gtk.Text_Iter;       use Gtk.Text_Iter;
@@ -794,47 +794,47 @@ package body Interactive_Consoles is
 
       Modify_Font (Console.View, Font);
 
-      Widget_Callback.Connect (Console, "destroy", On_Destroy'Access);
+      Widget_Callback.Connect (Console, Signal_Destroy, On_Destroy'Access);
 
       Widget_Callback.Object_Connect
-        (Console.Buffer, "mark_set",
+        (Console.Buffer, Signal_Mark_Set,
          Cb          => Mark_Set_Handler'Access,
          Slot_Object => Console);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
-        (Console.View, "button_release_event",
+        (Console.View, Signal_Button_Release_Event,
          Button_Release_Handler'Access,
          Gtk_Widget (Console),
          After => False);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
-        (Console.View, "button_press_event",
+        (Console.View, Signal_Button_Press_Event,
          Gtkada.Handlers.Return_Callback.To_Marshaller
            (Button_Press_Handler'Access),
          Gtk_Widget (Console),
          After => False);
 
       Gtkada.Handlers.Widget_Callback.Object_Connect
-        (Console.View, "selection_received",
+        (Console.View, Signal_Selection_Received,
          Selection_Received_Handler'Access,
          Gtk_Widget (Console),
          After => False);
 
       Gtkada.Handlers.Widget_Callback.Object_Connect
-        (Console.View, "size_allocate",
+        (Console.View, Signal_Size_Allocate,
          Size_Allocate_Handler'Access,
          Gtk_Widget (Console),
          After => False);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
-        (Console.View, "key_press_event",
+        (Console.View, Signal_Key_Press_Event,
          Gtkada.Handlers.Return_Callback.To_Marshaller
            (Key_Press_Handler'Access),
          Gtk_Widget (Console),
          After => False);
 
       Gtkada.Handlers.Return_Callback.Connect
-        (Console, "delete_event",
+        (Console, Signal_Delete_Event,
          Gtkada.Handlers.Return_Callback.To_Marshaller
            (Delete_Event_Handler'Access),
          After => False);

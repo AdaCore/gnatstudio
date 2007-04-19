@@ -25,15 +25,16 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Strings;
 with System;
 
-with Gdk.Color;                 use Gdk.Color;
-
 with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
 with Glib.Properties;           use Glib.Properties;
 with Glib.Unicode;              use Glib.Unicode;
 
+with Gdk.Color;                 use Gdk.Color;
+
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;
+with Gtk.Object;                use Gtk.Object;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_Mark;             use Gtk.Text_Mark;
 with Gtk.Text_Tag;              use Gtk.Text_Tag;
@@ -1733,12 +1734,12 @@ package body Src_Editor_Module.Shell is
                for C in Triplet'Range loop
                   if Triplet (C) /= null then
                      Connect
-                       (Triplet (C), "grab_focus",
+                       (Triplet (C), Signal_Grab_Focus,
                         Marshallers.Void_Marshaller.To_Marshaller
                           (On_Raise_Child'Access),
                         User_Data => Triplet);
                      Connect
-                       (Triplet (C), "destroy",
+                       (Triplet (C), Signal_Destroy,
                         Marshallers.Void_Marshaller.To_Marshaller
                           (On_Delete_Child'Access),
                         User_Data => Triplet);

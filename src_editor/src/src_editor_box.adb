@@ -44,10 +44,12 @@ with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu;                  use Gtk.Menu;
+with Gtk.Object;                use Gtk.Object;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Separator;             use Gtk.Separator;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_Mark;             use Gtk.Text_Mark;
+with Gtk.Text_View;             use Gtk.Text_View;
 with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
@@ -884,11 +886,11 @@ package body Src_Editor_Box is
       end;
 
       Object_Return_Callback.Object_Connect
-        (Event_Box, "button_press_event", On_Goto_Line_Func'Access, Box);
+        (Event_Box, Signal_Button_Press_Event, On_Goto_Line_Func'Access, Box);
 
       Gtkada.Handlers.Return_Callback.Connect
         (Box,
-         "delete_event",
+         Gtk.Widget.Signal_Delete_Event,
          Delete_Callback'Access,
          After => False);
 
@@ -912,7 +914,8 @@ package body Src_Editor_Box is
       Gtk_New (Box.Read_Only_Label);
       Add (Event_Box, Box.Read_Only_Label);
       Object_Return_Callback.Object_Connect
-        (Event_Box, "button_press_event", On_Read_Only_Pressed'Access, Box);
+        (Event_Box, Signal_Button_Press_Event,
+         On_Read_Only_Pressed'Access, Box);
 
       --  Insert/Overwrite label
       Gtk_New_Vseparator (Separator);
@@ -930,7 +933,7 @@ package body Src_Editor_Box is
       Add (Event_Box, Box.Overwrite_Label);
       Box_Callback.Connect
         (Box.Source_View,
-         "toggle_overwrite",
+         Signal_Toggle_Overwrite,
          On_Toggle_Overwrite'Access,
          User_Data => Source_Editor_Box (Box));
 
@@ -951,35 +954,35 @@ package body Src_Editor_Box is
 
       Box.Cursor_Handler := Box_Callback.Connect
         (Box.Source_Buffer,
-         "cursor_position_changed",
+         Signal_Cursor_Position_Changed,
          Cursor_Position_Changed_Handler'Access,
          User_Data => Source_Editor_Box (Box),
          After     => True);
 
       Box.Status_Handler := Box_Callback.Connect
         (Box.Source_Buffer,
-         "status_changed",
+         Signal_Status_Changed,
          Status_Changed_Handler'Access,
          User_Data => Source_Editor_Box (Box),
          After     => True);
 
       Box.Status_Handler := Box_Callback.Connect
         (Box.Source_Buffer,
-         "filename_changed",
+         Signal_Filename_Changed,
          Filename_Changed_Handler'Access,
          User_Data => Source_Editor_Box (Box),
          After     => True);
 
       Box.Buffer_Info_Handler := Box_Callback.Connect
         (Box.Source_Buffer,
-         "buffer_information_changed",
+         Signal_Buffer_Information_Changed,
          Buffer_Information_Handler'Access,
          User_Data => Source_Editor_Box (Box),
          After     => True);
 
       Box_Callback.Connect
         (Box.Source_View,
-         "destroy",
+         Signal_Destroy,
          On_Box_Destroy'Access,
          User_Data => Source_Editor_Box (Box));
 
@@ -988,11 +991,12 @@ package body Src_Editor_Box is
 
       Add_Events (Box.Source_View, Focus_Change_Mask);
       Object_Return_Callback.Object_Connect
-        (Box.Source_View, "focus_in_event", Focus_In'Access, Box, False);
+        (Box.Source_View, Signal_Focus_In_Event, Focus_In'Access, Box, False);
       Object_Return_Callback.Object_Connect
-        (Box.Source_View, "focus_out_event", Focus_Out'Access, Box, False);
+        (Box.Source_View, Signal_Focus_Out_Event,
+         Focus_Out'Access, Box, False);
       Object_Return_Callback.Object_Connect
-        (Box.Source_View, "key_press_event", Key_Press'Access, Box);
+        (Box.Source_View, Signal_Key_Press_Event, Key_Press'Access, Box);
 
       --  The Contextual Menu handling
       Register_Contextual_Menu

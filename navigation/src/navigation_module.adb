@@ -1035,7 +1035,7 @@ package body Navigation_Module is
                    -"Goto Previous Location");
       Insert (Toolbar, Button, 10);
       Kernel_Callback.Connect
-        (Button, "clicked", On_Back'Access, Kernel_Handle (Kernel));
+        (Button, Signal_Clicked, On_Back'Access, Kernel_Handle (Kernel));
       Navigation_Module (Navigation_Module_ID).Back_Button :=
         Gtk_Widget (Button);
 
@@ -1044,7 +1044,7 @@ package body Navigation_Module is
                    -"Goto Next Location");
       Insert (Toolbar, Button, 11);
       Kernel_Callback.Connect
-        (Button, "clicked", On_Forward'Access, Kernel_Handle (Kernel));
+        (Button, Signal_Clicked, On_Forward'Access, Kernel_Handle (Kernel));
       Navigation_Module (Navigation_Module_ID).Forward_Button :=
         Gtk_Widget (Button);
 

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2006                      --
+--                      Copyright (C) 2000-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1069,15 +1069,15 @@ package body GVD.Canvas is
       Add_Events (Canvas.Canvas, Key_Press_Mask);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
-        (Canvas.Canvas, "key_press_event",
+        (Canvas.Canvas, Signal_Key_Press_Event,
          Gtkada.Handlers.Return_Callback.To_Marshaller (Key_Press'Access),
          Canvas);
       Object_Callback.Object_Connect
-        (Canvas.Canvas, "background_click",
+        (Canvas.Canvas, Signal_Background_Click,
          Object_Callback.To_Marshaller (On_Background_Click'Access),
          Canvas);
       Widget_Callback.Object_Connect
-        (Canvas.Canvas, "realize", On_Realize'Access, Canvas);
+        (Canvas.Canvas, Signal_Realize, On_Realize'Access, Canvas);
 
       --  Initialize the canvas
 
@@ -1399,7 +1399,7 @@ package body GVD.Canvas is
       Gtk_New (Mitem, Label => -"Display Expression...");
       Append (Canvas.Contextual_Background_Menu, Mitem);
       Widget_Callback.Object_Connect
-        (Mitem, "activate", Display_Expression'Access, Canvas);
+        (Mitem, Signal_Activate, Display_Expression'Access, Canvas);
 
       Gtk_New (Mitem);
       Append (Canvas.Contextual_Background_Menu, Mitem);
@@ -1408,7 +1408,7 @@ package body GVD.Canvas is
       Set_Active (Check, Get_Align_On_Grid (Canvas.Canvas));
       Append (Canvas.Contextual_Background_Menu, Check);
       Check_Canvas_Handler.Connect
-        (Check, "activate",
+        (Check, Signal_Activate,
          Check_Canvas_Handler.To_Marshaller (Change_Align_On_Grid'Access),
          Canvas);
 
@@ -1416,7 +1416,7 @@ package body GVD.Canvas is
       Set_Active (Check, Canvas.Detect_Aliases);
       Append (Canvas.Contextual_Background_Menu, Check);
       Check_Canvas_Handler.Connect
-        (Check, "activate",
+        (Check, Signal_Activate,
          Check_Canvas_Handler.To_Marshaller (Change_Detect_Aliases'Access),
          Canvas);
 
@@ -1426,19 +1426,19 @@ package body GVD.Canvas is
       Gtk_New (Mitem, Label => -"Zoom in");
       Append (Canvas.Contextual_Background_Menu, Mitem);
       Widget_Callback.Object_Connect
-        (Mitem, "activate",
+        (Mitem, Signal_Activate,
          Widget_Callback.To_Marshaller (Zoom_In'Access), Canvas);
       Add_Accelerator
-        (Mitem, "activate",
+        (Mitem, Signal_Activate,
          Accel_Group, GDK_equal, 0, Accel_Visible);
 
       Gtk_New (Mitem, Label => -"Zoom out");
       Append (Canvas.Contextual_Background_Menu, Mitem);
       Widget_Callback.Object_Connect
-        (Mitem, "activate",
+        (Mitem, Signal_Activate,
          Widget_Callback.To_Marshaller (Zoom_Out'Access), Canvas);
       Add_Accelerator
-        (Mitem, "activate",
+        (Mitem, Signal_Activate,
          Accel_Group, GDK_minus, 0, Accel_Visible);
 
       Gtk_New (Zooms_Menu);
@@ -1447,7 +1447,7 @@ package body GVD.Canvas is
          Gtk_New (Mitem, Label => Guint'Image (Zoom_Levels (J)) & '%');
          Append (Zooms_Menu, Mitem);
          Item_Handler.Connect
-           (Mitem, "activate",
+           (Mitem, Signal_Activate,
             Item_Handler.To_Marshaller (Zoom_Level'Access),
             (Name_Length    => 0,
              Canvas         => Canvas,
@@ -1469,7 +1469,7 @@ package body GVD.Canvas is
       Gtk_New (Mitem, Label => -"Clear");
       Append (Canvas.Contextual_Background_Menu, Mitem);
       Widget_Callback.Object_Connect
-        (Mitem, "activate", On_Data_Clear'Access, Canvas);
+        (Mitem, Signal_Activate, On_Data_Clear'Access, Canvas);
 
       Gtk_New (Mitem);
       Append (Canvas.Contextual_Background_Menu, Mitem);
@@ -1477,7 +1477,7 @@ package body GVD.Canvas is
       Gtk_New (Mitem, Label => -"Refresh");
       Append (Canvas.Contextual_Background_Menu, Mitem);
       Widget_Callback.Object_Connect
-        (Mitem, "activate", On_Data_Refresh'Access, Canvas);
+        (Mitem, Signal_Activate, On_Data_Refresh'Access, Canvas);
 
       Show_All (Canvas.Contextual_Background_Menu);
 
@@ -1547,7 +1547,7 @@ package body GVD.Canvas is
 
       Gtk_New (Mitem, Label => -"Close" & " " & Get_Name (Item));
       Item_Handler.Connect
-        (Mitem, "activate",
+        (Mitem, Signal_Activate,
          Item_Handler.To_Marshaller (Undisplay_Item'Access),
          Item_Record'(Name_Length    => Component_Name'Length,
                       Canvas         => Canvas,
@@ -1567,7 +1567,7 @@ package body GVD.Canvas is
 
          Gtk_New (Mitem, Label => -"Hide all " & Component_Name);
          Item_Handler.Connect
-           (Mitem, "activate",
+           (Mitem, Signal_Activate,
             Item_Handler.To_Marshaller (Hide_All'Access),
             Item_Record'(Name_Length    => Component_Name'Length,
                          Canvas         => Canvas,
@@ -1581,7 +1581,7 @@ package body GVD.Canvas is
 
          Gtk_New (Mitem, Label => -"Show all " & Component_Name);
          Item_Handler.Connect
-           (Mitem, "activate",
+           (Mitem, Signal_Activate,
             Item_Handler.To_Marshaller (Show_All'Access),
             Item_Record'(Name_Length    => Component_Name'Length,
                          Canvas         => Canvas,
@@ -1600,7 +1600,7 @@ package body GVD.Canvas is
 
          Gtk_New (Mitem, Label => -"Clone" & " " & Component_Name);
          Item_Handler.Connect
-           (Mitem, "activate",
+           (Mitem, Signal_Activate,
             Item_Handler.To_Marshaller (Clone_Component'Access),
             Item_Record'(Name_Length    => Component_Name'Length,
                          Canvas         => Canvas,
@@ -1615,7 +1615,7 @@ package body GVD.Canvas is
          Gtk_New (Mitem, Label => -"View memory at address of "
                   & Krunch (Component_Name));
          Item_Handler.Connect
-           (Mitem, "activate",
+           (Mitem, Signal_Activate,
             Item_Handler.To_Marshaller (View_Into_Memory'Access),
             Item_Record'(Name_Length    => Component_Name'Length,
                          Canvas         => Canvas,
@@ -1629,7 +1629,7 @@ package body GVD.Canvas is
 
          Gtk_New (Mitem, Label => -"Set Value of " & Krunch (Component_Name));
          Item_Handler.Connect
-           (Mitem, "activate",
+           (Mitem, Signal_Activate,
             Item_Handler.To_Marshaller (Set_Value'Access),
             Item_Record'(Name_Length    => Component_Name'Length,
                          Canvas         => Canvas,
@@ -1644,7 +1644,7 @@ package body GVD.Canvas is
 
       Gtk_New (Mitem, Label => -"Update Value");
       Item_Handler.Connect
-        (Mitem, "activate",
+        (Mitem, Signal_Activate,
          Item_Handler.To_Marshaller (Update_Variable'Access),
          Item_Record'(Name_Length    => Component_Name'Length,
                       Canvas         => Canvas,
@@ -1669,7 +1669,7 @@ package body GVD.Canvas is
          Gtk_New (Radio, Widget_SList.Null_List, -"Show Value");
          Set_Active (Radio, Get_Display_Mode (Item) = Value);
          Item_Handler.Connect
-           (Radio, "activate",
+           (Radio, Signal_Activate,
             Item_Handler.To_Marshaller (Change_Display_Mode'Access),
             Item_Record'(Name_Length    => Component_Name'Length,
                          Canvas         => Canvas,
@@ -1684,7 +1684,7 @@ package body GVD.Canvas is
          Gtk_New (Radio, Group (Radio), -"Show Type");
          Set_Active (Radio, Get_Display_Mode (Item) = Type_Only);
          Item_Handler.Connect
-           (Radio, "activate",
+           (Radio, Signal_Activate,
             Item_Handler.To_Marshaller (Change_Display_Mode'Access),
             Item_Record'(Name_Length    => Component_Name'Length,
                          Canvas         => Canvas,
@@ -1699,7 +1699,7 @@ package body GVD.Canvas is
          Gtk_New (Radio, Group (Radio), -"Show Value + Type");
          Set_Active (Radio, Get_Display_Mode (Item) = Type_Value);
          Item_Handler.Connect
-           (Radio, "activate",
+           (Radio, Signal_Activate,
             Item_Handler.To_Marshaller (Change_Display_Mode'Access),
             Item_Record'(Name_Length    => Component_Name'Length,
                          Canvas         => Canvas,
@@ -1718,7 +1718,7 @@ package body GVD.Canvas is
          Gtk_New (Radio, Widget_SList.Null_List, -"Default");
          Set_Active (Radio, Get_Format (Item) = Default_Format);
          Item_Handler.Connect
-           (Radio, "activate",
+           (Radio, Signal_Activate,
             Item_Handler.To_Marshaller (Change_Format'Access),
             Item_Record'(Name_Length    => Component_Name'Length,
                          Canvas         => Canvas,
@@ -1733,7 +1733,7 @@ package body GVD.Canvas is
          Gtk_New (Radio, Group (Radio), -"Decimal");
          Set_Active (Radio, Get_Format (Item) = Decimal);
          Item_Handler.Connect
-           (Radio, "activate",
+           (Radio, Signal_Activate,
             Item_Handler.To_Marshaller (Change_Format'Access),
             Item_Record'(Name_Length    => Component_Name'Length,
                          Canvas         => Canvas,
@@ -1748,7 +1748,7 @@ package body GVD.Canvas is
          Gtk_New (Radio, Group (Radio), -"Hexadecimal");
          Set_Active (Radio, Get_Format (Item) = Hexadecimal);
          Item_Handler.Connect
-           (Radio, "activate",
+           (Radio, Signal_Activate,
             Item_Handler.To_Marshaller (Change_Format'Access),
             Item_Record'(Name_Length    => Component_Name'Length,
                          Canvas         => Canvas,
@@ -1763,7 +1763,7 @@ package body GVD.Canvas is
          Gtk_New (Radio, Group (Radio), -"Octal");
          Set_Active (Radio, Get_Format (Item) = Octal);
          Item_Handler.Connect
-           (Radio, "activate",
+           (Radio, Signal_Activate,
             Item_Handler.To_Marshaller (Change_Format'Access),
             Item_Record'(Name_Length    => Component_Name'Length,
                          Canvas         => Canvas,
@@ -1778,7 +1778,7 @@ package body GVD.Canvas is
          Gtk_New (Radio, Group (Radio), -"Binary");
          Set_Active (Radio, Get_Format (Item) = Binary);
          Item_Handler.Connect
-           (Radio, "activate",
+           (Radio, Signal_Activate,
             Item_Handler.To_Marshaller (Change_Format'Access),
             Item_Record'(Name_Length    => Component_Name'Length,
                          Canvas         => Canvas,
@@ -1801,7 +1801,7 @@ package body GVD.Canvas is
       Gtk_New (Check, "Auto refresh");
       Set_Active (Check, Get_Auto_Refresh (Display_Item (Item)));
       Item_Handler.Connect
-        (Check, "activate",
+        (Check, Signal_Activate,
          Item_Handler.To_Marshaller (Toggle_Refresh_Mode'Access),
          Item_Record'(Name_Length    => Component_Name'Length,
                       Canvas         => Canvas,

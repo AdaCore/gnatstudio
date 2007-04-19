@@ -872,7 +872,7 @@ package body GPS.Kernel.Modules is
                   end if;
 
                   Action_Callback.Object_Connect
-                    (Item, "activate",
+                    (Item, Signal_Activate,
                      Contextual_Action'Access,
                      User_Data   => C,
                      Slot_Object => Kernel);
@@ -1195,7 +1195,7 @@ package body GPS.Kernel.Modules is
 
          if Filter /= null then
             Command_Callback.Object_Connect
-              (Get_Toplevel (Item), "map", Map_Menu'Access,
+              (Get_Toplevel (Item), Signal_Map, Map_Menu'Access,
                Slot_Object => Item,
                User_Data   => (Kernel_Handle (Kernel), null, Filter));
          end if;
@@ -1343,20 +1343,20 @@ package body GPS.Kernel.Modules is
 
       if Callback /= null then
          Kernel_Callback.Connect
-           (Item, "activate",
+           (Item, Signal_Activate,
             Kernel_Callback.To_Marshaller (Callback), Kernel_Handle (Kernel));
       end if;
 
       if Command /= null then
          Command_Callback.Object_Connect
-           (Item, "activate", Execute_Command'Access,
+           (Item, Signal_Activate, Execute_Command'Access,
             Slot_Object => Kernel_Handle (Kernel),
             User_Data   => (Kernel_Handle (Kernel), Command, Filter));
       end if;
 
       if Action /= null then
          Command_Callback.Object_Connect
-           (Item, "activate", Execute_Command'Access,
+           (Item, Signal_Activate, Execute_Command'Access,
             Slot_Object => Kernel_Handle (Kernel),
             User_Data   => (Kernel_Handle (Kernel),
                             Action.Command,
@@ -1372,7 +1372,7 @@ package body GPS.Kernel.Modules is
 
       if Menu_Filter /= null then
          Command_Callback.Object_Connect
-           (Get_Toplevel (Item), "map", Map_Menu'Access,
+           (Get_Toplevel (Item), Signal_Map, Map_Menu'Access,
             Slot_Object => Item,
             User_Data   => (Kernel_Handle (Kernel), null, Menu_Filter));
       end if;
@@ -1516,7 +1516,7 @@ package body GPS.Kernel.Modules is
 
       if Factory /= null then
          Menu_Factory_Callback.Connect
-           (Get_Toplevel (Item), "map",
+           (Get_Toplevel (Item), Signal_Map,
             Menu_Factory_Callback.To_Marshaller (Menu_Button_Press'Access),
             User_Data => (Kernel_Handle (Kernel), Factory, Menu));
       end if;
@@ -1552,7 +1552,7 @@ package body GPS.Kernel.Modules is
       Show_All (Button);
 
       Command_Callback.Object_Connect
-        (Button, "clicked", Execute_Command'Access,
+        (Button, Signal_Clicked, Execute_Command'Access,
          Slot_Object => Kernel_Handle (Kernel),
          User_Data   => (Kernel_Handle (Kernel), Command, null));
    end Register_Button;
@@ -1578,7 +1578,7 @@ package body GPS.Kernel.Modules is
       Show_All (Button);
 
       Command_Callback.Object_Connect
-        (Button, "clicked", Execute_Command'Access,
+        (Button, Signal_Clicked, Execute_Command'Access,
          Slot_Object => Kernel_Handle (Kernel),
          User_Data   => (Kernel_Handle (Kernel), Command, null));
    end Register_Button;

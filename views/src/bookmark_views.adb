@@ -39,6 +39,7 @@ with Gdk.Window;                use Gdk.Window;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu;                  use Gtk.Menu;
+with Gtk.Object;                use Gtk.Object;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
@@ -705,10 +706,10 @@ package body Bookmark_Views is
 
       View.Goto_Icon := Render_Icon (View, Stock_Jump_To, Icon_Size_Menu);
 
-      Widget_Callback.Connect (View, "destroy", On_Destroy'Access);
+      Widget_Callback.Connect (View, Signal_Destroy, On_Destroy'Access);
       Return_Callback.Object_Connect
         (View.Tree,
-         "button_press_event",
+         Signal_Button_Press_Event,
          Return_Callback.To_Marshaller (Button_Press'Access),
          Slot_Object => View,
          After       => False);

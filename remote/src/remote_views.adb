@@ -274,7 +274,7 @@ package body Remote_Views is
          Set_Editable (Get_Entry (View.Servers_Combo (S)), False);
          Set_Width_Chars (Get_Entry (View.Servers_Combo (S)), 0);
          View_Callback.Connect
-           (View.Servers_Combo (S), "changed", On_Combo_Changed'Access,
+           (View.Servers_Combo (S), Signal_Changed, On_Combo_Changed'Access,
             (View => Remote_View (View), Server => S));
 
          case S is
@@ -340,22 +340,22 @@ package body Remote_Views is
 
          if S /= GPS_Server then
             Sync_Callback.Connect
-              (View.To_Local_Buttons (S), "clicked",
+              (View.To_Local_Buttons (S), Signal_Clicked,
                On_Sync_Menu_Clicked'Access,
                (View => Remote_View (View), From => S, To => GPS_Server));
             Sync_Callback.Connect
-              (View.To_Remote_Buttons (S), "clicked",
+              (View.To_Remote_Buttons (S), Signal_Clicked,
                On_Sync_Menu_Clicked'Access,
                (View => Remote_View (View), From => GPS_Server, To => S));
          else
             Sync_Callback.Connect
-              (View.To_Local_Buttons (S), "clicked",
+              (View.To_Local_Buttons (S), Signal_Clicked,
                On_Sync_Menu_Clicked'Access,
                (View => Remote_View (View),
                 From => Build_Server,
                 To   => GPS_Server));
             Sync_Callback.Connect
-              (View.To_Remote_Buttons (S), "clicked",
+              (View.To_Remote_Buttons (S), Signal_Clicked,
                On_Sync_Menu_Clicked'Access,
                (View => Remote_View (View),
                 From => GPS_Server,
@@ -433,7 +433,7 @@ package body Remote_Views is
       Set_Sensitive (View.Check_Button, False);
       Pack_Start (Buttons_Box, View.Check_Button, False, False);
       View_Callback.Connect
-        (View.Check_Button, "clicked", On_Check_Clicked'Access,
+        (View.Check_Button, Signal_Clicked, On_Check_Clicked'Access,
          (View => Remote_View (View), Server => GPS_Server));
 
       Gtk_New (View.Apply_Button, Label => -"Apply");
@@ -443,7 +443,7 @@ package body Remote_Views is
       Set_Sensitive (View.Apply_Button, False);
       Pack_Start (Buttons_Box, View.Apply_Button, False, False);
       View_Callback.Connect
-        (View.Apply_Button, "clicked", On_Connect_Clicked'Access,
+        (View.Apply_Button, Signal_Clicked, On_Connect_Clicked'Access,
          (View => Remote_View (View), Server => GPS_Server));
 
       Gtk_New (View.Set_Default_Button, -"Set default");
@@ -453,7 +453,8 @@ package body Remote_Views is
       Attach (View.Main_Table, View.Set_Default_Button,
               1, 2, 1, 2, 0, 0, 5, 0);
       View_Callback.Connect
-        (View.Set_Default_Button, "clicked", On_Set_Default_Clicked'Access,
+        (View.Set_Default_Button, Signal_Clicked,
+         On_Set_Default_Clicked'Access,
          (View => Remote_View (View), Server => GPS_Server));
 
       Gtk_New_Hbox (Buttons_Box, Homogeneous => False, Spacing => 5);
@@ -469,7 +470,7 @@ package body Remote_Views is
          -"Configure the list of available servers");
       Pack_Start (Buttons_Box, View.Settings_Button, False, False);
       View_Callback.Connect
-        (View.Settings_Button, "clicked", On_Config_List_Clicked'Access,
+        (View.Settings_Button, Signal_Clicked, On_Config_List_Clicked'Access,
          (View => Remote_View (View), Server => GPS_Server));
 
       Set_Servers (View);

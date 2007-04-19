@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2006                       --
+--                     Copyright (C) 2003-2007                       --
 --                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -35,6 +35,7 @@ with GNAT.Strings;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with Glib.Object;               use Glib.Object;
 with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Object;                use Gtk.Object;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.MDI;                use Gtkada.MDI;
 
@@ -644,7 +645,7 @@ package body Shell_Script is
          Put (Get_MDI (Kernel), Child, Initial_Position => Position_Bottom);
 
          Kernel_Callback.Connect
-           (Script.Console, "destroy", Console_Destroyed'Access,
+           (Script.Console, Signal_Destroy, Console_Destroyed'Access,
             Kernel_Handle (Kernel));
       else
          Child := GPS_MDI_Child

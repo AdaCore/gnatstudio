@@ -52,6 +52,7 @@ with Gtk.Ctree;                 use Gtk.Ctree;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.List;                  use Gtk.List;
 with Gtk.List_Item;             use Gtk.List_Item;
+with Gtk.Object;                use Gtk.Object;
 with Gtk.Paned;                 use Gtk.Paned;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Toolbar;               use Gtk.Toolbar;
@@ -638,10 +639,10 @@ package body Gtkada.File_Selector is
       end if;
 
       Widget_Callback.Object_Connect
-        (File_Selector.Ok_Button, "clicked",
+        (File_Selector.Ok_Button, Button.Signal_Clicked,
          On_Ok_Button_Clicked'Access, File_Selector);
       Widget_Callback.Object_Connect
-        (File_Selector.Cancel_Button, "clicked",
+        (File_Selector.Cancel_Button, Button.Signal_Clicked,
          On_Cancel_Button_Clicked'Access, File_Selector);
 
       Show_All (File_Selector);
@@ -750,10 +751,10 @@ package body Gtkada.File_Selector is
       Set_Transient_For (File_Selector, Parent);
 
       Widget_Callback.Object_Connect
-        (File_Selector.Ok_Button, "clicked",
+        (File_Selector.Ok_Button, Button.Signal_Clicked,
          On_Ok_Button_Clicked'Access, File_Selector);
       Widget_Callback.Object_Connect
-        (File_Selector.Cancel_Button, "clicked",
+        (File_Selector.Cancel_Button, Button.Signal_Clicked,
          On_Cancel_Button_Clicked'Access, File_Selector);
 
       Show_All (File_Selector);
@@ -1966,7 +1967,7 @@ package body Gtkada.File_Selector is
          Position => -1);
       Set_Sensitive (File_Selector_Window.Back_Button, False);
       Widget_Callback.Connect
-        (File_Selector_Window.Back_Button, "clicked",
+        (File_Selector_Window.Back_Button, Gtk.Button.Signal_Clicked,
          On_Back_Button_Clicked'Access);
 
       File_Selector_Window.Forward_Button := Insert_Stock
@@ -1976,7 +1977,7 @@ package body Gtkada.File_Selector is
          Position => -1);
       Set_Sensitive (File_Selector_Window.Forward_Button, False);
       Widget_Callback.Connect
-        (File_Selector_Window.Forward_Button, "clicked",
+        (File_Selector_Window.Forward_Button, Gtk.Button.Signal_Clicked,
          On_Forward_Button_Clicked'Access);
 
       Gtk_New (File_Selector_Window.Up_Icon, Stock_Go_Up, Icon_Size_Button);
@@ -1987,7 +1988,7 @@ package body Gtkada.File_Selector is
          Icon => Gtk_Widget (File_Selector_Window.Up_Icon));
 
       Widget_Callback.Connect
-        (File_Selector_Window.Up_Button, "clicked",
+        (File_Selector_Window.Up_Button, Gtk.Button.Signal_Clicked,
          On_Up_Button_Clicked'Access);
 
       Gtk_New
@@ -1998,7 +1999,7 @@ package body Gtkada.File_Selector is
          Tooltip_Text => -"Refresh",
          Icon => Gtk_Widget (File_Selector_Window.Refresh_Icon));
       Widget_Callback.Connect
-        (File_Selector_Window.Refresh_Button, "clicked",
+        (File_Selector_Window.Refresh_Button, Gtk.Button.Signal_Clicked,
          On_Refresh_Button_Clicked'Access);
 
       File_Selector_Window.Home_Button := Insert_Stock
@@ -2008,7 +2009,7 @@ package body Gtkada.File_Selector is
          Position => -1);
       Set_Sensitive (File_Selector_Window.Home_Button, True);
       Widget_Callback.Connect
-        (File_Selector_Window.Home_Button, "clicked",
+        (File_Selector_Window.Home_Button, Gtk.Button.Signal_Clicked,
          On_Home_Button_Clicked'Access);
 
       Pack_Start (Hbox1, Toolbar1, True, True, 3);
@@ -2047,7 +2048,7 @@ package body Gtkada.File_Selector is
          --  the list disapears. This prevents eventual dialogs appearing on
          --  host selection to be hidden by the drop down list.
          Widget_Callback.Object_Connect
-           (File_Selector_Window.Hosts_Combo, "changed",
+           (File_Selector_Window.Hosts_Combo, Gtkada.Combo.Signal_Changed,
             Host_Selected'Access, File_Selector_Window, After => True);
       end if;
 
@@ -2063,7 +2064,7 @@ package body Gtkada.File_Selector is
                   File_Selector_Window.Location_Combo, True, True, 3);
       Widget_Callback.Object_Connect
         (Get_Popup_Window (File_Selector_Window.Location_Combo),
-         "hide",
+         Signal_Hide,
          Directory_Selected'Access, File_Selector_Window.Location_Combo);
 
       if History /= null then
@@ -2077,16 +2078,16 @@ package body Gtkada.File_Selector is
       Set_Max_Length (File_Selector_Window.Location_Combo_Entry, 0);
       Set_Visibility (File_Selector_Window.Location_Combo_Entry, True);
       Widget_Callback.Connect
-        (File_Selector_Window.Location_Combo_Entry, "activate",
+        (File_Selector_Window.Location_Combo_Entry, Gtk.GEntry.Signal_Activate,
          On_Location_Combo_Entry_Activate'Access);
       Return_Callback.Connect
         (File_Selector_Window.Location_Combo_Entry,
-         "key_press_event", On_Location_Entry_Key_Press_Event'Access,
+         Signal_Key_Press_Event, On_Location_Entry_Key_Press_Event'Access,
          After => False);
 
       Object_Callback.Object_Connect
         (Get_Tree_Selection (File_Selector_Window.Explorer_Tree),
-         "changed",
+         Gtk.Tree_Selection.Signal_Changed,
          On_Explorer_Tree_Select_Row'Access,
          Slot_Object => File_Selector_Window,
          After => True);
@@ -2125,15 +2126,16 @@ package body Gtkada.File_Selector is
          Set_Mode
            (Get_Selection (File_Selector_Window.File_Tree), Selection_Single);
          Return_Callback.Connect
-           (File_Selector_Window.File_Tree, "key_press_event",
+           (File_Selector_Window.File_Tree, Signal_Key_Press_Event,
             On_File_List_Key_Press_Event'Access);
 
          Widget_Callback.Object_Connect
-           (Get_Selection (File_Selector_Window.File_Tree), "changed",
+           (Get_Selection (File_Selector_Window.File_Tree),
+            Gtk.Tree_Selection.Signal_Changed,
             Name_Selected'Access, File_Selector_Window);
 
          Widget_Callback.Connect
-           (File_Selector_Window.File_Tree, "row_activated",
+           (File_Selector_Window.File_Tree, Signal_Row_Activated,
             On_File_List_End_Selection'Access);
          Add (File_Selector_Window.Files_Scrolledwindow,
               File_Selector_Window.File_Tree);
@@ -2154,7 +2156,8 @@ package body Gtkada.File_Selector is
 
       Widget_Callback.Object_Connect
         (Get_Popup_Window (File_Selector_Window.Filter_Combo),
-         "hide", Filter_Selected'Access, File_Selector_Window.Filter_Combo);
+         Signal_Hide, Filter_Selected'Access,
+         File_Selector_Window.Filter_Combo);
 
       Pack_Start (Hbox4,
                   File_Selector_Window.Filter_Combo, True, True, 3);
@@ -2180,10 +2183,11 @@ package body Gtkada.File_Selector is
 
       Return_Callback.Connect
         (File_Selector_Window.Selection_Entry,
-         "key_press_event", On_Selection_Entry_Key_Press_Event'Access);
+         Signal_Key_Press_Event, On_Selection_Entry_Key_Press_Event'Access);
 
       Widget_Callback.Connect
-        (File_Selector_Window.Selection_Entry, "changed",
+        (File_Selector_Window.Selection_Entry,
+         Gtk.Tree_Selection.Signal_Changed,
          On_Selection_Entry_Changed'Access);
 
       Gtk_New_Hbox (Hbox6, False, 0);
@@ -2222,7 +2226,7 @@ package body Gtkada.File_Selector is
       end if;
 
       Widget_Callback.Connect
-        (File_Selector_Window, "destroy", On_Destroy'Access);
+        (File_Selector_Window, Signal_Destroy, On_Destroy'Access);
 
       Grab_Default (File_Selector_Window.Ok_Button);
       Grab_Focus (File_Selector_Window.Selection_Entry);

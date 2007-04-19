@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                     Copyright (C) 2001-2007                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,24 +18,27 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;               use Glib;
-with Gtk.Box;            use Gtk.Box;
-with Gtk.Button;         use Gtk.Button;
-with Gtk.Dialog;         use Gtk.Dialog;
-with Gtk.Label;          use Gtk.Label;
-with Gtk.Stock;          use Gtk.Stock;
-with Gtk.Style;          use Gtk.Style;
-with Gtk.Widget;         use Gtk.Widget;
-with Gtkada.Handlers;    use Gtkada.Handlers;
-with Pango.Enums;        use Pango.Enums;
-with Pango.Font;         use Pango.Font;
+with Ada.Exceptions;           use Ada.Exceptions;
+
+with GNAT.OS_Lib;              use GNAT.OS_Lib;
+
+with Glib;                     use Glib;
+with Gtk.Box;                  use Gtk.Box;
+with Gtk.Button;               use Gtk.Button;
+with Gtk.Dialog;               use Gtk.Dialog;
+with Gtk.Label;                use Gtk.Label;
+with Gtk.Object;               use Gtk.Object;
+with Gtk.Stock;                use Gtk.Stock;
+with Gtk.Style;                use Gtk.Style;
+with Gtk.Widget;               use Gtk.Widget;
+with Gtkada.Handlers;          use Gtkada.Handlers;
+with Pango.Enums;              use Pango.Enums;
+with Pango.Font;               use Pango.Font;
 
 with Logo_Boxes;               use Logo_Boxes;
 with GPS.Kernel;               use GPS.Kernel;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
-with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with Traces;                   use Traces;
-with Ada.Exceptions;           use Ada.Exceptions;
 
 package body Wizards is
 
@@ -135,25 +138,25 @@ package body Wizards is
       Set_Sensitive (Wiz.Previous, False);
       Pack_Start (Get_Action_Area (Wiz), Wiz.Previous);
       Widget_Callback.Object_Connect
-        (Wiz.Previous, "clicked", Previous_Page'Access, Wiz);
+        (Wiz.Previous, Signal_Clicked, Previous_Page'Access, Wiz);
 
       Gtk_New_From_Stock (Wiz.Next, Stock_Go_Forward);
       Pack_Start (Get_Action_Area (Wiz), Wiz.Next);
       Set_Flags (Wiz.Next, Can_Default);
       Widget_Callback.Object_Connect
-        (Wiz.Next, "clicked", Next_Page'Access, Wiz);
+        (Wiz.Next, Signal_Clicked, Next_Page'Access, Wiz);
 
       Wiz.Finish :=
         Gtk_Button (Add_Button (Wiz, Stock_Apply, Gtk_Response_Apply));
       Set_Flags (Wiz.Finish, Can_Default);
       Widget_Callback.Object_Connect
-        (Wiz.Finish, "clicked", On_Finish'Access, Wiz);
+        (Wiz.Finish, Signal_Clicked, On_Finish'Access, Wiz);
 
       Wiz.Cancel :=
         Gtk_Button (Add_Button (Wiz, Stock_Cancel, Gtk_Response_Cancel));
 
-      Widget_Callback.Connect (Wiz, "map", Map'Access);
-      Widget_Callback.Connect (Wiz, "destroy", On_Destroy'Access);
+      Widget_Callback.Connect (Wiz, Signal_Map, Map'Access);
+      Widget_Callback.Connect (Wiz, Signal_Destroy, On_Destroy'Access);
 
       Wiz.Normal_Style := Copy (Get_Style (Wiz));
       Wiz.Highlight_Style := Copy (Get_Style (Wiz));

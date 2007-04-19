@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                     Copyright (C) 2001-2007                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -19,13 +19,13 @@
 -----------------------------------------------------------------------
 
 with Gtk;                 use Gtk;
-with Gtk.Enums;           use Gtk.Enums;
-
 with Gtk.Box;             use Gtk.Box;
+with Gtk.Editable;        use Gtk.Editable;
+with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Stock;           use Gtk.Stock;
 
 with Callbacks_Aunit_Gui; use Callbacks_Aunit_Gui;
-with GPS.Intl;          use GPS.Intl;
+with GPS.Intl;            use GPS.Intl;
 with Aunit_Utils;         use Aunit_Utils;
 
 with Make_Harness_Window_Pkg.Callbacks; use Make_Harness_Window_Pkg.Callbacks;
@@ -101,7 +101,6 @@ package body Make_Harness_Window_Pkg is
       Gtk_New (Label, -"Suite file:");
       Pack_Start (Hbox, Label, False, False, 3);
 
-
       Gtk_New_Hbox (Hbox, False, 0);
       Pack_Start (Vbox_Entries, Hbox, False, False, 3);
 
@@ -114,7 +113,7 @@ package body Make_Harness_Window_Pkg is
       Set_Visibility (Make_Harness_Window.Directory_Entry, True);
       Pack_Start (Hbox, Make_Harness_Window.Directory_Entry, True, True, 3);
       Widget_Callback.Connect
-        (Make_Harness_Window.Directory_Entry, "changed",
+        (Make_Harness_Window.Directory_Entry, Signal_Changed,
          Check_Validity'Access);
 
       Gtk_New (Make_Harness_Window.Browse_Directory, -"Browse...");
@@ -122,7 +121,7 @@ package body Make_Harness_Window_Pkg is
       Pack_Start
         (Hbox, Make_Harness_Window.Browse_Directory, False, False, 3);
       Button_Callback.Connect
-        (Make_Harness_Window.Browse_Directory, "clicked",
+        (Make_Harness_Window.Browse_Directory, Signal_Clicked,
          On_Browse_Directory_Clicked'Access);
 
       Gtk_New_Hbox (Hbox, False, 0);
@@ -135,7 +134,7 @@ package body Make_Harness_Window_Pkg is
       Set_Visibility (Make_Harness_Window.Procedure_Entry, True);
       Pack_Start (Hbox, Make_Harness_Window.Procedure_Entry, True, True, 3);
       Widget_Callback.Connect
-        (Make_Harness_Window.Procedure_Entry, "changed",
+        (Make_Harness_Window.Procedure_Entry, Signal_Changed,
          Check_Validity'Access);
 
       Gtk_New_Hbox (Hbox, False, 0);
@@ -148,14 +147,14 @@ package body Make_Harness_Window_Pkg is
       Set_Visibility (Make_Harness_Window.File_Name_Entry, True);
       Pack_Start (Hbox, Make_Harness_Window.File_Name_Entry, True, True, 3);
       Widget_Callback.Connect
-        (Make_Harness_Window.File_Name_Entry, "changed",
+        (Make_Harness_Window.File_Name_Entry, Signal_Changed,
          Check_Validity'Access);
 
       Gtk_New (Make_Harness_Window.Browse, -"Browse...");
       Set_Relief (Make_Harness_Window.Browse, Relief_Normal);
       Pack_Start (Hbox, Make_Harness_Window.Browse, False, False, 3);
       Button_Callback.Connect
-        (Make_Harness_Window.Browse, "clicked",
+        (Make_Harness_Window.Browse, Signal_Clicked,
          On_Browse_Clicked'Access);
 
       Gtk_New (Make_Harness_Window.Label);

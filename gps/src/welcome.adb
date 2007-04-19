@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
+--                      Copyright (C) 2001-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -136,8 +136,8 @@ package body Welcome is
          (-"You can later modify any property and save the project ") &
          (-"on disk if needed."));
       Widget_Callback.Object_Connect
-        (Screen.Default_Project, "clicked", On_Default_Project_Clicked'Access,
-         Screen);
+        (Screen.Default_Project,
+         Signal_Clicked, On_Default_Project_Clicked'Access, Screen);
 
       Gtk_New_Hbox (Hbox, Homogeneous => False);
       Pack_Start (Box, Hbox, Expand => False);
@@ -150,7 +150,8 @@ package body Welcome is
       Add_Widget (Size, Screen.Default_Browse);
       Pack_Start (Hbox, Screen.Default_Browse, Expand => False);
       Widget_Callback.Object_Connect
-        (Screen.Default_Browse, "clicked", On_Browse_Default'Access, Screen);
+        (Screen.Default_Browse,
+         Signal_Clicked, On_Browse_Default'Access, Screen);
 
       --  Creating a new project
 
@@ -168,8 +169,8 @@ package body Welcome is
          (-"be loaded automatically. ") &
          (-"After the wizard, you can still modify any project's property."));
       Widget_Callback.Object_Connect
-        (Screen.Create_Project, "clicked", On_Create_Project_Clicked'Access,
-         Screen);
+        (Screen.Create_Project, Signal_Clicked,
+         On_Create_Project_Clicked'Access, Screen);
 
       --  Open project
 
@@ -186,8 +187,8 @@ package body Welcome is
          (-"Open a project from disk, either from a list of recent ") &
          (-"projects or by browsing the file system."));
       Widget_Callback.Object_Connect
-        (Screen.Open_Project_Button, "clicked", On_Open_Project_Clicked'Access,
-         Screen);
+        (Screen.Open_Project_Button, Signal_Clicked,
+         On_Open_Project_Clicked'Access, Screen);
 
       Gtk_New_Hbox (Hbox, Homogeneous => False);
       Pack_Start (Box, Hbox, Expand => False);
@@ -208,7 +209,7 @@ package body Welcome is
       Add_Widget (Size, Screen.Open_Browse);
       Pack_Start (Hbox, Screen.Open_Browse, Expand => False);
       Widget_Callback.Object_Connect
-        (Screen.Open_Browse, "clicked", On_Browse_Load'Access, Screen);
+        (Screen.Open_Browse, Signal_Clicked, On_Browse_Load'Access, Screen);
 
       if Get_Text (Get_Entry (Screen.Open_Project)) = "" then
          Clicked (Screen.Default_Project);

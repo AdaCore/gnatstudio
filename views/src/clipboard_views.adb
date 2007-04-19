@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2006                      --
+--                      Copyright (C) 2005-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -436,7 +436,7 @@ package body Clipboard_Views is
 
       Return_Callback.Object_Connect
         (View.Tree,
-         "button_press_event",
+         Signal_Button_Press_Event,
          Return_Callback.To_Marshaller (Button_Press'Access),
          Slot_Object => View,
          After       => False);

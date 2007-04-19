@@ -37,6 +37,7 @@ with Gtk.Check_Menu_Item;        use Gtk.Check_Menu_Item;
 with Gtk.Dnd;                    use Gtk.Dnd;
 with Gtk.Handlers;               use Gtk.Handlers;
 with Gtk.Main;                   use Gtk.Main;
+with Gtk.Object;                 use Gtk.Object;
 with Gtk.Tree_View;              use Gtk.Tree_View;
 with Gtk.Tree_Selection;         use Gtk.Tree_Selection;
 with Gtk.Tree_Store;             use Gtk.Tree_Store;
@@ -497,7 +498,7 @@ package body Project_Explorers_Files is
                      D.Explorer.Scroll_To_Directory := True;
                      D.Explorer.Realize_Cb_Id :=
                        Gtkada.Handlers.Object_Return_Callback.Object_Connect
-                         (D.Explorer.File_Tree, "expose_event",
+                         (D.Explorer.File_Tree, Signal_Expose_Event,
                           Expose_Event_Cb'Access, D.Explorer, True);
                   end;
 
@@ -686,14 +687,14 @@ package body Project_Explorers_Files is
 
       Gtkada.Handlers.Return_Callback.Object_Connect
         (Explorer.File_Tree,
-         "button_press_event",
+         Signal_Button_Press_Event,
          Gtkada.Handlers.Return_Callback.To_Marshaller
            (File_Button_Press'Access),
          Slot_Object => Explorer,
          After       => False);
       Gtkada.Handlers.Return_Callback.Object_Connect
         (Explorer.File_Tree,
-         "button_release_event",
+         Signal_Button_Release_Event,
          Gtkada.Handlers.Return_Callback.To_Marshaller
            (File_Button_Press'Access),
          Slot_Object => Explorer,
@@ -701,14 +702,14 @@ package body Project_Explorers_Files is
 
       Gtkada.Handlers.Return_Callback.Object_Connect
         (Explorer.File_Tree,
-         "key_press_event",
+         Signal_Key_Press_Event,
          Gtkada.Handlers.Return_Callback.To_Marshaller (File_Key_Press'Access),
          Slot_Object => Explorer,
          After       => False);
 
       Widget_Callback.Object_Connect
         (Get_Selection (Explorer.File_Tree),
-         "changed",
+         Signal_Changed,
          File_Selection_Changed'Access,
          Slot_Object => Explorer,
          After       => True);
@@ -727,21 +728,21 @@ package body Project_Explorers_Files is
       Refresh (Explorer);
 
       Widget_Callback.Object_Connect
-        (Explorer.File_Tree, "row_expanded",
+        (Explorer.File_Tree, Signal_Row_Expanded,
          File_Tree_Expand_Row_Cb'Access, Explorer, False);
 
       Widget_Callback.Object_Connect
-        (Explorer.File_Tree, "row_collapsed",
+        (Explorer.File_Tree, Signal_Row_Collapsed,
          File_Tree_Collapse_Row_Cb'Access, Explorer, False);
 
       Widget_Callback.Object_Connect
-        (Explorer.File_Tree, "destroy",
+        (Explorer.File_Tree, Signal_Destroy,
          On_File_Destroy'Access, Explorer, False);
 
       Gtk.Dnd.Dest_Set
         (Explorer.File_Tree, Dest_Default_All, Target_Table_Url, Action_Any);
       Kernel_Callback.Connect
-        (Explorer.File_Tree, "drag_data_received",
+        (Explorer.File_Tree, Signal_Drag_Data_Received,
          Drag_Data_Received'Access, Kernel_Handle (Kernel));
 
       Deleted_Hook := new File_Deleted_Hook_Record;
@@ -818,7 +819,8 @@ package body Project_Explorers_Files is
          Associate
            (Get_History (Kernel).all, File_View_Shows_Only_Project, Check);
          Append (Menu, Check);
-         Widget_Callback.Object_Connect (Check, "toggled", Refresh'Access, T);
+         Widget_Callback.Object_Connect
+           (Check, Signal_Toggled, Refresh'Access, T);
       end if;
    end Explorer_Context_Factory;
 

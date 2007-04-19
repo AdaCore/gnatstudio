@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2006                            --
+--                      Copyright (C) 2006-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -23,7 +23,7 @@
 --  be displayed on the collapsed state and the other one on the expanded
 --  state.
 
-with Glib; use Glib;
+with Glib;          use Glib;
 
 with Gdk.GC;
 with Gdk.Pixbuf;
@@ -85,6 +85,8 @@ package Collapsing_Pane is
    --
    --  - "toggled"
    --    procedure Handler (Widget : access Gtk_Widget_Record'Class);
+
+   Signal_Toggled : constant Signal_Name := "toggled";
 
 private
 

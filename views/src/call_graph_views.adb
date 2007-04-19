@@ -1181,28 +1181,28 @@ package body Call_Graph_Views is
 
       Return_Callback.Object_Connect
         (View.Tree,
-         "button_press_event",
+         Signal_Button_Press_Event,
          Return_Callback.To_Marshaller (Button_Press'Access),
          Slot_Object => View,
          After       => False);
 
       Return_Callback.Object_Connect
         (View.Locations_Tree,
-         "button_press_event",
+         Signal_Button_Press_Event,
          Return_Callback.To_Marshaller (Button_Press_On_List'Access),
          Slot_Object => View,
          After       => False);
 
       Return_Callback.Object_Connect
         (View.Tree,
-         "key_press_event",
+         Signal_Key_Press_Event,
          Return_Callback.To_Marshaller (On_Key_Press'Access),
          Slot_Object => View,
          After       => False);
 
       Return_Callback.Object_Connect
         (View.Locations_Tree,
-         "key_press_event",
+         Signal_Key_Press_Event,
          Return_Callback.To_Marshaller (On_Key_Press'Access),
          Slot_Object => View,
          After       => False);
@@ -1215,11 +1215,11 @@ package body Call_Graph_Views is
          Context_Func    => View_Context_Factory'Access);
 
       Widget_Callback.Object_Connect
-        (View.Tree, "row_expanded",
+        (View.Tree, Signal_Row_Expanded,
          On_Row_Expanded'Access, Slot_Object => View);
 
       Widget_Callback.Object_Connect
-        (Get_Selection (View.Tree), "changed",
+        (Get_Selection (View.Tree), Signal_Changed,
          Widget_Callback.To_Marshaller (On_Selection_Changed'Access),
          Slot_Object => View);
 
@@ -1239,13 +1239,13 @@ package body Call_Graph_Views is
       Parent_Iter : Gtk_Tree_Iter := Null_Iter) return Gtk_Tree_Iter
    is
       pragma Unreferenced (Parent);
-      Model : constant Gtk_Tree_Store :=
-        Gtk_Tree_Store (Get_Model (View.Tree));
+      Model     : constant Gtk_Tree_Store :=
+                    Gtk_Tree_Store (Get_Model (View.Tree));
+      Decl      : constant File_Location := Get_Declaration_Of (Entity);
       Iter      : Gtk_Tree_Iter;
       Locations : Gtk_Tree_Iter := Null_Iter;
-      Decl  : constant File_Location := Get_Declaration_Of (Entity);
-      Value : GValue;
-      Ent   : Entity_Information;
+      Value     : GValue;
+      Ent       : Entity_Information;
    begin
       if Parent_Iter = Null_Iter then
          Iter := Get_Iter_First (Model);

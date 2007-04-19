@@ -2,7 +2,7 @@
 --                              G P S                                --
 --                                                                   --
 --                     Copyright (C) 2001-2007                       --
---                              AdaCore                              --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -550,26 +550,24 @@ package body GVD_Module is
                    -"Start/Continue the debugged program");
       Insert (Toolbar, GVD_Module_ID.Cont_Button);
       Widget_Callback.Object_Connect
-        (GVD_Module_ID.Cont_Button, "clicked",
+        (GVD_Module_ID.Cont_Button, Signal_Clicked,
          On_Start_Continue'Access, Window);
       Show_All (GVD_Module_ID.Cont_Button);
 
       Gtk_New_From_Stock (GVD_Module_ID.Step_Button, "gps-debugger-step");
       Set_Name (GVD_Module_ID.Step_Button, "gps-debugger-step-button");
-      Set_Tooltip (GVD_Module_ID.Step_Button, Get_Tooltips (Kernel),
-                   -"Step");
+      Set_Tooltip (GVD_Module_ID.Step_Button, Get_Tooltips (Kernel), -"Step");
       Insert (Toolbar, GVD_Module_ID.Step_Button);
       Widget_Callback.Object_Connect
-        (GVD_Module_ID.Step_Button, "clicked", On_Step'Access, Window);
+        (GVD_Module_ID.Step_Button, Signal_Clicked, On_Step'Access, Window);
       Show_All (GVD_Module_ID.Step_Button);
 
       Gtk_New_From_Stock (GVD_Module_ID.Next_Button, "gps-debugger-next");
       Set_Name (GVD_Module_ID.Next_Button, "gps-debugger-next-button");
-      Set_Tooltip (GVD_Module_ID.Next_Button, Get_Tooltips (Kernel),
-                   -"Next");
+      Set_Tooltip (GVD_Module_ID.Next_Button, Get_Tooltips (Kernel), -"Next");
       Insert (Toolbar, GVD_Module_ID.Next_Button);
       Widget_Callback.Object_Connect
-        (GVD_Module_ID.Next_Button, "clicked", On_Next'Access, Window);
+        (GVD_Module_ID.Next_Button, Signal_Clicked, On_Next'Access, Window);
       Show_All (GVD_Module_ID.Next_Button);
 
       Gtk_New_From_Stock (GVD_Module_ID.Finish_Button, "gps-debugger-finish");
@@ -578,7 +576,8 @@ package body GVD_Module is
                    -"Execute until selected stack frame returns");
       Insert (Toolbar, GVD_Module_ID.Finish_Button);
       Widget_Callback.Object_Connect
-        (GVD_Module_ID.Finish_Button, "clicked", On_Finish'Access, Window);
+        (GVD_Module_ID.Finish_Button,
+         Signal_Clicked, On_Finish'Access, Window);
       Show_All (GVD_Module_ID.Finish_Button);
 
       Gtk_New_From_Stock (GVD_Module_ID.Up_Button, "gps-debugger-up");
@@ -587,7 +586,7 @@ package body GVD_Module is
                    -"Select and print stack frame that called this one");
       Insert (Toolbar, GVD_Module_ID.Up_Button);
       Widget_Callback.Object_Connect
-        (GVD_Module_ID.Up_Button, "clicked", On_Up'Access, Window);
+        (GVD_Module_ID.Up_Button, Signal_Clicked, On_Up'Access, Window);
       Show_All (GVD_Module_ID.Up_Button);
 
       Gtk_New_From_Stock (GVD_Module_ID.Down_Button, "gps-debugger-down");
@@ -596,7 +595,7 @@ package body GVD_Module is
                    -"Select and print stack frame called by this one");
       Insert (Toolbar, GVD_Module_ID.Down_Button);
       Widget_Callback.Object_Connect
-        (GVD_Module_ID.Down_Button, "clicked", On_Down'Access, Window);
+        (GVD_Module_ID.Down_Button, Signal_Clicked, On_Down'Access, Window);
       Show_All (GVD_Module_ID.Down_Button);
    end Add_Debug_Buttons;
 
@@ -2486,7 +2485,7 @@ package body GVD_Module is
                      Gtk_New (Mitem, Exec);
                      Prepend (Menu, Mitem);
                      File_Project_Cb.Object_Connect
-                       (Mitem, "activate",
+                       (Mitem, Gtk.Menu_Item.Signal_Activate,
                         On_Debug_Init'Access,
                         Slot_Object => Kernel,
                         User_Data   => File_Project_Record'
@@ -2520,7 +2519,7 @@ package body GVD_Module is
       Gtk_New (Mitem, -"<no main file>");
       Append (Menu, Mitem);
       File_Project_Cb.Object_Connect
-        (Mitem, "activate", On_Debug_Init'Access,
+        (Mitem, Gtk.Menu_Item.Signal_Activate, On_Debug_Init'Access,
          Slot_Object => Kernel,
          User_Data   => File_Project_Record'
            (Project => Get_Project (Kernel),

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2006                      --
+--                      Copyright (C) 2005-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -395,9 +395,10 @@ package body GPS.Kernel.MDI is
          Pack_Start (Col, Toggle_Renderer, False);
          Add_Attribute (Col, Toggle_Renderer, "active", 0);
          Widget_Callback.Object_Connect
-           (Col, "clicked", Select_All_Children'Access, Slot_Object => View);
+           (Col, Signal_Clicked,
+            Select_All_Children'Access, Slot_Object => View);
          Widget_Callback.Object_Connect
-           (Toggle_Renderer, "toggled",
+           (Toggle_Renderer, Signal_Toggled,
             Select_Child_When_Saving'Access,
             Slot_Object => View);
 

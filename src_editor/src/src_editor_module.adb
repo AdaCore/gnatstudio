@@ -44,6 +44,7 @@ with Gtk.Handlers;                      use Gtk.Handlers;
 with Gtk.Label;                         use Gtk.Label;
 with Gtk.Main;                          use Gtk.Main;
 with Gtk.Menu_Item;                     use Gtk.Menu_Item;
+with Gtk.Object;                        use Gtk.Object;
 with Gtk.Rc;                            use Gtk.Rc;
 with Gtk.Size_Group;                    use Gtk.Size_Group;
 with Gtk.Stock;                         use Gtk.Stock;
@@ -1001,12 +1002,13 @@ package body Src_Editor_Module is
          Set_Child (Get_View (Editor), Child);
 
          Widget_Callback.Connect
-           (Child, "selected", Update_Cache_On_Focus'Access);
+           (Child, Signal_Selected, Update_Cache_On_Focus'Access);
 
          Set_Focus_Child (Child);
 
          File_Callback.Connect
-           (Child, "destroy", On_Editor_Destroy'Access, User_Data => Title);
+           (Child, Signal_Destroy,
+            On_Editor_Destroy'Access, User_Data => Title);
 
          --  Emit a "status_changed" signal on the editor, to initialize the
          --  MDI icon and status.
@@ -1207,7 +1209,7 @@ package body Src_Editor_Module is
          end if;
 
          Widget_Callback.Connect
-           (Child, "selected", Update_Cache_On_Focus'Access);
+           (Child, Signal_Selected, Update_Cache_On_Focus'Access);
 
          --  Add child to the hash table of editors.
          Editors_Hash.Set (Id.Editors, File, (Child => MDI_Child (Child)));
@@ -1216,7 +1218,7 @@ package body Src_Editor_Module is
          --  is destroyed.
 
          File_Callback.Connect
-           (Child, "destroy", On_Editor_Destroy'Access,
+           (Child, Signal_Destroy, On_Editor_Destroy'Access,
             User_Data => File);
 
          Raise_Child (Child, Focus);
@@ -2909,7 +2911,7 @@ package body Src_Editor_Module is
       end;
 
       Kernel_Callback.Connect
-        (Toolbar, "destroy",
+        (Toolbar, Signal_Destroy,
          Toolbar_Destroy_Cb'Access,
          Kernel_Handle (Kernel));
 
@@ -2997,19 +2999,21 @@ package body Src_Editor_Module is
          Set_Tooltip (Button, Get_Tooltips (Kernel), -"Create a New File");
          Insert (Toolbar, Button, 0);
          Kernel_Callback.Connect
-           (Button, "clicked", On_New_File'Access, Kernel_Handle (Kernel));
+           (Button, Signal_Clicked,
+            On_New_File'Access, Kernel_Handle (Kernel));
 
          Gtk_New_From_Stock (Button, Stock_Open);
          Set_Tooltip (Button, Get_Tooltips (Kernel), -"Open a File");
          Insert (Toolbar, Button, 1);
          Kernel_Callback.Connect
-           (Button, "clicked", On_Open_File'Access, Kernel_Handle (Kernel));
+           (Button, Signal_Clicked,
+            On_Open_File'Access, Kernel_Handle (Kernel));
 
          Gtk_New_From_Stock (Button, Stock_Save);
          Set_Tooltip (Button, Get_Tooltips (Kernel), -"Save Current File");
          Insert (Toolbar, Button, 2);
          Kernel_Callback.Connect
-           (Button, "clicked", On_Save'Access, Kernel_Handle (Kernel));
+           (Button, Signal_Clicked, On_Save'Access, Kernel_Handle (Kernel));
       end;
 
       Add_Hook (Kernel, File_Saved_Hook,
@@ -3131,7 +3135,8 @@ package body Src_Editor_Module is
 
       if not Mapped_Is_Set (Get_Main_Window (Kernel)) then
          Widget_Callback.Connect
-           (Get_Main_Window (Kernel), "map", Map_Cb'Access, After => True);
+           (Get_Main_Window (Kernel),
+            Signal_Map, Map_Cb'Access, After => True);
 
       else
          Map_Cb (Get_Main_Window (Kernel));

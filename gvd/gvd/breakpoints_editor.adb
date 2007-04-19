@@ -133,22 +133,22 @@ package body Breakpoints_Editor is
 
          Disable_Activate (Editor.File_Combo);
          Widget_Callback.Object_Connect
-           (Get_Entry (Editor.File_Combo), "activate",
+           (Get_Entry (Editor.File_Combo), Gtk.GEntry.Signal_Activate,
             Widget_Callback.To_Marshaller (On_Add_Location_Clicked'Access),
             Editor);
          Disable_Activate (Editor.Address_Combo);
          Widget_Callback.Object_Connect
-           (Get_Entry (Editor.Address_Combo), "activate",
+           (Get_Entry (Editor.Address_Combo), Gtk.GEntry.Signal_Activate,
             Widget_Callback.To_Marshaller (On_Add_Location_Clicked'Access),
             Editor);
          Disable_Activate (Editor.Subprogram_Combo);
          Widget_Callback.Object_Connect
-           (Get_Entry (Editor.Subprogram_Combo), "activate",
+           (Get_Entry (Editor.Subprogram_Combo), Gtk.GEntry.Signal_Activate,
             Widget_Callback.To_Marshaller (On_Add_Location_Clicked'Access),
             Editor);
          Disable_Activate (Editor.Regexp_Combo);
          Widget_Callback.Object_Connect
-           (Get_Entry (Editor.Regexp_Combo), "activate",
+           (Get_Entry (Editor.Regexp_Combo), Gtk.GEntry.Signal_Activate,
             Widget_Callback.To_Marshaller (On_Add_Location_Clicked'Access),
             Editor);
       end if;
@@ -794,14 +794,15 @@ package body Breakpoints_Editor is
       end loop;
 
       Widget_Callback.Object_Connect
-        (Get_Selection (Editor.Breakpoint_List), "changed",
+        (Get_Selection (Editor.Breakpoint_List),
+         Gtk.Tree_Selection.Signal_Changed,
          Breakpoint_Row_Selection_Change'Access,
          Slot_Object => Editor,
          After       => True);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
         (Editor.Breakpoint_List,
-         "button_press_event",
+         Signal_Button_Press_Event,
          Gtkada.Handlers.Return_Callback.To_Marshaller
            (Breakpoint_Clicked'Access),
          Slot_Object => Editor,

@@ -410,16 +410,16 @@ package body Command_Window is
       Widget_Callback.Connect
         (Window, Gtk.Object.Signal_Destroy, On_Destroy'Access);
       Widget_Callback.Object_Connect
-        (Get_Buffer (Window.Line), "changed",
+        (Get_Buffer (Window.Line), Signal_Changed,
          On_Changed'Access, Window, After => True);
 
       --  So that when the commandWindow gets the keyboard focus, it keeps it
       --  forever (Grab)
       Return_Callback.Object_Connect
-        (Window.Line, "focus_in_event",
+        (Window.Line, Signal_Focus_In_Event,
          On_Focus_In'Access, Window);
       Return_Callback.Object_Connect
-        (Window.Line, "focus_out_event",
+        (Window.Line, Signal_Focus_Out_Event,
          On_Focus_Out'Access, Window);
 
       --  Compute size and placement of the window
@@ -439,8 +439,8 @@ package body Command_Window is
       Set_UPosition (Window, X, Y);
 
       Return_Callback.Object_Connect
-        (Get_Toplevel (Applies_To), "configure_event", On_Focus_Out'Access,
-         Window);
+        (Get_Toplevel (Applies_To), Signal_Configure_Event,
+         On_Focus_Out'Access, Window);
 
       Add_Event_Handler (Kernel, Command_Window_Event_Handler'Access);
 

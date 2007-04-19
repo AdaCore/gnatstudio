@@ -18,43 +18,44 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Conversion;
-with Commands.Custom;      use Commands, Commands.Custom;
-with Commands.Interactive; use Commands.Interactive;
-with Glib.Object;          use Glib, Glib.Object;
-with Glib.Values;          use Glib.Values;
-with Glib.Xml_Int;         use Glib.Xml_Int;
-with GNAT.OS_Lib;          use GNAT.OS_Lib;
-with GPS.Kernel;           use GPS.Kernel;
-with GPS.Kernel.Custom;    use GPS.Kernel.Custom;
-with GPS.Kernel.Modules;   use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with GPS.Intl;             use GPS.Intl;
-with GPS.Main_Window;      use GPS.Main_Window;
-with Gtkada.Handlers;      use Gtkada.Handlers;
-with Gtk.Box;              use Gtk.Box;
-with Gtk.Cell_Renderer;    use Gtk.Cell_Renderer;
-with Gtk.Dialog;           use Gtk.Dialog;
-with Gtk.Enums;            use Gtk.Enums;
-with Gtk.Event_Box;        use Gtk.Event_Box;
-with Gtk.Label;            use Gtk.Label;
-with Gtk.Notebook;         use Gtk.Notebook;
-with Gtk.Paned;            use Gtk.Paned;
-with Gtk.Scrolled_Window;  use Gtk.Scrolled_Window;
-with Gtk.Stock;            use Gtk.Stock;
-with Gtk.Text_Buffer;      use Gtk.Text_Buffer;
-with Gtk.Text_Iter;        use Gtk.Text_Iter;
-with Gtk.Text_Tag;         use Gtk.Text_Tag;
-with Gtk.Text_View;        use Gtk.Text_View;
-with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
-with Gtk.Tree_Model;       use Gtk.Tree_Model;
-with Gtk.Tree_Selection;   use Gtk.Tree_Selection;
-with Gtk.Tree_Store;       use Gtk.Tree_Store;
-with Gtk.Tree_View;        use Gtk.Tree_View;
-with Gtk.Widget;           use Gtk.Widget;
-with GUI_Utils;            use GUI_Utils;
-with Pango.Enums;          use Pango.Enums;
-with System;               use System;
-with VFS;                  use VFS;
+with Commands.Custom;          use Commands, Commands.Custom;
+with Commands.Interactive;     use Commands.Interactive;
+with Glib.Object;              use Glib, Glib.Object;
+with Glib.Values;              use Glib.Values;
+with Glib.Xml_Int;             use Glib.Xml_Int;
+with GNAT.OS_Lib;              use GNAT.OS_Lib;
+with GPS.Kernel;               use GPS.Kernel;
+with GPS.Kernel.Custom;        use GPS.Kernel.Custom;
+with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
+with GPS.Intl;                 use GPS.Intl;
+with GPS.Main_Window;          use GPS.Main_Window;
+with Gtkada.Handlers;          use Gtkada.Handlers;
+with Gtk.Box;                  use Gtk.Box;
+with Gtk.Cell_Renderer;        use Gtk.Cell_Renderer;
+with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
+with Gtk.Dialog;               use Gtk.Dialog;
+with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Event_Box;            use Gtk.Event_Box;
+with Gtk.Label;                use Gtk.Label;
+with Gtk.Notebook;             use Gtk.Notebook;
+with Gtk.Paned;                use Gtk.Paned;
+with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
+with Gtk.Stock;                use Gtk.Stock;
+with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
+with Gtk.Text_Iter;            use Gtk.Text_Iter;
+with Gtk.Text_Tag;             use Gtk.Text_Tag;
+with Gtk.Text_View;            use Gtk.Text_View;
+with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
+with Gtk.Tree_Store;           use Gtk.Tree_Store;
+with Gtk.Tree_View;            use Gtk.Tree_View;
+with Gtk.Widget;               use Gtk.Widget;
+with GUI_Utils;                use GUI_Utils;
+with Pango.Enums;              use Pango.Enums;
+with System;                   use System;
+with VFS;                      use VFS;
 
 package body Startup_Module is
 
@@ -459,7 +460,8 @@ package body Startup_Module is
          Cell_Renderer_List.Get_Data (List),
          "cell_background", Column_Background);
       Widget_Callback.Object_Connect
-        (Cell_Renderer_List.Get_Data (List), "toggled",
+        (Cell_Renderer_List.Get_Data (List),
+         Gtk.Cell_Renderer_Toggle.Signal_Toggled,
          On_Load_Toggled'Access, Editor, After => True);
       Cell_Renderer_List.Free (List);
 
@@ -471,7 +473,7 @@ package body Startup_Module is
       Cell_Renderer_List.Free (List);
 
       Widget_Callback.Object_Connect
-        (Get_Selection (Editor.Tree), "changed",
+        (Get_Selection (Editor.Tree), Gtk.Tree_Selection.Signal_Changed,
          On_Selection_Changed'Access, Editor);
 
       Editor.Model := Gtk_Tree_Store (Get_Model (Editor.Tree));

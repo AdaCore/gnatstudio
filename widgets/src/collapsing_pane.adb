@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2006                            --
+--                      Copyright (C) 2006-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -32,6 +32,7 @@ with Gdk.Window; use Gdk.Window;
 with Gtk.Box;       use Gtk.Box;
 with Gtk.Event_Box; use Gtk.Event_Box;
 with Gtk.Label;     use Gtk.Label;
+with Gtk.Object;    use Gtk.Object;
 with Gtk.Style;     use Gtk.Style;
 with Gtk.Widget;    use Gtk.Widget;
 with Gtk.Window; use Gtk.Window;
@@ -83,11 +84,11 @@ package body Collapsing_Pane is
    -- Signal Support --
    --------------------
 
-   Class_Record : GObject_Class := Uninitialized_Class;
+   Class_Record : Glib.Object.GObject_Class := Glib.Object.Uninitialized_Class;
    --  A pointer to the 'class record'
 
    Signals : constant Interfaces.C.Strings.chars_ptr_array :=
-     (1 => New_String ("toggled"));
+               (1 => New_String (String (Signal_Toggled)));
    --  The list of new signals supported by this GObject
 
    Signal_Parameters : constant Glib.Object.Signal_Parameter_Types :=
@@ -153,7 +154,7 @@ package body Collapsing_Pane is
 
       Widget_Callback.Object_Connect
         (Pane,
-         "destroy", On_Destroy'Access, Pane);
+         Signal_Destroy, On_Destroy'Access, Pane);
       Original_Color := Get_Bg (Get_Style (Pane), State_Normal);
       Set_Rgb
         (Background_Color,
@@ -176,13 +177,13 @@ package body Collapsing_Pane is
       Add_Events (Pane.Label_Box, Button_Release_Mask);
       Return_Callback.Object_Connect
         (Pane.Label_Box,
-         "button_release_event", On_Change_State'Access, Pane);
+         Signal_Button_Release_Event, On_Change_State'Access, Pane);
       Return_Callback.Object_Connect
         (Pane.Label_Box,
-         "leave_notify_event", On_Exit_Label'Access, Pane);
+         Signal_Leave_Notify_Event, On_Exit_Label'Access, Pane);
       Return_Callback.Object_Connect
         (Pane.Label_Box,
-         "enter_notify_event", On_Enter_Label'Access, Pane);
+         Signal_Enter_Notify_Event, On_Enter_Label'Access, Pane);
       Set_Rgb
         (Prelight_Color,
          16#FFFF#,
@@ -202,10 +203,10 @@ package body Collapsing_Pane is
 
       Gtk_New_Vbox (Pane.Label_Image);
       Gtkada.Handlers.Object_Return_Callback.Object_Connect
-        (Pane.Label_Image, "expose_event",
+        (Pane.Label_Image, Signal_Expose_Event,
          On_Expose_Pixmap'Access, Pane);
       Widget_Callback.Connect
-        (Pane, "map",
+        (Pane, Signal_Map,
          Marsh => Widget_Callback.To_Marshaller (On_Map'Access),
          After => True);
       Set_Size_Request
@@ -305,6 +306,7 @@ package body Collapsing_Pane is
          Set_Size_Request (Pane.Expanded_Box, 0, 0);
          Set_Child_Visible (Pane.Collapsed_Box, True);
          Set_Size_Request (Pane.Collapsed_Box, -1, -1);
+
       else
          Set_Child_Visible (Pane.Expanded_Box, True);
          Set_Size_Request (Pane.Expanded_Box, -1, -1);
@@ -328,7 +330,7 @@ package body Collapsing_Pane is
 
       Refresh_Pixmap (Pane);
 
-      Widget_Callback.Emit_By_Name (Pane, "toggled");
+      Widget_Callback.Emit_By_Name (Pane, Signal_Toggled);
    end Set_State;
 
    ---------------

@@ -29,6 +29,7 @@ with Glib.Object;             use Glib.Object;
 with Gtk.Label;               use Gtk.Label;
 with Gtk.Menu;                use Gtk.Menu;
 with Gtk.Menu_Item;           use Gtk.Menu_Item;
+with Gtk.Object;              use Gtk.Object;
 with Gtk.Widget;              use Gtk.Widget;
 with Gtkada.Types;            use Gtkada.Types;
 
@@ -1722,7 +1723,7 @@ package body GPS.Kernel.Scripts is
 
                if On_Destroy /= null then
                   Subprogram_Callback.Connect
-                    (Console, "destroy", On_Console_Destroy'Access,
+                    (Console, Signal_Destroy, On_Console_Destroy'Access,
                      User_Data => On_Destroy);
                end if;
             end if;

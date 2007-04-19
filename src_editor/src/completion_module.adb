@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005 - 2007                     --
+--                      Copyright (C) 2005-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -27,6 +27,7 @@ with Gdk.Types.Keysyms;         use Gdk.Types, Gdk.Types.Keysyms;
 with Glib;                      use Glib;
 with Glib.Unicode;              use Glib.Unicode;
 with Gtk.Main;                  use Gtk.Main;
+with Gtk.Object;                use Gtk.Object;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_Mark;             use Gtk.Text_Mark;
 with Gtk.Handlers;
@@ -857,7 +858,7 @@ package body Completion_Module is
             Completion_Module.Has_Smart_Completion := True;
 
             Object_Connect
-              (Win, "destroy",
+              (Win, Signal_Destroy,
                To_Marshaller (On_Completion_Destroy'Access),
                View, Data, After => True);
 

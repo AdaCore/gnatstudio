@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005-2006                       --
+--                     Copyright (C) 2005-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -20,7 +20,8 @@
 
 with Ada.Unchecked_Conversion;
 with Ada.Exceptions;         use Ada.Exceptions;
-with Debugger;               use Debugger;
+with System;                 use System;
+
 with Glib;                   use Glib;
 with Glib.Object;            use Glib.Object;
 with Gdk.Event;              use Gdk.Event;
@@ -28,9 +29,11 @@ with Gtk.Enums;              use Gtk.Enums;
 with Gtk.Main;               use Gtk.Main;
 with Gtk.Menu;               use Gtk.Menu;
 with Gtk.Menu_Item;          use Gtk.Menu_Item;
+with Gtk.Object;             use Gtk.Object;
 with Gtk.Widget;             use Gtk.Widget;
 with Gtkada.Handlers;        use Gtkada.Handlers;
 with Gtkada.MDI;             use Gtkada.MDI;
+
 pragma Warnings (Off);
 with GNAT.Expect.TTY;        use GNAT.Expect.TTY;
 with GNAT.TTY;               use GNAT.TTY;
@@ -39,6 +42,8 @@ with GNAT.Expect;            use GNAT.Expect;
 with GNAT.Regpat;            use GNAT.Regpat;
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
 with GNAT.Strings;
+
+with Debugger;               use Debugger;
 with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
@@ -55,7 +60,6 @@ with Interactive_Consoles;   use Interactive_Consoles;
 with Pango.Font;             use Pango.Font;
 with Process_Proxies;        use Process_Proxies;
 with String_List_Utils;      use String_List_Utils;
-with System;                 use System;
 with Traces;                 use Traces;
 with Basic_Types;
 
@@ -448,7 +452,7 @@ package body GVD.Consoles is
       Set_Highlight_Color    (Console, Get_Pref (Debugger_Highlight_Color));
       Set_Completion_Handler (Console, Complete_Command'Access);
       Widget_Callback.Object_Connect
-        (Get_View (Console), "grab_focus", On_Grab_Focus'Access, Console);
+        (Get_View (Console), Signal_Grab_Focus, On_Grab_Focus'Access, Console);
 
       Register_Contextual_Menu
         (Kernel          => Kernel,
@@ -477,7 +481,8 @@ package body GVD.Consoles is
          History_List => null,
          Key          => "gvd_tty_console",
          Wrap_Mode    => Wrap_Char);
-      Widget_Callback.Connect (Console, "destroy", On_Debuggee_Destroy'Access);
+      Widget_Callback.Connect
+        (Console, Signal_Destroy, On_Debuggee_Destroy'Access);
       Allocate_TTY (Console.Debuggee_TTY);
    end Initialize;
 
@@ -486,12 +491,12 @@ package body GVD.Consoles is
    --------------------------------
 
    procedure Attach_To_Debugger_Console
-     (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
+     (Debugger            : access GVD.Process.Visual_Debugger_Record'Class;
       Create_If_Necessary : Boolean)
      renames Debugger_Views.Attach_To_View;
 
    procedure Attach_To_Debuggee_Console
-     (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
+     (Debugger            : access GVD.Process.Visual_Debugger_Record'Class;
       Create_If_Necessary : Boolean)
      renames Debuggee_Views.Attach_To_View;
 

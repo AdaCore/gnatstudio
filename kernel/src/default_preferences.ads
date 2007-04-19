@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -26,20 +26,20 @@
 --  enumeration types with C types, thus allowing almost any type of
 --  preference.
 
-
 with Ada.Unchecked_Deallocation;
+
 with Gdk.Color;
 with Gdk.Types;
-with Generic_List;
 with Glib.Properties.Creation;
 with Glib.Properties;
-with Glib; use Glib;
+with Glib;                      use Glib;
 with Glib.Object;
 with Gtk.Handlers;
 with Gtk.Tooltips;
 with Gtk.Widget;
 with Gtk.Window;
 with Pango.Font;
+with Generic_List;
 
 package Default_Preferences is
 
@@ -334,6 +334,9 @@ package Default_Preferences is
 
    procedure Destroy (Data : in out Saved_Prefs_Data);
    --  Free the memory occupied by Data
+
+   Signal_Preferences_Changed : constant Glib.Signal_Name :=
+                                  "preferences_changed";
 
 private
    procedure Param_Spec_Unref (P : in out Glib.Param_Spec);

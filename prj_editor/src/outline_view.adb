@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005-2006                       --
+--                     Copyright (C) 2005-2007                       --
 --                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -34,6 +34,7 @@ with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Object;                use Gtk.Object;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
@@ -492,31 +493,31 @@ package body Outline_View is
          Associate (Get_History (Kernel).all, Hist_Show_Profile, Check);
          Append (Submenu, Check);
          Widget_Callback.Object_Connect
-           (Check, "toggled", Refresh'Access, Outline);
+           (Check, Signal_Toggled, Refresh'Access, Outline);
 
          Gtk_New (Check, Label => -"Show types");
          Associate (Get_History (Kernel).all, Hist_Show_Types, Check);
          Append (Submenu, Check);
          Widget_Callback.Object_Connect
-           (Check, "toggled", Refresh'Access, Outline);
+           (Check, Signal_Toggled, Refresh'Access, Outline);
 
          Gtk_New (Check, Label => -"Show specifications");
          Associate (Get_History (Kernel).all, Hist_Show_Decls, Check);
          Append (Submenu, Check);
          Widget_Callback.Object_Connect
-           (Check, "toggled", Refresh'Access, Outline);
+           (Check, Signal_Toggled, Refresh'Access, Outline);
 
          Gtk_New (Check, Label => -"Sort alphabetically");
          Associate (Get_History (Kernel).all, Hist_Sort_Alphabetical, Check);
          Append (Submenu, Check);
          Widget_Callback.Object_Connect
-           (Check, "toggled", Refresh'Access, Outline);
+           (Check, Signal_Toggled, Refresh'Access, Outline);
 
          Gtk_New (Check, Label => -"Dynamic link with editor");
          Associate (Get_History (Kernel).all, Hist_Editor_Link, Check);
          Append (Submenu, Check);
          Widget_Callback.Object_Connect
-           (Check, "toggled", Refresh'Access, Outline);
+           (Check, Signal_Toggled, Refresh'Access, Outline);
       end if;
    end Outline_Context_Factory;
 
@@ -696,12 +697,12 @@ package body Outline_View is
 
       Return_Callback.Object_Connect
         (Outline.Tree,
-         "button_press_event",
+         Signal_Button_Press_Event,
          Return_Callback.To_Marshaller (Button_Press'Access),
          Slot_Object => Outline,
          After       => False);
       Widget_Callback.Connect
-        (Outline, "destroy", On_Destroy'Access);
+        (Outline, Signal_Destroy, On_Destroy'Access);
 
       Register_Contextual_Menu
         (Kernel          => Kernel,

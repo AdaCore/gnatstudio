@@ -29,6 +29,7 @@ with Gtk.Enums;              use Gtk.Enums;
 with Gtk.GEntry;             use Gtk.GEntry;
 with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
 with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
+with Gtk.Object;             use Gtk.Object;
 with Gtk.Tree_Model;         use Gtk.Tree_Model;
 with Gtk.Tree_View;          use Gtk.Tree_View;
 with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
@@ -190,7 +191,7 @@ package body Naming_Exceptions is
       Editor := new Exceptions_Editor_Record;
       Editor.Language := new String'(Language);
       Initialize_Vbox (Editor, Homogeneous => False);
-      Widget_Callback.Connect (Editor, "destroy", Destroy_Editor'Access);
+      Widget_Callback.Connect (Editor, Signal_Destroy, Destroy_Editor'Access);
 
       Gtk_New (Scrolled);
       Pack_Start (Editor, Scrolled, Expand => True, Fill => True);
@@ -201,7 +202,7 @@ package body Naming_Exceptions is
       Add (Scrolled, Editor.Exceptions_List);
       Set_Mode (Get_Selection (Editor.Exceptions_List), Selection_Single);
       Return_Callback.Object_Connect
-        (Editor.Exceptions_List, "key_press_event",
+        (Editor.Exceptions_List, Signal_Key_Press_Event,
          Return_Callback.To_Marshaller (Delete_Exception'Access), Editor);
 
       Gtk_New (Render);
@@ -216,7 +217,7 @@ package body Naming_Exceptions is
       Add_Attribute (Col, Render, "editable", 1);
       Set_Editable_And_Callback (Editor.Exceptions, Render, 0);
       Widget_Callback.Object_Connect
-        (Render, "edited", Exception_Edited'Access, Editor);
+        (Render, Signal_Edited, Exception_Edited'Access, Editor);
 
       Clicked (Col);
 
@@ -227,15 +228,16 @@ package body Naming_Exceptions is
       Set_Text (Editor.Filename_Entry, Empty_Filename);
       Pack_Start (Box, Editor.Filename_Entry, Expand => True, Fill => True);
       Return_Callback.Object_Connect
-        (Editor.Filename_Entry, "key_press_event",
+        (Editor.Filename_Entry, Signal_Key_Press_Event,
          On_Edit_Filename'Access, Editor);
       Widget_Callback.Object_Connect
-        (Editor.Filename_Entry, "activate", On_Add'Access, Editor);
+        (Editor.Filename_Entry,
+         Gtk.GEntry.Signal_Activate, On_Add'Access, Editor);
 
       Gtk_New (Button, -"Add");
       Pack_Start (Box, Button, Expand => False);
       Widget_Callback.Object_Connect
-        (Button, "clicked", On_Add'Access, Editor);
+        (Button, Gtk.Button.Signal_Clicked, On_Add'Access, Editor);
    end Gtk_New;
 
    --------------------------

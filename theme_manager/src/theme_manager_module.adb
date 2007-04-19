@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2006                      --
+--                      Copyright (C) 2003-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -542,10 +542,10 @@ package body Theme_Manager_Module is
       Add_Attribute (Col, Render, "text", Name_Column);
 
       Widget_Callback.Object_Connect
-        (Get_Selection (Pane.View), "changed",
+        (Get_Selection (Pane.View), Gtk.Tree_Selection.Signal_Changed,
          Selection_Changed'Access, Pane);
       Widget_Callback.Object_Connect
-        (Toggle_Renderer, "toggled",
+        (Toggle_Renderer, Signal_Toggled,
          Selection_Toggled'Access, Pane);
 
       while Themes /= null loop

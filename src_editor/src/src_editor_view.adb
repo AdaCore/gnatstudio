@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
+--                      Copyright (C) 2001-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -42,6 +42,7 @@ with Gtk.Drawing_Area;           use Gtk.Drawing_Area;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Main;                   use Gtk.Main;
+with Gtk.Object;                 use Gtk.Object;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
 with Gtk.Text_Iter;              use Gtk.Text_Iter;
@@ -1280,35 +1281,35 @@ package body Src_Editor_View is
          Button_Motion_Mask or Button_Press_Mask or Button_Release_Mask);
 
       Return_Callback.Object_Connect
-        (Area, "button_press_event",
+        (Area, Signal_Button_Press_Event,
          Marsh       => Return_Callback.To_Marshaller
            (Speed_Bar_Button_Press_Event_Cb'Access),
          After       => False,
          Slot_Object => View);
 
       Return_Callback.Object_Connect
-        (Area, "motion_notify_event",
+        (Area, Signal_Motion_Notify_Event,
          Marsh       => Return_Callback.To_Marshaller
            (Speed_Bar_Button_Press_Event_Cb'Access),
          After       => False,
          Slot_Object => View);
 
       Return_Callback.Object_Connect
-        (Area, "button_release_event",
+        (Area, Signal_Button_Release_Event,
          Marsh       => Return_Callback.To_Marshaller
            (Speed_Bar_Button_Release_Event_Cb'Access),
          After       => False,
          Slot_Object => View);
 
       Return_Callback.Object_Connect
-        (View.Area, "expose_event",
+        (View.Area, Signal_Expose_Event,
          Marsh       => Return_Callback.To_Marshaller
            (Speed_Bar_Expose_Event_Cb'Access),
          After       => False,
          Slot_Object => View);
 
       Widget_Callback.Object_Connect
-        (View.Area, "size_allocate",
+        (View.Area, Signal_Size_Allocate,
          Marsh       => Widget_Callback.To_Marshaller
            (Speed_Bar_Size_Allocate_Cb'Access),
          After       => False,
@@ -1317,83 +1318,83 @@ package body Src_Editor_View is
       Set_Border_Window_Size (View, Enums.Text_Window_Left, 1);
       Set_Left_Margin (View, Margin);
 
-      Widget_Callback.Connect (View, "destroy", On_Destroy'Access);
+      Widget_Callback.Connect (View, Signal_Destroy, On_Destroy'Access);
       Widget_Callback.Connect
-        (View, "realize",
+        (View, Signal_Realize,
          Marsh => Widget_Callback.To_Marshaller (Realize_Cb'Access),
          After => True);
       Widget_Callback.Connect
-        (View, "map",
+        (View, Signal_Map,
          Marsh => Widget_Callback.To_Marshaller (Map_Cb'Access),
          After => True);
       Return_Callback.Connect
-        (View, "focus_in_event",
+        (View, Signal_Focus_In_Event,
          Marsh => Return_Callback.To_Marshaller (Focus_In_Event_Cb'Access),
          After => False);
       Return_Callback.Connect
-        (View, "focus_out_event",
+        (View, Signal_Focus_Out_Event,
          Marsh => Return_Callback.To_Marshaller (Focus_Out_Event_Cb'Access),
          After => False);
       Return_Callback.Connect
-        (View, "button_press_event",
+        (View, Signal_Button_Press_Event,
          Marsh => Return_Callback.To_Marshaller (Button_Press_Event_Cb'Access),
          After => False);
       Return_Callback.Connect
-        (View, "button_release_event",
+        (View, Signal_Button_Release_Event,
          Marsh => Return_Callback.To_Marshaller
            (Button_Release_Event_Cb'Access),
          After => False);
       Return_Callback.Connect
-        (View, "key_press_event",
+        (View, Signal_Key_Press_Event,
          Marsh => Return_Callback.To_Marshaller (Key_Press_Event_Cb'Access),
          After => False);
       Widget_Callback.Connect
-        (View, "size_allocate",
+        (View, Signal_Size_Allocate,
          Widget_Callback.To_Marshaller (Size_Allocated'Access),
          After => True);
       Widget_Callback.Connect
-        (View, "size_allocate",
+        (View, Signal_Size_Allocate,
          Widget_Callback.To_Marshaller (Size_Allocated_Before'Access),
          After => False);
 
       Widget_Callback.Connect
-        (View, "paste_clipboard",
+        (View, Signal_Paste_Clipboard,
          Widget_Callback.To_Marshaller (Paste_Clipboard_Before'Access),
          After => False);
 
       Source_Buffer_Callback.Connect
-        (Buffer, "cursor_position_changed",
+        (Buffer, Signal_Cursor_Position_Changed,
          Cb        => Change_Handler'Access,
          User_Data => Source_View (View),
          After     => True);
 
       Source_Buffer_Callback.Connect
-        (Buffer, "side_column_changed",
+        (Buffer, Signal_Side_Column_Changed,
          Cb        => Side_Columns_Change_Handler'Access,
          User_Data => Source_View (View),
          After     => True);
 
       Source_Buffer_Callback.Connect
-        (Buffer, "side_column_configuration_changed",
+        (Buffer, Signal_Side_Column_Configuration_Changed,
          Cb        => Side_Columns_Config_Change_Handler'Access,
          User_Data => Source_View (View),
          After     => True);
 
       Source_Buffer_Callback.Connect
-        (Buffer, "buffer_information_changed",
+        (Buffer, Signal_Buffer_Information_Changed,
          Cb        => Buffer_Information_Change_Handler'Access,
          User_Data => Source_View (View),
          After     => True);
 
       Source_Buffer_Callback.Connect
-        (Buffer, "line_highlights_changed",
+        (Buffer, Signal_Line_Highlights_Changed,
          Cb        => Line_Highlight_Change_Handler'Access,
          User_Data => Source_View (View),
          After     => True);
 
       Gtkada.Handlers.Return_Callback.Connect
         (View,
-         "delete_event",
+         Gtk.Widget.Signal_Delete_Event,
          Gtkada.Handlers.Return_Callback.To_Marshaller (On_Delete'Access),
          After => False);
 
@@ -1404,7 +1405,7 @@ package body Src_Editor_View is
 
          Gtkada.Handlers.Return_Callback.Object_Connect
            (View,
-            "button_press_event",
+            Signal_Button_Press_Event,
             Gtkada.Handlers.Return_Callback.To_Marshaller
               (On_Button_Press'Access),
             View,
@@ -1456,20 +1457,20 @@ package body Src_Editor_View is
       --  realized ???
 
       Return_Callback.Connect
-        (View, "expose_event",
+        (View, Signal_Expose_Event,
          Marsh => Return_Callback.To_Marshaller (Expose_Event_Cb'Access),
          After => False);
 
       Widget_Callback.Object_Connect
         (Get_Vadjustment (View.Scroll),
-         "value_changed",
+         Signal_Value_Changed,
          Marsh       => Widget_Callback.To_Marshaller (On_Scroll'Access),
          After       => True,
          Slot_Object => View);
 
       Widget_Callback.Object_Connect
         (Get_Hadjustment (View.Scroll),
-         "value_changed",
+         Signal_Value_Changed,
          Marsh       => Widget_Callback.To_Marshaller (On_Scroll'Access),
          After       => True,
          Slot_Object => View);
@@ -1706,7 +1707,7 @@ package body Src_Editor_View is
          Set_Time (View.Button_Event, 0);
 
          Result := Return_Callback.Emit_By_Name
-           (View, "button_release_event", View.Button_Event);
+           (View, Signal_Button_Release_Event, View.Button_Event);
       end if;
    end Stop_Selection_Drag;
 
@@ -1980,7 +1981,7 @@ package body Src_Editor_View is
                --  mode.
 
                Result := Return_Callback.Emit_By_Name
-                 (Widget, "button_release_event", Event);
+                 (Widget, Signal_Button_Release_Event, Event);
 
                Select_Current_Word (Buffer);
                return True;

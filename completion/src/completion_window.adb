@@ -1040,7 +1040,7 @@ package body Completion_Window is
 
       Set_Relief (Window.Location_Button, Relief_None);
       Object_Connect
-        (Window.Location_Button, "clicked",
+        (Window.Location_Button, Gtk.Button.Signal_Clicked,
          To_Marshaller (On_Location_Button_Clicked'Access), Window,
          After => False);
 
@@ -1193,38 +1193,40 @@ package body Completion_Window is
       Grab_Focus (Window.Text);
 
       Object_Connect
-        (Window.Text, "focus_out_event",
+        (Window.Text, Signal_Focus_Out_Event,
          To_Marshaller (On_Focus_Out'Access), Window, After => False);
 
       Object_Connect
-        (Window.Text, "button_press_event",
+        (Window.Text, Signal_Button_Press_Event,
          To_Marshaller (On_Focus_Out'Access), Window, After => False);
 
       Object_Connect
-        (Window.Text, "key_press_event",
+        (Window.Text, Signal_Key_Press_Event,
          To_Marshaller (On_Key_Press'Access), Window, After => False);
 
       Object_Connect
-        (Buffer, "insert_text", Insert_Text_Handler'Access, Window,
-         After => True);
-
-      Object_Connect (Buffer, "mark_set", Mark_Set_Handler'Access, Window);
-
-      Object_Connect
-        (Buffer, "delete_range", Delete_Text_Handler'Access, Window,
+        (Buffer, Signal_Insert_Text, Insert_Text_Handler'Access, Window,
          After => True);
 
       Object_Connect
-        (Buffer, "delete_range", Before_Delete_Text_Handler'Access, Window,
+        (Buffer, Signal_Mark_Set, Mark_Set_Handler'Access, Window);
+
+      Object_Connect
+        (Buffer, Signal_Delete_Range, Delete_Text_Handler'Access, Window,
+         After => True);
+
+      Object_Connect
+        (Buffer, Signal_Delete_Range,
+         Before_Delete_Text_Handler'Access, Window,
          After => False);
 
       Object_Connect
-        (Window.View, "button_press_event",
+        (Window.View, Signal_Button_Press_Event,
          To_Marshaller (On_Button_Pressed'Access), Window,
          After => False);
 
       Object_Connect
-        (Get_Selection (Window.View), "changed",
+        (Get_Selection (Window.View), Gtk.Tree_Selection.Signal_Changed,
          To_Marshaller (On_Selection_Changed'Access), Window,
          After => True);
 

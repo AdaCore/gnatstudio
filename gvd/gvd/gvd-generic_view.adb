@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2006                      --
+--                      Copyright (C) 2000-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -249,7 +249,7 @@ package body GVD.Generic_View is
 
                if Get_Console (Process) /= null then
                   Widget_Callback.Object_Connect
-                    (Get_Console (Process), "destroy",
+                    (Get_Console (Process), Signal_Destroy,
                      On_Debugger_Terminate'Unrestricted_Access,
                      Slot_Object => View);
                end if;
@@ -283,7 +283,7 @@ package body GVD.Generic_View is
                end if;
 
                Widget_Callback.Connect
-                 (View, "destroy", On_Destroy'Unrestricted_Access);
+                 (View, Signal_Destroy, On_Destroy'Unrestricted_Access);
             end if;
 
          else

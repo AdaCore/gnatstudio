@@ -41,6 +41,7 @@ with Gtk;                                 use Gtk;
 with Gtk.Enums;                           use Gtk.Enums;
 with Gtk.Handlers;                        use Gtk.Handlers;
 with Gtk.Main;                            use Gtk.Main;
+with Gtk.Text_Buffer;                     use Gtk.Text_Buffer;
 with Gtk.Text_Iter;                       use Gtk.Text_Iter;
 with Gtk.Text_Mark;                       use Gtk.Text_Mark;
 with Gtk.Text_Tag;                        use Gtk.Text_Tag;
@@ -131,13 +132,13 @@ package body Src_Editor_Buffer is
    --  A pointer to the 'class record'
 
    Signals : constant Interfaces.C.Strings.chars_ptr_array :=
-     (1 => New_String ("cursor_position_changed"),
-      2 => New_String ("side_column_changed"),
-      3 => New_String ("side_column_configuration_changed"),
-      4 => New_String ("line_highlights_changed"),
-      5 => New_String ("status_changed"),
-      6 => New_String ("filename_changed"),
-      7 => New_String ("buffer_information_changed"));
+          (1 => New_String (String (Signal_Cursor_Position_Changed)),
+           2 => New_String (String (Signal_Side_Column_Changed)),
+           3 => New_String (String (Signal_Side_Column_Configuration_Changed)),
+           4 => New_String (String (Signal_Line_Highlights_Changed)),
+           5 => New_String (String (Signal_Status_Changed)),
+           6 => New_String (String (Signal_Filename_Changed)),
+           7 => New_String (String (Signal_Buffer_Information_Changed)));
    --  The list of new signals supported by this GObject
 
    Signal_Parameters : constant Glib.Object.Signal_Parameter_Types :=
@@ -1851,7 +1852,7 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record'Class) is
    begin
       Emit_By_Name
-        (Get_Object (Buffer), "line_highlights_changed"
+        (Get_Object (Buffer), Signal_Line_Highlights_Changed
          & ASCII.NUL);
    end Line_Highlights_Changed;
 
@@ -1863,7 +1864,7 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record'Class) is
    begin
       Emit_By_Name
-        (Get_Object (Buffer), "buffer_information_changed" & ASCII.NUL);
+        (Get_Object (Buffer), Signal_Buffer_Information_Changed & ASCII.NUL);
    end Buffer_Information_Changed;
 
    --------------------
@@ -1873,7 +1874,7 @@ package body Src_Editor_Buffer is
    procedure Status_Changed
      (Buffer : access Source_Buffer_Record'Class) is
    begin
-      Emit_By_Name (Get_Object (Buffer), "status_changed" & ASCII.NUL);
+      Emit_By_Name (Get_Object (Buffer), Signal_Status_Changed & ASCII.NUL);
    end Status_Changed;
 
    ----------------------
@@ -1883,7 +1884,7 @@ package body Src_Editor_Buffer is
    procedure Filename_Changed
      (Buffer : access Source_Buffer_Record'Class) is
    begin
-      Emit_By_Name (Get_Object (Buffer), "filename_changed" & ASCII.NUL);
+      Emit_By_Name (Get_Object (Buffer), Signal_Filename_Changed & ASCII.NUL);
    end Filename_Changed;
 
    ---------------------
@@ -2421,22 +2422,23 @@ package body Src_Editor_Buffer is
       Weak_Ref (Buffer, Buffer_Destroy'Access);
 
       Buffer_Callback.Connect
-        (Buffer, "changed", Changed_Handler'Access, After => True);
+        (Buffer, Signal_Changed, Changed_Handler'Access, After => True);
       Buffer_Callback.Connect
-        (Buffer, "mark_set", Cb => Mark_Set_Handler'Access, After => True);
+        (Buffer, Signal_Mark_Set,
+         Cb => Mark_Set_Handler'Access, After => True);
       Buffer_Callback.Connect
-        (Buffer, "insert_text",
+        (Buffer, Signal_Insert_Text,
          Cb => First_Insert_Text'Access);
       Buffer_Callback.Connect
-        (Buffer, "insert_text",
+        (Buffer, Signal_Insert_Text,
          Cb => Insert_Text_Handler'Access,
          After => True);
       Buffer_Callback.Connect
-        (Buffer, "delete_range",
+        (Buffer, Signal_Delete_Range,
          Cb => Delete_Range_Handler'Access,
          After => True);
       Buffer_Callback.Connect
-        (Buffer, "delete_range",
+        (Buffer, Signal_Delete_Range,
          Cb => Delete_Range_Before_Handler'Access,
          After => False);
 

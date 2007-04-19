@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2006                      --
+--                      Copyright (C) 2003-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -211,7 +211,7 @@ package body Python.GUI is
    -------------------------
 
    procedure Set_Default_Console
-     (Interpreter : access Python_Interpreter_Record'Class;
+     (Interpreter    : access Python_Interpreter_Record'Class;
       Console        : Interactive_Consoles.Interactive_Console;
       Display_Prompt : Boolean := False)
    is
@@ -237,7 +237,7 @@ package body Python.GUI is
         and then not Gtk.Object.Destroyed_Is_Set (Interpreter.Console)
       then
          Interpreter.Destroy_Id := Interpreter_Callback2.Connect
-           (Console, "destroy",
+           (Console, Signal_Destroy,
             Interpreter_Callback2.To_Marshaller (Console_Destroyed'Access),
             Python_Interpreter (Interpreter));
 

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2006                       --
+--                     Copyright (C) 2000-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -528,7 +528,7 @@ package body GVD.Dialogs is
                Add (Thread, Thread.Tree);
                Show_All (Thread.Tree);
                Return_Callback.Object_Connect
-                 (Thread.Tree, "button_release_event",
+                 (Thread.Tree, Signal_Button_Release_Event,
                   Return_Callback.To_Marshaller
                     (On_Thread_Button_Release'Access),
                   Thread, After => False);
@@ -661,13 +661,13 @@ package body GVD.Dialogs is
       Add (Dialog.Hbuttonbox1, Dialog.Close_Button);
 
       Return_Callback.Connect
-        (Dialog, "delete_event",
+        (Dialog, Gtk.Widget.Signal_Delete_Event,
          Return_Callback.To_Marshaller (Delete_Dialog'Access));
 
       Dialog.Debugger := Debugger;
 
       Widget_Callback.Connect
-        (Dialog.Close_Button, "clicked",
+        (Dialog.Close_Button, Signal_Clicked,
          Widget_Callback.To_Marshaller (On_Question_Close_Clicked'Access));
 
       if Question_Description /= "" then
@@ -691,7 +691,7 @@ package body GVD.Dialogs is
          Add (Dialog.Hbuttonbox1, OK_Button);
          Widget_Callback.Connect
            (OK_Button,
-            "clicked",
+            Signal_Clicked,
             On_Question_Yes_Clicked'Access);
          Grab_Focus (OK_Button);
 
@@ -699,7 +699,7 @@ package body GVD.Dialogs is
          Add (Dialog.Hbuttonbox1, OK_Button);
          Widget_Callback.Connect
            (OK_Button,
-            "clicked",
+            Signal_Clicked,
             On_Question_No_Clicked'Access);
 
          Ref (Dialog.Close_Button);
@@ -718,7 +718,7 @@ package body GVD.Dialogs is
          Add (Dialog.Hbuttonbox1, OK_Button);
          Widget_Callback.Connect
            (OK_Button,
-            "clicked",
+            Signal_Clicked,
             On_Question_OK_Clicked'Access);
          Add (Dialog.Hbuttonbox1, Dialog.Close_Button);
          Unref (Dialog.Close_Button);

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
---                               G P S                               --
+--                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -34,6 +34,7 @@ with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
 with Gtk.Tree_Selection;     use Gtk.Tree_Selection;
 with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
 with GUI_Utils;              use GUI_Utils;
+with Gtk.Widget;             use Gtk.Widget;
 
 package body Naming_Scheme_Editor_Pkg is
 
@@ -129,7 +130,7 @@ package body Naming_Scheme_Editor_Pkg is
       Set_Text (Combo_Entry3, -"GNAT default");
       Set_Visibility (Combo_Entry3, True);
       Widget_Callback.Object_Connect
-        (Combo_Entry3, "changed",
+        (Combo_Entry3, Signal_Changed,
          On_Standard_Scheme_Changed'Access, Naming_Scheme_Editor);
 
       Gtk_New (Frame28, -"Details");
@@ -164,7 +165,8 @@ package body Naming_Scheme_Editor_Pkg is
       Set_Text (Combo_Entry2, -"");
       Set_Visibility (Combo_Entry2, True);
       Widget_Callback.Object_Connect
-        (Combo_Entry2, "changed", Customized'Access, Naming_Scheme_Editor);
+        (Combo_Entry2, Signal_Changed,
+         Customized'Access, Naming_Scheme_Editor);
 
       Gtk_New_Hbox (Hbox7, False, 0);
       Pack_Start (Vbox53, Hbox7, True, True, 0);
@@ -185,7 +187,7 @@ package body Naming_Scheme_Editor_Pkg is
       Set_Visibility (Naming_Scheme_Editor.Dot_Replacement, True);
       Pack_Start (Hbox7, Naming_Scheme_Editor.Dot_Replacement, True, True, 0);
       Widget_Callback.Object_Connect
-        (Naming_Scheme_Editor.Dot_Replacement, "changed",
+        (Naming_Scheme_Editor.Dot_Replacement, Signal_Changed,
          Customized'Access, Naming_Scheme_Editor);
 
       Gtk_New_Hbox (Hbox6, False, 0);
@@ -218,7 +220,7 @@ package body Naming_Scheme_Editor_Pkg is
       Set_Text (Combo_Entry4, -".ads");
       Set_Visibility (Combo_Entry4, True);
       Widget_Callback.Object_Connect
-        (Combo_Entry4, "changed",
+        (Combo_Entry4, Signal_Changed,
          Customized'Access, Naming_Scheme_Editor);
 
       Gtk_New_Hbox (Hbox8, False, 0);
@@ -251,7 +253,7 @@ package body Naming_Scheme_Editor_Pkg is
       Set_Text (Combo_Entry5, -".adb");
       Set_Visibility (Combo_Entry5, True);
       Widget_Callback.Object_Connect
-        (Combo_Entry5, "changed",
+        (Combo_Entry5, Signal_Changed,
          Customized'Access, Naming_Scheme_Editor);
 
       Gtk_New_Hbox (Hbox9, False, 0);
@@ -288,7 +290,7 @@ package body Naming_Scheme_Editor_Pkg is
       Set_Text (Combo_Entry6, -".adb");
       Set_Visibility (Combo_Entry6, True);
       Widget_Callback.Object_Connect
-        (Combo_Entry6, "changed",
+        (Combo_Entry6, Signal_Changed,
          Customized'Access, Naming_Scheme_Editor);
 
       Gtk_New (Frame30, -"Exceptions");
@@ -323,7 +325,7 @@ package body Naming_Scheme_Editor_Pkg is
       Set_Editable_And_Callback
         (Naming_Scheme_Editor.Exception_List_Model, Render, 0);
       Widget_Callback.Object_Connect
-        (Render, "edited", On_Exceptions_List_Select_Row'Access,
+        (Render, Signal_Edited, On_Exceptions_List_Select_Row'Access,
          Naming_Scheme_Editor);
 
       --  Sort on this column by clicking on it
@@ -340,7 +342,7 @@ package body Naming_Scheme_Editor_Pkg is
       Set_Editable_And_Callback
         (Naming_Scheme_Editor.Exception_List_Model, Render, 1);
       Widget_Callback.Object_Connect
-        (Render, "edited", On_Exceptions_List_Select_Row'Access,
+        (Render, Signal_Edited, On_Exceptions_List_Select_Row'Access,
          Naming_Scheme_Editor);
 
       Gtk_New (Col);
@@ -354,14 +356,14 @@ package body Naming_Scheme_Editor_Pkg is
       Set_Editable_And_Callback
         (Naming_Scheme_Editor.Exception_List_Model, Render, 2);
       Widget_Callback.Object_Connect
-        (Render, "edited", On_Exceptions_List_Select_Row'Access,
+        (Render, Signal_Edited, On_Exceptions_List_Select_Row'Access,
          Naming_Scheme_Editor);
 
       Return_Callback.Object_Connect
-        (Naming_Scheme_Editor.Exception_List, "key_press_event",
+        (Naming_Scheme_Editor.Exception_List, Signal_Key_Press_Event,
          On_Exception_List_Key_Press_Event'Access, Naming_Scheme_Editor);
       Widget_Callback.Object_Connect
-        (Get_Selection (Naming_Scheme_Editor.Exception_List), "changed",
+        (Get_Selection (Naming_Scheme_Editor.Exception_List), Signal_Changed,
          On_Exceptions_List_Select_Row'Access, Naming_Scheme_Editor);
       Add (Scrolledwindow1, Naming_Scheme_Editor.Exception_List);
 
@@ -376,10 +378,10 @@ package body Naming_Scheme_Editor_Pkg is
       Pack_Start
         (Hbox3, Naming_Scheme_Editor.Unit_Name_Entry, True, True, 0);
       Widget_Callback.Object_Connect
-        (Naming_Scheme_Editor.Unit_Name_Entry, "activate",
+        (Naming_Scheme_Editor.Unit_Name_Entry, Gtk.GEntry.Signal_Activate,
          On_Update_Clicked'Access, Naming_Scheme_Editor);
       Return_Callback.Object_Connect
-        (Naming_Scheme_Editor.Unit_Name_Entry, "key_press_event",
+        (Naming_Scheme_Editor.Unit_Name_Entry, Signal_Key_Press_Event,
          On_Unit_Name_Entry_Key_Press_Event'Access, Naming_Scheme_Editor);
 
       Gtk_New (Naming_Scheme_Editor.Spec_Filename_Entry);
@@ -390,10 +392,10 @@ package body Naming_Scheme_Editor_Pkg is
       Pack_Start
         (Hbox3, Naming_Scheme_Editor.Spec_Filename_Entry, True, True, 0);
       Widget_Callback.Object_Connect
-        (Naming_Scheme_Editor.Spec_Filename_Entry, "activate",
+        (Naming_Scheme_Editor.Spec_Filename_Entry, Gtk.GEntry.Signal_Activate,
          On_Update_Clicked'Access, Naming_Scheme_Editor);
       Return_Callback.Object_Connect
-        (Naming_Scheme_Editor.Spec_Filename_Entry, "key_press_event",
+        (Naming_Scheme_Editor.Spec_Filename_Entry, Signal_Key_Press_Event,
          On_Spec_Filename_Entry_Key_Press_Event'Access, Naming_Scheme_Editor);
 
       Gtk_New (Naming_Scheme_Editor.Body_Filename_Entry);
@@ -404,16 +406,16 @@ package body Naming_Scheme_Editor_Pkg is
       Pack_Start
         (Hbox3, Naming_Scheme_Editor.Body_Filename_Entry, True, True, 0);
       Widget_Callback.Object_Connect
-        (Naming_Scheme_Editor.Body_Filename_Entry, "activate",
+        (Naming_Scheme_Editor.Body_Filename_Entry, Gtk.GEntry.Signal_Activate,
          On_Update_Clicked'Access, Naming_Scheme_Editor);
       Return_Callback.Object_Connect
-        (Naming_Scheme_Editor.Body_Filename_Entry, "key_press_event",
+        (Naming_Scheme_Editor.Body_Filename_Entry, Signal_Key_Press_Event,
          On_Body_Filename_Entry_Key_Press_Event'Access, Naming_Scheme_Editor);
 
       Gtk_New (Naming_Scheme_Editor.Update, -"Update");
       Pack_Start (Hbox3, Naming_Scheme_Editor.Update, False, False, 0);
       Widget_Callback.Object_Connect
-        (Naming_Scheme_Editor.Update, "clicked",
+        (Naming_Scheme_Editor.Update, Gtk.Button.Signal_Clicked,
          On_Update_Clicked'Access, Naming_Scheme_Editor);
    end Initialize;
 

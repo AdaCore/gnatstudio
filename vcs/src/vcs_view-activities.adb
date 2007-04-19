@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2006                      --
+--                      Copyright (C) 2005-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -643,7 +643,7 @@ package body VCS_View.Activities is
       Set_Rules_Hint (Explorer.Tree, True);
 
       Tree_Model_Callback.Object_Connect
-        (Edit_Rend, "edited", Edited_Callback'Access,
+        (Edit_Rend, Signal_Edited, Edited_Callback'Access,
          Slot_Object => Explorer.Kernel, User_Data => Base_Name_Column);
 
       Gtk_New (Explorer.File_Column);

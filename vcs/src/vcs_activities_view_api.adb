@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2006                      --
+--                      Copyright (C) 2005-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -783,7 +783,8 @@ package body VCS_Activities_View_API is
          Set_Active (Check, Get_Group_Commit (Activity));
          Append (Menu, Check);
          Context_Callback.Connect
-           (Check, "activate", On_Menu_Toggle_Group_Commit'Access, Context);
+           (Check, Signal_Activate,
+            On_Menu_Toggle_Group_Commit'Access, Context);
          Set_Sensitive
            (Check,
             VCS /= null
@@ -797,7 +798,7 @@ package body VCS_Activities_View_API is
       Gtk_New (Item, Label => -"Create new activity");
       Append (Menu, Item);
       Context_Callback.Connect
-        (Item, "activate", On_Menu_Create_Activity'Access, Context);
+        (Item, Signal_Activate, On_Menu_Create_Activity'Access, Context);
       Set_Sensitive (Item, True);
 
       if Activity_Section then
@@ -809,13 +810,14 @@ package body VCS_Activities_View_API is
 
          Append (Menu, Item);
          Context_Callback.Connect
-           (Item, "activate", On_Menu_Close_Open_Activity'Access, Context);
+           (Item, Signal_Activate,
+            On_Menu_Close_Open_Activity'Access, Context);
          Set_Sensitive (Item, True);
 
          Gtk_New (Item, Label => -"Delete activity");
          Append (Menu, Item);
          Context_Callback.Connect
-           (Item, "activate", On_Menu_Delete_Activity'Access, Context);
+           (Item, Signal_Activate, On_Menu_Delete_Activity'Access, Context);
          Set_Sensitive (Item, True);
 
          Gtk_New (Item);
@@ -824,31 +826,32 @@ package body VCS_Activities_View_API is
          Gtk_New (Item, Label => -"Commit activity");
          Append (Menu, Item);
          Context_Callback.Connect
-           (Item, "activate", On_Menu_Commit_Activity'Access, Context);
+           (Item, Signal_Activate, On_Menu_Commit_Activity'Access, Context);
          Set_Sensitive (Item, Active);
 
          Gtk_New (Item, Label => -"Query status");
          Append (Menu, Item);
          Context_Callback.Connect
-           (Item, "activate", On_Menu_Query_Status_Activity'Access, Context);
+           (Item, Signal_Activate,
+            On_Menu_Query_Status_Activity'Access, Context);
          Set_Sensitive (Item, Active);
 
          Gtk_New (Item, Label => -"Update");
          Append (Menu, Item);
          Context_Callback.Connect
-           (Item, "activate", On_Menu_Update_Activity'Access, Context);
+           (Item, Signal_Activate, On_Menu_Update_Activity'Access, Context);
          Set_Sensitive (Item, Active);
 
          Gtk_New (Item, Label => -"Compare against head revision");
          Append (Menu, Item);
          Context_Callback.Connect
-           (Item, "activate", On_Menu_Diff_Activity'Access, Context);
+           (Item, Signal_Activate, On_Menu_Diff_Activity'Access, Context);
          Set_Sensitive (Item, Active);
 
          Gtk_New (Item, Label => -"Build patch file");
          Append (Menu, Item);
          Context_Callback.Connect
-           (Item, "activate", On_Menu_Build_Patch_File'Access, Context);
+           (Item, Signal_Activate, On_Menu_Build_Patch_File'Access, Context);
          Set_Sensitive (Item, Active);
       end if;
 
@@ -861,7 +864,8 @@ package body VCS_Activities_View_API is
          Gtk_New (Item, Label => -"Remove from activity");
          Append (Menu, Item);
          Context_Callback.Connect
-           (Item, "activate", On_Menu_Remove_From_Activity'Access, Context);
+           (Item, Signal_Activate,
+            On_Menu_Remove_From_Activity'Access, Context);
          Set_Sensitive (Item, Active);
       end if;
 
@@ -871,7 +875,7 @@ package body VCS_Activities_View_API is
          Gtk_New (Item, Label => -"Edit revision log");
          Append (Menu, Item);
          Context_Callback.Connect
-           (Item, "activate", On_Menu_Edit_Log'Access, Context);
+           (Item, Signal_Activate, On_Menu_Edit_Log'Access, Context);
          Set_Sensitive (Item, True);
       end if;
    end VCS_Activities_Contextual_Menu;

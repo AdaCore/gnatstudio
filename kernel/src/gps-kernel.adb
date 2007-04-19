@@ -1324,7 +1324,7 @@ package body GPS.Kernel is
             Model := Gtk_Tree_Store (Get_Model (View));
 
             Widget_Callback.Object_Connect
-              (View, "row_activated", Row_Activated'Access, Dialog);
+              (View, Signal_Row_Activated, Row_Activated'Access, Dialog);
          end if;
 
          Append (Model, It, Null_Iter);

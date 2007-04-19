@@ -33,6 +33,7 @@ with Glib.Object;                use Glib.Object;
 with Glib.Xml_Int;               use Glib.Xml_Int;
 
 with Gtk.Menu_Item;              use Gtk.Menu_Item;
+with Gtk.Object; use             Gtk.Object;
 with Gtk.Widget;                 use Gtk.Widget;
 
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
@@ -769,9 +770,10 @@ package body Help_Module is
                Item        => Gtk_Menu_Item (Item));
          end if;
 
-         Widget_Callback.Connect (Item, "destroy", On_Destroy'Access);
+         Widget_Callback.Connect (Item, Signal_Destroy, On_Destroy'Access);
          Kernel_Callback.Connect
-           (Item, "activate", On_Load_HTML'Access, Kernel_Handle (Kernel));
+           (Item, Signal_Activate,
+            On_Load_HTML'Access, Kernel_Handle (Kernel));
       end if;
 
       Node := First (Help_Module_ID.Categories);

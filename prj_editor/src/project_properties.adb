@@ -2468,7 +2468,7 @@ package body Project_Properties is
       Gtk_New (Button2, -"Browse");
       Pack_Start (Hbox, Button2, Expand => False);
       Widget_Callback.Object_Connect
-        (Button2, "clicked", Browse_Location'Access,
+        (Button2, Gtk.Button.Signal_Clicked, Browse_Location'Access,
          Slot_Object => Editor.Path);
 
       Gtk_New (Editor.Use_Relative_Paths, -"Paths should be relative paths");
@@ -2744,7 +2744,7 @@ package body Project_Properties is
          Gtk_New (Text);
          Gtk_New (Toggle);
          Widget_Callback.Object_Connect
-           (Toggle, "toggled", Attribute_List_Changed'Access, Editor);
+           (Toggle, Signal_Toggled, Attribute_List_Changed'Access, Editor);
 
          Gtk_New (Col);
          Col_Number := Append_Column (View, Col);
@@ -3203,13 +3203,13 @@ package body Project_Properties is
          Gtk_New_From_Stock (Button, Stock_Add);
          Pack_Start (Box, Button, Expand => False);
          Widget_Callback.Object_Connect
-           (Button, "clicked", Add_String_In_List'Access,
+           (Button, Gtk.Button.Signal_Clicked, Add_String_In_List'Access,
             Slot_Object => Editor);
 
          Gtk_New_From_Stock (Button, Stock_Remove);
          Pack_Start (Box, Button, Expand => False);
          Widget_Callback.Object_Connect
-           (Button, "clicked", Remove_String_From_List'Access,
+           (Button, Gtk.Button.Signal_Clicked, Remove_String_From_List'Access,
             Slot_Object => Editor);
 
          if Description.Ordered_List then
@@ -3218,7 +3218,7 @@ package body Project_Properties is
             Gtk_New (Arrow, Arrow_Up, Shadow_None);
             Add (Button, Arrow);
             Widget_Callback.Object_Connect
-              (Button, "clicked", Move_String_Up'Access,
+              (Button, Gtk.Button.Signal_Clicked, Move_String_Up'Access,
                Slot_Object => Editor);
 
             Gtk_New (Button);
@@ -3226,7 +3226,7 @@ package body Project_Properties is
             Gtk_New (Arrow, Arrow_Down, Shadow_None);
             Add (Button, Arrow);
             Widget_Callback.Object_Connect
-              (Button, "clicked", Move_String_Down'Access,
+              (Button, Gtk.Button.Signal_Clicked, Move_String_Down'Access,
                Slot_Object => Editor);
          end if;
 
@@ -3249,7 +3249,8 @@ package body Project_Properties is
          if Editor.As_Directory then
             Gtk_New (Toggle);
             Widget_Callback.Object_Connect
-              (Toggle, "toggled", Recursive_Directory_Changed'Access, Editor);
+              (Toggle, Signal_Toggled,
+               Recursive_Directory_Changed'Access, Editor);
             Gtk_New (Col);
             Set_Resizable (Col, True);
             Set_Title (Col, -"Include subdirectories");
@@ -3258,7 +3259,7 @@ package body Project_Properties is
             Add_Attribute (Col, Toggle, "active", 1);
 
             Widget_Callback.Object_Connect
-              (Path_Widget, "changed", Project_Path_Changed'Access,
+              (Path_Widget, Signal_Changed, Project_Path_Changed'Access,
                Slot_Object => Editor);
          end if;
 
@@ -3272,12 +3273,12 @@ package body Project_Properties is
             for V in Value'Range loop
                Append (Editor.Model, Iter, Null_Iter);
                if Value (V)'Length > 3 and then
-                   Value (V) (Value (V)'Last - 2 .. Value (V)'Last) = "/**"
+                 Value (V) (Value (V)'Last - 2 .. Value (V)'Last) = "/**"
                then
                   Set (Editor.Model, Iter, 0,
                        Normalize_Pathname
                          (Value (V) (Value (V)'First .. Value (V)'Last - 3),
-                          Directory => Get_Text (Path_Widget),
+                          Directory     => Get_Text (Path_Widget),
                           Resolve_Links => False));
                   Set (Editor.Model, Iter, 1, True);
                elsif Attr.Typ = Attribute_As_String then
@@ -3290,7 +3291,7 @@ package body Project_Properties is
                   Set (Editor.Model, Iter, 0,
                        Normalize_Pathname
                          (Value (V).all,
-                          Directory => Get_Text (Path_Widget),
+                          Directory     => Get_Text (Path_Widget),
                           Resolve_Links => False));
                   Set (Editor.Model, Iter, 1, False);
                end if;
@@ -3304,7 +3305,8 @@ package body Project_Properties is
 
          if Wiz /= null then
             Widget_Callback.Object_Connect
-              (Editor.Ent, "changed", Update_Buttons_Sensitivity'Access, Wiz);
+              (Editor.Ent, Signal_Changed,
+               Update_Buttons_Sensitivity'Access, Wiz);
          end if;
 
          Set_Activates_Default (Editor.Ent, True);
@@ -3335,7 +3337,7 @@ package body Project_Properties is
          if Attr.Typ /= Attribute_As_String then
             Gtk_New (Button, -"Browse");
             Widget_Callback.Object_Connect
-              (Button, "clicked", Select_File'Access,
+              (Button, Gtk.Button.Signal_Clicked, Select_File'Access,
                Slot_Object => Editor);
             Pack_Start (Editor, Button, Expand => False);
          end if;
@@ -4155,7 +4157,7 @@ package body Project_Properties is
       Initialize_Vbox (Ed, Homogeneous => True);
 
       Widget_Callback.Connect
-        (Ed, "destroy", On_Indexed_Editor_Destroy'Access);
+        (Ed, Signal_Destroy, On_Indexed_Editor_Destroy'Access);
 
       Gtk_New (Scrolled);
       Pack_Start (Ed, Scrolled, Expand => True, Fill => True);
@@ -4201,7 +4203,7 @@ package body Project_Properties is
       Add (Scrolled, Ed.View);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
-        (Ed.View, "button_press_event",
+        (Ed.View, Signal_Button_Press_Event,
          Gtkada.Handlers.Return_Callback.To_Marshaller
            (Edit_Indexed_Attribute'Access),
          Slot_Object => Ed);
@@ -4329,7 +4331,7 @@ package body Project_Properties is
          Add (Align, Check);
          Set_Active (Check, Exists);
          Attribute_Handler.Connect
-           (Check, "toggled", Toggle_Sensitive'Access, Attr);
+           (Check, Signal_Toggled, Toggle_Sensitive'Access, Attr);
       end if;
 
       if Attr.Label /= null then
@@ -4373,7 +4375,7 @@ package body Project_Properties is
       Attr.Editor.Wiz := Wiz;
 
       Attribute_Handler.Connect
-        (Attr.Editor, "destroy", Editor_Destroyed'Access, Attr);
+        (Attr.Editor, Signal_Destroy, Editor_Destroyed'Access, Attr);
 
       if Attr.Editor /= null then
          Pack_Start (Box, Attr.Editor, Expand => True, Fill => True);
@@ -4621,11 +4623,11 @@ package body Project_Properties is
 
       --  Connect this only once we have created the pages
       Object_User_Callback.Connect
-        (Editor.Note, "switch_page", Switch_Page_Validate'Access,
+        (Editor.Note, Signal_Switch_Page, Switch_Page_Validate'Access,
          User_Data => GObject (Editor),
          After     => False);
       Object_User_Callback.Connect
-        (Editor.Note, "switch_page", Switch_Page'Access,
+        (Editor.Note, Signal_Switch_Page, Switch_Page'Access,
          User_Data => GObject (Editor),
          After     => True);
    end Initialize;

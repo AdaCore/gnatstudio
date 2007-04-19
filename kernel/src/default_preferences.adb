@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                     Copyright (C) 2001-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -39,8 +39,10 @@ with Gtk.Box;                  use Gtk.Box;
 with Gtk.Button;               use Gtk.Button;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Check_Button;         use Gtk.Check_Button;
+with Gtk.Color_Selection;      use Gtk.Color_Selection;
 with Gtk.Combo;                use Gtk.Combo;
 with Gtk.Dialog;               use Gtk.Dialog;
+with Gtk.Editable;             use Gtk.Editable;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Event_Box;            use Gtk.Event_Box;
 with Gtk.Font_Selection;       use Gtk.Font_Selection;
@@ -146,7 +148,7 @@ package body Default_Preferences is
    Preferences_Editor_Class_Record : Gtk.Object.GObject_Class :=
      Gtk.Object.Uninitialized_Class;
    Preferences_Editor_Signals : constant chars_ptr_array :=
-     (1 => New_String ("preferences_changed"));
+                       (1 => New_String (String (Signal_Preferences_Changed)));
 
    generic
       type Param is private;
@@ -853,7 +855,7 @@ package body Default_Preferences is
 
       if Manager.Pref_Editor /= null then
          Widget_Callback.Emit_By_Name
-           (Manager.Pref_Editor, "preferences_changed");
+           (Manager.Pref_Editor, Signal_Preferences_Changed);
       end if;
    end Set_Pref;
 
@@ -1512,16 +1514,16 @@ package body Default_Preferences is
       Gtk_New (Button, Button_Label);
       Pack_Start (Box, Button, Expand => False, Fill => False);
       Param_Spec_Handlers.Object_Connect
-        (Button, "clicked",
+        (Button, Gtk.Button.Signal_Clicked,
          Param_Spec_Handlers.To_Marshaller (Select_Font'Access),
          Slot_Object => Ent,
          User_Data => (Preferences_Manager (Manager), Pref));
 
       Return_Param_Spec_Handlers.Connect
-        (Ent, "focus_out_event", Font_Entry_Changed'Access,
+        (Ent, Signal_Focus_Out_Event, Font_Entry_Changed'Access,
          User_Data => (Preferences_Manager (Manager), Pref));
       Param_Spec_Handlers.Object_Connect
-        (Manager.Pref_Editor, "preferences_changed",
+        (Manager.Pref_Editor, Signal_Preferences_Changed,
          Update_Font_Entry'Access, Ent,
          User_Data => (Preferences_Manager (Manager), Pref));
 
@@ -1568,10 +1570,10 @@ package body Default_Preferences is
             Set_Editable (Spin, True);
 
             Param_Spec_Handlers.Connect
-              (Adj, "value_changed", Gint_Changed'Access,
+              (Adj, Gtk.Adjustment.Signal_Value_Changed, Gint_Changed'Access,
                User_Data => (Preferences_Manager (Manager), Param));
             Param_Spec_Handlers.Object_Connect
-              (Manager.Pref_Editor, "preferences_changed",
+              (Manager.Pref_Editor, Signal_Preferences_Changed,
                Update_Gint'Access, Adj,
                User_Data => (Preferences_Manager (Manager), Param));
 
@@ -1585,15 +1587,15 @@ package body Default_Preferences is
          begin
             Gtk_New (Toggle, -"Enabled");
             Widget_Callback.Connect
-              (Toggle, "toggled", Toggled_Boolean'Access);
+              (Toggle, Signal_Toggled, Toggled_Boolean'Access);
             Set_Active (Toggle, True); --  Forces a toggle
             Set_Active (Toggle, Get_Pref (Prop));
 
             Param_Spec_Handlers.Connect
-              (Toggle, "toggled", Boolean_Changed'Access,
+              (Toggle, Signal_Toggled, Boolean_Changed'Access,
                User_Data => (Preferences_Manager (Manager), Param));
             Param_Spec_Handlers.Object_Connect
-              (Manager.Pref_Editor, "preferences_changed",
+              (Manager.Pref_Editor, Signal_Preferences_Changed,
                Update_Boolean'Access,
                Toggle, User_Data => (Preferences_Manager (Manager), Param));
 
@@ -1622,13 +1624,14 @@ package body Default_Preferences is
             Append_Text (Ent, Image (Key, Modif));
 
             Widget_Callback.Object_Connect
-              (Button, "clicked", Key_Grab'Access, Slot_Object => Ent);
+              (Button, Gtk.Button.Signal_Clicked, Key_Grab'Access,
+               Slot_Object => Ent);
             Param_Spec_Handlers.Connect
-              (Ent, "insert_text", Entry_Changed'Access,
+              (Ent, Signal_Insert_Text, Entry_Changed'Access,
                User_Data   => (Preferences_Manager (Manager), Param),
                After       => True);
             Param_Spec_Handlers.Object_Connect
-              (Manager.Pref_Editor, "preferences_changed",
+              (Manager.Pref_Editor, Signal_Preferences_Changed,
                Update_Entry'Access,
                Ent, User_Data => (Preferences_Manager (Manager), Param));
 
@@ -1644,17 +1647,17 @@ package body Default_Preferences is
             Set_Text (Ent, Get_Pref (Prop));
 
             Param_Spec_Handlers.Connect
-              (Ent, "insert_text",
+              (Ent, Signal_Insert_Text,
                Entry_Changed'Access,
                User_Data   => (Preferences_Manager (Manager), Param),
                After       => True);
             Param_Spec_Handlers.Connect
-              (Ent, "delete_text",
+              (Ent, Signal_Delete_Text,
                Entry_Changed'Access,
                User_Data   => (Preferences_Manager (Manager), Param),
                After       => True);
             Param_Spec_Handlers.Object_Connect
-              (Manager.Pref_Editor, "preferences_changed",
+              (Manager.Pref_Editor, Signal_Preferences_Changed,
                Update_Entry'Access,
                Ent, User_Data => (Preferences_Manager (Manager), Param));
 
@@ -1685,11 +1688,11 @@ package body Default_Preferences is
             Pack_Start (Box, Event, Expand => False);
             Set_Color (Combo, Get_Pref_Fg (Prop));
             Param_Spec_Handlers.Connect
-              (Combo, "color_changed",
+              (Combo, Signal_Color_Changed,
                Fg_Color_Changed'Access,
                User_Data   => (Preferences_Manager (Manager), Param));
             Param_Spec_Handlers.Object_Connect
-              (Manager.Pref_Editor, "preferences_changed",
+              (Manager.Pref_Editor, Signal_Preferences_Changed,
                Update_Fg'Access,
                Combo, User_Data => (Preferences_Manager (Manager), Param));
 
@@ -1700,11 +1703,11 @@ package body Default_Preferences is
             Pack_Start (Box, Event, Expand => False);
             Set_Color (Combo, Get_Pref_Bg (Prop));
             Param_Spec_Handlers.Connect
-              (Combo, "color_changed",
+              (Combo, Signal_Color_Changed,
                Bg_Color_Changed'Access,
                User_Data => (Preferences_Manager (Manager), Param));
             Param_Spec_Handlers.Object_Connect
-              (Manager.Pref_Editor, "preferences_changed",
+              (Manager.Pref_Editor, Signal_Preferences_Changed,
                Update_Bg'Access,
                Combo, User_Data => (Preferences_Manager (Manager), Param));
 
@@ -1720,11 +1723,11 @@ package body Default_Preferences is
             Set_Color (Combo, Get_Pref (Prop));
 
             Param_Spec_Handlers.Connect
-              (Combo, "color_changed",
+              (Combo, Signal_Color_Changed,
                Color_Changed'Access,
                User_Data   => (Preferences_Manager (Manager), Param));
             Param_Spec_Handlers.Object_Connect
-              (Manager.Pref_Editor, "preferences_changed",
+              (Manager.Pref_Editor, Signal_Preferences_Changed,
                Update_Color'Access,
                Combo, User_Data => (Preferences_Manager (Manager), Param));
 
@@ -1774,7 +1777,7 @@ package body Default_Preferences is
                Slot_Object => Combo,
                User_Data   => (Preferences_Manager (Manager), Param));
             Param_Spec_Handlers.Object_Connect
-              (Manager.Pref_Editor, "preferences_changed",
+              (Manager.Pref_Editor, Signal_Preferences_Changed,
                Update_Entry'Access,
                Get_Entry (Combo),
                User_Data => (Preferences_Manager (Manager), Param));
@@ -1970,7 +1973,7 @@ package body Default_Preferences is
       Add_Attribute (Col, Render, "text", 0);
 
       Widget_Callback.Object_Connect
-        (Get_Selection (View), "changed",
+        (Get_Selection (View), Gtk.Tree_Selection.Signal_Changed,
          Selection_Changed'Unrestricted_Access,
          View);
 

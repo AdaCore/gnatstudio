@@ -703,32 +703,33 @@ package body Project_Explorers is
       --  when the user has changed the visibility status of a node.
 
       Explorer.Expand_Id := Widget_Callback.Object_Connect
-        (Explorer.Tree, "row_expanded", Expand_Row_Cb'Access, Explorer);
+        (Explorer.Tree, Signal_Row_Expanded, Expand_Row_Cb'Access, Explorer);
       Widget_Callback.Object_Connect
-        (Explorer.Tree, "row_collapsed", Collapse_Row_Cb'Access, Explorer);
+        (Explorer.Tree,
+         Signal_Row_Collapsed, Collapse_Row_Cb'Access, Explorer);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
         (Explorer.Tree,
-         "button_release_event",
+         Signal_Button_Release_Event,
          Gtkada.Handlers.Return_Callback.To_Marshaller (Button_Press'Access),
          Slot_Object => Explorer,
          After       => False);
       Gtkada.Handlers.Return_Callback.Object_Connect
         (Explorer.Tree,
-         "button_press_event",
+         Signal_Button_Press_Event,
          Gtkada.Handlers.Return_Callback.To_Marshaller (Button_Press'Access),
          Slot_Object => Explorer,
          After       => False);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
         (Explorer.Tree,
-         "key_press_event",
+         Signal_Key_Press_Event,
          Gtkada.Handlers.Return_Callback.To_Marshaller (Key_Press'Access),
          Slot_Object => Explorer,
          After       => False);
 
       Widget_Callback.Object_Connect
-        (Get_Selection (Explorer.Tree), "changed",
+        (Get_Selection (Explorer.Tree), Signal_Changed,
          Tree_Select_Row_Cb'Access, Explorer, After => True);
 
       --  Automatic update of the tree when the project changes
@@ -753,13 +754,13 @@ package body Project_Explorers is
       --  project view is changed.
 
       Widget_Callback.Object_Connect
-        (Get_MDI (Kernel), "child_selected",
+        (Get_MDI (Kernel), Signal_Child_Selected,
          Child_Selected'Access, Explorer, After => True);
 
       Gtk.Dnd.Dest_Set
         (Explorer.Tree, Dest_Default_All, Target_Table_Url, Action_Any);
       Kernel_Callback.Connect
-        (Explorer.Tree, "drag_data_received",
+        (Explorer.Tree, Signal_Drag_Data_Received,
          Drag_Data_Received'Access, Kernel_Handle (Kernel));
 
       --  Initialize tooltips
@@ -928,7 +929,7 @@ package body Project_Explorers is
            (Get_History (Kernel).all, Show_Absolute_Paths, Check);
          Append (Menu, Check);
          Widget_Callback.Object_Connect
-           (Check, "toggled", Update_Absolute_Paths'Access,
+           (Check, Signal_Toggled, Update_Absolute_Paths'Access,
             Slot_Object => T);
 
          Gtk_New (Check, Label => -"Show flat view");
@@ -936,7 +937,7 @@ package body Project_Explorers is
            (Get_History (Kernel).all, Show_Flat_View, Check);
          Append (Menu, Check);
          Widget_Callback.Object_Connect
-           (Check, "toggled", Update_View'Access,
+           (Check, Signal_Toggled, Update_View'Access,
             Slot_Object => T);
 
          Gtk_New (Check, Label => -"Show hidden directories");
@@ -948,7 +949,7 @@ package body Project_Explorers is
            (Get_History (Kernel).all, Show_Hidden_Dirs, Check);
          Append (Menu, Check);
          Widget_Callback.Object_Connect
-           (Check, "toggled", Update_View'Access,
+           (Check, Signal_Toggled, Update_View'Access,
             Slot_Object => T);
 
          Gtk_New (Item);
@@ -962,7 +963,7 @@ package body Project_Explorers is
          Gtk_New (Item, -"Parse all xref information");
          Add (Menu, Item);
          Widget_Callback.Object_Connect
-           (Item, "activate", On_Parse_Xref'Access, T);
+           (Item, Signal_Activate, On_Parse_Xref'Access, T);
       end if;
 
    exception
@@ -3056,28 +3057,28 @@ package body Project_Explorers is
       Pack_Start (Box, Extra.Include_Projects);
       Set_Active (Extra.Include_Projects, True);
       Kernel_Callback.Connect
-        (Extra.Include_Projects, "toggled",
+        (Extra.Include_Projects, Signal_Toggled,
          Reset_Search'Access, Kernel_Handle (Kernel));
 
       Gtk_New (Extra.Include_Directories, -"Directories");
       Pack_Start (Box, Extra.Include_Directories);
       Set_Active (Extra.Include_Directories, True);
       Kernel_Callback.Connect
-        (Extra.Include_Directories, "toggled",
+        (Extra.Include_Directories, Signal_Toggled,
          Reset_Search'Access, Kernel_Handle (Kernel));
 
       Gtk_New (Extra.Include_Files, -"Files");
       Pack_Start (Box, Extra.Include_Files);
       Set_Active (Extra.Include_Files, True);
       Kernel_Callback.Connect
-        (Extra.Include_Files, "toggled",
+        (Extra.Include_Files, Signal_Toggled,
          Reset_Search'Access, Kernel_Handle (Kernel));
 
       Gtk_New (Extra.Include_Entities, -"Entities (might be slow)");
       Pack_Start (Box, Extra.Include_Entities);
       Set_Active (Extra.Include_Entities, False);
       Kernel_Callback.Connect
-        (Extra.Include_Entities, "toggled",
+        (Extra.Include_Entities, Signal_Toggled,
          Reset_Search'Access, Kernel_Handle (Kernel));
 
       Register_Filter
