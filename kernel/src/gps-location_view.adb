@@ -1844,6 +1844,38 @@ package body GPS.Location_View is
       Redraw_Totals (View);
    end Recount_Category;
 
+   --------------------
+   -- Category_Count --
+   --------------------
+
+   function Category_Count
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Category : String) return Natural
+   is
+      View  : constant Location_View :=
+                Get_Or_Create_Location_View (Kernel, Allow_Creation => False);
+      Cat   : Gtk_Tree_Iter;
+      Iter  : Gtk_Tree_Iter;
+      Dummy : Boolean;
+
+   begin
+      if View = null then
+         return 0;
+      end if;
+
+      Get_Category_File
+        (View,
+         View.Tree.Model,
+         Glib.Convert.Escape_Text (Category),
+         null, VFS.No_File, Cat, Iter, Dummy, False);
+
+      if Cat = Null_Iter then
+         return 0;
+      end if;
+
+      return Natural (Get_Int (View.Tree.Model, Cat, Number_Of_Items_Column));
+   end Category_Count;
+
    ------------------------------
    -- Remove_Location_Category --
    ------------------------------

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                     Copyright (C) 2001-2007                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -103,10 +103,15 @@ package GPS.Location_View is
    --  first entry with a higher line number. This should be avoided if you
    --  know that you are already inserting entries sorted, since it is slower.
 
+   function Category_Count
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Category : String) return Natural;
+   --  Return the number of entries for a given category
+
    procedure Recount_Category
      (Kernel   : access Kernel_Handle_Record'Class;
       Category : String);
-   --  Update the counters for Category.
+   --  Update the counters for Category
 
    procedure Remove_Location_Category
      (Kernel   : access Kernel_Handle_Record'Class;
