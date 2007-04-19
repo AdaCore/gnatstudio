@@ -24,7 +24,7 @@ class gnatCheck:
   <tool name="GnatCheck" package="Ide" index="gnatcheck" >
      <language>Ada</language>
      <switches lines="1" use_scrolled_window="true">
-        <title line="1" >General</title>
+        <title line="1" >Rules</title>
       """
       for j in self.rules_list:
         xml += '<check label="' + j[1] + '" switch="+R' + j[0] + '" line="1"/>'
@@ -78,7 +78,7 @@ class gnatCheck:
       GPS.Codefix.parse (self.locations_string, matched)
       print (matched)
 
-   def check_file (self, file):
+   def internalSpawn (self, filestr):
       self.init_gnatcheck_cmd ()
       if self.gnatcheckCmd == "":
          return
@@ -89,7 +89,7 @@ class gnatCheck:
       for i, j in scenario.iteritems():
          cmd += " -X" + i + "=" + j
       # use progress, specify the file name to check
-      cmd +=  " -dd " + file.name()
+      cmd +=  " -dd " + filestr
       # retrieve the rules to check, from project
       opts = GPS.Project.root().get_tool_switches_as_list ("GnatCheck")
       if opts == []:
@@ -119,10 +119,19 @@ class gnatCheck:
                              progress_current = 1,
                              progress_total = 2)
 
+   def check_file (self, file):
+      self.internalSpawn (file.name())
+
+   def check_files (self, files):
+      filestr = ""
+      for f in files:
+         filestr += f + " "
+      self.internalSpawn (filestr);
+
 # Contextual menu for checking files
-class contextualMenu (GPS.Contextual):
+class contextualMenuFile (GPS.Contextual):
    def __init__ (self):
-      GPS.Contextual.__init__ (self, "Check with gnatcheck")
+      GPS.Contextual.__init__ (self, "Check file with gnatcheck")
       self.create (on_activate = self.on_activate,
                    filter      = self.filter,
                    label       = self.label)
@@ -150,14 +159,52 @@ class contextualMenu (GPS.Contextual):
    def on_activate (self, context):
       gnatcheckproc.check_file (self.file)
 
+class contextualMenuDir (GPS.Contextual):
+   def __init__ (self):
+      GPS.Contextual.__init__ (self, "Check dir with gnatcheck")
+      self.create (on_activate = self.on_activate,
+                   filter      = self.filter,
+                   label       = self.label)
+
+   def filter (self, context):
+      if not isinstance(context, GPS.FileContext):
+         return False
+      try:
+         # verify this is not a file
+         context.file()
+         return False
+      except:
+         try:
+            # verify this is a dir
+            dir = context.directory()
+         except:
+            return False
+
+      srcs = GPS.Project.root().sources (recursive = True)
+      found = False
+      self.files = []
+      for f in srcs:
+         print "examining file " + f.name()
+         print "dir is " + dir
+         if f.name().lower().find (dir.lower()) == 0:
+            self.files.append (f.name())
+            found = True
+      return found
+
+   def label (self, context):
+      return "Check sources in directory with gnatcheck"
+
+   def on_activate (self, context):
+      gnatcheckproc.check_files (self.files)
+
 
 # create the gnatcheck and menus instances.
 gnatcheckproc = None;
 def init(p):
    global gnatcheckproc;
-   global gnatcheckmenu;
    gnatcheckproc = gnatCheck()
-   gnatcheckmenu = contextualMenu()
+   contextualMenuFile()
+   contextualMenuDir()
 
 def on_project_change(p):
    global gnatcheckproc;
