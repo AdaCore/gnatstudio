@@ -13276,6 +13276,12 @@ be overridden separately for each switch. Note that if you want the separator
 to be a space, you must use the value @code{"&#32;"} rather than @code{" "},
 since XML parser must normalize the latter to the empty string when reading
 the XML file.
+
+@item use_scrolled_window (Default value is false)
+This optional attribute specifies if the boxes of the project editor are placed
+into scrolled window. This is particularily useful if the number of displayed
+switches if important.
+
 @end table
 
 This @code{<switches>} tag can have any number of child tag, among the
