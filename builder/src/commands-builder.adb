@@ -125,24 +125,24 @@ package body Commands.Builder is
    -- Process_Builder_Output --
    ----------------------------
 
+   Completed_Matcher : constant Pattern_Matcher := Compile
+     ("completed ([0-9]+) out of ([0-9]+) \(([^\n]*)%\)\.\.\.\n",
+      Single_Line);
+   --  ??? This is configurable in some cases (from XML for instance), so
+   --  we should not have a hard coded regexp here.
+
    procedure Process_Builder_Output
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Command : Commands.Command_Access;
       Output  : String;
       Quiet   : Boolean)
    is
-      --  ??? This is configurable in some cases (from XML for instance), so
-      --  we should not have a hard coded regexp here, and especially not
-      --  recompile it every time.
-      Matcher : constant Pattern_Matcher := Compile
-        ("completed ([0-9]+) out of ([0-9]+) \(([^\n]*)%\)\.\.\.\n",
-         Single_Line);
       Start   : Integer := Output'First;
       Matched : Match_Array (0 .. 3);
       Buffer  : Unbounded_String;
    begin
       while Start <= Output'Last loop
-         Match (Matcher, Output (Start .. Output'Last), Matched);
+         Match (Completed_Matcher, Output (Start .. Output'Last), Matched);
          exit when Matched (0) = No_Match;
 
          Command.Progress.Current := Natural'Value
