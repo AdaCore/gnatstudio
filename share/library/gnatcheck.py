@@ -125,11 +125,11 @@ class gnatCheck:
    def check_files (self, files):
       filestr = ""
       for f in files:
-         filestr += f + " "
+         filestr += f.name() + " "
       self.internalSpawn (filestr);
 
 # Contextual menu for checking files
-class contextualMenuFile (GPS.Contextual):
+class contextualMenu (GPS.Contextual):
    def __init__ (self):
       GPS.Contextual.__init__ (self, "Check file with gnatcheck")
       self.create (on_activate = self.on_activate,
@@ -137,72 +137,72 @@ class contextualMenuFile (GPS.Contextual):
                    label       = self.label)
 
    def filter (self, context):
+      self.desttype = "none"
       if not isinstance(context, GPS.FileContext):
          return False
       try:
+         # might be a file
+         self.desttype = "file"
          self.file = context.file()
-      except:
-         return False
-      if self.file.language().lower() != "ada":
-         return False
-      srcs = GPS.Project.root().sources (recursive = True)
-      found = False
-      for f in srcs:
-         if f.name().lower() == self.file.name().lower():
-            found = True
-            break
-      return found
-
-   def label (self, context):
-      return "Check "+os.path.basename(self.file.name())+" with gnatcheck"
-
-   def on_activate (self, context):
-      gnatcheckproc.check_file (self.file)
-
-class contextualMenuDir (GPS.Contextual):
-   def __init__ (self):
-      GPS.Contextual.__init__ (self, "Check dir with gnatcheck")
-      self.create (on_activate = self.on_activate,
-                   filter      = self.filter,
-                   label       = self.label)
-
-   def filter (self, context):
-      if not isinstance(context, GPS.FileContext):
-         return False
-      try:
-         # verify this is not a file
-         context.file()
-         return False
+         if self.file.language().lower() != "ada":
+            return False
+         srcs = GPS.Project.root().sources (recursive = True)
+         found = False
+         for f in srcs:
+            if f.name().lower() == self.file.name().lower():
+               found = True
+               break
+         return found
       except:
          try:
-            # verify this is a dir
-            dir = context.directory()
+           self.desttype = "dir"
+           # verify this is a dir
+           dir = context.directory()
+           # check this directory contains ada sources
+           srcs = GPS.Project.root().sources (recursive = True)
+           found = False
+           self.files = []
+           for f in srcs:
+              if f.name().lower().find (dir.lower()) == 0:
+                 if f.language().lower() == "ada":
+                   self.files.append (f)
+                   found = True
+           return found
          except:
-            return False
-
-      srcs = GPS.Project.root().sources (recursive = True)
-      found = False
-      self.files = []
-      for f in srcs:
-         if f.name().lower().find (dir.lower()) == 0:
-            self.files.append (f.name())
-            found = True
-      return found
+            # this is a project file
+            self.desttype = "project"
+            project = context.project()
+            srcs = project.sources (recursive = False)
+            found = False
+            self.files = []
+            for f in srcs:
+               if f.language().lower() == "ada":
+                  self.files.append (f)
+                  found = True
+            return found
 
    def label (self, context):
-      return "Check sources in directory with gnatcheck"
+      if self.desttype == "file":
+         return "Check "+os.path.basename(self.file.name())+" with gnatcheck"
+      elif self.desttype == "dir":
+         return "Check directory with gnatcheck"
+      elif self.desttype == "project":
+         return "Check project with gnatcheck"
+      return ""
 
    def on_activate (self, context):
-      gnatcheckproc.check_files (self.files)
-
+      global gnatcheckproc
+      if self.desttype == "file":
+         gnatcheckproc.check_file(self.file)
+      else:
+         gnatcheckproc.check_files(self.files)
 
 # create the gnatcheck and menus instances.
 gnatcheckproc = None;
 def init(p):
    global gnatcheckproc;
    gnatcheckproc = gnatCheck()
-   contextualMenuFile()
-   contextualMenuDir()
+   contextualMenu()
 
 def on_project_change(p):
    global gnatcheckproc;
