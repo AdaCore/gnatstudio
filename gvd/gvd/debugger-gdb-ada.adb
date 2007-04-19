@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                                  GPS                              --
 --                                                                   --
---                      Copyright (C) 2000-2006                      --
+--                      Copyright (C) 2000-2007                      --
 --                                AdaCore                            --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -275,6 +275,14 @@ package body Debugger.Gdb.Ada is
                raise Unexpected_Type;
             end if;
 
+         when 'f' =>
+            --  A function that comes from the dereferencing of an access type
+            if Looking_At (Type_Str, Index, "function ") then
+               Result := null;
+            else
+               raise Unexpected_Type;
+            end if;
+
          when 'm' =>
             --  Modular types
 
@@ -338,6 +346,17 @@ package body Debugger.Gdb.Ada is
                   Set_Child (Class_Type (Result.all),
                              Record_Type_Access (Child));
                end;
+            else
+               raise Unexpected_Type;
+            end if;
+
+         when 'p' =>
+            --  A procedure that comes from the dereferencing of an access type
+            if Looking_At (Type_Str, Index, "procedure")
+              and then (Type_Str'Last = Index + 8
+                        or else Type_Str (Index + 9) = ' ')
+            then
+               Result := null;
             else
                raise Unexpected_Type;
             end if;
@@ -426,8 +445,8 @@ package body Debugger.Gdb.Ada is
       Result     : in out Items.Generic_Type_Access;
       Repeat_Num : out Positive) is
    begin
-      Internal_Parse_Value (Lang, Type_Str, Index, Result, Repeat_Num,
-                            Parent => null);
+      Internal_Parse_Value
+        (Lang, Type_Str, Index, Result, Repeat_Num, Parent => null);
    end Parse_Value;
 
    ----------------------
@@ -650,18 +669,36 @@ package body Debugger.Gdb.Ada is
          elsif Looking_At (Type_Str, Tmp_Index, "<incomplete ") then
             Tmp_Index := Tmp_Index + 17;
 
-         --  A record with a variant part ? This counts as
+         --  A record with a variant part? This counts as
          --  only one field
 
          elsif Looking_At (Type_Str, Tmp_Index, "case ") then
             Tmp_Index := Tmp_Index + 5;
             Skip_To_String (Type_Str, Tmp_Index, "end case;");
-            Fields := Fields + 1;
             Tmp_Index := Tmp_Index + 9;
+            Fields := Fields + 1;
 
          --  Else a standard field
 
          else
+            Skip_To_Char (Type_Str, Tmp_Index, ':');
+            Tmp_Index := Tmp_Index + 1;
+            Skip_Blanks (Type_Str, Tmp_Index);
+
+            if Looking_At (Type_Str, Tmp_Index, "access function ") then
+               Tmp_Index := Tmp_Index + 16;
+               Skip_To_String (Type_Str, Tmp_Index, " return ");
+               Tmp_Index := Tmp_Index + 8;
+
+            elsif Looking_At (Type_Str, Tmp_Index, "access procedure ") then
+               Tmp_Index := Tmp_Index + 16;
+               Skip_To_Char (Type_Str, Tmp_Index, ')');
+               Tmp_Index := Tmp_Index + 1;
+
+            elsif Looking_At (Type_Str, Tmp_Index, "access procedure;") then
+               Tmp_Index := Tmp_Index + 16;
+            end if;
+
             Skip_To_Char (Type_Str, Tmp_Index, ';');
             Tmp_Index := Tmp_Index + 1;
             Fields := Fields + 1;
@@ -761,6 +798,23 @@ package body Debugger.Gdb.Ada is
 
             Index := Index + 2;
             Tmp_Index := Index;
+
+            Skip_Blanks (Type_Str, Index);
+
+            if Looking_At (Type_Str, Index, "access function ") then
+               Index := Index + 16;
+               Skip_To_String (Type_Str, Index, " return ");
+               Index := Index + 8;
+
+            elsif Looking_At (Type_Str, Index, "access procedure ") then
+               Index := Index + 16;
+               Skip_To_Char (Type_Str, Index, ')');
+               Index := Index + 1;
+
+            elsif Looking_At (Type_Str, Index, "access procedure;") then
+               Index := Tmp_Index + 16;
+            end if;
+
             Skip_To_Char (Type_Str, Index, ';');
 
             --  If we have a simple type, no need to ask gdb, for efficiency
