@@ -22,14 +22,14 @@ Known Problems fixed in GPS 4.2.0
               through key shortcuts.
   Workaround: The extraneous dialogs can be closed safely.
 
-- G225-003 Activity indicator show "busy" state when using some plugins
-  Problem:    When using some plugins which launch a process in the background,
-              such as the spell checking "ispell" plugin, the GPS activity
+- G225-003 Activity indicator show "busy" state when using some plug-ins
+  Problem:    When using some plug-ins which launch a process in the background,
+              such as the spell checking "ispell" plug-in, the GPS activity
               indicator in the top-right corner show a busy state while the
               process is running.
   Workaround: Refer to the Task Manager to determine activity status of GPS.
 
-- G119-006 Extra line reformatted with the "align" plugin
+- G119-006 Extra line reformatted with the "align" plug-in
   Problem:    When the low bound of the selection is located before the
               first character of a line, this line gets reformatted although
               this is not very intuitive.
