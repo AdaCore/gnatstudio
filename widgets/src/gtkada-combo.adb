@@ -39,7 +39,7 @@ package body Gtkada.Combo is
    Class_Record : GObject_Class := Uninitialized_Class;
 
    Signals : constant chars_ptr_array :=
-     (1 => New_String ("changed"));
+               (1 => New_String (String (Signal_Changed)));
 
    procedure Selected (Combo : access Gtk_Widget_Record'Class);
    --  Called when a new value has been selected
@@ -50,7 +50,7 @@ package body Gtkada.Combo is
 
    procedure Selected (Combo : access Gtk_Widget_Record'Class) is
    begin
-      Widget_Callback.Emit_By_Name (Combo, "changed");
+      Widget_Callback.Emit_By_Name (Combo, Signal_Changed);
    end Selected;
 
    -------------
