@@ -1851,7 +1851,7 @@ package body Ada_Analyzer is
             Push (Tokens, Temp);
 
          elsif Reserved = Tok_Abort then
-            if Prev_Token = Tok_Then then
+            if Top_Token.Token = Tok_Select and then Prev_Token = Tok_Then then
                --  Temporarily unindent if we have a 'then abort' construct,
                --  with 'abort' on its own line, e.g:
                --  select
