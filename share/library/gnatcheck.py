@@ -184,8 +184,6 @@ class contextualMenuDir (GPS.Contextual):
       found = False
       self.files = []
       for f in srcs:
-         print "examining file " + f.name()
-         print "dir is " + dir
          if f.name().lower().find (dir.lower()) == 0:
             self.files.append (f.name())
             found = True
