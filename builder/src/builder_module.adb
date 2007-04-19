@@ -412,10 +412,10 @@ package body Builder_Module is
       Shadow : Boolean) is
    begin
       if Shadow then
-         Remove_Location_Category (Kernel, -Shadow_Category);
+         Remove_Location_Category (Kernel, Shadow_Category);
       else
          Console.Clear (Kernel);
-         Remove_Location_Category (Kernel, -Error_Category);
+         Remove_Location_Category (Kernel, Error_Category);
 
          --  We do not need to remove Warning/Style_Category since these
          --  are located under the Error_Category hierarchy in the locations
@@ -580,10 +580,10 @@ package body Builder_Module is
    procedure Free_Temporary_Files
      (Data : Process_Data; Status : Integer)
    is
-      pragma Unreferenced (Status);
       Files   : constant Files_Callback_Data_Access :=
                   Files_Callback_Data_Access (Data.Callback_Data);
       Success : Boolean;
+
    begin
       if Files /= null and then Files.Files /= null then
          for F in Files.Files'Range loop
@@ -594,6 +594,18 @@ package body Builder_Module is
             end if;
          end loop;
       end if;
+
+      --  Raise the messages window is compilation was unsuccessful
+      --  and no error was parsed. See D914-005
+
+      if Category_Count (Data.Kernel, Error_Category) = 0
+        and then Status /= 0
+      then
+         Console.Raise_Console (Data.Kernel);
+      end if;
+
+      --  ??? should also pass the Status value to Compilation_Finished
+      --  and to the corresponding hook
 
       Compilation_Finished (Data.Kernel, Error_Category);
    end Free_Temporary_Files;
@@ -1342,6 +1354,7 @@ package body Builder_Module is
       if not D.Bool then
          Console.Raise_Console (Kernel);
       end if;
+
       return True;
    end On_Compilation_Starting;
 
@@ -1380,8 +1393,8 @@ package body Builder_Module is
    -- Load_Xref_In_Memory --
    -------------------------
 
-   procedure Load_Xref_In_Memory (Kernel : access Kernel_Handle_Record'Class)
-   is
+   procedure Load_Xref_In_Memory
+     (Kernel : access Kernel_Handle_Record'Class) is
    begin
       Do_On_Each_File
         (Kernel,
