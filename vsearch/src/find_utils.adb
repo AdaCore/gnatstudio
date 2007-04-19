@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                     Copyright (C) 2001-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -128,6 +128,19 @@ package body Find_Utils is
          Index, Line, Column, Was_Partial);
       return Result;
    end Match;
+
+   ---------------------------
+   -- Get_Terminate_Message --
+   ---------------------------
+
+   function Get_Terminate_Message
+     (Context : access Root_Search_Context;
+      Kind    : Operation_Kind) return String
+   is
+      pragma Unreferenced (Context, Kind);
+   begin
+      return "";
+   end Get_Terminate_Message;
 
    --------------------------
    -- Scan_Buffer_No_Scope --

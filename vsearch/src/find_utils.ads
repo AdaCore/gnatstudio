@@ -158,6 +158,16 @@ package Find_Utils is
    --  This automatically uses either a regexp or a faster Boyer Moore methode
    --  for constant strings.
 
+   type Operation_Kind is (Replace, Search);
+
+   function Get_Terminate_Message
+     (Context : access Root_Search_Context;
+      Kind    : Operation_Kind) return String;
+   --  The implementer of this function is supposed to return a message that
+   --  will be displayed once the search or replace is done. By default, it
+   --  return "".
+   --  ??? Currently, only the Replace kind is taken into account.
+
    type Match_Result (Length : Natural) is record
       Index                : Natural;
       Begin_Line           : Natural;
