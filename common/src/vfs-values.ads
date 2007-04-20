@@ -31,6 +31,8 @@ package VFS.Values is
 
    procedure Set_File (Value : in out Glib.Values.GValue; File : Virtual_File);
    --  Store File into Value
+   --  Value must have been initialized (See Glib.Values.Init) with type
+   --  given by Get_Virtual_File_Type, below.
 
    function Get_File (Value : Glib.Values.GValue) return Virtual_File;
    --  Retrieve the file stored in Value
