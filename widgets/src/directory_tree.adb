@@ -510,8 +510,12 @@ package body Directory_Tree is
 
       if Row = Null_Iter then
          Append (Selector.List_Model, Row, Null_Iter);
+
+         Init (Value, Get_Virtual_File_Type);
          Set_File (Value, Dir);
          Set_Value (Selector.List_Model, Row, File_Column, Value);
+         Unset (Value);
+
          Set (Selector.List_Model, Row, Base_Name_Column,
               Base_Dir_Name (Dir));
       end if;
@@ -980,8 +984,10 @@ package body Directory_Tree is
             declare
                Value : GValue;
             begin
+               Init (Value, Get_Virtual_File_Type);
                Set_File (Value, Dir);
                Set_Value (Selector.List_Model, Iter, File_Column, Value);
+               Unset (Value);
             end;
             Set (Selector.List_Model, Iter, Base_Name_Column,
                  Base_Dir_Name (Dir));
@@ -1109,8 +1115,10 @@ package body Directory_Tree is
          declare
             Value      : GValue;
          begin
+            Init (Value, Get_Virtual_File_Type);
             Set_File (Value, D.Norm_Dir);
             Set_Value (D.Explorer.File_Model, Iter, File_Column, Value);
+            Unset (Value);
          end;
 
          Set (D.Explorer.File_Model, Iter, Base_Name_Column,
@@ -1181,8 +1189,12 @@ package body Directory_Tree is
             Value : GValue;
          begin
             Append (D.Explorer.File_Model, Iter, D.Base);
+
+            Init (Value, Get_Virtual_File_Type);
             Set_File (Value, Dir);
             Set_Value (D.Explorer.File_Model, Iter, File_Column, Value);
+            Unset (Value);
+
             Set (D.Explorer.File_Model, Iter, Base_Name_Column,
                  Base_Dir_Name (Dir));
 
