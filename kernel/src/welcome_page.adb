@@ -18,22 +18,22 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;        use Glib;
-with Glib.Object; use Glib.Object;
-with Gdk.Pixbuf;  use Gdk.Pixbuf;
-with Gdk.Color;   use Gdk.Color;
-with Gdk.Event;   use Gdk.Event;
-with Gtk.Enums;   use Gtk.Enums;
-with Gtk.Event_Box; use Gtk.Event_Box;
-with Gtk.Image;   use Gtk.Image;
-with Gtk.Handlers; use Gtk.Handlers;
-with Gtk.Label;   use Gtk.Label;
-with Gtk.Widget;  use Gtk.Widget;
-with Gtk.Window;  use Gtk.Window;
-with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
+with Glib;                      use Glib;
+with Glib.Object;               use Glib.Object;
+with Gdk.Pixbuf;                use Gdk.Pixbuf;
+with Gdk.Color;                 use Gdk.Color;
+with Gdk.Event;                 use Gdk.Event;
+with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Event_Box;             use Gtk.Event_Box;
+with Gtk.Image;                 use Gtk.Image;
+with Gtk.Handlers;              use Gtk.Handlers;
+with Gtk.Label;                 use Gtk.Label;
+with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Window;                use Gtk.Window;
+with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 
-with Traces;      use Traces;
-with GPS.Intl;  use GPS.Intl;
+with Traces;                    use Traces;
+with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 
@@ -64,25 +64,25 @@ package body Welcome_Page is
    function On_Overview
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle) return Boolean;
-   --  Display the overview page.
+   --  Display the overview page
 
    function On_Tutorial
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle) return Boolean;
-   --  Display the overview page.
+   --  Display the overview page
 
    function On_UG
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle) return Boolean;
-   --  Display the overview page.
+   --  Display the overview page
 
    function On_Enter
      (Widget : access GObject_Record'Class; Data : Pic_Data) return Boolean;
-   --  Called when mouse enters Widget.
+   --  Called when mouse enters Widget
 
    function On_Leave
      (Widget : access GObject_Record'Class; Data : Pic_Data) return Boolean;
-   --  Called when mouse leaves Widget.
+   --  Called when mouse leaves Widget
 
    -----------------
    -- On_Overview --
@@ -235,17 +235,17 @@ package body Welcome_Page is
    -------------------------
 
    function Create_Welcome_Page (Kernel : Kernel_Handle) return MDI_Child is
-      Main_Box : Welcome_Page_Access;
-      Main_Vbox : Gtk_Vbox;
-      Hbox     : Gtk_Hbox;
-      Vbox     : Gtk_Vbox;
-      Label    : Gtk_Label;
-      Child    : MDI_Child;
-      Image    : Gtk_Image;
-      Scroll   : Gtk_Scrolled_Window;
-      Box      : Gtk_Event_Box;
+      Main_Box    : Welcome_Page_Access;
+      Main_Vbox   : Gtk_Vbox;
+      Hbox        : Gtk_Hbox;
+      Vbox        : Gtk_Vbox;
+      Label       : Gtk_Label;
+      Child       : MDI_Child;
+      Image       : Gtk_Image;
+      Scroll      : Gtk_Scrolled_Window;
+      Box         : Gtk_Event_Box;
       Requisition : Gtk_Requisition;
-      Win      : Gtk_Window;
+      Win         : Gtk_Window;
 
    begin
       Main_Box := new Welcome_Page_Record;
