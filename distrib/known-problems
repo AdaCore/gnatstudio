@@ -11,7 +11,7 @@ Known Problems fixed in GPS 4.1.1
   Problem:    On Windows, a desktop containing floating windows is not restored
               properly, and the floating windows are set to wrong
               coordinates (and thus are invisible in most cases)
-  Workaround: Maximize and unmaxize the floating windows trough the Windows
+  Workaround: Maximize and unmaxize the floating windows through the Windows
               taskbar
 
 - G413-004 Cannot display record with access to subprogram field in debugger
