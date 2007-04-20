@@ -1826,6 +1826,65 @@ package body Codefix.Errors_Parser is
 
    end Fix;
 
+   -----------------
+   -- Use_Missing --
+   -----------------
+
+   procedure Initialize (This : in out Use_Missing) is
+   begin
+      This.Matcher :=
+        (1 => new Pattern_Matcher'
+           (Compile ("operator for type ""[^""]*"" defined at "
+            & "([^\:]+):([0-9]+) is not directly visible")));
+   end Initialize;
+
+   overriding
+   procedure Fix
+     (This         : Use_Missing;
+      Errors_List  : in out Errors_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Options, Solutions);
+
+      Preview  : Error_Message;
+      Decl_Cur : File_Cursor;
+   begin
+      Get_Preview (Errors_List, Current_Text, Preview);
+
+      if Preview = Invalid_Error_Message or else Get_Message (Preview)
+        /= "use clause would make operation legal"
+      then
+         raise Uncorrectable_Message;
+      end if;
+
+      Skip_Message (Errors_List);
+      Free (Preview);
+
+      Set_File
+        (Decl_Cur,
+         Create
+           (Get_Message (Message)
+            (Matches (1).First .. Matches (1).Last),
+            Get_Registry (Current_Text).all));
+
+      Set_Line (Decl_Cur, Integer'Value (Get_Message (Message)
+        (Matches (2).First .. Matches (2).Last)));
+
+      Set_Column (Decl_Cur, 1);
+
+      Solutions :=
+         Clause_Missing
+           (Current_Text   => Current_Text,
+            Cursor         => Message,
+            Missing_Clause => Get_Full_Prefix (Current_Text, Decl_Cur),
+            Add_With       => False,
+            Add_Use        => True);
+   end Fix;
+
    --------------------------
    -- Redundant_Conversion --
    --------------------------

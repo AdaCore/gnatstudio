@@ -1086,6 +1086,24 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix problem 'multiple use clause hiding'
 
+   type Use_Missing is new Error_Parser
+     (new String'("Use_Missing"), 1)
+   with null record;
+
+   overriding
+   procedure Initialize (This : in out Use_Missing);
+
+   overriding
+   procedure Fix
+     (This         : Use_Missing;
+      Errors_List  : in out Errors_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix problem 'use would make operation legal'
+
    type Redundant_Conversion is new Error_Parser
      (new String'("Useless_Conversion"), 1)
    with null record;
