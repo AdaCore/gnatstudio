@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006                    --
+--                        Copyright (C) 2006-2007                    --
 --                                AdaCore                            --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -77,6 +77,7 @@ package body Codefix.Helpers is
       Add_Parser (new Missplaced_With);
       Add_Parser (new Not_Fully_Conformant);
       Add_Parser (new Generic_Use_Unallowed);
+      Add_Parser (new Use_Missing);
       Add_Parser (new Non_Visible_Declaration);
       Add_Parser (new Redundant_With_In_Body);
       Add_Parser (new Consecutive_Underlines);
