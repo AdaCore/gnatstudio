@@ -1549,7 +1549,7 @@ package body GPS.Location_View is
       Set_Active (Check, Explorer.Sort_By_Category);
       Append (Menu, Check);
       Widget_Callback.Object_Connect
-         (Check, "activate", Toggle_Sort'Access, Explorer);
+        (Check, "activate", Toggle_Sort'Access, Explorer);
 
       Gtk_New (Mitem);
       Append (Menu, Mitem);
