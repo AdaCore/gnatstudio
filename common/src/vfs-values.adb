@@ -50,8 +50,6 @@ package body VFS.Values is
    procedure Set_File
      (Value : in out Glib.Values.GValue; File : Virtual_File) is
    begin
-      Init (Value, Get_Virtual_File_Type);
-
       if File.Value = null then
          Set_Boxed (Value, System.Null_Address);
       else
