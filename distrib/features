@@ -45,6 +45,11 @@ F716-001 Improve block navigation support (2007-03-18)
   the enclosing block when the cursor is already at the start/end of
   the current statement instead of doing nothing.
 
+F329-003 Fix of "use clause would make operation legal" messages (2007-04-20)
+
+  Compiler messages "use clause would make operation legal" are now 
+  automatically fixed by GPS, by adding the missing use clause to the file.
+
 D914-005 Better feedback when build fails with no source location (2007-04-19)
 
   When a build fails with no file:line location (e.g. error at link time),
