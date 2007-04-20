@@ -7,6 +7,13 @@ Known Problems fixed in GPS 4.1.1
               end if;
   Workaround: Fix the indentation by hand, by adding an extra space
 
+- G416-003 Floating windows and desktops on Windows
+  Problem:    On Windows, a desktop containing floating windows is not restored
+              properly, and the floating windows are set to wrong
+              coordinates (and thus are invisible in most cases)
+  Workaround: Maximize and unmaxize the floating windows trough the Windows
+              taskbar
+
 - G413-004 Cannot display record with access to subprogram field in debugger
   Problem:    It is not possible to display correctly a record that has an
               access to subprogram field in the graphical debugger interface.
