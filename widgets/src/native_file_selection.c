@@ -1,7 +1,7 @@
 /*********************************************************************
  *                               G P S                               *
  *                                                                   *
- *                      Copyright (C) 2002-2007                      *
+ *                      Copyright (C) 2002-2006                      *
  *                              AdaCore                              *
  *                                                                   *
  * GPS is free  software;  you can redistribute it and/or modify  it *
@@ -39,8 +39,8 @@
  * user shall free the result
 */
 
-#define OPEN_FILE 0
-#define SAVE_FILE 1
+#define OPEN_FILE 1
+#define SAVE_FILE 2
 #define PATTERN_SEP ';'
 
 static int
@@ -186,8 +186,6 @@ NativeWin32FileSelection
   else
     l_Result [0] = '\0';
 
-  ZeroMemory(&ofn, sizeof(ofn));
-
   ofn.lStructSize       = sizeof (OPENFILENAME);
   ofn.hwndOwner         = active_window;
   ofn.hInstance         = NULL;
@@ -201,25 +199,25 @@ NativeWin32FileSelection
   ofn.nMaxFileTitle     = 0;
   ofn.lpstrInitialDir   = basedir;
   ofn.lpstrTitle        = title;
+
+  if (kind == OPEN_FILE)
+    ofn.Flags = OFN_HIDEREADONLY | OFN_EXPLORER |
+                OFN_FILEMUSTEXIST | style_flag;
+  else
+    /* ??? Would be nice to take advantage of READONLY and CREATEPROMPT */
+    ofn.Flags = OFN_HIDEREADONLY | OFN_EXPLORER | style_flag;
+
   ofn.nFileOffset       = 0;
   ofn.nFileExtension    = 0;
-  ofn.lpstrDefExt       = NULL;
+  ofn.lpstrDefExt       = "";
   ofn.lCustData         = (LPARAM) &position;
   ofn.lpfnHook          = (LPOFNHOOKPROC) FileSelectionHook;
   ofn.lpTemplateName    = NULL;
 
-  if (kind == OPEN_FILE)
-    {
-      ofn.Flags = OFN_HIDEREADONLY | OFN_EXPLORER |
-                  OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | style_flag;
-      ret = GetOpenFileName (&ofn);
-    }
+  if (kind == 1)
+    ret = GetSaveFileName (&ofn);
   else
-    {
-      /* ??? Would be nice to take advantage of READONLY and CREATEPROMPT */
-      ofn.Flags = OFN_HIDEREADONLY | OFN_EXPLORER | style_flag;
-      ret = GetSaveFileName (&ofn);
-    }
+    ret = GetOpenFileName (&ofn);
 
   if (!ret)
     l_Result [0] = '\0';
