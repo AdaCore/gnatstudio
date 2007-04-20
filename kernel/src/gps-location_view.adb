@@ -604,18 +604,20 @@ package body GPS.Location_View is
       Highlight_Category : Style_Access;
       Highlight          : Boolean := True)
    is
-      Args    : GNAT.Strings.String_List (1 .. 5) :=
-                  (1 => new String'(Full_Name (Filename).all),
-                   2 => new String'(Get_Name (Highlight_Category)),
-                   3 => new String'(Image (Line)),
-                   4 => new String'(Image (Integer (Column))),
-                   5 => new String'(Image (Integer (Column) + Length)));
+      Args    : GNAT.Strings.String_List (1 .. 5);
       Command : GNAT.Strings.String_Access;
 
    begin
       if Highlight_Category = null then
          return;
       end if;
+
+      Args :=
+        (1 => new String'(Full_Name (Filename).all),
+         2 => new String'(Get_Name (Highlight_Category)),
+         3 => new String'(Image (Line)),
+         4 => new String'(Image (Integer (Column))),
+         5 => new String'(Image (Integer (Column) + Length)));
 
       if Highlight then
          if Length = 0 then
@@ -898,9 +900,11 @@ package body GPS.Location_View is
          end if;
       end if;
 
+      Init (Value, Get_Virtual_File_Type);
       Set_File (Value, Absolute_Name);
 
       Set_Value (Model, Iter, Absolute_Name_Column, Value);
+      Unset (Value);
 
       Set (Model, Iter, Mark_Column, Gint (Mark));
       Set (Model, Iter, Line_Column, Gint (Line));
@@ -1334,6 +1338,8 @@ package body GPS.Location_View is
                Node := Next (Node);
             end loop;
 
+            Free (Locs);
+
             Iter := Potential_Parent;
 
          else
@@ -1543,7 +1549,7 @@ package body GPS.Location_View is
       Set_Active (Check, Explorer.Sort_By_Category);
       Append (Menu, Check);
       Widget_Callback.Object_Connect
-        (Check, Signal_Activate, Toggle_Sort'Access, Explorer);
+         (Check, "activate", Toggle_Sort'Access, Explorer);
 
       Gtk_New (Mitem);
       Append (Menu, Mitem);
