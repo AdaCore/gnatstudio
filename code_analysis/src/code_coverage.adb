@@ -49,12 +49,11 @@ package body Code_Coverage is
                                       Multiple_Lines);
       Line_Matches      : Match_Array (0 .. 3);
       Last_Line_Regexp  : constant Pattern_Matcher :=
-                             Compile ("^ +-: *(\d+):", Multiple_Lines);
-      Last_Line_Matches : Match_Array (0 .. 1);
+                             Compile ("^ +(\d+|-): *(\d+):", Multiple_Lines);
+      Last_Line_Matches : Match_Array (0 .. 2);
       Line_Num          : Natural;
       Bad_Gcov_File     : exception;
    begin
-      Lines_Count   := 0;
       Not_Cov_Count := 0;
 
       --------------------------------------
@@ -102,7 +101,7 @@ package body Code_Coverage is
 
       Lines_Count := Natural'Value
         (File_Contents
-           (Last_Line_Matches (1).First .. Last_Line_Matches (1).Last));
+           (Last_Line_Matches (2).First .. Last_Line_Matches (2).Last));
 
       -------------------------------
       -- line coverage information --
@@ -208,6 +207,11 @@ package body Code_Coverage is
                Called   => 99, -- ??? intended crazy value
                Children =>
                  Node_Info.Sloc_End.Line - Node_Info.Sloc_Start.Line);
+
+            if Node_Info.Sloc_End.Line - Node_Info.Sloc_Start.Line = 0 then
+               Subprogram_Coverage
+                 (Subp_Node.Analysis_Data.Coverage_Data.all).Children := 1;
+            end if;
 
             for J in Node_Info.Sloc_Start.Line .. Node_Info.Sloc_End.Line loop
                if File_Node.Lines (J).Analysis_Data.Coverage_Data /= null then
