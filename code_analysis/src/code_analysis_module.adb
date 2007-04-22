@@ -77,6 +77,11 @@ package body Code_Analysis_Module is
    --  Constant used to set the width of the progress bars of the analysis
    --  report
 
+   Line_Info_Cst  : constant String := "Coverage Analysis";
+   --  Name of the text info column used for the annotations
+   Line_Icons_Cst : constant String := "Coverage Icons";
+   --  Name of the pixmap column used for the annotations
+
    -----------------------
    -- Create_From_Shell --
    -----------------------
@@ -198,8 +203,8 @@ package body Code_Analysis_Module is
       if not Is_Regular_File (Cov_File) then
          GPS.Kernel.Console.Insert
            (Code_Analysis_Module_ID.Kernel,
-            "There is no loadable GCOV information" &
-            " associated with " & Base_Name (Src_File),
+            -"There is no loadable GCOV information" &
+            (-" associated with " & Base_Name (Src_File)),
             Mode => GPS.Kernel.Console.Error);
       else
          Add_Gcov_File_Info (Src_File, Cov_File, Prj_Node);
@@ -251,7 +256,7 @@ package body Code_Analysis_Module is
       end if;
 
       if not Is_Regular_File (Src_File) then
-         Set_Error_Msg (Data, "The name given for 'src' file is wrong");
+         Set_Error_Msg (Data, -"The name given for 'src' file is wrong");
          return;
       end if;
 
@@ -266,7 +271,7 @@ package body Code_Analysis_Module is
       end if;
 
       if not Is_Regular_File (Cov_File) then
-         Set_Error_Msg (Data, "The name given for 'cov' file is wrong");
+         Set_Error_Msg (Data, -"The name given for 'cov' file is wrong");
          return;
       end if;
 
@@ -400,7 +405,7 @@ package body Code_Analysis_Module is
       end if;
 
       if not Is_Regular_File (Prj_File) then
-         Set_Error_Msg (Data, "The name given for 'prj' file is wrong");
+         Set_Error_Msg (Data, -"The name given for 'prj' file is wrong");
          return;
       end if;
 
@@ -445,8 +450,8 @@ package body Code_Analysis_Module is
          else
             GPS.Kernel.Console.Insert
               (Code_Analysis_Module_ID.Kernel,
-               "There is no loadable GCOV information" &
-               " associated with " & Base_Name (Src_File),
+               -"There is no loadable GCOV information" &
+               (-" associated with " & Base_Name (Src_File)),
                Mode => GPS.Kernel.Console.Error);
          end if;
       end loop;
@@ -1034,7 +1039,7 @@ package body Code_Analysis_Module is
          Group  => Group_VCS_Explorer,
          Module => Code_Analysis_Module_ID);
       Set_Title
-        (Property.Child, -("Report of " & Property.Instance_Name.all));
+        (Property.Child, -"Report of " & Property.Instance_Name.all);
       Register_Contextual_Menu
         (Code_Analysis_Module_ID.Kernel,
          Event_On_Widget => Property.View.Tree,
@@ -1313,12 +1318,10 @@ package body Code_Analysis_Module is
    ------------------------------
 
    procedure Add_Coverage_Annotations
-     (File_Node : Code_Analysis.File_Access) is
-      Line_Info      : Line_Information_Data;
-      Line_Info_Cst  : constant String := "Coverage Analysis";
-      Line_Icons     : Line_Information_Data;
-      Line_Icons_Cst : constant String := "Coverage Icons";
-
+     (File_Node : Code_Analysis.File_Access)
+   is
+      Line_Info  : Line_Information_Data;
+      Line_Icons : Line_Information_Data;
    begin
       Line_Info  := new Line_Information_Array (File_Node.Lines'Range);
       Line_Icons := new Line_Information_Array (File_Node.Lines'Range);
@@ -1388,13 +1391,9 @@ package body Code_Analysis_Module is
      (File_Node : Code_Analysis.File_Access) is
    begin
       Remove_Line_Information_Column
-        (Code_Analysis_Module_ID.Kernel,
-         File_Node.Name,
-         "Coverage Icons");
+        (Code_Analysis_Module_ID.Kernel, File_Node.Name, Line_Icons_Cst);
       Remove_Line_Information_Column
-        (Code_Analysis_Module_ID.Kernel,
-         File_Node.Name,
-         "Coverage Analysis");
+        (Code_Analysis_Module_ID.Kernel, File_Node.Name, Line_Info_Cst);
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -2312,7 +2311,7 @@ package body Code_Analysis_Module is
         (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
    begin
       Append_Show_Analysis_Report_To_Menu (Cont_N_Inst, Submenu);
-      Gtk_New (Item, "Remove " & Property.Instance_Name.all);
+      Gtk_New (Item, -"Remove " & Property.Instance_Name.all);
       Append (Submenu, Item);
       Context_And_Instance_CB.Connect
         (Item, Gtk.Menu_Item.Signal_Activate,
@@ -2323,7 +2322,7 @@ package body Code_Analysis_Module is
       Append_Load_Data_For_All_Projects (Cont_N_Inst, Submenu);
 
       if First_Project_With_Coverage_Data (Property) /= No_Project then
-         Gtk_New (Item, "List lines not covered in all projects");
+         Gtk_New (Item, -"List lines not covered in all projects");
          Append (Submenu, Item);
          Context_And_Instance_CB.Connect
            (Item, Gtk.Menu_Item.Signal_Activate,
