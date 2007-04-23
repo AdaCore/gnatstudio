@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2006                      --
+--                      Copyright (C) 2000-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -31,10 +31,10 @@ package body Items is
 
    use type GNAT.Strings.String_Access;
 
-   Max_Item_Width : constant := 1200;
+   Max_Item_Width : Positive;
    --  Maximal width (in pixels) an item can have
 
-   Max_Item_Height : constant := 12000;
+   Max_Item_Height : Positive;
    --  Maximal height (in pixels) an item can have
 
    ---------------
@@ -388,13 +388,31 @@ package body Items is
 
    procedure Constraint_Size (Item : in out Generic_Type) is
    begin
-      if Item.Width > Max_Item_Width then
-         Item.Width := Max_Item_Width;
+      if Item.Width > Gint (Max_Item_Width) then
+         Item.Width := Gint (Max_Item_Width);
       end if;
 
-      if Item.Height > Max_Item_Height then
-         Item.Height := Max_Item_Height;
+      if Item.Height > Gint (Max_Item_Height) then
+         Item.Height := Gint (Max_Item_Height);
       end if;
    end Constraint_Size;
+
+   --------------------
+   -- Set_Max_Height --
+   --------------------
+
+   procedure Set_Max_Height (Height : Positive) is
+   begin
+      Max_Item_Height := Height;
+   end Set_Max_Height;
+
+   -------------------
+   -- Set_Max_Width --
+   -------------------
+
+   procedure Set_Max_Width  (Width : Positive) is
+   begin
+      Max_Item_Width := Width;
+   end Set_Max_Width;
 
 end Items;
