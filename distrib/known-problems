@@ -1,6 +1,6 @@
 Known Problems fixed in GPS 4.1.1
 
-- G423-010 Replace all miss matches with open buffers
+- G423-010 "Replace all" miss matches with open buffers
   Problem:    When "replace all" is done on more than one file, and if there 
               are opened files with no matches, some matches will be missed
               by the replacement process.
