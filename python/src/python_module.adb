@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2006                      --
+--                      Copyright (C) 2003-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -323,11 +323,11 @@ package body Python_Module is
    ------------------
 
    type Handler_Data (Length : Natural) is record
-      Script  : Python_Scripting;
-      Handler : Module_Command_Function;
+      Script                     : Python_Scripting;
+      Handler                    : Module_Command_Function;
       Minimum_Args, Maximum_Args : Natural;
-      Is_Method : Boolean := False;
-      Command : String (1 .. Length);
+      Is_Method                  : Boolean := False;
+      Command                    : String (1 .. Length);
    end record;
    type Handler_Data_Access is access Handler_Data;
    --  Information stores with each python function to call the right Ada
@@ -617,8 +617,7 @@ package body Python_Module is
 
    function Save_Desktop
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle)
-     return Node_Ptr
+      User   : Kernel_Handle) return Node_Ptr
    is
       N : Node_Ptr;
    begin
@@ -1154,7 +1153,7 @@ package body Python_Module is
    procedure Python_Project_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Project  : constant Project_Type := Get_Data (Data, 1);
+      Project : constant Project_Type := Get_Data (Data, 1);
    begin
       if Command = "__str__" then
          Set_Return_Value (Data, Project_Name (Project));
@@ -1199,7 +1198,7 @@ package body Python_Module is
    procedure Python_Entity_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Entity : constant Entity_Information := Get_Data (Data, 1);
+      Entity  : constant Entity_Information := Get_Data (Data, 1);
       Entity2 : Entity_Information;
    begin
       if Command = "__str__"
@@ -2634,7 +2633,7 @@ package body Python_Module is
 
    function New_Instance
      (Script : access Python_Scripting_Record;
-      Class : Class_Type) return Class_Instance
+      Class  : Class_Type) return Class_Instance
    is
       Klass : constant PyObject := Lookup_Class_Object
         (Script.GPS_Module, Get_Name (Class));
@@ -2726,8 +2725,7 @@ package body Python_Module is
 
    function Execute
      (Subprogram : access Python_Subprogram_Record;
-      Args       : Callback_Data'Class)
-      return GNAT.Strings.String_List
+      Args       : Callback_Data'Class) return GNAT.Strings.String_List
    is
       Obj : constant PyObject := Execute_Command
         (Script => Python_Module_Id.Script,
