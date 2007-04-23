@@ -11,7 +11,7 @@ Known Problems fixed in GPS 4.1.1
               if xxx then
                  abort T;
               end if;
-  Workaround: Fix the indentation by hand, by adding an extra space
+  Workaround: Fix the indentation by hand, by adding an extra space.
 
 - G416-003 Floating windows and desktops on Windows
   Problem:    On Windows, a desktop containing floating windows is not restored
