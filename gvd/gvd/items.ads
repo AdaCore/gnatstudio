@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2006                      --
+--                      Copyright (C) 2000-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -196,6 +196,10 @@ package Items is
 
    function Get_Y (Item : Generic_Type) return Glib.Gint;
    --  Return the coordinates in the pixmap where the item was displayed.
+
+   procedure Set_Max_Height (Height : Positive);
+   procedure Set_Max_Width  (Width  : Positive);
+   --  Set the maximum size of an item
 
    procedure Set_Visibility
      (Item      : access Generic_Type;
