@@ -51,11 +51,12 @@ with Display_Items;          use Display_Items;
 with GNAT.Regpat;            use GNAT.Regpat;
 with GNAT.Strings;           use GNAT.Strings;
 with GPS.Intl;               use GPS.Intl;
+with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Properties;  use GPS.Kernel.Properties;
-with GPS.Kernel;             use GPS.Kernel;
 with GPS.Main_Window;        use GPS.Main_Window;
 with GVD.Memory_View;        use GVD.Memory_View;
 with GVD.Menu;               use GVD.Menu;
@@ -134,6 +135,16 @@ package body GVD.Canvas is
          Item_Contextual_Menu       : Gtk.Menu.Gtk_Menu;
       end record;
    type GVD_Canvas is access all GVD_Canvas_Record'Class;
+
+   type Preferences_Hook_Record is new Function_No_Args with record
+      Canvas : GVD_Canvas;
+   end record;
+   type Preferences_Hook is access all Preferences_Hook_Record'Class;
+   procedure Execute
+     (Hook   : Preferences_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class);
+   --  Called when the preferences have changed, to refresh the GVD canvas
+   --  appropriately.
 
    procedure On_Attach
      (Canvas  : access GVD_Canvas_Record;
@@ -355,6 +366,19 @@ package body GVD.Canvas is
    procedure Unselect_All
      (Process : access GVD.Process.Visual_Debugger_Record'Class);
    --  Unselect all items and their components
+
+   -------------
+   -- Execute --
+   -------------
+
+   procedure Execute
+     (Hook   : Preferences_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      Preferences_Changed (Hook.Canvas);
+   end Execute;
 
    ----------
    -- Save --
@@ -1056,6 +1080,7 @@ package body GVD.Canvas is
       Kernel : access Kernel_Handle_Record'Class)
    is
       Annotation_Font : Pango_Font_Description;
+      Hook            : Preferences_Hook;
    begin
       Gtk.Scrolled_Window.Initialize (Canvas);
       Set_Policy (Canvas, Policy_Automatic, Policy_Automatic);
@@ -1078,6 +1103,13 @@ package body GVD.Canvas is
          Canvas);
       Widget_Callback.Object_Connect
         (Canvas.Canvas, Signal_Realize, On_Realize'Access, Canvas);
+
+      Hook := new Preferences_Hook_Record'
+        (Function_No_Args with Canvas => GVD_Canvas (Canvas));
+      Add_Hook
+        (Kernel, Preferences_Changed_Hook, Hook,
+         Name  => "canvas.preferences_changed",
+         Watch => GObject (Canvas));
 
       --  Initialize the canvas
 
@@ -1194,6 +1226,11 @@ package body GVD.Canvas is
       end if;
 
       --  The drawing context for the items
+
+      Items.Set_Max_Height
+        (Positive (Get_Pref (Max_Item_Height)));
+      Items.Set_Max_Width
+        (Positive (Get_Pref (Max_Item_Width)));
 
       if Canvas.Item_Context.GC /= null then
          Destroy (Canvas.Item_Context.GC);
