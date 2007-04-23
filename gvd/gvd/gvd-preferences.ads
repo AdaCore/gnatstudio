@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2006                       --
+--                     Copyright (C) 2000-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -60,6 +60,8 @@ package GVD.Preferences is
    Big_Item_Height               : Param_Spec_Int;
    Default_Detect_Aliases        : Param_Spec_Boolean;
    Show_Call_Stack               : Param_Spec_Boolean;
+   Max_Item_Width                : Param_Spec_Int;
+   Max_Item_Height               : Param_Spec_Int;
 
    -- Command Window --
    Debugger_Highlight_Color      : Param_Spec_Color;
