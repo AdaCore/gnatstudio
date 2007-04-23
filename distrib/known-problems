@@ -9,6 +9,18 @@ Known Problems fixed in GPS 4.2.0
   Workaround: Unfold all blocks and remove comparisons when using such commands
               on editors.
 
+G412-023 Big items truncated in the debugger Data window
+
+  Problem:    The content of some items in the debugger Data window migth be
+              truncated.
+              The maximum width and height of an item displayed in the Data
+              window is now customizable through the Browsers section of the
+              Preferences dialog. Upon a preference change, all items will be
+              redrawn. This allows in particular to fully display big items.
+  Workaround: In some cases you can display the truncated part in an item of
+              its own instead of having one big items in which everyting is
+              displayed directly.
+
 - G316-005 Auto-casing is confused by string quotes characters constants.
   Problem:    When a string quote character is used ('"' in Ada or C), and
               a string constant is following this character constant, then GPS
@@ -42,7 +54,7 @@ Known Problems fixed in GPS 4.2.0
   Problem:    When strings involves double quotes, the autofix process is
               sometimes unable to locate precisely where the fix has to be
               done.
-  Workaround: Manually fix the error. 
+  Workaround: Manually fix the error.
 
 - DB25-010 Symbols not loaded when initializing cross debugger
   Problem:    When using GPS in a remote debugging configuration (ie, with the
