@@ -1905,6 +1905,9 @@ package body Src_Contexts is
       Interactive  : constant Boolean := not Context.All_Occurrences;
 
       Child        : MDI_Child;
+
+      Dummy        : Boolean;
+      pragma Unreferenced (Dummy);
    begin
       --  If we already have an occurrence, and the file is still open, the
       --  selection still there,... (which means the user hasn't touched
@@ -1937,13 +1940,15 @@ package body Src_Contexts is
             return False;
          end if;
 
-         return Replace_From_File
+         Dummy := Replace_From_File
            (Context,
             Kernel,
             Replace_String,
             Search_Backward,
             Give_Focus,
             Current_File (C));
+
+         return True;
       end if;
    end Replace;
 
