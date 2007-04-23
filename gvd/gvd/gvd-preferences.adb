@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2006                       --
+--                     Copyright (C) 2000-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -238,6 +238,26 @@ package body GVD.Preferences is
          Blurb    => -"Font used for the type of the variables",
          Default  => "Sans Oblique 9"));
       Register_Property (Prefs, Param_Spec (Type_Font), General);
+
+      Max_Item_Width := Param_Spec_Int (Gnew_Int
+        (Name    => "Browsers-Item-Max-Width",
+         Minimum => 1,
+         Maximum => Gint'Last,
+         Default => 1200,
+         Blurb   => -"The maximum width of an item",
+         Nick    => -"Max item width"));
+      Register_Property
+        (Prefs, Param_Spec (Max_Item_Width), General);
+
+      Max_Item_Height := Param_Spec_Int (Gnew_Int
+        (Name    => "Browsers-Item-Max-Height",
+         Minimum => 1,
+         Maximum => Gint'Last,
+         Default => 12000,
+         Blurb   => -"The maximum height of an item",
+         Nick    => -"Max item height"));
+      Register_Property
+        (Prefs, Param_Spec (Max_Item_Height), General);
 
    end Register_Default_Preferences;
 
