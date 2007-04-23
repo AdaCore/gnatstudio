@@ -9107,6 +9107,12 @@ Indicates the font to be used for the name of the item in the data window.
 @item Item type
 Indicates font to be used to display the type of the item in the data window.
 
+@item Max item width
+The maximum width an item can have.
+
+@item Max item height
+The maximum height an item can have.
+
 @end table
 
 @item @b{External Commands}
