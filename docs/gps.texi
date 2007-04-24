@@ -7627,10 +7627,10 @@ The visual comparison, available either from the VCS menus or from the Tools
 menu, provide a way to display graphically differences between two or three
 files, or two different versions of the same file.
 
-The 2-file comparison tool is based on the GNU text command
-@command{diff}. Under Windows and Solaris, a default implementation is
-provided with GPS. Called @command{gnudiff.exe} on Windows, you
-may want to provide an alternate implementation by e.g. installing a
+The 2-file comparison tool is based on the standard text command
+@command{diff}, available on all Unix systems. Under Windows, a default
+implementation is provided with GPS, called @command{gnudiff.exe}.
+You may want to provide an alternate implementation by e.g. installing a
 set of Unix tools such as cygwin (@url{http://www.cygwin.com}).
 
 The 3-file comparison tool is based on the text command @command{diff3},
