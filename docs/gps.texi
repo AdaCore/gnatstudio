@@ -6817,7 +6817,7 @@ see @ref{Adding support for new Version Control Systems} for more information.
 When using CVS or Subversion, GPS will also need a corresponding
 @command{patch} command that usually comes with it. If you are under
 Windows, be sure to install a set of CVS and patch executables that
-are compatible. Additionally a @command{diff} command is required to
+are compatible. Additionally a GNU @command{diff} command is required to
 use Subversion.
 
 It is recommended that you first get familiar with the version control
