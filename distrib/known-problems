@@ -1,5 +1,14 @@
 Known Problems fixed in GPS 4.2.0
 
+- G420-033 Edited project with custom language has unexpected changes
+  Problem:    If you project uses one of the predefined languages other
+              than Ada and C (e.g. "Project File"), then opening the project
+              properties editor, and clicking on OK results in a change in
+              the Naming package of your project. The resulting project
+              results in a warning when loaded by GNAT
+  Workaround: Define a dummy extension for the naming scheme of these extra
+              languages, so that none of the extensions is empty 
+
 - G413-018 Python/Shell commands related to EditorView not working
   Problem:    Python/Shell commands related to the class EditorView, for
               example EditorView.goto or EditorView.cursor, might not return
