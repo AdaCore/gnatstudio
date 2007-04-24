@@ -75,6 +75,10 @@ package body Projects.Registry is
    --  Whether we have already initialized the Ada keywords list. This is only
    --  used by Is_Valid_Project_Name
 
+   Dummy_Suffix : constant String := "<no suffix defined>";
+   --  A dummy suffixes that is used for languages that have either no spec or
+   --  no implementation suffix defined.
+
    procedure Do_Nothing (Project : in out Project_Type);
    --  Do not free the project (in the hash tables), since it shared by several
    --  entries and several htables
@@ -1847,12 +1851,30 @@ package body Projects.Registry is
      (Registry            : Project_Registry;
       Language_Name       : String;
       Default_Spec_Suffix : String;
-      Default_Body_Suffix : String) is
+      Default_Body_Suffix : String)
+   is
+      Spec, Impl : String_Access;
    begin
+      --  GNAT doesn't allow empty suffixes, and will display an error when
+      --  the view is recomputed, in that case. Therefore we substitute dummy
+      --  empty suffixes instead
+
+      if Default_Spec_Suffix = "" then
+         Spec := new String'(Dummy_Suffix);
+      else
+         Spec := new String'(Default_Spec_Suffix);
+      end if;
+
+      if Default_Body_Suffix = "" then
+         Impl := new String'(Dummy_Suffix);
+      else
+         Impl := new String'(Default_Body_Suffix);
+      end if;
+
       Registry.Data.Naming_Schemes := new Naming_Scheme_Record'
         (Language            => new String'(To_Lower (Language_Name)),
-         Default_Spec_Suffix => new String'(Default_Spec_Suffix),
-         Default_Body_Suffix => new String'(Default_Body_Suffix),
+         Default_Spec_Suffix => Spec,
+         Default_Body_Suffix => Impl,
          Next                => Registry.Data.Naming_Schemes);
    end Register_Default_Language_Extension;
 

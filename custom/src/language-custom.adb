@@ -188,8 +188,8 @@ package body Language.Custom is
       function Contains_Special_Characters (S : String) return Boolean;
       --  Return whether S contains special regexp characters.
 
-      function Get_String (S : String_Ptr) return String_Ptr;
-      --  Return a deep copy of S, or (1 => ASCII.NUL) if S is null.
+      function Get_String (S : String_Ptr) return String;
+      --  Return a deep copy of S, or empty string if S is null
 
       procedure Parse_Character
         (Node          : Node_Ptr;
@@ -232,12 +232,12 @@ package body Language.Custom is
       -- Get_String --
       ----------------
 
-      function Get_String (S : String_Ptr) return String_Ptr is
+      function Get_String (S : String_Ptr) return String is
       begin
          if S = null then
-            return new String'(1 => ASCII.NUL);
+            return "";
          else
-            return new String'(S.all);
+            return S.all;
          end if;
       end Get_String;
 
@@ -353,7 +353,7 @@ package body Language.Custom is
       Lang.Next   := Custom_Root;
       Custom_Root := Custom_Language_Access (Lang);
 
-      Lang.Name := Get_String (Get_Field (Top, "Name"));
+      Lang.Name := new String'(Get_String (Get_Field (Top, "Name")));
 
       Register_Language (Handler, Language_Access (Lang), null,
                          LI => Dummy_Handler);
@@ -361,9 +361,9 @@ package body Language.Custom is
         (Get_Registry (Kernel).all,
          Language_Name       => Get_Name (Lang),
          Default_Spec_Suffix =>
-           Get_String (Get_Field (Top, "Spec_Suffix")).all,
+           Get_String (Get_Field (Top, "Spec_Suffix")),
          Default_Body_Suffix =>
-           Get_String (Get_Field (Top, "Body_Suffix")).all);
+           Get_String (Get_Field (Top, "Body_Suffix")));
 
       Project_Viewers.Register_Naming_Scheme_Editor
         (Kernel, Get_Name (Lang), Custom_Naming_Scheme_Editor'Access);
