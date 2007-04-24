@@ -101,9 +101,11 @@ package body VCS_Activities is
    -- Value --
    -----------
 
-   function Value  (Str : String) return Activity_Id is
+   function Value (Str : String) return Activity_Id is
    begin
-      if Str'Length = Activity_Id'Length then
+      if Str'Length = Activity_Id'Length
+        and then Get (Activity_Id (Str)) /= Empty_Activity
+      then
          return Activity_Id (Str);
       else
          return No_Activity;
@@ -145,7 +147,7 @@ package body VCS_Activities is
          Item         : Activity_Record;
       begin
          Item := (Create (Project),
-                  new String'(Name), No_Class_Instance, Value (Id),
+                  new String'(Name), No_Class_Instance, Activity_Id (Id),
                   null, Group_Commit,
                   Committed or Closed,
                   new String_Hash_Table.HTable, String_List.Null_List, False);
