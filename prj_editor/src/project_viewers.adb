@@ -111,6 +111,7 @@ package body Project_Viewers is
      (Creator : access XML_Switches_Record;
       Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Switches_Editors.Switches_Editor_Page;
+   function Tool_Name (Creator : access XML_Switches_Record) return String;
    procedure Destroy (Creator : in out XML_Switches_Record);
    --  See inherited subprograms
 
@@ -1705,6 +1706,25 @@ package body Project_Viewers is
             Prj_Editor_Module_ID.Switches_Pages :=
               new Pages_Array'(1 => (Switches_Page_Creator (Creator), null));
          else
+            for J in Prj_Editor_Module_ID.Switches_Pages'Range loop
+               if Tool_Name (Creator) =
+                 Tool_Name (Prj_Editor_Module_ID.Switches_Pages (J).Creator)
+               then
+                  Destroy (Prj_Editor_Module_ID.Switches_Pages (J).Creator);
+
+                  if Prj_Editor_Module_ID.Switches_Pages (J).Page /= null then
+                     Unref (Prj_Editor_Module_ID.Switches_Pages (J).Page);
+                  end if;
+
+                  Prj_Editor_Module_ID.Switches_Pages (J) :=
+                    Switches_Page_Creator_Data'
+                      (Switches_Page_Creator (Creator), null);
+
+                  return;
+
+               end if;
+            end loop;
+
             Tmp := Prj_Editor_Module_ID.Switches_Pages;
             Prj_Editor_Module_ID.Switches_Pages := new Pages_Array'
               (Tmp.all & Switches_Page_Creator_Data'
@@ -2437,6 +2457,15 @@ package body Project_Viewers is
          Default_Separator, Scrolled_Windows);
       return Page;
    end Create;
+
+   ---------------
+   -- Tool_Name --
+   ---------------
+
+   function Tool_Name (Creator : access XML_Switches_Record) return String is
+   begin
+      return Creator.Tool_Name.all;
+   end Tool_Name;
 
    -------------
    -- Destroy --
