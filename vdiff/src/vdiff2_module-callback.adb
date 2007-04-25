@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
---                             AdaCore                               --
+--                      Copyright (C) 2001-2007                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -67,14 +67,14 @@ package body Vdiff2_Module.Callback is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       File1  : constant Virtual_File :=
-        Select_File
-          (Title             => -"Select Common Ancestor",
-           Parent            => Get_Current_Window (Kernel),
-           Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
-           Kind              => Open_File,
-           File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
-           Pattern_Name      => -"All files;Ada files;C/C++ files",
-           History           => Get_History (Kernel));
+                 Select_File
+                   (Title             => -"Select Common Ancestor",
+                    Parent            => Get_Current_Window (Kernel),
+                    Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
+                    Kind              => Open_File,
+                    File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+                    Pattern_Name      => -"All files;Ada files;C/C++ files",
+                    History           => Get_History (Kernel));
       Button : Message_Dialog_Buttons;
       pragma Unreferenced (Widget, Button);
 
@@ -85,15 +85,15 @@ package body Vdiff2_Module.Callback is
 
       declare
          File2 : constant Virtual_File :=
-           Select_File
-             (Title             => -"Select First Changes",
-              Base_Directory    => VFS.Get_Current_Dir,
-              Parent            => Get_Current_Window (Kernel),
-              Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
-              Kind              => Open_File,
-              File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
-              Pattern_Name      => -"All files;Ada files;C/C++ files",
-              History           => Get_History (Kernel));
+                   Select_File
+                     (Title             => -"Select First Changes",
+                      Base_Directory    => VFS.Get_Current_Dir,
+                      Parent            => Get_Current_Window (Kernel),
+                      Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
+                      Kind              => Open_File,
+                      File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+                      Pattern_Name      => -"All files;Ada files;C/C++ files",
+                      History           => Get_History (Kernel));
          Dummy : Command_Return_Type;
          pragma Unreferenced (Dummy);
 
@@ -131,15 +131,15 @@ package body Vdiff2_Module.Callback is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       File1  : constant Virtual_File :=
-        Select_File
-          (Title             => -"Select First File",
-           Base_Directory    => VFS.Get_Current_Dir,
-           Parent            => Get_Current_Window (Kernel),
-           Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
-           Kind              => Open_File,
-           File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
-           Pattern_Name      => -"All files;Ada files;C/C++ files",
-           History           => Get_History (Kernel));
+                 Select_File
+                   (Title             => -"Select First File",
+                    Base_Directory    => VFS.Get_Current_Dir,
+                    Parent            => Get_Current_Window (Kernel),
+                    Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
+                    Kind              => Open_File,
+                    File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+                    Pattern_Name      => -"All files;Ada files;C/C++ files",
+                    History           => Get_History (Kernel));
       Button : Message_Dialog_Buttons;
       pragma Unreferenced (Widget, Button);
 
@@ -150,15 +150,15 @@ package body Vdiff2_Module.Callback is
 
       declare
          File2 : constant Virtual_File :=
-           Select_File
-             (Title             => -"Select Second File",
-              Base_Directory    => VFS.Get_Current_Dir,
-              Parent            => Get_Current_Window (Kernel),
-              Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
-              Kind              => Open_File,
-              File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
-              Pattern_Name      => -"All files;Ada files;C/C++ files",
-              History           => Get_History (Kernel));
+                   Select_File
+                     (Title             => -"Select Second File",
+                      Base_Directory    => VFS.Get_Current_Dir,
+                      Parent            => Get_Current_Window (Kernel),
+                      Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
+                      Kind              => Open_File,
+                      File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+                      Pattern_Name      => -"All files;Ada files;C/C++ files",
+                      History           => Get_History (Kernel));
 
       begin
          if File2 = VFS.No_File then
@@ -182,15 +182,15 @@ package body Vdiff2_Module.Callback is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       File1  : constant Virtual_File :=
-        Select_File
-          (Title             => -"Select Common Ancestor",
-           Base_Directory    => VFS.No_File,
-           Parent            => Get_Current_Window (Kernel),
-           Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
-           Kind              => Open_File,
-           File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
-           Pattern_Name      => -"All files;Ada files;C/C++ files",
-           History           => Get_History (Kernel));
+                 Select_File
+                   (Title             => -"Select Common Ancestor",
+                    Base_Directory    => VFS.No_File,
+                    Parent            => Get_Current_Window (Kernel),
+                    Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
+                    Kind              => Open_File,
+                    File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+                    Pattern_Name      => -"All files;Ada files;C/C++ files",
+                    History           => Get_History (Kernel));
       Button : Message_Dialog_Buttons;
       pragma Unreferenced (Widget, Button);
 
@@ -201,15 +201,15 @@ package body Vdiff2_Module.Callback is
 
       declare
          File2 : constant Virtual_File :=
-           Select_File
-             (Title             => -"Select First Changes",
-              Base_Directory    => VFS.No_File,
-              Parent            => Get_Current_Window (Kernel),
-              Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
-              Kind              => Open_File,
-              File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
-              Pattern_Name      => -"All files;Ada files;C/C++ files",
-              History           => Get_History (Kernel));
+                   Select_File
+                     (Title             => -"Select First Changes",
+                      Base_Directory    => VFS.No_File,
+                      Parent            => Get_Current_Window (Kernel),
+                      Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
+                      Kind              => Open_File,
+                      File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+                      Pattern_Name      => -"All files;Ada files;C/C++ files",
+                      History           => Get_History (Kernel));
 
       begin
          if File2 = VFS.No_File then
@@ -237,7 +237,7 @@ package body Vdiff2_Module.Callback is
             Visual_Diff (File2, File1, File3);
 
             declare
-               Merge     : constant Virtual_File :=
+               Merge : constant Virtual_File :=
                  Select_File
                    (Title             => -"Select Merge File",
                     Base_Directory    => VFS.No_File,
@@ -270,14 +270,14 @@ package body Vdiff2_Module.Callback is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       File1  : constant Virtual_File :=
-        Select_File
-          (Title             => -"Select First File",
-           Parent            => Get_Current_Window (Kernel),
-           Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
-           Kind              => Open_File,
-           File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
-           Pattern_Name      => -"All files;Ada files;C/C++ files",
-           History           => Get_History (Kernel));
+                 Select_File
+                   (Title             => -"Select First File",
+                    Parent            => Get_Current_Window (Kernel),
+                    Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
+                    Kind              => Open_File,
+                    File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+                    Pattern_Name      => -"All files;Ada files;C/C++ files",
+                    History           => Get_History (Kernel));
       Button : Message_Dialog_Buttons;
       pragma Unreferenced (Widget, Button);
 
@@ -288,15 +288,15 @@ package body Vdiff2_Module.Callback is
 
       declare
          File2 : constant Virtual_File :=
-           Select_File
-             (Title             => -"Select Second File",
-              Base_Directory    => VFS.No_File,
-              Parent            => Get_Current_Window (Kernel),
-              Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
-              Kind              => Open_File,
-              File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
-              Pattern_Name      => -"All files;Ada files;C/C++ files",
-              History           => Get_History (Kernel));
+                   Select_File
+                     (Title             => -"Select Second File",
+                      Base_Directory    => VFS.No_File,
+                      Parent            => Get_Current_Window (Kernel),
+                      Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
+                      Kind              => Open_File,
+                      File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+                      Pattern_Name      => -"All files;Ada files;C/C++ files",
+                      History           => Get_History (Kernel));
 
       begin
          if File2 = VFS.No_File then
@@ -306,7 +306,7 @@ package body Vdiff2_Module.Callback is
          Visual_Diff (File1, File2);
 
          declare
-            Merge     : constant Virtual_File :=
+            Merge : constant Virtual_File :=
               Select_File
                 (Title             => -"Select Merge File",
                  Base_Directory    => VFS.No_File,
@@ -336,8 +336,7 @@ package body Vdiff2_Module.Callback is
 
    function Diff_Hook
      (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
-      return Boolean
+      Data   : access Hooks_Data'Class) return Boolean
    is
       D       : constant Diff_Hooks_Args := Diff_Hooks_Args (Data.all);
       Success : Boolean;
