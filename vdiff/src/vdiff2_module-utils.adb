@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2006                       --
---                             AdaCore                               --
+--                      Copyright (C) 2003-2007                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -33,6 +33,7 @@ with GPS.Intl;                          use GPS.Intl;
 with GPS.Kernel.Console;                use GPS.Kernel.Console;
 with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
+with GPS.Kernel.Scripts;                use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
 with GPS.Location_View;                 use GPS.Location_View;
 with Pixmaps_Vdiff2;                    use Pixmaps_Vdiff2;
@@ -366,8 +367,7 @@ package body Vdiff2_Module.Utils is
 
    function Is_In_3Diff_List
      (Selected_File : VFS.Virtual_File;
-      List          : Diff_Head_List.List)
-      return Boolean
+      List          : Diff_Head_List.List) return Boolean
    is
       Node : constant Diff_Head_List.List_Node :=
                Get_Diff_Node (Selected_File, List);
@@ -494,10 +494,10 @@ package body Vdiff2_Module.Utils is
    is
       Cmd                 : Diff_Command_Line_Access;
       Green_Button_Pixbuf : constant Gdk_Pixbuf :=
-        Gdk_New_From_Xpm_Data (green_button_xpm);
+                              Gdk_New_From_Xpm_Data (green_button_xpm);
       Red_Button_Pixbuf   : constant Gdk_Pixbuf :=
-        Gdk_New_From_Xpm_Data (red_button_xpm);
-      Line : Natural := VRange (Pos).First - 1;
+                              Gdk_New_From_Xpm_Data (red_button_xpm);
+      Line                : Natural := VRange (Pos).First - 1;
 
    begin
       if VStyle (Pos).all /= Default_Style then
@@ -542,6 +542,7 @@ package body Vdiff2_Module.Utils is
       Modification   : String (1 .. 8);
       The_Range      : Natural;
       Line           : Integer;
+      Split_MDI      : Boolean;
 
       procedure Add_Side_Symbol
         (File       : Virtual_File;
@@ -550,6 +551,11 @@ package body Vdiff2_Module.Utils is
          Symbol     : String);
       --  Add the specified symbol to the side of lines Line_Start to Line_End
       --  in editors for File.
+
+      function Is_Ref_Editor_Opened return Boolean;
+      --  Return True if the reference editor is already opened. In this case
+      --  we do not need to split the MDI, the reference editor should be
+      --  reused where it is currently placed.
 
       ---------------------
       -- Add_Side_Symbol --
@@ -579,6 +585,17 @@ package body Vdiff2_Module.Utils is
          Unchecked_Free (Infos);
       end Add_Side_Symbol;
 
+      --------------------------
+      -- Is_Ref_Editor_Opened --
+      --------------------------
+
+      function Is_Ref_Editor_Opened return Boolean is
+         Filename : aliased String := Base_Name (Item.Files (Ref));
+         Args     : constant Argument_List := (1 => Filename'Unchecked_Access);
+      begin
+         return Execute_GPS_Shell_Command (Kernel, "MDI.get", Args) /= "null";
+      end Is_Ref_Editor_Opened;
+
    begin
       Trace (Me, "Show_Differences");
 
@@ -589,6 +606,8 @@ package body Vdiff2_Module.Utils is
       else
          Ref := 1;
       end if;
+
+      Split_MDI := not Is_Ref_Editor_Opened;
 
       if Other = 1 then
          Highlight_File := Item.Files (1);
@@ -607,8 +626,10 @@ package body Vdiff2_Module.Utils is
 
       Synchronize_Scrolling (Kernel, Item.Files (1), Item.Files (2));
 
-      Split (Get_MDI (Kernel), Orientation_Horizontal,
-             Reuse_If_Possible => True);
+      if Split_MDI then
+         Split (Get_MDI (Kernel), Orientation_Horizontal,
+                Reuse_If_Possible => True);
+      end if;
 
       --  Note: we need to open the "ref" editor first, so that the focus is
       --  given to the "real" editor. This way, opening multiple vdiffs on
