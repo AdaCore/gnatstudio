@@ -52,7 +52,7 @@ unmodified in any copy.
 * Building applications::
 * Source Navigation::
 * Search Dialog::
-* Project view (entities)::
+* Project View (entities)::
 * Back to Source Navigation::
 * Code Completion::
 * Run::
@@ -109,7 +109,6 @@ several areas:
 @item a project view under the scenario view, on the left side
 @item a working area on the right of the project view
 @item a messages window under the working area
-@item a status bar at the bottom left
 @end itemize
 
 @c --------------------------------------------------------------------
@@ -299,7 +298,8 @@ Go on the line 38 of sdc.adb. You can see that there is a null instruction for
 the case of Stack.Overflow. We are going to add some code here, using the
 code assist capabilities.
 
-Type @code{Scr} and hit @key{Ctrl+Space}. If you've never used
+Type @key{enter} to create a new line, and then @code{Scr}, and hit
+@key{Ctrl+Space}. If you've never used
 auto-completion before, GPS will pop a window asking you if you want to enable
 the auto-completion engine. Answer "yes". You will see at the bottom right of
 GPS a progress bar, showing the status of the completion database load. Note
@@ -312,9 +312,10 @@ begining with @code{Scr}. Select @code{Screen_Output}. The code will be
 automatically completed in the editor. Then add a dot in your code. The
 completion popup will be automatically triggered, and will offer you to
 complete your code with the entities contained in the @code{Screen_Output}
-package. Select @code{Msg}, and add an open parenthesis. Once again, the
-completion popup will pop, and show you the possible parameters for msg. If you
-choose the first entry of the completion list ("params of Msg"), the call will
+package. Select @code{Msg}, add a space, and then an open parenthesis. Once
+again, the completion windows will pop up, and show you the possible parameters
+for msg. If you choose the first entry of the completion list
+("params of Msg"), the call will
 be automatically completed by a list of named parameters. Complete the list by
 giving e.g. @code{"The stack is full."} for @code{S1}, @code{""} for @code{S2},
 and @code{True} for @code{End_Line}.
