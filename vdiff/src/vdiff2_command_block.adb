@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                     Copyright (C) 2001-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -19,8 +19,6 @@
 -----------------------------------------------------------------------
 
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
-
-with Gtkada.Dialogs;      use Gtkada.Dialogs;
 
 with Basic_Types;         use Basic_Types;
 with GPS.Intl;            use GPS.Intl;
@@ -142,9 +140,7 @@ package body Vdiff2_Command_Block is
      (Kernel : Kernel_Handle;
       Item   : access Diff_Head)
    is
-      Tmp    : Diff_List;
-      Button : Message_Dialog_Buttons;
-      pragma Unreferenced (Button);
+      Tmp : Diff_List;
    begin
       Unhighlight_Difference (Kernel, Item);
 
