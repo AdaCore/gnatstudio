@@ -179,6 +179,10 @@ package Project_Viewers is
       return Switches_Editors.Switches_Editor_Page is abstract;
    --  Create a new switches editor page.
 
+   function Tool_Name (Creator : access Switches_Page_Creator_Record)
+                       return String is abstract;
+   --  Retrieve the tool name corresponding to the Creator
+
    procedure Destroy (Creator : in out Switches_Page_Creator_Record);
    procedure Destroy (Creator : in out Switches_Page_Creator);
    --  Free the memory occupied by the creator object. The default is to do
