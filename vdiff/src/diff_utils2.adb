@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2007                       --
---                             AdaCore                               --
+--                      Copyright (C) 2003-2007                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -49,7 +49,7 @@ package body Diff_Utils2 is
    type Match_Vector is array (Natural range <>) of Ptr_Match_Array;
 
    type Diff3_Block is record
-      S_Chunk : String_Array (0 .. 3);
+      S_Chunk       : String_Array (0 .. 3);
       Matches_Chunk : Match_Vector (0 .. 3);
    end record;
 
@@ -82,8 +82,8 @@ package body Diff_Utils2 is
       Occurrence : out Diff_Chunk_Access;
       S          : String;
       Matches    : Match_Array) is
-   begin
 
+   begin
       Occurrence := new Diff_Chunk;
       Occurrence.Location := 2;
       Occurrence.Range1.First :=
@@ -147,10 +147,10 @@ package body Diff_Utils2 is
       Chunk      : Diff3_Block)
    is
       Block_Ordered : Diff3_Block := Chunk;
-      Rang : T_Loc := 0;
-      Loc_Str : String (1 .. 1);
-      Location : T_Loc := 0;
-      VRange : array (1 .. 3) of Diff_Range;
+      Rang          : T_Loc := 0;
+      Loc_Str       : String (1 .. 1);
+      Location      : T_Loc := 0;
+      VRange        : array (1 .. 3) of Diff_Range;
 
    begin
       Occurrence := new Diff_Chunk;
@@ -225,8 +225,7 @@ package body Diff_Utils2 is
 
    function Diff
      (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Ref_File, New_File : VFS.Virtual_File)
-      return Diff_List
+      Ref_File, New_File : VFS.Virtual_File) return Diff_List
    is
       Diff_Command : constant String := Get_Pref (Diff_Cmd);
    begin
@@ -242,10 +241,9 @@ package body Diff_Utils2 is
       Diff_Command       : String;
       Ref_File, New_File : VFS.Virtual_File) return Diff_List
    is
+      Pattern    : constant Pattern_Matcher := Compile
+        ("^([0-9]+)(,[0-9]+)?([acd])([0-9]+)(,[0-9]+)?.*\n", Multiple_Lines);
       Descriptor : TTY_Process_Descriptor;
-      Pattern    : constant Pattern_Matcher :=
-        Compile ("^([0-9]+)(,[0-9]+)?([acd])([0-9]+)(,[0-9]+)?.*\n",
-                 Multiple_Lines);
       Matches    : Match_Array (0 .. 5);
       Args       : Argument_List (1 .. 2);
       Result     : Expect_Match;
@@ -314,15 +312,15 @@ package body Diff_Utils2 is
       Diff_File : VFS.Virtual_File;
       Revert    : Boolean := False) return Diff_List
    is
-      Args          : Argument_List (1 .. 6);
       Patch_Command : constant String := Get_Pref (Patch_Cmd);
+      Pattern_Any   : constant Pattern_Matcher := Compile (".+");
+      Pattern       : constant Pattern_Matcher := Compile
+        ("^([0-9]+)(,[0-9]+)?([acd])([0-9]+)(,[0-9]+)?");
+      Args          : Argument_List (1 .. 6);
       Descriptor    : TTY_Process_Descriptor;
       Ret           : Diff_List;
       Occurrence    : Diff_Chunk_Access;
       Cmd           : String_Access;
-      Pattern_Any   : constant Pattern_Matcher := Compile (".+");
-      Pattern       : constant Pattern_Matcher :=
-        Compile ("^([0-9]+)(,[0-9]+)?([acd])([0-9]+)(,[0-9]+)?");
       Matches       : Match_Array (0 .. 5);
       Result        : Expect_Match;
       File          : File_Type;
@@ -410,8 +408,9 @@ package body Diff_Utils2 is
    -- Diff3 --
    -----------
 
-   procedure Diff3 (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-                    Item   : in out Diff_Head) is
+   procedure Diff3
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Item   : in out Diff_Head) is
    begin
       Free (Item.List);
 
@@ -434,7 +433,7 @@ package body Diff_Utils2 is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       My_Change, Old_File, Your_Change : VFS.Virtual_File) return Diff_List
    is
-      Diff3_Command  : constant String := Get_Pref (Diff3_Cmd);
+      Diff3_Command : constant String := Get_Pref (Diff3_Cmd);
    begin
       return Diff3 (Kernel, Diff3_Command, My_Change, Old_File, Your_Change);
    end Diff3;
@@ -446,8 +445,7 @@ package body Diff_Utils2 is
    function Diff3
      (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
       Diff3_Command : String;
-      My_Change, Old_File, Your_Change : VFS.Virtual_File)
-      return Diff_List
+      My_Change, Old_File, Your_Change : VFS.Virtual_File) return Diff_List
    is
       Pattern_Bloc   : constant Pattern_Matcher :=
                          Compile ("^====([1-3])?$", Multiple_Lines);
@@ -539,7 +537,7 @@ package body Diff_Utils2 is
    --------------
 
    function Simplify
-     (Diff : Diff_List;
+     (Diff     : Diff_List;
       Ref_File : T_Loc) return Diff_List
    is
       Ref        : constant T_Loc := Ref_File;
@@ -626,7 +624,7 @@ package body Diff_Utils2 is
    ---------------------
 
    function Horizontal_Diff
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+     (Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
       Line1, Line2 : String) return Diff_List
    is
       V_Fich1,
@@ -716,11 +714,11 @@ package body Diff_Utils2 is
    ----------
 
    procedure Free (Vdiff : in out Diff_Head_Access) is
-      procedure Free is
+      procedure Unchecked_Free is
         new Ada.Unchecked_Deallocation (Diff_Head, Diff_Head_Access);
    begin
       Free (Vdiff.all);
-      Free (Vdiff);
+      Unchecked_Free (Vdiff);
    end Free;
 
    ----------
@@ -728,11 +726,11 @@ package body Diff_Utils2 is
    ----------
 
    procedure Free (Vect : in out Diff3_Block) is
-      procedure Internal_Free is new
+      procedure Unchecked_Free is new
         Ada.Unchecked_Deallocation (Match_Array, Ptr_Match_Array);
    begin
       for J in Vect.Matches_Chunk'Range loop
-         Internal_Free (Vect.Matches_Chunk (J));
+         Unchecked_Free (Vect.Matches_Chunk (J));
       end loop;
 
       for J in Vect.S_Chunk'Range loop
@@ -745,12 +743,12 @@ package body Diff_Utils2 is
    ----------
 
    procedure Free (Vdiff_List : in out Diff_Head_List_Access) is
-      procedure Free is
+      procedure Unchecked_Free is
         new Ada.Unchecked_Deallocation
           (Diff_Head_List.List, Diff_Head_List_Access);
    begin
       Free (Vdiff_List.all);
-      Free (Vdiff_List);
+      Unchecked_Free (Vdiff_List);
    end Free;
 
    ----------
