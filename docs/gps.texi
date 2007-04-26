@@ -15988,16 +15988,6 @@ Contains the user and e-mail to use in the global ChangeLog
 files. Note that the common usage is to have two spaces between the
 name and the e-mail. Ex: "John Does  <john.doe@@home.com>"
 
-   @item GDK_USE_XFT
-@cindex GDK_USE_XFT
-Only relevant to Linux and Solaris (8 and above) systems.
-If this variable is set to 1, then the fonts used in most parts of gps will be
-anti-aliased fonts.
-
-This option is enabled by default when running GPS locally (@code{DISPLAY} set
-to @code{":0.0"}) and disabled otherwise. Setting this variable explicitely
-overrides the default behavior.
-
    @item GPS_STARTUP_PATH
 @cindex GPS_STARTUP_PATH
 Contains the value of the @code{PATH} environment variable just before GPS
