@@ -53,6 +53,7 @@ package body Code_Coverage is
       Line_Num          : Natural;
       Bad_Gcov_File     : exception;
    begin
+      Lines_Count   := 0;
       Not_Cov_Count := 0;
 
       --------------------------------------
@@ -98,15 +99,13 @@ package body Code_Coverage is
          end if;
       end loop;
 
-      Lines_Count := Natural'Value
-        (File_Contents
-           (Last_Line_Matches (2).First .. Last_Line_Matches (2).Last));
-
       -------------------------------
       -- line coverage information --
       -------------------------------
 
-      File_Node.Lines := new Line_Array (1 .. Lines_Count);
+      File_Node.Lines := new Line_Array (1 .. Natural'Value
+        (File_Contents
+           (Last_Line_Matches (2).First .. Last_Line_Matches (2).Last)));
       --  Create a Line_Array with exactly the number of elements corresponding
       --  to the number of code lines in the original source code file.
 
@@ -118,6 +117,7 @@ package body Code_Coverage is
 
          exit when Line_Matches (0) = No_Match;
 
+         Lines_Count := Lines_Count + 1;
          Line_Num := Natural'Value
            (File_Contents (Line_Matches (2).First .. Line_Matches (2).Last));
          File_Node.Lines (Line_Num).Number := Line_Num;
@@ -185,43 +185,65 @@ package body Code_Coverage is
      (Data_File : Structured_File_Access;
       File_Node : Code_Analysis.File_Access)
    is
-      Tree      : constant Construct_Tree := Get_Full_Tree (Data_File);
-      Node      : Construct_Tree_Iterator := First (Tree);
-      Node_Info : Simple_Construct_Information;
-      Subp_Node : Subprogram_Access;
-      Subp_Name : String_Access;
+      Tree       : constant Construct_Tree := Get_Full_Tree (Data_File);
+      Node       : Construct_Tree_Iterator := First (Tree);
+      Node_Info  : Simple_Construct_Information;
+      Subp_Node  : Subprogram_Access;
+      Subp_Name  : String_Access;
+      Subp_Cov   : access Subprogram_Coverage := null;
+      File_Cov   : constant access Node_Coverage := Node_Coverage
+        (File_Node.Analysis_Data.Coverage_Data.all)'Access;
+      Line_Count : Natural := 0;
    begin
       loop
          Node_Info := Get_Construct (Node);
 
          if Node_Info.Category in Subprogram_Category then
-            Subp_Name := new String'(Node_Info.Name.all);
-            Subp_Node := Get_Or_Create (File_Node, Subp_Name);
-            Subp_Node.Line   := Node_Info.Sloc_Entity.Line;
-            Subp_Node.Column := Node_Info.Sloc_Entity.Column;
-            Subp_Node.Start  := Node_Info.Sloc_Start.Line;
-            Subp_Node.Stop   := Node_Info.Sloc_End.Line;
-            Subp_Node.Analysis_Data.Coverage_Data := new Subprogram_Coverage'
-              (Coverage => 0,
-               Called   => 99, -- ??? intended crazy value
-               Children =>
-                 Node_Info.Sloc_End.Line - Node_Info.Sloc_Start.Line + 1);
-
             for J in Node_Info.Sloc_Start.Line .. Node_Info.Sloc_End.Line loop
                if File_Node.Lines (J).Analysis_Data.Coverage_Data /= null then
+                  if Subp_Cov = null then
+                     Subp_Name := new String'(Node_Info.Name.all);
+                     Subp_Node := Get_Or_Create (File_Node, Subp_Name);
+                     Subp_Node.Line   := Node_Info.Sloc_Entity.Line;
+                     Subp_Node.Column := Node_Info.Sloc_Entity.Column;
+                     Subp_Node.Start  := Node_Info.Sloc_Start.Line;
+                     Subp_Node.Stop   := Node_Info.Sloc_End.Line;
+                     Subp_Node.Analysis_Data.Coverage_Data := new
+                       Subprogram_Coverage'
+                         (Coverage => 0,
+                          Called   => 99, -- ??? intended crazy value
+                          Children => 1);
+                     Subp_Cov := Subprogram_Coverage
+                       (Subp_Node.Analysis_Data.Coverage_Data.all)'Access;
+                  else
+                     Subp_Cov.Children := Subp_Cov.Children + 1;
+                  end if;
+
                   if File_Node.Lines (J).Analysis_Data.Coverage_Data.Coverage =
                     0 then
-                     Subp_Node.Analysis_Data.Coverage_Data.Coverage :=
-                       Subp_Node.Analysis_Data.Coverage_Data.Coverage + 1;
+                     Subp_Cov.Coverage := Subp_Cov.Coverage + 1;
                   end if;
                end if;
             end loop;
+
+            if Subp_Cov /= null then
+               Line_Count := Line_Count + Subp_Cov.Children;
+               Subp_Cov := null;
+            end if;
          end if;
 
          Node := Next (Tree, Node);
 
          exit when Node = Null_Construct_Tree_Iterator;
       end loop;
+
+      if Line_Count > File_Cov.Children then
+         --  If we were processing an Ada body file with nested subprograms,
+         --  take for file line count the sum of the line counts of each
+         --  subprogram, in order to keep the proportions of the correct
+         --  coverage percentage
+         File_Cov.Children := Line_Count;
+      end if;
    end Add_Subprogram_Info;
 
    ------------------------------
