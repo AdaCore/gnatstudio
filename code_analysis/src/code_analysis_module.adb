@@ -213,8 +213,7 @@ package body Code_Analysis_Module is
 
       --  Build/Refresh Report of Analysis
       Show_Analysis_Report
-        (Context_And_Instance'(Cont_N_Inst.Context, Instance),
-         Property, Raise_Report => False);
+        (Context_And_Instance'(Cont_N_Inst.Context, Instance), Property);
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -365,8 +364,7 @@ package body Code_Analysis_Module is
       Add_Gcov_Project_Info (Prj_Node);
       --  Build/Refresh Report of Analysis
       Show_Analysis_Report
-        (Context_And_Instance'(Cont_N_Inst.Context, Instance),
-         Property, Raise_Report => False);
+        (Context_And_Instance'(Cont_N_Inst.Context, Instance), Property);
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -498,8 +496,7 @@ package body Code_Analysis_Module is
 
       --  Build/Refresh Report of Analysis
       Show_Analysis_Report
-        (Context_And_Instance'(No_Context, Instance),
-         Property, Raise_Report => False);
+        (Context_And_Instance'(No_Context, Instance), Property);
    exception
       when E : others =>
          Trace (Exception_Handle,
