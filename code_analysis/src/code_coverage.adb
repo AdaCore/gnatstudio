@@ -211,7 +211,8 @@ package body Code_Coverage is
                      Subp_Node.Analysis_Data.Coverage_Data := new
                        Subprogram_Coverage'
                          (Coverage => 0,
-                          Called   => 99, -- ??? intended crazy value
+                          Called   => File_Node.Lines
+                            (J).Analysis_Data.Coverage_Data.Coverage,
                           Children => 1);
                      Subp_Cov := Subprogram_Coverage
                        (Subp_Node.Analysis_Data.Coverage_Data.all)'Access;
