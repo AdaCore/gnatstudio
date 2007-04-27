@@ -1,3 +1,12 @@
+Known Problems fixed in GPS 4.1.2
+
+- G426-018 Cannot open firefox to display documentation
+  Problem:    On UNIX-like environments where firefox is the default browser,
+              if it not already launched at the time the user wants to display
+              some documentation, GPS cannot open the browser and issue an
+              "Error: No running window found" message. 
+  Workaround: Launch firefox and try again to open the documentation.
+
 Known Problems fixed in GPS 4.1.1
 
 - G423-010 "Replace all" miss matches with open buffers
