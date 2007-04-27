@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2007                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -33,7 +33,7 @@ is
    type Browser_List is array (Natural range <>) of Cst_String_Access;
 
    Browsers : constant Browser_List :=
-     (new String'("firefox -remote openURL(%u)"),
+     (new String'("firefox -new-tab %u"),
       new String'("mozilla"),
       new String'("galeon"),
       new String'("netscape"),
