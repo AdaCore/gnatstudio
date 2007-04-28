@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 4.2.0
 
+- G427-022 Removing files from an activity makes GPS unstable
+  Problem:    When removing files from an activity there is a memory
+              corruption. This can make GPS unstable and it may exit.
+  Workaround: Create a new activity instead of removing files from the
+              current activity. Note that even if GPS crashes the
+              activity information is properly saved, so when GPS is
+              restarted no data are lost.
+
 - G420-033 Edited project with custom language has unexpected changes
   Problem:    If you project uses one of the predefined languages other
               than Ada and C (e.g. "Project File"), then opening the project
@@ -7,7 +15,7 @@ Known Problems fixed in GPS 4.2.0
               the Naming package of your project. The resulting project
               results in a warning when loaded by GNAT
   Workaround: Define a dummy extension for the naming scheme of these extra
-              languages, so that none of the extensions is empty 
+              languages, so that none of the extensions is empty
 
 - G413-018 Python/Shell commands related to EditorView not working
   Problem:    Python/Shell commands related to the class EditorView, for
@@ -44,10 +52,10 @@ G412-023 Big items truncated in the debugger Data window
   Workaround: The extraneous dialogs can be closed safely.
 
 - G225-003 Activity indicator show "busy" state when using some plug-ins
-  Problem:    When using some plug-ins which launch a process in the background,
-              such as the spell checking "ispell" plug-in, the GPS activity
-              indicator in the top-right corner show a busy state while the
-              process is running.
+  Problem:    When using some plug-ins which launch a process in the
+              background, such as the spell checking "ispell" plug-in,
+              the GPS activity indicator in the top-right corner show
+              a busy state while the process is running.
   Workaround: Refer to the Task Manager to determine activity status of GPS.
 
 - G119-006 Extra line reformatted with the "align" plug-in
@@ -72,4 +80,3 @@ G412-023 Big items truncated in the debugger Data window
               debugger does not load the debug symbols.
   Workaround: Load the symbols manually using the appropriate "file", "target"
               and "load" commands in the debugger console.
-
