@@ -44,10 +44,13 @@ package body VCS_Activities is
 
    Activities_Filename : constant String := "activities.xml";
 
-   Item_Tag            : constant String_Access := new String'("@TAG@");
+   Item_Tag            : constant String := "@TAG@";
    --  Used as the data for file keys
 
-   package Key_Hash is new String_Hash (String_Access, Free, null);
+   procedure Unchecked_Free is
+     new Ada.Unchecked_Deallocation (String, String_Access);
+
+   package Key_Hash is new String_Hash (String_Access, Unchecked_Free, null);
    use Key_Hash;
    type Key_Hash_Access is access String_Hash_Table.HTable;
 
@@ -158,7 +161,7 @@ package body VCS_Activities is
                   File : constant Virtual_File := Create (Child.Value.all);
                begin
                   String_Hash_Table.Set
-                    (Item.Keys.all, File_Key (File), Item_Tag);
+                    (Item.Keys.all, File_Key (File), new String'(Item_Tag));
                   String_List.Append (Item.Files, Child.Value.all);
                   --  Note that here we can't use Add_File. At this point the
                   --  project is not yet loaded and we can't compute the VCS
@@ -614,7 +617,8 @@ package body VCS_Activities is
                  and then Atomic_Commands_Supported (VCS);
             end if;
 
-            String_Hash_Table.Set (Item.Keys.all, File_Key (File), Item_Tag);
+            String_Hash_Table.Set
+              (Item.Keys.all, File_Key (File), new String'(Item_Tag));
             String_List.Append (Item.Files, Full_Name (File, False).all);
             Item.Sorted := False;
 
