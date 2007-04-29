@@ -41,15 +41,20 @@ package body C_Analyzer is
       Tok_Minus,                 -- -
       Tok_Plus,                  -- +
 
+      Tok_Minus_Minus,           -- --
+      Tok_Plus_Plus,             -- ++
+
       Tok_Star,                  -- *
       Tok_Star_Assign,           -- *=
       Tok_Slash,                 -- /
       Tok_Slash_Assign,          -- /=
 
       Tok_Dot,                   -- .
+      Tok_Deref_Select,          -- ->
       Tok_Semicolon,             -- ;
       Tok_Colon,                 -- :
 
+      Tok_Question_Mark,         -- ?
       Tok_Left_Paren,            -- (
       Tok_Right_Paren,           -- )
       Tok_Left_Bracket,          -- {
@@ -70,7 +75,6 @@ package body C_Analyzer is
       Tok_Plus_Assign,           -- +=
       Tok_Minus_Assign,          -- -=
       Tok_Tilde,                 -- ~
-      Tok_Tilde_Assign,          -- ~=
       Tok_Percent,               -- %
       Tok_Percent_Assign,        -- %=
       Tok_Xor,                   -- ^
@@ -82,14 +86,16 @@ package body C_Analyzer is
       Tok_Logical_Or,            -- ||
       Tok_Or_Assign,             -- |=
 
-      --  ??? mising: << >> <<= >>=
-
-      Tok_Arrow,                 -- =>
+      Tok_Righ_Shift,            -- >>
+      Tok_Righ_Shift_Assign,     -- >>=
+      Tok_Left_Shift,            -- <<
+      Tok_Left_Shift_Assign,     -- <<=
 
       --  Reserved words for C:
 
       --  Type specifiers:
       Tok_Char,
+      Tok_Double,
       Tok_Float,
       Tok_Int,
       Tok_Long,
@@ -97,9 +103,11 @@ package body C_Analyzer is
       Tok_Signed,
       Tok_Unsigned,
       Tok_Void,
+      Tok_Typedef,
 
       --  Storage-class specifiers:
       Tok_Auto,
+      Tok_Const,
       Tok_Extern,
       Tok_Static,
       Tok_Register,
@@ -109,11 +117,9 @@ package body C_Analyzer is
       --  Construct keywords:
       Tok_Break,
       Tok_Case,
-      Tok_Const,
       Tok_Continue,
       Tok_Default,
       Tok_Do,
-      Tok_Double,
       Tok_Else,
       Tok_Enum,
       Tok_For,
@@ -124,7 +130,6 @@ package body C_Analyzer is
       Tok_Sizeof,
       Tok_Struct,
       Tok_Switch,
-      Tok_Typedef,
       Tok_Union,
       Tok_While,
 
@@ -1388,8 +1393,6 @@ package body C_Analyzer is
                   case Buffer (Index + 1) is
                      when '=' =>
                         Token := Tok_Equal;
-                     when '>' =>
-                        Token := Tok_Arrow;
                      when others =>
                         Token := Tok_Assign;
                   end case;
@@ -1399,6 +1402,9 @@ package body C_Analyzer is
 
             when ':' =>
                Token := Tok_Colon;
+
+            when '?' =>
+               Token := Tok_Question_Mark;
 
             when ',' =>
                Token := Tok_Comma;
@@ -1413,15 +1419,31 @@ package body C_Analyzer is
                Token := Tok_Right_Square_Bracket;
 
             when '-' =>
-               if Index < Buffer'Last and then Buffer (Index + 1) = '=' then
-                  Token := Tok_Minus_Assign;
+               if Index < Buffer'Last then
+                  case Buffer (Index + 1) is
+                     when '=' =>
+                        Token := Tok_Minus_Assign;
+                     when '>' =>
+                        Token := Tok_Deref_Select;
+                     when '-' =>
+                        Token := Tok_Minus_Minus;
+                     when others =>
+                        Token := Tok_Minus;
+                  end case;
                else
                   Token := Tok_Minus;
                end if;
 
             when '+' =>
-               if Index < Buffer'Last and then Buffer (Index + 1) = '=' then
-                  Token := Tok_Plus_Assign;
+               if Index < Buffer'Last then
+                  case Buffer (Index + 1) is
+                     when '=' =>
+                        Token := Tok_Plus_Assign;
+                     when '+' =>
+                        Token := Tok_Plus_Plus;
+                     when others =>
+                        Token := Tok_Plus;
+                  end case;
                else
                   Token := Tok_Plus;
                end if;
@@ -1434,25 +1456,49 @@ package body C_Analyzer is
                end if;
 
             when '>' =>
-               if Index < Buffer'Last and then Buffer (Index + 1) = '=' then
-                  Token := Tok_Greater_Equal;
+               if Index < Buffer'Last then
+                  case Buffer (Index + 1) is
+                     when '=' =>
+                        Token := Tok_Greater_Equal;
+                     when '>' =>
+                        if (Index + 1) < Buffer'Last
+                          and then Buffer (Index + 2) = '='
+                        then
+                           Token := Tok_Righ_Shift_Assign;
+                        else
+                           Token := Tok_Righ_Shift;
+                        end if;
+
+                     when others =>
+                        Token := Tok_Greater;
+                  end case;
                else
                   Token := Tok_Greater;
                end if;
 
             when '<' =>
-               if Index < Buffer'Last and then Buffer (Index + 1) = '=' then
-                  Token := Tok_Less_Equal;
+               if Index < Buffer'Last then
+                  case Buffer (Index + 1) is
+                     when '=' =>
+                        Token := Tok_Less_Equal;
+                     when '<' =>
+                        if (Index + 1) > Buffer'Last
+                          and then Buffer (Index + 2) = '='
+                        then
+                           Token := Tok_Left_Shift_Assign;
+                        else
+                           Token := Tok_Left_Shift;
+                        end if;
+
+                     when others =>
+                        Token := Tok_Less;
+                  end case;
                else
                   Token := Tok_Less;
                end if;
 
             when '~' =>
-               if Index < Buffer'Last and then Buffer (Index + 1) = '=' then
-                  Token := Tok_Tilde_Assign;
-               else
-                  Token := Tok_Tilde;
-               end if;
+               Token := Tok_Tilde;
 
             when '!' =>
                if Index < Buffer'Last and then Buffer (Index + 1) = '=' then
