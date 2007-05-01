@@ -309,7 +309,7 @@ package body Python is
    procedure PyDict_SetItemString
      (Dict : PyDictObject; Key : String; Obj : PyObject)
    is
-      S      : Chars_Ptr := New_String (Key);
+      S      : chars_ptr := New_String (Key);
       Result : constant Integer := PyDict_SetItemString (Dict, S, Obj);
       pragma Unreferenced (Result);
    begin
@@ -323,7 +323,7 @@ package body Python is
    function PyModule_AddObject
      (Module : PyObject; Name : String;  Object : PyObject) return Integer
    is
-      S      : Chars_Ptr := New_String (Name);
+      S      : chars_ptr := New_String (Name);
       Result : Integer;
    begin
       Result := PyModule_AddObject (Module, S, Object);
@@ -338,7 +338,7 @@ package body Python is
    function PyDict_GetItemString
      (Dict : PyDictObject; Key : String) return PyObject
    is
-      S      : Chars_Ptr := New_String (Key);
+      S      : chars_ptr := New_String (Key);
       Result : constant PyObject := PyDict_GetItemString (Dict, S);
    begin
       Free (S);
