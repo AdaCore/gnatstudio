@@ -1949,6 +1949,7 @@ package body Language.Tree.Ada is
             Biggest_Parameter_Name       : Integer := 0;
             Biggest_Decoration_Length    : Integer := 0;
             Biggest_Affected_Type_Length : Integer := 0;
+            Current_Affected_Type_Length : Integer := 0;
          begin
             while Get_Parent_Scope (Tree, Sub_Iter) = Node loop
                if Get_Construct (Sub_Iter).Category = Cat_Parameter then
@@ -1979,18 +1980,28 @@ package body Language.Tree.Ada is
                         Type_End,
                         Success);
 
+                     Current_Affected_Type_Length :=
+                       Type_End.Index - Type_Start.Index + 1;
+
+                     if Get_Construct (Sub_Iter).Attributes
+                       (Ada_Class_Attribute)
+                     then
+                        Current_Affected_Type_Length :=
+                          Current_Affected_Type_Length + 6;
+                        --  Addition of the 'Class attribute to the label
+                     end if;
+
                      if Success
-                       and then Type_End.Index - Type_Start.Index + 1
+                       and then Current_Affected_Type_Length
                          > Biggest_Affected_Type_Length
                      then
                         Biggest_Affected_Type_Length :=
-                          Type_End.Index - Type_Start.Index + 1;
+                          Current_Affected_Type_Length;
                      end if;
                   end if;
                end if;
 
                Sub_Iter := Next (Tree, Sub_Iter, Jump_Over);
-               --  Compute biggest attributes size as well...
             end loop;
 
             Sub_Iter := Next (Tree, Node, Jump_Into);
@@ -2026,6 +2037,9 @@ package body Language.Tree.Ada is
                      Unbounded.Append (Result, " ");
                   end if;
 
+                  Current_Affected_Type_Length :=
+                    Type_End.Index - Type_Start.Index + 1;
+
                   Unbounded.Append
                     (Result,
                      Get_Construct (Sub_Iter).Name.all);
@@ -2056,6 +2070,14 @@ package body Language.Tree.Ada is
 
                      Unbounded.Append
                        (Result, Buffer (Type_Start.Index .. Type_End.Index));
+
+                     if Get_Construct (Sub_Iter).Attributes
+                       (Ada_Class_Attribute)
+                     then
+                        Unbounded.Append (Result, "'Class");
+                        Current_Affected_Type_Length :=
+                          Current_Affected_Type_Length + 6;
+                     end if;
                   else
                      Unbounded.Append (Result, " : ???");
                   end if;
@@ -2063,7 +2085,7 @@ package body Language.Tree.Ada is
                   if Get_Construct (Sub_Iter).Attributes
                     (Ada_Assign_Attribute)
                   then
-                     for J in Type_End.Index - Type_Start.Index + 1 + 1
+                     for J in Current_Affected_Type_Length + 1
                        .. Biggest_Affected_Type_Length
                      loop
                         Unbounded.Append (Result, " ");
@@ -2099,6 +2121,10 @@ package body Language.Tree.Ada is
                & ASCII.LF & " <b>"
                & Attribute_Decoration (Get_Construct (Node), False)
                & "</b>" & Buffer (Type_Start.Index .. Type_End.Index));
+
+            if Get_Construct (Node).Attributes (Ada_Class_Attribute) then
+               Unbounded.Append (Result, "'Class");
+            end if;
          end if;
       elsif Get_Construct (Node).Category in Data_Category then
          declare
@@ -2123,6 +2149,10 @@ package body Language.Tree.Ada is
                   & Attribute_Decoration (Get_Construct (Node), False)
                   & "</b>"
                   & Buffer (Var_Start.Index .. Var_End.Index));
+
+               if Get_Construct (Node).Attributes (Ada_Class_Attribute) then
+                  Unbounded.Append (Result, "'Class");
+               end if;
             end if;
          end;
       end if;
