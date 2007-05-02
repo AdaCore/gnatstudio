@@ -38,6 +38,12 @@ G412-023 Big items truncated in the debugger Data window
               its own instead of having one big items in which everyting is
               displayed directly.
 
+- G323-009 Documentation give wrong return type
+  Problem:    When the parameter initialization of a function contains the
+              reserved words "null" or "not", these words will go into the
+              returned type of the documentation.
+  Workaround  Ignore such documentation.
+
 - G316-005 Auto-casing is confused by string quotes characters constants.
   Problem:    When a string quote character is used ('"' in Ada or C), and
               a string constant is following this character constant, then GPS
