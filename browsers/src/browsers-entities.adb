@@ -55,6 +55,7 @@ with Basic_Types;
 with Browsers.Canvas;           use Browsers.Canvas;
 with Doc_Utils;                 use Doc_Utils;
 with Entities.Queries;          use Entities, Entities.Queries;
+with Entities.Tooltips;         use Entities.Tooltips;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel;                use GPS.Kernel;
@@ -520,8 +521,10 @@ package body Browsers.Entities is
          Handler => Show_Entity_Command_Handler'Access);
       Register_Command
         (Kernel, "documentation",
-         Class   => Get_Entity_Class (Kernel),
-         Handler => Show_Entity_Command_Handler'Access);
+         Class        => Get_Entity_Class (Kernel),
+         Handler      => Show_Entity_Command_Handler'Access,
+         Minimum_Args => 0,
+         Maximum_Args => 1);
       Register_Command
         (Kernel, "return_type",
          Class   => Get_Entity_Class (Kernel),
@@ -588,9 +591,20 @@ package body Browsers.Entities is
             end;
 
          elsif Command = "documentation" then
-            Set_Return_Value
-              (Data,
-               Get_Documentation (Get_Language_Handler (Kernel), Entity));
+            declare
+               Extended : constant Boolean := Nth_Arg (Data, 2, False);
+            begin
+               if not Extended then
+                  Set_Return_Value
+                    (Data,
+                     Get_Documentation
+                       (Get_Language_Handler (Kernel), Entity));
+               else
+                  Set_Return_Value
+                    (Data,
+                     Get_Documentation (Kernel, Entity));
+               end if;
+            end;
 
          elsif Command = "parameters" then
             declare
