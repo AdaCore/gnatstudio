@@ -3208,12 +3208,14 @@ package body Ada_Analyzer is
                         then
                            if Buffer (P) = ':'
                              and then Top_Token.Token = Tok_Colon
-                             and then Top_Token.Is_Parameter
                            then
+                              Right_Assignment := True;
                               Top_Token.Attributes
                                 (Ada_Assign_Attribute) := True;
-                              Pop (Tokens);
-                              Right_Assignment := True;
+
+                              if Top_Token.Is_Parameter then
+                                 Pop (Tokens);
+                              end if;
                            end if;
 
                            Handle_Two_Chars ('=');
@@ -3639,6 +3641,12 @@ package body Ada_Analyzer is
             end if;
 
             Casing := Ident_Casing;
+
+            if Prev_Token = Tok_Apostrophe
+              and then To_Upper (Str (1 .. Str_Len)) = "CLASS"
+            then
+               Top_Token.Attributes (Ada_Class_Attribute) := True;
+            end if;
 
             if Callback /= null then
                exit Main_Loop when Callback
