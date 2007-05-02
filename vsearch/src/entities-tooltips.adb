@@ -46,12 +46,6 @@ package body Entities.Tooltips is
    function Get_Instance (Entity_Ref : Entity_Reference) return String;
    --  Return the text describing from what instance the entity is
 
-   function Get_Documentation
-     (Kernel : access Kernel_Handle_Record'Class;
-      Entity : Entity_Information) return String;
-   --  Return the documentation for the entity (prefixed by a LF char if not
-   --  null)
-
    function Get_Header (Entity : Entity_Information) return String;
    --  Return a string in pango markup format to represent the header of a
    --  tooltip.

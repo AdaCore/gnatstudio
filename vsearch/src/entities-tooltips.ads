@@ -37,4 +37,10 @@ package Entities.Tooltips is
       Status : Find_Decl_Or_Body_Query_Status) return Gdk_Pixmap;
    --  Return a tooltip representing Entity.
 
+   function Get_Documentation
+     (Kernel : access Kernel_Handle_Record'Class;
+      Entity : Entity_Information) return String;
+   --  Return the documentation for the entity (prefixed by a LF char if not
+   --  null)
+
 end Entities.Tooltips;
