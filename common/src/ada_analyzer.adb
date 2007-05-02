@@ -723,6 +723,9 @@ package body Ada_Analyzer is
       --  This variable is true if the identifiers picked are parameters, false
       --  otherwise.
 
+      Right_Assignment    : Boolean := False;
+      --  When this is true, we are in a left assignment section.
+
       function Handle_Reserved_Word (Reserved : Token_Type) return Boolean;
       --  Handle reserved words.
       --  Return whether parsing should be terminated.
@@ -1756,7 +1759,7 @@ package body Ada_Analyzer is
 
          --  Computes Tok_Token.Type_Att
 
-         if not Top_Token.Attributes (Ada_Assign_Attribute) then
+         if not Right_Assignment then
             case Reserved is
                when Tok_Abstract =>
                   Top_Token.Attributes (Ada_Abstract_Attribute) := True;
@@ -2456,6 +2459,7 @@ package body Ada_Analyzer is
                Top_Token := Top (Tokens);
 
                if Num_Parens = 0 then
+                  Right_Assignment := False;
                   Paren_In_Middle := False;
 
                   if Top_Token.Token in Token_Class_Declk
@@ -3209,6 +3213,7 @@ package body Ada_Analyzer is
                               Top_Token.Attributes
                                 (Ada_Assign_Attribute) := True;
                               Pop (Tokens);
+                              Right_Assignment := True;
                            end if;
 
                            Handle_Two_Chars ('=');
@@ -3335,6 +3340,7 @@ package body Ada_Analyzer is
 
                   if Buffer (P) = ';' then
                      Prev_Token := Tok_Semicolon;
+                     Right_Assignment := False;
 
                      if Top_Token.Token = Tok_Colon then
                         Pop (Tokens);
