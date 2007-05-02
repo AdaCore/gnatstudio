@@ -50,7 +50,7 @@ F329-003 Fix of "use clause would make operation legal" messages (2007-04-20)
   Compiler messages "use clause would make operation legal" are now 
   automatically fixed by GPS, by adding the missing use clause to the file.
 
-F223-023 Retreive 'Class attribute on tooltip documentation (2007-05-02)
+F223-023 Retrieve 'Class attribute on tooltip documentation (2007-05-02)
 
   Documentation displayed by tooltips now displays type of parameters and
   variables with 'Class when relevant.
