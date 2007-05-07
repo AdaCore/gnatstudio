@@ -1,5 +1,14 @@
 Known Problems fixed in GPS 4.2.0
 
+- G503-011 Bad indentation of single line C constructs
+  Problem:    GPS does not properly unindent single line construct (statements
+              with no {}), e.g:
+              if (cond1)
+                if (cond2)
+                  do_x ();
+              do_y ();   <- this line was incorrectly indented
+  Workaround: Fix indentation manually, or use {} around statements.
+
 - G427-022 Removing files from an activity makes GPS unstable
   Problem:    When removing files from an activity there is a memory
               corruption. This can make GPS unstable and it may exit.
