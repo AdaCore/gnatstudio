@@ -1317,12 +1317,14 @@ package body C_Analyzer is
 
             when ';' =>
                Token := Tok_Semicolon;
-               Pop_To_Construct (Tokens, Top_Token);
 
-               if Top_Token.Token /= No_Token
-                 and then Top_Token.Curly_Level = Curly_Level
-                 and then Top_Token.Paren_Level = Paren_Level
-               then
+               loop
+                  Pop_To_Construct (Tokens, Top_Token);
+
+                  exit when Top_Token.Token = No_Token
+                    or else Top_Token.Curly_Level /= Curly_Level
+                    or else Top_Token.Paren_Level /= Paren_Level;
+
                   if Top_Token.Token = Tok_Do then
                      Do_Indent (Index, Indent);
                   else
@@ -1335,7 +1337,7 @@ package body C_Analyzer is
                   end if;
 
                   Pop (Tokens);
-               end if;
+               end loop;
 
             when '(' =>
                Token := Tok_Left_Paren;
