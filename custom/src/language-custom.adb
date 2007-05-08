@@ -913,6 +913,7 @@ package body Language.Custom is
               (Lang.Parent, Buffer, Replace, From, To,
                Indent_Params, Indent_Offset, Case_Exceptions);
          end if;
+
       else
          Lang.Format_Buffer
            (Buffer,
@@ -961,6 +962,7 @@ package body Language.Custom is
          else
             Parse_Entities (Lang.Parent, Buffer, Callback);
          end if;
+
       else
          Lang.Parse_Entities
            (Buffer, Entity_Cb'Address, Buffer'Length);

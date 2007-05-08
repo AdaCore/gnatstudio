@@ -633,15 +633,15 @@ package body Ada_Analyzer is
    ------------------------
 
    procedure Analyze_Ada_Source
-     (Buffer           : String;
-      Indent_Params    : Indent_Parameters;
-      Format           : Boolean               := True;
-      From, To         : Natural               := 0;
-      Replace          : Replace_Text_Callback := null;
-      Constructs       : Construct_List_Access := null;
-      Callback         : Entity_Callback       := null;
-      Indent_Offset    : Natural               := 0;
-      Case_Exceptions  : Casing_Exceptions     := No_Casing_Exception)
+     (Buffer          : String;
+      Indent_Params   : Indent_Parameters;
+      Format          : Boolean               := True;
+      From, To        : Natural               := 0;
+      Replace         : Replace_Text_Callback := null;
+      Constructs      : Construct_List_Access := null;
+      Callback        : Entity_Callback       := null;
+      Indent_Offset   : Natural               := 0;
+      Case_Exceptions : Casing_Exceptions     := No_Casing_Exception)
    is
       ---------------
       -- Constants --
@@ -1578,6 +1578,7 @@ package body Ada_Analyzer is
                   Current := Current.Prev;
                end loop;
             end;
+
          elsif Value.Token /= Tok_Record
            and then Value.Token /= Tok_When
            and then Constructs /= null
@@ -1604,8 +1605,10 @@ package body Ada_Analyzer is
 
             if Value.Attributes (Ada_Tagged_Attribute) then
                Constructs.Current.Category := Cat_Class;
+
             elsif Value.Attributes (Ada_Record_Attribute) then
                Constructs.Current.Category := Cat_Structure;
+
             else
                case Value.Token is
                   when Tok_Package =>
