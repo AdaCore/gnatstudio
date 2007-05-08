@@ -301,40 +301,51 @@ package body Code_Analysis_Module is
       Project_Node : Project_Access)
    is
       use Language.Tree.Database;
-      File_Contents : GNAT.Strings.String_Access := Read_File (Cov_File);
-      File_Node     : constant Code_Analysis.File_Access :=
-                        Get_Or_Create (Project_Node, Src_File);
+      File_Contents : GNAT.Strings.String_Access;
+      File_Node     : Code_Analysis.File_Access;
       Handler       : constant Language_Handler
         := Get_Language_Handler (Code_Analysis_Module_ID.Kernel);
       Database      : constant Construct_Database_Access
         := Get_Construct_Database (Code_Analysis_Module_ID.Kernel);
       Tree_Lang     : constant Tree_Language_Access
-        := Get_Tree_Language_From_File (Handler, File_Node.Name, False);
-      Data_File     : constant Structured_File_Access :=
-                        Language.Tree.Database.Get_Or_Create
-                          (Db   => Database,
-                           File => File_Node.Name,
-                           Lang => Tree_Lang);
+        := Get_Tree_Language_From_File (Handler, Src_File, False);
+      Data_File     : constant Structured_File_Access
+        := Language.Tree.Database.Get_Or_Create
+          (Db   => Database,
+           File => Src_File,
+           Lang => Tree_Lang);
    begin
-      if File_Node.Analysis_Data.Coverage_Data = null then
-         File_Node.Analysis_Data.Coverage_Data := new Node_Coverage;
+      if File_Time_Stamp (Src_File) > File_Time_Stamp (Cov_File) then
+         GPS.Kernel.Console.Insert
+           (Code_Analysis_Module_ID.Kernel, Base_Name (Src_File) &
+         (-" has been modified since GCOV information were generated.") &
+         (-" Skipped."),
+            Mode => GPS.Kernel.Console.Error);
+      else
+         File_Node := Get_Or_Create (Project_Node, Src_File);
+         File_Contents := Read_File (Cov_File);
+
+         if File_Node.Analysis_Data.Coverage_Data = null then
+            File_Node.Analysis_Data.Coverage_Data := new Node_Coverage;
+         end if;
+
+         Add_File_Info
+           (File_Node, File_Contents,
+            Node_Coverage (File_Node.Analysis_Data.Coverage_Data.all).Children,
+            File_Node.Analysis_Data.Coverage_Data.Coverage);
+
+         if Project_Node.Analysis_Data.Coverage_Data = null then
+            Project_Node.Analysis_Data.Coverage_Data :=
+              new Subprogram_Coverage;
+            Subprogram_Coverage
+              (Project_Node.Analysis_Data.Coverage_Data.all).Called :=
+              Get_Runs_Info_From_File (File_Node, File_Contents);
+         end if;
+         --  Check for project Called info
+
+         Add_Subprogram_Info (Data_File, File_Node);
+         Free (File_Contents);
       end if;
-
-      Add_File_Info (File_Node, File_Contents,
-                      Node_Coverage
-                        (File_Node.Analysis_Data.Coverage_Data.all).Children,
-                     File_Node.Analysis_Data.Coverage_Data.Coverage);
-
-      if Project_Node.Analysis_Data.Coverage_Data = null then
-         Project_Node.Analysis_Data.Coverage_Data := new Subprogram_Coverage;
-         Subprogram_Coverage
-           (Project_Node.Analysis_Data.Coverage_Data.all).Called :=
-           Get_Runs_Info_From_File (File_Node, File_Contents);
-      end if;
-      --  Check for project Called info
-
-      Add_Subprogram_Info (Data_File, File_Node);
-      Free (File_Contents);
    end Add_Gcov_File_Info;
 
    ----------------------------------------
