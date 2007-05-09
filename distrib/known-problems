@@ -47,7 +47,7 @@ G412-023 Big items truncated in the debugger Data window
               its own instead of having one big items in which everyting is
               displayed directly.
 
-- G323-009 Documentation give wrong return type
+- G323-009 Documentation gives wrong return type
   Problem:    When the parameter initialization of a function contains the
               reserved words "null" or "not", these words will go into the
               returned type of the documentation.
