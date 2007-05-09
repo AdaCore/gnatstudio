@@ -26,10 +26,6 @@ package Connection_Debuggers is
    type Connection_Debugger is access all
      Connection_Debugger_Record'Class;
 
-   procedure Create (Dbg   : access Connection_Debugger_Record'Class;
-                     Title : String) is abstract;
-   --  Create a new Connection Debugger with furnished title
-
    type Mode_Type is (Input, Output);
 
    procedure Print (Dbg  : access Connection_Debugger_Record;
