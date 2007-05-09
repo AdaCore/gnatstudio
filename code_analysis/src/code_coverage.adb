@@ -336,33 +336,53 @@ package body Code_Coverage is
    -- Line_Coverage_Info --
    ------------------------
 
-   function Line_Coverage_Info (Coverage : Coverage_Access)
-                                return String_Access
+   function Line_Coverage_Info
+     (Coverage : Coverage_Access;
+      Bin_Mode : Boolean := False) return String_Access
    is
       Pango_Markup_To_Open_1 : constant String
         := "<span size=""small"" foreground=""";
       Pango_Markup_To_Open_2 : constant String := """>";
       Pango_Markup_To_Close : constant String := " </span>";
    begin
-      case Coverage.Coverage is
-         when 0 => return new String'(Pango_Markup_To_Open_1
-                                      & "red"
-                                      & Pango_Markup_To_Open_2
-                                      & " not covered "
-                                      & Pango_Markup_To_Close);
-         when 1 => return new String'(Pango_Markup_To_Open_1
-                                      & "black"
-                                      & Pango_Markup_To_Open_2
-                                      & " 1 time "
-                                      & Pango_Markup_To_Close);
-         when others =>
-            return new String'(Pango_Markup_To_Open_1
-              & "black"
-              & Pango_Markup_To_Open_2
-              & Image (Coverage.Coverage, Int_Image_Padding)
-              & " times"
-              & Pango_Markup_To_Close);
-      end case;
+      if Bin_Mode then
+         case Coverage.Coverage is
+         when 0 => return new
+              String'(Pango_Markup_To_Open_1 &
+                      "red" &
+                      Pango_Markup_To_Open_2 &
+                      " not covered " &
+                      Pango_Markup_To_Close);
+         when others => return new
+              String'(Pango_Markup_To_Open_1
+                      & "black"
+                      & Pango_Markup_To_Open_2
+                      & " covered "
+                      & Pango_Markup_To_Close);
+         end case;
+      else
+         case Coverage.Coverage is
+         when 0 => return new
+              String'(Pango_Markup_To_Open_1 &
+                      "red" &
+                      Pango_Markup_To_Open_2 &
+                      " not covered " &
+                      Pango_Markup_To_Close);
+         when 1 => return new
+              String'(Pango_Markup_To_Open_1 &
+                      "black" &
+                      Pango_Markup_To_Open_2 &
+                      " 1 time " &
+                      Pango_Markup_To_Close);
+         when others => return new
+              String'(Pango_Markup_To_Open_1 &
+                      "black" &
+                      Pango_Markup_To_Open_2 &
+                      Image (Coverage.Coverage, Int_Image_Padding) &
+                      " times" &
+                      Pango_Markup_To_Close);
+         end case;
+      end if;
    end Line_Coverage_Info;
 
    ---------------
@@ -372,7 +392,8 @@ package body Code_Coverage is
    procedure Fill_Iter
      (Tree_Store : in out Gtk_Tree_Store;
       Iter       : in out Gtk_Tree_Iter;
-      Coverage   : Coverage_Access)
+      Coverage   : Coverage_Access;
+      Bin_Mode   : Boolean := False)
    is
       function Txt_Lig (Lig_Count : Natural) return String;
       --  Returns in a String the children count coverage info used to
@@ -412,6 +433,10 @@ package body Code_Coverage is
          end Txt_Cal;
 
       begin
+         if Bin_Mode then
+            return "";
+         end if;
+
          if Coverage.all in Subprogram_Coverage'Class then
             declare
                Cal_Count : constant Natural :=
