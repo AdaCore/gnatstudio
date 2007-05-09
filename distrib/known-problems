@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.2.0
 
+- G502-009 <on-failure> not executed whith empty <external> command
+  Problem:    If you create an XML file with an action that executes an
+              empty <external> command, an internal error is reported, but
+              GPS doesn't execute the following <on-failure> node.
+  Workaround: Make sure the command to execute cannot be empty
+
 - G503-011 Bad indentation of single line C constructs
   Problem:    GPS does not properly unindent single line construct (statements
               with no {}), e.g:

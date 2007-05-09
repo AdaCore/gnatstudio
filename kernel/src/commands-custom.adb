@@ -1355,33 +1355,41 @@ package body Commands.Custom is
                Free (Tmp);
             end loop;
 
-            Launch_Process
-              (Command.Kernel,
-               Command              => Args (Args'First).all,
-               Arguments            => Args (Args'First + 1 .. Args'Last),
-               Server               => Component.Server,
-               Console              => Console,
-               Callback             => Store_Command_Output'Access,
-               Exit_Cb              => Exit_Cb'Access,
-               Success              => Success,
-               Show_Command         => Component.Show_Command,
+            if Args'Length = 0 then
+               Trace (Me, "Cannot launch empty command");
+               Success := False;
+               Command.Execution.External_Process_In_Progress := False;
+               Command.Execution.Process_Exit_Status := 1;
 
-               --  Showing the output is already handled by the callback
-               --  Store_Command_Output
-               Show_Output          => False,
+            else
+               Launch_Process
+                 (Command.Kernel,
+                  Command              => Args (Args'First).all,
+                  Arguments            => Args (Args'First + 1 .. Args'Last),
+                  Server               => Component.Server,
+                  Console              => Console,
+                  Callback             => Store_Command_Output'Access,
+                  Exit_Cb              => Exit_Cb'Access,
+                  Success              => Success,
+                  Show_Command         => Component.Show_Command,
 
-               Callback_Data        => new Custom_Callback_Data'
-                 (Command => Custom_Command_Access (Command)),
-               Show_In_Task_Manager => Component.Show_In_Task_Manager,
-               Line_By_Line         => False,
-               Synchronous          => Context.Synchronous,
-               Directory            => To_Remote (To_String (Context.Dir),
-                                                  Component.Server),
-               Created_Command      => Command.Sub_Command);
-            Free (Args);
+                  --  Showing the output is already handled by the callback
+                  --  Store_Command_Output
+                  Show_Output          => False,
 
-            Command.Execution.External_Process_Console := Console;
-            Command.Execution.External_Process_In_Progress := Success;
+                  Callback_Data        => new Custom_Callback_Data'
+                    (Command => Custom_Command_Access (Command)),
+                  Show_In_Task_Manager => Component.Show_In_Task_Manager,
+                  Line_By_Line         => False,
+                  Synchronous          => Context.Synchronous,
+                  Directory            => To_Remote (To_String (Context.Dir),
+                    Component.Server),
+                  Created_Command      => Command.Sub_Command);
+               Free (Args);
+
+               Command.Execution.External_Process_Console := Console;
+               Command.Execution.External_Process_In_Progress := Success;
+            end if;
 
             return Success;
          end Execute_External;
