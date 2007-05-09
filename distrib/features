@@ -14,6 +14,12 @@ of the feature.
 New features in GPS 4.2.0
 -------------------------
 
+G502-004 Ignore leading spaces in <external>
+
+  If you specify an external command to execute in an XML file, you can now
+  have leading spaces if you wish. This allows you to split the contents of
+  the <external> tag on several lines.
+
 G307-006 File & Directories operations from file and project views (2007-03-14)
 
   File & directories can now be manipulated (created, renamed, deleted) from

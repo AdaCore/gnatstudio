@@ -20,6 +20,8 @@
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with Ada.Strings.Maps;          use Ada.Strings.Maps;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -1321,11 +1323,14 @@ package body Commands.Custom is
          is
             Tmp  : GNAT.Strings.String_Access;
             Args : String_List_Access;
-            Subst_Cmd_Line  : constant String := Substitute
-              (Subst_Percent,
-               Substitution_Char => GPS.Kernel.Macros.Special_Character,
-               Callback          => Substitution'Unrestricted_Access,
-               Recursive         => False);
+            Subst_Cmd_Line  : constant String := Trim
+              (Substitute
+                 (Subst_Percent,
+                  Substitution_Char => GPS.Kernel.Macros.Special_Character,
+                  Callback          => Substitution'Unrestricted_Access,
+                  Recursive         => False),
+               Left  => To_Set (' ' & ASCII.LF & ASCII.HT),
+               Right => Ada.Strings.Maps.Null_Set);
          begin
             Trace (Me, "Executing external command " & Component.Command.all);
 
