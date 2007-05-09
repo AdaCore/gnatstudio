@@ -82,6 +82,13 @@ package body Code_Analysis_Module is
    Line_Icons_Cst : constant String := "Coverage Icons";
    --  Name of the pixmap column used for the annotations
 
+   Binary_Coverage_Trace : constant Debug_Handle :=
+                             Create ("BINARY_COVERAGE_MODE", Off);
+
+   Binary_Coverage_Mode : constant Boolean := Active (Binary_Coverage_Trace);
+   --  Constant Boolean that allows to determine wether we are in binary
+   --  coverage mode or not.
+
    -----------------------
    -- Create_From_Shell --
    -----------------------
@@ -887,7 +894,8 @@ package body Code_Analysis_Module is
 
       Clear (Property.View.Model);
       Iter := Get_Iter_First (Property.View.Model);
-      Fill_Iter (Property.View.Model, Iter, Property.Projects);
+      Fill_Iter
+        (Property.View.Model, Iter, Property.Projects, Binary_Coverage_Mode);
 
       --------------------------------------
       --  Selection of the context caller --
@@ -1343,7 +1351,8 @@ package body Code_Analysis_Module is
       for J in File_Node.Lines'Range loop
          if File_Node.Lines (J) /= Null_Line then
             Line_Info (J).Text := Line_Coverage_Info
-              (File_Node.Lines (J).Analysis_Data.Coverage_Data);
+              (File_Node.Lines (J).Analysis_Data.Coverage_Data,
+               Binary_Coverage_Mode);
 
             if File_Node.Lines (J).Analysis_Data.Coverage_Data.Coverage
               = 0 then
@@ -1609,9 +1618,11 @@ package body Code_Analysis_Module is
          Subp_Iter := Get_Iter_From_Context
            (Cont_N_Inst.Context, Property.View.Model);
          File_Iter := Parent (Property.View.Model, Subp_Iter);
-         Fill_Iter (Property.View.Model, File_Iter, File_Node.Analysis_Data);
+         Fill_Iter (Property.View.Model, File_Iter, File_Node.Analysis_Data,
+                    Binary_Coverage_Mode);
          Prj_Iter  := Parent (Property.View.Model, File_Iter);
-         Fill_Iter (Property.View.Model, Prj_Iter, Prj_Node.Analysis_Data);
+         Fill_Iter (Property.View.Model, Prj_Iter, Prj_Node.Analysis_Data,
+                    Binary_Coverage_Mode);
          --  Removes Subp_Iter from the report
          Remove (Property.View.Model, Subp_Iter);
          --  Removes Subp_Iter from its container
@@ -1668,7 +1679,8 @@ package body Code_Analysis_Module is
          File_Iter := Get_Iter_From_Context
            (Cont_N_Inst.Context, Property.View.Model);
          Prj_Iter  := Parent (Property.View.Model, File_Iter);
-         Fill_Iter (Property.View.Model, Prj_Iter, Prj_Node.Analysis_Data);
+         Fill_Iter (Property.View.Model, Prj_Iter, Prj_Node.Analysis_Data,
+                    Binary_Coverage_Mode);
          --  Removes File_Iter from the report
          Remove (Property.View.Model, File_Iter);
          --  Removes File_Iter from its container
@@ -1764,7 +1776,7 @@ package body Code_Analysis_Module is
       Path : Gtk_Tree_Path;
    begin
       Clear (View.Model);
-      Fill_Iter (View.Model, Iter, View.Projects);
+      Fill_Iter (View.Model, Iter, View.Projects, Binary_Coverage_Mode);
       Iter := Get_Iter_First (View.Model);
       Path := Get_Path (View.Model, Iter);
       Collapse_All (View.Tree);
@@ -1787,7 +1799,8 @@ package body Code_Analysis_Module is
       Iter : Gtk_Tree_Iter := Get_Iter_First (View.Model);
    begin
       Clear (View.Model);
-      Fill_Iter_With_Files (View.Model, Iter, View.Projects);
+      Fill_Iter_With_Files (View.Model, Iter, View.Projects,
+                            Binary_Coverage_Mode);
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -1805,7 +1818,8 @@ package body Code_Analysis_Module is
       Iter : Gtk_Tree_Iter := Get_Iter_First (View.Model);
    begin
       Clear (View.Model);
-      Fill_Iter_With_Subprograms (View.Model, Iter, View.Projects);
+      Fill_Iter_With_Subprograms (View.Model, Iter, View.Projects,
+                                  Binary_Coverage_Mode);
    exception
       when E : others =>
          Trace (Exception_Handle,
