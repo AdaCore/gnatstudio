@@ -39,13 +39,13 @@ package body Code_Analysis_Tree_Model is
    procedure Fill_Iter
      (Model       : in out Gtk_Tree_Store;
       Iter        : in out Gtk_Tree_Iter;
-      Analysis_Id : Analysis) is
+      Analysis_Id : Analysis;
+      Bin_Mode    : Boolean := False) is
    begin
       if Analysis_Id.Coverage_Data /= null then
-         Fill_Iter (Model, Iter, Analysis_Id.Coverage_Data);
+         Fill_Iter (Model, Iter, Analysis_Id.Coverage_Data, Bin_Mode);
       else
-         Set (Model, Iter, Cov_Col,
-              " Coverage information not available");
+         Set (Model, Iter, Cov_Col, " Coverage information not available");
          Set (Model, Iter, Cov_Sort, Glib.Gint (0));
          Set (Model, Iter, Cov_Bar_Val, Glib.Gint (0));
          Set (Model, Iter, Cov_Bar_Txt, "n/a");
@@ -62,7 +62,8 @@ package body Code_Analysis_Tree_Model is
       Parent    : Gtk_Tree_Iter;
       Prj_Node  : Project_Access;
       File_Node : File_Access;
-      Subp_Node : Subprogram_Access) is
+      Subp_Node : Subprogram_Access;
+      Bin_Mode  : Boolean := False) is
    begin
       Append (Model, Iter, Parent);
       Set (Model, Iter, Pix_Col, C_Proxy
@@ -71,7 +72,7 @@ package body Code_Analysis_Tree_Model is
       Subprogram_Set.Set (Model, Iter, Node_Col, Subp_Node.all'Access);
       File_Set.Set (Model, Iter, File_Col, File_Node.all'Access);
       Project_Set.Set (Model, Iter, Prj_Col, Prj_Node.all'Access);
-      Fill_Iter (Model, Iter, Subp_Node.Analysis_Data);
+      Fill_Iter (Model, Iter, Subp_Node.Analysis_Data, Bin_Mode);
    end Fill_Iter;
 
    --------------------------------
@@ -83,7 +84,8 @@ package body Code_Analysis_Tree_Model is
       Iter      : in out Gtk_Tree_Iter;
       Prj_Node  : Project_Access;
       File_Node : File_Access;
-      Subp_Node : Subprogram_Access) is
+      Subp_Node : Subprogram_Access;
+      Bin_Mode  : Boolean := False) is
    begin
       Append (Model, Iter, Null_Iter);
       Set (Model, Iter, Pix_Col, C_Proxy
@@ -92,7 +94,7 @@ package body Code_Analysis_Tree_Model is
       Subprogram_Set.Set (Model, Iter, Node_Col, Subp_Node.all'Access);
       File_Set.Set (Model, Iter, File_Col, File_Node.all'Access);
       Project_Set.Set (Model, Iter, Prj_Col, Prj_Node.all'Access);
-      Fill_Iter (Model, Iter, Subp_Node.Analysis_Data);
+      Fill_Iter (Model, Iter, Subp_Node.Analysis_Data, Bin_Mode);
    end Fill_Iter_With_Subprograms;
 
    ---------------
@@ -104,7 +106,8 @@ package body Code_Analysis_Tree_Model is
       Iter      : in out Gtk_Tree_Iter;
       Parent    : Gtk_Tree_Iter;
       Prj_Node  : Project_Access;
-      File_Node : File_Access)
+      File_Node : File_Access;
+      Bin_Mode  : Boolean := False)
    is
       use Subprogram_Maps;
       Map_Cur   : Subprogram_Maps.Cursor := File_Node.Subprograms.First;
@@ -121,7 +124,7 @@ package body Code_Analysis_Tree_Model is
       File_Set.Set (Model, Iter, Node_Col, File_Node.all'Access);
       File_Set.Set (Model, Iter, File_Col, File_Node.all'Access);
       Project_Set.Set (Model, Iter, Prj_Col, Prj_Node.all'Access);
-      Fill_Iter (Model, Iter, File_Node.Analysis_Data);
+      Fill_Iter (Model, Iter, File_Node.Analysis_Data, Bin_Mode);
 
       for J in Sort_Arr'Range loop
          Sort_Arr (J) := (Element (Map_Cur));
@@ -131,7 +134,8 @@ package body Code_Analysis_Tree_Model is
       Sort_Subprograms (Sort_Arr);
 
       for J in Sort_Arr'Range loop
-         Fill_Iter (Model, Iter, Self_Iter, Prj_Node, File_Node, Sort_Arr (J));
+         Fill_Iter (Model, Iter, Self_Iter, Prj_Node, File_Node,
+                    Sort_Arr (J), Bin_Mode);
       end loop;
    end Fill_Iter;
 
@@ -143,7 +147,8 @@ package body Code_Analysis_Tree_Model is
      (Model     : in out Gtk_Tree_Store;
       Iter      : in out Gtk_Tree_Iter;
       Prj_Node  : Project_Access;
-      File_Node : File_Access) is
+      File_Node : File_Access;
+      Bin_Mode  : Boolean := False) is
    begin
       Append (Model, Iter, Null_Iter);
       Gtk.Tree_Store.Set (Model, Iter, Pix_Col, C_Proxy
@@ -153,7 +158,7 @@ package body Code_Analysis_Tree_Model is
       File_Set.Set (Model, Iter, Node_Col, File_Node.all'Access);
       File_Set.Set (Model, Iter, File_Col, File_Node.all'Access);
       Project_Set.Set (Model, Iter, Prj_Col, Prj_Node.all'Access);
-      Fill_Iter (Model, Iter, File_Node.Analysis_Data);
+      Fill_Iter (Model, Iter, File_Node.Analysis_Data, Bin_Mode);
    end Fill_Iter_With_Files;
 
    --------------------------------
@@ -164,7 +169,8 @@ package body Code_Analysis_Tree_Model is
      (Model     : in out Gtk_Tree_Store;
       Iter      : in out Gtk_Tree_Iter;
       Prj_Node  : Project_Access;
-      File_Node : File_Access)
+      File_Node : File_Access;
+      Bin_Mode  : Boolean := False)
    is
       use Subprogram_Maps;
       Map_Cur   : Subprogram_Maps.Cursor := File_Node.Subprograms.First;
@@ -180,7 +186,7 @@ package body Code_Analysis_Tree_Model is
 
       for J in Sort_Arr'Range loop
          Fill_Iter_With_Subprograms
-           (Model, Iter, Prj_Node, File_Node, Sort_Arr (J));
+           (Model, Iter, Prj_Node, File_Node, Sort_Arr (J), Bin_Mode);
       end loop;
    end Fill_Iter_With_Subprograms;
 
@@ -191,7 +197,8 @@ package body Code_Analysis_Tree_Model is
    procedure Fill_Iter
      (Model    : in out Gtk_Tree_Store;
       Iter     : in out Gtk_Tree_Iter;
-      Prj_Node : Project_Access)
+      Prj_Node : Project_Access;
+      Bin_Mode : Boolean := False)
    is
       use File_Maps;
       Map_Cur   : File_Maps.Cursor := Prj_Node.Files.First;
@@ -205,7 +212,7 @@ package body Code_Analysis_Tree_Model is
       Gtk.Tree_Store.Set (Model, Iter, Name_Col,
            UTF8_String (String'(Project_Name (Prj_Node.Name))));
       Project_Set.Set (Model, Iter, Node_Col, Prj_Node.all'Access);
-      Fill_Iter (Model, Iter, Prj_Node.Analysis_Data);
+      Fill_Iter (Model, Iter, Prj_Node.Analysis_Data, Bin_Mode);
 
       for J in Sort_Arr'Range loop
          Sort_Arr (J) := Element (Map_Cur);
@@ -215,7 +222,7 @@ package body Code_Analysis_Tree_Model is
       Sort_Files (Sort_Arr);
 
       for J in Sort_Arr'Range loop
-         Fill_Iter (Model, Iter, Self_Iter, Prj_Node, Sort_Arr (J));
+         Fill_Iter (Model, Iter, Self_Iter, Prj_Node, Sort_Arr (J), Bin_Mode);
       end loop;
    end Fill_Iter;
 
@@ -226,7 +233,8 @@ package body Code_Analysis_Tree_Model is
    procedure Fill_Iter_With_Files
      (Model    : in out Gtk_Tree_Store;
       Iter     : in out Gtk_Tree_Iter;
-      Prj_Node : Project_Access)
+      Prj_Node : Project_Access;
+      Bin_Mode : Boolean := False)
    is
       use File_Maps;
       Map_Cur   : File_Maps.Cursor := Prj_Node.Files.First;
@@ -241,7 +249,7 @@ package body Code_Analysis_Tree_Model is
       Sort_Files (Sort_Arr);
 
       for J in Sort_Arr'Range loop
-         Fill_Iter_With_Files (Model, Iter, Prj_Node, Sort_Arr (J));
+         Fill_Iter_With_Files (Model, Iter, Prj_Node, Sort_Arr (J), Bin_Mode);
       end loop;
    end Fill_Iter_With_Files;
 
@@ -252,7 +260,8 @@ package body Code_Analysis_Tree_Model is
    procedure Fill_Iter_With_Subprograms
      (Model    : in out Gtk_Tree_Store;
       Iter     : in out Gtk_Tree_Iter;
-      Prj_Node : Project_Access)
+      Prj_Node : Project_Access;
+      Bin_Mode : Boolean := False)
    is
       use File_Maps;
       Map_Cur   : File_Maps.Cursor := Prj_Node.Files.First;
@@ -267,7 +276,8 @@ package body Code_Analysis_Tree_Model is
       Sort_Files (Sort_Arr);
 
       for J in Sort_Arr'Range loop
-         Fill_Iter_With_Subprograms (Model, Iter, Prj_Node, Sort_Arr (J));
+         Fill_Iter_With_Subprograms
+           (Model, Iter, Prj_Node, Sort_Arr (J), Bin_Mode);
       end loop;
    end Fill_Iter_With_Subprograms;
 
@@ -278,7 +288,8 @@ package body Code_Analysis_Tree_Model is
    procedure Fill_Iter
      (Model    : in out Gtk_Tree_Store;
       Iter     : in out Gtk_Tree_Iter;
-      Projects : Code_Analysis_Tree)
+      Projects : Code_Analysis_Tree;
+      Bin_Mode : Boolean := False)
    is
       use Project_Maps;
       Map_Cur  : Project_Maps.Cursor := Projects.First;
@@ -292,7 +303,7 @@ package body Code_Analysis_Tree_Model is
       Sort_Projects (Sort_Arr);
 
       for J in Sort_Arr'Range loop
-         Fill_Iter (Model, Iter, Sort_Arr (J));
+         Fill_Iter (Model, Iter, Sort_Arr (J), Bin_Mode);
       end loop;
    end Fill_Iter;
 
@@ -303,7 +314,8 @@ package body Code_Analysis_Tree_Model is
    procedure Fill_Iter_With_Files
      (Model    : in out Gtk_Tree_Store;
       Iter     : in out Gtk_Tree_Iter;
-      Projects : Code_Analysis_Tree)
+      Projects : Code_Analysis_Tree;
+      Bin_Mode : Boolean := False)
    is
       use Project_Maps;
       Map_Cur  : Project_Maps.Cursor := Projects.First;
@@ -317,7 +329,7 @@ package body Code_Analysis_Tree_Model is
       Sort_Projects (Sort_Arr);
 
       for J in Sort_Arr'Range loop
-         Fill_Iter_With_Files (Model, Iter, Sort_Arr (J));
+         Fill_Iter_With_Files (Model, Iter, Sort_Arr (J), Bin_Mode);
       end loop;
    end Fill_Iter_With_Files;
 
@@ -328,7 +340,8 @@ package body Code_Analysis_Tree_Model is
    procedure Fill_Iter_With_Subprograms
      (Model    : in out Gtk_Tree_Store;
       Iter     : in out Gtk_Tree_Iter;
-      Projects : Code_Analysis_Tree)
+      Projects : Code_Analysis_Tree;
+      Bin_Mode : Boolean := False)
    is
       use Project_Maps;
       Map_Cur  : Project_Maps.Cursor := Projects.First;
@@ -342,7 +355,7 @@ package body Code_Analysis_Tree_Model is
       Sort_Projects (Sort_Arr);
 
       for J in Sort_Arr'Range loop
-         Fill_Iter_With_Subprograms (Model, Iter, Sort_Arr (J));
+         Fill_Iter_With_Subprograms (Model, Iter, Sort_Arr (J), Bin_Mode);
       end loop;
    end Fill_Iter_With_Subprograms;
 end Code_Analysis_Tree_Model;
