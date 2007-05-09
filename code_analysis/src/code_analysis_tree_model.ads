@@ -39,10 +39,13 @@ package Code_Analysis_Tree_Model is
    ------------
 
    procedure Fill_Iter
-     (Model        : in out Gtk_Tree_Store;
-      Iter         : in out Gtk_Tree_Iter;
-      Analysis_Id  : Analysis);
+     (Model       : in out Gtk_Tree_Store;
+      Iter        : in out Gtk_Tree_Iter;
+      Analysis_Id : Analysis;
+      Bin_Mode    : Boolean := False);
    --  Fill the Gtk_Tree_Store with the given Analysis record
+   --  If Bin_Mode is True, then the coverage messages will only be between
+   --  (covered | not covered)
 
    procedure Fill_Iter
      (Model     : in out Gtk_Tree_Store;
@@ -50,76 +53,109 @@ package Code_Analysis_Tree_Model is
       Parent    : Gtk_Tree_Iter;
       Prj_Node  : Project_Access;
       File_Node : File_Access;
-      Subp_Node : Subprogram_Access);
+      Subp_Node : Subprogram_Access;
+      Bin_Mode  : Boolean := False);
    --  Fill the Gtk_Tree_Store with the given Subprogram node
+   --  If Bin_Mode is True, then the coverage messages will only be between
+   --  (covered | not covered)
 
    procedure Fill_Iter_With_Subprograms
      (Model     : in out Gtk_Tree_Store;
       Iter      : in out Gtk_Tree_Iter;
       Prj_Node  : Project_Access;
       File_Node : Code_Analysis.File_Access;
-      Subp_Node : Subprogram_Access);
+      Subp_Node : Subprogram_Access;
+      Bin_Mode  : Boolean := False);
    --  Fill the Gtk_Tree_Store with the given parentless Subprogram node
+   --  If Bin_Mode is True, then the coverage messages will only be between
+   --  (covered | not covered)
 
    procedure Fill_Iter
      (Model     : in out Gtk_Tree_Store;
       Iter      : in out Gtk_Tree_Iter;
       Parent    : Gtk_Tree_Iter;
       Prj_Node  : Project_Access;
-      File_Node : File_Access);
+      File_Node : File_Access;
+      Bin_Mode  : Boolean := False);
    --  Fill the Gtk_Tree_Store with the given File node and recurse on its
    --  children
+   --  If Bin_Mode is True, then the coverage messages will only be between
+   --  (covered | not covered)
 
    procedure Fill_Iter_With_Files
      (Model     : in out Gtk_Tree_Store;
       Iter      : in out Gtk_Tree_Iter;
       Prj_Node  : Project_Access;
-      File_Node : File_Access);
+      File_Node : File_Access;
+      Bin_Mode  : Boolean := False);
    --  Fill the Gtk_Tree_Store with the given File node and stop
+   --  If Bin_Mode is True, then the coverage messages will only be between
+   --  (covered | not covered)
 
    procedure Fill_Iter_With_Subprograms
      (Model     : in out Gtk_Tree_Store;
       Iter      : in out Gtk_Tree_Iter;
       Prj_Node  : Project_Access;
-      File_Node : File_Access);
+      File_Node : File_Access;
+      Bin_Mode  : Boolean := False);
    --  Fill the Gtk_Tree_Store with the children of the given File node
+   --  If Bin_Mode is True, then the coverage messages will only be between
+   --  (covered | not covered)
 
    procedure Fill_Iter
      (Model    : in out Gtk_Tree_Store;
       Iter     : in out Gtk_Tree_Iter;
-      Prj_Node : Project_Access);
+      Prj_Node : Project_Access;
+      Bin_Mode : Boolean := False);
    --  Fill the Gtk_Tree_Store with the given Project node and recurse on its
    --  children
+   --  If Bin_Mode is True, then the coverage messages will only be between
+   --  (covered | not covered)
 
    procedure Fill_Iter_With_Files
      (Model    : in out Gtk_Tree_Store;
       Iter     : in out Gtk_Tree_Iter;
-      Prj_Node : Project_Access);
+      Prj_Node : Project_Access;
+      Bin_Mode : Boolean := False);
    --  Fill the Gtk_Tree_Store with the children of the given Project node
+   --  If Bin_Mode is True, then the coverage messages will only be between
+   --  (covered | not covered)
 
    procedure Fill_Iter_With_Subprograms
      (Model    : in out Gtk_Tree_Store;
       Iter     : in out Gtk_Tree_Iter;
-      Prj_Node : Project_Access);
+      Prj_Node : Project_Access;
+      Bin_Mode : Boolean := False);
    --  Fill the Gtk_Tree_Store with the subprograms of the file children of the
    --  given Project node
+   --  If Bin_Mode is True, then the coverage messages will only be between
+   --  (covered | not covered)
 
    procedure Fill_Iter
      (Model    : in out Gtk_Tree_Store;
       Iter     : in out Gtk_Tree_Iter;
-      Projects : Code_Analysis_Tree);
+      Projects : Code_Analysis_Tree;
+      Bin_Mode : Boolean := False);
    --  Fill the Gtk_Tree_Store with every nodes
+   --  If Bin_Mode is True, then the coverage messages will only be between
+   --  (covered | not covered)
 
    procedure Fill_Iter_With_Files
      (Model    : in out Gtk_Tree_Store;
       Iter     : in out Gtk_Tree_Iter;
-      Projects : Code_Analysis_Tree);
+      Projects : Code_Analysis_Tree;
+      Bin_Mode : Boolean := False);
    --  Fill the Gtk_Tree_Store with file rows only
+   --  If Bin_Mode is True, then the coverage messages will only be between
+   --  (covered | not covered)
 
    procedure Fill_Iter_With_Subprograms
      (Model    : in out Gtk_Tree_Store;
       Iter     : in out Gtk_Tree_Iter;
-      Projects : Code_Analysis_Tree);
+      Projects : Code_Analysis_Tree;
+      Bin_Mode : Boolean := False);
    --  Fill the Gtk_Tree_Store with subprogram rows only
+   --  If Bin_Mode is True, then the coverage messages will only be between
+   --  (covered | not covered)
 
 end Code_Analysis_Tree_Model;
