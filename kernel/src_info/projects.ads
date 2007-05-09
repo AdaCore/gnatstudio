@@ -306,21 +306,22 @@ package Projects is
    function Build (Package_Name, Attribute_Name : String) return Attribute_Pkg;
    --  Build an attribute reference
 
-   Source_Dirs_Attribute      : constant Attribute_Pkg;
-   Source_Files_Attribute     : constant Attribute_Pkg;
-   Gnatlist_Attribute         : constant Attribute_Pkg;
-   Compiler_Command_Attribute : constant Attribute_Pkg;
-   Debugger_Command_Attribute : constant Attribute_Pkg;
-   Program_Host_Attribute     : constant Attribute_Pkg;
-   Protocol_Attribute         : constant Attribute_Pkg;
-   Main_Attribute             : constant Attribute_Pkg;
-   Vcs_File_Check             : constant Attribute_Pkg;
-   Vcs_Log_Check              : constant Attribute_Pkg;
-   Obj_Dir_Attribute          : constant Attribute_Pkg;
-   Vcs_Kind_Attribute         : constant Attribute_Pkg;
-   Vcs_Repository_Root        : constant Attribute_Pkg;
-   Global_Pragmas_Attribute   : constant Attribute_Pkg;
-   Local_Pragmas_Attribute    : constant Attribute_Pkg;
+   Source_Dirs_Attribute           : constant Attribute_Pkg;
+   Source_Files_Attribute          : constant Attribute_Pkg;
+   Gnatlist_Attribute              : constant Attribute_Pkg;
+   Compiler_Command_Attribute      : constant Attribute_Pkg;
+   Debugger_Command_Attribute      : constant Attribute_Pkg;
+   Program_Host_Attribute          : constant Attribute_Pkg;
+   Protocol_Attribute              : constant Attribute_Pkg;
+   Main_Attribute                  : constant Attribute_Pkg;
+   Library_Name_Attribute          : constant Attribute_Pkg;
+   Vcs_File_Check                  : constant Attribute_Pkg;
+   Vcs_Log_Check                   : constant Attribute_Pkg;
+   Obj_Dir_Attribute               : constant Attribute_Pkg;
+   Vcs_Kind_Attribute              : constant Attribute_Pkg;
+   Vcs_Repository_Root             : constant Attribute_Pkg;
+   Global_Pragmas_Attribute        : constant Attribute_Pkg;
+   Local_Pragmas_Attribute         : constant Attribute_Pkg;
    Locally_Removed_Files_Attribute : constant Attribute_Pkg;
 
    --  Naming package
@@ -746,6 +747,7 @@ private
    Protocol_Attribute        : constant Attribute_Pkg :=
                                  "ide#communication_protocol";
    Main_Attribute            : constant Attribute_Pkg := "main";
+   Library_Name_Attribute    : constant Attribute_Pkg := "library_name";
    Vcs_File_Check            : constant Attribute_Pkg := "ide#vcs_file_check";
    Vcs_Log_Check             : constant Attribute_Pkg := "ide#vcs_log_check";
    Obj_Dir_Attribute         : constant Attribute_Pkg := "object_dir";
