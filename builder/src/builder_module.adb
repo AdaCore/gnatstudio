@@ -236,6 +236,13 @@ package body Builder_Module is
    --  If Menu is null, a new one is created if there are any entries
    --  If Set_Shortcut is true, the F4 shortcut is set for the first entry.
 
+   procedure Add_Build_Menu
+     (Menu    : in out Gtk_Menu;
+      Project : Project_Type;
+      Kernel  : access Kernel_Handle_Record'Class;
+      Library : String);
+   --  Add new entry for a library project
+
    procedure Add_Root_Project_Build_Menu
      (Menu         : in out Gtk_Menu;
       Kernel       : access Kernel_Handle_Record'Class;
@@ -295,13 +302,18 @@ package body Builder_Module is
 
    procedure On_Build_Project
      (Kernel : access GObject_Record'Class; Data : File_Project_Record);
-   --  Build->Make->All/Compile all sources menus.
+   --  Build->Make->All/Compile all sources menus
+
+   procedure On_Build_Library
+     (Kernel : access GObject_Record'Class; Data : File_Project_Record);
+   --  To build a library project
 
    procedure On_Build
      (Kernel      : Kernel_Handle;
       File        : Virtual_File;
       Project     : Project_Type;
       Main_Units  : Boolean := False;
+      Library     : Boolean := False;
       Synchronous : Boolean := False;
       Extra_Args  : Argument_List_Access := null);
    --  Same as On_Build.
@@ -619,6 +631,7 @@ package body Builder_Module is
       File        : Virtual_File;
       Project     : Project_Type;
       Main_Units  : Boolean := False;
+      Library     : Boolean := False;
       Synchronous : Boolean := False;
       Extra_Args  : Argument_List_Access := null)
    is
@@ -701,7 +714,7 @@ package body Builder_Module is
          Prj := Extending_Project (Project, Recurse => True);
          Args := Compute_Arguments
            (Kernel, Prj, "", File,
-            Unique_Project => not Main_Units,
+            Unique_Project => not Main_Units and not Library,
             Extra_Args     => Common_Args);
          Change_Dir (Dir_Name (Project_Path (Project)).all);
       end if;
@@ -773,9 +786,19 @@ package body Builder_Module is
      (Kernel : access GObject_Record'Class; Data : File_Project_Record) is
    begin
       On_Build
-        (Kernel_Handle (Kernel), Data.File,
-         Data.Project, Main_Units => True);
+        (Kernel_Handle (Kernel), Data.File, Data.Project, Main_Units => True);
    end On_Build_Project;
+
+   ----------------------
+   -- On_Build_Library --
+   ----------------------
+
+   procedure On_Build_Library
+     (Kernel : access GObject_Record'Class; Data : File_Project_Record) is
+   begin
+      On_Build
+        (Kernel_Handle (Kernel), No_File, Data.Project, Library => True);
+   end On_Build_Library;
 
    ---------------------
    -- On_Check_Syntax --
@@ -1617,8 +1640,8 @@ package body Builder_Module is
       Mains        : Argument_List;
       Set_Shortcut : Boolean)
    is
-      Mitem : Dynamic_Menu_Item;
       Group : constant Gtk_Accel_Group := Get_Default_Accelerators (Kernel);
+      Mitem : Dynamic_Menu_Item;
       Main  : Virtual_File;
       Tmp   : Boolean;
       pragma Unreferenced (Tmp);
@@ -1657,6 +1680,34 @@ package body Builder_Module is
               (Mitem, Make_Menu_Prefix & Item_Accel_Path & Image (M), Group);
          end if;
       end loop;
+   end Add_Build_Menu;
+
+   --------------------
+   -- Add_Build_Menu --
+   --------------------
+
+   procedure Add_Build_Menu
+     (Menu    : in out Gtk_Menu;
+      Project : Project_Type;
+      Kernel  : access Kernel_Handle_Record'Class;
+      Library : String)
+   is
+      Mitem : Dynamic_Menu_Item;
+   begin
+      if Menu = null then
+         Gtk_New (Menu);
+      end if;
+
+      Mitem := new Dynamic_Menu_Item_Record;
+      Gtk.Menu_Item.Initialize (Mitem, Library);
+      Append (Menu, Mitem);
+
+      File_Project_Cb.Object_Connect
+        (Mitem, Signal_Activate, On_Build_Library'Access,
+         Slot_Object => Kernel,
+         User_Data   => File_Project_Record'
+           (Project => Project,
+            File    => No_File));
    end Add_Build_Menu;
 
    ---------------------------------
@@ -1994,10 +2045,15 @@ package body Builder_Module is
       pragma Unreferenced (Object, Builder);
       --  The filter garantees we are on a File_Selection_Context
 
-      Mains : Argument_List := Get_Attribute_Value
-        (Project_Information (Context),
-         Attribute => Main_Attribute);
-      M     : Gtk_Menu := Gtk_Menu (Menu);
+      Library_Name : constant String :=
+                       Get_Attribute_Value
+                         (Project_Information (Context),
+                          Attribute => Library_Name_Attribute);
+      Mains        : Argument_List :=
+                       Get_Attribute_Value
+                         (Project_Information (Context),
+                          Attribute => Main_Attribute);
+      M            : Gtk_Menu := Gtk_Menu (Menu);
 
    begin
       if Mains'Length /= 0 then
@@ -2009,6 +2065,16 @@ package body Builder_Module is
             Set_Shortcut => False);
       end if;
       Free (Mains);
+
+      --  Check for library
+
+      if Library_Name /= "" then
+         Add_Build_Menu
+           (Menu    => M,
+            Project => Project_Information (Context),
+            Kernel  => Get_Kernel (Context),
+            Library => Library_Name);
+      end if;
    end Append_To_Menu;
 
    --------------------
@@ -2024,9 +2090,10 @@ package body Builder_Module is
       pragma Unreferenced (Factory, Object);
       --  The filter garantees we are on a File_Selection_Context
 
-      Mains : Argument_List := Get_Attribute_Value
-        (Project_Information (Context),
-         Attribute => Main_Attribute);
+      Mains : Argument_List :=
+                Get_Attribute_Value
+                  (Project_Information (Context),
+                   Attribute => Main_Attribute);
       M     : Gtk_Menu := Gtk_Menu (Menu);
 
    begin
