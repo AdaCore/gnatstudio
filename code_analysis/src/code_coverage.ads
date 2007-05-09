@@ -70,15 +70,21 @@ package Code_Coverage is
    --  Currently dump to the standard output coverage information stored in a
    --  Code_Analysis. Coverage of the Subprogram nodes, ie with extra Called
 
-   function Line_Coverage_Info (Coverage : Coverage_Access)
-                                return String_Access;
-   --  Returns a String_Access pointing on a message describing the coverage
+   function Line_Coverage_Info
+     (Coverage : Coverage_Access;
+      Bin_Mode : Boolean := False) return String_Access;
+   --  Return a String_Access pointing on a message describing the coverage
    --  state of the line from which the Coverage record had been extracted
+   --  If Bin_Mode is True, then the returned messages can only be between
+   --  (covered | not covered)
 
    procedure Fill_Iter
      (Tree_Store : in out Gtk_Tree_Store;
       Iter       : in out Gtk_Tree_Iter;
-      Coverage   : Coverage_Access);
+      Coverage   : Coverage_Access;
+      Bin_Mode   : Boolean := False);
    --  Fill the Gtk_Tree_Store with the given coverage record
+   --  If Bin_Mode is True, then the coverage messages will only be between
+   --  (covered | not covered)
 
 end Code_Coverage;
