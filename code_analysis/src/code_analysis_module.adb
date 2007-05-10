@@ -83,11 +83,11 @@ package body Code_Analysis_Module is
    --  Name of the pixmap column used for the annotations
 
    Binary_Coverage_Trace : constant Debug_Handle :=
-                             Create ("BINARY_COVERAGE_MODE", Off);
+                             Create ("BINARY_COVERAGE_MODE", On);
 
-   Binary_Coverage_Mode : constant Boolean := Active (Binary_Coverage_Trace);
-   --  Constant Boolean that allows to determine wether we are in binary
-   --  coverage mode or not.
+   Binary_Coverage_Mode : Boolean;
+   --  Boolean that allows to determine wether we are in binary coverage mode
+   --  or not.
 
    -----------------------
    -- Create_From_Shell --
@@ -2522,6 +2522,7 @@ package body Code_Analysis_Module is
       Code_Analysis_Class : constant Class_Type :=
                               New_Class (Kernel, Code_Analysis_Cst_Str);
    begin
+      Binary_Coverage_Mode := Active (Binary_Coverage_Trace);
       Code_Analysis_Module_ID := new Code_Analysis_Module_ID_Record;
       Code_Analysis_Module_ID.Kernel := Kernel_Handle (Kernel);
       Code_Analysis_Module_ID.Class  := Code_Analysis_Class;
