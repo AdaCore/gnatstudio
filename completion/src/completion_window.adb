@@ -833,8 +833,9 @@ package body Completion_Window is
       ---------------
 
       procedure Move_Page (Where : Page_Direction) is
-         Adj  : Gtk_Adjustment;
-         Page : Gdouble;
+         Adj             : Gtk_Adjustment;
+         Page_Increment,
+         Page_Size       : Gdouble;
       begin
          if Where = Down then
             Expand_Selection
@@ -843,14 +844,17 @@ package body Completion_Window is
          end if;
 
          Adj := Get_Vadjustment (Window.View);
-         Page := Get_Page_Increment (Adj);
+         Page_Increment := Get_Page_Increment (Adj);
+         Page_Size := Get_Page_Size (Adj);
 
          if Where = Up then
             Set_Value (Adj, Gdouble'Max
-                       (Get_Lower (Adj), Get_Value (Adj) - Page));
+                       (Get_Lower (Adj), Get_Value (Adj) - Page_Increment));
          else
-            Set_Value (Adj, Gdouble'Min
-                       (Get_Upper (Adj) - Page, Get_Value (Adj) + Page));
+            Set_Value
+              (Adj, Gdouble'Min
+                 (Get_Upper (Adj) - Page_Size,
+                  Get_Value (Adj) + Page_Increment));
          end if;
 
          Set_Vadjustment (Window.View, Adj);
