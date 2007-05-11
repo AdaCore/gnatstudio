@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.1.2
 
+- G511-006 Using Page Down in the Smart Completion window
+  Problem:    GPS might crash when using the "Page Down" Key to scroll to
+              the bottom of the Smart Completion window.
+  Workaround: When reaching the bottom of the Smart Completion window,
+              use the arrow keys to navigate.
+
 - G426-018 Cannot open firefox to display documentation under unix
   Problem:    Under unix environments where firefox is the default browser,
               if it is not already launched at the time you want to display
