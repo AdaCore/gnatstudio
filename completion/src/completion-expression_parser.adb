@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006                         --
+--                      Copyright (C) 2006-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -166,6 +166,8 @@ package body Completion.Expression_Parser is
                when others =>
                   null;
             end case;
+
+            exit when Offset = 0;
 
             if Buffer (Offset) /= '>' then
                Possible_Arrow := False;
