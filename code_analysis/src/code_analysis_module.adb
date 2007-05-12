@@ -84,7 +84,6 @@ package body Code_Analysis_Module is
 
    Binary_Coverage_Trace : constant Debug_Handle :=
                              Create ("BINARY_COVERAGE_MODE", On);
-
    Binary_Coverage_Mode : Boolean;
    --  Boolean that allows to determine wether we are in binary coverage mode
    --  or not.
@@ -213,6 +212,16 @@ package body Code_Analysis_Module is
             -"There is no loadable GCOV information" &
             (-" associated with " & Base_Name (Src_File)),
             Mode => GPS.Kernel.Console.Error);
+
+         declare
+            File_Node : constant Code_Analysis.File_Access
+              := Get_Or_Create (Prj_Node, Src_File);
+         begin
+            Set_Error (File_Node, File_Not_Found);
+            --  Set an empty line array in order to make File_Node a valid
+            --  Code_Analysis node
+            File_Node.Lines := new Line_Array (1 .. 1);
+         end;
       else
          Add_Gcov_File_Info (Src_File, Cov_File, Prj_Node);
          Compute_Project_Coverage (Prj_Node);
@@ -276,14 +285,25 @@ package body Code_Analysis_Module is
          Cov_File := Get_Data (Cov_Inst);
       end if;
 
-      if not Is_Regular_File (Cov_File) then
-         Set_Error_Msg (Data, -"The name given for 'cov' file is wrong");
-         return;
-      end if;
-
       Prj_Name  := Get_Project_From_File
         (Get_Registry (Code_Analysis_Module_ID.Kernel).all, Src_File);
       Prj_Node  := Get_Or_Create (Property.Projects, Prj_Name);
+
+      if not Is_Regular_File (Cov_File) then
+         Set_Error_Msg (Data, -"The name given for 'cov' file is wrong");
+
+         declare
+            File_Node : constant Code_Analysis.File_Access
+              := Get_Or_Create (Prj_Node, Src_File);
+         begin
+            Set_Error (File_Node, File_Not_Found);
+            --  Set an empty line array in order to make File_Node a valid
+            --  Code_Analysis node
+            File_Node.Lines := new Line_Array (1 .. 1);
+         end;
+         return;
+      end if;
+
       Add_Gcov_File_Info (Src_File, Cov_File, Prj_Node);
       Compute_Project_Coverage (Prj_Node);
       --  Build/Refresh Report of Analysis
@@ -309,7 +329,8 @@ package body Code_Analysis_Module is
    is
       use Language.Tree.Database;
       File_Contents : GNAT.Strings.String_Access;
-      File_Node     : Code_Analysis.File_Access;
+      File_Node     : constant Code_Analysis.File_Access
+        := Get_Or_Create (Project_Node, Src_File);
       Handler       : constant Language_Handler
         := Get_Language_Handler (Code_Analysis_Module_ID.Kernel);
       Database      : constant Construct_Database_Access
@@ -328,8 +349,11 @@ package body Code_Analysis_Module is
          (-" has been modified since GCOV information were generated.") &
          (-" Skipped."),
             Mode => GPS.Kernel.Console.Error);
+         Set_Error (File_Node, File_Corrupted);
+         --  Set an empty line array in order to make File_Node a valid
+         --  Code_Analysis node
+         File_Node.Lines := new Line_Array (1 .. 1);
       else
-         File_Node := Get_Or_Create (Project_Node, Src_File);
          File_Contents := Read_File (Cov_File);
 
          if File_Node.Analysis_Data.Coverage_Data = null then
@@ -469,6 +493,16 @@ package body Code_Analysis_Module is
                -"There is no loadable GCOV information" &
                (-" associated with " & Base_Name (Src_File)),
                Mode => GPS.Kernel.Console.Error);
+
+            declare
+               File_Node : constant Code_Analysis.File_Access
+                 := Get_Or_Create (Prj_Node, Src_File);
+            begin
+               Set_Error (File_Node, File_Not_Found);
+               --  Set an empty line array in order to make File_Node a valid
+               --  Code_Analysis node
+               File_Node.Lines := new Line_Array (1 .. 1);
+            end;
          end if;
       end loop;
 
@@ -1502,24 +1536,42 @@ package body Code_Analysis_Module is
    ------------------------------------
 
    procedure List_Lines_Not_Covered_In_File
-     (File_Node : Code_Analysis.File_Access) is
+     (File_Node : Code_Analysis.File_Access)
+   is
+      No_File_Added : Boolean := True;
    begin
-      for J in File_Node.Lines'Range loop
-         if File_Node.Lines (J) /= Null_Line then
-            if File_Node.Lines (J).Analysis_Data.Coverage_Data.Coverage
-              = 0 then
-               Insert_Location
-                 (Kernel    => Code_Analysis_Module_ID.Kernel,
-                  Category  => Coverage_Category,
-                  File      => File_Node.Name,
-                  Text      => File_Node.Lines (J).Contents.all,
-                  Line      => J,
-                  Column    => 1,
-                  Highlight => True,
-                  Highlight_Category => Builder_Warnings_Style);
+      if File_Node.Analysis_Data.Coverage_Data.Status = Valid then
+         for J in File_Node.Lines'Range loop
+            if File_Node.Lines (J) /= Null_Line then
+               if File_Node.Lines (J).Analysis_Data.Coverage_Data.Coverage
+                 = 0 then
+                  No_File_Added := False;
+                  Insert_Location
+                    (Kernel             => Code_Analysis_Module_ID.Kernel,
+                     Category           => Coverage_Category,
+                     File               => File_Node.Name,
+                     Text               => File_Node.Lines (J).Contents.all,
+                     Line               => J,
+                     Column             => 1,
+                     Highlight          => True,
+                     Highlight_Category => Builder_Warnings_Style);
+               end if;
             end if;
+         end loop;
+
+         if No_File_Added then
+            GPS.Kernel.Console.Insert
+              (Code_Analysis_Module_ID.Kernel,
+               -"There is no uncovered line in " &
+               Base_Name (File_Node.Name));
          end if;
-      end loop;
+      else
+         GPS.Kernel.Console.Insert
+           (Code_Analysis_Module_ID.Kernel,
+            -"There is no Gcov information" &
+            (-" associated with " & Base_Name (File_Node.Name)),
+            Mode => GPS.Kernel.Console.Error);
+      end if;
    end List_Lines_Not_Covered_In_File;
 
    -------------------------------------------------------
@@ -1542,22 +1594,30 @@ package body Code_Analysis_Module is
         (File_Node, new String'(Entity_Name_Information
          (Cont_N_Inst.Context)));
    begin
-      for J in Subp_Node.Start .. Subp_Node.Stop loop
-         if File_Node.Lines (J) /= Null_Line then
-            if File_Node.Lines (J).Analysis_Data.Coverage_Data.Coverage
-              = 0 then
-               Insert_Location
-                 (Kernel    => Code_Analysis_Module_ID.Kernel,
-                  Category  => Coverage_Category,
-                  File      => File_Node.Name,
-                  Text      => File_Node.Lines (J).Contents.all,
-                  Line      => J,
-                  Column    => 1,
-                  Highlight => True,
-                  Highlight_Category => Builder_Warnings_Style);
+      if File_Node.Analysis_Data.Coverage_Data.Status = Valid then
+         for J in Subp_Node.Start .. Subp_Node.Stop loop
+            if File_Node.Lines (J) /= Null_Line then
+               if File_Node.Lines (J).Analysis_Data.Coverage_Data.Coverage
+                 = 0 then
+                  Insert_Location
+                    (Kernel             => Code_Analysis_Module_ID.Kernel,
+                     Category           => Coverage_Category,
+                     File               => File_Node.Name,
+                     Text               => File_Node.Lines (J).Contents.all,
+                     Line               => J,
+                     Column             => 1,
+                     Highlight          => True,
+                     Highlight_Category => Builder_Warnings_Style);
+               end if;
             end if;
-         end if;
-      end loop;
+         end loop;
+      else
+         GPS.Kernel.Console.Insert
+           (Code_Analysis_Module_ID.Kernel,
+            -"There is no Gcov information" &
+            (-" associated with " & Base_Name (File_Node.Name)),
+            Mode => GPS.Kernel.Console.Error);
+      end if;
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -2030,8 +2090,8 @@ package body Code_Analysis_Module is
          begin
             if Has_Entity_Name_Information (Cont_N_Inst.Context) then
                declare
-                  Entity : constant Entities.Entity_Information :=
-                             Get_Entity (Cont_N_Inst.Context);
+                  Entity    : constant Entities.Entity_Information :=
+                                Get_Entity (Cont_N_Inst.Context);
                   Subp_Node : Subprogram_Access;
                begin
                   if (Entity /= null
@@ -2042,7 +2102,7 @@ package body Code_Analysis_Module is
                      --  So we have a subprogram information
                      Subp_Node := Get_Or_Create
                        (File_Node, new String'(Entity_Name_Information
-                          (Cont_N_Inst.Context)));
+                        (Cont_N_Inst.Context)));
                      Append_Subprogram_Menu_Entries
                        (Cont_N_Inst, Submenu, Subp_Node);
                   else
@@ -2114,7 +2174,8 @@ package body Code_Analysis_Module is
    is
       Item : Gtk_Menu_Item;
    begin
-      if File_Node.Analysis_Data.Coverage_Data /= null then
+      if File_Node.Analysis_Data.Coverage_Data /= null and then
+        File_Node.Analysis_Data.Coverage_Data.Status = Valid then
          Gtk_New (Item, -"Reload data for " &
                   Locale_Base_Name (File_Information (Cont_N_Inst.Context)));
          Append (Submenu, Item);
