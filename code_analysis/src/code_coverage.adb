@@ -18,20 +18,36 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib;
 with Ada.Text_IO;            use Ada.Text_IO;
 with Ada.Strings;            use Ada.Strings;
 with Ada.Strings.Fixed;      use Ada.Strings.Fixed;
 with GNAT.Regpat;            use GNAT.Regpat;
-with Glib;
 with String_Utils;           use String_Utils;
 with VFS;                    use VFS;
 with Language;               use Language;
 with Language.Tree;          use Language.Tree;
+with GPS.Intl;               use GPS.Intl;
 
 package body Code_Coverage is
 
    Int_Image_Padding : constant Positive := 5;
    --  Size of padding wanted with String_Utils.Image
+
+   ---------------
+   -- Set_Error --
+   ---------------
+
+   procedure Set_Error
+     (File_Node  : Code_Analysis.File_Access;
+      Error_Code : Coverage_Status) is
+   begin
+      if File_Node.Analysis_Data.Coverage_Data = null then
+         File_Node.Analysis_Data.Coverage_Data := new Coverage;
+      end if;
+
+      File_Node.Analysis_Data.Coverage_Data.Status := Error_Code;
+   end Set_Error;
 
    -------------------
    -- Add_File_Info --
@@ -211,6 +227,7 @@ package body Code_Coverage is
                      Subp_Node.Analysis_Data.Coverage_Data := new
                        Subprogram_Coverage'
                          (Coverage => 0,
+                          Status   => Valid,
                           Called   => File_Node.Lines
                             (J).Analysis_Data.Coverage_Data.Coverage,
                           Children => 1);
@@ -275,7 +292,8 @@ package body Code_Coverage is
             File_Node := Element (Cur);
             Next (Cur);
 
-            if File_Node.Analysis_Data.Coverage_Data /= null then
+            if File_Node.Analysis_Data.Coverage_Data /= null and then
+              File_Node.Analysis_Data.Coverage_Data.Status = Valid then
                Data.Children := Data.Children +
                  Node_Coverage
                    (File_Node.Analysis_Data.Coverage_Data.all).Children;
@@ -348,39 +366,39 @@ package body Code_Coverage is
       if Bin_Mode then
          case Coverage.Coverage is
          when 0 => return new
-              String'(Pango_Markup_To_Open_1 &
-                      "red" &
-                      Pango_Markup_To_Open_2 &
-                      " not covered " &
-                      Pango_Markup_To_Close);
+              String'(Pango_Markup_To_Open_1
+                      & "red"
+                      & Pango_Markup_To_Open_2
+                      & (-" not covered ")
+                      & Pango_Markup_To_Close);
          when others => return new
               String'(Pango_Markup_To_Open_1
                       & "black"
                       & Pango_Markup_To_Open_2
-                      & " covered "
+                      & (-" covered ")
                       & Pango_Markup_To_Close);
          end case;
       else
          case Coverage.Coverage is
          when 0 => return new
-              String'(Pango_Markup_To_Open_1 &
-                      "red" &
-                      Pango_Markup_To_Open_2 &
-                      " not covered " &
-                      Pango_Markup_To_Close);
+              String'(Pango_Markup_To_Open_1
+                      & "red"
+                      & Pango_Markup_To_Open_2
+                      & (-" not covered ")
+                      & Pango_Markup_To_Close);
          when 1 => return new
-              String'(Pango_Markup_To_Open_1 &
-                      "black" &
-                      Pango_Markup_To_Open_2 &
-                      " 1 time " &
-                      Pango_Markup_To_Close);
+              String'(Pango_Markup_To_Open_1
+                      & "black"
+                      & Pango_Markup_To_Open_2
+                      & (-" 1 time ")
+                      & Pango_Markup_To_Close);
          when others => return new
-              String'(Pango_Markup_To_Open_1 &
-                      "black" &
-                      Pango_Markup_To_Open_2 &
-                      Image (Coverage.Coverage, Int_Image_Padding) &
-                      " times" &
-                      Pango_Markup_To_Close);
+              String'(Pango_Markup_To_Open_1
+                      & "black"
+                      & Pango_Markup_To_Open_2
+                      & Image (Coverage.Coverage, Int_Image_Padding)
+                      & " times"
+                      & Pango_Markup_To_Close);
          end case;
       end if;
    end Line_Coverage_Info;
@@ -403,17 +421,12 @@ package body Code_Coverage is
       --  Returns in a String the Subprograms specific coverage info used to
       --  fill the Gtk_Tree_Store of a coverage report
 
-      Cov_Txt     : constant String  := Natural'Image (Coverage.Coverage);
-      Lig_Count   : constant Natural := Node_Coverage (Coverage.all).Children;
-      Cov_Percent : constant Natural :=
-                      (Lig_Count - Coverage.Coverage) * 100 / Lig_Count;
-
       function Txt_Lig (Lig_Count : Natural) return String is
       begin
          if Lig_Count = 1 then
-            return " line (";
+            return -" line (";
          else
-            return " lines (";
+            return -" lines (";
          end if;
       end Txt_Lig;
 
@@ -426,9 +439,9 @@ package body Code_Coverage is
          function Txt_Cal (Cal_Count : Natural) return String is
          begin
             if Cal_Count = 1 then
-               return " time";
+               return -" time";
             else
-               return " times";
+               return -" times";
             end if;
          end Txt_Cal;
 
@@ -439,10 +452,10 @@ package body Code_Coverage is
 
          if Coverage.all in Subprogram_Coverage'Class then
             declare
-               Cal_Count : constant Natural :=
-                             Subprogram_Coverage (Coverage.all).Called;
+               Cal_Count : constant Natural
+                 := Subprogram_Coverage (Coverage.all).Called;
             begin
-               return String'(", called"
+               return String'(-", called"
                               & Natural'Image (Cal_Count)
                               & Txt_Cal (Cal_Count));
             end;
@@ -452,17 +465,40 @@ package body Code_Coverage is
       end Txt_Sub;
 
    begin
-      Set (Tree_Store, Iter, Cov_Col,
-           Image (Lig_Count, Int_Image_Padding)
-           & Txt_Lig (Lig_Count)
-           & Cov_Txt (Cov_Txt'First + 1 .. Cov_Txt'Last)
-           & " not covered)"
-           & Txt_Sub (Coverage));
-      Set (Tree_Store, Iter, Cov_Sort, Glib.Gint (Coverage.Coverage));
-      Set (Tree_Store, Iter, Cov_Bar_Val, Glib.Gint (Cov_Percent));
-      Set (Tree_Store, Iter, Cov_Bar_Txt,
-           Image (Cov_Percent, Int_Image_Padding)
-           & " %");
+      if Coverage.Status = Valid then
+         declare
+            Cov_Txt     : constant String
+              := Natural'Image (Coverage.Coverage);
+            Lig_Count   : constant Natural
+              := Node_Coverage (Coverage.all).Children;
+            Cov_Percent : constant Natural
+              := (Lig_Count - Coverage.Coverage) * 100 / Lig_Count;
+         begin
+            Set (Tree_Store, Iter, Cov_Col,
+                 Image (Lig_Count, Int_Image_Padding)
+                 & Txt_Lig (Lig_Count)
+                 & Cov_Txt (Cov_Txt'First + 1 .. Cov_Txt'Last)
+                 & (-" not covered)")
+                 & Txt_Sub (Coverage));
+            Set (Tree_Store, Iter, Cov_Sort, Glib.Gint (Coverage.Coverage));
+            Set (Tree_Store, Iter, Cov_Bar_Val, Glib.Gint (Cov_Percent));
+            Set (Tree_Store, Iter, Cov_Bar_Txt,
+                 Image (Cov_Percent, Int_Image_Padding) & " %");
+         end;
+      else
+         case Coverage.Status is
+         when File_Not_Found =>
+            Set (Tree_Store, Iter, Cov_Col, -" No Gcov file found");
+         when File_Corrupted =>
+            Set (Tree_Store, Iter, Cov_Col, -" Gcov file corrupted");
+         when others =>
+            Set (Tree_Store, Iter, Cov_Col, -" Invalid coverage status");
+         end case;
+
+         Set (Tree_Store, Iter, Cov_Sort, Glib.Gint (0));
+         Set (Tree_Store, Iter, Cov_Bar_Val, Glib.Gint (0));
+         Set (Tree_Store, Iter, Cov_Bar_Txt, -"n/a");
+      end if;
    end Fill_Iter;
 
 end Code_Coverage;
