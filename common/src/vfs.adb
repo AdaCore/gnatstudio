@@ -174,7 +174,7 @@ package body VFS is
    ---------------------
 
    function Create_From_Dir
-     (Dir : Virtual_File;
+     (Dir       : Virtual_File;
       Base_Name : UTF8_String) return Virtual_File is
    begin
       Ensure_Directory (Dir);
@@ -304,8 +304,7 @@ package body VFS is
    -- Base_Dir_Name --
    -------------------
 
-   function Base_Dir_Name
-     (File : Virtual_File) return Glib.UTF8_String is
+   function Base_Dir_Name (File : Virtual_File) return Glib.UTF8_String is
    begin
       if File.Value = null
         or else File.Value.Full_Name = null

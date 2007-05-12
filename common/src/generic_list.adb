@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
---                            ACT-Europe                             --
+--                      Copyright (C) 2001-2007                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -223,7 +223,11 @@ package body Generic_List is
       Last      : List_Node;
 
       procedure Local_Free (Node : in out List_Node);
-      --  Free Node and its element.
+      --  Free Node and its element
+
+      ----------------
+      -- Local_Free --
+      ----------------
 
       procedure Local_Free (Node : in out List_Node) is
       begin
@@ -260,7 +264,7 @@ package body Generic_List is
             Local_Free (Delete);
          end if;
 
-         --  Set the boundaries.
+         --  Set the boundaries
 
          if Last /= Null_Node then
             L1.First.all := Last;
@@ -274,7 +278,7 @@ package body Generic_List is
          Current := Start_Node;
          Current := Next (Current);
 
-         --  Remove all nodes between Last and End_Node.
+         --  Remove all nodes between Last and End_Node
 
          while Current /= End_Node loop
             Delete := Current;
@@ -282,7 +286,7 @@ package body Generic_List is
             Local_Free (Delete);
          end loop;
 
-         --  Do not remove End_Node if End_Node = Start_Node.
+         --  Do not remove End_Node if End_Node = Start_Node
 
          if End_Node /= Null_Node then
             Delete := End_Node;
@@ -290,7 +294,7 @@ package body Generic_List is
             Local_Free (Delete);
          end if;
 
-         --  Set the boundaries.
+         --  Set the boundaries
 
          if Last = Null_Node then
             L1.Last.all := Start_Node;
@@ -548,7 +552,6 @@ package body Generic_List is
          return Node.Element;
       end if;
    end Data_Ref;
-
 
    --------------
    -- Set_Data --

@@ -290,6 +290,7 @@ package body GPS.Kernel.Charsets is
          else
             return Get_Pref (Default_Charset);
          end if;
+
       else
          Get_Property (Prop, File, "charset", Found);
          if Found then

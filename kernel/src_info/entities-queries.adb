@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2006                      --
+--                      Copyright (C) 2003-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -425,7 +425,7 @@ package body Entities.Queries is
       Status          : out Find_Decl_Or_Body_Query_Status;
       Check_Decl_Only : Boolean := False)
    is
-      Ref      : Entity_Reference;
+      Ref : Entity_Reference;
    begin
       Find_Declaration
         (Db, File_Name, Entity_Name, Line, Column, Entity, Ref, Status,
@@ -447,8 +447,8 @@ package body Entities.Queries is
       Status          : out Find_Decl_Or_Body_Query_Status;
       Check_Decl_Only : Boolean := False)
    is
-      Handler  : constant LI_Handler := Get_LI_Handler (Db, File_Name);
-      Source   : Source_File;
+      Handler : constant LI_Handler := Get_LI_Handler (Db, File_Name);
+      Source  : Source_File;
    begin
       Status := Entity_Not_Found;
       Entity := null;
@@ -553,9 +553,9 @@ package body Entities.Queries is
       Location             : out File_Location;
       No_Location_If_First : Boolean := False)
    is
-      Ref     : E_Reference;
-      First   : Entity_Reference_Arrays.Index_Type :=
-        Entity_Reference_Arrays.First - 1;
+      Ref         : E_Reference;
+      First       : Entity_Reference_Arrays.Index_Type :=
+                      Entity_Reference_Arrays.First - 1;
       Return_Next : Boolean := Current_Location = No_File_Location;
    begin
       if Active (Me) then
@@ -629,7 +629,7 @@ package body Entities.Queries is
    function In_Range
      (Loc : File_Location; Entity : Entity_Information) return Boolean
    is
-      Bod : File_Location := No_File_Location;
+      Bod         : File_Location := No_File_Location;
       Start, Last : Integer;
    begin
       --  An entity is never in its own range
@@ -672,10 +672,10 @@ package body Entities.Queries is
    ----------------------
 
    procedure Setup_For_Entity
-     (Iter   : in out Entity_Reference_Iterator;
-      Entity : Entity_Information;
+     (Iter                  : in out Entity_Reference_Iterator;
+      Entity                : Entity_Information;
       File_Has_No_LI_Report : File_Error_Reporter := null;
-      In_Scope : Entity_Information := null)
+      In_Scope              : Entity_Information := null)
    is
       Deps : Dependency_Iterator;
    begin
@@ -731,8 +731,8 @@ package body Entities.Queries is
       Filter                : Reference_Kind_Filter := Real_References_Filter;
       Include_Overriding    : Boolean := False)
    is
-      F    : Source_File := In_File;
-      Loc  : File_Location := No_File_Location;
+      F           : Source_File := In_File;
+      Loc         : File_Location := No_File_Location;
       Start, Last : Integer;
    begin
       Assert (Me, Entity /= null,
@@ -1810,7 +1810,7 @@ package body Entities.Queries is
         (Tree : in out Scope_Tree_Access;
          EL   : Entity_Information_List_Access)
       is
-         Entity : Entity_Information;
+         Entity         : Entity_Information;
          End_Of_Scope   : File_Location;
          Start_Of_Scope : File_Location;
       begin
@@ -2140,8 +2140,7 @@ package body Entities.Queries is
 
    function Get_Entity_From_Ref
      (Entity : Entity_Information;
-      Ref    : E_Reference)
-      return Entity_Information
+      Ref    : E_Reference) return Entity_Information
    is
       Result : Entity_Information;
       Status : Find_Decl_Or_Body_Query_Status;
@@ -2194,9 +2193,9 @@ package body Entities.Queries is
      (Entity    : Entity_Information;
       Separator : String := ".") return String
    is
-      E : Entity_Information := Entity;
+      E             : Entity_Information := Entity;
       Last_Not_Null : Entity_Information := Entity;
-      Length : Natural := 0;
+      Length        : Natural := 0;
    begin
       while E /= null loop
          Length := Length + E.Name'Length + Separator'Length;
@@ -2268,7 +2267,7 @@ package body Entities.Queries is
    function Get_All_Called_Entities
      (Entity : Entity_Information) return Calls_Iterator
    is
-      Loc : File_Location := No_File_Location;
+      Loc     : File_Location := No_File_Location;
       Old_Loc : File_Location;
    begin
       loop
@@ -2733,8 +2732,8 @@ package body Entities.Queries is
    ------------------
 
    function Is_Parameter (Entity : Entity_Information) return Boolean is
-      Caller : constant Entity_Information :=
-                 Get_Caller (Declaration_As_Reference (Entity));
+      Caller     : constant Entity_Information :=
+                     Get_Caller (Declaration_As_Reference (Entity));
       Param_Iter : Subprogram_Iterator;
       Param      : Entity_Information;
    begin

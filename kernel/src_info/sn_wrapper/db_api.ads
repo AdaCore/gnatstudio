@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2004                      --
---                            ACT-Europe                             --
+--                      Copyright (C) 2002-2007                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,10 +23,10 @@ with Interfaces.C.Strings;
 package DB_API is
 
    type DB_File is private;
-   --  Database file descriptor.
+   --  Database file descriptor
 
    type Cursor_Position is (First, Last, By_Key);
-   --  Cursor positions for Set_Cursor.
+   --  Cursor positions for Set_Cursor
 
    type Cursor_Movement is (Prev, Next, Next_By_Key);
    --  Cursor movements fro Get_Pair
@@ -67,9 +67,9 @@ package DB_API is
    --  Redefine the standard "=" operator for pairs
 
    procedure Open
-     (DB         : out DB_File;
-      Files      : Interfaces.C.Strings.chars_ptr_array;
-      Success    : out Boolean);
+     (DB      : out DB_File;
+      Files   : Interfaces.C.Strings.chars_ptr_array;
+      Success : out Boolean);
    --  Opens specified file as database file.
    --  Sets cursor to the first key/data pair in database (see
    --  Set_Cursor).
@@ -130,7 +130,7 @@ package DB_API is
 
    function Get_Field_Count (The_CSF : CSF) return Natural;
    pragma Inline (Get_Field_Count);
-   --  Returns number of fields in specified CSF.
+   --  Returns number of fields in specified CSF
 
    DB_Error             : exception;
    DB_Close_Error       : exception;

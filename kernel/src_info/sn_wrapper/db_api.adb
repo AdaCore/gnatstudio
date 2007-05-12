@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002-2004                    --
---                            ACT-Europe                             --
+--                      Copyright (C) 2002-2007                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,8 +25,8 @@ with Interfaces.C.Strings; use Interfaces.C.Strings;
 
 package body DB_API is
 
-   --  Exception messages.
    E_Init_Failed : constant String := "DB is not initialized";
+   --  Exception messages
 
    package C renames Interfaces.C;
    package CStrings renames Interfaces.C.Strings;
@@ -61,9 +61,9 @@ package body DB_API is
    ----------
 
    procedure Open
-     (DB         : out DB_File;
-      Files      : chars_ptr_array;
-      Success    : out Boolean)
+     (DB      : out DB_File;
+      Files   : chars_ptr_array;
+      Success : out Boolean)
    is
       function Internal_Open
         (Num_Of_Files : Integer; Files : System.Address) return DB_File;

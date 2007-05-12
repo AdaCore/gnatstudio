@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2006                       --
---                             AdaCore                               --
+--                      Copyright (C) 2003-2007                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -39,11 +39,11 @@ package body Vdiff2_Module.Utils.Shell_Command is
       Number : Natural := 1) return Natural
    is
       Args_Line : Argument_List :=
-        (1 => new String'(Full_Name (File).all),
-         2 => new String'(Image (Pos)),
-         3 => new String'(Image (Number)),
-         4 => new String'(Style));
-      Res : constant String :=  Execute_GPS_Shell_Command
+                    (1 => new String'(Full_Name (File).all),
+                     2 => new String'(Image (Pos)),
+                     3 => new String'(Image (Number)),
+                     4 => new String'(Style));
+      Res       : constant String :=  Execute_GPS_Shell_Command
         (Kernel, "Editor.add_blank_lines", Args_Line);
 
    begin
@@ -57,7 +57,8 @@ package body Vdiff2_Module.Utils.Shell_Command is
 
    procedure Delete_Mark
      (Kernel : Kernel_Handle;
-      Link   : String) is
+      Link   : String)
+   is
       pragma Unreferenced (Kernel, Link);
    begin
       null; -- ??? corrected when nico add delete_mark command
@@ -72,9 +73,9 @@ package body Vdiff2_Module.Utils.Shell_Command is
       File     : Virtual_File)
    is
       Args_Edit : Argument_List :=
-        (1 => new String'(Full_Name (File).all),
-         2 => new String'("0"),
-         3 => new String'("0"));
+                    (1 => new String'(Full_Name (File).all),
+                     2 => new String'("0"),
+                     3 => new String'("0"));
    begin
       Execute_GPS_Shell_Command (Kernel, "Editor.edit", Args_Edit);
       Basic_Types.Free (Args_Edit);
@@ -122,11 +123,11 @@ package body Vdiff2_Module.Utils.Shell_Command is
       After  : Integer := -1) return String
    is
       Args_Replace_Text : Argument_List :=
-        (1 => new String'(Full_Name (File).all),
-         2 => new String'(Image (Line)),
-         3 => new String'(Image (Column)),
-         4 => new String'(Image (Before)),
-         5 => new String'(Image (After)));
+                            (1 => new String'(Full_Name (File).all),
+                             2 => new String'(Image (Line)),
+                             3 => new String'(Image (Column)),
+                             4 => new String'(Image (Before)),
+                             5 => new String'(Image (After)));
       Res               : constant String := Execute_GPS_Shell_Command
         (Kernel, "Editor.get_chars", Args_Replace_Text);
 
@@ -141,10 +142,10 @@ package body Vdiff2_Module.Utils.Shell_Command is
 
    function Get_File_Last_Line
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File : Virtual_File) return Natural
+      File   : Virtual_File) return Natural
    is
       Args_Line : Argument_List :=
-        (1 => new String'(Full_Name (File).all));
+                    (1 => new String'(Full_Name (File).all));
       Res       : constant String :=  Execute_GPS_Shell_Command
         (Kernel, "Editor.get_last_line", Args_Line);
 
@@ -162,7 +163,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
       Mark   : String) return Natural
    is
       Args_Line : Argument_List :=
-        (1 => new String'(Mark));
+                    (1 => new String'(Mark));
       Res       : constant String :=  Execute_GPS_Shell_Command
         (Kernel, "Editor.get_line", Args_Line);
 
@@ -177,18 +178,17 @@ package body Vdiff2_Module.Utils.Shell_Command is
 
    procedure Highlight_Line
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File  : Virtual_File;
-      Pos   : Natural;
-      Style : String := "";
+      File   : Virtual_File;
+      Pos    : Natural;
+      Style  : String := "";
       Number : Natural := 1)
    is
       Args_Highlight : Argument_List :=
-        (1 => new String'(Full_Name (File).all),
-         2 => new String'(Style),
-         3 => null);
+                         (1 => new String'(Full_Name (File).all),
+                          2 => new String'(Style),
+                          3 => null);
 
    begin
-
       for J in 1 .. Number loop
          Args_Highlight (3) := new String'(Image (Pos + J - 1));
          Execute_GPS_Shell_Command
@@ -204,7 +204,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
    ---------------------
 
    procedure Highlight_Range
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       File    : Virtual_File;
       Style   : String;
       Line    : Natural := 0;
@@ -212,11 +212,11 @@ package body Vdiff2_Module.Utils.Shell_Command is
       End_C   : Integer := -1)
    is
       Args_Highlight_Range : Argument_List :=
-        (1 => new String'(Full_Name (File).all),
-         2 => new String'(Style),
-         3 => new String'(Image (Line)),
-         4 => new String'("-1"),
-         5 => new String'("-1"));
+                               (1 => new String'(Full_Name (File).all),
+                                2 => new String'(Style),
+                                3 => new String'(Image (Line)),
+                                4 => new String'("-1"),
+                                5 => new String'("-1"));
 
    begin
       if Line /= 0 then
@@ -243,21 +243,21 @@ package body Vdiff2_Module.Utils.Shell_Command is
    procedure Register_Highlighting
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Default_Color : constant String  :=
-        To_String (Get_Pref (Diff_Default_Color));
-      Old_Color     : constant String  :=
-        To_String (Get_Pref (Diff_Old_Color));
-      Append_Color  : constant String  :=
-        To_String (Get_Pref (Diff_Append_Color));
-      Remove_Color  : constant String  :=
-        To_String (Get_Pref (Diff_Remove_Color));
-      Change_Color  : constant String  :=
-        To_String (Get_Pref (Diff_Change_Color));
+      Default_Color      : constant String  :=
+                             To_String (Get_Pref (Diff_Default_Color));
+      Old_Color          : constant String  :=
+                             To_String (Get_Pref (Diff_Old_Color));
+      Append_Color       : constant String  :=
+                             To_String (Get_Pref (Diff_Append_Color));
+      Remove_Color       : constant String  :=
+                             To_String (Get_Pref (Diff_Remove_Color));
+      Change_Color       : constant String  :=
+                             To_String (Get_Pref (Diff_Change_Color));
       Change_Fine_Color  : constant String  :=
-        To_String (Get_Pref (Diff_Fine_Change_Color));
-      Args          : Argument_List :=
-        (1 => new String'(Default_Style),
-         2 => new String'(Default_Color));
+                             To_String (Get_Pref (Diff_Fine_Change_Color));
+      Args               : Argument_List :=
+                             (1 => new String'(Default_Style),
+                              2 => new String'(Default_Color));
 
    begin
       --  <preferences>
@@ -321,12 +321,12 @@ package body Vdiff2_Module.Utils.Shell_Command is
       After  : Integer := -1)
    is
       Args_Replace_Text : Argument_List :=
-        (1 => new String'(Full_Name (File).all),
-         2 => new String'(Image (Line)),
-         3 => new String'(Image (Column)),
-         4 => new String'(Text),
-         5 => new String'(Image (Before)),
-         6 => new String'(Image (After)));
+                            (1 => new String'(Full_Name (File).all),
+                             2 => new String'(Image (Line)),
+                             3 => new String'(Image (Column)),
+                             4 => new String'(Text),
+                             5 => new String'(Image (Before)),
+                             6 => new String'(Image (After)));
    begin
       Execute_GPS_Shell_Command
         (Kernel, "Editor.replace_text", Args_Replace_Text);
@@ -339,14 +339,14 @@ package body Vdiff2_Module.Utils.Shell_Command is
 
    procedure Unhighlight
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File  : Virtual_File;
-      Pos   : Natural;
-      Style : String := "")
+      File   : Virtual_File;
+      Pos    : Natural;
+      Style  : String := "")
    is
       Args_Highlight : Argument_List :=
-        (1 => new String'(Full_Name (File).all),
-         2 => new String'(Style),
-         3 => new String'(Image (Pos)));
+                         (1 => new String'(Full_Name (File).all),
+                          2 => new String'(Style),
+                          3 => new String'(Image (Pos)));
    begin
       Execute_GPS_Shell_Command (Kernel, "Editor.unhighlight", Args_Highlight);
       Basic_Types.Free (Args_Highlight);
@@ -358,9 +358,9 @@ package body Vdiff2_Module.Utils.Shell_Command is
 
    procedure Unhighlight_Line
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File  : Virtual_File;
-      Pos   : Natural;
-      Style : String := "") is
+      File   : Virtual_File;
+      Pos    : Natural;
+      Style  : String := "") is
    begin
       Unhighlight (Kernel, File, Pos, Style);
       Unhighlight_Range (Kernel, File, Fine_Change_Style, Pos);
@@ -371,7 +371,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
    -----------------------
 
    procedure Unhighlight_Range
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       File    : Virtual_File;
       Style   : String;
       Line    : Natural := 0;
@@ -379,11 +379,11 @@ package body Vdiff2_Module.Utils.Shell_Command is
       End_C   : Integer := -1)
    is
       Args_Highlight_Range : Argument_List :=
-        (1 => new String'(Full_Name (File).all),
-         2 => new String'(Style),
-         3 => new String'(Image (Line)),
-         4 => new String'("-1"),
-         5 => new String'("-1"));
+                               (1 => new String'(Full_Name (File).all),
+                                2 => new String'(Style),
+                                3 => new String'(Image (Line)),
+                                4 => new String'("-1"),
+                                5 => new String'("-1"));
    begin
       if Line /= 0 then
          if End_C >= 0  and then Start_C >= 0 then

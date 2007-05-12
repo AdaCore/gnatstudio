@@ -319,9 +319,9 @@ package body VFS_Module is
             --  Then check if the file is a source file.
             else
                declare
-                  Files   : File_Array_Access :=
-                              Projects.Get_Source_Files
-                                (Prj, Recursive => False);
+                  Files : File_Array_Access :=
+                            Projects.Get_Source_Files
+                              (Prj, Recursive => False);
                begin
                   for J in Files'Range loop
                      if Files (J) = File_In then

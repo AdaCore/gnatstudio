@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2006                       --
---                             AdaCore                               --
+--                      Copyright (C) 2003-2007                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -48,10 +48,10 @@ package Diff_Utils2 is
 
    Null_Range : constant Diff_Range := (0, 0, Nothing, 0);
 
-   type   T_VRange  is array (1 .. 3) of Diff_Range;
-   type   T_VStr    is array (1 .. 3) of String_Access;
-   type   T_VOffset is array (1 .. 3) of Natural;
-   type   T_VFile   is array (T_VFile_Index) of Virtual_File;
+   type T_VRange  is array (1 .. 3) of Diff_Range;
+   type T_VStr    is array (1 .. 3) of String_Access;
+   type T_VOffset is array (1 .. 3) of Natural;
+   type T_VFile   is array (T_VFile_Index) of Virtual_File;
 
    procedure Free (V : in out T_VStr);
    --  free memory of each element of vector V
@@ -71,7 +71,7 @@ package Diff_Utils2 is
 
    procedure Free is
       new Ada.Unchecked_Deallocation (Diff_Chunk, Diff_Chunk_Access);
-   --  Free the memory associated with the head of the list Link.
+   --  Free the memory associated with the head of the list Link
 
    package Diff_Chunk_List is new Generic_List (Diff_Chunk_Access, Free);
    subtype Diff_List is Diff_Chunk_List.List;
@@ -153,7 +153,7 @@ package Diff_Utils2 is
    --  Calculate the displayable version of Diff with reference file Ref_File
 
    function Horizontal_Diff
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+     (Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
       Line1, Line2 : String) return Diff_List;
    --  Do a fine diff between two lines.
    --  The only fields set in the resulting list is Range1 and Next, other
@@ -172,6 +172,6 @@ private
      (Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
       Diff_Command : String;
       Ref_File, New_File : VFS.Virtual_File) return Diff_List;
-   --  Execute diff on File1 and File2 and return a list of differences.
+   --  Execute diff on File1 and File2 and return a list of differences
 
 end Diff_Utils2;

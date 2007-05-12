@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2006                       --
+--                      Copyright (C) 2002-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,20 +18,19 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.IO_Aux;               use GNAT.IO_Aux;
 with GNAT.Expect;               use GNAT.Expect;
-with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 with Basic_Types;
 with SN.Xref_Pools; use SN.Xref_Pools;
-
 with OS_Utils;
-with File_Utils;   use File_Utils;
-with String_Utils; use String_Utils;
-with Traces;       use Traces;
-
-with GNAT.OS_Lib; use GNAT.OS_Lib;
+with File_Utils;    use File_Utils;
+with String_Utils;  use String_Utils;
+with Traces;        use Traces;
 
 package body SN.Browse is
 
@@ -194,9 +193,9 @@ package body SN.Browse is
    ---------------------
 
    procedure Delete_Database (DB_Directory : String) is
-      Dir          : Dir_Type;
-      Last         : Natural;
-      Dir_Entry    : String (1 .. 1024);
+      Dir       : Dir_Type;
+      Last      : Natural;
+      Dir_Entry : String (1 .. 1024);
       --  1024 is the value of FILENAME_MAX in stdio.h (see
       --  GNAT.Directory_Operations)
    begin

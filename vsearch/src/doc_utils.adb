@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2006                      --
+--                      Copyright (C) 2005-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -100,10 +100,10 @@ package body Doc_Utils is
             end if;
 
             Chars_Buffer := Glib.Convert.Convert
-              (Str          => Tmp_Buffer.all,
-               To_Codeset   => "UTF-8",
-               From_Codeset => Get_File_Charset (Declaration_File),
-               Bytes_Read   => Read'Unchecked_Access,
+              (Str           => Tmp_Buffer.all,
+               To_Codeset    => "UTF-8",
+               From_Codeset  => Get_File_Charset (Declaration_File),
+               Bytes_Read    => Read'Unchecked_Access,
                Bytes_Written => Buffer_Len'Unchecked_Access);
             Free (Tmp_Buffer);
 
