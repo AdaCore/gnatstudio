@@ -24,6 +24,7 @@
 --  </description>
 
 with Glib;                     use Glib;
+with GPS.Intl;                 use GPS.Intl;
 with Projects;                 use Projects;
 with Code_Analysis_Tree_Model; use Code_Analysis_Tree_Model;
 with Code_Analysis_Module;     use Code_Analysis_Module;
@@ -45,10 +46,10 @@ package body Code_Analysis_Tree_Model is
       if Analysis_Id.Coverage_Data /= null then
          Fill_Iter (Model, Iter, Analysis_Id.Coverage_Data, Bin_Mode);
       else
-         Set (Model, Iter, Cov_Col, " Coverage information not available");
+         Set (Model, Iter, Cov_Col, -" Coverage information not available");
          Set (Model, Iter, Cov_Sort, Glib.Gint (0));
          Set (Model, Iter, Cov_Bar_Val, Glib.Gint (0));
-         Set (Model, Iter, Cov_Bar_Txt, "n/a");
+         Set (Model, Iter, Cov_Bar_Txt, -"n/a");
       end if;
    end Fill_Iter;
 
@@ -117,8 +118,8 @@ package body Code_Analysis_Tree_Model is
    begin
       Append (Model, Iter, Parent);
       Self_Iter := Iter;
-      Gtk.Tree_Store.Set (Model, Iter, Pix_Col, C_Proxy
-           (Code_Analysis_Module_ID.File_Pixbuf));
+      Gtk.Tree_Store.Set
+        (Model, Iter, Pix_Col, C_Proxy (Code_Analysis_Module_ID.File_Pixbuf));
       Gtk.Tree_Store.Set
         (Model, Iter, Name_Col, VFS.Base_Name (File_Node.Name));
       File_Set.Set (Model, Iter, Node_Col, File_Node.all'Access);
@@ -240,7 +241,6 @@ package body Code_Analysis_Tree_Model is
       Map_Cur   : File_Maps.Cursor := Prj_Node.Files.First;
       Sort_Arr  : File_Array (1 .. Integer (Prj_Node.Files.Length));
    begin
-
       for J in Sort_Arr'Range loop
          Sort_Arr (J) := Element (Map_Cur);
          Next (Map_Cur);
@@ -267,7 +267,6 @@ package body Code_Analysis_Tree_Model is
       Map_Cur   : File_Maps.Cursor := Prj_Node.Files.First;
       Sort_Arr  : File_Array (1 .. Integer (Prj_Node.Files.Length));
    begin
-
       for J in Sort_Arr'Range loop
          Sort_Arr (J) := Element (Map_Cur);
          Next (Map_Cur);
