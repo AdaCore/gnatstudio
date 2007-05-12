@@ -589,12 +589,12 @@ package body VCS_Activities is
       File     : Virtual_File)
    is
       F_Activity : constant Activity_Id := Get_File_Activity (File);
-      Item       : Activity_Record := Get (Activity);
       Project    : constant Project_Type :=
                      Get_Project_From_File (Get_Registry (Kernel).all, File);
       VCS        : constant VCS_Access :=
                      Get_VCS_From_Id
                        (Get_Attribute_Value (Project, Vcs_Kind_Attribute));
+      Item       : Activity_Record := Get (Activity);
 
       procedure Add (File : Virtual_File);
       --  Add Name (a file or directory) into the VCS Activities
@@ -657,6 +657,13 @@ package body VCS_Activities is
    begin
       String_Hash_Table.Remove (Item.Keys.all, File_Key (File));
       Remove_From_List (Item.Files, Full_Name (File, False).all);
+
+      if String_List.Length (Item.Files) = 0 then
+         --  No more file in this activity, clear the information
+         Item.VCS := null;
+         Item.Sorted := False;
+         Item.Group_Commit := False;
+      end if;
 
       Set (Activity, Item);
       Save_Activities (Kernel);
