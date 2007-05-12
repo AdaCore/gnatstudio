@@ -231,6 +231,10 @@ package body Code_Coverage is
                           Called   => File_Node.Lines
                             (J).Analysis_Data.Coverage_Data.Coverage,
                           Children => 1);
+                     --  ??? Here we make the hypothesis that the 1st
+                     --  executed line of the subprogram was executed
+                     --  excatly one time by subprogram calls
+                     --  It fits with GCC 4.1 series
                      Subp_Cov := Subprogram_Coverage
                        (Subp_Node.Analysis_Data.Coverage_Data.all)'Access;
                   else
