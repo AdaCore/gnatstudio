@@ -42,15 +42,27 @@ package Code_Analysis is
    -- Tree decoration records --
    -----------------------------
 
+   type Coverage_Status is
+     (Valid,
+      File_Not_Found,
+      --  Error status obtained if no Gcov file was found associated to a
+      --  source file when trying to load Gcov info
+      File_Corrupted
+      --  Error status obtained when the Gcov file that is attempted to be
+      --  parsed is older than the source file associated to
+     );
+
    type Coverage is tagged record
-      Coverage : Natural := 99;
+      Coverage : Integer;
+      Status   : Coverage_Status := Valid;
    end record;
    --  Basic code coverage information
-   --  Record the Line's execution counts
-   --  and the Subprogram, File and Project number of not covered lines
+   --  Record the Line's execution counts and the Subprogram, File and Project
+   --  number of not covered lines
+   --  When negative, it stands for a Gcov_Error_Code (see Code_Coverage.ads)
 
    type Node_Coverage is new Coverage with record
-      Children : Natural := 99;
+      Children : Natural;
    end record;
    --  Extra node coverage information
    --  Children is the Subprogram, File or Project children count
