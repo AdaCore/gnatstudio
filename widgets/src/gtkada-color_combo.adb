@@ -62,11 +62,6 @@ package body Gtkada.Color_Combo is
      (Combo : access Gtk_Color_Combo_Record'Class);
    --  Redisplay the contents of the button
 
-   procedure Arrow_Selected
-     (Combo : access Gtk_Color_Combo_Record'Class);
-   --  Called whenever the arrow button is selected to open or hide the
-   --  popup window.
-
    procedure Button_Clicked (Combo : access Gtk_Widget_Record'Class);
    --  Called when the button is clicked
 
@@ -107,9 +102,6 @@ package body Gtkada.Color_Combo is
         (Combo.Selection, Signal_Color_Changed, Color_Selected'Access, Combo);
       Color_Cb.Connect
         (Combo, Signal_Map, Display_Button'Access, After => True);
-      Color_Cb.Object_Connect
-        (Get_Arrow (Combo), "toggled", Arrow_Selected'Access, Combo);
-      --  ??? can't find the toggled signal on a Gtk_Arrow!
       Show (Combo.Selection);
    end Initialize;
 
@@ -171,10 +163,14 @@ package body Gtkada.Color_Combo is
    is
       function Normalize (V : Gcolor_Int) return String;
 
+      ---------------
+      -- Normalize --
+      ---------------
+
       function Normalize (V : Gcolor_Int) return String is
-         S : String (1 .. 8);  --  "16#....#" or "16#.#", ....
-         O : String (1 .. 4) := "0000";
-         Index : Natural := S'Last;
+         S       : String (1 .. 8);  --  "16#....#" or "16#.#", ....
+         O       : String (1 .. 4) := "0000";
+         Index   : Natural := S'Last;
          O_Index : Natural := O'Last;
 
       begin
@@ -209,7 +205,7 @@ package body Gtkada.Color_Combo is
    procedure Color_Selected
      (Combo : access Gtk_Color_Combo_Record'Class)
    is
-      Color : Gdk_Color;
+      Color      : Gdk_Color;
       Components : Color_Array;
    begin
       Get_Color (Combo.Selection, Components);
@@ -263,20 +259,5 @@ package body Gtkada.Color_Combo is
       Draw (Pixmap, Full_Area);
       Unref (Tmp_Gc);
    end Display_Button;
-
-   --------------------
-   -- Arrow_Selected --
-   --------------------
-
-   procedure Arrow_Selected
-     (Combo : access Gtk_Color_Combo_Record'Class) is
-   begin
-      --  The following call should be used to set the current color,
-      --  however it raises some warnings in gtk+ unless the color selection
-      --  dialog is first hidden.
-      Hide (Combo.Selection);
-      Set_Color (Combo, Combo.Color);
-      Show (Combo.Selection);
-   end Arrow_Selected;
 
 end Gtkada.Color_Combo;
