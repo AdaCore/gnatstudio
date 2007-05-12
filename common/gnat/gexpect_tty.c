@@ -2,7 +2,7 @@
    Adapted from process.c in GNU Emacs.
    Copyright (C) 1985, 86, 87, 88, 93, 94, 95, 96, 1998
       Free Software Foundation, Inc.
-   Copyright (C) 2000-2006 AdaCore.
+   Copyright (C) 2000-2007 AdaCore.
 
 This file is part of GPS.
 
@@ -191,7 +191,6 @@ relocate_fd (fd, minfd)
       return new;
     }
 }
-
 
 /********************************************************************
  **  gvd_set_tty ()
@@ -690,7 +689,6 @@ allocate_pty_the_old_fashioned_way ()
 }
 #endif /* HAVE_PTYS */
 
-
 /**********************************************************
  **  child_setup_tty ()
  **
@@ -739,7 +737,6 @@ child_setup_tty (out)
   s.main.c_cc[VEOF] = 04;	/* insure that EOF is Control-D */
   s.main.c_cc[VERASE] = CDISABLE;	/* disable erase processing */
   s.main.c_cc[VKILL] = CDISABLE;	/* disable kill processing */
-
 
 #ifdef HPUX
   s.main.c_cflag = (s.main.c_cflag & ~CBAUD) | B9600; /* baud rate sanity */
@@ -957,7 +954,6 @@ gvd_setup_communication (struct GVD_Process** process_out) /* output param */
   /* Use volatile to protect variables from being clobbered by longjmp.  */
   volatile int forkin, forkout;
   volatile int pty_flag = 0;
-
 
   process = (struct GVD_Process*)malloc (sizeof (struct GVD_Process));
   *process_out = process;
@@ -1256,7 +1252,6 @@ gvd_setup_child_communication (struct GVD_Process* process, char** argv,
   process->pid=pid;
   return pid;
 }
-
 
 /**************************************************************
  **  gvd_setup_parent_communication ()
@@ -1812,7 +1807,6 @@ ReadBytes (HANDLE hFile, LPVOID buffer, DWORD size)
     }
 }
 
-
 static int
 nt_spawnve (char *exe, char **argv, char *env, struct GVD_Process *process)
 {
@@ -2029,11 +2023,8 @@ nt_spawnve (char *exe, char **argv, char *env, struct GVD_Process *process)
 		      flags, env, NULL, &start, &process->procinfo))
     goto EH_Fail;
 
-  pid = (int) process->procinfo.dwProcessId;
-
-  /* Hack for Windows 95, which assigns large (ie negative) pids */
-  if (pid < 0)
-    pid = -pid;
+  pid = (int) process->procinfo.hProcess;
+  process->pid=pid;
 
   return pid;
 
@@ -2080,6 +2071,7 @@ gvd_setup_communication (struct GVD_Process** process_out) /* output param */
   struct GVD_Process* process;
 
   process = (struct GVD_Process*)malloc (sizeof (struct GVD_Process));
+  ZeroMemory (process, sizeof (struct GVD_Process));
   *process_out = process;
 
   return 0;
@@ -2248,7 +2240,6 @@ gvd_setup_parent_communication
   *err = *out;
   *pid = process->pid;
 }
-
 
 typedef struct _child_process
 {
@@ -2483,7 +2474,6 @@ gvd_free_process (struct GVD_Process** process)
 }
 
 #endif /* WIN32 */
-
 
 /* TTY handling */
 
