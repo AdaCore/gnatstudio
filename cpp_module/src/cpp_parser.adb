@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2006                       --
---                            AdaCore                                --
+--                      Copyright (C) 2003-2007                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -2713,13 +2713,13 @@ package body CPP_Parser is
          return Source_File
       is
          Project : Project_Type;
-         Source : Source_File;
+         Source  : Source_File;
       begin
          Source := Get_Or_Create
-           (Db   => Handler.Db,
-            File => File,
+           (DB      => Handler.Db,
+            File    => File,
             Handler => LI_Handler (Handler),
-            LI   => null);
+            LI      => null);
          if Source = null then
             if File_Has_No_LI_Report /= null then
                Entities.Error
@@ -2811,19 +2811,19 @@ package body CPP_Parser is
    ------------------------------
 
    function Parse_All_LI_Information
-     (Handler         : access CPP_Handler_Record;
-      Project         : Projects.Project_Type;
-      Recursive       : Boolean := False) return Integer
+     (Handler   : access CPP_Handler_Record;
+      Project   : Projects.Project_Type;
+      Recursive : Boolean := False) return Integer
    is
-      Iter  : Imported_Project_Iterator :=
-        Start (Project, Recursive => Recursive);
-      P     : Project_Type;
-      Count : Natural := 0;
-      Files : chars_ptr_array (1 .. 1);
-      Table : DB_File;
-      F_Pair : Pair;
-      F_Data : F_Table;
-      Db_Dir  : constant String := Name_As_Directory (SN.Browse.DB_Dir_Name);
+      DB_Dir  : constant String := Name_As_Directory (SN.Browse.DB_Dir_Name);
+      Iter    : Imported_Project_Iterator :=
+                  Start (Project, Recursive => Recursive);
+      P       : Project_Type;
+      Count   : Natural := 0;
+      Files   : chars_ptr_array (1 .. 1);
+      Table   : DB_File;
+      F_Pair  : Pair;
+      F_Data  : F_Table;
       Success : Boolean;
       Source  : Source_File;
       pragma Unreferenced (Source);
@@ -2834,7 +2834,7 @@ package body CPP_Parser is
          exit when P = No_Project;
 
          Files (1) := New_String
-           (Name_As_Directory (Object_Path (P, Recursive => False)) & Db_Dir
+           (Name_As_Directory (Object_Path (P, Recursive => False)) & DB_Dir
             & SN.Browse.DB_File_Name & Table_Extension (F));
          DB_API.Open (Table, Files, Success);
          Free (Files (1));
@@ -2872,14 +2872,13 @@ package body CPP_Parser is
 
    function Create_CPP_Handler
      (Db       : Entities.Entities_Database;
-      Registry : Projects.Registry.Project_Registry)
-      return Entities.LI_Handler
+      Registry : Projects.Registry.Project_Registry) return Entities.LI_Handler
    is
       CPP : constant CPP_Handler := new CPP_Handler_Record;
    begin
-      CPP.Db       := Db;
-      CPP.Registry := Registry;
-      CPP.DBIMP_Path := null;
+      CPP.Db            := Db;
+      CPP.Registry      := Registry;
+      CPP.DBIMP_Path    := null;
       CPP.CBrowser_Path := null;
       return LI_Handler (CPP);
    end Create_CPP_Handler;
@@ -2889,9 +2888,9 @@ package body CPP_Parser is
    ------------------------
 
    function Database_Timestamp (Project : Project_Type) return Time is
-      DB_Dir           : constant String := Get_DB_Dir (Project);
-      TO_File_Name     : constant Virtual_File :=
-        Create (Full_Filename => DB_Dir & SN.Browse.DB_File_Name & ".to");
+      DB_Dir       : constant String := Get_DB_Dir (Project);
+      TO_File_Name : constant Virtual_File := Create
+        (Full_Filename => DB_Dir & SN.Browse.DB_File_Name & ".to");
    begin
       return File_Time_Stamp (TO_File_Name);
    end Database_Timestamp;
@@ -2901,17 +2900,17 @@ package body CPP_Parser is
    --------------------
 
    procedure Browse_Project
-     (Project      : Project_Type;
-      Iterator     : in out CPP_Handler_Iterator'Class;
-      Errors       : Projects.Error_Report;
-      Single_File  : VFS.Virtual_File := VFS.No_File)
+     (Project     : Project_Type;
+      Iterator    : in out CPP_Handler_Iterator'Class;
+      Errors      : Projects.Error_Report;
+      Single_File : VFS.Virtual_File := VFS.No_File)
    is
-      DB_Dir           : constant String := Get_DB_Dir (Project);
-      Num_C_Files      : Natural := 0;
-      Tmp_File         : File_Type;
-      Success          : Boolean;
-      TO_Timestamp     : constant Time := Database_Timestamp (Project);
-      Recompute_TO     : Boolean := False;
+      DB_Dir       : constant String := Get_DB_Dir (Project);
+      TO_Timestamp : constant Time := Database_Timestamp (Project);
+      Num_C_Files  : Natural := 0;
+      Tmp_File     : File_Type;
+      Success      : Boolean;
+      Recompute_TO : Boolean := False;
 
    begin
       --  Prepare the list of files
@@ -2923,8 +2922,8 @@ package body CPP_Parser is
 
       if Single_File = VFS.No_File then
          Iterator.Current_Files := Get_Source_Files
-           (Project            => Project,
-            Recursive          => False);
+           (Project   => Project,
+            Recursive => False);
       else
          Iterator.Current_Files := new File_Array'(1 => Single_File);
       end if;
@@ -2949,6 +2948,7 @@ package body CPP_Parser is
 
          Iterator.List_Filename := new String'(DB_Dir & "gps_list");
          Create (Tmp_File, Out_File, Name => Iterator.List_Filename.all);
+
       else
          Iterator.State := Skip_Project;
          return;
@@ -2956,11 +2956,14 @@ package body CPP_Parser is
 
       for F in Iterator.Current_Files'Range loop
          declare
-            File   : constant Virtual_File := Iterator.Current_Files (F);
-            Lang   : constant String := Get_Language_From_File
+            File           : constant Virtual_File :=
+                               Iterator.Current_Files (F);
+            Lang           : constant String := Get_Language_From_File
               (Iterator.Lang_Handler, File);
             Xref_File_Name : constant String :=
-              DB_Dir & Base_Name (File) & Xref_Suffix;
+                               Normalize_Pathname
+                                 (DB_Dir & Base_Name (File) & Xref_Suffix,
+                                  Case_Sensitive => False);
          begin
             if Lang = C_String or else Lang = Cpp_String then
 
@@ -2977,7 +2980,7 @@ package body CPP_Parser is
                   end if;
 
                   Put_Line (Tmp_File, "@" & Xref_File_Name);
-                  Put_Line (Tmp_File, Full_Name (File).all);
+                  Put_Line (Tmp_File, Full_Name (File, True).all);
                   Recompute_TO := True;
 
                elsif not Recompute_TO
@@ -3031,8 +3034,9 @@ package body CPP_Parser is
       Iter.Lang_Handler := Language_Handler (Lang_Handler);
       Iter.Do_Dbimp     := False;
 
-      Browse_Project (Current (Iter.Prj_Iterator), Iter,
-                      Errors => Errors, Single_File => File);
+      Browse_Project
+        (Current (Iter.Prj_Iterator), Iter,
+         Errors => Errors, Single_File => File);
 
       return Iter;
    end Generate_LI_For_Source;
@@ -3042,11 +3046,11 @@ package body CPP_Parser is
    -----------------------------
 
    function Generate_LI_For_Project
-     (Handler       : access CPP_Handler_Record;
-      Lang_Handler  : access Abstract_Language_Handler_Record'Class;
-      Project       : Projects.Project_Type;
-      Errors        : Projects.Error_Report;
-      Recursive     : Boolean := False) return LI_Handler_Iterator'Class
+     (Handler      : access CPP_Handler_Record;
+      Lang_Handler : access Abstract_Language_Handler_Record'Class;
+      Project      : Projects.Project_Type;
+      Errors       : Projects.Error_Report;
+      Recursive    : Boolean := False) return LI_Handler_Iterator'Class
    is
       Iter : CPP_Handler_Iterator;
    begin
@@ -3074,12 +3078,16 @@ package body CPP_Parser is
       Errors   : Projects.Error_Report;
       Finished : out Boolean)
    is
-      Process_Alive  : Boolean := False;
-      Success        : Boolean;
-      DB_Dirs        : GNAT.Strings.String_List_Access;
+      Process_Alive : Boolean := False;
+      Success       : Boolean;
+      DB_Dirs       : GNAT.Strings.String_List_Access;
 
       procedure Next_Project;
       --  Parse the source files for the next project
+
+      ------------------
+      -- Next_Project --
+      ------------------
 
       procedure Next_Project is
       begin
@@ -3123,6 +3131,7 @@ package body CPP_Parser is
                   PD             => Iterator.PD);
                Iterator.Process_Running := True;
                GNAT.Strings.Free (DB_Dirs);
+
             else
                Iterator.Process_Running := False;
                Iterator.State := Done;
