@@ -31,6 +31,11 @@ with Code_Analysis;          use Code_Analysis;
 
 package Code_Coverage is
 
+   procedure Set_Error
+     (File_Node  : Code_Analysis.File_Access;
+      Error_Code : Coverage_Status);
+   --  Sets a coverage data with Error_Code for Status to the given File_Node
+
    procedure Add_File_Info
      (File_Node     : Code_Analysis.File_Access;
       File_Contents : String_Access;
