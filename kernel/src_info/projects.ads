@@ -320,6 +320,7 @@ package Projects is
    Obj_Dir_Attribute               : constant Attribute_Pkg;
    Vcs_Kind_Attribute              : constant Attribute_Pkg;
    Vcs_Repository_Root             : constant Attribute_Pkg;
+   VCS_Patch_Root                  : constant Attribute_Pkg;
    Global_Pragmas_Attribute        : constant Attribute_Pkg;
    Local_Pragmas_Attribute         : constant Attribute_Pkg;
    Locally_Removed_Files_Attribute : constant Attribute_Pkg;
@@ -754,6 +755,8 @@ private
    Vcs_Kind_Attribute        : constant Attribute_Pkg := "ide#vcs_kind";
    Vcs_Repository_Root       : constant Attribute_Pkg :=
                                  "ide#vcs_repository_root";
+   VCS_Patch_Root            : constant Attribute_Pkg :=
+                                 "ide#vcs_patch_root";
    Global_Pragmas_Attribute  : constant Attribute_Pkg :=
                                  "builder#global_configuration_pragmas";
    Local_Pragmas_Attribute   : constant Attribute_Pkg :=
