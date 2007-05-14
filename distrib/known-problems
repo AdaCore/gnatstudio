@@ -93,6 +93,11 @@ G412-023 Big items truncated in the debugger Data window
               SHIFT to keep the current selection) to make sure it is not
               actually located on the following line.
 
+- FB30-007 Completion doesn't work on symbol operators
+  Problem:    When completing symbol operators, for example A."+" (|, the
+              completion engine doesn't provide any completion.
+  Workaround: Manually complete the code.
+
 - F907-001 Code fixing doesn't work with double quotes
   Problem:    When strings involves double quotes, the autofix process is
               sometimes unable to locate precisely where the fix has to be
