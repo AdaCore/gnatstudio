@@ -105,7 +105,8 @@ package body Codefix.Formal_Errors is
    exception
       when E : Constraint_Error =>
          Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+                "Unexpected exception " & Exception_Information (E)
+               & " on message '" & Error_Line & "'");
          Free (This);
          This := Invalid_Error_Message;
    end Initialize;
