@@ -204,16 +204,13 @@ package body Completion.Expression_Parser is
 
       procedure Skip_String (Offset : in out Natural) is
       begin
-         while Offset > 0 loop
+         while Offset > 1 loop
             case Buffer (Offset) is
                when '"' =>
-                  if Offset > 0 then
-
-                     if Buffer (Offset - 1) /= '"' then
-                        exit;
-                     else
-                        Offset := UTF8_Find_Prev_Char (Buffer, Offset);
-                     end if;
+                  if Buffer (Offset - 1) /= '"' then
+                     exit;
+                  else
+                     Offset := UTF8_Find_Prev_Char (Buffer, Offset);
                   end if;
 
                when others =>
@@ -385,6 +382,26 @@ package body Completion.Expression_Parser is
                Push (Token);
                Blank_Here := True;
 
+            when '"' =>
+               if Data (First (Result)).Tok_Type = Tok_Open_Parenthesis
+                 or else Data (First (Result)).Tok_Type = Tok_Expression
+               then
+                  --  We are in an operator symbol case
+
+                  Token.Tok_Type := Tok_Identifier;
+                  Token.Token_Name_Last := Offset;
+
+                  Offset := UTF8_Find_Prev_Char (Buffer, Offset);
+
+                  Skip_String (Offset);
+
+                  Token.Token_Name_First := Offset;
+
+                  Push (Token);
+               else
+                  exit;
+               end if;
+
             when ASCII.LF =>
                Skip_Comment_Line (Offset);
 
@@ -397,7 +414,6 @@ package body Completion.Expression_Parser is
                         (UTF8_Get_Char (Buffer (Offset .. Next_Ind)))
                     or else Buffer (Offset) = '_')
                then
-
                   Token.Tok_Type := Tok_Identifier;
                   Token.Token_Name_First := Offset;
 
