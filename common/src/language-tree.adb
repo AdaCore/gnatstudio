@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006                           --
+--                      Copyright (C) 2006-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -363,6 +363,9 @@ package body Language.Tree is
         Null_Construct_Tree_Iterator;
 
    begin
+      if Tree.Contents'Length = 0 then
+         return Null_Construct_Tree_Iterator;
+      end if;
 
       if Position = Before then
          if Match_Category (Tree.Contents (1).Construct.Category) then
@@ -840,7 +843,14 @@ package body Language.Tree is
 
          Word_Begin := Index;
          Word_End := Word_Begin;
-         Skip_Word (Identifier, Word_End);
+
+         if Identifier (Word_Begin) = '"' then
+            Word_End := Word_End + 1;
+            Skip_To_Char (Identifier, Word_End, '"');
+            Word_End := Word_End + 1;
+         else
+            Skip_Word (Identifier, Word_End);
+         end if;
 
          Index := Word_End;
          Word_End := Word_End - 1;
