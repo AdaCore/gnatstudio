@@ -19,11 +19,14 @@
 -----------------------------------------------------------------------
 
 with Ada.Calendar;              use Ada.Calendar;
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Directories;           use Ada.Directories;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
 with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
 with GNAT.OS_Lib;               use GNAT;
+with GNAT.Strings;
 
 with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
@@ -33,12 +36,15 @@ with Gtkada.MDI;                use Gtkada.MDI;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with Commands;                  use Commands;
 with Log_Utils;                 use Log_Utils;
+with OS_Utils;                  use OS_Utils;
+with Projects;                  use Projects;
 with String_List_Utils;         use String_List_Utils;
 with Traces;                    use Traces;
 with VCS;                       use VCS;
@@ -122,6 +128,22 @@ package body VCS_Activities_View_API is
    function Execute
      (Command : access Edit_Action_Command_Type) return Command_Return_Type;
 
+   --  Action adjust patch root
+
+   type Adjust_Patch_Action_Command_Type is new Root_Command with record
+      Kernel        : Kernel_Handle;
+      Patch_File    : Virtual_File;     -- patch file
+      Files         : String_List.List; -- all files contained in the patch
+      Root_Dir      : String_Access;    -- the patch root directory to set
+      Header_Length : Positive;         -- the character length of the header
+   end record;
+   type Adjust_Patch_Action_Command_Access is
+     access Adjust_Patch_Action_Command_Type;
+
+   function Execute
+     (Command : access Adjust_Patch_Action_Command_Type)
+      return Command_Return_Type;
+
    -------------
    -- Execute --
    -------------
@@ -133,6 +155,113 @@ package body VCS_Activities_View_API is
    begin
       Execute_GPS_Shell_Command
         (Command.Kernel, "Editor.edit", (1 => Filename'Unchecked_Access));
+      return Success;
+   end Execute;
+
+   function Execute
+     (Command : access Adjust_Patch_Action_Command_Type)
+      return Command_Return_Type
+   is
+      procedure Handle (Filename : String);
+      --  Handle this filename in the patch
+
+      Root_Dir      : constant String := To_Lower (Command.Root_Dir.all);
+      Iter          : String_List.List_Node;
+      Patch         : Strings.String_Access := Read_File (Command.Patch_File);
+      Patch_Content : Unbounded_String := To_Unbounded_String (Patch.all);
+
+      ------------
+      -- Handle --
+      ------------
+
+      procedure Handle (Filename : String) is
+         BF : constant String := Simple_Name (Filename);
+         LF : constant String := To_Lower (Filename);
+         NF : String := Filename;
+
+         procedure Replace_Token (Prefix, Token, By : String);
+         --  Replaces the slice matching ^<prefix>.*<token> by By string
+
+         -------------------
+         -- Replace_Token --
+         -------------------
+
+         procedure Replace_Token (Prefix, Token, By : String) is
+            First, Last : Natural := 1;
+         begin
+            First := Command.Header_Length;
+
+            Do_Replace : loop
+               Last := Index (Patch_Content, Token, From => First);
+
+               if Last = 0 then
+                  --  No more match, exit now, this should not append with a
+                  --  properly formated patch as we exit when the first match
+                  --  is found on the patch file.
+                  exit Do_Replace;
+
+               else
+                  --  Look for the start of the line
+
+                  First := Index
+                    (Patch_Content, String'(1 => ASCII.LF),
+                     From  => Last,
+                     Going => Ada.Strings.Backward);
+
+                  if First /= 0
+                    and then Slice
+                      (Patch_Content, First + 1, First + Prefix'Length)
+                      = Prefix
+                  then
+                     First := First + Prefix'Length + 1;
+                     Last := Last + Token'Length - 1;
+
+                     Replace_Slice (Patch_Content, First, Last, By);
+                     exit Do_Replace;
+
+                  else
+                     --  Do not macth, check for next macth
+                     First := Last + Token'Length;
+                  end if;
+               end if;
+            end loop Do_Replace;
+         end Replace_Token;
+
+      begin
+         --  Use forward slash into the patch file, this is fine for UNIXes and
+         --  Windows.
+
+         for K in NF'Range loop
+            if NF (K) = '\' then
+               NF (K) := '/';
+            end if;
+         end loop;
+
+         if LF (LF'First .. LF'First + Root_Dir'Length - 1) = Root_Dir then
+            Replace_Token
+              ("--- ", BF, NF (NF'First + Root_Dir'Length .. NF'Last));
+            Replace_Token
+              ("*** ", BF, NF (NF'First + Root_Dir'Length .. NF'Last));
+         end if;
+      end Handle;
+
+   begin
+      Strings.Free (Patch);
+
+      Iter := String_List.First (Command.Files);
+
+      for K in 1 .. String_List.Length (Command.Files) loop
+         Handle (String_List.Data (Iter));
+         Iter := String_List.Next (Iter);
+      end loop;
+
+      declare
+         W_File : Writable_File := Write_File (Command.Patch_File);
+      begin
+         Write (W_File, To_String (Patch_Content), As_UTF8 => False);
+         Close (W_File);
+      end;
+
       return Success;
    end Execute;
 
@@ -555,23 +684,25 @@ package body VCS_Activities_View_API is
       procedure Append_Indent (Str : String);
       --  Append Str into the patch file content, add Tab before each new line
 
-      Tab       : constant String := "        ";
-      Kernel    : constant Kernel_Handle := Get_Kernel (Context);
-      Logs_Dir  : constant String := Get_Home_Dir (Kernel) & "log_files";
-      Activity  : constant Activity_Id :=
-                    Value (Activity_Information (Context));
-      VCS       : constant VCS_Access :=
-                    Get_VCS_For_Activity (Kernel, Activity);
-      Files     : constant String_List.List :=
-                    Get_Files_In_Activity (Activity);
-      Filename  : constant String := Logs_Dir & OS_Lib.Directory_Separator &
-                    Image (Activity) & ".dif";
-      File      : Virtual_File;
-      W_File    : Writable_File;
-      Content   : Unbounded_String;
-      Iter      : String_List.List_Node;
+      Tab          : constant String := "        ";
+      Kernel       : constant Kernel_Handle := Get_Kernel (Context);
+      Logs_Dir     : constant String := Get_Home_Dir (Kernel) & "log_files";
+      Activity     : constant Activity_Id :=
+                       Value (Activity_Information (Context));
+      VCS          : constant VCS_Access :=
+                       Get_VCS_For_Activity (Kernel, Activity);
+      Files        : constant String_List.List :=
+                       Get_Files_In_Activity (Activity);
+      Filename     : constant String :=
+                       Logs_Dir & OS_Lib.Directory_Separator
+                         & Image (Activity) & ".dif";
+      File         : Virtual_File;
+      W_File       : Writable_File;
+      Content      : Unbounded_String;
+      Iter         : String_List.List_Node;
 
-      Edit_File : Edit_Action_Command_Access;
+      Edit_File    : Edit_Action_Command_Access;
+      Adjust_Patch : Adjust_Patch_Action_Command_Access;
 
       ------------
       -- Indent --
@@ -641,6 +772,35 @@ package body VCS_Activities_View_API is
          Diff_Patch (VCS, Create (String_List.Data (Iter)), File);
          Iter := String_List.Next (Iter);
       end loop;
+
+      --  Adjust patch root
+
+      declare
+         Root_Project : constant Project_Type := Get_Project (Kernel);
+         Root_Dir     : constant String :=
+                          Format_Pathname
+                            (Get_Attribute_Value
+                               (Root_Project,
+                                VCS_Patch_Root,
+                                Default => Full_Name
+                                  (Project_Directory (Root_Project)).all));
+      begin
+         Adjust_Patch := new Adjust_Patch_Action_Command_Type;
+         Adjust_Patch.Kernel := Kernel;
+         Adjust_Patch.Patch_File := File;
+         Adjust_Patch.Files := Files;
+         if Is_Directory_Separator (Root_Dir (Root_Dir'Last)) then
+            Adjust_Patch.Root_Dir := new String'(Root_Dir);
+         else
+            Adjust_Patch.Root_Dir :=
+              new String'(Root_Dir & OS_Lib.Directory_Separator);
+         end if;
+
+         Adjust_Patch.Header_Length := Length (Content);
+
+         Launch_Background_Command
+           (Kernel, Adjust_Patch, True, True, Name (VCS));
+      end;
 
       --  Add the last command that will open the file containing the patch
 
