@@ -188,7 +188,6 @@
        <string />
    </project_attribute>
 
-
    <!--  VCS attributes -->
 
    <project_attribute
@@ -225,9 +224,19 @@
        name="vcs_repository_root"
        package="IDE"
        editor_page="VCS"
-       editor_section="Repository"
+       editor_section="Path"
        description="The repository root path"
        label="Repository">
+       <string />
+    </project_attribute>
+
+    <project_attribute
+       name="vcs_patch_root"
+       package="IDE"
+       editor_page="VCS"
+       editor_section="Path"
+       description="The root directory to use for building patch file. The root project directory is used if this value is not defined."
+       label="Patch">
        <string />
     </project_attribute>
 
