@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2004-2006                    --
+--                      Copyright (C) 2004-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -179,13 +179,13 @@ package body Casing_Exceptions is
       end Set_Casing;
 
    begin
-      if Has_Entity_Column_Information (Context) then
-         Set_Casing (File_Information (Context), Line_Information (Context),
-                     Integer (Entity_Column_Information (Context)));
-
-      elsif Has_Area_Information (Context) then
+      if Has_Area_Information (Context) then
          Set_Casing (File_Information (Context), Line_Information (Context),
                      Integer (Column_Information (Context)));
+
+      elsif Has_Entity_Column_Information (Context) then
+         Set_Casing (File_Information (Context), Line_Information (Context),
+                     Integer (Entity_Column_Information (Context)));
       end if;
    end Set_Casing;
 
