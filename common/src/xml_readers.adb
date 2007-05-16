@@ -91,10 +91,10 @@ package body XML_Readers is
    --------------------------
 
    procedure Set_Document_Locator
-     (Handler : in out Gtk_Reader; Loc : access Sax.Locators.Locator'Class) is
+     (Handler : in out Gtk_Reader; Loc : in out Sax.Locators.Locator) is
    begin
-      Set_Line_Number (Locator_Impl_Access (Loc).all,
-                       Get_Line_Number (Loc.all) + Handler.Start_Line - 1);
+      Set_Line_Number (Loc,
+                       Get_Line_Number (Loc) + Handler.Start_Line - 1);
    end Set_Document_Locator;
 
    -------------------

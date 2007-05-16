@@ -95,7 +95,7 @@ private
 
    procedure Start_Document (Handler : in out Gtk_Reader);
    procedure Set_Document_Locator
-     (Handler : in out Gtk_Reader; Loc : access Sax.Locators.Locator'Class);
+     (Handler : in out Gtk_Reader; Loc : in out Sax.Locators.Locator);
    procedure Start_Element
      (Handler       : in out Gtk_Reader;
       Namespace_URI : Unicode.CES.Byte_Sequence := "";
