@@ -38,24 +38,23 @@ package Code_Coverage is
 
    procedure Add_File_Info
      (File_Node     : Code_Analysis.File_Access;
-      File_Contents : String_Access;
-      Lines_Count   : out Natural;
-      Not_Cov_Count : out Natural);
+      File_Contents : String_Access);
    --  Parse the File_Contents and fill the File_Node with gcov info
    --  And set Line_Count and Covered_Lines
-   --  Raise Bad_Gcov_File if information can't be found
 
-   function Get_Runs_Info_From_File
+   procedure Get_Runs_Info_From_File
      (File_Node     : Code_Analysis.File_Access;
-      File_Contents : String_Access) return Positive;
+      File_Contents : String_Access;
+      Prj_Called    : out Positive;
+      Success       : out Boolean);
    --  Reads and returns in the given .gcov file contents the number of
    --  execution(s) of the binary file produce by the analyzed sources
    --  This information is contained in every .gcov files
    --  Raise Bad_Gcov_File if this information is not found.
 
    procedure Add_Subprogram_Info
-     (Data_File : Structured_File_Access;
-      File_Node : Code_Analysis.File_Access);
+     (File_Node : Code_Analysis.File_Access;
+      Data_File : Structured_File_Access);
    --  Add the subprogram nodes of the given file node, and compute it coverage
    --  information
 
