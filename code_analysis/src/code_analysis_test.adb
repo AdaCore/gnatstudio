@@ -128,6 +128,7 @@ procedure Code_Analysis_Test is
       Registry      : Project_Registry;
       Loaded        : Boolean;
       Success       : Boolean;
+      Prj_Called    : Positive;
       Data_File     : Structured_File_Access;
       Project       : Project_Type;
       Project_Node  : Project_Access;
@@ -150,23 +151,33 @@ procedure Code_Analysis_Test is
       File_Contents := Read_File (Cov_File_Name);
       File_Node     := Get_Or_Create (Project_Node, Src_File_Name);
       File_Node.Analysis_Data.Coverage_Data := new Node_Coverage;
-      Add_File_Info (File_Node, File_Contents,
-                      Node_Coverage
-                        (File_Node.Analysis_Data.Coverage_Data.all).Children,
-                     File_Node.Analysis_Data.Coverage_Data.Coverage);
+      Add_File_Info (File_Node, File_Contents);
 
       -------------------------
       -- Add_Subprogram_Info --
       -------------------------
 
-      Data_File := Get_Or_Create (Database, File_Node.Name, Ada_Tree_Lang);
-      Add_Subprogram_Info (Data_File, File_Node);
+      if File_Node.Analysis_Data.Coverage_Data.Status = Valid then
+         Get_Runs_Info_From_File
+           (File_Node, File_Contents, Prj_Called, Success);
 
-      Project_Node.Analysis_Data.Coverage_Data := new Subprogram_Coverage;
-      Subprogram_Coverage
-        (Project_Node.Analysis_Data.Coverage_Data.all).Called :=
-        Get_Runs_Info_From_File (File_Node, File_Contents);
-      Compute_Project_Coverage (Project_Node);
+         if Success then
+            Project_Node.Analysis_Data.Coverage_Data :=
+              new Subprogram_Coverage;
+            Subprogram_Coverage
+              (Project_Node.Analysis_Data.Coverage_Data.all).Called :=
+              Prj_Called;
+         end if;
+
+         if File_Node.Analysis_Data.Coverage_Data.Status = Valid then
+            Data_File := Get_Or_Create
+              (Database, File_Node.Name, Ada_Tree_Lang);
+            Add_Subprogram_Info (File_Node, Data_File);
+         end if;
+
+         Compute_Project_Coverage (Project_Node);
+      end if;
+
       Free (File_Contents);
       return Project_Node;
    end Build_Structure;
@@ -247,11 +258,7 @@ procedure Code_Analysis_Test is
                                      & Integer'Image (JJ));
             File_Contents := Read_File (Cov_File_Name);
             File_Node     := Get_Or_Create (Project_Node, VFS_File_Name);
-            Add_File_Info
-              (File_Node, File_Contents,
-               Node_Coverage
-                 (File_Node.Analysis_Data.Coverage_Data.all).Children,
-               File_Node.Analysis_Data.Coverage_Data.Coverage);
+            Add_File_Info (File_Node, File_Contents);
             Free (File_Contents);
          end loop;
       end loop;
