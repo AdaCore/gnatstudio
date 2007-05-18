@@ -355,9 +355,9 @@ private
    --  Basically do an Add_Gcov_File_Info on every files of the given project
 
    procedure Add_Gcov_Project_Info (Prj_Node : Project_Access);
-   --  Actually look for project source files, and corresponding .gcov files
-   --  And when its possible, add every file coverage information to the
-   --  Code_Analysis structure of given Project_Node
+   --  Actually looks for a corresponding .gcov files to every source files in
+   --  the given project and when its possible, add every file coverage
+   --  information to the Code_Analysis structure of given Project_Node
 
    procedure Add_All_Gcov_Project_Info_From_Context
      (Widget      : access Glib.Object.GObject_Record'Class;
