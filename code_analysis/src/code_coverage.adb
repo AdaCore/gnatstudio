@@ -55,9 +55,7 @@ package body Code_Coverage is
 
    procedure Add_File_Info
      (File_Node     : Code_Analysis.File_Access;
-      File_Contents : String_Access;
-      Lines_Count   : out Natural;
-      Not_Cov_Count : out Natural)
+      File_Contents : String_Access)
    is
       Current           : Natural;
       Line_Regexp       : constant Pattern_Matcher := Compile
@@ -67,10 +65,12 @@ package body Code_Coverage is
         ("^ +(\d+|#####|-): *(\d+):", Multiple_Lines);
       Last_Line_Matches : Match_Array (0 .. 2);
       Line_Num          : Natural;
-      Bad_Gcov_File     : exception;
+      Lines_Count       : Natural := 0;
+      Not_Cov_Count     : Natural := 0;
    begin
-      Lines_Count   := 0;
-      Not_Cov_Count := 0;
+      if File_Node.Analysis_Data.Coverage_Data = null then
+         File_Node.Analysis_Data.Coverage_Data := new Node_Coverage;
+      end if;
 
       --------------------------------------
       -- Determination of the line number --
@@ -83,14 +83,17 @@ package body Code_Coverage is
          if Current > 0 then
             Current := Index
               (File_Contents.all, (1 => ASCII.LF), Current - 1, Backward);
+
             if Current = 0 then
-               raise Bad_Gcov_File with VFS.Base_Name (File_Node.Name)
-                 & ".gcov is not a valid Gcov file."
-                 & " No last source code line found.";
+               Set_Error (File_Node, File_Corrupted);
+               --  The .gcov file is not a valid Gcov file.
+               --  No last source code line found.
+               return;
             end if;
          else
-            raise Bad_Gcov_File with VFS.Base_Name (File_Node.Name)
-              & ".gcov is not a valid Gcov file";
+            Set_Error (File_Node, File_Corrupted);
+            --  the .gcov file is not a valid Gcov file.
+            return;
          end if;
       end if;
 
@@ -105,13 +108,15 @@ package body Code_Coverage is
               (File_Contents.all, (1 => ASCII.LF), Current - 1, Backward);
 
             if Current = 0 then
-               raise Bad_Gcov_File with VFS.Base_Name (File_Node.Name)
-                 & ".gcov is not a valid Gcov file."
-                 & " No last source code line found.";
+               Set_Error (File_Node, File_Corrupted);
+               --  The .gcov file is not a valid Gcov file.
+               --  No last source code line found.
+               return;
             end if;
          else
-            raise Bad_Gcov_File with VFS.Base_Name (File_Node.Name)
-              & ".gcov is not a valid Gcov file";
+            Set_Error (File_Node, File_Corrupted);
+            --  the .gcov file is not a valid Gcov file.
+            return;
          end if;
       end loop;
 
@@ -157,21 +162,26 @@ package body Code_Coverage is
 
          Current := Line_Matches (0).Last + 1;
       end loop;
+
+      Node_Coverage (File_Node.Analysis_Data.Coverage_Data.all).Children :=
+        Lines_Count;
+      File_Node.Analysis_Data.Coverage_Data.Coverage := Not_Cov_Count;
    end Add_File_Info;
 
    -----------------------------
    -- Get_Runs_Info_From_File --
    -----------------------------
 
-   function Get_Runs_Info_From_File
+   procedure Get_Runs_Info_From_File
      (File_Node     : Code_Analysis.File_Access;
-      File_Contents : String_Access) return Positive
+      File_Contents : String_Access;
+      Prj_Called    : out Positive;
+      Success       : out Boolean)
    is
       Current       : Natural;
       Runs_Regexp   : constant Pattern_Matcher :=
                             Compile ("^ +-: +0:Runs:(\d+)", Multiple_Lines);
       Runs_Matches  : Match_Array (0 .. 1);
-      Bad_Gcov_File : exception;
    begin
 
       Current := File_Contents'First;
@@ -184,13 +194,16 @@ package body Code_Coverage is
       Match (Runs_Regexp, File_Contents.all, Runs_Matches, Current);
 
       if Runs_Matches (0) = No_Match then
-         raise Bad_Gcov_File with VFS.Base_Name (File_Node.Name)
-           & ".gcov is not a valid Gcov file."
-           & " No runs quantity information found.";
+         Set_Error (File_Node, File_Corrupted);
+         Success := False;
+         return;
+         --  The .gcov is not a valid Gcov file.
+         --  No runs quantity information found.
       end if;
 
-      return Positive'Value
+      Prj_Called := Positive'Value
         (File_Contents (Runs_Matches (1).First .. Runs_Matches (1).Last));
+      Success := True;
    end Get_Runs_Info_From_File;
 
    -------------------------
@@ -198,8 +211,8 @@ package body Code_Coverage is
    -------------------------
 
    procedure Add_Subprogram_Info
-     (Data_File : Structured_File_Access;
-      File_Node : Code_Analysis.File_Access)
+     (File_Node : Code_Analysis.File_Access;
+      Data_File : Structured_File_Access)
    is
       Tree       : constant Construct_Tree := Get_Full_Tree (Data_File);
       Node       : Construct_Tree_Iterator := First (Tree);
@@ -280,7 +293,8 @@ package body Code_Coverage is
       Cur := Project_Node.Files.First;
 
       if Project_Node.Analysis_Data.Coverage_Data = null then
-         Project_Node.Analysis_Data.Coverage_Data := new Subprogram_Coverage;
+         return;
+         --  An Add_File_Info should have set up Runs/Called info
       end if;
 
       declare
@@ -305,12 +319,6 @@ package body Code_Coverage is
                  File_Node.Analysis_Data.Coverage_Data.Coverage;
             end if;
          end loop;
-
-         --  if nothing had been computed, then Project_Node must not have a
-         --  Coverage_Data attached to him
-         if Data.Children = 0 then
-            Unchecked_Free (Project_Node.Analysis_Data.Coverage_Data);
-         end if;
       end;
    end Compute_Project_Coverage;
 
