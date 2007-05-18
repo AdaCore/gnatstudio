@@ -329,6 +329,8 @@ package body Code_Analysis_Module is
    is
       use Language.Tree.Database;
       File_Contents : GNAT.Strings.String_Access;
+      Prj_Called    : Positive;
+      Success       : Boolean;
       File_Node     : constant Code_Analysis.File_Access
         := Get_Or_Create (Project_Node, Src_File);
       Handler       : constant Language_Handler
@@ -355,26 +357,28 @@ package body Code_Analysis_Module is
          File_Node.Lines := new Line_Array (1 .. 1);
       else
          File_Contents := Read_File (Cov_File);
+         Add_File_Info (File_Node, File_Contents);
 
-         if File_Node.Analysis_Data.Coverage_Data = null then
-            File_Node.Analysis_Data.Coverage_Data := new Node_Coverage;
+         if File_Node.Analysis_Data.Coverage_Data.Status = Valid and then
+           Project_Node.Analysis_Data.Coverage_Data = null then
+
+            Get_Runs_Info_From_File
+              (File_Node, File_Contents, Prj_Called, Success);
+
+            if Success then
+               Project_Node.Analysis_Data.Coverage_Data :=
+                 new Subprogram_Coverage;
+               Subprogram_Coverage
+                 (Project_Node.Analysis_Data.Coverage_Data.all).Called :=
+                 Prj_Called;
+            end if;
+            --  Check for project Called info
          end if;
 
-         Add_File_Info
-           (File_Node, File_Contents,
-            Node_Coverage (File_Node.Analysis_Data.Coverage_Data.all).Children,
-            File_Node.Analysis_Data.Coverage_Data.Coverage);
-
-         if Project_Node.Analysis_Data.Coverage_Data = null then
-            Project_Node.Analysis_Data.Coverage_Data :=
-              new Subprogram_Coverage;
-            Subprogram_Coverage
-              (Project_Node.Analysis_Data.Coverage_Data.all).Called :=
-              Get_Runs_Info_From_File (File_Node, File_Contents);
+         if File_Node.Analysis_Data.Coverage_Data.Status = Valid then
+            Add_Subprogram_Info (File_Node, Data_File);
          end if;
-         --  Check for project Called info
 
-         Add_Subprogram_Info (Data_File, File_Node);
          Free (File_Contents);
       end if;
    end Add_Gcov_File_Info;
