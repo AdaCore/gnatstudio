@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.1.2
 
+- G515-005 Casing a multi-line selection does not work
+  Problem:    Changing the case (using the casing contextual menu) of
+              a multi-line selection does not work as expected. Part
+              of the selection gets duplicated.
+  Workaround: Do not use multi-line selection when casing.
+
 - G511-006 Using Page Down in the Smart Completion window
   Problem:    GPS might crash when using the "Page Down" Key to scroll to
               the bottom of the Smart Completion window.
