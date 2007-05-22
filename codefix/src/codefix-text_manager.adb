@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2006                      --
+--                      Copyright (C) 2003-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -971,7 +971,7 @@ package body Codefix.Text_Manager is
          Str_Array,
          Escape_Manager,
          Step);
-      Real_Result : File_Cursor := Clone (File_Cursor (Result));
+      Real_Result : constant File_Cursor := Clone (File_Cursor (Result));
    begin
       Free (Str_Array);
       Free (Result);
@@ -1869,7 +1869,7 @@ package body Codefix.Text_Manager is
          Str_Array,
          Escape_Manager,
          Step);
-      Real_Result : File_Cursor := Clone (File_Cursor (Result));
+      Real_Result : constant File_Cursor := Clone (File_Cursor (Result));
    begin
       Free (Str_Array);
       Free (Result);
