@@ -22,6 +22,7 @@ with GNAT.Source_Info;
 with GNAT.Strings;
 with Ada.Calendar;
 with Ada.Text_IO;
+with Ada.Exceptions;
 
 package Traces is
 
@@ -123,6 +124,14 @@ package Traces is
    --  Return the unit name (upper-cased) for this handle. This can be used for
    --  instance in generic packages to specialize the handle for a specific
    --  instance.
+
+   procedure Trace
+     (Handle : Debug_Handle;
+      E      : Ada.Exceptions.Exception_Occurrence;
+      Msg    : String := "Unexpected exception: ");
+   pragma Inline (Trace);
+   --  Extract information from the given Exception_Occurence and output it
+   --  with a the commonly used header "Unexpected exception: "
 
    procedure Trace
      (Handle   : Debug_Handle;

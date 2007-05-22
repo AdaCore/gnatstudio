@@ -241,6 +241,18 @@ package body Traces is
    -----------
 
    procedure Trace
+     (Handle : Debug_Handle;
+      E      : Ada.Exceptions.Exception_Occurrence;
+      Msg    : String := "Unexpected exception: ") is
+   begin
+      Trace (Handle, Msg & Ada.Exceptions.Exception_Information (E));
+   end Trace;
+
+   -----------
+   -- Trace --
+   -----------
+
+   procedure Trace
      (Handle   : Debug_Handle;
       Message  : String;
       Location : String := GNAT.Source_Info.Source_Location;
