@@ -628,8 +628,9 @@ package body Code_Analysis_Module is
       Cont_N_Inst : Context_And_Instance)
    is
       pragma Unreferenced (Widget);
-      Property : Code_Analysis_Property_Record := Code_Analysis_Property_Record
-        (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
+      Property : constant Code_Analysis_Property_Record
+        := Code_Analysis_Property_Record
+          (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
    begin
       List_Lines_Not_Covered_In_All_Projects (Property);
    exception
@@ -713,7 +714,7 @@ package body Code_Analysis_Module is
      (Widget : access Glib.Object.GObject_Record'Class)
    is
       pragma Unreferenced (Widget);
-      Instance : Class_Instance := Create_Instance;
+      Instance : constant Class_Instance := Create_Instance;
       Property : Code_Analysis_Property_Record := Code_Analysis_Property_Record
         (Get_Property (Instance, Code_Analysis_Cst_Str));
    begin
@@ -971,7 +972,7 @@ package body Code_Analysis_Module is
       Pixbuf_Rend : Gtk_Cell_Renderer_Pixbuf;
       Bar_Render  : Gtk_Cell_Renderer_Progress;
       Dummy       : Gint;
-      Cont_N_Inst : Context_And_Instance :=
+      Cont_N_Inst : constant Context_And_Instance :=
                       (Context => No_Context, Instance => Instance);
       pragma Unreferenced (Dummy);
    begin
@@ -1124,7 +1125,7 @@ package body Code_Analysis_Module is
       Command : String)
    is
       pragma Unreferenced (Command);
-      Instance : Class_Instance := Nth_Arg
+      Instance : constant Class_Instance := Nth_Arg
         (Data, 1, Code_Analysis_Module_ID.Class);
    begin
       if not Is_In_Destruction (Code_Analysis_Module_ID.Kernel) then
@@ -1145,8 +1146,9 @@ package body Code_Analysis_Module is
       Cont_N_Inst : Context_And_Instance)
    is
       pragma Unreferenced (Widget);
-      Property : Code_Analysis_Property_Record := Code_Analysis_Property_Record
-        (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
+      Property : constant Code_Analysis_Property_Record :=
+        Code_Analysis_Property_Record
+          (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
    begin
       if Message_Dialog
         ((-"Destroy ") & Property.Instance_Name.all & (-"?"),
@@ -1357,7 +1359,7 @@ package body Code_Analysis_Module is
       pragma Unreferenced (Widget);
       Project_Node : Project_Access;
       File_Node    : Code_Analysis.File_Access;
-      Property     : Code_Analysis_Property_Record
+      Property     : constant Code_Analysis_Property_Record
         := Code_Analysis_Property_Record
           (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
    begin
@@ -1428,7 +1430,7 @@ package body Code_Analysis_Module is
       pragma Unreferenced (Widget);
       Project_Node : Project_Access;
       File_Node    : Code_Analysis.File_Access;
-      Property     : Code_Analysis_Property_Record
+      Property     : constant Code_Analysis_Property_Record
         := Code_Analysis_Property_Record
           (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
    begin
@@ -1471,7 +1473,7 @@ package body Code_Analysis_Module is
    is
       pragma Unreferenced (Widget);
       Project_Node : Project_Access;
-      Property     : Code_Analysis_Property_Record
+      Property     : constant Code_Analysis_Property_Record
         := Code_Analysis_Property_Record
           (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
    begin
@@ -1493,7 +1495,7 @@ package body Code_Analysis_Module is
       Cont_N_Inst : Context_And_Instance)
    is
       pragma Unreferenced (Widget);
-      Property  : Code_Analysis_Property_Record
+      Property  : constant Code_Analysis_Property_Record
         := Code_Analysis_Property_Record
           (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
       Prj_Node  : constant Project_Access := Get_Or_Create
@@ -1587,7 +1589,7 @@ package body Code_Analysis_Module is
       Cont_N_Inst : Context_And_Instance)
    is
       pragma Unreferenced (Widget);
-      Property  : Code_Analysis_Property_Record
+      Property  : constant Code_Analysis_Property_Record
         := Code_Analysis_Property_Record
           (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
       Prj_Node  : constant Project_Access := Get_Or_Create
@@ -2292,7 +2294,7 @@ package body Code_Analysis_Module is
          if Has_File_Information (Checked_Context) then
             declare
                Prj_Info  : Project_Type;
-               File_Info : VFS.Virtual_File :=
+               File_Info : constant VFS.Virtual_File :=
                              File_Information (Checked_Context);
             begin
                Prj_Info := Get_Project_From_File
@@ -2437,7 +2439,8 @@ package body Code_Analysis_Module is
       Project_Node : Project_Access)
    is
       Item     : Gtk_Menu_Item;
-      Property : Code_Analysis_Property_Record := Code_Analysis_Property_Record
+      Property : constant Code_Analysis_Property_Record :=
+        Code_Analysis_Property_Record
         (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
    begin
       Append_Show_Analysis_Report_To_Menu (Cont_N_Inst, Submenu);
@@ -2484,8 +2487,9 @@ package body Code_Analysis_Module is
       Menu        : access Gtk_Menu_Record'Class)
    is
       Item     : Gtk_Menu_Item;
-      Property : Code_Analysis_Property_Record := Code_Analysis_Property_Record
-        (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
+      Property : constant Code_Analysis_Property_Record :=
+        Code_Analysis_Property_Record
+          (Get_Property (Cont_N_Inst.Instance, Code_Analysis_Cst_Str));
    begin
       Gtk_New (Item, -"Show Report of " & Property.Instance_Name.all);
       Append (Menu, Item);

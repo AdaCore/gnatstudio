@@ -296,7 +296,7 @@ package body Completion_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      File_Data : File_Hooks_Args := File_Hooks_Args (Data.all);
+      File_Data : constant File_Hooks_Args := File_Hooks_Args (Data.all);
       File      : Structured_File_Access;
    begin
       if Get_Pref (Smart_Completion) then

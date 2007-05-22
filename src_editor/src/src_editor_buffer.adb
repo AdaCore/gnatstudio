@@ -3128,7 +3128,7 @@ package body Src_Editor_Buffer is
    is
       Name_Changed      : constant Boolean := Buffer.Filename /= Filename;
       Result            : Boolean;
-      Original_Filename : VFS.Virtual_File := Buffer.Filename;
+      Original_Filename : constant VFS.Virtual_File := Buffer.Filename;
    begin
 
       Internal_Save_To_File

@@ -218,7 +218,8 @@ package body VCS_View.Explorer is
                declare
                   File    : constant Virtual_File := Create
                     (Get_String (Explorer.Model, Iter, Name_Column));
-                  Line    : Line_Record := Get_Cache (Get_Status_Cache, File);
+                  Line    : constant Line_Record :=
+                    Get_Cache (Get_Status_Cache, File);
                   Success : Boolean;
                begin
                   Fill_Info (Explorer, Iter, Line, Success);

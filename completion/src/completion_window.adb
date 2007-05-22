@@ -273,7 +273,7 @@ package body Completion_Window is
 
       while not At_End (Window.Iter) loop
          declare
-            Proposal : Completion_Proposal'Class :=
+            Proposal : constant Completion_Proposal'Class :=
               Get_Proposal (Window.Iter);
 
          begin

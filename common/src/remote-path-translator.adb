@@ -209,12 +209,14 @@ package body Remote.Path.Translator is
       end if;
 
       declare
-         Path_From  : constant String := Mirror.Get_Local_Path;
-         Path_To    : constant String := Mirror.Get_Remote_Path;
-         To_Filesystem : Filesystem_Record'Class := Get_Filesystem (To);
-         U_Path     : constant String := To_Unix (Get_Local_Filesystem, Path);
+         Path_From     : constant String := Mirror.Get_Local_Path;
+         Path_To       : constant String := Mirror.Get_Remote_Path;
+         To_Filesystem : constant Filesystem_Record'Class :=
+           Get_Filesystem (To);
+         U_Path        : constant String :=
+           To_Unix (Get_Local_Filesystem, Path);
          --  The input path in unix style
-         U_Frompath : constant String := To_Unix (Get_Local_Filesystem,
+         U_Frompath    : constant String := To_Unix (Get_Local_Filesystem,
                                                   Path_From);
          --  The local root dir, in unix style
          U_Subpath  : constant String :=
@@ -288,7 +290,8 @@ package body Remote.Path.Translator is
       declare
          Path_From  : constant String := Mirror.Get_Remote_Path;
          Path_To    : constant String := Mirror.Get_Local_Path;
-         FS         : Filesystem_Record'Class := Get_Filesystem (From);
+         FS         : constant Filesystem_Record'Class :=
+           Get_Filesystem (From);
          U_Path     : constant String := To_Unix (FS, Path);
          --  The input path in unix style
          U_Frompath : constant String := To_Unix (FS, Path_From);

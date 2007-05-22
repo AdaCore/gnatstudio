@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2004 - 2005                     --
+--                     Copyright (C) 2004 - 2007                     --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -112,9 +112,10 @@ package body Creation_Wizard.Simple is
       Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget
    is
       pragma Unreferenced (Wiz);
-      Selection   : File_Array := Get_Multiple_Selection (Page.Src_Dirs.Dirs);
+      Selection   : constant File_Array :=
+        Get_Multiple_Selection (Page.Src_Dirs.Dirs);
       Current     : Virtual_File;
-      Current_Dir : Virtual_File := Get_Current_Dir;
+      Current_Dir : constant Virtual_File := Get_Current_Dir;
    begin
       if Selection'Length /= 0 then
          Current := Selection (Selection'First);
@@ -163,8 +164,9 @@ package body Creation_Wizard.Simple is
       Changed            : in out Boolean)
    is
       pragma Unreferenced (Scenario_Variables);
-      Src_Dirs : File_Array := Get_Multiple_Selection (Page.Src_Dirs.Dirs);
-      Obj_Dirs : File_Array := Get_Multiple_Selection (Page.Dirs);
+      Src_Dirs : constant File_Array :=
+        Get_Multiple_Selection (Page.Src_Dirs.Dirs);
+      Obj_Dirs : constant File_Array := Get_Multiple_Selection (Page.Dirs);
    begin
       Create_Gpr_Files
         (Registry          => Get_Registry (Kernel).all,

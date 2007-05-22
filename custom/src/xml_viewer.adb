@@ -197,7 +197,7 @@ package body XML_Viewer is
       Node : Node_Ptr) return Callback_Data'Class
    is
       Script : constant Scripting_Language := Get_Script (Sub.all);
-      C      : Callback_Data'Class := Create (Script, 3);
+      C      : constant Callback_Data'Class := Create (Script, 3);
    begin
       Set_Nth_Arg (C, 1, Node.Tag.all);
 

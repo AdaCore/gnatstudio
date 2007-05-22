@@ -2954,7 +2954,8 @@ package body VCS_View_API is
          end Get_Log_For_Root;
 
          Kernel        : constant Kernel_Handle := Get_Kernel (Context);
-         File          : Virtual_File := Create (Full_Filename => Filename);
+         File          : constant Virtual_File :=
+           Create (Full_Filename => Filename);
          Project       : constant Project_Type :=
                            Get_Project_From_File
                              (Get_Registry (Kernel).all, File);

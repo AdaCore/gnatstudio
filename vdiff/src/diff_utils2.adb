@@ -696,7 +696,8 @@ package body Diff_Utils2 is
 
       if Link.Instances /= null then
          declare
-            Instances : Instance_Array := Get_Instances (Link.Instances.all);
+            Instances : constant Instance_Array :=
+              Get_Instances (Link.Instances.all);
          begin
             for Index in Instances'Range loop
                if Instances (Index) /= No_Class_Instance then

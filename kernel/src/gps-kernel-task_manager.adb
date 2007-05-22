@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2006                       --
+--                     Copyright (C) 2003-2007                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -327,7 +327,7 @@ package body GPS.Kernel.Task_Manager is
    ----------
 
    procedure Free (Command : in out Scheduled_Command) is
-      Instances : Instance_Array := Get_Instances (Command.Instances);
+      Instances : constant Instance_Array := Get_Instances (Command.Instances);
    begin
       if Command.Is_Dead then
          for J in Instances'Range loop

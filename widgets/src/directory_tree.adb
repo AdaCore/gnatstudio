@@ -1741,7 +1741,7 @@ package body Directory_Tree is
          for J in 1 .. Len loop
             if Buffer (J) = ASCII.NUL then
                declare
-                  Drive : Virtual_File :=
+                  Drive : constant Virtual_File :=
                     Create (Get_Host (Dir), Buffer (Last .. J - 1));
                begin
                   if Is_Parent (Drive, Dir) then

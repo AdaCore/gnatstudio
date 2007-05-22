@@ -940,7 +940,7 @@ package body GPS.Kernel.Remote is
       Row_Number  : Guint;
       Cursor      : Mirror_List.Cursor)
    is
-      Path : Mirror_Path := Mirror_List.Element (Cursor);
+      Path : constant Mirror_Path := Mirror_List.Element (Cursor);
       Pix  : Gtk_Image;
       Row  : Path_Row;
       Data : Path_Cb_Data_Access;
@@ -1209,7 +1209,7 @@ package body GPS.Kernel.Remote is
    procedure On_Add_Path_Clicked (W : access Gtk_Widget_Record'Class)
    is
       Widget : Paths_Widget_Record renames Paths_Widget_Record (W.all);
-      Path   : Mirror_Path := Null_Path;
+      Path   : constant Mirror_Path := Null_Path;
    begin
       Ref (Widget.Add_Path_Button);
       Remove (Widget.Table, Widget.Add_Path_Button);

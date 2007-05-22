@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2006                      --
+--                      Copyright (C) 2005-2007                      --
 --                               AdaCore                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -122,7 +122,7 @@ package body GVD.Scripts is
       Debugger_Cmd : constant String := Nth_Arg (Data, 3);
       Inst         : constant Class_Instance :=
         Nth_Arg (Data, 2, New_Class (Get_Kernel (Data), "Debugger"));
-      Args    : Debugger_String_Hooks_Data :=
+      Args         : constant Debugger_String_Hooks_Data :=
         (Hooks_Data with
          Length   => Debugger_Cmd'Length,
          Process  => Visual_Debugger (GObject'(Get_Data (Inst))),

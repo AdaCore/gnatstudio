@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                     Copyright (C) 2001-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -118,7 +118,7 @@ package body Vdiff2_Module is
          declare
             Instance : constant Class_Instance :=
                          Nth_Arg (Data, 1, Vdiff_Class);
-            Property : Vdiff_Property :=
+            Property : constant Vdiff_Property :=
                          Vdiff_Property
                            (Get_Property (Instance, Vdiff_Class_Name));
             Cmd      : Diff_Command_Access;

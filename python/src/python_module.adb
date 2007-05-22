@@ -1429,7 +1429,7 @@ package body Python_Module is
      (Script          : access Python_Scripting_Record;
       Arguments_Count : Natural) return Callback_Data'Class
    is
-      Callback : Python_Callback_Data :=
+      Callback : constant Python_Callback_Data :=
         (Callback_Data with
          Script           => Python_Scripting (Script),
          Args             => PyTuple_New (Arguments_Count),
