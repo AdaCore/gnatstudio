@@ -928,7 +928,9 @@ package body Vdiff2_Module.Utils is
             else
                for J in 1 .. 3 loop
                   for K in 1 .. 3 loop
-                     if K /= Ref and K /= J then Other2 := K; end if;
+                     if K /= Ref and K /= J then
+                        Other2 := K;
+                     end if;
                   end loop;
 
                   if VRange (J).Action = Append then
