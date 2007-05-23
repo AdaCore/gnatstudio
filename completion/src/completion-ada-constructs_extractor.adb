@@ -822,18 +822,23 @@ package body Completion.Ada.Constructs_Extractor is
          return False;
       elsif Get_Construct (Proposal.Tree_Node).Category = Cat_Field then
          return False;
-      elsif not Match
-           (Identifier,
-            Get_Construct (Proposal.Tree_Node).Name.all,
-            Is_Partial)
-      then
-         return False;
       else
          declare
             Source_Tree : Construct_Tree;
             Source_Ada_Tree : Ada_Construct_Tree;
             Result : Boolean;
+            Name : constant Composite_Identifier :=
+              To_Composite_Identifier
+                (Get_Construct (Proposal.Tree_Node).Name.all);
          begin
+            if not Match
+              (Identifier,
+               Get_Item (Name, Length (Name)),
+               Is_Partial)
+            then
+               return False;
+            end if;
+
             if Context.all in Ada_Construct_Extractor_Context'Class then
                Source_Tree := Get_Full_Tree
                  (Ada_Construct_Extractor_Context (Context.all).File);
