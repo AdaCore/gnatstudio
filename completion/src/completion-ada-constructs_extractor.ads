@@ -49,6 +49,11 @@ package Completion.Ada.Constructs_Extractor is
       Result     : in out Completion_List);
    --  See inherited documentation
 
+   function From_Completion_Id
+     (Resolver : access Construct_Completion_Resolver; Id : Completion_Id)
+      return Completion_Proposal_Access;
+   --  See inherited documentation
+
    procedure Free (This : in out Construct_Completion_Resolver);
    --  Free the data associated to a construct completion resolver
 
@@ -96,6 +101,10 @@ private
       Is_In_Profile        : Boolean := False;
    end record;
 
+   function To_Completion_Id
+     (Proposal : Construct_Completion_Proposal) return Completion_Id;
+   --  See inherited documentation
+
    function Get_Completion
      (Proposal : Construct_Completion_Proposal) return UTF8_String;
    --  See inherited documentation
@@ -140,6 +149,15 @@ private
    procedure Append_Expression
      (Proposal             : in out Construct_Completion_Proposal;
       Number_Of_Parameters : Natural);
+   --  See inherited documentation
+
+   function Match
+     (Proposal   : Construct_Completion_Proposal;
+      Identifier : String;
+      Is_Partial : Boolean;
+      Context    : Completion_Context;
+      Offset     : Integer;
+      Filter     : Possibilities_Filter) return Boolean;
    --  See inherited documentation
 
    procedure Free (Proposal : in out Construct_Completion_Proposal);
