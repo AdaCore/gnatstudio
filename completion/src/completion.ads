@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006                         --
+--                      Copyright (C) 2006-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -37,8 +37,16 @@ with Virtual_Lists;
 with Virtual_Lists.Extensive;
 
 with VFS; use VFS;
+with Ada.Containers.Indefinite_Ordered_Sets;
 
 package Completion is
+
+   type Completion_Proposal is abstract tagged private;
+   --  This is the type of a proposal.
+
+   type Completion_Proposal_Access is access all Completion_Proposal'Class;
+
+   procedure Free (This : in out Completion_Proposal_Access);
 
    type Completion_List is private;
    --  This type hold a set of completions
@@ -74,6 +82,31 @@ package Completion is
    function Get_Completion_Offset
      (Context : Completion_Context) return Natural;
    --  Return the offset associated to this context.
+
+   -------------------
+   -- Completion_Id --
+   -------------------
+
+   type Completion_Id (Id_Length : Integer) is record
+      Resolver_Id : String (1 .. 8);
+      --  This id identifies in an unique way a resolver. Users are responsible
+      --  of avoidinc name clashes.
+
+      Id          : String (1 .. Id_Length);
+      File        : Virtual_File;
+      Line        : Natural := 0;
+      Column      : Natural := 0;
+   end record;
+   --  This type is used to store a completion proposal in an long time basis -
+   --  while the Completion_Proposal lifecycle is bound to its resolver one. A
+   --  resolver is supposed to be able to retreive a proposal based on an id,
+   --  if the proposal is still valid.
+
+   function "<" (Left, Right : Completion_Id) return Boolean;
+   --  Arbitrary comparison between two completion ids.
+
+   function "=" (Left, Right : Completion_Id) return Boolean;
+   --  Return true if the two ids are equals.
 
    -------------------------
    -- Completion_Resolver --
@@ -125,6 +158,14 @@ package Completion is
    --  the very begining of the file, and therefore nothing from the file
    --  should be extracted.
 
+   function From_Completion_Id
+     (Resolver : access Completion_Resolver; Id : Completion_Id)
+      return Completion_Proposal_Access is abstract;
+   --  Create a proposal based on the id given in parameter. Returns null if
+   --  the resolver cannot retreive any completion. This can happen because the
+   --  id does not correspond to this resolver, or because the underlying data
+   --  has changed and the completion is not valid anymore.
+
    procedure Free (Resolver : in out Completion_Resolver) is abstract;
    --  Free the data of a Resolver.
 
@@ -154,12 +195,15 @@ package Completion is
    --  Creates a new context for this manager, with the offset and the buffer
    --  given in parameter.
 
+   function From_Completion_Id
+     (Manager : access Completion_Manager; Id : Completion_Id)
+      return Completion_Proposal_Access;
+   --  Look from all the resolvers, and return the first proposal that has been
+   --  built according to this id. If none found, return null.
+
    -------------------------
    -- Completion_Proposal --
    -------------------------
-
-   type Completion_Proposal is abstract tagged private;
-   --  This is the type of a proposal.
 
    type File_Location is record
       File_Path : Virtual_File;
@@ -255,6 +299,21 @@ package Completion is
    --  It End_Is_Partial is true, then the position given is possibly an
    --  incomplete identifier. Otherwise, the expression will be analyzed as a
    --  complete expression. Start_Offset has to be given in bytes.
+
+   function Match
+     (Proposal   : Completion_Proposal;
+      Identifier : String;
+      Is_Partial : Boolean;
+      Context    : Completion_Context;
+      Offset     : Integer;
+      Filter     : Possibilities_Filter) return Boolean is abstract;
+   --  Return true if the proposal given in parameter matches the completion
+   --  search parameters given, false otherwise.
+
+   function To_Completion_Id
+     (Proposal : Completion_Proposal) return Completion_Id is abstract;
+   --  Creates a completion id able to retreive this completion proposal later
+   --  on.
 
    procedure Free (Proposal : in out Completion_Proposal) is abstract;
    --  Free the memory associated to the proposal.
@@ -379,15 +438,21 @@ private
       Searched_Identifier : String_Access;
    end record;
 
+   package Completion_Id_Set is new
+     Ada.Containers.Indefinite_Ordered_Sets (Completion_Id);
+
+   use Completion_Id_Set;
+
    type Completion_Iterator is record
-      It                  : Completion_List_Pckg.Virtual_List_Iterator;
+      It : Completion_List_Pckg.Virtual_List_Iterator;
+      Already_Extracted : Completion_Id_Set.Set;
    end record;
 
    Null_Completion_List : constant Completion_List :=
      (Completion_List_Pckg.Null_Virtual_List, null);
 
    Null_Completion_Iterator : constant Completion_Iterator :=
-     (It => Completion_List_Pckg.Null_Virtual_List_Iterator);
+     (It => Completion_List_Pckg.Null_Virtual_List_Iterator, others => <>);
 
    --------------------------------
    -- Simple_Completion_Proposal --
@@ -419,6 +484,19 @@ private
 
    function Get_Number_Of_Parameters
      (Proposal : Simple_Completion_Proposal) return Natural;
+   --  See inherited documentation
+
+   function Match
+     (Proposal   : Simple_Completion_Proposal;
+      Identifier : String;
+      Is_Partial : Boolean;
+      Context    : Completion_Context;
+      Offset     : Integer;
+      Filter     : Possibilities_Filter) return Boolean;
+   --  See inherited documentation
+
+   function To_Completion_Id
+     (Proposal : Simple_Completion_Proposal) return Completion_Id;
    --  See inherited documentation
 
    procedure Free (Proposal : in out Simple_Completion_Proposal);
