@@ -120,8 +120,10 @@ package body Entities.Tooltips is
 
       Node := Get_Iterator_At
         (Tree        => Tree,
-         Line        => Loc.Line,
-         Line_Offset => Natural (Loc.Column),
+         Location    =>
+           (Absolute_Offset => False,
+            Line            => Loc.Line,
+            Line_Offset     => Natural (Loc.Column)),
          From_Type   => Start_Name);
 
       if Node = Null_Construct_Tree_Iterator then
