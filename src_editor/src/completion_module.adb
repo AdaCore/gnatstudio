@@ -60,6 +60,7 @@ with VFS; use VFS;
 
 with Completion_Window;               use Completion_Window;
 with Completion;                      use Completion;
+with Completion.History;              use Completion.History;
 with Completion.Ada;                  use Completion.Ada;
 with Completion.Ada.Constructs_Extractor;
 use Completion.Ada.Constructs_Extractor;
@@ -160,6 +161,8 @@ package body Completion_Module is
 
       Has_Trigger_Timeout : Boolean := False;
       --  Whereas a character trigger timeout is currently registered.
+
+      Completion_History  : Completion_History_Access;
    end record;
    type Completion_Module_Access is access all Completion_Module_Record'Class;
 
@@ -386,6 +389,13 @@ package body Completion_Module is
    procedure Destroy (Module : in out Completion_Module_Record) is
       pragma Unreferenced (Module);
    begin
+      if Completion_Module /= null then
+         Kill_File_Iteration
+           (Get_Kernel (Completion_Module.all), Db_Loading_Queue);
+      end if;
+
+      Free (Completion_Resolver_Access (Completion_Module.Completion_History));
+
       Reset_Completion_Data;
       Completion_Module := null;
    end Destroy;
@@ -781,6 +791,8 @@ package body Completion_Module is
                   Get_Filename (Buffer),
                   GNAT.Strings.String_Access (Data.The_Text));
 
+            Register_Resolver
+              (Data.Manager, Completion_Module.Completion_History);
             Register_Resolver (Data.Manager, Data.Constructs_Resolver);
 
             Get_Iter_At_Mark (Buffer, It, Get_Insert (Buffer));
@@ -863,6 +875,8 @@ package body Completion_Module is
                View, Data, After => True);
 
             Set_Completion_Iterator (Win, First (Data.Result));
+
+            Set_History (Win, Completion_Module.Completion_History);
 
             Show
               (Win, Gtk_Text_View (View),
@@ -1124,6 +1138,8 @@ package body Completion_Module is
          Name => "completion_module.file_saved");
 
       Register_Preferences (Kernel);
+
+      Completion_Module.Completion_History := new Completion_History;
    end Register_Module;
 
    ------------------------------
