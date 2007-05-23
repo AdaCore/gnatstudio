@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                     Copyright (C) 2001-2007                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -108,9 +108,7 @@ package body GPS.Menu is
       GPS.Main_Window.Quit (GPS_Window (Get_Main_Window (Kernel)));
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Exit;
 
    -------------------
@@ -141,9 +139,7 @@ package body GPS.Menu is
             "Cannot change to directory: " &
             Full_Name (Dir).all,
             Mode => Error);
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Change_Dir;
 
    -----------------
@@ -160,9 +156,7 @@ package body GPS.Menu is
       Ignore := Save_MDI_Children (Kernel, Force => False);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Save_All;
 
    ---------------------
@@ -176,9 +170,7 @@ package body GPS.Menu is
    begin
       Save_Desktop (Kernel, As_Default_Desktop => False);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Save_Desktop;
 
    -----------------------------
@@ -192,9 +184,7 @@ package body GPS.Menu is
    begin
       Save_Desktop (Kernel, As_Default_Desktop => True);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Save_Default_Desktop;
 
    -------------
@@ -232,9 +222,7 @@ package body GPS.Menu is
       Load_Project (Callback.Kernel, Create (Item));
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Activate;
 
    ------------------------
@@ -252,9 +240,7 @@ package body GPS.Menu is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Project_Changed;
 
    --------------------
@@ -322,9 +308,7 @@ package body GPS.Menu is
       end;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Open_Project;
 
    ----------------------------
@@ -354,9 +338,7 @@ package body GPS.Menu is
       end;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Open_Remote_Project;
 
    --------------------
@@ -371,9 +353,7 @@ package body GPS.Menu is
    begin
       Edit_Preferences (Kernel);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Preferences;
 
    ---------------------------

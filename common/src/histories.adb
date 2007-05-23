@@ -236,8 +236,7 @@ package body Histories is
             exception
                when E : others =>
                   Value := null;
-                  Trace (Exception_Handle, "Unexpected exception: "
-                         & Exception_Information (E));
+                  Trace (Exception_Handle, E);
             end;
 
             if Value /= null then

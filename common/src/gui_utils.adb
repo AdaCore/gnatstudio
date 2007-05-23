@@ -369,8 +369,7 @@ package body GUI_Utils is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Unmap_Menu;
 
@@ -409,8 +408,7 @@ package body GUI_Utils is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Key_Press_For_Contextual_Menu;
 
@@ -475,8 +473,7 @@ package body GUI_Utils is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Button_Press_For_Contextual_Menu;
 
@@ -547,8 +544,7 @@ package body GUI_Utils is
 
       exception
          when E : others =>
-            Trace (Exception_Handle,
-                   "Unexpected exception: " & Exception_Information (E));
+            Trace (Exception_Handle, E);
             return False;
       end Unmap_User_Menu;
 
@@ -588,8 +584,7 @@ package body GUI_Utils is
 
       exception
          when E : others =>
-            Trace (Exception_Handle,
-                   "Unexpected exception: " & Exception_Information (E));
+            Trace (Exception_Handle, E);
             return False;
       end Key_Press_For_Contextual_Menu;
 
@@ -645,8 +640,7 @@ package body GUI_Utils is
 
       exception
          when E : others =>
-            Trace (Exception_Handle,
-                   "Unexpected exception: " & Exception_Information (E));
+            Trace (Exception_Handle, E);
             return False;
       end Button_Press_For_Contextual_Menu;
 
@@ -770,9 +764,7 @@ package body GUI_Utils is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Radio_Callback;
 
    -------------------------------
@@ -807,9 +799,7 @@ package body GUI_Utils is
       Set_Value (M, Iter, Data, Text_Value);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Edited_Callback;
 
    -----------------------------
@@ -1188,8 +1178,7 @@ package body GUI_Utils is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Key_Press_In_Grab;
 

@@ -974,8 +974,7 @@ procedure GPS.Main is
                     -"Error when executing the script for --script switch",
                     Mode => Error);
          end if;
-         Trace (Exception_Handle,
-                "Exception was " & Exception_Information (E));
+         Trace (Exception_Handle, E);
    end Execute_Batch;
 
    --------------------
@@ -999,8 +998,7 @@ procedure GPS.Main is
       return False;
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end On_GPS_Started;
 
@@ -1656,9 +1654,7 @@ procedure GPS.Main is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unhandled exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Title_Changed;
 
    --------------------
@@ -1710,9 +1706,7 @@ procedure GPS.Main is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unhandled exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Child_Selected;
 
    ---------------------
@@ -1729,8 +1723,7 @@ procedure GPS.Main is
    exception
       when E : others =>
          Unexpected_Exception := True;
-         Trace (Exception_Handle,
-                "Unhandled exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
 
          if Is_Regular_File (Pid_File) then
             Str := Pid_File'Unchecked_Access;
@@ -1838,7 +1831,5 @@ begin
    Do_Cleanups;
 
 exception
-   when E : others =>
-      Trace (Exception_Handle,
-             "Unexpected exception: " & Exception_Information (E));
+   when E : others => Trace (Exception_Handle, E);
 end GPS.Main;

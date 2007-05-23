@@ -304,9 +304,7 @@ package body Welcome is
       return Create_New_Project (S.Kernel);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
          return False;
    end On_New_Project;
 
@@ -321,9 +319,7 @@ package body Welcome is
       Response (S, Gtk_Response_OK);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Default_Project;
 
    ---------------------
@@ -360,9 +356,7 @@ package body Welcome is
       return True;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
          Button := Message_Dialog
            ((-"Project file ")
             & Full_Name (Project_Name).all & (-" couldn't be loaded"),
@@ -388,9 +382,7 @@ package body Welcome is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Browse_Default;
 
    --------------------
@@ -429,10 +421,8 @@ package body Welcome is
       Pop_State (S.Kernel);
 
    exception
-      when E : others =>
+      when E : others => Trace (Exception_Handle, E);
          Pop_State (S.Kernel);
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
    end On_Browse_Load;
 
    --------------------------------
@@ -450,9 +440,7 @@ package body Welcome is
       Set_Sensitive (S.Default_Browse, True);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Default_Project_Clicked;
 
    -------------------------------
@@ -470,9 +458,7 @@ package body Welcome is
       Set_Sensitive (S.Default_Browse, False);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Create_Project_Clicked;
 
    -----------------------------
@@ -490,9 +476,7 @@ package body Welcome is
       Set_Sensitive (S.Default_Browse, False);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Open_Project_Clicked;
 
 end Welcome;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2004                      --
+--                      Copyright (C) 2001-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -52,9 +52,7 @@ package body Memory_View_Pkg.Callbacks is
       Display_Memory (View, Get_Text (View.Address_Entry));
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Address_Entry_Activate;
 
    -----------------------------
@@ -70,9 +68,7 @@ package body Memory_View_Pkg.Callbacks is
       Display_Memory (View, Get_Text (View.Address_Entry));
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Address_View_Clicked;
 
    ---------------------------
@@ -88,9 +84,7 @@ package body Memory_View_Pkg.Callbacks is
       Update_Display (View);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Size_Entry_Changed;
 
    ---------------------------
@@ -106,9 +100,7 @@ package body Memory_View_Pkg.Callbacks is
       Update_Display (View);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Data_Entry_Changed;
 
    ---------------------------
@@ -124,9 +116,7 @@ package body Memory_View_Pkg.Callbacks is
       Update_Display (View);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Show_Ascii_Toggled;
 
    ---------------------
@@ -142,9 +132,7 @@ package body Memory_View_Pkg.Callbacks is
       Page_Up (View);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Pgup_Clicked;
 
    ---------------------
@@ -160,9 +148,7 @@ package body Memory_View_Pkg.Callbacks is
       Page_Down (View);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Pgdn_Clicked;
 
    -----------------------------
@@ -223,9 +209,7 @@ package body Memory_View_Pkg.Callbacks is
       when Invalid_Field =>
          return False;
 
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
          return False;
    end On_View_Key_Press_Event;
 
@@ -242,9 +226,7 @@ package body Memory_View_Pkg.Callbacks is
       null;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_View_Move_Cursor;
 
    ----------------------------------
@@ -277,9 +259,7 @@ package body Memory_View_Pkg.Callbacks is
       return False;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
       return False;
    end On_View_Button_Release_Event;
 
@@ -298,9 +278,7 @@ package body Memory_View_Pkg.Callbacks is
       Update_Display (View);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Reset_Clicked;
 
    -----------------------
@@ -314,9 +292,7 @@ package body Memory_View_Pkg.Callbacks is
       Apply_Changes (View);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Submit_Clicked;
 
    ----------------------
@@ -328,9 +304,7 @@ package body Memory_View_Pkg.Callbacks is
       Destroy (Get_Toplevel (Object));
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Close_Clicked;
 
    -----------------------

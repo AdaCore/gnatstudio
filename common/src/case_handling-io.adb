@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2004-2005                      --
+--                      Copyright (C) 2004-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -91,9 +91,7 @@ package body Case_Handling.IO is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Load_Exceptions;
 
    ---------------------
@@ -163,9 +161,7 @@ package body Case_Handling.IO is
       Free (File);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Save_Exceptions;
 
 end Case_Handling.IO;

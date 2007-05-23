@@ -271,8 +271,7 @@ package body Interactive_Consoles is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Button_Press_Handler;
 
@@ -296,8 +295,7 @@ package body Interactive_Consoles is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Button_Release_Handler;
 
@@ -331,9 +329,7 @@ package body Interactive_Consoles is
          Set_Policy (Console, Policy_Automatic, Policy_Automatic);
       end if;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Size_Allocate_Handler;
 
    --------------------------------
@@ -352,9 +348,7 @@ package body Interactive_Consoles is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Selection_Received_Handler;
 
    --------------------------
@@ -385,8 +379,7 @@ package body Interactive_Consoles is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Delete_Event_Handler;
 
@@ -541,8 +534,7 @@ package body Interactive_Consoles is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Key_Press_Handler;
 
@@ -668,9 +660,7 @@ package body Interactive_Consoles is
       C.Internal_Insert := False;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Mark_Set_Handler;
 
    ----------------
@@ -1019,9 +1009,7 @@ package body Interactive_Consoles is
       end loop;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Insert_And_Execute;
 
    ---------------------

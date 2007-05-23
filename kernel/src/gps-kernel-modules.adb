@@ -1011,8 +1011,7 @@ package body GPS.Kernel.Modules is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, "Unhandled exception "
-                & Exception_Information (E));
+         Trace (Exception_Handle, E);
          Destroy (Menu);
    end Create_Contextual_Menu;
 
@@ -1077,8 +1076,7 @@ package body GPS.Kernel.Modules is
       return Menu;
    exception
       when E : others =>
-         Trace (Exception_Handle, "Unhandled exception "
-                & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return null;
    end Create_Contextual_Menu;
 
@@ -1262,9 +1260,7 @@ package body GPS.Kernel.Modules is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Execute_Command;
 
    -------------------
@@ -1402,9 +1398,7 @@ package body GPS.Kernel.Modules is
            (Command.Filter,
             Command.Kernel.Last_Context_For_Contextual));
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Map_Menu;
 
    -----------------------
@@ -1446,9 +1440,7 @@ package body GPS.Kernel.Modules is
       Show_All (Data.Menu);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Menu_Button_Press;
 
    ---------------------------

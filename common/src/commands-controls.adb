@@ -85,10 +85,7 @@ package body Commands.Controls is
       Undo (Command.The_Queue);
 
    exception
-      when E : others =>
-         Trace
-           (Exception_Handle,
-            "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Undo;
 
    -------------
@@ -106,10 +103,7 @@ package body Commands.Controls is
       Redo (Command.The_Queue);
 
    exception
-      when E : others =>
-         Trace
-           (Exception_Handle,
-            "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Redo;
 
    -------------
