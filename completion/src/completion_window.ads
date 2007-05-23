@@ -52,6 +52,8 @@ with Completion;    use Completion;
 with GPS.Kernel;    use GPS.Kernel;
 with Basic_Types;   use Basic_Types;
 
+with Completion.History; use Completion.History;
+
 package Completion_Window is
 
    type Completion_Window_Record is new Gtk_Window_Record with private;
@@ -86,6 +88,11 @@ package Completion_Window is
 
    procedure Select_Next (Window : Completion_Window_Access);
    --  Select the next item in the window.
+
+   procedure Set_History
+     (Window : Completion_Window_Access; History : Completion_History_Access);
+   --  Sets the history of the completion window. This history will be feed
+   --  by completions chosen by the user.
 
    procedure Delete (Window : access Completion_Window_Record'Class);
    --  Destroy the window and its contents.
@@ -160,6 +167,8 @@ private
 
       Pattern : String_Access;
       --  The currently typed pattern.
+
+      Completion_History : Completion_History_Access;
    end record;
 
 end Completion_Window;
