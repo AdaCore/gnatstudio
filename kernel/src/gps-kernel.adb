@@ -857,9 +857,7 @@ package body GPS.Kernel is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
          return False;
    end Load_Desktop;
 
@@ -906,9 +904,7 @@ package body GPS.Kernel is
          Context.Data := null;
       end if;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
 
          if Active (Ref_Me) then
             Decrease_Indent;
@@ -931,9 +927,7 @@ package body GPS.Kernel is
          end if;
       end if;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Adjust;
 
    ----------------
@@ -1367,9 +1361,7 @@ package body GPS.Kernel is
       Basic_Types.Free (Column_Names);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
 
          if Dialog /= null then
             Destroy (Dialog);
