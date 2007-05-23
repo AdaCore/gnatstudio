@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling;    use Ada.Characters.Handling;
-with Ada.Exceptions;             use Ada.Exceptions;
 with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
@@ -1870,10 +1869,8 @@ package body GVD.Process is
       return Process;
 
    exception
-      when E : others =>
+      when E : others => Traces.Trace (Exception_Handle, E);
          Pop_State (Kernel_Handle (Kernel));
-         Traces.Trace (Exception_Handle,
-                       "Unexpected exception: " & Exception_Information (E));
          return Process;
    end Spawn;
 

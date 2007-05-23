@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;        use Ada.Exceptions;
 with Basic_Types;           use Basic_Types;
 with Config;                use Config;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
@@ -225,9 +224,7 @@ package body GVD.Dialogs is
       Attach (Process, Create_If_Necessary => True);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Open_View;
 
    ----------------------------
@@ -386,9 +383,7 @@ package body GVD.Dialogs is
 
       return False;
    exception
-      when E : others =>
-         Trace (Exception_Handle, "Unexpected exception: "
-                & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
          return False;
    end On_Thread_Button_Release;
 

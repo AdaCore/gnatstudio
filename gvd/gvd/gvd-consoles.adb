@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Conversion;
-with Ada.Exceptions;         use Ada.Exceptions;
 with System;                 use System;
 
 with Glib;                   use Glib;
@@ -327,9 +326,7 @@ package body GVD.Consoles is
            (Get_Process (C).Command_History, String_History.Forward);
       end if;
    exception
-      when E : others =>
-         Trace (Exception_Handle, "Unexpected exception: "
-                & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Grab_Focus;
 
    ----------------------

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2005                       --
+--                     Copyright (C) 2000-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;        use Ada.Exceptions;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with Gtk.Enums;             use Gtk.Enums;
@@ -46,9 +45,7 @@ package body GVD.Dialogs.Callbacks is
       Hide (Get_Toplevel (Object));
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Close_Button_Clicked;
 
    -----------------------------
@@ -84,9 +81,7 @@ package body GVD.Dialogs.Callbacks is
       end;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Question_Yes_Clicked;
 
    -----------------------------
@@ -121,9 +116,7 @@ package body GVD.Dialogs.Callbacks is
       end;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Question_No_Clicked;
 
    ----------------------------
@@ -180,9 +173,7 @@ package body GVD.Dialogs.Callbacks is
       end;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Question_OK_Clicked;
 
    -------------------------------
@@ -203,9 +194,7 @@ package body GVD.Dialogs.Callbacks is
       Unregister_Dialog (Convert (Dialog.Main_Window, Dialog.Debugger));
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Question_Close_Clicked;
 
 end GVD.Dialogs.Callbacks;
