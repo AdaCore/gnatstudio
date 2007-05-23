@@ -28,6 +28,7 @@ with GNAT.OS_Lib;
 
 with Completion.Ada;                  use Completion.Ada;
 with Completion.Expression_Parser;    use Completion.Expression_Parser;
+with Completion.History;              use Completion.History;
 
 with Completion.Ada.Constructs_Extractor;
 use Completion.Ada.Constructs_Extractor;
@@ -61,6 +62,13 @@ procedure Completion.Test is
       Word_Start  : out Natural;
       Word_End    : out Natural);
 
+   procedure Next_Complete_Number
+     (Buffer : String;
+      Index  : in out Natural;
+      Number : out Integer);
+   --  Retreived the next number given in parenthesis after the offset, null
+   --  if none found until the next LF character.
+
    procedure Display (List : Completion_List; Name : String);
 
    function Get_New_Construct_Extractor
@@ -70,7 +78,8 @@ procedure Completion.Test is
    procedure Extract_Constructs (File : Virtual_File);
    procedure Analyze_Proposal (File : Virtual_File);
    procedure Extract_Entities (File : Virtual_File; Project : String);
-   procedure Full_Test (File : Virtual_File; Project : String);
+   procedure Full_Test
+     (File : Virtual_File; Project : String; History : Boolean);
 
    -----------------------
    -- Next_Complete_Tag --
@@ -104,6 +113,49 @@ procedure Completion.Test is
 
       Index := Index + Pattern'Length;
    end Next_Complete_Tag;
+
+   --------------------------
+   -- Next_Complete_Number --
+   --------------------------
+
+   procedure Next_Complete_Number
+     (Buffer : String;
+      Index  : in out Natural;
+      Number : out Integer)
+   is
+      Is_Start : Boolean := False;
+      First : Integer := -1;
+      Last : Integer := -1;
+   begin
+      Number := -1;
+
+      while Index in Buffer'Range and then Buffer (Index) /= ASCII.LF loop
+         if not Is_Blank (Buffer (Index)) then
+            if not Is_Start then
+               if Buffer (Index) /= '[' then
+                  return;
+               end if;
+
+               Is_Start := True;
+            else
+               if Buffer (Index) in '0' .. '9' then
+                  if First = -1 then
+                     First := Index;
+                  end if;
+
+                  Last := Index;
+               elsif Buffer (Index) = ']' then
+                  Number := Integer'Value (Buffer (First .. Last));
+                  return;
+               else
+                  return;
+               end if;
+            end if;
+         end if;
+
+         Index := Index + 1;
+      end loop;
+   end Next_Complete_Number;
 
    -------------
    -- Display --
@@ -441,7 +493,9 @@ procedure Completion.Test is
    -- Full_Test --
    ---------------
 
-   procedure Full_Test (File : Virtual_File; Project : String) is
+   procedure Full_Test
+     (File : Virtual_File; Project : String; History : Boolean)
+   is
       Result      : Completion_List;
       Tag_Index   : Natural;
       Start_Word  : Natural;
@@ -455,6 +509,10 @@ procedure Completion.Test is
       Time_Passed : Duration;
 
       Buffer  : constant String_Access := String_Access (Read_File (File));
+
+      History_Resolver : Completion_History_Access;
+
+      Apply_Number : Integer := -1;
    begin
       Start_Date := Clock;
 
@@ -471,11 +529,17 @@ procedure Completion.Test is
 
       Tag_Index := 1;
 
+      if History then
+         History_Resolver := new Completion_History;
+         Register_Resolver (Manager, History_Resolver);
+      end if;
+
       Register_Resolver (Manager, Resolver);
 
       while Tag_Index < Buffer'Last loop
 
          Next_Complete_Tag (Buffer.all, Tag_Index, Start_Word, End_Word);
+         Next_Complete_Number (Buffer.all, Tag_Index, Apply_Number);
 
          exit when Tag_Index = 0;
 
@@ -495,6 +559,20 @@ procedure Completion.Test is
          end if;
 
          Display (Result, Buffer (Start_Word .. End_Word));
+
+         if Apply_Number /= -1 then
+            declare
+               Iter : Completion_Iterator;
+            begin
+               Iter := First (Result);
+
+               for J in 1 .. Apply_Number loop
+                  Next (Iter);
+               end loop;
+
+               Prepend_Proposal (History_Resolver, Get_Proposal (Iter));
+            end;
+         end if;
       end loop;
    end Full_Test;
 
@@ -529,7 +607,15 @@ begin
          return;
       end if;
 
-      Full_Test (Given_File, Argument (3));
+      if Command_Line.Argument_Count >= 4 then
+         if Argument (4) = "-history" then
+            Full_Test (Given_File, Argument (3), True);
+         else
+            Full_Test (Given_File, Argument (3), False);
+         end if;
+      else
+         Full_Test (Given_File, Argument (3), False);
+      end if;
    end if;
 
    Flush;
