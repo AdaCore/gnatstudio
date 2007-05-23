@@ -42,6 +42,12 @@ G213-014 Add support for Project Explorer filters (2007-02-20)
   designed to filter out version control specific directories
   like CVS or .svn for example.
 
+FA12-012 Recent chosen completions displayed at the top of the list (2007-05-23)
+
+  The completion window now remembers recently chosen completions, and will
+  propose them at the top of the completion proposal list, when they are
+  accurate.
+
 F925-002 Short titles for floating windows
 
   A new preference has been added to control titles used for floating windows.
