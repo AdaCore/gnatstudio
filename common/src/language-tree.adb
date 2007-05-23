@@ -231,13 +231,83 @@ package body Language.Tree is
       return Iter.Node.Sub_Nodes_Length;
    end Get_Child_Number;
 
+   ---------
+   -- "=" --
+   ---------
+
+   function "="
+     (Left : Text_Location; Right : Source_Location) return Boolean is
+   begin
+      case Left.Absolute_Offset is
+         when True =>
+            return Left.Offset = Right.Index;
+         when False =>
+            return Left.Line = Right.Line
+              and then Left.Line_Offset = Right.Column;
+      end case;
+   end "=";
+
+   ---------
+   -- "<" --
+   ---------
+
+   function "<"
+     (Left : Text_Location; Right : Source_Location) return Boolean is
+   begin
+      case Left.Absolute_Offset is
+         when True =>
+            return Left.Offset < Right.Index;
+         when False =>
+            return Left.Line < Right.Line
+              or else (Left.Line = Right.Line
+                       and then Left.Line_Offset < Right.Column);
+      end case;
+   end "<";
+
+   ----------
+   -- "<=" --
+   ----------
+
+   function "<="
+     (Left : Text_Location; Right : Source_Location) return Boolean is
+   begin
+      return Left = Right or else Left < Right;
+   end "<=";
+
+   ---------
+   -- ">" --
+   ---------
+
+   function ">"
+     (Left : Text_Location; Right : Source_Location) return Boolean is
+   begin
+      case Left.Absolute_Offset is
+         when True =>
+            return Left.Offset > Right.Index;
+         when False =>
+            return Left.Line > Right.Line
+              or else (Left.Line = Right.Line
+                       and then Left.Line_Offset > Right.Column);
+      end case;
+   end ">";
+
+   ----------
+   -- ">=" --
+   ----------
+
+   function ">="
+     (Left : Text_Location; Right : Source_Location) return Boolean is
+   begin
+      return Left = Right or else Left > Right;
+   end ">=";
+
    ---------------------
    -- Get_Iterator_At --
    ---------------------
 
    function Get_Iterator_At
      (Tree              : Construct_Tree;
-      Line, Line_Offset : Natural;
+      Location          : Text_Location;
       From_Type         : Position_Type := Start_Construct;
       Position          : Relative_Position := Specified;
       Categories_Seeked : Category_Array := Null_Category_Array)
@@ -289,13 +359,9 @@ package body Language.Tree is
         (Construct : Simple_Construct_Information) return Boolean is
       begin
          if From_Type = Start_Construct then
-            return Construct.Sloc_Start.Line > Line
-              or else (Construct.Sloc_Start.Line = Line
-                       and then Construct.Sloc_Start.Column > Line_Offset);
+            return Location < Construct.Sloc_Start;
          elsif From_Type = Start_Name then
-            return Construct.Sloc_Entity.Line > Line
-              or else (Construct.Sloc_Entity.Line = Line
-                       and then Construct.Sloc_Entity.Column > Line_Offset);
+            return Location < Construct.Sloc_Entity;
          else
             raise Constraint_Error;
          end if;
@@ -310,13 +376,9 @@ package body Language.Tree is
       is
       begin
          if From_Type = Start_Construct then
-            return Construct.Sloc_Start.Line > Line
-              or else (Construct.Sloc_Start.Line = Line
-                       and then Construct.Sloc_Start.Column >= Line_Offset);
+            return Location <= Construct.Sloc_Start;
          elsif From_Type = Start_Name then
-            return Construct.Sloc_Entity.Line > Line
-              or else (Construct.Sloc_Entity.Line = Line
-                       and then Construct.Sloc_Entity.Column >= Line_Offset);
+            return Location <= Construct.Sloc_Entity;
          else
             raise Constraint_Error;
          end if;
@@ -330,11 +392,9 @@ package body Language.Tree is
         (Construct : Simple_Construct_Information) return Boolean is
       begin
          if From_Type = Start_Construct then
-            return Construct.Sloc_Start.Line = Line
-              and then Construct.Sloc_Start.Column = Line_Offset;
+            return Location = Construct.Sloc_Start;
          elsif From_Type = Start_Name then
-            return Construct.Sloc_Entity.Line = Line
-              and then Construct.Sloc_Entity.Column = Line_Offset;
+            return Location = Construct.Sloc_Entity;
          else
             raise Constraint_Error;
          end if;
@@ -348,15 +408,8 @@ package body Language.Tree is
         (Construct : Simple_Construct_Information) return Boolean
       is
       begin
-         return
-           (Construct.Sloc_Start.Line < Line
-            or else
-              (Construct.Sloc_Start.Line = Line
-               and then Construct.Sloc_Start.Column <= Line_Offset))
-           and then (Construct.Sloc_End.Line > Line
-                     or else
-                       (Construct.Sloc_End.Line = Line
-                        and then Construct.Sloc_End.Column >= Line_Offset));
+         return Location >= Construct.Sloc_Start
+           and then Location <= Construct.Sloc_End;
       end Is_Enclosing;
 
       Last_Matched : Construct_Tree_Iterator :=
@@ -760,6 +813,44 @@ package body Language.Tree is
       return Construct.Tree;
    end Get_Tree;
 
+   -----------------------
+   -- Is_Same_Construct --
+   -----------------------
+
+   function Is_Same_Construct
+     (Left, Right : Construct_Cell_Access) return Boolean
+   is
+      function Equals (C1, C2 : Simple_Construct_Information) return Boolean;
+
+      function Equals (C1, C2 : Simple_Construct_Information) return Boolean is
+      begin
+         return C1.Category = C2.Category
+           and then C1.Is_Declaration = C2.Is_Declaration
+           and then C1.Visibility = C2.Visibility
+           and then C1.Attributes = C2.Attributes
+           and then C1.Name.all = C2.Name.all;
+      end Equals;
+
+      It_Left, It_Right : Construct_Tree_Iterator;
+   begin
+      It_Left := (Left.Tree.Contents (Left.Index), Left.Index);
+      It_Right := (Right.Tree.Contents (Right.Index), Right.Index);
+
+      while It_Left /= Null_Construct_Tree_Iterator
+        and then It_Right /= Null_Construct_Tree_Iterator
+      loop
+         if not Equals (Get_Construct (It_Left), Get_Construct (It_Right)) then
+            return False;
+         end if;
+
+         It_Left := Get_Parent_Scope (Left.Tree, It_Left);
+         It_Right := Get_Parent_Scope (Right.Tree, It_Right);
+      end loop;
+
+      return It_Left = Null_Construct_Tree_Iterator
+        and then It_Right = Null_Construct_Tree_Iterator;
+   end Is_Same_Construct;
+
    ----------
    -- Free --
    ----------
@@ -940,6 +1031,40 @@ package body Language.Tree is
 
       return Result;
    end Get_Slice;
+
+   -------------------------
+   -- Full_Construct_Path --
+   -------------------------
+
+   function Full_Construct_Path
+     (Cell : Construct_Cell_Access) return Construct_Tree_Iterator_Array
+   is
+      It   : Construct_Tree_Iterator := To_Construct_Tree_Iterator (Cell);
+      Size : Integer := 0;
+   begin
+      while It /= Null_Construct_Tree_Iterator loop
+         It := Get_Parent_Scope (Get_Tree (Cell), It);
+
+         Size := Size + 1;
+      end loop;
+
+      declare
+         Result : Construct_Tree_Iterator_Array (1 .. Size);
+         Ind    : Integer := Result'Length;
+      begin
+         It := To_Construct_Tree_Iterator (Cell);
+
+         while It /= Null_Construct_Tree_Iterator loop
+            Result (Ind) := It;
+
+            It := Get_Parent_Scope (Get_Tree (Cell), It);
+
+            Ind := Ind - 1;
+         end loop;
+
+         return Result;
+      end;
+   end Full_Construct_Path;
 
    ---------------------
    -- Get_Parent_Tree --

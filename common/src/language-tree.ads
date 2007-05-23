@@ -89,9 +89,33 @@ package Language.Tree is
 
    type Position_Type is (Start_Construct, Start_Name);
 
+   type Text_Location (Absolute_Offset : Boolean) is record
+      case Absolute_Offset is
+         when True =>
+            Offset : Integer;
+         when False =>
+            Line, Line_Offset : Natural;
+      end case;
+   end record;
+   --  This type is used to make comparaisons to Source_Location when only a
+   --  set "Line, Column" or "Offset" is available, but not both.
+
+   function "=" (Left : Text_Location; Right : Source_Location) return Boolean;
+
+   function "<" (Left : Text_Location; Right : Source_Location) return Boolean;
+
+   function "<="
+     (Left : Text_Location; Right : Source_Location) return Boolean;
+
+   function ">"
+     (Left : Text_Location; Right : Source_Location) return Boolean;
+
+   function ">="
+     (Left : Text_Location; Right : Source_Location) return Boolean;
+
    function Get_Iterator_At
      (Tree              : Construct_Tree;
-      Line, Line_Offset : Natural;
+      Location          : Text_Location;
       From_Type         : Position_Type     := Start_Construct;
       Position          : Relative_Position := Specified;
       Categories_Seeked : Category_Array    := Null_Category_Array)
@@ -193,6 +217,11 @@ package Language.Tree is
    function Get_Tree (Construct : Construct_Cell_Access) return Construct_Tree;
    --  Return the tree stored in this construct access
 
+   function Is_Same_Construct
+     (Left, Right : Construct_Cell_Access) return Boolean;
+   --  Return true if the two cell access points to the same construct, even
+   --  if they may not come from the exact same tree.
+
    --------------------------
    -- Composite_Identifier --
    --------------------------
@@ -245,6 +274,11 @@ package Language.Tree is
      Construct_Tree_Iterator;
 
    Null_Construct_Tree_Iterator_Array : constant Construct_Tree_Iterator_Array;
+
+   function Full_Construct_Path
+     (Cell : Construct_Cell_Access) return Construct_Tree_Iterator_Array;
+   --  Return an array containing all the parents of the construct cell given
+   --  in parameter.
 
    -------------------
    -- Tree_Language --
