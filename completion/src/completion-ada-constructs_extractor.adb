@@ -34,6 +34,8 @@ package body Completion.Ada.Constructs_Extractor is
    use Completion_List_Extensive_Pckg;
    use Extensive_List_Pckg;
 
+   Resolver_ID : constant String := "CNST_ADA";
+
    ---------------------------------------
    -- New_Construct_Completion_Resolver --
    ---------------------------------------
@@ -57,6 +59,52 @@ package body Completion.Ada.Constructs_Extractor is
 
       return Resolver_Acc;
    end New_Construct_Completion_Resolver;
+
+   ----------------------
+   -- To_Completion_Id --
+   ----------------------
+
+   function To_Completion_Id
+     (Proposal : Construct_Completion_Proposal) return Completion_Id
+   is
+      Id_Length : Integer := 0;
+
+      It : Construct_Tree_Iterator := Proposal.Tree_Node;
+   begin
+      while It /= Null_Construct_Tree_Iterator loop
+         if Get_Construct (It).Name /= null then
+            Id_Length := Id_Length + Get_Construct (It).Name'Length + 1;
+         end if;
+
+         It := Get_Parent_Scope (Proposal.Tree, It);
+      end loop;
+
+      declare
+         Id : String (1 .. Id_Length);
+         Index : Integer := Id'Length;
+      begin
+         It := Proposal.Tree_Node;
+
+         while It /= Null_Construct_Tree_Iterator loop
+            if Get_Construct (It).Name /= null then
+               Id (Index - (Get_Construct (It).Name'Length + 1 - 1)
+                   .. Index) :=
+                 Get_Construct (It).Name.all & ".";
+               Index := Index - (Get_Construct (It).Name'Length + 1);
+            end if;
+
+            It := Get_Parent_Scope (Proposal.Tree, It);
+         end loop;
+
+         return
+           (Id'Length - 1,
+            Resolver_ID,
+            Id (1 .. Id'Length  - 1), --  -1 to Remove the last dot
+            Get_File_Path (Proposal.File),
+            Get_Construct (Proposal.Tree_Node).Sloc_Start.Line,
+            Get_Construct (Proposal.Tree_Node).Sloc_Start.Column);
+      end;
+   end To_Completion_Id;
 
    --------------------
    -- Get_Completion --
@@ -756,6 +804,68 @@ package body Completion.Ada.Constructs_Extractor is
       Proposal.Params_In_Expression := Number_Of_Parameters;
    end Append_Expression;
 
+   -----------
+   -- Match --
+   -----------
+
+   function Match
+     (Proposal   : Construct_Completion_Proposal;
+      Identifier : String;
+      Is_Partial : Boolean;
+      Context    : Completion_Context;
+      Offset     : Integer;
+      Filter     : Possibilities_Filter) return Boolean
+   is
+      pragma Unreferenced (Filter);
+   begin
+      if Get_Construct (Proposal.Tree_Node).Name = null then
+         return False;
+      elsif Get_Construct (Proposal.Tree_Node).Category = Cat_Field then
+         return False;
+      elsif not Match
+           (Identifier,
+            Get_Construct (Proposal.Tree_Node).Name.all,
+            Is_Partial)
+      then
+         return False;
+      else
+         declare
+            Source_Tree : Construct_Tree;
+            Source_Ada_Tree : Ada_Construct_Tree;
+            Result : Boolean;
+         begin
+            if Context.all in Ada_Construct_Extractor_Context'Class then
+               Source_Tree := Get_Full_Tree
+                 (Ada_Construct_Extractor_Context (Context.all).File);
+               Source_Ada_Tree :=  Generate_Ada_Construct_Tree
+                 (Tree   => Source_Tree,
+                  Buffer => Get_Buffer
+                    (Ada_Construct_Extractor_Context (Context.all).File));
+            else
+               Source_Tree := To_Construct_Tree (Context.Buffer.all, Ada_Lang);
+               Source_Ada_Tree :=  Generate_Ada_Construct_Tree
+                 (Tree   => Source_Tree,
+                  Buffer => Context.Buffer);
+            end if;
+
+            Result := Is_Visible
+              (Db       => Construct_Completion_Resolver
+                 (Proposal.Resolver.all).Construct_Db,
+               Cell     => To_Construct_Access
+                 (Proposal.Tree, Proposal.Tree_Node),
+               Tree     => Source_Tree,
+               Ada_Tree => Source_Ada_Tree,
+               Offset   => Offset);
+
+            --  ??? Shouldn't we cache this tree instead of regenerating it
+            --  each time?
+            Free (Source_Tree, Source_Ada_Tree);
+
+            return Result;
+         end;
+      end if;
+   end Match;
+
    ----------
    -- Free --
    ----------
@@ -895,6 +1005,158 @@ package body Completion.Ada.Constructs_Extractor is
          end;
       end if;
    end Get_Possibilities;
+
+   ------------------------
+   -- From_Completion_Id --
+   ------------------------
+
+   function From_Completion_Id
+     (Resolver : access Construct_Completion_Resolver; Id : Completion_Id)
+      return Completion_Proposal_Access
+   is
+      function Extract_Construct
+        (Id    : Composite_Identifier;
+         Step  : Integer;
+         Scope : Construct_Tree_Iterator;
+         Tree  : Construct_Tree) return Construct_Tree_Iterator;
+
+      function Extract_Construct
+        (Id    : Composite_Identifier;
+         Step  : Integer;
+         Scope : Construct_Tree_Iterator;
+         Tree  : Construct_Tree) return Construct_Tree_Iterator
+      is
+         Result : Construct_Tree_Iterator;
+
+         It : Construct_Tree_Iterator := Next (Tree, Scope, Jump_Into);
+
+         Current_Item : constant String := Get_Item (Id, Step);
+      begin
+         --  ??? We should take into account line & column as well...
+
+         while Get_Parent_Scope (Tree, It) = Scope loop
+            if Get_Construct (It).Name /= null
+              and then Get_Construct (It).Name.all = Current_Item
+            then
+               if Step = Length (Id) then
+                  return It;
+               else
+                  Result := Extract_Construct (Id, Step + 1, It, Tree);
+
+                  if Result /= Null_Construct_Tree_Iterator then
+                     return Result;
+                  end if;
+               end if;
+            end if;
+
+            It := Next (Tree, It, Jump_Over);
+         end loop;
+
+         return Null_Construct_Tree_Iterator;
+      end Extract_Construct;
+
+      Found_Id_Length : Natural;
+      Found_Node      : Construct_Tree_Iterator;
+
+      File : constant Structured_File_Access := Get_Or_Create
+           (Resolver.Construct_Db,
+            Id.File,
+            Ada_Tree_Lang);
+
+      Full_Tree : constant Construct_Tree := Get_Full_Tree (File);
+
+      Node_At_Loc : constant Construct_Tree_Iterator := Get_Iterator_At
+        (Tree              => Full_Tree,
+         Location          => (False, Id.Line, Id.Column),
+         From_Type         => Start_Construct,
+         Position          => Specified,
+         Categories_Seeked => Null_Category_Array);
+
+   begin
+      if Id.Resolver_Id /= Resolver_ID then
+         return null;
+      end if;
+
+      declare
+         Composite_ID : constant Composite_Identifier :=
+           To_Composite_Identifier (Id.Id);
+
+         It : Construct_Tree_Iterator := First (Full_Tree);
+      begin
+
+         --  First, check if the node looks correct at {line, col}
+
+         if Node_At_Loc /= Null_Construct_Tree_Iterator
+           and then Get_Construct (Node_At_Loc).Name /= null
+         then
+            declare
+               Name_At_Loc : constant Composite_Identifier :=
+                 To_Composite_Identifier
+                   (Get_Construct (Node_At_Loc).Name.all);
+            begin
+               if Length (Name_At_Loc) >= Length (Composite_ID)
+                 and then Name_At_Loc =
+                   Get_Slice
+                     (Composite_ID,
+                      Length (Composite_ID) - Length (Name_At_Loc) + 1,
+                      Length (Composite_ID))
+               then
+                  return new Construct_Completion_Proposal'
+                       (Resolver             => Resolver,
+                        Profile              => null,
+                        Tree_Node            => Node_At_Loc,
+                        File                 => File,
+                        Is_All               => False,
+                        Params_In_Expression => 0,
+                        Tree                 => Full_Tree,
+                        Filter               => Everything,
+                        Buffer               => Get_Buffer (File),
+                        Is_In_Profile        => False);
+               end if;
+            end;
+         end if;
+
+         --  If not, try to retreive a construct of the same name. This usually
+         --  means that the file has been modified, and is done on a best
+         --  effort basis.
+
+         while It /= Null_Construct_Tree_Iterator loop
+            case Get_Construct (It).Category is
+               when Cat_Package | Cat_Procedure | Cat_Function =>
+                  Found_Id_Length := Length
+                    (To_Composite_Identifier
+                       (Get_Construct (It).Name.all));
+
+                  if Found_Id_Length <= Length (Composite_ID) then
+                     if Found_Id_Length < Length (Composite_ID) then
+                        Found_Node := Extract_Construct
+                          (Composite_ID, Found_Id_Length + 1, It, Full_Tree);
+                     else
+                        Found_Node := It;
+                     end if;
+
+                     return new Construct_Completion_Proposal'
+                       (Resolver             => Resolver,
+                        Profile              => null,
+                        Tree_Node            => Found_Node,
+                        File                 => File,
+                        Is_All               => False,
+                        Params_In_Expression => 0,
+                        Tree                 => Full_Tree,
+                        Filter               => Everything,
+                        Buffer               => Get_Buffer (File),
+                        Is_In_Profile        => False);
+                  end if;
+               when others =>
+                  null;
+            end case;
+
+            It := Next (Full_Tree, It);
+         end loop;
+      end;
+
+      return null;
+   end From_Completion_Id;
 
    ----------
    -- Free --
