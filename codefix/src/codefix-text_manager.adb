@@ -866,8 +866,10 @@ package body Codefix.Text_Manager is
    begin
       It := Get_Iterator_At
         (Get_Tree (Current_Text),
-         Get_Line (Cursor),
-         Integer (To_Char_Index (Get_Column (Cursor), Line_Cursor)),
+         (Absolute_Offset => False,
+          Line            => Get_Line (Cursor),
+          Line_Offset     =>
+            Integer (To_Char_Index (Get_Column (Cursor), Line_Cursor))),
          Start_Name,
          Position,
          Categories_Seeked);
