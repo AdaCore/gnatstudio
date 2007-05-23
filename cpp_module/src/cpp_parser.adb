@@ -2980,7 +2980,10 @@ package body CPP_Parser is
                   end if;
 
                   Put_Line (Tmp_File, "@" & Xref_File_Name);
-                  Put_Line (Tmp_File, Full_Name (File, True).all);
+                  Put_Line
+                    (Tmp_File,
+                     Normalize_Pathname (Full_Name (File, True).all,
+                       Case_Sensitive => False));
                   Recompute_TO := True;
 
                elsif not Recompute_TO
