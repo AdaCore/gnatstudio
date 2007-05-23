@@ -792,6 +792,9 @@ package body Completion_Window is
          Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Mark);
          Insert (Window.Buffer, Text_Begin, Window.Info (Pos).Text.all);
 
+         Prepend_Proposal
+           (Window.Completion_History, Window.Info (Pos).Proposal.all);
+
          Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Mark);
          Forward_Chars (Iter   => Text_Begin,
                         Count  => Gint (Window.Info (Pos).Offset),
@@ -1286,6 +1289,17 @@ package body Completion_Window is
          end if;
       end if;
    end Select_Next;
+
+   -----------------
+   -- Set_History --
+   -----------------
+
+   procedure Set_History
+     (Window : Completion_Window_Access; History : Completion_History_Access)
+   is
+   begin
+      Window.Completion_History := History;
+   end Set_History;
 
    -----------------------------
    -- Set_Completion_Iterator --
