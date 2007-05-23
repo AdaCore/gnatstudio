@@ -113,6 +113,12 @@ package Language.Tree is
    function ">="
      (Left : Text_Location; Right : Source_Location) return Boolean;
 
+   function To_Location (Offset : Integer) return Text_Location;
+   --  Return a text location for the offset given in parameter.
+
+   function To_Location (Line, Line_Offset : Natural) return Text_Location;
+   --  Return a text location for the line/column given in parameter.
+
    function Get_Iterator_At
      (Tree              : Construct_Tree;
       Location          : Text_Location;

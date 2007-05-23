@@ -301,6 +301,24 @@ package body Language.Tree is
       return Left = Right or else Left > Right;
    end ">=";
 
+   -----------------
+   -- To_Location --
+   -----------------
+
+   function To_Location (Offset : Integer) return Text_Location is
+   begin
+      return (True, Offset);
+   end To_Location;
+
+   -----------------
+   -- To_Location --
+   -----------------
+
+   function To_Location (Line, Line_Offset : Natural) return Text_Location is
+   begin
+      return (False, Line, Line_Offset);
+   end To_Location;
+
    ---------------------
    -- Get_Iterator_At --
    ---------------------
