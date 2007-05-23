@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;    use Ada.Exceptions;
 with GNAT.Strings;
 
 with Gdk.Event;         use Gdk.Event;

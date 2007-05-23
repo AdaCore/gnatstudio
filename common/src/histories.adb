@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;      use Ada.Exceptions;
 with Ada.Text_IO;         use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;

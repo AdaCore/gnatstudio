@@ -18,8 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;         use Ada.Exceptions;
-
 with Gdk.Types.Keysyms;      use Gdk.Types.Keysyms;
 with Gdk.Types;              use Gdk.Types;
 

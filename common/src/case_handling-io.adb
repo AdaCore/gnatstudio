@@ -33,7 +33,6 @@
 --  <substring>  : A substring exception. A substring is defined as a part
 --                 of the word separated by underscores.
 
-with Ada.Exceptions; use Ada.Exceptions;
 with GNAT.OS_Lib;    use GNAT.OS_Lib;
 
 with Traces;         use Traces;
