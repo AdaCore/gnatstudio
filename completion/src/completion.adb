@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006                         --
+--                      Copyright (C) 2006-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -91,6 +91,48 @@ package body Completion is
       return Context.Offset;
    end Get_Completion_Offset;
 
+   ---------
+   -- "<" --
+   ---------
+
+   function "<" (Left, Right : Completion_Id) return Boolean is
+   begin
+      return Left.Id_Length < Right.Id_Length
+        or else
+          (Left.Id_Length = Right.Id_Length
+           and then
+             (Left.Line < Right.Line
+              or else
+               (Left.Line = Right.Line
+                and then
+                  (Left.Column < Right.Column
+                   or else
+                     (Left.Column = Right.Column
+                      and then
+                      (Left.Id < Right.Id
+                       or else
+                         (Left.Id = Right.Id
+                          and then
+                            (Left.File < Right.File
+                             or else
+                             (Left.File = Right.File
+                              and then
+                              Left.Resolver_Id < Right.Resolver_Id)))))))));
+   end "<";
+
+   ---------
+   -- "=" --
+   ---------
+
+   function "=" (Left, Right : Completion_Id) return Boolean is
+   begin
+      return Left.Resolver_Id = Right.Resolver_Id
+        and then Left.Id = Right.Id
+        and then Left.File = Right.File
+        and then Left.Line = Right.Line
+        and then Left.Column = Right.Column;
+   end "=";
+
    ----------
    -- Next --
    ----------
@@ -163,6 +205,31 @@ package body Completion is
       return New_Context;
    end Create_Context;
 
+   ------------------------
+   -- From_Completion_Id --
+   ------------------------
+
+   function From_Completion_Id
+     (Manager : access Completion_Manager; Id : Completion_Id)
+      return Completion_Proposal_Access
+   is
+      It : Completion_Resolver_List_Pckg.List_Node := First
+        (Manager.Resolvers);
+      Result : Completion_Proposal_Access := null;
+   begin
+      while It /= Completion_Resolver_List_Pckg.Null_Node loop
+         Result := From_Completion_Id (Data (It), Id);
+
+         if Result /= null then
+            return Result;
+         end if;
+
+         It := Next (It);
+      end loop;
+
+      return null;
+   end From_Completion_Id;
+
    ----------
    -- Free --
    ----------
@@ -174,6 +241,17 @@ package body Completion is
    begin
       Free (Resolver.all);
       Internal_Free (Resolver);
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (This : in out Completion_Proposal_Access) is
+      procedure Internal is new Ada.Unchecked_Deallocation
+        (Completion_Proposal'Class, Completion_Proposal_Access);
+   begin
+      Internal (This);
    end Free;
 
    -------------------
@@ -281,11 +359,20 @@ package body Completion is
    -----------
 
    function First (This : Completion_List) return Completion_Iterator is
-      It : Completion_Iterator := (It => First (This.List));
+      It : Completion_Iterator := (It => First (This.List), others => <>);
+
+      Next_Done : Boolean := False;
    begin
       while not Is_Valid (It) loop
          Next (It);
+
+         Next_Done := True;
       end loop;
+
+      if not Next_Done and then not At_End (It) then
+         Completion_Id_Set.Insert
+           (It.Already_Extracted, To_Completion_Id (Get_Proposal (It)));
+      end if;
 
       return It;
    end First;
@@ -299,7 +386,21 @@ package body Completion is
       loop
          Next (This.It);
 
-         exit when Is_Valid (This);
+         exit when At_End (This);
+
+         if Is_Valid (This) then
+            declare
+               Id : Completion_Id := To_Completion_Id (Get_Proposal (This));
+            begin
+               if Completion_Id_Set.Find
+                 (This.Already_Extracted, Id) = Completion_Id_Set.No_Element
+               then
+                  Completion_Id_Set.Insert (This.Already_Extracted, Id);
+
+                  exit;
+               end if;
+            end;
+         end if;
       end loop;
    end Next;
 
@@ -384,6 +485,24 @@ package body Completion is
       return 0;
    end Get_Number_Of_Parameters;
 
+   -----------
+   -- Match --
+   -----------
+
+   function Match
+     (Proposal   : Simple_Completion_Proposal;
+      Identifier : String;
+      Is_Partial : Boolean;
+      Context    : Completion_Context;
+      Offset     : Integer;
+      Filter     : Possibilities_Filter) return Boolean
+   is
+      pragma Unreferenced
+        (Proposal, Identifier, Is_Partial, Context, Offset, Filter);
+   begin
+      --  ??? Implement correcly this function
+      return True;
+   end Match;
    ----------
    -- Free --
    ----------
@@ -417,6 +536,19 @@ package body Completion is
 
       return True;
    end Match;
+
+   ----------------------
+   -- To_Completion_Id --
+   ----------------------
+
+   function To_Completion_Id
+     (Proposal : Simple_Completion_Proposal) return Completion_Id is
+   begin
+      return (Proposal.Name'Length,
+              "SIMPLE  ",
+              Proposal.Name.all,
+              VFS.No_File, 0, 0);
+   end To_Completion_Id;
 
    ----------
    -- Free --
