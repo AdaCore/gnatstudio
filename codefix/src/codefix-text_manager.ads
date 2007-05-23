@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2006                      --
+--                      Copyright (C) 2002-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -154,7 +154,7 @@ package Codefix.Text_Manager is
    type Escape_Str_Manager is abstract tagged private;
    --  This object is used by string seeking functions, in order to know if the
    --  string found is in a compilable part, or in parts that should be ignored
-   --  (comments and quotes for example). As faar as it depends of the language
+   --  (comments and quotes for example). As far as it depends of the language
    --  each language should have his own Escape_Str_Manager.
 
    function Is_In_Escape_Part
