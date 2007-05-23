@@ -1081,9 +1081,7 @@ package body Display_Items is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Button_Click;
 
    -----------------------

@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;          use Ada.Exceptions;
 with GNAT.Strings;            use GNAT.Strings;
 with GNAT.Regpat;             use GNAT.Regpat;
 
@@ -699,9 +698,7 @@ package body GVD.Assembly_View is
       Update_Display (Assembly_View);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Preferences_Changed;
 
    -----------------
@@ -827,9 +824,7 @@ package body GVD.Assembly_View is
       return False;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
          return False;
    end Key_Press_Cb;
 
@@ -987,9 +982,7 @@ package body GVD.Assembly_View is
       Set_Busy (Process, False);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
          Set_Busy (Process, False);
    end On_Frame_Changed;
 

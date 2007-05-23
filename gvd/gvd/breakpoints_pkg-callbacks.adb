@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2006                      --
+--                      Copyright (C) 2000-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -17,8 +17,6 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
-
-with Ada.Exceptions;     use Ada.Exceptions;
 
 with Gdk.Event;          use Gdk.Event;
 with Gdk.Types.Keysyms;  use Gdk.Types.Keysyms;
@@ -50,9 +48,7 @@ package body Breakpoints_Pkg.Callbacks is
       return True;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
          return False;
    end On_Breakpoints_Delete_Event;
 
@@ -73,9 +69,7 @@ package body Breakpoints_Pkg.Callbacks is
       return False;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
          return False;
    end On_Breakpoints_Key_Press_Event;
 
@@ -96,9 +90,7 @@ package body Breakpoints_Pkg.Callbacks is
       Set_Sensitive (Breakpoints.Regexp_Combo, False);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Location_Selected_Toggled;
 
    -----------------------------------
@@ -118,9 +110,7 @@ package body Breakpoints_Pkg.Callbacks is
       Set_Sensitive (Breakpoints.Regexp_Combo, False);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Subprogam_Selected_Toggled;
 
    ---------------------------------
@@ -139,9 +129,7 @@ package body Breakpoints_Pkg.Callbacks is
       Set_Sensitive (Breakpoints.Regexp_Combo, False);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Address_Selected_Toggled;
 
    --------------------------------
@@ -160,9 +148,7 @@ package body Breakpoints_Pkg.Callbacks is
       Set_Sensitive (Breakpoints.Regexp_Combo, True);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Regexp_Selected_Toggled;
 
    -----------------------------
@@ -175,9 +161,7 @@ package body Breakpoints_Pkg.Callbacks is
       Set_Location_Breakpoint (Breakpoint_Editor_Access (Object));
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Add_Location_Clicked;
 
    -------------------------------
@@ -190,9 +174,7 @@ package body Breakpoints_Pkg.Callbacks is
       Set_Watchpoint (Breakpoint_Editor_Access (Object));
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Add_Watchpoint_Clicked;
 
    ------------------------------------
@@ -232,9 +214,7 @@ package body Breakpoints_Pkg.Callbacks is
       Set_Busy (Editor.Process, False);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Load_Exception_List_Clicked;
 
    ------------------------------
@@ -251,9 +231,7 @@ package body Breakpoints_Pkg.Callbacks is
       Set_Exception_Breakpoint (Editor);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Add_Exception_Clicked;
 
    -----------------------
@@ -276,9 +254,7 @@ package body Breakpoints_Pkg.Callbacks is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Remove_Clicked;
 
    ---------------------
@@ -304,9 +280,7 @@ package body Breakpoints_Pkg.Callbacks is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_View_Clicked;
 
    ----------------------------------
@@ -326,9 +300,7 @@ package body Breakpoints_Pkg.Callbacks is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Advanced_Location_Clicked;
 
    ----------------------
@@ -342,9 +314,7 @@ package body Breakpoints_Pkg.Callbacks is
       Hide (Object);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Ok_Bp_Clicked;
 
 end Breakpoints_Pkg.Callbacks;

@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;     use Ada.Exceptions;
 with Ada.Tags;           use Ada.Tags;
 
 with Glib;               use Glib;
@@ -68,9 +67,7 @@ package body GVD.Generic_View is
       null;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Attach;
 
    -----------------
@@ -147,9 +144,7 @@ package body GVD.Generic_View is
          end if;
 
       exception
-         when E : others =>
-            Trace (Exception_Handle,
-                   "Unexpected exception: " & Exception_Information (E));
+         when E : others => Trace (Exception_Handle, E);
       end On_Destroy;
 
       ---------------------------
@@ -184,9 +179,7 @@ package body GVD.Generic_View is
          end if;
 
       exception
-         when E : others =>
-            Trace (Exception_Handle,
-                   "Unexpected exception: " & Exception_Information (E));
+         when E : others => Trace (Exception_Handle, E);
       end On_Debugger_Terminate;
 
       --------------------
@@ -371,9 +364,7 @@ package body GVD.Generic_View is
          end if;
 
       exception
-         when E : others =>
-            Trace (Exception_Handle,
-                   "Unexpected exception: " & Exception_Information (E));
+         when E : others => Trace (Exception_Handle, E);
       end On_Update;
 
       --------------------------------
