@@ -20,7 +20,6 @@
 
 with Ada.Strings.Less_Case_Insensitive;
 with Ada.Strings.Equal_Case_Insensitive;
-with Ada.Exceptions;             use Ada.Exceptions;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
 with Glib;                       use Glib;
@@ -102,9 +101,7 @@ package body Code_Analysis_Module is
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
       Initialize_Instance (Instance);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Create_From_Shell;
 
    ----------------------
@@ -119,9 +116,7 @@ package body Code_Analysis_Module is
    begin
       Dummy := Create_Instance;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Create_From_Menu;
 
    ---------------------
@@ -231,9 +226,7 @@ package body Code_Analysis_Module is
       Show_Analysis_Report
         (Context_And_Instance'(Cont_N_Inst.Context, Instance), Property);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Add_Gcov_File_Info_From_Context;
 
    -----------------------------------
@@ -313,9 +306,7 @@ package body Code_Analysis_Module is
       Show_Analysis_Report
         (Context_And_Instance'(Context, Instance), Property);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Add_Gcov_File_Info_From_Shell;
 
    ------------------------
@@ -412,9 +403,7 @@ package body Code_Analysis_Module is
       Show_Analysis_Report
         (Context_And_Instance'(Cont_N_Inst.Context, Instance), Property);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Add_Gcov_Project_Info_From_Context;
 
    --------------------------------------
@@ -465,9 +454,7 @@ package body Code_Analysis_Module is
       Show_Analysis_Report
         (Context_And_Instance'(Context, Instance), Property);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Add_Gcov_Project_Info_From_Shell;
 
    ---------------------------
@@ -512,9 +499,7 @@ package body Code_Analysis_Module is
 
       Compute_Project_Coverage (Prj_Node);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Add_Gcov_Project_Info;
 
    --------------------------------------------
@@ -554,9 +539,7 @@ package body Code_Analysis_Module is
       Show_Analysis_Report
         (Context_And_Instance'(No_Context, Instance), Property);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Add_All_Gcov_Project_Info_From_Context;
 
    ------------------------------------------
@@ -592,9 +575,7 @@ package body Code_Analysis_Module is
       Show_Analysis_Report
         (Context_And_Instance'(No_Context, Instance), Property);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Add_All_Gcov_Project_Info_From_Shell;
 
    -------------------------------------------------------
@@ -614,9 +595,7 @@ package body Code_Analysis_Module is
         (Get_Property (Instance, Code_Analysis_Cst_Str));
       List_Lines_Not_Covered_In_All_Projects (Property);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end List_Lines_Not_Covered_In_All_Projects_From_Shell;
 
    ------------------------------------------------------
@@ -634,9 +613,7 @@ package body Code_Analysis_Module is
    begin
       List_Lines_Not_Covered_In_All_Projects (Property);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end List_Lines_Not_Covered_In_All_Projects_From_Menu;
 
    --------------------------------------------
@@ -682,9 +659,7 @@ package body Code_Analysis_Module is
       Show_Analysis_Report
         (Context_And_Instance'(No_Context, Instance), Property);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Show_Analysis_Report_From_Shell;
 
    ------------------------------------
@@ -701,9 +676,7 @@ package body Code_Analysis_Module is
    begin
       Show_Analysis_Report (Cont_N_Inst, Property);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Show_Analysis_Report_From_Menu;
 
    ------------------------------------------
@@ -722,9 +695,7 @@ package body Code_Analysis_Module is
       GPS.Kernel.Scripts.Set_Property
         (Instance, Code_Analysis_Cst_Str, Instance_Property_Record (Property));
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Show_Empty_Analysis_Report_From_Menu;
 
    --------------------------------
@@ -1132,9 +1103,7 @@ package body Code_Analysis_Module is
          Destroy_Instance (Instance);
       end if;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Destroy_From_Shell;
 
    -----------------------
@@ -1158,9 +1127,7 @@ package body Code_Analysis_Module is
          Destroy_Instance (Cont_N_Inst.Instance);
       end if;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Destroy_From_Menu;
 
    -------------------------------------
@@ -1182,9 +1149,7 @@ package body Code_Analysis_Module is
          Destroy_All_Instances;
       end if;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Destroy_All_Instances_From_Menu;
 
    ------------------------------------------------------
@@ -1199,9 +1164,7 @@ package body Code_Analysis_Module is
    begin
       Destroy_All_Instances;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Destroy_All_Instances_From_Project_Changing_Hook;
 
    ---------------------------
@@ -1265,9 +1228,7 @@ package body Code_Analysis_Module is
         (Cont_N_Inst.Instance, Code_Analysis_Cst_Str,
          Instance_Property_Record (Property));
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Destroy;
 
    ---------------------
@@ -1309,9 +1270,7 @@ package body Code_Analysis_Module is
 
       return False;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
          return False;
    end On_Double_Click;
 
@@ -1370,9 +1329,7 @@ package body Code_Analysis_Module is
       Open_File_Editor (Code_Analysis_Module_ID.Kernel, File_Node.Name);
       Add_Coverage_Annotations (File_Node);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Add_Coverage_Annotations_From_Context;
 
    ------------------------------
@@ -1441,9 +1398,7 @@ package body Code_Analysis_Module is
       Open_File_Editor (Code_Analysis_Module_ID.Kernel, File_Node.Name);
       Remove_Coverage_Annotations (File_Node);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Remove_Coverage_Annotations_From_Context;
 
    ---------------------------------
@@ -1458,9 +1413,7 @@ package body Code_Analysis_Module is
       Remove_Line_Information_Column
         (Code_Analysis_Module_ID.Kernel, File_Node.Name, Line_Info_Cst);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Remove_Coverage_Annotations;
 
    ----------------------------------------------------
@@ -1481,9 +1434,7 @@ package body Code_Analysis_Module is
         (Property.Projects, Project_Information (Cont_N_Inst.Context));
       List_Lines_Not_Covered_In_Project (Project_Node);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end List_Lines_Not_Covered_In_Project_From_Context;
 
    -------------------------------------------------
@@ -1506,9 +1457,7 @@ package body Code_Analysis_Module is
       Open_File_Editor (Code_Analysis_Module_ID.Kernel, File_Node.Name);
       List_Lines_Not_Covered_In_File (File_Node);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end List_Lines_Not_Covered_In_File_From_Context;
 
    ---------------------------------------
@@ -1625,9 +1574,7 @@ package body Code_Analysis_Module is
             Mode => GPS.Kernel.Console.Error);
       end if;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end List_Lines_Not_Covered_In_Subprogram_From_Context;
 
    ---------------------------------
@@ -1697,9 +1644,7 @@ package body Code_Analysis_Module is
          Free_Subprogram (Subp_Node);
       end if;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Remove_Subprogram_From_Menu;
 
    ---------------------------
@@ -1755,9 +1700,7 @@ package body Code_Analysis_Module is
          Free_File (File_Node);
       end if;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Remove_File_From_Menu;
 
    ------------------------------
@@ -1797,9 +1740,7 @@ package body Code_Analysis_Module is
          Free_Project (Prj_Node);
       end if;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Remove_Project_From_Menu;
 
    ----------------------------
@@ -1812,9 +1753,7 @@ package body Code_Analysis_Module is
    begin
       Expand_All (View.Tree);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Expand_All_From_Report;
 
    ------------------------------
@@ -1827,9 +1766,7 @@ package body Code_Analysis_Module is
    begin
       Collapse_All (View.Tree);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Collapse_All_From_Report;
 
    --------------------
@@ -1850,9 +1787,7 @@ package body Code_Analysis_Module is
       Select_Path (Get_Selection (View.Tree), Path);
       Path_Free (Path);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Show_Full_Tree;
 
    -----------------------------
@@ -1868,9 +1803,7 @@ package body Code_Analysis_Module is
       Fill_Iter_With_Files (View.Model, Iter, View.Projects,
                             Binary_Coverage_Mode);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Show_Flat_List_Of_Files;
 
    -----------------------------------
@@ -1887,9 +1820,7 @@ package body Code_Analysis_Module is
       Fill_Iter_With_Subprograms (View.Model, Iter, View.Projects,
                                   Binary_Coverage_Mode);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Show_Flat_List_Of_Subprograms;
 
    -----------------------------
