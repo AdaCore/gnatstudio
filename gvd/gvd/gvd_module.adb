@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
 with GNAT.Strings;
@@ -716,9 +715,7 @@ package body GVD_Module is
       end;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Add_Symbols;
 
    ---------------
@@ -778,9 +775,7 @@ package body GVD_Module is
       end;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Attach;
 
    ---------------
@@ -816,9 +811,7 @@ package body GVD_Module is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Detach;
 
    -------------
@@ -842,9 +835,7 @@ package body GVD_Module is
       Step_Into (Process.Debugger, Mode => GVD.Types.Visible);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Step;
 
    -------------------------
@@ -868,9 +859,7 @@ package body GVD_Module is
       Step_Into_Instruction (Process.Debugger, Mode => GVD.Types.Visible);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Step_Instruction;
 
    -------------
@@ -894,9 +883,7 @@ package body GVD_Module is
       Step_Over (Process.Debugger, Mode => GVD.Types.Visible);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Next;
 
    -------------------------
@@ -920,9 +907,7 @@ package body GVD_Module is
       Step_Over_Instruction (Process.Debugger, Mode => GVD.Types.Visible);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Next_Instruction;
 
    ---------------
@@ -946,9 +931,7 @@ package body GVD_Module is
       Finish (Process.Debugger, Mode => GVD.Types.Visible);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Finish;
 
    -----------------
@@ -972,9 +955,7 @@ package body GVD_Module is
       Continue (Process.Debugger, Mode => GVD.Types.Visible);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Continue;
 
    -------------
@@ -998,9 +979,7 @@ package body GVD_Module is
       Kill_Process (Process.Debugger, Mode => GVD.Types.Visible);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Kill;
 
    ------------------
@@ -1052,9 +1031,7 @@ package body GVD_Module is
       --  tricky when handling an internal command.
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Interrupt;
 
    -------------------------
@@ -1090,9 +1067,7 @@ package body GVD_Module is
       Breakpoint_Editor (GVD_Module_ID.Breakpoints_Editor, Process);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Edit_Breakpoints;
 
    -----------------------
@@ -1118,9 +1093,7 @@ package body GVD_Module is
       Show_All (Memory_View);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Examine_Memory;
 
    -----------------------
@@ -1147,9 +1120,7 @@ package body GVD_Module is
          Output_Command => True);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Display_Locals;
 
    ---------------------
@@ -1176,9 +1147,7 @@ package body GVD_Module is
          Output_Command => True);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Display_Args;
 
    ---------------------
@@ -1205,9 +1174,7 @@ package body GVD_Module is
          Output_Command => True);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Display_Regs;
 
    ---------------------------
@@ -1231,9 +1198,7 @@ package body GVD_Module is
       Display_Expression (Process);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Display_Expression;
 
    -------------------
@@ -1366,9 +1331,7 @@ package body GVD_Module is
       Start_Program (Process);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Start;
 
    ----------------
@@ -1455,9 +1418,7 @@ package body GVD_Module is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Assembly;
 
    -------------------------
@@ -1531,9 +1492,7 @@ package body GVD_Module is
       Destroy (Dialog);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Connect_To_Board;
 
    -------------------------
@@ -1606,9 +1565,7 @@ package body GVD_Module is
       end;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Debug_Executable;
 
    ------------------
@@ -1657,9 +1614,7 @@ package body GVD_Module is
       end;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Load_Core;
 
    ----------------------------
@@ -1953,10 +1908,8 @@ package body GVD_Module is
       when Language.Unexpected_Type | Constraint_Error =>
          Pop_State (Kernel);
          return null;
-      when E : others =>
+      when E : others => Trace (Exception_Handle, E);
          Pop_State (Kernel);
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
          return null;
    end Tooltip_Handler;
 
@@ -2130,10 +2083,8 @@ package body GVD_Module is
       Debug_Terminate (Kernel);
 
    exception
-      when E : others =>
+      when E : others => Trace (Exception_Handle, E);
          Pop_State (Kernel);
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
    end On_Debug_Terminate;
 
    --------------------------------
@@ -2148,10 +2099,8 @@ package body GVD_Module is
       Close_Debugger (Get_Current_Process (Get_Main_Window (Kernel)));
 
    exception
-      when E : others =>
+      when E : others => Trace (Exception_Handle, E);
          Pop_State (Kernel);
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
    end On_Debug_Terminate_Current;
 
    -----------------------
@@ -2222,9 +2171,7 @@ package body GVD_Module is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Start_Continue;
 
    -------------
@@ -2322,10 +2269,8 @@ package body GVD_Module is
       Create_Debugger_Columns (Kernel_Handle (Kernel), D.File);
 
    exception
-      when E : others =>
+      when E : others =>  Trace (Exception_Handle, E);
          Close_Debugger (Get_Current_Process (Hook.Top));
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
    end Execute;
 
    -------------
@@ -2426,10 +2371,8 @@ package body GVD_Module is
       end;
 
    exception
-      when E : others =>
+      when E : others => Trace (Exception_Handle, E);
          Close_Debugger (Process);
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
    end Execute;
 
    ---------------------
@@ -2528,10 +2471,8 @@ package body GVD_Module is
       Show_All (Menu);
 
    exception
-      when E : others =>
+      when E : others => Trace (Exception_Handle, E);
          Debug_Terminate (Kernel_Handle (Kernel));
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
    end On_View_Changed;
 
    -------------------------
