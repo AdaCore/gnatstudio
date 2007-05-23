@@ -45,7 +45,6 @@ with Pango.Enums;         use Pango.Enums;
 with Pango.Font;          use Pango.Font;
 with Pango.Layout;        use Pango.Layout;
 
-with Ada.Exceptions;         use Ada.Exceptions;
 with Debugger;               use Debugger;
 with Display_Items;          use Display_Items;
 with GNAT.Regpat;            use GNAT.Regpat;
@@ -789,9 +788,7 @@ package body GVD.Canvas is
       end if;
 
    exception
-      when E : Constraint_Error =>
-         Traces.Trace (Exception_Handle, "Unexpected exception: "
-                       & Exception_Information (E));
+      when E : Constraint_Error => Traces.Trace (Exception_Handle, E);
          --  Usually because Find_Item returned a null value.
          GVD.Trace.Output_Error
            (GPS_Window (Process.Window).Kernel,
@@ -842,9 +839,7 @@ package body GVD.Canvas is
       Refresh_Canvas (C.Canvas);
 
    exception
-      when E : others =>
-         Traces.Trace (Exception_Handle,
-                       "Unexpected exception: " & Exception_Information (E));
+      when E : others => Traces.Trace (Exception_Handle, E);
    end On_Data_Refresh;
 
    ------------------
@@ -946,9 +941,7 @@ package body GVD.Canvas is
       Align_On_Grid (Canvas.Canvas, Get_Active (Item));
 
    exception
-      when E : others =>
-         Traces.Trace (Exception_Handle,
-                       "Unexpected exception: " & Exception_Information (E));
+      when E : others => Traces.Trace (Exception_Handle, E);
    end Change_Align_On_Grid;
 
    ---------------------------
@@ -969,9 +962,7 @@ package body GVD.Canvas is
       Refresh_Data_Window (Get_Process (Canvas));
 
    exception
-      when E : others =>
-         Traces.Trace (Exception_Handle,
-                       "Unexpected exception: " & Exception_Information (E));
+      when E : others => Traces.Trace (Exception_Handle, E);
    end Change_Detect_Aliases;
 
    ------------------------
@@ -982,9 +973,7 @@ package body GVD.Canvas is
    begin
       Display_Expression (Get_Process (GVD_Canvas (Canvas)));
    exception
-      when E : others =>
-         Traces.Trace (Exception_Handle,
-                       "Unexpected exception: " & Exception_Information (E));
+      when E : others => Traces.Trace (Exception_Handle, E);
    end Display_Expression;
 
    ------------------------
@@ -1028,9 +1017,7 @@ package body GVD.Canvas is
 
       return False;
    exception
-      when E : others =>
-         Traces.Trace (Exception_Handle,
-                       "Unexpected exception: " & Exception_Information (E));
+      when E : others => Traces.Trace (Exception_Handle, E);
          return False;
    end Key_Press;
 
@@ -1066,9 +1053,7 @@ package body GVD.Canvas is
       end if;
 
    exception
-      when E : others =>
-         Traces.Trace (Exception_Handle,
-                       "Unexpected exception: " & Exception_Information (E));
+      when E : others => Traces.Trace (Exception_Handle, E);
    end On_Background_Click;
 
    ----------------
@@ -1151,9 +1136,7 @@ package body GVD.Canvas is
          Preferences_Changed (C);
       end if;
    exception
-      when E : others =>
-         Traces.Trace (Exception_Handle,
-                       "Unexpected exception: " & Exception_Information (E));
+      when E : others => Traces.Trace (Exception_Handle, E);
    end On_Realize;
 
    ---------------------------
@@ -1879,9 +1862,7 @@ package body GVD.Canvas is
       end if;
 
    exception
-      when E : others =>
-         Traces.Trace (Exception_Handle,
-                       "Unexpected exception: " & Exception_Information (E));
+      when E : others => Traces.Trace (Exception_Handle, E);
    end Set_Value;
 
    --------------
@@ -1898,9 +1879,7 @@ package body GVD.Canvas is
       Update_Resize_Display (Item.Item, True);
 
    exception
-      when E : others =>
-         Traces.Trace (Exception_Handle,
-                       "Unexpected exception: " & Exception_Information (E));
+      when E : others => Traces.Trace (Exception_Handle, E);
    end Show_All;
 
    ----------------------
@@ -1923,9 +1902,7 @@ package body GVD.Canvas is
       Display_Memory (View, Item.Component_Name);
 
    exception
-      when E : others =>
-         Traces.Trace (Exception_Handle,
-                       "Unexpected exception: " & Exception_Information (E));
+      when E : others => Traces.Trace (Exception_Handle, E);
    end View_Into_Memory;
 
    ---------------------
@@ -1941,9 +1918,7 @@ package body GVD.Canvas is
       Display_Items.Update (Item.Item, Redisplay_Canvas => True);
 
    exception
-      when E : others =>
-         Traces.Trace (Exception_Handle,
-                       "Unexpected exception: " & Exception_Information (E));
+      when E : others => Traces.Trace (Exception_Handle, E);
    end Update_Variable;
 
    --------------------
@@ -1962,9 +1937,7 @@ package body GVD.Canvas is
          Output_Command => True);
 
    exception
-      when E : others =>
-         Traces.Trace (Exception_Handle,
-                       "Unexpected exception: " & Exception_Information (E));
+      when E : others => Traces.Trace (Exception_Handle, E);
    end Undisplay_Item;
 
    -------------------------
@@ -1983,9 +1956,7 @@ package body GVD.Canvas is
          True);
 
    exception
-      when E : others =>
-         Traces.Trace (Exception_Handle,
-                       "Unexpected exception: " & Exception_Information (E));
+      when E : others => Traces.Trace (Exception_Handle, E);
    end Toggle_Refresh_Mode;
 
    -------------
@@ -2035,9 +2006,7 @@ package body GVD.Canvas is
       Zoom (Item.Canvas.Canvas, Item.Zoom, 1);
 
    exception
-      when E : others =>
-         Traces.Trace (Exception_Handle,
-                       "Unexpected exception: " & Exception_Information (E));
+      when E : others => Traces.Trace (Exception_Handle, E);
    end Zoom_Level;
 
    --------------------
@@ -2055,9 +2024,7 @@ package body GVD.Canvas is
          Attach_To_Data_Window (Process, Create_If_Necessary => True);
       end if;
    exception
-      when E : others =>
-         Traces.Trace (Exception_Handle,
-                       "Unexpected exception: " & Exception_Information (E));
+      when E : others => Traces.Trace (Exception_Handle, E);
    end On_Data_Window;
 
    ---------------------

@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;         use Ada.Exceptions;
 with GNAT.Strings;           use GNAT.Strings;
 
 with Gdk.Event;              use Gdk.Event;
@@ -198,9 +197,7 @@ package body GVD.Call_Stack is
       end loop;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Call_Stack;
 
    --------------------------
@@ -225,9 +222,7 @@ package body GVD.Call_Stack is
          GVD.Types.Visible);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Selection_Changed;
 
    -----------------
