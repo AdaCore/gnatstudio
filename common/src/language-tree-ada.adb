@@ -508,7 +508,7 @@ package body Language.Tree.Ada is
          Allow_Private    : Boolean);
       --  See if we find the seeked entity in the given package. This will
       --  not check any of the use clause nor any of the entities in the
-      --  encolsed or enclosing scopes. When the seeked entity is found, it is
+      --  enclosed or enclosing scopes. When the seeked entity is found, it is
       --  added to the list if relevant.
 
       function Is_Visible (It : Construct_Tree_Iterator) return Boolean;
@@ -1079,6 +1079,124 @@ package body Language.Tree.Ada is
            Id,
            Use_Wise);
    end Get_Visible_Constructs;
+
+   ----------------
+   -- Is_Visible --
+   ----------------
+
+   function Is_Visible
+     (Db       : access Construct_Database;
+      Cell     : Construct_Cell_Access;
+      Tree     : Construct_Tree;
+      Ada_Tree : Ada_Construct_Tree;
+      Offset   : Natural) return Boolean
+   is
+      pragma Unreferenced (Db);
+
+      Local_Visible_Entities : constant Construct_Tree_Iterator_Array :=
+        Get_Visible_Constructs
+          (Tree       => Tree,
+           Ada_Tree   => Ada_Tree,
+           Offset     => Offset,
+           Name       => Get_Construct
+             (To_Construct_Tree_Iterator (Cell)).Name.all,
+           Use_Wise   => True,
+           Is_Partial => False);
+   begin
+      for J in Local_Visible_Entities'Range loop
+         --  If we found the entity, then return it.
+
+         if Is_Same_Construct
+           (Cell, To_Construct_Access (Tree, Local_Visible_Entities (J)))
+         then
+            return True;
+         end if;
+
+         if Local_Visible_Entities (J).Node.Construct.Category
+         in Data_Category
+         then
+            --  In this case, the data is hidden by a former declaration.
+            return False;
+         end if;
+      end loop;
+
+      --  If the construct has not been found, then it's not in the visible
+      --  contents of the current file. Checks if the construct is either
+      --  in a public library part, or in a private visible library part.
+
+      declare
+         Previous_It : Construct_Tree_Iterator :=
+           To_Construct_Tree_Iterator (Cell);
+
+         It : Construct_Tree_Iterator :=
+           Get_Parent_Scope
+             (Get_Tree (Cell), To_Construct_Tree_Iterator (Cell));
+
+         Loc : constant Text_Location := (True, Offset);
+
+         Tested_Scope : constant Construct_Tree_Iterator := Get_Iterator_At
+           (Tree              => Tree,
+            Location          => Loc,
+            From_Type         => Start_Construct,
+            Position          => Enclosing,
+            Categories_Seeked => Null_Category_Array);
+      begin
+         while It /= Null_Construct_Tree_Iterator loop
+            if Get_Construct (It).Category /= Cat_Package
+              or else not Get_Construct (It).Is_Declaration
+            then
+               return False;
+            end if;
+
+            if Get_Construct (Previous_It).Visibility /= Visibility_Public
+              and then not
+                Has_Full_Visibility
+                  ((Tree, Tested_Scope.Index), (Get_Tree (Cell), It.Index))
+            then
+               return False;
+            end if;
+
+            Previous_It := It;
+            It := Get_Parent_Scope (Get_Tree (Cell), It);
+         end loop;
+
+         return True;
+      end;
+
+      --  ??? We could also check visibility against with / use clauses.
+   end Is_Visible;
+
+   -------------------------
+   -- Has_Full_Visibility --
+   -------------------------
+
+   function Has_Full_Visibility
+     (Construct : Construct_Cell_Access; Scope : Construct_Cell_Access)
+      return Boolean
+   is
+      Scope_Path : constant Construct_Tree_Iterator_Array :=
+        Full_Construct_Path (Scope);
+      Construct_Path : constant Construct_Tree_Iterator_Array :=
+        Full_Construct_Path (Construct);
+   begin
+      if Scope_Path'Length > Construct_Path'Length then
+         return False;
+      end if;
+
+      for J in Scope_Path'Range loop
+         if Get_Construct (Scope_Path (J)).Category /=
+           Get_Construct (Construct_Path (J)).Category
+           or else Get_Construct (Scope_Path (J)).Name = null
+           or else Get_Construct (Construct_Path (J)).Name = null
+           or else Get_Construct (Scope_Path (J)).Name.all
+           /= Get_Construct (Construct_Path (J)).Name.all
+         then
+            return False;
+         end if;
+      end loop;
+
+      return True;
+   end Has_Full_Visibility;
 
    ------------------
    -- Is_Enum_Type --

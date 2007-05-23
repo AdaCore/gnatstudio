@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                         Copyright (C) 2006                        --
+--                       Copyright (C) 2006-2007                     --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -17,6 +17,8 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
+
+with Language.Tree.Database; use Language.Tree.Database;
 
 package Language.Tree.Ada is
 
@@ -123,6 +125,21 @@ package Language.Tree.Ada is
    --  Return the first construct visible with the given name from the given
    --  offset. Null_Tree_Iterator if none. This function is sensitive to
    --  private parts, and to use clauses.
+
+   function Is_Visible
+     (Db       : access Construct_Database;
+      Cell     : Construct_Cell_Access;
+      Tree     : Construct_Tree;
+      Ada_Tree : Ada_Construct_Tree;
+      Offset   : Natural) return Boolean;
+   --  Return true if the entity pointed cell given in parameter is visible
+   --  from the tree at the given location.
+
+   function Has_Full_Visibility
+     (Construct : Construct_Cell_Access; Scope : Construct_Cell_Access)
+      return Boolean;
+   --  Return True if the Construct given in parameter has visibility over the
+   --  public and the private part of Scope.
 
    function Is_Enum_Type
      (Tree : Construct_Tree;
