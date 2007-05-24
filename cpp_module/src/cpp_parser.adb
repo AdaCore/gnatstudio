@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Calendar;              use Ada.Calendar;
-with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Text_IO;               use Ada.Text_IO;
 with GNAT.Calendar;             use GNAT.Calendar;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -2716,8 +2715,7 @@ package body CPP_Parser is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          Release_Cursor (Handler.SN_Table (FIL));
          --  Free (Module_Typedefs);
    end Parse_File;
@@ -3507,11 +3505,9 @@ package body CPP_Parser is
       Release_Cursor (Handler.SN_Table (FIL));
 
    exception
-      when DB_Error =>
+      when DB_Error   =>
          Result := Constructs;
-      when E : others   =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Parse_File_Constructs;
 
    --------------

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2006                       --
+--                     Copyright (C) 2002-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;           use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 
 with Glib.Properties.Creation; use Glib, Glib.Properties.Creation;
@@ -137,9 +136,7 @@ package body Cpp_Module is
         (Get_LI_Handler_By_Name (Handler, CPP_LI_Handler_Name));
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Project_View_Changed;
 
    ---------------------
@@ -227,9 +224,7 @@ package body Cpp_Module is
         (Kernel, Cpp_String, C_Naming_Scheme_Editor'Access);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle, "Unexpected exception in Register_Module: "
-                & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Register_Module;
 
 end Cpp_Module;
