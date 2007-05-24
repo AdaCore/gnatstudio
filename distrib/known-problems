@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.1.2
 
+- G523-021 Search & Replace recursion when the pattern is in the replacement
+  Problem:    When the pattern of a search is in the replacement string, doing
+              multiple "search & replace" will always replace the pattern from
+              the replacement.
+  Workaround: Move the cursor after the "search & replace" after the 
+              replacement.
+
 - G515-005 Casing a multi-line selection does not work
   Problem:    Changing the case (using the casing contextual menu) of
               a multi-line selection does not work as expected. Part
