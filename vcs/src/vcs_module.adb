@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                     Copyright (C) 2001-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Strings;
 
 with Glib.Object;               use Glib.Object;
@@ -150,9 +149,7 @@ package body VCS_Module is
       Open_Explorer (Kernel, No_Context);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Open_Interface;
 
    ----------------------------------
@@ -168,9 +165,7 @@ package body VCS_Module is
       Open_Activities_Explorer (Kernel, No_Context);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Open_Activities_Interface;
 
    ------------------------------
@@ -1060,9 +1055,7 @@ package body VCS_Module is
 
       Parse_Status (Ref, S, Local, Clear_Logs, Dir);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Status_Parse_Handler;
 
    -------------------------------
@@ -1092,9 +1085,7 @@ package body VCS_Module is
 
       Parse_Annotations (Ref, File, S);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Annotations_Parse_Handler;
 
    -----------------------
@@ -1124,9 +1115,7 @@ package body VCS_Module is
 
       Parse_Log (Ref, File, S);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Log_Parse_Handler;
 
    ----------------------------
@@ -1156,9 +1145,7 @@ package body VCS_Module is
 
       Parse_Revision (Ref, File, S);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Revision_Parse_Handler;
 
    --------------------
@@ -1193,9 +1180,7 @@ package body VCS_Module is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end File_Edited_Cb;
 
    ----------------------------
@@ -1270,9 +1255,7 @@ package body VCS_Module is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end File_Status_Changed_Cb;
 
    ------------------

@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 
 with Namet;                     use Namet;
@@ -720,9 +719,7 @@ package body VCS_View.Explorer is
       Refresh (E);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Show_All_Status;
 
    ---------------------
@@ -748,9 +745,7 @@ package body VCS_View.Explorer is
       Refresh (E);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Hide_All_Status;
 
    ------------------------
@@ -773,9 +768,7 @@ package body VCS_View.Explorer is
       Refresh (E);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Toggle_Show_Status;
 
    ------------------
@@ -932,9 +925,7 @@ package body VCS_View.Explorer is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Context_Func;
 
    -------------
@@ -968,9 +959,7 @@ package body VCS_View.Explorer is
          end;
       end if;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Execute;
 
    -------------------

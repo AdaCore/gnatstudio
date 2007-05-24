@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
 with GNAT.OS_Lib;
@@ -1176,10 +1175,7 @@ package body VCS.Generic_VCS is
                            & (-"could not parse regular expression: ")
                            & ASCII.LF & Field.all,
                            Mode => Error);
-
-                        Trace (Exception_Handle,
-                               "Unexpected exception "
-                               & Exception_Information (E));
+                        Trace (Exception_Handle, E);
                   end;
                end if;
 
@@ -1200,10 +1196,7 @@ package body VCS.Generic_VCS is
                         & ASCII.LF & "could not parse regular expression: "
                         & ASCII.LF & Field.all,
                         Mode => Error);
-
-                     Trace (Exception_Handle,
-                            "Unexpected exception "
-                            & Exception_Information (E));
+                     Trace (Exception_Handle, E);
                end;
             end if;
 

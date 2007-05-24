@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2006                      --
+--                      Copyright (C) 2003-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -17,8 +17,6 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
-
-with Ada.Exceptions;            use Ada.Exceptions;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
@@ -472,9 +470,7 @@ package body Docgen_Module is
          Trace (Me, "No source file to generate documentation for.");
       end if;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Generate_Project;
 
    ----------------------
@@ -764,9 +760,7 @@ package body Docgen_Module is
       Generate (Kernel, Source_File_List, Nb_Files, B);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Generate_File;
 
    -----------------
@@ -908,8 +902,7 @@ package body Docgen_Module is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          Pop_State (Kernel);
    end Generate;
 

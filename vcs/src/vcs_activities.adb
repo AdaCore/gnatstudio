@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Calendar;               use Ada.Calendar;
-with Ada.Exceptions;             use Ada.Exceptions;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;                use GNAT;
@@ -211,9 +210,7 @@ package body VCS_Activities is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Load_Activities;
 
    ---------------------
@@ -276,9 +273,7 @@ package body VCS_Activities is
       Free (File);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Save_Activities;
 
    ------------------

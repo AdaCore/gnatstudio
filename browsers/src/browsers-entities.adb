@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
 with GNAT.Heap_Sort_G;
@@ -702,9 +701,7 @@ package body Browsers.Entities is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
          Set_Error_Msg (Data, -"Internal error");
    end Show_Entity_Command_Handler;
 
@@ -800,9 +797,7 @@ package body Browsers.Entities is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Type_Browser;
 
    -------------
@@ -1377,9 +1372,7 @@ package body Browsers.Entities is
       Refresh_Canvas (Get_Canvas (Get_Browser (Item)));
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Find_Parent_Or_Child_Types;
 
    -----------------------
@@ -1391,9 +1384,7 @@ package body Browsers.Entities is
       Find_Parent_Or_Child_Types
         (Item, Get_Parent_Types (Type_Item (Item).Entity), Parents => True);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Find_Parent_Types;
 
    ----------------------
@@ -1405,9 +1396,7 @@ package body Browsers.Entities is
       Find_Parent_Or_Child_Types
         (Item, Get_Child_Types (Type_Item (Item).Entity), Parents => False);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Find_Child_Types;
 
    -------------------------

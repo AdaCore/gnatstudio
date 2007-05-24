@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;          use Ada.Exceptions;
 with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
 
 with Language_Handlers;   use Language_Handlers;
@@ -181,9 +180,7 @@ package body Docgen.Backend is
 
       Finish (B, Kernel, Result, Text, Entity_Line);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Format_Code;
 
    ---------------------

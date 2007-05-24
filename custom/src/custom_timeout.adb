@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2004-2006                      --
+--                      Copyright (C) 2004-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;     use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 
 with Glib;               use Glib;
@@ -115,9 +114,8 @@ package body Custom_Timeout is
       return True;
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-      return True;
+         Trace (Exception_Handle, E);
+         return True;
    end Callback;
 
    ----------------------------

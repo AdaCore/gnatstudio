@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;        use Ada.Exceptions;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Strings.Maps;      use Ada.Strings.Maps;
 with GNAT.Expect;           use GNAT.Expect;
@@ -116,9 +115,7 @@ package body Commands.Builder is
          Quiet              => Quiet);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Parse_Compiler_Output;
 
    ----------------------------

@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Strings;
@@ -265,8 +264,7 @@ package body XML_Viewer is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, "Unexpected exception "
-                & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return Null_Iter;
    end Node_Parser;
 
@@ -365,8 +363,7 @@ package body XML_Viewer is
       return False;
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end On_Button_Press;
 

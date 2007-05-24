@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
+--                      Copyright (C) 2001-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -17,8 +17,6 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
-
-with Ada.Exceptions;         use Ada.Exceptions;
 
 with Glib;                   use Glib;
 with Glib.Xml_Int;           use Glib.Xml_Int;
@@ -382,9 +380,8 @@ package body Browsers.Projects is
 
    exception
       when E : others =>
+         Trace (Exception_Handle, E);
          Pop_State (Kernel);
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
    end Examine_Project_Hierarchy;
 
    ----------------------------------------
@@ -428,9 +425,8 @@ package body Browsers.Projects is
 
    exception
       when E : others =>
+         Trace (Exception_Handle, E);
          Pop_State (Kernel);
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
    end Examine_Ancestor_Project_Hierarchy;
 
    ---------------------

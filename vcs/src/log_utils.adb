@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Calendar;              use Ada.Calendar;
-with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
 with Traces;                    use Traces;
@@ -123,9 +122,7 @@ package body Log_Utils is
          Load_Mapper (Mapper, Full_Name (Mapping).all);
       exception
          when E : others =>
-            Trace (Exception_Handle,
-                   "unexpected exception: " & Exception_Information (E));
-
+            Trace (Exception_Handle, E);
             Button := Message_Dialog
               (Msg     =>
                  (-"The file") & ASCII.LF & Full_Name (Mapping).all & ASCII.LF

@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;                use Ada.Exceptions;
 with Ada.Strings.Unbounded;
 with Ada.Text_IO;                   use Ada.Text_IO;
 with GNAT.Strings;                  use GNAT.Strings;
@@ -771,9 +770,7 @@ package body Browsers.Call_Graph is
       Align_Item (Canvas, Item, 0.4, 0.4);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Examine_Entity_Call_Graph;
 
    -------------
@@ -935,9 +932,8 @@ package body Browsers.Call_Graph is
 
    exception
       when E : others =>
+         Trace (Exception_Handle, E);
          Pop_State (Kernel_Handle (Kernel));
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
    end Examine_Ancestors_Call_Graph;
 
    -------------
@@ -1218,16 +1214,13 @@ package body Browsers.Call_Graph is
 
          exception
             when E : others =>
-               Trace (Exception_Handle,
-                      "Unexpected exception " & Exception_Information (E));
+               Trace (Exception_Handle, E);
                Destroy (Data.Iter);
          end;
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Find_All_References_Internal;
 
    ----------------------------------
@@ -1278,9 +1271,7 @@ package body Browsers.Call_Graph is
          Entity_Column => Get_Column (Get_Declaration_Of (Item.Entity)));
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Contextual_Factory;
 
    -------------------
@@ -1306,9 +1297,7 @@ package body Browsers.Call_Graph is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Call_Graph;
 
    ----------------------------
@@ -1346,9 +1335,7 @@ package body Browsers.Call_Graph is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Find_All_References;
 
    -----------------------------
@@ -1528,9 +1515,7 @@ package body Browsers.Call_Graph is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Call_Graph_Command_Handler;
 
    --------------------------
@@ -1686,8 +1671,7 @@ package body Browsers.Call_Graph is
                  -"Internal error when creating the call graph for "
                  & Entity_Name_Information (Context.Context),
                  Mode => Error);
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          Pop_State (Get_Kernel (Context.Context));
       return Commands.Failure;
    end Execute;
@@ -1724,8 +1708,7 @@ package body Browsers.Call_Graph is
                  -"Internal error when creating the call graph for "
                  & Entity_Name_Information (Context.Context),
                  Mode => Error);
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          Pop_State (Get_Kernel (Context.Context));
       return Commands.Failure;
    end Execute;

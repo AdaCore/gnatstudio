@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;                    use Ada.Exceptions;
 with Ada.Numerics.Elementary_Functions; use Ada.Numerics.Elementary_Functions;
 with GNAT.OS_Lib;
 with GNAT.Strings;                      use GNAT.Strings;
@@ -833,9 +832,8 @@ package body Browsers.Canvas is
 
    exception
       when E : others =>
+         Trace (Exception_Handle, E);
          Pop_State (Get_Kernel (Data.Browser));
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
    end Set_Root;
 
    ------------------
@@ -895,13 +893,11 @@ package body Browsers.Canvas is
       end;
 
    exception
-      when E : others =>
+      when E : others => Trace (Exception_Handle, E);
+
          if State_Pushed then
             Pop_State (Get_Kernel (B));
          end if;
-
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
    end On_Export;
 
    ----------------------
@@ -947,13 +943,11 @@ package body Browsers.Canvas is
       end;
 
    exception
-      when E : others =>
+      when E : others => Trace (Exception_Handle, E);
+
          if State_Pushed then
             Pop_State (Get_Kernel (B));
          end if;
-
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
    end On_Export_To_SVG;
 
    ----------------
@@ -972,9 +966,8 @@ package body Browsers.Canvas is
 
    exception
       when E : others =>
+         Trace (Exception_Handle, E);
          Pop_State (Get_Kernel (B));
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
    end On_Refresh;
 
    -------------------
@@ -986,9 +979,7 @@ package body Browsers.Canvas is
    begin
       Select_All (Canvas);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Select_All;
 
    -----------------------
@@ -1452,9 +1443,7 @@ package body Browsers.Canvas is
       Activate (Browser_Item (Item), Event);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Button_Click;
 
    -----------------

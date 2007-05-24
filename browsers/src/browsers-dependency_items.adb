@@ -18,8 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;         use Ada.Exceptions;
-
 with Glib;                   use Glib;
 with Glib.Object;            use Glib.Object;
 with Glib.Xml_Int;           use Glib.Xml_Int;
@@ -629,9 +627,8 @@ package body Browsers.Dependency_Items is
 
    exception
       when E : others =>
+         Trace (Exception_Handle, E);
          Pop_State (Kernel_Handle (Kernel));
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
    end Examine_Dependencies;
 
    ------------------
@@ -666,9 +663,8 @@ package body Browsers.Dependency_Items is
 
    exception
       when E : others =>
+         Trace (Exception_Handle, E);
          Clean;
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
    end Destroy_Idle;
 
    ----------------------------
@@ -718,9 +714,7 @@ package body Browsers.Dependency_Items is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
          return False;
    end Examine_Ancestors_Idle;
 
@@ -787,10 +781,9 @@ package body Browsers.Dependency_Items is
 
    exception
       when E : others =>
+         Trace (Exception_Handle, E);
          Pop_State (Kernel_Handle (Kernel));
          Destroy (Data.Iter);
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
    end Examine_From_Dependencies;
 
    --------------------
@@ -877,10 +870,7 @@ package body Browsers.Dependency_Items is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception in On_Dependency_Browser "
-                & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Dependency_Browser;
 
    -------------

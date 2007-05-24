@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with System.Assertions;         use System.Assertions;
@@ -223,9 +222,7 @@ package body Custom_Module is
       Free (C);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle, "Unexpected exception "
-                & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Dynamic_Menu_Activate;
 
    --------------------
@@ -1229,9 +1226,7 @@ package body Custom_Module is
       Add_Child ("/", Node);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Customize;
 
    -----------------
@@ -1258,9 +1253,7 @@ package body Custom_Module is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Activate;
 
    ------------------------------
@@ -1384,9 +1377,7 @@ package body Custom_Module is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Menu_Handler;
 
    ------------------------
@@ -1503,9 +1494,7 @@ package body Custom_Module is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Contextual_Handler;
 
    ---------------------

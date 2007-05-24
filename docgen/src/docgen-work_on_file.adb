@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                     Copyright (C) 2001-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;                use Ada.Exceptions;
 with Ada.Strings.Unbounded;         use Ada.Strings.Unbounded;
 with GNAT.OS_Lib;                   use GNAT.OS_Lib;
 
@@ -689,8 +688,7 @@ package body Docgen.Work_On_File is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          Pop_State (Data.Kernel);
          Result := Failure;
          return;

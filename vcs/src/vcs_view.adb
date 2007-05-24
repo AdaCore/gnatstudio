@@ -18,8 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;            use Ada.Exceptions;
-
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Window;                use Gdk.Window;
@@ -230,8 +228,7 @@ package body VCS_View is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Button_Press;
 
@@ -560,9 +557,7 @@ package body VCS_View is
       Save_Cache (Explorer.Kernel, Get_Status_Cache);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Destroy;
 
    -----------------
@@ -591,8 +586,7 @@ package body VCS_View is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end On_Delete;
 
@@ -842,9 +836,7 @@ package body VCS_View is
          Expand_All (Get_Explorer (Kernel));
       end if;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Expand_All;
 
    --------------------------
@@ -864,9 +856,7 @@ package body VCS_View is
          Collapse_All (Get_Explorer (Kernel));
       end if;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Collapse_All;
 
    --------------------------------------
@@ -886,9 +876,7 @@ package body VCS_View is
          Select_Files_Same_Status (Get_Explorer (Kernel));
       end if;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Select_Files_Same_Status;
 
    -----------------

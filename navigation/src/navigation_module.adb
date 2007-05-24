@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;             use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 
 with GNAT.OS_Lib;
@@ -639,9 +638,7 @@ package body Navigation_Module is
       Refresh_Location_Buttons (Kernel);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Back;
 
    ----------------
@@ -658,9 +655,7 @@ package body Navigation_Module is
       Refresh_Location_Buttons (Kernel);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Forward;
 
    ------------------------
@@ -713,9 +708,7 @@ package body Navigation_Module is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Start_Statement;
 
    ------------------------
@@ -768,9 +761,7 @@ package body Navigation_Module is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_End_Statement;
 
    ------------------------
@@ -814,9 +805,7 @@ package body Navigation_Module is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Next_Subprogram;
 
    --------------------
@@ -836,9 +825,7 @@ package body Navigation_Module is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Next_Result;
 
    ----------------------------
@@ -880,9 +867,7 @@ package body Navigation_Module is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Previous_Subprogram;
 
    ------------------------
@@ -902,9 +887,7 @@ package body Navigation_Module is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Previous_Result;
 
    -------------------
@@ -941,9 +924,8 @@ package body Navigation_Module is
 
    exception
       when E : others =>
+         Trace (Exception_Handle, E);
          Pop_State (Kernel);
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
    end On_Other_File;
 
    ---------------------

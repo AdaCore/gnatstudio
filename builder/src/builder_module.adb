@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 with Ada.Tags;                  use Ada.Tags;
 with Ada.Strings;               use Ada.Strings;
@@ -765,8 +764,7 @@ package body Builder_Module is
          Free (Args);
 
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          Change_Dir (Old_Dir);
    end On_Build;
 
@@ -823,9 +821,7 @@ package body Builder_Module is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Check_Syntax;
 
    ------------------
@@ -1121,9 +1117,7 @@ package body Builder_Module is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Compile;
 
    ---------------
@@ -1207,9 +1201,7 @@ package body Builder_Module is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Custom;
 
    ------------------
@@ -1307,9 +1299,7 @@ package body Builder_Module is
         (Kernel, Command_Access (C), True, True, "");
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Compute_Xref;
 
    -------------------------
@@ -1335,9 +1325,7 @@ package body Builder_Module is
    begin
       Load_Xref_In_Memory (Kernel);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Load_Xref_In_Memory;
 
    -----------------------------
@@ -1607,9 +1595,7 @@ package body Builder_Module is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Run;
 
    ------------------------
@@ -1624,9 +1610,7 @@ package body Builder_Module is
       Interrupt_Latest_Task (Kernel);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Tools_Interrupt;
 
    --------------------
@@ -2027,9 +2011,7 @@ package body Builder_Module is
          Load_Xref_In_Memory (Kernel_Handle (Kernel));
       end if;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_View_Changed;
 
    --------------------

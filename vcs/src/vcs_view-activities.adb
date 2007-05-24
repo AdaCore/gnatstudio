@@ -18,8 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;            use Ada.Exceptions;
-
 with Gdk;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 
@@ -163,9 +161,7 @@ package body VCS_View.Activities is
       Refresh (Get_Explorer (K, False, False));
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Edited_Callback;
 
    ---------------
@@ -781,9 +777,7 @@ package body VCS_View.Activities is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Context_Func;
 
    -------------
@@ -838,9 +832,7 @@ package body VCS_View.Activities is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Execute;
 
    ----------------

@@ -21,7 +21,6 @@
 with Ada.Calendar;              use Ada.Calendar;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Directories;           use Ada.Directories;
-with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
 with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
@@ -280,9 +279,7 @@ package body VCS_Activities_View_API is
       Activity := Value (Activity_Information (Context));
       Toggle_Group_Commit (Kernel, Activity);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Toggle_Group_Commit;
 
    -----------------------------
@@ -298,9 +295,7 @@ package body VCS_Activities_View_API is
    begin
       On_Create_Activity (Kernel);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Create_Activity;
 
    -----------------------------
@@ -316,9 +311,7 @@ package body VCS_Activities_View_API is
    begin
       On_Delete_Activity (Kernel, Value (Activity_Information (Context)));
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Delete_Activity;
 
    -----------------------------
@@ -373,9 +366,7 @@ package body VCS_Activities_View_API is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Add_To_Activity;
 
    ----------------------------------
@@ -408,9 +399,7 @@ package body VCS_Activities_View_API is
       end loop;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Remove_From_Activity;
 
    ---------------------------
@@ -449,9 +438,7 @@ package body VCS_Activities_View_API is
    begin
       Query_Status_Activity (Kernel, Activity);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Query_Status_Activity;
 
    ---------------------
@@ -491,9 +478,7 @@ package body VCS_Activities_View_API is
    begin
       Update_Activity (Kernel, Activity);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Update_Activity;
 
    ---------------------
@@ -554,9 +539,7 @@ package body VCS_Activities_View_API is
    begin
       Commit_Activity (Kernel, Activity);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Commit_Activity;
 
    -------------------
@@ -596,9 +579,7 @@ package body VCS_Activities_View_API is
    begin
       Diff_Activity (Kernel, Activity);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Diff_Activity;
 
    ----------------------
@@ -652,9 +633,7 @@ package body VCS_Activities_View_API is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Edit_Log;
 
    ---------------------------------
@@ -812,9 +791,7 @@ package body VCS_Activities_View_API is
         (Kernel, Edit_File, True, True, Name (VCS));
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Build_Patch_File;
 
    -------------------
@@ -899,9 +876,7 @@ package body VCS_Activities_View_API is
       Query_Activities_Files (Explorer, Kernel, True);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Query_Status;
 
    ------------------------------------

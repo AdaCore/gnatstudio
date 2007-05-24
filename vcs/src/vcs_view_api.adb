@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Maps;          use Ada.Strings.Maps;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -565,9 +564,7 @@ package body VCS_View_API is
          On_Remove_Project (Explorer, "No project");
       end if;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Remove_Project;
 
    ----------------------------
@@ -584,9 +581,7 @@ package body VCS_View_API is
    begin
       Clear (Explorer);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Clear_Explorer;
 
    ---------------------
@@ -1568,9 +1563,7 @@ package body VCS_View_API is
       end loop;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Edit_ChangeLog;
 
    ----------------------
@@ -1607,9 +1600,7 @@ package body VCS_View_API is
       end loop;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Edit_Log;
 
    ------------------------
@@ -1641,9 +1632,7 @@ package body VCS_View_API is
 
       Destroy (Dialog);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Create_Tag;
 
    ------------------------
@@ -1681,9 +1670,7 @@ package body VCS_View_API is
 
       Destroy (Dialog);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Switch_Tag;
 
    ---------------------
@@ -1758,9 +1745,7 @@ package body VCS_View_API is
       Free (Files);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Remove_Log;
 
    --------------------
@@ -1793,9 +1778,7 @@ package body VCS_View_API is
       On_Log_Action (Context, Commit, Files);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Commit;
 
    -------------------
@@ -1916,9 +1899,7 @@ package body VCS_View_API is
       String_List.Free (List);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Open;
 
    -----------------
@@ -1935,9 +1916,7 @@ package body VCS_View_API is
       On_Log_Action (Context, Add, Files);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Add;
 
    -------------------------------------
@@ -1965,9 +1944,7 @@ package body VCS_View_API is
       String_List.Free (Files);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Add_Directory_No_Commit;
 
    ---------------------------
@@ -1999,9 +1976,7 @@ package body VCS_View_API is
       String_List.Free (Files);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Add_No_Commit;
 
    --------------------
@@ -2033,9 +2008,7 @@ package body VCS_View_API is
       String_List.Free (Files);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Revert;
 
    ----------------------
@@ -2068,9 +2041,7 @@ package body VCS_View_API is
       String_List.Free (Files);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Resolved;
 
    --------------------
@@ -2087,9 +2058,7 @@ package body VCS_View_API is
       On_Log_Action (Context, Remove, Files);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Remove;
 
    ----------------------------------------
@@ -2117,9 +2086,7 @@ package body VCS_View_API is
       String_List.Free (Files);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Remove_Directory_No_Commit;
 
    ------------------------------
@@ -2151,9 +2118,7 @@ package body VCS_View_API is
       String_List.Free (Files);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Remove_No_Commit;
 
    ----------------------
@@ -2195,9 +2160,7 @@ package body VCS_View_API is
       end loop;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Annotate;
 
    -----------------------------
@@ -2230,9 +2193,7 @@ package body VCS_View_API is
       end loop;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Remove_Annotate;
 
    --------------------
@@ -2263,9 +2224,7 @@ package body VCS_View_API is
       String_List.Free (Files);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Update;
 
    -------------------
@@ -2287,9 +2246,7 @@ package body VCS_View_API is
          String_List.Free (Files);
       end if;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Merge;
 
    ------------------------
@@ -2320,9 +2277,7 @@ package body VCS_View_API is
       String_List.Free (Files);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Get_Status;
 
    ------------------
@@ -2465,9 +2420,7 @@ package body VCS_View_API is
         (Context, Recursive => False, Update => True, Get_Status => True);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Update_Dir;
 
    ----------------------------------
@@ -2484,9 +2437,7 @@ package body VCS_View_API is
         (Context, Recursive => True, Update => True, Get_Status => True);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Update_Dir_Recursive;
 
    ----------------------------
@@ -2503,9 +2454,7 @@ package body VCS_View_API is
         (Context, Recursive => False, Update => False, Get_Status => True);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Get_Status_Dir;
 
    --------------------------------------
@@ -2522,9 +2471,7 @@ package body VCS_View_API is
         (Context, Recursive => True, Update => False, Get_Status => True);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Get_Status_Dir_Recursive;
 
    --------------------
@@ -2567,9 +2514,7 @@ package body VCS_View_API is
    begin
       Update_Project (Context, False);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Update_Project;
 
    --------------------------------------
@@ -2584,9 +2529,7 @@ package body VCS_View_API is
    begin
       Update_Project (Context, True);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Update_Project_Recursive;
 
    -------------------------
@@ -2685,9 +2628,7 @@ package body VCS_View_API is
    begin
       List_Project_Files (Context, False);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_List_Project_Files;
 
    ------------------------------------------
@@ -2702,9 +2643,7 @@ package body VCS_View_API is
    begin
       List_Project_Files (Context, True);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_List_Project_Files_Recursive;
 
    ------------------------
@@ -2746,9 +2685,7 @@ package body VCS_View_API is
    begin
       Get_Status_Project (Context, False);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Get_Status_Project;
 
    ------------------------------------------
@@ -2763,9 +2700,7 @@ package body VCS_View_API is
    begin
       Get_Status_Project (Context, True);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Get_Status_Project_Recursive;
 
    ------------------
@@ -2800,9 +2735,7 @@ package body VCS_View_API is
       end loop;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Diff;
 
    --------------------------
@@ -2837,9 +2770,7 @@ package body VCS_View_API is
       end loop;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Diff_Working;
 
    ----------------------------
@@ -2871,9 +2802,7 @@ package body VCS_View_API is
       end loop;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Diff_Base_Head;
 
    ----------------------
@@ -3012,9 +2941,7 @@ package body VCS_View_API is
          String_List.Next (Files);
       end loop;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_View_Log;
 
    ---------------------------
@@ -3048,9 +2975,7 @@ package body VCS_View_API is
          String_List.Next (Files);
       end loop;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_View_Log_Text;
 
    --------------------------
@@ -3113,9 +3038,7 @@ package body VCS_View_API is
       String_List.Free (Files);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_View_Log_Rev;
 
    --------------------------------
@@ -3136,9 +3059,7 @@ package body VCS_View_API is
             Revision_Information (Context));
       end if;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_View_File_Revision;
 
    ---------------------------
@@ -3153,9 +3074,7 @@ package body VCS_View_API is
    begin
       Comparison (Context, True);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Diff_Specific;
 
    -------------------
@@ -3170,9 +3089,7 @@ package body VCS_View_API is
    begin
       Comparison (Context, False);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Diff2;
 
    ----------------------
@@ -3195,9 +3112,7 @@ package body VCS_View_API is
             Tag_Information (Context));
       end if;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Diff_Tag;
 
    ----------------
@@ -3422,9 +3337,7 @@ package body VCS_View_API is
       Query_Project_Files (Explorer, Kernel, Get_Project (Kernel), True, True);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Query_Status_For_Project;
 
    ----------------
@@ -3444,9 +3357,7 @@ package body VCS_View_API is
       Update (Ref, Dirs);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Update_All;
 
    ---------------------
@@ -3469,9 +3380,7 @@ package body VCS_View_API is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
          return No_Context;
    end Context_Factory;
 

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2004-2006                      --
+--                      Copyright (C) 2004-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Calendar;            use Ada.Calendar;
-with Ada.Exceptions;          use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 with System;
 
@@ -859,9 +858,7 @@ package body Expect_Interface is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle, "Unexpected exception: "
-                & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Custom_Spawn_Handler;
 
    -----------------------
