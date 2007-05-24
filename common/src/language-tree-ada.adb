@@ -2039,8 +2039,7 @@ package body Language.Tree.Ada is
 
       if Beginning = 0 then
          Get_Documentation_After
-           (Context       => Get_Language_Context
-              (Get_Language (Tree_Language'Class (Lang.all)'Access)).all,
+           (Context       => Get_Language_Context (Language).all,
             Buffer        => Buffer,
             Decl_Index    => Get_Construct (Node).Sloc_End.Index,
             Comment_Start => Beginning,
@@ -2051,7 +2050,7 @@ package body Language.Tree.Ada is
          Unbounded.Append
            (Result,
             Comment_Block
-              (Get_Language (Tree_Language'Class (Lang.all)'Access),
+              (Language,
                Buffer (Beginning .. Current),
                Comment => False,
                Clean   => True));
