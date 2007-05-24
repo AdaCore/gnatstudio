@@ -1064,4 +1064,61 @@ package body Language is
       return Is_Entity_Letter (Char);
    end Is_Word_Char;
 
+   ---------
+   -- "=" --
+   ---------
+
+   function "=" (S1, S2 : Source_Location) return Boolean is
+   begin
+      if S1.Index > 0 and then S2.Index > 0 then
+         return S1.Index = S2.Index;
+      elsif S1.Line = S2.Line then
+         return S1.Column = S2.Column;
+      else
+         return False;
+      end if;
+   end "=";
+
+   ---------
+   -- "<" --
+   ---------
+
+   function "<" (S1, S2 : Source_Location) return Boolean is
+   begin
+      if S1.Index > 0 and then S2.Index > 0 then
+         return S1.Index < S2.Index;
+      elsif S1.Line = S2.Line then
+         return S1.Column < S2.Column;
+      else
+         return S1.Line < S2.Line;
+      end if;
+   end "<";
+
+   ----------
+   -- "<=" --
+   ----------
+
+   function "<=" (S1, S2 : Source_Location) return Boolean is
+   begin
+      return S1 = S2 or else S1 < S2;
+   end "<=";
+
+   ---------
+   -- ">" --
+   ---------
+
+   function ">" (S1, S2 : Source_Location) return Boolean is
+   begin
+      return not (S1 <= S2);
+   end ">";
+
+   ----------
+   -- ">=" --
+   ----------
+
+   function ">=" (S1, S2 : Source_Location) return Boolean is
+   begin
+      return S1 = S2 or else S1 > S2;
+   end ">=";
+
 end Language;

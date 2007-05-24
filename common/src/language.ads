@@ -295,6 +295,12 @@ package Language is
    end record;
    pragma Convention (C, Source_Location);
 
+   function ">" (S1, S2 : Source_Location) return Boolean;
+   function ">=" (S1, S2 : Source_Location) return Boolean;
+   function "<" (S1, S2 : Source_Location) return Boolean;
+   function "<=" (S1, S2 : Source_Location) return Boolean;
+   function "=" (S1, S2 : Source_Location) return Boolean;
+
    type Indent_Style is (Automatic, RM_Style, Non_RM_Style);
    for Indent_Style'Size use Integer'Size;
    pragma Convention (C, Indent_Style);
