@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                     Copyright (C) 2001-2007                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -21,8 +21,6 @@
 with Glib.Object;                       use Glib.Object;
 with Gtk.Menu_Item;                     use Gtk.Menu_Item;
 with Gtk.Dialog;                        use Gtk.Dialog;
-
-with Ada.Exceptions;                    use Ada.Exceptions;
 
 with GPS.Kernel;                        use GPS.Kernel;
 with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
@@ -81,10 +79,7 @@ package body Aunit_Module is
       Destroy (Make_Test_Window);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception in On_New_Test_Case: "
-                & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_New_Test_Case;
 
    -----------------------
@@ -110,9 +105,7 @@ package body Aunit_Module is
       Destroy (Make_Suite_Window);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle, "Unexpected exception in On_New_Test_Suite: "
-                & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_New_Test_Suite;
 
    -------------------------
@@ -138,10 +131,7 @@ package body Aunit_Module is
       Destroy (Make_Harness_Window);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception in On_New_Test_Harness: "
-                & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_New_Test_Harness;
 
    ---------------------

@@ -20,7 +20,6 @@
 
 --  This package defines the module for code fixing.
 
-with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 with GNAT.Regpat;               use GNAT.Regpat;
 
@@ -300,9 +299,7 @@ package body Codefix_Module is
          Message       => Get_Message (Err));
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Fix;
 
    ------------
@@ -463,9 +460,7 @@ package body Codefix_Module is
       Free (Errors_Found);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Activate_Codefix;
 
    -----------------------------
@@ -485,9 +480,7 @@ package body Codefix_Module is
          Execute_GPS_Shell_Command (Kernel, "get_build_output"),
          Compilation_Data.Value);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Compilation_Finished_Cb;
 
    ---------------------
@@ -536,9 +529,7 @@ package body Codefix_Module is
       Set_Focus_Child (Child);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Codefix_Handler;
 
    -------------------------
@@ -664,9 +655,7 @@ package body Codefix_Module is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Append_To_Menu;
 
    ---------------------
@@ -758,9 +747,7 @@ package body Codefix_Module is
 
       Create_Parsers;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Register_Module;
 
    ---------------------------

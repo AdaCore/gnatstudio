@@ -21,7 +21,6 @@
 --  This package provides low-level utilities to handle differences between
 --  files.
 
-with Ada.Exceptions;         use Ada.Exceptions;
 with Ada.Text_IO;            use Ada.Text_IO;
 
 with GNAT.Expect;            use GNAT.Expect;
@@ -295,8 +294,7 @@ package body Diff_Utils2 is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          Close (Descriptor);
          return Diff_Chunk_List.Null_List;
    end Diff;
@@ -398,8 +396,7 @@ package body Diff_Utils2 is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          Close (File);
          return Diff_Chunk_List.Null_List;
    end Diff;

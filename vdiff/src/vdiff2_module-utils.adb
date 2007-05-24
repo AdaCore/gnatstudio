@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;                    use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 
 with Gdk.Pixbuf;                        use Gdk.Pixbuf;
@@ -169,9 +168,7 @@ package body Vdiff2_Module.Utils is
       end loop;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Append;
 
    -------------------------
@@ -852,9 +849,7 @@ package body Vdiff2_Module.Utils is
       Trace (Me, "End Show_Differences3");
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Show_Differences3;
 
    ---------------------

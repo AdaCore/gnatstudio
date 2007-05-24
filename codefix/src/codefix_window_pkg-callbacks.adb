@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
---                            ACT-Europe                             --
+--                        Copyright (C) 2002-2007                    --
+--                                AdaCore                            --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,8 +17,6 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
-
-with Ada.Exceptions;        use Ada.Exceptions;
 
 with Glib;                  use Glib;
 
@@ -48,9 +46,7 @@ package body Codefix_Window_Pkg.Callbacks is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Fix_Entry_Changed;
 
    ---------------------
@@ -65,9 +61,7 @@ package body Codefix_Window_Pkg.Callbacks is
    begin
       Load_Previous_Error (Graphic_Codefix);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Prev_Clicked;
 
    ---------------------
@@ -83,9 +77,7 @@ package body Codefix_Window_Pkg.Callbacks is
       Load_Next_Error (Graphic_Codefix);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Next_Clicked;
 
    ----------------------
@@ -102,9 +94,7 @@ package body Codefix_Window_Pkg.Callbacks is
       Load_Next_Error (Graphic_Codefix);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Apply_Clicked;
 
    ---------------------
@@ -119,9 +109,7 @@ package body Codefix_Window_Pkg.Callbacks is
    begin
       Undo_Last_Fix (Graphic_Codefix);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Undo_Clicked;
 
    ------------------------
@@ -138,9 +126,7 @@ package body Codefix_Window_Pkg.Callbacks is
       Load_Error (Graphic_Codefix, Success_Load);
       --  ??? What may I do when the fix is no longer pertinent ?
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Refresh_Clicked;
 
 end Codefix_Window_Pkg.Callbacks;

@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;                    use Ada.Exceptions;
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 
 with Gtk.Window;                        use Gtk.Window;
@@ -118,9 +117,7 @@ package body Vdiff2_Module.Callback is
          end;
       end;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Compare_Three_Files;
 
    --------------------------
@@ -169,9 +166,7 @@ package body Vdiff2_Module.Callback is
       end;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Compare_Two_Files;
 
    -------------------------
@@ -257,9 +252,7 @@ package body Vdiff2_Module.Callback is
       end;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Merge_Three_Files;
 
    ------------------------
@@ -325,9 +318,7 @@ package body Vdiff2_Module.Callback is
       end;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Merge_Two_Files;
 
    ---------------
@@ -461,9 +452,7 @@ package body Vdiff2_Module.Callback is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end File_Closed_Cb;
 
    ------------------------------
@@ -486,9 +475,7 @@ package body Vdiff2_Module.Callback is
          Curr_Node := Next (Curr_Node);
       end loop;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Preferences_Changed;
 
    -------------
