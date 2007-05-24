@@ -210,7 +210,10 @@ package body Completion is
    ------------------------
 
    function From_Completion_Id
-     (Manager : access Completion_Manager; Id : Completion_Id)
+     (Manager : access Completion_Manager;
+      Id      : Completion_Id;
+      Context : Completion_Context;
+      Filter  : Possibilities_Filter)
       return Completion_Proposal_Access
    is
       It : Completion_Resolver_List_Pckg.List_Node := First
@@ -218,7 +221,7 @@ package body Completion is
       Result : Completion_Proposal_Access := null;
    begin
       while It /= Completion_Resolver_List_Pckg.Null_Node loop
-         Result := From_Completion_Id (Data (It), Id);
+         Result := From_Completion_Id (Data (It), Id, Context, Filter);
 
          if Result /= null then
             return Result;

@@ -159,7 +159,10 @@ package Completion is
    --  should be extracted.
 
    function From_Completion_Id
-     (Resolver : access Completion_Resolver; Id : Completion_Id)
+     (Resolver : access Completion_Resolver;
+      Id       : Completion_Id;
+      Context  : Completion_Context;
+      Filter   : Possibilities_Filter)
       return Completion_Proposal_Access is abstract;
    --  Create a proposal based on the id given in parameter. Returns null if
    --  the resolver cannot retreive any completion. This can happen because the
@@ -196,7 +199,10 @@ package Completion is
    --  given in parameter.
 
    function From_Completion_Id
-     (Manager : access Completion_Manager; Id : Completion_Id)
+     (Manager : access Completion_Manager;
+      Id      : Completion_Id;
+      Context : Completion_Context;
+      Filter  : Possibilities_Filter)
       return Completion_Proposal_Access;
    --  Look from all the resolvers, and return the first proposal that has been
    --  built according to this id. If none found, return null.

@@ -50,7 +50,10 @@ package Completion.Ada.Constructs_Extractor is
    --  See inherited documentation
 
    function From_Completion_Id
-     (Resolver : access Construct_Completion_Resolver; Id : Completion_Id)
+     (Resolver : access Construct_Completion_Resolver;
+      Id       : Completion_Id;
+      Context  : Completion_Context;
+      Filter   : Possibilities_Filter)
       return Completion_Proposal_Access;
    --  See inherited documentation
 

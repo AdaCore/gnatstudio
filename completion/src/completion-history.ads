@@ -41,7 +41,10 @@ package Completion.History is
    --  See inherited documentation
 
    function From_Completion_Id
-     (Resolver : access Completion_History; Id : Completion_Id)
+     (Resolver : access Completion_History;
+      Id       : Completion_Id;
+      Context  : Completion_Context;
+      Filter   : Possibilities_Filter)
       return Completion_Proposal_Access;
    --  See inherited documentation
 
