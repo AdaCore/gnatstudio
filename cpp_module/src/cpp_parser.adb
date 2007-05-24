@@ -157,20 +157,20 @@ package body CPP_Parser is
    function Case_Insensitive_Identifiers
      (Handler         : access CPP_Handler_Record) return Boolean;
    function Parse_All_LI_Information
-     (Handler         : access CPP_Handler_Record;
-      Project         : Projects.Project_Type;
-      Recursive       : Boolean := False) return Integer;
+     (Handler   : access CPP_Handler_Record;
+      Project   : Projects.Project_Type;
+      Recursive : Boolean := False) return Integer;
    function Generate_LI_For_Project
-     (Handler       : access CPP_Handler_Record;
-      Lang_Handler  : access Abstract_Language_Handler_Record'Class;
-      Project       : Projects.Project_Type;
-      Errors        : Projects.Error_Report;
-      Recursive     : Boolean := False) return LI_Handler_Iterator'Class;
-   procedure Parse_File_Constructs
      (Handler      : access CPP_Handler_Record;
-      Languages    : access Abstract_Language_Handler_Record'Class;
-      File_Name    : VFS.Virtual_File;
-      Result       : out Language.Construct_List);
+      Lang_Handler : access Abstract_Language_Handler_Record'Class;
+      Project      : Projects.Project_Type;
+      Errors       : Projects.Error_Report;
+      Recursive    : Boolean := False) return LI_Handler_Iterator'Class;
+   procedure Parse_File_Constructs
+     (Handler   : access CPP_Handler_Record;
+      Languages : access Abstract_Language_Handler_Record'Class;
+      File_Name : VFS.Virtual_File;
+      Result    : out Language.Construct_List);
    --  See doc for inherited subprograms
 
    type Iterator_State_Type is
@@ -206,10 +206,10 @@ package body CPP_Parser is
    --  See doc for inherited subprograms
 
    procedure Browse_Project
-     (Project      : Project_Type;
-      Iterator     : in out CPP_Handler_Iterator'Class;
-      Errors       : Projects.Error_Report;
-      Single_File  : VFS.Virtual_File := VFS.No_File);
+     (Project     : Project_Type;
+      Iterator    : in out CPP_Handler_Iterator'Class;
+      Errors      : Projects.Error_Report;
+      Single_File : VFS.Virtual_File := VFS.No_File);
    --  Runs cbrowser for all source files of Project.
    --  If Single_File is specified, then only this information for this file
    --  will be generated.
@@ -262,8 +262,8 @@ package body CPP_Parser is
    --  there is none.
 
    function Entity_From_FIL
-     (Sym     : FIL_Table;
-      Source  : Source_File) return Entity_Information;
+     (Sym    : FIL_Table;
+      Source : Source_File) return Entity_Information;
    --  Create an entity from the information in Sym
 
    procedure Parse_FIL_Table
@@ -316,19 +316,19 @@ package body CPP_Parser is
       Entity  : Entity_Information;
       Sym     : FIL_Table);
    procedure Parse_TO_Table
-     (Handler   : access CPP_Handler_Record'Class;
-      Sym_Name  : String;
-      Sym_Class : String;
+     (Handler       : access CPP_Handler_Record'Class;
+      Sym_Name      : String;
+      Sym_Class     : String;
       Sym_Arg_Types : String);
    procedure Parse_LV_Table
-     (Handler : access CPP_Handler_Record'Class;
-      Entity  : Entity_Information;
+     (Handler          : access CPP_Handler_Record'Class;
+      Entity           : Entity_Information;
       Entity_File_Name : String;
       Entity_Class     : String;
       Entity_Arg_Types : String;
-      Params  : String;
-      Parsed_Params : Segment_Array;
-      Source  : Source_File);
+      Params           : String;
+      Parsed_Params    : Segment_Array;
+      Source           : Source_File);
    procedure Parse_IV_Table
      (Handler : access CPP_Handler_Record'Class;
       Entity  : Entity_Information;
@@ -364,13 +364,13 @@ package body CPP_Parser is
    --  Return the Class entity
 
    procedure Process_Local_Variables_And_Parameters
-     (Handler : access CPP_Handler_Record'Class;
-      Entity  : Entity_Information;
+     (Handler          : access CPP_Handler_Record'Class;
+      Entity           : Entity_Information;
       Entity_File_Name : String;
       Entity_Class     : String;
       Entity_Arg_Types : String;
-      Params  : String;
-      Source  : Source_File);
+      Params           : String;
+      Source           : Source_File);
    --  Analyze all the local variables declared in Sym, and check whether they
    --  are parameters to the subprogram Sym.
 
@@ -435,9 +435,9 @@ package body CPP_Parser is
    --  Parent_Reference is also registered as a reference to the parent
 
    procedure Set_Subprogram_Return_Type
-     (Handler          : access CPP_Handler_Record'Class;
-      Entity           : Entity_Information;
-      Return_Type      : String);
+     (Handler     : access CPP_Handler_Record'Class;
+      Entity      : Entity_Information;
+      Return_Type : String);
    --  Set the return type for a subprogram or method entity
 
    function Find_Forward_Declaration_And_Body
@@ -701,6 +701,7 @@ package body CPP_Parser is
       if Entity = null then
          if Looking_At (Clean_Name, Name_Start, Signed_Str) then
             Name_Start := Name_Start + Signed_Str'Length;
+
          elsif Looking_At (Clean_Name, Name_Start, Unsigned_Str) then
             Name_Start := Name_Start + Unsigned_Str'Length;
             Has_Unsigned := True;
@@ -717,23 +718,30 @@ package body CPP_Parser is
             else
                Kind := Signed_Integer_Entity;
             end if;
+
          elsif Clean_Name (Name_Start .. Clean_Name'Last) = "uint"
            or else Clean_Name (Name_Start .. Clean_Name'Last) = "uchar"
          then
             Kind := Modular_Integer_Entity;
+
          elsif Clean_Name (Name_Start .. Clean_Name'Last) = "float"
            or else Clean_Name (Name_Start .. Clean_Name'Last) = "double"
          then
             Kind := Floating_Point_Entity;
+
          elsif Clean_Name (Name_Start .. Clean_Name'Last) = "char *" then
             Kind := String_Entity;
+
          elsif Clean_Name (Name_Start .. Clean_Name'Last) = "void" then
             Kind := Void_Entity;
+
          elsif Clean_Name (Name_Start .. Clean_Name'Last) = "class" then
             Kind := Class_Entity;
+
          else
             return null;
          end if;
+
          Kind.Is_Type := True;
 
          Entity := Get_Or_Create
@@ -830,17 +838,17 @@ package body CPP_Parser is
       Check_Class_Template_Arguments : Boolean := True;
       Class_Or_Function              : String := Invalid_String;
       Args                           : String := Invalid_String)
-     return Entity_Information
+      return Entity_Information
    is
-      Source  : Source_File;
+      Source               : Source_File;
       Entity, Real_Entity  : Entity_Information;
-      Key     : Entity_Key;
-      Key2    : Entity_Class_Key;
-      Key3    : Entity_Function_Key;
-      Success : Boolean;
-      Last    : Natural := Name'Last;
-      P       : Pair;
-      F       : FU_Table;
+      Key                  : Entity_Key;
+      Key2                 : Entity_Class_Key;
+      Key3                 : Entity_Function_Key;
+      Success              : Boolean;
+      Last                 : Natural := Name'Last;
+      P                    : Pair;
+      F                    : FU_Table;
 
       procedure Handle_FU_Table (Table_Type : Symbol_Type);
       procedure Handle_CL_Table (Table_Type : Symbol_Type);
@@ -849,6 +857,10 @@ package body CPP_Parser is
       pragma Inline (Handle_FU_Table, Handle_CL_Table, Handle_MI_Table,
                      Handle_LV_Table);
       --  Handle various kinds of tables when searching for an entity
+
+      ---------------------
+      -- Handle_FU_Table --
+      ---------------------
 
       procedure Handle_FU_Table (Table_Type : Symbol_Type) is
       begin
@@ -884,12 +896,17 @@ package body CPP_Parser is
          end if;
       end Handle_FU_Table;
 
+      ---------------------
+      -- Handle_CL_Table --
+      ---------------------
+
       procedure Handle_CL_Table (Table_Type : Symbol_Type) is
       begin
          Find_Key (Handler.SN_Table (Table_Type),
-                   Name           => Name (Name'First .. Last),
-                   Key            => Key,
-                   Success        => Success);
+                   Name    => Name (Name'First .. Last),
+                   Key     => Key,
+                   Success => Success);
+
          if Success then
             Source := Get_Or_Create
               (Handler.Db,
@@ -904,16 +921,21 @@ package body CPP_Parser is
          end if;
       end Handle_CL_Table;
 
+      ---------------------
+      -- Handle_MI_Table --
+      ---------------------
+
       procedure Handle_MI_Table (Table_Type : Symbol_Type) is
       begin
          if Class_Or_Function /= ""
            and then Class_Or_Function /= "#"
          then
             Find_Key (Handler.SN_Table (Table_Type),
-                      Class       => Class_Or_Function,
-                      Name        => Name (Name'First .. Last),
-                      Key         => Key2,
-                      Success     => Success);
+                      Class   => Class_Or_Function,
+                      Name    => Name (Name'First .. Last),
+                      Key     => Key2,
+                      Success => Success);
+
             if Success then
                Source := Get_Or_Create
                  (Handler.Db,
@@ -929,13 +951,18 @@ package body CPP_Parser is
          end if;
       end Handle_MI_Table;
 
+      ---------------------
+      -- Handle_LV_Table --
+      ---------------------
+
       procedure Handle_LV_Table (Table_Type : Symbol_Type) is
       begin
          Find_Key (Handler.SN_Table (Table_Type),
-                   Function_Name     => Class_Or_Function,
-                   Name              => Name (Name'First .. Last),
-                   Key               => Key3,
-                   Success           => Success);
+                   Function_Name => Class_Or_Function,
+                   Name          => Name (Name'First .. Last),
+                   Key           => Key3,
+                   Success       => Success);
+
          if Success then
             Source := Get_Or_Create
               (Handler.Db,
@@ -1036,16 +1063,16 @@ package body CPP_Parser is
             if Name (Last) /= ' ' then
                if Is_Predefined_Entity (Entity) then
                   Real_Entity := Get_Or_Create
-                    (Name         => Name (Name'First .. Last),
-                     File         => Get_Predefined_File (Handler.Db, Handler),
-                     Line         => Predefined_Line,
-                     Column       => Predefined_Column);
+                    (Name   => Name (Name'First .. Last),
+                     File   => Get_Predefined_File (Handler.Db, Handler),
+                     Line   => Predefined_Line,
+                     Column => Predefined_Column);
                else
                   Real_Entity := Get_Or_Create
-                    (Name         => Name (Name'First .. Last),
-                     File         => Current_Source,
-                     Line         => Predefined_Line,
-                     Column       => Predefined_Column);
+                    (Name   => Name (Name'First .. Last),
+                     File   => Current_Source,
+                     Line   => Predefined_Line,
+                     Column => Predefined_Column);
                end if;
 
                if Name (Last) = '*' then
@@ -1358,9 +1385,9 @@ package body CPP_Parser is
    --     Attributes, Template_Parameters
 
    procedure Parse_MD_Table
-     (Handler      : access CPP_Handler_Record'Class;
-      Sym          : FIL_Table;
-      Source       : Source_File)
+     (Handler : access CPP_Handler_Record'Class;
+      Sym     : FIL_Table;
+      Source  : Source_File)
    is
       Entity, Class : Entity_Information;
       Var      : MD_Table;
@@ -1565,11 +1592,11 @@ package body CPP_Parser is
       Sym     : FIL_Table;
       Source  : Source_File)
    is
-      D      : MD_Table;
-      M      : MI_Table;
-      SuccessD : Boolean;
-      SuccessI : Boolean;
-      Class_Length : Natural;
+      D             : MD_Table;
+      M             : MI_Table;
+      SuccessD      : Boolean;
+      SuccessI      : Boolean;
+      Class_Length  : Natural;
       Entity, Class : Entity_Information;
    begin
       --  Find and parse the corresponding method declaration.
@@ -1852,12 +1879,14 @@ package body CPP_Parser is
       ET      : E_Table;
       Success : Boolean;
    begin
-      Find (DB        => Handler.SN_Table (E),
-            Name      => Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last),
-            Filename  => Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last),
-            Start_Position => Sym.Start_Position,
-            Tab       => ET,
-            Success   => Success);
+      Find
+        (DB             => Handler.SN_Table (E),
+         Name           =>
+           Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last),
+         Filename       => Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last),
+         Start_Position => Sym.Start_Position,
+         Tab            => ET,
+         Success        => Success);
 
       if Success then
          Set_End_Of_Scope
@@ -1880,15 +1909,17 @@ package body CPP_Parser is
       Entity  : Entity_Information;
       Sym     : FIL_Table)
    is
-      C : CON_Table;
+      C       : CON_Table;
       Success : Boolean;
    begin
-      Find (DB       => Handler.SN_Table (CON),
-            Name     => Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last),
-            Start_Position => Sym.Start_Position,
-            Filename => Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last),
-            Tab      => C,
-            Success  => Success);
+      Find
+        (DB             => Handler.SN_Table (CON),
+         Name           =>
+           Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last),
+         Start_Position => Sym.Start_Position,
+         Filename       => Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last),
+         Tab            => C,
+         Success        => Success);
 
       if Success then
          Set_Parent
@@ -1952,10 +1983,10 @@ package body CPP_Parser is
                Handler);
 
             Decl := Get_Or_Create
-              (Name   => Name,
-               File   => S,
-               Line   => FD_Tab.Start_Position.Line,
-               Column => FD_Tab.Start_Position.Column,
+              (Name         => Name,
+               File         => S,
+               Line         => FD_Tab.Start_Position.Line,
+               Column       => FD_Tab.Start_Position.Column,
                Allow_Create => False);
 
             if Decl = null then
@@ -2016,6 +2047,7 @@ package body CPP_Parser is
 
       if Return_Type (Start .. Return_Type'Last) = "void" then
          Set_Kind (Entity, Procedure_Entity);
+
       else
          Set_Kind (Entity, Function_Entity);
          Parent := Lookup_Entity_In_Tables
@@ -2206,16 +2238,16 @@ package body CPP_Parser is
    --     Referred_Argument_Types
 
    procedure Parse_TO_Table
-     (Handler   : access CPP_Handler_Record'Class;
-      Sym_Name  : String;
-      Sym_Class : String;
+     (Handler       : access CPP_Handler_Record'Class;
+      Sym_Name      : String;
+      Sym_Class     : String;
       Sym_Arg_Types : String)
    is
-      P    : Pair;
-      R    : TO_Table;
-      Ref  : Entity_Information;
-      Kind : Reference_Kind;
-      Arr  : Boolean_Table_Array;
+      P          : Pair;
+      R          : TO_Table;
+      Ref        : Entity_Information;
+      Kind       : Reference_Kind;
+      Arr        : Boolean_Table_Array;
       Ref_Source : Source_File;
    begin
       if Is_Open (Handler.SN_Table (TO)) then
@@ -2364,18 +2396,18 @@ package body CPP_Parser is
    --    End_Position, Attributes, Type_Start_Position
 
    procedure Parse_LV_Table
-     (Handler : access CPP_Handler_Record'Class;
-      Entity  : Entity_Information;
+     (Handler          : access CPP_Handler_Record'Class;
+      Entity           : Entity_Information;
       Entity_File_Name : String;
       Entity_Class     : String;
       Entity_Arg_Types : String;
-      Params  : String;
-      Parsed_Params : Segment_Array;
-      Source  : Source_File)
+      Params           : String;
+      Parsed_Params    : Segment_Array;
+      Source           : Source_File)
    is
-      P      : Pair;
-      Var    : LV_Table;
-      Local  : Entity_Information;
+      P     : Pair;
+      Var   : LV_Table;
+      Local : Entity_Information;
    begin
       if Is_Open (Handler.SN_Table (LV)) then
          Set_Cursor
@@ -2447,13 +2479,13 @@ package body CPP_Parser is
    --------------------------------------------
 
    procedure Process_Local_Variables_And_Parameters
-     (Handler : access CPP_Handler_Record'Class;
-      Entity  : Entity_Information;
+     (Handler          : access CPP_Handler_Record'Class;
+      Entity           : Entity_Information;
       Entity_File_Name : String;
       Entity_Class     : String;
       Entity_Arg_Types : String;
-      Params  : String;
-      Source  : Source_File)
+      Params           : String;
+      Source           : Source_File)
    is
       Params_Count : Natural := 1;
    begin
@@ -2502,12 +2534,12 @@ package body CPP_Parser is
    ----------------
 
    procedure Set_Parent
-     (Handler          : access CPP_Handler_Record'Class;
-      Entity           : Entity_Information;
-      Parent_Name      : String;
-      Parent_Reference : Point := Invalid_Point;
-      Entity_Is_A_Type : Boolean := False;
-      Tables           : Boolean_Table_Array := All_Types_Table;
+     (Handler           : access CPP_Handler_Record'Class;
+      Entity            : Entity_Information;
+      Parent_Name       : String;
+      Parent_Reference  : Point := Invalid_Point;
+      Entity_Is_A_Type  : Boolean := False;
+      Tables            : Boolean_Table_Array := All_Types_Table;
       Class_Or_Function : String := Invalid_String)
    is
       Parent     : Entity_Information;
@@ -2757,6 +2789,7 @@ package body CPP_Parser is
       Source, Other_File  : Source_File;
       Project             : Project_Type;
       pragma Unreferenced (Other_File);
+
    begin
       --  Do nothing if the database doesn't exist or hasn't been parsed
       if not Is_Open (Handler.SN_Table (FIL)) then
@@ -3289,20 +3322,20 @@ package body CPP_Parser is
    ---------------------------
 
    procedure Parse_File_Constructs
-     (Handler      : access CPP_Handler_Record;
-      Languages    : access Abstract_Language_Handler_Record'Class;
-      File_Name    : VFS.Virtual_File;
-      Result       : out Language.Construct_List)
+     (Handler   : access CPP_Handler_Record;
+      Languages : access Abstract_Language_Handler_Record'Class;
+      File_Name : VFS.Virtual_File;
+      Result    : out Language.Construct_List)
    is
-      Project         : constant Project_Type :=
-        Get_Project_From_File (Handler.Registry, File_Name);
-      Constructs      : Language.Construct_List;
-      P               : Pair;
-      Sym             : FIL_Table;
-      Info            : Construct_Access;
-      C               : Construct_Access;
-      Finished        : Boolean;
-      Source          : Source_File;
+      Project    : constant Project_Type :=
+                     Get_Project_From_File (Handler.Registry, File_Name);
+      Constructs : Language.Construct_List;
+      P          : Pair;
+      Sym        : FIL_Table;
+      Info       : Construct_Access;
+      C          : Construct_Access;
+      Finished   : Boolean;
+      Source     : Source_File;
 
    begin
       --  This call is just to check whether we know anything of the file from
