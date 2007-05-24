@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.OS_Lib;
@@ -1388,8 +1387,7 @@ package body Switches_Editors is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, "Create_Combo: Unexpected exception "
-                & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return Gtk_Widget (Hbox);
    end Create_Combo;
 
@@ -1876,9 +1874,7 @@ package body Switches_Editors is
       end loop;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Revert_To_Default;
 
    ----------------------------
@@ -2268,9 +2264,7 @@ package body Switches_Editors is
       end loop;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Fill_Editor;
 
    -------------

@@ -43,7 +43,6 @@ with Gtkada.Dialogs;      use Gtkada.Dialogs;
 with Glib.Xml_Int;        use Glib.Xml_Int;
 with Gtkada.MDI;          use Gtkada.MDI;
 
-with Ada.Exceptions;     use Ada.Exceptions;
 with Projects.Editor;    use Projects, Projects.Editor;
 with GPS.Kernel;         use GPS.Kernel;
 with GPS.Kernel.MDI;     use GPS.Kernel.MDI;
@@ -480,9 +479,7 @@ package body Scenario_Views is
       Raise_Child (Child);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Open_View;
 
    ------------------

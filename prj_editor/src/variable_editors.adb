@@ -47,12 +47,11 @@ with Interfaces.C.Strings;     use Interfaces.C.Strings;
 with System;                   use System;
 
 with Projects.Editor;          use Projects, Projects.Editor;
-with GPS.Kernel;             use GPS.Kernel;
-with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
-with GPS.Kernel.Project;     use GPS.Kernel.Project;
-with GPS.Intl;               use GPS.Intl;
+with GPS.Kernel;               use GPS.Kernel;
+with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
+with GPS.Kernel.Project;       use GPS.Kernel.Project;
+with GPS.Intl;                 use GPS.Intl;
 with Traces;                   use Traces;
-with Ada.Exceptions;           use Ada.Exceptions;
 with Prj.Tree;                 use Prj.Tree;
 with Projects.Registry;        use Projects.Registry;
 
@@ -599,8 +598,7 @@ package body Variable_Editors is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Update_Variable;
 
