@@ -92,7 +92,7 @@ package body Completion.History is
       Proposal : Completion_Proposal'Class)
    is
       It : Proposal_Stack.Cursor := First (Resolver.Stack);
-      Id : Completion_Id :=  To_Completion_Id (Proposal);
+      Id : constant Completion_Id :=  To_Completion_Id (Proposal);
    begin
       while It /= Proposal_Stack.No_Element loop
          if Element (It) = Id then
