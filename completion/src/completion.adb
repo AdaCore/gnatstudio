@@ -390,7 +390,8 @@ package body Completion is
 
          if Is_Valid (This) then
             declare
-               Id : Completion_Id := To_Completion_Id (Get_Proposal (This));
+               Id : constant Completion_Id :=
+                 To_Completion_Id (Get_Proposal (This));
             begin
                if Completion_Id_Set.Find
                  (This.Already_Extracted, Id) = Completion_Id_Set.No_Element
