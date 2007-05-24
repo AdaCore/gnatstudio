@@ -36,8 +36,8 @@ package body Language.Tree is
 
    function Contains (Scope, Item : Construct_Access) return Boolean is
    begin
-      return Scope.Sloc_Start.Index <= Item.Sloc_Start.Index
-        and then Scope.Sloc_End.Index >= Item.Sloc_End.Index;
+      return Scope.Sloc_Start <= Item.Sloc_Start
+        and then Scope.Sloc_End >= Item.Sloc_End;
    end Contains;
 
    ----------
@@ -501,9 +501,7 @@ package body Language.Tree is
    is
       Next_Index : Positive;
    begin
-      if Iter.Node.Sub_Nodes_Length > 0
-        and then Scope_Policy = Jump_Into
-      then
+      if Scope_Policy = Jump_Into then
          Next_Index := Iter.Index + 1;
       else
          Next_Index := Iter.Index + Iter.Node.Sub_Nodes_Length + 1;
@@ -1220,8 +1218,7 @@ package body Language.Tree is
 
       if Beginning = 0 then
          Get_Documentation_After
-           (Context       => Get_Language_Context
-              (Get_Language (Tree_Language'Class (Lang.all)'Access)).all,
+           (Context       => Get_Language_Context (Language).all,
             Buffer        => Buffer,
             Decl_Index    => Get_Construct (Node).Sloc_End.Index,
             Comment_Start => Beginning,
@@ -1232,7 +1229,7 @@ package body Language.Tree is
          Append
            (Result,
             Comment_Block
-              (Get_Language (Tree_Language'Class (Lang.all)'Access),
+              (Language,
                Buffer (Beginning .. Current),
                Comment => False,
                Clean   => True));
