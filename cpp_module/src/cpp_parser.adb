@@ -3383,6 +3383,8 @@ package body CPP_Parser is
                   Info.Next               := Constructs.Current;
                end if;
 
+               Constructs.Last := Constructs.Current;
+
                --  Set name and location, common to all categories
 
                C.Name := new String'
