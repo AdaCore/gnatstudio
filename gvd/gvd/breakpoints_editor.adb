@@ -63,11 +63,9 @@ with GVD.Types;        use GVD.Types;
 with GUI_Utils;        use GUI_Utils;
 with Debugger;         use Debugger;
 with VFS;              use VFS;
+with Traces;           use Traces;
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-
-with Ada.Exceptions;          use Ada.Exceptions;
-with Traces;                  use Traces;
 
 package body Breakpoints_Editor is
 
@@ -207,9 +205,7 @@ package body Breakpoints_Editor is
       return False;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
          return False;
    end Breakpoint_Clicked;
 
@@ -294,9 +290,7 @@ package body Breakpoints_Editor is
       Set_Sensitive (Editor.View, True);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Breakpoint_Row_Selection_Change;
 
    -------------------------

@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
---                              ACT-Europe                           --
+--                      Copyright (C) 2000-2007                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,8 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Traces; use Traces;
-with Ada.Exceptions; use Ada.Exceptions;
+with Traces;   use Traces;
 with Gtk.Main; use Gtk.Main;
 
 package body Advanced_Breakpoint_Pkg.Callbacks is
@@ -36,9 +35,7 @@ package body Advanced_Breakpoint_Pkg.Callbacks is
       null;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Start_Record_Clicked;
 
    ----------------------------
@@ -53,9 +50,7 @@ package body Advanced_Breakpoint_Pkg.Callbacks is
       null;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Stop_Record_Clicked;
 
    ----------------------
@@ -73,9 +68,7 @@ package body Advanced_Breakpoint_Pkg.Callbacks is
       Main_Quit;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Apply_Clicked;
 
    ----------------------
@@ -93,9 +86,7 @@ package body Advanced_Breakpoint_Pkg.Callbacks is
       Main_Quit;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Close_Clicked;
 
 end Advanced_Breakpoint_Pkg.Callbacks;
