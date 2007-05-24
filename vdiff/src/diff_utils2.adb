@@ -524,7 +524,7 @@ package body Diff_Utils2 is
          return Ret;
 
       when others =>
-         --  unexpected exception
+         Trace (Exception_Handle, E);
          Close (Descriptor);
          return Diff_Chunk_List.Null_List;
    end Diff3;
