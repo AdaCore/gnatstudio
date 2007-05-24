@@ -42,7 +42,8 @@ package body Completion.History is
       while It /= Proposal_Stack.No_Element loop
          declare
             Proposal : Completion_Proposal_Access :=
-              From_Completion_Id (Resolver.Manager, Element (It));
+              From_Completion_Id
+                (Resolver.Manager, Element (It), Context, Filter);
          begin
             if Proposal /= null and then Match
               (Proposal.all, Identifier, Is_Partial, Context, Offset, Filter)
@@ -66,10 +67,13 @@ package body Completion.History is
    ------------------------
 
    function From_Completion_Id
-     (Resolver : access Completion_History; Id : Completion_Id)
+     (Resolver : access Completion_History;
+      Id       : Completion_Id;
+      Context  : Completion_Context;
+      Filter   : Possibilities_Filter)
       return Completion_Proposal_Access
    is
-      pragma Unreferenced (Resolver, Id);
+      pragma Unreferenced (Resolver, Id, Context, Filter);
    begin
       return null;
    end From_Completion_Id;
