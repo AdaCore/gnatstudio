@@ -1616,8 +1616,8 @@ package body Src_Contexts is
 
                Set_Cursor_Position
                  (Get_Buffer (Editor),
-                  Context.Begin_Line,
-                  Context.Begin_Column,
+                  Context.End_Line,
+                  Context.End_Column,
                   True);
 
                Save_Cursor_Position (Get_View (Editor));
