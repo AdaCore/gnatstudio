@@ -986,12 +986,12 @@ procedure GPS.Main is
       --  associated with GPS_Main, which happens only very late in the
       --  processing
 
---        if not Have_Render (Get_Window (GPS_Main)) then
---           Trace (Me, "RENDER extension NOT detected");
---           Put_Line
---             ("Warning: X RENDER extension is not detected, " &
---              "display will be slow");
---        end if;
+      if not Have_Render (Get_Window (GPS_Main)) then
+         Trace (Me, "RENDER extension NOT detected");
+         Put_Line
+           ("Warning: X RENDER extension is not detected, " &
+            "display will be slow");
+      end if;
 
       Run_Hook (GPS_Main.Kernel, GPS_Started_Hook);
       return False;
