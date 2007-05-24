@@ -715,9 +715,12 @@ package body Completion.Ada.Constructs_Extractor is
                   Add_Children_Of (Proposal.Tree, Body_It, List, True);
                end if;
 
-               if Get_Unit_Construct
-                 (Ada_Tree_Lang, Get_Public_Tree (Proposal.File))
-                 = Proposal.Tree_Node
+               if Is_Same_Construct
+                 (To_Construct_Access
+                    (Get_Public_Tree (Proposal.File),
+                     Get_Unit_Construct
+                       (Ada_Tree_Lang, Get_Public_Tree (Proposal.File))),
+                  To_Construct_Access (Proposal.Tree, Proposal.Tree_Node))
                then
                   --  If we are completing a unit name, then look for its
                   --  children
@@ -1016,9 +1019,14 @@ package body Completion.Ada.Constructs_Extractor is
    ------------------------
 
    function From_Completion_Id
-     (Resolver : access Construct_Completion_Resolver; Id : Completion_Id)
+     (Resolver : access Construct_Completion_Resolver;
+      Id       : Completion_Id;
+      Context  : Completion_Context;
+      Filter   : Possibilities_Filter)
       return Completion_Proposal_Access
    is
+      pragma Unreferenced (Context);
+
       function Extract_Construct
         (Id    : Composite_Identifier;
          Step  : Integer;
@@ -1114,7 +1122,7 @@ package body Completion.Ada.Constructs_Extractor is
                         Is_All               => False,
                         Params_In_Expression => 0,
                         Tree                 => Full_Tree,
-                        Filter               => Everything,
+                        Filter               => Filter,
                         Buffer               => Get_Buffer (File),
                         Is_In_Profile        => False);
                end if;
@@ -1148,7 +1156,7 @@ package body Completion.Ada.Constructs_Extractor is
                         Is_All               => False,
                         Params_In_Expression => 0,
                         Tree                 => Full_Tree,
-                        Filter               => Everything,
+                        Filter               => Filter,
                         Buffer               => Get_Buffer (File),
                         Is_In_Profile        => False);
                   end if;
