@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;             use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;               use GNAT.Strings;
 
@@ -218,8 +217,7 @@ package body Gtkada.Entry_Completion is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, "Unexpected exception "
-                & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end On_Key_Press;
 
@@ -569,8 +567,7 @@ package body Gtkada.Entry_Completion is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, "Unexpected exception "
-                & Exception_Information (E));
+         Trace (Exception_Handle, E);
          GEntry.Completion_Index := Integer'Last;
          return False;
    end On_Entry_Tab;

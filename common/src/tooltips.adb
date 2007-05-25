@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;       use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 
 with Gdk.Drawable;         use Gdk.Drawable;
@@ -185,9 +184,7 @@ package body Tooltips is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, "Unexpected exception"
-                & Exception_Information (E));
-
+         Trace (Exception_Handle, E);
          return False;
    end Display_Tooltip;
 
@@ -313,8 +310,7 @@ package body Tooltips is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, "Unexpected exception"
-                & Exception_Information (E));
+         Trace (Exception_Handle, E);
       return False;
    end Tooltip_Event_Cb;
 
@@ -402,9 +398,7 @@ package body Tooltips is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle, "Unexpected exception"
-                & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Destroy_Cb;
 
    -------------------------

@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -1496,9 +1495,7 @@ package body Src_Contexts is
       end if;
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "unexpected exception: " & Exception_Information (E));
-
+         Trace (Exception_Handle, E);
          Found := False;
          Continue := False;
          return;
@@ -1740,8 +1737,7 @@ package body Src_Contexts is
       return not Context.All_Occurrences and then Found;
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Replace;
 

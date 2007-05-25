@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Glib;                      use Glib;
@@ -591,9 +590,7 @@ package body Directory_Tree is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Add_Directory_Cb;
 
    ----------------------
@@ -653,9 +650,7 @@ package body Directory_Tree is
       Remove_Directory (Selector, Recursive => True);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Remove_Directory_Cb;
 
    -----------------------------
@@ -857,9 +852,7 @@ package body Directory_Tree is
       Destroy (Dialog);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Create_Directory_Cb;
 
    ---------------------------------
@@ -1288,8 +1281,7 @@ package body Directory_Tree is
          return False;
 
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Read_Directory;
 
@@ -1525,8 +1517,7 @@ package body Directory_Tree is
       end if;
 
    exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Message (E));
+      when E : others => Trace (Me, E);
    end File_Tree_Collapse_Row_Cb;
 
    ---------------------
@@ -1569,7 +1560,7 @@ package body Directory_Tree is
       return True;
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Message (E));
+         Trace (Me, E);
          return True;
    end Expose_Event_Cb;
 
@@ -1623,8 +1614,7 @@ package body Directory_Tree is
       end if;
 
    exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Message (E));
+      when E : others => Trace (Me, E);
    end File_Tree_Expand_Row_Cb;
 
    ---------------------
@@ -1670,8 +1660,7 @@ package body Directory_Tree is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end On_Button_Press;
 
@@ -1690,9 +1679,7 @@ package body Directory_Tree is
         (T.File_Tree, T.File_Model, Event, True);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
          return False;
    end File_Button_Press;
 
@@ -1767,9 +1754,7 @@ package body Directory_Tree is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Refresh;
 
    -------------------
