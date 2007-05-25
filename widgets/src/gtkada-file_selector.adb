@@ -27,7 +27,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Expect;               use GNAT.Expect;
 with GNAT.Regexp;               use GNAT.Regexp;
@@ -919,7 +918,7 @@ package body Gtkada.File_Selector is
    exception
       --  ??? should catch VFS_Directory_Error
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Me, E);
          return False;
    end Read_File;
 
@@ -1117,7 +1116,7 @@ package body Gtkada.File_Selector is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Me, E);
          Free (S);
    end On_Back_Button_Clicked;
 
@@ -1143,8 +1142,7 @@ package body Gtkada.File_Selector is
       Free (H);
 
    exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Me, E);
    end On_Home_Button_Clicked;
 
    --------------------------
@@ -1164,8 +1162,7 @@ package body Gtkada.File_Selector is
       Change_Directory (Win, Get_Selection (Win.Explorer_Tree));
 
    exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Me, E);
    end On_Up_Button_Clicked;
 
    -------------------------------
@@ -1184,8 +1181,7 @@ package body Gtkada.File_Selector is
       Refresh_Files (Win);
 
    exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Me, E);
    end On_Refresh_Button_Clicked;
 
    -------------------------------
@@ -1221,8 +1217,7 @@ package body Gtkada.File_Selector is
       when Stack_Empty =>
          null;
 
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Me, E);
    end On_Forward_Button_Clicked;
 
    -------------------
@@ -1267,8 +1262,7 @@ package body Gtkada.File_Selector is
                       Get_Host (Win.Current_Directory));
          end if;
          Host_Selected (Object);
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Me, E);
    end Host_Selected;
 
    ------------------------
@@ -1285,8 +1279,7 @@ package body Gtkada.File_Selector is
         (Win, Get_Location (Win.Location_Combo));
 
    exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Me, E);
    end Directory_Selected;
 
    ---------------------
@@ -1302,8 +1295,7 @@ package body Gtkada.File_Selector is
       Refresh_Files (Win);
 
    exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Me, E);
    end Filter_Selected;
 
    --------------------------------------
@@ -1322,8 +1314,7 @@ package body Gtkada.File_Selector is
       end if;
 
    exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Me, E);
    end On_Location_Combo_Entry_Activate;
 
    ---------------------------------
@@ -1345,8 +1336,7 @@ package body Gtkada.File_Selector is
       end if;
 
    exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Me, E);
    end On_Explorer_Tree_Select_Row;
 
    -------------------
@@ -1399,8 +1389,7 @@ package body Gtkada.File_Selector is
       end if;
 
    exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Me, E);
    end On_File_List_End_Selection;
 
    --------------------------------
@@ -1415,8 +1404,7 @@ package body Gtkada.File_Selector is
       null;
 
    exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Me, E);
    end On_Selection_Entry_Changed;
 
    --------------------------
@@ -1443,8 +1431,7 @@ package body Gtkada.File_Selector is
       Destroy (Win);
 
    exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Me, E);
    end On_Ok_Button_Clicked;
 
    ------------------------------
@@ -1468,8 +1455,7 @@ package body Gtkada.File_Selector is
       Destroy (Win);
 
    exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Me, E);
    end On_Cancel_Button_Clicked;
 
    ----------------
@@ -1499,8 +1485,7 @@ package body Gtkada.File_Selector is
       end if;
 
    exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Me, E);
    end On_Destroy;
 
    ----------------------------------
@@ -1561,7 +1546,7 @@ package body Gtkada.File_Selector is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Me, E);
          return False;
    end On_File_List_Key_Press_Event;
 
@@ -1814,7 +1799,7 @@ package body Gtkada.File_Selector is
    exception
       --  ??? should catch VFS_Directory_Error
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Me, E);
          return False;
    end On_Selection_Entry_Key_Press_Event;
 
