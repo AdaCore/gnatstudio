@@ -1116,7 +1116,8 @@ package body Completion.Ada.Constructs_Extractor is
                then
                   return new Construct_Completion_Proposal'
                        (Resolver             => Resolver,
-                        Profile              => null,
+                        Profile              => To_Profile_Manager
+                          (Full_Tree, Node_At_Loc),
                         Tree_Node            => Node_At_Loc,
                         File                 => File,
                         Is_All               => False,
@@ -1150,7 +1151,8 @@ package body Completion.Ada.Constructs_Extractor is
 
                      return new Construct_Completion_Proposal'
                        (Resolver             => Resolver,
-                        Profile              => null,
+                        Profile              => To_Profile_Manager
+                          (Full_Tree, Found_Node),
                         Tree_Node            => Found_Node,
                         File                 => File,
                         Is_All               => False,
