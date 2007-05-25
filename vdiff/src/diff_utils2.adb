@@ -523,7 +523,7 @@ package body Diff_Utils2 is
          Close (Descriptor);
          return Ret;
 
-      when others =>
+      when E : others =>
          Trace (Exception_Handle, E);
          Close (Descriptor);
          return Diff_Chunk_List.Null_List;
