@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -712,9 +711,7 @@ package body Src_Editor_Module.Shell is
          end;
       end if;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Delete_Child;
 
    --------------------
@@ -736,9 +733,7 @@ package body Src_Editor_Module.Shell is
          end if;
       end loop;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Raise_Child;
 
    -----------------------------------

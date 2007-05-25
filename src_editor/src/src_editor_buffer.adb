@@ -20,7 +20,6 @@
 
 with Ada.Calendar;                        use Ada.Calendar;
 with Ada.Characters.Handling;             use Ada.Characters.Handling;
-with Ada.Exceptions;                      use Ada.Exceptions;
 with Ada.Strings.Unbounded;               use Ada.Strings.Unbounded;
 pragma Warnings (Off);
 with Ada.Strings.Unbounded.Aux;           use Ada.Strings.Unbounded.Aux;
@@ -528,9 +527,7 @@ package body Src_Editor_Buffer is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected Exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Execute;
 
    -------------
@@ -572,9 +569,7 @@ package body Src_Editor_Buffer is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected Exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Execute;
 
    ----------------------
@@ -785,8 +780,7 @@ package body Src_Editor_Buffer is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Check_Blocks;
 
@@ -1078,8 +1072,7 @@ package body Src_Editor_Buffer is
       return False;
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Cursor_Stop_Hook;
 
@@ -1385,9 +1378,7 @@ package body Src_Editor_Buffer is
       Buffer.Modified_Auto := True;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Changed_Handler;
 
    ----------------------
@@ -1422,9 +1413,7 @@ package body Src_Editor_Buffer is
       Buffer.Setting_Mark := False;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Mark_Set_Handler;
 
    --------------------
@@ -1442,9 +1431,7 @@ package body Src_Editor_Buffer is
       Update_Highlight_Region (Source_Buffer (Buffer), End_Insert_Iter);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Insert_Text_Cb;
 
    -------------------------
@@ -1516,9 +1503,7 @@ package body Src_Editor_Buffer is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Insert_Text_Handler;
 
    -----------------------
@@ -1632,9 +1617,7 @@ package body Src_Editor_Buffer is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end First_Insert_Text;
 
    ---------------------
@@ -1671,9 +1654,7 @@ package body Src_Editor_Buffer is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Delete_Range_Handler;
 
    ---------------------------------
@@ -1839,9 +1820,7 @@ package body Src_Editor_Buffer is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Delete_Range_Before_Handler;
 
    -----------------------------
@@ -2900,9 +2879,8 @@ package body Src_Editor_Buffer is
 
    exception
       when E : others =>
+         Trace (Exception_Handle, E);
          Success := False;
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
    end Load_File;
 
    ---------------------------
@@ -3105,8 +3083,7 @@ package body Src_Editor_Buffer is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
 
          --  To avoid consuming up all File Descriptors, we catch all
          --  exceptions here, and close the current file descriptor.
@@ -3167,9 +3144,7 @@ package body Src_Editor_Buffer is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Save_To_File;
 
    ------------------
@@ -5241,8 +5216,7 @@ package body Src_Editor_Buffer is
             g_free (C_Str);
          end if;
 
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Do_Indentation;
 

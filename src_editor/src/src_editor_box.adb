@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Strings;
 
@@ -355,9 +354,8 @@ package body Src_Editor_Box is
 
    exception
       when E : others =>
+         Trace (Exception_Handle, E);
          Pop_State (Kernel_Handle (Kernel));
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
    end Goto_Declaration_Or_Body;
 
    -------------------------
@@ -590,9 +588,7 @@ package body Src_Editor_Box is
          Get_Filename (Box.Source_Buffer),
          Get_Status (Box.Source_Buffer));
    exception
-      when E : others =>
-         Trace (Exception_Handle, "Unexpected exception: " &
-                Ada.Exceptions.Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Status_Changed_Handler;
 
    ------------------------------
@@ -613,9 +609,7 @@ package body Src_Editor_Box is
          Box.Source_Buffer.Get_Filename.Full_Name.all,
          Box.Source_Buffer.Get_Filename.Base_Name);
    exception
-      when E : others =>
-         Trace (Exception_Handle, "Unexpected exception: " &
-                Ada.Exceptions.Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Filename_Changed_Handler;
 
    --------------------------------
@@ -728,9 +722,7 @@ package body Src_Editor_Box is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Cursor_Position_Changed_Handler;
 
    --------------------
@@ -760,9 +752,7 @@ package body Src_Editor_Box is
          Idle_Remove (Box.Check_Timestamp_Id);
       end if;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Box_Destroy;
 
    -------------------------
@@ -785,9 +775,7 @@ package body Src_Editor_Box is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Toggle_Overwrite;
 
    ----------------
@@ -1025,8 +1013,7 @@ package body Src_Editor_Box is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
 
          return False;
    end Key_Press;
@@ -1047,8 +1034,7 @@ package body Src_Editor_Box is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
 
          return False;
    end On_Read_Only_Pressed;
@@ -1093,8 +1079,7 @@ package body Src_Editor_Box is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
 
          return False;
    end Check_Timestamp_Idle;
@@ -1140,8 +1125,7 @@ package body Src_Editor_Box is
       return False;
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Focus_Out;
 
@@ -1699,8 +1683,7 @@ package body Src_Editor_Box is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Delete_Callback;
 

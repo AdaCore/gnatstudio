@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling;           use Ada.Characters.Handling;
-with Ada.Exceptions;                    use Ada.Exceptions;
 with Ada.IO_Exceptions;                 use Ada.IO_Exceptions;
 with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
 with GNAT.Directory_Operations;         use GNAT.Directory_Operations;
@@ -395,9 +394,7 @@ package body Src_Editor_Module is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Editor_Destroy;
 
    --------------
@@ -437,9 +434,7 @@ package body Src_Editor_Module is
       UR.Undo_Menu_Item := null;
       UR.Redo_Menu_Item := null;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Toolbar_Destroy_Cb;
 
    ------------
@@ -482,9 +477,7 @@ package body Src_Editor_Module is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Map_Cb;
 
    -------------------------
@@ -598,9 +591,7 @@ package body Src_Editor_Module is
          Add_To_Recent_Menu (Kernel, D.File);
       end if;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end File_Saved_Cb;
 
    -----------------------
@@ -627,9 +618,7 @@ package body Src_Editor_Module is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Cursor_Stopped_Cb;
 
    ------------------------
@@ -660,8 +649,7 @@ package body Src_Editor_Module is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end File_Edit_Callback;
 
@@ -763,8 +751,7 @@ package body Src_Editor_Module is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return null;
    end Load_Desktop;
 
@@ -1342,8 +1329,7 @@ package body Src_Editor_Module is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Location_Callback;
 
@@ -1404,9 +1390,7 @@ package body Src_Editor_Module is
       end;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Open_File;
 
    -------------------------
@@ -1437,9 +1421,7 @@ package body Src_Editor_Module is
       end;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Open_Remote_File;
 
    ----------------
@@ -1618,9 +1600,7 @@ package body Src_Editor_Module is
       Unchecked_Free (List2);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Open_From_Path;
 
    --------------
@@ -1632,9 +1612,7 @@ package body Src_Editor_Module is
       Open_File_Editor (Callback.Kernel, Create (Full_Filename => Item));
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Activate;
 
    -----------------
@@ -1650,9 +1628,7 @@ package body Src_Editor_Module is
       Editor := Open_File (Kernel, File => VFS.No_File);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_New_File;
 
    -------------
@@ -1668,9 +1644,7 @@ package body Src_Editor_Module is
       Save_To_File (Kernel, Success => Success);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Save;
 
    ----------------
@@ -1710,9 +1684,7 @@ package body Src_Editor_Module is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Save_As;
 
    -------------
@@ -1809,9 +1781,7 @@ package body Src_Editor_Module is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Print;
 
    -------------------
@@ -1830,9 +1800,7 @@ package body Src_Editor_Module is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Select_All;
 
    --------------------
@@ -1872,9 +1840,7 @@ package body Src_Editor_Module is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Insert_File;
 
    -----------------
@@ -1889,9 +1855,7 @@ package body Src_Editor_Module is
       New_View (Kernel);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_New_View;
 
    -------------------------
@@ -1916,9 +1880,7 @@ package body Src_Editor_Module is
          Context => Get_Current_Context (Kernel));
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Goto_Declaration;
 
    ------------------
@@ -1943,9 +1905,7 @@ package body Src_Editor_Module is
          Context => Get_Current_Context (Kernel));
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Goto_Body;
 
    -----------------------
@@ -2021,9 +1981,7 @@ package body Src_Editor_Module is
       Comment_Uncomment (Kernel, Comment => True);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Comment_Lines;
 
    --------------------
@@ -2042,9 +2000,7 @@ package body Src_Editor_Module is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Fold_Blocks;
 
    ----------------------
@@ -2063,9 +2019,7 @@ package body Src_Editor_Module is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Unfold_Blocks;
 
    ------------------------
@@ -2081,9 +2035,7 @@ package body Src_Editor_Module is
       Comment_Uncomment (Kernel, Comment => False);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Uncomment_Lines;
 
    ---------------
@@ -2104,9 +2056,7 @@ package body Src_Editor_Module is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Refill;
 
    ----------------------
@@ -2234,8 +2184,7 @@ package body Src_Editor_Module is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end File_Line_Hook;
 

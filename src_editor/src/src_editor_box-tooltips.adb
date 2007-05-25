@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2006                      --
+--                      Copyright (C) 2005-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,9 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Unbounded;
-
 with GNAT.Strings;
 
 with Glib;                      use Glib;
@@ -127,9 +125,8 @@ package body Src_Editor_Box.Tooltips is
 
    exception
       when E : others =>
+         Trace (Exception_Handle, E);
          Pop_State (Editor.Kernel);
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
          Entity := null;
    end Get_Declaration_Info;
 
@@ -351,9 +348,7 @@ package body Src_Editor_Box.Tooltips is
       end;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Draw;
 
 end Src_Editor_Box.Tooltips;
