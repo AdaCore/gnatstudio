@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling;      use Ada.Characters.Handling;
-with Ada.Exceptions;               use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 with GNAT.Case_Util;               use GNAT.Case_Util;
 with GNAT.Strings;                 use GNAT.Strings;
@@ -553,8 +552,7 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Select_Row;
 
@@ -576,9 +574,7 @@ package body Project_Viewers is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Execute;
 
    ---------------------
@@ -660,9 +656,7 @@ package body Project_Viewers is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Explorer_Selection_Changed;
 
    -------------
@@ -872,9 +866,7 @@ package body Project_Viewers is
       Set_Focus_Child (Child);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Edit_Switches;
 
    ---------------------------
@@ -899,9 +891,7 @@ package body Project_Viewers is
       Edit_Properties (Project, Kernel);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Project_Properties;
 
    -----------------------
@@ -918,9 +908,7 @@ package body Project_Viewers is
       Tmp := Save_Project (Kernel, Get_Project (Kernel), Recursive => True);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Save_All_Projects;
 
    -------------
@@ -1010,9 +998,7 @@ package body Project_Viewers is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Project_Editor_Context_Factory;
 
    ----------------------------
@@ -1072,9 +1058,7 @@ package body Project_Viewers is
       end;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Edit_Multiple_Switches;
 
    --------------------
@@ -1098,8 +1082,7 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return null;
    end Widget_Factory;
 
@@ -1127,8 +1110,7 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Project_Editor;
 
@@ -1174,8 +1156,7 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return null;
    end Widget_Factory;
 
@@ -1202,8 +1183,7 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Project_Editor;
 
@@ -2410,9 +2390,7 @@ package body Project_Viewers is
             end if;
 
          exception
-            when E : others =>
-               Trace (Exception_Handle,
-                      "Unexpected exception " & Exception_Information (E));
+            when E : others => Trace (Exception_Handle, E);
          end;
 
          N := N.Next;

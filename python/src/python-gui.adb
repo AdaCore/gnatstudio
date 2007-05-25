@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Calendar;      use Ada.Calendar;
-with Ada.Exceptions;    use Ada.Exceptions;
 with Gtk.Main;          use Gtk.Main;
 with Gtk.Handlers;      use Gtk.Handlers;
 with Gtk.Object;        use Gtk.Object;
@@ -563,8 +562,7 @@ package body Python.GUI is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          Interpreter.In_Process := False;
          Interpreter.Hide_Output := False;
          Errors.all := True;

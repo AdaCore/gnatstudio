@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with GNAT.Strings;              use GNAT.Strings;
 
@@ -289,8 +288,7 @@ package body Clipboard_Views is
       return False;
    exception
       when E : others =>
-         Trace (Exception_Handle, "Unexpected exception "
-                & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Button_Press;
 
@@ -400,9 +398,7 @@ package body Clipboard_Views is
          end if;
       end loop;
    exception
-      when E : others =>
-         Trace (Exception_Handle, "Unexpected exception "
-                & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Refresh;
 
    ----------------

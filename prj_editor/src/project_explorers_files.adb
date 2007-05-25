@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;             use Ada.Exceptions;
 with Ada.Unchecked_Deallocation; use Ada;
 
 with GNAT.Case_Util;             use GNAT.Case_Util;
@@ -547,8 +546,7 @@ package body Project_Explorers_Files is
          return False;
 
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Read_Directory;
 
@@ -884,9 +882,7 @@ package body Project_Explorers_Files is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end File_Tree_Collapse_Row_Cb;
 
    ---------------------
@@ -913,8 +909,7 @@ package body Project_Explorers_Files is
       return True;
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return True;
    end Expose_Event_Cb;
 
@@ -985,9 +980,7 @@ package body Project_Explorers_Files is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end File_Tree_Expand_Row_Cb;
 
    ----------------------------
@@ -1001,9 +994,7 @@ package body Project_Explorers_Files is
    begin
       Context_Changed (T.Kernel);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end File_Selection_Changed;
 
    -----------------------
@@ -1023,8 +1014,7 @@ package body Project_Explorers_Files is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end File_Button_Press;
 
@@ -1042,8 +1032,7 @@ package body Project_Explorers_Files is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end File_Key_Press;
 
@@ -1145,9 +1134,7 @@ package body Project_Explorers_Files is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Refresh;
 
    ----------------
@@ -1538,9 +1525,7 @@ package body Project_Explorers_Files is
       Set_Focus_Child (Get_MDI (Kernel), Child);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Open_Explorer;
 
    ------------------

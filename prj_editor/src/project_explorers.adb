@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Directories;           use Ada.Directories;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -620,8 +619,7 @@ package body Project_Explorers is
       end if;
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Button_Press;
 
@@ -638,8 +636,7 @@ package body Project_Explorers is
       return On_Key_Press (T.Kernel, T.Tree, Event);
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Key_Press;
 
@@ -655,8 +652,7 @@ package body Project_Explorers is
    begin
       Context_Changed (T.Kernel);
    exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Message (E));
+      when E : others => Trace (Me, E);
    end Tree_Select_Row_Cb;
 
    ----------------
@@ -880,7 +876,7 @@ package body Project_Explorers is
 
    exception
       when Exc : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Message (Exc));
+         Trace (Me, Exc);
          Pop_State (E.Kernel);
    end On_Parse_Xref;
 
@@ -967,8 +963,7 @@ package body Project_Explorers is
       end if;
 
    exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Message (E));
+      when E : others => Trace (Me, E);
    end Explorer_Context_Factory;
 
    -------------
@@ -1332,8 +1327,7 @@ package body Project_Explorers is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          Pop_State (Explorer.Kernel);
    end Expand_Project_Node;
 
@@ -1408,9 +1402,7 @@ package body Project_Explorers is
       Append_File_Info (Explorer.Kernel, Explorer.Tree.Model, Node, File_Name);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Expand_File_Node;
 
    ----------------------
@@ -1566,8 +1558,7 @@ package body Project_Explorers is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          T.Expanding := False;
    end Expand_Row_Cb;
 
@@ -2260,9 +2251,7 @@ package body Project_Explorers is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Refresh;
 
    --------------------------------
@@ -2317,9 +2306,7 @@ package body Project_Explorers is
       Explorer := Get_Or_Create_Project_View (Kernel);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Open_Explorer;
 
    -----------------------------

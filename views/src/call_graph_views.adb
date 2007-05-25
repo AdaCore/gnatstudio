@@ -18,8 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;              use Ada.Exceptions;
-
 with GNAT.Strings;                use GNAT.Strings;
 
 with Glib;                        use Glib;
@@ -530,8 +528,7 @@ package body Call_Graph_Views is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end On_Key_Press;
 
@@ -587,8 +584,7 @@ package body Call_Graph_Views is
       return False;
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Button_Press;
 
@@ -618,8 +614,7 @@ package body Call_Graph_Views is
       return False;
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Button_Press_On_List;
 
@@ -683,9 +678,7 @@ package body Call_Graph_Views is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Selection_Changed;
 
    ---------------------
@@ -771,8 +764,7 @@ package body Call_Graph_Views is
       Thaw_Sort (M, Column);
    exception
       when E : others =>
-         Trace (Exception_Handle, "Unexpected exception: "
-                & Exception_Information (E));
+         Trace (Exception_Handle, E);
          Thaw_Sort (M, Column);
    end On_Row_Expanded;
 

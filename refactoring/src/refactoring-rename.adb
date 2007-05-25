@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2006                       --
+--                     Copyright (C) 2003-2007                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,14 +18,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;         use Ada.Exceptions;
-
-with GPS.Kernel;           use GPS.Kernel;
-with GPS.Kernel.Contexts;  use GPS.Kernel.Contexts;
-with GPS.Kernel.Modules;   use GPS.Kernel.Modules;
-with GPS.Kernel.MDI;       use GPS.Kernel.MDI;
-with GPS.Kernel.Scripts;   use GPS.Kernel.Scripts;
-with GPS.Intl;             use GPS.Intl;
+with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
+with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
+with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
+with GPS.Intl;               use GPS.Intl;
 with Entities;               use Entities;
 with Entities.Queries;       use Entities.Queries;
 with Traces;                 use Traces;
@@ -236,8 +234,7 @@ package body Refactoring.Rename is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          Destroy (Dialog);
          return Failure;
    end Execute;

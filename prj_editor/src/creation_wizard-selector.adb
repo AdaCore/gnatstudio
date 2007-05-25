@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2004-2006                       --
+--                     Copyright (C) 2004-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,16 +18,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;         use Ada.Exceptions;
+with Glib.Object;               use Glib.Object;
+with Glib;                      use Glib;
 
-with Glib.Object;            use Glib.Object;
-with Glib;                   use Glib;
-
-with Gtk.Box;                use Gtk.Box;
-with Gtk.Label;              use Gtk.Label;
-with Gtk.Radio_Button;       use Gtk.Radio_Button;
-with Gtk.Separator;          use Gtk.Separator;
-with Gtk.Widget;             use Gtk.Widget;
+with Gtk.Box;                   use Gtk.Box;
+with Gtk.Label;                 use Gtk.Label;
+with Gtk.Radio_Button;          use Gtk.Radio_Button;
+with Gtk.Separator;             use Gtk.Separator;
+with Gtk.Widget;                use Gtk.Widget;
 
 with Creation_Wizard.Adp;       use Creation_Wizard.Adp;
 with Creation_Wizard.Extending; use Creation_Wizard.Extending;
@@ -155,8 +153,7 @@ package body Creation_Wizard.Selector is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Create_New_Project;
 

@@ -18,8 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;           use Ada.Exceptions;
-
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 
 with Glib;                     use Glib;
@@ -256,9 +254,7 @@ package body Wizards is
         (Get_Contents (Wiz), Full_Req.Width, Full_Req.Height);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle, "Unexpected exception "
-                & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Add_Page;
 
    ------------------
@@ -288,9 +284,7 @@ package body Wizards is
          Unchecked_Free (W.Pages);
       end if;
    exception
-      when E : others =>
-         Trace (Exception_Handle, "Unexpected exception "
-                & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Destroy;
 
    ---------
@@ -308,9 +302,7 @@ package body Wizards is
 
       Set_Current_Page (W, W.Current_Page);
    exception
-      when E : others =>
-         Trace (Exception_Handle, "Unexpected exception "
-                & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Map;
 
    ------------------
@@ -439,9 +431,7 @@ package body Wizards is
       Update_Buttons_Sensitivity (Wiz);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle, "Unexpected exception "
-                & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Set_Current_Page;
 
    ---------------------
@@ -478,9 +468,7 @@ package body Wizards is
       Set_Current_Page (W, W.Current_Page + 1);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle, "Unexpected exception "
-                & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Next_Page;
 
    -------------------
@@ -492,9 +480,7 @@ package body Wizards is
    begin
       Set_Current_Page (W, W.Current_Page - 1);
    exception
-      when E : others =>
-         Trace (Exception_Handle, "Unexpected exception "
-                & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Previous_Page;
 
    ---------------
@@ -506,9 +492,7 @@ package body Wizards is
    begin
       Perform_Finish (W);
    exception
-      when E : others =>
-         Trace (Exception_Handle, "Unexpected exception "
-                & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Finish;
 
    ---------------

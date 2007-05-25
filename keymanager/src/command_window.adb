@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;         use Ada.Exceptions;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
@@ -312,9 +311,7 @@ package body Command_Window is
       KeyManager_Module.Unblock_Key_Shortcuts (Win.Kernel);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle, "Unexpected exception: "
-                & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Destroy;
 
    -----------------

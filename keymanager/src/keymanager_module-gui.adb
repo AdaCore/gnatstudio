@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;          use Ada.Exceptions;
 with Case_Handling;           use Case_Handling;
 with Commands.Interactive;    use Commands.Interactive;
 with Gdk.Types;               use Gdk.Types;
@@ -547,9 +546,7 @@ package body KeyManager_Module.GUI is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Add_Selection_Changed;
 
    -------------------------
@@ -587,8 +584,7 @@ package body KeyManager_Module.GUI is
         or else N_Children (Model, Iter) > 0;
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return True;
    end Action_Is_Visible;
 
@@ -768,9 +764,7 @@ package body KeyManager_Module.GUI is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Grab_Key;
 
    -------------------
@@ -806,9 +800,7 @@ package body KeyManager_Module.GUI is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Remove_Key;
 
    ------------------
@@ -1001,9 +993,7 @@ package body KeyManager_Module.GUI is
       Destroy (Editor);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Edit_Keys;
 
    -----------------------

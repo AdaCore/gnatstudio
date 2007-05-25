@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Unbounded;     use Ada.Strings; use Ada.Strings.Unbounded;
 with Ada.Unchecked_Conversion;
 with System;
@@ -231,9 +230,7 @@ package body Revision_Views is
 
       Add_Link_If_Not_Present (View, Log_1, Log_2);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Add_Link_Command_Handler;
 
    -----------------------------
@@ -256,9 +253,7 @@ package body Revision_Views is
    begin
       Add_Log_If_Not_Present (View, Log, Expand);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Add_Log_Command_Handler;
 
    ----------------------------------
@@ -284,9 +279,7 @@ package body Revision_Views is
 
       String_Hash_Table.Set (View.Syms, Key, List);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Add_Revision_Command_Handler;
 
    -----------------------------
@@ -429,9 +422,7 @@ package body Revision_Views is
          Destroy (View);
       end if;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Clear_View_Command_Handler;
 
    --------------------------

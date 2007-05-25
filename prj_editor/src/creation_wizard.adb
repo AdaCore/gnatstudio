@@ -37,7 +37,6 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with Ada.Exceptions;            use Ada.Exceptions;
 
 with Projects.Editor;           use Projects, Projects.Editor;
 with Projects.Registry;         use Projects.Registry;
@@ -410,9 +409,7 @@ package body Creation_Wizard is
       when Invalid_Project_Page =>
          Pop_State (Get_Kernel (Wiz));
 
-      when E : others =>
-         Trace (Exception_Handle, "Unexpected exception: "
-                & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Perform_Finish;
 
    -----------------
@@ -452,8 +449,7 @@ package body Creation_Wizard is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          Destroy (Wiz);
          return VFS.No_File;
    end Run;

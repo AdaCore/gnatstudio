@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Calendar;              use Ada.Calendar;
-with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Strings;              use GNAT.Strings;
 
@@ -878,8 +877,7 @@ package body Project_Explorers_Common is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return No_Project;
    end Get_Project_From_Node;
 

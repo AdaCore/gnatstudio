@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2006                       --
+--                     Copyright (C) 2003-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Calendar;            use Ada.Calendar;
-with Ada.Exceptions;          use Ada.Exceptions;
 with Commands.Interactive;    use Commands, Commands.Interactive;
 with Gdk.Event;               use Gdk.Event;
 with Gdk.Types.Keysyms;       use Gdk.Types, Gdk.Types.Keysyms;
@@ -267,9 +266,7 @@ package body KeyManager_Module.Macros is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Macro_Command_Handler;
 
    -------------
@@ -469,8 +466,7 @@ package body KeyManager_Module.Macros is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Play_Macro_Timer;
 
@@ -575,9 +571,7 @@ package body KeyManager_Module.Macros is
       end;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Load_Macro;
 
    -------------------
@@ -619,9 +613,7 @@ package body KeyManager_Module.Macros is
       end;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Save_Macro;
 
    ----------------
@@ -734,10 +726,8 @@ package body KeyManager_Module.Macros is
 
    exception
       when E : others =>
-         Trace
-           (Exception_Handle,
-            "Unexpected exception: " & Exception_Information (E));
-      return False;
+         Trace (Exception_Handle, E);
+         return False;
    end General_Event_Handler;
 
    ---------------------

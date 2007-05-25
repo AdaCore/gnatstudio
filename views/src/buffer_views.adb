@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                         Copyright (C) 2005-2007                   --
---                              AdaCore                              --
+--                                 AdaCore                           --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,8 +17,6 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
-
-with Ada.Exceptions;         use Ada.Exceptions;
 
 with Glib;                   use Glib;
 with Glib.Object;            use Glib.Object;
@@ -275,8 +273,7 @@ package body Buffer_Views is
       return False;
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Button_Press;
 
@@ -328,9 +325,7 @@ package body Buffer_Views is
          end;
       end if;
    exception
-      when E : others =>
-         Trace (Exception_Handle, "Unexpected exception "
-                & Exception_Message (E));
+      when E : others => Trace (Exception_Handle, E);
    end Child_Selected;
 
    -------------
@@ -464,9 +459,7 @@ package body Buffer_Views is
       Expand_All (V.Tree);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle, "Unexpected exception "
-                & Exception_Message (E));
+      when E : others => Trace (Exception_Handle, E);
    end Refresh;
 
    --------------------------

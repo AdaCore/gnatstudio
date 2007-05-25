@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with System;                    use System;
@@ -405,9 +404,7 @@ package body Bookmark_Views is
          end if;
 
       exception
-         when E : others =>
-            Trace (Exception_Handle, "Unexpected exception "
-                   & Exception_Information (E));
+         when E : others => Trace (Exception_Handle, E);
       end Edit_Selected;
 
    begin
@@ -418,9 +415,8 @@ package body Bookmark_Views is
       return False;
 
       exception
-         when E : others =>
-            Trace (Exception_Handle, "Unexpected exception "
-                   & Exception_Information (E));
+      when E : others =>
+         Trace (Exception_Handle, E);
          return False;
    end Start_Editing_Idle;
 
@@ -542,8 +538,7 @@ package body Bookmark_Views is
       return False;
    exception
       when E : others =>
-         Trace (Exception_Handle, "Unexpected exception "
-                & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Button_Press;
 

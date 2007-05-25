@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;           use Ada.Exceptions;
 with System;                   use System;
 with GNAT.OS_Lib;
 with GNAT.Strings;             use GNAT.Strings;
@@ -333,8 +332,7 @@ package body Action_Editor is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return True;
    end On_Button_Press;
 
@@ -513,9 +511,7 @@ package body Action_Editor is
       Destroy (Editor);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Edit_Actions;
 
    -------------

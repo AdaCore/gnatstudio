@@ -52,7 +52,6 @@ with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.Handlers;          use Gtkada.Handlers;
 with Traces;                   use Traces;
 with System.Assertions;        use System.Assertions;
-with Ada.Exceptions;           use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
@@ -344,9 +343,7 @@ package body Theme_Manager_Module is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Selection_Changed;
 
    ---------
@@ -415,9 +412,7 @@ package body Theme_Manager_Module is
          end;
       end if;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Selection_Toggled;
 
    ----------
@@ -613,4 +608,3 @@ package body Theme_Manager_Module is
    end Register_Module;
 
 end Theme_Manager_Module;
-

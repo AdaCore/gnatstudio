@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                     Copyright (C) 2001-2007                       --
 --                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -19,22 +19,16 @@
 -----------------------------------------------------------------------
 
 with Gtk.Main;                use Gtk.Main;
-
 with GNAT.Sockets;            use GNAT.Sockets;
-
-with Ada.Exceptions;          use Ada.Exceptions;
 with Ada.IO_Exceptions;       use Ada.IO_Exceptions;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-with GPS.Kernel;            use GPS.Kernel;
-with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
-with GPS.Kernel.Scripts;    use GPS.Kernel.Scripts;
-
+with GPS.Kernel;              use GPS.Kernel;
+with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
+with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with Traces;                  use Traces;
-
 with Commands.Socket;         use Commands.Socket;
 with Commands;                use Commands;
-
-with GPS.Intl;              use GPS.Intl;
+with GPS.Intl;                use GPS.Intl;
 
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;
@@ -327,7 +321,7 @@ package body Socket_Module is
          return False;
 
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Idle_Read;
 
@@ -385,7 +379,7 @@ package body Socket_Module is
          return False;
 
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Idle_Accept;
 
@@ -427,8 +421,7 @@ package body Socket_Module is
       when Socket_Error | End_Error =>
          Trace (Me, "Communication error, closing socket.");
 
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Socket_Command_Handler;
 
    -----------------------------------
@@ -543,8 +536,7 @@ package body Socket_Module is
          Handler       => Socket_Static_Command_Handler'Access);
 
    exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Register_Module;
 
 end Socket_Module;

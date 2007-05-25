@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Ada.Exceptions;          use Ada.Exceptions;
 with Ada.Strings.Unbounded;
 with Ada.Unchecked_Conversion;
 
@@ -1093,8 +1092,7 @@ package body KeyManager_Module is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Process_Event;
 
@@ -1150,8 +1148,7 @@ package body KeyManager_Module is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          Insert (Kernel, -"Could not parse " & Filename, Mode => Error);
    end Load_Custom_Keys;
 

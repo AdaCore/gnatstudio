@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2006                       --
---                            AdaCore                                --
+--                     Copyright (C) 2003-2007                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;          use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 
@@ -171,9 +170,8 @@ package body Refactoring.Performers is
 
    exception
       when E : others =>
+         Trace (Exception_Handle, E);
          Free (Data);
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
    end Get_All_Locations;
 
    ----------------------

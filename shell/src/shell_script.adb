@@ -21,7 +21,6 @@
 --  This package contains the implementation for a specific scripting language,
 --  the simple GPS shell.
 
-with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
@@ -577,8 +576,7 @@ package body Shell_Script is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return "";
    end Interpret_Command_Handler;
 
@@ -1259,8 +1257,7 @@ package body Shell_Script is
          return -"Invalid parameter for " & Command;
 
       when E : others =>
-         Trace (Exception_Handle, "Unexpected exception in Execute_Command: "
-                & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return "";
    end Execute_GPS_Shell_Command;
 
