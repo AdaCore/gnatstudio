@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;             use Ada.Exceptions;
 with Ada.Strings.Maps.Constants; use Ada.Strings.Maps;
 
 with Gdk;                        use Gdk;
@@ -69,7 +68,7 @@ with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with Language;                   use Language;
 with Src_Editor_Buffer.Line_Information;
-                                 use Src_Editor_Buffer.Line_Information;
+use Src_Editor_Buffer.Line_Information;
 with Traces;                     use Traces;
 with VFS;                        use VFS;
 
@@ -358,7 +357,8 @@ package body Src_Editor_View is
    --------------------------
 
    procedure Save_Cursor_Position (View : access Source_View_Record'Class) is
-      Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
+      Buffer      : constant Source_Buffer :=
+                      Source_Buffer (Get_Buffer (View));
       Insert_Iter : Gtk_Text_Iter;
    begin
       Get_Iter_At_Mark (Buffer, Insert_Iter, Get_Insert (Buffer));
@@ -381,7 +381,8 @@ package body Src_Editor_View is
    procedure Restore_Cursor_Position
      (View : access Source_View_Record'Class)
    is
-      Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
+      Buffer      : constant Source_Buffer :=
+                      Source_Buffer (Get_Buffer (View));
       Insert_Iter : Gtk_Text_Iter;
       Cursor_Iter : Gtk_Text_Iter;
    begin
@@ -470,8 +471,7 @@ package body Src_Editor_View is
       return False;
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end On_Button_Press;
 
@@ -491,8 +491,7 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end On_Delete;
 
@@ -508,9 +507,7 @@ package body Src_Editor_View is
       Set_Font (View, View.Pango_Font);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Realize_Cb;
 
    -----------------------
@@ -560,9 +557,7 @@ package body Src_Editor_View is
       Invalidate_Window (User);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Line_Highlight_Change_Handler;
 
    ---------------------------------------
@@ -581,9 +576,7 @@ package body Src_Editor_View is
       Invalidate_Window (User);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Buffer_Information_Change_Handler;
 
    ---------------------------------
@@ -609,9 +602,7 @@ package body Src_Editor_View is
       Register_Idle_Column_Redraw (User);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Side_Columns_Change_Handler;
 
    ----------------------------------------
@@ -637,9 +628,7 @@ package body Src_Editor_View is
       Register_Idle_Column_Redraw (User);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Side_Columns_Config_Change_Handler;
 
    ------------------------
@@ -668,8 +657,7 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Idle_Column_Redraw;
 
@@ -705,9 +693,7 @@ package body Src_Editor_View is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Change_Handler;
 
    ---------------------------
@@ -726,9 +712,7 @@ package body Src_Editor_View is
            Cursor_Screen_Position (Source_View (View));
       end if;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Size_Allocated_Before;
 
    --------------------
@@ -752,9 +736,7 @@ package body Src_Editor_View is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Size_Allocated;
 
    ----------------------------
@@ -767,9 +749,7 @@ package body Src_Editor_View is
    begin
       Prevent_CR_Insertion (Buffer, True);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Paste_Clipboard_Before;
 
    --------------------------------
@@ -787,9 +767,7 @@ package body Src_Editor_View is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Speed_Bar_Size_Allocate_Cb;
 
    -------------------------------
@@ -810,8 +788,7 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Speed_Bar_Expose_Event_Cb;
 
@@ -941,10 +918,10 @@ package body Src_Editor_View is
             Height         : Gint;
             X              : Gint;
 
-            First          : constant Gint :=
-              Gint (Get_Buffer_Line (Buffer, B.First_Line) - 1);
-            Last           : Gint :=
-              Gint (Get_Buffer_Line (Buffer, B.Last_Line) - 1);
+            First          : constant Gint
+              := Gint (Get_Buffer_Line (Buffer, B.First_Line) - 1);
+            Last           : Gint
+              := Gint (Get_Buffer_Line (Buffer, B.Last_Line) - 1);
             Offset         : Integer;
 
          begin
@@ -1099,8 +1076,7 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Expose_Event_Cb;
 
@@ -1129,8 +1105,7 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Focus_Out_Event_Cb;
 
@@ -1152,8 +1127,7 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Focus_In_Event_Cb;
 
@@ -1215,9 +1189,7 @@ package body Src_Editor_View is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Map_Cb;
 
    ----------------
@@ -1417,13 +1389,13 @@ package body Src_Editor_View is
       Execute (Hook.all, Kernel);
       Add_Hook
         (Kernel, Preferences_Changed_Hook, Hook,
-         Name => "src_editor_view.preferences_changed",
+         Name  => "src_editor_view.preferences_changed",
          Watch => GObject (View));
 
       F_Hook := new File_Hook_Record'
         (Function_With_Args with View => Source_View (View));
       Add_Hook (Kernel, File_Saved_Hook, F_Hook,
-                Name => "src_editor_view.file_saved",
+                Name  => "src_editor_view.file_saved",
                 Watch => GObject (View));
 
       --  Connect in an idle callback, otherwise the lines-with-code in the
@@ -1494,7 +1466,7 @@ package body Src_Editor_View is
       then
          Set_Value
            (Get_Vadjustment (View.Scroll),
-         Get_Value (Get_Vadjustment (View.Synchronized_Editor.Scroll)));
+            Get_Value (Get_Vadjustment (View.Synchronized_Editor.Scroll)));
 
          Set_Value
            (Get_Hadjustment (View.Scroll),
@@ -1511,8 +1483,7 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Connect_Expose;
 
@@ -1599,9 +1570,7 @@ package body Src_Editor_View is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Execute;
 
    -------------
@@ -1614,7 +1583,7 @@ package body Src_Editor_View is
       Data   : access Hooks_Data'Class)
    is
       pragma Unreferenced (Kernel);
-      D : constant File_Hooks_Args := File_Hooks_Args (Data.all);
+      D      : constant File_Hooks_Args := File_Hooks_Args (Data.all);
       Buffer : constant Source_Buffer :=
                  Source_Buffer (Get_Buffer (Hook.View));
       File   : VFS.Virtual_File := Get_Filename (Buffer);
@@ -1627,9 +1596,7 @@ package body Src_Editor_View is
          Redraw_Columns (Hook.View);
       end if;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Execute;
 
    --------------
@@ -1665,7 +1632,9 @@ package body Src_Editor_View is
 
       Scroll_To_Mark
         (View, View.Saved_Cursor_Mark, Use_Align => Center,
-         Within_Margin => 0.0, Xalign => 0.5, Yalign => 0.5);
+         Within_Margin                           => 0.0,
+         Xalign                                  => 0.5,
+         Yalign                                  => 0.5);
    end Scroll_To_Cursor_Location;
 
    -------------------
@@ -1677,7 +1646,9 @@ package body Src_Editor_View is
    begin
       Scroll_To_Mark
         (View, Insert_Mark, Use_Align => False,
-         Within_Margin => 0.1, Xalign => 0.5, Yalign => 0.5);
+         Within_Margin                => 0.1,
+         Xalign                       => 0.5,
+         Yalign                       => 0.5);
    end Center_Cursor;
 
    -------------------------
@@ -1845,8 +1816,7 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Speed_Bar_Button_Press_Event_Cb;
 
@@ -1862,8 +1832,7 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Speed_Bar_Button_Release_Event_Cb;
 
@@ -1995,8 +1964,7 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Button_Press_Event_Cb;
 
@@ -2008,8 +1976,9 @@ package body Src_Editor_View is
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean
    is
-      View   : constant Source_View   := Source_View (Widget);
-      Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
+      View        : constant Source_View   := Source_View (Widget);
+      Buffer      : constant Source_Buffer :=
+                      Source_Buffer (Get_Buffer (View));
       Start, Last : Gtk_Text_Iter;
       Result      : Boolean;
 
@@ -2074,10 +2043,8 @@ package body Src_Editor_View is
                return True;
             end if;
 
-         when GDK_Linefeed | GDK_Tab |
-           GDK_Home | GDK_Page_Up | GDK_Page_Down | GDK_End | GDK_Begin |
-           GDK_Up | GDK_Down | GDK_Left | GDK_Right
-         =>
+         when GDK_Linefeed | GDK_Tab | GDK_Home | GDK_Page_Up | GDK_Page_Down |
+              GDK_End | GDK_Begin | GDK_Up | GDK_Down | GDK_Left | GDK_Right =>
             External_End_Action (Buffer);
 
          when GDK_space =>
@@ -2115,8 +2082,7 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Key_Press_Event_Cb;
 
@@ -2130,7 +2096,8 @@ package body Src_Editor_View is
       X, Y, Width, Height, Depth : Gint;
       Layout                     : Pango_Layout;
 
-      Src_Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
+      Src_Buffer  : constant Source_Buffer :=
+                      Source_Buffer (Get_Buffer (View));
 
       Total_Width : Gint;
 
@@ -2227,12 +2194,13 @@ package body Src_Editor_View is
       X, Y, Width, Height, Depth : Gint;
       GC                         : Gdk.GC.Gdk_GC;
 
-      Src_Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
+      Src_Buffer   : constant Source_Buffer :=
+                       Source_Buffer (Get_Buffer (View));
 
-      Line_Height : Gint;
-      Total_Lines : Gint;
+      Line_Height  : Gint;
+      Total_Lines  : Gint;
 
-      Info_Exists : Boolean := False;
+      Info_Exists  : Boolean := False;
 
    begin
       if View.Area = null
@@ -2406,9 +2374,7 @@ package body Src_Editor_View is
       Src_View.Scrolling := False;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Scroll;
 
    ---------------
