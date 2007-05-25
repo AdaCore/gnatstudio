@@ -18,41 +18,38 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib.Values;            use Glib.Values;
-with Glib.Convert;           use Glib.Convert;
+with Glib.Values;               use Glib.Values;
+with Glib.Convert;              use Glib.Convert;
 
-with Gdk.Event;              use Gdk.Event;
-with Gdk.Rectangle;          use Gdk.Rectangle;
-with Gdk.Window;             use Gdk.Window;
-with Gdk.Types;              use Gdk.Types;
-with Gdk.Types.Keysyms;      use Gdk.Types.Keysyms;
+with Gdk.Event;                 use Gdk.Event;
+with Gdk.Rectangle;             use Gdk.Rectangle;
+with Gdk.Window;                use Gdk.Window;
+with Gdk.Types;                 use Gdk.Types;
+with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 
-with Gtk.Adjustment;         use Gtk.Adjustment;
-with Gtk.Box;                use Gtk.Box;
-with Gtk.Handlers;           use Gtk.Handlers;
-with Gtk.Frame;              use Gtk.Frame;
-with Gtk.Enums;              use Gtk.Enums;
-with Gtk.Tree_Selection;     use Gtk.Tree_Selection;
-with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
-with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
-with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Style;              use Gtk.Style;
-with Gtk.Scrollbar;          use Gtk.Scrollbar;
-with Gtk.Widget;             use Gtk.Widget;
+with Gtk.Adjustment;            use Gtk.Adjustment;
+with Gtk.Box;                   use Gtk.Box;
+with Gtk.Handlers;              use Gtk.Handlers;
+with Gtk.Frame;                 use Gtk.Frame;
+with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
+with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
+with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Style;                 use Gtk.Style;
+with Gtk.Scrollbar;             use Gtk.Scrollbar;
+with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Viewport;              use Gtk.Viewport;
 
-with Gtk.Viewport;           use Gtk.Viewport;
-
-with Pango.Font;             use Pango.Font;
-with Pango.Layout;           use Pango.Layout;
+with Pango.Font;                use Pango.Font;
+with Pango.Layout;              use Pango.Layout;
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 
 with Traces;                    use Traces;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with VFS;                       use VFS;
-
 with Language.Icons;            use Language.Icons;
 
 package body Completion_Window is
@@ -441,9 +438,7 @@ package body Completion_Window is
          end if;
       end if;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Mark_Set_Handler;
 
    -------------------------
@@ -469,9 +464,7 @@ package body Completion_Window is
       Window.Pattern := new String'(Get_Text (Window.Buffer, Beg, Iter));
       Adjust_Selected (Window);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Insert_Text_Handler;
 
    --------------------------------
@@ -498,9 +491,7 @@ package body Completion_Window is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Before_Delete_Text_Handler;
 
    -------------------------
@@ -531,9 +522,7 @@ package body Completion_Window is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Delete_Text_Handler;
 
    -----------------------
@@ -550,9 +539,7 @@ package body Completion_Window is
 
       return False;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
          return False;
    end On_Button_Pressed;
 
@@ -569,9 +556,7 @@ package body Completion_Window is
          Window.Location_Location.Line,
          Window.Location_Location.Column);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Location_Button_Clicked;
 
    --------------------------
@@ -662,9 +647,7 @@ package body Completion_Window is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Selection_Changed;
 
    ------------------
@@ -680,9 +663,7 @@ package body Completion_Window is
       Delete (Window);
       return False;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
          return False;
    end On_Focus_Out;
 
@@ -947,8 +928,7 @@ package body Completion_Window is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end On_Key_Press;
 

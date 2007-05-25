@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with System;
-with Interfaces.C.Strings;    use Interfaces.C.Strings;
+with Interfaces.C.Strings;     use Interfaces.C.Strings;
 
 with Gdk.Event;                use Gdk.Event;
 with Gdk.Types;                use Gdk.Types;
@@ -65,7 +65,6 @@ with Generic_List;
 with Histories;                use Histories;
 
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
-with Ada.Exceptions;           use Ada.Exceptions;
 with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 
@@ -498,9 +497,7 @@ package body Vsearch is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Float_Vsearch;
 
    -------------------
@@ -519,9 +516,7 @@ package body Vsearch is
       Gdk_Raise (Get_Window (Get_Main_Window (Vsearch.Kernel)));
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Close_Vsearch;
 
    ----------
@@ -609,8 +604,7 @@ package body Vsearch is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          Pop_State (Data.Vsearch.Kernel);
          Data.Vsearch.Search_Idle_Handler := 0;
 
@@ -655,8 +649,7 @@ package body Vsearch is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          Free (Data.Replace_With);
          Pop_State (Data.Vsearch.Kernel);
          Data.Vsearch.Search_Idle_Handler := 0;
@@ -856,9 +849,8 @@ package body Vsearch is
 
    exception
       when E : others =>
+         Trace (Exception_Handle, E);
          Pop_State (Vsearch.Kernel);
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
    end Internal_Search;
 
    ---------------
@@ -870,9 +862,7 @@ package body Vsearch is
       Internal_Search (Vsearch_Access (Object));
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Search;
 
    ------------------------
@@ -921,9 +911,7 @@ package body Vsearch is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Search_Previous;
 
    -------------------
@@ -935,9 +923,7 @@ package body Vsearch is
       Internal_Search (Vsearch_Access (Object), True);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Search_All;
 
    ----------------
@@ -962,9 +948,7 @@ package body Vsearch is
       Set_Sensitive (Vsearch.Replace_Button, False);
       Set_Sensitive (Vsearch.Replace_Search_Button, False);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Replace;
 
    -----------------------
@@ -989,9 +973,7 @@ package body Vsearch is
       On_Search (Object);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Replace_Search;
 
    --------------------
@@ -1070,9 +1052,7 @@ package body Vsearch is
       Set_Sensitive (Vsearch.Replace_Button, False);
       Set_Sensitive (Vsearch.Replace_Search_Button, False);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Replace_All;
 
    ----------------------------
@@ -1235,9 +1215,7 @@ package body Vsearch is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Context_Entry_Changed;
 
    ----------------
@@ -1268,9 +1246,7 @@ package body Vsearch is
          Get_State (Vsearch.Options_Box) = Collapsed);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Toggled;
 
    -------------------------
@@ -1349,9 +1325,7 @@ package body Vsearch is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Set_First_Next_Mode_Cb;
 
    ---------------
@@ -1380,8 +1354,7 @@ package body Vsearch is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Key_Press;
 
@@ -1420,8 +1393,7 @@ package body Vsearch is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Key_Press_Replace;
 
@@ -1452,9 +1424,7 @@ package body Vsearch is
    exception
       when Gtkada.Types.Data_Error =>
          null;
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Selection_Changed;
 
    ---------------------------
@@ -1839,8 +1809,7 @@ package body Vsearch is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end On_Delete;
 
@@ -1869,9 +1838,7 @@ package body Vsearch is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Receive_Text;
 
    ---------------------------
@@ -2037,9 +2004,7 @@ package body Vsearch is
       Grab_Focus (Vsearch.Pattern_Entry);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Search_Menu_Cb;
 
    --------------------
@@ -2056,9 +2021,7 @@ package body Vsearch is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Search_Next_Cb;
 
    ------------------------
@@ -2075,9 +2038,7 @@ package body Vsearch is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Search_Previous_Cb;
 
    ------------------------------

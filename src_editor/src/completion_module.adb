@@ -18,8 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;            use Ada.Exceptions;
-
 with GNAT.Strings;              use GNAT.Strings;
 with Basic_Types;               use Basic_Types;
 
@@ -56,26 +54,26 @@ with Src_Editor_View;           use Src_Editor_View;
 with String_List_Utils;         use String_List_Utils;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
-with VFS; use VFS;
+with VFS;                       use VFS;
 
-with Completion_Window;               use Completion_Window;
-with Completion;                      use Completion;
-with Completion.History;              use Completion.History;
-with Completion.Ada;                  use Completion.Ada;
+with Completion_Window;         use Completion_Window;
+with Completion;                use Completion;
+with Completion.History;        use Completion.History;
+with Completion.Ada;            use Completion.Ada;
 with Completion.Ada.Constructs_Extractor;
 use Completion.Ada.Constructs_Extractor;
 
-with Glib.Properties.Creation; use Glib.Properties.Creation;
+with Glib.Properties.Creation;  use Glib.Properties.Creation;
 
-with Gtk.Text_View;                   use Gtk.Text_View;
-with Gtk.Text_Buffer;                 use Gtk.Text_Buffer;
-with Gtk.Enums;                       use Gtk.Enums;
+with Gtk.Text_View;             use Gtk.Text_View;
+with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
+with Gtk.Enums;                 use Gtk.Enums;
 
-with Language.Ada;                    use Language.Ada;
-with Language.Tree.Database;          use Language.Tree.Database;
-with Language.Tree.Ada;               use Language.Tree.Ada;
+with Language.Ada;              use Language.Ada;
+with Language.Tree.Database;    use Language.Tree.Database;
+with Language.Tree.Ada;         use Language.Tree.Ada;
 
-with Gtkada.Dialogs;                  use Gtkada.Dialogs;
+with Gtkada.Dialogs;            use Gtkada.Dialogs;
 
 package body Completion_Module is
 
@@ -362,9 +360,7 @@ package body Completion_Module is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Completion_Destroy;
 
    ------------------------
@@ -1156,8 +1152,7 @@ package body Completion_Module is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Trigger_Timeout_Callback;
 
@@ -1195,9 +1190,7 @@ package body Completion_Module is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Character_Added_Hook_Callback;
 
    --------------------------
