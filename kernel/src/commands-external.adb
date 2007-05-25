@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
+--                     Copyright (C) 2001-2007                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -22,8 +22,6 @@ with GNAT.Expect;                use GNAT.Expect;
 with GNAT.Regpat;                use GNAT.Regpat;
 with GNAT.OS_Lib;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
-
-with Ada.Exceptions;             use Ada.Exceptions;
 
 with Traces;                     use Traces;
 with GPS.Intl;                   use GPS.Intl;
@@ -172,17 +170,13 @@ package body Commands.External is
             Command_Finished (D, D.Handler_Success);
 
          exception
-            when E : others =>
-               Trace
-                 (Exception_Handle,
-                  "Unexpected exception: " & Exception_Information (E));
+            when E : others => Trace (Exception_Handle, E);
          end;
 
          return False;
 
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Atomic_Command;
 

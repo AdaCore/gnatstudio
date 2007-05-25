@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Calendar;             use Ada.Calendar;
-with Ada.Exceptions;           use Ada.Exceptions;
 with Ada.IO_Exceptions;        use Ada.IO_Exceptions;
 with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
@@ -625,8 +624,7 @@ package body Aliases_Module is
          Trace (Me, "No aliases file " & Filename);
 
       when E : others =>
-         Trace (Exception_Handle, "Unexcepted exception "
-                & Exception_Information (E));
+         Trace (Exception_Handle, E);
          Free (File);
    end Parse_File;
 
@@ -1089,8 +1087,7 @@ package body Aliases_Module is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexception exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return Failure;
    end Execute;
 
@@ -1215,9 +1212,7 @@ package body Aliases_Module is
       Set_Editable (Ed.Expansion, not Alias.Read_Only);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Alias_Selection_Changed;
 
    -------------------
@@ -1275,9 +1270,7 @@ package body Aliases_Module is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Alias_Renamed;
 
    -------------------
@@ -1304,9 +1297,7 @@ package body Aliases_Module is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Alias_Deleted;
 
    -------------------
@@ -1318,9 +1309,7 @@ package body Aliases_Module is
       Add_New_Alias (Alias_Editor (Editor), "_new_", Selected => True);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Alias_Created;
 
    -----------------------
@@ -1345,9 +1334,7 @@ package body Aliases_Module is
            not Get_Boolean (Ed.Variables_Model, Iter, 3));
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Param_Env_Changed;
 
    -------------------------
@@ -1505,9 +1492,7 @@ package body Aliases_Module is
       Update_Vars (Alias_Editor (Editor));
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Expansion_Inserted;
 
    -----------------------
@@ -1531,9 +1516,7 @@ package body Aliases_Module is
       Update_Vars (Alias_Editor (Editor));
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Expansion_Deleted;
 
    -------------------------------
@@ -1592,9 +1575,7 @@ package body Aliases_Module is
       Insert (Buffer, Iter, It.Special);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Insert_Special;
 
    ------------------------
@@ -1644,9 +1625,7 @@ package body Aliases_Module is
       return Menu;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
          return Menu;
    end Contextual_Factory;
 
@@ -1662,9 +1641,7 @@ package body Aliases_Module is
       Destroy (Menu);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Contextual_Destroy;
 
    ----------------------------
@@ -2045,9 +2022,7 @@ package body Aliases_Module is
       Destroy (Editor);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Edit_Aliases;
 
    -----------------------------------
@@ -2114,8 +2089,7 @@ package body Aliases_Module is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexception exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return Invalid_Expansion;
    end Special_Entities;
 

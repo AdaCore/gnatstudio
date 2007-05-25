@@ -37,8 +37,6 @@ with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 
-with Ada.Exceptions; use Ada.Exceptions;
-
 package body Welcome_Page is
 
    type Pic_Data is record
@@ -98,8 +96,7 @@ package body Welcome_Page is
       return False;
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end On_Overview;
 
@@ -117,8 +114,7 @@ package body Welcome_Page is
       return False;
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
       return False;
    end On_Tutorial;
 
@@ -136,9 +132,8 @@ package body Welcome_Page is
       return False;
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-      return False;
+         Trace (Exception_Handle, E);
+         return False;
    end On_UG;
 
    --------------------------
@@ -171,8 +166,7 @@ package body Welcome_Page is
       return False;
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end On_Enter;
 
@@ -189,8 +183,7 @@ package body Welcome_Page is
       return False;
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end On_Leave;
 

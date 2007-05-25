@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Calendar;               use Ada.Calendar;
-with Ada.Exceptions;             use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Expect;                use GNAT.Expect;
@@ -437,11 +436,10 @@ package body GPS.Kernel.Timeout is
          return False;
 
       when E : others =>
+         Trace (Exception_Handle, E);
          Unchecked_Free (Data.Expect_Regexp);
          Cleanup (Data);
          Unref (Data);
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
          return False;
    end Process_Cb;
 
@@ -469,8 +467,7 @@ package body GPS.Kernel.Timeout is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          Remove (Process.Id);
          Unchecked_Free (Process.Expect_Regexp);
          Cleanup (Process);
@@ -620,9 +617,8 @@ package body GPS.Kernel.Timeout is
       Success := True;
    exception
       when E : others =>
+         Trace (Exception_Handle, E);
          Pop_State (Kernel);
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
          Success := False;
    end Launch_Process;
 
@@ -689,8 +685,7 @@ package body GPS.Kernel.Timeout is
       end if;
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          Success := False;
    end Launch_Process;
 
@@ -787,12 +782,11 @@ package body GPS.Kernel.Timeout is
 
    exception
       when E : others =>
+         Trace (Exception_Handle, E);
          Remove (Console.Id);
          Unchecked_Free (Console.Expect_Regexp);
          Cleanup (Console);
          Unref (Console);
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
          return False;
    end Delete_Handler;
 

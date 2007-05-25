@@ -801,9 +801,7 @@ package body Remote_Views is
       Set_Sensitive (User.View.Apply_Button, Modified);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Combo_Changed;
 
    ----------------
@@ -1030,9 +1028,7 @@ package body Remote_Views is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Config_List_Clicked;
 
    ----------------------------
@@ -1077,9 +1073,7 @@ package body Remote_Views is
       Raise_Child (Child);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Show_Remote_View;
 
    ---------------------

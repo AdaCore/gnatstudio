@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling;    use Ada.Characters.Handling;
-with Ada.Exceptions;             use Ada.Exceptions;
 with Ada.Strings;                use Ada.Strings;
 with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
 with Ada.Strings.Hash;
@@ -1755,9 +1754,7 @@ package body Projects is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Compute_Importing_Projects;
 
    ---------------------------------
@@ -2541,8 +2538,7 @@ package body Projects is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return "";
    end Get_String;
 
@@ -2556,8 +2552,7 @@ package body Projects is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return "";
    end Get_String;
 
@@ -2571,8 +2566,7 @@ package body Projects is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return "";
    end Get_String;
 
@@ -2586,8 +2580,7 @@ package body Projects is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return "";
    end Get_String;
 

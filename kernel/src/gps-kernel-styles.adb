@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2006                      --
+--                      Copyright (C) 2005-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;         use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 
 with Gdk;                    use Gdk;
@@ -354,9 +353,7 @@ package body GPS.Kernel.Styles is
          Style.all := S;
 
       exception
-         when E : others =>
-            Trace (Exception_Handle,
-                   "Unexpected exception: " & Exception_Information (E));
+         when E : others => Trace (Exception_Handle, E);
       end Read_Style;
 
    begin
@@ -393,9 +390,7 @@ package body GPS.Kernel.Styles is
       Initialize_Predefined_Styles (Kernel);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Load_Styles;
 
    ----------

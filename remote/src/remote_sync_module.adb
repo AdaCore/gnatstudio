@@ -18,40 +18,39 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;         use Ada.Exceptions;
 with Ada.Strings.Unbounded;
-with GNAT.OS_Lib;            use GNAT.OS_Lib;
-with GNAT.Regpat;            use GNAT.Regpat;
-with GNAT.Expect;            use GNAT.Expect;
+with GNAT.OS_Lib;         use GNAT.OS_Lib;
+with GNAT.Regpat;         use GNAT.Regpat;
+with GNAT.Expect;         use GNAT.Expect;
 with GNAT.Strings;
 
-with Glib;               use Glib;
-with Glib.Xml_Int;       use Glib.Xml_Int;
-with Gtk.Box;            use Gtk.Box;
-with Gtk.Button;         use Gtk.Button;
-with Gtk.Dialog;         use Gtk.Dialog;
-with Gtk.Label;          use Gtk.Label;
+with Glib;                use Glib;
+with Glib.Xml_Int;        use Glib.Xml_Int;
+with Gtk.Box;             use Gtk.Box;
+with Gtk.Button;          use Gtk.Button;
+with Gtk.Dialog;          use Gtk.Dialog;
+with Gtk.Label;           use Gtk.Label;
 with Gtk.Main;
-with Gtk.Progress_Bar;   use Gtk.Progress_Bar;
-with Gtk.Stock;          use Gtk.Stock;
-with Gtk.Widget;         use Gtk.Widget;
-with Gtkada.Handlers;    use Gtkada.Handlers;
+with Gtk.Progress_Bar;    use Gtk.Progress_Bar;
+with Gtk.Stock;           use Gtk.Stock;
+with Gtk.Widget;          use Gtk.Widget;
+with Gtkada.Handlers;     use Gtkada.Handlers;
 
-with GPS.Intl;           use GPS.Intl;
-with GPS.Kernel.Console; use GPS.Kernel.Console;
-with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
-with GPS.Kernel.Modules; use GPS.Kernel.Modules;
-with GPS.Kernel.Remote;  use GPS.Kernel.Remote;
-with GPS.Kernel.Timeout; use GPS.Kernel.Timeout;
+with GPS.Intl;            use GPS.Intl;
+with GPS.Kernel.Console;  use GPS.Kernel.Console;
+with GPS.Kernel.Hooks;    use GPS.Kernel.Hooks;
+with GPS.Kernel.Modules;  use GPS.Kernel.Modules;
+with GPS.Kernel.Remote;   use GPS.Kernel.Remote;
+with GPS.Kernel.Timeout;  use GPS.Kernel.Timeout;
 
-with Commands;           use Commands;
-with Filesystem;         use Filesystem;
-with Filesystem.Queries; use Filesystem.Queries;
-with Filesystem.Windows; use Filesystem.Windows;
-with Password_Manager;   use Password_Manager;
-with String_Utils;       use String_Utils;
-with Traces;             use Traces;
-with VFS;                use VFS;
+with Commands;            use Commands;
+with Filesystem;          use Filesystem;
+with Filesystem.Queries;  use Filesystem.Queries;
+with Filesystem.Windows;  use Filesystem.Windows;
+with Password_Manager;    use Password_Manager;
+with String_Utils;        use String_Utils;
+with Traces;              use Traces;
+with VFS;                 use VFS;
 
 with Machine_Descriptors; use Machine_Descriptors;
 
@@ -731,8 +730,7 @@ package body Remote_Sync_Module is
       Trace (Me, "rsync status is" & Integer'Image (Status));
 
    exception
-      when E : others =>
-         Trace (Exception_Handle, Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Rsync_Terminated;
 
 end Remote_Sync_Module;

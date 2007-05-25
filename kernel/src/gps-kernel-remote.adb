@@ -1111,9 +1111,7 @@ package body GPS.Kernel.Remote is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Path_Grab_Focus;
 
    ---------------------
@@ -1223,9 +1221,7 @@ package body GPS.Kernel.Remote is
       Show_All (Widget.Table);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Add_Path_Clicked;
 
    ----------------------------
@@ -1240,9 +1236,7 @@ package body GPS.Kernel.Remote is
       On_Changed (W.Widget.Dialog, False);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Remove_Path_Clicked;
 
    ---------------------
@@ -1784,9 +1778,7 @@ package body GPS.Kernel.Remote is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Changed;
 
    ----------
@@ -2174,9 +2166,7 @@ package body GPS.Kernel.Remote is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Selection_Changed;
 
    -------------------------
@@ -2245,9 +2235,7 @@ package body GPS.Kernel.Remote is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Add_Machine_Clicked;
 
    ---------------------
@@ -2315,9 +2303,7 @@ package body GPS.Kernel.Remote is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Restore_Clicked;
 
    --------------------
@@ -2391,9 +2377,7 @@ package body GPS.Kernel.Remote is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Remove_Clicked;
 
    ---------------------------
@@ -2899,9 +2883,7 @@ package body GPS.Kernel.Remote is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Project_Changing;
 
    ---------------
@@ -3596,8 +3578,7 @@ package body GPS.Kernel.Remote is
                end if;
 
             exception
-               when E : others =>
-                  Trace (Exception_Handle, Exception_Information (E));
+               when E : others => Trace (Exception_Handle, E);
             end;
          end if;
 

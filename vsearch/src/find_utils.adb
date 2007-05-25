@@ -20,7 +20,6 @@
 
 with Ada.Unchecked_Deallocation;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Ada.Exceptions;            use Ada.Exceptions;
 with Glib.Convert;              use Glib.Convert;
 with Glib.Unicode;              use Glib.Unicode;
 with Boyer_Moore;               use Boyer_Moore;
@@ -627,9 +626,7 @@ package body Find_Utils is
       Run_Hook (Kernel, Search_Reset_Hook);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Reset_Search;
 
    -----------------

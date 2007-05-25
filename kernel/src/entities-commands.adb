@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                         Copyright (C) 2005                        --
+--                      Copyright (C) 2005-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;                 use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Commands.Generic_Asynchronous;  use Commands;
@@ -160,8 +159,7 @@ package body Entities.Commands is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          Result := Failure;
    end Examine_Ancestors_Idle;
 
@@ -228,9 +226,8 @@ package body Entities.Commands is
 
    exception
       when E : others =>
+         Trace (Exception_Handle, E);
          Pop_State (Kernel_Handle (Kernel));
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
    end Examine_Ancestors_Call_Graph;
 
    -------------------------------

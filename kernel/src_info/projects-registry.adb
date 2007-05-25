@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Calendar;              use Ada.Calendar;
 with Ada.Unchecked_Deallocation;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
@@ -695,8 +694,7 @@ package body Projects.Registry is
 
       exception
          when E : others =>
-            Trace (Exception_Handle, "Load: unexpected exception: "
-                   & Exception_Information (E));
+            Trace (Exception_Handle, E);
             Output.Set_Special_Output (null);
             raise;
       end Internal_Load;
@@ -911,9 +909,7 @@ package body Projects.Registry is
       --  We can get an unexpected exception (actually Directory_Error) if the
       --  project file's path is invalid, for instance because it was
       --  modified by the user.
-      when E : others =>
-         Trace (Exception_Handle, "Unexpected exception: "
-                & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Recompute_View;
 
    ------------------------

@@ -18,8 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;   use Ada.Exceptions;
-
 with Glib.Main;        use Glib.Main;
 
 with Gtk.Progress_Bar; use Gtk.Progress_Bar;
@@ -73,8 +71,7 @@ package body Task_Manager is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return Failure;
    end Safe_Execute;
 
@@ -115,8 +112,7 @@ package body Task_Manager is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Active_Incremental;
 
@@ -146,8 +142,7 @@ package body Task_Manager is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Passive_Incremental;
 

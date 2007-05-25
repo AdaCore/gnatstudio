@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Maps;          use Ada.Strings.Maps;
 with Ada.Unchecked_Conversion;
@@ -1436,12 +1435,11 @@ package body Commands.Custom is
 
       exception
          when E : others =>
+            Trace (Exception_Handle, E);
             Insert (Command.Kernel,
                     -("An unexpected error occurred while executing the custom"
                       & " command. See the log file for more information."),
                     Mode => Error);
-            Trace (Exception_Handle,
-                   "Unexpected exception: " & Exception_Information (E));
             return False;
       end Execute_Simple_Command;
 

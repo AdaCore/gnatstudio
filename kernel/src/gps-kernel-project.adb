@@ -23,7 +23,6 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
-with Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 
 with Projects;                  use Projects;
@@ -148,8 +147,7 @@ package body GPS.Kernel.Project is
       Add_Child (Node, Child);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle, Ada.Exceptions.Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Save;
 
    ----------

@@ -251,9 +251,7 @@ package body GPS.Kernel.Preferences is
          exception
             when E : Invalid_Parameter =>
                Set_Error_Msg (Data, Exception_Message (E));
-            when E : others =>
-               Trace (Exception_Handle, "Unexpected exception "
-                      & Exception_Information (E));
+            when E : others => Trace (Exception_Handle, E);
          end;
       end if;
    end Get_Command_Handler;

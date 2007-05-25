@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Calendar;           use Ada.Calendar;
-with Ada.Exceptions;         use Ada.Exceptions;
 
 with GNAT.Calendar;          use GNAT.Calendar;
 with GNAT.Calendar.Time_IO;  use GNAT.Calendar.Time_IO;
@@ -242,9 +241,7 @@ package body GPS.Kernel.Console is
       end;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Save_Console_As;
 
    ------------------------
@@ -292,9 +289,7 @@ package body GPS.Kernel.Console is
       Free (Contents);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Load_To_Console;
 
    ----------------------
@@ -309,9 +304,7 @@ package body GPS.Kernel.Console is
       Clear (Kernel);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Clear_Console;
 
    -------------

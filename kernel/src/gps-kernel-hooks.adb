@@ -18,16 +18,15 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Traces;       use Traces;
-with Glib.Object;  use Glib.Object;
-with System;       use System;
-with Ada.Exceptions; use Ada.Exceptions;
+with Traces;                    use Traces;
+with Glib.Object;               use Glib.Object;
+with System;                    use System;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Generic_List;
-with GPS.Intl; use GPS.Intl;
-with GPS.Kernel.Console; use GPS.Kernel.Console;
-with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 
 package body GPS.Kernel.Hooks is
@@ -1029,9 +1028,7 @@ package body GPS.Kernel.Hooks is
          end if;
       end if;
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Run_Hook;
 
    ----------------------------

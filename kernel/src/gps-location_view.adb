@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;           use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with System;
@@ -476,9 +475,7 @@ package body GPS.Location_View is
       end loop;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Execute;
 
    -----------------
@@ -692,9 +689,7 @@ package body GPS.Location_View is
       end;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Goto_Location;
 
    ----------------------------------
@@ -820,9 +815,7 @@ package body GPS.Location_View is
 
       Path_Free (Path);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Expand_Category;
 
    --------------
@@ -834,9 +827,7 @@ package body GPS.Location_View is
    begin
       Collapse_All (View.Tree);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Collapse;
 
    ---------------------
@@ -853,9 +844,7 @@ package body GPS.Location_View is
       Remove_Category_Or_File_Iter (View, Iter);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Remove_Category;
 
    ---------------
@@ -1491,9 +1480,7 @@ package body GPS.Location_View is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Destroy;
 
    -------------
@@ -1643,9 +1630,7 @@ package body GPS.Location_View is
 
       Clicked (Explorer.Sorting_Column);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Toggle_Sort;
 
    ----------------
@@ -1747,9 +1732,7 @@ package body GPS.Location_View is
 
       Path_Free (Path);
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Row_Expanded;
 
    ---------------------
@@ -2051,8 +2034,7 @@ package body GPS.Location_View is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end Button_Press;
 

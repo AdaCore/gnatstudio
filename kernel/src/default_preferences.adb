@@ -977,9 +977,7 @@ package body Default_Preferences is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Load_Preferences;
 
    ----------------------
@@ -1010,9 +1008,7 @@ package body Default_Preferences is
 
       Print (File, File_Name);
    exception
-      when E : others =>
-         Trace (Exception_Handle, "Unexpected exception: " &
-                Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Save_Preferences;
 
    ---------------------
@@ -2091,8 +2087,7 @@ package body Default_Preferences is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          Destroy (Dialog);
    end Edit_Preferences;
 

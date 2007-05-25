@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005-2006                       --
+--                     Copyright (C) 2005-2007                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-with Ada.Exceptions;             use Ada.Exceptions;
 
 with File_Utils;                 use File_Utils;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
@@ -627,9 +626,7 @@ package body GPS.Kernel.Properties is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Restore_Persistent_Properties;
 
    --------------------------

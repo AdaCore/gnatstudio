@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -3682,9 +3681,7 @@ package body Projects.Editor is
 
       Set_Status (Project, From_File);
    exception
-      when E : others =>
-         Trace (Exception_Handle, "Unexpected exception "
-                & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end Rename_And_Move;
 
    --------------------

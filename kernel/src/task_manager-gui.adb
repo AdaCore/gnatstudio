@@ -18,8 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;           use Ada.Exceptions;
-
 with Gdk.Color;                use Gdk.Color;
 with Gdk.Drawable;             use Gdk.Drawable;
 with Gdk.Event;                use Gdk.Event;
@@ -201,8 +199,7 @@ package body Task_Manager.GUI is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end On_Progress_Bar_Button_Pressed;
 
@@ -222,9 +219,7 @@ package body Task_Manager.GUI is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Pause_Command;
 
    -----------------------
@@ -243,9 +238,7 @@ package body Task_Manager.GUI is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Resume_Command;
 
    --------------------
@@ -277,9 +270,7 @@ package body Task_Manager.GUI is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_Interrupt_Command;
 
    -----------------
@@ -514,9 +505,7 @@ package body Task_Manager.GUI is
          Iface.Progress_Height);
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_View_Realize;
 
    ---------------------
@@ -543,9 +532,7 @@ package body Task_Manager.GUI is
       end if;
 
    exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      when E : others => Trace (Exception_Handle, E);
    end On_View_Destroy;
 
    ---------------------------
@@ -584,8 +571,7 @@ package body Task_Manager.GUI is
 
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Trace (Exception_Handle, E);
          return False;
    end On_Button_Press_Event;
 
