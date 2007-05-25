@@ -486,7 +486,7 @@ package body CPP_Parser is
    function Time_Stamp_From_DB
      (Project   : Project_Type;
       File_Name : VFS.Virtual_File) return Time;
-   --  Return the timestamp of File_Name when the database was last created.
+   --  Return the timestamp of File_Name when the database was last created
 
    ---------------------
    -- Table_Extension --
@@ -1150,8 +1150,7 @@ package body CPP_Parser is
          Entity := Get_Or_Create
            (Name   => G.Key (G.Name.First .. G.Name.Last),
             File   => Get_Or_Create
-              (Handler.Db,
-               Var.Key (Var.File_Name.First .. Var.File_Name.Last),
+              (Handler.Db, Var.Key (Var.File_Name.First .. Var.File_Name.Last),
                Handler),
             Line   => Var.Start_Position.Line,
             Column => Var.Start_Position.Column);
@@ -1353,14 +1352,15 @@ package body CPP_Parser is
       Success  : Boolean;
       Var      : IV_Table;
    begin
-      Find (DB       => Handler.SN_Table (IV),
-            Class    => Sym.Key (Sym.Class.First .. Sym.Class.Last),
-            Variable_Name =>
-              Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last),
-            Start_Position => Sym.Start_Position,
-            Filename => Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last),
-            Tab      => Var,
-            Success  => Success);
+      Find
+        (DB             => Handler.SN_Table (IV),
+         Class          => Sym.Key (Sym.Class.First .. Sym.Class.Last),
+         Variable_Name  =>
+           Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last),
+         Start_Position => Sym.Start_Position,
+         Filename       => Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last),
+         Tab            => Var,
+         Success        => Success);
 
       if Success then
          --  Register a reference to the parent where the entity is defined.
@@ -1395,13 +1395,15 @@ package body CPP_Parser is
       P        : Pair;
       S        : Source_File;
    begin
-      Find (DB        => Handler.SN_Table (MD),
-            Class     => Sym.Key (Sym.Class.First .. Sym.Class.Last),
-            Name      => Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last),
-            Start_Position => Sym.Start_Position,
-            Filename  => Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last),
-            Tab       => Var,
-            Success   => Success);
+      Find
+        (DB             => Handler.SN_Table (MD),
+         Class          => Sym.Key (Sym.Class.First .. Sym.Class.Last),
+         Name           =>
+           Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last),
+         Start_Position => Sym.Start_Position,
+         Filename       => Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last),
+         Tab            => Var,
+         Success        => Success);
 
       if Success then
          Parse_Method_Table_Internal
@@ -1730,12 +1732,14 @@ package body CPP_Parser is
       Success : Boolean;
       P       : Pair;
    begin
-      Find (DB       => Handler.SN_Table (CL),
-            Name     => Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last),
-            Start_Position => Sym.Start_Position,
-            Filename => Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last),
-            Tab      => C,
-            Success  => Success);
+      Find
+        (DB             => Handler.SN_Table (CL),
+         Name           =>
+           Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last),
+         Start_Position => Sym.Start_Position,
+         Filename       => Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last),
+         Tab            => C,
+         Success        => Success);
 
       if Success then
          Kind.Is_Generic := (C.Attributes and SN_TEMPLATE) /= 0;
@@ -1804,13 +1808,15 @@ package body CPP_Parser is
       T : TA_Table;
       Success : Boolean;
    begin
-      Find (DB       => Handler.SN_Table (TA),
-            Name     => Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last),
-            Start_Position => Sym.Start_Position,
-            Filename => Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last),
-            Class    => Sym.Key (Sym.Class.First .. Sym.Class.Last),
-            Tab      => T,
-            Success  => Success);
+      Find
+        (DB             => Handler.SN_Table (TA),
+         Name           =>
+           Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last),
+         Start_Position => Sym.Start_Position,
+         Filename       => Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last),
+         Class          => Sym.Key (Sym.Class.First .. Sym.Class.Last),
+         Tab            => T,
+         Success        => Success);
 
       if Success then
          Set_Parent
@@ -1838,12 +1844,14 @@ package body CPP_Parser is
       Success : Boolean;
       Parent  : Entity_Information;
    begin
-      Find (DB        => Handler.SN_Table (EC),
-            Name      => Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last),
-            Filename  => Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last),
-            Start_Position => Sym.Start_Position,
-            Tab       => C,
-            Success   => Success);
+      Find
+        (DB             => Handler.SN_Table (EC),
+         Name           =>
+           Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last),
+         Filename       => Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last),
+         Start_Position => Sym.Start_Position,
+         Tab            => C,
+         Success        => Success);
 
       if Success then
          Parent := Lookup_Entity_In_Tables
@@ -2118,7 +2126,8 @@ package body CPP_Parser is
 
       if Body_Found then
          Source := Get_Or_Create
-           (Handler.Db, F.Key (F.File_Name.First .. F.File_Name.Last),
+           (Handler.Db,
+            F.Key (F.File_Name.First .. F.File_Name.Last),
             Handler);
 
          Add_Reference
@@ -2154,12 +2163,14 @@ package body CPP_Parser is
       Entity  : Entity_Information;
       End_Of_Scope_Kind : Reference_Kind;
    begin
-      Find (DB       => Handler.SN_Table (FU),
-            Name     => Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last),
-            Start_Position => Sym.Start_Position,
-            Filename => Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last),
-            Tab      => C,
-            Success  => Success);
+      Find
+        (DB             => Handler.SN_Table (FU),
+         Name           =>
+           Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last),
+         Start_Position => Sym.Start_Position,
+         Filename       => Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last),
+         Tab            => C,
+         Success        => Success);
 
       if Success then
          --  Find forward declaration if any, possibly in another file
@@ -2214,13 +2225,13 @@ package body CPP_Parser is
 
          Process_Local_Variables_And_Parameters
            (Handler,
-            Entity => Entity,
+            Entity           => Entity,
             Entity_File_Name =>
               Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last),
-            Entity_Class => Sym.Key (Sym.Class.First .. Sym.Class.Last),
+            Entity_Class     => Sym.Key (Sym.Class.First .. Sym.Class.Last),
             Entity_Arg_Types => C.Data (C.Arg_Types.First .. C.Arg_Types.Last),
-            Params => C.Data (C.Arg_Names.First .. C.Arg_Names.Last),
-            Source => S);
+            Params           => C.Data (C.Arg_Names.First .. C.Arg_Names.Last),
+            Source           => S);
 
          Parse_TO_Table
            (Handler     => Handler,
@@ -2992,9 +3003,7 @@ package body CPP_Parser is
             Lang           : constant String := Get_Language_From_File
               (Iterator.Lang_Handler, File);
             Xref_File_Name : constant String :=
-                               Normalize_Pathname
-                                 (DB_Dir & Base_Name (File) & Xref_Suffix,
-                                  Case_Sensitive => False);
+                               DB_Dir & Base_Name (File) & Xref_Suffix;
          begin
             if Lang = C_String or else Lang = Cpp_String then
 
@@ -3011,10 +3020,7 @@ package body CPP_Parser is
                   end if;
 
                   Put_Line (Tmp_File, "@" & Xref_File_Name);
-                  Put_Line
-                    (Tmp_File,
-                     Normalize_Pathname (Full_Name (File, True).all,
-                       Case_Sensitive => False));
+                  Put_Line (Tmp_File, Full_Name (File, True).all);
                   Recompute_TO := True;
 
                elsif not Recompute_TO
