@@ -14,12 +14,12 @@ of the feature.
 New features in GPS 4.2.0
 -------------------------
 
-NF-420-G509-011 New contextual menu to build libraries
+NF-420-G509-011 New contextual menu to build libraries (2007-05-12)
 
   It is now possible to build individual libraries directly from the
   Build project's contextual menu on the Project View.
 
-NF-420-G502-004 Ignore leading spaces in <external>
+NF-420-G502-004 Ignore leading spaces in <external> (2007-05-09)
 
   If you specify an external command to execute in an XML file, you can now
   have leading spaces if you wish. This allows you to split the contents of
