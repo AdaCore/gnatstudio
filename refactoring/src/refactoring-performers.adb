@@ -50,6 +50,7 @@ package body Refactoring.Performers is
    type Get_Locations_Data is record
       Refs                : Location_Arrays.Instance;
       Stale_LI_List       : File_Arrays.Instance;
+      Read_Only_Files     : File_Arrays.Instance;
       On_Completion       : Refactor_Performer;
       Kernel              : Kernel_Handle;
       Entity              : Entity_Information;
@@ -183,7 +184,10 @@ package body Refactoring.Performers is
       Pop_State (Data.Kernel);
 
       if Confirm_Files
-        (Data.Kernel, Data.Errors.No_LI_List, Data.Stale_LI_List)
+        (Data.Kernel,
+         Data.Read_Only_Files,
+         Data.Errors.No_LI_List,
+         Data.Stale_LI_List)
       then
          Push_State (Data.Kernel, Busy);
          Execute
@@ -236,6 +240,10 @@ package body Refactoring.Performers is
             then
                Append (Data.Stale_LI_List, Source);
             end if;
+         end if;
+
+         if not Is_Writable (Get_Filename (Source)) then
+            Append (Data.Read_Only_Files, Source);
          end if;
 
          Next (Data.Iter.all);

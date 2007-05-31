@@ -50,9 +50,10 @@ package body Refactoring is
    -------------------
 
    function Confirm_Files
-     (Kernel        : access Kernel_Handle_Record'Class;
-      No_LI_List    : File_Arrays.Instance;
-      Stale_LI_List : File_Arrays.Instance) return Boolean
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Read_Only_Files : File_Arrays.Instance;
+      No_LI_List      : File_Arrays.Instance;
+      Stale_LI_List   : File_Arrays.Instance) return Boolean
    is
       Dialog : Gtk_Dialog;
       Button : Gtk_Widget;
@@ -60,6 +61,36 @@ package body Refactoring is
       Result : Boolean;
 
    begin
+      if Length (Read_Only_Files) > 0 then
+         Gtk_New (Dialog,
+                  Title  => -"Read-only files",
+                  Parent => Get_Current_Window (Kernel),
+                  Flags  => Destroy_With_Parent or Modal);
+         Set_Default_Size (Dialog, -1, 350);
+
+         Gtk_New
+           (Label,
+            (-"The following files are not writable, and will not be updated."
+             & ASCII.LF
+             & "Do you want to refactor the other files anyway ?"));
+         Set_Alignment (Label, 0.0, 0.0);
+         Pack_Start (Get_Vbox (Dialog), Label, Expand => False, Padding => 10);
+         Pack_Start (Get_Vbox (Dialog), Create_File_List (Read_Only_Files));
+
+         Button := Add_Button (Dialog, Stock_Execute, Gtk_Response_OK);
+         Grab_Default (Button);
+         Grab_Focus (Button);
+         Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+
+         Show_All (Dialog);
+         Result := Run (Dialog) = Gtk_Response_OK;
+         Destroy (Dialog);
+
+         if not Result then
+            return False;
+         end if;
+      end if;
+
       if Length (No_LI_List) = 0 and then Length (Stale_LI_List) = 0 then
          return True;
       end if;

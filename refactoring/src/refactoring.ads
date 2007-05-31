@@ -49,9 +49,10 @@ package Refactoring is
    --  Handling of dynamic arrays
 
    function Confirm_Files
-     (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
-      No_LI_List    : File_Arrays.Instance;
-      Stale_LI_List : File_Arrays.Instance) return Boolean;
+     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Read_Only_Files : File_Arrays.Instance;
+      No_LI_List      : File_Arrays.Instance;
+      Stale_LI_List   : File_Arrays.Instance) return Boolean;
    --  Whether the user wants to perform the refactoring even though there are
    --  some errors in the LI files.
 

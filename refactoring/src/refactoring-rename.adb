@@ -221,10 +221,10 @@ package body Refactoring.Rename is
                     Auto_Save       => Get_Active (Dialog.Auto_Save));
             begin
                Get_All_Locations
-                 (Get_Kernel (Context.Context),
-                  Entity,
-                  Refactor,
-                  Auto_Compile => Get_Active (Dialog.Auto_Compile));
+                 (Kernel        => Get_Kernel (Context.Context),
+                  Entity        => Entity,
+                  On_Completion => Refactor,
+                  Auto_Compile   => Get_Active (Dialog.Auto_Compile));
             end;
          end if;
 
