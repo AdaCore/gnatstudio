@@ -117,7 +117,7 @@ class Makefile:
          If none is specified there, we default on the Makefile or makefile found
          in the same directory as the root project"""
       root_dir = dirname (Project.root().file().name())
-      self.makefile = Project.root().get_attribute_as_string ("makefile","make")
+      self.makefile = join(root_dir,Project.root().get_attribute_as_string ("makefile","make"))
       if not isfile (self.makefile):
          self.makefile = join (root_dir, self.makefile)
       if not isfile (self.makefile):
@@ -166,6 +166,7 @@ class Makefile:
          reparse the Makefile"""
       try:
          self.destroy_menus()
+         self.compute_makefile ()
          if self.makefile:
             self.menus.append \
               (Menu.create \
