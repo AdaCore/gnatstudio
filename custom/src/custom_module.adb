@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2001-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -60,6 +59,7 @@ with Language.Custom;           use Language.Custom;
 with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
 with Projects;                  use Projects;
+with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with VFS;                       use VFS;
 with XML_Viewer;
@@ -1320,13 +1320,26 @@ package body Custom_Module is
 
             Item : Gtk_Menu_Item;
             Menu : Subprogram_Type_Menu;
-            Base : constant String := Base_Name (Path);
+            Last : Integer := Path'First - 1;
          begin
-            if Base'Length > 0 and then Base (Base'First) = '-' then
+            --  Take into account backslashes when extracting components of the
+            --  menu path.
+            for J in reverse Path'Range loop
+               if Path (J) = '/'
+                 and then (J = Path'First
+                           or else Path (J - 1) /= '\')
+               then
+                  Last := J;
+                  exit;
+               end if;
+            end loop;
+
+            if Path'Length > 0 and then Path (Path'First) = '-' then
                Gtk_New (Item);
             else
                Menu := new Subprogram_Type_Menu_Record;
-               Gtk.Menu_Item.Initialize (Menu, Label => Base);
+               Gtk.Menu_Item.Initialize
+                 (Menu, Label => Unprotect (Path (Last + 1 .. Path'Last)));
                Menu.On_Activate := Nth_Arg (Data, 2, null);
                Widget_Callback.Connect
                  (Menu, Signal_Activate, On_Activate'Access);
@@ -1343,7 +1356,7 @@ package body Custom_Module is
 
             Register_Menu
               (Kernel      => Kernel,
-               Parent_Path => Dir_Name (Path),
+               Parent_Path => Path (Path'First .. Last - 1),
                Item        => Item,
                Ref_Item    => Nth_Arg (Data, 3, ""),
                Add_Before  => Nth_Arg (Data, 4, True),

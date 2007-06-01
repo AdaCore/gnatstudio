@@ -29,8 +29,15 @@
       /Edit/Key shortcuts
    By default, the name in the menu will be the name of the Makefile target.
    However, if your makefile contains lines similar to:
+
       target: dependency1 dependency2 # menu name
+
    then the part after the '#' sign will be used as the menu name
+   As a special case, when the comment is <IGNORE>, as in:
+
+      target: dependency1 dependency2 # <IGNORE>
+
+   then that target is now displayed in the menu
 
    When you select one of the new menus, GPS will run make, and parse error
    messages to display them in the locations window as usual.
@@ -174,22 +181,29 @@ class Makefile:
                    ref = "Make", add_before=False,
                    on_activate=self.edit_makefile))
              
-            matcher=re.compile ("^([^#.=%][^#=\(\)%]*?):[^#=]*(#(.+))?$")
+            matcher=re.compile ("^([^#.=%][^#=\(\)%]*?):[^#=:]*(#(.+))?$")
             f = file (self.makefile)
             for line in f:
                matches=matcher.match (line)
                if matches:
                    if matches.group (3):
-                      m = Menu.create \
-                        ("/Build/Makefile/" + matches.group (3).strip(),
-                         on_activate = self.on_build_target)
-                      m.target = matches.group (1)
-                      self.menus.append (m)
+                      t = matches.group (3).strip ()
+                      if t != "<IGNORE>":
+                        t = t.replace ("\\", '\\\\')
+                        t = t.replace ("/", '\/')
+                        m = Menu.create \
+                          ("/Build/Makefile/" + t,
+                           on_activate = self.on_build_target)
+                        m.target = matches.group (1)
+                        self.menus.append (m)
                    else:
                       ## Handle multiple targets on same line
                       for target in matches.group (1).split():
+                        t = target.strip ()
+                        t = t.replace ("\\", '\\\\')
+                        t = t.replace ("/", '\/')
                         m = Menu.create \
-                         ("/Build/Makefile/" + target.strip(),
+                         ("/Build/Makefile/" + t,
                          on_activate = self.on_build_target)
                         m.target = target
                         self.menus.append (m)
@@ -204,7 +218,6 @@ class Makefile:
 
    def __init__ (self):
       self.menus = []
-      self.compute_makefile ()
       Hook ("project_view_changed").add (self.on_project_view_changed)
       Hook ("project_changed").add (self.on_project_changed)
       self.on_project_changed ("project_changed")

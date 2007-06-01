@@ -1,5 +1,15 @@
 Known Problems fixed in GPS 4.2.0
 
+- G517-001 Makefile.py plug-in: various fixes
+  Problem:    Various minor issues were fixed in the Makefile plugin.
+              When the project loaded from the command line defines the
+              "make" package, no warning should be displayed in the console.
+              When a scenario variable is changed, and the project then
+              defines a new Makefile to use, this new value is not taken into
+              account and the old Makefile is still used. Entries containing
+              full path names are also not displayed correctly
+  Workaround: this warning can be safely ignored
+
 - G508-003 Clicks ignored when clicking on file nodes in project view
   Problem:    When clicking on the expansion arrow of a file node in the
               Project View, half the clicks are ignored.
