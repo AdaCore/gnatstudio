@@ -205,6 +205,12 @@ class Makefile:
    def __init__ (self):
       self.menus = []
       self.compute_makefile ()
+      Hook ("project_view_changed").add (self.on_project_view_changed)
+      Hook ("project_changed").add (self.on_project_changed)
+      self.on_project_changed ("project_changed")
+      self.on_project_view_changed ("project_view_changed")
+
+def register_project_attributes ():
       parse_xml("""
         <project_attribute
           name="makefile"
@@ -228,13 +234,14 @@ class Makefile:
           <string type="" default="-k"/>
        </project_attribute>""")
 
-      Hook ("project_view_changed").add (self.on_project_view_changed)
-      Hook ("project_changed").add (self.on_project_changed)
-      self.on_project_changed ("project_changed")
-      self.on_project_view_changed ("project_view_changed")
 
 def on_gps_started (hook_name):
    Makefile()
    
+
+## Register the project attributes early so that the project loaded
+## from the command line doesn't display warnings
+
+register_project_attributes ()
 
 Hook ("gps_started").add (on_gps_started)
