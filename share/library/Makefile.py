@@ -201,7 +201,6 @@ class Makefile:
 
    def on_project_changed (self, hook):
       self.destroy_menus ()
-      self.compute_makefile ()
 
    def __init__ (self):
       self.menus = []
