@@ -182,7 +182,7 @@ class Builder:
       switches = project.get_attribute_as_string\
         (self.switches_attr,   self.pkg_name)
       make     = project.get_attribute_as_string\
-        (self.build_file_attr, self.pkg_name)
+        (self.build_cmd_attr, self.pkg_name)
 
       # Change the directory instead of using -C, so that we are compatible
       # with any version of make, not only GNU make
@@ -257,6 +257,7 @@ class Makefile (Builder):
     def __init__ (self):
        self.pkg_name = "make"
        self.build_file_attr = "makefile"
+       self.build_cmd_attr = "make"
        self.switches_attr = "switches"
        self.default_build_files = ["Makefile", "makefile"]
        self.extra_switches = extra_make_switches
@@ -288,6 +289,7 @@ class Antfile (Builder):
     def __init__ (self):
        self.pkg_name = "ant"
        self.build_file_attr = "antfile"
+       self.build_cmd_attr = "ant"
        self.switches_attr = "switches"
        self.default_build_files = ["build.xml"]
        self.extra_switches = extra_ant_switches
