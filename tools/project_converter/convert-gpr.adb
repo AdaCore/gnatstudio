@@ -198,7 +198,7 @@ package body Convert.Gpr is
       Parse (Tree, Project, Gpr_Filename, Always_Errout_Finalize => True);
       Process (View_Tree, Project_View, Success,
                Project, Tree, Report_Error => null);
-      Errout.Finalize;
+      Errout.Finalize (True);
 
       if Success then
          declare
