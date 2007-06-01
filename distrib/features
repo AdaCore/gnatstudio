@@ -14,6 +14,12 @@ of the feature.
 New features in GPS 4.2.0
 -------------------------
 
+NF-420-G517-005 Makefile.py now also provides support for ant (2007-06-01)
+
+  The "ant" build system is now supported as a GPS plug-in. The support
+  is similar to what already existed for makefiles, and is available through
+  the same plug-in. See extended documentation through /Tools/Plug-ins menu.
+
 NF-420-G515-006 Refactoring now detects read-only files (2007-05-31)
 
   When refactoring (in particular when renaming an entity), a dialog is
