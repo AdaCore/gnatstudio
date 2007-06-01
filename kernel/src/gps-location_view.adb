@@ -2755,14 +2755,19 @@ package body GPS.Location_View is
          declare
             View  : constant Location_View := Get_Or_Create_Location_View
               (Get_Kernel (Data), Allow_Creation => False);
-            Model : constant Gtk_Tree_Store := View.Tree.Model;
-            Iter  : Gtk_Tree_Iter := Get_Iter_First (Model);
+            Model : Gtk_Tree_Store;
+            Iter  : Gtk_Tree_Iter;
          begin
             Set_Return_Value_As_List (Data);
-            while Iter /= Null_Iter loop
-               Set_Return_Value (Data, Get_Category_Name (Model, Iter));
-               Next (Model, Iter);
-            end loop;
+            if View /= null then
+               Model := View.Tree.Model;
+               Iter := Get_Iter_First (Model);
+
+               while Iter /= Null_Iter loop
+                  Set_Return_Value (Data, Get_Category_Name (Model, Iter));
+                  Next (Model, Iter);
+               end loop;
+            end if;
          end;
 
       elsif Command = "add" then
