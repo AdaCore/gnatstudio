@@ -47,7 +47,7 @@ with Gtkada.Handlers; use Gtkada.Handlers;
 package body Gtkada.Tree_View is
 
    procedure Set_Draw_Expander
-     (Style : Gtk_Style; Expander : System.Address);
+     (Style : System.Address; Expander : System.Address);
    pragma Import (C, Set_Draw_Expander, "ada_style_set_draw_expander");
    --  Set the draw_expander function for the widget's class.
 
@@ -271,7 +271,8 @@ package body Gtkada.Tree_View is
 
       Gtk_New (Widget.Model, Real_Column_Types);
       Initialize (Gtk_Tree_View (Widget), Widget.Model);
-      Set_Draw_Expander (Get_Style (Widget), Draw_Expander'Address);
+      Set_Draw_Expander
+        (Get_Object (Get_Style (Widget)), Draw_Expander'Address);
 
       Gtkada.Handlers.Object_Callback.Object_Connect
         (Widget,
