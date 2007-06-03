@@ -1532,7 +1532,7 @@ package body GUI_Utils is
       M         : Gtk_Menu;
       Index     : Gint;
    begin
-      if Path (First) = '/' then
+      if Path /= "" and then Path (First) = '/' then
          First := First + 1;
       end if;
 
