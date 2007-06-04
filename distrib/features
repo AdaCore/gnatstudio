@@ -14,54 +14,54 @@ of the feature.
 New features in GPS 4.2.0
 -------------------------
 
-NF-420-G517-005 Makefile.py now also provides support for ant (2007-06-01)
+NF-42-G517-005 Makefile.py now also provides support for ant (2007-06-01)
 
   The "ant" build system is now supported as a GPS plug-in. The support
   is similar to what already existed for makefiles, and is available through
   the same plug-in. See extended documentation through /Tools/Plug-ins menu.
 
-NF-420-G515-006 Refactoring now detects read-only files (2007-05-31)
+NF-42-G515-006 Refactoring now detects read-only files (2007-05-31)
 
   When refactoring (in particular when renaming an entity), a dialog is
   displayed to warn about read-only files that cannot be refactored. The
   user is then given the choice of refactoring the others anyway, or
   cancelling the operation
 
-NF-420-G509-011 New contextual menu to build libraries (2007-05-12)
+NF-42-G509-011 New contextual menu to build libraries (2007-05-12)
 
   It is now possible to build individual libraries directly from the
   Build project's contextual menu on the Project View.
 
-NF-420-G502-004 Ignore leading spaces in <external> (2007-05-09)
+NF-42-G502-004 Ignore leading spaces in <external> (2007-05-09)
 
   If you specify an external command to execute in an XML file, you can now
   have leading spaces if you wish. This allows you to split the contents of
   the <external> tag on several lines.
 
-NF-420-G307-006 File & Dirs operations from file and project views (2007-03-14)
+NF-42-G307-006 File & Dirs operations from file and project views (2007-03-14)
 
   File & directories can now be manipulated (created, renamed, deleted) from
   the contextual menu of the project and file views.
 
-NF-420-G223-014 Display full names in entity browser (2007-03-09)
+NF-42-G223-014 Display full names in entity browser (2007-03-09)
 
   Entities in the entity browsers are now identified with their full names
   XXX.YYY.ZZZ instead of their simple names ZZZ.
 
-NF-420-G213-014 Add support for Project Explorer filters (2007-02-20)
+NF-42-G213-014 Add support for Project Explorer filters (2007-02-20)
 
   It is now possible to filter out directories on the Project
   Explorer based on a given regular expression. This has been
   designed to filter out version control specific directories
   like CVS or .svn for example.
 
-NF-420-FA12-012 Recent chosen completions displayed at top of list (2007-05-23)
+NF-42-FA12-012 Recent chosen completions displayed at top of list (2007-05-23)
 
   The completion window now remembers recently chosen completions, and will
   propose them at the top of the completion proposal list, when they are
   accurate.
 
-NF-420-F925-002 Short titles for floating windows (2007-04-18)
+NF-42-F925-002 Short titles for floating windows (2007-04-18)
 
   A new preference has been added to control titles used for floating windows.
   It is now possible to specify whether short or normal titles should be used.
@@ -69,28 +69,28 @@ NF-420-F925-002 Short titles for floating windows (2007-04-18)
   The preference can be changed in the Windows section of the Preferences
   dialog.
 
-NF-420-F716-001 Improve block navigation support (2007-03-18)
+NF-42-F716-001 Improve block navigation support (2007-03-18)
 
   Now the "Start Of Statement" or "End Of Statement" actions move to
   the enclosing block when the cursor is already at the start/end of
   the current statement instead of doing nothing.
 
-NF-420-F329-003 Fix of "use clause would make operation legal" (2007-04-20)
+NF-42-F329-003 Fix of "use clause would make operation legal" (2007-04-20)
 
   Compiler messages "use clause would make operation legal" are now 
   automatically fixed by GPS, by adding the missing use clause to the file.
 
-NF-420-F223-023 Retrieve 'Class attribute on tooltip documentation (2007-05-02)
+NF-42-F223-023 Retrieve 'Class attribute on tooltip documentation (2007-05-02)
 
   Documentation displayed by tooltips now displays type of parameters and
   variables with 'Class when relevant.
 
-NF-420-D914-005 Better feedback when build fails w/o src location (2007-04-19)
+NF-42-D914-005 Better feedback when build fails w/o src location (2007-04-19)
 
   When a build fails with no file:line location (e.g. error at link time),
   GPS now raises the Messages window to make the error more visible.
 
-NF-420-C127-006 Ability to use shell syntax on custom build/run (2007-04-11)
+NF-42-C127-006 Ability to use shell syntax on custom build/run (2007-04-11)
 
   When using the Build>Run>Custom and Build>Make>Custom menus, it is now
   possible to use shell syntax, as recognized by the SHELL environment
