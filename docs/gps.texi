@@ -5044,7 +5044,7 @@ either vertically or horizontally. This algorithm tries to preserve as
 much as possible the positions of the items that were moved
 interactively.
 
-The @code{refresh layout} menu item in the background contextual menu
+The @code{Refresh layout} menu item in the background contextual menu
 can be used to recompute the layout of items at any time, even for
 items that were previously moved interactively.
 
@@ -5271,8 +5271,8 @@ the standard menu:
 This menu entry will display an external dialog in which you can
 select the name of a file to analyze.
 
-@item Refresh
-@cindex refresh
+@item Recompute dependencies
+@cindex recompute dependencies
 
 This menu entry will check that all links displays in the dependency
 browser are still valid. If not, they are removed. The arrows in the
@@ -5710,9 +5710,9 @@ the following commands. Failing to do so will result in blank windows.
       command (e.g @code{p/x var}) or a procedure call in the program being
       debugged (e.g @code{call my_proc}).
 
-   @item Refresh
-@cindex refresh
-      Refreshes all the items displayed in the Data Window.
+   @item Recompute
+@cindex recompute
+      Recomputes and refreshes all the items displayed in the Data Window.
 @end table
 
 @c --------------------------------------------------------------------
