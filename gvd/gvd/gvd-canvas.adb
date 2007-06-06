@@ -1494,7 +1494,7 @@ package body GVD.Canvas is
       Gtk_New (Mitem);
       Append (Canvas.Contextual_Background_Menu, Mitem);
 
-      Gtk_New (Mitem, Label => -"Refresh");
+      Gtk_New (Mitem, Label => -"Recompute");
       Append (Canvas.Contextual_Background_Menu, Mitem);
       Widget_Callback.Object_Connect
         (Mitem, Signal_Activate, On_Data_Refresh'Access, Canvas);
