@@ -413,7 +413,7 @@ package body Browsers.Dependency_Items is
             Slot_Object => General_Browser (Object),
             User_Data   => Context);
 
-         Gtk_New (Mitem, Label => -"Refresh");
+         Gtk_New (Mitem, Label => -"Recompute dependencies");
          Append (Menu, Mitem);
          Widget_Callback.Object_Connect
            (Mitem, Signal_Activate, Refresh_Browser'Access, Event_Widget);
