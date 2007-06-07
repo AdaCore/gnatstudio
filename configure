@@ -4918,7 +4918,7 @@ case "${host}" in
 	machine=intel386 opsys=windows
 	STRIP_CR=True
 	CAN_OUTPUT=False
-	TARGET_LFLAGS="$TARGET_LFLAGS -luser32 -lcomdlg32 -mwindows -Wl,--stack=0x10000000"
+	TARGET_LFLAGS="$TARGET_LFLAGS -luser32 -lcomdlg32 -mwindows -Wl,--stack=0x8000000"
 	TARGET=pentium-mingw32msv
 	COLOR_SELECTION="#BEBEBE"
 	EXEC_COMMAND="cmd /c start"
