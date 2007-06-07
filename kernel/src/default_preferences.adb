@@ -113,6 +113,7 @@ package body Default_Preferences is
       Descr : Pango.Font.Pango_Font_Description;
    end record;
    type Pref_Description_Access is access all Pref_Description;
+   pragma Convention (C, Pref_Description_Access);
 
    function Get_Description  (P : Param_Spec) return Pref_Description_Access;
    procedure Set_Description (P : Param_Spec; Descr : Pref_Description_Access);

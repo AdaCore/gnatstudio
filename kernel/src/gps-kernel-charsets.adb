@@ -50,6 +50,7 @@ package body GPS.Kernel.Charsets is
       Param              : Glib.Param_Spec;
       Tips               : Gtk.Tooltips.Gtk_Tooltips)
       return Gtk.Widget.Gtk_Widget;
+   pragma Convention (C, Edit_Charset);
    --  Create a widget suitable for editing a charset
 
    type Charset_Description is record

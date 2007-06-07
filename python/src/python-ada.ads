@@ -64,6 +64,7 @@ package Python.Ada is
 
    type C_Callback_Record is private;
    type C_Callback is access C_Callback_Record;
+   pragma Convention (C, C_Callback);
    --  The exact type doesn't matter, we only want to cover all possible cases
    --  of callbacks (C_Method_Vargs, C_Method_Keywords)
 

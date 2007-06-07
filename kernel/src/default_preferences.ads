@@ -75,6 +75,7 @@ package Default_Preferences is
       Param              : Glib.Param_Spec;
       Tips               : Gtk.Tooltips.Gtk_Tooltips)
       return Gtk.Widget.Gtk_Widget;
+   pragma Convention (C, Param_Spec_Editor);
    --  Return the widget that should be used to edit the preference described
    --  in Param.
    --  This widget should connect to the "preferences_changed" signal on
