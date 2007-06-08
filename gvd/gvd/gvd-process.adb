@@ -1066,6 +1066,7 @@ package body GVD.Process is
 
    exception
       when Process_Died =>
+         Traces.Trace (Me, "could not launch the debugger");
          Set_Busy (Process, False);
          Buttons :=
            Message_Dialog

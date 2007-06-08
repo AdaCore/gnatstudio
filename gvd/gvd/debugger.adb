@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2007                      --
+--                      Copyright (C) 2000-2006                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -50,10 +50,13 @@ with Language.Debugger;          use Language.Debugger;
 with Process_Proxies;            use Process_Proxies;
 with Remote;                     use Remote;
 with String_Utils;               use String_Utils;
+with Traces;                     use Traces;
 
 package body Debugger is
 
    use String_History;
+
+   Me : constant Debug_Handle := Create ("Debugger");
 
    Debug_Timeout : constant Guint32 := 100;
    --  Timeout in millisecond to check input from the underlying debugger
@@ -671,6 +674,7 @@ package body Debugger is
             return;
          end if;
 
+         Trace (Me, "underlying debugger died unexpectedly in 'send'");
          Button :=
            Message_Dialog
              (Expect_Out (Get_Process (Debugger)) & ASCII.LF &
@@ -724,6 +728,7 @@ package body Debugger is
 
    exception
       when Process_Died =>
+         Trace (Me, "underlying debugger died unexpectedly in 'send_full'");
          Set_Command_In_Process (Get_Process (Debugger), False);
 
          if Debugger.Window /= null then
