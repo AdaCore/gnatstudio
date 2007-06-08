@@ -1,0 +1,16 @@
+Completions for No (python):
+
+Completions for M (python):
+M.C1, M.Console, M.__doc__, M.__name__, M.hello, 
+Completions for M.C (python):
+M.C1, M.Console, 
+Completions for M.C1. (python):
+M.C1.__doc__, M.C1.__init__, M.C1.__module__, M.C1.method, 
+Completions for M.C1.me (python):
+M.C1.method, 
+Completions for C1 (shell):
+C1, C1.method, 
+Completions for  (shell):
+C1, C1.method, Console.clear, Console.flush, Console.isatty, Console.read, Console.readline, Console.write, clear_cache, echo, hello, load, 
+Completions for Ba (shell):
+

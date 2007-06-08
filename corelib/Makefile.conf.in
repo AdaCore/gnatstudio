@@ -1,0 +1,28 @@
+PYTHON_VERSION=@PYTHON_VERSION@
+PYTHON_CFLAGS=@PYTHON_CFLAGS@
+PYTHON_BASE=@PYTHON_BASE@
+PYGTK_INCLUDE="@PYGTK_INCLUDE@"
+PYTHON_DIR=@PYTHON_DIR@
+PYTHON_LIBS="@PYTHON_LIBS@"
+GTK_INCLUDE="@GTK_CFLAGS@"
+
+ifeq (${GTK_INCLUDE},"")
+USE_GTK=no
+else
+USE_GTK=yes
+endif
+
+.PHONY: all examples tests valgrind clean docs
+
+all:
+
+ifeq (${USE_GTK},yes)
+all:      all_text all_gtk
+examples: examples_text examples_gtk
+clean:    clean_text    clean_gtk
+else
+all:      all_text
+examples: examples_text
+clean:    clean_text
+endif
+

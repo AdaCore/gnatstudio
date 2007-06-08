@@ -1,0 +1,31 @@
+MAKEINFO=makeinfo
+TEXI2DVI=texi2dvi
+
+corelib.html: corelib.texi
+	${MAKEINFO} --html --css-include=corelib.css --number-sections $<
+
+corelib.pdf: corelib.texi
+	echo x | ${TEXI2DVI} -p $<
+
+corelib.txt: corelib.texi
+	${MAKEINFO} --force --no-headers --no-split -o $@ $<
+
+.PHONY: clean-temp-files
+clean-temp-files:
+	-$(RM) *.aux
+	-$(RM) *.cp
+	-$(RM) *.cps
+	-$(RM) *.fn
+	-$(RM) *.ky
+	-$(RM) *.log
+	-$(RM) *.pg
+	-$(RM) *.toc
+	-$(RM) *.tp
+	-$(RM) *.vr
+
+.PHONY: clean
+clean: clean-temp-files
+	-${RM} corelib.pdf corelib.txt
+	-${RM} -rf corelib/
+
+
