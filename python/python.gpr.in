@@ -4,7 +4,7 @@ with "../gtkada/gtkada";
 
 project Python is
 
-   for Source_Dirs use ("@PYTHON_ADA_SOURCE@");
+   for Source_Dirs use ("@PYTHON_ADA_SRC@");
    for Object_Dir use "obj";
    for Languages use ("Ada", "C");
 

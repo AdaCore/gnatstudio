@@ -310,7 +310,7 @@ ac_includes_default="\
 
 ac_subdirs_all="$ac_subdirs_all kernel/src_info/sn"
 ac_subdirs_all="$ac_subdirs_all kernel/src_info/sn/snsrc"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os XMLADA_GPR CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP GNATMAKE SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB DVIPS MAKEINFO TEXI2DVI PKG_CONFIG GTK_CONFIG GTK_PREFIX GLIB_PREFIX ATK_PREFIX PANGO_PREFIX CAIRO_PREFIX GTKADA_SRC GTKADA_OBJ GTK_CFLAGS GTK_LIBS GTK_STATIC_LIBS PYTHON GPS_VERSION opsysfile TARGET EXEC_PREFIX STRIP_CR CAN_OUTPUT TARGET_CFLAGS TARGET_LFLAGS EXEC_COMMAND DEFAULT_PS DEFAULT_FONT PRINT_CMD DIFF_CMD PATCH_CMD OPAQUE_MDI HOST_TYPE EXECUTION_WINDOW PYTHON_BASE PYTHON_VERSION PYTHON_ADA_SOURCE PYTHON_DIR PYTHON_LIBS PYGTK_INCLUDE PATH_STYLE SSH_ESCAPE subdirs LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os XMLADA_GPR CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP GNATMAKE SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB DVIPS MAKEINFO TEXI2DVI PKG_CONFIG GTK_CFLAGS GTK_CONFIG GTK_PREFIX GLIB_PREFIX ATK_PREFIX PANGO_PREFIX CAIRO_PREFIX GTKADA_SRC GTKADA_OBJ GTK_LIBS GTK_STATIC_LIBS PYTHON PYTHON_BASE PYTHON_VERSION PYTHON_DIR PYTHON_LIBS PYTHON_CFLAGS PYTHON_ADA_SRC PYGTK_PREFIX PYGTK_INCLUDE GPS_VERSION opsysfile TARGET EXEC_PREFIX STRIP_CR CAN_OUTPUT TARGET_CFLAGS TARGET_LFLAGS EXEC_COMMAND DEFAULT_PS DEFAULT_FONT PRINT_CMD DIFF_CMD PATCH_CMD OPAQUE_MDI HOST_TYPE EXECUTION_WINDOW PATH_STYLE SSH_ESCAPE subdirs LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -846,7 +846,8 @@ if test -n "$ac_init_help"; then
 Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-  --disable-pygtk	do not try to build the special support for PyGTK
+  --disable-pygtk    do not try to build the special support
+for PyGTK
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1385,7 +1386,7 @@ TARGET_LFLAGS=""
 EXEC_COMMAND="xterm -e"
 DEFAULT_FONT="sans 9"
 PATH_STYLE=UNIX
-SSH_ESCAPE="~"
+SSH_ESCAPE='~'
 
 ## We need to double the quotes here, since this is inserted in an Ada file
 DEFAULT_PS='sh -c """"""ps x 2> /dev/null || ps -u \$USER 2> /dev/null || ps""""""'
@@ -3223,7 +3224,8 @@ done
 
 
 ######### checking for gtk
-  # Extract the first word of "pkg-config", so it can be a program name with args.
+
+   # Extract the first word of "pkg-config", so it can be a program name with args.
 set dummy pkg-config; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
 echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
@@ -3262,6 +3264,21 @@ else
   echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
 fi
+
+   echo "$as_me:$LINENO: checking gtk+" >&5
+echo $ECHO_N "checking gtk+... $ECHO_C" >&6
+   if test "$PKG_CONFIG" = "no" ; then
+      echo "$as_me:$LINENO: result: not found" >&5
+echo "${ECHO_T}not found" >&6
+   else
+      GTK_PREFIX=`$PKG_CONFIG gtk+-2.0 --variable=prefix`
+      echo "$as_me:$LINENO: result: $GTK_PREFIX" >&5
+echo "${ECHO_T}$GTK_PREFIX" >&6
+      GTK_CFLAGS=`$PKG_CONFIG gtk+-2.0 --cflags`
+   fi
+
+
+
 
   echo "$as_me:$LINENO: checking GTK GLIB ATK PANGO prefix" >&5
 echo $ECHO_N "checking GTK GLIB ATK PANGO prefix... $ECHO_C" >&6
@@ -3472,12 +3489,14 @@ else
   PYTHON_PATH_WITH=yes
 fi;
 
+   PYTHON_ADA_SRC=python
    if test x"$PYTHON_PATH_WITH" = xno ; then
       echo "$as_me:$LINENO: checking for python" >&5
 echo $ECHO_N "checking for python... $ECHO_C" >&6
       echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
       PYTHON_BASE=no
+      PYTHON_ADA_SRC=nopython
 
    else
       # Extract the first word of "python", so it can be a program name with args.
@@ -3523,6 +3542,7 @@ fi
 
       if test x"$PYTHON" = xno ; then
          PYTHON_BASE=no
+         PYTHON_ADA_SRC=nopython
       else
         echo "$as_me:$LINENO: checking for python >= 2.0" >&5
 echo $ECHO_N "checking for python >= 2.0... $ECHO_C" >&6
@@ -3537,6 +3557,7 @@ echo $ECHO_N "checking for python >= 2.0... $ECHO_C" >&6
            echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
            PYTHON_BASE=no
+           PYTHON_ADA_SRC=nopython
         else
            PYTHON_VERSION=`$PYTHON -c 'import sys; print \`sys.version_info[0]\`+"."+\`sys.version_info[1]\`'`
            PYTHON_DIR=${PYTHON_BASE}/lib/python${PYTHON_VERSION}/config
@@ -3546,11 +3567,143 @@ echo "${ECHO_T}yes (version $PYTHON_VERSION)" >&6
       fi
    fi
 
-   if test x"$PYTHON_BASE" = xno ; then
-      PYTHON_ADA_SOURCE="src2"
-   else
-      PYTHON_ADA_SOURCE="src"
+   PYTHON_LIBS=""
+   if test x"$PYTHON_BASE" != xno; then
+      case "${host}" in
+          hppa*-hp-hpux1[0-9]* )
+             PYTHON_LIBS="-Wl,-E ${PYTHON_LIBS}"
+             ;;
+          powerpc-ibm-aix5.* )
+             PYTHON_LIBS="-lld ${PYTHON_LIBS}"
+             ;;
+          powerpc-*-darwin* )
+             PYTHON_LIBS="-ldl ${PYTHON_LIBS}"
+             ;;
+          *-sunos5.5* | *-solaris2.5* )
+             PYTHON_LIBS="-lresolv -lsocket -lnsl -ldl -lm ${PYTHON_LIBS}"
+             ;;
+          *-sunos5* | *-solaris* )
+             PYTHON_LIBS="-lresolv -lsocket -lnsl -ldl -lm ${PYTHON_LIBS}"
+             ;;
+          ia64-*-* )
+             case "${host}" in
+               *-linux-gnu* )
+                  PYTHON_LIBS="-Wl,-export-dynamic -ldl ${PYTHON_LIBS}"
+                  ;;
+               *-hp-hpux11* )
+                  PYTHON_LIBS="-ldld -ldl -Wl,-E ${PYTHON_LIBS}"
+                  ;;
+             esac
+             ;;
+          x86-64-*-* )
+             PYTHON_LIBS="-Wl,-export-dynamic -ldl -lm ${PYTHON_LIBS}"
+             ;;
+          i[3456]86-*linux-gnu* )
+             PYTHON_LIBS="-Wl,-export-dynamic -ldl -lm ${PYTHON_LIBS}"
+             ;;
+          i[3456]86-*win32* | i[3456]86-*mingw32* | i[3456]86-*cygwin* )
+             ;;
+          *-darwin* )
+             PYTHON_LIBS="-ldl ${PYTHON_LIBS}"
+             ;;
+      esac
+
+      PYTHON_LIBS="-L${PYTHON_DIR} -lpython${PYTHON_VERSION} ${PYTHON_LIBS}"
+      PYTHON_CFLAGS="-I${PYTHON_BASE}/include/python${PYTHON_VERSION}"
    fi
+
+   # Automatically check whether some libraries are needed to link with
+   # the python libraries. If you are using the default system library, it is
+   # generally the case that at least -lpthread will be needed. But you might
+   # also have recompiled your own version, and if it doesn't depend on
+   # pthreads, we shouldn't bring that in, since that also impacts the choice
+   # of the GNAT runtime
+
+   CFLAGS="${CFLAGS} ${PYTHON_CFLAGS}"
+   LIBS="${LIBS} ${PYTHON_LIBS}"
+   cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <Python.h>
+int
+main ()
+{
+Py_Initialize();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  :
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+LIBS="${LIBS} -lpthread -lutil"
+      cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <Python.h>
+int
+main ()
+{
+Py_Initialize();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  PYTHON_LIBS="${PYTHON_LIBS} -lpthread -lutil"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+{ { echo "$as_me:$LINENO: error: Can't compile and link python example
+See \`config.log' for more details." >&5
+echo "$as_me: error: Can't compile and link python example
+See \`config.log' for more details." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+
+
+
+
+
+
+
 
 
     # Check whether --enable-pygtk or --disable-pygtk was given.
@@ -3561,38 +3714,48 @@ else
   enable_pygtk=yes
 fi;
 
-    min_pygtk_version=2.8
-    module=pygtk-2.0
-    echo "$as_me:$LINENO: checking for pygtk - version >= $min_pygtk_version" >&5
+    if test "$PKG_CONFIG" = "" -o "$PKG_CONFIG" = "no" ; then
+       echo "$as_me:$LINENO: checking for pygtk" >&5
+echo $ECHO_N "checking for pygtk... $ECHO_C" >&6
+       echo "$as_me:$LINENO: result: no (pkg-config not found)" >&5
+echo "${ECHO_T}no (pkg-config not found)" >&6
+    else
+       min_pygtk_version=2.8
+       module=pygtk-2.0
+       echo "$as_me:$LINENO: checking for pygtk - version >= $min_pygtk_version" >&5
 echo $ECHO_N "checking for pygtk - version >= $min_pygtk_version... $ECHO_C" >&6
 
-    if test x"$enable_pygtk" = x -o x"$enable_pygtk" = xno ; then
-       echo "$as_me:$LINENO: result: no" >&5
+       if test x"$enable_pygtk" = x -o x"$enable_pygtk" = xno ; then
+          echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
-       PYGTK_PREFIX=""
-       PYGTK_INCLUDE=""
+          PYGTK_PREFIX=""
+          PYGTK_INCLUDE=""
 
-    elif test "$PYTHON_BASE" != "no" ; then
-       pygtk_version=`$PKG_CONFIG $module --modversion`
-       $PKG_CONFIG $module --atleast-version=$min_pygtk_version
-       if test $? = 0 ; then
-          PYGTK_INCLUDE=`$PKG_CONFIG $module --cflags`
-          PYGTK_PREFIX=`$PKG_CONFIG $module --variable=prefix`
-          echo "$as_me:$LINENO: result: yes (version $pygtk_version)" >&5
+       elif test "$PYTHON_BASE" != "no" ; then
+          pygtk_version=`$PKG_CONFIG $module --modversion`
+          $PKG_CONFIG $module --atleast-version=$min_pygtk_version
+          if test $? = 0 ; then
+             PYGTK_INCLUDE="`$PKG_CONFIG $module --cflags` -DPYGTK"
+             PYGTK_PREFIX=`$PKG_CONFIG $module --variable=prefix`
+             echo "$as_me:$LINENO: result: yes (version $pygtk_version)" >&5
 echo "${ECHO_T}yes (version $pygtk_version)" >&6
-       else
-          echo "$as_me:$LINENO: result: no (found $pygtk_version)" >&5
+          else
+             echo "$as_me:$LINENO: result: no (found $pygtk_version)" >&5
 echo "${ECHO_T}no (found $pygtk_version)" >&6
+             PYGTK_PREFIX=""
+             PYGTK_INCLUDE=""
+          fi
+
+       else
+          echo "$as_me:$LINENO: result: no since python not found" >&5
+echo "${ECHO_T}no since python not found" >&6
           PYGTK_PREFIX=""
           PYGTK_INCLUDE=""
        fi
-
-    else
-       echo "$as_me:$LINENO: result: no since python not found" >&5
-echo "${ECHO_T}no since python not found" >&6
-       PYGTK_PREFIX=""
-       PYGTK_INCLUDE=""
     fi
+
+
+
 
 
 ######## GNU regex checking
@@ -4780,7 +4943,6 @@ case "${host}" in
   ## HP 9000 series 700 and 800, running HP/UX
   hppa*-hp-hpux1[0-9]* )
     machine=hp800 opsys=hpux10
-    PYTHON_LIBS="-Wl,-E ${PYTHON_LIBS}"
   ;;
 
   mips-sgi-irix6.5* )
@@ -4793,7 +4955,6 @@ case "${host}" in
   ## IBM, AIX machines
   powerpc-ibm-aix5.*  )
     machine=ibmrs6000 opsys=aix4-2
-    PYTHON_LIBS="-lld ${PYTHON_LIBS}"
     TARGET_LFLAGS="$TARGET_LFLAGS -Wl,-bbigtoc"
   ;;
 
@@ -4805,7 +4966,6 @@ case "${host}" in
 
   powerpc-*-darwin* )
     machine=powerpc opsys=darwin
-    PYTHON_LIBS="-ldl ${PYTHON_LIBS}"
     STRIP_CR=True
   ;;
 
@@ -4844,12 +5004,10 @@ case "${host}" in
                 opsys=sol2-4
                 ;;
       *-sunos5.5* | *-solaris2.5* )
-		PYTHON_LIBS="-lresolv -lsocket -lnsl -ldl -lm ${PYTHON_LIBS}"
 		TARGET_LFLAGS="$TARGET_LFLAGS -lXrender"
                 opsys=sol2-5
                 ;;
       *-sunos5* | *-solaris* )
-		PYTHON_LIBS="-lresolv -lsocket -lnsl -ldl -lm ${PYTHON_LIBS}"
 		TARGET_LFLAGS="$TARGET_LFLAGS -lXrender"
                 opsys=sol2-5
                 ;;
@@ -4864,12 +5022,10 @@ case "${host}" in
   ia64-*-* )
     case "${host}" in
       *-linux-gnu* )
-	PYTHON_LIBS="-Wl,-export-dynamic -ldl ${PYTHON_LIBS}"
 	opsys=gnu-linux
 	PRINT_CMD="a2ps"
         ;;
       *-hp-hpux11* )
-	PYTHON_LIBS="-ldld -ldl -Wl,-E ${PYTHON_LIBS}"
         opsys=hpux10
         ;;
     esac
@@ -4880,7 +5036,6 @@ case "${host}" in
     case "${host}" in
       *-linux-gnu* )
         opsys=gnu-linux
-	PYTHON_LIBS="-Wl,-export-dynamic -ldl -lm ${PYTHON_LIBS}"
 	PRINT_CMD="a2ps"
         ;;
     esac
@@ -4902,10 +5057,6 @@ case "${host}" in
       *-linux-gnu* )
 	opsys=gnu-linux
 	PRINT_CMD="a2ps"
-
-	# If we do not link with -Wl,-export-dynamic, commands like
-	# "import time" will raise errors in the interpreter
-	PYTHON_LIBS="-Wl,-export-dynamic -ldl -lm ${PYTHON_LIBS}"
 	;;
 
       *-sco3.2v4* )             opsys=sco4  ;;
@@ -4935,7 +5086,6 @@ case "${host}" in
 
       *-darwin* )
         opsys=darwin
-        PYTHON_LIBS="-ldl ${PYTHON_LIBS}"
         STRIP_CR=True
         ;;
 
@@ -4951,11 +5101,6 @@ machfile="'\"machine/${machine}.h\"'"
 opsysfile="\\\"system/${opsys}.h\\\""
 
 # Set the version number of GPS/GVD
-
-
-
-
-
 
 
 
@@ -5002,7 +5147,7 @@ echo "       xmlada: $XMLADA_GPR"
 echo "           uses ADA_PROJECT_PATH to find xmlada.gpr"
 echo ""
 
-                                                                                                                                  ac_config_files="$ac_config_files Makefile Makefile.common gnat/sdefault/sdefault.adb docs/Makefile po/Makefile common/Makefile.common common/src/config.ads python/Makefile.python python/python.gpr gtkada/gtkada.gpr common/expect/Makefile common/common.gpr:common/common_${XMLADA_GPR}.gpr.in share/plug-ins/subversion.xml share/plug-ins/protocols.xml"
+                                                                                                                                            ac_config_files="$ac_config_files Makefile Makefile.common gnat/sdefault/sdefault.adb docs/Makefile po/Makefile common/Makefile.common common/src/config.ads python/Makefile.python python/python.gpr gtkada/gtkada.gpr common/expect/Makefile common/common.gpr:common/common_${XMLADA_GPR}.gpr.in share/plug-ins/subversion.xml share/plug-ins/protocols.xml"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -5683,6 +5828,7 @@ s,@DVIPS@,$DVIPS,;t t
 s,@MAKEINFO@,$MAKEINFO,;t t
 s,@TEXI2DVI@,$TEXI2DVI,;t t
 s,@PKG_CONFIG@,$PKG_CONFIG,;t t
+s,@GTK_CFLAGS@,$GTK_CFLAGS,;t t
 s,@GTK_CONFIG@,$GTK_CONFIG,;t t
 s,@GTK_PREFIX@,$GTK_PREFIX,;t t
 s,@GLIB_PREFIX@,$GLIB_PREFIX,;t t
@@ -5691,10 +5837,17 @@ s,@PANGO_PREFIX@,$PANGO_PREFIX,;t t
 s,@CAIRO_PREFIX@,$CAIRO_PREFIX,;t t
 s,@GTKADA_SRC@,$GTKADA_SRC,;t t
 s,@GTKADA_OBJ@,$GTKADA_OBJ,;t t
-s,@GTK_CFLAGS@,$GTK_CFLAGS,;t t
 s,@GTK_LIBS@,$GTK_LIBS,;t t
 s,@GTK_STATIC_LIBS@,$GTK_STATIC_LIBS,;t t
 s,@PYTHON@,$PYTHON,;t t
+s,@PYTHON_BASE@,$PYTHON_BASE,;t t
+s,@PYTHON_VERSION@,$PYTHON_VERSION,;t t
+s,@PYTHON_DIR@,$PYTHON_DIR,;t t
+s,@PYTHON_LIBS@,$PYTHON_LIBS,;t t
+s,@PYTHON_CFLAGS@,$PYTHON_CFLAGS,;t t
+s,@PYTHON_ADA_SRC@,$PYTHON_ADA_SRC,;t t
+s,@PYGTK_PREFIX@,$PYGTK_PREFIX,;t t
+s,@PYGTK_INCLUDE@,$PYGTK_INCLUDE,;t t
 s,@GPS_VERSION@,$GPS_VERSION,;t t
 s,@opsysfile@,$opsysfile,;t t
 s,@TARGET@,$TARGET,;t t
@@ -5712,12 +5865,6 @@ s,@PATCH_CMD@,$PATCH_CMD,;t t
 s,@OPAQUE_MDI@,$OPAQUE_MDI,;t t
 s,@HOST_TYPE@,$HOST_TYPE,;t t
 s,@EXECUTION_WINDOW@,$EXECUTION_WINDOW,;t t
-s,@PYTHON_BASE@,$PYTHON_BASE,;t t
-s,@PYTHON_VERSION@,$PYTHON_VERSION,;t t
-s,@PYTHON_ADA_SOURCE@,$PYTHON_ADA_SOURCE,;t t
-s,@PYTHON_DIR@,$PYTHON_DIR,;t t
-s,@PYTHON_LIBS@,$PYTHON_LIBS,;t t
-s,@PYGTK_INCLUDE@,$PYGTK_INCLUDE,;t t
 s,@PATH_STYLE@,$PATH_STYLE,;t t
 s,@SSH_ESCAPE@,$SSH_ESCAPE,;t t
 s,@subdirs@,$subdirs,;t t
@@ -6102,3 +6249,4 @@ echo "$as_me: error: $ac_sub_configure failed for $ac_dir" >&2;}
   done
 fi
 
+# corelib/shared.gpr corelib/docs/Makefile corelib/Makefile.conf)

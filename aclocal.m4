@@ -19,6 +19,8 @@ for am_file in <<$1>>; do
 done<<>>dnl>>)
 changequote([,]))])
 
+sinclude(corelib/aclocal.m4)
+
 #############################################################
 #
 #  Checking for Gnat
@@ -69,98 +71,6 @@ EOF
 
 #############################################################
 #
-#  Checking for python
-#
-#############################################################
-
-AC_DEFUN(AM_PATH_PYTHON,
-[
-   AC_ARG_WITH(python,
-               [ --with-python=<path>     Specify the full path to the Python installation],
-               PYTHON_PATH_WITH=$withval,
-               PYTHON_PATH_WITH=yes)
-
-   if test x"$PYTHON_PATH_WITH" = xno ; then
-      AC_MSG_CHECKING(for python)
-      AC_MSG_RESULT(no, use --with-python if needed)
-      PYTHON_BASE=no
-
-   else
-      AC_PATH_PROG(PYTHON, python, no, $PYTHON_PATH_WITH/bin:$PATH)
-      if test x"$PYTHON" = xno ; then
-         PYTHON_BASE=no
-      else
-        AC_MSG_CHECKING(for python >= 2.0)
-        if test x"$PYTHON_PATH_WITH" != xyes ; then
-           PYTHON_BASE=$PYTHON_PATH_WITH
-        else
-           PYTHON_BASE=`$PYTHON -c 'import sys; print sys.prefix' `
-        fi
-
-        PYTHON_MAJOR_VERSION=`$PYTHON -c 'import sys; print sys.version_info[[0]]' 2>/dev/null` 
-        if test x$PYTHON_MAJOR_VERSION != x2 ; then
-           AC_MSG_RESULT(no, need at least version 2.0)
-           PYTHON_BASE=no
-        else
-           PYTHON_VERSION=`$PYTHON -c 'import sys; print \`sys.version_info[[0]]\`+"."+\`sys.version_info[[1]]\`'`
-           PYTHON_DIR=${PYTHON_BASE}/lib/python${PYTHON_VERSION}/config
-           AC_MSG_RESULT(yes (version $PYTHON_VERSION))
-        fi
-      fi
-   fi
-
-   if test x"$PYTHON_BASE" = xno ; then
-      PYTHON_ADA_SOURCE="src2"
-   else
-      PYTHON_ADA_SOURCE="src"
-   fi
-])
-
-##############################################################
-#
-#  Checking for pygtk
-#    $1 = minimum pygtk version required
-#
-##############################################################
-
-AC_DEFUN(AM_PATH_PYGTK,
-[
-    AC_ARG_ENABLE(pygtk,
-                  [  --disable-pygtk	do not try to build the special support for PyGTK],
-                  ,
-                  enable_pygtk=yes)
-
-    min_pygtk_version=ifelse([$1], ,2.8,$1)
-    module=pygtk-2.0
-    AC_MSG_CHECKING(for pygtk - version >= $min_pygtk_version)
-
-    if test x"$enable_pygtk" = x -o x"$enable_pygtk" = xno ; then
-       AC_MSG_RESULT(no)
-       PYGTK_PREFIX=""
-       PYGTK_INCLUDE=""
-
-    elif test "$PYTHON_BASE" != "no" ; then
-       pygtk_version=`$PKG_CONFIG $module --modversion`
-       $PKG_CONFIG $module --atleast-version=$min_pygtk_version
-       if test $? = 0 ; then
-          PYGTK_INCLUDE=`$PKG_CONFIG $module --cflags`
-          PYGTK_PREFIX=`$PKG_CONFIG $module --variable=prefix`
-          AC_MSG_RESULT(yes (version $pygtk_version))
-       else
-          AC_MSG_RESULT(no (found $pygtk_version))
-          PYGTK_PREFIX=""
-          PYGTK_INCLUDE=""
-       fi 
-
-    else
-       AC_MSG_RESULT(no since python not found)
-       PYGTK_PREFIX=""
-       PYGTK_INCLUDE=""
-    fi
-])
-
-#############################################################
-#
 # Configure paths for GtkAda
 #
 #############################################################
@@ -168,11 +78,10 @@ AC_DEFUN(AM_PATH_PYGTK,
 dnl AM_PATH_GTK([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
 dnl Test for GTK, and define GTK_CFLAGS and GTK_LIBS
 dnl
-AC_DEFUN(AM_PATH_GTK,
+AC_DEFUN(AM_PATH_GTKADA,
 [dnl 
 dnl Get the cflags and libraries from the gtkada-config script
 dnl
-  AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
   AC_MSG_CHECKING(GTK GLIB ATK PANGO prefix)
   GTK="gtk+-2.0"
   GLIB="glib-2.0"

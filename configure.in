@@ -46,7 +46,8 @@ AC_CHECK_PROGS(MAKEINFO, makeinfo)
 AC_CHECK_PROGS(TEXI2DVI, texi2dvi)
 
 ######### checking for gtk
-AM_PATH_GTK(2.4.0,,AC_MSG_ERROR(Test for GtkAda failed. See the file 'INSTALL' for help.))
+AM_PATH_GTK
+AM_PATH_GTKADA(2.4.0,,AC_MSG_ERROR(Test for GtkAda failed. See the file 'INSTALL' for help.))
 
 ######### checking for python (needs to be done after gtk)
 AM_PATH_PYTHON
@@ -88,7 +89,6 @@ case "${host}" in
   ## HP 9000 series 700 and 800, running HP/UX
   hppa*-hp-hpux1[[0-9]]* )
     machine=hp800 opsys=hpux10
-    PYTHON_LIBS="-Wl,-E ${PYTHON_LIBS}"
   ;;
 
   mips-sgi-irix6.5* )
@@ -101,7 +101,6 @@ case "${host}" in
   ## IBM, AIX machines
   powerpc-ibm-aix5.*  )
     machine=ibmrs6000 opsys=aix4-2
-    PYTHON_LIBS="-lld ${PYTHON_LIBS}"
     TARGET_LFLAGS="$TARGET_LFLAGS -Wl,-bbigtoc"
   ;;
 
@@ -113,7 +112,6 @@ case "${host}" in
 
   powerpc-*-darwin* )
     machine=powerpc opsys=darwin
-    PYTHON_LIBS="-ldl ${PYTHON_LIBS}"
     STRIP_CR=True
   ;;
 
@@ -152,12 +150,10 @@ case "${host}" in
                 opsys=sol2-4
                 ;;
       *-sunos5.5* | *-solaris2.5* )
-		PYTHON_LIBS="-lresolv -lsocket -lnsl -ldl -lm ${PYTHON_LIBS}"
 		TARGET_LFLAGS="$TARGET_LFLAGS -lXrender"
                 opsys=sol2-5
                 ;;
       *-sunos5* | *-solaris* )
-		PYTHON_LIBS="-lresolv -lsocket -lnsl -ldl -lm ${PYTHON_LIBS}"
 		TARGET_LFLAGS="$TARGET_LFLAGS -lXrender"
                 opsys=sol2-5
                 ;;
@@ -172,12 +168,10 @@ case "${host}" in
   ia64-*-* )
     case "${host}" in
       *-linux-gnu* )
-	PYTHON_LIBS="-Wl,-export-dynamic -ldl ${PYTHON_LIBS}"
 	opsys=gnu-linux
 	PRINT_CMD="a2ps"
         ;;
       *-hp-hpux11* )
-	PYTHON_LIBS="-ldld -ldl -Wl,-E ${PYTHON_LIBS}"
         opsys=hpux10
         ;;
     esac
@@ -188,7 +182,6 @@ case "${host}" in
     case "${host}" in
       *-linux-gnu* )
         opsys=gnu-linux
-	PYTHON_LIBS="-Wl,-export-dynamic -ldl -lm ${PYTHON_LIBS}"
 	PRINT_CMD="a2ps"
         ;;
     esac
@@ -210,10 +203,6 @@ case "${host}" in
       *-linux-gnu* )
 	opsys=gnu-linux
 	PRINT_CMD="a2ps"
-
-	# If we do not link with -Wl,-export-dynamic, commands like
-	# "import time" will raise errors in the interpreter
-	PYTHON_LIBS="-Wl,-export-dynamic -ldl -lm ${PYTHON_LIBS}"
 	;;
 
       *-sco3.2v4* )             opsys=sco4  ;;
@@ -243,7 +232,6 @@ case "${host}" in
 
       *-darwin* )
         opsys=darwin
-        PYTHON_LIBS="-ldl ${PYTHON_LIBS}"
         STRIP_CR=True
         ;;
 
@@ -280,12 +268,6 @@ AC_SUBST(PATCH_CMD)
 AC_SUBST(OPAQUE_MDI)
 AC_SUBST(HOST_TYPE)
 AC_SUBST(EXECUTION_WINDOW)
-AC_SUBST(PYTHON_BASE)
-AC_SUBST(PYTHON_VERSION)
-AC_SUBST(PYTHON_ADA_SOURCE)
-AC_SUBST(PYTHON_DIR)
-AC_SUBST(PYTHON_LIBS)
-AC_SUBST(PYGTK_INCLUDE)
 AC_SUBST(PATH_STYLE)
 AC_SUBST(SSH_ESCAPE)
 
@@ -306,3 +288,4 @@ echo "           uses ADA_PROJECT_PATH to find xmlada.gpr"
 echo ""
 
 AC_OUTPUT(Makefile Makefile.common gnat/sdefault/sdefault.adb docs/Makefile po/Makefile common/Makefile.common common/src/config.ads python/Makefile.python python/python.gpr gtkada/gtkada.gpr common/expect/Makefile common/common.gpr:common/common_${XMLADA_GPR}.gpr.in share/plug-ins/subversion.xml share/plug-ins/protocols.xml)
+# corelib/shared.gpr corelib/docs/Makefile corelib/Makefile.conf)
