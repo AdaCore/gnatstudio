@@ -45,17 +45,17 @@ If you need to modify configure.in and then regenerate the configure script,
 you will need autoconf version 2.57 installed on your machine. Later versions
 may not be compatible.
 
-Building/Installing from CVS
-============================
+Building/Installing from Subversion
+===================================
 
-The instructions to build from CVS are similar to the instructions listed
+The instructions to build from SVN are similar to the instructions listed
 above, with a few additional steps:
 
 - You need to create a symbolic link called 'gnat_src' that points to recent
   GNAT sources (preferably sources as recent as the GPS sources used), e.g.
   the svn://gcc.gnu.org/svn/gcc/trunk/gcc/ada repository.
 
-- You need to use the CVS version of GtkAda matching GPS sources (same date/tag)
+- You need to use the SVN version of GtkAda matching GPS sources (same date/tag)
 
 - Depending on your GNAT version, you may also need to apply
   distrib/gps-4.1-gpl-2006.diff
