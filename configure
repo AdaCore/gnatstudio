@@ -3610,18 +3610,17 @@ echo "${ECHO_T}yes (version $PYTHON_VERSION)" >&6
 
       PYTHON_LIBS="-L${PYTHON_DIR} -lpython${PYTHON_VERSION} ${PYTHON_LIBS}"
       PYTHON_CFLAGS="-I${PYTHON_BASE}/include/python${PYTHON_VERSION}"
-   fi
 
-   # Automatically check whether some libraries are needed to link with
-   # the python libraries. If you are using the default system library, it is
-   # generally the case that at least -lpthread will be needed. But you might
-   # also have recompiled your own version, and if it doesn't depend on
-   # pthreads, we shouldn't bring that in, since that also impacts the choice
-   # of the GNAT runtime
+      # Automatically check whether some libraries are needed to link with
+      # the python libraries. If you are using the default system library, it is
+      # generally the case that at least -lpthread will be needed. But you might
+      # also have recompiled your own version, and if it doesn't depend on
+      # pthreads, we shouldn't bring that in, since that also impacts the choice
+      # of the GNAT runtime
 
-   CFLAGS="${CFLAGS} ${PYTHON_CFLAGS}"
-   LIBS="${LIBS} ${PYTHON_LIBS}"
-   cat >conftest.$ac_ext <<_ACEOF
+      CFLAGS="${CFLAGS} ${PYTHON_CFLAGS}"
+      LIBS="${LIBS} ${PYTHON_LIBS}"
+      cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 /* confdefs.h.  */
 _ACEOF
@@ -3655,7 +3654,7 @@ else
 sed 's/^/| /' conftest.$ac_ext >&5
 
 LIBS="${LIBS} -lpthread -lutil"
-      cat >conftest.$ac_ext <<_ACEOF
+         cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 /* confdefs.h.  */
 _ACEOF
@@ -3697,6 +3696,7 @@ fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+   fi
 
 
 

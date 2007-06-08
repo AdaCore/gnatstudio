@@ -110,25 +110,25 @@ AC_DEFUN(AM_PATH_PYTHON,
 
       PYTHON_LIBS="-L${PYTHON_DIR} -lpython${PYTHON_VERSION} ${PYTHON_LIBS}"
       PYTHON_CFLAGS="-I${PYTHON_BASE}/include/python${PYTHON_VERSION}"
-   fi
 
-   # Automatically check whether some libraries are needed to link with
-   # the python libraries. If you are using the default system library, it is
-   # generally the case that at least -lpthread will be needed. But you might
-   # also have recompiled your own version, and if it doesn't depend on
-   # pthreads, we shouldn't bring that in, since that also impacts the choice
-   # of the GNAT runtime
+      # Automatically check whether some libraries are needed to link with
+      # the python libraries. If you are using the default system library, it is
+      # generally the case that at least -lpthread will be needed. But you might
+      # also have recompiled your own version, and if it doesn't depend on
+      # pthreads, we shouldn't bring that in, since that also impacts the choice
+      # of the GNAT runtime
 
-   CFLAGS="${CFLAGS} ${PYTHON_CFLAGS}"
-   LIBS="${LIBS} ${PYTHON_LIBS}"
-   AC_LINK_IFELSE(
-     [AC_LANG_PROGRAM([#include <Python.h>],[Py_Initialize();])],
-     [],
-     [LIBS="${LIBS} -lpthread -lutil"
+      CFLAGS="${CFLAGS} ${PYTHON_CFLAGS}"
+      LIBS="${LIBS} ${PYTHON_LIBS}"
       AC_LINK_IFELSE(
         [AC_LANG_PROGRAM([#include <Python.h>],[Py_Initialize();])],
-        [PYTHON_LIBS="${PYTHON_LIBS} -lpthread -lutil"],
-        [AC_MSG_FAILURE([Can't compile and link python example])])])
+        [],
+        [LIBS="${LIBS} -lpthread -lutil"
+         AC_LINK_IFELSE(
+           [AC_LANG_PROGRAM([#include <Python.h>],[Py_Initialize();])],
+           [PYTHON_LIBS="${PYTHON_LIBS} -lpthread -lutil"],
+           [AC_MSG_FAILURE([Can't compile and link python example])])])
+   fi
 
    AC_SUBST(PYTHON_BASE)
    AC_SUBST(PYTHON_VERSION)
