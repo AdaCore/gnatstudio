@@ -310,7 +310,7 @@ ac_includes_default="\
 
 ac_subdirs_all="$ac_subdirs_all kernel/src_info/sn"
 ac_subdirs_all="$ac_subdirs_all kernel/src_info/sn/snsrc"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os XMLADA_GPR CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP GNATMAKE SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB DVIPS MAKEINFO TEXI2DVI PKG_CONFIG GTK_CFLAGS GTK_CONFIG GTK_PREFIX GLIB_PREFIX ATK_PREFIX PANGO_PREFIX CAIRO_PREFIX GTKADA_SRC GTKADA_OBJ GTK_LIBS GTK_STATIC_LIBS PYTHON PYTHON_BASE PYTHON_VERSION PYTHON_DIR PYTHON_LIBS PYTHON_CFLAGS PYTHON_ADA_SRC PYGTK_PREFIX PYGTK_INCLUDE GPS_VERSION opsysfile TARGET EXEC_PREFIX STRIP_CR CAN_OUTPUT TARGET_CFLAGS TARGET_LFLAGS EXEC_COMMAND DEFAULT_PS DEFAULT_FONT PRINT_CMD DIFF_CMD PATCH_CMD OPAQUE_MDI HOST_TYPE EXECUTION_WINDOW PATH_STYLE SSH_ESCAPE subdirs LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os XMLADA_GPR CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP GNATMAKE SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB DVIPS MAKEINFO TEXI2DVI PKG_CONFIG GTK_GCC_FLAGS GTK_CONFIG GTK_PREFIX GLIB_PREFIX ATK_PREFIX PANGO_PREFIX CAIRO_PREFIX GTKADA_SRC GTKADA_OBJ GTK_CFLAGS GTK_LIBS GTK_STATIC_LIBS PYTHON PYTHON_BASE PYTHON_VERSION PYTHON_DIR PYTHON_LIBS PYTHON_CFLAGS PYTHON_ADA_SRC PYGTK_PREFIX PYGTK_INCLUDE PYTHON_LIBS_GPR PYTHON_CFLAGS_GPR PYGTK_INCLUDE_GPR GTK_GCC_FLAGS_GPR GPS_VERSION opsysfile TARGET EXEC_PREFIX STRIP_CR CAN_OUTPUT TARGET_CFLAGS TARGET_LFLAGS EXEC_COMMAND DEFAULT_PS DEFAULT_FONT PRINT_CMD DIFF_CMD PATCH_CMD OPAQUE_MDI HOST_TYPE EXECUTION_WINDOW PATH_STYLE SSH_ESCAPE subdirs LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -3274,7 +3274,7 @@ echo "${ECHO_T}not found" >&6
       GTK_PREFIX=`$PKG_CONFIG gtk+-2.0 --variable=prefix`
       echo "$as_me:$LINENO: result: $GTK_PREFIX" >&5
 echo "${ECHO_T}$GTK_PREFIX" >&6
-      GTK_CFLAGS=`$PKG_CONFIG gtk+-2.0 --cflags`
+      GTK_GCC_FLAGS=`$PKG_CONFIG gtk+-2.0 --cflags`
    fi
 
 
@@ -3754,6 +3754,62 @@ echo "${ECHO_T}no since python not found" >&6
        fi
     fi
 
+
+
+
+
+   value=$PYTHON_LIBS
+   output=PYTHON_LIBS_GPR
+   result=""
+   for v in $value; do
+      if test "$result" != ""; then
+         result="$result, "
+      fi
+      result="$result\"$v\""
+   done
+   PYTHON_LIBS_GPR=$result
+
+
+
+
+   value=$PYTHON_CFLAGS
+   output=PYTHON_CFLAGS_GPR
+   result=""
+   for v in $value; do
+      if test "$result" != ""; then
+         result="$result, "
+      fi
+      result="$result\"$v\""
+   done
+   PYTHON_CFLAGS_GPR=$result
+
+
+
+
+   value=$PYGTK_INCLUDE
+   output=PYGTK_INCLUDE_GPR
+   result=""
+   for v in $value; do
+      if test "$result" != ""; then
+         result="$result, "
+      fi
+      result="$result\"$v\""
+   done
+   PYGTK_INCLUDE_GPR=$result
+
+
+
+
+   value=$GTK_GCC_FLAGS
+   output=GTK_GCC_FLAGS_GPR
+   result=""
+   for v in $value; do
+      if test "$result" != ""; then
+         result="$result, "
+      fi
+      result="$result\"$v\""
+   done
+   GTK_GCC_FLAGS_GPR=$result
 
 
 
@@ -5831,7 +5887,7 @@ s,@DVIPS@,$DVIPS,;t t
 s,@MAKEINFO@,$MAKEINFO,;t t
 s,@TEXI2DVI@,$TEXI2DVI,;t t
 s,@PKG_CONFIG@,$PKG_CONFIG,;t t
-s,@GTK_CFLAGS@,$GTK_CFLAGS,;t t
+s,@GTK_GCC_FLAGS@,$GTK_GCC_FLAGS,;t t
 s,@GTK_CONFIG@,$GTK_CONFIG,;t t
 s,@GTK_PREFIX@,$GTK_PREFIX,;t t
 s,@GLIB_PREFIX@,$GLIB_PREFIX,;t t
@@ -5840,6 +5896,7 @@ s,@PANGO_PREFIX@,$PANGO_PREFIX,;t t
 s,@CAIRO_PREFIX@,$CAIRO_PREFIX,;t t
 s,@GTKADA_SRC@,$GTKADA_SRC,;t t
 s,@GTKADA_OBJ@,$GTKADA_OBJ,;t t
+s,@GTK_CFLAGS@,$GTK_CFLAGS,;t t
 s,@GTK_LIBS@,$GTK_LIBS,;t t
 s,@GTK_STATIC_LIBS@,$GTK_STATIC_LIBS,;t t
 s,@PYTHON@,$PYTHON,;t t
@@ -5851,6 +5908,10 @@ s,@PYTHON_CFLAGS@,$PYTHON_CFLAGS,;t t
 s,@PYTHON_ADA_SRC@,$PYTHON_ADA_SRC,;t t
 s,@PYGTK_PREFIX@,$PYGTK_PREFIX,;t t
 s,@PYGTK_INCLUDE@,$PYGTK_INCLUDE,;t t
+s,@PYTHON_LIBS_GPR@,$PYTHON_LIBS_GPR,;t t
+s,@PYTHON_CFLAGS_GPR@,$PYTHON_CFLAGS_GPR,;t t
+s,@PYGTK_INCLUDE_GPR@,$PYGTK_INCLUDE_GPR,;t t
+s,@GTK_GCC_FLAGS_GPR@,$GTK_GCC_FLAGS_GPR,;t t
 s,@GPS_VERSION@,$GPS_VERSION,;t t
 s,@opsysfile@,$opsysfile,;t t
 s,@TARGET@,$TARGET,;t t

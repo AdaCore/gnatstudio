@@ -52,6 +52,10 @@ AM_PATH_GTKADA(2.4.0,,AC_MSG_ERROR(Test for GtkAda failed. See the file 'INSTALL
 ######### checking for python (needs to be done after gtk)
 AM_PATH_PYTHON
 AM_PATH_PYGTK(2.8)
+AM_TO_GPR($PYTHON_LIBS,   PYTHON_LIBS_GPR)
+AM_TO_GPR($PYTHON_CFLAGS, PYTHON_CFLAGS_GPR)
+AM_TO_GPR($PYGTK_INCLUDE, PYGTK_INCLUDE_GPR)
+AM_TO_GPR($GTK_GCC_FLAGS, GTK_GCC_FLAGS_GPR)
 
 ######## GNU regex checking
 AC_CHECK_FUNC(re_compile_pattern, AC_DEFINE(HAVE_GNU_REGEX))
