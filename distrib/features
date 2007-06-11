@@ -14,6 +14,13 @@ of the feature.
 New features in GPS 4.2.0
 -------------------------
 
+NF-42-G608-003 Grouping VCS queries for better performance (2007-06-11)
+
+  It is now possible to configure VCS so that, when querying status for all
+  files, the VCS performs "query status for directories" on each source
+  directory instead of file-by-file queries. This is activated by default, and
+  can be controlled on the VCS that are described through XML files.
+
 NF-42-G517-005 Makefile.py now also provides support for ant (2007-06-01)
 
   The "ant" build system is now supported as a GPS plug-in. The support
@@ -77,7 +84,7 @@ NF-42-F716-001 Improve block navigation support (2007-03-18)
 
 NF-42-F329-003 Fix of "use clause would make operation legal" (2007-04-20)
 
-  Compiler messages "use clause would make operation legal" are now 
+  Compiler messages "use clause would make operation legal" are now
   automatically fixed by GPS, by adding the missing use clause to the file.
 
 NF-42-F223-023 Retrieve 'Class attribute on tooltip documentation (2007-05-02)
