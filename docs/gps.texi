@@ -15346,6 +15346,13 @@ commands in the VCS will work on absolute file names. If it set to
 that GPS will move to the appropriate directory before executing an
 action.
 
+@item group_queries_by_directory
+The attribute @code{group_queries_by_directory} indicates that, when querying
+status for all the source files in a directory, a query for the directory
+should be launched, instead of launching a query for multiple files.
+This operation is faster on some Version Control systems. By default, this
+is set to @code{TRUE}.
+
 @item ignore_file
 The attribute @code{ignore_file} specifies the name of the file used
 by the VCS Explorer to get the list of files to ignore. By default for
