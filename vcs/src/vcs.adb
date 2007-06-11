@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
+--                      Copyright (C) 2001-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -400,5 +400,15 @@ package body VCS is
          return Unknown_Id;
       end if;
    end Get_File_Status_Id;
+
+   -------------------------------
+   -- Group_Query_Status_By_Dir --
+   -------------------------------
+
+   function Group_Query_Status_By_Dir
+     (Ref : access VCS_Record) return Boolean is
+   begin
+      return Ref.Query_Status_By_Dir;
+   end Group_Query_Status_By_Dir;
 
 end VCS;

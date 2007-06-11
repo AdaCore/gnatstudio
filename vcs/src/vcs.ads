@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
+--                      Copyright (C) 2001-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -106,6 +106,10 @@ package VCS is
 
    procedure Free (Ref : in out VCS_Access);
    --  Free the VCS pointed to by Ref, and Ref itself
+
+   function Group_Query_Status_By_Dir (Ref : access VCS_Record) return Boolean;
+   --  Return whether global query operations should be grouped by directory,
+   --  for efficiency purposes.
 
    function Absolute_Filenames_Supported
      (Ref : access VCS_Record) return Boolean;
@@ -494,12 +498,13 @@ private
    --  The file is unknown of the VCS repository.
 
    type VCS_Record is abstract tagged limited record
-      Kernel           : GPS.Kernel.Kernel_Handle;
-      Absolute_Names   : Boolean    := False;
-      Atomic_Commands  : Boolean    := False;
-      Commit_Directory : Boolean    := False;
-      Path_Style       : OS_Utils.Path_Style := System_Default;
-      Ignore_Filename  : GNAT.Strings.String_Access;
+      Kernel              : GPS.Kernel.Kernel_Handle;
+      Absolute_Names      : Boolean    := False;
+      Query_Status_By_Dir : Boolean    := True;
+      Atomic_Commands     : Boolean    := False;
+      Commit_Directory    : Boolean    := False;
+      Path_Style          : OS_Utils.Path_Style := System_Default;
+      Ignore_Filename     : GNAT.Strings.String_Access;
    end record;
 
 end VCS;

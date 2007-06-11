@@ -147,6 +147,15 @@ package body VCS_View_API is
       Get_Status : Boolean);
    --  Perform VCS operations on directories contained in Context
 
+   procedure Process_Dir
+     (Directory  : String;
+      Ref        : VCS_Access;
+      Kernel     : Kernel_Handle;
+      Recursive  : Boolean;
+      Update     : Boolean;
+      Get_Status : Boolean);
+   --  Same as above, working directly on a directory.
+
    procedure On_Log_Action
      (Context : Selection_Context;
       Action  : VCS_Action;
@@ -2280,20 +2289,20 @@ package body VCS_View_API is
       when E : others => Trace (Exception_Handle, E);
    end On_Menu_Get_Status;
 
-   ------------------
-   -- Process_Dirs --
-   ------------------
+   -----------------
+   -- Process_Dir --
+   -----------------
 
-   procedure Process_Dirs
-     (Context    : Selection_Context;
+   procedure Process_Dir
+     (Directory  : String;
+      Ref        : VCS_Access;
+      Kernel     : Kernel_Handle;
       Recursive  : Boolean;
       Update     : Boolean;
       Get_Status : Boolean)
    is
       Files        : String_List.List;
       Status       : File_Status_List.List;
-      Ref          : constant VCS_Access := Get_Current_Ref (Context);
-      Kernel       : constant Kernel_Handle := Get_Kernel (Context);
 
       procedure Add_Directory_Files (Dir : String);
       --  Fill the explorer with blank status for all files in Dir.
@@ -2380,28 +2389,45 @@ package body VCS_View_API is
       end Add_Directory_Recursively;
 
    begin
+      String_List.Append (Files, Directory);
+      Add_Directory_Files (Directory);
+
+      if Recursive then
+         Add_Directory_Recursively;
+      end if;
+
+      Display_File_Status (Kernel, Status, Ref, False, True, False);
+      File_Status_List.Free (Status);
+
+      if Update then
+         VCS.Update (Ref, Files);
+      end if;
+
+      if Get_Status then
+         VCS.Get_Status_Dirs (Ref, Files);
+      end if;
+
+      String_List.Free (Files);
+   end Process_Dir;
+
+   ------------------
+   -- Process_Dirs --
+   ------------------
+
+   procedure Process_Dirs
+     (Context    : Selection_Context;
+      Recursive  : Boolean;
+      Update     : Boolean;
+      Get_Status : Boolean) is
+   begin
       Open_Explorer (Get_Kernel (Context), Context);
 
       if Has_Directory_Information (Context) then
-         String_List.Append (Files, Directory_Information (Context));
-         Add_Directory_Files (Directory_Information (Context));
-
-         if Recursive then
-            Add_Directory_Recursively;
-         end if;
-
-         Display_File_Status (Kernel, Status, Ref, False, True, False);
-         File_Status_List.Free (Status);
-
-         if Update then
-            VCS.Update (Ref, Files);
-         end if;
-
-         if Get_Status then
-            VCS.Get_Status_Dirs (Ref, Files);
-         end if;
-
-         String_List.Free (Files);
+         Process_Dir
+           (Directory_Information (Context),
+            Get_Current_Ref (Context),
+            Get_Kernel (Context),
+            Recursive, Update, Get_Status);
       end if;
    end Process_Dirs;
 
@@ -2565,17 +2591,40 @@ package body VCS_View_API is
                -"Warning: no VCS set in project properties for project "
                & Project_Name (The_Project));
          else
-            Files := Get_Files_In_Project (The_Project, False);
-
             if Real_Query then
-               Get_Status (Ref, Files);
+               if Group_Query_Status_By_Dir (Ref) then
+                  declare
+                     Dirs : String_List.List;
+                     Node : String_List.List_Node;
+                  begin
+                     Dirs := Get_Dirs_In_Project (The_Project, False);
+                     Node := First (Dirs);
+
+                     while Node /= Null_Node loop
+                        Process_Dir
+                          (Directory  => Data (Node),
+                           Ref        => Ref,
+                           Kernel     => Kernel,
+                           Recursive  => False,
+                           Update     => False,
+                           Get_Status => True);
+                        Node := Next (Node);
+                     end loop;
+
+                     Free (Dirs);
+                  end;
+               else
+                  Files := Get_Files_In_Project (The_Project, False);
+                  Get_Status (Ref, Files);
+                  String_List.Free (Files);
+               end if;
             else
+               Files := Get_Files_In_Project (The_Project, False);
                Status := Local_Get_Status (Ref, Files);
                Display_File_Status (Kernel, Status, Ref, False, True);
                File_Status_List.Free (Status);
+               String_List.Free (Files);
             end if;
-
-            String_List.Free (Files);
          end if;
       end Query_Status_For_Project;
 

@@ -1288,6 +1288,8 @@ package body VCS.Generic_VCS is
          Ref := new Generic_VCS_Record;
          Ref.Id := new String'(Name);
 
+         Ref.Query_Status_By_Dir := Boolean'Value
+           (Get_Attribute (M, "group_queries_by_directory", "TRUE"));
          Ref.Absolute_Names := Boolean'Value
            (Get_Attribute (M, "absolute_names", "FALSE"));
          Ref.Atomic_Commands := Boolean'Value
