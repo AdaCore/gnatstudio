@@ -21,7 +21,6 @@
 with Ada.Directories;           use Ada.Directories;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNAT.Regpat;               use GNAT.Regpat;
 
 with Glib;                      use Glib;
 with Glib.Convert;              use Glib.Convert;
@@ -1680,8 +1679,6 @@ package body Project_Explorers is
       --  Return true if Dir contains an hidden directory (a directory starting
       --  with a dot).
 
-      Hidden_File_Matcher : constant Pattern_Matcher :=
-                              Compile (Get_Pref (Hidden_Directories_Pattern));
       Project  : constant Project_Type :=
                    Get_Project_From_Node
                      (Explorer.Tree.Model, Explorer.Kernel, Node, False);
@@ -1708,7 +1705,6 @@ package body Project_Explorers is
       ---------------
 
       function Is_Hidden (Dir : String) return Boolean is
-
          D : constant String := Dir (Dir'First .. Dir'Last - 1);
 
          function Is_Hidden (CD, Dir : String) return Boolean;
@@ -1748,10 +1744,10 @@ package body Project_Explorers is
             --  Is_Root is the only test needed with a proper Ada.Directories
             --  implementation.
             then
-               return Match (Hidden_File_Matcher, Dir);
+               return Is_Hidden (Explorer.Kernel, Dir);
 
             else
-               return Match (Hidden_File_Matcher, Dir)
+               return Is_Hidden (Explorer.Kernel, Dir)
                  or else Is_Hidden
                    (Containing_Directory (CD), Simple_Name (CD));
             end if;
