@@ -14,6 +14,13 @@ of the feature.
 New features in GPS 4.2.0
 -------------------------
 
+NF-42-G608-016 Avoiding hidden directories in VCS operations (2007-06-11)
+
+  The VCS operations "Query status for directory recursively" and "Update
+  directory recursively" now take into account the Preference "Hidden
+  directories pattern" (in the "Project" section) and do not perform VCS
+  operations on hidden or special directories.
+
 NF-42-G608-003 Grouping VCS queries for better performance (2007-06-11)
 
   It is now possible to configure VCS so that, when querying status for all
