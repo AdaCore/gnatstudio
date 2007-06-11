@@ -20,10 +20,11 @@
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Unchecked_Conversion;
-with Ada.Unchecked_Deallocation;
+
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
 with GNAT.Strings;              use GNAT.Strings;
+with GNAT.Regpat;               use GNAT.Regpat;
 with System;                    use System;
 
 with Gdk;                       use Gdk;
@@ -302,6 +303,14 @@ package body GPS.Kernel is
    procedure On_Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class) is
    begin
+      if Kernel.Hidden_File_Matcher /= null then
+         Unchecked_Free (Kernel.Hidden_File_Matcher);
+      end if;
+
+      Kernel.Hidden_File_Matcher := new Pattern_Matcher'
+        (Compile (GPS.Kernel.Preferences.Get_Pref
+         (Hidden_Directories_Pattern)));
+
       Set_Trusted_Mode
         (Get_Registry (Kernel).all,
          GPS.Kernel.Preferences.Get_Pref (Trusted_Mode));
@@ -570,6 +579,17 @@ package body GPS.Kernel is
          return (1 .. 0 => VFS.No_File);
       end if;
    end Open_Files;
+
+   ---------------
+   -- Is_Hidden --
+   ---------------
+
+   function Is_Hidden
+     (Kernel    : access Kernel_Handle_Record;
+      Base_Name : String) return Boolean is
+   begin
+      return Match (Kernel.Hidden_File_Matcher.all, Base_Name);
+   end Is_Hidden;
 
    ---------------------
    -- Context_Changed --
