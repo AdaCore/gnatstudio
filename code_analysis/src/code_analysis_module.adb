@@ -124,6 +124,9 @@ package body Code_Analysis_Module is
    ---------------------
 
    function Create_Instance return Class_Instance is
+      --  ??? Obviously wrong, why create an instance for a random scripting
+      --  language ? It would be much better to stay at the Ada level here,
+      --  rather than create an opaque structure that is not usable anywhere
       Scripts  : constant Scripting_Language_Array :=
                    Get_Scripting_Languages (Code_Analysis_Module_ID.Kernel);
       Instance : Class_Instance := New_Instance
