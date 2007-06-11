@@ -34,10 +34,8 @@ with Glib.Error;                use Glib.Error;
 with Glib.Messages;             use Glib.Messages;
 with Glib.Object;               use Glib.Object;
 with Glib.Properties;           use Glib.Properties;
-with Glib.Values;               use Glib.Values;
 
 with Gtk;                       use Gtk;
-with Gtk.Arguments;             use Gtk.Arguments;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Image;                 use Gtk.Image;
@@ -54,6 +52,7 @@ with Gtkada.MDI;                use Gtkada.MDI;
 with Config;                    use Config;
 with DDE;
 with File_Utils;
+with GPS.Callbacks;             use GPS.Callbacks;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
@@ -139,7 +138,6 @@ procedure GPS.Main is
    use GPS.Main_Window;
 
    Me        : constant Debug_Handle := Create ("GPS");
-   Gtk_Trace : constant Debug_Handle := Create ("Gtk+");
    Pid_Image : constant String := String_Utils.Image (Get_Process_Id);
 
    Docgen_Trace           : constant Debug_Handle :=
@@ -209,7 +207,6 @@ procedure GPS.Main is
 
    subtype String_Access is GNAT.Strings.String_Access;
 
-   GPS_Main               : GPS_Window;
    Directory              : Dir_Type;
    Str                    : String (1 .. 1024);
    Last                   : Natural;
@@ -235,12 +232,6 @@ procedure GPS.Main is
    Hide_GPS               : Boolean := False;
    Program_Args           : String_Access;
 
-   Started                : Boolean := False;
-   --  Whether the main loop is started
-
-   Exiting                : Boolean := False;
-   --  Whether GPS is exiting
-
    Button                 : Message_Dialog_Buttons;
    Result                 : Boolean;
    Timeout_Id             : Timeout_Handler_Id;
@@ -265,46 +256,17 @@ procedure GPS.Main is
    function Finish_Setup (Data : Process_Data) return Boolean;
    --  Finish the set up of GPS, while the main loop is running.
 
-   function On_GPS_Started return Boolean;
-   --  Called when GPS is started and visible on the screen
-
    procedure Help;
    --  Display help on the standard output
-
-   procedure Ctrl_C_Handler;
-   --  Handler for Ctrl-C events
 
    function Clean_Parameter return String;
    --  Return a clean version of the parameter for command line switches, ie
    --  return the same thing as GNAT.Command_Line.Parameter, but strips the
    --  leading '=' if any, so that users can say '--log-level=4' for instance.
 
-   procedure Set_Main_Title
-     (Kernel : access Kernel_Handle_Record'Class;
-      Child  : MDI_Child);
-   --  Set the title of the main window
-
-   procedure Child_Selected
-     (Mdi    : access GObject_Record'Class;
-      Params : Glib.Values.GValues;
-      Kernel : Kernel_Handle);
-   --  Called when a new child is selected
-
-   procedure Title_Changed
-     (MDI    : access GObject_Record'Class;
-      Child  : Gtk_Args;
-      Kernel : Kernel_Handle);
-   --  Called when the title of an MDI child has changed
-
    procedure Execute_Batch (Batch : String; As_File : Boolean);
    --  Execute a batch command (either loading the file Batch if As_File is
    --  true, or as a standard command otherwise).
-
-   procedure Gtk_Log
-     (Log_Domain : String;
-      Log_Level  : Log_Level_Flags;
-      Message    : String);
-   --  Log level glib handler for redirecting Gtk+ messages to our log file.
 
    ---------------------
    -- Clean_Parameter --
@@ -356,29 +318,6 @@ procedure GPS.Main is
       end if;
    end Display_Splash_Screen;
 
-   -------------
-   -- Gtk_Log --
-   -------------
-
-   procedure Gtk_Log
-     (Log_Domain : String;
-      Log_Level  : Log_Level_Flags;
-      Message    : String) is
-   begin
-      if Log_Domain = "" then
-         --  Ignore this message, to avoid generating too much noise
-         return;
-      end if;
-
-      if (Log_Level and Log_Level_Critical) /= 0 then
-         Trace (Gtk_Trace, Log_Domain & "-CRITICAL: " & Message);
-      elsif (Log_Level and Log_Level_Warning) /= 0 then
-         Trace (Gtk_Trace, Log_Domain & "-WARNING: " & Message);
-      else
-         Trace (Gtk_Trace, Log_Domain & "-MISC: " & Message);
-      end if;
-   end Gtk_Log;
-
    -------------------
    -- Init_Settings --
    -------------------
@@ -395,7 +334,7 @@ procedure GPS.Main is
       pragma Unreferenced (Ignored);
 
    begin
-      OS_Utils.Install_Ctrl_C_Handler (Ctrl_C_Handler'Unrestricted_Access);
+      OS_Utils.Install_Ctrl_C_Handler (Callbacks.Ctrl_C_Handler'Access);
       Projects.Registry.Initialize;
 
       --  Reset the environment that was set before GPS was started (since
@@ -539,21 +478,21 @@ procedure GPS.Main is
       --  Redirect all default Gtk+ logs to our own trace mechanism
 
       Ignored := Log_Set_Handler
-        ("", Log_Level_Mask, Gtk_Log'Unrestricted_Access);
+        ("", Log_Level_Mask, Gtk_Log'Access);
       Ignored := Log_Set_Handler
-        ("GLib", Log_Level_Mask, Gtk_Log'Unrestricted_Access);
+        ("GLib", Log_Level_Mask, Gtk_Log'Access);
       Ignored := Log_Set_Handler
-        ("GLib-GObject", Log_Level_Mask, Gtk_Log'Unrestricted_Access);
+        ("GLib-GObject", Log_Level_Mask, Gtk_Log'Access);
       Ignored := Log_Set_Handler
-        ("Pango", Log_Level_Mask, Gtk_Log'Unrestricted_Access);
+        ("Pango", Log_Level_Mask, Gtk_Log'Access);
       Ignored := Log_Set_Handler
-        ("Atk", Log_Level_Mask, Gtk_Log'Unrestricted_Access);
+        ("Atk", Log_Level_Mask, Gtk_Log'Access);
       Ignored := Log_Set_Handler
-        ("GdkPixbuf", Log_Level_Mask, Gtk_Log'Unrestricted_Access);
+        ("GdkPixbuf", Log_Level_Mask, Gtk_Log'Access);
       Ignored := Log_Set_Handler
-        ("Gdk", Log_Level_Mask, Gtk_Log'Unrestricted_Access);
+        ("Gdk", Log_Level_Mask, Gtk_Log'Access);
       Ignored := Log_Set_Handler
-        ("Gtk", Log_Level_Mask, Gtk_Log'Unrestricted_Access);
+        ("Gtk", Log_Level_Mask, Gtk_Log'Access);
 
       declare
          Plug_Ins : constant String :=
@@ -652,10 +591,10 @@ procedure GPS.Main is
 
       Kernel_Callback.Connect
         (Get_MDI (GPS_Main.Kernel), Signal_Child_Selected,
-         Child_Selected'Unrestricted_Access, GPS_Main.Kernel);
+         Child_Selected'Access, GPS_Main.Kernel);
       Kernel_Callback.Connect
         (Get_MDI (GPS_Main.Kernel), Signal_Child_Title_Changed,
-         Title_Changed'Unrestricted_Access, GPS_Main.Kernel);
+         Title_Changed'Access, GPS_Main.Kernel);
 
       DDE.Register_DDE_Server (GPS_Main.Kernel);
       Parse_Switches;
@@ -900,17 +839,6 @@ procedure GPS.Main is
       end if;
    end Help;
 
-   --------------------
-   -- Ctrl_C_Handler --
-   --------------------
-
-   procedure Ctrl_C_Handler is
-   begin
-      --  Ignore Ctrl-C events
-
-      null;
-   end Ctrl_C_Handler;
-
    -------------------
    -- Execute_Batch --
    -------------------
@@ -975,31 +903,6 @@ procedure GPS.Main is
          end if;
          Trace (Exception_Handle, E);
    end Execute_Batch;
-
-   --------------------
-   -- On_GPS_Started --
-   --------------------
-
-   function On_GPS_Started return Boolean is
-   begin
-      --  Cannot call Have_Render earlier, since we need a valid Gdk Window
-      --  associated with GPS_Main, which happens only very late in the
-      --  processing
-
-      if not Have_Render (Get_Window (GPS_Main)) then
-         Trace (Me, "RENDER extension NOT detected");
-         Put_Line
-           ("Warning: X RENDER extension is not detected, " &
-            "display will be slow");
-      end if;
-
-      Run_Hook (GPS_Main.Kernel, GPS_Started_Hook);
-      return False;
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
-         return False;
-   end On_GPS_Started;
 
    ------------------
    -- Finish_Setup --
@@ -1631,82 +1534,9 @@ procedure GPS.Main is
       Set_Main_Title
         (GPS_Main.Kernel, Get_Focus_Child (Get_MDI (GPS_Main.Kernel)));
 
-      Idle_Id := Idle_Add (On_GPS_Started'Unrestricted_Access);
+      Idle_Id := Idle_Add (On_GPS_Started'Access);
       return False;
    end Finish_Setup;
-
-   -------------------
-   -- Title_Changed --
-   -------------------
-
-   procedure Title_Changed
-     (MDI    : access GObject_Record'Class;
-      Child  : Gtk_Args;
-      Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (MDI);
-      C : MDI_Child;
-   begin
-      if not Exiting then
-         C := MDI_Child (To_Object (Child, 1));
-         Set_Main_Title (Kernel, C);
-      end if;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end Title_Changed;
-
-   --------------------
-   -- Set_Main_Title --
-   --------------------
-
-   procedure Set_Main_Title
-     (Kernel : access Kernel_Handle_Record'Class;
-      Child  : MDI_Child) is
-   begin
-      if Started then
-         if Child = null then
-            Reset_Title (GPS_Window (Get_Main_Window (Kernel)));
-         else
-            if Get_Pref (Pref_Draw_Title_Bars) then
-               Reset_Title
-                 (GPS_Window (Get_Main_Window (Kernel)),
-                  Get_Short_Title (Child));
-            else
-               Reset_Title
-                 (GPS_Window (Get_Main_Window (Kernel)),
-                  Get_Title (Child));
-            end if;
-         end if;
-      end if;
-   end Set_Main_Title;
-
-   --------------------
-   -- Child_Selected --
-   --------------------
-
-   procedure Child_Selected
-     (Mdi    : access GObject_Record'Class;
-      Params : Glib.Values.GValues;
-      Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Mdi);
-      Child : MDI_Child;
-   begin
-      if Exiting then
-         return;
-      end if;
-
-      Child := MDI_Child (To_Object (Params, 1));
-      Set_Main_Title (Kernel, Child);
-
-      if Started then
-         Context_Changed (Kernel);
-      end if;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end Child_Selected;
 
    ---------------------
    -- Main_Processing --
