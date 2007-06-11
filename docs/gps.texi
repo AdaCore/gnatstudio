@@ -7343,11 +7343,12 @@ Update the files in the selected directory.
 
 @item Query status for directory recursively
 Query status for the files in the selected directory and all
-subdirectories recursively, links not included.
+subdirectories recursively. Links and hidden directories are not
+included.
 
 @item Update directory recursively
 Update the files in the selected directory and all
-subdirectories recursively, links not included..
+subdirectories recursively. Links and hidden directories not included..
 
 @end table
 
@@ -9429,8 +9430,9 @@ a new project is loaded. @xref{Support for Cross-References}.
 
 @item Hidden directories pattern
 @cindex hidden directories pattern
-A regular expression used to macth hidden directories. Such directories
-are not displayed by default in the project view.
+A regular expression used to match hidden directories. Such directories
+are not displayed by default in the project view, and are not taken into
+account for VCS operations working on directories.
 
 @end table
 
