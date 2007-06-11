@@ -4292,6 +4292,7 @@ package body Project_Properties is
               and then Attr.Hide_In (First .. Last - 1) = Context
             then
                Widget := null;
+               Expandable := False;
                return;
             end if;
 
@@ -4308,6 +4309,7 @@ package body Project_Properties is
         and then Parent_Project (Project) = Projects.No_Project
       then
          Widget := null;
+         Expandable := False;
          return;
       end if;
 
