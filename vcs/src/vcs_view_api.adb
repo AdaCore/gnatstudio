@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Directories;           use Ada.Directories;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Maps;          use Ada.Strings.Maps;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -2362,6 +2363,7 @@ package body VCS_View_API is
                           and then File (1 .. Last) /= ".."
                           and then GNAT.OS_Lib.Is_Directory
                             (Data (Node) & File (1 .. Last))
+                          and then not Is_Hidden (Kernel, File (1 .. Last))
                         then
                            Append
                              (Files,
@@ -2389,6 +2391,11 @@ package body VCS_View_API is
       end Add_Directory_Recursively;
 
    begin
+      --  Do not process hidden directories.
+      if Is_Hidden (Kernel, Simple_Name (Directory)) then
+         return;
+      end if;
+
       String_List.Append (Files, Directory);
       Add_Directory_Files (Directory);
 
