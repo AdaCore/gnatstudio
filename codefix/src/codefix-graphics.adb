@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002-2003                    --
---                            ACT-Europe                             --
+--                        Copyright (C) 2002-2007                    --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -232,9 +232,9 @@ package body Codefix.Graphics is
       Show_All (Graphic_Codefix);
    end Load_Next_Error;
 
-   ---------------------
+   ----------------
    -- Load_Error --
-   ---------------------
+   ----------------
 
    procedure Load_Error
      (Graphic_Codefix : access Graphic_Codefix_Record'Class;
@@ -275,6 +275,7 @@ package body Codefix.Graphics is
          Current_Iterator := First_Iterator;
 
          if Current_Line = null then
+            Success := False;
             return;
          end if;
 
@@ -618,6 +619,5 @@ package body Codefix.Graphics is
          end if;
       end if;
    end Load_Previous_Error;
-
 
 end Codefix.Graphics;
