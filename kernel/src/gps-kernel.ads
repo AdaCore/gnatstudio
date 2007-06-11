@@ -22,6 +22,7 @@
 
 with Ada.Finalization;
 with GNAT.Strings;
+with GNAT.Regpat;
 with System;
 
 with Glib.Object;  use Glib;
@@ -49,6 +50,7 @@ with Histories;
 with Projects.Registry;
 with Task_Manager;
 with VFS;
+with Ada.Unchecked_Deallocation;
 
 package GPS.Kernel is
 
@@ -253,6 +255,13 @@ package GPS.Kernel is
    function Open_Files
      (Kernel : access Kernel_Handle_Record) return VFS.File_Array;
    --  Return a list of currently open files
+
+   function Is_Hidden
+     (Kernel    : access Kernel_Handle_Record;
+      Base_Name : String) return Boolean;
+   --  Return whether File or Directory identified by its Base_Name should be
+   --  considered as hidden for all GUI purposes, such as the Project/File
+   --  explorer or the VCS operations.
 
    -------------
    -- Queries --
@@ -858,6 +867,10 @@ private
    --  System_Level : system custom files loaded
    --  User_Level   : system and user custom files loaded
 
+   type Pattern_Matcher_Access is access GNAT.Regpat.Pattern_Matcher;
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (GNAT.Regpat.Pattern_Matcher, Pattern_Matcher_Access);
+
    type Kernel_Handle_Record is new Glib.Object.GObject_Record with record
       Database : Entities.Entities_Database;
       --  The cross-reference information
@@ -967,6 +980,8 @@ private
 
       Is_In_Destruction : Boolean := False;
       --  Determies wether the kernel is being destroyed.
+
+      Hidden_File_Matcher : Pattern_Matcher_Access;
    end record;
 
 end GPS.Kernel;
