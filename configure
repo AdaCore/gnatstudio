@@ -6249,4 +6249,4 @@ echo "$as_me: error: $ac_sub_configure failed for $ac_dir" >&2;}
   done
 fi
 
-# corelib/shared.gpr corelib/docs/Makefile corelib/Makefile.conf)
+# gnatlib/shared.gpr gnatlib/docs/Makefile gnatlib/Makefile.conf)

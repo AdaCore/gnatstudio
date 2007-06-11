@@ -1,6 +1,0 @@
-with "../corelib_scripts";
-project Testsuite is
-   for Main use ("testsuite.adb", "testapi.adb");
-   package Compiler renames CoreLib_Scripts.Compiler;
-   package Linker renames CoreLib_Scripts.Linker;
-end Testsuite;

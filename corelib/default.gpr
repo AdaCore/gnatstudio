@@ -1,6 +1,0 @@
---  This project is meant for edition in GPS
-with "scripts/testsuite/testsuite";
-with "scripts/examples/examplesgtk";
-project Default is
-   for Source_Dirs use ();
-end Default;
