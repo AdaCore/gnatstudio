@@ -104,6 +104,7 @@ package body Src_Editor_Box.Tooltips is
 
       if Filename = VFS.No_File then
          Entity := null;
+         Status := Entity_Not_Found;
          return;
       end if;
 
