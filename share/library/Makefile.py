@@ -161,7 +161,7 @@ class Builder:
          self.buildfile = None
          return
 
-      self.buildfile = join (root_dir, self.buildile)
+      self.buildfile = join (root_dir, self.buildfile)
       if not isfile (self.buildfile):
          for f in self.default_build_files:
             self.buildfile = join (root_dir, f)
