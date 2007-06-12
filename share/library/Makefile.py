@@ -222,7 +222,7 @@ class Builder:
          if self.buildfile:
             self.menus.append \
               (Menu.create \
-                  (self.menu_name + "/" + self.edit_menu,
+                  (self.menu_name + self.edit_menu,
                    ref = "Make", add_before=False,
                    on_activate=self.edit_buildfile))
 
@@ -233,7 +233,7 @@ class Builder:
                    t = t.replace ("\\", '\\\\')
                    t = t.replace ("/", '\/')
                    m = Menu.create \
-                     (self.menu_name + "/" + t,
+                     (self.menu_name + t,
                       on_activate = self.on_build_target)
                    m.target = d[0]
                    self.menus.append (m)
