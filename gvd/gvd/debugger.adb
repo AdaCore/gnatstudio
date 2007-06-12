@@ -445,7 +445,9 @@ package body Debugger is
          --  Will close the debugger in GVD.Process when getting this
          --  exception the next time.
 
-         Timeout_Remove (Process.Timeout_Id);
+         if Process.Timeout_Id > 0 then
+            Timeout_Remove (Process.Timeout_Id);
+         end if;
          Process.Timeout_Id := 0;
 
          if Debugger /= null and then Get_Process (Debugger) /= null then
