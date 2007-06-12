@@ -3570,14 +3570,14 @@ echo "${ECHO_T}yes (version $PYTHON_VERSION)" >&6
    PYTHON_LIBS=""
    if test x"$PYTHON_BASE" != xno; then
       case "${host}" in
-          hppa*-hp-hpux1[0-9]* )
-             PYTHON_LIBS="-Wl,-E ${PYTHON_LIBS}"
+          hppa*-hp-hpux1* )
+             PYTHON_LIBS="-Wl,-E -lm ${PYTHON_LIBS}"
              ;;
           powerpc-ibm-aix5.* )
-             PYTHON_LIBS="-lld ${PYTHON_LIBS}"
+             PYTHON_LIBS="-ldl -lm ${PYTHON_LIBS}"
              ;;
           powerpc-*-darwin* )
-             PYTHON_LIBS="-ldl ${PYTHON_LIBS}"
+             PYTHON_LIBS="-ldl -lm ${PYTHON_LIBS}"
              ;;
           *-sunos5.5* | *-solaris2.5* )
              PYTHON_LIBS="-lresolv -lsocket -lnsl -ldl -lm ${PYTHON_LIBS}"
@@ -3588,23 +3588,26 @@ echo "${ECHO_T}yes (version $PYTHON_VERSION)" >&6
           ia64-*-* )
              case "${host}" in
                *-linux-gnu* )
-                  PYTHON_LIBS="-Wl,-export-dynamic -ldl ${PYTHON_LIBS}"
+                  PYTHON_LIBS="-Wl,-export-dynamic -ldl -lm ${PYTHON_LIBS}"
                   ;;
                *-hp-hpux11* )
-                  PYTHON_LIBS="-ldld -ldl -Wl,-E ${PYTHON_LIBS}"
+                  PYTHON_LIBS="-ldld -ldl -lm -Wl,-E ${PYTHON_LIBS}"
+                  ;;
+               *-sgi* )
+                  PYTHON_LIBS="-lm ${PYTHON_LIBS}"
                   ;;
              esac
              ;;
-          x86-64-*-* )
-             PYTHON_LIBS="-Wl,-export-dynamic -ldl -lm ${PYTHON_LIBS}"
+          x86_64-*-* )
+             PYTHON_LIBS="-Wl,-export-dynamic -lm -ldl ${PYTHON_LIBS}"
              ;;
           i[3456]86-*linux-gnu* )
-             PYTHON_LIBS="-Wl,-export-dynamic -ldl -lm ${PYTHON_LIBS}"
+             PYTHON_LIBS="-Wl,-export-dynamic -lm -ldl ${PYTHON_LIBS}"
              ;;
           i[3456]86-*win32* | i[3456]86-*mingw32* | i[3456]86-*cygwin* )
              ;;
           *-darwin* )
-             PYTHON_LIBS="-ldl ${PYTHON_LIBS}"
+             PYTHON_LIBS="-ldl -lm ${PYTHON_LIBS}"
              ;;
           *-freebsd* )
              PYTHON_LIBS="-lm -lutil ${PYTHON_LIBS}"
