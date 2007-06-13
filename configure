@@ -310,7 +310,7 @@ ac_includes_default="\
 
 ac_subdirs_all="$ac_subdirs_all kernel/src_info/sn"
 ac_subdirs_all="$ac_subdirs_all kernel/src_info/sn/snsrc"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os XMLADA_GPR CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP GNATMAKE SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB DVIPS MAKEINFO TEXI2DVI PKG_CONFIG GTK_GCC_FLAGS GTK_CONFIG GTK_PREFIX GLIB_PREFIX ATK_PREFIX PANGO_PREFIX CAIRO_PREFIX GTKADA_SRC GTKADA_OBJ GTK_CFLAGS GTK_LIBS GTK_STATIC_LIBS PYTHON PYTHON_BASE PYTHON_VERSION PYTHON_DIR PYTHON_LIBS PYTHON_CFLAGS PYTHON_ADA_SRC PYGTK_PREFIX PYGTK_INCLUDE PYTHON_LIBS_GPR PYTHON_CFLAGS_GPR PYGTK_INCLUDE_GPR GTK_GCC_FLAGS_GPR GPS_VERSION opsysfile TARGET EXEC_PREFIX STRIP_CR CAN_OUTPUT TARGET_CFLAGS TARGET_LFLAGS EXEC_COMMAND DEFAULT_PS DEFAULT_FONT PRINT_CMD DIFF_CMD PATCH_CMD OPAQUE_MDI HOST_TYPE EXECUTION_WINDOW PATH_STYLE SSH_ESCAPE subdirs LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os XMLADA_GPR CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP GNATMAKE SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB DVIPS MAKEINFO TEXI2DVI PKG_CONFIG GTK_GCC_FLAGS WITH_GTK GTK_CONFIG GTK_PREFIX GLIB_PREFIX ATK_PREFIX PANGO_PREFIX CAIRO_PREFIX GTKADA_SRC GTKADA_OBJ GTK_CFLAGS GTK_LIBS GTK_STATIC_LIBS PYTHON PYTHON_BASE PYTHON_VERSION PYTHON_DIR PYTHON_LIBS PYTHON_CFLAGS WITH_PYTHON PYGTK_PREFIX PYGTK_INCLUDE PYTHON_LIBS_GPR PYTHON_CFLAGS_GPR PYGTK_INCLUDE_GPR GTK_GCC_FLAGS_GPR GPS_VERSION opsysfile TARGET EXEC_PREFIX STRIP_CR CAN_OUTPUT TARGET_CFLAGS TARGET_LFLAGS EXEC_COMMAND DEFAULT_PS DEFAULT_FONT PRINT_CMD DIFF_CMD PATCH_CMD OPAQUE_MDI HOST_TYPE EXECUTION_WINDOW PATH_STYLE SSH_ESCAPE subdirs LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -3270,12 +3270,19 @@ echo $ECHO_N "checking gtk+... $ECHO_C" >&6
    if test "$PKG_CONFIG" = "no" ; then
       echo "$as_me:$LINENO: result: not found" >&5
 echo "${ECHO_T}not found" >&6
+      WITH_GTK=no
    else
       GTK_PREFIX=`$PKG_CONFIG gtk+-2.0 --variable=prefix`
       echo "$as_me:$LINENO: result: $GTK_PREFIX" >&5
 echo "${ECHO_T}$GTK_PREFIX" >&6
       GTK_GCC_FLAGS=`$PKG_CONFIG gtk+-2.0 --cflags`
+      if test x"$GTK_GCC_FLAGS" != x ; then
+         WITH_GTK=yes
+      else
+         WITH_GTK=no
+      fi
    fi
+
 
 
 
@@ -3489,14 +3496,14 @@ else
   PYTHON_PATH_WITH=yes
 fi;
 
-   PYTHON_ADA_SRC=python
+   WITH_PYTHON=yes
    if test x"$PYTHON_PATH_WITH" = xno ; then
       echo "$as_me:$LINENO: checking for python" >&5
 echo $ECHO_N "checking for python... $ECHO_C" >&6
       echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
       PYTHON_BASE=no
-      PYTHON_ADA_SRC=nopython
+      WITH_PYTHON=no
 
    else
       # Extract the first word of "python", so it can be a program name with args.
@@ -3542,7 +3549,7 @@ fi
 
       if test x"$PYTHON" = xno ; then
          PYTHON_BASE=no
-         PYTHON_ADA_SRC=nopython
+         WITH_PYTHON=no
       else
         echo "$as_me:$LINENO: checking for python >= 2.0" >&5
 echo $ECHO_N "checking for python >= 2.0... $ECHO_C" >&6
@@ -3557,7 +3564,7 @@ echo $ECHO_N "checking for python >= 2.0... $ECHO_C" >&6
            echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
            PYTHON_BASE=no
-           PYTHON_ADA_SRC=nopython
+           WITH_PYTHON=no
         else
            PYTHON_VERSION=`$PYTHON -c 'import sys; print \`sys.version_info[0]\`+"."+\`sys.version_info[1]\`'`
            PYTHON_DIR=${PYTHON_BASE}/lib/python${PYTHON_VERSION}/config
@@ -5893,6 +5900,7 @@ s,@MAKEINFO@,$MAKEINFO,;t t
 s,@TEXI2DVI@,$TEXI2DVI,;t t
 s,@PKG_CONFIG@,$PKG_CONFIG,;t t
 s,@GTK_GCC_FLAGS@,$GTK_GCC_FLAGS,;t t
+s,@WITH_GTK@,$WITH_GTK,;t t
 s,@GTK_CONFIG@,$GTK_CONFIG,;t t
 s,@GTK_PREFIX@,$GTK_PREFIX,;t t
 s,@GLIB_PREFIX@,$GLIB_PREFIX,;t t
@@ -5910,7 +5918,7 @@ s,@PYTHON_VERSION@,$PYTHON_VERSION,;t t
 s,@PYTHON_DIR@,$PYTHON_DIR,;t t
 s,@PYTHON_LIBS@,$PYTHON_LIBS,;t t
 s,@PYTHON_CFLAGS@,$PYTHON_CFLAGS,;t t
-s,@PYTHON_ADA_SRC@,$PYTHON_ADA_SRC,;t t
+s,@WITH_PYTHON@,$WITH_PYTHON,;t t
 s,@PYGTK_PREFIX@,$PYGTK_PREFIX,;t t
 s,@PYGTK_INCLUDE@,$PYGTK_INCLUDE,;t t
 s,@PYTHON_LIBS_GPR@,$PYTHON_LIBS_GPR,;t t
