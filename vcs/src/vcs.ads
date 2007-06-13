@@ -51,6 +51,7 @@ package VCS is
      (None,               --  Do nothing
       Status_Files,       --  Queries the status of one or more files
       Status_Dir,         --  Queries the status for one directory
+      Status_Dir_Recursive, --  Queries the status for a directory recursively
       Local_Status_Files, --  Queries the local status for one or more files
       Local_Status_Dir,   --  Queries the local status for one directory
       Create_Tag,         --  Create a new tag
@@ -237,6 +238,13 @@ package VCS is
       Clear_Logs : Boolean := False;
       Local      : Boolean := False) is abstract;
    --  Same as above, but work on directories instead of files
+
+   procedure Get_Status_Dirs_Recursive
+     (Rep        : access VCS_Record;
+      Dirs       : String_List.List;
+      Clear_Logs : Boolean := False;
+      Local      : Boolean := False) is abstract;
+   --  Same as above, and works on all subdirectories recursively.
 
    function Local_Get_Status
      (Rep       : access VCS_Record;
