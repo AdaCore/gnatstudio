@@ -1,5 +1,6 @@
-GPS NEW FEATURES LIST
-=====================
+====================================================
+GPS 4.2 NEW FEATURES LIST Current as of Jun 13, 2007
+====================================================
 
 Copyright (c) 2006-2007, AdaCore
 
@@ -109,4 +110,3 @@ NF-42-C127-006 Ability to use shell syntax on custom build/run (2007-04-11)
   When using the Build>Run>Custom and Build>Make>Custom menus, it is now
   possible to use shell syntax, as recognized by the SHELL environment
   variable, if set.
-
