@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
+--                      Copyright (C) 2001-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -43,6 +43,12 @@ package VCS.Unknown_VCS is
       Local       : Boolean := False);
 
    procedure Get_Status_Dirs
+     (Rep         : access Unknown_VCS_Record;
+      Filenames   : String_List.List;
+      Clear_Logs  : Boolean := False;
+      Local       : Boolean := False) renames Get_Status;
+
+   procedure Get_Status_Dirs_Recursive
      (Rep         : access Unknown_VCS_Record;
       Filenames   : String_List.List;
       Clear_Logs  : Boolean := False;
@@ -147,6 +153,6 @@ package VCS.Unknown_VCS is
    --  Register the VCS.Unknown_VCS module
 
 private
-   type Unknown_VCS_Record is new VCS_Record with null record;
+   type  Unknown_VCS_Record is new VCS_Record with null record;
 
 end VCS.Unknown_VCS;
