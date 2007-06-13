@@ -15643,6 +15643,13 @@ parameters:
   @end table
   Same as above, but works on all the files in one directory.
 
+@item status_dir_recursive
+  @table @code
+    @item $1 = the directory.
+  @end table
+  Same as above, but works on all the files in one directory and all
+  subdirectories, recursively.
+
 @item local_status_files
   @table @code
     @item $* = list of files
