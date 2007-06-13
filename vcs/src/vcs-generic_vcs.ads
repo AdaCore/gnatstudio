@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2006                      --
+--                      Copyright (C) 2003-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -44,6 +44,12 @@ package VCS.Generic_VCS is
       Local      : Boolean := False);
 
    procedure Get_Status_Dirs
+     (Rep        : access Generic_VCS_Record;
+      Dirs       : String_List.List;
+      Clear_Logs : Boolean := False;
+      Local      : Boolean := False);
+
+   procedure Get_Status_Dirs_Recursive
      (Rep        : access Generic_VCS_Record;
       Dirs       : String_List.List;
       Clear_Logs : Boolean := False;
