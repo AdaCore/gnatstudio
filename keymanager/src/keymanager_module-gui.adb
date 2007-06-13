@@ -715,8 +715,12 @@ package body KeyManager_Module.GUI is
 --        Old_Action : Action_Record_Access;
    begin
       Get_Selected (Selection, Sort_Model, Sort_Iter);
-      Convert_Iter_To_Child_Iter (Ed.Sort, Filter_Iter, Sort_Iter);
-      Convert_Iter_To_Child_Iter (Ed.Filter, Iter, Filter_Iter);
+      if Sort_Iter /= Null_Iter then
+         Convert_Iter_To_Child_Iter (Ed.Sort, Filter_Iter, Sort_Iter);
+         Convert_Iter_To_Child_Iter (Ed.Filter, Iter, Filter_Iter);
+      else
+         Iter := Null_Iter;
+      end if;
 
       --  Only edit for leaf nodes (otherwise these are contexts)
 
