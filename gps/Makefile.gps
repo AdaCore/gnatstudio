@@ -15,6 +15,8 @@ endif
 
 GPS_BASE_DIR := $(BASE_DIR)
 
+BASE_DIR=$(GPS_BASE_DIR)/../gnatlib
+include $(BASE_DIR)/Makefile.gnatlib_gtk
 BASE_DIR=$(GPS_BASE_DIR)/../gtkada
 include $(BASE_DIR)/Makefile.gtkada
 BASE_DIR=$(GPS_BASE_DIR)/../gvd
@@ -100,13 +102,10 @@ endif
 ifeq ($(MAIN_ROOT),True)
 
    ifeq ($(OS),Windows_NT)
-      default: resources do_links gpslink gnatlib all
+      default: resources do_links gpslink all
    else
-      default: do_links gpslink gnatlib all
+      default: do_links gpslink all
    endif
-
-   gnatlib:
-	${MAKE} -C ../gnatlib all
 
    resources: force
 	cd $(GPS_BASE_DIR)/src; windres gps.rc -O coff \
