@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2001-2007, AdaCore             --
 --                                                                   --
 -- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
@@ -23,6 +22,7 @@ with Ada.Unchecked_Conversion;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
+with GNAT.Scripts;              use GNAT.Scripts;
 with GNAT.Strings;              use GNAT.Strings;
 with GNAT.Regpat;               use GNAT.Regpat;
 with System;                    use System;
@@ -76,7 +76,6 @@ with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
 with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
@@ -284,7 +283,8 @@ package body GPS.Kernel is
       Load (Handle.History.all, Handle.Home_Dir.all & "histories.xml");
       Set_Max_Length (Handle.History.all, History_Max_Length);
 
-      GPS.Kernel.Scripts.Initialize (Handle);
+      Handle.Scripts := new Kernel_Scripts_Repository'
+        (Scripts_Repository_Record with Kernel => Handle);
 
       Restore_Persistent_Properties (Handle);
 
@@ -1005,9 +1005,6 @@ package body GPS.Kernel is
    ----------
 
    procedure Free (Data : in out Selection_Context_Data_Record) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Instance_List_Base'Class, Instance_List_Base_Access);
-      List : Instance_List;
    begin
       Free (Data.Category_Name);
       Free (Data.Message);
@@ -1016,12 +1013,7 @@ package body GPS.Kernel is
       Unref (Data.Entity);
       Free (Data.Activity_Id);
       Free (Data.Revision);
-
-      if Data.Instances /= null then
-         List := Instance_List (Data.Instances.all);
-         Free (List);
-         Unchecked_Free (Data.Instances);
-      end if;
+      Free (Data.Instances);
    end Free;
 
    ---------------------
@@ -1981,7 +1973,7 @@ package body GPS.Kernel is
                declare
                   Lang : constant Scripting_Language :=
                     Lookup_Scripting_Language
-                      (Kernel, Filter.Shell_Lang.all);
+                      (Kernel.Scripts, Filter.Shell_Lang.all);
 
                   function Substitution
                     (Param  : String; Quoted : Boolean) return String;
@@ -2009,7 +2001,7 @@ package body GPS.Kernel is
                      declare
                         Errors : aliased Boolean;
                         R      : constant Boolean :=
-                         GPS.Kernel.Scripts.Execute_Command
+                         GNAT.Scripts.Execute_Command
                             (Lang,
                              Cmd,
                              Hide_Output => True,

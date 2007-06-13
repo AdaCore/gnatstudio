@@ -18,11 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Tags;                use Ada.Tags;
 with Ada.Unchecked_Conversion;
-with Ada.Unchecked_Deallocation;
 
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
+with GNAT.Scripts.Gtkada;     use GNAT.Scripts.Gtkada;
 
 with Glib.Object;             use Glib.Object;
 with Gtk.Label;               use Gtk.Label;
@@ -30,7 +29,6 @@ with Gtk.Menu;                use Gtk.Menu;
 with Gtk.Menu_Item;           use Gtk.Menu_Item;
 with Gtk.Object;              use Gtk.Object;
 with Gtk.Widget;              use Gtk.Widget;
-with Gtkada.Types;            use Gtkada.Types;
 
 with Basic_Types;             use Basic_Types;
 with Commands.Interactive;    use Commands, Commands.Interactive;
@@ -54,7 +52,6 @@ with Projects.Editor;         use Projects.Editor;
 with Projects.Registry;       use Projects.Registry;
 with Projects;                use Projects;
 with String_List_Utils;
-with String_Utils;            use String_Utils;
 with System;                  use System;
 with System.Address_Image;
 with System.Assertions;
@@ -73,37 +70,18 @@ package body GPS.Kernel.Scripts is
    Context_Class_Name       : constant String := "Context";
    File_Location_Class_Name : constant String := "FileLocation";
    Logger_Class_Name        : constant String := "Logger";
+   Hook_Class_Name          : constant String := "Hook";
 
-   function To_Address is new Ada.Unchecked_Conversion
-     (Class_Instance_Record_Access, System.Address);
    function To_Address is new Ada.Unchecked_Conversion
      (Selection_Context_Data, System.Address);
 
-   -----------------------------------
-   -- Data stored in class_instance --
-   -----------------------------------
+   type GPS_Properties_Type is
+     (Files, Contexts, Entities, Projects, File_Locations, Debug_Handles);
 
-   type User_Data_Type is
-     (Strings,
-      Objects,
-      Integers,
-      Files,
-      Contexts,
-      Entities,
-      Projects,
-      File_Locations,
-      Debug_Handles);
-
-   type Scalar_Properties_Record (Typ : User_Data_Type) is
-     new Instance_Property_Record
+   type GPS_Properties_Record (Typ : GPS_Properties_Type)
+     is new Instance_Property_Record
    with record
       case Typ is
-         when Strings =>
-            Str : GNAT.Strings.String_Access;
-         when Objects =>
-            Obj : Glib.Object.GObject;
-         when Integers =>
-            Int : Integer;
          when Files =>
             File : Virtual_File;
          when Contexts =>
@@ -117,45 +95,14 @@ package body GPS.Kernel.Scripts is
          when Debug_Handles =>
             Handle   : Debug_Handle;
       end case;
+
    end record;
 
-   type Scalar_Properties is access all Scalar_Properties_Record'Class;
-   overriding procedure Destroy (Prop : in out Scalar_Properties_Record);
+   type GPS_Properties is access all GPS_Properties_Record'Class;
+   overriding procedure Destroy (Prop : in out GPS_Properties_Record);
    overriding function Get_Instances
-     (Prop : Scalar_Properties_Record) return Instance_List_Access;
+     (Prop : GPS_Properties_Record) return Instance_List_Access;
    --  See inherited documentation
-
-   -----------------
-   -- Subprograms --
-   -----------------
-
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Class_Instance_Record'Class, Class_Instance_Record_Access);
-
-   type Scripting_Language_List is access Scripting_Language_Array;
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Scripting_Language_Array, Scripting_Language_List);
-
-   procedure Free (Class : in out Class_Type);
-   package Classes_Hash is new String_Hash (Class_Type, Free, No_Class);
-   use Classes_Hash.String_Hash_Table;
-
-   type Scripting_Data_Record is new Kernel_Scripting_Data_Record with record
-      Scripting_Languages  : Scripting_Language_List :=
-        new Scripting_Language_Array'(1 .. 0 => null);
-      Classes              : Classes_Hash.String_Hash_Table.HTable;
-      Entity_Class         : Class_Type := No_Class;
-      File_Class           : Class_Type := No_Class;
-      Project_Class        : Class_Type := No_Class;
-      Context_Class        : Class_Type := No_Class;
-      Area_Context_Class   : Class_Type := No_Class;
-      File_Context_Class   : Class_Type := No_Class;
-      File_Location_Class  : Class_Type := No_Class;
-      Entity_Context_Class : Class_Type := No_Class;
-      GUI_Class            : Class_Type := No_Class;
-      Hook_Class           : Class_Type := No_Class;
-   end record;
-   type Scripting_Data is access all Scripting_Data_Record'Class;
 
    procedure On_Console_Destroy
      (Console : access Gtk_Widget_Record'Class;
@@ -225,23 +172,15 @@ package body GPS.Kernel.Scripts is
    --  already exists for that context, return the same one so that the user
    --  can store his own data in it.
 
-   procedure Free_User_Data (Data : in out User_Data_List);
-   --  Free the memory used by Data. Data is reset to null, and this doesn't
-   --  free other user data in the list.
-
-   function Get_Data
-     (Instance : Class_Instance; Name : String) return User_Data_List;
-   --  Return the user data with the given name, or null if there is none
-
-   type CIR_Data_Type (Length : Natural) is record
-      CIR : Class_Instance_Record_Access;
-      Property_Name : String (1 .. Length);
-   end record;
-   package CIR_User_Data is new Glib.Object.User_Data
-     (Data_Type => CIR_Data_Type);
-
-   procedure On_Widget_Data_Destroyed (CIR : CIR_Data_Type);
-   --  Called when the widget associated with CIR is destroyed
+   function Get_Area_Context_Class
+     (Repo : Scripts_Repository) return Class_Type;
+   function Get_File_Context_Class
+     (Repo : Scripts_Repository) return Class_Type;
+   function Get_Context_Class
+     (Repo : Scripts_Repository) return Class_Type;
+   function Get_Entity_Context_Class
+     (Repo : Scripts_Repository) return Class_Type;
+   --  Create or return existing classes
 
    Name_Cst       : aliased constant String := "name";
    Filename_Cst   : aliased constant String := "filename";
@@ -304,382 +243,24 @@ package body GPS.Kernel.Scripts is
       On_Input_Cst'Access, On_Destroy_Cst'Access, Accept_Input_Cst'Access);
 
    Enable_Cst         : aliased constant String := "enable";
-   Text_Cst           : aliased constant String := "text";
 
-   Console_Write_Args : constant Cst_Argument_List := (1 => Text_Cst'Access);
    Enable_Input_Args  : constant Cst_Argument_List := (1 => Enable_Cst'Access);
-
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (Prop : in out Instance_Property_Record) is
-      pragma Unreferenced (Prop);
-   begin
-      null;
-   end Destroy;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (List : in out Instance_List) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Instance_Array, Instance_Array_Access);
-   begin
-      --  When a selection is freed, all associated class instances must
-      --  already have been destroyed, otherwise we have dangling pointers.
-      --  ??? Unfortunately, this assertion seems no longer true when GNAT is
-      --  finalizing all global controlled types...
-
-      if False and then Active (Ref_Me) and then List.List /= null then
-         for L in List.List'Range loop
-            if List.List (L).Initialized then
-               Assert (Ref_Me, False,
-                       "A class instance still exists when we destroy the"
-                       & " instance_list. This means that the instance will"
-                       & " now reference an invalid Ada object. CI="
-                       & System.Address_Image
-                         (To_Address (List.List (L).Data.Data)),
-                       Raise_Exception => False);
-            end if;
-         end loop;
-      end if;
-
-      --  Class_Instance are automatically Finalized by the compiler
-      Unchecked_Free (List.List);
-   end Free;
-
-   ---------
-   -- Get --
-   ---------
-
-   function Get
-     (List   : Instance_List;
-      Script : access Scripting_Language_Record'Class) return Class_Instance
-   is
-      Tmp : constant Scripting_Language_Array :=
-              Scripting_Data
-                (Get_Kernel (Script).Scripts).Scripting_Languages.all;
-   begin
-      if List.List /= null then
-         for T in Tmp'Range loop
-            if Tmp (T) = Scripting_Language (Script) then
-               return List.List (T);
-            end if;
-         end loop;
-      end if;
-      return No_Class_Instance;
-   end Get;
-
-   ---------
-   -- Set --
-   ---------
-
-   procedure Set
-     (List   : in out Instance_List;
-      Script : access Scripting_Language_Record'Class;
-      Inst   : Class_Instance)
-   is
-      Tmp : constant Scripting_Language_Array :=
-              Scripting_Data
-                (Get_Kernel (Script).Scripts).Scripting_Languages.all;
-   begin
-      if List.List = null then
-         List.List := new Instance_Array (Tmp'Range);
-         List.List.all := (others => No_Class_Instance);
-      end if;
-
-      for T in Tmp'Range loop
-         if Tmp (T) = Scripting_Language (Script) then
-            List.List (T) := Inst;
-
-            if Active (Ref_Me) then
-               Trace (Ref_Me,
-                      "After Set in Instance_List Inst="
-                      & Print_Refcount (Inst.Data.Data));
-            end if;
-
-            exit;
-         end if;
-      end loop;
-   end Set;
-
-   -------------------
-   -- Get_Instances --
-   -------------------
-
-   function Get_Instances (List : Instance_List) return Instance_Array is
-      Null_List : Instance_Array (1 .. 0);
-   begin
-      if List.List = null then
-         return Null_List;
-      else
-         return List.List.all;
-      end if;
-   end Get_Instances;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (List : in out Callback_Data_List) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Callback_Data_Array, Callback_Data_List);
-   begin
-      if List /= null then
-         for L in List'Range loop
-            if List (L) /= null then
-               Free (List (L));
-            end if;
-         end loop;
-         Unchecked_Free (List);
-      end if;
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (List : in out Instance_List_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Instance_List, Instance_List_Access);
-   begin
-      if List /= null then
-         Free (List.all);
-         Unchecked_Free (List);
-      end if;
-   end Free;
-
-   ---------
-   -- Get --
-   ---------
-
-   function Get
-     (Kernel : access Kernel_Handle_Record'Class;
-      List   : Callback_Data_List;
-      Script : access Scripting_Language_Record'Class)
-      return Callback_Data_Access
-   is
-      Tmp : constant Scripting_Language_Array :=
-              Scripting_Data (Kernel.Scripts).Scripting_Languages.all;
-   begin
-      if List /= null then
-         for T in Tmp'Range loop
-            if Tmp (T) = Scripting_Language (Script) then
-               return List (T);
-            end if;
-         end loop;
-      end if;
-      return null;
-   end Get;
-
-   ---------
-   -- Set --
-   ---------
-
-   procedure Set
-     (Kernel : access Kernel_Handle_Record'Class;
-      List   : in out Callback_Data_List;
-      Script : access Scripting_Language_Record'Class;
-      Data   : Callback_Data_Access)
-   is
-      Tmp : constant Scripting_Language_Array :=
-              Scripting_Data (Kernel.Scripts).Scripting_Languages.all;
-   begin
-      if List = null then
-         List := new Callback_Data_Array (Tmp'Range);
-      end if;
-
-      for T in Tmp'Range loop
-         if Tmp (T) = Scripting_Language (Script) then
-            if List (T) /= null
-              and then List (T) /= Data
-            then
-               Free (List (T));
-            end if;
-
-            List (T) := Data;
-            exit;
-         end if;
-      end loop;
-   end Set;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Class : in out Class_Type) is
-   begin
-      Free (Class.Name);
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Data : in out Callback_Data_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Callback_Data'Class, Callback_Data_Access);
-   begin
-      if Data /= null then
-         Free (Data.all);
-         Unchecked_Free (Data);
-      end if;
-   end Free;
-
-   ---------------------------------
-   -- Register_Scripting_Language --
-   ---------------------------------
-
-   procedure Register_Scripting_Language
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Script : access Scripting_Language_Record'Class)
-   is
-      Tmp : constant Scripting_Language_Array :=
-              Scripting_Data (Kernel.Scripts).Scripting_Languages.all;
-   begin
-      Unchecked_Free (Scripting_Data (Kernel.Scripts).Scripting_Languages);
-      Scripting_Data (Kernel.Scripts).Scripting_Languages :=
-        new Scripting_Language_Array'
-          (Tmp & Scripting_Language (Script));
-   end Register_Scripting_Language;
-
-   -------------------------------
-   -- Lookup_Scripting_Language --
-   -------------------------------
-
-   function Lookup_Scripting_Language
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Name   : String) return Scripting_Language
-   is
-      Tmp : constant Scripting_Language_List :=
-              Scripting_Data (Kernel.Scripts).Scripting_Languages;
-   begin
-      for T in Tmp'Range loop
-         if Equal (Get_Name (Tmp (T)), Name, False) then
-            return Tmp (T);
-         end if;
-      end loop;
-
-      return null;
-   end Lookup_Scripting_Language;
-
-   -----------------------------
-   -- Get_Scripting_Languages --
-   -----------------------------
-
-   function Get_Scripting_Languages
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Scripting_Language_Array is
-   begin
-      return Scripting_Data (Kernel.Scripts).Scripting_Languages.all;
-   end Get_Scripting_Languages;
-
-   --------------------
-   -- Block_Commands --
-   --------------------
-
-   procedure Block_Commands
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Block  : Boolean)
-   is
-      Tmp : constant Scripting_Language_List :=
-              Scripting_Data (Kernel.Scripts).Scripting_Languages;
-   begin
-      for T in Tmp'Range loop
-         Block_Commands (Tmp (T), Block);
-      end loop;
-   end Block_Commands;
-
-   ----------------------
-   -- Register_Command --
-   ----------------------
-
-   procedure Register_Command
-     (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Command       : String;
-      Minimum_Args  : Natural := 0;
-      Maximum_Args  : Natural := 0;
-      Handler       : Module_Command_Function;
-      Class         : Class_Type := No_Class;
-      Static_Method : Boolean := False)
-   is
-      Tmp : constant Scripting_Language_List :=
-              Scripting_Data (Kernel.Scripts).Scripting_Languages;
-   begin
-      Assert (Me,
-              Command /= Constructor_Method or else Class /= No_Class,
-              "Constructors can only be specified for classes");
-      Assert (Me, not Static_Method or else Class /= No_Class,
-              "Static method can only be created for classes");
-
-      for T in Tmp'Range loop
-         Register_Command
-           (Tmp (T), Command,
-            Minimum_Args, Maximum_Args, Handler, Class, Static_Method);
-      end loop;
-   end Register_Command;
-
-   ---------------
-   -- New_Class --
-   ---------------
-
-   function New_Class
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Name   : String;
-      Base   : Class_Type := No_Class) return Class_Type
-   is
-      Tmp   : constant Scripting_Language_List :=
-                Scripting_Data (Kernel.Scripts).Scripting_Languages;
-      Class : Class_Type;
-
-   begin
-      Class := Get (Scripting_Data (Kernel.Scripts).Classes, Name);
-
-      if Class = No_Class and then Tmp /= null then
-         for T in Tmp'Range loop
-            Register_Class (Tmp (T), Name, Base);
-         end loop;
-
-         Class := Class_Type'(Name => new String'(Name));
-         Set (Scripting_Data (Kernel.Scripts).Classes, Name, Class);
-      end if;
-
-      return Class;
-   end New_Class;
-
-   --------------
-   -- Get_Name --
-   --------------
-
-   function Get_Name (Class : Class_Type) return String is
-   begin
-      if Class.Name = null then
-         return "";
-      else
-         return Class.Name.all;
-      end if;
-   end Get_Name;
 
    --------------
    -- Set_Data --
    --------------
 
    procedure Set_Data
-     (Instance : Class_Instance; Entity : Entity_Information)
-   is
-      Script : constant Scripting_Language := Get_Script (Instance);
-      Class  : constant Class_Type := Get_Entity_Class (Get_Kernel (Script));
+     (Instance : Class_Instance; Entity : Entity_Information) is
    begin
-      if not Is_Subclass (Instance, Class) then
+      if not Is_Subclass (Instance, Entity_Class_Name) then
          raise Invalid_Data;
       end if;
 
       Ref (Entity);
-      Set_Property
+      Set_Data
         (Instance, Entity_Class_Name,
-         Scalar_Properties_Record'(Typ => Entities, Entity => Entity));
+         GPS_Properties_Record'(Typ => Entities, Entity => Entity));
    end Set_Data;
 
    --------------
@@ -688,19 +269,15 @@ package body GPS.Kernel.Scripts is
 
    procedure Set_Data
      (Instance : Class_Instance;
-      Location : File_Location_Info)
-   is
-      Script : constant Scripting_Language := Get_Script (Instance);
-      Class  : constant Class_Type :=
-                 Get_File_Location_Class (Get_Kernel (Script));
+      Location : File_Location_Info) is
    begin
-      if not Is_Subclass (Instance, Class) then
+      if not Is_Subclass (Instance, File_Location_Class_Name) then
          raise Invalid_Data;
       end if;
 
-      Set_Property
+      Set_Data
         (Instance, File_Location_Class_Name,
-         Scalar_Properties_Record'
+         GPS_Properties_Record'
            (Typ => File_Locations, Location => Location));
    end Set_Data;
 
@@ -709,22 +286,22 @@ package body GPS.Kernel.Scripts is
    --------------
 
    function Get_Data
-     (Data : Callback_Data; N : Positive) return Entity_Information
+     (Data : Callback_Data'Class; N : Positive) return Entity_Information
    is
       Class : constant Class_Type := Get_Entity_Class (Get_Kernel (Data));
       Inst  : constant Class_Instance := Nth_Arg
-        (Callback_Data'Class (Data), N, Class, Allow_Null => True);
-      D     : User_Data_List;
+        (Data, N, Class, Allow_Null => True);
+      Props : Instance_Property;
    begin
       if Inst = No_Class_Instance then
          return null;
       end if;
 
-      D := Get_Data (Inst, Entity_Class_Name);
-      if D = null then
+      Props := Get_Data (Inst, Entity_Class_Name);
+      if Props = null then
          return null;
       else
-         return Scalar_Properties (D.Prop).Entity;
+         return GPS_Properties (Props).Entity;
       end if;
    end Get_Data;
 
@@ -732,14 +309,14 @@ package body GPS.Kernel.Scripts is
    -- Get_Data --
    --------------
 
-   function Get_Data (Data : Callback_Data; N : Positive)
+   function Get_Data (Data : Callback_Data'Class; N : Positive)
       return File_Location_Info
    is
       Class : constant Class_Type :=
                 Get_File_Location_Class (Get_Kernel (Data));
       Inst  : constant Class_Instance :=
-                Nth_Arg (Callback_Data'Class (Data), N, Class);
-      D     : User_Data_List;
+                Nth_Arg (Data, N, Class);
+      D     : Instance_Property;
    begin
       if Inst /= No_Class_Instance then
          D := Get_Data (Inst, File_Location_Class_Name);
@@ -748,7 +325,7 @@ package body GPS.Kernel.Scripts is
       if D = null then
          return No_File_Location;
       else
-         return Scalar_Properties (D.Prop).Location;
+         return GPS_Properties (D).Location;
       end if;
    end Get_Data;
 
@@ -757,18 +334,14 @@ package body GPS.Kernel.Scripts is
    --------------
 
    procedure Set_Data (Instance : Class_Instance; File : Virtual_File) is
-      Script : constant Scripting_Language := Get_Script (Instance);
-      Kernel : constant Kernel_Handle := Get_Kernel (Script);
-      Class  : constant Class_Type := Get_File_Class (Kernel);
-
    begin
-      if not Is_Subclass (Instance, Class) then
+      if not Is_Subclass (Instance, File_Class_Name) then
          raise Invalid_Data;
       end if;
 
-      Set_Property
+      Set_Data
         (Instance, File_Class_Name,
-         Scalar_Properties_Record'(Typ => Files, File => File));
+         GPS_Properties_Record'(Typ => Files, File => File));
    end Set_Data;
 
    --------------
@@ -776,11 +349,10 @@ package body GPS.Kernel.Scripts is
    --------------
 
    function Get_Data
-     (Data : Callback_Data; N : Positive) return Virtual_File
+     (Data : Callback_Data'Class; N : Positive) return Virtual_File
    is
       Class : constant Class_Type := Get_File_Class (Get_Kernel (Data));
-      Inst  : constant Class_Instance :=
-                Nth_Arg (Callback_Data'Class (Data), N, Class);
+      Inst  : constant Class_Instance := Nth_Arg (Data, N, Class);
    begin
       return Get_Data (Inst);
    end Get_Data;
@@ -790,7 +362,7 @@ package body GPS.Kernel.Scripts is
    --------------
 
    function Get_Data (Instance : Class_Instance) return Virtual_File is
-      Data : User_Data_List;
+      Data : Instance_Property;
    begin
       if Instance /= No_Class_Instance then
          Data := Get_Data (Instance, File_Class_Name);
@@ -799,7 +371,7 @@ package body GPS.Kernel.Scripts is
       if Data = null then
          return VFS.No_File;
       else
-         return Scalar_Properties (Data.Prop).File;
+         return GPS_Properties (Data).File;
       end if;
    end Get_Data;
 
@@ -808,16 +380,14 @@ package body GPS.Kernel.Scripts is
    --------------
 
    procedure Set_Data (Instance : Class_Instance; Project  : Project_Type) is
-      Script : constant Scripting_Language := Get_Script (Instance);
-      Class  : constant Class_Type := Get_Project_Class (Get_Kernel (Script));
    begin
-      if not Is_Subclass (Instance, Class) then
+      if not Is_Subclass (Instance, Project_Class_Name) then
          raise Invalid_Data;
       end if;
 
-      Set_Property
+      Set_Data
         (Instance, Project_Class_Name,
-         Scalar_Properties_Record'(Typ => Projects, Project => Project));
+         GPS_Properties_Record'(Typ => Projects, Project => Project));
    end Set_Data;
 
    --------------
@@ -825,17 +395,17 @@ package body GPS.Kernel.Scripts is
    --------------
 
    function Get_Data
-     (Data : Callback_Data; N : Positive) return Project_Type
+     (Data : Callback_Data'Class; N : Positive) return Project_Type
    is
       Class : constant Class_Type := Get_Project_Class (Get_Kernel (Data));
-      Inst  : constant Class_Instance := Nth_Arg
-        (Callback_Data'Class (Data), N, Class);
-      Value : constant User_Data_List := Get_Data (Inst, Project_Class_Name);
+      Inst  : constant Class_Instance := Nth_Arg (Data, N, Class);
+      Value : constant Instance_Property :=
+        Get_Data (Inst, Project_Class_Name);
    begin
       if Value = null then
          return No_Project;
       else
-         return Scalar_Properties (Value.Prop).Project;
+         return GPS_Properties (Value).Project;
       end if;
    end Get_Data;
 
@@ -1610,26 +1180,6 @@ package body GPS.Kernel.Scripts is
       end if;
    end Context_Command_Handler;
 
-   ----------------
-   -- Initialize --
-   ----------------
-
-   procedure Initialize
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
-   begin
-      Kernel.Scripts := new Scripting_Data_Record;
-   end Initialize;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (Script : access Scripting_Language_Record) is
-      pragma Unreferenced (Script);
-   begin
-      null;
-   end Destroy;
-
    ----------------------
    -- On_Console_Input --
    ----------------------
@@ -1686,10 +1236,7 @@ package body GPS.Kernel.Scripts is
    procedure Console_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Kernel        : constant Kernel_Handle := Get_Kernel (Data);
-      Console_Class : constant Class_Type := New_Class (Kernel, "Console");
-      Inst          : constant Class_Instance :=
-                        Nth_Arg (Data, 1, Console_Class);
+      Inst          : constant Class_Instance := Nth_Arg (Data, 1);
       Console       : Interactive_Console;
    begin
       if Command = Constructor_Method then
@@ -1712,42 +1259,22 @@ package body GPS.Kernel.Scripts is
             --   ??? If the console was already associated with an instance,
             --  we would lose that original instance and all data the user
             --  might have stored in it.
-            Set_Data (Inst, Widget => GObject (Console));
+            GNAT.Scripts.Set_Data
+              (Inst, Get_Or_Create_Virtual_Console (Console));
 
-            if Console /= null then
+            if Title /= "" and then Console /= null then
                if On_Input /= null then
                   Set_Command_Handler
                     (Console, On_Console_Input'Access, On_Input.all'Address);
                end if;
+            end if;
 
-               if On_Destroy /= null then
-                  Subprogram_Callback.Connect
-                    (Console, Signal_Destroy, On_Console_Destroy'Access,
-                     User_Data => On_Destroy);
-               end if;
+            if Console /= null and then On_Destroy /= null then
+               Subprogram_Callback.Connect
+                 (Console, Signal_Destroy, On_Console_Destroy'Access,
+                  User_Data => On_Destroy);
             end if;
          end;
-
-      elsif Command = "write" then
-         Name_Parameters (Data, Console_Write_Args);
-         Console := Interactive_Console (GObject'(Get_Data (Inst)));
-         if Console /= null then
-            Insert_UTF8
-              (Console,
-               UTF8   => Nth_Arg (Data, 2),
-               Add_LF => False);
-         end if;
-
-      elsif Command = "clear" then
-         Console := Interactive_Console (GObject'(Get_Data (Inst)));
-         if Console /= null then
-            Clear (Console);
-         end if;
-
-      elsif Command = "flush" then
-         null;
-         --  Do nothing, only needed for compatibility with Python's
-         --  stdout stream
 
       elsif Command = "accept_input" then
          Console := Interactive_Console (GObject'(Get_Data (Inst)));
@@ -1762,25 +1289,6 @@ package body GPS.Kernel.Scripts is
          Console := Interactive_Console (GObject'(Get_Data (Inst)));
          if Console /= null then
             Enable_Prompt_Display (Console, Nth_Arg (Data, 2));
-         else
-            Set_Error_Msg (Data, -"Console was closed by user");
-         end if;
-
-      elsif Command = "isatty" then
-         Set_Return_Value (Data, False);
-
-      elsif Command = "read" then
-         Console := Interactive_Console (GObject'(Get_Data (Inst)));
-         if Console /= null then
-            Set_Return_Value (Data, Read (Console, Whole_Line => False));
-         else
-            Set_Error_Msg (Data, -"Console was closed by user");
-         end if;
-
-      elsif Command = "readline" then
-         Console := Interactive_Console (GObject'(Get_Data (Inst)));
-         if Console /= null then
-            Set_Return_Value (Data, Read (Console, Whole_Line => True));
          else
             Set_Error_Msg (Data, -"Console was closed by user");
          end if;
@@ -1802,46 +1310,38 @@ package body GPS.Kernel.Scripts is
    procedure Logger_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Kernel              : constant Kernel_Handle := Get_Kernel (Data);
       Name_Cst            : aliased constant String := "name";
       Message_Cst         : aliased constant String := "message";
       Active_Cst          : aliased constant String := "active";
       Condition_Cst       : aliased constant String := "condition";
       Error_Message_Cst   : aliased constant String := "error_message";
       Success_Message_Cst : aliased constant String := "success_message";
-      Logger_Class        : constant Class_Type :=
-                              New_Class (Kernel, Logger_Class_Name);
-      Inst                : constant Class_Instance :=
-                              Nth_Arg (Data, 1, Logger_Class);
-      Handle              : Debug_Handle;
+      Inst                : constant Class_Instance := Nth_Arg (Data, 1);
+      Prop                : Instance_Property;
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, (1 => Name_Cst'Unchecked_Access));
-         Set_Property
-           (Inst, Logger_Class_Name, Scalar_Properties_Record'
+         Set_Data
+           (Inst, Logger_Class_Name, GPS_Properties_Record'
               (Typ => Debug_Handles, Handle => Create (Nth_Arg (Data, 2))));
 
       elsif Command = "log" then
          Name_Parameters (Data, (1 => Message_Cst'Unchecked_Access));
-         Handle :=
-           Scalar_Properties (Get_Data (Inst, Logger_Class_Name).Prop).Handle;
-         Trace (Handle, Nth_Arg (Data, 2));
+         Prop := Get_Data (Inst, Logger_Class_Name);
+         Trace (GPS_Properties (Prop).Handle, Nth_Arg (Data, 2));
 
       elsif Command = "set_active" then
          Name_Parameters (Data, (1 => Active_Cst'Unchecked_Access));
-         Handle :=
-           Scalar_Properties (Get_Data (Inst, Logger_Class_Name).Prop).Handle;
-         Set_Active
-           (Handle, Nth_Arg (Data, 2));
+         Prop := Get_Data (Inst, Logger_Class_Name);
+         Set_Active (GPS_Properties (Prop).Handle, Nth_Arg (Data, 2));
 
       elsif Command = "check" then
          Name_Parameters (Data, (1 => Condition_Cst'Unchecked_Access,
                                  2 => Error_Message_Cst'Unchecked_Access,
                                  3 => Success_Message_Cst'Unchecked_Access));
          begin
-            Handle := Scalar_Properties
-              (Get_Data (Inst, Logger_Class_Name).Prop).Handle;
-            Assert (Handle,
+            Prop := Get_Data (Inst, Logger_Class_Name);
+            Assert (GPS_Properties (Prop).Handle,
                     Condition          => Nth_Arg (Data, 2),
                     Error_Message      => Nth_Arg (Data, 3),
                     Message_If_Success => Nth_Arg (Data, 4, ""));
@@ -1852,6 +1352,67 @@ package body GPS.Kernel.Scripts is
       end if;
    end Logger_Handler;
 
+   ----------------------
+   -- Register_Command --
+   ----------------------
+
+   procedure Register_Command
+     (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Command       : String;
+      Minimum_Args  : Natural    := 0;
+      Maximum_Args  : Natural    := 0;
+      Handler       : Module_Command_Function;
+      Class         : Class_Type := No_Class;
+      Static_Method : Boolean := False) is
+   begin
+      Register_Command
+        (Repo          => Kernel.Scripts,
+         Command       => Command,
+         Minimum_Args  => Minimum_Args,
+         Maximum_Args  => Maximum_Args,
+         Handler       => Handler,
+         Class         => Class,
+         Static_Method => Static_Method);
+   end Register_Command;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      List   : Callback_Data_List;
+      Script : access Scripting_Language_Record'Class)
+      return Callback_Data_Access is
+   begin
+      return Get (Get_Scripts (Kernel), List, Script);
+   end Get;
+
+   ---------
+   -- Set --
+   ---------
+
+   procedure Set
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      List   : in out Callback_Data_List;
+      Script : access Scripting_Language_Record'Class;
+      Data   : Callback_Data_Access) is
+   begin
+      Set (Get_Scripts (Kernel), List, Script, Data);
+   end Set;
+
+   ---------------
+   -- New_Class --
+   ---------------
+
+   function New_Class
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Name   : String;
+      Base   : Class_Type := No_Class) return Class_Type is
+   begin
+      return New_Class (Get_Scripts (Kernel), Name, Base);
+   end New_Class;
+
    --------------------------------------
    -- Register_Default_Script_Commands --
    --------------------------------------
@@ -1859,11 +1420,16 @@ package body GPS.Kernel.Scripts is
    procedure Register_Default_Script_Commands
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Console_Class : constant Class_Type :=
-                        New_Class
-                          (Kernel, "Console", Base => Get_GUI_Class (Kernel));
-      Logger  : constant Class_Type := New_Class (Kernel, Logger_Class_Name);
+      Console_Class_Name : constant String := "Console";
+      Console_Class : constant Class_Type := New_Class
+        (Kernel.Scripts, Console_Class_Name, Base => Get_GUI_Class (Kernel));
+      Logger  : constant Class_Type :=
+        New_Class (Kernel.Scripts, Logger_Class_Name);
    begin
+      GNAT.Scripts.Register_Standard_Classes
+        (Get_Scripts (Kernel),
+         Console_Class_Name => Console_Class_Name);
+
       Register_Command
         (Kernel, Constructor_Method, 1, 1, Logger_Handler'Access, Logger);
       Register_Command
@@ -1880,39 +1446,13 @@ package body GPS.Kernel.Scripts is
          Class        => Console_Class,
          Handler      => Console_Command_Handler'Access);
       Register_Command
-        (Kernel, "write",
-         Minimum_Args => 1,
-         Maximum_Args => 1,
-         Class        => Console_Class,
-         Handler      => Console_Command_Handler'Access);
-      Register_Command
-        (Kernel, "clear",
-         Class        => Console_Class,
-         Handler      => Console_Command_Handler'Access);
-      Register_Command
         (Kernel, "enable_input",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Class        => Console_Class,
          Handler      => Console_Command_Handler'Access);
       Register_Command
-        (Kernel, "flush",
-         Class        => Console_Class,
-         Handler      => Console_Command_Handler'Access);
-      Register_Command
         (Kernel, "accept_input",
-         Class        => Console_Class,
-         Handler      => Console_Command_Handler'Access);
-      Register_Command
-        (Kernel, "isatty",
-         Class        => Console_Class,
-         Handler      => Console_Command_Handler'Access);
-      Register_Command
-        (Kernel, "read",
-         Class        => Console_Class,
-         Handler      => Console_Command_Handler'Access);
-      Register_Command
-        (Kernel, "readline",
          Class        => Console_Class,
          Handler      => Console_Command_Handler'Access);
       Register_Command
@@ -2196,12 +1736,7 @@ package body GPS.Kernel.Scripts is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Class_Type is
    begin
-      if Scripting_Data (Kernel.Scripts).Entity_Class = No_Class then
-         Scripting_Data (Kernel.Scripts).Entity_Class := New_Class
-           (Kernel, Entity_Class_Name);
-      end if;
-
-      return Scripting_Data (Kernel.Scripts).Entity_Class;
+      return New_Class (Kernel.Scripts, Entity_Class_Name);
    end Get_Entity_Class;
 
    --------------------
@@ -2212,12 +1747,7 @@ package body GPS.Kernel.Scripts is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Class_Type is
    begin
-      if Scripting_Data (Kernel.Scripts).File_Class = No_Class then
-         Scripting_Data (Kernel.Scripts).File_Class := New_Class
-           (Kernel, File_Class_Name);
-      end if;
-
-      return Scripting_Data (Kernel.Scripts).File_Class;
+      return New_Class (Kernel.Scripts, File_Class_Name);
    end Get_File_Class;
 
    -----------------------
@@ -2228,12 +1758,7 @@ package body GPS.Kernel.Scripts is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Class_Type is
    begin
-      if Scripting_Data (Kernel.Scripts).Project_Class = No_Class then
-         Scripting_Data (Kernel.Scripts).Project_Class := New_Class
-           (Kernel, Project_Class_Name);
-      end if;
-
-      return Scripting_Data (Kernel.Scripts).Project_Class;
+      return New_Class (Kernel.Scripts, Project_Class_Name);
    end Get_Project_Class;
 
    -----------------------------
@@ -2244,28 +1769,19 @@ package body GPS.Kernel.Scripts is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Class_Type is
    begin
-      if Scripting_Data (Kernel.Scripts).File_Location_Class = No_Class then
-         Scripting_Data (Kernel.Scripts).File_Location_Class := New_Class
-           (Kernel, File_Location_Class_Name);
-      end if;
-
-      return Scripting_Data (Kernel.Scripts).File_Location_Class;
+      return New_Class (Kernel.Scripts, File_Location_Class_Name);
    end Get_File_Location_Class;
 
-   -------------------------------
-   -- Execute_Command_With_Args --
-   -------------------------------
+   -----------------
+   -- Get_Scripts --
+   -----------------
 
-   function Execute_Command_With_Args
-     (Script  : access Scripting_Language_Record;
-      Command : String;
-      Args    : GNAT.OS_Lib.Argument_List) return String
-   is
-      pragma Unreferenced (Script, Command, Args);
+   function Get_Scripts
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return GNAT.Scripts.Scripts_Repository is
    begin
-      raise Program_Error;
-      return "";
-   end Execute_Command_With_Args;
+      return Kernel.Scripts;
+   end Get_Scripts;
 
    -------------------------------
    -- Execute_GPS_Shell_Command --
@@ -2278,7 +1794,7 @@ package body GPS.Kernel.Scripts is
       Errors : aliased Boolean;
    begin
       return Execute_Command
-        (Lookup_Scripting_Language (Kernel, GPS_Shell_Name),
+        (Lookup_Scripting_Language (Kernel.Scripts, GPS_Shell_Name),
          Command, null, True, True, Errors'Unchecked_Access);
    end Execute_GPS_Shell_Command;
 
@@ -2292,7 +1808,7 @@ package body GPS.Kernel.Scripts is
       Args    : GNAT.OS_Lib.Argument_List)
    is
       Output : constant String := Execute_Command_With_Args
-        (Lookup_Scripting_Language (Kernel, GPS_Shell_Name),
+        (Lookup_Scripting_Language (Kernel.Scripts, GPS_Shell_Name),
          Command, Args);
       pragma Unreferenced (Output);
    begin
@@ -2309,7 +1825,7 @@ package body GPS.Kernel.Scripts is
       Args    : GNAT.OS_Lib.Argument_List) return String is
    begin
       return Execute_Command_With_Args
-        (Lookup_Scripting_Language (Kernel, GPS_Shell_Name),
+        (Lookup_Scripting_Language (Kernel.Scripts, GPS_Shell_Name),
          Command, Args);
    end Execute_GPS_Shell_Command;
 
@@ -2323,113 +1839,32 @@ package body GPS.Kernel.Scripts is
    is
       Errors : aliased Boolean;
       Str : constant String := Execute_Command
-        (Lookup_Scripting_Language (Kernel, GPS_Shell_Name),
+        (Lookup_Scripting_Language (Kernel.Scripts, GPS_Shell_Name),
          Command, null, True, True, Errors'Unchecked_Access);
       pragma Unreferenced (Str);
    begin
       null;
    end Execute_GPS_Shell_Command;
 
-   ---------------------
-   -- Execute_Command --
-   ---------------------
+   ----------------
+   -- Get_Kernel --
+   ----------------
 
-   function Execute_Command
-     (Script       : access Scripting_Language_Record;
-      Command      : String;
-      Console      : Interactive_Consoles.Interactive_Console := null;
-      Hide_Output  : Boolean := False;
-      Show_Command : Boolean := True;
-      Errors       : access Boolean) return String is
+   function Get_Kernel (Data : Callback_Data'Class)
+      return GPS.Kernel.Kernel_Handle is
    begin
-      Execute_Command
-        (Scripting_Language (Script),
-         Command, Console, Hide_Output, Show_Command, Errors.all);
-      return "";
-   end Execute_Command;
-
-   -------------
-   -- Nth_Arg --
-   -------------
-
-   function Nth_Arg
-     (Data    : Callback_Data;
-      N       : Positive;
-      Default : Subprogram_Type) return Subprogram_Type is
-   begin
-      return Nth_Arg (Callback_Data'Class (Data), N);
-   exception
-      when No_Such_Parameter =>
-         return Default;
-   end Nth_Arg;
-
-   -------------
-   -- Nth_Arg --
-   -------------
-
-   function Nth_Arg
-     (Data : Callback_Data; N : Positive; Default : String)
-      return String is
-   begin
-      return Nth_Arg (Callback_Data'Class (Data), N);
-   exception
-      when No_Such_Parameter =>
-         return Default;
-   end Nth_Arg;
-
-   -------------
-   -- Nth_Arg --
-   -------------
-
-   function Nth_Arg
-     (Data : Callback_Data; N : Positive; Default : Integer)
-      return Integer is
-   begin
-      return Nth_Arg (Callback_Data'Class (Data), N);
-   exception
-      when No_Such_Parameter =>
-         return Default;
-   end Nth_Arg;
-
-   -------------
-   -- Nth_Arg --
-   -------------
-
-   function Nth_Arg
-     (Data : Callback_Data; N : Positive; Default : Boolean)
-      return Boolean is
-   begin
-      return Nth_Arg (Callback_Data'Class (Data), N);
-   exception
-      when No_Such_Parameter =>
-         return Default;
-   end Nth_Arg;
-
-   -------------
-   -- Nth_Arg --
-   -------------
-
-   function Nth_Arg
-     (Data       : Callback_Data;
-      N          : Positive;
-      Class      : Class_Type;
-      Default    : Class_Instance;
-      Allow_Null : Boolean := False) return Class_Instance is
-   begin
-      return Nth_Arg (Callback_Data'Class (Data), N, Class, Allow_Null);
-   exception
-      when No_Such_Parameter =>
-         return Default;
-   end Nth_Arg;
+      return Kernel_Scripts_Repository (Get_Repository (Data).all).Kernel;
+   end Get_Kernel;
 
    ----------------
    -- Get_Kernel --
    ----------------
 
-   function Get_Kernel (Data : Callback_Data)
+   function Get_Kernel
+     (Script : access GNAT.Scripts.Scripting_Language_Record'Class)
       return GPS.Kernel.Kernel_Handle is
    begin
-      return Get_Kernel (Get_Script (Callback_Data'Class (Data)));
+      return Kernel_Scripts_Repository (Get_Repository (Script).all).Kernel;
    end Get_Kernel;
 
    -------------------
@@ -2446,7 +1881,7 @@ package body GPS.Kernel.Scripts is
          return No_Class_Instance;
       else
          Instance := New_Instance
-           (Script, Get_Entity_Class (Get_Kernel (Script)));
+           (Script, New_Class (Get_Repository (Script), Entity_Class_Name));
          Set_Data (Instance, Entity);
          return Instance;
       end if;
@@ -2461,7 +1896,7 @@ package body GPS.Kernel.Scripts is
       File   : Virtual_File) return Class_Instance
    is
       Instance : constant Class_Instance := New_Instance
-        (Script, Get_File_Class (Get_Kernel (Script)));
+        (Script, New_Class (Get_Repository (Script), File_Class_Name));
    begin
       Set_Data (Instance, File);
       return Instance;
@@ -2479,7 +1914,7 @@ package body GPS.Kernel.Scripts is
    begin
       if Project /= No_Project then
          Instance := New_Instance
-           (Script, Get_Project_Class (Get_Kernel (Script)));
+           (Script, New_Class (Get_Repository (Script), Project_Class_Name));
          Set_Data (Instance, Project);
       end if;
       return Instance;
@@ -2496,7 +1931,8 @@ package body GPS.Kernel.Scripts is
       Column : Basic_Types.Visible_Column_Type) return Class_Instance
    is
       Instance : constant Class_Instance := New_Instance
-        (Script, Get_File_Location_Class (Get_Kernel (Script)));
+        (Script,
+         New_Class (Get_Repository (Script), File_Location_Class_Name));
       Info     : constant File_Location_Info := (File, Line, Column);
 
    begin
@@ -2540,12 +1976,13 @@ package body GPS.Kernel.Scripts is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Class_Type is
    begin
-      if Scripting_Data (Kernel.Scripts).Context_Class = No_Class then
-         Scripting_Data (Kernel.Scripts).Context_Class := New_Class
-           (Kernel, Context_Class_Name);
-      end if;
+      return Get_Context_Class (Kernel.Scripts);
+   end Get_Context_Class;
 
-      return Scripting_Data (Kernel.Scripts).Context_Class;
+   function Get_Context_Class
+     (Repo : Scripts_Repository) return Class_Type is
+   begin
+      return New_Class (Repo, Context_Class_Name);
    end Get_Context_Class;
 
    --------------------
@@ -2556,12 +1993,7 @@ package body GPS.Kernel.Scripts is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Class_Type is
    begin
-      if Scripting_Data (Kernel.Scripts).Hook_Class = No_Class then
-         Scripting_Data (Kernel.Scripts).Hook_Class := New_Class
-           (Kernel, "Hook");
-      end if;
-
-      return Scripting_Data (Kernel.Scripts).Hook_Class;
+      return New_Class (Kernel.Scripts, Hook_Class_Name);
    end Get_Hook_Class;
 
    ----------------------------
@@ -2572,14 +2004,14 @@ package body GPS.Kernel.Scripts is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Class_Type is
    begin
-      if Scripting_Data (Kernel.Scripts).Area_Context_Class = No_Class then
-         Scripting_Data (Kernel.Scripts).Area_Context_Class := New_Class
-           (Kernel,
-            "AreaContext",
-            Base => Get_File_Context_Class (Kernel));
-      end if;
+      return Get_Area_Context_Class (Kernel.Scripts);
+   end Get_Area_Context_Class;
 
-      return Scripting_Data (Kernel.Scripts).Area_Context_Class;
+   function Get_Area_Context_Class
+     (Repo : Scripts_Repository) return Class_Type is
+   begin
+      return New_Class
+        (Repo, "AreaContext", Base => Get_File_Context_Class (Repo));
    end Get_Area_Context_Class;
 
    --------------------
@@ -2597,13 +2029,13 @@ package body GPS.Kernel.Scripts is
       elsif Has_Area_Information (Context) then
          return Get_Or_Create_Context
            (Script,
-            Get_Area_Context_Class (Get_Kernel (Script)),
+            Get_Area_Context_Class (Get_Repository (Script)),
             Context);
 
       elsif Has_Entity_Name_Information (Context) then
          return Get_Or_Create_Context
            (Script,
-            Get_Entity_Context_Class (Get_Kernel (Script)),
+            Get_Entity_Context_Class (Get_Repository (Script)),
             Context);
 
       elsif Has_File_Information (Context)
@@ -2612,14 +2044,14 @@ package body GPS.Kernel.Scripts is
       then
          return Get_Or_Create_Context
            (Script,
-            Get_File_Context_Class (Get_Kernel (Script)),
+            Get_File_Context_Class (Get_Repository (Script)),
             Context);
 
       else
          Trace (Me, "Context type is not supported by GPS");
          return Get_Or_Create_Context
            (Script,
-            Get_Context_Class (Get_Kernel (Script)),
+            Get_Context_Class (Get_Repository (Script)),
             Context);
       end if;
    end Create_Context;
@@ -2631,13 +2063,13 @@ package body GPS.Kernel.Scripts is
    function Get_Data
      (Instance : Class_Instance) return GPS.Kernel.Selection_Context
    is
-      Value : constant User_Data_List :=
+      Value : constant Instance_Property :=
         Get_Data (Instance, Context_Class_Name);
    begin
       if Value = null then
          return No_Context;
       else
-         return Scalar_Properties (Value.Prop).Context;
+         return GPS_Properties (Value).Context;
       end if;
    end Get_Data;
 
@@ -2645,12 +2077,11 @@ package body GPS.Kernel.Scripts is
    -- Get_Data --
    --------------
 
-   function Get_Data (Data : Callback_Data; N : Positive)
+   function Get_Data (Data : Callback_Data'Class; N : Positive)
                       return GPS.Kernel.Selection_Context is
    begin
       return Get_Data
-        (Nth_Arg (Callback_Data'Class (Data), N,
-                  Get_Context_Class (Get_Kernel (Data))));
+        (Nth_Arg (Data, N, Get_Context_Class (Get_Kernel (Data))));
    end Get_Data;
 
    ----------------------------
@@ -2661,14 +2092,14 @@ package body GPS.Kernel.Scripts is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Class_Type is
    begin
-      if Scripting_Data (Kernel.Scripts).File_Context_Class = No_Class then
-         Scripting_Data (Kernel.Scripts).File_Context_Class := New_Class
-           (Kernel,
-            "FileContext",
-            Base => Get_Context_Class (Kernel));
-      end if;
+      return Get_File_Context_Class (Kernel.Scripts);
+   end Get_File_Context_Class;
 
-      return Scripting_Data (Kernel.Scripts).File_Context_Class;
+   function Get_File_Context_Class
+     (Repo : Scripts_Repository) return Class_Type is
+   begin
+      return New_Class
+        (Repo, "FileContext", Base => Get_Context_Class (Repo));
    end Get_File_Context_Class;
 
    ------------------------------
@@ -2679,14 +2110,14 @@ package body GPS.Kernel.Scripts is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Class_Type is
    begin
-      if Scripting_Data (Kernel.Scripts).Entity_Context_Class = No_Class then
-         Scripting_Data (Kernel.Scripts).Entity_Context_Class := New_Class
-           (Kernel,
-            "EntityContext",
-            Base => Get_File_Context_Class (Kernel));
-      end if;
+      return Get_Entity_Context_Class (Kernel.Scripts);
+   end Get_Entity_Context_Class;
 
-      return Scripting_Data (Kernel.Scripts).Entity_Context_Class;
+   function Get_Entity_Context_Class
+     (Repo : Scripts_Repository) return Class_Type is
+   begin
+      return New_Class
+        (Repo, "EntityContext", Base => Get_File_Context_Class (Repo));
    end Get_Entity_Context_Class;
 
    --------------
@@ -2695,29 +2126,15 @@ package body GPS.Kernel.Scripts is
 
    procedure Set_Data
      (Instance : Class_Instance;
-      Context  : Selection_Context)
-   is
-      Script : constant Scripting_Language := Get_Script (Instance);
-      Class  : constant Class_Type :=
-                 Get_Context_Class (Get_Kernel (Script));
+      Context  : Selection_Context) is
    begin
-      if not Is_Subclass (Instance, Class) then
+      if not Is_Subclass (Instance, Context_Class_Name) then
          raise Invalid_Data;
       end if;
 
-      if Active (Ref_Me) then
-         Increase_Indent (Ref_Me, "Before set_data, Inst="
-                          & Print_Refcount (Instance.Data.Data));
-      end if;
-
-      Set_Property
+      Set_Data
         (Instance, Context_Class_Name,
-         Scalar_Properties_Record'(Typ => Contexts, Context => Context));
-
-      if Active (Ref_Me) then
-         Decrease_Indent (Ref_Me, "After set_Data, Inst="
-                          & Print_Refcount (Instance.Data.Data));
-      end if;
+         GPS_Properties_Record'(Typ => Contexts, Context => Context));
    end Set_Data;
 
    ---------------------------
@@ -2755,11 +2172,11 @@ package body GPS.Kernel.Scripts is
               Script, Instance);
 
          if Active (Ref_Me) then
-            Assert (Ref_Me,
-                    Instance.Data.Data.Refcount = 3,
-                    "After Get_Or_Create_Context, CI.refcount ("
-                    & Instance.Data.Data.Refcount'Img
-                    & ") should be 3", Raise_Exception => False);
+--              Assert (Ref_Me,
+--                      Instance.Data.Data.Refcount = 3,
+--                      "After Get_Or_Create_Context, CI.refcount ("
+--                      & Instance.Data.Data.Refcount'Img
+--                      & ") should be 3", Raise_Exception => False);
             Assert (Ref_Me,
                     Context.Data.Data.Ref_Count = Initial_Ref + 1,
                     "After Get_Or_Create_Context, context.refcount ("
@@ -2775,27 +2192,13 @@ package body GPS.Kernel.Scripts is
          end if;
       end if;
 
-      if Active (Ref_Me) then
-         Decrease_Indent (Ref_Me, "End of Get_Or_Create_Context "
-                          & Print_Refcount (Instance.Data.Data));
-      end if;
+--        if Active (Ref_Me) then
+--           Decrease_Indent (Ref_Me, "End of Get_Or_Create_Context "
+--                            & Print_Refcount (Instance.Data.Data));
+--        end if;
 
       return Instance;
    end Get_Or_Create_Context;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Subprogram : in out Subprogram_Type) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Subprogram_Record'Class, Subprogram_Type);
-   begin
-      if Subprogram /= null then
-         Free (Subprogram.all);
-         Unchecked_Free (Subprogram);
-      end if;
-   end Free;
 
    -------------------
    -- Get_GUI_Class --
@@ -2804,12 +2207,7 @@ package body GPS.Kernel.Scripts is
    function Get_GUI_Class
      (Kernel : access Kernel_Handle_Record'Class) return Class_Type is
    begin
-      if Scripting_Data (Kernel.Scripts).GUI_Class = No_Class then
-         Scripting_Data (Kernel.Scripts).GUI_Class := New_Class
-           (Kernel, GUI_Class_Name);
-      end if;
-
-      return Scripting_Data (Kernel.Scripts).GUI_Class;
+      return New_Class (Kernel.Scripts, GUI_Class_Name);
    end Get_GUI_Class;
 
    -------------------------
@@ -2829,7 +2227,7 @@ package body GPS.Kernel.Scripts is
                     & " by other functions"));
       elsif Command = "set_sensitive" then
          Name_Parameters (Data, Set_Sensitive_Parameters);
-         W := Gtk_Widget (GObject'(Get_Data (Inst, GUI_Class_Name)));
+         W := Gtk_Widget (GObject'(Get_Data (Inst)));
          if W /= null then
             Set_Sensitive (W, Nth_Arg (Data, 2, True));
          else
@@ -2837,14 +2235,14 @@ package body GPS.Kernel.Scripts is
          end if;
 
       elsif Command = "is_sensitive" then
-         W := Gtk_Widget (GObject'(Get_Data (Inst, GUI_Class_Name)));
+         W := Gtk_Widget (GObject'(Get_Data (Inst)));
          if W /= null then
             Set_Return_Value (Data, Gtk.Widget.Is_Sensitive (W));
          else
             Set_Error_Msg (Data, "Widget has been destroyed");
          end if;
       elsif Command = "destroy" then
-         W := Gtk_Widget (GObject'(Get_Data (Inst, GUI_Class_Name)));
+         W := Gtk_Widget (GObject'(Get_Data (Inst)));
          if W /= null then
             Destroy (W);
          else
@@ -2854,7 +2252,7 @@ package body GPS.Kernel.Scripts is
          end if;
 
       elsif Command = "hide" then
-         W := Gtk_Widget (GObject'(Get_Data (Inst, GUI_Class_Name)));
+         W := Gtk_Widget (GObject'(Get_Data (Inst)));
          if W /= null then
             Set_Child_Visible (W, False);
             Hide (W);
@@ -2863,7 +2261,7 @@ package body GPS.Kernel.Scripts is
          end if;
 
       elsif Command = "show" then
-         W := Gtk_Widget (GObject'(Get_Data (Inst, GUI_Class_Name)));
+         W := Gtk_Widget (GObject'(Get_Data (Inst)));
          if W /= null then
             Set_Child_Visible (W, True);
             Show (W);
@@ -2873,57 +2271,20 @@ package body GPS.Kernel.Scripts is
       end if;
    end GUI_Command_Handler;
 
-   --------------------
-   -- Free_User_Data --
-   --------------------
-
-   procedure Free_User_Data (Data : in out User_Data_List) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (User_Data, User_Data_List);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Instance_Property_Record'Class, Instance_Property);
-   begin
-      if Data /= null then
-         if Data.Prop /= null then
-            Destroy (Data.Prop.all);
-            Unchecked_Free (Data.Prop);
-         end if;
-         Unchecked_Free (Data);
-      end if;
-   end Free_User_Data;
-
    -------------
    -- Destroy --
    -------------
 
-   procedure Destroy (Prop : in out Scalar_Properties_Record) is
+   procedure Destroy (Prop : in out GPS_Properties_Record) is
    begin
       case Prop.Typ is
-         when Strings =>
-            Free (Prop.Str);
-
-         when Objects =>
-            --  Nothing to do; the object holds a reference to the
-            --  instance, the opposite is not true. The instance will
-            --  never be destroyed while the object exists in this case.
-            --
-            --  We shouldn't be able to free Obj while the widget's user
-            --  data still exists, since it holds a reference to the
-            --  class_instance. Therefore Free should only be called when
-            --  Obj has already been reset to null when
-            --  On_Widget_Data_Destroyed has been called.
-
-            if Prop.Obj /= null then
-               Prop.Obj := null;
-            end if;
-
          when Contexts =>
             --  Nothing to do either. The ref to the class instance that is
             --  hold by the context will be automatically freed when the
             --  context itself is destroyed.
             null;
 
-         when Integers | Files | Projects | Debug_Handles =>
+         when Files | Projects | Debug_Handles =>
             null;
 
          when Entities =>
@@ -2940,19 +2301,7 @@ package body GPS.Kernel.Scripts is
    -------------------
 
    function Get_Instances
-     (Prop : Instance_Property_Record) return Instance_List_Access
-   is
-      pragma Unreferenced (Prop);
-   begin
-      return null;
-   end Get_Instances;
-
-   -------------------
-   -- Get_Instances --
-   -------------------
-
-   function Get_Instances
-     (Prop : Scalar_Properties_Record) return Instance_List_Access
+     (Prop : GPS_Properties_Record) return Instance_List_Access
    is
    begin
       case Prop.Typ is
@@ -2961,501 +2310,11 @@ package body GPS.Kernel.Scripts is
                return Instance_List_Access (Prop.Context.Data.Data.Instances);
             end if;
 
-         when Strings | Objects | Integers | Files | Entities | Projects
-            | File_Locations | Debug_Handles =>
+         when Files | Entities | Projects | File_Locations | Debug_Handles =>
             null;
       end case;
 
       return null;
    end Get_Instances;
-
-   ------------
-   -- Decref --
-   ------------
-
-   procedure Decref (Inst : access Class_Instance_Record) is
-      Data : User_Data_List;
-      Ptr  : Class_Instance_Record_Access;
-      L    : Instance_Array_Access;
-      Instances : Instance_List_Access;
-      Refs_In_User_Data : Natural := 0;
-   begin
-      --  We are already in the process of destroying the class instance, so
-      --  nothing else to do
-
-      if Inst.Refcount = Natural'Last then
-         return;
-      end if;
-
-      if Active (Ref_Me) then
-         Increase_Indent (Ref_Me, "CI.Decref " & Print_Refcount (Inst));
-      end if;
-
-      --  If the instance has only one reference left, and that is owned by
-      --  the user data (for instance when it is a selection), we will be able
-      --  to kill the CI instances anyway.
-
-      Data := Inst.User_Data;
-
-      while Data /= null loop
-         Instances := Get_Instances (Data.Prop.all);
-
-         if Instances /= null and then Instances.List /= null then
-            L := Instances.List;
-
-            for C in L'Range loop
-               if L (C).Initialized
-                 and then L (C).Data.Data = Class_Instance_Record_Access (Inst)
-               then
-                  Refs_In_User_Data := Refs_In_User_Data + 1;
-               end if;
-            end loop;
-         end if;
-
-         Data := Data.Next;
-      end loop;
-
-      if Active (Ref_Me) then
-         Trace (Ref_Me, "CI.Decref, Refs_In_User=" & Refs_In_User_Data'Img);
-      end if;
-
-      Inst.Refcount := Inst.Refcount - 1;
-
-      if Inst.Refcount = Refs_In_User_Data then
-         --  Reset the references to the CI in the instances of all its user
-         --  data. This might result in a recursive call to Decref, which will
-         --  set Refcount to 0. To prevent this, and for more efficiency,
-         --  we simulate a different refcount, and finalize the CI ourselves
-
-         Inst.Refcount := Natural'Last;
-
-         Data := Inst.User_Data;
-         while Data /= null loop
-            Instances := Get_Instances (Data.Prop.all);
-            if Instances /= null and then Instances.List /= null then
-               L := Instances.List;
-               for C in L'Range loop
-                  if L (C).Initialized
-                    and then L (C).Data.Data =
-                       Class_Instance_Record_Access (Inst)
-                  then
-                     if Active (Ref_Me) then
-                        Trace (Ref_Me, "Reset Instances in user data:"
-                               & " CI=" & Print_Refcount (L (C).Data.Data));
-                     end if;
-
-                     L (C) := No_Class_Instance;
-                     exit;
-                  end if;
-               end loop;
-            end if;
-            Data := Data.Next;
-         end loop;
-
-         Inst.Refcount := 0;
-      end if;
-
-      if Inst.Refcount = 0 then
-         if Active (Ref_Me) then
-            Trace (Ref_Me, "Decref Destroying CI "
-                   & Print_Refcount (Class_Instance_Record_Access (Inst)));
-         end if;
-
-         Inst.Refcount := Natural'Last;
-
-         while Inst.User_Data /= null loop
-            if Active (Ref_Me) then
-               Trace (Ref_Me, "Destroying user_data: name="
-                      & Inst.User_Data.Name & " type="
-                      & External_Tag (Inst.User_Data.Prop'Tag));
-            end if;
-
-            Data := Inst.User_Data.Next;
-            Free_User_Data (Inst.User_Data);
-            Inst.User_Data := Data;
-         end loop;
-
-         Inst.Refcount := 0;
-
-         Ptr := Inst.all'Access;
-         --  The above isn't dangerous: We know there are no more
-         --  Class_Instance referencing this pointer, or we wouldn't be
-         --  destroying it. As a result, it is safe to free the memory here
-
-         Unchecked_Free (Ptr);
-
-      elsif Active (Ref_Me) then
-         Trace (Ref_Me, "After Decref "
-                & Print_Refcount (Class_Instance_Record_Access (Inst)));
-      end if;
-
-      if Active (Ref_Me) then
-         Decrease_Indent (Ref_Me, "Done CI.Decref");
-      end if;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end Decref;
-
-   ------------
-   -- Incref --
-   ------------
-
-   procedure Incref (Inst : access Class_Instance_Record) is
-   begin
-      Inst.Refcount := Inst.Refcount + 1;
-   end Incref;
-
-   ------------
-   -- Adjust --
-   ------------
-
-   procedure Adjust (CI : in out Class_Instance_Data) is
-   begin
-      Incref (CI.Data);
-      if Active (Ref_Me) then
-         Trace (Ref_Me, "After CI.Adjust " & Print_Refcount (CI.Data));
-      end if;
-   end Adjust;
-
-   --------------
-   -- Finalize --
-   --------------
-
-   procedure Finalize (CI : in out Class_Instance_Data) is
-   begin
-      --  Data might be null in some rare cases. Most notably, it happens when
-      --  GPS is being destroyed: the python module has already been destroyed,
-      --  but we still have remaining CI finalized when GNAT finalizes
-      --  everything before exit.
-
-      if CI.Data /= null then
-         if Active (Ref_Me) then
-            Increase_Indent
-              (Ref_Me, "CI.Finalize " & Print_Refcount (CI.Data));
-         end if;
-         Decref (CI.Data);
-         if Active (Ref_Me) then
-            Decrease_Indent (Ref_Me, "Done CI.Finalize");
-         end if;
-      end if;
-   end Finalize;
-
-   ---------
-   -- "=" --
-   ---------
-
-   function "=" (CI1, CI2 : Class_Instance_Data) return Boolean is
-   begin
-      return CI1.Data = CI2.Data;
-   end "=";
-
-   -------------
-   -- Get_CIR --
-   -------------
-
-   function Get_CIR
-     (Inst : Class_Instance) return Class_Instance_Record_Access is
-   begin
-      if Inst.Initialized then
-         return Inst.Data.Data;
-      else
-         return null;
-      end if;
-   end Get_CIR;
-
-   --------------------
-   -- Print_Refcount --
-   --------------------
-
-   function Print_Refcount
-     (Instance : access Class_Instance_Record) return String
-   is
-      Data : User_Data_List := Instance.User_Data;
-      Context : Selection_Context_Data;
-   begin
-      if Active (Ref_Me) then
-         while Data /= null loop
-            if Data.Prop.all in Scalar_Properties_Record'Class
-              and then Scalar_Properties_Record (Data.Prop.all).Typ = Contexts
-            then
-               Context :=
-                 Scalar_Properties_Record (Data.Prop.all).Context.Data.Data;
-               if Context /= null then
-                  return "CI=(" & System.Address_Image
-                    (To_Address (Class_Instance_Record_Access (Instance)))
-                    & Integer'Image (Instance.Refcount)
-                    & ") ctx=("
-                    & System.Address_Image (To_Address (Context))
-                    & Context.Ref_Count'Img & ")";
-               end if;
-            end if;
-            Data := Data.Next;
-         end loop;
-      end if;
-
-      return "CI=(" & System.Address_Image
-        (To_Address (Class_Instance_Record_Access (Instance)))
-        & Integer'Image (Instance.Refcount) & ")";
-   end Print_Refcount;
-
-   -------------------
-   -- From_Instance --
-   -------------------
-
-   function From_Instance
-     (Script : access Scripting_Language_Record'Class;
-      Inst   : access Class_Instance_Record'Class) return Class_Instance
-   is
-      Result : Class_Instance (Initialized => True);
-   begin
-      --  Do not modify the refcount, it should have been initialized properly
-      --  already.
-      Inst.Script := Scripting_Language (Script);
-
-      --  Do not use an aggregate to limit the number of calls to
-      --  Adjust/Finalize
-      Result.Data.Data := Class_Instance_Record_Access (Inst);
-      Incref (Get_CIR (Result));
-      if Active (Ref_Me) then
-         Trace (Ref_Me, "After From_Instance "
-                & Print_Refcount (Get_CIR (Result)));
-      end if;
-      return Result;
-   end From_Instance;
-
-   --------------
-   -- Get_Data --
-   --------------
-
-   function Get_Data
-     (Instance : Class_Instance; Name : String) return User_Data_List
-   is
-      D : User_Data_List;
-   begin
-      if Instance.Initialized then
-         D := Instance.Data.Data.User_Data;
-         while D /= null loop
-            if D.Name = Name then
-               return D;
-            end if;
-            D := D.Next;
-         end loop;
-      end if;
-      return null;
-   end Get_Data;
-
-   ------------------
-   -- Set_Property --
-   ------------------
-
-   procedure Set_Property
-     (Instance : Class_Instance;
-      Name     : String;
-      Property : Instance_Property_Record'Class)
-   is
-      D        : User_Data_List := Instance.Data.Data.User_Data;
-      Previous : User_Data_List;
-   begin
-      while D /= null loop
-         if D.Name = Name then
-            if Previous = null then
-               Instance.Data.Data.User_Data := D.Next;
-            else
-               Previous.Next := D.Next;
-            end if;
-            Free_User_Data (D);
-            exit;
-         end if;
-         Previous := D;
-         D := D.Next;
-      end loop;
-
-      Instance.Data.Data.User_Data := new User_Data'
-        (Length => Name'Length,
-         Name   => Name,
-         Next   => Instance.Data.Data.User_Data,
-         Prop   => new Instance_Property_Record'Class'(Property));
-   end Set_Property;
-
-   --------------
-   -- Set_Data --
-   --------------
-
-   procedure Set_Data
-     (Instance : Class_Instance; Name : Class_Type; Value : String)
-   is
-   begin
-      Set_Property
-        (Instance, Get_Name (Name),
-         Scalar_Properties_Record'(Typ => Strings, Str => new String'(Value)));
-   end Set_Data;
-
-   --------------
-   -- Set_Data --
-   --------------
-
-   procedure Set_Data
-     (Instance : Class_Instance; Name : Class_Type; Value : Integer)
-   is
-   begin
-      Set_Property
-        (Instance, Get_Name (Name),
-         Scalar_Properties_Record'(Typ => Integers, Int => Value));
-   end Set_Data;
-
-   ------------------------------
-   -- On_Widget_Data_Destroyed --
-   ------------------------------
-
-   procedure On_Widget_Data_Destroyed (CIR : CIR_Data_Type) is
-      Data : User_Data_List := CIR.CIR.User_Data;
-   begin
-      --  Warning: it is possible that the Ada handle to the widget has already
-      --  been deallocated, through a call to Glib.Object.Free_Data. The order
-      --  of calls between Free_Data and On_Widget_Data_Destroyed is undefined,
-      --  since they are both associated with user data stored in the C widget.
-      --  As a result, we shouldn't use the Ada handle here!
-
-      while Data /= null loop
-         if Data.Name = CIR.Property_Name then
-            Scalar_Properties (Data.Prop).Obj := null;
-            exit;
-         end if;
-         Data := Data.Next;
-      end loop;
-
-      Decref (CIR.CIR); --  Might free CIR, do not reuse afterward!
-   end On_Widget_Data_Destroyed;
-
-   --------------
-   -- Set_Data --
-   --------------
-
-   procedure Set_Data
-     (Instance : Class_Instance;
-      Widget   : Glib.Object.GObject;
-      Name     : String := GUI_Class_Name) is
-   begin
-      Set_Property
-        (Instance, Name,
-         Scalar_Properties_Record'(Typ => Objects, Obj => Widget));
-
-      --  The widget will hold a reference to the Instance, so that the
-      --  instance is not destroyed while the widget is in use
-      Incref (Get_CIR (Instance));
-
-      --  Use a name specific to the scripting language, so that the same
-      --  widget can have corresponding instances in several languages
-      CIR_User_Data.Set
-        (Widget, CIR_Data_Type'
-           (CIR           => Get_CIR (Instance),
-            Length        => Name'Length,
-            Property_Name => Name),
-         "GPS-Instance-" & Get_Name (Instance.Data.Data.Script),
-         On_Destroyed => On_Widget_Data_Destroyed'Access);
-   end Set_Data;
-
-   ------------------
-   -- Get_Instance --
-   ------------------
-
-   function Get_Instance
-     (Script : access Scripting_Language_Record'Class;
-      Widget : access Glib.Object.GObject_Record'Class)
-      return Class_Instance is
-   begin
-      return From_Instance
-        (Script, CIR_User_Data.Get
-           (Widget, "GPS-Instance-" & Get_Name (Script)).CIR);
-   exception
-      when Gtkada.Types.Data_Error =>
-         return No_Class_Instance;
-   end Get_Instance;
-
-   ------------------
-   -- Get_Property --
-   ------------------
-
-   function Get_Property
-     (Instance : Class_Instance;
-      Name     : String) return Instance_Property_Record'Class
-   is
-      D : constant User_Data_List := Get_Data (Instance, Name);
-   begin
-      if D = null then
-         raise Invalid_Data;
-      else
-         return D.Prop.all;
-      end if;
-   end Get_Property;
-
-   --------------
-   -- Get_Data --
-   --------------
-
-   function Get_Data
-     (Instance : Class_Instance; Name : Class_Type) return Integer
-   is
-      D : constant User_Data_List := Get_Data (Instance, Get_Name (Name));
-   begin
-      if D = null then
-         return Integer'Last;
-      else
-         return Scalar_Properties (D.Prop).Int;
-      end if;
-   end Get_Data;
-
-   --------------
-   -- Get_Data --
-   --------------
-
-   function Get_Data
-     (Instance : Class_Instance; Name : Class_Type) return String
-   is
-      D : constant User_Data_List := Get_Data (Instance, Get_Name (Name));
-   begin
-      if D = null then
-         return "";
-      else
-         return Scalar_Properties (D.Prop).Str.all;
-      end if;
-   end Get_Data;
-
-   --------------
-   -- Get_Data --
-   --------------
-
-   function Get_Data
-     (Instance : Class_Instance;
-      Name     : String := GUI_Class_Name) return Glib.Object.GObject
-   is
-      D : constant User_Data_List := Get_Data (Instance, Name);
-   begin
-      if D = null then
-         return null;
-      else
-         return Scalar_Properties (D.Prop).Obj;
-      end if;
-   end Get_Data;
-
-   ----------------
-   -- Get_Script --
-   ----------------
-
-   function Get_Script (Instance : Class_Instance) return Scripting_Language is
-   begin
-      return Instance.Data.Data.Script;
-   end Get_Script;
-
-   -----------------
-   -- Is_Subclass --
-   -----------------
-
-   function Is_Subclass
-     (Instance : Class_Instance; Base : Class_Type) return Boolean is
-   begin
-      return Is_Subclass (Get_CIR (Instance), Base);
-   end Is_Subclass;
 
 end GPS.Kernel.Scripts;

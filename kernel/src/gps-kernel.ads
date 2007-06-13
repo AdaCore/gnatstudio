@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2001-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,6 +20,7 @@
 --  This package is the root of the GPS' kernel API.
 
 with Ada.Finalization;
+with GNAT.Scripts;
 with GNAT.Strings;
 with GNAT.Regpat;
 with System;
@@ -298,13 +298,6 @@ package GPS.Kernel is
    --  If Ask_If_Overloaded is True and there are several possible matches for
    --  the entiy (for instance because the xref info is not up-to-date), an
    --  interactive dialog is opened.
-
-   -------------
-   -- Scripts --
-   -------------
-
-   type Instance_List_Base is abstract tagged null record;
-   --  See gps-kernel-scripts.ads
 
    --------------
    -- Contexts --
@@ -739,14 +732,12 @@ private
       end case;
    end record;
 
-   type Instance_List_Base_Access is access all Instance_List_Base'Class;
-
    type Selection_Context_Data_Record is record
       Kernel    : Kernel_Handle;
       Creator   : Abstract_Module_ID;
       Ref_Count : Natural := 1;
 
-      Instances : Instance_List_Base_Access;
+      Instances : GNAT.Scripts.Instance_List_Access;
 
       File              : VFS.Virtual_File      := VFS.No_File;
       --  The current file
@@ -816,10 +807,6 @@ private
    No_Context : constant Selection_Context :=
      (Data => (Ada.Finalization.Controlled with null));
 
-   type Kernel_Scripting_Data_Record is abstract tagged null record;
-   type Kernel_Scripting_Data is access all Kernel_Scripting_Data_Record'Class;
-   --  Derived in GPS.Kernel.Scripts to store internal data
-
    No_Tool : constant Tool_Properties_Record := (null, null, null, null);
 
    procedure Free (Tool : in out Tool_Properties_Record);
@@ -867,9 +854,15 @@ private
    --  System_Level : system custom files loaded
    --  User_Level   : system and user custom files loaded
 
+   type Kernel_Scripts_Repository is new GNAT.Scripts.Scripts_Repository_Record
+   with record
+      Kernel : Kernel_Handle;
+   end record;
+
    type Pattern_Matcher_Access is access GNAT.Regpat.Pattern_Matcher;
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (GNAT.Regpat.Pattern_Matcher, Pattern_Matcher_Access);
+
 
    type Kernel_Handle_Record is new Glib.Object.GObject_Record with record
       Database : Entities.Entities_Database;
@@ -909,7 +902,7 @@ private
       Registry : Projects.Registry.Project_Registry_Access;
       --  The project registry
 
-      Scripts : Kernel_Scripting_Data;
+      Scripts : GNAT.Scripts.Scripts_Repository;
       --  Data used to store information for the scripting languages
 
       GNAT_Version : GNAT.Strings.String_Access;
