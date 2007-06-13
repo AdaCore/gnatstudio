@@ -100,10 +100,13 @@ endif
 ifeq ($(MAIN_ROOT),True)
 
    ifeq ($(OS),Windows_NT)
-      default: resources do_links gpslink all
+      default: resources do_links gpslink gnatlib all
    else
-      default: do_links gpslink all
+      default: do_links gpslink gnatlib all
    endif
+
+   gnatlib:
+	${MAKE} -C ../gnatlib all
 
    resources: force
 	cd $(GPS_BASE_DIR)/src; windres gps.rc -O coff \

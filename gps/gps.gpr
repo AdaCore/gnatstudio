@@ -33,6 +33,7 @@ with "../code_analysis/code_analysis";
 with "../plugins";
 with "../docs/docs";
 with "../distrib";
+with "../gnatlib/scripts/gnatlib_scripts_gtk";
 
 project GPS is
 
@@ -71,6 +72,10 @@ project GPS is
       end case;
       --  for Default_Switches ("Ada") use ("-lgmem");
       --  for Default_Switches ("Ada") use ("-pg");
+
+      for Default_Switches ("Ada") use
+          Linker'Default_Switches ("Ada")
+          & GnatLib_Scripts_Gtk.Linker'Default_Switches ("Ada");
    end Linker;
 
    package Naming is
