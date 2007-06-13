@@ -21,6 +21,7 @@
 with Ada.Unchecked_Deallocation;
 
 with GNAT.OS_Lib;
+with GNAT.Scripts;               use GNAT.Scripts;
 with GNAT.Strings;               use GNAT.Strings;
 
 with Glib;                       use Glib;

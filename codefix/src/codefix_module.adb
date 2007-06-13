@@ -22,6 +22,7 @@
 
 with Ada.Unchecked_Deallocation;
 with GNAT.Regpat;               use GNAT.Regpat;
+with GNAT.Scripts;              use GNAT.Scripts;
 
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 
@@ -127,6 +128,7 @@ package body Codefix_Module is
    type Codefix_Properties is new Instance_Property_Record with record
       Session : Codefix_Session;
    end record;
+   type Codefix_Properties_Access is access all Codefix_Properties'Class;
 
    type Codefix_Menu_Item_Record is new Gtk_Menu_Item_Record with record
       Fix_Command  : Ptr_Command;
@@ -243,6 +245,8 @@ package body Codefix_Module is
    type Codefix_Error_Property is new Instance_Property_Record with record
       Error : Codefix_Error_Data;
    end record;
+   type Codefix_Error_Property_Access
+     is access all Codefix_Error_Property'Class;
 
    -------------
    -- Destroy --
@@ -930,7 +934,7 @@ package body Codefix_Module is
          raise Invalid_Data;
       end if;
 
-      Set_Property
+      Set_Data
         (Instance, Codefix_Class_Name,
          Codefix_Properties'(Session => Session));
    end Set_Data;
@@ -945,8 +949,9 @@ package body Codefix_Module is
          raise Invalid_Data;
       end if;
 
-      return Codefix_Properties
-        (Get_Property (Instance, Codefix_Class_Name)).Session;
+      return Codefix_Properties_Access
+        (Instance_Property'(Get_Data (Instance, Codefix_Class_Name)))
+        .Session;
    end Get_Data;
 
    --------------
@@ -962,7 +967,7 @@ package body Codefix_Module is
          raise Invalid_Data;
       end if;
 
-      Set_Property
+      Set_Data
         (Instance,
          Codefix_Error_Class_Name,
          Codefix_Error_Property'(Error => Error));
@@ -979,8 +984,9 @@ package body Codefix_Module is
          raise Invalid_Data;
       end if;
 
-      return Codefix_Error_Property
-        (Get_Property (Instance, Codefix_Error_Class_Name)).Error;
+      return Codefix_Error_Property_Access
+        (Instance_Property'(Get_Data (Instance, Codefix_Error_Class_Name)))
+        .Error;
    end Get_Data;
 
    ------------------------

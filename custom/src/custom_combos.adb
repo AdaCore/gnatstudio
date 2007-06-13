@@ -33,6 +33,7 @@ with Gtk.Tool_Item;      use Gtk.Tool_Item;
 with Gtk.Label;          use Gtk.Label;
 with Gtk.Widget;         use Gtk.Widget;
 
+with GNAT.Scripts.Gtkada; use GNAT.Scripts, GNAT.Scripts.Gtkada;
 with GPS.Kernel.Console; use GPS.Kernel.Console;
 with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
@@ -85,7 +86,7 @@ package body Custom_Combos is
 
    type Item_Callback is record
       Combo       : Custom_Combo;
-      On_Selected : GPS.Kernel.Scripts.Subprogram_Type;
+      On_Selected : Subprogram_Type;
    end record;
 
    package Item_Handlers is new Gtk.Handlers.User_Return_Callback
@@ -104,7 +105,7 @@ package body Custom_Combos is
    procedure Add_Combo_Entry
      (Combo       : access Custom_Combo_Record'Class;
       Label       : String;
-      On_Selected : GPS.Kernel.Scripts.Subprogram_Type);
+      On_Selected : Subprogram_Type);
    --  Add a combo entry and a command that should be
    --  executed whenever this entry is selected.
    --  On_Selected is also executed when the entry is selected
@@ -350,7 +351,7 @@ package body Custom_Combos is
    procedure Add_Combo_Entry
      (Combo       : access Custom_Combo_Record'Class;
       Label       : String;
-      On_Selected : GPS.Kernel.Scripts.Subprogram_Type)
+      On_Selected : Subprogram_Type)
    is
       Item : constant Gtk_List_Item :=
                Add_Unique_Combo_Entry (Combo.Combo, Label);

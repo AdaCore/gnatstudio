@@ -23,6 +23,7 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Case_Util;               use GNAT.Case_Util;
 with GNAT.Strings;                 use GNAT.Strings;
 with GNAT.OS_Lib;
+with GNAT.Scripts;                 use GNAT.Scripts;
 
 with Gdk.Color;                    use Gdk.Color;
 with Gdk.Event;                    use Gdk.Event;
@@ -159,23 +160,22 @@ package body Project_Viewers is
    Obj_Path_Cst  : aliased constant String := "objects";
    Name_Cst      : aliased constant String := "name";
    Path_Cst      : aliased constant String := "path";
-   Sources_Cmd_Parameters : constant GPS.Kernel.Scripts.Cst_Argument_List :=
-                              (1 => Recursive_Cst'Access);
-   Source_Dirs_Cmd_Parameters : constant GPS.Kernel.Scripts.Cst_Argument_List
-     := (1 => Recursive_Cst'Access);
-   Languages_Cmd_Parameters : constant GPS.Kernel.Scripts.Cst_Argument_List
-     := (1 => Recursive_Cst'Access);
-   Add_Source_Dir_Cmd_Parameters :
-     constant GPS.Kernel.Scripts.Cst_Argument_List :=
+   Sources_Cmd_Parameters : constant GNAT.Scripts.Cst_Argument_List :=
+     (1 => Recursive_Cst'Access);
+   Source_Dirs_Cmd_Parameters : constant GNAT.Scripts.Cst_Argument_List :=
+     (1 => Recursive_Cst'Access);
+   Languages_Cmd_Parameters : constant GNAT.Scripts.Cst_Argument_List :=
+     (1 => Recursive_Cst'Access);
+   Add_Source_Dir_Cmd_Parameters : constant GNAT.Scripts.Cst_Argument_List :=
      (1 => Directory_Cst'Access);
-   Remove_Dep_Cmd_Parameters : constant GPS.Kernel.Scripts.Cst_Argument_List
-     := (1 => Imported_Cst'Access);
-   Add_Predefined_Parameters : constant GPS.Kernel.Scripts.Cst_Argument_List
+   Remove_Dep_Cmd_Parameters : constant GNAT.Scripts.Cst_Argument_List :=
+     (1 => Imported_Cst'Access);
+   Add_Predefined_Parameters : constant GNAT.Scripts.Cst_Argument_List
      := (1 => Src_Path_Cst'Access, 2 => Obj_Path_Cst'Access);
-   Rename_Cmd_Parameters : constant GPS.Kernel.Scripts.Cst_Argument_List :=
+   Rename_Cmd_Parameters : constant GNAT.Scripts.Cst_Argument_List :=
      (1 => Name_Cst'Access, 2 => Path_Cst'Access);
-   Add_Dep_Cmd_Parameters : constant GPS.Kernel.Scripts.Cst_Argument_List :=
-                              (1 => Path_Cst'Access);
+   Add_Dep_Cmd_Parameters : constant GNAT.Scripts.Cst_Argument_List :=
+     (1 => Path_Cst'Access);
 
    Base_File_Name_Column     : constant := 0;
    Absolute_File_Name_Column : constant := 1;

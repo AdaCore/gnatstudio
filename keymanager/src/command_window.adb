@@ -31,6 +31,8 @@ with Gdk.Types.Keysyms;      use Gdk.Types.Keysyms;
 with Gdk.Window;             use Gdk.Window;
 with Glib;                   use Glib;
 with Glib.Object;            use Glib.Object;
+with GNAT.Scripts;           use GNAT.Scripts;
+with GNAT.Scripts.Gtkada;    use GNAT.Scripts.Gtkada;
 with Gtkada.Handlers;        use Gtkada.Handlers;
 with Gtkada.MDI;             use Gtkada.MDI;
 with Gtk.Accel_Group;        use Gtk.Accel_Group;

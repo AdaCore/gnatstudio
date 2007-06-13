@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
---                              AdaCore                              --
+--                      Copyright (C) 2001-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,9 +22,8 @@
 with Glib.Object;        use Glib.Object;
 with Gtk.Widget;
 with Gtk.Menu;           use Gtk.Menu;
-
+with GNAT.Scripts;
 with GPS.Kernel;         use GPS.Kernel;
-with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 with VCS;                use VCS;
 with Projects;           use Projects;
 
@@ -281,7 +279,7 @@ package VCS_View_API is
    --  Return the VCS reference registered in Project.
 
    procedure VCS_Command_Handler
-     (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
+     (Data    : in out GNAT.Scripts.Callback_Data'Class;
       Command : String);
    --  Handler for VCS commands, that take a file name as their first parameter
 

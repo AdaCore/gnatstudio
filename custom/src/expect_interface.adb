@@ -28,6 +28,7 @@ with GNAT.Expect.TTY;         use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with GNAT.Regpat;             use GNAT.Regpat;
+with GNAT.Scripts;            use GNAT.Scripts;
 
 with Gtk.Main;                use Gtk.Main;
 
@@ -82,9 +83,9 @@ package body Expect_Interface is
    type Custom_Action_Record is new Root_Command with record
       Pattern          : Pattern_Matcher_Access;
       Command          : Argument_List_Access;
-      On_Match         : GPS.Kernel.Scripts.Subprogram_Type;
-      On_Exit          : GPS.Kernel.Scripts.Subprogram_Type;
-      Before_Kill      : GPS.Kernel.Scripts.Subprogram_Type;
+      On_Match         : Subprogram_Type;
+      On_Exit          : Subprogram_Type;
+      Before_Kill      : Subprogram_Type;
       Pd               : Process_Descriptor_Access;
       Status           : Integer := 0;
       Terminated       : Boolean;
@@ -123,6 +124,7 @@ package body Expect_Interface is
    type Action_Property is new Instance_Property_Record with record
       Action : Custom_Action_Access;
    end record;
+   type Action_Property_Access is access all Action_Property'Class;
 
    procedure In_Trace_Filter
      (Description : Process_Descriptor'Class;
@@ -276,7 +278,8 @@ package body Expect_Interface is
 
    function Get_Data (Inst : Class_Instance) return Custom_Action_Access is
    begin
-      return Action_Property (Get_Property (Inst, Process_Class_Name)).Action;
+      return Action_Property_Access
+        (Instance_Property'(Get_Data (Inst, Process_Class_Name))).Action;
    end Get_Data;
 
    --------------
@@ -781,7 +784,7 @@ package body Expect_Interface is
                   Show_Bar => Show_Bar);
 
                Set_Instance (Created_Command, Get_Script (Data), Inst);
-               Set_Property
+               Set_Data
                  (Inst, Process_Class_Name, Action_Property'(Action => D));
             else
                Free (D);

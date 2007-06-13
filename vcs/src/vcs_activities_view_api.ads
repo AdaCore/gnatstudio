@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2006                      --
---                              AdaCore                              --
+--                      Copyright (C) 2005-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,9 +19,8 @@
 
 with Glib.Object;         use Glib.Object;
 with Gtk.Menu;            use Gtk.Menu;
-
+with GNAT.Scripts;        use GNAT.Scripts;
 with GPS.Kernel;          use GPS.Kernel;
-with GPS.Kernel.Scripts;  use GPS.Kernel.Scripts;
 with VCS_View.Activities; use VCS_View.Activities;
 
 package VCS_Activities_View_API is
@@ -69,7 +67,7 @@ package VCS_Activities_View_API is
    --  Change Activity's status to/from closed/opened
 
    procedure VCS_Activities_Command_Handler
-     (Data    : in out Callback_Data'Class;
+     (Data    : in out GNAT.Scripts.Callback_Data'Class;
       Command : String);
    --  VCS Activities class command handler
 

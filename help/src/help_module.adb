@@ -24,6 +24,7 @@ with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
+with GNAT.Scripts;               use GNAT.Scripts;
 with GNAT.Strings;
 
 with Glib;                       use Glib;
@@ -93,6 +94,7 @@ package body Help_Module is
    type XML_Property is new Instance_Property_Record with record
       XML : Node_Ptr;
    end record;
+   type XML_Property_Access is access all XML_Property'Class;
    procedure Destroy (Property : in out XML_Property);
    --  See inherited documentation
 
@@ -519,17 +521,18 @@ package body Help_Module is
    begin
       if Command = Constructor_Method then
          Inst := Nth_Arg (Data, 1, Help_Module_ID.Help_Class);
-         Set_Property
+         Set_Data
            (Inst, Help_Class_Name, XML_Property'(XML => null));
 
       elsif Command = "getdoc" then
          Name_Parameters (Data, Getdoc_Parameters);
          Inst := Nth_Arg (Data, 1, Help_Module_ID.Help_Class);
 
-         XML := XML_Property (Get_Property (Inst, Help_Class_Name)).XML;
+         XML := XML_Property_Access
+           (Instance_Property'(Get_Data (Inst, Help_Class_Name))).XML;
          if XML = null then
             XML := Initialize_XML_Doc (Kernel);
-            Set_Property
+            Set_Data
               (Inst, Help_Class_Name, XML_Property'(XML => XML));
          end if;
 
@@ -559,7 +562,7 @@ package body Help_Module is
 
       elsif Command = "reset" then
          Inst := Nth_Arg (Data, 1, Help_Module_ID.Help_Class);
-         Set_Property
+         Set_Data
            (Inst, Help_Class_Name, XML_Property'(XML => null));
 
       elsif Command = "browse" then
@@ -674,9 +677,9 @@ package body Help_Module is
          Trace (Me, "On_Load_HTML: No file specified, executing shell cmd");
          declare
             Errors : aliased Boolean := False;
-            File   : constant String := GPS.Kernel.Scripts.Execute_Command
-              (Script      =>
-                 Lookup_Scripting_Language (Kernel, Item.Shell_Lang.all),
+            File   : constant String := Execute_Command
+              (Script      => Lookup_Scripting_Language
+                 (Get_Scripts (Kernel), Item.Shell_Lang.all),
                Command     => Item.Shell.all,
                Console     => null,
                Hide_Output => False,

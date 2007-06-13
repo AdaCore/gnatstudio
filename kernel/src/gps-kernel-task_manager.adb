@@ -26,11 +26,11 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtkada.MDI;                use Gtkada.MDI;
-
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Main_Window;           use GPS.Main_Window;
 with Task_Manager.GUI;          use Task_Manager.GUI;
@@ -47,10 +47,11 @@ package body GPS.Kernel.Task_Manager is
    Task_Manager_Module_Name : constant String := "GPS.Kernel.Task_Manager";
    Command_Class_Name       : constant String := "Command";
 
-   type Command_Property is new GPS.Kernel.Scripts.Instance_Property_Record
+   type Command_Property is new Instance_Property_Record
    with record
       Command : Scheduled_Command_Access;
    end record;
+   type Command_Property_Access is access all Command_Property'Class;
 
    function Load_Desktop
      (MDI  : MDI_Window;
@@ -350,7 +351,7 @@ package body GPS.Kernel.Task_Manager is
             for J in Instances'Range loop
                if Instances (J) /= No_Class_Instance then
                   Found := True;
-                  Set_Property
+                  Set_Data
                     (Instances (J), Command_Class_Name, Command_Property'
                        (Command => Dead_Command));
                end if;
@@ -529,7 +530,8 @@ package body GPS.Kernel.Task_Manager is
         (Get_Task_Manager (Kernel),
          GPS_Window (Get_Main_Window (Kernel)).Statusbar);
 
-      Script := Lookup_Scripting_Language (Kernel, GPS_Shell_Name);
+      Script := Lookup_Scripting_Language
+        (Get_Scripts (Kernel), GPS_Shell_Name);
       Create
         (Push_Command, "set_busy", Kernel_Handle (Kernel), "set_busy", Script);
       Create
@@ -603,7 +605,7 @@ package body GPS.Kernel.Task_Manager is
       Instance : Class_Instance)
    is
    begin
-      Set_Property
+      Set_Data
         (Instance, Command_Class_Name, Command_Property'
            (Command => Scheduled_Command_Access (Command)));
       Set (Command.Instances, Language, Instance);
@@ -626,11 +628,11 @@ package body GPS.Kernel.Task_Manager is
    --------------
 
    function Get_Data
-     (Instance : GPS.Kernel.Scripts.Class_Instance)
+     (Instance : Class_Instance)
       return Scheduled_Command_Access is
    begin
-      return Command_Property
-        (Get_Property (Instance, Command_Class_Name)).Command;
+      return Command_Property_Access
+        (Instance_Property'(Get_Data (Instance, Command_Class_Name))).Command;
    exception
       when Invalid_Data =>
          return null;

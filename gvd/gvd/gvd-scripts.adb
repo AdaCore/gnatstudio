@@ -21,6 +21,8 @@
 with Debugger;           use Debugger;
 with Glib;               use Glib;
 with Glib.Object;        use Glib.Object;
+with GNAT.Scripts;       use GNAT.Scripts;
+with GNAT.Scripts.Gtkada; use GNAT.Scripts.Gtkada;
 with GPS.Kernel;         use GPS.Kernel;
 with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
 with GPS.Kernel.Project; use GPS.Kernel.Project;
@@ -37,7 +39,7 @@ package body GVD.Scripts is
    Debugger_String_Hook_Data_Name : constant String := "Debugger_String";
 
    procedure Shell_Handler
-     (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
+     (Data    : in out Callback_Data'Class;
       Command : String);
    --  Interactive script handler for the debugger module.
 
@@ -47,10 +49,10 @@ package body GVD.Scripts is
    --  Get or create an existing instance associated with Process.
 
    function From_Callback_Data_Debugger
-     (Data : GPS.Kernel.Scripts.Callback_Data'Class)
+     (Data : Callback_Data'Class)
       return Hooks_Data'Class;
    function From_Callback_Data_Debugger_String
-     (Data : GPS.Kernel.Scripts.Callback_Data'Class)
+     (Data : Callback_Data'Class)
       return Hooks_Data'Class;
    --  Convert Data into one of the supported Hooks_Data type for the debugger
 
@@ -59,10 +61,10 @@ package body GVD.Scripts is
    --------------------------
 
    function Create_Callback_Data
-     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+     (Script    : access Scripting_Language_Record'Class;
       Hook_Name : String;
       Data      : access Debugger_Hooks_Data)
-      return GPS.Kernel.Scripts.Callback_Data_Access
+      return Callback_Data_Access
    is
       D   : constant Callback_Data_Access :=
         new Callback_Data'Class'(Create (Script, 2));
@@ -79,7 +81,7 @@ package body GVD.Scripts is
    ---------------------------------
 
    function From_Callback_Data_Debugger
-     (Data : GPS.Kernel.Scripts.Callback_Data'Class)
+     (Data : Callback_Data'Class)
       return Hooks_Data'Class
    is
       Process : Visual_Debugger;
@@ -95,10 +97,10 @@ package body GVD.Scripts is
    --------------------------
 
    function Create_Callback_Data
-     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+     (Script    : access Scripting_Language_Record'Class;
       Hook_Name : String;
       Data      : access Debugger_String_Hooks_Data)
-      return GPS.Kernel.Scripts.Callback_Data_Access
+      return Callback_Data_Access
    is
       D   : constant Callback_Data_Access :=
         new Callback_Data'Class'(Create (Script, 3));
@@ -116,7 +118,7 @@ package body GVD.Scripts is
    ----------------------------------------
 
    function From_Callback_Data_Debugger_String
-     (Data : GPS.Kernel.Scripts.Callback_Data'Class)
+     (Data : Callback_Data'Class)
       return Hooks_Data'Class
    is
       Debugger_Cmd : constant String := Nth_Arg (Data, 3);
@@ -206,7 +208,7 @@ package body GVD.Scripts is
    -------------------
 
    procedure Shell_Handler
-     (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
+     (Data    : in out Callback_Data'Class;
       Command : String)
    is
       Kernel : constant Kernel_Handle := GPS.Kernel.Scripts.Get_Kernel (Data);
@@ -290,7 +292,7 @@ package body GVD.Scripts is
          Set_Return_Value
            (Data, Process_User_Command
               (Debugger       => Process,
-               Command        => GPS.Kernel.Scripts.Nth_Arg (Data, 2),
+               Command        => Nth_Arg (Data, 2),
                Output_Command => Nth_Arg (Data, 3, True),
                Mode           => GVD.Types.Hidden));
 
@@ -371,25 +373,21 @@ package body GVD.Scripts is
 
       --  Commands
 
-      GPS.Kernel.Scripts.Register_Command
+      Register_Command
         (Kernel, Constructor_Method, 0, 0, Shell_Handler'Access, Class);
-      GPS.Kernel.Scripts.Register_Command
+      Register_Command
         (Kernel, "get", 0, 1, Shell_Handler'Access, Class,
          Static_Method => True);
-      GPS.Kernel.Scripts.Register_Command
+      Register_Command
         (Kernel, "list", 0, 0, Shell_Handler'Access, Class,
          Static_Method => True);
-      GPS.Kernel.Scripts.Register_Command
-        (Kernel, "send", 1, 2, Shell_Handler'Access, Class);
-      GPS.Kernel.Scripts.Register_Command
+      Register_Command (Kernel, "send", 1, 2, Shell_Handler'Access, Class);
+      Register_Command
         (Kernel, "get_executable", 0, 0, Shell_Handler'Access, Class);
-      GPS.Kernel.Scripts.Register_Command
-        (Kernel, "get_num", 0, 0, Shell_Handler'Access, Class);
-      GPS.Kernel.Scripts.Register_Command
-        (Kernel, "is_busy", 0, 0, Shell_Handler'Access, Class);
-      GPS.Kernel.Scripts.Register_Command
-        (Kernel, "close", 0, 0, Shell_Handler'Access, Class);
-      GPS.Kernel.Scripts.Register_Command
+      Register_Command (Kernel, "get_num", 0, 0, Shell_Handler'Access, Class);
+      Register_Command (Kernel, "is_busy", 0, 0, Shell_Handler'Access, Class);
+      Register_Command (Kernel, "close", 0, 0, Shell_Handler'Access, Class);
+      Register_Command
         (Kernel, "spawn", 1, 2, Shell_Handler'Access, Class,
          Static_Method => True);
    end Create_Hooks;

@@ -20,6 +20,7 @@
 
 with Ada.Strings.Unbounded;
 with Ada.Text_IO;                   use Ada.Text_IO;
+with GNAT.Scripts;                  use GNAT.Scripts;
 with GNAT.Strings;                  use GNAT.Strings;
 
 with Gdk.GC;                        use Gdk.GC;

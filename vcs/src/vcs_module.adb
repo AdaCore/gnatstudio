@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.Scripts;              use GNAT.Scripts;
 with GNAT.Strings;
 
 with Glib.Object;               use Glib.Object;
@@ -107,32 +108,32 @@ package body VCS_Module is
    --  Save the status of the project explorer to an XML tree
 
    procedure Status_Parse_Handler
-     (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
+     (Data    : in out Callback_Data'Class;
       Command : String);
    --  Handler for the command "vcs_status_parse"
 
    procedure Annotations_Parse_Handler
-     (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
+     (Data    : in out Callback_Data'Class;
       Command : String);
    --  Handler for the command "VCS.annotations_parse"
 
    procedure Log_Parse_Handler
-     (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
+     (Data    : in out Callback_Data'Class;
       Command : String);
    --  Handler for the command "VCS.log_parse"
 
    procedure Revision_Parse_Handler
-     (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
+     (Data    : in out Callback_Data'Class;
       Command : String);
    --  Handler for the command "VCS.revision_parse"
 
    procedure VCS_Command_Handler_No_Param
-     (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
+     (Data    : in out Callback_Data'Class;
       Command : String);
    --  Handler for VCS commands that take no parameter
 
    procedure VCS_Activities_Class_Command_Handler
-     (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
+     (Data    : in out Callback_Data'Class;
       Command : String);
    --  Handler for VCS Activities commands that take no parameter
 
@@ -250,7 +251,7 @@ package body VCS_Module is
    ----------------------------------
 
    procedure VCS_Command_Handler_No_Param
-     (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
+     (Data    : in out Callback_Data'Class;
       Command : String) is
    begin
       if Command = "supported_systems" then
@@ -353,7 +354,7 @@ package body VCS_Module is
    ------------------------------------------
 
    procedure VCS_Activities_Class_Command_Handler
-     (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
+     (Data    : in out Callback_Data'Class;
       Command : String)
    is
       Kernel               : constant Kernel_Handle := Get_Kernel (Data);
@@ -1027,7 +1028,7 @@ package body VCS_Module is
    --------------------------
 
    procedure Status_Parse_Handler
-     (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
+     (Data    : in out Callback_Data'Class;
       Command : String)
    is
       pragma Unreferenced (Command);
@@ -1063,7 +1064,7 @@ package body VCS_Module is
    -------------------------------
 
    procedure Annotations_Parse_Handler
-     (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
+     (Data    : in out Callback_Data'Class;
       Command : String)
    is
       pragma Unreferenced (Command);
@@ -1093,7 +1094,7 @@ package body VCS_Module is
    -----------------------
 
    procedure Log_Parse_Handler
-     (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
+     (Data    : in out Callback_Data'Class;
       Command : String)
    is
       pragma Unreferenced (Command);
@@ -1123,7 +1124,7 @@ package body VCS_Module is
    ----------------------------
 
    procedure Revision_Parse_Handler
-     (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
+     (Data    : in out Callback_Data'Class;
       Command : String)
    is
       pragma Unreferenced (Command);

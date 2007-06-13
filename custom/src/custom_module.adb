@@ -20,6 +20,7 @@
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Scripts.Gtkada;       use GNAT.Scripts, GNAT.Scripts.Gtkada;
 with System.Assertions;         use System.Assertions;
 
 with Glib.Object;               use Glib.Object;

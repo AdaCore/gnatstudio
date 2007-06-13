@@ -20,6 +20,7 @@
 
 with Ada.Unchecked_Conversion;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.Scripts.Gtkada;       use GNAT.Scripts, GNAT.Scripts.Gtkada;
 with GNAT.Strings;
 with System;
 

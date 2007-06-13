@@ -30,6 +30,7 @@ with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Regpat;                use GNAT.Regpat;
+with GNAT.Scripts;               use GNAT.Scripts;
 with GNAT.Strings;
 
 with Glib;                       use Glib;
@@ -79,7 +80,6 @@ with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
-with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 
 with Filesystem.Unix;            use Filesystem.Unix;
@@ -2595,10 +2595,10 @@ package body GPS.Kernel.Remote is
    --------------------------
 
    function Create_Callback_Data
-     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+     (Script    : access Scripting_Language_Record'Class;
       Hook_Name : String;
       Data      : access Rsync_Hooks_Args)
-      return GPS.Kernel.Scripts.Callback_Data_Access
+      return Callback_Data_Access
    is
       D : constant Callback_Data_Access :=
         new Callback_Data'Class'(Create (Script, 9));
@@ -2642,10 +2642,10 @@ package body GPS.Kernel.Remote is
    ---------------------------
 
    function Create_Callback_Data
-     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+     (Script    : access Scripting_Language_Record'Class;
       Hook_Name : String;
       Data      : access Server_Config_Changed_Hooks_Args)
-      return GPS.Kernel.Scripts.Callback_Data_Access
+      return Callback_Data_Access
    is
       D : constant Callback_Data_Access :=
         new Callback_Data'Class'(Create (Script, 3));

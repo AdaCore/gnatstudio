@@ -31,6 +31,7 @@ with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT; use GNAT.OS_Lib;
+with GNAT.Scripts;              use GNAT.Scripts;
 with GNAT.Strings;
 with GNAT.Case_Util;            use GNAT.Case_Util;
 

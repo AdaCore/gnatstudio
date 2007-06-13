@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005                           --
---                               AdaCore                             --
+--                      Copyright (C) 2005-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,8 +19,8 @@
 
 --  This package defines the hooks used in the GVD module
 
+with GNAT.Scripts;
 with GPS.Kernel.Hooks;
-with GPS.Kernel.Scripts;
 with GVD.Process;
 
 package GVD.Scripts is
@@ -117,17 +116,17 @@ private
    end record;
 
    function Create_Callback_Data
-     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+     (Script    : access GNAT.Scripts.Scripting_Language_Record'Class;
       Hook_Name : String;
       Data      : access Debugger_Hooks_Data)
-      return GPS.Kernel.Scripts.Callback_Data_Access;
+      return GNAT.Scripts.Callback_Data_Access;
    --  See inherited documentation
 
    function Create_Callback_Data
-     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+     (Script    : access GNAT.Scripts.Scripting_Language_Record'Class;
       Hook_Name : String;
       Data      : access Debugger_String_Hooks_Data)
-      return GPS.Kernel.Scripts.Callback_Data_Access;
+      return GNAT.Scripts.Callback_Data_Access;
    --  See inherited documentation
 
 end GVD.Scripts;

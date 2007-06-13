@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002-2006                    --
---                              AdaCore                             --
+--                        Copyright (C) 2002-2007, AdaCore           --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -59,6 +58,7 @@
 --      %l, %c -> the current line and column in the current file.
 
 with GNAT.Expect;
+with GNAT.Scripts;
 with GNAT.Strings;            use GNAT.Strings;
 
 with Glib.Xml_Int;
@@ -66,7 +66,6 @@ with Glib.Xml_Int;
 with Commands;                use Commands;
 with Commands.Interactive;    use Commands.Interactive;
 with GPS.Kernel;              use GPS.Kernel;
-with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with Interactive_Consoles;
 
@@ -88,7 +87,7 @@ package Commands.Custom is
       Name         : String;
       Kernel       : Kernel_Handle;
       Command      : String;
-      Script       : GPS.Kernel.Scripts.Scripting_Language);
+      Script       : GNAT.Scripts.Scripting_Language);
    --  Create a new custom command.
    --  If Script is null, the command is launched as a system
    --  command (Unix or Windows). Otherwise, it is interpreted as a GPS

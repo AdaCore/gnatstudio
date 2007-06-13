@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2005-2006                       --
---                             AdaCore                               --
+--                     Copyright (C) 2005-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,10 +18,10 @@
 -----------------------------------------------------------------------
 
 with Commands;                use Commands;
-with Task_Manager;            use Task_Manager;
-
+with GNAT.Scripts;            use GNAT.Scripts;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
+with Task_Manager;            use Task_Manager;
 
 package body GPS.Kernel.Command_API is
 

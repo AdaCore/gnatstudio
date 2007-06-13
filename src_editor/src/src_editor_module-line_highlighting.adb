@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2006                      --
---                              AdaCore                              --
+--                      Copyright (C) 2003-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,7 +18,7 @@
 -----------------------------------------------------------------------
 
 with Basic_Types;        use Basic_Types;
-
+with GNAT.Scripts;       use GNAT.Scripts;
 with GPS.Intl;           use GPS.Intl;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 with Src_Editor_Box;     use Src_Editor_Box;
@@ -64,7 +63,7 @@ package body Src_Editor_Module.Line_Highlighting is
    --------------------------
 
    procedure Edit_Command_Handler
-     (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
+     (Data    : in out Callback_Data'Class;
       Command : String)
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);

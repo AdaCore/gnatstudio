@@ -25,6 +25,7 @@ with Glib;               use Glib;
 with Gtk.Main;           use Gtk.Main;
 
 with Custom_Module;      use Custom_Module;
+with GNAT.Scripts;       use GNAT.Scripts;
 with GPS.Intl;           use GPS.Intl;
 with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
@@ -42,7 +43,7 @@ package body Custom_Timeout is
    type Custom_Timeout is record
       Handler  : Timeout_Handler_Id;
       Instance : Class_Instance;
-      Action   : GPS.Kernel.Scripts.Subprogram_Type;
+      Action   : Subprogram_Type;
    end record;
 
    type Custom_Timeout_Access is access Custom_Timeout;
@@ -54,6 +55,7 @@ package body Custom_Timeout is
    type Timeout_Property is new Instance_Property_Record with record
       Timeout : Custom_Timeout_Access;
    end record;
+   type Timeout_Property_Access is access all Timeout_Property;
 
    -----------------------
    -- Local subprograms --
@@ -94,8 +96,8 @@ package body Custom_Timeout is
         New_Class (Get_Kernel (Data), Timeout_Class_Name);
       Inst : constant Class_Instance := Nth_Arg (Data, N, Timeout_Class);
    begin
-      return Timeout_Property
-        (Get_Property (Inst, Timeout_Class_Name)).Timeout;
+      return Timeout_Property_Access
+        (Instance_Property'(Get_Data (Inst, Timeout_Class_Name))).Timeout;
    end Get_Data;
 
    --------------
@@ -157,7 +159,7 @@ package body Custom_Timeout is
             D.Handler := Action_Timeout.Add
               (Guint32 (Timeout), Callback'Access, D);
 
-            Set_Property
+            Set_Data
               (Inst, Timeout_Class_Name, Timeout_Property'(Timeout => D));
          end;
 

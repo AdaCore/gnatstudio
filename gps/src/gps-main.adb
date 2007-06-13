@@ -26,6 +26,7 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Scripts;              use GNAT.Scripts;
 with GNAT.Strings;
 
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
@@ -852,7 +853,7 @@ procedure GPS.Main is
       for J in Batch'Range loop
          if Batch (J) = ':' then
             Script := Lookup_Scripting_Language
-              (GPS_Main.Kernel, Batch (Batch'First .. J - 1));
+              (Get_Scripts (GPS_Main.Kernel), Batch (Batch'First .. J - 1));
 
             if Script = null then
                exit;
@@ -865,7 +866,7 @@ procedure GPS.Main is
                     (Batch (J + 1 .. Batch'Last), Startup_Dir.all),
                   Errors   => Errors);
             else
-               GPS.Kernel.Scripts.Execute_Command
+               GNAT.Scripts.Execute_Command
                  (Script   => Script,
                   Command  => Batch (J + 1 .. Batch'Last),
                   Errors   => Errors);

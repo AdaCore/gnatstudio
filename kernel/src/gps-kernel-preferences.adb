@@ -20,6 +20,7 @@
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Exceptions;          use Ada.Exceptions;
+with GNAT.Scripts;            use GNAT.Scripts;
 with Interfaces.C.Strings;    use Interfaces.C, Interfaces.C.Strings;
 
 with Gdk.Color;               use Gdk.Color;

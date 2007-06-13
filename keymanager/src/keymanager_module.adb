@@ -23,6 +23,7 @@ with Ada.Strings.Unbounded;
 with Ada.Unchecked_Conversion;
 
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
+with GNAT.Scripts;            use GNAT.Scripts;
 
 with System.Assertions;       use System.Assertions;
 

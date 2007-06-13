@@ -27,6 +27,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Expect;               use GNAT.Expect;
 with GNAT.OS_Lib;
 with GNAT.Regpat;               use GNAT.Regpat;
+with GNAT.Scripts;              use GNAT.Scripts;
 with System;
 
 with Glib.Xml_Int;              use Glib.Xml_Int;
@@ -62,6 +63,7 @@ with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Macros;         use GPS.Kernel.Macros;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
 with GUI_Utils;                 use GUI_Utils;
 with Interactive_Consoles;      use Interactive_Consoles;
@@ -116,7 +118,7 @@ package body Commands.Custom is
 
          case The_Type is
             when Component_Shell =>
-               Script               : GPS.Kernel.Scripts.Scripting_Language;
+               Script               : Scripting_Language;
             when Component_External =>
                Server               : Server_Type;      --  "server" attribute
                Check_Password       : Boolean := False; --  "check-password"
@@ -153,7 +155,7 @@ package body Commands.Custom is
 
          case The_Type is
             when Component_Shell =>
-               Script      : GPS.Kernel.Scripts.Scripting_Language;
+               Script       : Scripting_Language;
             when Component_External =>
                Regexp       : Gtk_Entry;
                Current      : Gtk_Spin_Button;
@@ -735,7 +737,7 @@ package body Commands.Custom is
       Name         : String;
       Kernel       : Kernel_Handle;
       Command      : String;
-      Script       : GPS.Kernel.Scripts.Scripting_Language) is
+      Script       : Scripting_Language) is
    begin
       Item := new Custom_Command;
       Item.Kernel := Kernel;
@@ -777,7 +779,8 @@ package body Commands.Custom is
          Show_Command => Show_Command,
          Output       => Outp,
          Command      => new String'(Command.Value.all),
-         Script       => Lookup_Scripting_Language (Kernel, Script));
+         Script       =>
+           Lookup_Scripting_Language (Get_Scripts (Kernel), Script));
    end Shell_From_XML;
 
    -----------------------
@@ -1293,14 +1296,15 @@ package body Commands.Custom is
                            (Component.Script, Subst_Cmd_Line,
                             Hide_Output  => Output_Location.all = No_Output,
                             Show_Command => Component.Show_Command,
-                            Console      => Console,
+                            Console      =>
+                              Get_Or_Create_Virtual_Console (Console),
                             Errors       => Errors'Unchecked_Access));
                else
                   Execute_Command
                     (Component.Script, Subst_Cmd_Line,
                      Hide_Output  => Output_Location.all = No_Output,
                      Show_Command => Component.Show_Command,
-                     Console      => Console,
+                     Console      => Get_Or_Create_Virtual_Console (Console),
                      Errors       => Errors);
                end if;
             end if;
@@ -1676,14 +1680,15 @@ package body Commands.Custom is
       Pack_Start (Bbox, Button);
       Component_Type_And_Lang_Callback.Object_Connect
         (Button, Signal_Clicked, On_Add'Access, Box,
-         (Component_Shell, Lookup_Scripting_Language (Kernel, "Python")));
+         (Component_Shell,
+          Lookup_Scripting_Language (Get_Scripts (Kernel), "Python")));
 
       Gtk_New_From_Stock_And_Label (Button, Stock_Add, -"Add Shell");
       Pack_Start (Bbox, Button);
       Component_Type_And_Lang_Callback.Object_Connect
         (Button, Signal_Clicked, On_Add'Access, Box,
-         (Component_Shell, Lookup_Scripting_Language (Kernel,
-          GPS_Shell_Name)));
+         (Component_Shell,
+          Lookup_Scripting_Language (Get_Scripts (Kernel), GPS_Shell_Name)));
 
       Gtk_New_From_Stock_And_Label (Button, Stock_Add, -"Add External");
       Pack_Start (Bbox, Button);

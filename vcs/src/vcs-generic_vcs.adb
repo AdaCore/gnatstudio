@@ -23,6 +23,7 @@ with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
 with GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.Scripts;              use GNAT.Scripts;
 
 with Glib;                      use Glib;
 with Glib.Convert;              use Glib.Convert;
@@ -1703,7 +1704,8 @@ package body VCS.Generic_VCS is
          Open_File_Editor (Kernel, File);
       end if;
 
-      Script := Lookup_Scripting_Language (Kernel, GPS_Shell_Name);
+      Script := Lookup_Scripting_Language
+        (Get_Scripts (Kernel), GPS_Shell_Name);
 
       declare
       begin
@@ -1873,7 +1875,8 @@ package body VCS.Generic_VCS is
                  -"Error: no log parser defined for " & Rep.Id.all);
       end if;
 
-      Script := Lookup_Scripting_Language (Kernel, GPS_Shell_Name);
+      Script := Lookup_Scripting_Language
+        (Get_Scripts (Kernel), GPS_Shell_Name);
 
       loop
          Match (Parser.Regexp.all, S, Matches, Start, S'Last);
@@ -1954,7 +1957,8 @@ package body VCS.Generic_VCS is
                  -"Error: no revision parser defined for " & Rep.Id.all);
       end if;
 
-      Script := Lookup_Scripting_Language (Kernel, GPS_Shell_Name);
+      Script := Lookup_Scripting_Language
+        (Get_Scripts (Kernel), GPS_Shell_Name);
 
       loop
          Match (Parser.Regexp.all, S, Matches, Start, S'Last);

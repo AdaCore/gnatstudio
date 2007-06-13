@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2006                       --
---                              AdaCore                              --
+--                     Copyright (C) 2003-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,8 +20,8 @@
 --  This package implements a general support for hooks.
 --  See the GPS documentation on how to use hooks from the scripting languages.
 
+with GNAT.Scripts;
 with GNAT.Strings;
-with GPS.Kernel.Scripts;
 with Glib.Object;
 
 package GPS.Kernel.Hooks is
@@ -32,7 +31,7 @@ package GPS.Kernel.Hooks is
    --  Register all predefined hooks
 
    function Get_Hook_Name
-     (Data : GPS.Kernel.Scripts.Callback_Data'Class; Nth : Natural)
+     (Data : GNAT.Scripts.Callback_Data'Class; Nth : Natural)
       return String;
    --  Return the name of the hook instance stored in Data
 
@@ -50,10 +49,10 @@ package GPS.Kernel.Hooks is
    --  Free the memory used by Data. By default, this does nothing
 
    function Create_Callback_Data
-     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+     (Script    : access GNAT.Scripts.Scripting_Language_Record'Class;
       Hook_Name : String;
       Data      : access Hooks_Data)
-      return GPS.Kernel.Scripts.Callback_Data_Access is abstract;
+      return GNAT.Scripts.Callback_Data_Access is abstract;
    --  Create the callback_data to be passed to a shell command. The data
    --  itself will be freed automatically later on. However, when you add a
    --  class instance to the data, you must free it before returning from the
@@ -71,7 +70,7 @@ package GPS.Kernel.Hooks is
    --  ??? Why set the hooks_name here, that could be done automatically
 
    type From_Callback_Data_Function is access function
-     (Data : GPS.Kernel.Scripts.Callback_Data'Class)
+     (Data : GNAT.Scripts.Callback_Data'Class)
       return Hooks_Data'Class;
    --  Create a hooks data from the arguments pass from the shell. This
    --  function is used when run_hook is called from the shell.
@@ -283,6 +282,6 @@ package GPS.Kernel.Hooks is
 
 private
    type Hooks_Data is abstract tagged record
-      Data : GPS.Kernel.Scripts.Callback_Data_List;
+      Data : GNAT.Scripts.Callback_Data_List;
    end record;
 end GPS.Kernel.Hooks;

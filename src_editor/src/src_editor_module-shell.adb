@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2005-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,6 +20,7 @@
 with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Scripts.Gtkada;       use GNAT.Scripts, GNAT.Scripts.Gtkada;
 with GNAT.Strings;
 with System;
 
@@ -238,6 +238,7 @@ package body Src_Editor_Module.Shell is
    type Location_Property is new Instance_Property_Record with record
       Location : Location_Info_Access;
    end record;
+   type Location_Property_Access is access all Location_Property;
    procedure Destroy (Property : in out Location_Property);
 
    function Convert is new Ada.Unchecked_Conversion
@@ -412,8 +413,9 @@ package body Src_Editor_Module.Shell is
          Success := False;
 
       else
-         Info := Location_Property
-           (Get_Property (Loc_Inst, Editor_Location_Class_Name)).Location;
+         Info := Location_Property_Access
+           (Instance_Property'
+              (Get_Data (Loc_Inst, Editor_Location_Class_Name))).Location;
 
          if Info.Buffer = null
            or else not Is_Valid_Position (Info.Buffer, Info.Line, Info.Offset)
@@ -587,7 +589,7 @@ package body Src_Editor_Module.Shell is
       Info : constant Location_Info_Access := new Location_Info'
         (Buffer => Buffer, Line => Line, Offset => Offset);
    begin
-      Set_Property
+      Set_Data
         (Inst, Editor_Location_Class_Name,
          Location_Property'(Location => Info));
       Weak_Ref (Buffer, On_Buffer_Destroyed_For_Location'Access,

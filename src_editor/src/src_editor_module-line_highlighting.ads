@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2006                      --
---                              AdaCore                              --
+--                      Copyright (C) 2003-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,12 +21,12 @@
 --  line highlighting in the source editors.
 
 with Gdk.GC; use Gdk.GC;
-with GPS.Kernel.Scripts;
+with GNAT.Scripts;
 
 package Src_Editor_Module.Line_Highlighting is
 
    procedure Edit_Command_Handler
-     (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
+     (Data    : in out GNAT.Scripts.Callback_Data'Class;
       Command : String);
    --  Interactive command handler for the source editor module.
 

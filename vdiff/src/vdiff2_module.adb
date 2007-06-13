@@ -20,6 +20,7 @@
 
 with Commands.Interactive;      use Commands.Interactive;
 with Commands;                  use Commands;
+with GNAT.Scripts;              use GNAT.Scripts;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
@@ -118,9 +119,9 @@ package body Vdiff2_Module is
          declare
             Instance : constant Class_Instance :=
                          Nth_Arg (Data, 1, Vdiff_Class);
-            Property : constant Vdiff_Property :=
-                         Vdiff_Property
-                           (Get_Property (Instance, Vdiff_Class_Name));
+            Property : constant Vdiff_Property_Access :=
+              Vdiff_Property_Access
+                (Instance_Property'(Get_Data (Instance, Vdiff_Class_Name)));
             Cmd      : Diff_Command_Access;
          begin
             if Property.Vdiff = null then
@@ -192,9 +193,8 @@ package body Vdiff2_Module is
          declare
             Instance : constant Class_Instance :=
                          Nth_Arg (Data, 1, Vdiff_Class);
-            Property : constant Vdiff_Property :=
-                         Vdiff_Property
-                           (Get_Property (Instance, Vdiff_Class_Name));
+            Property : constant Vdiff_Property_Access := Vdiff_Property_Access
+              (Instance_Property'(Get_Data (Instance, Vdiff_Class_Name)));
          begin
             if Property.Vdiff = null then
                Set_Error_Msg (Data, "Visual diff has been destroyed");
@@ -244,9 +244,8 @@ package body Vdiff2_Module is
          declare
             Instance : constant Class_Instance :=
                          Nth_Arg (Data, 1, Vdiff_Class);
-            Property : constant Vdiff_Property :=
-                         Vdiff_Property
-                           (Get_Property (Instance, Vdiff_Class_Name));
+            Property : constant Vdiff_Property_Access := Vdiff_Property_Access
+              (Instance_Property'(Get_Data (Instance, Vdiff_Class_Name)));
             Cmd      : Diff_Command_Access;
          begin
             if Property.Vdiff = null then

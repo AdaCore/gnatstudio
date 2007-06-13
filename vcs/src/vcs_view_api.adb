@@ -23,6 +23,7 @@ with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Maps;          use Ada.Strings.Maps;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
+with GNAT.Scripts;              use GNAT.Scripts;
 with GNAT.Strings;
 
 with Glib.Values;               use Glib.Values;
@@ -52,6 +53,7 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with Log_Utils;                 use Log_Utils;
@@ -2947,7 +2949,7 @@ package body VCS_View_API is
          Root_Branches : constant String := Get_Branches_Root (Project);
          Root_Tags     : constant String := Get_Tags_Root (Project);
          Script        : constant Scripting_Language :=
-                           Lookup_Scripting_Language (Kernel, GPS_Shell_Name);
+           Lookup_Scripting_Language (Get_Scripts (Kernel), GPS_Shell_Name);
          Command       : Custom_Command_Access;
 
       begin
@@ -3445,7 +3447,7 @@ package body VCS_View_API is
    -------------------------
 
    procedure VCS_Command_Handler
-     (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
+     (Data    : in out Callback_Data'Class;
       Command : String)
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);

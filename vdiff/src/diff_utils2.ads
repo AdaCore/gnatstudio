@@ -24,10 +24,10 @@
 with Ada.Unchecked_Deallocation;
 
 with GNAT.OS_Lib;        use GNAT.OS_Lib;
+with GNAT.Scripts;       use GNAT.Scripts;
 
 with Generic_List;
 with GPS.Kernel;         use GPS.Kernel;
-with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 with VFS;                use VFS;
 
 package Diff_Utils2 is
@@ -121,6 +121,7 @@ package Diff_Utils2 is
    type Vdiff_Property is new Instance_Property_Record with record
       Vdiff : Diff_Head_Access;
    end record;
+   type Vdiff_Property_Access is access all Vdiff_Property'Class;
    --  Vdiff structure that is stored in a class instance
 
    procedure Set_Vdiff_Data

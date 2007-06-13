@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2006                      --
+--                      Copyright (C) 2005-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
@@ -23,6 +23,7 @@ with Ada.Unchecked_Deallocation;
 with System;                     use System;
 
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
+with GNAT.Scripts;               use GNAT.Scripts;
 
 with Glib.Object;                use Glib.Object;
 with Glib.Properties.Creation;   use Glib.Properties.Creation;

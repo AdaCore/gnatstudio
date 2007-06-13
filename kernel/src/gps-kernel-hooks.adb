@@ -24,6 +24,7 @@ with System;                    use System;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Generic_List;
+with GNAT.Scripts;              use GNAT.Scripts;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
@@ -71,6 +72,7 @@ package body GPS.Kernel.Hooks is
    type Hook_Property is new Instance_Property_Record with record
       Hook : Hook_Description_Access;
    end record;
+   type Hook_Property_Access is access all Hook_Property'Class;
 
    type Subprogram_Wrapper_Creator is access function
      (Subprogram : Subprogram_Type;
@@ -232,7 +234,7 @@ package body GPS.Kernel.Hooks is
 
    type Shell_Hooks_Data is new Hooks_Data with null record;
    function Create_Callback_Data
-     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+     (Script    : access GNAT.Scripts.Scripting_Language_Record'Class;
       Hook_Name : String;
       Data      : access Shell_Hooks_Data) return Callback_Data_Access;
    function General_From_Callback_Data
@@ -1219,7 +1221,7 @@ package body GPS.Kernel.Hooks is
    --------------------------
 
    function Create_Callback_Data
-     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+     (Script    : access Scripting_Language_Record'Class;
       Hook_Name : String;
       Data      : access Shell_Hooks_Data) return Callback_Data_Access
    is
@@ -1264,7 +1266,8 @@ package body GPS.Kernel.Hooks is
       Instance : constant Class_Instance :=
         Nth_Arg (Data, Nth, Get_Hook_Class (Get_Kernel (Data)));
    begin
-      return Hook_Property (Get_Property (Instance, Hook_Class_Name)).Hook;
+      return Hook_Property_Access
+        (Instance_Property'(Get_Data (Instance, Hook_Class_Name))).Hook;
    end Get_Data;
 
    -----------
@@ -1327,7 +1330,7 @@ package body GPS.Kernel.Hooks is
                Set_Error_Msg (Data, -"No such hook: " & Name);
             else
                Instance := Nth_Arg (Data, 1, Class);
-               Set_Property
+               Set_Data
                  (Instance, Hook_Class_Name, Hook_Property'(Hook => Info));
             end if;
          end;
@@ -1340,7 +1343,7 @@ package body GPS.Kernel.Hooks is
             Info := Get_Data (Data, 1);
             Info.Command_Handler (Data, Command);
          exception
-            when GPS.Kernel.Scripts.No_Such_Parameter =>
+            when No_Such_Parameter =>
                Trace (Me, "Invalid number of parameters for hook");
                Set_Error_Msg
                  (Data, "Invalid number of parameters in call to Hook.run");

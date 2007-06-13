@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2005                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2002-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,6 +16,8 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
+
+with GNAT.Scripts; use GNAT.Scripts;
 
 package body Commands.Socket is
 
@@ -61,7 +62,8 @@ package body Commands.Socket is
          String'Write
            (Command.Stream,
             Execute_Command
-              (Lookup_Scripting_Language (Command.Kernel, Command.Shell.all),
+              (Lookup_Scripting_Language
+                 (Get_Scripts (Command.Kernel), Command.Shell.all),
                Command.Command.all, null, True, True,
                Errors'Unchecked_Access) &
             ASCII.LF & "GPS>> ");

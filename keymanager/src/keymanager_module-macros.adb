@@ -25,6 +25,7 @@ with Gdk.Types.Keysyms;       use Gdk.Types, Gdk.Types.Keysyms;
 with Glib.Convert;            use Glib, Glib.Convert;
 with Glib.Main;               use Glib.Main;
 with Glib.Object;             use Glib.Object;
+with GNAT.Scripts;            use GNAT.Scripts;
 with GNAT.Strings;            use GNAT.Strings;
 with GPS.Kernel;              use GPS.Kernel;
 with GPS.Kernel.Actions;      use GPS.Kernel.Actions;

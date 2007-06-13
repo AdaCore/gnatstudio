@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2003-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,11 +21,11 @@ with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with System;
 
+with GNAT.Scripts;       use GNAT.Scripts;
 with GNAT.Strings;
 with Basic_Types;
 
 with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
-with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 with VFS;                use VFS;
 with Gdk.Pixbuf;
 with Commands;
@@ -44,10 +43,10 @@ package GPS.Kernel.Standard_Hooks is
       File : VFS.Virtual_File := VFS.No_File;
    end record;
    function Create_Callback_Data
-     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+     (Script    : access GNAT.Scripts.Scripting_Language_Record'Class;
       Hook_Name : String;
       Data      : access File_Hooks_Args)
-      return GPS.Kernel.Scripts.Callback_Data_Access;
+      return GNAT.Scripts.Callback_Data_Access;
    --  Base type for hooks that take a single file in parameter
    --  See inherited doc
 
@@ -56,10 +55,10 @@ package GPS.Kernel.Standard_Hooks is
       Value : String (1 .. Length);
    end record;
    function Create_Callback_Data
-     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+     (Script    : access GNAT.Scripts.Scripting_Language_Record'Class;
       Hook_Name : String;
       Data      : access String_Hooks_Args)
-      return GPS.Kernel.Scripts.Callback_Data_Access;
+      return GNAT.Scripts.Callback_Data_Access;
    procedure Run_String_Hook
      (Kernel : access Kernel_Handle_Record'Class;
       Hook   : String;
@@ -76,10 +75,10 @@ package GPS.Kernel.Standard_Hooks is
          Bool : Boolean;
       end record;
    function Create_Callback_Data
-     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+     (Script    : access GNAT.Scripts.Scripting_Language_Record'Class;
       Hook_Name : String;
       Data      : access String_Boolean_Hooks_Args)
-      return GPS.Kernel.Scripts.Callback_Data_Access;
+      return GNAT.Scripts.Callback_Data_Access;
    --  Hooks that take a string and a boolean as a parameter.
    --  To create such hooks, use GPS.Kernel.Hooks.Register_Hook with a
    --  Type_Name parameter of String_Boolean_Hook_Type
@@ -90,10 +89,10 @@ package GPS.Kernel.Standard_Hooks is
       Project : Projects.Project_Type;
    end record;
    function Create_Callback_Data
-     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+     (Script    : access GNAT.Scripts.Scripting_Language_Record'Class;
       Hook_Name : String;
       Data      : access Project_Hooks_Args)
-      return GPS.Kernel.Scripts.Callback_Data_Access;
+      return GNAT.Scripts.Callback_Data_Access;
    --  Hooks that take a single project as a parameter.
    --  To create such hooks, use GPS.Kernel.Hooks.Register_Hook with a
    --  Type_Name parameter of Project_Hook_Type.
@@ -153,10 +152,10 @@ package GPS.Kernel.Standard_Hooks is
       Renamed : VFS.Virtual_File;
    end record;
    function Create_Callback_Data
-     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+     (Script    : access GNAT.Scripts.Scripting_Language_Record'Class;
       Hook_Name : String;
       Data      : access Files_2_Hooks_Args)
-      return GPS.Kernel.Scripts.Callback_Data_Access;
+      return GNAT.Scripts.Callback_Data_Access;
    --  Base type for hooks that take two files in parameter
    --  See inherited doc
 
@@ -469,73 +468,73 @@ private
                               (null, null, Gdk.Pixbuf.Null_Pixbuf, null);
 
    function Create_Callback_Data
-     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+     (Script    : access GNAT.Scripts.Scripting_Language_Record'Class;
       Hook_Name : String;
       Data      : access Context_Hooks_Args)
-      return GPS.Kernel.Scripts.Callback_Data_Access;
+      return GNAT.Scripts.Callback_Data_Access;
    --  See inherited doc
 
    function Create_Callback_Data
-     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+     (Script    : access GNAT.Scripts.Scripting_Language_Record'Class;
       Hook_Name : String;
       Data      : access File_Line_Hooks_Args)
-      return GPS.Kernel.Scripts.Callback_Data_Access;
+      return GNAT.Scripts.Callback_Data_Access;
    --  See inherited doc
 
    function Create_Callback_Data
-     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+     (Script    : access GNAT.Scripts.Scripting_Language_Record'Class;
       Hook_Name : String;
       Data      : access Source_File_Hooks_Args)
-      return GPS.Kernel.Scripts.Callback_Data_Access;
+      return GNAT.Scripts.Callback_Data_Access;
    --  See inherited doc
 
    function Create_Callback_Data
-     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+     (Script    : access GNAT.Scripts.Scripting_Language_Record'Class;
       Hook_Name : String;
       Data      : access Location_Hooks_Args)
-      return GPS.Kernel.Scripts.Callback_Data_Access;
+      return GNAT.Scripts.Callback_Data_Access;
    --  See inherited doc
 
    function Create_Callback_Data
-     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+     (Script    : access GNAT.Scripts.Scripting_Language_Record'Class;
       Hook_Name : String;
       Data      : access Diff_Hooks_Args)
-      return GPS.Kernel.Scripts.Callback_Data_Access;
+      return GNAT.Scripts.Callback_Data_Access;
    --  See inherited doc
 
    function Create_Callback_Data
-     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+     (Script    : access GNAT.Scripts.Scripting_Language_Record'Class;
       Hook_Name : String;
       Data      : access Html_Hooks_Args)
-      return GPS.Kernel.Scripts.Callback_Data_Access;
+      return GNAT.Scripts.Callback_Data_Access;
    --  See inherited doc
 
    function Create_Callback_Data
-     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+     (Script    : access GNAT.Scripts.Scripting_Language_Record'Class;
       Hook_Name : String;
       Data      : access Exit_Before_Action_Hooks_Args)
-      return GPS.Kernel.Scripts.Callback_Data_Access;
+      return GNAT.Scripts.Callback_Data_Access;
    --  See inherited doc
 
    function Create_Callback_Data
-     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+     (Script    : access GNAT.Scripts.Scripting_Language_Record'Class;
       Hook_Name : String;
       Data      : access File_Location_Hooks_Args)
-      return GPS.Kernel.Scripts.Callback_Data_Access;
+      return GNAT.Scripts.Callback_Data_Access;
    --  See inherited doc
 
    function Create_Callback_Data
-     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+     (Script    : access GNAT.Scripts.Scripting_Language_Record'Class;
       Hook_Name : String;
       Data      : access Marker_Hooks_Args)
-      return GPS.Kernel.Scripts.Callback_Data_Access;
+      return GNAT.Scripts.Callback_Data_Access;
    --  See inherited subprograms
 
    function Create_Callback_Data
-     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+     (Script    : access GNAT.Scripts.Scripting_Language_Record'Class;
       Hook_Name : String;
       Data      : access File_Status_Changed_Hooks_Args)
-      return GPS.Kernel.Scripts.Callback_Data_Access;
+      return GNAT.Scripts.Callback_Data_Access;
    --  See inherited subprograms
 
 end GPS.Kernel.Standard_Hooks;

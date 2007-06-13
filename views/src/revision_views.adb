@@ -22,6 +22,7 @@ with Ada.Strings.Unbounded;     use Ada.Strings; use Ada.Strings.Unbounded;
 with Ada.Unchecked_Conversion;
 with System;
 
+with GNAT.Scripts;              use GNAT.Scripts;
 with GNAT.Strings;              use GNAT.Strings;
 
 with Glib;                      use Glib;

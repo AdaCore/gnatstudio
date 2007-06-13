@@ -24,6 +24,7 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Scripts;              use GNAT.Scripts;
 
 with Gdk.Event;                 use Gdk.Event;
 
@@ -2595,7 +2596,7 @@ package body Project_Properties is
    begin
       if Attr.Typ = Attribute_As_Dynamic_List then
          Script := Lookup_Scripting_Language
-           (Kernel, Attr.Dynamic_List_Lang.all);
+           (Get_Scripts (Kernel), Attr.Dynamic_List_Lang.all);
          if Script = null then
             Insert (Kernel,
                     -"Unknown scripting language "
@@ -2606,7 +2607,7 @@ package body Project_Properties is
          end if;
 
          declare
-            List : constant String := GPS.Kernel.Scripts.Execute_Command
+            List : constant String := GNAT.Scripts.Execute_Command
               (Script,
                Command     => Attr.Dynamic_List_Cmd.all,
                Hide_Output => True,

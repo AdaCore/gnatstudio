@@ -768,7 +768,7 @@ package body Diff_Utils2 is
      (Instance : Class_Instance;
       Data     : Diff_Head_Access) is
    begin
-      Set_Property
+      Set_Data
         (Instance,
          Vdiff_Class_Name,
          Vdiff_Property'(Vdiff => Data));

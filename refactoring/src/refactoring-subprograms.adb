@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005-2006                       --
---                            AdaCore                                --
+--                     Copyright (C) 2005-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,6 +23,7 @@ with Dynamic_Arrays;
 with Entities.Queries;       use Entities, Entities.Queries;
 with Glib;                   use Glib;
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
+with GNAT.Scripts;           use GNAT.Scripts;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.Console;     use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;

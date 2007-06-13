@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006                         --
---                              AdaCore                              --
+--                        Copyright (C) 2006-2007, AdaCore           --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,7 +24,7 @@ pragma Warnings (On);
 with GNAT.OS_Lib;
 
 with GPS.Kernel.Hooks;     use GPS.Kernel.Hooks;
-with GPS.Kernel.Scripts;
+with GNAT.Scripts;
 with Filesystem;           use Filesystem;
 with Interactive_Consoles;
 with Remote;               use Remote;
@@ -126,10 +125,10 @@ package GPS.Kernel.Remote is
    end record;
 
    function Create_Callback_Data
-     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+     (Script    : access GNAT.Scripts.Scripting_Language_Record'Class;
       Hook_Name : String;
       Data      : access Rsync_Hooks_Args)
-      return GPS.Kernel.Scripts.Callback_Data_Access;
+      return GNAT.Scripts.Callback_Data_Access;
    --  See inherited for documentation
 
    --------------------------------
@@ -151,10 +150,10 @@ package GPS.Kernel.Remote is
    end record;
 
    function Create_Callback_Data
-     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+     (Script    : access GNAT.Scripts.Scripting_Language_Record'Class;
       Hook_Name : String;
       Data      : access Server_Config_Changed_Hooks_Args)
-      return GPS.Kernel.Scripts.Callback_Data_Access;
+      return GNAT.Scripts.Callback_Data_Access;
    --  See inherited for documentation
 
    ------------------------------

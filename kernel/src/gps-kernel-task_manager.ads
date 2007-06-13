@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2006                      --
---                              AdaCore                              --
+--                      Copyright (C) 2003-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,9 +20,9 @@
 --  This package initializes the GPS Task Manager, and provides menus
 --  to display the Task Manager Interface.
 
-with Commands;           use Commands;
-with Task_Manager;       use Task_Manager;
-with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
+with Commands;     use Commands;
+with Task_Manager; use Task_Manager;
+with GNAT.Scripts; use GNAT.Scripts;
 
 package GPS.Kernel.Task_Manager is
 
@@ -138,7 +137,7 @@ package GPS.Kernel.Task_Manager is
    --  Removes the instance corresponding to the given language from the list.
 
    function Get_Data
-     (Instance : GPS.Kernel.Scripts.Class_Instance)
+     (Instance : GNAT.Scripts.Class_Instance)
       return Scheduled_Command_Access;
    --  Return the command stored in Instance. Instance must be of the class
    --  GPS.Command
@@ -148,7 +147,7 @@ private
    type Scheduled_Command is new Root_Command with record
       Command         : Command_Access;
       Destroy_On_Exit : Boolean;
-      Instances       : GPS.Kernel.Scripts.Instance_List;
+      Instances       : GNAT.Scripts.Instance_List;
       Is_Dead         : Boolean := False;
    end record;
 

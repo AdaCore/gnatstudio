@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2006-2007, AdaCore             --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -27,6 +26,7 @@
 with Ada.Unchecked_Deallocation;
 with Ada.Containers.Indefinite_Ordered_Sets; use Ada.Containers;
 with Ada.Calendar;         use Ada.Calendar;
+with GNAT.Scripts;         use GNAT.Scripts;
 with GNAT.Strings;
 
 with Glib;
@@ -46,7 +46,6 @@ with Gtk.Handlers;         use Gtk.Handlers;
 
 with GPS.Kernel;           use GPS.Kernel;
 with GPS.Kernel.Modules;   use GPS.Kernel.Modules;
-with GPS.Kernel.Scripts;   use GPS.Kernel.Scripts;
 with GPS.Kernel.Hooks;     use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;       use GPS.Kernel.MDI;
 with GPS.Intl;             use GPS.Intl;
@@ -131,7 +130,6 @@ private
       Instance_Name : GNAT.Strings.String_Access;
       Date          : Time;
    end record;
-
    type Code_Analysis_Property is access all Code_Analysis_Property_Record;
 
    type Context_And_Instance is record

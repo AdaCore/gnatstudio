@@ -23,6 +23,7 @@ with Ada.Unchecked_Deallocation;
 with System;                    use System;
 
 with GNAT.OS_Lib;
+with GNAT.Scripts;              use GNAT.Scripts;
 with GNAT.Strings;              use GNAT.Strings;
 
 with Glib;                      use Glib;
@@ -894,7 +895,7 @@ package body Bookmark_Views is
    is
       Name_Cst       : aliased constant String := "name";
       Bookmark_Class : constant Class_Type :=
-                         New_Class (Get_Kernel (Data), "Bookmark");
+        New_Class (Get_Scripts (Get_Kernel (Data)), "Bookmark");
       Inst           : Class_Instance;
       Bookmark       : Bookmark_List.List_Node;
       Marker         : Location_Marker;
@@ -1001,7 +1002,7 @@ package body Bookmark_Views is
    is
       Command            : Interactive_Command_Access;
       Bookmark_Class     : constant Class_Type :=
-                             New_Class (Kernel, "Bookmark");
+                             New_Class (Get_Scripts (Kernel), "Bookmark");
       Src_Action_Context : constant Action_Filter :=
                              Lookup_Filter (Kernel, "Source editor");
 
