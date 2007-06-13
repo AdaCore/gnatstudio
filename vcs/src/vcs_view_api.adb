@@ -2305,92 +2305,6 @@ package body VCS_View_API is
       Get_Status : Boolean)
    is
       Files        : String_List.List;
-      Status       : File_Status_List.List;
-
-      procedure Add_Directory_Files (Dir : String);
-      --  Fill the explorer with blank status for all files in Dir.
-
-      procedure Add_Directory_Recursively;
-      --  Add Dir and all subdirectories in Dir to Files, and make Node point
-      --  to the next node.
-
-      -------------------------
-      -- Add_Directory_Files --
-      -------------------------
-
-      procedure Add_Directory_Files (Dir : String) is
-         use String_List;
-
-         F      : File_Array_Access := Read_Files_From_Dirs (Dir);
-      begin
-         for J in F'Range loop
-            if not Is_Directory (F (J)) then
-               File_Status_List.Append
-                 (Status,
-                  (F (J), VCS.Unknown,
-                   Null_List, Null_List, Null_List, Null_List));
-            end if;
-         end loop;
-
-         Unchecked_Free (F);
-      end Add_Directory_Files;
-
-      -------------------------------
-      -- Add_Directory_Recursively --
-      -------------------------------
-
-      procedure Add_Directory_Recursively is
-         use String_List_Utils.String_List;
-
-         Node : String_List.List_Node;
-         File : String (1 .. 1024);
-         Last : Natural;
-         D    : Dir_Type;
-      begin
-         Node := First (Files);
-
-         while Node /= Null_Node loop
-            begin
-               Open (D, Data (Node));
-
-               loop
-                  begin
-                     Read (D, File, Last);
-
-                     if Last = 0 then
-                        Close (D);
-                        exit;
-                     else
-                        if File (1 .. Last) /= "."
-                          and then File (1 .. Last) /= ".."
-                          and then GNAT.OS_Lib.Is_Directory
-                            (Data (Node) & File (1 .. Last))
-                          and then not Is_Hidden (Kernel, File (1 .. Last))
-                        then
-                           Append
-                             (Files,
-                              Data (Node) & File (1 .. Last)
-                              & GNAT.OS_Lib.Directory_Separator);
-                           Add_Directory_Files
-                             (Data (Node) & File (1 .. Last));
-                        end if;
-                     end if;
-
-                  exception
-                     when Directory_Error =>
-                        Close (D);
-                        exit;
-                  end;
-               end loop;
-
-            exception
-               when Directory_Error =>
-                  null;
-            end;
-
-            Node := Next (Node);
-         end loop;
-      end Add_Directory_Recursively;
 
    begin
       --  Do not process hidden directories.
@@ -2399,21 +2313,17 @@ package body VCS_View_API is
       end if;
 
       String_List.Append (Files, Directory);
-      Add_Directory_Files (Directory);
-
-      if Recursive then
-         Add_Directory_Recursively;
-      end if;
-
-      Display_File_Status (Kernel, Status, Ref, False, True, False);
-      File_Status_List.Free (Status);
 
       if Update then
          VCS.Update (Ref, Files);
       end if;
 
       if Get_Status then
-         VCS.Get_Status_Dirs (Ref, Files);
+         if Recursive then
+            VCS.Get_Status_Dirs_Recursive (Ref, Files);
+         else
+            VCS.Get_Status_Dirs (Ref, Files);
+         end if;
       end if;
 
       String_List.Free (Files);
