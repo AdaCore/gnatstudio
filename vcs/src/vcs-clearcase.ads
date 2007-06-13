@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
+--                      Copyright (C) 2001-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -39,6 +39,12 @@ package VCS.ClearCase is
       Local       : Boolean := False);
 
    procedure Get_Status_Dirs
+     (Rep         : access ClearCase_Record;
+      Dirs        : String_List.List;
+      Clear_Logs  : Boolean := False;
+      Local       : Boolean := False) renames Get_Status;
+
+   procedure Get_Status_Dirs_Recursive
      (Rep         : access ClearCase_Record;
       Dirs        : String_List.List;
       Clear_Logs  : Boolean := False;

@@ -657,6 +657,108 @@ package body VCS.Generic_VCS is
       end if;
    end Get_Status_Dirs;
 
+   -------------------------------
+   -- Get_Status_Dirs_Recursive --
+   -------------------------------
+
+   procedure Get_Status_Dirs_Recursive
+     (Rep        : access Generic_VCS_Record;
+      Dirs       : String_List.List;
+      Clear_Logs : Boolean := False;
+      Local      : Boolean := False)
+   is
+      Args : GNAT.Strings.String_List_Access;
+
+      Files : String_List.List;
+
+      procedure Add_Directory_Recursively;
+      --  Add Dir and all subdirectories in Dir to Dirs, and make Node point
+      --  to the next node.
+
+      -------------------------------
+      -- Add_Directory_Recursively --
+      -------------------------------
+
+      procedure Add_Directory_Recursively is
+         Node : String_List.List_Node;
+         File : String (1 .. 1024);
+         Last : Natural;
+         D    : Dir_Type;
+      begin
+         Node := First (Files);
+
+         while Node /= Null_Node loop
+            begin
+               Open (D, Data (Node));
+
+               loop
+                  begin
+                     Read (D, File, Last);
+
+                     if Last = 0 then
+                        Close (D);
+                        exit;
+                     else
+                        if File (1 .. Last) /= "."
+                          and then File (1 .. Last) /= ".."
+                          and then GNAT.OS_Lib.Is_Directory
+                            (Data (Node) & File (1 .. Last))
+                          and then not Is_Hidden (Rep.Kernel, File (1 .. Last))
+                        then
+                           Append
+                             (Files,
+                              Data (Node) & File (1 .. Last)
+                              & GNAT.OS_Lib.Directory_Separator);
+                        end if;
+                     end if;
+
+                  exception
+                     when Directory_Error =>
+                        Close (D);
+                        exit;
+                  end;
+               end loop;
+
+            exception
+               when Directory_Error =>
+                  null;
+            end;
+
+            Node := Next (Node);
+         end loop;
+      end Add_Directory_Recursively;
+
+   begin
+      Args := new GNAT.Strings.String_List (1 .. 1);
+      Args (1) := new String'(Clear_Logs'Img);
+
+      if Rep.Current_Query_Files /= Null_List then
+         Free (Rep.Current_Query_Files);
+      end if;
+
+      if Local then
+         Generic_Dir_Command (Rep, Dirs, Args, Local_Status_Dir, False);
+         --  ??? add recursive behavior for this?
+      else
+         declare
+            The_Action : constant Action_Record_Access :=
+              Lookup_Action (Rep.Kernel, Rep.Commands (Status_Dir_Recursive));
+         begin
+            if The_Action = null then
+               --  There is no action to perform on a hierarchy of directories:
+               --  do the work manually.
+
+               Files := Copy_String_List (Dirs);
+               Add_Directory_Recursively;
+               Generic_Dir_Command (Rep, Files, Args, Status_Dir);
+               String_List.Free (Files);
+            else
+               Generic_Dir_Command (Rep, Dirs, Args, Status_Dir_Recursive);
+            end if;
+         end;
+      end if;
+   end Get_Status_Dirs_Recursive;
+
    ----------------------
    -- Local_Get_Status --
    ----------------------
