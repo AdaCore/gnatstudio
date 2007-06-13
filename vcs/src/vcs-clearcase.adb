@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
+--                      Copyright (C) 2001-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1840,6 +1840,7 @@ package body VCS.ClearCase is
         (None               => null,
          Status_Files       => new String'(-"Query status"),
          Status_Dir         => null,
+         Status_Dir_Recursive => null,
          Local_Status_Files => null,
          Local_Status_Dir   => null,
          Create_Tag         => null,
