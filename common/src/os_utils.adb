@@ -24,13 +24,11 @@ with Interfaces.C.Strings;      use Interfaces.C.Strings;
 
 with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Directory_Operations; use GNAT, GNAT.Directory_Operations;
+with GNAT.Scripts.Utils;
 
 with Glib.Convert;              use Glib.Convert;
-with Traces;                    use Traces;
 
 package body OS_Utils is
-
-   Me : constant Debug_Handle := Create ("OS_Utils");
 
    OpenVMS_Host : Boolean := False;
 
@@ -183,25 +181,8 @@ package body OS_Utils is
    ---------------
 
    function Read_File (File : String) return String_Access is
-      FD           : File_Descriptor := Invalid_FD;
-      Buffer       : String_Access;
-      Length       : Integer;
-      Dummy_Length : Integer;
-      pragma Unreferenced (Dummy_Length);
-
    begin
-      FD := Open_Read (Locale_From_UTF8 (File), Fmode => Binary);
-
-      if FD = Invalid_FD then
-         Trace (Me, "Couldn't open " & Locale_From_UTF8 (File));
-         return null;
-      end if;
-
-      Length := Integer (File_Length (FD));
-      Buffer := new String (1 .. Length);
-      Dummy_Length := Read (FD, Buffer.all'Address, Length);
-      Close (FD);
-      return Buffer;
+      return GNAT.Scripts.Utils.Read_File (Locale_From_UTF8 (File));
    end Read_File;
 
    ----------------------
