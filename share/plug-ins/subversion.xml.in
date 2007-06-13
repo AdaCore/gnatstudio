@@ -35,6 +35,18 @@
       <shell>VCS.status_parse "Subversion" "%1" "$1" FALSE "%3"</shell>
    </action>
 
+   <!-- SVN status dir recursive -->
+
+   <action name="generic_svn_status_dir_recursive" show-command="true" output="none" category="">
+      <shell>pwd</shell>
+      <shell output="">echo "Querying status for %1"</shell>
+      <external check-password="true">svn --non-interactive status -u -v .</external>
+      <on-failure>
+         <shell output="">echo "SVN error:"</shell>
+         <shell output="">echo "%2"</shell>
+      </on-failure>
+      <shell>VCS.status_parse "Subversion" "%1" "$1" FALSE "%3"</shell>
+   </action>
    <!-- SVN tag/branch -->
 
    <action name="generic_svn_create_tag" show-command="true" output="" category="">
@@ -360,12 +372,15 @@
 
    <!-- SVN -->
 
-   <vcs name="Subversion" 
+   <vcs name="Subversion"
         path_style="@PATH_STYLE@"
         absolute_names="TRUE" atomic_commands="TRUE"
         commit_directory="TRUE">
       <status_files       action="generic_svn_status"           label="Query status"/>
       <status_dir         action="generic_svn_status_dir"       label="Query status for directory"/>
+      <status_dir_recursive
+                action="generic_svn_status_dir_recursive"
+                label="Query status for directory recursively"/>
       <local_status_files action="generic_svn_local_status"     label="Local status"/>
       <create_tag         action="generic_svn_create_tag"       label="Create tag"/>
       <create_branch      action="generic_svn_create_branch"    label="Create branch"/>
@@ -401,7 +416,7 @@
       <status label="Added" stock="gps-vcs-added" />
 
       <status_parser>
-         <regexp>(^|\n)([^\?S].......)\s+([^\s]+)\s+([^\s]+)\s+([^\s]+)\s+([^\n]+)</regexp>
+         <regexp>(^|\n)([^\?S].......)\s+([0-9]+)\s+([0-9]+)\s+([^\s]+)\s+([^\n]+)</regexp>
 
          <file_index>6</file_index>
          <status_index>2</status_index>
@@ -419,7 +434,7 @@
       </status_parser>
 
       <local_status_parser>
-         <regexp>(^|\n)([^\?S].......)\s+([^\s]+)\s+([^\s]+)\s+([^\s]+)\s+([^\n]+)</regexp>
+         <regexp>(^|\n)([^\?S].......)\s+([0-9]+)\s+([0-9]+)\s+([^\s]+)\s+([^\n]+)</regexp>
 
          <file_index>6</file_index>
          <status_index>2</status_index>
