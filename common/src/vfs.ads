@@ -338,6 +338,16 @@ private
       Filename : GNAT.Strings.String_Access;
    end record;
 
+   Invalid_File : constant Writable_File :=
+     ((Ada.Finalization.Controlled with Value => null),
+      GNAT.OS_Lib.Invalid_FD, null);
+
+   type Virtual_Dir is record
+      File       : Virtual_File;
+      Files_List : File_Array_Access;
+      Current    : Natural;
+   end record;
+
    No_File : constant Virtual_File :=
      (Ada.Finalization.Controlled with Value => null);
 
@@ -349,16 +359,6 @@ private
         Normalized_Full => new String'(1 => GNAT.OS_Lib.Directory_Separator),
         Dir_Name        => new String'(1 => GNAT.OS_Lib.Directory_Separator),
         Kind            => Directory));
-
-   Invalid_File : constant Writable_File :=
-     ((Ada.Finalization.Controlled with Value => null),
-      GNAT.OS_Lib.Invalid_FD, null);
-
-   type Virtual_Dir is record
-      File       : Virtual_File;
-      Files_List : File_Array_Access;
-      Current    : Natural;
-   end record;
 
    Invalid_Dir : constant Virtual_Dir :=
      ((Ada.Finalization.Controlled with Value => null),
