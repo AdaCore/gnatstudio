@@ -1,33 +1,13 @@
-*** shared.gpr.old	Tue Oct  1 18:21:51 2002
---- shared.gpr	Tue Oct  1 18:22:03 2002
-***************
-*** 4,10 ****
-     OS : OS_Type := External ("OS", "unix");
-  
-     type Build_Type is ("Debug", "Production");
-!    Build : Build_Type := External ("Build", "Debug");
-  
-     for Source_Dirs use ();
-  
---- 4,10 ----
-     OS : OS_Type := External ("OS", "unix");
-  
-     type Build_Type is ("Debug", "Production");
-!    Build : Build_Type := External ("Build", "Production");
-  
-     for Source_Dirs use ();
-  
---- gnatlib/gnatlib_shared.gpr.in.old	2007-06-13 11:04:06.515625000 +0200
-+++ gnatlib/gnatlib_shared.gpr.in	2007-06-13 11:04:29.531250000 +0200
-@@ -2,7 +2,7 @@ project GnatLib_Shared is
-    for Source_Dirs use ();
- 
-    type Build_Type is ("Debug", "Production");
+--- shared.gpr.old	2007-06-13 11:36:51.000000000 +0200
++++ shared.gpr	2007-06-07 21:53:17.578125000 +0200
+@@ -7 +7 @@
+-   Build : Build_Type := External ("Build", "Production");
++   Build : Build_Type := External ("Build", "Debug");
+--- gnatlib/gnatlib_shared.gpr.in.old	2007-06-13 11:35:36.828125000 +0200
++++ gnatlib/gnatlib_shared.gpr.in	2007-06-13 11:34:49.656250000 +0200
+@@ -5 +5 @@
 -   Build : Build_Type := External ("Build", "Debug");
 +   Build : Build_Type := External ("Build", "Production");
- 
-    Python_Version := "@PYTHON_VERSION@";
-    Python_Base    := "@PYTHON_BASE@";
 --- gnat_src/osint.ads	8 Jan 2007 17:00:09 -0000	1.147
 +++ gnat_src/osint.ads	10 Feb 2007 11:56:42 -0000
 @@ -29,10 +29,10 @@
