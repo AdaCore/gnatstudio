@@ -19,16 +19,19 @@
 -----------------------------------------------------------------------
 
 with Ada.Strings.Fixed;   use Ada.Strings.Fixed;
+with Ada.Unchecked_Conversion;
+with Ada.Unchecked_Deallocation;
 with System;              use System;
 
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
+with GNAT.Scripts.Gtkada; use GNAT.Scripts, GNAT.Scripts.Gtkada;
 
 with Glib;                use Glib;
 with Glib.Convert;
 with Glib.Values;         use Glib.Values;
 with Glib.Object;         use Glib.Object;
 with Glib.Properties;     use Glib.Properties;
-with Gdk.Types;           use Gdk.Types;
+with Gdk.Types;           use Gdk, Gdk.Types;
 with Gdk.Types.Keysyms;   use Gdk.Types.Keysyms;
 with Gdk.Event;           use Gdk.Event;
 with Gtk.Enums;           use Gtk.Enums;
@@ -51,11 +54,64 @@ with Pango.Enums;         use Pango.Enums;
 with Traces;              use Traces;
 with Histories;           use Histories;
 with String_Utils;        use String_Utils;
+with String_List_Utils;   use String_List_Utils;
 with GUI_Utils;           use GUI_Utils;
 
 package body Interactive_Consoles is
+   Me : constant Debug_Handle := Create ("Console");
 
    package Console_Idle is new Gtk.Main.Idle (Interactive_Console);
+   function UC is new Ada.Unchecked_Conversion
+     (System.Address, Interactive_Console);
+   function UC is new Ada.Unchecked_Conversion
+     (Interactive_Console, System.Address);
+
+   ---------------------------------
+   -- Interactive_Virtual_Console --
+   ---------------------------------
+
+   type Interactive_Virtual_Console_Record is new Virtual_Console_Record with
+      record
+         Console   : Interactive_Console;
+         Script    : Scripting_Language;
+         Took_Grab : Boolean := False;
+      end record;
+   type Interactive_Virtual_Console
+     is access all Interactive_Virtual_Console_Record'Class;
+
+   overriding procedure Ref
+     (Console : access Interactive_Virtual_Console_Record);
+   overriding procedure Unref
+     (Console : access Interactive_Virtual_Console_Record);
+   overriding procedure Insert_Text
+     (Console : access Interactive_Virtual_Console_Record; Txt : String);
+   overriding procedure Insert_Log
+     (Console : access Interactive_Virtual_Console_Record; Txt : String);
+   overriding procedure Insert_Prompt
+     (Console : access Interactive_Virtual_Console_Record; Txt : String);
+   overriding procedure Insert_Error
+     (Console : access Interactive_Virtual_Console_Record; Txt : String);
+   overriding procedure Grab_Events
+     (Console : access Interactive_Virtual_Console_Record; Grab : Boolean);
+   overriding procedure Set_As_Default_Console
+     (Console     : access Interactive_Virtual_Console_Record;
+      Script      : GNAT.Scripts.Scripting_Language);
+   overriding procedure Set_Data_Primitive
+     (Instance : Class_Instance;
+      Console  : access Interactive_Virtual_Console_Record);
+   overriding function Get_Instance
+     (Script  : access Scripting_Language_Record'Class;
+      Console : access Interactive_Virtual_Console_Record)
+      return Class_Instance;
+   overriding procedure Process_Pending_Events_Primitive
+     (Console : access Interactive_Virtual_Console_Record);
+   overriding function Read
+     (Console    : access Interactive_Virtual_Console_Record;
+      Size       : Integer;
+      Whole_Line : Boolean) return String;
+   overriding procedure Clear
+     (Console    : access Interactive_Virtual_Console_Record);
+   --  See inherited subprograms
 
    -----------------------
    -- Local subprograms --
@@ -121,6 +177,226 @@ package body Interactive_Consoles is
    --  Execute Command, store it in the history, and display its result
    --  in the console
 
+   ---------
+   -- Ref --
+   ---------
+
+   procedure Ref
+     (Console : access Interactive_Virtual_Console_Record) is
+   begin
+      Ref (Console.Console);
+   end Ref;
+
+   -----------
+   -- Unref --
+   -----------
+
+   procedure Unref
+     (Console : access Interactive_Virtual_Console_Record) is
+   begin
+      Unref (Console.Console);
+   end Unref;
+
+   -----------
+   -- Clear --
+   -----------
+
+   procedure Clear
+     (Console    : access Interactive_Virtual_Console_Record) is
+   begin
+      Clear (Console.Console);
+   end Clear;
+
+   -----------------
+   -- Insert_Text --
+   -----------------
+
+   procedure Insert_Text
+     (Console : access Interactive_Virtual_Console_Record; Txt : String) is
+   begin
+      Insert (Console.Console, Txt, Add_LF => False, Show_Prompt => False);
+   end Insert_Text;
+
+   ----------------
+   -- Insert_Log --
+   ----------------
+
+   procedure Insert_Log
+     (Console : access Interactive_Virtual_Console_Record; Txt : String)
+   is
+      pragma Unreferenced (Console);
+   begin
+      Trace (Me, Txt);
+   end Insert_Log;
+
+   -------------------
+   -- Insert_Prompt --
+   -------------------
+
+   procedure Insert_Prompt
+     (Console : access Interactive_Virtual_Console_Record; Txt : String)
+   is
+   begin
+      --  If the console has its own prompt, so ignore the one passed in
+      --  parameter
+      if Console.Console.Prompt.all /= "" then
+         Display_Prompt (Console.Console);
+      else
+         Set_Prompt (Console.Console, Txt);
+         Display_Prompt (Console.Console);
+         Set_Prompt (Console.Console, "");
+      end if;
+   end Insert_Prompt;
+
+   ------------------
+   -- Insert_Error --
+   ------------------
+
+   procedure Insert_Error
+     (Console : access Interactive_Virtual_Console_Record; Txt : String) is
+   begin
+      Insert (Console.Console, Txt, Add_LF => True, Highlight => True,
+              Show_Prompt => False);
+   end Insert_Error;
+
+   -----------------
+   -- Grab_Events --
+   -----------------
+
+   procedure Grab_Events
+     (Console : access Interactive_Virtual_Console_Record; Grab : Boolean) is
+   begin
+      if Grab then
+         Console.Took_Grab := False;
+
+         --  Grab the mouse, keyboard,... so as to avoid recursive loops in
+         --  GPS (user selecting a menu while python is running)
+         Ref (Console.Console);
+
+         if Get_Window (Console.Console) /= null then
+            --  If we already have a grab (for instance when the user is
+            --  displaying a menu and we are running the python command as a
+            --  filter for that menu), no need to take another. In fact,
+            --  taking another would break the above scenario, since in
+            --  gtkmenu.c the handler for grab_notify cancels the menu when
+            --  another grab is taken (G305-005)
+
+            if Gtk.Main.Grab_Get_Current = null then
+               Gtk.Main.Grab_Add (Console.Console);
+               Console.Took_Grab := True;
+            end if;
+         end if;
+
+      else
+         --  Note: the widget might have been destroyed by the python command,
+         --  we need to check that it still exists.
+
+         if Console.Took_Grab then
+            Gtk.Main.Grab_Remove (Console.Console);
+            Unref (Console.Console);
+         end if;
+      end if;
+   end Grab_Events;
+
+   ----------------------------
+   -- Set_As_Default_Console --
+   ----------------------------
+
+   procedure Set_As_Default_Console
+     (Console     : access Interactive_Virtual_Console_Record;
+      Script      : GNAT.Scripts.Scripting_Language) is
+   begin
+      Console.Script := Script;
+   end Set_As_Default_Console;
+
+   ------------------------
+   -- Set_Data_Primitive --
+   ------------------------
+
+   procedure Set_Data_Primitive
+     (Instance : Class_Instance;
+      Console  : access Interactive_Virtual_Console_Record) is
+   begin
+      GNAT.Scripts.Gtkada.Set_Data (Instance, GObject (Console.Console));
+   end Set_Data_Primitive;
+
+   ------------------
+   -- Get_Instance --
+   ------------------
+
+   function Get_Instance
+     (Script  : access Scripting_Language_Record'Class;
+      Console : access Interactive_Virtual_Console_Record)
+      return Class_Instance is
+   begin
+      return GNAT.Scripts.Gtkada.Get_Instance
+        (Script, GObject (Console.Console));
+   end Get_Instance;
+
+   --------------------------------------
+   -- Process_Pending_Events_Primitive --
+   --------------------------------------
+
+   procedure Process_Pending_Events_Primitive
+     (Console : access Interactive_Virtual_Console_Record)
+   is
+      Dead : Boolean;
+      pragma Unreferenced (Console, Dead);
+   begin
+      --  Process all gtk+ events, so that the text becomes visible
+      --  immediately, even if the python program hasn't finished executing
+
+      --  Note: since we have grabed the mouse and keyboards, events will only
+      --  be sent to the python console, thus avoiding recursive loops inside
+      --  GPS.
+
+      while Gtk.Main.Events_Pending loop
+         Dead := Gtk.Main.Main_Iteration;
+      end loop;
+   end Process_Pending_Events_Primitive;
+
+   ----------
+   -- Read --
+   ----------
+
+   function Read
+     (Console    : access Interactive_Virtual_Console_Record;
+      Size       : Integer;
+      Whole_Line : Boolean) return String
+   is
+      pragma Unreferenced (Size);
+   begin
+      return Read (Console.Console, Whole_Line);
+   end Read;
+
+   -----------------------------------
+   -- Get_Or_Create_Virtual_Console --
+   -----------------------------------
+
+   function Get_Or_Create_Virtual_Console
+     (Console : Interactive_Console) return Virtual_Console is
+   begin
+      if Console = null then
+         return null;
+
+      elsif Console.Virtual = null then
+         Console.Virtual := new Interactive_Virtual_Console_Record;
+         Interactive_Virtual_Console (Console.Virtual).Console := Console;
+      end if;
+
+      return Console.Virtual;
+   end Get_Or_Create_Virtual_Console;
+
+   -----------------
+   -- Get_Console --
+   -----------------
+
+   function Get_Console
+     (Virtual : GNAT.Scripts.Virtual_Console) return Interactive_Console is
+   begin
+      return Interactive_Virtual_Console (Virtual).Console;
+   end Get_Console;
+
    ------------------
    -- Destroy_Idle --
    ------------------
@@ -167,11 +443,13 @@ package body Interactive_Consoles is
       Text           : String;
       Add_LF         : Boolean := True;
       Highlight      : Boolean := False;
-      Add_To_History : Boolean := False)
+      Add_To_History : Boolean := False;
+      Show_Prompt    : Boolean := True)
    is
       UTF8        : constant String := Glib.Convert.Locale_To_UTF8 (Text);
    begin
-      Insert_UTF8 (Console, UTF8, Add_LF, Highlight, Add_To_History);
+      Insert_UTF8
+        (Console, UTF8, Add_LF, Highlight, Add_To_History, Show_Prompt);
    end Insert;
 
    -----------------
@@ -183,7 +461,8 @@ package body Interactive_Consoles is
       UTF8           : Glib.UTF8_String;
       Add_LF         : Boolean := True;
       Highlight      : Boolean := False;
-      Add_To_History : Boolean := False)
+      Add_To_History : Boolean := False;
+      Show_Prompt    : Boolean := True)
    is
       Prompt_Iter : Gtk_Text_Iter;
       Last_Iter   : Gtk_Text_Iter;
@@ -237,7 +516,9 @@ package body Interactive_Consoles is
             Prompt_Iter, Last_Iter);
       end if;
 
-      Display_Prompt (Console);
+      if Show_Prompt then
+         Display_Prompt (Console);
+      end if;
 
       Console.Message_Was_Displayed := True;
       Console.Internal_Insert := Internal;
@@ -358,6 +639,8 @@ package body Interactive_Consoles is
      (Object : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean
    is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Virtual_Console_Record'Class, Virtual_Console);
       pragma Unreferenced (Event);
 
       Console : constant Interactive_Console := Interactive_Console (Object);
@@ -374,6 +657,14 @@ package body Interactive_Consoles is
       Console.Internal_Insert := True;
       Console.Idle_Registered := True;
 
+      if Console.Virtual /= null then
+         if Interactive_Virtual_Console (Console.Virtual).Script /= null then
+            Set_Default_Console
+              (Interactive_Virtual_Console (Console.Virtual).Script, null);
+         end if;
+         Unchecked_Free (Console.Virtual);
+      end if;
+
       return False;
 
    exception
@@ -381,6 +672,102 @@ package body Interactive_Consoles is
          Trace (Exception_Handle, E);
          return False;
    end Delete_Event_Handler;
+
+   --------------------------------
+   -- Default_Completion_Handler --
+   --------------------------------
+
+   function Default_Completion_Handler
+     (Input     : String;
+      User_Data : System.Address)
+      return String_List_Utils.String_List.List
+   is
+      Console     : constant Interactive_Console := UC (User_Data);
+      Completions : String_Lists.List;
+      C           : String_Lists.Cursor;
+      Result      : String_List_Utils.String_List.List :=
+        String_List_Utils.String_List.Null_List;
+   begin
+      if Console.Virtual /= null
+        and then Interactive_Virtual_Console (Console.Virtual).Script /= null
+      then
+         Complete (Interactive_Virtual_Console (Console.Virtual).Script,
+                   Input, Completions);
+         C := String_Lists.First (Completions);
+         while String_Lists.Has_Element (C) loop
+            String_List_Utils.String_List.Append
+              (Result, String_Lists.Element (C));
+            String_Lists.Next (C);
+         end loop;
+      end if;
+
+      return Result;
+   end Default_Completion_Handler;
+
+   -------------------------------
+   -- Default_Interrupt_Handler --
+   -------------------------------
+
+   function Default_Interrupt_Handler
+     (Console   : access Interactive_Console_Record'Class;
+      User_Data : System.Address) return Boolean
+   is
+      pragma Unreferenced (User_Data);
+   begin
+      if Console.Virtual /= null
+        and then Interactive_Virtual_Console (Console.Virtual).Script /= null
+      then
+         return Interrupt
+           (Interactive_Virtual_Console (Console.Virtual).Script);
+      end if;
+      return False;
+   end Default_Interrupt_Handler;
+
+   -----------------------------
+   -- Default_Command_Handler --
+   -----------------------------
+
+   function Default_Command_Handler
+     (Console   : access Interactive_Console_Record'Class;
+      Input     : String;
+      User_Data : System.Address) return String
+   is
+      pragma Unreferenced (User_Data);
+   begin
+      if Console.Virtual /= null
+        and then Interactive_Virtual_Console (Console.Virtual).Script /= null
+      then
+         declare
+            Errors : aliased Boolean;
+            S : constant String := Execute_Command
+              (Script  => Interactive_Virtual_Console (Console.Virtual).Script,
+               Command      => Input,
+               Show_Command => False,
+               Hide_Output  => False,
+               Errors       => Errors'Unchecked_Access);
+         begin
+            --  Preserve the focus on the console after an interactive
+            --  execution
+
+            Grab_Focus (Console.View);
+
+            if S = ""
+              or else S (S'Last) = ASCII.LF
+              or else S (S'Last) = ASCII.CR
+            then
+               return S;
+            else
+               return S & ASCII.LF;
+            end if;
+         end;
+      end if;
+      return "";
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return "";
+   end Default_Command_Handler;
 
    -----------------------
    -- Key_Press_Handler --
@@ -390,12 +777,11 @@ package body Interactive_Consoles is
      (Object : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean
    is
-      Console     : constant Interactive_Console :=
-                      Interactive_Console (Object);
-      Key         : constant Gdk_Key_Type  := Get_Key_Val (Event);
+      Console   : constant Interactive_Console := Interactive_Console (Object);
+      Key       : constant Gdk_Key_Type  := Get_Key_Val (Event);
       Prompt_Iter : Gtk_Text_Iter;
-      Last_Iter   : Gtk_Text_Iter;
-      Success     : Boolean;
+      Last_Iter : Gtk_Text_Iter;
+      Success   : Boolean;
 
    begin
       case Key is
@@ -449,12 +835,22 @@ package body Interactive_Consoles is
             if Console.Completion = null or else Console.Waiting_For_Input then
                return False;
             else
-               Do_Completion
-                 (View            => Console.View,
-                  Completion      => Console.Completion,
-                  Prompt_End_Mark => Console.Prompt_Mark,
-                  Uneditable_Tag  => Console.Uneditable_Tag,
-                  User_Data       => Console.User_Data);
+               if Console.Completion = Default_Completion_Handler'Access then
+                  Do_Completion
+                    (View            => Console.View,
+                     Completion      => Default_Completion_Handler'Access,
+                     Prompt_End_Mark => Console.Prompt_Mark,
+                     Uneditable_Tag  => Console.Uneditable_Tag,
+                     User_Data       => UC (Console));
+
+               else
+                  Do_Completion
+                    (View            => Console.View,
+                     Completion      => Console.Completion,
+                     Prompt_End_Mark => Console.Prompt_Mark,
+                     Uneditable_Tag  => Console.Uneditable_Tag,
+                     User_Data       => Console.User_Data);
+               end if;
                Console.Internal_Insert := False;
                return True;
             end if;
@@ -549,21 +945,24 @@ package body Interactive_Consoles is
 
       Offset : Gint;
    begin
-      Get_End_Iter (Console.Buffer, First_Iter);
-      Offset := Get_Offset (First_Iter);
+      if not Console.Input_Blocked then
+         Get_End_Iter (Console.Buffer, First_Iter);
+         Offset := Get_Offset (First_Iter);
 
-      Insert (Console.Buffer, First_Iter, Console.Prompt.all);
+         Insert (Console.Buffer, First_Iter, Console.Prompt.all);
 
-      Get_End_Iter (Console.Buffer, Prompt_Iter);
-      Get_Iter_At_Offset (Console.Buffer, First_Iter, Offset);
+         Get_End_Iter (Console.Buffer, Prompt_Iter);
+         Get_Iter_At_Offset (Console.Buffer, First_Iter, Offset);
 
-      Apply_Tag
-        (Console.Buffer, Console.Uneditable_Tag, First_Iter, Prompt_Iter);
-      Apply_Tag
-        (Console.Buffer, Console.Prompt_Tag, First_Iter, Prompt_Iter);
+         Apply_Tag
+           (Console.Buffer, Console.Uneditable_Tag, First_Iter, Prompt_Iter);
+         Apply_Tag
+           (Console.Buffer, Console.Prompt_Tag, First_Iter, Prompt_Iter);
+      else
+         Get_End_Iter (Console.Buffer, Prompt_Iter);
+      end if;
 
       Move_Mark (Console.Buffer, Console.Prompt_Mark, Prompt_Iter);
-
       Scroll_Mark_Onscreen (Console.View, Console.Prompt_Mark);
    end Display_Prompt;
 
@@ -688,7 +1087,7 @@ package body Interactive_Consoles is
    procedure Gtk_New
      (Console             : out Interactive_Console;
       Prompt              : String;
-      Handler             : Command_Handler;
+      Handler             : Command_Handler := Default_Command_Handler'Access;
       User_Data           : System.Address;
       Font                : Pango.Font.Pango_Font_Description;
       History_List        : Histories.History;
@@ -710,7 +1109,7 @@ package body Interactive_Consoles is
    procedure Initialize
      (Console             : access Interactive_Console_Record'Class;
       Prompt              : String;
-      Handler             : Command_Handler;
+      Handler             : Command_Handler := Default_Command_Handler'Access;
       User_Data           : System.Address;
       Font                : Pango.Font.Pango_Font_Description;
       History_List        : Histories.History;
@@ -832,10 +1231,11 @@ package body Interactive_Consoles is
 
       Console.Prompt_Mark := Create_Mark (Console.Buffer, "", Iter);
       Console.Insert_Mark := Get_Insert (Console.Buffer);
+      Console.Completion  := Default_Completion_Handler'Access;
+      Console.Interrupt   := Default_Interrupt_Handler'Access;
 
       Console.Internal_Insert := False;
 
-      Display_Prompt (Console);
       Console.Empty_Equals_Repeat := Empty_Equals_Repeat;
    end Initialize;
 
@@ -1027,8 +1427,10 @@ package body Interactive_Consoles is
       Output := new String'
         (Console.Handler (Console, Command, Console.User_Data));
 
-      Get_End_Iter (Console.Buffer, Last_Iter);
-      Insert (Console.Buffer, Last_Iter, Output.all);
+      if Console.Handler /= Default_Command_Handler'Access then
+         Get_End_Iter (Console.Buffer, Last_Iter);
+         Insert (Console.Buffer, Last_Iter, Output.all);
+      end if;
 
       if Command /= "" and then Console.History /= null then
          Add_To_History
@@ -1044,7 +1446,10 @@ package body Interactive_Consoles is
         (Console.Buffer,
          Console.Uneditable_Tag, Prompt_Iter, Last_Iter);
 
-      Display_Prompt (Console);
+      if Console.Handler /= Default_Command_Handler'Access then
+         Display_Prompt (Console);
+      end if;
+
       Free (Output);
    end Execute_Command;
 

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
---                             AdaCore                               --
+--                     Copyright (C) 2001-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -32,9 +31,11 @@ with Gtk.Text_Mark;
 with Gtk.Text_Tag;
 with Gtk.Scrolled_Window;
 
+with GNAT.Scripts;
 with GNAT.Strings;
 with Histories;
 with GUI_Utils;
+with String_List_Utils;
 with System;
 
 with Pango.Font;
@@ -59,10 +60,32 @@ package Interactive_Consoles is
    --  Should return true if the process was interrupted, False if nothing was
    --  done.
 
+   function Default_Command_Handler
+     (Console   : access Interactive_Console_Record'Class;
+      Input     : String;
+      User_Data : System.Address) return String;
+   --  A command handler that executes Input into the scripting language
+   --  associated with Console
+
+   function Default_Completion_Handler
+     (Input     : String;
+      User_Data : System.Address)
+      return String_List_Utils.String_List.List;
+   --  The default completion handler for a console, which queries the
+   --  associated scripting language.
+   --  When called, User_Data will be the Console itself, and not the one
+   --  passed to Gtk_New
+
+   function Default_Interrupt_Handler
+     (Console   : access Interactive_Console_Record'Class;
+      User_Data : System.Address) return Boolean;
+   --  The default interrupt handler for a console, which requests the
+   --  associated scripting language to interrupt the current command.
+
    procedure Gtk_New
      (Console             : out Interactive_Console;
       Prompt              : String;
-      Handler             : Command_Handler;
+      Handler             : Command_Handler := Default_Command_Handler'Access;
       User_Data           : System.Address;
       Font                : Pango.Font.Pango_Font_Description;
       History_List        : Histories.History;
@@ -80,7 +103,7 @@ package Interactive_Consoles is
    procedure Initialize
      (Console             : access Interactive_Console_Record'Class;
       Prompt              : String;
-      Handler             : Command_Handler;
+      Handler             : Command_Handler := Default_Command_Handler'Access;
       User_Data           : System.Address;
       Font                : Pango.Font.Pango_Font_Description;
       History_List        : Histories.History;
@@ -95,16 +118,19 @@ package Interactive_Consoles is
       Text           : String;
       Add_LF         : Boolean := True;
       Highlight      : Boolean := False;
-      Add_To_History : Boolean := False);
+      Add_To_History : Boolean := False;
+      Show_Prompt    : Boolean := True);
    procedure Insert_UTF8
      (Console        : access Interactive_Console_Record;
       UTF8           : Glib.UTF8_String;
       Add_LF         : Boolean := True;
       Highlight      : Boolean := False;
-      Add_To_History : Boolean := False);
+      Add_To_History : Boolean := False;
+      Show_Prompt    : Boolean := True);
    --  Suspend the user insertion and insert Text as an information message.
    --  If Add_To_History is True, the inserted text will be inserted in the
    --  user command history.
+   --  If Show_Prompt is true, then a prompt is printed after the text.
 
    function Read
      (Console    : access Interactive_Console_Record;
@@ -148,12 +174,15 @@ package Interactive_Consoles is
    --  Set Handler as the default completion handler for the console.
    --  User_Data passed to Handler is the same one that is passed to the
    --  Command_Handler.
+   --  A default completion handler is provided that queries the scripting
+   --  language associated with the console, if there is any.
 
    procedure Set_Interrupt_Handler
      (Console : access Interactive_Console_Record'Class;
       Handler : Interrupt_Handler);
    --  Set Handler to be called when ctrl-c is pressed in the interactive
-   --  console.
+   --  console. A default interrupt handler is provided that asks the scripting
+   --  language to do the necessary work
 
    procedure Set_Highlight_Color
      (Console : access Interactive_Console_Record'Class;
@@ -174,12 +203,30 @@ package Interactive_Consoles is
       return Gtk.Text_View.Gtk_Text_View;
    --  Return the text view.
 
+   ------------------------------
+   -- Adapter for GNAT.Scripts --
+   ------------------------------
+   --  The following functions can be used to integrate an interactive
+   --  console with a GNAT.Scripts.Virtual_Console.
+
+   function Get_Or_Create_Virtual_Console
+     (Console : Interactive_Console)
+      return GNAT.Scripts.Virtual_Console;
+   --  Return the virtual console attached to Console.
+   --  Create one if necessary
+
+   function Get_Console
+     (Virtual : GNAT.Scripts.Virtual_Console) return Interactive_Console;
+   --  Return the interactive console associated with Virtual. This only works
+   --  for virtual consoles created by Get_Or_Create_Virtual_Console above
+
 private
 
    type Interactive_Console_Record is new
      Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record
    with record
       Handler    : Command_Handler;
+      Virtual    : GNAT.Scripts.Virtual_Console;
       Completion : GUI_Utils.Completion_Handler;
       Interrupt  : Interrupt_Handler;
       User_Data  : System.Address;
