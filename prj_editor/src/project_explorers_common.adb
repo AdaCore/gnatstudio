@@ -507,6 +507,8 @@ package body Project_Explorers_Common is
             is
 
                when Directory_Node | Project_Node | Category_Node =>
+                  Cancel_Child_Drag (Child);
+
                   if Get_Event_Type (Event) = Gdk_2button_Press then
                      declare
                         Path    : Gtk_Tree_Path;
@@ -557,9 +559,14 @@ package body Project_Explorers_Common is
                         Child_Drag_Begin (Child, Event);
                      end if;
                      return False;
+
+                  else
+                     Cancel_Child_Drag (Child);
                   end if;
 
                when Entity_Node =>
+                  Cancel_Child_Drag (Child);
+
                   if Get_Event_Type (Event) = Button_Release then
                      Line := Get_Int (Model, Iter, Line_Column);
                      Column := Get_Int (Model, Iter, Column_Column);
@@ -575,6 +582,7 @@ package body Project_Explorers_Common is
                   return False;
 
                when others =>
+                  Cancel_Child_Drag (Child);
                   return False;
             end case;
 
