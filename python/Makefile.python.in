@@ -16,9 +16,10 @@ PYTHON_LIBS=@PYTHON_LIBS@
 PYTHON_BASE_DIR := $(BASE_DIR)
 
 ifneq ($(PYTHON_BASE),no)
-PYTHON_SRC_DIRS = $(PYTHON_BASE_DIR)/python
+PYTHON_SRC_DIRS = $(PYTHON_BASE_DIR)/src
+PYTHON_LIBS := ${PYTHON_LIBS} ../gnatlib/scripts/obj/python_support.o ../gnatlib/scripts/obj/python_support_gtk.o
 else
-PYTHON_SRC_DIRS = $(PYTHON_BASE_DIR)/nopython
+PYTHON_SRC_DIRS = $(PYTHON_BASE_DIR)/src
 endif
 
 ifneq ($(PYGTK_INCLUDE),)
