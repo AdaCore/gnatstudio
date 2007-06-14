@@ -186,6 +186,7 @@ Tools
 * Code Fixing::
 * Documentation Generation::
 * Metrics::
+* Code Coverage::
 
 Working in a Cross Environment
 * Customizing your Projects::
@@ -7502,6 +7503,7 @@ children nodes this contains the log for the corresponding revision.
 * Code Fixing::
 * Documentation Generation::
 * Metrics::
+* Code Coverage::
 @end menu
 
 @node The Tools Menu
@@ -7604,6 +7606,10 @@ Open a python console to access the python interpreter.
 @item Metrics
 @cindex metrics
 @xref{Metrics}.
+
+@item Coverage
+@cindex code coverage
+@xref{Code Coverage}.
 
 @item Macro
 @cindex macros
@@ -7887,6 +7893,199 @@ are arranged by files, and then by scopes inside the files in a nested fashion.
 Double-clicking on any of the files or scopes displayed will open the
 appropriate source location in the editor. Any errors encountered during
 metrics computation will be displayed in the Locations Window.
+
+@c --------------------------------------------------------------------
+@node Code Coverage
+@section Code Coverage
+@cindex Code Coverage
+@noindent
+@c --------------------------------------------------------------------
+
+GPS is fitted with a strong integration of @command{Gcov}, the GNU code coverage
+utility.
+
+The code coverage information can be loaded into GPS for an entire project
+(including recursive projects), for one single project or one single file
+belonging to a loaded project.
+
+To ease its the handling, code coverage information is stored in "analysis"
+entities. Many analyzes can be loaded in GPS at the same time and specific
+treatments of the information contained in an analysis entity, such as coverage
+reporting or highlighting, are provided for each separate analyzes.
+
+Code analysis entities are automatically created the first time you try to load
+coverage information from the "@command{Tools/Coverage}" menu.
+
+@table @b
+@item @ref{The Tools Menu}
+
+@table @command
+@item Coverage->Load data for all projects
+Load the coverage data of the main project, and every recursively included ones.
+
+@item Coverage->Load data for project @code{project}
+Load the coverage data of the @code{project} project only.
+
+@item Coverage->Load data for @file{xxx.adb} (@file{xxx.ads})
+Load the coverage data of the @file{xxx.adb} (@file{xxx.ads}) source file.
+
+@end table
+@end table
+
+But its also possible to create empty ones using :
+
+@table @command
+@item Coverage->Create code analysis
+Create an empty code analysis.
+@end table
+
+This "@command{Tools->Coverage}" menu can have three incremental sets of
+entries, depending on the context and the quantity of analyzes loaded in GPS :
+
+@itemize
+@item The first set is the one described above, allowing you to create analysis.
+
+@item The second set, induced by the creation of a code analysis, includes, at
+its root, the entries applicable to a code analysis, plus entries allowing to
+destroy the new analysis or create one more.
+
+@item Then the third set, encountered when many analyzes are loaded, presents a
+submenu for each analyzes, and keeps the analyzes management entries at the root
+of the menu.
+
+@end itemize
+
+@table @b
+@item @ref{The Tools Menu} (second set)
+
+@table @command
+@item Coverage->Show report of Analysis 1
+Open a new window in the center area of GPS summarizing the coverage
+information.
+
+@item Coverage->Remove Analysis 1
+Drop the Analysis 1, and return to the first set of entries.
+
+@c \hline
+
+@item Coverage->Load data for all projects
+Load or re-load the data of every projects
+(including recursively included ones).
+
+@item Coverage->List lines not covered in all projects
+Highlight every not covered lines in the files of every projects. The lines
+are listed in the location view.
+
+@item Coverage->Reload data for project @code{XXX}
+Try to load again the coverage data of the project @code{XXX}.
+
+@item Coverage->List line not covered
+Highlight the not covered lines of every files of the project @code{XXX}.
+
+@item Coverage->Remove data of project @code{XXX}
+Drop the data of the specified project.
+
+@c \hline
+
+@item Coverage->Reload data for @file{xxx.adb} (@file{xxx.ads})
+Try to reload the coverage data of the specified source file.
+
+@item Coverage->Add coverage annotations
+Append an annotation column to the left side of the current source editor.
+This column indicates which lines are covered and which aren't.
+
+@item Coverage->Remove coverage annotations
+Withdraw from the current source editor a previously set coverage annotation
+column.
+
+@item Coverage->List line not covered
+Highlight the not covered lines of the current contextual file.
+
+@item Coverage->Remove data of @file{xxx.adb} (@file{xxx.ads})
+Remove the coverage data of the specified source file.
+
+@c \hline
+
+@item Coverage->Create code analysis
+Create a new empty analysis entity.
+
+@end table
+
+@item @ref{The Tools Menu} (third set)
+
+@table @command
+@item Coverage->Analysis 1
+Analysis 1 specific submenu. Contains the analysis related entries described
+above.
+
+@item Coverage->Analysis 2
+Analysis 2 specific submenu. Contains the analysis related entries described
+above. (the menu must contains at least two analyzes to have submenus)
+
+@c \hline
+
+@item Coverage->Create code analysis
+Create a new empty analysis entity.
+
+@item Coverage->Remove all analysis
+Drop every analyzes, and so return to the first set of entries.
+@end table
+
+@item The Contextual Menu
+
+When clicking on a project, file or subprogram entity (including the entities
+of the analysis reports), you have access to a "@command{Coverage}" submenu.
+
+These submenus contains an appropriate subset of entries from the
+"@command{Tools/Coverage}" menu allowing to handle the current contextual
+entity.
+
+@item The Report of Analysis
+
+When asked from the "@command{Tools/Coverage}" menu or the contextual menu, or
+when coverage information are loaded, a report of analysis is displayed in the
+center area of GPS. This report contains a tree view of the analysis elements
+and the corresponding coverage information are displayed for each node in sided
+columns.
+
+@iftex
+@cindex screen shot
+@image{report-of-analysis_tree, 8.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{report-of-analysis_tree}
+@end ifhtml
+
+The contextual menus generated on this widget contain, in addition to the
+regular entries, some analysis report specific entries on the top of the menu.
+These entries allow to expand or fold the tree view, and also to display flat
+lists (of files or subprograms) instead of a tree. A flat list of file will
+look like :
+
+@iftex
+@cindex screen shot
+@image{report-of-analysis_flat, 8.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{report-of-analysis_flat}
+@end ifhtml
+
+@end table
+
+Note that, in order to be loaded in an analysis in GPS, the coverage
+information need to be computed before, using Gcov. To be able to produce
+coverage information from Gcov, your project need to have been compiled with
+the "@command{-fprofile-arcs}" and "@command{-ftest-coverage}" switches,
+respectively "Instrument arcs" and "Code coverage" preferences in @ref{The
+Project Properties Editor}.
+
+Also note that if you change the current main project in GPS, using the
+"@command{Project/Open}" menu entry for instance, you will also drop every
+loaded analyzes as they are related with the working project.
 
 @c --------------------------------------------------------------------
 @node Working in a Cross Environment
