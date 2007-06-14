@@ -178,7 +178,8 @@ procedure Completion.Test is
 
       while not At_End (Iter) loop
          declare
-            Proposal : Completion_Proposal'Class := Get_Proposal (Iter);
+            Proposal : constant Completion_Proposal'Class :=
+              Get_Proposal (Iter);
          begin
             if Get_Completion (Proposal) = "***" then
                Put_Line ("Dummy test");
