@@ -704,9 +704,12 @@ package body Aliases_Module is
          P := Values;
          Count := Substrings'First + 1;
 
+         --  Preserve %%, since Find_And_Replace_Cursor does a second expansion
+         --  phase
+
          Substrings (Substrings'First) :=
            (Name  => new String'("" & Special),
-            Value => new String'("" & Special));
+            Value => new String'("" & Special & Special));
 
          while P /= null loop
             Substrings (Count) :=
@@ -752,6 +755,7 @@ package body Aliases_Module is
          Result : Ada.Strings.Unbounded.Unbounded_String;
          First  : Natural := Str'First;
          S      : Natural := Str'First;
+         Found  : Boolean;
 
       begin
          --  Prevent recursion in alias expansion
@@ -780,6 +784,7 @@ package body Aliases_Module is
 
                else
                   Tmp := Aliases_Module_Id.Module_Funcs (Str (S + 1));
+                  Found := False;
 
                   while Tmp /= null loop
                      declare
@@ -791,12 +796,17 @@ package body Aliases_Module is
                         if Replace /= Invalid_Expansion then
                            Result := Ada.Strings.Unbounded.To_Unbounded_String
                              (Replace);
+                           Found := True;
                            exit;
                         end if;
                      end;
 
                      Tmp := Tmp.Next;
                   end loop;
+
+                  if not Found then
+                     Result := Result & Special & Str (S + 1);
+                  end if;
                end if;
 
                S := S + 2;
@@ -2104,6 +2114,12 @@ package body Aliases_Module is
                end if;
             end;
 
+         when 'l' => return Expansion & "line";
+         when 'c' => return Expansion & "column";
+         when 'f' => return Expansion & "file";
+         when 'd' => return Expansion & "directory";
+         when 'p' => return Expansion & "project";
+         when 'P' => return Expansion & "Project";
          when others => return Invalid_Expansion;
       end case;
 
@@ -2267,6 +2283,7 @@ package body Aliases_Module is
         (Kernel, "Current Date", 'D', Special_Entities'Access);
       Register_Special_Alias_Entity
         (Kernel, "Current Hour", 'H', Special_Entities'Access);
+      --  Others are registered in src_editor_module
    end Register_Module;
 
 end Aliases_Module;

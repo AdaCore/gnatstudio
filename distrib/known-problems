@@ -1,5 +1,14 @@
 Known Problems fixed in GPS 4.1.2
 
+- G613-006 Inserting % character in alias expansion
+  Problem:    If your alias contains both %% and another expansion like
+              %(name), then the former will not result in a % in the editor,
+              and will instead discard the following character.
+              It was also found that %f and %l do not work in alias expansion
+  Workaround: A python script can replace the alias expansion to insert
+              constant text (or a more complex script if interaction with the
+              user is needed)
+
 - G523-021 Search & Replace recursion when the pattern is in the replacement
   Problem:    When the pattern of a search is in the replacement string, doing
               multiple "search & replace" will always replace the pattern from
