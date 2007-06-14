@@ -88,6 +88,12 @@ extra_make_switches = ""
 ## script is loaded, and therefore changing the python variable afterward
 ## has no impact
 
+ant_support=False
+## Whether support for ant should be added. This is False by default,
+## because adding this support will implicitely load libexpat from the system,
+## which conflicts in some cases with the one linked with the gtk+ distributed
+## with GPS, and that results in a fatal storage error, crashing GPS
+
 
 ############################################################################
 ## No user customization below this line
@@ -98,7 +104,9 @@ from os.path import *
 import re
 import os
 import traceback
-from xml.sax import handler, make_parser
+
+if ant_support:
+   from xml.sax import handler, make_parser
 
 class Console_Process (Console, Process):
 
@@ -369,7 +377,8 @@ def register_project_attributes ():
 
 def on_gps_started (hook_name):
    Makefile()
-   Antfile()
+   if ant_support:
+      Antfile()
    
 
 ## Register the project attributes early so that the project loaded
