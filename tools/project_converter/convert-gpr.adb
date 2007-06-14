@@ -9,7 +9,6 @@ with Prj.Util;                  use Prj.Util;
 with Errout;                    use Errout;
 with Namet;                     use Namet;
 with Snames;                    use Snames;
-with Types;                     use Types;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Command_Line;          use Ada.Command_Line;
