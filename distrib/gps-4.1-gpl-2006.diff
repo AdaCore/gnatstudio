@@ -1,8 +1,8 @@
 --- shared.gpr.old	2007-06-13 11:36:51.000000000 +0200
 +++ shared.gpr	2007-06-07 21:53:17.578125000 +0200
 @@ -7 +7 @@
--   Build : Build_Type := External ("Build", "Production");
-+   Build : Build_Type := External ("Build", "Debug");
+-   Build : Build_Type := External ("Build", "Debug");
++   Build : Build_Type := External ("Build", "Production");
 --- gnatlib/gnatlib_shared.gpr.in.old	2007-06-13 11:35:36.828125000 +0200
 +++ gnatlib/gnatlib_shared.gpr.in	2007-06-13 11:34:49.656250000 +0200
 @@ -5 +5 @@
