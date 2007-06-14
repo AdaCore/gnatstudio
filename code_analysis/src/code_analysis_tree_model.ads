@@ -26,6 +26,7 @@
 with Code_Analysis;   use Code_Analysis;
 with Gtk.Tree_Store;  use Gtk.Tree_Store;
 with Gtk.Tree_Model;  use Gtk.Tree_Model;
+with Code_Analysis_Module;
 
 package Code_Analysis_Tree_Model is
 
@@ -54,7 +55,8 @@ package Code_Analysis_Tree_Model is
       Prj_Node  : Project_Access;
       File_Node : File_Access;
       Subp_Node : Subprogram_Access;
-      Bin_Mode  : Boolean := False);
+      Bin_Mode  : Boolean := False;
+      Icons     : Code_Analysis_Module.Code_Analysis_Icons);
    --  Fill the Gtk_Tree_Store with the given Subprogram node
    --  If Bin_Mode is True, then the coverage messages will only be between
    --  (covered | not covered)
@@ -65,7 +67,8 @@ package Code_Analysis_Tree_Model is
       Prj_Node  : Project_Access;
       File_Node : Code_Analysis.File_Access;
       Subp_Node : Subprogram_Access;
-      Bin_Mode  : Boolean := False);
+      Bin_Mode  : Boolean := False;
+      Icons     : Code_Analysis_Module.Code_Analysis_Icons);
    --  Fill the Gtk_Tree_Store with the given parentless Subprogram node
    --  If Bin_Mode is True, then the coverage messages will only be between
    --  (covered | not covered)
@@ -76,7 +79,8 @@ package Code_Analysis_Tree_Model is
       Parent    : Gtk_Tree_Iter;
       Prj_Node  : Project_Access;
       File_Node : File_Access;
-      Bin_Mode  : Boolean := False);
+      Bin_Mode  : Boolean := False;
+      Icons     : Code_Analysis_Module.Code_Analysis_Icons);
    --  Fill the Gtk_Tree_Store with the given File node and recurse on its
    --  children
    --  If Bin_Mode is True, then the coverage messages will only be between
@@ -87,7 +91,8 @@ package Code_Analysis_Tree_Model is
       Iter      : in out Gtk_Tree_Iter;
       Prj_Node  : Project_Access;
       File_Node : File_Access;
-      Bin_Mode  : Boolean := False);
+      Bin_Mode  : Boolean := False;
+      Icons     : Code_Analysis_Module.Code_Analysis_Icons);
    --  Fill the Gtk_Tree_Store with the given File node and stop
    --  If Bin_Mode is True, then the coverage messages will only be between
    --  (covered | not covered)
@@ -97,7 +102,8 @@ package Code_Analysis_Tree_Model is
       Iter      : in out Gtk_Tree_Iter;
       Prj_Node  : Project_Access;
       File_Node : File_Access;
-      Bin_Mode  : Boolean := False);
+      Bin_Mode  : Boolean := False;
+      Icons     : Code_Analysis_Module.Code_Analysis_Icons);
    --  Fill the Gtk_Tree_Store with the children of the given File node
    --  If Bin_Mode is True, then the coverage messages will only be between
    --  (covered | not covered)
@@ -106,7 +112,8 @@ package Code_Analysis_Tree_Model is
      (Model    : in out Gtk_Tree_Store;
       Iter     : in out Gtk_Tree_Iter;
       Prj_Node : Project_Access;
-      Bin_Mode : Boolean := False);
+      Bin_Mode : Boolean := False;
+      Icons    : Code_Analysis_Module.Code_Analysis_Icons);
    --  Fill the Gtk_Tree_Store with the given Project node and recurse on its
    --  children
    --  If Bin_Mode is True, then the coverage messages will only be between
@@ -116,7 +123,8 @@ package Code_Analysis_Tree_Model is
      (Model    : in out Gtk_Tree_Store;
       Iter     : in out Gtk_Tree_Iter;
       Prj_Node : Project_Access;
-      Bin_Mode : Boolean := False);
+      Bin_Mode : Boolean := False;
+      Icons    : Code_Analysis_Module.Code_Analysis_Icons);
    --  Fill the Gtk_Tree_Store with the children of the given Project node
    --  If Bin_Mode is True, then the coverage messages will only be between
    --  (covered | not covered)
@@ -125,7 +133,8 @@ package Code_Analysis_Tree_Model is
      (Model    : in out Gtk_Tree_Store;
       Iter     : in out Gtk_Tree_Iter;
       Prj_Node : Project_Access;
-      Bin_Mode : Boolean := False);
+      Bin_Mode : Boolean := False;
+      Icons    : Code_Analysis_Module.Code_Analysis_Icons);
    --  Fill the Gtk_Tree_Store with the subprograms of the file children of the
    --  given Project node
    --  If Bin_Mode is True, then the coverage messages will only be between
@@ -135,7 +144,8 @@ package Code_Analysis_Tree_Model is
      (Model    : in out Gtk_Tree_Store;
       Iter     : in out Gtk_Tree_Iter;
       Projects : Code_Analysis_Tree;
-      Bin_Mode : Boolean := False);
+      Bin_Mode : Boolean := False;
+      Icons    : Code_Analysis_Module.Code_Analysis_Icons);
    --  Fill the Gtk_Tree_Store with every nodes
    --  If Bin_Mode is True, then the coverage messages will only be between
    --  (covered | not covered)
@@ -144,7 +154,8 @@ package Code_Analysis_Tree_Model is
      (Model    : in out Gtk_Tree_Store;
       Iter     : in out Gtk_Tree_Iter;
       Projects : Code_Analysis_Tree;
-      Bin_Mode : Boolean := False);
+      Bin_Mode : Boolean := False;
+      Icons    : Code_Analysis_Module.Code_Analysis_Icons);
    --  Fill the Gtk_Tree_Store with file rows only
    --  If Bin_Mode is True, then the coverage messages will only be between
    --  (covered | not covered)
@@ -153,7 +164,8 @@ package Code_Analysis_Tree_Model is
      (Model    : in out Gtk_Tree_Store;
       Iter     : in out Gtk_Tree_Iter;
       Projects : Code_Analysis_Tree;
-      Bin_Mode : Boolean := False);
+      Bin_Mode : Boolean := False;
+      Icons    : Code_Analysis_Module.Code_Analysis_Icons);
    --  Fill the Gtk_Tree_Store with subprogram rows only
    --  If Bin_Mode is True, then the coverage messages will only be between
    --  (covered | not covered)
