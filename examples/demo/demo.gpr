@@ -1,4 +1,4 @@
-project Sdc is
+project Demo is
 
    for Languages use ("Ada", "C");
    for Source_Dirs use ("common", "struct", "matrix_handling");
@@ -38,5 +38,4 @@ project Sdc is
       for Compiler_Command ("c") use "gcc";
    end Ide;
 
-end Sdc;
-
+end Demo;
