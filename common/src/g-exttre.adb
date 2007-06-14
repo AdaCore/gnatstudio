@@ -1165,6 +1165,7 @@ package body GNAT.Expect.TTY.Remote is
 
    begin
       if Descriptor.Session_Nb = 0 then
+         Status := 0;
          return;
       end if;
 
