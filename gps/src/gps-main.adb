@@ -1223,6 +1223,13 @@ procedure GPS.Main is
          Help_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
+      --  Initialize the aliases module before the src_editor, since the
+      --  latter registers special expansion functions
+
+      if Active (Aliases_Trace) then
+         Aliases_Module.Register_Module (GPS_Main.Kernel);
+      end if;
+
       --  Initialize Src_Editor_Module early, since many modules depend
       --  on the editor API, and also during finalization, modules may need
       --  to access marks that are handled by this module.
@@ -1279,10 +1286,6 @@ procedure GPS.Main is
 
       if Active (Aunit_Trace) then
          Aunit_Module.Register_Module (GPS_Main.Kernel);
-      end if;
-
-      if Active (Aliases_Trace) then
-         Aliases_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
       KeyManager_Module.Register_Key_Menu (GPS_Main.Kernel);

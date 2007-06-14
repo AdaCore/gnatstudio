@@ -702,9 +702,12 @@ package body Aliases_Module is
          P := Values;
          Count := Substrings'First + 1;
 
+         --  Preserve %%, since Find_And_Replace_Cursor does a second expansion
+         --  phase
+
          Substrings (Substrings'First) :=
            (Name  => new String'("" & Special),
-            Value => new String'("" & Special));
+            Value => new String'("" & Special & Special));
 
          while P /= null loop
             Substrings (Count) :=
@@ -2091,6 +2094,12 @@ package body Aliases_Module is
                end if;
             end;
 
+         when 'l' => return Expansion & "line";
+         when 'c' => return Expansion & "column";
+         when 'f' => return Expansion & "file";
+         when 'd' => return Expansion & "directory";
+         when 'p' => return Expansion & "project";
+         when 'P' => return Expansion & "Project";
          when others => return Invalid_Expansion;
       end case;
 
@@ -2253,6 +2262,7 @@ package body Aliases_Module is
         (Kernel, "Current Date", 'D', Special_Entities'Access);
       Register_Special_Alias_Entity
         (Kernel, "Current Hour", 'H', Special_Entities'Access);
+      --  Others are registered in src_editor_module
    end Register_Module;
 
 end Aliases_Module;
