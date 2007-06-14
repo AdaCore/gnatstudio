@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2006                      --
+--                      Copyright (C) 2002-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -691,6 +691,8 @@ package body Codefix.Merge_Utils is
       Len := 0;
 
       if It.Info_Index > This.Infos'Last then
+         Start := 0;
+         Info := Original_Unit;
          return;
       end if;
 
