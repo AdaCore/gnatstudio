@@ -938,7 +938,7 @@ package body Src_Editor_Box is
       Add (Frame, Event_Box);
       Add (Event_Box, Box.Function_Label);
 
-      --  Connect to source buffer signals.
+      --  Connect to source buffer signals
 
       Box.Cursor_Handler := Box_Callback.Connect
         (Box.Source_Buffer,

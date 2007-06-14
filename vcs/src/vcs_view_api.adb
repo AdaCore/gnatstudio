@@ -2537,6 +2537,7 @@ package body VCS_View_API is
                   Get_Status (Ref, Files);
                   String_List.Free (Files);
                end if;
+
             else
                Files := Get_Files_In_Project (The_Project, False);
                Status := Local_Get_Status (Ref, Files);

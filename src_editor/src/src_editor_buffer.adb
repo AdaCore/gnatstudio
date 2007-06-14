@@ -2672,11 +2672,11 @@ package body Src_Editor_Buffer is
 
       procedure Reset_Buffer (Buffer : access Source_Buffer_Record) is
       begin
-         --  Clear the buffer.
+         --  Clear the buffer
 
          Clear (Buffer);
 
-         --  Clear the side column information.
+         --  Clear the side column information
 
          Buffer.Original_Text_Inserted := False;
 
@@ -2714,14 +2714,14 @@ package body Src_Editor_Buffer is
          Buffer.Last_Removed_Line  := 0;
          Buffer.Last_Editable_Line := 1;
 
-         --  Unregister the blocks timeout.
+         --  Unregister the blocks timeout
 
          if Buffer.Blocks_Timeout_Registered then
             Timeout_Remove (Buffer.Blocks_Timeout);
             Buffer.Blocks_Timeout_Registered := False;
          end if;
 
-         --  Unregister the cursor timeout.
+         --  Unregister the cursor timeout
 
          if Buffer.Cursor_Timeout_Registered then
             Timeout_Remove (Buffer.Cursor_Timeout);
@@ -2732,7 +2732,7 @@ package body Src_Editor_Buffer is
          Buffer.Hidden_Lines := 0;
          Buffer.Block_Highlighting_Column := -1;
 
-         --  Request the new blocks.
+         --  Request the new blocks
 
          Register_Edit_Timeout (Buffer);
       end Reset_Buffer;

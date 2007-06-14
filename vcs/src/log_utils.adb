@@ -459,7 +459,8 @@ package body Log_Utils is
       if Log_File = VFS.No_File then
          declare
             Log_File     : constant Virtual_File :=
-              Get_Log_From_File (Kernel, File_Name, True, Suffix);
+                             Get_Log_From_File
+                               (Kernel, File_Name, True, Suffix);
             CL_File      : constant Virtual_File := Create (ChangeLog);
             Date_Tag     : constant String := Image (Clock, ISO_Date);
             Base_Name    : constant String := VFS.Base_Name (File_Name);

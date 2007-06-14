@@ -159,10 +159,10 @@ package body VCS.ClearCase is
       Head   : String_List.List;
       List   : String_List.List) return Boolean
    is
-      L_Temp       : List_Node := First (List);
       Length       : constant Natural := String_List.Length (List);
       Current_File : constant Virtual_File :=
         Create (Full_Filename => String_List.Head (Head));
+      L_Temp       : List_Node := First (List);
       A            : Line_Information_Array (1 .. Length);
 
    begin
@@ -208,11 +208,10 @@ package body VCS.ClearCase is
       Head   : String_List.List;
       List   : String_List.List) return Boolean
    is
-      L_Temp  : List_Node := First (List);
-
       Current_File : constant String := String_List.Head (Head);
       Text_File    : constant Virtual_File := Create
         (Full_Filename => Get_Tmp_Dir & Base_Name (Current_File));
+      L_Temp       : List_Node := First (List);
       File         : File_Type;
       Success      : Boolean;
 
@@ -240,7 +239,7 @@ package body VCS.ClearCase is
       Message : String;
       List    : String_List.List := Null_List)
    is
-      Node   : List_Node := First (List);
+      Node : List_Node := First (List);
    begin
       Insert (Kernel, -"ClearCase error: " & Message, Mode => Error);
 
@@ -394,10 +393,10 @@ package body VCS.ClearCase is
    ----------------
 
    procedure Get_Status
-     (Rep         : access ClearCase_Record;
-      Filenames   : String_List.List;
-      Clear_Logs  : Boolean := False;
-      Local       : Boolean := False)
+     (Rep        : access ClearCase_Record;
+      Filenames  : String_List.List;
+      Clear_Logs : Boolean := False;
+      Local      : Boolean := False)
    is
       pragma Unreferenced (Local);
 
@@ -621,8 +620,8 @@ package body VCS.ClearCase is
    is
       pragma Unreferenced (Rep);
 
-      Result     : File_Status_List.List;
-      List_Temp  : List_Node := First (Filenames);
+      Result    : File_Status_List.List;
+      List_Temp : List_Node := First (Filenames);
 
       function Status (File : in String) return File_Status_Record;
       --  Return the local file status for File.
@@ -1084,8 +1083,8 @@ package body VCS.ClearCase is
    is
       pragma Unreferenced (Kernel);
 
-      Node      : String_List.List_Node;
-      Pattern   : constant String := "Checked out ";
+      Node    : String_List.List_Node;
+      Pattern : constant String := "Checked out ";
    begin
       Node := First (List);
 
@@ -1120,8 +1119,8 @@ package body VCS.ClearCase is
    is
       pragma Unreferenced (Kernel);
 
-      Node      : String_List.List_Node;
-      Pattern   : constant String := "Removed ";
+      Node    : String_List.List_Node;
+      Pattern : constant String := "Removed ";
    begin
       Node := First (List);
 
@@ -1837,37 +1836,38 @@ package body VCS.ClearCase is
 
       --  ??? Need to adapt this to the ClearCase terminology
       Actions :=
-        (None               => null,
-         Status_Files       => new String'(-"Query status"),
-         Status_Dir         => null,
+        (None                 => null,
+         Status_Files         => new String'(-"Query status"),
+         Status_Dir           => null,
          Status_Dir_Recursive => null,
-         Local_Status_Files => null,
-         Local_Status_Dir   => null,
-         Create_Tag         => null,
-         Create_Branch      => null,
-         Switch             => null,
-         Open               => new String'(-"Start editing"),
-         Update             => new String'(-"Update"),
-         Merge              => null,
-         Resolved           => null,
-         Revision           => null,
-         Commit             => new String'(-"Commit"),
-         History_Text       => new String'(-"View revision history"),
-         History            => null,
-         History_Revision   => null,
-         Annotate           => new String'(-"Annotate"),
-         Diff_Head          => new String'(-"Diff against head rev."),
-         Diff_Patch         => null,
-         Diff_Working       => null,
-         Diff_Base_Head     => null,
-         Diff               => new String'(-"Diff against specific rev."),
-         Diff2              => new String'(-"Diff between two revisions"),
-         Diff_Tag           => null,
-         Add                => new String'(-"Add to repository"),
-         Add_No_Commit      => null,
-         Remove             => new String'(-"Remove from repository"),
-         Remove_No_Commit   => null,
-         Revert             => new String'(-"Revert to repository revision"));
+         Local_Status_Files   => null,
+         Local_Status_Dir     => null,
+         Create_Tag           => null,
+         Create_Branch        => null,
+         Switch               => null,
+         Open                 => new String'(-"Start editing"),
+         Update               => new String'(-"Update"),
+         Merge                => null,
+         Resolved             => null,
+         Revision             => null,
+         Commit               => new String'(-"Commit"),
+         History_Text         => new String'(-"View revision history"),
+         History              => null,
+         History_Revision     => null,
+         Annotate             => new String'(-"Annotate"),
+         Diff_Head            => new String'(-"Diff against head rev."),
+         Diff_Patch           => null,
+         Diff_Working         => null,
+         Diff_Base_Head       => null,
+         Diff                 => new String'(-"Diff against specific rev."),
+         Diff2                => new String'(-"Diff between two revisions"),
+         Diff_Tag             => null,
+         Add                  => new String'(-"Add to repository"),
+         Add_No_Commit        => null,
+         Remove               => new String'(-"Remove from repository"),
+         Remove_No_Commit     => null,
+         Revert               =>
+           new String'(-"Revert to repository revision"));
    end Register_Module;
 
    ----------------------------
