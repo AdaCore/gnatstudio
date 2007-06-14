@@ -750,6 +750,7 @@ package body Aliases_Module is
          Result : Ada.Strings.Unbounded.Unbounded_String;
          First  : Natural := Str'First;
          S      : Natural := Str'First;
+         Found  : Boolean;
 
       begin
          --  Prevent recursion in alias expansion
@@ -778,6 +779,7 @@ package body Aliases_Module is
 
                else
                   Tmp := Aliases_Module_Id.Module_Funcs (Str (S + 1));
+                  Found := False;
 
                   while Tmp /= null loop
                      declare
@@ -789,12 +791,17 @@ package body Aliases_Module is
                         if Replace /= Invalid_Expansion then
                            Result := Ada.Strings.Unbounded.To_Unbounded_String
                              (Replace);
+                           Found := True;
                            exit;
                         end if;
                      end;
 
                      Tmp := Tmp.Next;
                   end loop;
+
+                  if not Found then
+                     Result := Result & Special & Str (S + 1);
+                  end if;
                end if;
 
                S := S + 2;
