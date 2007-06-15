@@ -155,6 +155,9 @@ package body Src_Editor_View is
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean;
 
+   function Line_Highlight_Redraw (User : Source_View) return Boolean;
+   --  Redraw the source view after a change in highlights.
+
    procedure Map_Cb (Widget : access Gtk_Widget_Record'Class);
    --  This procedure is invoked when the Source_View widget is mapped.
    --  It performs various operations that can not be done before the widget
@@ -436,6 +439,10 @@ package body Src_Editor_View is
          Idle_Remove (View.Idle_Redraw_Id);
       end if;
 
+      if View.Redraw_Registered then
+         Idle_Remove (View.Redraw_Idle_Handler);
+      end if;
+
       --  Mark the idle loops as registered, so that they can no longer be
       --  registered once the view has been destroyed.
 
@@ -538,6 +545,28 @@ package body Src_Editor_View is
       Register_Idle_Column_Redraw (User);
    end Invalidate_Window;
 
+   ---------------------------
+   -- Line_Highlight_Redraw --
+   ---------------------------
+
+   function Line_Highlight_Redraw (User : Source_View) return Boolean is
+   begin
+      User.Redraw_Registered := False;
+
+      if User.Speed_Column_Buffer /= null then
+         Gdk.Pixmap.Unref (User.Speed_Column_Buffer);
+         User.Speed_Column_Buffer := null;
+      end if;
+
+      Invalidate_Window (User);
+
+      return False;
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return False;
+   end Line_Highlight_Redraw;
+
    -----------------------------------
    -- Line_Highlight_Change_Handler --
    -----------------------------------
@@ -549,12 +578,13 @@ package body Src_Editor_View is
    is
       pragma Unreferenced (Params, Buffer);
    begin
-      if User.Speed_Column_Buffer /= null then
-         Gdk.Pixmap.Unref (User.Speed_Column_Buffer);
-         User.Speed_Column_Buffer := null;
+      if not User.Redraw_Registered
+        and then Realized_Is_Set (User)
+      then
+         User.Redraw_Idle_Handler :=
+           Source_View_Idle.Add (Line_Highlight_Redraw'Access, User);
+         User.Redraw_Registered := True;
       end if;
-
-      Invalidate_Window (User);
 
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -918,13 +948,21 @@ package body Src_Editor_View is
             Height         : Gint;
             X              : Gint;
 
-            First          : constant Gint
-              := Gint (Get_Buffer_Line (Buffer, B.First_Line) - 1);
-            Last           : Gint
-              := Gint (Get_Buffer_Line (Buffer, B.Last_Line) - 1);
-            Offset         : Integer;
+            Buffer_First   : constant Buffer_Line_Type
+              := Get_Buffer_Line (Buffer, B.First_Line);
+            Buffer_Last    : constant Buffer_Line_Type
+              := Get_Buffer_Line (Buffer, B.Last_Line);
 
+            First          : constant Gint := Gint (Buffer_First - 1);
+            Last           : Gint := Gint (Buffer_Last - 1);
+            Offset         : Integer;
          begin
+            if Buffer_First > Bottom_Line
+              or else Buffer_Last < Top_Line
+            then
+               return;
+            end if;
+
             Calculate_Screen_Offset (Buffer, B);
             Offset := B.Stored_Offset;
 
@@ -979,7 +1017,6 @@ package body Src_Editor_View is
                  (Window, View.Current_Block_GC,
                   X, Block_Begin_Y, X + Bracket_Length, Block_Begin_Y);
             end if;
-
          end Draw_Block;
 
       begin
@@ -1032,6 +1069,16 @@ package body Src_Editor_View is
 
          Get_Line_Yrange (View, Cursor_Iter, Line_Y, Line_Height);
 
+         --  Highlight the current block
+
+         if View.Highlight_Blocks then
+            View.Current_Block := Get_Block
+              (Buffer,
+               Buffer_Line_Type (Get_Line (Cursor_Iter)) + 1,
+               False);
+            Draw_Block (View.Current_Block);
+         end if;
+
          --  Highlight the line that contains the cursor
 
          if View.Highlight_Current then
@@ -1041,16 +1088,6 @@ package body Src_Editor_View is
             Draw_Rectangle
               (Window, View.Current_Line_GC, True, Margin, Buffer_Line_Y,
                Rect.Width, Line_Height);
-         end if;
-
-         --  Highlight the current block
-
-         if View.Highlight_Blocks then
-            View.Current_Block := Get_Block
-              (Buffer,
-               Buffer_Line_Type (Get_Line (Cursor_Iter)) + 1,
-               False);
-            Draw_Block (View.Current_Block);
          end if;
 
          --  Redraw the line showing the nth column if needed
