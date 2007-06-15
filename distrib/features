@@ -15,7 +15,7 @@ of the feature.
 New features in GPS 4.2.0
 -------------------------
 
-NF-42-G526-011 Performance improvements with highlighted lines (2007-06-15)
+NF-42-G526-001 Performance improvements with highlighted lines (2007-06-15)
 
   The speed of operations involving the creation or the removal of line
   highlighting (such as the visual file differences) has been improved.
