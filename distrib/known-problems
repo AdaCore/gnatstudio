@@ -33,6 +33,17 @@ Known Problems fixed in GPS 4.1.2
               Project View, half the clicks are ignored.
   Workaround: click twice to change the expansion of the node
 
+- G507-019 Some operations not working with "ClearCase Native" VCS.
+  Problem:    When working on a project with "ClearCase Native" selected as
+              Version Control system, the "Query status" and "Annotate" 
+              operations do not work.
+  Workaround: Edit the "clearcase.xml" file in the directory share/gps/plug-ins
+              from your GPS installation, look for the lines containing
+              the "cleartool describe" and "cleartool annotate" commands, and
+              replace the quoted blocks after "-fmt" with
+                  "%%En\\n%%Xn\\n%%f\\n%%m %%Rf\\n"
+              and "%%Sd\\040%%-16.16u\\040%%-40.39Vn:"
+
 - G426-018 Cannot open firefox to display documentation under unix
   Problem:    Under unix environments where firefox is the default browser,
               if it is not already launched at the time you want to display
