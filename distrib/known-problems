@@ -1,6 +1,6 @@
 Known Problems fixed in GPS 4.2.0
 
-- G526-011 Incorrect display of block highlighting
+- G526-001 Incorrect display of block highlighting
   Problem:    In some very long source files, the block highlighing line may
               be drawn incorrectly on very large areas containing no block
               information.
