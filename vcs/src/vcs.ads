@@ -508,7 +508,7 @@ private
    type VCS_Record is abstract tagged limited record
       Kernel              : GPS.Kernel.Kernel_Handle;
       Absolute_Names      : Boolean    := False;
-      Query_Status_By_Dir : Boolean    := True;
+      Query_Status_By_Dir : Boolean    := False;
       Atomic_Commands     : Boolean    := False;
       Commit_Directory    : Boolean    := False;
       Path_Style          : OS_Utils.Path_Style := System_Default;
