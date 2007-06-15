@@ -13,7 +13,7 @@
 
    <action name="clearcase_describe" show-command="true" output="none" category="">
       <shell output="">echo "Describing $2-"</shell>
-      <external>cleartool describe -fmt "%En\\n%Xn\\n%f\\n%m %Rf\\n" "$2-"</external>
+      <external>cleartool describe -fmt "%%En\\n%%Xn\\n%%f\\n%%m %%Rf\\n" "$2-"</external>
       <shell>VCS.status_parse "ClearCase Native" "%1" $1 FALSE</shell>
    </action>
 
@@ -21,7 +21,7 @@
 
    <action name="clearcase_annotate" show-command="true" output="none" category="">
       <shell output="">echo "Querying annotations for $1"</shell>
-      <external>cleartool annotate -nheader -force -fmt "%Sd\\040%-16.16u\\040%-40.39Vn:" -out - "$1"</external>
+      <external>cleartool annotate -nheader -force -fmt "%%Sd\\040%%-16.16u\\040%%-40.39Vn:" -out - "$1"</external>
       <shell>VCS.annotations_parse "ClearCase Native" "$1" "%1"</shell>
    </action>
 
