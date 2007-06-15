@@ -16,6 +16,17 @@ Known Problems fixed in GPS 4.2.0
               full path names are also not displayed correctly
   Workaround: this warning can be safely ignored
 
+- G507-019 Some operations not working with "ClearCase Native" VCS.
+  Problem:    When working on a project with "ClearCase Native" selected as
+              Version Control system, the "Query status" and "Annotate"
+              operations do not work.
+  Workaround: Edit the "clearcase.xml" file in the directory share/gps/plug-ins
+              from your GPS installation, look for the lines containing
+              the "cleartool describe" and "cleartool annotate" commands, and
+              replace the quoted blocks after "-fmt" with
+                  "%%En\\n%%Xn\\n%%f\\n%%m %%Rf\\n"
+              and "%%Sd\\040%%-16.16u\\040%%-40.39Vn:"
+
 - G502-009 <on-failure> not executed whith empty <external> command
   Problem:    If you create an XML file with an action that executes an
               empty <external> command, an internal error is reported, but
