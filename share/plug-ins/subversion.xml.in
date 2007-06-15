@@ -374,6 +374,7 @@
 
    <vcs name="Subversion"
         path_style="@PATH_STYLE@"
+        group_queries_by_directory="TRUE"
         absolute_names="TRUE" atomic_commands="TRUE"
         commit_directory="TRUE">
       <status_files       action="generic_svn_status"           label="Query status"/>
