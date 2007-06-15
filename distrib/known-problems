@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.2.0
 
+- G526-011 Incorrect display of block highlighting
+  Problem:    In some very long source files, the block highlighing line may
+              be drawn incorrectly on very large areas containing no block
+              information.
+  Workaround: The block highlighting line can be safely ignored.
+
 - G517-001 Makefile.py plug-in: various fixes
   Problem:    Various minor issues were fixed in the Makefile plugin.
               When the project loaded from the command line defines the
