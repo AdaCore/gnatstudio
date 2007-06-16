@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.2.0
 
+- G611-028 Files status overriden
+  Problem:    When opening a file the status in the VCS Explorer and
+              the VCS Activities is set to locally modified. This is
+              because a bad interaction between the explorers and the
+              cached statuses.
+  Workaround: Use the Query Status action to recover the proper status
+
 - G526-001 Incorrect display of block highlighting
   Problem:    In some very long source files, the block highlighing line may
               be drawn incorrectly on very large areas containing no block
@@ -14,7 +21,7 @@ Known Problems fixed in GPS 4.2.0
               defines a new Makefile to use, this new value is not taken into
               account and the old Makefile is still used. Entries containing
               full path names are also not displayed correctly
-  Workaround: this warning can be safely ignored
+  Workaround: This warning can be safely ignored
 
 - G502-009 <on-failure> not executed whith empty <external> command
   Problem:    If you create an XML file with an action that executes an

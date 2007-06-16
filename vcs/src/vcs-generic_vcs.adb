@@ -46,6 +46,7 @@ with VCS_Activities;            use VCS_Activities;
 with VCS_View.Activities;       use VCS_View.Activities;
 with VCS_View.Explorer;         use VCS_View.Explorer;
 with VCS_Module;                use VCS_Module;
+with VCS_Status;                use VCS_Status;
 with VFS;                       use VFS;
 with String_Utils;
 
@@ -1588,6 +1589,17 @@ package body VCS.Generic_VCS is
                      St.File := Create (Command.Dir.all & Filename);
                   end if;
                end if;
+
+               --  Initialize with the current status now
+
+               declare
+                  LR : constant Line_Record :=
+                         Get_Cache (Get_Status_Cache, St.File);
+               begin
+                  if LR /= No_Data then
+                     St := Copy_File_Status (LR.Status);
+                  end if;
+               end;
 
             elsif not Is_Empty (Command.Rep.Current_Query_Files) then
                St.File := GPS.Kernel.Create

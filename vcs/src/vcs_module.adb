@@ -1172,7 +1172,10 @@ package body VCS_Module is
 
       Status := Get_Cache (Get_Status_Cache, D.File).Status;
 
-      if Status.File = VFS.No_File then
+      if Status.File = VFS.No_File
+        or else Status.Status.Stock_Id.all = "gps-vcs-unknown"
+      then
+         --  If file not found in the cache or the status is not yet known
          Append (Files, Full_Name (D.File).all);
          Get_Status (Ref, Files, False, Local => True);
          Free (Files);
@@ -1201,6 +1204,13 @@ package body VCS_Module is
       Status   : Line_Record;
       F_Status : File_Status_List.List;
    begin
+      if D.Status = Unmodified then
+         --  Nothing else to do, this is a status changed hook run when the
+         --  file is first loaded. There is no local modification done to this
+         --  file.
+         return;
+      end if;
+
       if Project /= No_Project then
          Ref := Get_Current_Ref (Project);
       end if;
