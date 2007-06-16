@@ -1518,26 +1518,6 @@ package body VCS.Generic_VCS is
       Matches     : Match_Array (0 .. Command.Parser.Matches_Num);
       Num_Matches : Natural := 0;
 
-      function Get_Filename return String;
-      pragma Inline (Get_Filename);
-      --  Return the matched filename
-
-      ------------------
-      -- Get_Filename --
-      ------------------
-
-      function Get_Filename return String is
-         Filename : constant String :=
-                      S (Matches (Command.Parser.File_Index).First
-                         .. Matches (Command.Parser.File_Index).Last);
-      begin
-         if Command.Rep.Path_Style = Cygwin then
-            return Format_Pathname (Filename, OS_Utils.DOS);
-         else
-            return Filename;
-         end if;
-      end Get_Filename;
-
    begin
       Command.Prev_Start := Command.Start;
 
@@ -1572,7 +1552,9 @@ package body VCS.Generic_VCS is
          end if;
 
          declare
-            Filename : constant String := Get_Filename;
+            Filename : constant String :=
+                         S (Matches (Command.Parser.File_Index).First
+                            .. Matches (Command.Parser.File_Index).Last);
             St       : File_Status_Record;
          begin
             if Command.Parser.File_Index /= 0 then

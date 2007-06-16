@@ -65,6 +65,38 @@ package body VFS is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Contents_Record, Contents_Access);
 
+   Cygdrive : constant String := "/cygdrive/";
+   --  This package supports the standard Cygwin naming convention. A filename
+   --  starting with /cygdrive/ will be properly converted to the DOS
+   --  equivalent.
+
+   function Native_Filename (Filename : String) return String;
+   pragma Inline (Native_Filename);
+   --  Routine that will translate a "foreign" filename convention to the
+   --  proper native one. This is currently used only for the standard Cygwin
+   --  convention.
+
+   ---------------------
+   -- Native_Filename --
+   ---------------------
+
+   function Native_Filename (Filename : String) return String is
+   begin
+      if Filename'Length > Cygdrive'Length + 2
+        and then
+          Filename (Filename'First .. Filename'First + Cygdrive'Length - 1)
+          = Cygdrive
+        and then
+          (Filename (Filename'First + Cygdrive'Length) in 'a' .. 'z'
+           or else Filename (Filename'First + Cygdrive'Length) in 'A' .. 'Z')
+      then
+         return OS_Utils.Format_Pathname (Filename, Style => DOS);
+
+      else
+         return Filename;
+      end if;
+   end Native_Filename;
+
    --------------
    -- Is_Local --
    --------------
@@ -157,7 +189,7 @@ package body VFS is
            (Server          => new String'(Host),
             Ref_Count       => 1,
             Full_Name       => new String'
-              (Full_Filename (Full_Filename'First .. Last)),
+              (Native_Filename (Full_Filename (Full_Filename'First .. Last))),
             Normalized_Full => null,
             Dir_Name        => null,
             Kind            => Unknown));
