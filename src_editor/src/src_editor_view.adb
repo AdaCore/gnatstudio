@@ -1069,16 +1069,6 @@ package body Src_Editor_View is
 
          Get_Line_Yrange (View, Cursor_Iter, Line_Y, Line_Height);
 
-         --  Highlight the current block
-
-         if View.Highlight_Blocks then
-            View.Current_Block := Get_Block
-              (Buffer,
-               Buffer_Line_Type (Get_Line (Cursor_Iter)) + 1,
-               False);
-            Draw_Block (View.Current_Block);
-         end if;
-
          --  Highlight the line that contains the cursor
 
          if View.Highlight_Current then
@@ -1088,6 +1078,16 @@ package body Src_Editor_View is
             Draw_Rectangle
               (Window, View.Current_Line_GC, True, Margin, Buffer_Line_Y,
                Rect.Width, Line_Height);
+         end if;
+
+         --  Highlight the current block
+
+         if View.Highlight_Blocks then
+            View.Current_Block := Get_Block
+              (Buffer,
+               Buffer_Line_Type (Get_Line (Cursor_Iter)) + 1,
+               False);
+            Draw_Block (View.Current_Block);
          end if;
 
          --  Redraw the line showing the nth column if needed
