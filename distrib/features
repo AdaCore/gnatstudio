@@ -15,6 +15,13 @@ of the feature.
 New features in GPS 4.2.0
 -------------------------
 
+NF-42-G611-029 Specifying "recursive" directory status for VCS (2006-06-18)
+
+  It is now possible, in custom XML files, to specify an action to query
+  the status of a directory and subdirectories recursively, which GPS calls
+  instead of launching separate queries for each directory. The provided
+  Subversion plug-in benefits from this improvement.
+
 NF-42-G608-016 Avoiding hidden directories in VCS operations (2007-06-11)
 
   The VCS operations "Query status for directory recursively" and "Update
