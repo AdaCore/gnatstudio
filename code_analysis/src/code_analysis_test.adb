@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006-2007                    --
+--                      Copyright (C) 2006-2007                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
@@ -24,7 +24,9 @@ with Ada.Calendar;             use Ada.Calendar;
 
 with Code_Analysis;            use Code_Analysis;
 with Code_Analysis_Dump;       use Code_Analysis_Dump;
-with Code_Analysis_Tree_Model; use Code_Analysis_Tree_Model;
+--  with Code_Analysis_Tree_Model; use Code_Analysis_Tree_Model;
+--  ??? will be decommented when gui will be separated from module
+--  [G608-020]
 with Code_Coverage;            use Code_Coverage;
 
 with Projects;                 use Projects;
@@ -330,7 +332,9 @@ procedure Code_Analysis_Test is
       Tree_View     : Gtk_Tree_View;
       Tree_Store    : Gtk_Tree_Store;
       Types_Array   : GType_Array (1 .. Node_Col_Count + Cov_Col_Count);
-      Iter          : Gtk_Tree_Iter;
+      --  Iter          : Gtk_Tree_Iter;
+      --  ??? will be decommented when gui will be separated from module
+      --  [G608-020]
       Tree_Col      : Gtk_Tree_View_Column;
       Text_Render   : Gtk_Cell_Renderer_Text;
       Num_Col       : Gint;
@@ -379,8 +383,9 @@ procedure Code_Analysis_Test is
 
       Set_Title (Tree_Col, "Coverage");
       Pack_Start (Container, Tree_View);
-      Iter := Get_Iter_First (Gtk_Tree_Model (Tree_Store));
-      Fill_Iter (Tree_Store, Iter, Projects);
+      --  Iter := Get_Iter_First (Gtk_Tree_Model (Tree_Store));
+      --  Fill_Iter (Tree_Store, Iter, Projects, False, );
+      --  ??? Could be fixed when gui will be separated from module [G608-020]
       Show_All (Window);
       Main;
       Free_Code_Analysis (Projects);
