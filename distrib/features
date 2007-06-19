@@ -79,7 +79,8 @@ NF-42-G222-021 Reordering notebook tabs (2007-06-19)
 
   Support has been added for reordering notebook tabs (or switching to
   another tab) through keyboard shortcuts. Key bindings are edited as usual
-  through /Edit/Key Shortcuts menu.
+  through /Edit/Key Shortcuts menu. Reordering can also be done through the
+  mouse, through drag-and-drop
 
 NF-42-G213-014 Add support for Project Explorer filters (2007-02-20)
 
