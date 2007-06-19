@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.2 NEW FEATURES LIST Current as of Jun 18, 2007
+GPS 4.2 NEW FEATURES LIST Current as of Jun 19, 2007
 ====================================================
 
 Copyright (c) 2006-2007, AdaCore
@@ -15,7 +15,7 @@ of the feature.
 New features in GPS 4.2.0
 -------------------------
 
-NF-42-G611-029 Specifying "recursive" directory status for VCS (2006-06-18)
+NF-42-G611-029 Specifying "recursive" directory status for VCS (2007-06-18)
 
   It is now possible, in custom XML files, to specify an action to query
   the status of a directory and subdirectories recursively, which GPS calls
@@ -74,6 +74,12 @@ NF-42-G223-014 Display full names in entity browser (2007-03-09)
 
   Entities in the entity browsers are now identified with their full names
   XXX.YYY.ZZZ instead of their simple names ZZZ.
+
+NF-42-G222-021 Reordering notebook tabs (2007-06-19)
+
+  Support has been added for reordering notebook tabs (or switching to
+  another tab) through keyboard shortcuts. Key bindings are edited as usual
+  through /Edit/Key Shortcuts menu.
 
 NF-42-G213-014 Add support for Project Explorer filters (2007-02-20)
 

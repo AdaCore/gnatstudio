@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                              AdaCore                              --
+--                     Copyright (C) 2001-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -40,6 +39,7 @@ with Gtk.Label;                 use Gtk.Label;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Notebook;              use Gtk.Notebook;
 with Gtk.Object;                use Gtk.Object;
 with Gtk.Progress_Bar;          use Gtk.Progress_Bar;
 with Gtk.Rc;                    use Gtk.Rc;
@@ -163,7 +163,9 @@ package body GPS.Main_Window is
    --  Check whether Event should activate the selection dialog for MDI
    --  children.
 
-   type Window_Mode is (Split_H, Split_V, Clone);
+   type Window_Mode is
+     (Split_H, Split_V, Clone, Reorder_Tab_Left, Reorder_Tab_Right,
+      Move_To_Next_Tab, Move_To_Previous_Tab);
    type MDI_Window_Actions_Command is new Interactive_Command with record
       Kernel : Kernel_Handle;
       Mode   : Window_Mode;
@@ -223,6 +225,10 @@ package body GPS.Main_Window is
       return Command_Return_Type
    is
       pragma Unreferenced (Context);
+      Child : MDI_Child;
+      Iter  : Child_Iterator;
+      Note  : Gtk_Notebook;
+      Pos   : Gint;
    begin
       case Command.Mode is
          when Split_H =>
@@ -242,6 +248,40 @@ package body GPS.Main_Window is
                   N  := Dnd_Data (Focus, Copy => True);
                end if;
             end;
+         when Reorder_Tab_Left =>
+            Iter := First_Child (Get_MDI (Command.Kernel));
+            Child := Get (Iter);
+            if Child /= null then
+               Note := Get_Notebook (Iter);
+               Reorder_Child (Note, Child, Page_Num (Note, Child) - 1);
+            end if;
+
+         when Reorder_Tab_Right =>
+            Iter := First_Child (Get_MDI (Command.Kernel));
+            Child := Get (Iter);
+            if Child /= null then
+               Note := Get_Notebook (Iter);
+               Pos := Page_Num (Note, Child) + 1;
+               if Pos >= Get_N_Pages (Note) then
+                  Pos := 0;
+               end if;
+               Reorder_Child (Note, Child, Pos);
+            end if;
+
+         when Move_To_Next_Tab =>
+            Iter := First_Child (Get_MDI (Command.Kernel));
+            Child := Get (Iter);
+            if Child /= null then
+               Next_Page (Get_Notebook (Iter));
+            end if;
+
+         when Move_To_Previous_Tab =>
+            Iter := First_Child (Get_MDI (Command.Kernel));
+            Child := Get (Iter);
+            if Child /= null then
+               Prev_Page (Get_Notebook (Iter));
+            end if;
+
       end case;
 
       return Success;
@@ -705,7 +745,7 @@ package body GPS.Main_Window is
          Command     => Command,
          Category    => "MDI",
          Description =>
-           -("Select the next splitted window in the central area of GPS."));
+         -("Select the next splitted window in the central area of GPS."));
 
       Command2        := new MDI_Window_Actions_Command;
       Command2.Kernel := Main_Window.Kernel;
@@ -738,6 +778,66 @@ package body GPS.Main_Window is
          Description =>
          -("Create a duplicate of the current window if possible. Not all"
            & " windows support this operation."));
+
+      Command2        := new MDI_Window_Actions_Command;
+      Command2.Kernel := Main_Window.Kernel;
+      Command2.Mode   := Reorder_Tab_Left;
+      Register_Action
+        (Main_Window.Kernel,
+         Name        => "Move tab to left",
+         Command     => Command2,
+         Category    => "MDI",
+         Description =>
+         -("Move the current notebook tab one position to the left, within"
+           & " the notebook (cyclic)"));
+      Bind_Default_Key
+        (Kernel      => Main_Window.Kernel,
+         Action      => "Move tab to left",
+         Default_Key => "shift-control-alt-Left");
+
+      Command2        := new MDI_Window_Actions_Command;
+      Command2.Kernel := Main_Window.Kernel;
+      Command2.Mode   := Reorder_Tab_Right;
+      Register_Action
+        (Main_Window.Kernel,
+         Name        => "Move tab to right",
+         Command     => Command2,
+         Category    => "MDI",
+         Description =>
+         -("Move the current notebook tab one position to the right, within"
+           & " the notebook (cyclic)"));
+      Bind_Default_Key
+        (Kernel      => Main_Window.Kernel,
+         Action      => "Move tab to right",
+         Default_Key => "shift-control-alt-Right");
+
+      Command2        := new MDI_Window_Actions_Command;
+      Command2.Kernel := Main_Window.Kernel;
+      Command2.Mode   := Move_To_Next_Tab;
+      Register_Action
+        (Main_Window.Kernel,
+         Name        => "Move to next tab",
+         Command     => Command2,
+         Category    => "MDI",
+         Description => -("Move to the next tab in the current notebook"));
+      Bind_Default_Key
+        (Kernel      => Main_Window.Kernel,
+         Action      => "Move to next tab",
+         Default_Key => "control-alt-Right");
+
+      Command2        := new MDI_Window_Actions_Command;
+      Command2.Kernel := Main_Window.Kernel;
+      Command2.Mode   := Move_To_Previous_Tab;
+      Register_Action
+        (Main_Window.Kernel,
+         Name        => "Move to previous tab",
+         Command     => Command2,
+         Category    => "MDI",
+         Description => -("Move to the previous tab in the current notebook"));
+      Bind_Default_Key
+        (Kernel      => Main_Window.Kernel,
+         Action      => "Move to previous tab",
+         Default_Key => "control-alt-Left");
 
       Register_Command
         (Main_Window.Kernel, "dialog",
