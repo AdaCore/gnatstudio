@@ -1492,7 +1492,11 @@ with the left mouse button in its title bar, and keep the button
 pressed while moving the mouse.
 
 If the window is inside a notebook, you can also choose to select the
-notebook tab to start dragging the window around.
+notebook tab to start dragging the window around. In such a case, the windows
+within the notebook can also be reordered: select the tab, then start moving
+left or right to the new position the window should have. Note that your mouse
+must remain within the tab area, since otherwise GPS will enter in the mode
+where the window can be put in other notebooks.
 
 While you keep the mouse button pressed, and move the mouse around, the
 selected drop area is highlighted with a dashed border. This shows precisely
