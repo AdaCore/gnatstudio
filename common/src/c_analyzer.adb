@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                 Copyright (C) 2001-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1121,14 +1120,16 @@ package body C_Analyzer is
                end if;
 
             when Tok_Case | Tok_Default =>
-               if Top_Token.First then
-                  Top_Token.First := False;
-               else
-                  Indent := Indent - Indent_Level;
-               end if;
+               if Prev_Token /= Tok_Left_Paren then
+                  if Top_Token.First then
+                     Top_Token.First := False;
+                  else
+                     Indent := Indent - Indent_Level;
+                  end if;
 
-               Do_Indent (Index, Indent);
-               Indent := Indent + Indent_Level;
+                  Do_Indent (Index, Indent);
+                  Indent := Indent + Indent_Level;
+               end if;
 
             when Tok_Struct | Tok_Class | Tok_Enum | Tok_Union =>
                if Paren_Level = 0 then
