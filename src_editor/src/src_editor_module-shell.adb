@@ -2058,9 +2058,21 @@ package body Src_Editor_Module.Shell is
       elsif Command = "get_chars" then
          Name_Parameters (Data, (1 => From_Cst'Access, 2 => To_Cst'Access));
          Get_Buffer (Buffer, Data, 1);
-         Get_Locations (Iter, Iter2, Buffer, Data, 2, 3);
          if Buffer /= null then
-            Set_Return_Value (Data, Get_Text (Buffer, Iter, Iter2));
+            Get_Locations (Iter, Iter2, Buffer, Data, 2, 3);
+
+            declare
+               Begin_Line : Editable_Line_Type;
+               Begin_Col  : Character_Offset_Type;
+               End_Line   : Editable_Line_Type;
+               End_Col    : Character_Offset_Type;
+            begin
+               Get_Iter_Position (Buffer, Iter, Begin_Line, Begin_Col);
+               Get_Iter_Position (Buffer, Iter2, End_Line, End_Col);
+               Set_Return_Value
+                 (Data,
+                  Get_Text (Buffer, Begin_Line, Begin_Col, End_Line, End_Col));
+            end;
          end if;
 
       elsif Command = "insert" then
