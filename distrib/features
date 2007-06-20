@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.2 NEW FEATURES LIST Current as of Jun 19, 2007
+GPS 4.2 NEW FEATURES LIST Current as of Jun 20, 2007
 ====================================================
 
 Copyright (c) 2006-2007, AdaCore
@@ -32,7 +32,7 @@ NF-42-G608-016 Avoiding hidden directories in VCS operations (2007-06-11)
 NF-42-G608-003 Grouping VCS queries for better performance (2007-06-11)
 
   It is now possible to configure VCS so that, when querying status for all
-  files, the VCS performs "query status for directories" on each source
+  files, the VCS performs "Query status for directories" on each source
   directory instead of file-by-file queries. This is activated by default, and
   can be controlled on the VCS that are described through XML files.
 
