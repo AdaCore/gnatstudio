@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006-2007                    --
---                              AdaCore                              --
+--                  Copyright (C) 2006-2007, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -211,7 +210,7 @@ package body Code_Analysis_Tree_Model is
       Append (Model, Iter, Null_Iter);
       Self_Iter := Iter;
       Gtk.Tree_Store.Set
-        (Model, Iter, Pix_Col, C_Proxy (Icons.Project_Pixbuf));
+        (Model, Iter, Pix_Col, C_Proxy (Icons.Prj_Pixbuf));
       Gtk.Tree_Store.Set (Model, Iter, Name_Col,
            UTF8_String (String'(Project_Name (Prj_Node.Name))));
       Project_Set.Set (Model, Iter, Node_Col, Prj_Node.all'Access);
