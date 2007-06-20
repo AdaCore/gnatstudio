@@ -31,10 +31,10 @@ package Code_Analysis_Module is
    --  Register the module
 
    type Code_Analysis_Icons is record
-      Project_Pixbuf : Gdk.Pixbuf.Gdk_Pixbuf;
-      File_Pixbuf    : Gdk.Pixbuf.Gdk_Pixbuf;
-      Subp_Pixbuf    : Gdk.Pixbuf.Gdk_Pixbuf;
-      Warn_Pixbuf    : Gdk.Pixbuf.Gdk_Pixbuf;
+      Prj_Pixbuf  : Gdk.Pixbuf.Gdk_Pixbuf;
+      File_Pixbuf : Gdk.Pixbuf.Gdk_Pixbuf;
+      Subp_Pixbuf : Gdk.Pixbuf.Gdk_Pixbuf;
+      Warn_Pixbuf : Gdk.Pixbuf.Gdk_Pixbuf;
    end record;
 
 end Code_Analysis_Module;
