@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                              AdaCore                              --
+--                     Copyright (C) 2001-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -153,7 +152,7 @@ package body Aunit_Module is
          Priority                => Default_Priority);
 
       Register_Menu (Kernel, Edit & '_' & Unit_Testing,
-                     Ref_Item => -"Preferences");
+                     Ref_Item => -"Aliases");
       Register_Menu (Kernel, Edit & Unit_Testing,
                      -"New Test _Case...", "", On_New_Test_Case'Access);
 
@@ -166,7 +165,7 @@ package body Aunit_Module is
       Register_Menu (Kernel, Edit & Unit_Testing,
                      -"New Test _Harness...", "", On_New_Test_Harness'Access);
       Gtk_New (Menu_Item);
-      Register_Menu (Kernel, Edit, Menu_Item, Ref_Item => -"Preferences");
+      Register_Menu (Kernel, Edit, Menu_Item, Ref_Item => -"Aliases");
    end Register_Module;
 
 end Aunit_Module;
