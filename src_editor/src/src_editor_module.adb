@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2001-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -2866,18 +2865,16 @@ package body Src_Editor_Module is
         Register_Menu (Kernel, Edit, -"_Undo", Stock_Undo,
                        null, null,
                        GDK_LC_z, Control_Mask,
-                       Ref_Item  => -"Preferences",
+                       Ref_Item  => -"Paste Previous",
+                       Add_Before => False,
                        Sensitive => False);
       UR.Redo_Menu_Item :=
         Register_Menu (Kernel, Edit, -"_Redo", Stock_Redo,
                        null, null,
                        GDK_LC_r, Control_Mask,
-                       Ref_Item  => -"Preferences",
-                       Sensitive => False);
-
-      Gtk_New (Mitem);
-      Register_Menu
-        (Kernel, Edit, Mitem, Ref_Item => "Redo", Add_Before => False);
+                       Ref_Item   => -"Undo",
+                       Add_Before => False,
+                       Sensitive  => False);
 
       declare
          Space  : Gtk_Separator_Tool_Item;
@@ -2907,45 +2904,64 @@ package body Src_Editor_Module is
       --  ??? This should be bound to Ctrl-A, except this would interfer with
       --  Emacs keybindings for people who want to use them.
       Register_Menu (Kernel, Edit, -"_Select All", "",
-                     On_Select_All'Access, Ref_Item => -"Preferences",
+                     On_Select_All'Access, Ref_Item => -"Redo",
+                     Add_Before => False,
                      Filter => Src_Action_Context);
 
       Gtk_New (Mitem);
-      Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Preferences");
+      Register_Menu
+        (Kernel, Edit, Mitem, Ref_Item => "Redo", Add_Before => False);
+
       Register_Menu (Kernel, Edit, -"Insert _File...",  "",
-                     On_Insert_File'Access, Ref_Item => -"Preferences",
+                     On_Insert_File'Access, Ref_Item => -"Select All",
+                     Add_Before => False,
                      Filter => Src_Action_Context);
 
       Gtk_New (Mitem);
-      Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Preferences");
+      Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Select All",
+                     Add_Before => False);
 
       Register_Menu (Kernel, Edit, -"Comment _Lines", "",
                      On_Comment_Lines'Access, null,
-                     GDK_minus, Control_Mask, Ref_Item => -"Preferences",
-                     Filter => Src_Action_Context);
-      Register_Menu (Kernel, Edit, -"Uncomment L_ines", "",
-                     On_Uncomment_Lines'Access, null,
-                     GDK_underscore, Control_Mask, Ref_Item => -"Preferences",
-                     Filter => Src_Action_Context);
-      Register_Menu (Kernel, Edit, -"R_efill", "",
-                     On_Refill'Access, null,
-                     GDK_equal, Control_Mask, Ref_Item => -"Preferences",
+                     GDK_minus, Control_Mask, Ref_Item => -"Insert File...",
+                     Add_Before => False,
                      Filter => Src_Action_Context);
 
       Gtk_New (Mitem);
-      Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Preferences");
+      Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Insert File...",
+                    Add_Before => False);
+
+      Register_Menu (Kernel, Edit, -"Uncomment L_ines", "",
+                     On_Uncomment_Lines'Access, null,
+                     GDK_underscore, Control_Mask,
+                     Ref_Item   => -"Comment Lines",
+                     Add_Before => False,
+                     Filter     => Src_Action_Context);
+      Register_Menu (Kernel, Edit, -"R_efill", "",
+                     On_Refill'Access, null,
+                     GDK_equal, Control_Mask,
+                     Ref_Item   => "Expand Alias",
+                     Add_Before => False,
+                     Filter     => Src_Action_Context);
 
       Register_Menu (Kernel, Edit, -"_Fold all blocks", "",
                      On_Fold_Blocks'Access, null,
-                     0, 0, Ref_Item => -"Preferences",
-                     Filter => Src_Action_Context);
+                     0, 0, Ref_Item => -"Refill",
+                     Add_Before     => False,
+                     Filter         => Src_Action_Context);
+      Gtk_New (Mitem);
+      Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Refill",
+                     Add_Before => False);
+
       Register_Menu (Kernel, Edit, -"Unfold all _blocks", "",
                      On_Unfold_Blocks'Access, null,
-                     0, 0, Ref_Item => -"Preferences",
-                     Filter => Src_Action_Context);
+                     0, 0, Ref_Item => -"Fold all blocks",
+                     Add_Before     => False,
+                     Filter         => Src_Action_Context);
 
       Gtk_New (Mitem);
-      Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Preferences");
+      Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Unfold all blocks",
+                     Add_Before => False);
 
       Command := new Goto_Line_Command;
       Goto_Line_Command (Command.all).Kernel := Kernel_Handle (Kernel);

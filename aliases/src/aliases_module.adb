@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2006                       --
---                              AdaCore                              --
+--                      Copyright (C) 2003-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -2255,6 +2254,7 @@ package body Aliases_Module is
       Register_Menu
         (Kernel, Edit, -"_Aliases",
          Ref_Item   => -"Preferences",
+         Add_Before => True,
          Callback   => On_Edit_Aliases'Access);
 
       Parse_File
@@ -2270,7 +2270,8 @@ package body Aliases_Module is
          Description => -"Expand the alias found just before the cursor");
       Register_Menu
         (Kernel, Edit, -"Expand alias",
-         Ref_Item   => -"Refill",
+         Ref_Item   => -"Aliases",
+         Add_Before => True,
          Accel_Key  => GDK_LC_o,
          Accel_Mods => Control_Mask,
          Callback   => null,

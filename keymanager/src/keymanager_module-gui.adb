@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2006                       --
---                             AdaCore                               --
+--                     Copyright (C) 2003-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1017,7 +1016,8 @@ package body KeyManager_Module.GUI is
         (Kernel, '/' & (-"Edit"),
          -"_Key Shortcuts",
          Callback => On_Edit_Keys'Access,
-         Ref_Item => -"Preferences");
+         Ref_Item => -"Aliases",
+         Add_Before => False);
    end Register_Key_Menu;
 
 end KeyManager_Module.GUI;
