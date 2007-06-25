@@ -370,15 +370,10 @@ gendate:
 # uninstalled tclsh that is present in this directory.  The "make tclsh"
 # command is needed for the same reason (must make sure that it exists).
 
-dltest/pkg5${SHLIB_SUFFIX}: dltest/Makefile
+dltest/pkg5${SHLIB_SUFFIX}:
 	if test ! -f tclsh; then $(MAKE) tclsh; else true; fi
 	libdir=`cd $(TOP_DIR)/library && pwd`; cd dltest; \
 	PATH=..:${PATH} TCL_LIBRARY=$$libdir $(MAKE)
-
-dltest/Makefile: $(DLTEST_DIR)/configure $(DLTEST_DIR)/Makefile.in tclConfig.sh
-	if test ! -d dltest; then mkdir dltest; else true; fi
-	dldir=`cd $(DLTEST_DIR) && pwd`; cd dltest; \
-	if test -f configure; then ./configure; else $$dldir/configure; fi
 
 #install: install-binaries install-libraries install-man
 install: install-binaries
@@ -521,12 +516,6 @@ install-man:
 	    done;
 	$(UNIX_DIR)/mkLinks $(MAN3_INSTALL_DIR)
 
-Makefile: $(UNIX_DIR)/Makefile.in config.status
-	$(SHELL) config.status
-
-config.status: $(UNIX_DIR)/configure
-	./config.status --recheck
-
 mostlyclean: clean
 clean:
 	rm -f *.a *.o libtcl* core errs *~ \#* TAGS *.E a.out \
@@ -609,9 +598,7 @@ DISTROOT =	/tmp/dist
 DISTNAME =	tcl@TCL_VERSION@@TCL_PATCH_LEVEL@
 ZIPNAME =	tcl@TCL_MAJOR_VERSION@@TCL_MINOR_VERSION@@TCL_PATCH_LEVEL@.zip
 DISTDIR =	$(DISTROOT)/$(DISTNAME)
-$(UNIX_DIR)/configure: $(UNIX_DIR)/configure.in
-	autoconf $(UNIX_DIR)/configure.in > $(UNIX_DIR)/configure
-dist: $(UNIX_DIR)/configure
+dist:
 	rm -rf $(DISTDIR)
 	mkdir $(DISTDIR)
 	mkdir $(DISTDIR)/unix
