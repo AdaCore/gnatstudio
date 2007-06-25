@@ -103,8 +103,8 @@ def on_gps_started (hook_name):
      <filter id="Source editor" />
      <shell lang="python">vi.CmdLine.repeat_command()</shell>
   </action>
-  <menu action='vi_command_line' after="Find Or Replace...">
-    <title>Vi command line</title>
+  <menu action='vi_command_line' after="Refill">
+    <title>/Edit/Vi command line</title>
   </menu>
   <key action="vi_command_line">control-colon</key>
   <key action="vi_repeat_cmd">control-period</key>
