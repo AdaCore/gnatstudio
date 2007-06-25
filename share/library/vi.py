@@ -43,6 +43,9 @@ The supported commands are:
      You can set the option "ignorecase" below to be in case-insensitive
      mode by default.
 
+   - d
+     deletes the lines in the specied range
+
 Here are a few examples:
    %s/foo/bar
       Replaces all instances of "foo" by "bar" in the whole buffer
@@ -196,57 +199,70 @@ class CmdLine (CommandWindow):
         return (c, l, e)
 
    @staticmethod
+   def do_replace (arg, loc, maxloc):
+     buffer = loc.buffer()
+     params = arg[1:].split (arg [0])
+     if len (params) == 3:
+        pattern,replace,options = params
+     elif len (params) == 2:
+        pattern,replace = params
+        options = ""
+
+     count = 1
+     icase = ignorecase or (options.find ("i") < 0)
+     if loc == maxloc:
+        maxloc = loc.end_of_line ()  ## On whole line by default
+     else:
+        count = 10000000
+
+     if options.find ("g") >= 0:
+        count = 100000000            ## as many times as needed
+
+     while count > 0:
+        result = loc.search \
+           (pattern, regexp=True, \
+            dialog_on_failure=False, case_sensitive=icase)
+        if not result:
+           return
+        else:
+           start,last = result
+           if start > maxloc:
+              return
+
+           # Add support for \1,.. in the replacement string
+           found = buffer.get_chars (start,last-1)
+           if icase:
+              r = re.compile (pattern)
+           else:
+              r = re.compile (pattern, re.IGNORECASE)
+           repl = r.sub (replace, found)
+           buffer.delete (start, last - 1)
+           buffer.insert (start, repl)
+           loc = start + len (repl)
+           buffer.current_view().goto (loc)
+
+        count = count - 1
+
+   @staticmethod
+   def do_delete_line (arg, loc, maxloc):
+      loc = loc.beginning_of_line ()
+      maxloc = maxloc.end_of_line ()
+      loc.buffer().delete (loc, maxloc)
+      loc.buffer().current_view().goto (loc)
+
+   @staticmethod
    def repeat_command (loc=None):
      """Repeat the last command that was executed, in Editor"""
      if not loc:
         loc = EditorBuffer.get().current_view ().cursor ()
      buffer = loc.buffer()
-     buffer.start_undo_group ()
      (cmd, loc, maxloc) = CmdLine.get_scope (CmdLine.history[0], loc, buffer)
 
+     buffer.start_undo_group ()
      if cmd [0] == "s":
-        params = cmd[2:].split (cmd [1])
-        if len (params) == 3:
-           pattern,replace,options = params
-        elif len (params) == 2:
-           pattern,replace = params
-           options = ""
-
-        count = 1
-        icase = ignorecase or (options.find ("i") < 0)
-        if loc == maxloc:
-           maxloc = loc.end_of_line ()  ## On whole line by default
-        else:
-           count = 10000000
-
-        if options.find ("g") >= 0:
-           count = 100000000            ## as many times as needed
-
-        while count > 0:
-           result = loc.search \
-              (pattern, regexp=True, \
-               dialog_on_failure=False, case_sensitive=icase)
-           if not result:
-              return
-           else:
-              start,last = result
-              if start > maxloc:
-                 return
-
-              # Add support for \1,.. in the replacement string
-              found = buffer.get_chars (start,last-1)
-              if icase:
-                 r = re.compile (pattern)
-              else:
-                 r = re.compile (pattern, re.IGNORECASE)
-              repl = r.sub (replace, found)
-              buffer.delete (start, last - 1)
-              buffer.insert (start, repl)
-              loc = start + len (repl)
-              buffer.current_view().goto (loc)
-
-           count = count - 1
-
+        CmdLine.do_replace (cmd[1:], loc, maxloc)
+     elif cmd [0] == "d":
+        CmdLine.do_delete_line (cmd[1:], loc, maxloc)
      buffer.finish_undo_group ()
 
    def on_cancel (self, input):
