@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2007                       --
---                              AdaCore                              --
+--                 Copyright (C) 2003-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -151,6 +150,12 @@ package VFS is
       Full_Name : String;
       Success   : out Boolean);
    --  Rename a file or directory. This does not work for remote files
+
+   procedure Copy
+     (File        : Virtual_File;
+      Target_Name : String;
+      Success     : out Boolean);
+   --  Copy a file or directory. This does not work for remote files
 
    procedure Delete (File : Virtual_File; Success : out Boolean);
    --  Remove file from the disk. This also works for remote files
