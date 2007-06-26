@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2007                      --
---                              AdaCore                              --
+--                  Copyright (C) 2003-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,6 +22,7 @@
 --  features (case sensitivity),...
 
 with Ada.Calendar;              use Ada.Calendar;
+with Ada.Directories;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
@@ -525,6 +525,60 @@ package body VFS is
       end if;
    end Rename;
 
+   ----------
+   -- Copy --
+   ----------
+
+   procedure Copy
+     (File        : Virtual_File;
+      Target_Name : String;
+      Success     : out Boolean) is
+   begin
+      if Is_Local (File) then
+         if not Is_Directory (File) then
+            Ada.Directories.Copy_File (Locale_Full_Name (File), Target_Name);
+
+         else
+            declare
+               Files_Array : File_Array_Access     := Read_Dir (File);
+               Target      : constant Virtual_File := Create (Target_Name);
+            begin
+               Ensure_Directory (Target);
+               if not Is_Directory (Target) then
+                  Make_Dir (Target);
+               end if;
+
+               for F in Files_Array'Range loop
+                  --  Make sure that we ignore . and ..
+                  if Files_Array (F) /= File
+                    and then not Is_Parent (Files_Array (F), File)
+                  then
+                     Copy
+                       (Files_Array (F),
+                        Full_Name
+                          (Create_From_Dir
+                             (Target, Base_Name (Files_Array (F)))).all,
+                        Success);
+
+                     exit when not Success;
+
+                  end if;
+               end loop;
+
+               Unchecked_Free (Files_Array);
+            end;
+         end if;
+
+         Success := True;
+      else
+         Success := False;
+      end if;
+
+   exception
+      when others =>
+         Success := False;
+   end Copy;
+
    ------------
    -- Delete --
    ------------
@@ -1019,7 +1073,16 @@ package body VFS is
          Raise_Exception (VFS_Directory_Error'Identity, "Dir is No_File");
       end if;
 
+      --  If Dir already exists and is a directory, then return.
+      if Is_Directory (Dir) then
+         return;
+      end if;
+
       if Is_Local (Dir) then
+         if not Is_Directory (Get_Parent (Dir)) then
+            Make_Dir (Get_Parent (Dir));
+         end if;
+
          GNAT.Directory_Operations.Make_Dir
            (Locale_From_UTF8 (Full_Name (Dir).all));
       else
