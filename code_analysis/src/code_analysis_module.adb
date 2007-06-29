@@ -797,8 +797,6 @@ package body Code_Analysis_Module is
    is
       use Language.Tree.Database;
       File_Contents : GNAT.Strings.String_Access;
-      Prj_Called    : Positive;
-      Success       : Boolean;
       File_Node     : constant Code_Analysis.File_Access
         := Get_Or_Create (Project_Node, Src_File);
       Handler       : constant Language_Handler
@@ -827,20 +825,17 @@ package body Code_Analysis_Module is
          File_Contents := Read_File (Cov_File);
          Add_File_Info (File_Node, File_Contents);
 
+         --  Check for project runs info
          if File_Node.Analysis_Data.Coverage_Data.Status = Valid and then
            Project_Node.Analysis_Data.Coverage_Data = null then
 
+            Project_Node.Analysis_Data.Coverage_Data := new Project_Coverage;
             Get_Runs_Info_From_File
-              (File_Node, File_Contents, Prj_Called, Success);
-
-            if Success then
-               Project_Node.Analysis_Data.Coverage_Data :=
-                 new Subprogram_Coverage;
-               Subprogram_Coverage
-                 (Project_Node.Analysis_Data.Coverage_Data.all).Called :=
-                 Prj_Called;
-            end if;
-            --  Check for project Called info
+              (File_Contents,
+               Project_Coverage
+                 (Project_Node.Analysis_Data.Coverage_Data.all).Runs,
+               Project_Coverage
+                 (Project_Node.Analysis_Data.Coverage_Data.all).Have_Runs);
          end if;
 
          if File_Node.Analysis_Data.Coverage_Data.Status = Valid then
