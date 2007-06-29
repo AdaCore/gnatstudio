@@ -2059,7 +2059,8 @@ package body Src_Editor_Module.Shell is
          Name_Parameters (Data, (1 => From_Cst'Access, 2 => To_Cst'Access));
          Get_Buffer (Buffer, Data, 1);
          if Buffer /= null then
-            Get_Locations (Iter, Iter2, Buffer, Data, 2, 3);
+            Get_Locations (Iter, Iter2, Buffer, Data, 2, 3,
+                           Compensate_Last_Iter => False);
 
             declare
                Begin_Line : Editable_Line_Type;
