@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006-2007                    --
---                              AdaCore                              --
+--                  Copyright (C) 2006-2007, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -43,10 +42,9 @@ package Code_Coverage is
    --  And set Line_Count and Covered_Lines
 
    procedure Get_Runs_Info_From_File
-     (File_Node     : Code_Analysis.File_Access;
-      File_Contents : String_Access;
-      Prj_Called    : out Positive;
-      Success       : out Boolean);
+     (File_Contents : String_Access;
+      Prj_Runs      : out Positive;
+      Have_Runs     : out Boolean);
    --  Reads and returns in the given .gcov file contents the number of
    --  execution(s) of the binary file produce by the analyzed sources
    --  This information is contained in every .gcov files
@@ -63,16 +61,20 @@ package Code_Coverage is
    --  the coverage information of its File children
 
    procedure Dump_Node_Coverage (Coverage : Coverage_Access);
-   --  Currently dump to the standard output coverage information stored in a
+   --  Dump to the standard output coverage information stored in a
    --  Code_Analysis. Coverage of the types before Line, ie the tree nodes
 
    procedure Dump_Line_Coverage (Coverage : Coverage_Access);
-   --  Currently dump to the standard output coverage information stored
+   --  Dump to the standard output coverage information stored
    --  in a Code_Analysis. Coverage record of the Line type
 
    procedure Dump_Subp_Coverage (Coverage : Coverage_Access);
-   --  Currently dump to the standard output coverage information stored in a
+   --  Dump to the standard output coverage information stored in a
    --  Code_Analysis. Coverage of the Subprogram nodes, ie with extra Called
+
+   procedure Dump_Prj_Coverage (Coverage : Coverage_Access);
+   --  Dump to the standard output coverage information stored in a
+   --  Code_Analysis. Coverage of the Project nodes, ie with extra Runs if any.
 
    function Line_Coverage_Info
      (Coverage : Coverage_Access;
