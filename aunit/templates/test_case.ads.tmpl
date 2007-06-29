@@ -2,7 +2,7 @@
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with AUnit.Test_Cases;      use AUnit.Test_Cases;
 @@ELSE@@
-with AUnit; use AUnit.Test_Cases, AUnit.Test_Results;
+with AUnit; use AUnit, AUnit.Test_Cases, AUnit.Test_Results;
 @@END_IF@@
 
 package @_TEST_CASE_PACKAGE_@ is
