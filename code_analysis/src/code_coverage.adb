@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006-2007                      --
---                              AdaCore                              --
+--                  Copyright (C) 2006-2007, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -173,10 +172,9 @@ package body Code_Coverage is
    -----------------------------
 
    procedure Get_Runs_Info_From_File
-     (File_Node     : Code_Analysis.File_Access;
-      File_Contents : String_Access;
-      Prj_Called    : out Positive;
-      Success       : out Boolean)
+     (File_Contents : String_Access;
+      Prj_Runs      : out Positive;
+      Have_Runs     : out Boolean)
    is
       Current       : Natural;
       Runs_Regexp   : constant Pattern_Matcher :=
@@ -194,16 +192,14 @@ package body Code_Coverage is
       Match (Runs_Regexp, File_Contents.all, Runs_Matches, Current);
 
       if Runs_Matches (0) = No_Match then
-         Set_Error (File_Node, File_Corrupted);
-         Success := False;
+         Have_Runs := False;
          return;
-         --  The .gcov is not a valid Gcov file.
-         --  No runs quantity information found.
+         --  The .gcov have no runs count information
       end if;
 
-      Prj_Called := Positive'Value
+      Prj_Runs  := Positive'Value
         (File_Contents (Runs_Matches (1).First .. Runs_Matches (1).Last));
-      Success := True;
+      Have_Runs := True;
    end Get_Runs_Info_From_File;
 
    -------------------------
@@ -362,6 +358,20 @@ package body Code_Coverage is
       end if;
    end Dump_Subp_Coverage;
 
+   -----------------------
+   -- Dump_Prj_Coverage --
+   -----------------------
+
+   procedure Dump_Prj_Coverage (Coverage : Coverage_Access) is
+   begin
+      Dump_Node_Coverage (Coverage);
+
+      if Project_Coverage (Coverage.all).Have_Runs then
+         Put (Natural'Image (Project_Coverage (Coverage.all).Runs)
+              & " run(s)");
+      end if;
+   end Dump_Prj_Coverage;
+
    ------------------------
    -- Line_Coverage_Info --
    ------------------------
@@ -467,9 +477,19 @@ package body Code_Coverage is
                Cal_Count : constant Natural
                  := Subprogram_Coverage (Coverage.all).Called;
             begin
-               return String'(-", called"
-                              & Natural'Image (Cal_Count)
-                              & Txt_Cal (Cal_Count));
+               return
+                 String'(-", called" & Natural'Image (Cal_Count)
+                         & Txt_Cal (Cal_Count));
+            end;
+         elsif Coverage.all in Project_Coverage'Class and then
+           Project_Coverage (Coverage.all).Have_Runs then
+            declare
+               Run_Count : constant Natural
+                 := Project_Coverage (Coverage.all).Runs;
+            begin
+               return
+                 String'(-", ran" & Natural'Image (Run_Count)
+                         & Txt_Cal (Run_Count));
             end;
          else
             return "";
