@@ -1,8 +1,6 @@
 @@IF@@ @_AUNIT_@ = "AUNIT1.X"
 with Aunit.Test_Cases.Registration; use AUnit.Test_Cases.Registration;
 with AUnit.Assertions;              use AUnit.Assertions;
-@@ELSE@@
-with AUnit; use AUnit.Test_Cases.Registration, AUnit.Assertions;
 @@END_IF@@
 package body @_TEST_CASE_PACKAGE_@ is
 
