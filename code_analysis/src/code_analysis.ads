@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006-2007                    --
---                              AdaCore                              --
+--                  Copyright (C) 2006-2007, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -72,6 +71,15 @@ package Code_Analysis is
    end record;
    --  Specific Subprogram extra info
    --  The number of time the subprogram has been called
+
+   type Project_Coverage is new Node_Coverage with record
+      Have_Runs : Boolean := False;
+      Runs      : Natural;
+   end record;
+   --  Store project number of call if this info is available
+   --  Older gcov than gcov (GCC) 4.1.3 20070620 were fitted with a runs field
+   --  in their header, reporting the number of executions of the produced
+   --  executable file
 
    type Coverage_Access is access all Coverage'Class;
 
