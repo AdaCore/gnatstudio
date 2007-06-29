@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006-2007                      --
---                              AdaCore                              --
+--                  Copyright (C) 2006-2007, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -129,8 +128,7 @@ procedure Code_Analysis_Test is
       File_Contents : GNAT.Strings.String_Access;
       Registry      : Project_Registry;
       Loaded        : Boolean;
-      Success       : Boolean;
-      Prj_Called    : Positive;
+      Status        : Boolean;
       Data_File     : Structured_File_Access;
       Project       : Project_Type;
       Project_Node  : Project_Access;
@@ -147,7 +145,7 @@ procedure Code_Analysis_Test is
            (Get_Current_Dir, Project_File),
          Errors             => Project_Error'Unrestricted_Access,
          New_Project_Loaded => Loaded,
-         Status             => Success);
+         Status             => Status);
       Project       := Load_Or_Find (Registry, Project_File);
       Project_Node  := Get_Or_Create (Projects, Project);
       File_Contents := Read_File (Cov_File_Name);
@@ -160,16 +158,13 @@ procedure Code_Analysis_Test is
       -------------------------
 
       if File_Node.Analysis_Data.Coverage_Data.Status = Valid then
-         Get_Runs_Info_From_File
-           (File_Node, File_Contents, Prj_Called, Success);
-
-         if Success then
-            Project_Node.Analysis_Data.Coverage_Data :=
-              new Subprogram_Coverage;
-            Subprogram_Coverage
-              (Project_Node.Analysis_Data.Coverage_Data.all).Called :=
-              Prj_Called;
-         end if;
+         Project_Node.Analysis_Data.Coverage_Data := new Project_Coverage;
+            Get_Runs_Info_From_File
+              (File_Contents,
+               Project_Coverage
+                 (Project_Node.Analysis_Data.Coverage_Data.all).Runs,
+               Project_Coverage
+                 (Project_Node.Analysis_Data.Coverage_Data.all).Have_Runs);
 
          if File_Node.Analysis_Data.Coverage_Data.Status = Valid then
             Data_File := Get_Or_Create
