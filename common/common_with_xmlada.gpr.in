@@ -3,6 +3,7 @@ with "../gnat";
 with "../shared";
 with "xmlada_sax";
 with "../gnatlib/gnatlib_gtk";
+with "../gnatlib/gnatlib";
 
 project Common is
 

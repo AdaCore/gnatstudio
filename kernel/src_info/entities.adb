@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2007                       --
---                             AdaCore                               --
+--                     Copyright (C) 2003-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,6 +23,7 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Calendar.Time_IO;      use GNAT.Calendar.Time_IO;
 with GNAT.Heap_Sort_G;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
+with GNAT.Traces;                use GNAT.Traces;
 
 with Basic_Types;                use Basic_Types;
 with Entities.Debug;             use Entities.Debug;
@@ -37,21 +37,20 @@ with Projects.Registry;          use Projects.Registry;
 with Projects;                   use Projects;
 with Remote;                     use Remote;
 with String_Utils;               use String_Utils;
-with Traces;                     use Traces;
 with VFS;                        use VFS;
 
 package body Entities is
-   Assert_Me : constant Debug_Handle := Create ("Entities.Assert", Off);
+   Assert_Me : constant Trace_Handle := Create ("Entities.Assert", Off);
 
-   Ref_Me  : constant Debug_Handle := Create ("Entities.Ref", Off);
+   Ref_Me  : constant Trace_Handle := Create ("Entities.Ref", Off);
    --  If active, will trace all calls to Ref/Unref for Entity_Information.
    --  That generates a lot of output!
 
-   Debug_Me  : constant Debug_Handle := Create ("Entities.Debug", Off);
+   Debug_Me  : constant Trace_Handle := Create ("Entities.Debug", Off);
    --  If True, no memory is freed, this makes the structure more robust and
    --  easier to debug, but will of course use more memory.
 
-   Add_Reference_Force_Unique : constant Debug_Handle :=
+   Add_Reference_Force_Unique : constant Trace_Handle :=
      Create ("Entities.Force_Unique_Ref", On);
    --  Activate this to force a check that all references are unique. This
    --  will slow down the parsing a little, but might help customers work

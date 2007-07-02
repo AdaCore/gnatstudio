@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2007                       --
---                              AdaCore                              --
+--                     Copyright (C) 2003-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,6 +24,7 @@ with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Generic_List;
 with GNAT.Scripts;              use GNAT.Scripts;
+with GNAT.Traces;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
@@ -32,7 +32,7 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 
 package body GPS.Kernel.Hooks is
 
-   Me : constant Debug_Handle := Create ("Hooks", Default => Off);
+   Me : constant Debug_Handle := Create ("Hooks", Default => GNAT.Traces.Off);
 
    use GNAT.Strings;
    use GPS.Kernel.Hooks_Hash.String_Hash_Table;

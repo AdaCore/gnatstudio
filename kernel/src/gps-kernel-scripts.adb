@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2007                      --
---                             AdaCore                               --
+--                      Copyright (C) 2003-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,6 +21,7 @@ with Ada.Unchecked_Conversion;
 
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with GNAT.Scripts.Gtkada;     use GNAT.Scripts.Gtkada;
+with GNAT.Traces;             use GNAT.Traces;
 
 with Glib.Object;             use Glib.Object;
 with Gtk.Label;               use Gtk.Label;
@@ -55,14 +55,14 @@ with String_List_Utils;
 with System;                  use System;
 with System.Address_Image;
 with System.Assertions;
-with Traces;                  use Traces;
+with Traces;
 with VFS;                     use VFS;
 with OS_Utils;                use OS_Utils;
 
 package body GPS.Kernel.Scripts is
 
-   Me     : constant Debug_Handle := Create ("GPS.Kernel.Scripts");
-   Ref_Me : constant Debug_Handle := Create ("Scripts.Ref", Off);
+   Me     : constant Trace_Handle := Create ("GPS.Kernel.Scripts");
+   Ref_Me : constant Trace_Handle := Create ("Scripts.Ref", GNAT.Traces.Off);
 
    Entity_Class_Name        : constant String := "Entity";
    File_Class_Name          : constant String := "File";
@@ -93,7 +93,7 @@ package body GPS.Kernel.Scripts is
          when File_Locations =>
             Location : File_Location_Info;
          when Debug_Handles =>
-            Handle   : Debug_Handle;
+            Handle   : Trace_Handle;
       end case;
 
    end record;
@@ -1640,7 +1640,7 @@ package body GPS.Kernel.Scripts is
          Maximum_Args => 1,
          Handler      => Create_Project_Command_Handler'Access);
 
-      if Active (Testsuite_Handle) then
+      if Active (Traces.Testsuite_Handle) then
          Register_Command
            (Kernel, "contextual_menu",
             Class        => Get_Context_Class (Kernel),

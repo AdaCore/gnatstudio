@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2005-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with GNAT.Strings;              use GNAT.Strings;
+with GNAT.Traces;               use GNAT.Traces;
 with Basic_Types;               use Basic_Types;
 
 with Gdk.Types.Keysyms;         use Gdk.Types, Gdk.Types.Keysyms;
@@ -53,7 +53,7 @@ with Src_Editor_Module;         use Src_Editor_Module;
 with Src_Editor_View;           use Src_Editor_View;
 with String_List_Utils;         use String_List_Utils;
 with String_Utils;              use String_Utils;
-with Traces;                    use Traces;
+with Traces;
 with VFS;                       use VFS;
 
 with Completion_Window;         use Completion_Window;
@@ -77,9 +77,9 @@ with Gtkada.Dialogs;            use Gtkada.Dialogs;
 
 package body Completion_Module is
 
-   Me : constant Debug_Handle := Create ("Completion");
+   Me : constant Trace_Handle := Create ("Completion");
 
-   Me_Adv : constant Debug_Handle := Create ("Completion_Advanced", Off);
+   Me_Adv : constant Trace_Handle := Create ("Completion_Advanced", Off);
 
    Db_Loading_Queue : constant String := "constructs_db_loading";
 
@@ -360,7 +360,8 @@ package body Completion_Module is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Traces.Exception_Handle, E);
    end On_Completion_Destroy;
 
    ------------------------
@@ -1152,7 +1153,7 @@ package body Completion_Module is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Traces.Exception_Handle, E);
          return False;
    end Trigger_Timeout_Callback;
 
@@ -1190,7 +1191,8 @@ package body Completion_Module is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Traces.Exception_Handle, E);
    end Character_Added_Hook_Callback;
 
    --------------------------

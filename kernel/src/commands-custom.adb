@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2001-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -28,6 +27,7 @@ with GNAT.Expect;               use GNAT.Expect;
 with GNAT.OS_Lib;
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.Scripts;              use GNAT.Scripts;
+with GNAT.Traces;               use GNAT.Traces;
 with System;
 
 with Glib.Xml_Int;              use Glib.Xml_Int;
@@ -70,11 +70,11 @@ with Interactive_Consoles;      use Interactive_Consoles;
 with Password_Manager;          use Password_Manager;
 with Remote.Path.Translator;    use Remote, Remote.Path.Translator;
 with String_Utils;              use String_Utils;
-with Traces;                    use Traces;
+with Traces;
 
 package body Commands.Custom is
 
-   Me : constant Debug_Handle := Create ("Commands.Custom", Off);
+   Me : constant Trace_Handle := Create ("Commands.Custom", Off);
 
    On_Failure_Node_Name : constant String := "on-failure";
    --  Name of the node that represents an on-failure in the list of components
@@ -1439,7 +1439,7 @@ package body Commands.Custom is
 
       exception
          when E : others =>
-            Trace (Exception_Handle, E);
+            Trace (Traces.Exception_Handle, E);
             Insert (Command.Kernel,
                     -("An unexpected error occurred while executing the custom"
                       & " command. See the log file for more information."),

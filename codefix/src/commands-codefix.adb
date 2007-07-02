@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
---                            AdaCore                                --
+--                     Copyright (C) 2001-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,19 +17,19 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.Traces;           use GNAT.Traces;
 with Gtk.Menu;              use Gtk.Menu;
 
 with Codefix.Formal_Errors; use Codefix.Formal_Errors;
 use Codefix.Formal_Errors.Command_List;
 
 with Codefix_Module;        use Codefix_Module;
-with Traces;                use Traces;
 with GPS.Intl;              use GPS.Intl;
 with VFS;                   use VFS;
 
 package body Commands.Codefix is
 
-   Me : constant Debug_Handle := Create ("Commands.Codefix", Off);
+   Me : constant Trace_Handle := Create ("Commands.Codefix", Off);
 
    -------------
    -- Execute --

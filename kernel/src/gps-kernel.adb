@@ -22,9 +22,10 @@ with Ada.Unchecked_Conversion;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
+with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.Scripts;              use GNAT.Scripts;
 with GNAT.Strings;              use GNAT.Strings;
-with GNAT.Regpat;               use GNAT.Regpat;
+with GNAT.Traces;
 with System;                    use System;
 
 with Gdk;                       use Gdk;
@@ -96,7 +97,7 @@ with XML_Parsers;
 package body GPS.Kernel is
 
    Me     : constant Debug_Handle := Create ("gps_kernel");
-   Ref_Me : constant Debug_Handle := Create ("Scripts.Ref", Off);
+   Ref_Me : constant Debug_Handle := Create ("Scripts.Ref", GNAT.Traces.Off);
 
    History_Max_Length : constant Positive := 10;
    --  <preferences> Maximum number of entries to store in each history
@@ -901,7 +902,7 @@ package body GPS.Kernel is
 
          if Context.Data.Ref_Count = 0 then
             if Active (Ref_Me) then
-               Increase_Indent
+               GNAT.Traces.Increase_Indent
                  (Ref_Me, "Destroy selection context ("
                   & System.Address_Image (To_Address (Context.Data)) & ")");
             end if;
@@ -912,7 +913,8 @@ package body GPS.Kernel is
             Unchecked_Free (Garbage);
 
             if Active (Ref_Me) then
-               Decrease_Indent (Ref_Me, "Done destroying selection context");
+               GNAT.Traces.Decrease_Indent
+                 (Ref_Me, "Done destroying selection context");
             end if;
          end if;
 
@@ -926,7 +928,7 @@ package body GPS.Kernel is
       when E : others => Trace (Exception_Handle, E);
 
          if Active (Ref_Me) then
-            Decrease_Indent;
+            GNAT.Traces.Decrease_Indent;
          end if;
    end Finalize;
 

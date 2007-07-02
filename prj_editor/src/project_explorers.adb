@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2001-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,6 +20,7 @@
 with Ada.Directories;           use Ada.Directories;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Traces;
 
 with Glib;                      use Glib;
 with Glib.Convert;              use Glib.Convert;
@@ -97,7 +97,7 @@ package body Project_Explorers is
    --  Id for the explorer module
 
    Explorers_Tooltips  : constant Debug_Handle :=
-                          Create ("Explorers.Tooltips", Off);
+                          Create ("Explorers.Tooltips", GNAT.Traces.Off);
 
    Show_Absolute_Paths : constant History_Key :=
                            "explorer-show-absolute-paths";

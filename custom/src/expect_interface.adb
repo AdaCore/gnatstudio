@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2004-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2004-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -29,6 +28,7 @@ pragma Warnings (On);
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with GNAT.Regpat;             use GNAT.Regpat;
 with GNAT.Scripts;            use GNAT.Scripts;
+with GNAT.Traces;             use GNAT.Traces;
 
 with Gtk.Main;                use Gtk.Main;
 
@@ -38,12 +38,12 @@ with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with String_Utils;            use String_Utils;
-with Traces;                  use Traces;
+with Traces;
 with Commands;                use Commands;
 
 package body Expect_Interface is
 
-   Me : constant Debug_Handle := Create ("Expect", Off);
+   Me : constant Trace_Handle := Create ("Expect", Off);
 
    Process_Class_Name   : constant String := "Process";
 
@@ -861,7 +861,8 @@ package body Expect_Interface is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Traces.Exception_Handle, E);
    end Custom_Spawn_Handler;
 
    -----------------------

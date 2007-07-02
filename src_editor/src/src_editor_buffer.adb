@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                             AdaCore                               --
+--                     Copyright (C) 2001-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,6 +24,7 @@ pragma Warnings (Off);
 with Ada.Strings.Unbounded.Aux;           use Ada.Strings.Unbounded.Aux;
 pragma Warnings (On);
 with GNAT.Regpat;
+with GNAT.Traces;                         use GNAT.Traces;
 with Interfaces.C.Strings;                use Interfaces.C.Strings;
 with System.Address_Image;
 
@@ -78,7 +78,7 @@ with Src_Editor_Module;                   use Src_Editor_Module;
 with Src_Editor_Module.Line_Highlighting;
 with Src_Highlighting;                    use Src_Highlighting;
 with String_Utils;                        use String_Utils;
-with Traces;                              use Traces;
+with Traces;
 with VFS;                                 use VFS;
 
 package body Src_Editor_Buffer is
@@ -89,9 +89,9 @@ package body Src_Editor_Buffer is
    use type System.Address;
    use type GNAT.Strings.String_Access;
 
-   Me                        : constant Debug_Handle :=
+   Me                        : constant Trace_Handle :=
      Create ("Source_Editor_Buffer");
-   Indent_On_Block_Info      : constant Debug_Handle :=
+   Indent_On_Block_Info      : constant Trace_Handle :=
      Create ("Source_Editor_Buffer.Indent_On_Block_Info", Default => Off);
 
    Buffer_Recompute_Interval : constant Guint32 := 200;
@@ -527,7 +527,8 @@ package body Src_Editor_Buffer is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Traces.Exception_Handle, E);
    end Execute;
 
    -------------
@@ -569,7 +570,8 @@ package body Src_Editor_Buffer is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Traces.Exception_Handle, E);
    end Execute;
 
    ----------------------
@@ -780,7 +782,7 @@ package body Src_Editor_Buffer is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Traces.Exception_Handle, E);
          return False;
    end Check_Blocks;
 
@@ -1072,7 +1074,7 @@ package body Src_Editor_Buffer is
       return False;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Traces.Exception_Handle, E);
          return False;
    end Cursor_Stop_Hook;
 
@@ -1378,7 +1380,8 @@ package body Src_Editor_Buffer is
       Buffer.Modified_Auto := True;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Traces.Exception_Handle, E);
    end Changed_Handler;
 
    ----------------------
@@ -1413,7 +1416,8 @@ package body Src_Editor_Buffer is
       Buffer.Setting_Mark := False;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Traces.Exception_Handle, E);
    end Mark_Set_Handler;
 
    --------------------
@@ -1431,7 +1435,8 @@ package body Src_Editor_Buffer is
       Update_Highlight_Region (Source_Buffer (Buffer), End_Insert_Iter);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Traces.Exception_Handle, E);
    end Insert_Text_Cb;
 
    -------------------------
@@ -1503,7 +1508,8 @@ package body Src_Editor_Buffer is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Traces.Exception_Handle, E);
    end Insert_Text_Handler;
 
    -----------------------
@@ -1617,7 +1623,8 @@ package body Src_Editor_Buffer is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Traces.Exception_Handle, E);
    end First_Insert_Text;
 
    ---------------------
@@ -1654,7 +1661,8 @@ package body Src_Editor_Buffer is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Traces.Exception_Handle, E);
    end Delete_Range_Handler;
 
    ---------------------------------
@@ -1820,7 +1828,8 @@ package body Src_Editor_Buffer is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Traces.Exception_Handle, E);
    end Delete_Range_Before_Handler;
 
    -----------------------------
@@ -2458,8 +2467,8 @@ package body Src_Editor_Buffer is
    begin
       --  ??? We do not support all languages here. It needs to be expanded to
       --  have a proper support in every context.
-      Traces.Assert
-        (Exception_Handle,
+      Assert
+        (Traces.Exception_Handle,
          Lang_Context.Comment_Start_Length = 0
            or else Lang_Context.Comment_Start_Length = 0
            or else Lang_Context.New_Line_Comment_Start /= null
@@ -2879,7 +2888,7 @@ package body Src_Editor_Buffer is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Traces.Exception_Handle, E);
          Success := False;
    end Load_File;
 
@@ -3083,7 +3092,7 @@ package body Src_Editor_Buffer is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Traces.Exception_Handle, E);
 
          --  To avoid consuming up all File Descriptors, we catch all
          --  exceptions here, and close the current file descriptor.
@@ -3144,7 +3153,8 @@ package body Src_Editor_Buffer is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Traces.Exception_Handle, E);
    end Save_To_File;
 
    ------------------
@@ -5216,7 +5226,7 @@ package body Src_Editor_Buffer is
             g_free (C_Str);
          end if;
 
-         Trace (Exception_Handle, E);
+         Trace (Traces.Exception_Handle, E);
          return False;
    end Do_Indentation;
 

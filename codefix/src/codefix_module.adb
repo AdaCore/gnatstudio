@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2001-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,6 +22,7 @@
 with Ada.Unchecked_Deallocation;
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.Scripts;              use GNAT.Scripts;
+with GNAT.Traces;
 
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 
@@ -71,7 +71,8 @@ package body Codefix_Module is
 
    Me          : constant Debug_Handle := Create ("Codefix_Module");
 
-   Codefix_GUI : constant Debug_Handle := Create ("Codefix_GUI", Off);
+   Codefix_GUI : constant Debug_Handle :=
+     Create ("Codefix_GUI", GNAT.Traces.Off);
    --  ??? Disabled by default, as the UI is not ready yet.
 
    Location_Button_Name     : constant String := "Codefix";

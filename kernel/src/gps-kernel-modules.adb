@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2001-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,6 +22,7 @@ with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
+with GNAT.Traces;
 
 with Gdk.Dnd;                   use Gdk.Dnd;
 with Gdk.Types;                 use Gdk.Types;
@@ -73,7 +73,8 @@ with VFS;                       use VFS;
 
 package body GPS.Kernel.Modules is
 
-   Me : constant Debug_Handle := Create ("GPS.Kernel.Modules", Off);
+   Me : constant Debug_Handle :=
+     Create ("GPS.Kernel.Modules", GNAT.Traces.Off);
 
    type Contextual_Menu_User_Data is record
       Object       : GObject;

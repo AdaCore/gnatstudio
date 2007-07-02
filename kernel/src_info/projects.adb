@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2002-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -28,6 +27,7 @@ with Ada.Unchecked_Deallocation;
 
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
+with GNAT.Traces;                use GNAT.Traces;
 
 with Basic_Types;                use Basic_Types;
 with Casing;                     use Casing;
@@ -46,13 +46,13 @@ with Projects.Registry;          use Projects.Registry;
 with Remote.Path.Translator;     use Remote, Remote.Path.Translator;
 with Snames;                     use Snames;
 with String_Hash;
-with Traces;                     use Traces;
+with Traces;
 with VFS;                        use VFS;
 
 package body Projects is
 
-   Me    : constant Debug_Handle := Create ("Projects");
-   Debug : constant Debug_Handle := Create ("Projects.Debug", Default => Off);
+   Me    : constant Trace_Handle := Create ("Projects");
+   Debug : constant Trace_Handle := Create ("Projects.Debug", Default => Off);
 
    type Name_Id_Array_Access is access Name_Id_Array;
 
@@ -1754,7 +1754,7 @@ package body Projects is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Traces.Exception_Handle, E);
    end Compute_Importing_Projects;
 
    ---------------------------------
@@ -2538,7 +2538,7 @@ package body Projects is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Traces.Exception_Handle, E);
          return "";
    end Get_String;
 
@@ -2552,7 +2552,7 @@ package body Projects is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Traces.Exception_Handle, E);
          return "";
    end Get_String;
 
@@ -2566,7 +2566,7 @@ package body Projects is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Traces.Exception_Handle, E);
          return "";
    end Get_String;
 
@@ -2580,7 +2580,7 @@ package body Projects is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Traces.Exception_Handle, E);
          return "";
    end Get_String;
 

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2006                       --
---                             AdaCore                               --
+--                     Copyright (C) 2000-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,9 +18,9 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Conversion;
-
 with Debugger;             use Debugger;
-with GPS.Kernel.Console; use GPS.Kernel.Console;
+with GNAT.Traces;          use GNAT.Traces;
+with GPS.Kernel.Console;   use GPS.Kernel.Console;
 with GPS.Main_Window;      use GPS.Main_Window;
 with Process_Proxies;      use Process_Proxies;
 with Traces;               use Traces;
@@ -31,11 +30,11 @@ package body GVD.Trace is
    --  Internally, we only handle two different handles, since it makes things
    --  much simpler to activate, and anyway we either want the minimal or all
    --  of it anyway
-   Me : constant array (Command_Type) of Debug_Handle :=
-     (Internal => Create ("GVD.Out", Off),   --  Could be "Internal"
-      Hidden   => Create ("GVD.Out", Off),   --  Could be "Hidden"
-      Visible  => Create ("GVD.Out", Off),   --  Could be "Visible"
-      User     => Create ("GVD.Out", Off));  --  Could be "User"
+   Me : constant array (Command_Type) of Trace_Handle :=
+     (Internal => GNAT.Traces.Create ("GVD.Out", Off),  --  Could be "Internal"
+      Hidden   => GNAT.Traces.Create ("GVD.Out", Off),  --  Could be "Hidden"
+      Visible  => GNAT.Traces.Create ("GVD.Out", Off),  --  Could be "Visible"
+      User     => GNAT.Traces.Create ("GVD.Out", Off)); --  Could be "User"
 
    Direction_String : constant array (IO_Kind) of String (1 .. 4) :=
      (Input_Kind  => "-> """,

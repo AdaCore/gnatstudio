@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2003-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,19 +19,19 @@
 
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
+with GNAT.Traces;             use GNAT.Traces;
 with Basic_Types;             use Basic_Types;
 with Language_Handlers;   use Language_Handlers;
 with Projects;                use Projects;
 with Projects.Registry;       use Projects.Registry;
-with Traces;                  use Traces;
 with VFS;                     use VFS;
 
 package body Entities.Queries is
 
-   Me     : constant Debug_Handle := Create ("Entities.Queries", Off);
-   Ref_Me : constant Debug_Handle := Create ("Entities.Ref", Off);
+   Me     : constant Trace_Handle := Create ("Entities.Queries", Off);
+   Ref_Me : constant Trace_Handle := Create ("Entities.Ref", Off);
 
-   Find_Deps_File_Granularity : constant Debug_Handle :=
+   Find_Deps_File_Granularity : constant Trace_Handle :=
      Create ("Entities.Queries_File_Granularity", On);
    --  Whether the search for dependencies parses all the files from a project
    --  at one time, or one file at a time.

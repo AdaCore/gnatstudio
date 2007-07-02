@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                                  GPS                              --
 --                                                                   --
---                      Copyright (C) 2000-2007                      --
---                                AdaCore                            --
+--                      Copyright (C) 2000-2007, AdaCore             --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,8 +18,8 @@
 -----------------------------------------------------------------------
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with Ada.Strings; use Ada.Strings;
-
+with Ada.Strings;   use Ada.Strings;
+with GNAT.Traces;   use GNAT.Traces;
 with Items.Arrays;  use Items.Arrays;
 with Items.Classes; use Items.Classes;
 with Items.Records; use Items.Records;
@@ -29,11 +28,10 @@ with Items;         use Items;
 with Language.Ada;  use Language.Ada;
 with Language.Debugger; use Language.Debugger;
 with String_Utils;  use String_Utils;
-with Traces;        use Traces;
 
 package body Debugger.Gdb.Ada is
 
-   Me : constant Debug_Handle := Create ("Debug.Gdb.Ada", Off);
+   Me : constant Trace_Handle := Create ("Debug.Gdb.Ada", Off);
 
    Variant_Name : constant String := "<variant>";
    --  Name used for fields with a variant part

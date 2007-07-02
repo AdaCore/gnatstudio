@@ -3,7 +3,7 @@
 
 --  Configure the traces format
 
-DEBUG.COLORS=no
+DEBUG.COLORS=yes
 DEBUG.ABSOLUTE_TIME=yes
 DEBUG.ELAPSED_TIME=no
 DEBUG.STACK_TRACE=no

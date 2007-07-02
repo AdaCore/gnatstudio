@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2007                       --
---                              AdaCore                              --
+--                     Copyright (C) 2003-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,31 +22,32 @@ with Ada.Calendar;              use Ada.Calendar;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Strings;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.Traces;               use GNAT.Traces;
 
 with Basic_Types;               use Basic_Types;
-with Entities;                  use Entities;
 with Entities.Queries;          use Entities.Queries;
-with VFS;                       use VFS;
-with Traces;                    use Traces;
-with Projects;                  use Projects;
+with Entities;                  use Entities;
+with File_Utils;                use File_Utils;
+with Filesystem.Queries;        use Filesystem.Queries;
+with Filesystem;                use Filesystem;
+with Glib.Convert;              use Glib.Convert;
 with Projects.Editor;           use Projects.Editor;
 with Projects.Registry;         use Projects.Registry;
-with Glib.Convert;              use Glib.Convert;
-with Filesystem;                use Filesystem;
-with Filesystem.Queries;        use Filesystem.Queries;
-with File_Utils;                use File_Utils;
+with Projects;                  use Projects;
 with Remote;                    use Remote;
+with Traces;
+with VFS;                       use VFS;
 
 with ALI;                       use ALI;
 with Types;                     use Types;
 with Namet;                     use Namet;
 
 package body ALI_Parser is
-   Me        : constant Debug_Handle := Create ("ALI", Off);
-   Assert_Me : constant Debug_Handle := Create ("ALI.Assert", Off);
+   Me        : constant Trace_Handle := Create ("ALI", Off);
+   Assert_Me : constant Trace_Handle := Create ("ALI.Assert", Off);
 
    ALI_Ext  : constant String := ".ali";
    --  Extension for ALI files
@@ -905,7 +905,7 @@ package body ALI_Parser is
       end if;
    exception
       when E : others =>
-         Trace (Exception_Handle, "Unexpected error while parsing "
+         Trace (Traces.Exception_Handle, "Unexpected error while parsing "
                 & Full_Name (Get_LI_Filename (LI)).all & ": "
                 & Exception_Information (E));
    end Process_Entity_Ref;
@@ -1330,7 +1330,7 @@ package body ALI_Parser is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, "Unexpected error while parsing "
+         Trace (Traces.Exception_Handle, "Unexpected error while parsing "
                 & Full_Name (Get_LI_Filename (LI)).all & ": "
                 & Exception_Information (E));
          return False;

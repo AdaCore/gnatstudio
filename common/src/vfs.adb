@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2003-2007, AdaCore                 --
+--                      Copyright (C) 2003-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -34,6 +34,7 @@ with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Heap_Sort;            use GNAT.Heap_Sort;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Traces;               use GNAT.Traces;
 
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 
@@ -46,11 +47,10 @@ with File_Utils;                use File_Utils;
 with OS_Utils;                  use OS_Utils;
 with Remote;                    use Remote;
 with String_Utils;              use String_Utils;
-with Traces;                    use Traces;
 
 package body VFS is
 
-   Resolve_Links_Handle : constant Debug_Handle :=
+   Resolve_Links_Handle : constant Trace_Handle :=
       Create ("VFS.Resolve_Links", Off);
 
    Temporary_Dir : constant String := Get_Tmp_Dir;

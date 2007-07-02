@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2007                       --
---                             AdaCore                               --
+--                     Copyright (C) 2003-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -27,6 +26,7 @@ with Glib.Main;               use Glib.Main;
 with Glib.Object;             use Glib.Object;
 with GNAT.Scripts;            use GNAT.Scripts;
 with GNAT.Strings;            use GNAT.Strings;
+with GNAT.Traces;
 with GPS.Kernel;              use GPS.Kernel;
 with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
 with GPS.Kernel.Console;      use GPS.Kernel.Console;
@@ -48,7 +48,7 @@ package body KeyManager_Module.Macros is
    Me        : constant Debug_Handle := Create ("Keymanager.Macros");
 
    Mouse_Macro_Support : constant Debug_Handle :=
-     Create ("Keymanager.Mouse_Macro", Off);
+     Create ("Keymanager.Mouse_Macro", GNAT.Traces.Off);
    --  ??? For now disable by default since this is a work in progress
 
    File_Cst                  : aliased constant String := "file";

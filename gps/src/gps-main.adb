@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                             AdaCore                               --
+--                     Copyright (C) 2001-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -28,6 +27,7 @@ pragma Warnings (On);
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Scripts;              use GNAT.Scripts;
 with GNAT.Strings;
+with GNAT.Traces;
 
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 
@@ -142,64 +142,67 @@ procedure GPS.Main is
    Pid_Image : constant String := String_Utils.Image (Get_Process_Id);
 
    Docgen_Trace           : constant Debug_Handle :=
-                              Create ("MODULE.Docgen", On);
+                              Create ("MODULE.Docgen", GNAT.Traces.On);
    Refactor_Trace         : constant Debug_Handle :=
-                              Create ("MODULE.Refactor", On);
+                              Create ("MODULE.Refactor", GNAT.Traces.On);
    Python_Trace           : constant Debug_Handle :=
-                              Create ("MODULE.Python", On);
+                              Create ("MODULE.Python", GNAT.Traces.On);
    Call_Graph_Trace       : constant Debug_Handle :=
-                              Create ("MODULE.Call_Graph", On);
+                              Create ("MODULE.Call_Graph", GNAT.Traces.On);
    Dependency_Trace       : constant Debug_Handle :=
-                              Create ("MODULE.Dependency", On);
+                              Create ("MODULE.Dependency", GNAT.Traces.On);
    Project_Browser_Trace  : constant Debug_Handle :=
-                              Create ("MODULE.Project_Browser", On);
+                             Create ("MODULE.Project_Browser", GNAT.Traces.On);
    Entities_Browser_Trace : constant Debug_Handle :=
-                              Create ("MODULE.Entities_Browser", On);
+                            Create ("MODULE.Entities_Browser", GNAT.Traces.On);
    Revision_Views_Trace   : constant Debug_Handle :=
-                               Create ("MODULE.Revision_Views", On);
+                              Create ("MODULE.Revision_Views", GNAT.Traces.On);
    Aliases_Trace          : constant Debug_Handle :=
-                              Create ("MODULE.Aliases", On);
+                              Create ("MODULE.Aliases", GNAT.Traces.On);
    Project_Explorer_Trace : constant Debug_Handle :=
-                              Create ("MODULE.Project_Explorer", On);
+                            Create ("MODULE.Project_Explorer", GNAT.Traces.On);
    Files_Explorer_Trace   : constant Debug_Handle :=
-                              Create ("MODULE.Files_Explorer", On);
+                              Create ("MODULE.Files_Explorer", GNAT.Traces.On);
    External_Editor_Trace  : constant Debug_Handle :=
-                              Create ("MODULE.External_Editor", On);
-   VCS_Trace              : constant Debug_Handle := Create ("MODULE.VCS", On);
+                             Create ("MODULE.External_Editor", GNAT.Traces.On);
+   VCS_Trace              : constant Debug_Handle :=
+                             Create ("MODULE.VCS", GNAT.Traces.On);
    Custom_Trace           : constant Debug_Handle :=
-                              Create ("MODULE.Custom", On);
+                              Create ("MODULE.Custom", GNAT.Traces.On);
    Action_Editor_Trace    : constant Debug_Handle :=
-                              Create ("MODULE.Action_Editor", Off);
+                              Create ("MODULE.Action_Editor", GNAT.Traces.Off);
    Code_Analysis_Trace    : constant Debug_Handle :=
-                                       Create ("MODULE.Code_Analysis", On);
+                              Create ("MODULE.Code_Analysis", GNAT.Traces.On);
    Codefix_Trace          : constant Debug_Handle :=
-                                       Create ("MODULE.Codefix", On);
+                              Create ("MODULE.Codefix", GNAT.Traces.On);
    Builder_Trace          : constant Debug_Handle :=
-                                       Create ("MODULE.Builder", On);
+                              Create ("MODULE.Builder", GNAT.Traces.On);
    GVD_Trace              : constant Debug_Handle :=
-                                       Create ("MODULE.GVD", On);
+                              Create ("MODULE.GVD", GNAT.Traces.On);
    Aunit_Trace            : constant Debug_Handle :=
-                                       Create ("MODULE.Aunit", On);
+                              Create ("MODULE.Aunit", GNAT.Traces.On);
    Startup_Trace          : constant Debug_Handle :=
-                                       Create ("MODULE.Startup", On);
-   VFS_Trace              : constant Debug_Handle := Create ("MODULE.VFS", On);
+                              Create ("MODULE.Startup", GNAT.Traces.On);
+   VFS_Trace              : constant Debug_Handle :=
+                              Create ("MODULE.VFS", GNAT.Traces.On);
    Help_Trace             : constant Debug_Handle :=
-                                       Create ("MODULE.Help", On);
+                              Create ("MODULE.Help", GNAT.Traces.On);
    Scenario_View_Trace    : constant Debug_Handle :=
-                              Create ("MODULE.SCENARIO", On);
+                              Create ("MODULE.SCENARIO", GNAT.Traces.On);
    Project_Viewer_Trace   : constant Debug_Handle :=
-                              Create ("MODULE.Project_Viewer", On);
+                              Create ("MODULE.Project_Viewer", GNAT.Traces.On);
    Project_Properties_Trace : constant Debug_Handle :=
-                                Create ("MODULE.Project_Properties", On);
-   CPP_Trace              : constant Debug_Handle := Create ("MODULE.CPP", On);
+                          Create ("MODULE.Project_Properties", GNAT.Traces.On);
+   CPP_Trace              : constant Debug_Handle :=
+                              Create ("MODULE.CPP", GNAT.Traces.On);
    Outline_View_Trace     : constant Debug_Handle :=
-                              Create ("MODULE.Outline", On);
+                              Create ("MODULE.Outline", GNAT.Traces.On);
    Call_Graph_View_Trace  : constant Debug_Handle :=
-                              Create ("MODULE.Call_Graph_View", On);
+                             Create ("MODULE.Call_Graph_View", GNAT.Traces.On);
    Clipboard_View_Trace   : constant Debug_Handle :=
-                              Create ("MODULE.Clipboard_Vview", On);
+                             Create ("MODULE.Clipboard_Vview", GNAT.Traces.On);
    Remote_View_Trace      : constant Debug_Handle :=
-                              Create ("MODULE.Remote_View", On);
+                              Create ("MODULE.Remote_View", GNAT.Traces.On);
 
    GPS_Started_Hook       : constant String := "gps_started";
 
@@ -556,7 +559,7 @@ procedure GPS.Main is
 
       --  Initialize the traces
 
-      Traces.Parse_Config_File
+      GNAT.Traces.Parse_Config_File
         (Default => File_Utils.Name_As_Directory (Dir.all) & "traces.cfg");
       Trace (Me, "GPS " & Config.Version & " (" & Config.Source_Date &
              ") hosted on " & Config.Target);
@@ -732,16 +735,16 @@ procedure GPS.Main is
                         end;
 
                      elsif Full_Switch = "-traceon" then
-                        Set_Active (Create (Parameter), True);
+                        GNAT.Traces.Set_Active (Create (Parameter), True);
 
                      elsif Full_Switch = "-traceoff" then
-                        Set_Active (Create (Parameter), False);
+                        GNAT.Traces.Set_Active (Create (Parameter), False);
 
                      elsif Full_Switch = "-tracefile" then
-                        Traces.Parse_Config_File (Filename => Parameter);
+                        GNAT.Traces.Parse_Config_File (Filename => Parameter);
 
                      elsif Full_Switch = "-tracelist" then
-                        Traces.Show_Configuration
+                        GNAT.Traces.Show_Configuration
                           (Ada.Text_IO.Put_Line'Access);
                         OS_Exit (0);
                      end if;
@@ -1634,7 +1637,7 @@ procedure GPS.Main is
       Destroy (Kernel);
 
       Projects.Registry.Finalize;
-      Traces.Finalize;
+      GNAT.Traces.Finalize;
 
       GNAT.Expect.TTY.Remote.Close_All;
 

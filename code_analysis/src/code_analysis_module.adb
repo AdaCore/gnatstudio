@@ -29,6 +29,7 @@ with Entities;                               use Entities;
 with GNAT.OS_Lib;                            use GNAT.OS_Lib;
 with GNAT.Scripts;                           use GNAT.Scripts;
 with GNAT.Strings;
+with GNAT.Traces;
 with GPS.Intl;                               use GPS.Intl;
 with GPS.Kernel;                             use GPS.Kernel;
 with GPS.Kernel.Console;
@@ -113,7 +114,7 @@ package body Code_Analysis_Module is
    --  annotation columns
 
    Binary_Coverage_Trace : constant Debug_Handle :=
-                             Create ("BINARY_COVERAGE_MODE", On);
+                             Create ("BINARY_COVERAGE_MODE", GNAT.Traces.On);
    Binary_Coverage_Mode : Boolean;
    --  Boolean that allows to determine wether we are in binary coverage mode
    --  or not.
