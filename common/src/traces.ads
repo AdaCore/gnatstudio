@@ -35,6 +35,7 @@ package Traces is
       Default   : GNAT.Traces.Default_Activation_Status :=
         GNAT.Traces.From_Config;
       Stream    : String := "";
+      Factory   : GNAT.Traces.Handle_Factory := null;
       Finalize  : Boolean := True)
       return Debug_Handle
      renames GNAT.Traces.Create;
