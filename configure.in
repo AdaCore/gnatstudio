@@ -49,17 +49,6 @@ AC_CHECK_PROGS(TEXI2DVI, texi2dvi)
 AM_PATH_GTK
 AM_PATH_GTKADA(2.4.0,,AC_MSG_ERROR(Test for GtkAda failed. See the file 'INSTALL' for help.))
 
-######### checking for python (needs to be done after gtk)
-AM_PATH_PYTHON
-AM_PATH_PYGTK(2.8)
-AM_TO_GPR($PYTHON_LIBS,   PYTHON_LIBS_GPR)
-AM_TO_GPR($PYTHON_CFLAGS, PYTHON_CFLAGS_GPR)
-AM_TO_GPR($PYGTK_INCLUDE, PYGTK_INCLUDE_GPR)
-AM_TO_GPR($GTK_GCC_FLAGS, GTK_GCC_FLAGS_GPR)
-
-######### Configuration for gnatlib
-AM_PATH_SYSLOG
-
 ######## GNU regex checking
 AC_CHECK_FUNC(re_compile_pattern, AC_DEFINE(HAVE_GNU_REGEX))
 
@@ -281,17 +270,13 @@ AC_SUBST(SSH_ESCAPE)
 AC_CONFIG_SUBDIRS(kernel/src_info/sn)
 AC_CONFIG_SUBDIRS(kernel/src_info/sn/snsrc)
 
-echo ""
-echo "--------- Summary --------------"
-echo "       python: $PYTHON_BASE"
-echo "           uses --with-python=<dir> to find libpython.so"
-if test "$PYGTK_INCLUDE" = "" ; then
-   echo "       pygtk: no"
-else
-   echo "       pygtk: $PYGTK_PREFIX"
-fi
-echo "       xmlada: $XMLADA_GPR"
-echo "           uses ADA_PROJECT_PATH to find xmlada.gpr"
-echo ""
+## Recurse for gnatlib, but do not provide support for syslog
 
-AC_OUTPUT(Makefile Makefile.common gnat/sdefault/sdefault.adb docs/Makefile po/Makefile common/Makefile.common common/src/config.ads gtkada/gtkada.gpr common/expect/Makefile common/common.gpr:common/common_${XMLADA_GPR}.gpr.in share/plug-ins/subversion.xml share/plug-ins/protocols.xml gnatlib/gnatlib_shared.gpr gnatlib/docs/Makefile gnatlib/Makefile.conf)
+AC_CONFIG_SUBDIRS([gnatlib])
+
+AC_MSG_NOTICE([------------- Summary for GPS --------------------])
+AC_MSG_NOTICE([ Xml/Ada: $XMLADA_GPR])
+AC_MSG_NOTICE([    use ADA_PROJECT_PATH to find xmlada.gpr])
+AC_MSG_NOTICE([--------------------------------------------------])
+
+AC_OUTPUT(Makefile Makefile.common gnat/sdefault/sdefault.adb docs/Makefile po/Makefile common/Makefile.common common/src/config.ads gtkada/gtkada.gpr common/expect/Makefile common/common.gpr:common/common_${XMLADA_GPR}.gpr.in share/plug-ins/subversion.xml share/plug-ins/protocols.xml )
