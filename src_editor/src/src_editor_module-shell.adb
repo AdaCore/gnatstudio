@@ -446,6 +446,19 @@ package body Src_Editor_Module.Shell is
       Compensate_Last_Iter : Boolean := True)
    is
       Success : Boolean;
+
+      procedure Forward_Iter (Iter : in out Gtk_Text_Iter);
+      --  Forward Iter one char.
+
+      procedure Forward_Iter (Iter : in out Gtk_Text_Iter) is
+         Line, End_Line : Editable_Line_Type;
+         Col, End_Col   : Character_Offset_Type;
+      begin
+         Get_Iter_Position (Buffer, Iter, Line, Col);
+         Forward_Position (Buffer, Line, Col, 1, End_Line, End_Col);
+         Get_Iter_At_Screen_Position (Buffer, Iter, End_Line, End_Col);
+      end Forward_Iter;
+
    begin
       if Buffer /= null then
          Get_Start_Iter (Buffer, Iter1);
@@ -469,7 +482,7 @@ package body Src_Editor_Module.Shell is
                --  Emacs mode (F707-004)
                --  if not (Is_End (Iter2) or else Ends_Line (Iter2)) then
                if not Is_End (Iter2) then
-                  Forward_Char (Iter2, Success);
+                  Forward_Iter (Iter2);
                end if;
 
             else
@@ -477,7 +490,7 @@ package body Src_Editor_Module.Shell is
                --  Emacs mode (F707-004)
                --  if not (Is_End (Iter1) or else Ends_Line (Iter1)) then
                if not Is_End (Iter1) then
-                  Forward_Char (Iter1, Success);
+                  Forward_Iter (Iter1);
                end if;
             end if;
          end if;
