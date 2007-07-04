@@ -448,7 +448,11 @@ package body Src_Editor_Module.Shell is
       Success : Boolean;
 
       procedure Forward_Iter (Iter : in out Gtk_Text_Iter);
-      --  Forward Iter one char.
+      --  Forward Iter one char
+
+      ------------------
+      -- Forward_Iter --
+      ------------------
 
       procedure Forward_Iter (Iter : in out Gtk_Text_Iter) is
          Line, End_Line : Editable_Line_Type;
@@ -636,10 +640,10 @@ package body Src_Editor_Module.Shell is
    ----------------------------
 
    function Create_Editor_Location
-     (Script   : access Scripting_Language_Record'Class;
-      Buffer   : Source_Buffer;
-      Line     : Editable_Line_Type;
-      Column   : Visible_Column_Type) return Class_Instance
+     (Script : access Scripting_Language_Record'Class;
+      Buffer : Source_Buffer;
+      Line   : Editable_Line_Type;
+      Column : Visible_Column_Type) return Class_Instance
    is
       EditorLoc : constant Class_Type :=
                     New_Class
@@ -756,15 +760,15 @@ package body Src_Editor_Module.Shell is
    -----------------------------------
 
    procedure Common_Search_Command_Handler
-     (Data    : in out Callback_Data'Class;
-      Files   : File_Array_Access)
+     (Data  : in out Callback_Data'Class;
+      Files : File_Array_Access)
    is
       Kernel  : constant Kernel_Handle := Get_Kernel (Data);
-      Context : Files_Project_Context_Access;
       Pattern : constant String  := Nth_Arg (Data, 2);
       Casing  : constant Boolean := Nth_Arg (Data, 3, False);
       Regexp  : constant Boolean := Nth_Arg (Data, 4, False);
       Scope   : constant String  := Nth_Arg (Data, 5, "whole");
+      Context : Files_Project_Context_Access;
       S       : Search_Scope;
 
       function Callback (Match : Match_Result) return Boolean;
