@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 4.2.0
 
+- G628-004 Generated AUnit test cases are missing a use clause
+  Problem:    When GPS generates a new AUnit test case for AUnit 2.x, a use
+              clause for the AUnit unit is missing.
+  Workaround: Add a use AUnit clause in the generated file.
+
 - G611-028 Files status overriden
   Problem:    When opening a file the status in the VCS Explorer and
               the VCS Activities is set to locally modified. This is
