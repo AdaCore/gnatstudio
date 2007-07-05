@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
---                              AdaCore                              --
+--                  Copyright (C) 2001-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -241,7 +240,7 @@ package body VCS_View_API is
 
    function Get_Repository_Root (Project : Project_Type) return String is
       Rep_Root : constant String :=
-                   Get_Attribute_Value (Project, Vcs_Repository_Root);
+                   Get_Attribute_Value (Project, VCS_Repository_Root);
    begin
       if Rep_Root = "" then
          return "";
@@ -604,7 +603,7 @@ package body VCS_View_API is
    begin
       --  ??? maybe we could cache this information
       return Get_VCS_From_Id
-        (Get_Attribute_Value (Project, Vcs_Kind_Attribute));
+        (Get_Attribute_Value (Project, VCS_Kind_Attribute));
    end Get_Current_Ref;
 
    ---------------------

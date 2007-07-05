@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2007                      --
---                              AdaCore                              --
+--                  Copyright (C) 2005-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -75,8 +74,7 @@ package body VCS_Activities is
    function Hash (F : Activity_Id) return Hash_Header;
 
    package Activity_Table is new GNAT.HTable.Simple_HTable
-     (Hash_Header, Activity_Record, Empty_Activity,
-      Activity_Id, Hash, "=");
+     (Hash_Header, Activity_Record, Empty_Activity, Activity_Id, Hash, "=");
    use Activity_Table;
 
    function Hash is new HTable.Hash (Hash_Header);
@@ -339,7 +337,7 @@ package body VCS_Activities is
             begin
                if Project /= No_Project then
                   VCS := Get_VCS_From_Id
-                    (Get_Attribute_Value (Project, Vcs_Kind_Attribute));
+                    (Get_Attribute_Value (Project, VCS_Kind_Attribute));
                   declare
                      Item : Activity_Record := Get (Activity);
                   begin
@@ -588,7 +586,7 @@ package body VCS_Activities is
                      Get_Project_From_File (Get_Registry (Kernel).all, File);
       VCS        : constant VCS_Access :=
                      Get_VCS_From_Id
-                       (Get_Attribute_Value (Project, Vcs_Kind_Attribute));
+                       (Get_Attribute_Value (Project, VCS_Kind_Attribute));
       Item       : Activity_Record := Get (Activity);
 
       procedure Add (File : Virtual_File);

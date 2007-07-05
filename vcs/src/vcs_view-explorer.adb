@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                              AdaCore                              --
+--                 Copyright (C) 2001-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -864,7 +863,7 @@ package body VCS_View.Explorer is
 
       if Project /= No_Project then
          Explorer.VCS := Get_VCS_From_Id
-           (Get_Attribute_Value (Project, Vcs_Kind_Attribute));
+           (Get_Attribute_Value (Project, VCS_Kind_Attribute));
       end if;
 
       Set_Context_Information

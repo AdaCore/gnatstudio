@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2007, AdaCore             --
+--                  Copyright (C) 2002-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -499,7 +499,7 @@ package body Projects is
          exit when P = No_Project;
 
          if not Has_VCS
-           or else Get_Attribute_Value (P, Vcs_Kind_Attribute) /= ""
+           or else Get_Attribute_Value (P, VCS_Kind_Attribute) /= ""
          then
             Src := Projects_Table (Project) (Get_View (P)).Source_Dirs;
 

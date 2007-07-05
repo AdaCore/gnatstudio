@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2007                      --
---                              AdaCore                              --
+--                  Copyright (C) 2002-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -865,9 +864,9 @@ package body Log_Utils is
                use GNAT;
 
                File_Check_Command : constant String := Get_Attribute_Value
-                 (Project, Vcs_File_Check);
+                 (Project, VCS_File_Check);
                Log_Check_Command  : constant String := Get_Attribute_Value
-                 (Project, Vcs_Log_Check);
+                 (Project, VCS_Log_Check);
                Log_File           : constant Virtual_File :=
                                       Get_Log_From_File
                                         (Kernel, File, False,

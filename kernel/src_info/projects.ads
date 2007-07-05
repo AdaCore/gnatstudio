@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2007                      --
---                              AdaCore                              --
+--                   Copyright (C) 2002-2007, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -294,12 +293,12 @@ package Projects is
    -- Attributes --
    ----------------
 
-   Builder_Package            : constant String := "builder";
-   Compiler_Package           : constant String := "compiler";
-   Linker_Package             : constant String := "linker";
-   Binder_Package             : constant String := "binder";
-   Naming_Package             : constant String := "naming";
-   Ide_Package                : constant String := "ide";
+   Builder_Package  : constant String := "builder";
+   Compiler_Package : constant String := "compiler";
+   Linker_Package   : constant String := "linker";
+   Binder_Package   : constant String := "binder";
+   Naming_Package   : constant String := "naming";
+   Ide_Package      : constant String := "ide";
 
    type Attribute_Pkg (<>) is private;
 
@@ -315,11 +314,11 @@ package Projects is
    Protocol_Attribute              : constant Attribute_Pkg;
    Main_Attribute                  : constant Attribute_Pkg;
    Library_Name_Attribute          : constant Attribute_Pkg;
-   Vcs_File_Check                  : constant Attribute_Pkg;
-   Vcs_Log_Check                   : constant Attribute_Pkg;
+   VCS_File_Check                  : constant Attribute_Pkg;
+   VCS_Log_Check                   : constant Attribute_Pkg;
    Obj_Dir_Attribute               : constant Attribute_Pkg;
-   Vcs_Kind_Attribute              : constant Attribute_Pkg;
-   Vcs_Repository_Root             : constant Attribute_Pkg;
+   VCS_Kind_Attribute              : constant Attribute_Pkg;
+   VCS_Repository_Root             : constant Attribute_Pkg;
    VCS_Patch_Root                  : constant Attribute_Pkg;
    Global_Pragmas_Attribute        : constant Attribute_Pkg;
    Local_Pragmas_Attribute         : constant Attribute_Pkg;
@@ -749,11 +748,11 @@ private
                                  "ide#communication_protocol";
    Main_Attribute            : constant Attribute_Pkg := "main";
    Library_Name_Attribute    : constant Attribute_Pkg := "library_name";
-   Vcs_File_Check            : constant Attribute_Pkg := "ide#vcs_file_check";
-   Vcs_Log_Check             : constant Attribute_Pkg := "ide#vcs_log_check";
+   VCS_File_Check            : constant Attribute_Pkg := "ide#vcs_file_check";
+   VCS_Log_Check             : constant Attribute_Pkg := "ide#vcs_log_check";
    Obj_Dir_Attribute         : constant Attribute_Pkg := "object_dir";
-   Vcs_Kind_Attribute        : constant Attribute_Pkg := "ide#vcs_kind";
-   Vcs_Repository_Root       : constant Attribute_Pkg :=
+   VCS_Kind_Attribute        : constant Attribute_Pkg := "ide#vcs_kind";
+   VCS_Repository_Root       : constant Attribute_Pkg :=
                                  "ide#vcs_repository_root";
    VCS_Patch_Root            : constant Attribute_Pkg :=
                                  "ide#vcs_patch_root";
