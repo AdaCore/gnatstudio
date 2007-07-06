@@ -1,9 +1,8 @@
-with "../gtkada/gtkada";
+with "gtkada";
 with "../gnat";
 with "../shared";
 with "xmlada_sax";
-with "../gnatlib/gnatlib_gtk";
-with "../gnatlib/gnatlib";
+with "../gnatlib/src/gnatlib_gtk";
 
 project Common is
 

@@ -1,7 +1,7 @@
 with "../shared";
 with "../kernel/kernel";
-with "../gtkada/gtkada";
-with "../gnatlib/gnatlib";
+with "gtkada";
+with "../gnatlib/src/gnatlib";
 
 project Python is
 

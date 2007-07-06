@@ -9,8 +9,6 @@ endif
 
 VDIFF_BASE_DIR := $(BASE_DIR)
 
-BASE_DIR=$(VDIFF_BASE_DIR)/../gtkada
-include $(BASE_DIR)/Makefile.gtkada
 BASE_DIR=$(VDIFF_BASE_DIR)/../common
 include $(BASE_DIR)/Makefile.common
 BASE_DIR=$(VDIFF_BASE_DIR)/../kernel

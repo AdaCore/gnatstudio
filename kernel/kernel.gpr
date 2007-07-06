@@ -1,10 +1,10 @@
 with "../gnat";
-with "../gtkada/gtkada";
+with "gtkada";
 with "../common/common";
 with "../widgets/widgets";
 with "../shared";
-with "../gnatlib/gnatlib";
-with "../gnatlib/gnatlib_gtk";
+with "../gnatlib/src/gnatlib";
+with "../gnatlib/src/gnatlib_gtk";
 
 project Kernel is
 

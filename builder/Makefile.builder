@@ -10,8 +10,6 @@ endif
 BUILDER_BASE_DIR := $(BASE_DIR)
 BASE_DIR=$(BUILDER_BASE_DIR)/../kernel
 include $(BASE_DIR)/Makefile.kernel
-BASE_DIR=$(BUILDER_BASE_DIR)/../gtkada
-include $(BASE_DIR)/Makefile.gtkada
 
 BUILDER_SRC_DIRS = $(BUILDER_BASE_DIR)/src
 SRC_DIRS += $(BUILDER_SRC_DIRS)

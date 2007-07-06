@@ -9,9 +9,6 @@ endif
 
 COMMON_BASE_DIR := $(BASE_DIR)
 
-BASE_DIR=$(COMMON_BASE_DIR)/../gtkada
-include $(BASE_DIR)/Makefile.gtkada
-
 ifeq ($(OS),Windows_NT)
 BASE_DIR=$(COMMON_BASE_DIR)/expect
 include $(BASE_DIR)/Makefile.expect

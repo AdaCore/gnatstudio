@@ -1,5 +1,5 @@
 with "../common/common";
-with "../gtkada/gtkada";
+with "gtkada";
 with "../kernel/kernel";
 with "../widgets/widgets";
 with "../vsearch/vsearch";

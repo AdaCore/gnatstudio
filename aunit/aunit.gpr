@@ -1,4 +1,4 @@
-with "../gtkada/gtkada";
+with "gtkada";
 with "../common/common";
 with "../kernel/kernel";
 with "../widgets/widgets";

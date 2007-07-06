@@ -1,5 +1,5 @@
 with "../kernel/kernel";
-with "../gtkada/gtkada";
+with "gtkada";
 with "../shared";
 
 project Refactoring is

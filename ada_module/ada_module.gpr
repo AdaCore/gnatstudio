@@ -1,7 +1,7 @@
 with "../kernel/kernel";
 with "../shared";
 with "../prj_editor/prj_editor";
-with "../gtkada/gtkada";
+with "gtkada";
 
 project Ada_Module is
 

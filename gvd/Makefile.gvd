@@ -9,9 +9,6 @@ endif
 
 GVD_BASE_DIR := $(BASE_DIR)
 
-BASE_DIR=$(GVD_BASE_DIR)/../gtkada
-include $(BASE_DIR)/Makefile.gtkada
-
 GVD_SRC_DIRS = $(GVD_BASE_DIR)/gvd $(GVD_BASE_DIR)/pixmaps
 SRC_DIRS += $(GVD_SRC_DIRS)
 C_SRCS = pixmaps.c

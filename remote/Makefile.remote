@@ -11,8 +11,6 @@ REMOTE_BASE_DIR := $(BASE_DIR)
 
 BASE_DIR=$(REMOTE_BASE_DIR)/../common
 include $(BASE_DIR)/Makefile.common
-BASE_DIR=$(REMOTE_BASE_DIR)/../gtkada
-include $(BASE_DIR)/Makefile.gtkada
 BASE_DIR=$(REMOTE_BASE_DIR)/../kernel
 include $(BASE_DIR)/Makefile.kernel
 

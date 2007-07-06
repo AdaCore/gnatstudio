@@ -9,8 +9,6 @@ endif
 
 CPP_MODULE_BASE_DIR := $(BASE_DIR)
 
-BASE_DIR=$(CPP_MODULE_BASE_DIR)/../gtkada
-include $(BASE_DIR)/Makefile.gtkada
 BASE_DIR=$(CPP_MODULE_BASE_DIR)/../kernel
 include $(BASE_DIR)/Makefile.kernel
 BASE_DIR=$(CPP_MODULE_BASE_DIR)/../prj_editor
