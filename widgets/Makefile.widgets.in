@@ -19,7 +19,7 @@ C_SRCS = \
 WIDGETS_OBJ_DIR = $(WIDGETS_BASE_DIR)/obj
 OBJ_DIR = $(WIDGETS_OBJ_DIR)
 
-CFLAGS = -g -O2 ${shell pkg-config gtk+-2.0 --cflags}
+CFLAGS = -g -O2 ${shell @PKG_CONFIG@ gtk+-2.0 --cflags}
 
 PROJECT_FILE = widgets
 LIBS := $(WIDGETS_OBJ_DIR)/libwidgets$(AR_EXT) $(LIBS)

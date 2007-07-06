@@ -4867,7 +4867,7 @@ echo "$as_me:     use ADA_PROJECT_PATH to find xmlada.gpr" >&6;}
 { echo "$as_me:$LINENO: --------------------------------------------------" >&5
 echo "$as_me: --------------------------------------------------" >&6;}
 
-                                                                                                                        ac_config_files="$ac_config_files Makefile Makefile.common gnat/sdefault/sdefault.adb docs/Makefile po/Makefile common/Makefile.common common/src/config.ads common/expect/Makefile common/common.gpr:common/common_${XMLADA_GPR}.gpr.in share/plug-ins/subversion.xml share/plug-ins/protocols.xml"
+                                                                                                                        ac_config_files="$ac_config_files Makefile Makefile.common gnat/sdefault/sdefault.adb docs/Makefile po/Makefile common/Makefile.common common/src/config.ads common/expect/Makefile common/common.gpr:common/common_${XMLADA_GPR}.gpr.in share/plug-ins/subversion.xml share/plug-ins/protocols.xml widgets/Makefile.widgets"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
