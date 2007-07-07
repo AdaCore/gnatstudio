@@ -108,6 +108,7 @@ dnl
     no_gtk=yes
   else
     GTK_CFLAGS=`$GTK_CONFIG --cflags`
+    GTKADA_PREFIX=`$GTK_CONFIG --prefix`
     GTKADA_SRC=`echo $GTK_CFLAGS | sed -e 's/ *-aO.*//' -e 's/-aI//'`
     GTKADA_OBJ=`echo $GTK_CFLAGS | sed -e 's/.*-aO//'`
     GTK_LIBS=`$GTK_CONFIG --libs`
@@ -201,6 +202,7 @@ main ()
   AC_SUBST(GTK_CFLAGS)
   AC_SUBST(GTK_LIBS)
   AC_SUBST(GTK_STATIC_LIBS)
+  AC_SUBST(GTKADA_PREFIX)
   rm -f conf.gtktest
 ])
 

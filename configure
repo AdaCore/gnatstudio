@@ -311,7 +311,7 @@ ac_includes_default="\
 ac_subdirs_all="$ac_subdirs_all kernel/src_info/sn"
 ac_subdirs_all="$ac_subdirs_all kernel/src_info/sn/snsrc"
 ac_subdirs_all="$ac_subdirs_all gnatlib"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os XMLADA_GPR CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP GNATMAKE SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB DVIPS MAKEINFO TEXI2DVI PKG_CONFIG GTK_GCC_FLAGS WITH_GTK GTK_CONFIG GTK_PREFIX GLIB_PREFIX ATK_PREFIX PANGO_PREFIX CAIRO_PREFIX GTKADA_SRC GTKADA_OBJ GTK_CFLAGS GTK_LIBS GTK_STATIC_LIBS GPS_VERSION opsysfile TARGET EXEC_PREFIX STRIP_CR CAN_OUTPUT TARGET_CFLAGS TARGET_LFLAGS EXEC_COMMAND DEFAULT_PS DEFAULT_FONT PRINT_CMD DIFF_CMD PATCH_CMD OPAQUE_MDI HOST_TYPE EXECUTION_WINDOW PATH_STYLE SSH_ESCAPE subdirs LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os XMLADA_GPR CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP GNATMAKE SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB DVIPS MAKEINFO TEXI2DVI PKG_CONFIG GTK_GCC_FLAGS WITH_GTK GTK_CONFIG GTK_PREFIX GLIB_PREFIX ATK_PREFIX PANGO_PREFIX CAIRO_PREFIX GTKADA_SRC GTKADA_OBJ GTK_CFLAGS GTK_LIBS GTK_STATIC_LIBS GTKADA_PREFIX GPS_VERSION opsysfile TARGET EXEC_PREFIX STRIP_CR CAN_OUTPUT TARGET_CFLAGS TARGET_LFLAGS EXEC_COMMAND DEFAULT_PS DEFAULT_FONT PRINT_CMD DIFF_CMD PATCH_CMD OPAQUE_MDI HOST_TYPE EXECUTION_WINDOW PATH_STYLE SSH_ESCAPE subdirs LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -3346,6 +3346,7 @@ echo $ECHO_N "checking for GtkAda - version >= $min_gtk_version... $ECHO_C" >&6
     no_gtk=yes
   else
     GTK_CFLAGS=`$GTK_CONFIG --cflags`
+    GTKADA_PREFIX=`$GTK_CONFIG --prefix`
     GTKADA_SRC=`echo $GTK_CFLAGS | sed -e 's/ *-aO.*//' -e 's/-aI//'`
     GTKADA_OBJ=`echo $GTK_CFLAGS | sed -e 's/.*-aO//'`
     GTK_LIBS=`$GTK_CONFIG --libs`
@@ -3462,6 +3463,7 @@ echo "${ECHO_T}no" >&6
 echo "$as_me: error: Test for GtkAda failed. See the file 'INSTALL' for help." >&2;}
    { (exit 1); exit 1; }; }
   fi
+
 
 
 
@@ -5425,11 +5427,11 @@ do
   "po/Makefile" ) CONFIG_FILES="$CONFIG_FILES po/Makefile" ;;
   "common/Makefile.common" ) CONFIG_FILES="$CONFIG_FILES common/Makefile.common" ;;
   "common/src/config.ads" ) CONFIG_FILES="$CONFIG_FILES common/src/config.ads" ;;
-  "gtkada/gtkada.gpr" ) CONFIG_FILES="$CONFIG_FILES gtkada/gtkada.gpr" ;;
   "common/expect/Makefile" ) CONFIG_FILES="$CONFIG_FILES common/expect/Makefile" ;;
   "common/common.gpr" ) CONFIG_FILES="$CONFIG_FILES common/common.gpr:common/common_${XMLADA_GPR}.gpr.in" ;;
   "share/plug-ins/subversion.xml" ) CONFIG_FILES="$CONFIG_FILES share/plug-ins/subversion.xml" ;;
   "share/plug-ins/protocols.xml" ) CONFIG_FILES="$CONFIG_FILES share/plug-ins/protocols.xml" ;;
+  "widgets/Makefile.widgets" ) CONFIG_FILES="$CONFIG_FILES widgets/Makefile.widgets" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
    { (exit 1); exit 1; }; };;
@@ -5559,6 +5561,7 @@ s,@GTKADA_OBJ@,$GTKADA_OBJ,;t t
 s,@GTK_CFLAGS@,$GTK_CFLAGS,;t t
 s,@GTK_LIBS@,$GTK_LIBS,;t t
 s,@GTK_STATIC_LIBS@,$GTK_STATIC_LIBS,;t t
+s,@GTKADA_PREFIX@,$GTKADA_PREFIX,;t t
 s,@GPS_VERSION@,$GPS_VERSION,;t t
 s,@opsysfile@,$opsysfile,;t t
 s,@TARGET@,$TARGET,;t t

@@ -19,6 +19,10 @@ ifeq ($(BASE_DIR),)
    MAIN_ROOT=True
 endif
 
+# Add path to gtkada.gpr (as found from gtkada-config by configure)
+# Put it last to allow the user to point to another one
+export ADA_PROJECT_PATH:=${ADA_PROJECT_PATH}:${GTKADA_PREFIX}/lib/gnat
+
 GPS_BASE_DIR := $(BASE_DIR)
 
 BASE_DIR=$(GPS_BASE_DIR)/../gnatlib
