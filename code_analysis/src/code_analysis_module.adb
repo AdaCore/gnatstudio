@@ -92,6 +92,9 @@ package body Code_Analysis_Module is
    Prj_File_Cst : aliased   constant String := "prj";
    --  Constant String that represents the name of the .gpr file parameter
    --  of the GPS.CodeAnalysis.add_gcov_project_info subprogram
+   Ana_Name_Cst : aliased   constant String := "name";
+   --  Constant String that represents a name of Analysis_Instance in parameter
+   --  of the GPS.CodeAnalysis.get_analysis command
    Gcov_Extension_Cst :     constant String := ".gcov";
    --  Constant String that represents the extension of GCOV files
    Progress_Bar_Width_Cst : constant Gint   := 150;
@@ -115,7 +118,7 @@ package body Code_Analysis_Module is
 
    Binary_Coverage_Trace : constant Debug_Handle :=
                              Create ("BINARY_COVERAGE_MODE", GNAT.Traces.On);
-   Binary_Coverage_Mode : Boolean;
+   Binary_Coverage_Mode  : Boolean;
    --  Boolean that allows to determine wether we are in binary coverage mode
    --  or not.
 
@@ -147,11 +150,12 @@ package body Code_Analysis_Module is
    ------------------------
 
    type Code_Analysis_Instance_Record is record
-      Projects : Code_Analysis_Tree;
-      View     : Code_Analysis_View;
-      Child    : GPS_MDI_Child;
-      Name     : GNAT.Strings.String_Access;
-      Date     : Time;
+      Instances : GNAT.Scripts.Instance_List_Access;
+      Projects  : Code_Analysis_Tree;
+      View      : Code_Analysis_View;
+      Child     : GPS_MDI_Child;
+      Name      : GNAT.Strings.String_Access;
+      Date      : Time;
    end record;
 
    type Code_Analysis_Instance is access Code_Analysis_Instance_Record;
@@ -359,7 +363,13 @@ package body Code_Analysis_Module is
    --  Call to build the tree view report and then put inside it an error
    --  message
 
-   procedure Create_Shell_Instance
+   procedure Shell_CodeAnalysis_Constructor
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Empty subprogram that just raise an exception in order to prevent users
+   --  from using the default shell constructor
+   --  The Shell_Get_Command should be used instead.
+
+   procedure Shell_Get_Command
      (Data    : in out Callback_Data'Class;
       Command : String);
    --  Create a shell scripting instance of the module
@@ -368,7 +378,8 @@ package body Code_Analysis_Module is
      (Widget : access Gtk_Widget_Record'Class);
    --  Create a new analysis instance from the "Tools/Coverage" menu
 
-   function Create_Analysis_Instance return Code_Analysis_Instance;
+   function Create_Analysis_Instance
+     (Name : String := "") return Code_Analysis_Instance;
    --  Create a new analysis instance, intended to contain analysis data
    --  The instance is inserted in the Instances set of the Module_ID
 
@@ -590,26 +601,103 @@ package body Code_Analysis_Module is
       Cont_N_Anal : Context_And_Analysis);
    --  Menu callback that calls Show_Analysis_Report with no context info
 
-   ---------------------------
-   -- Create_Shell_Instance --
-   ---------------------------
+   --------------------------------------------
+   -- CodeAnalysis_Default_Shell_Constructor --
+   --------------------------------------------
 
-   procedure Create_Shell_Instance
-     (Data    : in out Callback_Data'Class;
-      Command : String)
+   procedure Shell_CodeAnalysis_Constructor
+     (Data : in out Callback_Data'Class; Command : String)
    is
-      pragma Unreferenced (Command);
-      Instance : constant Class_Instance
-        := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
-      Property : constant Code_Analysis_Property
-        := new Code_Analysis_Property_Record;
+      pragma Unreferenced (Data, Command);
+      Bad_Usage : exception;
    begin
-      Property.Analysis := Create_Analysis_Instance;
-      Set_Data (Instance, Code_Analysis_Cst_Str,
-                Instance_Property_Record (Property.all));
+      raise Bad_Usage with -"Default constructor can't be used to create" &
+      (-"CodeAnalysis shell instances. Consider using static" &
+       (-"GPS.CodeAnalysis.get (name:) instead."));
+   end Shell_CodeAnalysis_Constructor;
+
+   -----------------------
+   -- Shell_Get_Command --
+   -----------------------
+
+   procedure Shell_Get_Command
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+
+      procedure Attach_Instance_And_Analysis
+        (Data     : in out Callback_Data'Class;
+         Instance : Class_Instance;
+         Analysis : Code_Analysis_Instance);
+      --  Set the Instance in the instance list of Analysis
+      --  Set Analysis in the created property for Instance
+
+      procedure Attach_Instance_And_Analysis
+        (Data     : in out Callback_Data'Class;
+         Instance : Class_Instance;
+         Analysis : Code_Analysis_Instance)
+      is
+         Property : Code_Analysis_Property;
+      begin
+         Set (Analysis.Instances.all, Get_Script (Data), Instance);
+         Property := new Code_Analysis_Property_Record;
+         Property.Analysis := Analysis;
+         Set_Data (Instance, Code_Analysis_Cst_Str,
+                   Instance_Property_Record (Property.all));
+      end Attach_Instance_And_Analysis;
+
+      pragma Unreferenced (Command);
+      use Code_Analysis_Instances;
+      Cur      : Cursor := Code_Analysis_Module_ID.Analyzes.First;
+      Analysis : Code_Analysis_Instance := null;
+      Instance : Class_Instance;
+   begin
+      Name_Parameters (Data, (1 => Ana_Name_Cst'Access));
+
+      declare
+         Analysis_Name : constant String := Nth_Arg (Data, 1);
+      begin
+
+         --  If the given name correspond to an existing Analysis use it
+         --  Else create one using the givent instance
+         loop
+            exit when Analysis /= null or else Cur = No_Element;
+            Analysis := Element (Cur);
+            Next (Cur);
+
+            if Analysis.Name.all /= Analysis_Name then
+               Analysis := null;
+            end if;
+         end loop;
+
+         if Analysis = null then
+            --  Create one
+            Analysis := Create_Analysis_Instance (Analysis_Name);
+            Instance := New_Instance
+              (Get_Script (Data), Code_Analysis_Module_ID.Class);
+            Attach_Instance_And_Analysis (Data, Instance, Analysis);
+         else
+            --  Set the current instance to corresponding instance of the
+            --  Analysis of the given name
+            declare
+               Stored_Instance : Class_Instance := Get
+                 (Analysis.Instances.all, Get_Script (Data));
+            begin
+               if Stored_Instance = No_Class_Instance then
+                  --  Attach the current instance to
+                  Instance := New_Instance
+                    (Get_Script (Data), Code_Analysis_Module_ID.Class);
+                  Attach_Instance_And_Analysis (Data, Instance, Analysis);
+               else
+                  Instance := Stored_Instance;
+               end if;
+            end;
+         end if;
+
+         Set_Return_Value (Data, Instance);
+      end;
    exception
       when E : others => Trace (Exception_Handle, E);
-   end Create_Shell_Instance;
+   end Shell_Get_Command;
 
    -------------------------------
    -- Create_Analysis_From_Menu --
@@ -630,7 +718,8 @@ package body Code_Analysis_Module is
    -- Create_Analysis_Instance --
    ------------------------------
 
-   function Create_Analysis_Instance return Code_Analysis_Instance
+   function Create_Analysis_Instance
+     (Name : String := "") return Code_Analysis_Instance
    is
       Analysis : constant Code_Analysis_Instance
         := new Code_Analysis_Instance_Record;
@@ -639,9 +728,16 @@ package body Code_Analysis_Module is
       Date := Clock;
       Analysis.Date := Date;
       Code_Analysis_Module_ID.Count := Code_Analysis_Module_ID.Count + 1;
-      Analysis.Name := new String'
-        (-"Analysis" & Integer'Image (Code_Analysis_Module_ID.Count));
-      Analysis.Projects := new Project_Maps.Map;
+
+      if Name = "" then
+         Analysis.Name   := new String'
+           (-"Analysis" & Integer'Image (Code_Analysis_Module_ID.Count));
+      else
+         Analysis.Name   := new String'(Name);
+      end if;
+
+      Analysis.Instances := new Instance_List;
+      Analysis.Projects  := new Project_Maps.Map;
       Code_Analysis_Module_ID.Analyzes.Insert (Analysis);
       return Analysis;
    end Create_Analysis_Instance;
@@ -725,6 +821,19 @@ package body Code_Analysis_Module is
    begin
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
       Property := Get_Data (Instance, Code_Analysis_Cst_Str);
+
+      --  Check if Property contains a valid pointer on a
+      --  Code_Analysis_Instance
+      --  Raise Analysis_No_Longer_Exists if pointer is null
+      --  This happens typically when you try to apply shell commands to an
+      --  analysis that have been destroyed by user via the GUI
+      if Code_Analysis_Property (Property).Analysis = null then
+         GPS.Kernel.Console.Insert
+           (Get_Kernel (Data), -"The analysis no longer exists",
+            Mode => GPS.Kernel.Console.Error);
+         return;
+      end if;
+
       Name_Parameters (Data, (2 => Src_File_Cst'Access,
                               3 => Cov_File_Cst'Access));
       Src_Inst := Nth_Arg
@@ -897,6 +1006,19 @@ package body Code_Analysis_Module is
    begin
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
       Property := Get_Data (Instance, Code_Analysis_Cst_Str);
+
+      --  Check if Property contains a valid pointer on a
+      --  Code_Analysis_Instance
+      --  Raise Analysis_No_Longer_Exists if pointer is null
+      --  This happens typically when you try to apply shell commands to an
+      --  analysis that have been destroyed by user via the GUI
+      if Code_Analysis_Property (Property).Analysis = null then
+         GPS.Kernel.Console.Insert
+           (Get_Kernel (Data), -"The analysis no longer exists",
+            Mode => GPS.Kernel.Console.Error);
+         return;
+      end if;
+
       Name_Parameters (Data, (2 => Prj_File_Cst'Access));
          Prj_Inst := Nth_Arg
            (Data, 2, Get_File_Class (Get_Kernel (Data)),
@@ -1033,6 +1155,18 @@ package body Code_Analysis_Module is
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
       Property := Get_Data (Instance, Code_Analysis_Cst_Str);
 
+      --  Check if Property contains a valid pointer on a
+      --  Code_Analysis_Instance
+      --  Raise Analysis_No_Longer_Exists if pointer is null
+      --  This happens typically when you try to apply shell commands to an
+      --  analysis that have been destroyed by user via the GUI
+      if Code_Analysis_Property (Property).Analysis = null then
+         GPS.Kernel.Console.Insert
+           (Get_Kernel (Data), -"The analysis no longer exists",
+            Mode => GPS.Kernel.Console.Error);
+         return;
+      end if;
+
       Prj_Name := Get_Project (Get_Kernel (Data));
       Prj_Iter := Start (Prj_Name);
 
@@ -1067,6 +1201,19 @@ package body Code_Analysis_Module is
    begin
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
       Property := Get_Data (Instance, Code_Analysis_Cst_Str);
+
+      --  Check if Property contains a valid pointer on a
+      --  Code_Analysis_Instance
+      --  Raise Analysis_No_Longer_Exists if pointer is null
+      --  This happens typically when you try to apply shell commands to an
+      --  analysis that have been destroyed by user via the GUI
+      if Code_Analysis_Property (Property).Analysis = null then
+         GPS.Kernel.Console.Insert
+           (Get_Kernel (Data), -"The analysis no longer exists",
+            Mode => GPS.Kernel.Console.Error);
+         return;
+      end if;
+
       List_Lines_Not_Covered_In_All_Projects
         (Get_Kernel (Data), Code_Analysis_Property (Property).Analysis);
    exception
@@ -1129,6 +1276,19 @@ package body Code_Analysis_Module is
    begin
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
       Property := Get_Data (Instance, Code_Analysis_Cst_Str);
+
+      --  Check if Property contains a valid pointer on a
+      --  Code_Analysis_Instance
+      --  Raise Analysis_No_Longer_Exists if pointer is null
+      --  This happens typically when you try to apply shell commands to an
+      --  analysis that have been destroyed by user via the GUI
+      if Code_Analysis_Property (Property).Analysis = null then
+         GPS.Kernel.Console.Insert
+           (Get_Kernel (Data), -"The analysis no longer exists",
+            Mode => GPS.Kernel.Console.Error);
+         return;
+      end if;
+
       Show_Analysis_Report
         (Get_Kernel (Data), Context_And_Analysis'(No_Context,
          Code_Analysis_Property (Property).Analysis));
@@ -1643,7 +1803,11 @@ package body Code_Analysis_Module is
 
    procedure Destroy_Analysis_Instance
      (Kernel   : Kernel_Handle;
-      Analysis : Code_Analysis_Instance) is
+      Analysis : Code_Analysis_Instance)
+   is
+      Instances : constant Instance_Array := Get_Instances
+        (Analysis.Instances.all);
+      Property  : Instance_Property;
    begin
       if Analysis.View /= null then
          Close_Child (Analysis.Child, Force => True);
@@ -1653,6 +1817,17 @@ package body Code_Analysis_Module is
       Remove_Line_Information_Column (Kernel, No_File, Line_Icons_Cst);
       Remove_Line_Information_Column (Kernel, No_File, Line_Info_Cst);
       Free_Code_Analysis (Analysis.Projects);
+
+      --  For each shell instance, get its property and set the Analysis field
+      --  to null
+      for J in Instances'Range loop
+
+         Property := Get_Data (Instances (J), Code_Analysis_Cst_Str);
+
+         if Property /= null then
+            Code_Analysis_Property (Property).Analysis := null;
+         end if;
+      end loop;
 
       if Code_Analysis_Module_ID.Analyzes.Contains (Analysis) then
          Code_Analysis_Module_ID.Analyzes.Delete (Analysis);
@@ -2978,7 +3153,14 @@ package body Code_Analysis_Module is
       Register_Command
         (Kernel, Constructor_Method,
          Class   => Code_Analysis_Class,
-         Handler => Create_Shell_Instance'Access);
+         Handler => Shell_CodeAnalysis_Constructor'Access);
+      Register_Command
+        (Kernel, "get",
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Class         => Code_Analysis_Class,
+         Handler       => Shell_Get_Command'Access,
+         Static_Method => True);
       Register_Command
         (Kernel, "add_all_gcov_project_info",
          Class   => Code_Analysis_Class,
