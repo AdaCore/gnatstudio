@@ -9,3 +9,8 @@ GLIB_PREFIX  = @GLIB_PREFIX@
 CAIRO_PREFIX = @CAIRO_PREFIX@
 PREFIX       = @prefix@
 GTKADA_PREFIX= @GTKADA_PREFIX@
+
+# Add path to gtkada.gpr (as found from gtkada-config by configure)
+# Put it last to allow the user to point to another one
+export ADA_PROJECT_PATH:=${ADA_PROJECT_PATH}:${GTKADA_PREFIX}/lib/gnat
+
