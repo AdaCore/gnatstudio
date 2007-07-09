@@ -2723,14 +2723,14 @@ Access the various suggested fixes through the methods of the Codefix class</des
       <description>Deletes every information contained in a CodeAnalysis instance.</description>
   </shell_doc>
 
-  <shell_doc name="GPS.CodeAnalysis.__init__">
-      <param name="self">The GPS.CodeAnalysis instance to build</param>
-      <return>An instance of GPS.CodeAnalysis</return>
-      <description>Creates an empty CodeAnalysis data structure. Data can be put in this structure by using one of the primitive operations.</description>
+  <shell_doc name="GPS.CodeAnalysis.get">
+      <param name="name">The name of the code analysis data structure to get or create</param>
+      <return>An instance of GPS.CodeAnalysis associated to a code analysis data structure in GPS.</return>
+      <description>Creates an empty code analysis data structure. Data can be put in this structure by using one of the primitive operations.</description>
       <example lang="python">
-          i = GPS.CodeAnalysis ()
-          i.add_all_gcov_project_info ()
-          i.list_lines_not_covered ()
+          a = GPS.CodeAnalysis.get ("Analysis 1")
+          a.add_all_gcov_project_info ()
+          a.list_lines_not_covered ()
       </example>
   </shell_doc>
 
@@ -2742,8 +2742,8 @@ Access the various suggested fixes through the methods of the Codefix class</des
       <see_also name="GPS.CodeAnalysis.add_all_gcov_project_info" />
       <see_also name="GPS.CodeAnalysis.add_gcov_project_info" />
       <example lang="python">
-          i = GPS.CodeAnalysis ()
-          i.add_gcov_file_info (src=GPS.File ("source_file.adb"), cov=GPS.File ("source_file.adb.gcov"))
+          a = GPS.CodeAnalysis.get ("Analysis 1")
+          a.add_gcov_file_info (src=GPS.File ("source_file.adb"), cov=GPS.File ("source_file.adb.gcov"))
       </example>
   </shell_doc>
 
