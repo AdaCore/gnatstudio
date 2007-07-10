@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2006                      --
---                              AdaCore                              --
+--                  Copyright (C) 2005-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1339,7 +1338,7 @@ package body Docgen.Backend.Text is
       Level            : Natural;
       Indent           : Natural)
    is
-      Line_Body : Natural := Line_In_Body;
+      Line_Body : constant Natural := Line_In_Body;
    begin
       --  In Text, each identifier may have a link,
       --  Each link is made by the subprogram Format_Link (see just below).
