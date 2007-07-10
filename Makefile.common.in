@@ -15,3 +15,9 @@ GTKADA_PREFIX= @GTKADA_PREFIX@
 #export ADA_PROJECT_PATH:=${ADA_PROJECT_PATH}:${GTKADA_PREFIX}/lib/gnat
 export ADA_PROJECT_PATH:=${GTKADA_PREFIX}/lib/gnat:${ADA_PROJECT_PATH}
 
+# How to build gnatlib:
+export GNATLIB_LIBRARY_TYPE=static
+# export GNATLIB_LIBRARY_TYPE=relocatable
+
+export TP_TASKING=No_Tasking
+
