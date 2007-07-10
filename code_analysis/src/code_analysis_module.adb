@@ -112,9 +112,6 @@ package body Code_Analysis_Module is
    --  Name of the pixbuf used for file node in the analysis report
    Subp_Pixbuf_Cst : constant String := "gps-entity-subprogram";
    --  Name of the pixbuf used for subprogram node in the analysis report
-   Warn_Pixbuf_Cst : constant String := "gps-warning";
-   --  Name of the pixbuf used to indicate an un covered line in coverage
-   --  annotation columns
 
    Binary_Coverage_Trace : constant Debug_Handle :=
                              Create ("BINARY_COVERAGE_MODE", GNAT.Traces.On);
@@ -507,7 +504,6 @@ package body Code_Analysis_Module is
 
    procedure Add_Coverage_Annotations
      (Kernel    : Kernel_Handle;
-      Analysis  : Code_Analysis_Instance;
       File_Node : Code_Analysis.File_Access);
    --  Actually add the annotation columns
 
@@ -1592,8 +1588,6 @@ package body Code_Analysis_Module is
         (Get_Main_Window (Kernel), File_Pixbuf_Cst, Gtk.Enums.Icon_Size_Menu);
       Analysis.View.Icons.Subp_Pixbuf := Render_Icon
         (Get_Main_Window (Kernel), Subp_Pixbuf_Cst, Gtk.Enums.Icon_Size_Menu);
-      Analysis.View.Icons.Warn_Pixbuf := Render_Icon
-        (Get_Main_Window (Kernel), Warn_Pixbuf_Cst, Gtk.Enums.Icon_Size_Menu);
       Initialize_Vbox (Analysis.View, False, 0);
       Analysis.View.Projects := Analysis.Projects;
       Gtk_New (Analysis.View.Model, GType_Array'
@@ -1944,7 +1938,7 @@ package body Code_Analysis_Module is
         (Project_Node, File_Information (Cont_N_Anal.Context));
       Open_File_Editor (Get_Kernel (Cont_N_Anal.Context), File_Node.Name);
       Add_Coverage_Annotations
-        (Get_Kernel (Cont_N_Anal.Context), Cont_N_Anal.Analysis, File_Node);
+        (Get_Kernel (Cont_N_Anal.Context), File_Node);
    exception
       when E : others => Trace (Exception_Handle, E);
    end Add_Coverage_Annotations_From_Context;
@@ -1955,36 +1949,25 @@ package body Code_Analysis_Module is
 
    procedure Add_Coverage_Annotations
      (Kernel    : Kernel_Handle;
-      Analysis  : Code_Analysis_Instance;
       File_Node : Code_Analysis.File_Access)
    is
       Line_Info  : Line_Information_Data;
-      Line_Icons : Line_Information_Data;
    begin
       Line_Info  := new Line_Information_Array (File_Node.Lines'Range);
-      Line_Icons := new Line_Information_Array (File_Node.Lines'Range);
 
       for J in File_Node.Lines'Range loop
          if File_Node.Lines (J) /= Null_Line then
             Line_Info (J).Text := Line_Coverage_Info
               (File_Node.Lines (J).Analysis_Data.Coverage_Data,
                Binary_Coverage_Mode);
-
-            if File_Node.Lines (J).Analysis_Data.Coverage_Data.Coverage =
-              0
-            then
-               Line_Icons (J).Image := Analysis.View.Icons.Warn_Pixbuf;
-            end if;
+         else
+            Line_Info (J).Text := new String'("-");
          end if;
       end loop;
 
-      Create_Line_Information_Column (Kernel, File_Node.Name, Line_Icons_Cst);
-      Add_Line_Information
-        (Kernel, File_Node.Name, Line_Icons_Cst, Line_Icons);
       Create_Line_Information_Column (Kernel, File_Node.Name, Line_Info_Cst);
       Add_Line_Information (Kernel, File_Node.Name, Line_Info_Cst, Line_Info);
       Unchecked_Free (Line_Info);
-      Unchecked_Free (Line_Icons);
    end Add_Coverage_Annotations;
 
    ----------------------------------------------
