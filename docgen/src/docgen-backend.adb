@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                             AdaCore                               --
+--                  Copyright (C) 2001-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -197,7 +196,7 @@ package body Docgen.Backend is
       Sloc_End         : Source_Location;
       File_Name        : VFS.Virtual_File;
       Entity_Line      : Natural;
-      Line_In_Body     : in out Natural;
+      Line_In_Body     : Natural;
       Source_File_List : Type_Source_File_Table.HTable;
       Link_All         : Boolean;
       Is_Body          : Boolean;
