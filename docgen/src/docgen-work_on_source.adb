@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                             AdaCore                               --
+--                  Copyright (C) 2001-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -88,7 +87,7 @@ package body Docgen.Work_On_Source is
       File_Text        : GNAT.Strings.String_Access;
       Source_File_List : Type_Source_File_Table.HTable;
       Options          : All_Options;
-      Level            : in out Natural);
+      Level            : Natural);
    --  Will pass the information about the body file to the output
    --  subprogram. This is the only subprogram working on the contents
    --  of the body source files.
@@ -109,7 +108,7 @@ package body Docgen.Work_On_Source is
       Text     : String;
       Options  : All_Options;
       Language : Language_Access;
-      Level    : in out Natural);
+      Level    : Natural);
    --  Extracts all the comment lines of the source file which are at the
    --  beginning of it. Empty lines are ignored, the procedure stops when
    --  first command is found. This information will be passed to the
@@ -125,7 +124,7 @@ package body Docgen.Work_On_Source is
       File_Text        : GNAT.Strings.String_Access;
       Source_File_List : in out Type_Source_File_Table.HTable;
       Options          : All_Options;
-      Level            : in out Natural);
+      Level            : Natural);
    --  Will process the lines at the beginning of the source file
    --  starting with "with" and pass them to the output subprogram
 
@@ -133,7 +132,7 @@ package body Docgen.Work_On_Source is
      (B       : access Docgen.Backend.Backend'Class;
       Kernel  : access Kernel_Handle_Record'Class;
       Result  : in out Unbounded_String;
-      Level   : in out Natural;
+      Level   : Natural;
       Comment : String);
    --  Processes comments after the source code (or before: it depends on
    --  preferences)
@@ -178,7 +177,7 @@ package body Docgen.Work_On_Source is
       Options          : All_Options;
       Private_Entity   : Boolean;
       Display_Private  : in out Boolean;
-      Level            : in out Natural);
+      Level            : Natural);
    --  Called by Process_Source to work on the constants
    --  and named numbers and pass each of them to the output subprogram
    --  Display_Private : indicate if we print the "Private" header.
@@ -199,7 +198,7 @@ package body Docgen.Work_On_Source is
       Options          : All_Options;
       Private_Entity   : Boolean;
       Display_Private  : in out Boolean;
-      Level            : in out Natural);
+      Level            : Natural);
    --  Called by Process_Source to work on the exceptions and
    --  pass each of them to the output subprogram
    --  Display_Private : indicate if we print the "Private" header.
@@ -220,7 +219,7 @@ package body Docgen.Work_On_Source is
       Options          : All_Options;
       Private_Entity   : Boolean;
       Display_Private  : in out Boolean;
-      Level            : in out Natural);
+      Level            : Natural);
    --  Called by Process_Source to work on the entires and entry
    --  families and pass each of them to the output subprogram
    --  Display_Private : indicate if we print the "Private" header.
@@ -234,7 +233,7 @@ package body Docgen.Work_On_Source is
       Options          : All_Options;
       Info             : Entity_Information;
       Source_File_List : Type_Source_File_Table.HTable;
-      Level            : in out Natural);
+      Level            : Natural);
    procedure Process_Caller_References
      (B                : access Docgen.Backend.Backend'Class;
       Kernel           : access Kernel_Handle_Record'Class;
@@ -242,7 +241,7 @@ package body Docgen.Work_On_Source is
       Options          : All_Options;
       Info             : Entity_Information;
       Source_File_List : Type_Source_File_Table.HTable;
-      Level            : in out Natural);
+      Level            : Natural);
    --  For one subprogram: processes the output of the callgraph when this
    --  option is choosen.
 
@@ -260,7 +259,7 @@ package body Docgen.Work_On_Source is
       Options          : All_Options;
       Private_Entity   : Boolean;
       Display_Private  : in out Boolean;
-      Level            : in out Natural);
+      Level            : Natural);
    --  Called by Process_Source to work on the subprograms and
    --  pass each of them to the output subprogram
    --  Private_Entity indicates if it must process private or public entites
@@ -274,7 +273,7 @@ package body Docgen.Work_On_Source is
       Family           : List_Entity_Information.List;
       Source_File_List : in out Type_Source_File_Table.HTable;
       Entity           : Entity_Information;
-      Level            : in out Natural);
+      Level            : Natural);
    --  For one tagged type: indicates its parents and children.
 
    procedure Process_Types
@@ -293,7 +292,7 @@ package body Docgen.Work_On_Source is
       Options                   : All_Options;
       Private_Entity            : Boolean;
       Display_Private           : in out Boolean;
-      Level                     : in out Natural);
+      Level                     : Natural);
    --  Called by Process_Source to work on the types and
    --  pass each of them to the output subprogram
    --  Display_Private : indicate if we print the "Private" header.
@@ -318,49 +317,49 @@ package body Docgen.Work_On_Source is
      (B      : access Docgen.Backend.Backend'Class;
       Kernel : access Kernel_Handle_Record'Class;
       Result : in out Unbounded_String;
-      Level  : in out Natural);
+      Level  : Natural);
    --  Adds title "Private: " when private entities are required.
 
    procedure Process_Header_Packages
      (B      : access Docgen.Backend.Backend'Class;
       Kernel : access Kernel_Handle_Record'Class;
       Result : in out Unbounded_String;
-      Level  : in out Natural);
+      Level  : Natural);
    --  Adds title "Packages".
 
    procedure Process_Header_Vars
      (B      : access Docgen.Backend.Backend'Class;
       Kernel : access Kernel_Handle_Record'Class;
       Result : in out Unbounded_String;
-      Level  : in out Natural);
+      Level  : Natural);
    --  Adds title "Constants and Named Numbers"
 
    procedure Process_Header_Types
      (B      : access Docgen.Backend.Backend'Class;
       Kernel : access Kernel_Handle_Record'Class;
       Result : in out Unbounded_String;
-      Level  : in out Natural);
+      Level  : Natural);
    --  Adds title "Types"
 
    procedure Process_Header_Entries
      (B      : access Docgen.Backend.Backend'Class;
       Kernel : access Kernel_Handle_Record'Class;
       Result : in out Unbounded_String;
-      Level  : in out Natural);
+      Level  : Natural);
    --  Adds title "Entries"
 
    procedure Process_Header_Subprograms
      (B      : access Docgen.Backend.Backend'Class;
       Kernel : access Kernel_Handle_Record'Class;
       Result : in out Unbounded_String;
-      Level  : in out Natural);
+      Level  : Natural);
    --  Adds title "Subprograms"
 
    procedure Process_Header_Exceptions
      (B      : access Docgen.Backend.Backend'Class;
       Kernel : access Kernel_Handle_Record'Class;
       Result : in out Unbounded_String;
-      Level  : in out Natural);
+      Level  : Natural);
    --  Adds title "Exceptions"
 
    procedure Process_Footer
@@ -762,7 +761,7 @@ package body Docgen.Work_On_Source is
       File_Text        : GNAT.Strings.String_Access;
       Source_File_List : Type_Source_File_Table.HTable;
       Options          : All_Options;
-      Level            : in out Natural) is
+      Level            : Natural) is
    begin
       Doc_Body
         (B, Kernel, Result, List_Ref_In_File, Source_File_List,
@@ -780,7 +779,7 @@ package body Docgen.Work_On_Source is
       Kernel           : access Kernel_Handle_Record'Class;
       Source_File_List : Docgen.Type_Source_File_Table.HTable;
       Options          : Docgen.All_Options;
-      Level            : in out Natural)
+      Level            : Natural)
    is
       use GNAT.OS_Lib;
       use Type_Source_File_Table;
@@ -1229,7 +1228,7 @@ package body Docgen.Work_On_Source is
      (B      : access Docgen.Backend.Backend'Class;
       Kernel : access Kernel_Handle_Record'Class;
       Result : in out Unbounded_String;
-      Level  : in out Natural) is
+      Level  : Natural) is
    begin
       Doc_Header_Private
         (B, Kernel, Result,
@@ -1260,7 +1259,7 @@ package body Docgen.Work_On_Source is
       Text     : String;
       Options  : All_Options;
       Language : Language_Access;
-      Level    : in out Natural)
+      Level    : Natural)
    is
       pragma Unreferenced (Options);
 
@@ -1304,7 +1303,7 @@ package body Docgen.Work_On_Source is
       File_Text        : GNAT.Strings.String_Access;
       Source_File_List : in out Type_Source_File_Table.HTable;
       Options          : All_Options;
-      Level            : in out Natural)
+      Level            : Natural)
    is
       Parse_Node         : Construct_Access := Parsed_List.First;
       First_With_Line    : Natural := 0;
@@ -1344,7 +1343,7 @@ package body Docgen.Work_On_Source is
      (B      : access Docgen.Backend.Backend'Class;
       Kernel : access Kernel_Handle_Record'Class;
       Result : in out Unbounded_String;
-      Level  : in out Natural) is
+      Level  : Natural) is
    begin
       Doc_Subtitle (B, Kernel, Result, Level, Subtitle_Name => "Packages");
    end Process_Header_Packages;
@@ -1357,7 +1356,7 @@ package body Docgen.Work_On_Source is
      (B       : access Docgen.Backend.Backend'Class;
       Kernel  : access Kernel_Handle_Record'Class;
       Result  : in out Unbounded_String;
-      Level   : in out Natural;
+      Level   : Natural;
       Comment : String) is
    begin
       Doc_Description (B, Kernel, Result, Level, Description => Comment);
@@ -1574,7 +1573,7 @@ package body Docgen.Work_On_Source is
      (B      : access Docgen.Backend.Backend'Class;
       Kernel : access Kernel_Handle_Record'Class;
       Result : in out Unbounded_String;
-      Level  : in out Natural) is
+      Level  : Natural) is
    begin
       Doc_Subtitle (B, Kernel, Result, Level, Subtitle_Name => "Constants");
    end Process_Header_Vars;
@@ -1597,7 +1596,7 @@ package body Docgen.Work_On_Source is
       Options          : All_Options;
       Private_Entity   : Boolean;
       Display_Private  : in out Boolean;
-      Level            : in out Natural)
+      Level            : Natural)
    is
       use TEL;
       Case_Sensitive    : constant Boolean :=
@@ -1695,7 +1694,7 @@ package body Docgen.Work_On_Source is
      (B      : access Docgen.Backend.Backend'Class;
       Kernel : access Kernel_Handle_Record'Class;
       Result : in out Unbounded_String;
-      Level  : in out Natural) is
+      Level  : Natural) is
    begin
       Doc_Subtitle (B, Kernel, Result, Level, Subtitle_Name => "Exceptions");
    end Process_Header_Exceptions;
@@ -1718,7 +1717,7 @@ package body Docgen.Work_On_Source is
       Options          : All_Options;
       Private_Entity   : Boolean;
       Display_Private  : in out Boolean;
-      Level            : in out Natural)
+      Level            : Natural)
    is
       use TEL;
       Case_Sensitive    : constant Boolean :=
@@ -1813,7 +1812,7 @@ package body Docgen.Work_On_Source is
      (B      : access Docgen.Backend.Backend'Class;
       Kernel : access Kernel_Handle_Record'Class;
       Result : in out Unbounded_String;
-      Level  : in out Natural) is
+      Level  : Natural) is
    begin
       Doc_Subtitle (B, Kernel, Result, Level, Subtitle_Name => "Types");
    end Process_Header_Types;
@@ -1829,7 +1828,7 @@ package body Docgen.Work_On_Source is
       Family           : List_Entity_Information.List;
       Source_File_List : in out Type_Source_File_Table.HTable;
       Entity           : Entity_Information;
-      Level            : in out Natural)
+      Level            : Natural)
    is
       use List_Entity_Information;
       Node          : List_Entity_Information.List_Node;
@@ -1875,7 +1874,7 @@ package body Docgen.Work_On_Source is
       Options                   : All_Options;
       Private_Entity            : Boolean;
       Display_Private           : in out Boolean;
-      Level                     : in out Natural)
+      Level                     : Natural)
    is
       use TEL;
       Case_Sensitive    : constant Boolean :=
@@ -2025,7 +2024,7 @@ package body Docgen.Work_On_Source is
      (B      : access Docgen.Backend.Backend'Class;
       Kernel : access Kernel_Handle_Record'Class;
       Result : in out Unbounded_String;
-      Level  : in out Natural) is
+      Level  : Natural) is
    begin
       Doc_Subtitle (B, Kernel, Result, Level,
                     Subtitle_Name => "Tasking");
@@ -2049,7 +2048,7 @@ package body Docgen.Work_On_Source is
       Options          : All_Options;
       Private_Entity   : Boolean;
       Display_Private  : in out Boolean;
-      Level            : in out Natural)
+      Level            : Natural)
    is
       use TEL;
       Case_Sensitive    : constant Boolean :=
@@ -2143,7 +2142,7 @@ package body Docgen.Work_On_Source is
      (B      : access Docgen.Backend.Backend'Class;
       Kernel : access Kernel_Handle_Record'Class;
       Result : in out Unbounded_String;
-      Level  : in out Natural) is
+      Level  : Natural) is
    begin
       Doc_Subtitle (B, Kernel, Result, Level, Subtitle_Name => "Subprograms");
    end Process_Header_Subprograms;
@@ -2159,7 +2158,7 @@ package body Docgen.Work_On_Source is
       Options          : All_Options;
       Info             : Entity_Information;
       Source_File_List : Type_Source_File_Table.HTable;
-      Level            : in out Natural)
+      Level            : Natural)
    is
       Caller         : Entity_Information;
       Reference_Iter : Entity_Reference_Iterator;
@@ -2199,7 +2198,7 @@ package body Docgen.Work_On_Source is
       Options          : All_Options;
       Info             : Entity_Information;
       Source_File_List : Type_Source_File_Table.HTable;
-      Level            : in out Natural)
+      Level            : Natural)
    is
       Call_Iter      : Calls_Iterator := Get_All_Called_Entities (Info);
       Entity         : Entity_Information;
@@ -2243,7 +2242,7 @@ package body Docgen.Work_On_Source is
       Options          : All_Options;
       Private_Entity   : Boolean;
       Display_Private  : in out Boolean;
-      Level            : in out Natural)
+      Level            : Natural)
    is
       use TEL;
       Case_Sensitive    : constant Boolean :=
