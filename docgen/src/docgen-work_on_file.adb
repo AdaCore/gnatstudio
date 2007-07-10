@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                             AdaCore                               --
+--                  Copyright (C) 2001-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -548,7 +547,7 @@ package body Docgen.Work_On_File is
    -------------------------------
 
    procedure Finalize_Files_Processing (Data : in out Process_One_File_Data) is
-      Level : Natural := 1;
+      Level : constant Natural := 1;
    begin
       --  Sort the type index list and the subprogram index list first (both
       --  for private and public lists)
