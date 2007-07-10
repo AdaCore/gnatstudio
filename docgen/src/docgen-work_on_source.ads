@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
---                             AdaCore                               --
+--                  Copyright (C) 2001-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -82,7 +81,7 @@ package Docgen.Work_On_Source is
       Kernel           : access Kernel_Handle_Record'Class;
       Source_File_List : Docgen.Type_Source_File_Table.HTable;
       Options          : Docgen.All_Options;
-      Level            : in out Natural);
+      Level            : Natural);
    --  Create the index file for the packages
 
    procedure Process_Subprogram_Index
