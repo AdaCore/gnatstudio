@@ -34,7 +34,6 @@ package Code_Analysis_Module is
       Prj_Pixbuf  : Gdk.Pixbuf.Gdk_Pixbuf;
       File_Pixbuf : Gdk.Pixbuf.Gdk_Pixbuf;
       Subp_Pixbuf : Gdk.Pixbuf.Gdk_Pixbuf;
-      Warn_Pixbuf : Gdk.Pixbuf.Gdk_Pixbuf;
    end record;
 
 end Code_Analysis_Module;
