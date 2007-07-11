@@ -874,6 +874,17 @@ package body ALI_Parser is
                --  avoids cases where the entity points to its primitive op,
                --  but the latter points to another one as its parent.
 
+               if Sfiles (Current_Sfile).File =
+                 Get_Declaration_Of (Entity).File
+                 and then
+                   (Is_Primitive_Operation_Of (Primitive) = null
+                    or else Sfiles (Current_Sfile).File /=
+                      Get_Declaration_Of
+                        (Is_Primitive_Operation_Of (Primitive)).File)
+               then
+                  Add_Primitive_Subprogram (Entity, Primitive);
+               end if;
+
                if Is_Primitive_Operation_Of (Primitive) = null then
                   Add_Primitive_Subprogram (Entity, Primitive);
                end if;
