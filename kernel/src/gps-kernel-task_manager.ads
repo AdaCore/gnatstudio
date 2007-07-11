@@ -64,8 +64,9 @@ package GPS.Kernel.Task_Manager is
    --  If Queue_Id is not empty, the queue will be appended at the end of the
    --  queue corresponding to the Id if it exists, or a new queue with this
    --  Id will be created.
-   --  If Active is True, the command will be launched in active mode,
-   --  otherwise it will be launched in background mode.
+   --  If Active is True, the command will be launched in active mode, ie
+   --  executed as fast as possible in an idle loop. Otherwise, it is launched
+   --  in background mode, ie executed more slowly in a timeout.
    --  If Show_Bar is True, a progress bar will be displayed for this command,
    --  otherwise it will only be visible in the Task Manager window.
    --  Memory associated to Command will be freed by the Task Manager
