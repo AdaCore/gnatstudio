@@ -52,6 +52,14 @@ package GPS.Kernel.Task_Manager is
    procedure Free (Command : in out Scheduled_Command);
    --  See inhertited documentation
 
+   procedure Launch_Foreground_Command
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Command         : access Root_Command'Class;
+      Destroy_On_Exit : Boolean := True);
+   --  Executes a command, blocking the whole GPS interface while doing so.
+   --  It is recommended instead to use Launch_Background_Command, but this one
+   --  is sometimes used in user's python scripts.
+
    procedure Launch_Background_Command
      (Kernel          : access Kernel_Handle_Record'Class;
       Command         : access Root_Command'Class;

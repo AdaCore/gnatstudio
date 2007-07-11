@@ -1370,6 +1370,10 @@ package body Commands.Custom is
                Command.Execution.Process_Exit_Status := 1;
 
             else
+               --  Set the console before launching the process, so that
+               --  synchronous calls correctly output
+               Command.Execution.External_Process_Console := Console;
+
                Launch_Process
                  (Command.Kernel,
                   Command              => Args (Args'First).all,
@@ -1395,7 +1399,6 @@ package body Commands.Custom is
                   Created_Command      => Command.Sub_Command);
                Free (Args);
 
-               Command.Execution.External_Process_Console := Console;
                Command.Execution.External_Process_In_Progress := Success;
             end if;
 

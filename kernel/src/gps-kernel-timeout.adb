@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2001-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -246,6 +245,7 @@ package body GPS.Kernel.Timeout is
             return Execute_Again;
 
          else
+            Trace (Me, "Failure when spawning the process");
             Free (Command.Data.D.Descriptor);
             Command.Data.Died := True;
             return Failure;
@@ -254,8 +254,13 @@ package body GPS.Kernel.Timeout is
       elsif Command.Data.D.Descriptor = null
         or else Command.Data.Died
       then
+         Trace (Me, "Process is finished");
          return Failure;
       else
+         if Command.Data.Synchronous then
+            Success := Process_Cb (Command.Data);
+         end if;
+
          return Execute_Again;
       end if;
    end Execute;

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2007                       --
---                              AdaCore                              --
+--                     Copyright (C) 2003-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -480,6 +479,36 @@ package body GPS.Kernel.Task_Manager is
 
       return Wrapper;
    end Launch_Background_Command;
+
+   -------------------------------
+   -- Launch_Foreground_Command --
+   -------------------------------
+
+   procedure Launch_Foreground_Command
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Command         : access Root_Command'Class;
+      Destroy_On_Exit : Boolean := True)
+   is
+      Wrapper : Scheduled_Command_Access :=
+        Create_Wrapper (Command, Destroy_On_Exit);
+      Result : Command_Return_Type;
+   begin
+      Push_State (Kernel, Busy);
+      loop
+         begin
+            Result := Execute (Command);
+         exception
+            when E : others =>
+               Trace (Exception_Handle, E);
+               Result := Failure;
+         end;
+
+         exit when Result = Success or Result = Failure;
+      end loop;
+
+      Pop_State (Kernel);
+      Destroy (Command_Access (Wrapper));
+   end Launch_Foreground_Command;
 
    ---------------------------
    -- Interrupt_Latest_Task --

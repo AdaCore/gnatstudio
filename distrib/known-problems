@@ -5,6 +5,13 @@ Known Problems fixed in GPS 4.2.0
               clause for the AUnit unit is missing.
   Workaround: Add a use AUnit clause in the generated file.
 
+- G625-004 GPS.execute_action not synchronous, and hiding its output
+  Problem:    If your script uses GPS.execute_action, it will not properly
+              execute external commands synchronously (meaning the call will
+              return before the external process has finished executing). In
+              addition, the output of the external process is never displayed
+  Workaround: use the GPS.Process class
+
 - G611-028 Files status overriden
   Problem:    When opening a file the status in the VCS Explorer and
               the VCS Activities is set to locally modified. This is

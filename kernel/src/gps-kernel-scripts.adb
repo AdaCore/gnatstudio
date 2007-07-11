@@ -536,11 +536,16 @@ package body GPS.Kernel.Scripts is
                               Repeat_Count     => 1,
                               Remaining_Repeat => 0));
 
-               Launch_Background_Command
-                 (Kernel, Custom, Destroy_On_Exit => True,
-                  Active   => Synchronous,
-                  Show_Bar => True,
-                  Queue_Id => "");
+               if Synchronous then
+                  Launch_Foreground_Command
+                    (Kernel, Custom, Destroy_On_Exit => True);
+               else
+                  Launch_Background_Command
+                    (Kernel, Custom, Destroy_On_Exit => True,
+                     Active   => Synchronous,
+                     Show_Bar => True,
+                     Queue_Id => "");
+               end if;
             end if;
          end;
 
