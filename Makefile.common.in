@@ -10,10 +10,16 @@ CAIRO_PREFIX = @CAIRO_PREFIX@
 PREFIX       = @prefix@
 GTKADA_PREFIX= @GTKADA_PREFIX@
 
+ifeq (${OS},Windows_NT)
+PATH_SEPARATOR=;
+else
+PATH_SEPARATOR=:
+endif
+
 # Add path to gtkada.gpr (as found from gtkada-config by configure)
 # Put it last to allow the user to point to another one
 #export ADA_PROJECT_PATH:=${ADA_PROJECT_PATH}:${GTKADA_PREFIX}/lib/gnat
-export ADA_PROJECT_PATH:=${GTKADA_PREFIX}/lib/gnat:${ADA_PROJECT_PATH}
+export ADA_PROJECT_PATH:=${GTKADA_PREFIX}/lib/gnat${PATH_SEPARATOR}${ADA_PROJECT_PATH}
 
 # How to build gnatlib:
 export GNATLIB_LIBRARY_TYPE=static
