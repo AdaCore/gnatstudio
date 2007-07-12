@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003-2006                    --
---                              AdaCore                              --
+--                        Copyright (C) 2003-2007, AdaCore           --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -575,7 +574,7 @@ package body Entities.Debug is
          end loop;
       end;
 
-      if not Full and then not Is_Empty and then Name /= "" then
+      if not Full and then not Is_Empty then
          Output_Line ("");
       end if;
    end Dump;
