@@ -594,7 +594,8 @@ package body Entities.Debug is
          end loop;
       else
          for F in Files'Range loop
-            Dump (Files (F).Entities, Full => False, Name => "");
+            Dump (Files (F).Entities, Full => False,
+                  Name => Base_Name (Get_Filename (Files (F))));
          end loop;
       end if;
    end Dump_Entities_From_Files;
