@@ -1,8 +1,15 @@
 @c This file contains texinfo.tex modifications needed to print the 
-@c ACT manuals. See end of file for ACT specific modifications.
+@c Cygnus manuals. See end of file for further AdaCore-specific modifications.
 @c Add "@input texiplus" as second line to your *.texi file to use this.
-@c The actual page size is 19x23 cm, cut to this size after printing
-@c on letter or a4 paper.
+
+@c The actual page size is 7.5x9in, cut to this size after printing
+@c on A4 (default) or US Letter (when \forletterpaper is defined) paper.
+
+@c Use the following command lines to generate PDF for printing:
+@c pdftex '\let\forprinting=1\input document.texi'
+@c   (A4 paper)
+@c pdftex '\let\forprinting=1\let\forletterpaper=1 \input document.texi'
+@c   (letter paper)
 
 @tex
 %% Cygnus revisions to texinfo.tex, TeX macros to handle texinfo files
@@ -11,6 +18,7 @@
 %This texiplus.tex file is free software; you can redistribute it and/or
 %modify it under the terms of the GNU General Public License as
 %published by the Free Software Foundation; either version 1, or (at
+%??? GPL notice has been truncated
 
 {\let\fsfvn=\texinfoversion
 \xdef\texinfoversion{\fsfvn\ (Cygnus+WRS)}}
@@ -126,7 +134,7 @@
 \def\HEADINGSdoublex{
 \global\evenfootline={%
 {\bf\folio}\ftfnt\leadline\ifdraft DRAFT\quad\fi
-\ftfnt\manvers\qquad
+\ftfnt\manvers\kern 0pt
 }
 \ifx\specialOddFootline\undefined
 \global\oddfootline={%
@@ -264,7 +272,8 @@
 \global\pagewidth=\hsize
 \global\pageheight=\vsize
 
-}\textfonts
+}
+\textfonts
 
 \globaldefs=0 % this is NOT redundant; the \endgroup done by@end tex
 	      % would restore the value, but before doing that would
@@ -272,7 +281,7 @@
 @end tex
 
 @rm
-@smallbook
+@c @smallbook
 @c some manuals (notably as) contain stuff that only looks good in
 @c smallbook; this switch controls its appearance, by local convention
 @set SMALL
@@ -286,14 +295,66 @@
 @c (such as GPL) and copyright/license info by default.
 @set COMPILATION
 
-@c ACT specific stuff starts here
+@c AdaCore specific stuff starts here
 @tex
+%
+% \adacorebook
+% Page layout for AdaCore manuals: 7.5in x 9in printed on A4 or letter paper
+%
+\newdimen\ACpaperheight
+\newdimen\ACpaperwidth
+%
+\gdef\adacorebook{{\globaldefs=1
+  \parskip = 2pt plus 1pt
+  \textleading = 12pt
+%
+\ifx\forletterpaper\undefined
+  % Default: A4
+  \ACpaperheight=297mm
+  \ACpaperwidth=210mm
+\else
+  % Alternate: Letter
+  \ACpaperheight=11in
+  \ACpaperwidth=8.5in
+\fi
+
+% Parameters in order: 1) pageheight; 2) pagewidth; 3) voffset;
+% 4) normaloffset; 5) binding offset; 6) topskip; 7) physical page height; 8)
+% physical page width.
+
+  \internalpagesizes{7in}{5.5in}%
+                    {-1in}{-1in}%
+                    {\bindingoffset}%
+                    {1.5\baselineskip}%
+                    {\ACpaperheight}{\ACpaperwidth}%
+  %
+  % voffset has been initialized to cancel out the standard 1in offset.
+  % Provision for top margin and magic constant from makeheadline (22.5pt)
+  % yielding final value:
+  %    voffset = topmargin + 22.5pt - 1in
+  % (here we use 2\baselineskip as the top margin).
+  %
+  \advance\voffset by 2\baselineskip
+  \advance\voffset by 22.5pt
+  %
+  %
+  % normaloffset has been initialized to cancel out the standard 1in offset.
+  % Adjust it for proper even/odd overlap, yielding final value:
+  %    normaloffset = (paperwidth - pagewidth) / 2 - 1in
+  %
+  \advance\normaloffset by 0.5\ACpaperwidth
+  \advance\normaloffset by -0.5\pagewidth
+  %
+  \lispnarrowing = 0.3in
+  \tolerance = 700
+  \hfuzz = 1pt
+  \contentsrightmargin = 0pt
+  \defbodyindent = .5cm
+}}
 %% Add some room between page text and footer
 \gdef\pagebody#1{\vbox to\pageheight{\boxmaxdepth=\maxdepth #1}\vskip 5mm}
 
 %% Provision for printing manuals: set PDF link color to black
-%% Use the following command line to generate PDF for printing:
-%% pdftex '\let\forprinting=1\input document.texi'
 \ifx\forprinting\undefined
  \message{Generating PDF/DVI for display}
  \relax
@@ -302,6 +363,7 @@
  \global\let\linkcolor=\Black
 \fi
 @end tex
+@adacorebook
 
 @c Suppress black markers in overfull hboxes
 @finalout
