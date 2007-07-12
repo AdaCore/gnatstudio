@@ -2185,55 +2185,57 @@ package body Code_Analysis_Module is
       File_Iter  : Gtk_Tree_Iter;
       Subp_Iter  : Gtk_Tree_Iter;
    begin
-      if Message_Dialog
-        ((-"Remove data of ") & Subp_Node.Name.all & (-"?"),
-         Confirmation, Button_Yes or Button_No,
-         Justification => Justify_Left,
-         Title         => (-"Remove ") & Subp_Node.Name.all & (-"?")) = 1
-      then
-         if Cont_N_Anal.Analysis.View = null then
-            Show_Analysis_Report
-              (Get_Kernel (Cont_N_Anal.Context), Cont_N_Anal, False);
-         end if;
-
-         --  Update project coverage information
-         Prj_Node.Analysis_Data.Coverage_Data.Coverage :=
-           Prj_Node.Analysis_Data.Coverage_Data.Coverage -
-             Subp_Node.Analysis_Data.Coverage_Data.Coverage;
-         Subprogram_Coverage
-           (Prj_Node.Analysis_Data.Coverage_Data.all).Children :=
-           Subprogram_Coverage
-             (Prj_Node.Analysis_Data.Coverage_Data.all).Children -
-             Subprogram_Coverage
-               (Subp_Node.Analysis_Data.Coverage_Data.all).Children;
-         --  Update file coverage information
-         File_Node.Analysis_Data.Coverage_Data.Coverage :=
-           File_Node.Analysis_Data.Coverage_Data.Coverage -
-             Subp_Node.Analysis_Data.Coverage_Data.Coverage;
-         Node_Coverage (File_Node.Analysis_Data.Coverage_Data.all).Children :=
-           Node_Coverage (File_Node.Analysis_Data.Coverage_Data.all).Children -
-           Subprogram_Coverage
-             (Subp_Node.Analysis_Data.Coverage_Data.all).Children;
-         Subp_Iter := Get_Iter_From_Context
-           (Cont_N_Anal.Context, Cont_N_Anal.Analysis.View.Model);
-         File_Iter := Parent (Cont_N_Anal.Analysis.View.Model, Subp_Iter);
-         Fill_Iter (Cont_N_Anal.Analysis.View.Model, File_Iter,
-                    File_Node.Analysis_Data, Binary_Coverage_Mode);
-         Prj_Iter  := Parent (Cont_N_Anal.Analysis.View.Model, File_Iter);
-         Fill_Iter (Cont_N_Anal.Analysis.View.Model, Prj_Iter,
-                    Prj_Node.Analysis_Data, Binary_Coverage_Mode);
-         --  Removes Subp_Iter from the report
-         Remove (Cont_N_Anal.Analysis.View.Model, Subp_Iter);
-         --  Removes Subp_Iter from its container
-         Subprogram_Maps.Delete (File_Node.Subprograms, Subp_Node.Name.all);
-         --  Free Subprogram analysis node
-         Free_Subprogram (Subp_Node);
-
-         if Subprogram_Maps.Length (File_Node.Subprograms) = 0 then
-            Show_Empty_Analysis_Report
-              (Get_Kernel (Cont_N_Anal.Context), Cont_N_Anal.Analysis);
-         end if;
+      if Cont_N_Anal.Analysis.View = null then
+         Show_Analysis_Report
+           (Get_Kernel (Cont_N_Anal.Context), Cont_N_Anal, False);
       end if;
+
+      --  Update project coverage information
+      Prj_Node.Analysis_Data.Coverage_Data.Coverage :=
+        Prj_Node.Analysis_Data.Coverage_Data.Coverage -
+          Subp_Node.Analysis_Data.Coverage_Data.Coverage;
+      Project_Coverage
+        (Prj_Node.Analysis_Data.Coverage_Data.all).Children :=
+        Project_Coverage
+          (Prj_Node.Analysis_Data.Coverage_Data.all).Children -
+          Subprogram_Coverage
+            (Subp_Node.Analysis_Data.Coverage_Data.all).Children;
+
+      if Project_Coverage
+        (Prj_Node.Analysis_Data.Coverage_Data.all).Children = 0 then
+         --  No more children means no more usable coverage data
+         Unchecked_Free (Prj_Node.Analysis_Data.Coverage_Data);
+      end if;
+
+      --  Update file coverage information
+      File_Node.Analysis_Data.Coverage_Data.Coverage :=
+        File_Node.Analysis_Data.Coverage_Data.Coverage -
+          Subp_Node.Analysis_Data.Coverage_Data.Coverage;
+      Node_Coverage (File_Node.Analysis_Data.Coverage_Data.all).Children :=
+        Node_Coverage (File_Node.Analysis_Data.Coverage_Data.all).Children -
+        Subprogram_Coverage
+          (Subp_Node.Analysis_Data.Coverage_Data.all).Children;
+
+      if Node_Coverage
+        (File_Node.Analysis_Data.Coverage_Data.all).Children = 0 then
+         --  No more children means no more usable coverage data
+         Unchecked_Free (File_Node.Analysis_Data.Coverage_Data);
+      end if;
+
+      Subp_Iter := Get_Iter_From_Context
+        (Cont_N_Anal.Context, Cont_N_Anal.Analysis.View.Model);
+      File_Iter := Parent (Cont_N_Anal.Analysis.View.Model, Subp_Iter);
+      Fill_Iter (Cont_N_Anal.Analysis.View.Model, File_Iter,
+                 File_Node.Analysis_Data, Binary_Coverage_Mode);
+      Prj_Iter  := Parent (Cont_N_Anal.Analysis.View.Model, File_Iter);
+      Fill_Iter (Cont_N_Anal.Analysis.View.Model, Prj_Iter,
+                 Prj_Node.Analysis_Data, Binary_Coverage_Mode);
+      --  Removes Subp_Iter from the report
+      Remove (Cont_N_Anal.Analysis.View.Model, Subp_Iter);
+      --  Removes Subp_Iter from its container
+      Subprogram_Maps.Delete (File_Node.Subprograms, Subp_Node.Name.all);
+      --  Free Subprogram analysis node
+      Free_Subprogram (Subp_Node);
    exception
       when E : others => Trace (Exception_Handle, E);
    end Remove_Subprogram_From_Menu;
@@ -2255,45 +2257,39 @@ package body Code_Analysis_Module is
       File_Iter : Gtk_Tree_Iter;
       Prj_Iter  : Gtk_Tree_Iter;
    begin
-      if Message_Dialog
-        ((-"Remove data of ") & Base_Name (File_Node.Name) & (-"?"),
-         Confirmation, Button_Yes or Button_No,
-         Justification => Justify_Left,
-         Title         => (-"Remove ") & Base_Name (File_Node.Name) & (-"?"))
-        = 1
-      then
-         if Cont_N_Anal.Analysis.View = null then
-            Show_Analysis_Report
-              (Get_Kernel (Cont_N_Anal.Context), Cont_N_Anal, False);
-         end if;
-
-         --  Update project coverage information
-         Prj_Node.Analysis_Data.Coverage_Data.Coverage :=
-           Prj_Node.Analysis_Data.Coverage_Data.Coverage -
-             File_Node.Analysis_Data.Coverage_Data.Coverage;
-         Subprogram_Coverage
-           (Prj_Node.Analysis_Data.Coverage_Data.all).Children :=
-           Subprogram_Coverage
-             (Prj_Node.Analysis_Data.Coverage_Data.all).Children -
-             Node_Coverage
-               (File_Node.Analysis_Data.Coverage_Data.all).Children;
-         File_Iter := Get_Iter_From_Context
-           (Cont_N_Anal.Context, Cont_N_Anal.Analysis.View.Model);
-         Prj_Iter  := Parent (Cont_N_Anal.Analysis.View.Model, File_Iter);
-         Fill_Iter (Cont_N_Anal.Analysis.View.Model, Prj_Iter,
-                    Prj_Node.Analysis_Data, Binary_Coverage_Mode);
-         --  Removes File_Iter from the report
-         Remove (Cont_N_Anal.Analysis.View.Model, File_Iter);
-         --  Removes File_Iter from its container
-         File_Maps.Delete (Prj_Node.Files, File_Node.Name);
-         --  Free the file analysis node
-         Free_File (File_Node);
-
-         if File_Maps.Length (Prj_Node.Files) = 0 then
-            Show_Empty_Analysis_Report
-              (Get_Kernel (Cont_N_Anal.Context), Cont_N_Anal.Analysis);
-         end if;
+      if Cont_N_Anal.Analysis.View = null then
+         Show_Analysis_Report
+           (Get_Kernel (Cont_N_Anal.Context), Cont_N_Anal, False);
       end if;
+
+      --  Update project coverage information
+      Prj_Node.Analysis_Data.Coverage_Data.Coverage :=
+        Prj_Node.Analysis_Data.Coverage_Data.Coverage -
+          File_Node.Analysis_Data.Coverage_Data.Coverage;
+      Project_Coverage
+        (Prj_Node.Analysis_Data.Coverage_Data.all).Children :=
+        Project_Coverage
+          (Prj_Node.Analysis_Data.Coverage_Data.all).Children -
+          Node_Coverage
+            (File_Node.Analysis_Data.Coverage_Data.all).Children;
+
+      if Project_Coverage
+        (Prj_Node.Analysis_Data.Coverage_Data.all).Children = 0 then
+         --  No more children means no more usable coverage data
+         Unchecked_Free (Prj_Node.Analysis_Data.Coverage_Data);
+      end if;
+
+      File_Iter := Get_Iter_From_Context
+        (Cont_N_Anal.Context, Cont_N_Anal.Analysis.View.Model);
+      Prj_Iter  := Parent (Cont_N_Anal.Analysis.View.Model, File_Iter);
+      Fill_Iter (Cont_N_Anal.Analysis.View.Model, Prj_Iter,
+                 Prj_Node.Analysis_Data, Binary_Coverage_Mode);
+      --  Removes File_Iter from the report
+      Remove (Cont_N_Anal.Analysis.View.Model, File_Iter);
+      --  Removes File_Iter from its container
+      File_Maps.Delete (Prj_Node.Files, File_Node.Name);
+      --  Free the file analysis node
+      Free_File (File_Node);
    exception
       when E : others => Trace (Exception_Handle, E);
    end Remove_File_From_Menu;
@@ -2307,37 +2303,29 @@ package body Code_Analysis_Module is
       Cont_N_Anal : Context_And_Analysis)
    is
       pragma Unreferenced (Widget);
-      Prj_Node : Project_Access
-        := Get_Or_Create (Cont_N_Anal.Analysis.Projects,
-                          Project_Information (Cont_N_Anal.Context));
       Iter     : Gtk_Tree_Iter;
+      Prj_Node : Project_Access :=
+                   Get_Or_Create (Cont_N_Anal.Analysis.Projects,
+                                  Project_Information (Cont_N_Anal.Context));
    begin
-      if Message_Dialog
-        ((-"Remove data of project ") & Project_Name (Prj_Node.Name) & (-"?"),
-         Confirmation, Button_Yes or Button_No,
-         Justification => Justify_Left,
-         Title         => (-"Remove ") & Project_Name (Prj_Node.Name) & (-"?"))
-        = 1
-      then
-         if Cont_N_Anal.Analysis.View = null then
-            Show_Analysis_Report
-              (Get_Kernel (Cont_N_Anal.Context), Cont_N_Anal, False);
-         end if;
+      if Cont_N_Anal.Analysis.View = null then
+         Show_Analysis_Report
+           (Get_Kernel (Cont_N_Anal.Context), Cont_N_Anal, False);
+      end if;
 
-         Iter := Get_Iter_From_Context
-           (Cont_N_Anal.Context, Cont_N_Anal.Analysis.View.Model);
-         --  Removes it from the report
-         Remove (Cont_N_Anal.Analysis.View.Model, Iter);
-         --  Removes it from its container
-         Project_Maps.Delete
-           (Cont_N_Anal.Analysis.Projects.all, Prj_Node.Name);
-         --  Free it
-         Free_Project (Prj_Node);
+      Iter := Get_Iter_From_Context
+        (Cont_N_Anal.Context, Cont_N_Anal.Analysis.View.Model);
+      --  Removes it from the report
+      Remove (Cont_N_Anal.Analysis.View.Model, Iter);
+      --  Removes it from its container
+      Project_Maps.Delete
+        (Cont_N_Anal.Analysis.Projects.all, Prj_Node.Name);
+      --  Free it
+      Free_Project (Prj_Node);
 
-         if Project_Maps.Length (Cont_N_Anal.Analysis.Projects.all) = 0 then
-            Show_Empty_Analysis_Report
-              (Get_Kernel (Cont_N_Anal.Context), Cont_N_Anal.Analysis);
-         end if;
+      if Project_Maps.Length (Cont_N_Anal.Analysis.Projects.all) = 0 then
+         Show_Empty_Analysis_Report
+           (Get_Kernel (Cont_N_Anal.Context), Cont_N_Anal.Analysis);
       end if;
    exception
       when E : others => Trace (Exception_Handle, E);
