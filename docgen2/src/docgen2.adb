@@ -109,9 +109,8 @@ package body Docgen2 is
      (Index_Type => Natural, Element_Type => VFS.Virtual_File);
 
    function Less_Than (Left, Right : Cross_Ref) return Boolean;
-   --  Used to sort the children lists
-
    function Less_Than (Left, Right : Entity_Info) return Boolean;
+   function Less_Than (Left, Right : VFS.Virtual_File) return Boolean;
    --  Used to sort the children lists
 
    package Vector_Sort is new Cross_Ref_List.Generic_Sorting
@@ -121,7 +120,7 @@ package body Docgen2 is
      ("<" => Less_Than);
 
    package Files_Vector_Sort is new Files_List.Generic_Sorting
-     ("<" => VFS."<");
+     ("<" => Less_Than);
 
    type Entity_Info_Record (Category : Entity_Info_Category := Cat_Unknown)
       is record
@@ -418,6 +417,15 @@ package body Docgen2 is
    function Less_Than (Left, Right : Entity_Info) return Boolean is
    begin
       return To_Lower (Left.Short_Name.all) < To_Lower (Right.Short_Name.all);
+   end Less_Than;
+
+   ---------------
+   -- Less_Than --
+   ---------------
+
+   function Less_Than (Left, Right : VFS.Virtual_File) return Boolean is
+   begin
+      return To_Lower (Base_Name (Left)) < To_Lower (Base_Name (Right));
    end Less_Than;
 
    -----------
