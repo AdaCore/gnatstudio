@@ -32,7 +32,7 @@ endif
 ifeq ($(DOCGEN2_ROOT),True)
    include ../builder/src/Makefile.generic
 else
-   DEPS_PROJECTS += $(DOCGEN2_BASE_DIR)/$(PROJECT_FILE)
+   DEPS_PROJECTS += $(DOCGEN2_BASE_DIR)/docgen2
 endif
 
 endif
