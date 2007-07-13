@@ -41,7 +41,7 @@ install-common:
 	-$(RMDIR) $(sharedir)/gps/python/
 	(cd share; tar cf - icons/)  | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - *.*)  | (cd $(sharedir)/gps; tar xf -)
-	(cd docgen/templates; tar cf - html/) \
+	(cd docgen2/resources; tar cf - *.tmpl support/*.css support/*.js support/images/*.png) \
 		| (cd $(sharedir)/gps/docgen; tar xf -)
 	(cd aunit/templates; tar cf - *.tmpl) \
 		| (cd $(sharedir)/gps/aunit; tar xf -)

@@ -106,7 +106,7 @@ with Codefix_Module;
 with Command_Window;
 with Cpp_Module;
 with Custom_Module;
-with Docgen_Module;
+with Docgen2_Module;
 with External_Editor_Module;
 with GPS.Location_View;
 with GVD_Module;
@@ -1341,7 +1341,7 @@ procedure GPS.Main is
       end if;
 
       if Active (Docgen_Trace) then
-         Docgen_Module.Register_Module (GPS_Main.Kernel);
+         Docgen2_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (Code_Analysis_Trace) then
