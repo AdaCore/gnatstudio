@@ -170,6 +170,10 @@ package body Docgen2_Module is
            Get_Pref (Docgen_Module (Docgen_Module_Id).Show_Private_Entities),
          References         =>
            Get_Pref (Docgen_Module (Docgen_Module_Id).Show_References));
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
    end On_Preferences_Changed;
 
    -------------
@@ -187,6 +191,11 @@ package body Docgen2_Module is
          Docgen_Module (Docgen_Module_Id).Options,
          Command.Recursive);
       return Commands.Success;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return Commands.Failure;
    end Execute;
 
    -------------
@@ -205,6 +214,11 @@ package body Docgen2_Module is
          File_Information (Context.Context),
          Docgen_Module (Docgen_Module_Id).Options);
       return Commands.Success;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return Commands.Failure;
    end Execute;
 
    ---------------------------
@@ -229,6 +243,10 @@ package body Docgen2_Module is
                Docgen_Module (Docgen_Module_Id).Options);
          end;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
    end File_Commands_Handler;
 
    ------------------------------
@@ -257,6 +275,10 @@ package body Docgen2_Module is
                Recursive);
          end;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
    end Project_Commands_Handler;
 
    -----------------------
@@ -298,6 +320,10 @@ package body Docgen2_Module is
                Docgen_Module (Docgen_Module_Id).Options);
          end if;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
    end Choose_Menu_Current_File;
 
    -------------------------
@@ -315,6 +341,10 @@ package body Docgen2_Module is
          No_Project,
          Docgen_Module (Docgen_Module_Id).Options,
          False);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
    end Choose_Menu_Project;
 
    -----------------------------------
@@ -328,10 +358,14 @@ package body Docgen2_Module is
    begin
       Generate
         (Kernel,
-               Docgen_Module (Docgen_Module_Id).Backend,
+         Docgen_Module (Docgen_Module_Id).Backend,
          No_Project,
          Docgen_Module (Docgen_Module_Id).Options,
          False);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
    end Choose_Menu_Project_Recursive;
 
    ----------------------
@@ -359,6 +393,10 @@ package body Docgen2_Module is
             File,
             Docgen_Module (Docgen_Module_Id).Options);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
    end Choose_Menu_File;
 
    ---------------------
