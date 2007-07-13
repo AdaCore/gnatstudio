@@ -407,7 +407,11 @@ package body Docgen2 is
 
    function Less_Than (Left, Right : Cross_Ref) return Boolean is
    begin
-      return To_Lower (Left.Name.all) < To_Lower (Right.Name.all);
+      if Left.Xref /= null and then Right.Xref /= null then
+         return To_Lower (Left.Xref.Name.all) < To_Lower (Right.Xref.Name.all);
+      else
+         return To_Lower (Left.Name.all) < To_Lower (Right.Name.all);
+      end if;
    end Less_Than;
 
    ---------------
@@ -1920,15 +1924,13 @@ package body Docgen2 is
       Options   : Docgen_Options;
       Recursive : Boolean := False)
    is
-      Source_Files  : constant File_Array_Access :=
-                        Get_Source_Files (Project, Recursive);
-
       C             : Docgen_Command_Access;
       P             : Projects.Project_Type := Project;
       Context       : Selection_Context;
    begin
       if P = No_Project then
          Context := Get_Current_Context (Kernel);
+
          if Has_Project_Information (Context) then
             P := Project_Information (Context);
          else
@@ -1938,15 +1940,20 @@ package body Docgen2 is
 
       Parse_All_LI_Information (Kernel, P, Recursive);
 
-      C := new Docgen_Command;
-      C.Kernel         := Kernel_Handle (Kernel);
-      C.Backend        := Backend;
-      C.Project        := P;
-      C.Source_Files   := Source_Files;
-      C.Src_File_Index := Source_Files'First - 1;
-      C.File_Index     := Source_Files'First - 1;
-      C.Options        := Options;
-      C.Analysis_Ctxt.Iter := Null_Construct_Tree_Iterator;
+      declare
+         Source_Files  : constant File_Array_Access :=
+                           Get_Source_Files (P, Recursive);
+      begin
+         C := new Docgen_Command;
+         C.Kernel         := Kernel_Handle (Kernel);
+         C.Backend        := Backend;
+         C.Project        := P;
+         C.Source_Files   := Source_Files;
+         C.Src_File_Index := Source_Files'First - 1;
+         C.File_Index     := Source_Files'First - 1;
+         C.Options        := Options;
+         C.Analysis_Ctxt.Iter := Null_Construct_Tree_Iterator;
+      end;
 
       Launch_Background_Command
         (Kernel,
