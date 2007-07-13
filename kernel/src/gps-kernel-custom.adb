@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2007, AdaCore             --
+--                 Copyright (C) 2003-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -696,11 +696,11 @@ package body GPS.Kernel.Custom is
       if Startup /= null and then Startup.Initialization /= null then
          Custom := new Custom_Command;
          Create
-           (Item    => Custom,
-            Name    => "Initialize " & Full_Name (File).all,
-            Kernel  => Kernel_Handle (Kernel),
+           (Item           => Custom,
+            Name           => "Initialize " & Full_Name (File).all,
+            Kernel         => Kernel_Handle (Kernel),
             Default_Output => No_Output,
-            Command => Startup.Initialization);
+            Command        => Startup.Initialization);
          return Custom;
       else
          return null;
