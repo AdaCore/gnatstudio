@@ -1,0 +1,381 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html><head>
+  <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
+  <meta http-equiv="Content-Script-Type" content="text/javascript"/>
+
+  <title>
+    @@IF@@ @_EXIST:SOURCE_FILE_@
+    File: @_SOURCE_FILE_@
+    @@ELSE@@
+    Package: @_PACKAGE_NAME_@
+    @@END_IF@@
+  </title>
+  <link rel='stylesheet' href='support/docgen.css' type='text/css'/>
+  <script src='support/docgen.js' type='text/javascript' charset='utf-8'></script>
+</head>
+<body onload="onloadDoc();">
+
+<div id='leftSide'>
+  <div id='leftSideInside'>
+  @@INCLUDE@@ navigation.tmpl
+
+  <div id='navigation'>
+    <h2 class="button">Navigation</h2>
+    <a href='#Description'><div class="button2">Description</div></a>
+    @@IF@@ @_EXIST:PKG_@
+    <a href='#Packages'><div class="button2">Packages</div></a>
+    @@END_IF@@
+    @@IF@@ @_EXIST:CLASS_@
+    <a href='#Classes'><div class="button2">Classes</div></a>
+    @@END_IF@@
+    @@IF@@ @_EXIST:TASK_@
+    <a href='#Tasks'><div class="button2">Tasks &amp; Protected</div></a>
+    @@END_IF@@
+    @@IF@@ @_EXIST:TYPE_@
+    <a href='#Types'><div class="button2">Types</div></a>
+    @@END_IF@@
+    @@IF@@ @_EXIST:CST_@
+    <a href='#Constants'><div class="button2">Constants &amp; Global variables</div></a>
+    @@END_IF@@
+    @@IF@@ @_EXIST:SUBP_@
+    <a href='#Methods'><div class="button2">Subprograms &amp; Entries</div></a>
+    @@END_IF@@
+  </div><!-- navigation -->
+  </div>
+</div> <!-- leftSide -->
+
+<div class='default' id='rightSide'>
+ <div id='rightSideInside'>
+ <div id='Index'>
+  <h2>Index</h2>
+  <script type="text/javascript">
+    var names = new Array (
+      @@TABLE@@
+      @@INCLUDE@@ index_entry.tmpl @_PKG_@ @_PKG_LOC_@ package-spec
+      @@END_TABLE@@
+      @@TABLE@@
+      @@INCLUDE@@ index_entry.tmpl @_CLASS_@ @_CLASS_LOC_@ class-spec
+      @@END_TABLE@@
+      @@TABLE@@
+      @@INCLUDE@@ index_entry.tmpl @_TASK_@ @_TASK_LOC_@ var-spec
+      @@END_TABLE@@
+      @@TABLE@@
+      @@INCLUDE@@ index_entry.tmpl @_TYPE_@ @_TYPE_LOC_@ type-spec
+      @@END_TABLE@@
+      @@TABLE@@
+      @@INCLUDE@@ index_entry.tmpl @_CST_@ @_CST_LOC_@ var-spec
+      @@END_TABLE@@
+      @@TABLE@@
+      @@INCLUDE@@ index_entry.tmpl @_SUBP_@ @_SUBP_LOC_@ subp-spec
+      @@END_TABLE@@
+      @@TABLE@@
+        @@IF@@ @_TASK_ENTRY_@ /= "none"
+          @@TABLE@@
+            @@INCLUDE@@ index_entry.tmpl @_TASK_ENTRY_PARENT_@.@_TASK_ENTRY_@ @_TASK_ENTRY_LOC_@ subp-spec
+          @@END_TABLE@@
+        @@END_IF@@
+      @@END_TABLE@@
+      new Array ('dummy', '', ''));
+    printIndexList (names);
+  </script>
+  <noscript>
+    <ul>
+      @@TABLE@@
+      <li class='package-spec'><a href="#@_PKG_LOC_@">@_REPLACE_ALL(([.])/.<wbr/>):REPLACE_ALL((_)/_<wbr/>):PKG_@</a></li>
+      @@END_TABLE@@
+      @@TABLE@@
+      <li class='class-spec'><a href="#@_CLASS_LOC_@">@_REPLACE_ALL(([.])/.<wbr/>):REPLACE_ALL((_)/_<wbr/>):CLASS_@</a></li>
+      @@END_TABLE@@
+      @@TABLE@@
+      <li class='task-spec'><a href="#@_TASK_LOC_@">@_REPLACE_ALL(([.])/.<wbr/>):REPLACE_ALL((_)/_<wbr/>):TASK_@</a></li>
+      @@END_TABLE@@
+      @@TABLE@@
+      <li class='type-spec'><a href="#@_TYPE_LOC_@">@_REPLACE_ALL(([.])/.<wbr/>):REPLACE_ALL((_)/_<wbr/>):TYPE_@</a></li>
+      @@END_TABLE@@
+      @@TABLE@@
+      <li class='var-spec'><a href="#@_CST_LOC_@">@_REPLACE_ALL(([.])/.<wbr/>):REPLACE_ALL((_)/_<wbr/>):CST_@</a></li>
+      @@END_TABLE@@
+      @@TABLE@@
+      <li class='subp-spec'><a href="#@_SUBP_LOC_@">@_REPLACE_ALL(([.])/.<wbr/>):REPLACE_ALL((_)/_<wbr/>):SUBP_@</a></li>
+      @@END_TABLE@@
+      @@TABLE@@
+        @@IF@@ @_TASK_ENTRY_@ /= "none"
+          @@TABLE@@
+            <li class='subp-spec'><a href="#@_TASK_ENTRY_LOC_@">@_REPLACE_ALL(([.])/.<wbr/>):REPLACE_ALL((_)/_<wbr/>):TASK_ENTRY_@</a></li>
+          @@END_TABLE@@
+        @@END_IF@@
+      @@END_TABLE@@
+    </ul>
+  </noscript>
+ </div>
+ </div>
+</div>
+
+<div class='default' id='documentation'>
+  <div class='title'>
+    @@IF@@ @_EXIST:SOURCE_FILE_@
+    File: <i>@_SOURCE_FILE_@</i>
+    @@ELSE@@
+    Package: <i>@_PACKAGE_NAME_@</i>
+    @@END_IF@@
+    (<a href="@_SOURCE_@">Source File</a>)
+  </div>
+  <div class='subprograms'>
+    <h1><a name='Description' id='Description'></a>Description</h1>
+    <div class="class">
+    @@IF@@ @_NO_SPACE:PRINTOUT_@ /= ""
+    <div class='details'>@_PRINTOUT_@</div>
+    @@END_IF@@
+    @@IF@@ @_NO_SPACE:DESCRIPTION_@ /= ""
+    <div class='comment'><xmp>@_DESCRIPTION_@</xmp></div>
+    @@END_IF@@
+    @@IF@@ @_EXIST:GENERIC_PARAMETERS_@
+    <div class='parameters'>
+      Formal Generic Parameters:<br/>
+      @@TABLE@@
+      <div><a name='@_GENERIC_PARAMETERS_LOC_@' id='@_GENERIC_PARAMETERS_LOC_@'></a>@_GENERIC_PARAMETERS_@</div>
+      @@END_TABLE@@
+    </div>
+    @@END_IF@@
+    </div>
+  </div>
+
+  @@IF@@ @_EXIST:PKG_@
+  <div class='subprograms'>
+    <h1><a name='Packages' id='Packages'></a>Packages</h1>
+    @@TABLE@@
+    <div class="class">
+      <h3>
+        <a name='@_PKG_LOC_@' id='@_PKG_LOC_@'></a>
+        @_PKG_@
+        @@IF@@ @_NO_SPACE:PKG_INSTANTIATION_@ /= ""
+        <span class='type'>(new @_PKG_INSTANTIATION_@)</span>
+        @@ELSIF@@ @_NO_SPACE:PKG_RENAMES_@ /= ""
+        <span class='type'>(renames @_PKG_RENAMES_@)</span>
+        @@END_IF@@
+      </h3>
+      @@IF@@ (@_NO_SPACE:PKG_INSTANTIATION_@ = "") AND (@_NO_SPACE:PKG_RENAMES_@ = "")
+        @@IF@@ @_NO_SPACE:PKG_DESCRIPTION_@ /= ""
+        <div class='comment'><xmp>@_PKG_DESCRIPTION_@</xmp></div>
+        @@END_IF@@
+        <div class='details'>@_PKG_FULL_LINK_@</div>
+      @@ELSE@@
+        @@IF@@ @_NO_SPACE:PKG_PRINTOUT_@ /= ""
+        <div class='details'>@_PKG_PRINTOUT_@</div>
+        @@END_IF@@
+        @@IF@@ @_NO_SPACE:PKG_DESCRIPTION_@ /= ""
+        <div class='comment'><xmp>@_PKG_DESCRIPTION_@</xmp></div>
+        @@END_IF@@
+      @@END_IF@@
+    </div>
+    @@END_TABLE@@
+  </div>
+  @@END_IF@@
+
+  @@IF@@ @_EXIST:CLASS_@
+  <div class='subprograms'>
+    <h1><a name='Classes' id='Classes'></a>Classes</h1>
+    @@TABLE@@
+    <div class="class">
+      <h3><a name='@_CLASS_LOC_@' id='@_CLASS_LOC_@'></a>@_CLASS_@</h3>
+      <div class='details'>@_CLASS_PRINTOUT_@</div>
+      @@IF@@ (@_CLASS_PARENTS_@ /= "none") or (@_CLASS_PRIMITIVES_@ /= "none") or (@_CLASS_PRIMITIVES_INHERITED_@ /= "none")
+      <div class='profile'>
+        @@IF@@ @_CLASS_PARENTS_@ /= "none"
+        <div>
+          <h4>Ancestors:</h4>
+          @@TABLE@@
+            @@IF@@ @_NO_SPACE:CLASS_PARENTS_@ /= ""
+            <div>@_CLASS_PARENTS_@</div>
+            @@END_IF@@
+          @@END_TABLE@@
+        </div>
+        @@END_IF@@
+        @@IF@@ (@_CLASS_PRIMITIVES_@ /= "none") or (@_CLASS_PRIMITIVES_INHERITED_@ /= "none")
+        <div>
+          <h4>Primitive operations:</h4>
+          @@IF@@ @_CLASS_PRIMITIVES_@ /= "none"
+          @@TABLE@@
+            @@IF@@ @_NO_SPACE:CLASS_PRIMITIVES_@ /= ""
+            <div>@_CLASS_PRIMITIVES_@</div>
+            @@END_IF@@
+          @@END_TABLE@@
+          @@END_IF@@
+          @@IF@@ @_CLASS_PRIMITIVES_INHERITED_@ /= "none"
+          @@TABLE@@
+            @@IF@@ @_NO_SPACE:CLASS_PRIMITIVES_INHERITED_@ /= ""
+            <div><i>@_CLASS_PRIMITIVES_INHERITED_@ (inherited)</i></div>
+            @@END_IF@@
+          @@END_TABLE@@
+          @@END_IF@@
+        </div>
+        @@END_IF@@
+      </div>
+      @@END_IF@@
+      @@IF@@ @_CLASS_REFERENCES_@ /= "none"
+      <div class='profile'>
+          <h4>References:</h4>
+          @@TABLE@@
+            @@IF@@ @_NO_SPACE:CLASS_REFERENCES_@ /= ""
+            <div><i>@_CLASS_REFERENCES_@</i></div>
+            @@END_IF@@
+          @@END_TABLE@@
+      </div>
+      @@END_IF@@
+      @@IF@@ @_NO_SPACE:CLASS_DESCRIPTION_@ /= ""
+      <div class='comment'><xmp>@_CLASS_DESCRIPTION_@</xmp></div>
+      @@END_IF@@
+    </div>
+    @@END_TABLE@@
+  </div>
+  @@END_IF@@
+
+  @@IF@@ @_EXIST:TASK_@
+    <div class='subprograms'>
+      <h1><a name='Tasks' id='Tasks'></a>Tasks &amp; Protected</h1>
+      @@TABLE@@
+      <div class="class">
+        <h3>
+          <a name='@_TASK_LOC_@' id='@_TASK_LOC_@'></a>@_TASK_@
+          @@IF@@ @_TASK_IS_TYPE_@
+           (@_TASK_TYPE_@ type)
+          @@ELSE@@
+           (@_TASK_TYPE_@)
+          @@END_IF@@
+        </h3>
+        @@IF@@ @_TASK_ENTRY_@ /= "none"
+        <div>Entries:</div>
+        @@TABLE@@
+          <div><a href="#@_TASK_ENTRY_LOC_@">@_TASK_ENTRY_@</a></div>
+        @@END_TABLE@@
+        @@END_IF@@
+        @@IF@@ @_TASK_REFERENCES_@ /= "none"
+        <div class='profile'>
+            <h4>References:</h4>
+            @@TABLE@@
+            <div><i>@_TASK_REFERENCES_@</i></div>
+            @@END_TABLE@@
+        </div>
+        @@END_IF@@
+        @@IF@@ @_NO_SPACE:TASK_DESCRIPTION_@ /= ""
+        <div class='comment'><xmp>@_TASK_DESCRIPTION_@</xmp></div>
+        @@END_IF@@
+      </div>
+      @@END_TABLE@@
+    </div>
+  @@END_IF@@
+
+  @@IF@@ @_EXIST:TYPE_@
+    <div class='subprograms'>
+      <h1><a name='Types' id='Types'></a>Types</h1>
+      @@TABLE@@
+      <div class="class">
+        <h3><a name='@_TYPE_LOC_@' id='@_TYPE_LOC_@'></a>@_TYPE_@</h3>
+        <div class='details'>@_TYPE_PRINTOUT_@</div>
+        @@IF@@ @_TYPE_REFERENCES_@ /= "none"
+        <div class='profile'>
+            <h4>References:</h4>
+            @@TABLE@@
+            <div><i>@_TYPE_REFERENCES_@</i></div>
+            @@END_TABLE@@
+        </div>
+        @@END_IF@@
+        @@IF@@ @_NO_SPACE:TYPE_DESCRIPTION_@ /= ""
+        <div class='comment'><xmp>@_TYPE_DESCRIPTION_@</xmp></div>
+        @@END_IF@@
+      </div>
+      @@END_TABLE@@
+    </div>
+  @@END_IF@@
+
+  @@IF@@ @_EXIST:CST_@
+    <div class='subprograms'>
+      <h1><a name='Constants' id='Constants'></a>Constants &amp; Global variables</h1>
+      @@TABLE@@
+      <div class="class">
+        <h3><a name='@_CST_LOC_@' id='@_CST_LOC_@'></a>@_CST_@
+          @@IF@@ @_CST_TYPE_@ /= ""
+          <span class="type">(@_CST_TYPE_@)</span>
+          @@END_IF@@
+        </h3>
+        <div class='details'>@_CST_PRINTOUT_@</div>
+        @@IF@@ @_CST_REFERENCES_@ /= "none"
+        <div class='profile'>
+          <h4>References:</h4>
+          @@TABLE@@
+          <div><i>@_CST_REFERENCES_@</i></div>
+          @@END_TABLE@@
+        </div>
+        @@END_IF@@
+        @@IF@@ @_NO_SPACE:CST_DESCRIPTION_@ /= ""
+        <div class='comment'><xmp>@_CST_DESCRIPTION_@</xmp></div>
+        @@END_IF@@
+      </div>
+      @@END_TABLE@@
+    </div>
+  @@END_IF@@
+
+  @@IF@@ @_EXIST:SUBP_@ OR @_EXIST:TASK_ENTRY_@
+    <div class='subprograms'>
+      <h1><a name='Methods' id='Methods'></a>Subprograms &amp; Entries</h1>
+      @@TABLE@@
+        @@IF@@ @_TASK_ENTRY_@ /= "none"
+        @@TABLE@@
+          <div class='class'>
+            <div>
+              <h3>
+                <a name='@_TASK_ENTRY_LOC_@' id='@_TASK_ENTRY_LOC_@'></a>
+                <span class="type">
+                  <a href="#@_TASK_ENTRY_PARENT_LOC_@">@_TASK_ENTRY_PARENT_@</a>
+                </span>
+                .@_TASK_ENTRY_@
+              </h3>
+              <div class='details'>@_REPLACE(span>[^>]*\(/span><table><tr><td>\(</td>):REPLACE(\)[ \n]*/\)</table><tr><td>):REPLACE_ALL(span\>\s*[:]/span></td><td>:):REPLACE_ALL(;/;</td></tr><tr><td>):TASK_ENTRY_PRINTOUT_@</div>
+              @@IF@@ @_TASK_ENTRY_REFERENCES_@ /= "none"
+              <div class='profile'>
+                <h4>References:</h4>
+                @@TABLE@@
+                <div><i>@_TASK_ENTRY_REFERENCES_@</i></div>
+                @@END_TABLE@@
+              </div>
+              @@END_IF@@
+              @@IF@@ @_NO_SPACE:TASK_ENTRY_DESCRIPTION_@ /= ""
+              <div class='comment'><xmp>@_TASK_ENTRY_DESCRIPTION_@</xmp></div>
+              @@END_IF@@
+            </div>
+          </div>
+        @@END_TABLE@@
+        @@END_IF@@
+      @@END_TABLE@@
+      @@TABLE@@
+      <div class="class">
+        <h3><a name='@_SUBP_LOC_@' id='@_SUBP_LOC_@'></a>@_SUBP_@</h3>
+        @@IF@@ @_SUBP_GENERIC_PARAMETERS_@ /= "none"
+        <div class='parameters'>
+          Formal Generic Parameters:<br/>
+          @@TABLE@@
+          <div>@_SUBP_GENERIC_PARAMETERS_@</div>
+          @@END_TABLE@@
+        </div>
+        @@END_IF@@
+        <div class='details'>@_REPLACE(span>[^>]*\(/span><table><tr><td>\(</td><td>):REPLACE(\)[ \n]*/\)</table><tr><td>):REPLACE_ALL(span\>\s*[:]/span></td><td>:):REPLACE_ALL(;\n/;</td></tr><tr><td></td><td>):SUBP_PRINTOUT_@</div>
+        @@IF@@ @_SUBP_REFERENCES_@ /= "none"
+        <div class='profile'>
+          <h4>References:</h4>
+          @@TABLE@@
+          <div><i>@_SUBP_REFERENCES_@</i></div>
+          @@END_TABLE@@
+        </div>
+        @@END_IF@@
+        @@IF@@ @_NO_SPACE:SUBP_DESCRIPTION_@ /= ""
+        <div class='comment'><xmp>@_SUBP_DESCRIPTION_@</xmp></div>
+        @@END_IF@@
+      </div>
+      @@END_TABLE@@
+    </div>
+  @@END_IF@@
+</div> <!-- documentation -->
+
+</body>
+</html>

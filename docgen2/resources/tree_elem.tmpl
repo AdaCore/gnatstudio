@@ -1,0 +1,16 @@
+@@IF@@ @_ROOT_TREE_@
+<div class="classroot">
+@@ELSE@@
+<div class="classtree">
+@@END_IF@@
+  <h3>@_TREE_@ (at @_TREE_LOC_@)</h3>
+  @@IF@@ @_EXIST:TREE_CHILDREN_@
+  <div class="classtreechildren">
+  <div class="classtreechildreninside">
+  @@TABLE@@
+  @_TREE_CHILDREN_@
+  @@END_TABLE@@
+  </div>
+  </div>
+  @@END_IF@@
+</div>

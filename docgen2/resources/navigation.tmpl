@@ -1,0 +1,24 @@
+@@SET@@ WHEREAMI = $1
+  <div id='header'>
+    <h2 class="button">Documentation</h2>
+    @@IF@@ @_WHEREAMI_@ /= "TOC"
+    <a href='index.html'><div class="button2">Table of Contents</div></a>
+    @@ELSE@@
+    <i><div class="button2">Table of Contents</div></i>
+    @@END_IF@@
+    @@IF@@ @_WHEREAMI_@ /= "INDEX"
+    <a href='entities.html'><div class="button2">Entities Index</div></a>
+    @@ELSE@@
+    <i><div class="button2">Entities Index</div></i>
+    @@END_IF@@
+    @@IF@@ @_WHEREAMI_@ /= "SRC_INDEX"
+    <a href='src_index.html'><div class="button2">Sources Index</div></a>
+    @@ELSE@@
+    <i><div class="button2">Sources Index</div></i>
+    @@END_IF@@
+    @@IF@@ @_WHEREAMI_@ /= "CLASS_TREE"
+    <a href='tree.html'><div class="button2">Class Inheritance Trees</div></a>
+    @@ELSE@@
+    <i><div class="button2">Class Inheritance Trees</div></i>
+    @@END_IF@@
+  </div>
