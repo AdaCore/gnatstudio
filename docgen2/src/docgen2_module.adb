@@ -361,7 +361,7 @@ package body Docgen2_Module is
          Docgen_Module (Docgen_Module_Id).Backend,
          No_Project,
          Docgen_Module (Docgen_Module_Id).Options,
-         False);
+         True);
 
    exception
       when E : others =>
