@@ -49,8 +49,8 @@ BASE_DIR=$(GPS_BASE_DIR)/../help
 include $(BASE_DIR)/Makefile.help
 BASE_DIR=$(GPS_BASE_DIR)/../vfs
 include $(BASE_DIR)/Makefile.vfs
-BASE_DIR=$(GPS_BASE_DIR)/../docgen
-include $(BASE_DIR)/Makefile.docgen
+BASE_DIR=$(GPS_BASE_DIR)/../docgen2
+include $(BASE_DIR)/Makefile.docgen2
 BASE_DIR=$(GPS_BASE_DIR)/../ada_module
 include $(BASE_DIR)/Makefile.ada_module
 BASE_DIR=$(GPS_BASE_DIR)/../cpp_module
@@ -91,7 +91,7 @@ OBJ_DIR = $(GPS_OBJ_DIR)
 
 CFLAGS = -g -O2
 ADA_SOURCES = gps-main.adb
-ADAFLAGS=-j2
+ADAFLAGS=-j4
 
 PROJECT_FILE = gps
 
