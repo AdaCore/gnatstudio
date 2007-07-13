@@ -1476,6 +1476,84 @@ package body Entities.Queries is
       end case;
    end Image;
 
+   ----------------------------
+   -- Get_Generic_Parameters --
+   ----------------------------
+
+   function Get_Generic_Parameters
+     (Generic_Entity        : Entity_Information;
+      File_Has_No_LI_Report : File_Error_Reporter := null)
+      return Generic_Iterator
+   is
+      Iter : Generic_Iterator;
+   begin
+      Update_Xref (Get_File (Get_Declaration_Of (Generic_Entity)),
+                   File_Has_No_LI_Report);
+      Iter := (Index         => Entity_Reference_Arrays.First,
+               Entity        => Generic_Entity,
+               Cache_Current => null);
+      if Length (Iter.Entity.References) > 0
+        and then Iter.Entity.References.Table (Iter.Index).Kind /=
+                   Formal_Generic_Parameter
+      then
+         Next (Iter);
+      end if;
+
+      return Iter;
+   end Get_Generic_Parameters;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (Iterator : in out Generic_Iterator) is
+   begin
+      loop
+         Iterator.Index := Iterator.Index + 1;
+         exit when Iterator.Index > Last (Iterator.Entity.References)
+           or else Iterator.Entity.References.Table (Iterator.Index).Kind =
+                     Formal_Generic_Parameter;
+      end loop;
+      Iterator.Cache_Current := null;
+   end Next;
+
+   ---------
+   -- Get --
+   ---------
+
+   procedure Get
+     (Iterator  : in out Generic_Iterator;
+      Parameter : out Entity_Information)
+   is
+      Entity : Entity_Information;
+      Loc    : File_Location;
+      Status : Find_Decl_Or_Body_Query_Status;
+   begin
+      if Iterator.Cache_Current = null
+        and then Iterator.Index <= Last (Iterator.Entity.References)
+      then
+         Loc := Iterator.Entity.References.Table (Iterator.Index).Location;
+
+         Find_Declaration
+           (Db          => Get_Database
+              (Get_File (Get_Declaration_Of (Iterator.Entity))),
+            File_Name   => Get_Filename (Get_File (Loc)),
+            Entity_Name => "",
+            Line        => Get_Line (Loc),
+            Column      => Get_Column (Loc),
+            Check_Decl_Only => True,
+            Entity      => Entity,
+            Status      => Status);
+
+         --  ??? If there was an error above, this will set the current to
+         --  null, and thus we will no longer return the remaining parameters.
+         --  In fact, we might not be able to compute them anyway...
+         Iterator.Cache_Current := Entity;
+      end if;
+
+      Parameter := Iterator.Cache_Current;
+   end Get;
+
    -------------------------
    -- Is_Instantiation_Of --
    -------------------------

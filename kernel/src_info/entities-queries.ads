@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2007                       --
---                             AdaCore                               --
+--                 Copyright (C) 2003-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -236,6 +235,30 @@ package Entities.Queries is
 
    function Is_Parameter (Entity : Entity_Information) return Boolean;
    --  Return True if Entity is a parameter for a subprogram
+
+   -------------------------------
+   -- Formal generic parameters --
+   -------------------------------
+
+   type Generic_Iterator is private;
+
+   function Get_Generic_Parameters
+     (Generic_Entity        : Entity_Information;
+      File_Has_No_LI_Report : File_Error_Reporter := null)
+      return Generic_Iterator;
+   --  Return an iterator that will get all the formal parameters associated
+   --  with the Generic_Entity.
+   --  If Generic_Entity doesn't have any, or isn't a generic, the iterator
+   --  will not return any value.
+
+   procedure Next (Iterator : in out Generic_Iterator);
+   --  Move to the next parameter
+
+   procedure Get
+     (Iterator  : in out Generic_Iterator;
+      Parameter : out Entity_Information);
+   --  Return the current parameter.
+   --  null is returned if there are no more parameters.
 
    ------------------
    -- Dependencies --
@@ -494,6 +517,12 @@ private
    end record;
 
    type Subprogram_Iterator is record
+      Index         : Entity_Reference_Arrays.Index_Type;
+      Entity        : Entity_Information;
+      Cache_Current : Entity_Information;
+   end record;
+
+   type Generic_Iterator is record
       Index         : Entity_Reference_Arrays.Index_Type;
       Entity        : Entity_Information;
       Cache_Current : Entity_Information;
