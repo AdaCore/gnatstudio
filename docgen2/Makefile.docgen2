@@ -1,0 +1,38 @@
+ifeq ($(DOCGEN2_PROJECT),)
+DOCGEN2_PROJECT=True
+
+ifeq ($(BASE_DIR),)
+   include ../Makefile.common
+   BASE_DIR=$(shell pwd)
+   DOCGEN2_ROOT=True
+endif
+
+DOCGEN2_BASE_DIR := $(BASE_DIR)
+
+BASE_DIR=$(DOCGEN2_BASE_DIR)/../kernel
+include $(BASE_DIR)/Makefile.kernel
+
+DOCGEN2_SRC_DIRS = $(DOCGEN2_BASE_DIR)/src
+SRC_DIRS += $(DOCGEN2_SRC_DIRS)
+C_SRCS = \
+  $(foreach name,$(DOCGEN2_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
+DOCGEN2_SRCS := \
+  $(foreach name,$(DOCGEN2_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
+DOCGEN2_OBJ_DIR = $(DOCGEN2_BASE_DIR)/obj
+OBJ_DIR = $(DOCGEN2_OBJ_DIR)
+
+CFLAGS = -g -O2
+
+PROJECT_FILE = docgen2
+
+ifneq ($(strip $(DOCGEN2_SRCS)),)
+   LIBS := $(DOCGEN2_OBJ_DIR)/libdocgen2$(AR_EXT) $(LIBS)
+endif
+
+ifeq ($(DOCGEN2_ROOT),True)
+   include ../builder/src/Makefile.generic
+else
+   DEPS_PROJECTS += $(DOCGEN2_BASE_DIR)/$(PROJECT_FILE)
+endif
+
+endif
