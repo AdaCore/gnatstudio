@@ -10571,7 +10571,7 @@ GPS.Project.root().file().name()
 This is similar to @code{%pp}, except it returns the project name prepended
 with @code{-P}, or an empty string if there is no project file selected and the
 current source file doesn't belong to any project. This is mostly for use with
-the GNAT command line tools.
+the GNAT command line tools. The project name is quoted if it contains spaces.
 Python equivalent:
 @smallexample
 if GPS.current_context().project():

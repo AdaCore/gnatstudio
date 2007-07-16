@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2001-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -377,9 +376,12 @@ package String_Utils is
    --     foo\"foo    -> foo\"foo    (backslash not removed from output)
 
    function Protect
-     (S : String; Protect_Quotes : Boolean := True) return String;
+     (S : String;
+      Protect_Quotes : Boolean := True;
+      Protect_Spaces : Boolean := False) return String;
    --  Escape special characters in S.
-   --  Quotes are only escaped with Protect_Quotes is true
+   --  Quotes are only escaped when Protect_Quotes is true.
+   --  Spaces are only escaped when Protect_Spaces is true
 
    function Unprotect (S : String) return String;
    --  Unprotect an argument: remove the leading and ending '"',

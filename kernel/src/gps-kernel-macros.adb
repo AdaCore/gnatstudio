@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005-2007                       --
---                              AdaCore                              --
+--                     Copyright (C) 2005-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -221,8 +220,9 @@ package body GPS.Kernel.Macros is
                return "";
             else
                return String_Utils.Protect
-                 ("-P" & To_Remote (Full_Name (Project_Path (Project)).all,
-                                    Server),
+                 ("-P"
+                  & To_Remote (Full_Name (Project_Path (Project)).all, Server),
+                  Protect_Spaces => not Quoted,
                   Protect_Quotes => Quoted);
             end if;
          end if;
