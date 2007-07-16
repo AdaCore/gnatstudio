@@ -1386,7 +1386,6 @@ package body Docgen2 is
 
             when Cat_Class =>
                --  Get parents
-               Trace (Me, "Get class parents");
                declare
                   Parents : constant Entity_Information_Array :=
                               Get_Parent_Types (Entity, Recursive => True);
@@ -1397,7 +1396,6 @@ package body Docgen2 is
                end;
 
                --  Get known children
-               Trace (Me, "Get known children");
                declare
                   Children : Children_Iterator := Get_Child_Types
                     (Entity, Recursive => False, Update_Xref => False);
@@ -1415,8 +1413,6 @@ package body Docgen2 is
                end;
 
                --  Get primitive operations
-               Trace (Me, "Get primitive operations");
-
                declare
                   Iter, Iter_First : Primitive_Operations_Iterator;
                   E_Overriden      : Entity_Information;
@@ -1425,7 +1421,6 @@ package body Docgen2 is
 
                begin
                   Find_All_Primitive_Operations (Iter, Entity, True);
-                  Trace (Me, "All primitive operations found: start filter");
 
                   Iter_First := Iter;
 
@@ -1485,8 +1480,6 @@ package body Docgen2 is
                      end loop;
                   end;
                end;
-
-               Trace (Me, "End class analysis");
 
             when Cat_Variable =>
                --  Get its type
@@ -1655,6 +1648,7 @@ package body Docgen2 is
       Comment_End   : Integer;
       Database      : constant Entities_Database :=
                         Get_Database (Command.Kernel);
+      File          : Source_File;
       use type Ada.Containers.Count_Type;
    begin
       if Command.Analysis_Ctxt.Iter /= Null_Construct_Tree_Iterator then
@@ -1675,9 +1669,15 @@ package body Docgen2 is
          Free (Command.Analysis_Ctxt.Tree);
          Free (Command.Analysis_Ctxt.File_Buffer);
 
+         File := Get_Or_Create
+           (Database,
+            Command.Source_Files (Command.File_Index));
+
          --  Only analyze specs
          if Is_Spec_File (Command.Kernel,
                           Command.Source_Files (Command.File_Index))
+           and then (not Command.Options.Process_Up_To_Date_Only
+                       or else Is_Up_To_Date (File))
          then
             --  Create the new entity info structure
             File_EInfo := new Entity_Info_Record
@@ -1705,9 +1705,8 @@ package body Docgen2 is
 
             begin
                File_EInfo.Language := Language;
-               File_EInfo.File := Get_Or_Create
-                 (Database,
-                  Command.Source_Files (Command.File_Index));
+               File_EInfo.File := File;
+               Ref (File_EInfo.File);
                File_Buffer := Read_File
                  (Command.Source_Files (Command.File_Index));
 
@@ -1849,10 +1848,16 @@ package body Docgen2 is
          --  Generate annotated source files
 
          Command.Src_File_Index := Command.Src_File_Index + 1;
+         File := Get_Or_Create
+           (Database,
+            Command.Source_Files (Command.File_Index));
 
-         if Is_Spec_File (Command.Kernel,
+         if (Is_Spec_File (Command.Kernel,
                           Command.Source_Files (Command.Src_File_Index))
-           or else Command.Options.Process_Body_Files
+             or else Command.Options.Process_Body_Files)
+           and then
+             (not Command.Options.Process_Up_To_Date_Only
+              or else Is_Up_To_Date (File))
          then
             Command.Src_Files.Append
               (Command.Source_Files (Command.Src_File_Index));

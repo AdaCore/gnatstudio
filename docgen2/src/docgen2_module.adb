@@ -62,6 +62,9 @@ package body Docgen2_Module is
       --  True if the program should search for the references
       --  Adding information like "subprogram called by..."
 
+      Process_Up_To_Date_Only : Param_Spec_Boolean;
+      --  True if docgen should document up to date entities only.
+
       Options               : Docgen_Options;
       --  Group all the preferences
 
@@ -169,7 +172,10 @@ package body Docgen2_Module is
          Show_Private       =>
            Get_Pref (Docgen_Module (Docgen_Module_Id).Show_Private_Entities),
          References         =>
-           Get_Pref (Docgen_Module (Docgen_Module_Id).Show_References));
+           Get_Pref (Docgen_Module (Docgen_Module_Id).Show_References),
+         Process_Up_To_Date_Only =>
+           Get_Pref
+             (Docgen_Module (Docgen_Module_Id).Process_Up_To_Date_Only));
 
    exception
       when E : others =>
@@ -492,6 +498,20 @@ package body Docgen2_Module is
       Register_Property
         (Kernel,
          Param_Spec (Docgen_Module (Docgen_Module_Id).Show_References),
+         -"Documentation");
+
+      Docgen_Module (Docgen_Module_Id).Process_Up_To_Date_Only :=
+        Param_Spec_Boolean
+          (Gnew_Boolean
+               (Name    => "Doc-Up-To-Date-Only",
+                Default => True,
+                Blurb   =>
+                -("Whether Docgen should only document files with up-to-date"
+                  & " cross ref informations."),
+                Nick    => -"Up-to-date files only"));
+      Register_Property
+        (Kernel,
+         Param_Spec (Docgen_Module (Docgen_Module_Id).Process_Up_To_Date_Only),
          -"Documentation");
 
       Add_Hook

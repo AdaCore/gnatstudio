@@ -27,15 +27,16 @@ with VFS;
 package Docgen2 is
 
    type Docgen_Options is record
-      Process_Body_Files : Boolean := False;
+      Process_Body_Files      : Boolean := False;
       --  Create also the body documentation
-      Comments_Filter    : GNAT.Expect.Pattern_Matcher_Access;
+      Comments_Filter         : GNAT.Expect.Pattern_Matcher_Access;
       --  Filter comments
-      Show_Private       : Boolean := False;
+      Show_Private            : Boolean := False;
       --  Show also private entities
-      References         : Boolean := False;
+      References              : Boolean := False;
       --  True if the program should search for the references
       --  Adding information like "subprogram called by..."
+      Process_Up_To_Date_Only : Boolean := True;
    end record;
 
    procedure Generate
