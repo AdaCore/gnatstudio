@@ -381,7 +381,7 @@ package body Code_Coverage is
       Bin_Mode : Boolean := False) return String_Access
    is
       Pango_Markup_To_Open_1 : constant String
-        := "<span size=""small"" foreground=""";
+        := "<span foreground=""";
       Pango_Markup_To_Open_2 : constant String := """>";
       Pango_Markup_To_Close : constant String := "</span>";
    begin
@@ -393,7 +393,12 @@ package body Code_Coverage is
                       & Pango_Markup_To_Open_2
                       & "#"
                       & Pango_Markup_To_Close);
-         when others => return new String'("");
+         when others => return new
+              String'(Pango_Markup_To_Open_1
+                      & "blue"
+                      & Pango_Markup_To_Open_2
+                      & ("+")
+                      & Pango_Markup_To_Close);
          end case;
       else
          case Coverage.Coverage is
