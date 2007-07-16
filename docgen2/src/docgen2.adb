@@ -2078,7 +2078,7 @@ package body Docgen2 is
             --  to find its corresponding Entity_Info
 
             --  Find the entity in E_Info and its children
-            Decl_Entity := Get_Entity
+            Decl_Entity := Get_Declaration_Entity
               (Buffer (Sloc_Start.Index .. Sloc_End.Index),
                Sloc_Start, File, Db, Lang);
 
