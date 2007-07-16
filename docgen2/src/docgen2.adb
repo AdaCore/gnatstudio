@@ -1853,10 +1853,11 @@ package body Docgen2 is
             Command.Src_Files.Append
               (Command.Source_Files (Command.Src_File_Index));
 
-            Trace
-              (Me, "Generate annotated source for " &
-               Base_Name
-                 (Command.Source_Files (Command.Src_File_Index)));
+            if Active (Me) then
+               Trace
+                 (Me, "Generate annotated source for " &
+                  Base_Name (Command.Source_Files (Command.Src_File_Index)));
+            end if;
 
             Command.Buffer :=
               VFS.Read_File (Command.Source_Files (Command.Src_File_Index));
