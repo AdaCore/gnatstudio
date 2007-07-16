@@ -56,6 +56,8 @@ with Docgen2_Backend;           use Docgen2_Backend;
 
 package body Docgen2 is
 
+   Me : constant Debug_Handle := Create ("Docgen");
+
    type Entity_Info_Category is
      (Cat_File,
       Cat_Package,
@@ -259,6 +261,8 @@ package body Docgen2 is
       Documentation  : Entity_Info_List.Vector;
       File_Index     : Natural;
       Src_File_Index : Natural;
+      Src_File_Iter  : Parse_Entities_Iterator;
+      Buffer         : GNAT.Strings.String_Access;
       Src_Files      : Files_List.Vector;
       Files          : Cross_Ref_List.Vector;
       Analysis_Ctxt  : Analysis_Context;
@@ -323,6 +327,8 @@ package body Docgen2 is
      (Kernel  : access Kernel_Handle_Record'Class;
       Backend : Backend_Handle;
       File    : Source_File;
+      Buffer  : GNAT.Strings.String_Access;
+      Iter    : in out Parse_Entities_Iterator;
       Lang    : Language_Access;
       Db      : Entities_Database;
       Xrefs   : Entity_Info_Map.Map);
@@ -1382,6 +1388,7 @@ package body Docgen2 is
 
             when Cat_Class =>
                --  Get parents
+               Trace (Me, "Get class parents");
                declare
                   Parents : constant Entity_Information_Array :=
                               Get_Parent_Types (Entity, Recursive => True);
@@ -1392,6 +1399,7 @@ package body Docgen2 is
                end;
 
                --  Get known children
+               Trace (Me, "Get known children");
                declare
                   Children : constant Entity_Information_Array :=
                                Get_Child_Types (Entity, Recursive => False);
@@ -1405,59 +1413,78 @@ package body Docgen2 is
                end;
 
                --  Get primitive operations
+               Trace (Me, "Get primitive operations");
+
                declare
-                  Iter, Iter2, Iter_First : Primitive_Operations_Iterator;
-                  Primitive_Operation     : Entity_Information;
-                  Overriden               : Boolean;
-                  E_Overriden             : Entity_Information;
-                  Op_Xref                 : Cross_Ref;
+                  Iter, Iter_First : Primitive_Operations_Iterator;
+                  E_Overriden      : Entity_Information;
+                  Op_Xref          : Cross_Ref;
+                  Nb_Primop        : Natural;
+
                begin
                   Find_All_Primitive_Operations (Iter, Entity, True);
+                  Trace (Me, "All primitive operations found: start filter");
 
                   Iter_First := Iter;
 
+                  Nb_Primop := 0;
+
                   while not At_End (Iter) loop
-                     Primitive_Operation := Get (Iter);
-
-                     --  Search for overriding operation
-                     Overriden := False;
-                     Iter2 := Iter_First;
-
-                     if Is_Primitive_Operation_Of (Primitive_Operation) /=
-                       Entity
-                     then
-                        while not At_End (Iter2) loop
-                           E_Overriden := Overriden_Entity (Get (Iter2));
-
-                           if E_Overriden = Primitive_Operation then
-                              --  Primitive_Operation is overriden. Do not
-                              --  display it.
-                              Overriden := True;
-
-                              exit;
-                           end if;
-
-                           Next (Iter2);
-                        end loop;
-                     end if;
-
-                     if not Overriden then
-                        Op_Xref := Create_Xref  (Primitive_Operation);
-                        Op_Xref.Inherited :=
-                          Is_Primitive_Operation_Of (Primitive_Operation) /=
-                          Entity;
-
-                        E_Overriden := Overriden_Entity (Primitive_Operation);
-                        if E_Overriden /= null then
-                           Op_Xref.Overriding_Op := Create_Xref (E_Overriden);
-                        end if;
-
-                        E_Info.Primitive_Ops.Append (Op_Xref);
-                     end if;
-
+                     Nb_Primop := Nb_Primop + 1;
                      Next (Iter);
                   end loop;
+
+                  declare
+                     type Primop_Info is record
+                        Entity    : Entity_Information;
+                        Overriden : Boolean;
+                     end record;
+
+                     List : array (1 .. Nb_Primop) of Primop_Info;
+
+                  begin
+                     Iter := Iter_First;
+
+                     --  Init the list of primitive operations
+                     for J in List'Range loop
+                        List (J) := (Get (Iter), False);
+                        Next (Iter);
+                     end loop;
+
+                     --  Search for overriden operations
+                     for J in List'Range loop
+                        E_Overriden := Overriden_Entity (List (J).Entity);
+
+                        for K in J + 1 .. List'Last loop
+                           if E_Overriden = List (K).Entity then
+                              List (K).Overriden := True;
+                           end if;
+                        end loop;
+                     end loop;
+
+                     --  Insert non overriden operations in the xref list.
+                     for J in List'Range loop
+                        if not List (J).Overriden then
+                           Op_Xref := Create_Xref  (List (J).Entity);
+
+                           Op_Xref.Inherited :=
+                             Is_Primitive_Operation_Of (List (J).Entity) /=
+                             Entity;
+
+                           E_Overriden := Overriden_Entity (List (J).Entity);
+
+                           if E_Overriden /= null then
+                              Op_Xref.Overriding_Op :=
+                                Create_Xref (E_Overriden);
+                           end if;
+
+                           E_Info.Primitive_Ops.Append (Op_Xref);
+                        end if;
+                     end loop;
+                  end;
                end;
+
+               Trace (Me, "End class analysis");
 
             when Cat_Variable =>
                --  Get its type
@@ -1657,6 +1684,8 @@ package body Docgen2 is
               (Base_Name (Command.Source_Files (Command.File_Index)));
             File_EInfo.Short_Name := File_EInfo.Name;
 
+            Trace (Me, "Analysis of file " & File_EInfo.Name.all);
+
             --  And add it to the global documentation list
             Command.Documentation.Append (File_EInfo);
 
@@ -1787,6 +1816,7 @@ package body Docgen2 is
          Generate_Support_Files (Command.Kernel, Command.Backend);
 
          --  Generate all cross-refs
+         Trace (Me, "Generate all Cross-Refs");
          Generate_Xrefs (Command.Xref_List, Command.EInfo_Map);
 
          Command.Doc_Gen := True;
@@ -1800,6 +1830,7 @@ package body Docgen2 is
             EInfo   : constant Entity_Info :=
                         Entity_Info_List.Element (Command.Cursor);
          begin
+            Trace (Me, "Generate doc for " & EInfo.Name.all);
             Generate_Doc
               (Kernel  => Command.Kernel,
                Backend => Command.Backend,
@@ -1815,12 +1846,30 @@ package body Docgen2 is
       elsif Command.Src_File_Index < Command.Source_Files'Last then
          --  Generate annotated source files
 
-         Command.Src_File_Index := Command.Src_File_Index + 1;
+         if At_End (Command.Src_File_Iter) then
+            Command.Src_File_Index := Command.Src_File_Index + 1;
 
-         if Is_Spec_File (Command.Kernel,
-                          Command.Source_Files (Command.Src_File_Index))
-           or else Command.Options.Process_Body_Files
-         then
+            if Is_Spec_File (Command.Kernel,
+                             Command.Source_Files (Command.Src_File_Index))
+              or else Command.Options.Process_Body_Files
+            then
+               Command.Src_Files.Append
+                 (Command.Source_Files (Command.Src_File_Index));
+
+               Trace
+                 (Me, "Generate annotated source for " &
+                  Base_Name
+                    (Command.Source_Files (Command.Src_File_Index)));
+
+               Free (Command.Buffer);
+               Command.Buffer :=
+                 VFS.Read_File (Command.Source_Files (Command.Src_File_Index));
+
+               Command.Src_File_Iter := Get_Parse_Entities_Iterator
+                 (Command.Buffer.all);
+
+            end if;
+         else
             declare
                Lang_Handler  : constant Language_Handler :=
                                  Get_Language_Handler (Command.Kernel);
@@ -1830,14 +1879,13 @@ package body Docgen2 is
                                     Command.Source_Files
                                       (Command.Src_File_Index));
             begin
-               Command.Src_Files.Append
-                 (Command.Source_Files (Command.Src_File_Index));
-
                Generate_Annotated_Source
                  (Kernel  => Command.Kernel,
                   Backend => Command.Backend,
                   File    => Get_Or_Create
                     (Database, Command.Source_Files (Command.Src_File_Index)),
+                  Buffer  => Command.Buffer,
+                  Iter    => Command.Src_File_Iter,
                   Lang    => Language,
                   Db      => Database,
                   Xrefs   => Command.EInfo_Map);
@@ -1861,7 +1909,11 @@ package body Docgen2 is
          Generate_TOC
            (Command.Kernel, Command.Backend, Command.Files);
 
+         Templates_Parser.Release_Cache;
+         Free (Command.Buffer);
+
          --  ??? todo: cleanup everything
+
          return Success;
       end if;
 
@@ -1901,6 +1953,7 @@ package body Docgen2 is
       C.Source_Files   := Source_Files;
       C.File_Index     := Source_Files'First - 1;
       C.Src_File_Index := Source_Files'First - 1;
+      C.Src_File_Iter  := No_Parse_Entities_Iterator;
       C.Options        := Options;
       C.Analysis_Ctxt.Iter := Null_Construct_Tree_Iterator;
 
@@ -1950,6 +2003,7 @@ package body Docgen2 is
          C.Project        := P;
          C.Source_Files   := Source_Files;
          C.Src_File_Index := Source_Files'First - 1;
+         C.Src_File_Iter  := No_Parse_Entities_Iterator;
          C.File_Index     := Source_Files'First - 1;
          C.Options        := Options;
          C.Analysis_Ctxt.Iter := Null_Construct_Tree_Iterator;
@@ -1972,14 +2026,14 @@ package body Docgen2 is
      (Kernel  : access Kernel_Handle_Record'Class;
       Backend : Backend_Handle;
       File    : Source_File;
+      Buffer  : GNAT.Strings.String_Access;
+      Iter    : in out Parse_Entities_Iterator;
       Lang    : Language_Access;
       Db      : Entities_Database;
       Xrefs   : Entity_Info_Map.Map)
    is
       Last_Idx    : Natural := 0;
       Printout    : Unbounded_String;
-      File_Buffer : GNAT.Strings.String_Access :=
-                      VFS.Read_File (Get_Filename (File));
       File_Handle : File_Type;
       Translation : Translate_Set;
       Tmpl        : constant String :=
@@ -2012,7 +2066,7 @@ package body Docgen2 is
          --  Print all text between previous call and current one
          if Last_Idx /= 0 then
             Printout := Printout &
-              File_Buffer (Last_Idx + 1 .. Sloc_Start.Index - 1);
+            Buffer (Last_Idx + 1 .. Sloc_Start.Index - 1);
          end if;
 
          Last_Idx := Sloc_End.Index;
@@ -2024,7 +2078,7 @@ package body Docgen2 is
             --  directly
             Printout := Printout &
             Backend.Gen_Tag
-              (Entity, File_Buffer (Sloc_Start.Index .. Sloc_End.Index));
+              (Entity, Buffer (Sloc_Start.Index .. Sloc_End.Index));
 
          else
             --  If entity is an identifier or a partial identifier, then try
@@ -2032,7 +2086,7 @@ package body Docgen2 is
 
             --  Find the entity in E_Info and its children
             Decl_Entity := Get_Declaration_Entity
-              (File_Buffer (Sloc_Start.Index .. Sloc_End.Index),
+              (Buffer (Sloc_Start.Index .. Sloc_End.Index),
                Sloc_Start, File, Db, Lang);
 
             EInfo := null;
@@ -2054,7 +2108,7 @@ package body Docgen2 is
                --  We generate a href to this entity declaration.
                Printout := Printout & Gen_Href
                  (Backend, EInfo,
-                  File_Buffer (Sloc_Start.Index .. Sloc_End.Index));
+                  Buffer (Sloc_Start.Index .. Sloc_End.Index));
 
             elsif EInfo = null
               and then Decl_Entity /= null
@@ -2066,14 +2120,14 @@ package body Docgen2 is
                --  the examined entity is a declaration entity
                Printout := Printout & Backend.Gen_Tag
                  (Identifier_Text,
-                  File_Buffer (Sloc_Start.Index .. Sloc_End.Index));
+                  Buffer (Sloc_Start.Index .. Sloc_End.Index));
 
             else
                --  No declaration associated with examined entity
                --  just generate simple text
                Printout := Printout & Backend.Gen_Tag
                  (Normal_Text,
-                  File_Buffer (Sloc_Start.Index .. Sloc_End.Index));
+                  Buffer (Sloc_Start.Index .. Sloc_End.Index));
 
             end if;
          end if;
@@ -2086,22 +2140,26 @@ package body Docgen2 is
       end CB;
 
    begin
-      Parse_Entities (Lang, File_Buffer.all, CB'Unrestricted_Access);
-      Free (File_Buffer);
-      Append (Translation,
-              Tag_Name => "SOURCE_FILE",
-              Value    => Get_Filename (File).Base_Name);
-      Append (Translation,
-              Tag_Name => "PRINTOUT",
-              Value    => To_String (Printout));
-      Ada.Text_IO.Create
-        (File_Handle,
-         Name => Get_Doc_Directory (Kernel) & "src_" &
-           Backend.To_Destination_Name
-             (VFS.Base_Name (Get_Filename (File))));
+      Parse_Entities (Lang, Iter, Buffer.all, CB'Unrestricted_Access);
 
-      Ada.Text_IO.Put (File_Handle, Parse (Tmpl, Translation));
-      Ada.Text_IO.Close (File_Handle);
+      if At_End (Iter) then
+         Append (Translation,
+                 Tag_Name => "SOURCE_FILE",
+                 Value    => Get_Filename (File).Base_Name);
+         Append (Translation,
+                 Tag_Name => "PRINTOUT",
+                 Value    => To_String (Printout));
+         Ada.Text_IO.Create
+           (File_Handle,
+            Name => Get_Doc_Directory (Kernel) & "src_" &
+            Backend.To_Destination_Name
+              (VFS.Base_Name (Get_Filename (File))));
+
+         Trace (Me, "Generating file");
+         Ada.Text_IO.Put
+           (File_Handle, Parse (Tmpl, Translation, Cached => True));
+         Ada.Text_IO.Close (File_Handle);
+      end if;
    end Generate_Annotated_Source;
 
    ------------------
@@ -2702,7 +2760,7 @@ package body Docgen2 is
                  E_Info.Location.Pkg_Nb));
       end if;
 
-      Ada.Text_IO.Put (File_Handle, Parse (Tmpl, Translation));
+      Ada.Text_IO.Put (File_Handle, Parse (Tmpl, Translation, Cached => True));
       Ada.Text_IO.Close (File_Handle);
    end Generate_Doc;
 
@@ -2777,7 +2835,7 @@ package body Docgen2 is
         (File_Handle,
          Name =>  Get_Doc_Directory (Kernel) &
            Backend.To_Destination_Name ("index"));
-      Ada.Text_IO.Put (File_Handle, Parse (Tmpl, Translation));
+      Ada.Text_IO.Put (File_Handle, Parse (Tmpl, Translation, Cached => True));
       Ada.Text_IO.Close (File_Handle);
 
       Open_Html
@@ -2810,7 +2868,7 @@ package body Docgen2 is
         (File_Handle,
          Name =>  Get_Doc_Directory (Kernel) &
            Backend.To_Destination_Name ("src_index"));
-      Ada.Text_IO.Put (File_Handle, Parse (Tmpl, Translation));
+      Ada.Text_IO.Put (File_Handle, Parse (Tmpl, Translation, Cached => True));
       Ada.Text_IO.Close (File_Handle);
    end Generate_Files_Index;
 
@@ -2890,7 +2948,7 @@ package body Docgen2 is
             Cross_Ref_List.Next (Cursor);
          end loop;
 
-         return Parse (Tmpl_Elem, Translation);
+         return Parse (Tmpl_Elem, Translation, Cached => True);
       end Print_Tree;
 
    begin
@@ -2922,7 +2980,7 @@ package body Docgen2 is
         (File_Handle,
          Name => Get_Doc_Directory (Kernel) &
            Backend.To_Destination_Name ("tree"));
-      Ada.Text_IO.Put (File_Handle, Parse (Tmpl, Translation));
+      Ada.Text_IO.Put (File_Handle, Parse (Tmpl, Translation, Cached => True));
       Ada.Text_IO.Close (File_Handle);
    end Generate_Trees;
 
@@ -3010,7 +3068,8 @@ package body Docgen2 is
                  Backend.To_Destination_Name ("entities" & Letter));
          end if;
 
-         Ada.Text_IO.Put (File_Handle, Parse (Tmpl, Translation));
+         Ada.Text_IO.Put
+           (File_Handle, Parse (Tmpl, Translation, Cached => True));
          Ada.Text_IO.Close (File_Handle);
       end loop;
    end Generate_Global_Index;
