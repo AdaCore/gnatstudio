@@ -1399,15 +1399,19 @@ package body Docgen2 is
                --  Get known children
                Trace (Me, "Get known children");
                declare
-                  Children : constant Entity_Information_Array :=
-                               Get_Child_Types (Entity, Recursive => False);
+                  Children : Children_Iterator := Get_Child_Types
+                    (Entity, Recursive => False, Update_Xref => False);
                begin
-                  for J in Children'Range loop
-                     E_Info.Class_Children.Append
-                       (Create_Xref
-                          (Get_Name (Children (J)).all,
-                           Get_Declaration_Of (Children (J))));
+                  while not At_End (Children) loop
+                     if Get (Children) /= null then
+                        E_Info.Class_Children.Append
+                          (Create_Xref
+                             (Get_Name (Get (Children)).all,
+                              Get_Declaration_Of (Get (Children))));
+                     end if;
+                     Next (Children);
                   end loop;
+                  Destroy (Children);
                end;
 
                --  Get primitive operations

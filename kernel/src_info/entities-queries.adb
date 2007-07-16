@@ -184,6 +184,11 @@ package body Entities.Queries is
    --  entity. This factorizes code between Get_Parent_Types and
    --  Get_Child_Types.
 
+   procedure Add_Child_Types
+     (Iter   : in out Children_Iterator;
+      Entity : Entity_Information);
+   --  Add all child types of Entity to the results of Iter
+
    ---------------
    -- To_String --
    ---------------
@@ -916,12 +921,17 @@ package body Entities.Queries is
       ---------------------
 
       procedure Add_Children_Of (Entity : Entity_Information) is
-         Children : constant Entity_Information_Array :=
-                      Get_Child_Types (Entity, Recursive => True);
+         Children : Children_Iterator :=
+                       Get_Child_Types (Entity, Recursive => True);
       begin
-         for Index in Children'Range loop
-            Add_Prims_Of_Entity (Children (Index));
+         --  ??? Could be done in background
+         while not At_End (Children) loop
+            if Get (Children) /= null then
+               Add_Prims_Of_Entity (Get (Children));
+            end if;
+            Next (Children);
          end loop;
+         Destroy (Children);
       end Add_Children_Of;
 
       Prim_Of : Entity_Information;
@@ -2798,11 +2808,133 @@ package body Entities.Queries is
    ---------------------
 
    function Get_Child_Types
-     (Entity    : Entity_Information;
-      Recursive : Boolean := False) return Entity_Information_Array is
+     (Entity      : Entity_Information;
+      Recursive   : Boolean := False;
+      Update_Xref : Boolean := True) return Children_Iterator
+   is
+      Deps : Dependency_Iterator;
+      Iter : Children_Iterator;
    begin
-      return Get_Parent_Or_Child_Types (Entity, False, Recursive);
+      --  Algorithm is the following:
+      --  - Find all child types for Entity:
+      --    * Find all files that depend on the file that declares the entity
+      --    * Parse those files. This will automatically
+      --      update Entity.Child_Types
+      --  - Recurse if necessary
+
+      if Update_Xref then
+         Find_Ancestor_Dependencies
+           (Deps,
+            File         => Get_File (Get_Declaration_Of (Entity)),
+            Include_Self => True);
+      end if;
+
+      Iter := Children_Iterator'
+        (Entity      => Entity,
+         Recursive   => Recursive,
+         Update_Xref => Update_Xref,
+         Deps        => Deps,
+         Results     => Null_Entity_Information_List,
+         Current     => Entity_Information_Arrays.First);
+
+      if not Update_Xref then
+         Add_Child_Types (Iter, Iter.Entity);
+      end if;
+
+      return Iter;
    end Get_Child_Types;
+
+   ---------------------
+   -- Add_Child_Types --
+   ---------------------
+
+   procedure Add_Child_Types
+     (Iter   : in out Children_Iterator;
+      Entity : Entity_Information)
+   is
+      Members : constant Entity_Information_List := Entity.Child_Types;
+   begin
+      for P in Entity_Information_Arrays.First .. Last (Members) loop
+         Append (Iter.Results, Members.Table (P));
+      end loop;
+   end Add_Child_Types;
+
+   ------------
+   -- At_End --
+   ------------
+
+   function At_End (Iter : Children_Iterator) return Boolean is
+   begin
+      return (not Iter.Update_Xref or else At_End (Iter.Deps))
+        and then Iter.Current > Last (Iter.Results);
+   end At_End;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get (Iter : Children_Iterator) return Entity_Information is
+      Entity : Entity_Information;
+   begin
+      if not Iter.Update_Xref or else At_End (Iter.Deps) then
+         Entity := Iter.Results.Table (Iter.Current);
+         return Entity;
+      else
+         return null;
+      end if;
+   end Get;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (Iter : in out Children_Iterator) is
+   begin
+      if Iter.Update_Xref and then not At_End (Iter.Deps) then
+         Next (Iter.Deps);
+         if At_End (Iter.Deps) then
+            --  When we just finished processing an entity, add all its
+            --  children to the results.
+            Add_Child_Types (Iter, Iter.Entity);
+         else
+            --  We haven't finished looking for all files that potentially
+            --  contain extensions of the entity, so we'll keep looking
+            null;
+         end if;
+      else
+         --  We are not searching for possible extensions, so return the
+         --  current results
+
+         if Iter.Recursive
+           and then Iter.Current <= Last (Iter.Results)
+         then
+            --  Start searching for children of the child type. These will
+            --  be ultimately appended to Iter.Results
+            Iter.Entity := Iter.Results.Table (Iter.Current);
+
+            if Iter.Update_Xref then
+               Find_Ancestor_Dependencies
+                 (Iter.Deps,
+                  File         => Get_File (Get_Declaration_Of (Iter.Entity)),
+                  Include_Self => True);
+            else
+               Add_Child_Types (Iter, Iter.Entity);
+            end if;
+         end if;
+
+         Iter.Current := Iter.Current + 1;
+      end if;
+   end Next;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Iter : in out Children_Iterator) is
+   begin
+      Destroy (Iter.Deps);
+      Free (Iter.Results);
+   end Destroy;
 
    ------------------
    -- Is_Parameter --

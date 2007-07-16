@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                            AdaCore                                --
+--                     Copyright (C) 2001-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -687,16 +686,21 @@ package body Browsers.Entities is
 
          elsif Command = "derived_types" then
             declare
-               Children : constant Entity_Information_Array :=
+               Children : Children_Iterator :=
                             Get_Child_Types (Entity);
+               Child : Entity_Information;
             begin
                Set_Return_Value_As_List (Data);
 
-               for Index in Children'Range loop
-                  Set_Return_Value
-                    (Data,
-                     Create_Entity (Get_Script (Data), Children (Index)));
+               while not At_End (Children) loop
+                  Child := Get (Children);
+                  if Child /= null then
+                     Set_Return_Value
+                       (Data, Create_Entity (Get_Script (Data), Child));
+                  end if;
+                  Next (Children);
                end loop;
+               Destroy (Children);
             end;
          end if;
       end if;
@@ -1393,9 +1397,27 @@ package body Browsers.Entities is
    ----------------------
 
    procedure Find_Child_Types (Item  : access Arrow_Item_Record'Class) is
+      Iter  : Children_Iterator := Get_Child_Types (Type_Item (Item).Entity);
+      Child : Entity_Information;
    begin
-      Find_Parent_Or_Child_Types
-        (Item, Get_Child_Types (Type_Item (Item).Entity), Parents => False);
+      --  ??? Should be done in background
+      while not At_End (Iter) loop
+         Child := Get (Iter);
+         if Child /= null then
+            Add_Item_And_Link
+              (Type_Item (Item), Child, "",
+               Parent_Link => True,
+               Reverse_Link => True);
+         end if;
+         Next (Iter);
+      end loop;
+      Destroy (Iter);
+
+      Set_Children_Shown (Type_Item (Item), True);
+      Redraw_Title_Bar (Item);
+      Layout (Type_Browser (Get_Browser (Item)), Force => False);
+      Refresh_Canvas (Get_Canvas (Get_Browser (Item)));
+
    exception
       when E : others => Trace (Exception_Handle, E);
    end Find_Child_Types;

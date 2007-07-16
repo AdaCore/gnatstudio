@@ -439,12 +439,11 @@ package body Docgen.Backend.Text is
       --  Output Text info related to Entity.
 
       Parents  : constant Entity_Information_Array :=
-                   Get_Parent_Types (Entity);
-      Children : constant Entity_Information_Array :=
-                   Get_Child_Types (Entity);
+        Get_Parent_Types (Entity);
+      Children : Children_Iterator := Get_Child_Types (Entity);
 
       Has_Parents  : constant Boolean := Parents'Length > 0;
-      Has_Children : constant Boolean := Children'Length > 0;
+      Has_Children : Boolean := False;
 
       C_Entities   : T_Entities;
       P_Entities   : T_Entities;
@@ -487,11 +486,14 @@ package body Docgen.Backend.Text is
 
       --  Children
 
-      if Has_Children then
-         for P in Children'Range loop
-            Output_Entity (Children (P), C_Entities);
-         end loop;
-      end if;
+      while not At_End (Children) loop
+         if Get (Children) /= null then
+            Has_Children := True;
+            Output_Entity (Get (Children), C_Entities);
+         end if;
+
+         Next (Children);
+      end loop;
 
       Append
         (Result,

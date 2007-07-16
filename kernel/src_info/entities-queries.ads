@@ -432,10 +432,28 @@ package Entities.Queries is
    --  Return the parent package for the package Pkg.
    --  This is not intended to be use for nested packages.
 
+   type Children_Iterator is private;
+   function  At_End  (Iter : Children_Iterator) return Boolean;
+   function  Get     (Iter : Children_Iterator) return Entity_Information;
+   procedure Next    (Iter : in out Children_Iterator);
+   procedure Destroy (Iter : in out Children_Iterator);
+   --  An iterator for the types derived from a given entity. These are the
+   --  usual iterator subprograms, that return one entity at a time, since
+   --  finding all the entities might require parsing and loading several
+   --  source files. Get might return null even though the search is not
+   --  finished, when it needs to parse more files.
+
    function Get_Child_Types
-     (Entity    : Entity_Information;
-      Recursive : Boolean := False) return Entity_Information_Array;
-   --  Return the list of children for Entity.
+     (Entity      : Entity_Information;
+      Recursive   : Boolean := False;
+      Update_Xref : Boolean := True) return Children_Iterator;
+   --  Return the list of types derived from Entity. If Recursive is False,
+   --  then only the entities that derive directly from Entity are returned,
+   --  otherwise all the types that derive even indirectly from Entity are
+   --  returned.
+   --  If Update_Xref is False, then the entities database is not updated in
+   --  memory. If it isn't already up-to-date, some child types might not be
+   --  returned.
 
    --------------------------
    -- Primitive operations --
@@ -451,8 +469,6 @@ package Entities.Queries is
    --  inherited from its various parents
 
    function At_End (Iter : Primitive_Operations_Iterator) return Boolean;
-   --  Whether there remains any primitive operation to return
-
    function Get
      (Iter : Primitive_Operations_Iterator) return Entity_Information;
    procedure Next    (Iter : in out Primitive_Operations_Iterator);
@@ -555,6 +571,16 @@ private
         Entity_Information_Arrays.First;
 
       Deps    : Dependency_Iterator;
+   end record;
+
+   type Children_Iterator is record
+      Entity      : Entity_Information;
+      Recursive   : Boolean;
+      Deps        : Dependency_Iterator;
+      Update_Xref : Boolean;
+
+      Results     : Entity_Information_List;
+      Current     : Entity_Information_Arrays.Index_Type;
    end record;
 
    type Calls_Iterator is record

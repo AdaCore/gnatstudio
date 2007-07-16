@@ -76,8 +76,7 @@ Known Problems fixed in GPS 4.2.0
   Workaround: Unfold all blocks and remove comparisons when using such commands
               on editors.
 
-G412-023 Big items truncated in the debugger Data window
-
+- G412-023 Big items truncated in the debugger Data window
   Problem:    The content of some items in the debugger Data window migth be
               truncated.
               The maximum width and height of an item displayed in the Data
@@ -87,6 +86,15 @@ G412-023 Big items truncated in the debugger Data window
   Workaround: In some cases you can display the truncated part in an item of
               its own instead of having one big items in which everyting is
               displayed directly.
+
+- G323-017 Incomplete list of child types in entities browser
+  Problem:    If you click on the "down" arrow for a tagged type displayed
+              in the entities browser, it shows the list of types that
+              extend that type. However, it only shows those types for the
+              files for which xref information has already been loaded in
+              memory.
+  Workaround: First select the menu /Build/Load xref info in memory", and
+              only then click on the down arrow
 
 - G323-009 Documentation gives wrong return type
   Problem:    When the parameter initialization of a function contains the
