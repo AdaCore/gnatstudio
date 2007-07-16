@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2000-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1052,7 +1051,7 @@ package body String_Utils is
             S (Index) := ' ';
             Index := Index + 1;
          end loop;
-         return S;
+         return S (1 .. S'Last - 1);  -- Ignore last space
       end;
    end Argument_List_To_String;
 
