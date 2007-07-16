@@ -652,25 +652,6 @@ package Language is
    --  non terminated entity (e.g string or multi-line comment).
    --  If Callback returns True, the parsing should be stopped.
 
-   type Parse_Entities_Iterator is private;
-
-   No_Parse_Entities_Iterator : constant Parse_Entities_Iterator;
-
-   function Get_Parse_Entities_Iterator (Buffer : String)
-                                         return Parse_Entities_Iterator;
-   --  Create a new Iterator to parse entities of the buffer
-
-   function At_End (Iter : Parse_Entities_Iterator) return Boolean;
-   --  Tell if the iterator is at end
-
-   procedure Parse_Entities
-     (Lang     : access Language_Root;
-      Iter     : in out Parse_Entities_Iterator;
-      Buffer   : String;
-      Callback : Entity_Callback);
-   --  Parse entities (as defined by Language_Entity) contained in buffer.
-   --  For each match, call Callback. Stops after each match.
-
    procedure Parse_Entities
      (Lang     : access Language_Root;
       Buffer   : String;
@@ -779,18 +760,5 @@ private
       Sloc_Entity    => (0, 0, 0),
       Sloc_End       => (0, 0, 0),
       Attributes     => (others => False));
-
-   type Parse_Entities_Iterator is record
-      Line     : Natural;
-      Column   : Natural;
-      Index    : Natural;
-      Last_Idx : Natural;
-   end record;
-
-   No_Parse_Entities_Iterator : constant Parse_Entities_Iterator :=
-                                  (Line     => 0,
-                                   Column   => 0,
-                                   Index    => 0,
-                                   Last_Idx => 0);
 
 end Language;
