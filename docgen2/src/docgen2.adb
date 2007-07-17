@@ -22,6 +22,7 @@ with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;                 use Ada.Strings.Unbounded;
 with Ada.Text_IO;                           use Ada.Text_IO;
+with Ada.Unchecked_Deallocation;
 
 with GNAT.HTable;
 with GNAT.Regpat;               use GNAT.Regpat;
@@ -98,6 +99,9 @@ package body Docgen2 is
       Overriding_Op : Cross_Ref;        -- Primitive operation cross-ref
    end record;
 
+   procedure Xref_Free (Xref : in out Cross_Ref);
+   --  Free memory used by Xref
+
    package Cross_Ref_List is new Ada.Containers.Vectors
      (Index_Type => Natural, Element_Type => Cross_Ref);
 
@@ -123,6 +127,10 @@ package body Docgen2 is
 
    package Files_Vector_Sort is new Files_List.Generic_Sorting
      ("<" => Less_Than);
+
+   procedure Free (List : in out Cross_Ref_List.Vector);
+   procedure Free (List : in out Entity_Info_List.Vector);
+   --  Free memory used by List
 
    type Entity_Info_Record (Category : Entity_Info_Category := Cat_Unknown)
       is record
@@ -169,6 +177,8 @@ package body Docgen2 is
                null;
          end case;
       end record;
+
+   procedure EInfo_Free (EInfo : in out Entity_Info);
 
    function Hash (Key : File_Location) return Ada.Containers.Hash_Type;
    function Equivalent_Keys (Left, Right : File_Location)
@@ -404,6 +414,94 @@ package body Docgen2 is
    function Get_Doc_Directory
      (Kernel : not null access Kernel_Handle_Record'Class) return String;
    --  Return the directory in which the documentation will be generated
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (List : in out Cross_Ref_List.Vector) is
+   begin
+      for J in List.First_Index .. List.Last_Index loop
+         List.Update_Element (J, Xref_Free'Access);
+      end loop;
+
+      Cross_Ref_List.Clear (List);
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (List : in out Entity_Info_List.Vector) is
+   begin
+      for J in List.First_Index .. List.Last_Index loop
+         List.Update_Element (J, EInfo_Free'Access);
+      end loop;
+
+      Entity_Info_List.Clear (List);
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Xref_Free (Xref : in out Cross_Ref) is
+      procedure Internal is new Ada.Unchecked_Deallocation
+        (Cross_Ref_Record, Cross_Ref);
+   begin
+      if Xref /= null then
+         Free (Xref.Name);
+         Internal (Xref);
+      end if;
+   end Xref_Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure EInfo_Free (EInfo : in out Entity_Info) is
+      procedure Internal is new Ada.Unchecked_Deallocation
+        (Entity_Info_Record, Entity_Info);
+   begin
+      if EInfo = null then
+         return;
+      end if;
+
+      if EInfo.Short_Name /= EInfo.Name then
+         Free (EInfo.Short_Name);
+      end if;
+
+      Free (EInfo.Name);
+      Free (EInfo.Description);
+      Free (EInfo.Printout);
+      Free (EInfo.Generic_Params);
+      Xref_Free (EInfo.Renamed_Entity);
+      Xref_Free (EInfo.Instantiated_Entity);
+      Xref_Free (EInfo.Full_Declaration);
+      Free (EInfo.Children);
+      Locations_List.Clear (EInfo.References);
+
+      case EInfo.Category is
+         when Cat_Class =>
+            Free (EInfo.Parents);
+            Free (EInfo.Class_Children);
+            Free (EInfo.Primitive_Ops);
+
+         when Cat_Variable =>
+            Xref_Free (EInfo.Variable_Type);
+
+         when Cat_Parameter =>
+            Xref_Free (EInfo.Parameter_Type);
+
+         when Cat_Subprogram | Cat_Entry =>
+            Xref_Free (EInfo.Return_Type);
+
+         when others =>
+            null;
+      end case;
+
+      Internal (EInfo);
+   end EInfo_Free;
 
    ---------------
    -- Less_Than --
@@ -1913,8 +2011,16 @@ package body Docgen2 is
 
          Templates_Parser.Release_Cache;
          Free (Command.Buffer);
-
-         --  ??? todo: cleanup everything
+         Free (Command.Documentation);
+         Unchecked_Free (Command.Source_Files);
+         --  Don't free the internal data of those lists, as they are just
+         --  pointers to the Documentation structure, which has already been
+         --  freed
+         Command.Xref_List.Clear;
+         Command.EInfo_Map.Clear;
+         Command.Class_List.Clear;
+         Command.Src_Files.Clear;
+         Command.Files.Clear;
 
          return Success;
       end if;
@@ -2329,8 +2435,7 @@ package body Docgen2 is
          begin
             --  Print all text between previous call and current one
             if Last_Idx /= 0 then
-               Printout := Printout &
-                 Extract (Last_Idx + 1, Sloc_Start.Index - 1);
+               Append (Printout, Extract (Last_Idx + 1, Sloc_Start.Index - 1));
             end if;
 
             Last_Idx := Sloc_End.Index;
@@ -2340,9 +2445,10 @@ package body Docgen2 is
             then
                --  For all entities that are not identifiers, print them
                --  directly
-               Printout := Printout &
-                 Backend.Gen_Tag
-                   (Entity, Extract (Sloc_Start.Index, Sloc_End.Index));
+               Append
+                 (Printout,
+                  Backend.Gen_Tag
+                    (Entity, Extract (Sloc_Start.Index, Sloc_End.Index)));
 
             else
                --  If entity is an identifier or a partial identifier, then try
@@ -2359,8 +2465,11 @@ package body Docgen2 is
                       Start_Loc.Index)
                then
                   --  Identifier of current entity.
-                  Printout := Printout & Backend.Gen_Tag
-                    (Entity, Extract (Sloc_Start.Index, Sloc_End.Index), True);
+                  Append
+                    (Printout,
+                     Backend.Gen_Tag
+                       (Entity,
+                        Extract (Sloc_Start.Index, Sloc_End.Index), True));
 
                else
                   Decl_Entity := Get_Declaration_Entity
@@ -2388,23 +2497,29 @@ package body Docgen2 is
                       Basic_Types.Visible_Column_Type (Start_Loc.Column)
                   then
                      --  the examined entity is a declaration entity
-                     Printout := Printout & Backend.Gen_Tag
-                       (Identifier_Text,
-                        Extract (Sloc_Start.Index, Sloc_End.Index));
+                     Append
+                       (Printout,
+                        Backend.Gen_Tag
+                          (Identifier_Text,
+                           Extract (Sloc_Start.Index, Sloc_End.Index)));
 
                   elsif EInfo = null then
                      --  No declaration associated with examined entity
                      --  just generate simple text
-                     Printout := Printout & Backend.Gen_Tag
-                       (Normal_Text,
-                        Extract (Sloc_Start.Index, Sloc_End.Index));
+                     Append
+                       (Printout,
+                        Backend.Gen_Tag
+                          (Normal_Text,
+                           Extract (Sloc_Start.Index, Sloc_End.Index)));
 
                   else
                      --  The entity references an entity that we've analysed
                      --  We generate a href to this entity declaration.
-                     Printout := Printout & Gen_Href
-                       (Backend, EInfo,
-                        Extract (Sloc_Start.Index, Sloc_End.Index));
+                     Append
+                       (Printout,
+                        Gen_Href
+                          (Backend, EInfo,
+                           Extract (Sloc_Start.Index, Sloc_End.Index)));
                   end if;
                end if;
             end if;
@@ -2432,6 +2547,7 @@ package body Docgen2 is
       Pkg_Found := False;
 
       Cursor := E_Info.Children.First;
+
       while Entity_Info_List.Has_Element (Cursor) loop
          Child_EInfo := Entity_Info_List.Element (Cursor);
 
@@ -2511,7 +2627,7 @@ package body Docgen2 is
 
                if Param_Type /= null then
                   Name_Str := Name_Str & " (" &
-                  Gen_Href (Backend, Param_Type) & ")";
+                    Gen_Href (Backend, Param_Type) & ")";
                end if;
 
                Append
@@ -2584,9 +2700,11 @@ package body Docgen2 is
                   if Xref.Overriding_Op /= null
                     and then not Xref.Inherited
                   then
-                     Prim_Op_Str := Prim_Op_Str & " (" &
-                     Gen_Href (Backend, Xref.Overriding_Op, "overriding") &
-                     ")";
+                     Append
+                       (Prim_Op_Str,
+                        " (" &
+                        Gen_Href (Backend, Xref.Overriding_Op, "overriding") &
+                        ")");
                   end if;
 
                   if Xref.Inherited then
@@ -2633,19 +2751,19 @@ package body Docgen2 is
 
                   Entry_Tag := Entry_Tag & E_Entry.Name.all;
                   Entry_Cat_Tag := Entry_Cat_Tag &
-                  Image (E_Entry.Lang_Category);
+                    Image (E_Entry.Lang_Category);
                   Entry_Parent_Tag := Entry_Parent_Tag & Child_EInfo.Name.all;
                   Entry_P_Loc_Tag := Entry_P_Loc_Tag &
-                  Location_Image (Child_EInfo.Location.File_Loc);
+                    Location_Image (Child_EInfo.Location.File_Loc);
                   Entry_Loc_Tag := Entry_Loc_Tag &
-                  Location_Image (E_Entry.Location.File_Loc);
+                    Location_Image (E_Entry.Location.File_Loc);
                   Format_Printout (E_Entry);
                   Entry_Print_Tag := Entry_Print_Tag &
-                  E_Entry.Printout.all;
+                    E_Entry.Printout.all;
 
                   if E_Entry.Description /= null then
                      Entry_Descr_Tag := Entry_Descr_Tag &
-                     E_Entry.Description.all;
+                       E_Entry.Description.all;
                   else
                      Entry_Descr_Tag := Entry_Descr_Tag & "";
                   end if;
@@ -2702,13 +2820,14 @@ package body Docgen2 is
                     (Backend.Gen_Tag (Identifier_Text, Param.Name.all));
 
                   if Param_Type /= null then
-                     Name_Str := Name_Str & " (" &
-                     Gen_Href (Backend, Param_Type) & ")";
+                     Append
+                       (Name_Str,
+                        " (" & Gen_Href (Backend, Param_Type) & ")");
                   end if;
 
                   Param_Tag := Param_Tag & Name_Str;
                   Param_Loc_Tag := Param_Loc_Tag &
-                  Location_Image (Param_Type.Location);
+                    Location_Image (Param_Type.Location);
 
                   Entity_Info_List.Next (Param_Cursor);
                end loop;
