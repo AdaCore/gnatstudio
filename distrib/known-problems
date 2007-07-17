@@ -1,9 +1,9 @@
 Known Problems fixed in GPS 4.2.0
 
-- G717-004 GPS Remote using ssh on Windows do not handle passwords anymore
-  Problem:    When GPS tries to connect to a remote machine using ssh, and ssh
-              asks for a username or a password, then GPS won't receive this
-              request, thus blocking the connection.
+- G717-004 Remote connection using ssh on Windows no longer handles passwords
+  Problem:    Under Windows, when GPS tries to connect to a remote machine
+              using ssh, and ssh asks for a username or a password, then GPS
+              won't receive this request, thus blocking the connection.
   Workaround: In share/gps/plug-ins/protocols.xml, set the use_pipes attribute
               of the start_command tag to "false" for the ssh 
               remote_connection_config
