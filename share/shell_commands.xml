@@ -1085,6 +1085,12 @@ This is different than setting instance properties through Python's standard mec
      <see_also name="GPS.File.set_property" />
   </shell_doc>
 
+  <shell_doc name="GPS.File.generate_doc">
+     <param name="self">The instance of GPS.File</param>
+     <description>Generate the documentation of the file, and display it with the default browser</description>
+     <see_also name="GPS.Project.generate_doc"/>
+  </shell_doc>
+
   <!--#################################################################
     ####   Entity class
     ###################################################################-->
@@ -1830,6 +1836,13 @@ This is different than setting instance properties through Python's standard mec
      <param name="name">A string</param>
      <description>Removes a property associated with a project</description>
      <see_also name="GPS.Project.set_property" />
+  </shell_doc>
+
+  <shell_doc name="GPS.Project.generate_doc">
+     <param name="self">The instance of GPS.Project</param>
+     <param name="recursive" default="False">A boolean</param>
+     <description>Generate the documentation of the project and its subprojects if recursive is True, and display it with the default browser</description>
+     <see_also name="GPS.File.generate_doc"/>
   </shell_doc>
 
   <!--#################################################################
