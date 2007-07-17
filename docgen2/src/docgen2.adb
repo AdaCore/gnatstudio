@@ -770,7 +770,6 @@ package body Docgen2 is
       Lang      : Language_Access) return Entity_Information
    is
       Entity        : Entity_Information;
-      --        Entity_Status : Find_Decl_Or_Body_Query_Status;
       Current_Loc   : File_Location;
       pragma Unreferenced (Db);
 
@@ -963,6 +962,7 @@ package body Docgen2 is
                E_Info.Printout_Loc.Index := Idx_Start;
                E_Info.Printout := new String'
                  (File_Buffer (Idx_Start .. Idx_End));
+
                return;
             end if;
          end if;
@@ -1505,8 +1505,10 @@ package body Docgen2 is
                              (Get_Name (Get (Children)).all,
                               Get_Declaration_Of (Get (Children))));
                      end if;
+
                      Next (Children);
                   end loop;
+
                   Destroy (Children);
                end;
 
@@ -2652,7 +2654,12 @@ package body Docgen2 is
            and then Child_EInfo.Full_Declaration.Xref /= null
            and then not Child_EInfo.Full_Declaration.Xref.Displayed
          then
-            Child_EInfo.Printout := Child_EInfo.Full_Declaration.Xref.Printout;
+            --  Replace current printout by full declaration's printout
+            Free (Child_EInfo.Printout);
+            Child_EInfo.Printout :=
+              Child_EInfo.Full_Declaration.Xref.Printout;
+            Child_EInfo.Full_Declaration.Xref.Printout := null;
+
             Child_EInfo.Printout_Loc :=
               Child_EInfo.Full_Declaration.Xref.Printout_Loc;
             Child_EInfo.Full_Declaration.Xref.Displayed := True;
