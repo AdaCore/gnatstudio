@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 4.2.0
 
+- G717-004 GPS Remote using ssh on Windows do not handle passwords anymore
+  Problem:    When GPS tries to connect to a remote machine using ssh, and ssh
+              asks for a username or a password, then GPS won't receive this
+              request, thus blocking the connection.
+  Workaround: In share/gps/plug-ins/protocols.xml, set the use_pipes attribute
+              of the start_command tag to "false" for the ssh 
+              remote_connection_config
+
 - G628-004 Generated AUnit test cases are missing a use clause
   Problem:    When GPS generates a new AUnit test case for AUnit 2.x, a use
               clause for the AUnit unit is missing.
