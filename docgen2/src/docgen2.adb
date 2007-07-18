@@ -358,7 +358,7 @@ package body Docgen2 is
 
    generic
       type The_Type is private;
-      with function "&" (Left : Tag; Right : The_Type) return Tag is <>;
+      with procedure Append (Left : in out Tag; Right : The_Type) is <>;
    procedure Gen_Append
      (Translation : in out Translate_Set;
       Tag_Name    : String;
@@ -378,7 +378,7 @@ package body Docgen2 is
          E_Tag := Get (Prev_Assoc);
       end if;
 
-      E_Tag := E_Tag & Value;
+      Append (E_Tag, Value);
       Insert (Translation, Assoc (Tag_Name, E_Tag));
    end Gen_Append;
 
@@ -631,7 +631,7 @@ package body Docgen2 is
          E_Tag := Get (Prev_Assoc);
       end if;
 
-      E_Tag := E_Tag & Value;
+      Append (E_Tag, Value);
       Insert (Translation, Assoc (Tag_Name, E_Tag));
    end Append;
 
@@ -2688,7 +2688,7 @@ package body Docgen2 is
                  Child_EInfo.Parents.Last_Index
                loop
                   Xref := Child_EInfo.Parents.Element (J);
-                  Parent_Tag := Parent_Tag & Gen_Href (Backend, Xref);
+                  Append (Parent_Tag, Gen_Href (Backend, Xref));
                end loop;
 
                Append (Translation, "CLASS_PARENTS", Parent_Tag);
@@ -2715,9 +2715,9 @@ package body Docgen2 is
                   end if;
 
                   if Xref.Inherited then
-                     Prim_Inh_Tag := Prim_Inh_Tag & Prim_Op_Str;
+                     Append (Prim_Inh_Tag, Prim_Op_Str);
                   else
-                     Prim_Tag := Prim_Tag & Prim_Op_Str;
+                     Append (Prim_Tag, Prim_Op_Str);
                   end if;
                end loop;
 
@@ -2756,23 +2756,20 @@ package body Docgen2 is
                while Entity_Info_List.Has_Element (Entry_Cursor) loop
                   E_Entry := Entity_Info_List.Element (Entry_Cursor);
 
-                  Entry_Tag := Entry_Tag & E_Entry.Name.all;
-                  Entry_Cat_Tag := Entry_Cat_Tag &
-                    Image (E_Entry.Lang_Category);
-                  Entry_Parent_Tag := Entry_Parent_Tag & Child_EInfo.Name.all;
-                  Entry_P_Loc_Tag := Entry_P_Loc_Tag &
-                    Location_Image (Child_EInfo.Location.File_Loc);
-                  Entry_Loc_Tag := Entry_Loc_Tag &
-                    Location_Image (E_Entry.Location.File_Loc);
+                  Append (Entry_Tag, E_Entry.Name.all);
+                  Append (Entry_Cat_Tag, Image (E_Entry.Lang_Category));
+                  Append (Entry_Parent_Tag, Child_EInfo.Name.all);
+                  Append (Entry_P_Loc_Tag,
+                          Location_Image (Child_EInfo.Location.File_Loc));
+                  Append (Entry_Loc_Tag,
+                          Location_Image (E_Entry.Location.File_Loc));
                   Format_Printout (E_Entry);
-                  Entry_Print_Tag := Entry_Print_Tag &
-                    E_Entry.Printout.all;
+                  Append (Entry_Print_Tag, E_Entry.Printout.all);
 
                   if E_Entry.Description /= null then
-                     Entry_Descr_Tag := Entry_Descr_Tag &
-                       E_Entry.Description.all;
+                     Append (Entry_Descr_Tag, E_Entry.Description.all);
                   else
-                     Entry_Descr_Tag := Entry_Descr_Tag & "";
+                     Append (Entry_Descr_Tag, "");
                   end if;
 
                   Entity_Info_List.Next (Entry_Cursor);
@@ -2832,9 +2829,8 @@ package body Docgen2 is
                         " (" & Gen_Href (Backend, Param_Type) & ")");
                   end if;
 
-                  Param_Tag := Param_Tag & Name_Str;
-                  Param_Loc_Tag := Param_Loc_Tag &
-                    Location_Image (Param_Type.Location);
+                  Append (Param_Tag, Name_Str);
+                  Append (Param_Loc_Tag, Location_Image (Param_Type.Location));
 
                   Entity_Info_List.Next (Param_Cursor);
                end loop;
@@ -3171,10 +3167,9 @@ package body Docgen2 is
 
          for K in Local_List (J).First_Index .. Local_List (J).Last_Index loop
             EInfo := Local_List (J).Element (K);
-            Href_Tag := Href_Tag &
-              Gen_Href (Backend, EInfo, EInfo.Short_Name.all);
-            Loc_Tag := Loc_Tag & Location_Image (EInfo.Location.File_Loc);
-            Kind_Tag := Kind_Tag & Image (EInfo.Category);
+            Append (Href_Tag, Gen_Href (Backend, EInfo, EInfo.Short_Name.all));
+            Append (Loc_Tag, Location_Image (EInfo.Location.File_Loc));
+            Append (Kind_Tag, Image (EInfo.Category));
          end loop;
 
          Insert (Translation, Assoc ("ENTITY_HREF", Href_Tag));
