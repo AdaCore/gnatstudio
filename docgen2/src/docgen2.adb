@@ -354,46 +354,6 @@ package body Docgen2 is
    --  Generate the final documentation for the specified Entity_Info.
    --  E_Info's category must be Cat_File
 
-   --  UTILITIES FOR TAG HANDLING (TEMPLATE PARSER)
-
-   generic
-      type The_Type is private;
-      with procedure Append (Left : in out Tag; Right : The_Type) is <>;
-   procedure Gen_Append
-     (Translation : in out Translate_Set;
-      Tag_Name    : String;
-      Value       : The_Type);
-
-   procedure Gen_Append
-     (Translation : in out Translate_Set;
-      Tag_Name    : String;
-      Value       : The_Type)
-   is
-      E_Tag      : Tag;
-      Prev_Assoc : Association;
-   begin
-      Prev_Assoc := Get (Translation, Tag_Name);
-
-      if Prev_Assoc /= Null_Association then
-         E_Tag := Get (Prev_Assoc);
-      end if;
-
-      Append (E_Tag, Value);
-      Insert (Translation, Assoc (Tag_Name, E_Tag));
-   end Gen_Append;
-
-   procedure Append
-     (Translation : in out Translate_Set;
-      Tag_Name    : String;
-      Value       : String);
-   procedure Append
-     (Translation : in out Translate_Set;
-      Tag_Name    : String;
-      Value       : Tag);
-   procedure Append is new Gen_Append (Boolean);
-   procedure Append is new Gen_Append (Character);
-   --  Append a new value to Tag_Name association.
-
    function Gen_Href
      (Backend : Backend_Handle;
       EInfo   : Entity_Info;
@@ -612,46 +572,6 @@ package body Docgen2 is
             return Cat_Unknown;
       end case;
    end To_Category;
-
-   ------------
-   -- Append --
-   ------------
-
-   procedure Append
-     (Translation : in out Translate_Set;
-      Tag_Name    : String;
-      Value       : String)
-   is
-      E_Tag      : Tag;
-      Prev_Assoc : Association;
-   begin
-      Prev_Assoc := Get (Translation, Tag_Name);
-
-      if Prev_Assoc /= Null_Association then
-         E_Tag := Get (Prev_Assoc);
-      end if;
-
-      Append (E_Tag, Value);
-      Insert (Translation, Assoc (Tag_Name, E_Tag));
-   end Append;
-
-   ------------
-   -- Append --
-   ------------
-
-   procedure Append
-     (Translation : in out Translate_Set;
-      Tag_Name    : String;
-      Value       : Tag)
-   is
-      procedure Internal is new Gen_Append (Tag);
-   begin
-      if Size (Value) = 0 then
-         Append (Translation, Tag_Name, "none");
-      else
-         Internal (Translation, Tag_Name, Value);
-      end if;
-   end Append;
 
    --------------
    -- Gen_Href --
@@ -2259,12 +2179,10 @@ package body Docgen2 is
       Trace (Me, "Parse entities");
       Parse_Entities (Lang, Buffer.all, CB'Unrestricted_Access);
 
-      Append (Translation,
-              Tag_Name => "SOURCE_FILE",
-              Value    => Get_Filename (File).Base_Name);
-      Append (Translation,
-              Tag_Name => "PRINTOUT",
-              Value    => To_String (Printout));
+      Insert
+        (Translation, Assoc ("SOURCE_FILE", Get_Filename (File).Base_Name));
+      Insert
+        (Translation, Assoc ("PRINTOUT", Printout));
       Ada.Text_IO.Create
         (File_Handle,
          Name => Get_Doc_Directory (Kernel) & "src_" &
@@ -2298,13 +2216,29 @@ package body Docgen2 is
       Pkg_Found   : Boolean;
       File_Handle : File_Type;
 
+      type Common_Info_Tags is record
+         Name_Tag           : Vector_Tag;
+         Printout_Tag       : Vector_Tag;
+         Description_Tag    : Vector_Tag;
+         References_Tag     : Vector_Tag;
+         Loc_Tag            : Vector_Tag;
+         Instantiation_Tag  : Vector_Tag;
+         Renames_Tag        : Vector_Tag;
+         Cat_Tag            : Vector_Tag;
+      end record;
+
       function Get_Name (E : Entity_Info) return String;
       --  Get name from E, and formats it to reflect its attribute (abstract,
       --  generic)
 
       procedure Init_Common_Informations
         (E_Info   : Entity_Info;
-         Tag_Name : String);
+         Tags     : in out Common_Info_Tags);
+
+      procedure Insert_Common_Informations
+        (Tag_Name : String;
+         CI       : Common_Info_Tags);
+      --  Insert in Translation the CI structure, with Tag_Name prefix
 
       procedure Format_Printout (E_Info : Entity_Info);
       --  Formats the printout to reflect language_entity types and
@@ -2318,12 +2252,15 @@ package body Docgen2 is
          Str : Unbounded_String;
       begin
          Str := To_Unbounded_String (E.Name.all);
+
          if E.Is_Abstract then
             Str := Str & " (abstract)";
          end if;
+
          if E.Is_Private then
             Str := Str & " (private)";
          end if;
+
          if E.Is_Generic then
             Str := Str & " (generic)";
          end if;
@@ -2336,43 +2273,66 @@ package body Docgen2 is
       ------------------------------
 
       procedure Init_Common_Informations
-        (E_Info   : Entity_Info;
-         Tag_Name : String)
+        (E_Info : Entity_Info;
+         Tags   : in out Common_Info_Tags)
       is
          Ref_Tag : Tag;
       begin
-         Append (Translation, Tag_Name, Get_Name (E_Info));
+         Append (Tags.Name_Tag, Get_Name (E_Info));
          Format_Printout (E_Info);
 
          if E_Info.Printout /= null then
-            Append (Translation, Tag_Name & "_PRINTOUT", E_Info.Printout.all);
+            Append (Tags.Printout_Tag, E_Info.Printout.all);
          else
-            Append (Translation, Tag_Name & "_PRINTOUT", "");
+            Append (Tags.Printout_Tag, "");
          end if;
 
          if E_Info.Description /= null then
-            Append
-              (Translation, Tag_Name & "_DESCRIPTION", E_Info.Description.all);
+            Append (Tags.Description_Tag, E_Info.Description.all);
          else
-            Append (Translation, Tag_Name & "_DESCRIPTION", "");
+            Append (Tags.Description_Tag, "");
          end if;
 
          for J in E_Info.References.First_Index .. E_Info.References.Last_Index
          loop
-            Ref_Tag := Ref_Tag &
-              Location_Image (E_Info.References.Element (J));
+            Append (Ref_Tag, Location_Image (E_Info.References.Element (J)));
          end loop;
 
-         Append (Translation, Tag_Name & "_REFERENCES", Ref_Tag);
+         Append (Tags.References_Tag, Ref_Tag);
 
-         Append (Translation, Tag_Name & "_LOC",
+         Append (Tags.Loc_Tag,
                  Location_Image (E_Info.Location.File_Loc));
-         Append (Translation, Tag_Name & "_INSTANTIATION",
+         Append (Tags.Instantiation_Tag,
                  Gen_Href (Backend, E_Info.Instantiated_Entity));
-         Append (Translation, Tag_Name & "_RENAMES",
+         Append (Tags.Renames_Tag,
                  Gen_Href (Backend, E_Info.Renamed_Entity));
-         Append (Translation, Tag_Name & "_CAT", Image (E_Info.Lang_Category));
+         Append (Tags.Cat_Tag, Image (E_Info.Lang_Category));
       end Init_Common_Informations;
+
+      --------------------------------
+      -- Insert_Common_Informations --
+      --------------------------------
+
+      procedure Insert_Common_Informations
+        (Tag_Name : String;
+         CI       : Common_Info_Tags) is
+      begin
+         Insert (Translation, Assoc (Tag_Name, CI.Name_Tag));
+         Insert (Translation, Assoc (Tag_Name & "_PRINTOUT", CI.Printout_Tag));
+         Insert (Translation,
+                 Assoc (Tag_Name & "_DESCRIPTION", CI.Description_Tag));
+         Insert (Translation,
+                 Assoc (Tag_Name & "_REFERENCES", CI.References_Tag));
+         Insert (Translation, Assoc (Tag_Name & "_LOC", CI.Loc_Tag));
+         Insert (Translation,
+                 Assoc (Tag_Name & "_INSTANTIATION", CI.Instantiation_Tag));
+         Insert (Translation, Assoc (Tag_Name & "_RENAMES", CI.Renames_Tag));
+         Insert (Translation, Assoc (Tag_Name & "_CAT", CI.Cat_Tag));
+      end Insert_Common_Informations;
+
+      ---------------------
+      -- Format_Printout --
+      ---------------------
 
       procedure Format_Printout (E_Info : Entity_Info) is
          Printout : Unbounded_String;
@@ -2545,6 +2505,31 @@ package body Docgen2 is
       Child_EInfo      : Entity_Info;
       Displayed        : Boolean;
 
+      Pkg_CI                 : Common_Info_Tags;
+      Pkg_Full_Link          : Vector_Tag;
+      Pkg_Gen_Params         : Vector_Tag;
+      Pkg_Gen_Params_Loc     : Vector_Tag;
+      Class_CI               : Common_Info_Tags;
+      Class_Parents          : Vector_Tag;
+      Class_Primitives       : Vector_Tag;
+      Class_Primitives_Inh   : Vector_Tag;
+      Task_CI                : Common_Info_Tags;
+      Task_Type              : Vector_Tag;
+      Task_Is_Type           : Vector_Tag;
+      Task_Entry             : Vector_Tag;
+      Task_Entry_Cat         : Vector_Tag;
+      Task_Entry_Parent      : Vector_Tag;
+      Task_Entry_Parent_Loc  : Vector_Tag;
+      Task_Entry_Loc         : Vector_Tag;
+      Task_Entry_Description : Vector_Tag;
+      Task_Entry_Printout    : Vector_Tag;
+      Type_CI                : Common_Info_Tags;
+      Cst_CI                 : Common_Info_Tags;
+      Cst_Type               : Vector_Tag;
+      Subp_CI                : Common_Info_Tags;
+      Subp_Generic_Params    : Vector_Tag;
+      Subp_Generic_Params_Loc : Vector_Tag;
+
    begin
       Pkg_Found := False;
 
@@ -2563,8 +2548,8 @@ package body Docgen2 is
                E_Info.Description := null;
             end if;
 
-            Init_Common_Informations (Child_EInfo, "PKG");
-            Append (Translation, "PKG_FULL_LINK",
+            Init_Common_Informations (Child_EInfo, Pkg_CI);
+            Append (Pkg_Full_Link,
                     Gen_Href (Backend, Child_EInfo, "Full description"));
 
             if not Child_EInfo.Is_Renaming
@@ -2632,11 +2617,9 @@ package body Docgen2 is
                     Gen_Href (Backend, Param_Type) & ")";
                end if;
 
-               Append
-                 (Translation, "GENERIC_PARAMETERS", To_String (Name_Str));
-               Append
-                 (Translation, "GENERIC_PARAMETERS_LOC",
-                  Location_Image (Param.Location.File_Loc));
+               Append (Pkg_Gen_Params, Name_Str);
+               Append (Pkg_Gen_Params_Loc,
+                       Location_Image (Param.Location.File_Loc));
 
                Entity_Info_List.Next (Cursor);
             end loop;
@@ -2681,7 +2664,7 @@ package body Docgen2 is
                Prim_Op_Str : Ada.Strings.Unbounded.Unbounded_String;
             begin
                --  Init entities common information
-               Init_Common_Informations (Child_EInfo, "CLASS");
+               Init_Common_Informations (Child_EInfo, Class_CI);
 
                --  Init parents
                for J in Child_EInfo.Parents.First_Index ..
@@ -2691,7 +2674,7 @@ package body Docgen2 is
                   Append (Parent_Tag, Gen_Href (Backend, Xref));
                end loop;
 
-               Append (Translation, "CLASS_PARENTS", Parent_Tag);
+               Append (Class_Parents, Parent_Tag);
 
                --  Init primitive operations
                Vector_Sort.Sort (Child_EInfo.Primitive_Ops);
@@ -2721,10 +2704,10 @@ package body Docgen2 is
                   end if;
                end loop;
 
-               Append (Translation, "CLASS_PRIMITIVES", Prim_Tag);
+               Append (Class_Primitives, Prim_Tag);
                Clear (Prim_Tag);
                Append
-                 (Translation, "CLASS_PRIMITIVES_INHERITED", Prim_Inh_Tag);
+                 (Class_Primitives_Inh, Prim_Inh_Tag);
                Clear (Prim_Inh_Tag);
             end;
 
@@ -2747,9 +2730,9 @@ package body Docgen2 is
                E_Entry          : Entity_Info;
 
             begin
-               Init_Common_Informations (Child_EInfo, "TASK");
-               Append (Translation, "TASK_TYPE", Image (Child_EInfo.Category));
-               Append (Translation, "TASK_IS_TYPE", Child_EInfo.Is_Type);
+               Init_Common_Informations (Child_EInfo, Task_CI);
+               Append (Task_Type, Image (Child_EInfo.Category));
+               Append (Task_Is_Type, Child_EInfo.Is_Type);
 
                Entry_Cursor := Entity_Info_List.First (Child_EInfo.Children);
 
@@ -2775,35 +2758,35 @@ package body Docgen2 is
                   Entity_Info_List.Next (Entry_Cursor);
                end loop;
 
-               Append (Translation, "TASK_ENTRY", Entry_Tag);
-               Append (Translation, "TASK_ENTRY_CAT", Entry_Cat_Tag);
-               Append (Translation, "TASK_ENTRY_PARENT", Entry_Parent_Tag);
-               Append (Translation, "TASK_ENTRY_PARENT_LOC", Entry_P_Loc_Tag);
-               Append (Translation, "TASK_ENTRY_LOC", Entry_Loc_Tag);
-               Append (Translation, "TASK_ENTRY_DESCRIPTION", Entry_Descr_Tag);
-               Append (Translation, "TASK_ENTRY_PRINTOUT", Entry_Print_Tag);
+               Append (Task_Entry, Entry_Tag);
+               Append (Task_Entry_Cat, Entry_Cat_Tag);
+               Append (Task_Entry_Parent, Entry_Parent_Tag);
+               Append (Task_Entry_Parent_Loc, Entry_P_Loc_Tag);
+               Append (Task_Entry_Loc, Entry_Loc_Tag);
+               Append (Task_Entry_Description, Entry_Descr_Tag);
+               Append (Task_Entry_Printout, Entry_Print_Tag);
             end;
 
             --  TYPES HANDLING --
          elsif Child_EInfo.Category = Cat_Type then
 
             --  Init entities common information
-            Init_Common_Informations (Child_EInfo, "TYPE");
+            Init_Common_Informations (Child_EInfo, Type_CI);
 
             --  CONSTANTS AND GLOBAL VARIABLES HANDLING --
          elsif Child_EInfo.Category = Cat_Variable then
 
             --  Init entities common information
-            Init_Common_Informations (Child_EInfo, "CST");
+            Init_Common_Informations (Child_EInfo, Cst_CI);
             Append
-              (Translation, "CST_TYPE",
+              (Cst_Type,
                Gen_Href (Backend, Child_EInfo.Variable_Type));
 
             --  SUBPROGRAMS
          elsif Child_EInfo.Category = Cat_Subprogram then
 
             --  Init entities common information
-            Init_Common_Informations (Child_EInfo, "SUBP");
+            Init_Common_Informations (Child_EInfo, Subp_CI);
 
             declare
                Param_Tag         : Tag;
@@ -2835,9 +2818,8 @@ package body Docgen2 is
                   Entity_Info_List.Next (Param_Cursor);
                end loop;
 
-               Append (Translation, "SUBP_GENERIC_PARAMETERS", Param_Tag);
-               Append
-                 (Translation, "SUBP_GENERIC_PARAMETERS_LOC", Param_Loc_Tag);
+               Append (Subp_Generic_Params, Param_Tag);
+               Append (Subp_Generic_Params_Loc, Param_Loc_Tag);
             end;
          end if;
 
@@ -2845,12 +2827,18 @@ package body Docgen2 is
       end loop;
 
       if E_Info.Category = Cat_File then
-         Append (Translation, "SOURCE",
-                 "src_" & Backend.To_Destination_Name (E_Info.Name.all));
+         Insert
+           (Translation,
+            Assoc
+              ("SOURCE",
+               "src_" & Backend.To_Destination_Name (E_Info.Name.all)));
       else
-         Append (Translation, "SOURCE",
-                 "src_" & Backend.To_Destination_Name
-                   (Get_Filename (E_Info.Location.File_Loc.File).Base_Name));
+         Insert
+           (Translation,
+            Assoc
+              ("SOURCE",
+               "src_" & Backend.To_Destination_Name
+                 (Get_Filename (E_Info.Location.File_Loc.File).Base_Name)));
       end if;
 
       if E_Info.Category = Cat_File then
@@ -2888,6 +2876,37 @@ package body Docgen2 is
                 (VFS.Base_Name (Get_Filename (E_Info.Location.File_Loc.File)),
                  E_Info.Location.Pkg_Nb));
       end if;
+
+      Insert_Common_Informations ("PKG", Pkg_CI);
+      Insert (Translation, Assoc ("PKG_FULL_LINK", Pkg_Full_Link));
+      Insert (Translation, Assoc ("PKG_GENERIC_PARAMETERS", Pkg_Gen_Params));
+      Insert (Translation,
+              Assoc ("PKG_GENERIC_PARAMETERS_LOC", Pkg_Gen_Params_Loc));
+      Insert_Common_Informations ("CLASS", Class_CI);
+      Insert (Translation, Assoc ("CLASS_PARENTS", Class_Parents));
+      Insert (Translation, Assoc ("CLASS_PRIMITIVES", Class_Primitives));
+      Insert (Translation,
+              Assoc ("CLASS_PRIMITIVES_INH", Class_Primitives_Inh));
+      Insert_Common_Informations ("TASK", Task_CI);
+      Insert (Translation, Assoc ("TASK_TYPE", Task_Type));
+      Insert (Translation, Assoc ("TASK_IS_TYPE", Task_Is_Type));
+      Insert (Translation, Assoc ("TASK_ENTRY", Task_Entry));
+      Insert (Translation, Assoc ("TASK_ENTRY_CAT", Task_Entry_Cat));
+      Insert (Translation, Assoc ("TASK_ENTRY_PARENT", Task_Entry_Parent));
+      Insert (Translation,
+              Assoc ("TASK_ENTRY_PARENT_LOC", Task_Entry_Parent_Loc));
+      Insert (Translation, Assoc ("TASK_ENTRY_LOC", Task_Entry_Loc));
+      Insert (Translation,
+              Assoc ("TASK_ENTRY_DESCRIPTION", Task_Entry_Description));
+      Insert (Translation, Assoc ("TASK_ENTRY_PRINTOUT", Task_Entry_Printout));
+      Insert_Common_Informations ("TYPE", Type_CI);
+      Insert_Common_Informations ("CST", Cst_CI);
+      Insert (Translation, Assoc ("CST_TYPE", Cst_Type));
+      Insert_Common_Informations ("SUBP", Subp_CI);
+      Insert (Translation,
+              Assoc ("SUBP_GENERIC_PARAMETERS", Subp_Generic_Params));
+      Insert (Translation,
+              Assoc ("SUBP_GENERIC_PARAMETERS_LOC", Subp_Generic_Params_Loc));
 
       Ada.Text_IO.Put (File_Handle, Parse (Tmpl, Translation, Cached => True));
       Ada.Text_IO.Close (File_Handle);
@@ -2938,6 +2957,9 @@ package body Docgen2 is
       Xref         : Cross_Ref;
       First_Letter : Character;
       Prev_Letter  : Character := ASCII.NUL;
+      Letter_Tag         : Vector_Tag;
+      Letter_Changed_Tag : Vector_Tag;
+      Files_Tag          : Vector_Tag;
    begin
       Vector_Sort.Sort (Files);
 
@@ -2949,16 +2971,19 @@ package body Docgen2 is
             First_Letter := '*';
          end if;
 
-         Append (Translation, "LETTER", First_Letter);
-         Append (Translation, "LETTER_CHANGED", First_Letter /= Prev_Letter);
-         Prev_Letter := First_Letter;
-
-         Append (Translation, "FILES",
+         Append (Letter_Tag, First_Letter);
+         Append (Letter_Changed_Tag, First_Letter /= Prev_Letter);
+         Append (Files_Tag,
                  Backend.Gen_Href
                    (Name  => Xref.Xref.Name.all,
                     Href  => Xref.Name.all,
                     Title => Location_Image (Xref.Location)));
+         Prev_Letter := First_Letter;
       end loop;
+
+      Insert (Translation, Assoc ("LETTER", Letter_Tag));
+      Insert (Translation, Assoc ("LETTER_CHANGED", Letter_Changed_Tag));
+      Insert (Translation, Assoc ("FILES", Files_Tag));
 
       Ada.Text_IO.Create
         (File_Handle,
@@ -2987,11 +3012,14 @@ package body Docgen2 is
                         (Get_System_Dir (Kernel), Tmpl_Src_Index);
       File_Handle : File_Type;
       Translation : Translate_Set;
+      Src_File    : Vector_Tag;
    begin
       for J in Src_Files.First_Index .. Src_Files.Last_Index loop
          Append
-           (Translation, "SRC_FILE", Base_Name (Src_Files.Element (J)));
+           (Src_File, Base_Name (Src_Files.Element (J)));
       end loop;
+
+      Insert (Translation, Assoc ("SRC_FILE", Src_File));
 
       Ada.Text_IO.Create
         (File_Handle,
@@ -3023,6 +3051,7 @@ package body Docgen2 is
       Map_Cursor  : Entity_Info_Map.Cursor;
       Xref        : Cross_Ref;
       Translation : Translate_Set;
+      Tree_Tag    : Vector_Tag;
 
       function Print_Tree
         (Name  : String;
@@ -3041,6 +3070,10 @@ package body Docgen2 is
       is
          Cursor        : Cross_Ref_List.Cursor;
          Translation   : Translate_Set;
+         Tree_Tag      : Vector_Tag;
+         Tree_Loc_Tag  : Vector_Tag;
+         Root_Tree_Tag : Vector_Tag;
+         Tree_Children_Tag : Vector_Tag;
       begin
          if Class = null then
             return "";
@@ -3048,10 +3081,9 @@ package body Docgen2 is
             return "";
          end if;
 
-         Append (Translation, "TREE", Gen_Href (Backend, Class, Name));
-         Append (Translation, "TREE_LOC",
-                 Location_Image (Class.Location.File_Loc));
-         Append (Translation, "ROOT_TREE", Depth = 0);
+         Append (Tree_Tag, Gen_Href (Backend, Class, Name));
+         Append (Tree_Loc_Tag, Location_Image (Class.Location.File_Loc));
+         Append (Root_Tree_Tag, Depth = 0);
 
          Vector_Sort.Sort (Class.Class_Children);
 
@@ -3069,13 +3101,18 @@ package body Docgen2 is
                                Depth + 1);
                begin
                   if Child /= "" then
-                     Append (Translation, "TREE_CHILDREN", Child);
+                     Append (Tree_Children_Tag, Child);
                   end if;
                end;
             end if;
 
             Cross_Ref_List.Next (Cursor);
          end loop;
+
+         Insert (Translation, Assoc ("TREE", Tree_Tag));
+         Insert (Translation, Assoc ("TREE_LOC", Tree_Loc_Tag));
+         Insert (Translation, Assoc ("ROOT_TREE", Root_Tree_Tag));
+         Insert (Translation, Assoc ("TREE_CHILDREN", Tree_Children_Tag));
 
          return Parse (Tmpl_Elem, Translation, Cached => True);
       end Print_Tree;
@@ -3097,14 +3134,14 @@ package body Docgen2 is
                 or else EInfo.Parents.First_Element.Xref = null)
               and then not EInfo.Displayed
             then
-               Append (Translation, "TREE",
-                       Print_Tree (Xref.Name.all, EInfo, 0));
+               Append (Tree_Tag, Print_Tree (Xref.Name.all, EInfo, 0));
             end if;
          end if;
 
          Cross_Ref_List.Next (Xref_Cursor);
       end loop;
 
+      Insert (Translation, Assoc ("TREE", Tree_Tag));
       Ada.Text_IO.Create
         (File_Handle,
          Name => Get_Doc_Directory (Kernel) &
