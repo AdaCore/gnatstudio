@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2007                       --
---                              AdaCore                              --
+--                     Copyright (C) 2003-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -59,9 +58,10 @@ package body Refactoring.Rename is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Called for "Rename Entity" menu
 
-   type Renaming_Performer_Record (New_Name_Length : Natural)
+   type Renaming_Performer_Record (Old_Name_Length, New_Name_Length : Natural)
      is new Refactor_Performer_Record with record
        Auto_Save   : Boolean;
+       Old_Name    : String (1 .. Old_Name_Length);
        New_Name    : String (1 .. New_Name_Length);
      end record;
    type Renaming_Performer is access all Renaming_Performer_Record'Class;
@@ -107,6 +107,12 @@ package body Refactoring.Rename is
       Button : Gtk_Widget;
       pragma Unreferenced (Button);
    begin
+      if not Save_MDI_Children
+        (Kernel, Force => False)
+      then
+         return;
+      end if;
+
       Dialog := new Entity_Renaming_Dialog_Record;
       Gtk.Dialog.Initialize
         (Dialog,
@@ -168,28 +174,80 @@ package body Refactoring.Rename is
    is
       pragma Unreferenced (No_LI_List, Stale_LI_List);
       Name : constant String := Get_Name (Entity).all;
+      Errors : File_Arrays.Instance := File_Arrays.Empty_Instance;
+
+      procedure Terminate_File (File : Virtual_File);
+      --  Finish the processing for a given file
+
+      procedure Terminate_File (File : Virtual_File) is
+      begin
+         Finish_Undo_Group (Kernel, File);
+         if Factory.Auto_Save then
+            Execute_GPS_Shell_Command
+              (Kernel, "Editor.save_buffer """ & Full_Name (File).all & '"');
+         end if;
+      end Terminate_File;
+
    begin
       --  Replace first the last occurrences since we are about to modify
       --  the file, and the locations would become invalid
       for L in reverse Location_Arrays.First .. Last (Refs) loop
-         Insert_Text
+         if L = Last (Refs)
+           or else Refs.Table (L).File /= Refs.Table (L + 1).File
+         then
+            if L /= Last (Refs) then
+               Terminate_File (Get_Filename (Refs.Table (L + 1).File));
+            end if;
+
+            Start_Undo_Group (Kernel, Get_Filename (Refs.Table (L).File));
+         end if;
+
+         if not Insert_Text
            (Kernel,
             Get_Filename (Refs.Table (L).File),
             Refs.Table (L).Line,
             Refs.Table (L).Column,
             Factory.New_Name,
             Indent          => False,
-            Replaced_Length => Name'Length);
-
-         if Factory.Auto_Save
-           and then (L = Location_Arrays.First
-                     or else Refs.Table (L).File /= Refs.Table (L - 1).File)
+            Replaced_Length => Name'Length,
+            Only_If_Replacing => Factory.Old_Name)
          then
-            Execute_GPS_Shell_Command
-              (Kernel, "Editor.save_buffer """
-               & Full_Name (Get_Filename (Refs.Table (L).File)).all & '"');
+            if Length (Errors) = 0
+              or else Refs.Table (L).File /= Errors.Table (Last (Errors))
+            then
+               Append (Errors, Refs.Table (L).File);
+            end if;
          end if;
       end loop;
+
+      if Length (Refs) > 0 then
+         Terminate_File
+           (Get_Filename (Refs.Table (Location_Arrays.First).File));
+      end if;
+
+      if Length (Errors) > 0 then
+         if not Dialog
+           (Kernel,
+            Title => -"References not replaced",
+            Msg   =>
+            -("Some references could not be replaced because one or more files"
+              & " were already modified"),
+            Files => Errors,
+            Execute_Label => Gtk.Stock.Stock_Ok,
+            Cancel_Label  => Gtk.Stock.Stock_Undo)
+         then
+            for L in Location_Arrays.First .. Last (Refs) loop
+               if L = Location_Arrays.First
+                 or else Refs.Table (L).File /= Refs.Table (L - 1).File
+               then
+                  Execute_GPS_Shell_Command
+                    (Kernel, "Editor.undo """
+                     & Full_Name (Get_Filename (Refs.Table (L).File)).all
+                     & '"');
+               end if;
+            end loop;
+         end if;
+      end if;
    end Execute;
 
    -------------
@@ -207,6 +265,10 @@ package body Refactoring.Rename is
    begin
       if Entity /= null then
          Gtk_New (Dialog, Get_Kernel (Context.Context), Entity);
+         if Dialog = null then
+            return Failure;
+         end if;
+
          Show_All (Dialog);
 
          if Run (Dialog) = Gtk_Response_OK
@@ -217,6 +279,8 @@ package body Refactoring.Rename is
                Refactor : constant Renaming_Performer :=
                  new Renaming_Performer_Record'
                    (Refactor_Performer_Record with
+                    Old_Name_Length => Get_Name (Entity)'Length,
+                    Old_Name        => Get_Name (Entity).all,
                     New_Name_Length => New_Name'Length,
                     New_Name        => New_Name,
                     Auto_Save       => Get_Active (Dialog.Auto_Save));
@@ -258,6 +322,8 @@ package body Refactoring.Rename is
                 (Refactor_Performer_Record with
                  New_Name_Length => New_Name'Length,
                  New_Name        => New_Name,
+                 Old_Name_Length => Get_Name (Entity)'Length,
+                 Old_Name        => Get_Name (Entity).all,
                  Auto_Save       => False);
          begin
             Get_All_Locations

@@ -21,6 +21,7 @@ with Ada.Unchecked_Conversion;
 
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with GNAT.Scripts.Gtkada;     use GNAT.Scripts.Gtkada;
+with GNAT.Scripts.Utils;      use GNAT.Scripts.Utils;
 with GNAT.Traces;             use GNAT.Traces;
 
 with Glib.Object;             use Glib.Object;
@@ -1798,6 +1799,7 @@ package body GPS.Kernel.Scripts is
    is
       Errors : aliased Boolean;
    begin
+      Trace (Me, "Executing " & Command);
       return Execute_Command
         (Lookup_Scripting_Language (Kernel.Scripts, GPS_Shell_Name),
          Command, null, True, True, Errors'Unchecked_Access);
@@ -1817,7 +1819,11 @@ package body GPS.Kernel.Scripts is
          Command, Args);
       pragma Unreferenced (Output);
    begin
-      null;
+      if Active (Me) then
+         Trace
+           (Me, "Executing " & Command & " "
+            & Argument_List_To_Quoted_String (Args));
+      end if;
    end Execute_GPS_Shell_Command;
 
    -------------------------------
@@ -1829,6 +1835,11 @@ package body GPS.Kernel.Scripts is
       Command : String;
       Args    : GNAT.OS_Lib.Argument_List) return String is
    begin
+      if Active (Me) then
+         Trace (Me, "Executing " & Command & " "
+                & Argument_List_To_Quoted_String (Args));
+      end if;
+
       return Execute_Command_With_Args
         (Lookup_Scripting_Language (Kernel.Scripts, GPS_Shell_Name),
          Command, Args);
@@ -1848,7 +1859,7 @@ package body GPS.Kernel.Scripts is
          Command, null, True, True, Errors'Unchecked_Access);
       pragma Unreferenced (Str);
    begin
-      null;
+      Trace (Me, "Executing " & Command);
    end Execute_GPS_Shell_Command;
 
    ----------------

@@ -309,6 +309,8 @@ package body Refactoring.Subprograms is
       Constructs : Construct_List;
       Line       : Integer := Before_Line;
       Decl_Line  : Integer := Integer'Last;
+      Inserted   : Boolean;
+      pragma Unreferenced (Inserted);
    begin
       Parse_File_Constructs (Handler, Languages, In_File, Constructs);
       Constructs.Current := Constructs.First;
@@ -332,10 +334,11 @@ package body Refactoring.Subprograms is
 
       --  Insert the body before the decl, so that if they are inserted at the
       --  same line, they occur with the decl first
-      Insert_Text (Kernel, In_File, Line, 1, Method_Body, True);
+      Inserted := Insert_Text (Kernel, In_File, Line, 1, Method_Body, True);
 
       if Options.Use_Separate_Decl then
-         Insert_Text (Kernel, In_File, Decl_Line, 1, Method_Decl, True);
+         Inserted :=
+           Insert_Text (Kernel, In_File, Decl_Line, 1, Method_Decl, True);
       end if;
    end Insert_New_Method;
 
@@ -483,23 +486,26 @@ package body Refactoring.Subprograms is
             In_File     => File,
             Line_Start  => Line_Start,
             Line_End    => Line_End);
-         Insert_Text
+         if Insert_Text
            (Kernel     => Kernel,
             In_File    => File,
             Line       => Line_Start,
             Column     => 1,
             Text       => To_String (Method_Call),
-            Indent     => True);
-
-         Insert_New_Method
-           (Kernel      => Kernel,
-            In_File     => File,
-            Before_Line => Line_Start,
-            Options     => Options,
-            Method_Decl => To_String (Method_Decl),
-            Method_Body => To_String (Method_Body));
-         Finish_Undo_Group (Kernel, File);
-         return Success;
+            Indent     => True)
+         then
+            Insert_New_Method
+              (Kernel      => Kernel,
+               In_File     => File,
+               Before_Line => Line_Start,
+               Options     => Options,
+               Method_Decl => To_String (Method_Decl),
+               Method_Body => To_String (Method_Body));
+            Finish_Undo_Group (Kernel, File);
+            return Success;
+         else
+            return Failure;
+         end if;
       else
          return Failure;
       end if;

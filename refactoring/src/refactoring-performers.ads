@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2006                       --
---                            AdaCore                                --
+--                     Copyright (C) 2003-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -63,18 +62,23 @@ package Refactoring.Performers is
    -- Editor interface --
    ----------------------
 
-   procedure Insert_Text
-     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      In_File         : VFS.Virtual_File;
-      Line            : Integer;
-      Column          : Visible_Column_Type := 1;
-      Text            : String;
-      Indent          : Boolean;
-      Replaced_Length : Integer := 0);
+   function Insert_Text
+     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
+      In_File           : VFS.Virtual_File;
+      Line              : Integer;
+      Column            : Visible_Column_Type := 1;
+      Text              : String;
+      Indent            : Boolean;
+      Replaced_Length   : Integer := 0;
+      Only_If_Replacing : String := "") return Boolean;
    --  Insert some text in a source file.
    --  If Indent is True, the text is indented automatically.
    --  Replaced_Length is the number of characters that should first be removed
    --  to be replaced by Text.
+   --  If Only_If_Replacing is specified, then the replacement of text will be
+   --  done only if the text being replaced is exactly Only_If_Replacing. If it
+   --  isn't, False is returned.
+   --  This function returns True if the new text could be inserted.
 
    procedure Delete_Text
      (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;

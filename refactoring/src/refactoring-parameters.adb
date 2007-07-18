@@ -177,12 +177,15 @@ package body Refactoring.Parameters is
       end loop;
 
       Result := Result & Chars (Last .. First);
-      Insert_Text
+      if Insert_Text
         (Kernel, File, Line, Column, To_String (Result),
          Indent          => False,
-         Replaced_Length => First - Chars'First + 1);
-
-      return Success;
+         Replaced_Length => First - Chars'First + 1)
+      then
+         return Success;
+      else
+         return Failure;
+      end if;
    end Name_Parameters;
 
    -------------

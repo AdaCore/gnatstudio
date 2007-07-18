@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2007                       --
---                             AdaCore                               --
+--                     Copyright (C) 2003-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -288,14 +287,15 @@ package body Refactoring.Performers is
    -- Insert_Text --
    -----------------
 
-   procedure Insert_Text
+   function Insert_Text
      (Kernel     : access Kernel_Handle_Record'Class;
       In_File    : VFS.Virtual_File;
       Line       : Integer;
       Column     : Visible_Column_Type := 1;
       Text       : String;
       Indent     : Boolean;
-      Replaced_Length : Integer := 0)
+      Replaced_Length : Integer := 0;
+      Only_If_Replacing : String := "") return Boolean
    is
       Args : Argument_List_Access := new Argument_List'
         (new String'(Full_Name (In_File).all),
@@ -308,6 +308,25 @@ package body Refactoring.Performers is
         (new String'(Integer'Image (Line)),
          new String'(Integer'Image (Line + Lines_Count (Text) - 1)));
    begin
+      if Replaced_Length /= 0 and then Only_If_Replacing /= "" then
+         declare
+            Args_Get : Argument_List_Access := new Argument_List'
+              (new String'(Full_Name (In_File).all),
+               new String'(Integer'Image (Line)),
+               new String'(Visible_Column_Type'Image (Column)),
+               new String'("0"),
+               new String'(Integer'Image (Replaced_Length)));
+            Str : constant String := Execute_GPS_Shell_Command
+              (Kernel, "Editor.get_chars", Args_Get.all);
+         begin
+            Free (Args_Get);
+
+            if Str /= Only_If_Replacing then
+               return False;
+            end if;
+         end;
+      end if;
+
       Execute_GPS_Shell_Command (Kernel, "Editor.replace_text", Args.all);
 
       if Indent then
@@ -318,6 +337,7 @@ package body Refactoring.Performers is
 
       Free (Args2);
       Free (Args);
+      return True;
    end Insert_Text;
 
    -----------------

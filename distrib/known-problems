@@ -13,6 +13,14 @@ Known Problems fixed in GPS 4.2.0
               clause for the AUnit unit is missing.
   Workaround: Add a use AUnit clause in the generated file.
 
+- G628-002 Refactoring and renaming variables in not up-to-date files
+  Problem:    When using the "rename variable" refactoring, GPS would corrupt
+              the file if its cross-reference information is not up-to-date and
+              the line on which the entity occurs has already been modified
+  Workaround: Make sure to save all files before starting a refactoring. GPS
+              will then display a dialog warning you that some files might not
+              be up-to-date, and in this case you should cancel the refactoring
+
 - G625-004 GPS.execute_action not synchronous, and hiding its output
   Problem:    If your script uses GPS.execute_action, it will not properly
               execute external commands synchronously (meaning the call will

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2005                       --
---                              AdaCore                              --
+--                     Copyright (C) 2003-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -45,6 +44,49 @@ package body Refactoring is
    use File_Arrays;
    use Location_Arrays;
 
+   ------------
+   -- Dialog --
+   ------------
+
+   function Dialog
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Title  : String;
+      Msg    : String;
+      Files  : File_Arrays.Instance;
+      Execute_Label : String := Stock_Execute;
+      Cancel_Label  : String := Stock_Cancel) return Boolean
+   is
+      Dialog : Gtk_Dialog;
+      Button : Gtk_Widget;
+      Label  : Gtk_Label;
+      Result : Boolean;
+   begin
+      if Length (Files) > 0 then
+         Gtk_New (Dialog,
+                  Title  => Title,
+                  Parent => Get_Current_Window (Kernel),
+                  Flags  => Destroy_With_Parent or Modal);
+         Set_Default_Size (Dialog, -1, 350);
+
+         Gtk_New (Label, Msg);
+         Set_Alignment (Label, 0.0, 0.0);
+         Pack_Start (Get_Vbox (Dialog), Label, Expand => False, Padding => 10);
+         Pack_Start (Get_Vbox (Dialog), Create_File_List (Files));
+
+         Button := Add_Button (Dialog, Execute_Label, Gtk_Response_OK);
+         Grab_Default (Button);
+         Grab_Focus (Button);
+         Button := Add_Button (Dialog, Cancel_Label, Gtk_Response_Cancel);
+
+         Show_All (Dialog);
+         Result := Run (Dialog) = Gtk_Response_OK;
+         Destroy (Dialog);
+
+         return Result;
+      end if;
+      return True;
+   end Dialog;
+
    -------------------
    -- Confirm_Files --
    -------------------
@@ -53,92 +95,32 @@ package body Refactoring is
      (Kernel          : access Kernel_Handle_Record'Class;
       Read_Only_Files : File_Arrays.Instance;
       No_LI_List      : File_Arrays.Instance;
-      Stale_LI_List   : File_Arrays.Instance) return Boolean
-   is
-      Dialog : Gtk_Dialog;
-      Button : Gtk_Widget;
-      Label  : Gtk_Label;
-      Result : Boolean;
-
+      Stale_LI_List   : File_Arrays.Instance) return Boolean is
    begin
-      if Length (Read_Only_Files) > 0 then
-         Gtk_New (Dialog,
-                  Title  => -"Read-only files",
-                  Parent => Get_Current_Window (Kernel),
-                  Flags  => Destroy_With_Parent or Modal);
-         Set_Default_Size (Dialog, -1, 350);
+      return Dialog
+        (Kernel,
+         -"Read-only files",
+         -("The following files are not writable, and will not be updated."
+           & ASCII.LF
+           & "Do you want to refactor the other files anyway ?"),
+         Files => Read_Only_Files)
 
-         Gtk_New
-           (Label,
-            (-"The following files are not writable, and will not be updated."
-             & ASCII.LF
-             & "Do you want to refactor the other files anyway ?"));
-         Set_Alignment (Label, 0.0, 0.0);
-         Pack_Start (Get_Vbox (Dialog), Label, Expand => False, Padding => 10);
-         Pack_Start (Get_Vbox (Dialog), Create_File_List (Read_Only_Files));
+      and then Dialog
+        (Kernel,
+         -"Missing cross-references",
+         -("The following files might contain references to the entity,"
+           & ASCII.LF
+           & "but no cross-reference information was found for them"),
+         No_LI_List)
 
-         Button := Add_Button (Dialog, Stock_Execute, Gtk_Response_OK);
-         Grab_Default (Button);
-         Grab_Focus (Button);
-         Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
-
-         Show_All (Dialog);
-         Result := Run (Dialog) = Gtk_Response_OK;
-         Destroy (Dialog);
-
-         if not Result then
-            return False;
-         end if;
-      end if;
-
-      if Length (No_LI_List) = 0 and then Length (Stale_LI_List) = 0 then
-         return True;
-      end if;
-
-      Gtk_New (Dialog,
-               Title  => -"Missing cross-reference",
-               Parent => Get_Current_Window (Kernel),
-               Flags  => Destroy_With_Parent or Modal);
-      Set_Default_Size (Dialog, -1, 350);
-
-      Gtk_New (Label,
-               -"Errors in cross-references. Execute refactoring anyway?");
-      Set_Alignment (Label, 0.0, 0.0);
-      Pack_Start (Get_Vbox (Dialog), Label, Expand => False, Padding => 10);
-
-      if Length (No_LI_List) /= 0 then
-         Gtk_New
-           (Label,
-            (-"The following files might contain references to the entity,"
+      and then Dialog
+        (Kernel,
+         -"Cross-references not up-to-date",
+         -("The following files contain references to the entity, but the"
             & ASCII.LF
-            & "but no cross-reference information was found for them"));
-         Set_Alignment (Label, 0.0, 0.0);
-         Pack_Start (Get_Vbox (Dialog), Label, Expand => False, Padding => 10);
-         Pack_Start (Get_Vbox (Dialog), Create_File_List (No_LI_List));
-      end if;
-
-      if Length (Stale_LI_List) /= 0 then
-         Gtk_New
-           (Label,
-            (-"The following files contain references to the entity, but the"
-             & ASCII.LF
-             & "cross-reference information is not up-to-date and replace"
-             & " might fail"));
-         Set_Alignment (Label, 0.0, 0.0);
-         Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
-         Pack_Start (Get_Vbox (Dialog), Create_File_List (Stale_LI_List));
-      end if;
-
-      Button := Add_Button (Dialog, Stock_Execute, Gtk_Response_OK);
-      Grab_Default (Button);
-      Grab_Focus (Button);
-      Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
-
-      Show_All (Dialog);
-      Result := Run (Dialog) = Gtk_Response_OK;
-      Destroy (Dialog);
-
-      return Result;
+            & "cross-reference information is not up-to-date and replace"
+            & " might fail"),
+         Stale_LI_List);
    end Confirm_Files;
 
    ----------------------
