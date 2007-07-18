@@ -70,7 +70,7 @@
       @@INCLUDE@@ index_entry.tmpl @_SUBP_@ @_SUBP_LOC_@ subp-spec
       @@END_TABLE@@
       @@TABLE@@
-        @@IF@@ @_TASK_ENTRY_@ /= "none"
+        @@IF@@ @_EXIST:TASK_ENTRY_@
           @@TABLE@@
             @@INCLUDE@@ index_entry.tmpl @_TASK_ENTRY_PARENT_@.@_TASK_ENTRY_@ @_TASK_ENTRY_LOC_@ subp-spec
           @@END_TABLE@@
@@ -100,7 +100,7 @@
       <li class='subp-spec'><a href="#@_SUBP_LOC_@">@_REPLACE_ALL(([.])/.<wbr/>):REPLACE_ALL((_)/_<wbr/>):SUBP_@</a></li>
       @@END_TABLE@@
       @@TABLE@@
-        @@IF@@ @_TASK_ENTRY_@ /= "none"
+        @@IF@@ @_EXIST:TASK_ENTRY_@
           @@TABLE@@
             <li class='subp-spec'><a href="#@_TASK_ENTRY_LOC_@">@_REPLACE_ALL(([.])/.<wbr/>):REPLACE_ALL((_)/_<wbr/>):TASK_ENTRY_@</a></li>
           @@END_TABLE@@
@@ -180,9 +180,9 @@
     <div class="class">
       <h3><a name='@_CLASS_LOC_@' id='@_CLASS_LOC_@'></a>@_CLASS_@</h3>
       <div class='details'>@_CLASS_PRINTOUT_@</div>
-      @@IF@@ (@_CLASS_PARENTS_@ /= "none") or (@_CLASS_PRIMITIVES_@ /= "none") or (@_CLASS_PRIMITIVES_INHERITED_@ /= "none")
+      @@IF@@ (@_EXIST:CLASS_PARENTS_@) or (@_EXIST:CLASS_PRIMITIVES_@) or (@_EXIST:CLASS_PRIMITIVES_INHERITED_@)
       <div class='profile'>
-        @@IF@@ @_CLASS_PARENTS_@ /= "none"
+        @@IF@@ @_EXIST:CLASS_PARENTS_@
         <div>
           <h4>Ancestors:</h4>
           @@TABLE@@
@@ -192,28 +192,24 @@
           @@END_TABLE@@
         </div>
         @@END_IF@@
-        @@IF@@ (@_CLASS_PRIMITIVES_@ /= "none") or (@_CLASS_PRIMITIVES_INHERITED_@ /= "none")
+        @@IF@@ (@_EXIST:CLASS_PRIMITIVES_@) or (@_EXIST:CLASS_PRIMITIVES_INHERITED_@)
         <div>
           <h4>Primitive operations:</h4>
-          @@IF@@ @_CLASS_PRIMITIVES_@ /= "none"
           @@TABLE@@
             @@IF@@ @_NO_SPACE:CLASS_PRIMITIVES_@ /= ""
             <div>@_CLASS_PRIMITIVES_@</div>
             @@END_IF@@
           @@END_TABLE@@
-          @@END_IF@@
-          @@IF@@ @_CLASS_PRIMITIVES_INHERITED_@ /= "none"
           @@TABLE@@
             @@IF@@ @_NO_SPACE:CLASS_PRIMITIVES_INHERITED_@ /= ""
             <div><i>@_CLASS_PRIMITIVES_INHERITED_@ (inherited)</i></div>
             @@END_IF@@
           @@END_TABLE@@
-          @@END_IF@@
         </div>
         @@END_IF@@
       </div>
       @@END_IF@@
-      @@IF@@ @_CLASS_REFERENCES_@ /= "none"
+      @@IF@@ @_EXIST:CLASS_REFERENCES_@
       <div class='profile'>
           <h4>References:</h4>
           @@TABLE@@
@@ -244,17 +240,19 @@
            (@_TASK_TYPE_@)
           @@END_IF@@
         </h3>
-        @@IF@@ @_TASK_ENTRY_@ /= "none"
+        @@IF@@ @_EXIST:TASK_ENTRY_@
         <div>Entries:</div>
         @@TABLE@@
           <div><a href="#@_TASK_ENTRY_LOC_@">@_TASK_ENTRY_@</a></div>
         @@END_TABLE@@
         @@END_IF@@
-        @@IF@@ @_TASK_REFERENCES_@ /= "none"
+        @@IF@@ @_EXIST:TASK_REFERENCES_@
         <div class='profile'>
             <h4>References:</h4>
             @@TABLE@@
+            @@IF@@ @_NO_SPACE:TASK_REFERENCES_@ /= ""
             <div><i>@_TASK_REFERENCES_@</i></div>
+            @@END_IF@@
             @@END_TABLE@@
         </div>
         @@END_IF@@
@@ -273,11 +271,13 @@
       <div class="class">
         <h3><a name='@_TYPE_LOC_@' id='@_TYPE_LOC_@'></a>@_TYPE_@</h3>
         <div class='details'>@_TYPE_PRINTOUT_@</div>
-        @@IF@@ @_TYPE_REFERENCES_@ /= "none"
+        @@IF@@ @_EXIST:TYPE_REFERENCES_@
         <div class='profile'>
             <h4>References:</h4>
             @@TABLE@@
+            @@IF@@ @_NO_SPACE:TYPE_REFERENCES_@ /= ""
             <div><i>@_TYPE_REFERENCES_@</i></div>
+            @@END_IF@@
             @@END_TABLE@@
         </div>
         @@END_IF@@
@@ -300,11 +300,13 @@
           @@END_IF@@
         </h3>
         <div class='details'>@_CST_PRINTOUT_@</div>
-        @@IF@@ @_CST_REFERENCES_@ /= "none"
+        @@IF@@ @_EXIST:CST_REFERENCES_@
         <div class='profile'>
           <h4>References:</h4>
           @@TABLE@@
-          <div><i>@_CST_REFERENCES_@</i></div>
+            @@IF@@ @_NO_SPACE:CST_REFERENCES_@ /= ""
+            <div><i>@_CST_REFERENCES_@</i></div>
+            @@END_IF@@
           @@END_TABLE@@
         </div>
         @@END_IF@@
@@ -320,7 +322,7 @@
     <div class='subprograms'>
       <h1><a name='Methods' id='Methods'></a>Subprograms &amp; Entries</h1>
       @@TABLE@@
-        @@IF@@ @_TASK_ENTRY_@ /= "none"
+        @@IF@@ @_EXIST:TASK_ENTRY_@
         @@TABLE@@
           <div class='class'>
             <div>
@@ -332,11 +334,13 @@
                 .@_TASK_ENTRY_@
               </h3>
               <div class='details'>@_REPLACE(span>[^>]*\(/span><table><tr><td>\(</td>):REPLACE(\)[ \n]*/\)</table><tr><td>):REPLACE_ALL(span\>\s*[:]/span></td><td>:):REPLACE_ALL(;/;</td></tr><tr><td>):TASK_ENTRY_PRINTOUT_@</div>
-              @@IF@@ @_TASK_ENTRY_REFERENCES_@ /= "none"
+              @@IF@@ @_EXIST:TASK_ENTRY_REFERENCES_@
               <div class='profile'>
                 <h4>References:</h4>
                 @@TABLE@@
-                <div><i>@_TASK_ENTRY_REFERENCES_@</i></div>
+                  @@IF@@ @_NO_SPACE:TASK_ENTRY_REFERENCES_@ /= ""
+                  <div><i>@_TASK_ENTRY_REFERENCES_@</i></div>
+                  @@END_IF@@
                 @@END_TABLE@@
               </div>
               @@END_IF@@
@@ -351,7 +355,7 @@
       @@TABLE@@
       <div class="class">
         <h3><a name='@_SUBP_LOC_@' id='@_SUBP_LOC_@'></a>@_SUBP_@</h3>
-        @@IF@@ @_SUBP_GENERIC_PARAMETERS_@ /= "none"
+        @@IF@@ @_EXIST:SUBP_GENERIC_PARAMETERS_@
         <div class='parameters'>
           Formal Generic Parameters:<br/>
           @@TABLE@@
@@ -360,11 +364,13 @@
         </div>
         @@END_IF@@
         <div class='details'>@_REPLACE(span>[^>]*\(/span><table><tr><td>\(</td><td>):REPLACE(\)[ \n]*/\)</table><tr><td>):REPLACE_ALL(span\>\s*[:]/span></td><td>:):REPLACE_ALL(;\n/;</td></tr><tr><td></td><td>):SUBP_PRINTOUT_@</div>
-        @@IF@@ @_SUBP_REFERENCES_@ /= "none"
+        @@IF@@ @_EXIST:SUBP_REFERENCES_@
         <div class='profile'>
           <h4>References:</h4>
           @@TABLE@@
-          <div><i>@_SUBP_REFERENCES_@</i></div>
+            @@IF@@ @_NO_SPACE:SUBP_REFERENCES_@ /= ""
+            <div><i>@_SUBP_REFERENCES_@</i></div>
+            @@END_IF@@
           @@END_TABLE@@
         </div>
         @@END_IF@@
