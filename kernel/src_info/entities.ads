@@ -188,6 +188,7 @@ package Entities is
    --    - Global: publicly visible entity in a top level library.
 
    function Attributes_To_String (Attr : Entity_Attributes) return String;
+   function Image (Attr : Entity_Attributes_Names) return String;
    --  Return a string suitable to describe the attributes
 
    --------------------

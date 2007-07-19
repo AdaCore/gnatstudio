@@ -1183,6 +1183,12 @@ Some entities have several bodies. This is for instance the case of a separate s
       </example>
   </shell_doc>
 
+  <shell_doc name="GPS.Entity.attributes">
+      <param name="self">The instance of GPS.Entity</param>
+      <return>A htable</return>
+      <description>Return various boolean attributes of the entity: is the entity global, static, static for a class, protected,...</description>
+  </shell_doc>
+
   <shell_doc name="GPS.Entity.find_all_refs">
       <param name="self">The instance of GPS.Entity</param>
       <param name="include_implicit" default="False">A boolean</param>

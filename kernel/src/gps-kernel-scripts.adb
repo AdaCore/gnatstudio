@@ -771,6 +771,17 @@ package body GPS.Kernel.Scripts is
                Set_Error_Msg (Data, -"Body not found for the entity");
             end if;
          end;
+
+      elsif Command = "attributes" then
+         Entity := Get_Data (Data, 1);
+         declare
+            Attr : constant Entity_Attributes := Get_Attributes (Entity);
+         begin
+            for A in Attr'Range loop
+               Set_Return_Value (Data, Attr (A));
+               Set_Return_Value_Key (Data, Image (A));
+            end loop;
+         end;
       end if;
    end Create_Entity_Command_Handler;
 
@@ -1622,6 +1633,10 @@ package body GPS.Kernel.Scripts is
         (Kernel, "body",
          Minimum_Args => 0,
          Maximum_Args => 1,
+         Class        => Get_Entity_Class (Kernel),
+         Handler      => Create_Entity_Command_Handler'Access);
+      Register_Command
+        (Kernel, "attributes",
          Class        => Get_Entity_Class (Kernel),
          Handler      => Create_Entity_Command_Handler'Access);
 

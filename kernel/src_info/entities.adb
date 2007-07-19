@@ -2276,6 +2276,24 @@ package body Entities is
       end case;
    end Kind_To_String;
 
+   -----------
+   -- Image --
+   -----------
+
+   function Image (Attr : Entity_Attributes_Names) return String is
+   begin
+      case Attr is
+         when Global          => return "global";
+         when Class_Static    => return "class_static";
+         when Static_Local    => return "static";
+         when Protected_Field => return "protected";
+         when Public_Field    => return "public";
+         when Private_Field   => return "private";
+         when Virtual         => return "virtual";
+         when Abstract_Entity => return "abstract";
+      end case;
+   end Image;
+
    --------------------------
    -- Attributes_To_String --
    --------------------------
