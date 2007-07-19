@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                              AdaCore                              --
+--                 Copyright (C) 2001-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -124,7 +123,7 @@ package GPS.Location_View is
    procedure Next_Item
      (View      : access Location_View_Record'Class;
       Backwards : Boolean := False);
-   --  If an item if selected, jump to the location pointed to by the iter
+   --  If an item is selected, jump to the location pointed to by the iter
    --  immediately following it in the same category. If there is none, jump
    --  to the first item in the category.
 
@@ -190,7 +189,6 @@ private
 
       Children           : List;
    end record;
-
 
    type Pattern_Matcher_Access is access Pattern_Matcher;
 
