@@ -26,7 +26,7 @@ stamp-pdf: $(IMAGES)
 	touch stamp-pdf
 
 tutorial: gps-tutorial.html
-doc:      gps.txt gps.html gps.pdf
+doc:      gps.txt gps.html gps.pdf gps.pdf4print
 gps_pg:   gps_pg.pdf gps_pg.html
 
 .PHONY: gps.html
@@ -48,6 +48,12 @@ gps.html: ${TEXI}
 	@mv gps/index.html.tmp gps/index.html
 
 gps.pdf gps.txt: ${TEXI}
+
+gps.pdf4print: ${TEXI}
+	@-if [ -f gps.pdf ]; then mv gps.pdf gps.pdf.bck; fi
+	pdftex '\let\forprinting=1\input gps.texi'
+	mv gps.pdf gps.pdf4print
+	@-if [ -f gps.pdf.bck ]; then mv gps.pdf.bck gps.pdf; fi
 
 %.pdf::
 ifneq (${TEXI2DVI},)
@@ -101,6 +107,7 @@ clean-temp-files:
 
 clean: clean-temp-files
 	-$(RM) gps-tutorial*.html gps_*.html gps.pdf gps.dvi gps.txt stamp-*
+	-$(RM) gps.pdf4print
 	-${RM} -rf gps/
 
 mostlyclean: clean
