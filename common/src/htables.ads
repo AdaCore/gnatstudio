@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2006                      --
---                              AdaCore                              --
+--                      Copyright (C) 2002-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -113,6 +112,11 @@ pragma Preelaborate (HTables);
       --  there is no call to 'Set' in between Get_Next calls, all the
       --  elements of the Htable will be traversed.
 
+      procedure Remove_And_Get_Next
+        (Hash_Table : in out HTable; Iter : in out Iterator);
+      --  Remove the current element from the table, and moves to the next
+      --  element. This is the only safe way to alter the table while iterating
+
       function Get_Element (Iter : Iterator) return Elmt_Ptr;
       --  Return the current element
 
@@ -193,6 +197,10 @@ pragma Preelaborate (HTables);
 
       function Get_Element (Iter : Iterator) return Element;
       --  Return the element pointed to by Iter
+
+      procedure Remove_And_Get_Next
+        (Hash_Table : in out HTable; Iter : in out Iterator);
+      --  Remove current element and move to next one
 
       function Get_Key (Iter : Iterator) return Key;
       --  Return the key pointed to by Iter

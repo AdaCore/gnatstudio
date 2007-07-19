@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2006                      --
---                              AdaCore                              --
+--                      Copyright (C) 2002-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -33,6 +32,13 @@ package body HTables is
       --  Returns Null_Ptr if Iterator_Started is false of the Table is
       --  empty. Returns Iterator_Ptr if non null, or the next non null
       --  element in table if any.
+
+      procedure Remove
+        (Hash_Table : in out HTable;
+         Elmt       : in out Elmt_Ptr;
+         Index      : Header_Num;
+         K          : Key);
+      --  Low-level implementation for Remove
 
       ---------
       -- Get --
@@ -95,6 +101,32 @@ package body HTables is
          Get_Non_Null (Hash_Table, Iter);
       end Get_Next;
 
+      -------------------------
+      -- Remove_And_Get_Next --
+      -------------------------
+
+      procedure Remove_And_Get_Next
+        (Hash_Table : in out HTable; Iter : in out Iterator)
+      is
+         Tmp : Elmt_Ptr;
+         Index : Header_Num;
+      begin
+         if not Iter.Iterator_Started then
+            return;
+         end if;
+
+         --  Save current setup
+         Tmp   := Iter.Iterator_Ptr;
+         Index := Iter.Iterator_Index;
+
+         --  Move to next element
+         Iter.Iterator_Ptr := Next (Iter.Iterator_Ptr);
+         Get_Non_Null (Hash_Table, Iter);
+
+         --  Remove old one
+         Remove (Hash_Table, Tmp, Index, Get_Key (Tmp));
+      end Remove_And_Get_Next;
+
       ------------------
       -- Get_Non_Null --
       ------------------
@@ -119,10 +151,23 @@ package body HTables is
       procedure Remove (Hash_Table : in out HTable; K : Key) is
          Index     : constant Header_Num := Hash (K);
          Elmt      : Elmt_Ptr;
-         Next_Elmt : Elmt_Ptr;
       begin
          Elmt := Hash_Table.Table (Index);
+         Remove (Hash_Table, Elmt, Index, K);
+      end Remove;
 
+      ------------
+      -- Remove --
+      ------------
+
+      procedure Remove
+        (Hash_Table : in out HTable;
+         Elmt       : in out Elmt_Ptr;
+         Index      : Header_Num;
+         K          : Key)
+      is
+         Next_Elmt : Elmt_Ptr;
+      begin
          if Elmt = Null_Ptr then
             return;
 
@@ -243,6 +288,16 @@ package body HTables is
       begin
          Get_Next (Hash_Table.Table, Iter.Iter);
       end Get_Next;
+
+      -------------------------
+      -- Remove_And_Get_Next --
+      -------------------------
+
+      procedure Remove_And_Get_Next
+        (Hash_Table : in out HTable; Iter : in out Iterator) is
+      begin
+         Remove_And_Get_Next (Hash_Table.Table, Iter.Iter);
+      end Remove_And_Get_Next;
 
       -------------
       -- Get_Key --

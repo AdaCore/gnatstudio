@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2003-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,6 +23,7 @@ with Ada.Unchecked_Conversion;
 
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with GNAT.Scripts;            use GNAT.Scripts;
+with GNAT.Traces;             use GNAT.Traces;
 
 with System.Assertions;       use System.Assertions;
 
@@ -61,13 +61,13 @@ with GUI_Utils;               use GUI_Utils;
 with HTables;                 use HTables;
 with KeyManager_Module.GUI;
 with String_Utils;            use String_Utils;
-with Traces;                  use Traces;
+with Traces;
 with VFS;                     use VFS;
 with XML_Parsers;
 
 package body KeyManager_Module is
 
-   Me : constant Debug_Handle := Create ("Keymanager");
+   Me : constant Trace_Handle := Create ("Keymanager", GNAT.Traces.Off);
 
    use Key_Htable;
 
@@ -611,10 +611,12 @@ package body KeyManager_Module is
       is
          Iter : Key_Htable.Iterator;
          List, Previous, Tmp : Key_Description_List;
+         Move_To_Next : Boolean;
       begin
          Get_First (Table, Iter);
          while Get_Element (Iter) /= null loop
             List := Get_Element (Iter);
+            Move_To_Next := True;
 
             Previous := null;
             while List /= null loop
@@ -637,9 +639,17 @@ package body KeyManager_Module is
                         List.all := Tmp.all;
                         Unchecked_Free (Tmp);
                      else
-                        --  There was a single element with this key binding:
+                        --  There was a single element with this key binding.
+                        --  We need to remove it from the table (otherwise that
+                        --  keybinding will remain unusable for the rest of the
+                        --  session, since GPS would believe it is associated
+                        --  with a secondary keymap), but we cannot do that
+                        --  directly or that would invalidate the iterator.
                         Free (List.Action);
-                        List := List.Next;
+                        Remove_And_Get_Next (Table, Iter);
+                        Move_To_Next := False;
+--                        Unchecked_Free (List);
+                        List := null;
                      end if;
 
                   else
@@ -654,7 +664,9 @@ package body KeyManager_Module is
                end if;
             end loop;
 
-            Get_Next (Table, Iter);
+            if Move_To_Next then
+               Get_Next (Table, Iter);
+            end if;
          end loop;
       end Remove_In_Keymap;
 
@@ -884,6 +896,8 @@ package body KeyManager_Module is
          Modif := Get_State (Event) and Get_Default_Mod_Mask;
          Key   := Get_Key_Val (Event);
 
+         Trace (Me, "Key=" & Key'Img & " Modif=" & Modif'Img);
+
          --  Are we reading arguments for a command ?
 
          if Keymanager_Module.Argument_Validator /= null then
@@ -927,6 +941,7 @@ package body KeyManager_Module is
          if Key >= GDK_Shift_L
            and then Key <= GDK_Hyper_R
          then
+            Trace (Me, "Key is just a modifier, ignored");
             return False;
          end if;
 
@@ -942,6 +957,7 @@ package body KeyManager_Module is
          --  alt-shift-greater or alt-greater results in the same.
 
          if Binding = No_Key then
+            Trace (Me, "No binding found, retrying with shift-");
             Modif := Modif and not Shift_Mask;
             if Keymanager_Module.Secondary_Keymap = null then
                Binding := Get (Keymanager_Module.Table.all, (Key, Modif));
@@ -984,10 +1000,12 @@ package body KeyManager_Module is
             --  defined.
             while Binding /= No_Key loop
                if Binding.Action = null then
+                  Trace (Me, "Checking secondary keymap");
                   Keymanager_Module.Secondary_Keymap := Binding.Keymap;
                   Found_Action := True;
 
                else
+                  Trace (Me, "Checking action: " & Binding.Action.all);
                   --  If we have not found the accelerator using the Gtk+
                   --  mechanism, fallback on the standard mechanism to lookup
                   --  the action.
@@ -1058,6 +1076,7 @@ package body KeyManager_Module is
          end if;
 
          if not Found_Action then
+            Trace (Me, "No action was executed, falling though gtk+");
             --  The command will be executed by gtk, we don't know exactly how
             if Keymanager_Module.Last_Command /= null then
                Free (Keymanager_Module.Last_User_Command);
@@ -1093,7 +1112,7 @@ package body KeyManager_Module is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Traces.Exception_Handle, E);
          return False;
    end Process_Event;
 
@@ -1149,7 +1168,7 @@ package body KeyManager_Module is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Traces.Exception_Handle, E);
          Insert (Kernel, -"Could not parse " & Filename, Mode => Error);
    end Load_Custom_Keys;
 

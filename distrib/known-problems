@@ -83,6 +83,14 @@ Known Problems fixed in GPS 4.2.0
   Workaround: Define a dummy extension for the naming scheme of these extra
               languages, so that none of the extensions is empty
 
+- G417-011 Removing a key shortcuts leaves the key unusuable
+  Problem:    If you have used the /Edit/Key Shortcuts dialog to bind a key
+              to some action, and later on used the same dialog to remove that
+              shortcut, then the key itself is no longer usable in this GPS
+              session (for instance if it was bound to backspace, then you
+              won't be able to use it later on)
+  Workaround: Exit GPS and restart
+
 - G413-018 Python/Shell commands related to EditorView not working
   Problem:    Python/Shell commands related to the class EditorView, for
               example EditorView.goto or EditorView.cursor, might not return
