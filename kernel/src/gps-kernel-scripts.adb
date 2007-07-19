@@ -216,6 +216,8 @@ package body GPS.Kernel.Scripts is
                                  2 => Local_Cst'Access);
    File_Project_Parameters  : constant Cst_Argument_List :=
                                 (1 => Default_Cst'Access);
+   File_Entities_Parameters  : constant Cst_Argument_List :=
+                                (1 => Local_Cst'Access);
    Open_Cmd_Parameters      : constant Cst_Argument_List :=
                                 (1 => Filename_Cst'Access,
                                  2 => Force_Cst'Access);
@@ -872,6 +874,38 @@ package body GPS.Kernel.Scripts is
 
             Set_Return_Value (Data, Create_File (Get_Script (Data), Other));
          end;
+
+      elsif Command = "entities" then
+         Name_Parameters (Data, File_Entities_Parameters);
+         Info := Get_Data (Data, 1);
+         declare
+            Iter   : Entity_Iterator;
+            Defined_In_File : constant Boolean := Nth_Arg (Data, 2, True);
+            Ent    : Entity_Information;
+         begin
+            Find_All_Entities_In_File
+              (Iter  => Iter,
+               File  => Get_Or_Create
+                 (Db            => Get_Database (Kernel),
+                  File          => Info,
+                  Allow_Create  => True),
+               Name  => "");
+
+            Set_Return_Value_As_List (Data);
+            while not At_End (Iter) loop
+               Ent := Get (Iter);
+               if not Defined_In_File
+                 or else Get_Filename (Get_File (Get_Declaration_Of (Ent))) =
+                   Info
+               then
+                  Set_Return_Value
+                    (Data, Create_Entity (Get_Script (Data), Ent));
+               end if;
+               Next (Iter);
+            end loop;
+            Destroy (Iter);
+         end;
+
       end if;
    end Create_File_Command_Handler;
 
@@ -1555,6 +1589,12 @@ package body GPS.Kernel.Scripts is
          Handler      => Create_File_Command_Handler'Access);
       Register_Command
         (Kernel, "other_file",
+         Class        => Get_File_Class (Kernel),
+         Handler      => Create_File_Command_Handler'Access);
+      Register_Command
+        (Kernel, "entities",
+         Minimum_Args => 0,
+         Maximum_Args => 1,
          Class        => Get_File_Class (Kernel),
          Handler      => Create_File_Command_Handler'Access);
       Register_Command

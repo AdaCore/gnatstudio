@@ -1059,6 +1059,13 @@ local to the current directory.</description>
       <see_also name="GPS.File.search_next" />
   </shell_doc>
 
+  <shell_doc name="GPS.File.entities">
+      <param name="self">The instance of GPS.File</param>
+      <param name="local" default="true">A boolean</param>
+      <return>A list of GPS.Entity</return>
+      <description>Return the list of entities that are either referenced (if local is false) or declared (if local is true) in self.</description>
+  </shell_doc>
+
   <shell_doc name="GPS.File.set_property">
      <param name="self">The instance of GPS.File</param>
      <param name="name">A string</param>
