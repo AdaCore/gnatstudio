@@ -537,6 +537,10 @@ package body Browsers.Entities is
          Class   => Get_Entity_Class (Kernel),
          Handler => Show_Entity_Command_Handler'Access);
       Register_Command
+        (Kernel, "primitive_of",
+         Class   => Get_Entity_Class (Kernel),
+         Handler => Show_Entity_Command_Handler'Access);
+      Register_Command
         (Kernel, "type",
          Class   => Get_Entity_Class (Kernel),
          Handler => Show_Entity_Command_Handler'Access);
@@ -646,6 +650,12 @@ package body Browsers.Entities is
             Set_Return_Value
               (Data,
                Create_Entity (Get_Script (Data), Returned_Type (Entity)));
+
+         elsif Command = "primitive_of" then
+            Set_Return_Value
+              (Data,
+               Create_Entity
+                 (Get_Script (Data), Is_Primitive_Operation_Of (Entity)));
 
          elsif Command = "pointed_type" then
             Result := Pointed_Type (Entity);

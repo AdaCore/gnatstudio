@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2001-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -103,9 +102,11 @@ package body Browsers.Call_Graph is
 
    Include_Implicit_Cst : aliased constant String := "include_implicit";
    Synchronous_Cst      : aliased constant String := "synchronous";
+   Show_Kind_Cst        : aliased constant String := "show_kind";
    References_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Include_Implicit_Cst'Access,
-      2 => Synchronous_Cst'Access);
+      2 => Synchronous_Cst'Access,
+      3 => Show_Kind_Cst'Access);
 
    type Filters_Buttons is array (Reference_Kind) of Gtk_Check_Button;
    type References_Filter_Dialog_Record is new Gtk_Dialog_Record with record
@@ -198,13 +199,18 @@ package body Browsers.Call_Graph is
      (Command : access Edit_Spec_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
-   procedure Free (This : in out File_Location);
-   package Location_List is new Generic_List (File_Location);
-   use Location_List;
+   type Entity_Ref is record
+      Loc  : File_Location;
+      Kind : Reference_Kind;
+   end record;
+   procedure Free (This : in out Entity_Ref);
+   package Entity_Ref_List is new Generic_List (Entity_Ref);
+   use Entity_Ref_List;
 
    type References_Command is new Root_Command with record
-      Iter      : Entity_Reference_Iterator;
-      Locations : Location_List.List;
+      Iter          : Entity_Reference_Iterator;
+      Locations     : Entity_Ref_List.List;
+      Show_Ref_Kind : Boolean;
    end record;
    type References_Command_Access is access all References_Command'Class;
    function Execute
@@ -454,8 +460,9 @@ package body Browsers.Call_Graph is
    --  Handle shell commands related of ReferencesCommand class
 
    procedure Put_Locations_In_Return
-     (Command : access References_Command'Class;
-      Data    : in out Callback_Data'Class);
+     (Command       : access References_Command'Class;
+      Data          : in out Callback_Data'Class;
+      Show_Ref_Kind : Boolean);
    --  Put on the result of Data the list of entities found in the command
 
    procedure Examine_Ancestors_Call_Graph
@@ -1008,7 +1015,6 @@ package body Browsers.Call_Graph is
    function Execute
      (Command : access References_Command) return Command_Return_Type
    is
-      Loc : File_Location;
       Ref : Entity_Reference;
    begin
       for J in 1 .. 15 loop
@@ -1017,8 +1023,7 @@ package body Browsers.Call_Graph is
          Ref := Get (Command.Iter);
 
          if Ref /= No_Entity_Reference then
-            Loc := Get_Location (Ref);
-            Append (Command.Locations, Loc);
+            Append (Command.Locations, (Get_Location (Ref), Get_Kind (Ref)));
          end if;
 
          Next (Command.Iter);
@@ -1443,9 +1448,12 @@ package body Browsers.Call_Graph is
                New_Class (Get_Kernel (Data), "Command"));
 
             Synchronous      : constant Boolean := Nth_Arg (Data, 3, True);
+            Show_Ref_Type    : constant Boolean := Nth_Arg (Data, 4, False);
             Instance         : Class_Instance;
             Launched_Command : Scheduled_Command_Access;
          begin
+            Ref_Command.Show_Ref_Kind := Show_Ref_Type;
+
             Filter := Real_References_Filter;
             Filter (Implicit) := Nth_Arg (Data, 2, False);
             Find_All_References
@@ -1458,7 +1466,7 @@ package body Browsers.Call_Graph is
                --  Synchronous, return directly the result
 
                Launch_Synchronous (Ref_Command);
-               Put_Locations_In_Return (Ref_Command, Data);
+               Put_Locations_In_Return (Ref_Command, Data, Show_Ref_Type);
 
             else
                --  Not synchronous, return a command
@@ -1585,7 +1593,8 @@ package body Browsers.Call_Graph is
                                     (GPS.Kernel.Task_Manager.Get_Data (Inst)));
    begin
       if Command = "get_result" then
-         Put_Locations_In_Return (Data_Command, Data);
+         Put_Locations_In_Return
+           (Data_Command, Data, Show_Ref_Kind => Data_Command.Show_Ref_Kind);
       end if;
    end References_Command_Handler;
 
@@ -1594,26 +1603,37 @@ package body Browsers.Call_Graph is
    -----------------------------
 
    procedure Put_Locations_In_Return
-     (Command : access References_Command'Class;
-      Data    : in out Callback_Data'Class) is
+     (Command       : access References_Command'Class;
+      Data          : in out Callback_Data'Class;
+      Show_Ref_Kind : Boolean)
+   is
+      Inst : Class_Instance;
    begin
-      Set_Return_Value_As_List (Data);
+      if not Show_Ref_Kind then
+         Set_Return_Value_As_List (Data);
+      end if;
 
       declare
-         Node : Location_List.List_Node :=
-                  First (Command.Locations);
+         Node  : Entity_Ref_List.List_Node := First (Command.Locations);
+         Loc   : File_Location;
       begin
-         while Node /= Location_List.Null_Node loop
-            Set_Return_Value
-              (Data,
-               Create_File_Location
+         while Node /= Entity_Ref_List.Null_Node loop
+            Loc := Entity_Ref_List.Data (Node).Loc;
+            Inst := Create_File_Location
+              (Script => Get_Script (Data),
+               File   => Create_File
                  (Script => Get_Script (Data),
-                  File   => Create_File
-                    (Script => Get_Script (Data),
-                     File   => Get_Filename
-                       (Get_File (Location_List.Data (Node)))),
-                  Line   => Get_Line (Location_List.Data (Node)),
-                  Column => Get_Column (Location_List.Data (Node))));
+                  File   => Get_Filename (Get_File (Loc))),
+               Line   => Get_Line (Loc),
+               Column => Get_Column (Loc));
+
+            if Show_Ref_Kind then
+               Set_Return_Value
+                 (Data, Kind_To_String (Entity_Ref_List.Data (Node).Kind));
+               Set_Return_Value_Key (Data, Inst);
+            else
+               Set_Return_Value (Data, Inst);
+            end if;
 
             Node := Next (Node);
          end loop;
@@ -2170,7 +2190,7 @@ package body Browsers.Call_Graph is
       Register_Command
         (Kernel, "references",
          Class        => Get_Entity_Class (Kernel),
-         Maximum_Args => 2,
+         Maximum_Args => 3,
          Handler      => Call_Graph_Command_Handler'Access);
       Register_Command
         (Kernel, "calls",
@@ -2364,7 +2384,7 @@ package body Browsers.Call_Graph is
    -- Free --
    ----------
 
-   procedure Free (This : in out File_Location) is
+   procedure Free (This : in out Entity_Ref) is
       pragma Unreferenced (This);
    begin
       null;
