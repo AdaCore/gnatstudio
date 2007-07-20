@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.2 NEW FEATURES LIST Current as of Jun 20, 2007
+GPS 4.2 NEW FEATURES LIST Current as of Jul 20, 2007
 ====================================================
 
 Copyright (c) 2006-2007, AdaCore
@@ -123,6 +123,11 @@ NF-42-D914-005 Better feedback when build fails w/o src location (2007-04-19)
 
   When a build fails with no file:line location (e.g. error at link time),
   GPS now raises the Messages window to make the error more visible.
+
+NF-42-D825-009 New plug-in to list unused entities (2007-07-20)
+
+  A new plug-in can be activated through the /Tools/Plug-ins menu and provides
+  additional menus to list unused entities in a file or a project
 
 NF-42-C127-006 Ability to use shell syntax on custom build/run (2007-04-11)
 

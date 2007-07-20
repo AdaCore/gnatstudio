@@ -893,28 +893,33 @@ package body GPS.Kernel.Scripts is
             Iter   : Entity_Iterator;
             Defined_In_File : constant Boolean := Nth_Arg (Data, 2, True);
             Ent    : Entity_Information;
+            Source : Source_File;
          begin
-            Find_All_Entities_In_File
-              (Iter  => Iter,
-               File  => Get_Or_Create
-                 (Db            => Get_Database (Kernel),
-                  File          => Info,
-                  Allow_Create  => True),
-               Name  => "");
-
             Set_Return_Value_As_List (Data);
-            while not At_End (Iter) loop
-               Ent := Get (Iter);
-               if not Defined_In_File
-                 or else Get_Filename (Get_File (Get_Declaration_Of (Ent))) =
-                   Info
-               then
-                  Set_Return_Value
-                    (Data, Create_Entity (Get_Script (Data), Ent));
-               end if;
-               Next (Iter);
-            end loop;
-            Destroy (Iter);
+            Source := Get_Or_Create
+              (Db            => Get_Database (Kernel),
+               File          => Info,
+               Allow_Create  => True);
+
+            if Source /= null then
+               Find_All_Entities_In_File
+                 (Iter  => Iter,
+                  File  => Source,
+                  Name  => "");
+
+               while not At_End (Iter) loop
+                  Ent := Get (Iter);
+                  if not Defined_In_File
+                    or else Get_Filename (Get_File (Get_Declaration_Of (Ent)))
+                    = Info
+                  then
+                     Set_Return_Value
+                       (Data, Create_Entity (Get_Script (Data), Ent));
+                  end if;
+                  Next (Iter);
+               end loop;
+               Destroy (Iter);
+            end if;
          end;
 
       end if;
