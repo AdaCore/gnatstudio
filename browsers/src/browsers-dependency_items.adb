@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2001-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -69,6 +68,8 @@ package body Browsers.Dependency_Items is
 
    Show_System_Files_Key : constant History_Key := "browser_show_system_files";
    Show_Implicit_Key     : constant History_Key := "browser_show_implicit";
+
+   Recursive_Cst         : aliased constant String := "recursive";
 
    procedure Default_Context_Factory
      (Module  : access Dependency_Browser_Module;
@@ -976,6 +977,7 @@ package body Browsers.Dependency_Items is
          Examine_From_Dependencies (Kernel, File => File);
 
       elsif Command = "imports" then
+         Name_Parameters (Data, (1 => Recursive_Cst'Access));
          declare
             Iter       : File_Dependency_Iterator;
             Dependency : Source_File;
