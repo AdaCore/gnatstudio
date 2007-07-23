@@ -1365,7 +1365,8 @@ package body Entities.Queries is
 
    function At_End (Iter : File_Dependency_Iterator) return Boolean is
    begin
-      return Iter.Dep_Index > Last (Iter.File.Depends_On);
+      return Iter.File = null
+        or else Iter.Dep_Index > Last (Iter.File.Depends_On);
    end At_End;
 
    ---------
