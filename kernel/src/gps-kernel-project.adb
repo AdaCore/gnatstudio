@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                              AdaCore                              --
+--                     Copyright (C) 2001-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -181,7 +180,7 @@ package body GPS.Kernel.Project is
       Property_Index.Nickname := new String'(Host);
       Property_Index.Gnatls   := Handle.Gnatls_Cache;
       Remove_Property
-        ("predefined_path", To_String (Property_Index), "gnatls");
+        (Handle, "predefined_path", To_String (Property_Index), "gnatls");
       Free (Property_Index.Nickname);
    end Invalidate_Predefined_Paths_Cache;
 
@@ -273,7 +272,8 @@ package body GPS.Kernel.Project is
               new String'(Get_Predefined_Project_Path (Handle.Registry.all));
             Prop_Access := new Predefined_Paths_Property'(Property);
             Set_Property
-              ("predefined_path", To_String (Property_Index),
+              (Handle,
+               "predefined_path", To_String (Property_Index),
                Name       => "gnatls",
                Property   => Prop_Access,
                Persistent => True);

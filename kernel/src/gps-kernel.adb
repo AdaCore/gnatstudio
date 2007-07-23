@@ -1424,21 +1424,16 @@ package body GPS.Kernel is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (History_Record, History);
    begin
-      Trace
-        (Me, "Saving preferences in " & Handle.Home_Dir.all & "preferences");
-      Save_Preferences (Handle, Handle.Home_Dir.all & "preferences");
       Save_Styles
         (Kernel_Handle (Handle),
          Create (Handle.Home_Dir.all & "styles.xml"));
 
-      Save_Persistent_Properties (Handle);
       Reset_Properties (Handle);
 
       Save (Handle.History.all, Handle.Home_Dir.all & "histories.xml");
       Free (Handle.History.all);
       Unchecked_Free (Handle.History);
 
-      Save_Startup_Scripts_List (Handle);
       Reset (Handle.Startup_Scripts);
 
       Destroy_Clipboard (Handle);

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2006                       --
---                             AdaCore                               --
+--                     Copyright (C) 2003-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -193,5 +192,9 @@ private
 
    procedure Clone (From : Key_Htable.HTable; To : out Key_Htable.HTable);
    --  Deep copy of From
+
+   procedure Save_Custom_Keys
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Save the current custom keys
 
 end KeyManager_Module;

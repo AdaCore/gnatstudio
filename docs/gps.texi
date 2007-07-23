@@ -947,8 +947,8 @@ callgraph during the last GPS session.
 @noindent
 Bookmarks are a convenient way to remember places in your code or in your
 environment so that you can go back to them at any point in the future.
-These bookmarks are saved automatically when GPS exits, and restored when it
-is reloaded, so that exist across GPS sessions.
+These bookmarks are saved automatically whenever they are modified, and
+restored when GPS is reloaded, so that they exist across GPS sessions.
 
 Bookmarks will automatically remember the exact location in an editor, not
 in terms of line/column, but in terms of which word they point to. If you

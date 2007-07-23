@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2004-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2004-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -344,6 +343,8 @@ package body Casing_Exceptions is
       end Get_Name;
 
       Name : constant String := Get_Name;
+      Filename : constant String :=
+        Get_Home_Dir (Get_Kernel (Context.Context)) & Case_Exceptions_Filename;
 
    begin
       if Command.Substring then
@@ -359,6 +360,9 @@ package body Casing_Exceptions is
             Add_Exception (Name);
          end if;
       end if;
+
+      Save_Exceptions (Casing_Module_Id.Casing_Exceptions_Table, Filename);
+
       return Commands.Success;
    end Execute;
 
@@ -543,10 +547,7 @@ package body Casing_Exceptions is
    -------------
 
    procedure Destroy (Id : in out Casing_Module_Record) is
-      Filename : constant String :=
-        Get_Home_Dir (Get_Kernel (Id)) & Case_Exceptions_Filename;
    begin
-      Save_Exceptions (Id.Casing_Exceptions_Table, Filename);
       Destroy (Id.Casing_Exceptions_Table);
    end Destroy;
 

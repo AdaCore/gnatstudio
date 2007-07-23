@@ -65,6 +65,7 @@ with GPS.Kernel.Hooks;                    use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;                      use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;                  use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;              use GPS.Kernel.Preferences;
+with GPS.Kernel.Properties;               use GPS.Kernel.Properties;
 with GPS.Kernel.Project;                  use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;                  use GPS.Kernel.Scripts;
 with Language;                            use Language;
@@ -3198,13 +3199,11 @@ package body Src_Editor_Buffer is
                --  If this is the same as the project => Do not save, so that
                --  changing in the project correctly impacts this file
                Set_Language_From_File
-                 (Get_Language_Handler (Buffer.Kernel),
-                  Buffer.Filename, "");
+                 (Buffer.Kernel, Buffer.Filename, "");
             else
                --  Note for the future which language should be used
                Set_Language_From_File
-                 (Get_Language_Handler (Buffer.Kernel),
-                  Buffer.Filename, Get_Name (Lang));
+                 (Buffer.Kernel, Buffer.Filename, Get_Name (Lang));
             end if;
          end if;
       end if;
@@ -3227,10 +3226,10 @@ package body Src_Editor_Buffer is
             if Charset = Get_File_Charset (VFS.No_File) then
                --  Since we are using the default charset, do not save in the
                --  properties
-               Set_File_Charset (Buffer.Filename, "");
+               Set_File_Charset (Buffer.Kernel, Buffer.Filename, "");
             else
                --  Else note for the future which charset should be used
-               Set_File_Charset (Buffer.Filename, Charset);
+               Set_File_Charset (Buffer.Kernel, Buffer.Filename, Charset);
             end if;
          end if;
       end if;

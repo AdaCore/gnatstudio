@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.2 NEW FEATURES LIST Current as of Jul 20, 2007
+GPS 4.2 NEW FEATURES LIST Current as of Jul 23, 2007
 ====================================================
 
 Copyright (c) 2006-2007, AdaCore
@@ -102,6 +102,14 @@ NF-42-F925-002 Short titles for floating windows (2007-04-18)
   In particular, base file names can be used for editors instead of full names.
   The preference can be changed in the Windows section of the Preferences
   dialog.
+
+NF-42-F803-003 Config files saved after each change (2007-07-22)
+
+  GPS will now save its various configuration files (preferences, bookmarks,
+  plug-ins,...) every time they are modified, even implicitely, instead of
+  on exit. This makes sure that when you have several GPS sessions running
+  the behavior is more user-friendly, and that these files can be edited
+  manually even when GPS is running
 
 NF-42-F716-001 Improve block navigation support (2007-03-18)
 

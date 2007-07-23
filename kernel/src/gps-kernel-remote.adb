@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2006-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -2806,7 +2805,8 @@ package body GPS.Kernel.Remote is
 
             --  Set the property for loaded project
             Prop := new Servers_Property'(Property);
-            Set_Property (Local_File, "servers_config", Prop,
+            Set_Property (Kernel,
+                          Local_File, "servers_config", Prop,
                           Persistent => True);
 
          else
@@ -3305,7 +3305,7 @@ package body GPS.Kernel.Remote is
       Get_Property (Property, The_File, "servers_config", Found);
 
       if Found then
-         Remove_Property (The_File, "servers_config");
+         Remove_Property (Remote_Module.Kernel, The_File, "servers_config");
       end if;
 
       Set_Prop := False;
@@ -3332,7 +3332,9 @@ package body GPS.Kernel.Remote is
       end loop;
 
       Prop := new Servers_Property'(Property);
-      Set_Property (The_File, "servers_config", Prop, Persistent => True);
+      Set_Property
+        (Remote_Module.Kernel,
+         The_File, "servers_config", Prop, Persistent => True);
    end Set_Default_Remote_Settings;
 
    ------------

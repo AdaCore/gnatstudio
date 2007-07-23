@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2005                         --
---                              AdaCore                              --
+--                        Copyright (C) 2005-2007, AdaCore           --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -62,7 +61,9 @@ package GPS.Kernel.Charsets is
    --  If File is VFS.No_File, the default charset is returned.
 
    procedure Set_File_Charset
-     (File : VFS.Virtual_File; Charset : String := "");
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File    : VFS.Virtual_File;
+      Charset : String := "");
    --  Set the charset that should be used to edit File.
    --  If Charset is left to the empty string, the default charset specified in
    --  the preferences will be used

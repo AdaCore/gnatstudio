@@ -428,6 +428,8 @@ package body KeyManager_Module.GUI is
       Gtk.Accel_Map.Foreach_Unfiltered
         (System.Null_Address, Process_Menu_Binding'Unrestricted_Access);
       Block_Accel_Map_Refresh (Editor.Kernel, Block => False);
+
+      Save_Custom_Keys (Editor.Kernel);
    end Save_Editor;
 
    ---------------------------

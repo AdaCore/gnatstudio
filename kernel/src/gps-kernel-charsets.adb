@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2005-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -311,15 +310,16 @@ package body GPS.Kernel.Charsets is
    ----------------------
 
    procedure Set_File_Charset
-     (File : VFS.Virtual_File; Charset : String := "")
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File : VFS.Virtual_File; Charset : String := "")
    is
       Prop : String_Property_Access;
    begin
       if Charset = "" then
-         Remove_Property (File, "charset");
+         Remove_Property (Kernel, File, "charset");
       else
          Prop := new String_Property'(Value => new String'(Charset));
-         Set_Property (File, "charset", Prop, Persistent => True);
+         Set_Property (Kernel, File, "charset", Prop, Persistent => True);
       end if;
    end Set_File_Charset;
 

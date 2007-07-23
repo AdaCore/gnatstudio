@@ -232,13 +232,12 @@ package body KeyManager_Module is
    --  This command reads a numeric argument, and will then execute the next
    --  action a number of times
 
-   -------------
-   -- Destroy --
-   -------------
+   ----------------------
+   -- Save_Custom_Keys --
+   ----------------------
 
-   procedure Destroy (Module : in out Keymanager_Module_Record) is
-      Filename : constant String :=
-        Get_Home_Dir (Get_Kernel (Module)) & "keys.xml";
+   procedure Save_Custom_Keys (Kernel : access Kernel_Handle_Record'Class) is
+      Filename : constant String := Get_Home_Dir (Kernel) & "keys.xml";
       File : Node_Ptr;
 
       procedure Save_Table (Table : in out Key_Htable.HTable; Prefix : String);
@@ -296,15 +295,21 @@ package body KeyManager_Module is
       File     := new Node;
       File.Tag := new String'("Keys");
 
-      Save_Table (Module.Table.all, "");
+      Save_Table (Keymanager_Module.Table.all, "");
 
       Trace (Me, "Saving " & Filename);
       Print (File, Filename);
       Free (File);
+   end Save_Custom_Keys;
 
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Module : in out Keymanager_Module_Record) is
+   begin
       Reset (Module.Table.all);
       Unchecked_Free (Module.Table);
-
       Keymanager_Module := null;
    end Destroy;
 

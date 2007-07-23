@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2001-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,6 +20,7 @@
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Exceptions;          use Ada.Exceptions;
 with GNAT.Scripts;            use GNAT.Scripts;
+with GNAT.Traces;             use GNAT.Traces;
 with Interfaces.C.Strings;    use Interfaces.C, Interfaces.C.Strings;
 
 with Gdk.Color;               use Gdk.Color;
@@ -41,9 +41,10 @@ with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with Language;                use Language;
-with Traces;                  use Traces;
+with Traces;
 
 package body GPS.Kernel.Preferences is
+   Me : constant Trace_Handle := Create ("GPS_KERNEL");
 
    use type Config.Host_Type;
 
@@ -246,13 +247,15 @@ package body GPS.Kernel.Preferences is
             end if;
 
             if Done then
+               Save_Preferences
+                 (Kernel, Get_Home_Dir (Kernel) & "preferences");
                Run_Hook (Kernel, Preferences_Changed_Hook);
             end if;
 
          exception
             when E : Invalid_Parameter =>
                Set_Error_Msg (Data, Exception_Message (E));
-            when E : others => Trace (Exception_Handle, E);
+            when E : others => Trace (Traces.Exception_Handle, E);
          end;
       end if;
    end Get_Command_Handler;
@@ -1461,6 +1464,8 @@ package body GPS.Kernel.Preferences is
          Parent            => Get_Main_Window (Kernel),
          On_Changed        => On_Changed'Unrestricted_Access,
          Custom_Pages      => Preferences_Pages.all);
+
+      Save_Preferences (Kernel, Get_Home_Dir (Kernel) & "preferences");
    end Edit_Preferences;
 
    ----------------------
@@ -1470,6 +1475,7 @@ package body GPS.Kernel.Preferences is
    procedure Save_Preferences
      (Kernel : access Kernel_Handle_Record'Class; File_Name : String) is
    begin
+      Trace (Me, "Saving preferences in " & File_Name);
       Save_Preferences (Kernel.Preferences, File_Name);
    end Save_Preferences;
 

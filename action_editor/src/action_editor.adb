@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2004-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2004-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -77,9 +76,6 @@ package body Action_Editor is
 
    Action_Editor_Module : Action_Editor_Module_Access;
 
-   procedure Destroy (Module : in out Action_Editor_Module_Record);
-   --  Called when the module is destroyed
-
    No_Filter      : constant String := "<No filter>";   --  -"No filter"
    Unnamed_Filter : constant String := "<Unnamed filter>";
    --  -"Unnamed filter"
@@ -148,6 +144,10 @@ package body Action_Editor is
      (Action : Action_Record_Access;
       Dialog : Action_Editor_Dialog);
    --  Update the action from the dialog
+
+   procedure Save_Custom_Actions
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Save the actions modified interactively through this module
 
    -------------
    -- Gtk_New --
@@ -501,7 +501,7 @@ package body Action_Editor is
 
       case Run (Editor) is
          when Gtk_Response_OK =>
-            null;
+            Save_Custom_Actions (Kernel);
          when Gtk_Response_Cancel =>
             null;
          when others =>
@@ -514,17 +514,18 @@ package body Action_Editor is
       when E : others => Trace (Exception_Handle, E);
    end On_Edit_Actions;
 
-   -------------
-   -- Destroy --
-   -------------
+   -------------------------
+   -- Save_Custom_Actions --
+   -------------------------
 
-   procedure Destroy (Module : in out Action_Editor_Module_Record) is
-      Filename : constant String :=
-        Get_Home_Dir (Get_Kernel (Module)) & "actions.xml";
+   procedure Save_Custom_Actions
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      Filename : constant String := Get_Home_Dir (Kernel) & "actions.xml";
       Tree        : Node_Ptr;
       Error       : String_Access;
       Action      : Action_Record_Access;
-      Action_Iter : Action_Iterator := Start (Get_Kernel (Module));
+      Action_Iter : Action_Iterator := Start (Kernel);
       Child       : Node_Ptr;
       Descr       : Node_Ptr;
 
@@ -574,13 +575,13 @@ package body Action_Editor is
             Action.Modified := False;
          end if;
 
-         Next (Get_Kernel (Module), Action_Iter);
+         Next (Kernel, Action_Iter);
       end loop;
 
       Trace (Me, "Saving " & Filename);
       Print (Tree, Filename);
       Free (Tree);
-   end Destroy;
+   end Save_Custom_Actions;
 
    ---------------------
    -- Register_Module --

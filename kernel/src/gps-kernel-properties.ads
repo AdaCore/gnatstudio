@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005-2006                       --
---                              AdaCore                              --
+--                     Copyright (C) 2005-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -84,7 +83,8 @@ package GPS.Kernel.Properties is
    -------------------------------------------
 
    procedure Set_Property
-     (Index_Name  : String;
+     (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Index_Name  : String;
       Index_Value : String;
       Name        : String;
       Property    : access Property_Record'Class;
@@ -106,7 +106,8 @@ package GPS.Kernel.Properties is
    --  Property names are case sensitive.
 
    procedure Remove_Property
-     (Index_Name  : String;
+     (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Index_Name  : String;
       Index_Value : String;
       Name        : String);
    --  Remove the named property (persistent or not) associated with Index.
@@ -116,7 +117,8 @@ package GPS.Kernel.Properties is
    ---------------------------------------
 
    procedure Set_Property
-     (File       : VFS.Virtual_File;
+     (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File       : VFS.Virtual_File;
       Name       : String;
       Property   : access Property_Record'Class;
       Persistent : Boolean := False);
@@ -136,7 +138,8 @@ package GPS.Kernel.Properties is
    --  Property names are case sensitive.
 
    procedure Remove_Property
-     (File     : VFS.Virtual_File;
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File     : VFS.Virtual_File;
       Name     : String);
    --  Remove the named property (persistent or not) from the file.
 
@@ -145,7 +148,8 @@ package GPS.Kernel.Properties is
    ------------------------------------------
 
    procedure Set_Property
-     (Project    : Projects.Project_Type;
+     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Project    : Projects.Project_Type;
       Name       : String;
       Property   : access Property_Record'Class;
       Persistent : Boolean := False);
@@ -165,7 +169,8 @@ package GPS.Kernel.Properties is
    --  Property names are case sensitive.
 
    procedure Remove_Property
-     (Project  : Projects.Project_Type;
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Project  : Projects.Project_Type;
       Name     : String);
    --  Remove the named property (persistent or not) from the file.
 
@@ -188,6 +193,15 @@ package GPS.Kernel.Properties is
       Value : Boolean;
    end record;
    type Boolean_Property_Access is access all Boolean_Property'Class;
+
+   procedure Set_Language_From_File
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Filename : VFS.Virtual_File;
+      Language : String := "");
+   --  Override the language to be used for the specific filename. This doesn't
+   --  change the project itself, just the properties associated with the file.
+   --  If Language is set to "", then the language will be guessed from the
+   --  project.
 
    -----------------------------------------
    -- Saving and restoring all properties --

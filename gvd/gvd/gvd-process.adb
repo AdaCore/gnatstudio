@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2007                       --
---                             AdaCore                               --
+--                     Copyright (C) 2000-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1143,7 +1142,8 @@ package body GVD.Process is
       Process.Breakpoints  := null;
 
       Set_Property
-        (File       => Get_Executable (Process.Debugger),
+        (Kernel     => Process.Window.Kernel,
+         File       => Get_Executable (Process.Debugger),
          Name       => "breakpoints",
          Property   => Property,
          Persistent => True);
@@ -1195,7 +1195,8 @@ package body GVD.Process is
             Save_Breakpoints_In_Properties (Process, Property);
          else
             Remove_Property
-              (File => Get_Executable (Process.Debugger),
+              (Process.Window.Kernel,
+               File => Get_Executable (Process.Debugger),
                Name => "breakpoints");
          end if;
       end if;

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2002-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -181,26 +180,6 @@ package body Language_Handlers is
          end if;
       end if;
    end Get_Language_From_File;
-
-   ----------------------------
-   -- Set_Language_From_File --
-   ----------------------------
-
-   procedure Set_Language_From_File
-     (Handler  : access Language_Handler_Record;
-      Filename : VFS.Virtual_File;
-      Language : String := "")
-   is
-      pragma Unreferenced (Handler);
-      Prop : String_Property_Access;
-   begin
-      if Language = "" then
-         Remove_Property (Filename, "language");
-      else
-         Prop := new String_Property'(Value => new String'(Language));
-         Set_Property (Filename, "language", Prop, Persistent => True);
-      end if;
-   end Set_Language_From_File;
 
    --------------------------
    -- Get_Language_By_Name --

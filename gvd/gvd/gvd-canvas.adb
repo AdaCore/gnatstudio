@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2000-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -531,8 +530,9 @@ package body GVD.Canvas is
 
             if Count = 0 then
                Remove_Property
-                 (File => Get_Executable (Process.Debugger),
-                  Name => "debugger_items");
+                 (Kernel => Old.Kernel,
+                  File   => Get_Executable (Process.Debugger),
+                  Name   => "debugger_items");
 
             else
                Property := new GVD_Items_Property_Record;
@@ -557,7 +557,8 @@ package body GVD.Canvas is
 
                Traces.Trace (Me, "Saving debugger canvas properties");
                Set_Property
-                 (File       => Get_Executable (Process.Debugger),
+                 (Kernel     => Old.Kernel,
+                  File       => Get_Executable (Process.Debugger),
                   Name       => "debugger_items",
                   Property   => Property,
                   Persistent => True);

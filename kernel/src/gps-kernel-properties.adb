@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005-2007                       --
---                              AdaCore                              --
+--                     Copyright (C) 2005-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -88,10 +87,12 @@ package body GPS.Kernel.Properties is
    --  current project
 
    procedure Set_Resource_Property
-     (Resource_Key  : String;
+     (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Resource_Key  : String;
       Resource_Kind : String;
       Name          : String;
-      Property      : Property_Description);
+      Property      : Property_Description;
+      Save_File     : Boolean := True);
    --  Set property for any kind of resource. This is the internal
    --  implementation of Set_*_Property
 
@@ -104,7 +105,8 @@ package body GPS.Kernel.Properties is
    --  Get property for any kind of resource
 
    procedure Remove_Resource_Property
-     (Resource_Key  : String;
+     (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Resource_Key  : String;
       Resource_Kind : String;
       Name          : String);
    --  Remove property for any kind of resource
@@ -255,10 +257,12 @@ package body GPS.Kernel.Properties is
    ---------------------------
 
    procedure Set_Resource_Property
-     (Resource_Key  : String;
+     (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Resource_Key  : String;
       Resource_Kind : String;
       Name          : String;
-      Property      : Property_Description)
+      Property      : Property_Description;
+      Save_File     : Boolean := True)
    is
       pragma Unreferenced (Resource_Kind);
       --  Not used yet, the idea is to have various attributes in the XML file
@@ -273,6 +277,10 @@ package body GPS.Kernel.Properties is
       end if;
 
       Set (Hash.all, Name, new Property_Description'(Property));
+
+      if Save_File and then Property.Persistent then
+         Save_Persistent_Properties (Kernel);
+      end if;
    end Set_Resource_Property;
 
    ---------------------------
@@ -316,7 +324,8 @@ package body GPS.Kernel.Properties is
    ------------------------------
 
    procedure Remove_Resource_Property
-     (Resource_Key  : String;
+     (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Resource_Key  : String;
       Resource_Kind : String;
       Name          : String)
    is
@@ -326,6 +335,7 @@ package body GPS.Kernel.Properties is
       Hash := Get (All_Properties, Resource_Key);
       if Hash /= null then
          Remove (Hash.all, Name);
+         Save_Persistent_Properties (Kernel);
       end if;
    end Remove_Resource_Property;
 
@@ -334,14 +344,16 @@ package body GPS.Kernel.Properties is
    ------------------
 
    procedure Set_Property
-     (Index_Name  : String;
+     (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Index_Name  : String;
       Index_Value : String;
       Name        : String;
       Property    : access Property_Record'Class;
       Persistent  : Boolean := False) is
    begin
       Set_Resource_Property
-        (Index_Value, Index_Name, Name,
+        (Kernel,
+         Index_Value, Index_Name, Name,
          Property_Description'(Value      => Property_Access (Property),
                                Unparsed   => null,
                                Persistent => Persistent));
@@ -367,11 +379,12 @@ package body GPS.Kernel.Properties is
    ---------------------
 
    procedure Remove_Property
-     (Index_Name  : String;
+     (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Index_Name  : String;
       Index_Value : String;
       Name        : String) is
    begin
-      Remove_Resource_Property (Index_Value, Index_Name, Name);
+      Remove_Resource_Property (Kernel, Index_Value, Index_Name, Name);
    end Remove_Property;
 
    function To_String (File : VFS.Virtual_File) return String;
@@ -405,12 +418,14 @@ package body GPS.Kernel.Properties is
    ------------------
 
    procedure Set_Property
-     (File       : VFS.Virtual_File;
+     (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File       : VFS.Virtual_File;
       Name       : String;
       Property   : access Property_Record'Class;
       Persistent : Boolean := False) is
    begin
-      Set_Property ("file", To_String (File), Name, Property, Persistent);
+      Set_Property
+        (Kernel, "file", To_String (File), Name, Property, Persistent);
    end Set_Property;
 
    ------------------
@@ -418,12 +433,13 @@ package body GPS.Kernel.Properties is
    ------------------
 
    procedure Set_Property
-     (Project    : Projects.Project_Type;
+     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Project    : Projects.Project_Type;
       Name       : String;
       Property   : access Property_Record'Class;
       Persistent : Boolean := False) is
    begin
-      Set_Property ("project", To_String (Project), Name,
+      Set_Property (Kernel, "project", To_String (Project), Name,
                     Property, Persistent);
    end Set_Property;
 
@@ -458,10 +474,11 @@ package body GPS.Kernel.Properties is
    ---------------------
 
    procedure Remove_Property
-     (File     : VFS.Virtual_File;
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File     : VFS.Virtual_File;
       Name     : String) is
    begin
-      Remove_Property ("file", To_String (File), Name);
+      Remove_Property (Kernel, "file", To_String (File), Name);
    end Remove_Property;
 
    ---------------------
@@ -469,10 +486,11 @@ package body GPS.Kernel.Properties is
    ---------------------
 
    procedure Remove_Property
-     (Project  : Projects.Project_Type;
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Project  : Projects.Project_Type;
       Name     : String) is
    begin
-      Remove_Property ("project", To_String (Project), Name);
+      Remove_Property (Kernel, "project", To_String (Project), Name);
    end Remove_Property;
 
    -----------------------------
@@ -534,9 +552,14 @@ package body GPS.Kernel.Properties is
 
             if Descr.Persistent then
                if Descr.Value = null then
-                  Descr.Unparsed.Tag := new String'("property");
-                  Prop := Descr.Unparsed;
-                  Descr.Unparsed := null;
+                  Prop := new Node'
+                    (Tag        => new String'("property"),
+                     Attributes => new String'(Descr.Unparsed.Attributes.all),
+                     Value      => new String'(Descr.Unparsed.Value.all),
+                     Parent     => null,
+                     Child      => null,
+                     Next       => null,
+                     Specific_Data => 1);
 
                else
                   Prop := new Node'
@@ -612,9 +635,11 @@ package body GPS.Kernel.Properties is
                --  saves space in memory
 
                Set_Resource_Property
-                 (Resource_Key  => Get_Attribute (File, "file"),
+                 (Kernel,
+                  Resource_Key  => Get_Attribute (File, "file"),
                   Resource_Kind => "file",
                   Name          => Get_Attribute (Prop, "name"),
+                  Save_File     => False,
                   Property      => (Value      => null,
                                     Unparsed   => Prop2,
                                     Persistent => True));
@@ -629,6 +654,25 @@ package body GPS.Kernel.Properties is
    exception
       when E : others => Trace (Exception_Handle, E);
    end Restore_Persistent_Properties;
+
+   ----------------------------
+   -- Set_Language_From_File --
+   ----------------------------
+
+   procedure Set_Language_From_File
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Filename : VFS.Virtual_File;
+      Language : String := "")
+   is
+      Prop : String_Property_Access;
+   begin
+      if Language = "" then
+         Remove_Property (Kernel, Filename, "language");
+      else
+         Prop := new String_Property'(Value => new String'(Language));
+         Set_Property (Kernel, Filename, "language", Prop, Persistent => True);
+      end if;
+   end Set_Language_From_File;
 
    --------------------------
    -- File_Command_Handler --
@@ -656,7 +700,8 @@ package body GPS.Kernel.Properties is
                                  4 => Persistent'Unchecked_Access));
          Prop := new String_Property'(Value => new String'(Nth_Arg (Data, 3)));
          Set_Property
-           (File,
+           (Kernel,
+            File,
             Name       => Nth_Arg (Data, 2),
             Property   => Prop,
             Persistent => Nth_Arg (Data, 4, False));
@@ -679,8 +724,9 @@ package body GPS.Kernel.Properties is
       else
          Name_Parameters (Data, (2 => Name'Unchecked_Access));
          Remove_Property
-           (File => File,
-            Name => Nth_Arg (Data, 2));
+           (Kernel => Kernel,
+            File   => File,
+            Name   => Nth_Arg (Data, 2));
       end if;
    end File_Command_Handler;
 
@@ -706,7 +752,8 @@ package body GPS.Kernel.Properties is
                                  4 => Persistent'Unchecked_Access));
          Prop := new String_Property'(Value => new String'(Nth_Arg (Data, 3)));
          Set_Property
-           (Project,
+           (Get_Kernel (Data),
+            Project,
             Name       => Nth_Arg (Data, 2),
             Property   => Prop,
             Persistent => Nth_Arg (Data, 4, False));
@@ -729,7 +776,8 @@ package body GPS.Kernel.Properties is
       else
          Name_Parameters (Data, (2 => Name'Unchecked_Access));
          Remove_Property
-           (Project  => Project,
+           (Kernel   => Get_Kernel (Data),
+            Project  => Project,
             Name     => Nth_Arg (Data, 2));
       end if;
    end Project_Command_Handler;

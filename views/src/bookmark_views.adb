@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2005-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -94,9 +93,6 @@ package body Bookmark_Views is
    end record;
    type Bookmark_Views_Module_Access
      is access all Bookmark_Views_Module_Record'Class;
-
-   procedure Destroy (Module : in out Bookmark_Views_Module_Record);
-   --  Called when the module is destroyed
 
    Bookmark_Views_Module : Bookmark_Views_Module_Access;
 
@@ -220,6 +216,9 @@ package body Bookmark_Views is
    procedure On_Destroy (View : access Gtk_Widget_Record'Class);
    --  Called when the bookmark view is destroyed
 
+   procedure On_Model_Row_Changed (View : access Gtk_Widget_Record'Class);
+   --  Called when the treeview model is changed
+
    --------------
    -- Tooltips --
    --------------
@@ -331,6 +330,8 @@ package body Bookmark_Views is
          Prev := Node;
          Node := Next (Node);
       end loop;
+
+      Save_Bookmarks (Kernel);
    end Delete_Bookmark;
 
    -------------
@@ -591,7 +592,11 @@ package body Bookmark_Views is
             end loop;
          end if;
 
-         --  ??? Should run the hook only after the name is known
+         --  This results in save the bookmarks.xml twice when the bookmarks
+         --  view is also visible (becasue of Edited_Callback). But this is
+         --  needed when the view is not visible. Saving is fast, so that
+         --  doesn't really matter
+         Save_Bookmarks (Kernel);
          Run_String_Hook (Kernel, Bookmark_Added_Hook, To_String (Mark));
          return Success;
       end if;
@@ -644,6 +649,7 @@ package body Bookmark_Views is
       Mark := Convert (Get_Address (M, Iter, Data_Column));
       Free (Mark.Name);
       Mark.Name := new String'(Get_String (Text_Value));
+      Save_Bookmarks (Get_Kernel (Bookmark_Views_Module.all));
    end Edited_Callback;
 
    ----------------------------
@@ -667,6 +673,18 @@ package body Bookmark_Views is
    begin
       Unref (Bookmark_View_Access (View).Goto_Icon);
    end On_Destroy;
+
+   --------------------------
+   -- On_Model_Row_Changed --
+   --------------------------
+
+   procedure On_Model_Row_Changed (View : access Gtk_Widget_Record'Class) is
+      V : constant Bookmark_View_Access := Bookmark_View_Access (View);
+      pragma Unreferenced (V);
+   begin
+      null;
+--      Save_Bookmarks (V.Kernel);
+   end On_Model_Row_Changed;
 
    ----------------
    -- Initialize --
@@ -734,6 +752,15 @@ package body Bookmark_Views is
                 Name  => "bookmark_views.refresh",
                 Watch => GObject (View));
 
+      --  Each change to the model (in particular renaming of bookmarks) should
+      --  be saved immediately into the bookmarks.xml file. Unfortunately,
+      --  there doesn't appear to be a signal when a cell is finished editing,
+      --  so we just monitor these events at the model level directly.
+
+      Widget_Callback.Object_Connect
+        (Get_Model (View.Tree), Signal_Row_Changed,
+         On_Model_Row_Changed'Access, View);
+
       --  Initialize tooltips
 
       Tooltip := new Bookmark_View_Tooltips;
@@ -754,15 +781,6 @@ package body Bookmark_Views is
    begin
       Refresh (Func.View);
    end Execute;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (Module : in out Bookmark_Views_Module_Record) is
-   begin
-      Save_Bookmarks (Get_Kernel (Module));
-   end Destroy;
 
    --------------------
    -- Load_Bookmarks --
@@ -931,6 +949,7 @@ package body Bookmark_Views is
                  (Marker    => Marker,
                   Instances => Null_Instance_List,
                   Name      => new String'(Nth_Arg (Data, 1))));
+            Save_Bookmarks (Get_Kernel (Data));
             Run_String_Hook
               (Get_Kernel (Data), Bookmark_Added_Hook, Nth_Arg (Data, 1));
             Bookmark := First (Bookmark_Views_Module.List);
@@ -969,6 +988,7 @@ package body Bookmark_Views is
             Set_Data (Inst, Bookmark_Class, String'(Nth_Arg (Data, 2)));
             Run_String_Hook
               (Get_Kernel (Data), Bookmark_Added_Hook, Nth_Arg (Data, 2));
+            Save_Bookmarks (Get_Kernel (Data));
          end if;
 
       elsif Command = "goto" then

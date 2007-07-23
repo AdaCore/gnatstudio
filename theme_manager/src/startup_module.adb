@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2006-2007 AdaCore               --
+--                     Copyright (C) 2006-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -514,6 +514,7 @@ package body Startup_Module is
       Show_All (Editor);
       if Run (Editor) = Gtk_Response_OK then
          Save (Editor);
+         Save_Startup_Scripts_List (Editor.Kernel);
       end if;
       Destroy (Editor);
    end On_Edit_Startup_Scripts;

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2007                       --
---                             AdaCore                               --
+--                     Copyright (C) 2002-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -121,21 +120,14 @@ package Language_Handlers is
    --  The language is guessed either from a specific setup the user has done
    --  for instance through the properties dialog for source editors, or from
    --  the project.
+   --  See the function GPS.Kernel.Properties.Set_Language_From_File for more
+   --  info on how to override this language
 
    function Language_Is_Overriden
      (Handler  : access Language_Handler_Record;
       Filename : VFS.Virtual_File) return Boolean;
    --  Return True if the language for Filename doesn't come from the project,
    --  but from a user setting.
-
-   procedure Set_Language_From_File
-     (Handler  : access Language_Handler_Record;
-      Filename : VFS.Virtual_File;
-      Language : String := "");
-   --  Override the language to be used for the specific filename. This doesn't
-   --  change the project itself, just the properties associated with the file.
-   --  If Language is set to "", then the language will be guessed from the
-   --  project.
 
    function Get_Language_By_Name
      (Handler : access Language_Handler_Record;
