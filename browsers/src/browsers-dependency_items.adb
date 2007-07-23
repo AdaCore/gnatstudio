@@ -69,7 +69,8 @@ package body Browsers.Dependency_Items is
    Show_System_Files_Key : constant History_Key := "browser_show_system_files";
    Show_Implicit_Key     : constant History_Key := "browser_show_implicit";
 
-   Recursive_Cst         : aliased constant String := "recursive";
+   Include_Implicit_Cst  : aliased constant String := "include_implicit";
+   Include_System_Cst    : aliased constant String := "include_system";
 
    procedure Default_Context_Factory
      (Module  : access Dependency_Browser_Module;
@@ -977,12 +978,14 @@ package body Browsers.Dependency_Items is
          Examine_From_Dependencies (Kernel, File => File);
 
       elsif Command = "imports" then
-         Name_Parameters (Data, (1 => Recursive_Cst'Access));
+         Name_Parameters (Data, (1 => Include_Implicit_Cst'Access,
+                                 2 => Include_System_Cst'Access));
          declare
             Iter       : File_Dependency_Iterator;
             Dependency : Source_File;
             Source     : Source_File;
-            Recursive  : constant Boolean := Nth_Arg (Data, 2);
+            Include_Implicit : constant Boolean := Nth_Arg (Data, 2, False);
+            Include_System   : constant Boolean := Nth_Arg (Data, 3, True);
          begin
             Set_Return_Value_As_List (Data);
             Source := Get_Or_Create (Get_Database (Kernel), File);
@@ -994,8 +997,9 @@ package body Browsers.Dependency_Items is
                Dependency := Get (Iter);
 
                if Dependency /= null
-                 and then Filter
-                   (Kernel, Recursive or else Is_Explicit (Iter), Dependency)
+                 and then (Include_Implicit or else Is_Explicit (Iter))
+                 and then
+                   (Include_System or else not Is_System_File (Dependency))
                then
                   Set_Return_Value
                     (Data,
@@ -1008,11 +1012,14 @@ package body Browsers.Dependency_Items is
          end;
 
       elsif Command = "imported_by" then
+         Name_Parameters (Data, (1 => Include_Implicit_Cst'Access,
+                                 2 => Include_System_Cst'Access));
          declare
             Iter       : Dependency_Iterator;
             Dependency : Source_File;
             Source     : Source_File;
-            Recursive  : constant Boolean := Nth_Arg (Data, 2);
+            Include_Implicit : constant Boolean := Nth_Arg (Data, 2, False);
+            Include_System   : constant Boolean := Nth_Arg (Data, 3, True);
          begin
             Set_Return_Value_As_List (Data);
             Source := Get_Or_Create (Get_Database (Kernel), File);
@@ -1025,8 +1032,9 @@ package body Browsers.Dependency_Items is
                Dependency := Get (Iter);
 
                if Dependency /= null
-                 and then Filter
-                   (Kernel, Recursive or else Is_Explicit (Iter), Dependency)
+                 and then (Include_Implicit or else Is_Explicit (Iter))
+                 and then
+                   (Include_System or else not Is_System_File (Dependency))
                then
                   Set_Return_Value
                     (Data,
@@ -1102,14 +1110,14 @@ package body Browsers.Dependency_Items is
          Handler => Depends_On_Command_Handler'Access);
       Register_Command
         (Kernel, "imports",
-         Minimum_Args => 1,
-         Maximum_Args => 1,
+         Minimum_Args => 0,
+         Maximum_Args => 2,
          Class        => Get_File_Class (Kernel),
          Handler      => Depends_On_Command_Handler'Access);
       Register_Command
         (Kernel, "imported_by",
-         Minimum_Args => 1,
-         Maximum_Args => 1,
+         Minimum_Args => 0,
+         Maximum_Args => 2,
          Class        => Get_File_Class (Kernel),
          Handler      => Depends_On_Command_Handler'Access);
    end Register_Module;

@@ -994,17 +994,19 @@ local to the current directory.</description>
 
   <shell_doc name="GPS.File.imports">
       <param name="self">The instance of GPS.File</param>
-      <param name="recursive">A boolean</param>
+      <param name="include_implicit" default="False">A boolean</param>
+      <param name="include_system" default="True">A boolean</param>
       <return>A list of files</return>
-      <description>Return the the list of files that self depends on. If recursive is true, then return dependecies recursively.</description>
+      <description>Return the the list of files that self depends on. If include_implicit is true, then implicit dependencies are also returned. If include_system is true, then system files from the compiler runtime are also returned.</description>
       <see_also name="GPS.File.imported_by()"/>
   </shell_doc>
 
   <shell_doc name="GPS.File.imported_by">
       <param name="self">The instance of GPS.File</param>
-      <param name="recursive">A boolean</param>
+      <param name="include_implicit" default="False">A boolean</param>
+      <param name="include_system" default="True">A boolean</param>
       <return>A list of files</return>
-      <description>Return the list of files that depends on file_name. This command might take some time to execute since GPS needs to parse the cross-reference information for multiple source files. If recursive is true, then return dependencies recursively.</description>
+      <description>Return the list of files that depends on file_name. This command might take some time to execute since GPS needs to parse the cross-reference information for multiple source files. If include_implicit is true, then implicit dependencies are also returned. If include_system is true, then system files from the compiler runtime are also returned.</description>
       <see_also name="GPS.File.imports()" />
   </shell_doc>
 
