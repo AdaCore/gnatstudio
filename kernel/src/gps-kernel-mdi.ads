@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005-2006                       --
---                              AdaCore                              --
+--                     Copyright (C) 2005-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -59,7 +58,7 @@ package GPS.Kernel.MDI is
       Group               : Child_Group := Group_Default;
       Focus_Widget        : Gtk.Widget.Gtk_Widget := null;
       Default_Width, Default_Height : Glib.Gint := -1;
-      Module              : access Module_ID_Record'Class;
+      Module              : access Module_ID_Record'Class; --  can be null
       Desktop_Independent : Boolean := False);
    --  Recommended version of Gtk_New to use, instead of the one in
    --  GtkAda.MDI. This version has several new parameters:

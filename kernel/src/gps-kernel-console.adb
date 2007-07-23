@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                             AdaCore                               --
+--                     Copyright (C) 2001-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -432,18 +431,20 @@ package body GPS.Kernel.Console is
                         Focus_Widget        => Gtk_Widget (Get_View (Console)),
                         Module              => Module_ID (Module),
                         Desktop_Independent => True);
-               Child := MDI_Child (NChild);
 
             else
-               Gtk_New
-                 (Child, Console,
-                  Group        => Group_Consoles,
-                  Focus_Widget => Gtk_Widget (Get_View (Console)));
+               GPS.Kernel.MDI.Gtk_New
+                 (NChild, Console,
+                  Group               => Group_Consoles,
+                  Focus_Widget        => Gtk_Widget (Get_View (Console)),
+                  Module              => null,
+                  Desktop_Independent => False);
             end if;
 
-            Set_Title (Child, Title, Title);
-            Put (Get_MDI (Kernel), Child, Initial_Position => Position_Bottom);
-            Raise_Child (Child);
+            Set_Title (NChild, Title, Title);
+            Put
+              (Get_MDI (Kernel), NChild, Initial_Position => Position_Bottom);
+            Raise_Child (NChild);
 
          elsif Child /= null then
             Highlight_Child (Child);

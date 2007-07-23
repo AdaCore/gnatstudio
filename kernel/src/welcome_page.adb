@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2005-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -233,7 +232,7 @@ package body Welcome_Page is
       Hbox        : Gtk_Hbox;
       Vbox        : Gtk_Vbox;
       Label       : Gtk_Label;
-      Child       : MDI_Child;
+      Child       : GPS_MDI_Child;
       Image       : Gtk_Image;
       Scroll      : Gtk_Scrolled_Window;
       Box         : Gtk_Event_Box;
@@ -324,14 +323,14 @@ package body Welcome_Page is
       Show_All (Scroll);
 
       Set_Size_Request (Scroll, -1, 500);
-      Gtk_New (Child, Scroll);
+      Gtk_New (Child, Scroll, Module => null, Desktop_Independent => False);
       Set_Title (Child, -"Welcome to GPS");
       Put (Get_MDI (Kernel), Child);
 
       Modify_Bg (Get_Parent (Main_Box),
                  State_Normal, White (Get_Default_Colormap));
 
-      return Child;
+      return MDI_Child (Child);
    end Create_Welcome_Page;
 
 end Welcome_Page;

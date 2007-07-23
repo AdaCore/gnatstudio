@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2003-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -488,12 +487,13 @@ package body Python_Module is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Widget   : Glib.Object.GObject;
-      Child    : MDI_Child;
+      Child    : GPS_MDI_Child;
    begin
       if Command = "add" then
          Widget := From_PyGtk (Data, 1);
          if Widget /= null then
-            Gtk_New (Child, Gtk_Widget (Widget), Group => Group_Default);
+            Gtk_New (Child, Gtk_Widget (Widget), Group => Group_Default,
+                     Module => null, Desktop_Independent => False);
             Set_Title (Child, Nth_Arg (Data, 2, ""), Nth_Arg (Data, 3, ""));
             Put (Get_MDI (Get_Kernel (Data)), Child,
                  Initial_Position => Position_Automatic);
