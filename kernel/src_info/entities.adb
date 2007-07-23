@@ -1368,16 +1368,18 @@ package body Entities is
          Append (Depends_On.Depended_On, (File, Explicit_Dependency));
 
       elsif Explicit_Dependency then
-         --  This is only added when File itself is actually parse, so be sure
-         --  to reflect the dependency status
-         File.Depends_On.Table (Index).Explicit := Explicit_Dependency;
+         if File.Depends_On.Table (Index).Explicit /= Explicit_Dependency then
+            --  This is only added when File itself is actually parse, so be
+            --  sure to reflect the dependency status
+            File.Depends_On.Table (Index).Explicit := Explicit_Dependency;
 
-         Index := Find (Depends_On.Depended_On, File);
-         if Index < Dependency_Arrays.First then
-            Append (Depends_On.Depended_On, (File, Explicit_Dependency));
-         else
-            Depends_On.Depended_On.Table (Index).Explicit :=
-              Explicit_Dependency;
+            Index := Find (Depends_On.Depended_On, File);
+            if Index < Dependency_Arrays.First then
+               Append (Depends_On.Depended_On, (File, Explicit_Dependency));
+            else
+               Depends_On.Depended_On.Table (Index).Explicit :=
+                 Explicit_Dependency;
+            end if;
          end if;
       end if;
    end Add_Depends_On;

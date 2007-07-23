@@ -239,8 +239,13 @@ package body ALI_Parser is
 
    function Filename_From_Unit
      (Unit              : Unit_Name_Type;
-      Imported_Projects : Project_Type_Array) return Name_Id;
-   --  Convert from a Unit specification (unit%s or unit%b) to a filename
+      Imported_Projects : Project_Type_Array;
+      File_To_Compile   : File_Name_Type) return Name_Id;
+   --  Convert from a Unit specification (unit%s or unit%b) to a filename.
+   --  File_To_Compile is the name of the file to compile to regenerate the
+   --  units'.ali file, and it could be either the body (in general) or the
+   --  spec. This is used as a base name for proper handling of GNAT's runtime
+   --  files
 
    function Imported_Projects_Count (Project : Project_Type) return Natural;
    --  Return the number of projects imported by Project
@@ -536,7 +541,8 @@ package body ALI_Parser is
 
    function Filename_From_Unit
      (Unit              : Unit_Name_Type;
-      Imported_Projects : Project_Type_Array) return Name_Id
+      Imported_Projects : Project_Type_Array;
+      File_To_Compile   : File_Name_Type) return Name_Id
    is
       Unit_Name : constant String := Get_String (Unit);
       Is_Spec   : constant Boolean := Unit_Name (Unit_Name'Last) = 's';
@@ -569,13 +575,18 @@ package body ALI_Parser is
       --  We end up here for the runtime files, so we just try to append the
       --  standard GNAT extensions.
 
-      return Get_String
-        (Get_Filename_From_Unit
-           (Imported_Projects (Imported_Projects'First),
-            Unit_Name (1 .. Unit_Name'Last - 2),
-            Part,
-            Check_Predefined_Library => True,
-            Language => Ada_String));
+      declare
+         Base : constant String := Get_String (File_To_Compile);
+      begin
+         return Get_String
+           (Get_Filename_From_Unit
+              (Imported_Projects (Imported_Projects'First),
+               Base (Base'First .. Base'Last - 4),
+               --            Unit_Name (1 .. Unit_Name'Last - 2),
+               Part,
+               Check_Predefined_Library => True,
+               Language => Ada_String));
+      end;
    end Filename_From_Unit;
 
    ----------------------------
@@ -594,7 +605,8 @@ package body ALI_Parser is
    begin
       for W in With_Files'Range loop
          With_Files (W) := File_Name_Type (Filename_From_Unit
-           (Withs.Table (W).Uname, Imported_Projects));
+           (Withs.Table (W).Uname, Imported_Projects,
+            Withs.Table (W).Sfile));
       end loop;
 
       if Units.Table (Unit).First_With /= No_With_Id then
