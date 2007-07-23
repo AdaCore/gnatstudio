@@ -137,6 +137,12 @@ NF-42-D825-009 New plug-in to list unused entities (2007-07-20)
   A new plug-in can be activated through the /Tools/Plug-ins menu and provides
   additional menus to list unused entities in a file or a project
 
+NF-42-CC02-005 New plug-in to show dependency path between files (2007-07-23)
+
+  A new plug-in can be activated to show why one file depends on another one,
+  and why the compiler decides to recompile the first one when the second
+  one has changed.
+
 NF-42-C127-006 Ability to use shell syntax on custom build/run (2007-04-11)
 
   When using the Build>Run>Custom and Build>Make>Custom menus, it is now
