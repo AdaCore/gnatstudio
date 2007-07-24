@@ -160,6 +160,12 @@ Known Problems fixed in GPS 4.2.0
               completion engine doesn't provide any completion.
   Workaround: Manually complete the code.
 
+- F223-015 Duplicate links in entity browser
+  Problem:    In the entity browser, it might happen that clicking several
+              times on an hyper link will create duplicate links between
+              entities.
+  Workaround: This is purely graphical, and does not impact the semantic
+
 - F907-001 Code fixing doesn't work with double quotes
   Problem:    When strings involves double quotes, the autofix process is
               sometimes unable to locate precisely where the fix has to be
