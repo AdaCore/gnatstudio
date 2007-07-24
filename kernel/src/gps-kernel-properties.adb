@@ -520,6 +520,7 @@ package body GPS.Kernel.Properties is
       Hash  : Properties_Description_HTable;
       Root, File, Prop : Node_Ptr;
       Descr : Property_Description_Access;
+      Val   : String_Ptr;
    begin
       Trace (Me, "Saving " & Filename);
       Root := new Node'
@@ -552,14 +553,29 @@ package body GPS.Kernel.Properties is
 
             if Descr.Persistent then
                if Descr.Value = null then
+                  --  Descr.Unparsed.Value might be null if the properties is
+                  --  represented by XML children instead
+                  if Descr.Unparsed.Value /= null then
+                     Val := new String'(Descr.Unparsed.Value.all);
+                  else
+                     Val := null;
+                  end if;
+
                   Prop := new Node'
                     (Tag        => new String'("property"),
                      Attributes => new String'(Descr.Unparsed.Attributes.all),
-                     Value      => new String'(Descr.Unparsed.Value.all),
+                     Value      => Val,
                      Parent     => null,
                      Child      => null,
                      Next       => null,
                      Specific_Data => 1);
+
+                  --  If there are any children to Descr.Unparsed, we must
+                  --  preserve them
+
+                  if Descr.Unparsed.Child /= null then
+                     Prop.Child := Deep_Copy (Descr.Unparsed.Child);
+                  end if;
 
                else
                   Prop := new Node'
