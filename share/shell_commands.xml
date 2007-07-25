@@ -4447,12 +4447,13 @@ If file is not specified, the current editor is returned, ie the last one that h
 
 If the file is not currently open, the behavior depends on the open parameter: if true, a new editor is created for that file, otherwise None is returned.
 
-When a file is returned, it has gained received the focus.
+When a new file is open, it has received the focus. But if the editor already existed, it is not raised explicitly, and you need to do it yourself through a call to GPS.MDIWindow.raise_window (see the example below).
 
 If force is set to true, a reload is forced in case the file is already open.
       </description>
       <example lang="python">
           ed = GPS.EditorBuffer.get (GPS.File ("a.adb"))
+          GPS.MDI.get_by_child (ed.current_view()).raise_window()
           ed.data = "whatever"
           # ... Whatever, including modifying ed
           ed = GPS.EditorBuffer.get (GPS.File ("a.adb"))
