@@ -71,6 +71,7 @@ class Addr2line (Console):
   def onclick (self, text):
      matched = re.match (file_line_re, text)
      buffer = EditorBuffer.get (File (matched.group (2)))
+     MDI.get_by_child (buffer.current_view()).raise_window()
      line = int (matched.group (3))
      column = matched.group (5)
      if column != None:
