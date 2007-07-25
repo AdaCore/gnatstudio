@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2001-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -80,6 +79,12 @@ package body GPS.Location_View is
    Location_View_Module_Id : Module_ID;
 
    package View_Idle is new Gtk.Main.Timeout (Location_View);
+
+   procedure Location_Changed
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Called whenever the location in the current editor has changed, so that
+   --  we can highlight the corresponding line in the locations window
 
    ---------------------
    -- Local constants --
@@ -225,7 +230,6 @@ package body GPS.Location_View is
 
    procedure Get_Category_File
      (View          : access Location_View_Record'Class;
-      Model         : Gtk_Tree_Store;
       Category      : Glib.UTF8_String;
       H_Category    : Style_Access;
       File          : VFS.Virtual_File;
@@ -238,6 +242,15 @@ package body GPS.Location_View is
    --  If File is "", then the category iter will be returned.
    --  If the category was created, New_Category is set to True.
    --  Category is the escaped string.
+
+   procedure Get_Line_Column_Iter
+     (View      : access Location_View_Record'Class;
+      File_Iter : Gtk_Tree_Iter;
+      Line      : Natural;
+      Column    : Natural := 0;
+      Loc_Iter  : out Gtk_Tree_Iter);
+   --  Get the iter corresponding to a line/column location within the file.
+   --  If Column is not specified, only the line has to match.
 
    procedure Fill_Iter
      (View               : access Location_View_Record'Class;
@@ -260,7 +273,6 @@ package body GPS.Location_View is
 
    procedure Add_Location
      (View               : access Location_View_Record'Class;
-      Model              : Gtk_Tree_Store;
       Category           : Glib.UTF8_String;
       File               : VFS.Virtual_File;
       Line               : Positive;
@@ -1057,7 +1069,6 @@ package body GPS.Location_View is
 
    procedure Get_Category_File
      (View          : access Location_View_Record'Class;
-      Model         : Gtk_Tree_Store;
       Category      : Glib.UTF8_String;
       H_Category    : Style_Access;
       File          : VFS.Virtual_File;
@@ -1066,6 +1077,7 @@ package body GPS.Location_View is
       New_Category  : out Boolean;
       Create        : Boolean := True)
    is
+      Model         : constant Gtk_Tree_Store := View.Tree.Model;
    begin
       File_Iter := Null_Iter;
       Category_Iter := Get_Iter_First (Model);
@@ -1116,13 +1128,41 @@ package body GPS.Location_View is
       return;
    end Get_Category_File;
 
+   --------------------------
+   -- Get_Line_Column_Iter --
+   --------------------------
+
+   procedure Get_Line_Column_Iter
+     (View      : access Location_View_Record'Class;
+      File_Iter : Gtk_Tree_Iter;
+      Line      : Natural;
+      Column    : Natural := 0;
+      Loc_Iter  : out Gtk_Tree_Iter)
+   is
+   begin
+      Loc_Iter := Children (View.Tree.Model, File_Iter);
+
+      while Loc_Iter /= Null_Iter loop
+         if Get_Int (View.Tree.Model, Loc_Iter, Line_Column) = Gint (Line)
+           and then
+             (Column = 0
+              or else Get_Int
+                (View.Tree.Model, Loc_Iter, Column_Column) = Gint (Column))
+         then
+            return;
+         end if;
+
+         Next (View.Tree.Model, Loc_Iter);
+      end loop;
+      Loc_Iter := Null_Iter;
+   end Get_Line_Column_Iter;
+
    ------------------
    -- Add_Location --
    ------------------
 
    procedure Add_Location
      (View               : access Location_View_Record'Class;
-      Model              : Gtk_Tree_Store;
       Category           : Glib.UTF8_String;
       File               : VFS.Virtual_File;
       Line               : Positive;
@@ -1148,6 +1188,8 @@ package body GPS.Location_View is
       Path              : Gtk_Tree_Path;
       Added             : Boolean := False;
 
+      Model             : constant Gtk_Tree_Store := View.Tree.Model;
+
       Locs              : Locations_List.List;
       Loc               : Location;
       Node              : Locations_List.List_Node;
@@ -1158,7 +1200,7 @@ package body GPS.Location_View is
       end if;
 
       Get_Category_File
-        (View, Model, Category, Highlight_Category,
+        (View, Category, Highlight_Category,
          File, Category_Iter, File_Iter, Category_Created);
 
       --  Check whether the same item already exists
@@ -1634,6 +1676,53 @@ package body GPS.Location_View is
       when E : others => Trace (Exception_Handle, E);
    end Toggle_Sort;
 
+   ----------------------
+   -- Location_Changed --
+   ----------------------
+
+   procedure Location_Changed
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      Child       : MDI_Child;
+      Locations   : Location_View;
+      D           : constant File_Location_Hooks_Args_Access :=
+        File_Location_Hooks_Args_Access (Data);
+      Category_Iter, File_Iter, Loc_Iter : Gtk_Tree_Iter;
+      Category_Created : Boolean;
+      Path             : Gtk_Tree_Path;
+   begin
+      Child := Find_MDI_Child_By_Tag
+        (Get_MDI (Kernel), Location_View_Record'Tag);
+      Locations := Location_View (Get_Widget (Child));
+
+      Get_Category_File
+        (Locations,
+         Category           => "Builder results",
+         H_Category         => null,
+         File               => D.File,
+         Category_Iter      => Category_Iter,
+         File_Iter          => File_Iter,
+         New_Category       => Category_Created,
+         Create             => False);
+      if File_Iter /= Null_Iter then
+         Get_Line_Column_Iter
+           (View      => Locations,
+            File_Iter => File_Iter,
+            Line      => D.Line,
+            Column    => 0,
+            Loc_Iter  => Loc_Iter);
+
+         if Loc_Iter /= Null_Iter then
+            Path := Get_Path (Locations.Tree.Model, Loc_Iter);
+            Expand_To_Path (Locations.Tree, Path);
+            Select_Iter (Get_Selection (Locations.Tree), Loc_Iter);
+            Scroll_To_Cell (Locations.Tree, Path, null, False, 0.1, 0.1);
+            Path_Free (Path);
+         end if;
+      end if;
+   end Location_Changed;
+
    ----------------
    -- Initialize --
    ----------------
@@ -1709,6 +1798,11 @@ package body GPS.Location_View is
                 Watch => GObject (View));
       Modify_Font (View.Tree, Get_Pref (View_Fixed_Font));
 
+      Add_Hook (Kernel, Location_Changed_Hook,
+                Wrapper (Location_Changed'Access),
+                Name  => "locations.location_changed",
+                Watch => GObject (View));
+
       Read_Secondary_Pattern_Preferences (View);
    end Initialize;
 
@@ -1762,7 +1856,7 @@ package body GPS.Location_View is
       if View /= null then
          if Has_Markups then
             Add_Location
-              (View, View.Tree.Model,
+              (View,
                Glib.Convert.Escape_Text (Category),
                File, Line, Column, Length,
                Highlight, Text, Highlight_Category,
@@ -1774,7 +1868,7 @@ package body GPS.Location_View is
                Look_For_Secondary => False);
          else
             Add_Location
-              (View, View.Tree.Model,
+              (View,
                Glib.Convert.Escape_Text (Category),
                File, Line, Column, Length,
                Highlight, Glib.Convert.Escape_Text (Text), Highlight_Category,
@@ -1813,7 +1907,6 @@ package body GPS.Location_View is
 
       Get_Category_File
         (View,
-         View.Tree.Model,
          Glib.Convert.Escape_Text (Category),
          null, VFS.No_File, Cat, Iter, Dummy, False);
 
@@ -1856,7 +1949,6 @@ package body GPS.Location_View is
 
       Get_Category_File
         (View,
-         View.Tree.Model,
          Glib.Convert.Escape_Text (Category),
          null, VFS.No_File, Cat, Iter, Dummy, False);
 
@@ -1899,7 +1991,6 @@ package body GPS.Location_View is
    begin
       Get_Category_File
         (View,
-         View.Tree.Model,
          Identifier, null, File, Iter, File_Iter, Dummy);
 
       if File_Iter = Null_Iter then
@@ -2134,7 +2225,7 @@ package body GPS.Location_View is
              & ' ' & Message);
 
       Get_Category_File
-        (View, View.Tree.Model,
+        (View,
          Glib.Convert.Escape_Text (Category),
          H_Category,
          File, Category_Iter, File_Iter, Created, False);
@@ -2346,7 +2437,6 @@ package body GPS.Location_View is
          Loc := Data (Node).all;
          Add_Location
            (View               => View,
-            Model              => View.Tree.Model,
             Category           => Loc.Category.all,
             File               => Loc.File,
             Line               => Loc.Line,
@@ -2837,7 +2927,6 @@ package body GPS.Location_View is
       Quiet                   : Boolean := False)
    is
       View   : Location_View := null;
-      Model  : Gtk_Tree_Store;
       Expand : Boolean := Quiet;
 
       Iter   : Gtk_Tree_Iter := Null_Iter;
@@ -2986,12 +3075,10 @@ package body GPS.Location_View is
 
             if View = null then
                View := Get_Or_Create_Location_View (Kernel);
-               Model := View.Tree.Model;
             end if;
 
             Add_Location
               (View               => View,
-               Model              => Model,
                Category           => Glib.Convert.Escape_Text (Category),
                File               => Create
                  (Text (Matched

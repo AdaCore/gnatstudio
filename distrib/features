@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.2 NEW FEATURES LIST Current as of Jul 23, 2007
+GPS 4.2 NEW FEATURES LIST Current as of Jul 25, 2007
 ====================================================
 
 Copyright (c) 2006-2007, AdaCore
@@ -14,6 +14,13 @@ of the feature.
 
 New features in GPS 4.2.0
 -------------------------
+
+NF-42-G724-010 Locations window highlights current line error (2007-07-25)
+
+  After a compilation resulted in errors, the locations view displays these
+  error. But now, it will highlight the error corresponding to the current
+  line in the editor, making it easier to find what is the error that
+  occurred on that line
 
 NF-42-G611-029 Specifying "recursive" directory status for VCS (2007-06-18)
 
