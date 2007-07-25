@@ -134,6 +134,11 @@ NF-42-F223-023 Retrieve 'Class attribute on tooltip documentation (2007-05-02)
   Documentation displayed by tooltips now displays type of parameters and
   variables with 'Class when relevant.
 
+NF-42-F213-027 New plug-in to interface with addr2line (2007-07-25)
+
+  A new plug-in is provided to interface with addr2line to convert backtraces
+  into clickable symbolic backtraces
+
 NF-42-D914-005 Better feedback when build fails w/o src location (2007-04-19)
 
   When a build fails with no file:line location (e.g. error at link time),

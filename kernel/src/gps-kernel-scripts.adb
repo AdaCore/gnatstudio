@@ -20,6 +20,7 @@
 with Ada.Unchecked_Conversion;
 
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
+with GNAT.Regpat;             use GNAT.Regpat;
 with GNAT.Scripts.Gtkada;     use GNAT.Scripts.Gtkada;
 with GNAT.Scripts.Utils;      use GNAT.Scripts.Utils;
 with GNAT.Traces;             use GNAT.Traces;
@@ -182,6 +183,13 @@ package body GPS.Kernel.Scripts is
    function Get_Entity_Context_Class
      (Repo : Scripts_Repository) return Class_Type;
    --  Create or return existing classes
+
+   type Hyper_Link_Subprogram is new Hyper_Link_Callback_Record with record
+      Subprogram : Subprogram_Type;
+   end record;
+   overriding procedure On_Click
+     (Link : access Hyper_Link_Subprogram; Text : String);
+   --  Called when a user clicks on a hyper link in a console
 
    Name_Cst       : aliased constant String := "name";
    Filename_Cst   : aliased constant String := "filename";
@@ -1356,6 +1364,29 @@ package body GPS.Kernel.Scripts is
          else
             Set_Error_Msg (Data, -"Console was closed by user");
          end if;
+
+      elsif Command = "create_link" then
+         Console := Interactive_Console (GObject'(Get_Data (Inst)));
+         declare
+            Cb : constant Hyper_Link_Callback := new Hyper_Link_Subprogram'
+              (Hyper_Link_Callback_Record with
+               Subprogram => Nth_Arg (Data, 3));
+         begin
+            Create_Hyper_Link
+              (Console,
+               Regexp => Compile (Nth_Arg (Data, 2)),
+               Callback => Cb);
+         exception
+            when GNAT.Regpat.Expression_Error =>
+               Set_Error_Msg (Data, "Invalid regular expression");
+         end;
+
+      elsif Command = "write_with_links" then
+         Console := Interactive_Console (GObject'(Get_Data (Inst)));
+         Insert_With_Links
+           (Console,
+            Text      => Nth_Arg (Data, 2),
+            Add_LF    => False);
       end if;
    end Console_Command_Handler;
 
@@ -1513,6 +1544,18 @@ package body GPS.Kernel.Scripts is
          Handler      => Console_Command_Handler'Access);
       Register_Command
         (Kernel, "get_text",
+         Class        => Console_Class,
+         Handler      => Console_Command_Handler'Access);
+      Register_Command
+        (Kernel, "create_link",
+         Minimum_Args => 1,
+         Maximum_Args => 2,
+         Class        => Console_Class,
+         Handler      => Console_Command_Handler'Access);
+      Register_Command
+        (Kernel, "write_with_links",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
          Class        => Console_Class,
          Handler      => Console_Command_Handler'Access);
 
@@ -2392,5 +2435,22 @@ package body GPS.Kernel.Scripts is
 
       return null;
    end Get_Instances;
+
+   --------------
+   -- On_Click --
+   --------------
+
+   procedure On_Click
+     (Link : access Hyper_Link_Subprogram; Text : String)
+   is
+      Data : Callback_Data'Class :=
+        Create (Get_Script (Link.Subprogram.all), 1);
+      Result : Boolean;
+      pragma Unreferenced (Result);
+   begin
+      Set_Nth_Arg (Data, 1, Text);
+      Result := Execute (Link.Subprogram, Data);
+      Free (Data);
+   end On_Click;
 
 end GPS.Kernel.Scripts;
