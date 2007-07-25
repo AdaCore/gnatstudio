@@ -1848,6 +1848,7 @@ package body Src_Editor_Module.Shell is
                return;
             end if;
          else
+            Raise_Child (Child);
             Box := Get_Source_Box_From_MDI (Child);
 
             if File /= VFS.No_File and Force then
