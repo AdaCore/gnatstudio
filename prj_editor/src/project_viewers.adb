@@ -2690,7 +2690,7 @@ package body Project_Viewers is
       Register_Contextual_Menu
         (Kernel, "Edit file switches",
          Action => Command,
-         Filter => Filter2,
+         Filter => Filter,
          Label  => "Edit switches for %f");
 
       Creation_Wizard.Extending.Register_Contextual_Menus (Kernel);
