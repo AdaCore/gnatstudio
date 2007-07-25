@@ -31,6 +31,8 @@ with Gtk.Text_Mark;
 with Gtk.Text_Tag;
 with Gtk.Scrolled_Window;
 
+with GNAT.Expect;
+with GNAT.Regpat;
 with GNAT.Scripts;
 with GNAT.Strings;
 with Histories;
@@ -203,6 +205,47 @@ package Interactive_Consoles is
       return Gtk.Text_View.Gtk_Text_View;
    --  Return the text view.
 
+   -----------------
+   -- Hyper links --
+   -----------------
+   --  The console supports hyper links, ie clickable text areas that perform
+   --  an action as a result of a user click (in general open an editor for
+   --  instance)
+
+   type Hyper_Link_Callback_Record is abstract tagged null record;
+   type Hyper_Link_Callback is access all Hyper_Link_Callback_Record'Class;
+   procedure On_Click
+     (Link : access Hyper_Link_Callback_Record;
+      Text : String) is abstract;
+   --  Called when a link is clicked on
+
+   procedure On_Destroy (Link : in out Hyper_Link_Callback_Record) is null;
+   --  Called when Link is destroyed.
+
+   procedure Create_Hyper_Link
+     (Console  : access Interactive_Console_Record;
+      Regexp   : GNAT.Regpat.Pattern_Matcher;
+      Callback : not null access Hyper_Link_Callback_Record'Class);
+   --  Register a regular expression that will highlight links when some text
+   --  is inserted through Insert_With_Links. Callback will be destroyed when
+   --  the console itself is destroyed.
+   --  Such callbacks have to be registered separately from the actual
+   --  insertion of text for efficiency and memory reasons. This way, a single
+   --  instance of the callback need to exist in memory no matter how many
+   --  links are actually set for that callback.
+   --  If Regexp contains parenthesis, then the part that is highlighted
+   --  corresponds to the first group of parenthesis, otherwise the whole
+   --  regexp is highlighted.
+
+   procedure Insert_With_Links
+     (Console        : access Interactive_Console_Record;
+      Text           : String;
+      Add_LF         : Boolean := True;
+      Highlight      : Boolean := False);
+   --  Insert text in the console, highlighting any text that matches one of
+   --  hyper links registered with Create_Hyper_Link.
+   --  Clicking on these links will call On_Click on the matching Callback.
+
    ------------------------------
    -- Adapter for GNAT.Scripts --
    ------------------------------
@@ -221,6 +264,15 @@ package Interactive_Consoles is
    --  for virtual consoles created by Get_Or_Create_Virtual_Console above
 
 private
+
+   type Hyper_Link_Record;
+   type Hyper_Links is access Hyper_Link_Record;
+   type Hyper_Link_Record is record
+      Pattern  : GNAT.Expect.Pattern_Matcher_Access;
+      Callback : Hyper_Link_Callback;
+      Tag      : Gtk.Text_Tag.Gtk_Text_Tag;
+      Next     : Hyper_Links;
+   end record;
 
    type Interactive_Console_Record is new
      Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record
@@ -301,6 +353,12 @@ private
 
       Command_Received : Boolean := False;
       --  Whether the console has received a first command yet
+
+      Links       : Hyper_Links;
+      Links_Count : Natural := 0;
+      --  List of hyper links that have been registered for this console
+      --  Links_Count indicates the number of links that have been registered,
+      --  for efficiency
    end record;
 
 end Interactive_Consoles;

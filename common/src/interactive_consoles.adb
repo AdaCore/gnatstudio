@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                              AdaCore                              --
+--                     Copyright (C) 2001-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,7 +22,9 @@ with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with System;              use System;
 
+with GNAT.Expect;         use GNAT.Expect;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
+with GNAT.Regpat;         use GNAT.Regpat;
 with GNAT.Scripts.Gtkada; use GNAT.Scripts, GNAT.Scripts.Gtkada;
 
 with Glib;                use Glib;
@@ -176,6 +177,28 @@ package body Interactive_Consoles is
       Command : String);
    --  Execute Command, store it in the history, and display its result
    --  in the console
+
+   procedure Insert_UTF8_With_Tag
+     (Console        : access Interactive_Console_Record;
+      UTF8           : Glib.UTF8_String;
+      Add_LF         : Boolean := True;
+      Highlight      : Boolean := False;
+      Highlight_Tag  : Gtk_Text_Tag;
+      Add_To_History : Boolean := False;
+      Show_Prompt    : Boolean := True);
+   --  Same as Insert_UTF8, but the tag to use for highlighting is specified
+
+   procedure Prepare_For_Output
+     (Console     : access Interactive_Console_Record'Class;
+      Internal    : out Boolean;
+      Last_Iter   : out Gtk_Text_Iter);
+   procedure Terminate_Output
+     (Console       : access Interactive_Console_Record'Class;
+      Internal      : Boolean;
+      Show_Prompt   : Boolean);
+   --  Prepare or terminate text insertion in the console. This properly takes
+   --  care of the prompt, making the text read-only,... Any highlighting of
+   --  the text must be done separately.
 
    ---------
    -- Ref --
@@ -464,24 +487,99 @@ package body Interactive_Consoles is
       Add_To_History : Boolean := False;
       Show_Prompt    : Boolean := True)
    is
-      Prompt_Iter : Gtk_Text_Iter;
-      Last_Iter   : Gtk_Text_Iter;
-      Success     : Boolean;
-      Internal    : constant Boolean := Console.Internal_Insert;
-
    begin
-      Console.Internal_Insert := True;
+      Insert_UTF8_With_Tag
+        (Console        => Console,
+         UTF8           => UTF8,
+         Add_LF         => Add_LF,
+         Highlight      => Highlight,
+         Highlight_Tag  => Console.Highlight_Tag,
+         Add_To_History => Add_To_History,
+         Show_Prompt    => Show_Prompt);
+   end Insert_UTF8;
 
-      Get_Iter_At_Mark (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
-      Get_End_Iter (Console.Buffer, Last_Iter);
+   ------------------------
+   -- Prepare_For_Output --
+   ------------------------
+
+   procedure Prepare_For_Output
+     (Console     : access Interactive_Console_Record'Class;
+      Internal    : out Boolean;
+      Last_Iter   : out Gtk_Text_Iter)
+   is
+      Prompt_Iter : Gtk_Text_Iter;
+   begin
+      Internal := Console.Internal_Insert;
+      Get_End_Iter     (Console.Buffer, Last_Iter);
 
       if Console.User_Input = null then
+         Get_Iter_At_Mark (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
          Console.User_Input := new String'
            (Get_Slice (Console.Buffer, Prompt_Iter, Last_Iter));
       end if;
+   end Prepare_For_Output;
+
+   ----------------------
+   -- Terminate_Output --
+   ----------------------
+
+   procedure Terminate_Output
+     (Console       : access Interactive_Console_Record'Class;
+      Internal      : Boolean;
+      Show_Prompt   : Boolean)
+   is
+      Last_Iter   : Gtk_Text_Iter;
+      Success     : Boolean;
+      Prompt_Iter : Gtk_Text_Iter;
+   begin
+      Get_Iter_At_Mark (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
+      Get_End_Iter (Console.Buffer, Last_Iter);
+      Apply_Tag
+        (Console.Buffer, Console.Uneditable_Tag, Prompt_Iter, Last_Iter);
+
+      Forward_Chars (Prompt_Iter, Console.User_Input'Length, Success);
+      Apply_Tag
+        (Console.Buffer,
+         Console.External_Messages_Tag,
+         Prompt_Iter, Last_Iter);
+
+      if Show_Prompt then
+         Display_Prompt (Console);
+      end if;
+
+      Console.Message_Was_Displayed := True;
+      Console.Internal_Insert := Internal;
+   end Terminate_Output;
+
+   --------------------------
+   -- Insert_UTF8_With_Tag --
+   --------------------------
+
+   procedure Insert_UTF8_With_Tag
+     (Console        : access Interactive_Console_Record;
+      UTF8           : Glib.UTF8_String;
+      Add_LF         : Boolean := True;
+      Highlight      : Boolean := False;
+      Highlight_Tag  : Gtk_Text_Tag;
+      Add_To_History : Boolean := False;
+      Show_Prompt    : Boolean := True)
+   is
+      Last_Iter   : Gtk_Text_Iter;
+      Internal    : Boolean;
+
+   begin
+      Prepare_For_Output (Console, Internal, Last_Iter);
 
       if Add_LF then
-         Insert (Console.Buffer, Last_Iter, UTF8 & ASCII.LF);
+         if Highlight then
+            Insert_With_Tags
+              (Console.Buffer, Last_Iter, UTF8 & ASCII.LF,
+               Highlight_Tag);
+         else
+            Insert (Console.Buffer, Last_Iter, UTF8 & ASCII.LF);
+         end if;
+      elsif Highlight then
+         Insert_With_Tags (Console.Buffer, Last_Iter, UTF8, Highlight_Tag);
       else
          Insert (Console.Buffer, Last_Iter, UTF8);
       end if;
@@ -497,32 +595,8 @@ package body Interactive_Consoles is
          end if;
       end if;
 
-      Get_Iter_At_Mark (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
-      Get_End_Iter (Console.Buffer, Last_Iter);
-
-      Apply_Tag
-        (Console.Buffer, Console.Uneditable_Tag, Prompt_Iter, Last_Iter);
-
-      Forward_Chars (Prompt_Iter, Console.User_Input'Length, Success);
-      Apply_Tag
-        (Console.Buffer,
-         Console.External_Messages_Tag,
-         Prompt_Iter, Last_Iter);
-
-      if Highlight then
-         Apply_Tag
-           (Console.Buffer,
-            Console.Highlight_Tag,
-            Prompt_Iter, Last_Iter);
-      end if;
-
-      if Show_Prompt then
-         Display_Prompt (Console);
-      end if;
-
-      Console.Message_Was_Displayed := True;
-      Console.Internal_Insert := Internal;
-   end Insert_UTF8;
+      Terminate_Output (Console, Internal, Show_Prompt);
+   end Insert_UTF8_With_Tag;
 
    -----------------
    -- Is_Editable --
@@ -566,9 +640,41 @@ package body Interactive_Consoles is
       pragma Unreferenced (Params);
 
       Console : constant Interactive_Console := Interactive_Console (Object);
-
+      Cursor_Iter, Start_Iter : Gtk_Text_Iter;
+      Link    : Hyper_Links := Console.Links;
+      Success : Boolean;
    begin
       Console.Button_Press := False;
+
+      if Link /= null then
+         Get_Iter_At_Mark (Console.Buffer, Cursor_Iter, Console.Insert_Mark);
+         while Link /= null loop
+            if Has_Tag (Cursor_Iter, Link.Tag) then
+               Copy (Source => Cursor_Iter, Dest => Start_Iter);
+               Success := Begins_Tag (Start_Iter, Link.Tag);
+               if not Success then
+                  Backward_To_Tag_Toggle (Start_Iter, Link.Tag, Success);
+               end if;
+
+               if Success then
+                  Success := Ends_Tag (Cursor_Iter, Link.Tag);
+                  if not Success then
+                     Forward_To_Tag_Toggle (Cursor_Iter, Link.Tag, Success);
+                  end if;
+
+                  if Success then
+                     On_Click
+                       (Link.Callback,
+                        Get_Text (Console.Buffer, Start_Iter, Cursor_Iter));
+                  end if;
+               end if;
+               exit;
+            end if;
+
+            Link := Link.Next;
+         end loop;
+      end if;
+
       Replace_Cursor (Console);
 
       return False;
@@ -1066,11 +1172,28 @@ package body Interactive_Consoles is
    ----------------
 
    procedure On_Destroy (Console : access Gtk_Widget_Record'Class) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Pattern_Matcher, Pattern_Matcher_Access);
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Hyper_Link_Callback_Record'Class, Hyper_Link_Callback);
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Hyper_Link_Record, Hyper_Links);
       C : constant Interactive_Console := Interactive_Console (Console);
+      L, L2 : Hyper_Links;
    begin
       if C.Idle_Registered then
          Idle_Remove (C.Idle_Id);
       end if;
+
+      L := C.Links;
+      while L /= null loop
+         L2 := L.Next;
+         On_Destroy (L.Callback.all);
+         Unchecked_Free (L.Callback);
+         Unchecked_Free (L.Pattern);
+         Unchecked_Free (L);
+         L := L2;
+      end loop;
 
       Unref (C.Uneditable_Tag);
       Unref (C.Prompt_Tag);
@@ -1506,5 +1629,170 @@ package body Interactive_Consoles is
          return "";
       end if;
    end Read;
+
+   -----------------------
+   -- Create_Hyper_Link --
+   -----------------------
+
+   procedure Create_Hyper_Link
+     (Console  : access Interactive_Console_Record;
+      Regexp   : GNAT.Regpat.Pattern_Matcher;
+      Callback : not null access Hyper_Link_Callback_Record'Class)
+   is
+      Tag : Gtk_Text_Tag;
+   begin
+      Gtk_New (Tag);
+      Add (Get_Tag_Table (Console.Buffer), Tag);
+      Set_Property (Tag, Gtk.Text_Tag.Foreground_Property, "blue");
+      Set_Property
+        (Tag, Gtk.Text_Tag.Underline_Property, Pango_Underline_Single);
+
+      Console.Links := new Hyper_Link_Record'
+        (Pattern  => new Pattern_Matcher'(Regexp),
+         Callback => Hyper_Link_Callback (Callback),
+         Tag      => Tag,
+         Next     => Console.Links);
+      Console.Links_Count := Console.Links_Count + 1;
+   end Create_Hyper_Link;
+
+   -----------------------
+   -- Insert_With_Links --
+   -----------------------
+
+   procedure Insert_With_Links
+     (Console        : access Interactive_Console_Record;
+      Text           : String;
+      Add_LF         : Boolean := True;
+      Highlight      : Boolean := False)
+   is
+      type Link_And_Location is record
+         Link        : Hyper_Links;
+         First, Last : Natural;
+      end record;
+      Locs : array (1 .. Console.Links_Count) of Link_And_Location;
+      --  Index in Text of the first occurrence of each regexp
+
+      Index   : Natural := Text'First;
+
+      procedure Update_Pattern_Loc (L : Natural; Link : Hyper_Links);
+      --  Update the next location of the pattern after Index
+
+      procedure Update_Pattern_Loc (L : Natural; Link : Hyper_Links) is
+         Matches : Match_Array (0 .. 1);
+      begin
+         Match (Link.Pattern.all, Text, Matches, Data_first => Index);
+         if Matches (0) = No_Match then
+            Locs (L) := (Link  => Link,
+                         First => Integer'Last,
+                         Last  => Integer'Last);
+
+         elsif Paren_Count (Link.Pattern.all) = 0 then
+            Locs (L) := (Link  => Link,
+                         First => Matches (0).First,
+                         Last  => Matches (0).Last);
+
+         else
+            Locs (L) := (Link  => Link,
+                         First => Matches (1).First,
+                         Last  => Matches (1).Last);
+         end if;
+      end Update_Pattern_Loc;
+
+      Link        : Hyper_Links := Console.Links;
+      Min         : Natural;
+      Min_Pattern : Natural;
+      Internal    : Boolean;
+      Start_Iter, Last_Iter : Gtk_Text_Iter;
+
+   begin
+      --  Initialize the locations array, so that we try and match the regexps
+      --  as few times as possible for efficiency
+      for L in Locs'Range loop
+         Update_Pattern_Loc (L, Link);
+         Link := Link.Next;
+      end loop;
+
+      Prepare_For_Output (Console, Internal, Last_Iter);
+
+      while Index <= Text'Last loop
+         Min         := Text'Last + 1;
+         Min_Pattern := Locs'Last + 1;
+         for L in Locs'Range loop
+            if Locs (L).First < Min then
+               Min         := Locs (L).First;
+               Min_Pattern := L;
+            end if;
+         end loop;
+
+         if Min <= Text'Last then
+            --  Found a regexp. Insert the leading text first, no hyper link
+            if Min - 1 >= Index then
+               Get_End_Iter (Console.Buffer, Start_Iter);
+               if Highlight then
+                  Insert_With_Tags
+                    (Buffer         => Console.Buffer,
+                     Iter           => Start_Iter,
+                     Text           => Glib.Convert.Locale_To_UTF8
+                       (Text (Index .. Min - 1)),
+                     Tag            => Console.Highlight_Tag);
+               else
+                  Insert
+                    (Buffer         => Console.Buffer,
+                     Iter           => Start_Iter,
+                     Text           => Glib.Convert.Locale_To_UTF8
+                       (Text (Index .. Min - 1)));
+               end if;
+            end if;
+
+            --  Then insert the hyper link
+            Get_End_Iter (Console.Buffer, Start_Iter);
+            Insert_With_Tags
+              (Buffer         => Console.Buffer,
+               Iter           => Start_Iter,
+               Text           => Glib.Convert.Locale_To_UTF8
+                 (Text (Min .. Locs (Min_Pattern).Last)),
+               Tag            => Locs (Min_Pattern).Link.Tag);
+
+            Index := Locs (Min_Pattern).Last + 1;
+
+            --  Update the locations of the matches to find the next one. This
+            --  is done as efficiently as possible, since we do not need to
+            --  refresh those for which we know the next location is later on.
+
+            for L in Locs'Range loop
+               if Locs (L).First < Index then
+                  Update_Pattern_Loc (L, Locs (L).Link);
+               end if;
+            end loop;
+
+         else
+            --  Insert the remaining of the text
+            Get_End_Iter (Console.Buffer, Start_Iter);
+            if Highlight then
+               Insert_With_Tags
+                 (Buffer         => Console.Buffer,
+                  Iter           => Start_Iter,
+                  Text           => Text (Index .. Text'Last),
+                  Tag            => Console.Highlight_Tag);
+            else
+               Insert
+                 (Buffer         => Console.Buffer,
+                  Iter           => Start_Iter,
+                  Text           => Text (Index .. Text'Last));
+            end if;
+            Index := Text'Last + 1;
+         end if;
+      end loop;
+
+      if Add_LF then
+         Get_End_Iter (Console.Buffer, Start_Iter);
+         Insert
+           (Buffer         => Console.Buffer,
+            Iter           => Start_Iter,
+            Text           => "" & ASCII.LF);
+      end if;
+
+      Terminate_Output (Console, Internal, Show_Prompt => False);
+   end Insert_With_Links;
 
 end Interactive_Consoles;
