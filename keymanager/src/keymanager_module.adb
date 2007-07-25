@@ -307,7 +307,11 @@ package body KeyManager_Module is
    -------------
 
    procedure Destroy (Module : in out Keymanager_Module_Record) is
+      Key : constant String :=
+        Get_Home_Dir (Get_Kernel (Module)) & "custom_key";
    begin
+      Gtk.Accel_Map.Save (Key);
+
       Reset (Module.Table.all);
       Unchecked_Free (Module.Table);
       Keymanager_Module := null;
@@ -653,7 +657,6 @@ package body KeyManager_Module is
                         Free (List.Action);
                         Remove_And_Get_Next (Table, Iter);
                         Move_To_Next := False;
---                        Unchecked_Free (List);
                         List := null;
                      end if;
 
