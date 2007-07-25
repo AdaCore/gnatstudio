@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2002-2007                       --
---                             AdaCore                               --
+--                     Copyright (C) 2002-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1642,13 +1641,17 @@ package body Project_Properties is
             Index          : constant String := Nth_Arg (Data, 4);
             Value          : constant String := Nth_Arg (Data, 5);
          begin
-            Update_Attribute_Value_In_Scenario
-              (Project            => Project,
-               Scenario_Variables => No_Scenario,
-               Attribute          =>
-                 Build (Package_Name, Attribute_Name),
-               Value              => Value,
-               Attribute_Index    => Index);
+            if not Is_Editable (Project) then
+               Set_Error_Msg (Data, -"Project is not editable");
+            else
+               Update_Attribute_Value_In_Scenario
+                 (Project            => Project,
+                  Scenario_Variables => No_Scenario,
+                  Attribute          =>
+                    Build (Package_Name, Attribute_Name),
+                  Value              => Value,
+                  Attribute_Index    => Index);
+            end if;
          end;
 
          Recompute_View (Get_Kernel (Data));
@@ -1664,34 +1667,39 @@ package body Project_Properties is
             Attribute      : constant Attribute_Pkg :=
               Build (Package_Name, Attribute_Name);
          begin
-            for J in 5 .. Number_Of_Arguments (Data) loop
-               Values (J - 4) := new String'(Nth_Arg (Data, J));
-            end loop;
-
-            if Attribute_Is_Defined (Project, Attribute, Index) then
-               Update_Attribute_Value_In_Scenario
-                 (Project            => Project,
-                  Scenario_Variables => No_Scenario,
-                  Attribute          => Attribute,
-                  Values             => Values,
-                  Attribute_Index    => Index,
-                  Prepend            => True);
+            if not Is_Editable (Project) then
+               Set_Error_Msg (Data, -"Project is not editable");
             else
-               Update_Attribute_Value_In_Scenario
-                 (Project            => Project,
-                  Scenario_Variables => No_Scenario,
-                  Attribute          => Attribute,
-                  Values             => Values,
-                  Attribute_Index    => Index,
-                  Prepend            => False);
-            end if;
+               for J in 5 .. Number_Of_Arguments (Data) loop
+                  Values (J - 4) := new String'(Nth_Arg (Data, J));
+               end loop;
 
-            for J in Values'Range loop
-               Free (Values (J));
-            end loop;
+               if Attribute_Is_Defined (Project, Attribute, Index) then
+                  Update_Attribute_Value_In_Scenario
+                    (Project            => Project,
+                     Scenario_Variables => No_Scenario,
+                     Attribute          => Attribute,
+                     Values             => Values,
+                     Attribute_Index    => Index,
+                     Prepend            => True);
+               else
+                  Update_Attribute_Value_In_Scenario
+                    (Project            => Project,
+                     Scenario_Variables => No_Scenario,
+                     Attribute          => Attribute,
+                     Values             => Values,
+                     Attribute_Index    => Index,
+                     Prepend            => False);
+               end if;
+
+               for J in Values'Range loop
+                  Free (Values (J));
+               end loop;
+            end if;
          end;
 
          Recompute_View (Get_Kernel (Data));
+
       elsif Command = "remove_attribute_values" then
          Name_Parameters (Data, Remove_Attribute_Values_Parameters);
          declare
@@ -1708,45 +1716,50 @@ package body Project_Properties is
             Found          : Boolean := False;
             First_Added    : Boolean := False;
          begin
-            for J in 5 .. Number_Of_Arguments (Data) loop
-               Values (J - 4) := new String'(Nth_Arg (Data, J));
-            end loop;
+            if not Is_Editable (Project) then
+               Set_Error_Msg (Data, -"Project is not editable");
+            else
+               for J in 5 .. Number_Of_Arguments (Data) loop
+                  Values (J - 4) := new String'(Nth_Arg (Data, J));
+               end loop;
 
-            Delete_Attribute
-              (Project            => Project,
-               Scenario_Variables => No_Scenario,
-               Attribute          => Attribute,
-               Attribute_Index    => Index);
+               Delete_Attribute
+                 (Project            => Project,
+                  Scenario_Variables => No_Scenario,
+                  Attribute          => Attribute,
+                  Attribute_Index    => Index);
 
-            for J in reverse List'Range loop
-               Found := False;
+               for J in reverse List'Range loop
+                  Found := False;
 
-               for K in Values'Range loop
-                  if List (J).all = Values (K).all then
-                     Found := True;
-                     exit;
+                  for K in Values'Range loop
+                     if List (J).all = Values (K).all then
+                        Found := True;
+                        exit;
+                     end if;
+                  end loop;
+
+                  if not Found then
+                     Update_Attribute_Value_In_Scenario
+                       (Project            => Project,
+                        Scenario_Variables => No_Scenario,
+                        Attribute          => Attribute,
+                        Values             => (1 => List (J)),
+                        Attribute_Index    => Index,
+                        Prepend            => First_Added);
+
+                     First_Added := True;
                   end if;
                end loop;
 
-               if not Found then
-                  Update_Attribute_Value_In_Scenario
-                    (Project            => Project,
-                     Scenario_Variables => No_Scenario,
-                     Attribute          => Attribute,
-                     Values             => (1 => List (J)),
-                     Attribute_Index    => Index,
-                     Prepend            => First_Added);
-
-                  First_Added := True;
-               end if;
-            end loop;
-
-            for J in Values'Range loop
-               Free (Values (J));
-            end loop;
+               for J in Values'Range loop
+                  Free (Values (J));
+               end loop;
+            end if;
          end;
 
          Recompute_View (Get_Kernel (Data));
+
       elsif Command = "clear_attribute_values" then
          Name_Parameters (Data, Clear_Attribute_Values_Parameters);
          declare
@@ -1755,12 +1768,16 @@ package body Project_Properties is
             Package_Name   : constant String := Nth_Arg (Data, 3, "");
             Index          : constant String := Nth_Arg (Data, 4, "");
          begin
-            Delete_Attribute
-              (Project            => Project,
-               Scenario_Variables => No_Scenario,
-               Attribute          => Build
-                 (Package_Name, Attribute_Name),
-               Attribute_Index    => Index);
+            if not Is_Editable (Project) then
+               Set_Error_Msg (Data, -"Project is not editable");
+            else
+               Delete_Attribute
+                 (Project            => Project,
+                  Scenario_Variables => No_Scenario,
+                  Attribute          => Build
+                    (Package_Name, Attribute_Name),
+                  Attribute_Index    => Index);
+            end if;
          end;
 
          Recompute_View (Get_Kernel (Data));
@@ -5038,6 +5055,18 @@ package body Project_Properties is
       Project_Renamed_Or_Moved : Boolean := False;
 
    begin
+      if not Is_Editable (Project) then
+         Response2 := Message_Dialog
+           (Msg     =>
+            -("This project cannot be edited (most likely it uses variables"
+              & " which GPS cannot edit graphically, such as ""Var := ..."""),
+            Buttons => Button_OK,
+            Dialog_Type => Error,
+            Title   => -"Error",
+            Parent  => Get_Current_Window (Kernel));
+         return;
+      end if;
+
       if not View_Is_Complete (Project) then
          case Warning_On_View_Incomplete (Kernel, Project) is
             when Do_Not_Edit =>

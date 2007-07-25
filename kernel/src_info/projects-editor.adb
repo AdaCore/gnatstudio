@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2002-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -867,6 +866,11 @@ package body Projects.Editor is
       Pkg_Prj  : constant Project_Type :=
                    Find_Project_Of_Package (Project, Pkg_Name);
    begin
+      if not Is_Editable (Project) then
+         Trace (Me, "Project is not editable");
+         return;
+      end if;
+
       Projects.Editor.Normalize.Normalize (Pkg_Prj);
       Update_Attribute_Value_In_Scenario
         (Project.Tree, Pkg_Prj.Node, Scenario_Variables, Attribute,
@@ -996,6 +1000,11 @@ package body Projects.Editor is
       Sep     : constant Natural := Split_Package (Attribute);
       Pkg_Prj : Project_Type := Project;
    begin
+      if not Is_Editable (Project) then
+         Trace (Me, "Project is not editable");
+         return;
+      end if;
+
       if Sep > Attribute'First then
          Pkg_Prj := Find_Project_Of_Package
            (Project, String (Attribute (Attribute'First .. Sep - 1)));
@@ -1152,6 +1161,11 @@ package body Projects.Editor is
       end Add_Or_Replace;
 
    begin
+      if not Is_Editable (Project) then
+         Trace (Me, "Project is not editable");
+         return;
+      end if;
+
       --  The call to Delete_Attribute will normalize the right project
       Delete_Attribute
         (Project, Scenario_Variables, Attribute, Any_Attribute);
@@ -1422,6 +1436,11 @@ package body Projects.Editor is
       end Delete_Attr;
 
    begin
+      if not Is_Editable (Project) then
+         Trace (Me, "Project is not editable");
+         return;
+      end if;
+
       Projects.Editor.Normalize.Normalize (Pkg_Prj);
       Attribute_N := Get_String (Attribute_Name);
 
@@ -1627,6 +1646,11 @@ package body Projects.Editor is
 
       Ext_Var : constant Name_Id := Get_String (Ext_Variable_Name);
    begin
+      if not Is_Editable (Root_Project) then
+         Trace (Me, "Project is not editable");
+         return;
+      end if;
+
       Projects.Editor.Normalize.Normalize (Root_Project);
       For_Each_Environment_Variable
         (Root_Project, Ext_Var,
@@ -1748,6 +1772,11 @@ package body Projects.Editor is
 
       N : constant Name_Id := Get_String (Ext_Variable_Name);
    begin
+      if not Is_Editable (Root_Project) then
+         Trace (Me, "Project is not editable");
+         return;
+      end if;
+
       Projects.Editor.Normalize.Normalize (Root_Project);
       For_Each_Environment_Variable
         (Root_Project, N, Get_String (Old_Value_Name),
@@ -2041,6 +2070,11 @@ package body Projects.Editor is
       end Callback;
 
    begin
+      if not Is_Editable (Root_Project) then
+         Trace (Me, "Project is not editable");
+         return;
+      end if;
+
       Projects.Editor.Normalize.Normalize (Root_Project);
       For_Each_Environment_Variable
         (Root_Project, Get_String (Ext_Variable_Name),
@@ -2135,6 +2169,11 @@ package body Projects.Editor is
       end Callback;
 
    begin
+      if not Is_Editable (Root_Project) then
+         Trace (Me, "Project is not editable");
+         return;
+      end if;
+
       For_Each_Environment_Variable
         (Root_Project, Get_String (Ext_Variable_Name), No_Name,
          Callback'Unrestricted_Access);
@@ -2170,6 +2209,11 @@ package body Projects.Editor is
       Ext_Ref : constant Name_Id :=
         Get_String (External_Reference_Of (Variable));
    begin
+      if not Is_Editable (Root_Project) then
+         Trace (Me, "Project is not editable");
+         return;
+      end if;
+
       Projects.Editor.Normalize.Normalize (Root_Project);
       For_Each_Environment_Variable
         (Root_Project, Ext_Ref, No_Name, Callback'Unrestricted_Access);
@@ -2201,6 +2245,11 @@ package body Projects.Editor is
       loop
          P := Current (Iter);
          exit when P = No_Project;
+
+         if not Is_Editable (P) then
+            Trace (Me, "Project is not editable");
+            return;
+         end if;
 
          Projects.Editor.Normalize.Normalize (P);
          Var := Find_Scenario_Variable (Tree, P, External_Var.Name);
@@ -3811,6 +3860,11 @@ package body Projects.Editor is
       Tree : constant Project_Node_Tree_Ref := Project.Tree;
       Typ, Var : Project_Node_Id;
    begin
+      if not Is_Editable (Project) then
+         Trace (Me, "Project is not editable");
+         return No_Variable;
+      end if;
+
       Projects.Editor.Normalize.Normalize (Project);
       Typ := Create_Type (Tree, Project.Node, Type_Name);
       Var := Create_Typed_Variable

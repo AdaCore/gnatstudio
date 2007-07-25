@@ -587,6 +587,9 @@ package Projects is
    --  Return the empy string if Project is normalized, or an error message if
    --  otherwise.
 
+   function Is_Editable (Project : Project_Type) return Boolean;
+   --  Whether the project can be edited
+
    type Project_Status is (From_File, Default, From_Executable, Empty);
    --  How the project was created: either read from a file, automatically
    --  created from a directory, automatically created from an executable

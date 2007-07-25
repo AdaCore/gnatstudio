@@ -139,6 +139,12 @@ NF-42-F213-027 New plug-in to interface with addr2line (2007-07-25)
   A new plug-in is provided to interface with addr2line to convert backtraces
   into clickable symbolic backtraces
 
+NF-42-E525-006 Disabling editing of projects with variables (2007-07-25)
+
+  GPS will now prevent you from graphically editing a project that uses
+  variables (of the form "a:=value"), since the graphical editor does not
+  support those and would mess the project up. 
+
 NF-42-D914-005 Better feedback when build fails w/o src location (2007-04-19)
 
   When a build fails with no file:line location (e.g. error at link time),

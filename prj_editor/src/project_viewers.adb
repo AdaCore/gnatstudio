@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
+--                     Copyright (C) 2001-2007, AdaCore              --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1325,18 +1325,22 @@ package body Project_Viewers is
             Args : GNAT.Strings.String_List
               (1 .. Number_Of_Arguments (Data) - 1);
          begin
-            for Index in 2 .. Number_Of_Arguments (Data) loop
-               Args (Index - 1) := new String'(Nth_Arg (Data, Index));
-            end loop;
+            if not Is_Editable (Project) then
+               Set_Error_Msg (Data, -"Project is not editable");
+            else
+               for Index in 2 .. Number_Of_Arguments (Data) loop
+                  Args (Index - 1) := new String'(Nth_Arg (Data, Index));
+               end loop;
 
-            Update_Attribute_Value_In_Scenario
-              (Project            => Project,
-               Scenario_Variables => Scenario_Variables (Kernel),
-               Attribute          => Main_Attribute,
-               Values             => Args,
-               Prepend            => True);
-            Recompute_View (Kernel);
-            Basic_Types.Free (Args);
+               Update_Attribute_Value_In_Scenario
+                 (Project            => Project,
+                  Scenario_Variables => Scenario_Variables (Kernel),
+                  Attribute          => Main_Attribute,
+                  Values             => Args,
+                  Prepend            => True);
+               Recompute_View (Kernel);
+               Basic_Types.Free (Args);
+            end if;
          end;
 
       elsif Command = "rename" then
@@ -1346,13 +1350,17 @@ package body Project_Viewers is
             Path : constant String :=
               Nth_Arg (Data, 3, Full_Name (Project_Directory (Project)).all);
          begin
-            Rename_And_Move
-              (Root_Project  => Get_Project (Kernel),
-               Project       => Project,
-               New_Name      => Name,
-               New_Path      => Create (Path),
-               Report_Errors => Set_Error_Tmp'Unrestricted_Access);
-            Run_Hook (Kernel, Project_Changed_Hook);
+            if not Is_Editable (Project) then
+               Set_Error_Msg (Data, -"Project is not editable");
+            else
+               Rename_And_Move
+                 (Root_Project  => Get_Project (Kernel),
+                  Project       => Project,
+                  New_Name      => Name,
+                  New_Path      => Create (Path),
+                  Report_Errors => Set_Error_Tmp'Unrestricted_Access);
+               Run_Hook (Kernel, Project_Changed_Hook);
+            end if;
          end;
 
       elsif Command = "remove_dependency" then
@@ -1360,7 +1368,11 @@ package body Project_Viewers is
          declare
             Project2  : constant Project_Type := Get_Data (Data, 2);
          begin
-            Remove_Imported_Project (Project, Project2);
+            if not Is_Editable (Project) then
+               Set_Error_Msg (Data, -"Project is not editable");
+            else
+               Remove_Imported_Project (Project, Project2);
+            end if;
          end;
 
       elsif Command = "add_dependency" then
@@ -1375,12 +1387,16 @@ package body Project_Viewers is
             Error    : Import_Project_Error;
             pragma Unreferenced (Error);
          begin
-            Error := Add_Imported_Project
-              (Root_Project              => Get_Project (Kernel),
-               Project                   => Project,
-               Imported_Project_Location => Create (Project2),
-               Report_Errors             => Set_Error_Tmp'Unrestricted_Access,
-               Use_Relative_Path         => Relative);
+            if not Is_Editable (Project) then
+               Set_Error_Msg (Data, -"Project is not editable");
+            else
+               Error := Add_Imported_Project
+                 (Root_Project              => Get_Project (Kernel),
+                  Project                   => Project,
+                  Imported_Project_Location => Create (Project2),
+                  Report_Errors           => Set_Error_Tmp'Unrestricted_Access,
+                  Use_Relative_Path         => Relative);
+            end if;
          end;
 
       elsif Command = "sources" then
@@ -1457,25 +1473,30 @@ package body Project_Viewers is
             Found   : Boolean := False;
 
          begin
-            for S in Sources'Range loop
-               if Sources (S).all = Dir then
-                  Found := True;
-                  exit;
+            if not Is_Editable (Project) then
+               Set_Error_Msg (Data, -"Project is not editable");
+            else
+               for S in Sources'Range loop
+                  if Sources (S).all = Dir then
+                     Found := True;
+                     exit;
+                  end if;
+               end loop;
+
+               if not Found then
+                  Update_Attribute_Value_In_Scenario
+                    (Project            => Project,
+                     Scenario_Variables =>
+                       Scenario_Variables (Get_Kernel (Data)),
+                     Attribute          => Source_Dirs_Attribute,
+                     Values             => Dirs,
+                     Attribute_Index    => "",
+                     Prepend            => True);
                end if;
-            end loop;
 
-            if not Found then
-               Update_Attribute_Value_In_Scenario
-                 (Project            => Project,
-                  Scenario_Variables => Scenario_Variables (Get_Kernel (Data)),
-                  Attribute          => Source_Dirs_Attribute,
-                  Values             => Dirs,
-                  Attribute_Index    => "",
-                  Prepend            => True);
+               Basic_Types.Free (Dirs);
+               Free (Sources);
             end if;
-
-            Basic_Types.Free (Dirs);
-            Free (Sources);
          end;
 
       elsif Command = "remove_source_dir" then
@@ -1486,21 +1507,25 @@ package body Project_Viewers is
               (Project, Source_Dirs_Attribute);
             Index : Natural := Dirs'Last;
          begin
-            for D in Dirs'Range loop
-               if File_Equal (Dirs (D).all, Dir, Build_Server) then
-                  Free (Dirs (D));
-                  Dirs (D .. Dirs'Last - 1) := Dirs (D + 1 .. Dirs'Last);
-                  Index := Index - 1;
-               end if;
-            end loop;
+            if not Is_Editable (Project) then
+               Set_Error_Msg (Data, -"Project is not editable");
+            else
+               for D in Dirs'Range loop
+                  if File_Equal (Dirs (D).all, Dir, Build_Server) then
+                     Free (Dirs (D));
+                     Dirs (D .. Dirs'Last - 1) := Dirs (D + 1 .. Dirs'Last);
+                     Index := Index - 1;
+                  end if;
+               end loop;
 
-            Update_Attribute_Value_In_Scenario
-              (Project            => Project,
-               Scenario_Variables => Scenario_Variables (Get_Kernel (Data)),
-               Attribute          => Source_Dirs_Attribute,
-               Values             => Dirs (Dirs'First .. Index),
-               Attribute_Index    => "");
-            Basic_Types.Free (Dirs);
+               Update_Attribute_Value_In_Scenario
+                 (Project            => Project,
+                  Scenario_Variables => Scenario_Variables (Get_Kernel (Data)),
+                  Attribute          => Source_Dirs_Attribute,
+                  Values             => Dirs (Dirs'First .. Index),
+                  Attribute_Index    => "");
+               Basic_Types.Free (Dirs);
+            end if;
          end;
 
       end if;
@@ -2558,6 +2583,7 @@ package body Project_Viewers is
       Project : constant String := '/' & (-"Project");
       Tools   : constant String := '/' & (-"Tools") & '/' & (-"Views");
       Filter  : Action_Filter;
+      Filter2 : Action_Filter;
       Command : Interactive_Command_Access;
       Mitem   : Gtk_Menu_Item;
 
@@ -2618,18 +2644,20 @@ package body Project_Viewers is
          Title => -"Please select the switches to build the project");
 
       Filter  := Lookup_Filter (Kernel, "Project only");
+      Filter2  := Lookup_Filter (Kernel, "Project only")
+        and Lookup_Filter (Kernel, "Editable Project");
       Command := new Project_Properties_Editor_Command;
       Register_Contextual_Menu
         (Kernel, "Edit project properties",
          Action => Command,
          Label  => "Project/Properties",
-         Filter => Filter);
+         Filter => Filter2);
 
       Command := new Save_Project_Command;
       Register_Contextual_Menu
         (Kernel, "Save project",
          Action => Command,
-         Filter => Filter,
+         Filter => Filter2,
          Label  => "Project/Save project %p");
 
       Command := new Edit_Project_Source_Command;
@@ -2642,7 +2670,7 @@ package body Project_Viewers is
       Register_Contextual_Menu
         (Kernel, "Project dependencies",
          Action => Command,
-         Filter => Filter,
+         Filter => Filter2,
          Label  => "Project/Dependencies");
 
       Command := new Add_Variable_Command;
@@ -2651,7 +2679,7 @@ package body Project_Viewers is
          Action => Command,
          Label  => "Project/Add configuration variable",
          Filter => Action_Filter
-           ((Create (Module => "Explorer") and Filter)
+           ((Create (Module => "Explorer") and Filter2)
             or Create (Module => "Scenario_View")));
 
       Filter := Lookup_Filter (Kernel, "Project and file");
@@ -2662,7 +2690,7 @@ package body Project_Viewers is
       Register_Contextual_Menu
         (Kernel, "Edit file switches",
          Action => Command,
-         Filter => Filter,
+         Filter => Filter2,
          Label  => "Edit switches for %f");
 
       Creation_Wizard.Extending.Register_Contextual_Menus (Kernel);

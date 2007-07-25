@@ -103,6 +103,10 @@ package body Projects is
       Files : VFS.File_Array_Access;
       --  The list of source files for this project
 
+      Uses_Variables : Boolean := False;
+      --  If the project uses variables ("foo := .."), then it cannot be
+      --  edited graphically, since GPS would break it.
+
       Status : Project_Status := From_File;
    end record;
 
@@ -2289,6 +2293,15 @@ package body Projects is
       Project := No_Project;
    end Destroy;
 
+   -----------------
+   -- Is_Editable --
+   -----------------
+
+   function Is_Editable (Project : Project_Type) return Boolean is
+   begin
+      return not Project.Data.Uses_Variables;
+   end Is_Editable;
+
    --------------------------------------------
    -- For_Each_External_Variable_Declaration --
    --------------------------------------------
@@ -2298,6 +2311,9 @@ package body Projects is
       Recursive : Boolean;
       Callback  : External_Variable_Callback)
    is
+      Iterator : Imported_Project_Iterator := Start (Project, Recursive);
+      P : Project_Type;
+
       procedure Process_Prj (Prj : Project_Node_Id);
       --  Process all the declarations in a single project
 
@@ -2318,6 +2334,18 @@ package body Projects is
                  and then not Callback (Var, Prj)
                then
                   exit;
+
+               elsif Kind_Of (Var, Project.Tree) = N_Variable_Declaration
+                 or else
+                   (Kind_Of (Var, Project.Tree) = N_Typed_Variable_Declaration
+                    and then not Is_External_Variable (Var, Project.Tree))
+               then
+                  Trace (Me, "Uses variable in " & Project_Name (P));
+                  if Active (Debug) then
+                     Pretty_Print
+                       (Var, Project.Tree, Backward_Compatibility => False);
+                  end if;
+                  P.Data.Uses_Variables := True;
                end if;
 
                Var := Next_Variable (Var, Project.Tree);
@@ -2331,13 +2359,12 @@ package body Projects is
          end loop;
       end Process_Prj;
 
-      Iterator : Imported_Project_Iterator := Start (Project, Recursive);
-      P : Project_Type;
    begin
       loop
          P := Current (Iterator);
          exit when P = No_Project;
 
+         P.Data.Uses_Variables := False;
          Process_Prj (P.Node);
          Next (Iterator);
       end loop;
