@@ -2940,7 +2940,37 @@ The subprogram on_destroy is called whenever the user closes the console. It is 
       <example lang="python">
           Console().write (u"\N{LATIN CAPITAL LETTER E WITH ACUTE}".encode("utf-8"))
       </example>
+      <see_also name="GPS.Console.write_with_links" />
   </shell_doc>
+
+  <shell_doc name="GPS.Console.create_link">
+      <param name="self">The instance of GPS.Console</param>
+      <param name="regexp">A string</param>
+      <param name="on_click">A subprogram</param>
+      <description>Register a regular expression that should be highlight in this console to provide hyper links. These links are searched for when calling GPS.Console.write_with_links. The part of the text that matches any of the link registered in the console through GPS.Console.create_link gets highlighted in blue and underlined, just like an hyper link in a web browser. If the user clicks on that text, on_click gets called with one parameter, the text that was clicked on. This can for instance be used to jump to an editor, open a web browser,...
+
+If the regular expression does not contain any parenthesis, the text that matches the whole regexp is highlighted as a link. Otherwise, only the part of the text that matches the first parenthesis group is highlighted (so that you can test for the presence of text before or after the actual hyper link). </description>
+      <see_also name="GPS.Console.write_with_links" />
+  </shell_doc>
+
+  <shell_doc name="GPS.Console.write_with_links">
+      <param name="self">The instance of GPS.Console</param>
+      <param name="text">A utf8 string</param>
+      <description>Output some text on the console, highlight the parts of it that matches the regular expression registered by GPS.Console.create_link.</description>
+      <example lang="python">
+   import re
+
+   console = GPS.Console ("myconsole")
+   console.create_link ("(([\w-]+):(\d+))", open_editor)
+   console.write_with_link ("a file.adb:12 location in a file")
+
+   def open_editor (text):
+      matched = re.match ("([\w+-]+):(\d+)", text)
+      buffer = GPS.EditorBuffer.get (GPS.File (matched.group (1)))
+      buffer.current_view().goto \
+         (GPS.EditorLocation (buffer, int (matched.group (2)), 1))
+      </example>
+  </shell_doc> 
 
   <shell_doc name="GPS.Console.clear">
       <param name="self">The instance of GPS.Console</param>
