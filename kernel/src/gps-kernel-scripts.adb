@@ -208,7 +208,14 @@ package body GPS.Kernel.Scripts is
    Default_Cst    : aliased constant String := "default_to_root";
    Nth_Cst        : aliased constant String := "nth";
    Local_Cst      : aliased constant String := "local";
+   Regexp_Cst     : aliased constant String := "regexp";
+   On_Click_Cst   : aliased constant String := "on_click";
+   Text_Cst       : aliased constant String := "text";
 
+   Create_Link_Args         : constant Cst_Argument_List :=
+     (1 => Regexp_Cst'Access, 2 => On_Click_Cst'Access);
+   Write_With_Link_Args         : constant Cst_Argument_List :=
+     (1 => Text_Cst'Access);
    Project_Cmd_Parameters   : constant Cst_Argument_List :=
                                 (1 => Name_Cst'Access);
    Insmod_Cmd_Parameters    : constant Cst_Argument_List :=
@@ -1366,6 +1373,7 @@ package body GPS.Kernel.Scripts is
          end if;
 
       elsif Command = "create_link" then
+         Name_Parameters (Data, Create_Link_Args);
          Console := Interactive_Console (GObject'(Get_Data (Inst)));
          declare
             Cb : constant Hyper_Link_Callback := new Hyper_Link_Subprogram'
@@ -1382,6 +1390,7 @@ package body GPS.Kernel.Scripts is
          end;
 
       elsif Command = "write_with_links" then
+         Name_Parameters (Data, Write_With_Link_Args);
          Console := Interactive_Console (GObject'(Get_Data (Inst)));
          Insert_With_Links
            (Console,
