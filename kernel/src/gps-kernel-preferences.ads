@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2001-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -160,7 +159,6 @@ package GPS.Kernel.Preferences is
    Default_Font          : Param_Spec_Font;
    View_Fixed_Font       : Param_Spec_Font;
    Use_Native_Dialogs    : Param_Spec_Boolean;
-   Can_Change_Accels     : Param_Spec_Boolean;
    Default_Widget_Width  : Param_Spec_Int;
    Default_Widget_Height : Param_Spec_Int;
    Splash_Screen         : Param_Spec_Boolean;

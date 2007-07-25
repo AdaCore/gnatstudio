@@ -422,11 +422,7 @@ package body GPS.Main_Window is
       Gtk.Rc.Parse_String
         ("gtk-font-name=""" &
          To_String (Get_Pref (Default_Font)) &
-         '"' & ASCII.LF &
-         "gtk-can-change-accels=" &
-         Integer'Image
-           (Boolean'Pos
-              (Get_Pref (Can_Change_Accels))));
+         '"' & ASCII.LF);
 
       Gtk.Rc.Parse_String
         ("style ""gtk-default-tooltips-style""  {" & ASCII.LF

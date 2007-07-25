@@ -1404,8 +1404,8 @@ be displayed while the mouse is dragged.
 
 You may want to bind the key shortcuts to the menus
 @code{Window->Split Horizontally}
-as well as @code{Window->Split Vertically} using either the preference
-@code{Dynamic Key Binding}, or the key manager. In addition, if you want to
+as well as @code{Window->Split Vertically} using 
+the key manager. In addition, if you want to
 achieve an effect similar to e.g. the standard Emacs behavior (where
 @key{control-x 2} splits a window horizontally, and @key{control-x 3} splits
 a window vertically), you can use the key manager
@@ -8646,17 +8646,6 @@ encoding to unicode.
 
 This preference indicates the file system encoding in use. It defaults to
 ISO-8859-1, which corresponds to western european characters.
-
-@item Dynamic key bindings
-@cindex key
-@cindex key binding
-@cindex dynamic key binding
-@anchor{Dynamic key bindings}
-Whether the menu key bindings can be changed interactively.
-
-When this preference is enabled, you can navigate through the menus, and type
-the key binding you want to associate to a particular item.
-To remove a key binding, use the @key{Backspace} key.
 
 @item Display splash screen
 @cindex splash screen
@@ -16285,6 +16274,22 @@ or define support for new languages.
 Contains all the key bindings for the actions defined in GPS or in the
 custom files. This only contains the key bindings overridden through the
 key shortcuts editor (see @ref{The Key Manager Dialog}).
+
+   @item $HOME/.gps/gtkrc
+@cindex Dynamic Key Binding
+@cindex gtkrc
+Configuration and theme file for gtkrc. This file can be edited to activate
+gtk+ specific aspects, or change the look of GPS in some measure. Mostly,
+everything can be done through the standard GPS preferences, but this file
+can be used to get access to the old GPS preference "Dynamic Key Binding".
+This preference activated a gtk+ behavior were key shortcuts for menu can be
+changed by simply pressing the appropriate key combination when the mouse is
+over that menu. It has various dangereous aspects and is not fully supported
+by GPS, so was removed as a preference, but you can add the following line
+in @file{gtkrc} to get this back:
+@smallexample
+gtk-can-change-accels=1
+@end smallexample
 
    @item $HOME/.gps/actions.xml
 Contains the definition of all the actions that were defined through the

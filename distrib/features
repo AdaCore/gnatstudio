@@ -118,6 +118,14 @@ NF-42-F803-003 Config files saved after each change (2007-07-22)
   the behavior is more user-friendly, and that these files can be edited
   manually even when GPS is running
 
+NF-42-F731-011 Dynamic Key Bindings preference remove (2007-07-25)
+
+  This preference was removed because it could result in unexpected shortcut
+  change when a menu is open and the user press an incorrect key accelerator
+  (users often ended up assigning "q" to /File/New, expecting to hit Exit
+  instead. See the documentation on how to keep access to the old behavior
+  through gtkrc files (see index in the documentation).
+
 NF-42-F716-001 Improve block navigation support (2007-03-18)
 
   Now the "Start Of Statement" or "End Of Statement" actions move to

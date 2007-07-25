@@ -320,14 +320,6 @@ package body GPS.Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Use_Native_Dialogs), -"General");
 
-      Can_Change_Accels := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "General-Can-Change-Accels",
-         Nick    => -"Dynamic key bindings",
-         Blurb   => -"Ability to change the menu key bindings interactively",
-         Default => False));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Can_Change_Accels), -"General");
-
       Splash_Screen := Param_Spec_Boolean
         (Gnew_Boolean
            (Name    => "General-Splash-Screen",
