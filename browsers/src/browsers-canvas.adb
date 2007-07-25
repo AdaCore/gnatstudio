@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2001-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Numerics.Elementary_Functions; use Ada.Numerics.Elementary_Functions;
+with Ada.Strings.Fixed;                 use Ada.Strings.Fixed;
 with GNAT.OS_Lib;
 with GNAT.Strings;                      use GNAT.Strings;
 
@@ -209,6 +209,11 @@ package body Browsers.Canvas is
       return String;
    --  Return a SVG representation of an arrow head defined by it coordinates
    --  (X, Y, Angle).
+
+   procedure Foreach_Active_Area
+     (Str : String;
+      Cb  : access procedure (Link : String));
+   --  For each xref in Str (blocks surrounded by @..@), call Cb
 
    -------------
    -- Markers --
@@ -2015,6 +2020,31 @@ package body Browsers.Canvas is
          Length    => Length1);
    end Add_Line;
 
+   -------------------------
+   -- Foreach_Active_Area --
+   -------------------------
+
+   procedure Foreach_Active_Area
+     (Str : String;
+      Cb  : access procedure (Link : String))
+   is
+      S  : Integer := Str'First;
+      S2 : Integer;
+   begin
+      while S /= 0 loop
+         S := Ada.Strings.Fixed.Index (Str (S .. Str'Last), "@");
+         if S /= 0 then
+            S2 := Ada.Strings.Fixed.Index (Str (S + 1 .. Str'Last), "@");
+            if S2 /= 0 then
+               Cb (Str (S + 1 .. S2 - 1));
+               S := S2 + 1;
+            else
+               exit;
+            end if;
+         end if;
+      end loop;
+   end Foreach_Active_Area;
+
    -----------------
    -- Expand_Line --
    -----------------
@@ -2023,21 +2053,53 @@ package body Browsers.Canvas is
      (List     : in out Xref_List;
       Num      : Positive;
       Str      : String;
-      Callback : Active_Area_Cb_Array := Empty_Cb_Array)
+      Callback : Active_Area_Cb_Array := Empty_Cb_Array;
+      Check_Duplicates : Boolean)
    is
       Tmp : Xref_Line;
+      Has_Duplicate : Boolean := False;
+
+      procedure On_Str_Active (Link : String);
+      --  For each link in Str
+
+      procedure On_Str_Active (Link : String) is
+         procedure On_Existing_Active (Link2 : String);
+         --  For each link on the existing line
+
+         procedure On_Existing_Active (Link2 : String) is
+         begin
+            if Link = Link2 then
+               Has_Duplicate := True;
+            end if;
+         end On_Existing_Active;
+
+      begin
+         Foreach_Active_Area
+           (List.Lines (Num - 1 + List.Lines'First).Text.all,
+            On_Existing_Active'Unrestricted_Access);
+      end On_Str_Active;
+
    begin
       if List.Lines = null or else Num > List.Lines'Length then
          Add_Line (List, Str, Callback => Callback);
       else
-         Tmp := List.Lines (Num - 1 + List.Lines'First);
-         List.Lines (Num - 1 + List.Lines'First) :=
-           (Text      => new String'(Tmp.Text.all & Str),
-            Callbacks => new Active_Area_Cb_Array'
-              (Tmp.Callbacks.all & Callback),
-            Length    => Tmp.Length);
-         Free (Tmp.Text);
-         Unchecked_Free (Tmp.Callbacks);
+         --  Check whether the cross-references are already there. If they
+         --  are, do not add Str again to avoid duplicates
+
+         if Check_Duplicates then
+            Foreach_Active_Area (Str, On_Str_Active'Unrestricted_Access);
+         end if;
+
+         if not Has_Duplicate then
+            Tmp := List.Lines (Num - 1 + List.Lines'First);
+            List.Lines (Num - 1 + List.Lines'First) :=
+              (Text      => new String'(Tmp.Text.all & Str),
+               Callbacks => new Active_Area_Cb_Array'
+                 (Tmp.Callbacks.all & Callback),
+               Length    => Tmp.Length);
+            Free (Tmp.Text);
+            Unchecked_Free (Tmp.Callbacks);
+         end if;
       end if;
    end Expand_Line;
 

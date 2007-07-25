@@ -872,7 +872,8 @@ package body Browsers.Call_Graph is
               (Changing.Refs, Line,
                " @" & Image (Get_Line (Loc))
                & ':' & Image (Integer (Get_Column (Loc))) & '@',
-               (1 => New_Cb));
+               (1 => New_Cb),
+               Check_Duplicates => True);
             return;
          end if;
 

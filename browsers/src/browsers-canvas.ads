@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                                GPS                                --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
---                              AdaCore                              --
+--                      Copyright (C) 2001-2007, AdaCore             --
 --                                                                   --
 -- GPS is  free software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -366,9 +365,13 @@ package Browsers.Canvas is
      (List     : in out Xref_List;
       Num      : Positive;
       Str      : String;
-      Callback : Active_Area_Cb_Array := Empty_Cb_Array);
+      Callback : Active_Area_Cb_Array := Empty_Cb_Array;
+      Check_Duplicates : Boolean);
    --  Add some contents to an existing line.
    --  A new line is appended if there is no such line already.
+   --  If Check_Duplicates is true, then the new contents is not added if any
+   --  of the xref in Str is already found on the existing line (it is
+   --  recommended that a single xref be added at a time).
 
    procedure Display_Lines
      (Item          : access Browser_Item_Record'Class;

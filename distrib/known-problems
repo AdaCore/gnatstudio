@@ -172,6 +172,13 @@ Known Problems fixed in GPS 4.2.0
               done.
   Workaround: Manually fix the error.
 
+- EB07-020 Duplicate references in the callgraph browser
+  Problem:    If you use several times the contextual menu
+              "Browsers/is called by" on the same entity, GPS would duplicate
+              the locations of the call within the box representing the entity
+  Workaround: This is purely graphical, you can close the box and reopen to
+              clean it up if you need
+
 - DB25-010 Symbols not loaded when initializing cross debugger
   Problem:    When using GPS in a remote debugging configuration (ie, with the
               debugger running on a machine other than the executable being
