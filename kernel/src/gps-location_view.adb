@@ -220,7 +220,8 @@ package body GPS.Location_View is
    procedure Remove_Category
      (View       : access Location_View_Record'Class;
       Identifier : String;
-      File       : VFS.Virtual_File);
+      File       : VFS.Virtual_File;
+      Line       : Natural := 0);
    --  Remove category Identifier from the view. All corresponding marks
    --  are deleted.
    --  Identifier is the escaped string.
@@ -317,8 +318,15 @@ package body GPS.Location_View is
 
    procedure Remove_Category_Or_File_Iter
      (View : Location_View;
-      Iter : in out Gtk_Tree_Iter);
+      Iter : in out Gtk_Tree_Iter;
+      Line : Natural := 0);
    --  Clear all the marks and highlightings in file or category
+
+   procedure Remove_Line
+     (View       : Location_View;
+      Categories : in out String_List.List;
+      Loc_Iter   : Gtk_Tree_Iter);
+   --  Clear the marks and highlightings of one specific line
 
    procedure Remove_Category (Object : access Gtk_Widget_Record'Class);
    --  Remove the selected category in the Location_View
@@ -711,7 +719,8 @@ package body GPS.Location_View is
 
    procedure Remove_Category_Or_File_Iter
      (View : Location_View;
-      Iter : in out Gtk_Tree_Iter)
+      Iter : in out Gtk_Tree_Iter;
+      Line : Natural := 0)
    is
       File_Iter : Gtk_Tree_Iter;
       Parent    : Gtk_Tree_Iter;
@@ -724,7 +733,7 @@ package body GPS.Location_View is
       use String_List;
       Categories : String_List.List;
    begin
-      --  Unhighight all the lines and remove all marks in children of the
+      --  Unhighlight all the lines and remove all marks in children of the
       --  category / file.
 
       if Iter = Null_Iter then
@@ -750,30 +759,32 @@ package body GPS.Location_View is
          --  Delete the marks corresponding to all locations in this file
          Loc_Iter := Children (View.Tree.Model, File_Iter);
 
-         while Loc_Iter /= Null_Iter loop
+         if Line /= 0 then
+            --  Delete one specific line location in one specific file
             declare
-               Mark : constant Gint :=
-                 Get_Int (View.Tree.Model, Loc_Iter, Mark_Column);
-               Args : GNAT.Strings.String_List :=
-                 (1 => new String'(Image (Integer (Mark))));
-
-               Style : Style_Access;
+               Not_Yet_Removed : Boolean := True;
             begin
-               if Mark /= -1 then
-                  Execute_GPS_Shell_Command
-                    (View.Kernel, "Editor.delete_mark", Args);
-               end if;
-               Free (Args);
+               while Loc_Iter /= Null_Iter or else Not_Yet_Removed loop
+                  if Get_Int (View.Tree.Model, Loc_Iter, Line_Column)
+                    = Gint (Line) then
+                     Remove_Line (View, Categories, Loc_Iter);
+                     Remove (View.Tree.Model, Loc_Iter);
+                     Not_Yet_Removed := False;
 
-               Style := Get_Highlighting_Style (View, Loc_Iter);
+                     if Children (View.Tree.Model, File_Iter) = Null_Iter then
+                        Remove (View.Tree.Model, File_Iter);
+                     end if;
+                  end if;
 
-               if Style /= null then
-                  Add_Unique_Sorted (Categories, Get_Name (Style));
-               end if;
+                  Next (View.Tree.Model, Loc_Iter);
+               end loop;
             end;
-
-            Next (View.Tree.Model, Loc_Iter);
-         end loop;
+         else
+            while Loc_Iter /= Null_Iter loop
+               Remove_Line (View, Categories, Loc_Iter);
+               Next (View.Tree.Model, Loc_Iter);
+            end loop;
+         end if;
 
          --  ??? Shouldn't we only remove for the specific lines, in case
          --  we have multiple categories associated with the file (for
@@ -786,6 +797,10 @@ package body GPS.Location_View is
                False);
             Next (Categories, Free_Data => True);
          end loop;
+
+         if Line /= 0 then
+            return;
+         end if;
 
          exit when not Removing_Category;
 
@@ -804,6 +819,34 @@ package body GPS.Location_View is
 
       Remove (View.Tree.Model, Iter);
    end Remove_Category_Or_File_Iter;
+
+   -----------------
+   -- Remove_Line --
+   -----------------
+
+   procedure Remove_Line
+     (View       : Location_View;
+      Categories : in out String_List.List;
+      Loc_Iter   : Gtk_Tree_Iter)
+   is
+      Mark  : constant Gint :=
+                Get_Int (View.Tree.Model, Loc_Iter, Mark_Column);
+      Args  : GNAT.Strings.String_List :=
+                (1 => new String'(Image (Integer (Mark))));
+      Style : Style_Access;
+   begin
+      if Mark /= -1 then
+         Execute_GPS_Shell_Command
+           (View.Kernel, "Editor.delete_mark", Args);
+      end if;
+
+      Free (Args);
+      Style := Get_Highlighting_Style (View, Loc_Iter);
+
+      if Style /= null then
+         Add_Unique_Sorted (Categories, Get_Name (Style));
+      end if;
+   end Remove_Line;
 
    ---------------------
    -- Expand_Category --
@@ -851,11 +894,9 @@ package body GPS.Location_View is
       View  : constant Location_View := Location_View (Object);
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_Tree_Model;
-
    begin
       Get_Selected (Get_Selection (View.Tree), Model, Iter);
       Remove_Category_Or_File_Iter (View, Iter);
-
    exception
       when E : others => Trace (Exception_Handle, E);
    end Remove_Category;
@@ -1966,13 +2007,15 @@ package body GPS.Location_View is
    procedure Remove_Location_Category
      (Kernel   : access Kernel_Handle_Record'Class;
       Category : String;
-      File     : VFS.Virtual_File := VFS.No_File)
+      File     : VFS.Virtual_File := VFS.No_File;
+      Line     : Natural := 0)
    is
       View : constant Location_View :=
                Get_Or_Create_Location_View (Kernel, Allow_Creation => False);
    begin
       if View /= null then
-         Remove_Category (View, Glib.Convert.Escape_Text (Category), File);
+         Remove_Category
+           (View, Glib.Convert.Escape_Text (Category), File, Line);
       end if;
    end Remove_Location_Category;
 
@@ -1983,7 +2026,8 @@ package body GPS.Location_View is
    procedure Remove_Category
      (View       : access Location_View_Record'Class;
       Identifier : String;
-      File       : VFS.Virtual_File)
+      File       : VFS.Virtual_File;
+      Line       : Natural := 0)
    is
       Iter      : Gtk_Tree_Iter;
       File_Iter : Gtk_Tree_Iter;
@@ -1996,9 +2040,11 @@ package body GPS.Location_View is
       if File_Iter = Null_Iter then
          Remove_Category_Or_File_Iter (Location_View (View), Iter);
       else
-         Remove_Category_Or_File_Iter (Location_View (View), File_Iter);
+         --  Remove the indicated file
+         Remove_Category_Or_File_Iter (Location_View (View), File_Iter, Line);
 
          if Children (View.Tree.Model, Iter) = Null_Iter then
+            --  If Category has no more children remove it
             Remove_Category_Or_File_Iter (Location_View (View), Iter);
          end if;
       end if;
@@ -2012,7 +2058,7 @@ package body GPS.Location_View is
      (View     : access Gtk_Widget_Record'Class;
       Event    : Gdk_Event) return Boolean
    is
-      Explorer : constant Location_View := Location_View (View);
+      Explorer  : constant Location_View := Location_View (View);
       X         : constant Gdouble := Get_X (Event);
       Y         : constant Gdouble := Get_Y (Event);
       Path      : Gtk_Tree_Path;
