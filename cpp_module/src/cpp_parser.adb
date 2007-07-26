@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2003-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,8 +18,9 @@
 -----------------------------------------------------------------------
 
 with Ada.Calendar;              use Ada.Calendar;
+with Ada.Calendar.Formatting;   use Ada.Calendar.Formatting;
+with Ada.Calendar.Time_Zones;   use Ada.Calendar.Time_Zones;
 with Ada.Text_IO;               use Ada.Text_IO;
-with GNAT.Calendar;             use GNAT.Calendar;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 pragma Warnings (Off);
 with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
@@ -55,7 +55,7 @@ package body CPP_Parser is
    DBIMP       : constant String := "dbimp";    --  SN database engine
    CBrowser    : constant String := "cbrowser"; --  SN C and C++ parser
 
-   Base_Time : constant Ada.Calendar.Time := GNAT.Calendar.Time_Of
+   Base_Time : constant Ada.Calendar.Time := Ada.Calendar.Formatting.Time_Of
      (1970, 1, 1, 0, 0, 0);
    --  All timestamps in the SN db are the number of seconds since that time
    --  (The Unix Epoch)
@@ -486,7 +486,8 @@ package body CPP_Parser is
    function Time_Stamp_From_DB
      (Project   : Project_Type;
       File_Name : VFS.Virtual_File) return Time;
-   --  Return the timestamp of File_Name when the database was last created
+   --  Return the timestamp of File_Name when the database was last created.
+   --  This is a GMT time
 
    ---------------------
    -- Table_Extension --
@@ -3305,13 +3306,20 @@ package body CPP_Parser is
             exit when F_Pair = No_Pair;
 
             Parse_Pair (F_Pair, F_Data);
+
+            --  In the database, this is created by a call to stat() in
+            --  dbutils.c::put_file_db()
             Dur := Duration'Value
               (F_Data.Data
                  (F_Data.Timestamp.First .. F_Data.Timestamp.Last));
 
             DB_API.Close (Table, Success);
             Release_Cursor (Table);
-            return Base_Time + Dur;
+
+            --  What we just read is a local time, convert it to GMT for
+            --  proper comparison
+
+            return Base_Time + Dur - Duration (UTC_Time_Offset) * 60.0;
          end loop;
 
          Release_Cursor (Table);
