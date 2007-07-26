@@ -2781,7 +2781,7 @@ Access the various suggested fixes through the methods of the Codefix class</des
       <see_also name="GPS.CodeAnalysis.add_all_gcov_project_info" />
       <see_also name="GPS.CodeAnalysis.add_gcov_project_info" />
       <example lang="python">
-          a = GPS.CodeAnalysis.get ("Analysis 1")
+          a = GPS.CodeAnalysis.get ("Code Coverage")
           a.add_gcov_file_info (src=GPS.File ("source_file.adb"), cov=GPS.File ("source_file.adb.gcov"))
       </example>
   </shell_doc>
@@ -2806,7 +2806,7 @@ Access the various suggested fixes through the methods of the Codefix class</des
       <description>Displays the data stored in the CodeAnalysis instance into a new MDI window. This window contains a tree view that can be interactively manipulated to analyze the results of the code analysis (Coverage, ...).</description>
   </shell_doc>
 
-  <shell_doc name="GPS.CodeAnalysis.list_lines_not_covered">
+  <shell_doc name="GPS.CodeAnalysis.list_uncovered_lines">
       <param name="self">An instance of GPS.CodeAnalysis</param>
       <description>Lists in the Locations view the lines that are not covered in the files loaded in the CodeAnalysis instance. The lines are also highlighted in the corresponding source files currently edited.</description>
       <see_also name="GPS.CodeAnalysis.clear_locations" />
@@ -2815,7 +2815,7 @@ Access the various suggested fixes through the methods of the Codefix class</des
   <shell_doc name="GPS.CodeAnalysis.clear_locations">
       <param name="self">An instance of GPS.CodeAnalysis</param>
       <description>Remove from the Locations view any listed coverage locations.</description>
-      <see_also name="GPS.CodeAnalysis.list_lines_not_covered" />
+      <see_also name="GPS.CodeAnalysis.list_uncovered_lines" />
   </shell_doc>
 
   <!--#################################################################
@@ -2976,7 +2976,7 @@ If the regular expression does not contain any parenthesis, the text that matche
       buffer.current_view().goto \
          (GPS.EditorLocation (buffer, int (matched.group (2)), 1))
       </example>
-  </shell_doc> 
+  </shell_doc>
 
   <shell_doc name="GPS.Console.clear">
       <param name="self">The instance of GPS.Console</param>
