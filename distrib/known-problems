@@ -160,6 +160,13 @@ Known Problems fixed in GPS 4.2.0
               completion engine doesn't provide any completion.
   Workaround: Manually complete the code.
 
+- FA17-011 Refactoring C sources
+  Problem:    When renaming a C entity, it happens that some references are
+              not properly renamed, even after selecting "Recompute C/C++
+              xref" as documented.
+  Workaround: Select the menu "Recompute C/C++ xref", exit GPS and restart
+              it. It will properly reload its xref database.
+
 - F223-015 Duplicate links in entity browser
   Problem:    In the entity browser, it might happen that clicking several
               times on an hyper link will create duplicate links between
