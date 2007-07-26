@@ -1949,14 +1949,16 @@ package body Entities is
 
    function Is_Up_To_Date (File : Source_File) return Boolean is
       From_Disk : constant Time := File_Time_Stamp (File.Name);
+      Result    : constant Boolean := From_Disk = File.Timestamp;
    begin
       if Active (Assert_Me) then
          Trace (Assert_Me, "Is_Up_To_Date: "
                 & Base_Name (Get_Filename (File))
                 & " file time:" & Image (From_Disk, "%D-%T")
-                & " memory: " & Image (File.Timestamp, "%D-%T"));
+                & " memory: " & Image (File.Timestamp, "%D-%T")
+                & " => " & Result'Img);
       end if;
-      return From_Disk = File.Timestamp;
+      return Result;
    end Is_Up_To_Date;
 
    ------------------------
