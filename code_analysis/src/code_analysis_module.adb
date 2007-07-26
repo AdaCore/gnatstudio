@@ -663,12 +663,11 @@ package body Code_Analysis_Module is
    procedure Shell_CodeAnalysis_Constructor
      (Data : in out Callback_Data'Class; Command : String)
    is
-      pragma Unreferenced (Data, Command);
-      Bad_Usage : exception;
+      pragma Unreferenced (Command);
    begin
-      raise Bad_Usage with -"Default constructor can't be used to create" &
-      (-"CodeAnalysis shell instances. Consider using static" &
-       (-"GPS.CodeAnalysis.get (name:) instead."));
+      Set_Error_Msg (Data, -"Default constructor can't be used to create " &
+      (-"CodeAnalysis shell instances. Consider using static " &
+       (-"GPS.CodeAnalysis.get (name:) instead.")));
    end Shell_CodeAnalysis_Constructor;
 
    -----------------------
@@ -877,15 +876,8 @@ package body Code_Analysis_Module is
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
       Property := Get_Data (Instance, Code_Analysis_Cst_Str);
 
-      --  Check if Property contains a valid pointer on a
-      --  Code_Analysis_Instance
-      --  Raise Analysis_No_Longer_Exists if pointer is null
-      --  This happens typically when you try to apply shell commands to an
-      --  analysis that have been destroyed by user via the GUI
       if Code_Analysis_Property (Property).Analysis = null then
-         GPS.Kernel.Console.Insert
-           (Get_Kernel (Data), -"The analysis no longer exists",
-            Mode => GPS.Kernel.Console.Error);
+         Set_Error_Msg (Data, -"The analysis no longer exists");
          return;
       end if;
 
@@ -1062,15 +1054,8 @@ package body Code_Analysis_Module is
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
       Property := Get_Data (Instance, Code_Analysis_Cst_Str);
 
-      --  Check if Property contains a valid pointer on a
-      --  Code_Analysis_Instance
-      --  Raise Analysis_No_Longer_Exists if pointer is null
-      --  This happens typically when you try to apply shell commands to an
-      --  analysis that have been destroyed by user via the GUI
       if Code_Analysis_Property (Property).Analysis = null then
-         GPS.Kernel.Console.Insert
-           (Get_Kernel (Data), -"The analysis no longer exists",
-            Mode => GPS.Kernel.Console.Error);
+         Set_Error_Msg (Data, -"The analysis no longer exists");
          return;
       end if;
 
@@ -1210,15 +1195,8 @@ package body Code_Analysis_Module is
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
       Property := Get_Data (Instance, Code_Analysis_Cst_Str);
 
-      --  Check if Property contains a valid pointer on a
-      --  Code_Analysis_Instance
-      --  Raise Analysis_No_Longer_Exists if pointer is null
-      --  This happens typically when you try to apply shell commands to an
-      --  analysis that have been destroyed by user via the GUI
       if Code_Analysis_Property (Property).Analysis = null then
-         GPS.Kernel.Console.Insert
-           (Get_Kernel (Data), -"The analysis no longer exists",
-            Mode => GPS.Kernel.Console.Error);
+         Set_Error_Msg (Data, -"The analysis no longer exists");
          return;
       end if;
 
@@ -1257,15 +1235,8 @@ package body Code_Analysis_Module is
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
       Property := Get_Data (Instance, Code_Analysis_Cst_Str);
 
-      --  Check if Property contains a valid pointer on a
-      --  Code_Analysis_Instance
-      --  Raise Analysis_No_Longer_Exists if pointer is null
-      --  This happens typically when you try to apply shell commands to an
-      --  analysis that have been destroyed by user via the GUI
       if Code_Analysis_Property (Property).Analysis = null then
-         GPS.Kernel.Console.Insert
-           (Get_Kernel (Data), -"The analysis no longer exists",
-            Mode => GPS.Kernel.Console.Error);
+         Set_Error_Msg (Data, -"The analysis no longer exists");
          return;
       end if;
 
@@ -1290,15 +1261,8 @@ package body Code_Analysis_Module is
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
       Property := Get_Data (Instance, Code_Analysis_Cst_Str);
 
-      --  Check if Property contains a valid pointer on a
-      --  Code_Analysis_Instance
-      --  Raise Analysis_No_Longer_Exists if pointer is null
-      --  This happens typically when you try to apply shell commands to an
-      --  analysis that have been destroyed by user via the GUI
       if Code_Analysis_Property (Property).Analysis = null then
-         GPS.Kernel.Console.Insert
-           (Get_Kernel (Data), -"The analysis no longer exists",
-            Mode => GPS.Kernel.Console.Error);
+         Set_Error_Msg (Data, -"The analysis no longer exists");
          return;
       end if;
 
@@ -1398,15 +1362,8 @@ package body Code_Analysis_Module is
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
       Property := Get_Data (Instance, Code_Analysis_Cst_Str);
 
-      --  Check if Property contains a valid pointer on a
-      --  Code_Analysis_Instance
-      --  Raise Analysis_No_Longer_Exists if pointer is null
-      --  This happens typically when you try to apply shell commands to an
-      --  analysis that have been destroyed by user via the GUI
       if Code_Analysis_Property (Property).Analysis = null then
-         GPS.Kernel.Console.Insert
-           (Get_Kernel (Data), -"The analysis no longer exists",
-            Mode => GPS.Kernel.Console.Error);
+         Set_Error_Msg (Data, -"The analysis no longer exists");
          return;
       end if;
 
