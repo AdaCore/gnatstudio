@@ -3073,7 +3073,16 @@ package body CPP_Parser is
       Iter.Project      := Project;
       Iter.Prj_Iterator := Start (Project, Recursive => False);
       Iter.Lang_Handler := Language_Handler (Lang_Handler);
-      Iter.Do_Dbimp     := False;
+
+      --  We do not call dbimp yet, for speed reasons (because we won't
+      --  necessarily need that info immediately, for instance if the user
+      --  just opened a contextual menu). But we'll need to do it before the
+      --  first call to Find All References for instance.
+      --  This call is also used for the outline view, that is before GPS is
+      --  even fully started, so we do not want to slow things done with dbimp
+      --  here. That means that the user will have to refresh the database
+      --  explicitly to get proper xref.
+      Iter.Do_Dbimp := False;
 
       Browse_Project
         (Current (Iter.Prj_Iterator), Iter,
@@ -3168,9 +3177,9 @@ package body CPP_Parser is
                SN.Browse.Generate_Xrefs
                  (DB_Directories => DB_Dirs,
                   DBIMP_Path     => Iterator.Handler.DBIMP_Path.all,
+                  Started        => Iterator.Process_Running,
                   Temp_Name      => Iterator.Tmp_Filename,
                   PD             => Iterator.PD);
-               Iterator.Process_Running := True;
                GNAT.Strings.Free (DB_Dirs);
 
             else

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2002-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -72,12 +71,14 @@ package body SN.Browse is
    procedure Generate_Xrefs
      (DB_Directories : GNAT.Strings.String_List_Access;
       DBIMP_Path     : String;
+      Started        : out Boolean;
       Temp_Name      : out GNAT.OS_Lib.Temp_File_Name;
       PD             : out GNAT.Expect.TTY.TTY_Process_Descriptor)
    is
       DB_Directory : String renames DB_Directories (1).all;
       LV_File_Name : constant String := DB_Directory & DB_File_Name & ".lv";
       TO_File_Name : constant String := DB_Directory & DB_File_Name & ".to";
+      F_File_Name  : constant String := DB_Directory & DB_File_Name & ".to";
       Dir          : Dir_Type;
       Last         : Natural;
       Dir_Entry    : String (1 .. 8192);
@@ -87,6 +88,19 @@ package body SN.Browse is
       Temp_File    : File_Descriptor;
 
    begin
+      --  Check whether we actually need to run dbimp or not. Since that can
+      --  take a while, no need to do it if the files are already up-to-date
+
+      if File_Exists (TO_File_Name)
+        and then File_Exists (F_File_Name)
+        and then
+          File_Time_Stamp (TO_File_Name) >= File_Time_Stamp (F_File_Name)
+      then
+         Trace (Me, "No need to start dbimp, since db is up to date");
+         Started := False;
+         return;
+      end if;
+
       --  remove .to and .lv tables
       if File_Exists (LV_File_Name) then
          Delete_File (LV_File_Name, Success);
@@ -161,6 +175,8 @@ package body SN.Browse is
              & " " & Argument_List_To_String (Args.all));
       Non_Blocking_Spawn (PD, DBIMP_Path, Args.all, Err_To_Out => True);
       GNAT.OS_Lib.Free (Args);
+
+      Started := True;
    end Generate_Xrefs;
 
    --------------
