@@ -115,10 +115,13 @@ package GPS.Location_View is
    procedure Remove_Location_Category
      (Kernel   : access Kernel_Handle_Record'Class;
       Category : String;
-      File     : VFS.Virtual_File := VFS.No_File);
+      File     : VFS.Virtual_File := VFS.No_File;
+      Line     : Natural := 0);
    --  Remove Category from the results view, if it exists.
    --  If File /= No_File, remove only the node corresponding to File in
    --  the category.
+   --  If also Line /= 0, removes only the corresponding line in the
+   --  corresponding File.
 
    procedure Next_Item
      (View      : access Location_View_Record'Class;
