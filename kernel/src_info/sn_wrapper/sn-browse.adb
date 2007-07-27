@@ -18,7 +18,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
-
+with GNAT.Calendar.Time_IO; use GNAT.Calendar.Time_IO;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.IO_Aux;               use GNAT.IO_Aux;
 with GNAT.Expect;               use GNAT.Expect;
@@ -78,7 +78,7 @@ package body SN.Browse is
       DB_Directory : String renames DB_Directories (1).all;
       LV_File_Name : constant String := DB_Directory & DB_File_Name & ".lv";
       TO_File_Name : constant String := DB_Directory & DB_File_Name & ".to";
-      F_File_Name  : constant String := DB_Directory & DB_File_Name & ".to";
+      F_File_Name  : constant String := DB_Directory & DB_File_Name & ".f";
       Dir          : Dir_Type;
       Last         : Natural;
       Dir_Entry    : String (1 .. 8192);
@@ -90,6 +90,23 @@ package body SN.Browse is
    begin
       --  Check whether we actually need to run dbimp or not. Since that can
       --  take a while, no need to do it if the files are already up-to-date
+
+      if Active (Me) then
+         if File_Exists (F_File_Name) then
+            Trace
+              (Me, ".f timestamp: "
+               & Image (File_Time_Stamp (F_File_Name), "%Y-%m-%d %H:%M:%S"));
+         else
+            Trace (Me, "No .f file");
+         end if;
+         if File_Exists (TO_File_Name) then
+            Trace
+              (Me, ".to timestamp: "
+               & Image (File_Time_Stamp (TO_File_Name), "%Y-%m-%d %H:%M:%S"));
+         else
+            Trace (Me, "No .to file");
+         end if;
+      end if;
 
       if File_Exists (TO_File_Name)
         and then File_Exists (F_File_Name)
@@ -189,19 +206,13 @@ package body SN.Browse is
    is
       Result : Expect_Match;
    begin
-      Status := False;
-      Expect (Process_Descriptor (PD), Result, "", 1);
-
-      if Result = Expect_Timeout then
-         Status := True;
-         return;
-      end if;
-
-      Close (Process_Descriptor (PD));
+      Expect (Process_Descriptor (PD), Result, "", 0);
+      Status := True;
 
    exception
       when Process_Died =>
          Close (Process_Descriptor (PD));
+         Status := False;
    end Is_Alive;
 
    ---------------------
