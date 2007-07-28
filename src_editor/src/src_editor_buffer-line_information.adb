@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2003-2006                       --
---                             AdaCore                               --
+--                 Copyright (C) 2003-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -562,8 +561,8 @@ package body Src_Editor_Buffer.Line_Information is
       Bottom_Line : Buffer_Line_Type;
       View        : Gtk_Text_View;
       GC          : Gdk.GC.Gdk_GC;
-      Layout      : in out Pango_Layout;
-      Drawable    : in out Gdk.Pixmap.Gdk_Pixmap)
+      Layout      : in Pango_Layout;
+      Drawable    : in Gdk.Pixmap.Gdk_Pixmap)
    is
       Current_Line    : Buffer_Line_Type;
       Editable_Line   : Editable_Line_Type;

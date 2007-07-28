@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2007                      --
---                              AdaCore                              --
+--                  Copyright (C) 2003-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -2129,6 +2128,9 @@ package body Codefix.Text_Manager is
       Current_Text  : Text_Navigator_Abstr'Class;
       Size          : Natural)
    is
+      pragma Warnings (Off, This);
+      pragma Warnings (Off, Prev);
+
       Line_Cursor            : File_Cursor;
       New_Line, Current_Line : Ptr_Extract_Line;
 
@@ -2190,6 +2192,8 @@ package body Codefix.Text_Manager is
       Current_Text : Text_Navigator_Abstr'Class;
       Size         : Natural)
    is
+      pragma Warnings (Off, This);
+
       Line_Cursor            : File_Cursor;
       New_Line, Current_Line : Ptr_Extract_Line;
       End_Of_File            : Natural;

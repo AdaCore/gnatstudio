@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006                         --
---                              AdaCore                              --
+--                 Copyright (C) 2006-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -75,10 +74,16 @@ package body GPS.Kernel.Commands is
       Command : Command_Access;
       Result  : out Command_Return_Type)
    is
+      pragma Warnings (Off, Data);
+
       D : File_Iterate_Data_Access renames Data;
 
       procedure Iter_From_File_Array
         (Files : File_Array_Access; Index : in out Natural);
+
+      --------------------------
+      -- Iter_From_File_Array --
+      --------------------------
 
       procedure Iter_From_File_Array
         (Files : File_Array_Access; Index : in out Natural)

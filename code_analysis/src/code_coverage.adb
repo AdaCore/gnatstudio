@@ -435,6 +435,8 @@ package body Code_Coverage is
       Coverage   : Coverage_Access;
       Bin_Mode   : Boolean := False)
    is
+      pragma Warnings (Off, Tree_Store);
+
       function Txt_Lig (Lig_Count : Natural) return String;
       --  Returns in a String the children count coverage info used to
       --  fill the Gtk_Tree_Store of a coverage report
@@ -442,6 +444,10 @@ package body Code_Coverage is
       function Txt_Sub (Coverage  : Coverage_Access) return String;
       --  Returns in a String the Subprograms specific coverage info used to
       --  fill the Gtk_Tree_Store of a coverage report
+
+      -------------
+      -- Txt_Lig --
+      -------------
 
       function Txt_Lig (Lig_Count : Natural) return String is
       begin
@@ -452,11 +458,19 @@ package body Code_Coverage is
          end if;
       end Txt_Lig;
 
+      -------------
+      -- Txt_Sub --
+      -------------
+
       function Txt_Sub (Coverage : Coverage_Access) return String is
 
          function Txt_Cal (Cal_Count : Natural) return String;
          --  Used to distinguish wether the Subprogram had already been called
          --  once or more in order to have a clean display
+
+         -------------
+         -- Txt_Cal --
+         -------------
 
          function Txt_Cal (Cal_Count : Natural) return String is
          begin
@@ -517,6 +531,7 @@ package body Code_Coverage is
             Set (Tree_Store, Iter, Cov_Bar_Txt,
                  Image (Cov_Percent, Int_Image_Padding) & " %");
          end;
+
       else
          case Coverage.Status is
          when File_Not_Found =>

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2007, AdaCore              --
+--                 Copyright (C) 2001-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -425,6 +425,7 @@ package body Interactive_Consoles is
    ------------------
 
    procedure Destroy_Idle (Console : in out Interactive_Console) is
+      pragma Warnings (Off, Console);
    begin
       Console.Idle_Registered := False;
    end Destroy_Idle;

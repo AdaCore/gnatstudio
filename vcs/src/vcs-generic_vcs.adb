@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
---                              AdaCore                              --
+--                 Copyright (C) 2001-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -262,6 +261,7 @@ package body VCS.Generic_VCS is
    ----------
 
    procedure Free (X : in out Generic_VCS_Access) is
+      pragma Warnings (Off, X);
    begin
       GNAT.Strings.Free (X.Id);
 

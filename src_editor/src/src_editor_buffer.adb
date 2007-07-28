@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2007, AdaCore              --
+--                Copyright (C) 2001-2007, AdaCore                   --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -365,8 +365,8 @@ package body Src_Editor_Buffer is
    --  The returned string is UTF8-encoded
 
    procedure Free_Column_Info
-     (Column_Info : in out Columns_Config_Access);
-   --  Free the info contained in Column_Info;
+     (Column_Info : in Columns_Config_Access);
+   --  Free the info contained in Column_Info
 
    procedure C_Free (S : Interfaces.C.Strings.chars_ptr);
    pragma Import (C, C_Free, "free");
@@ -580,7 +580,7 @@ package body Src_Editor_Buffer is
    ----------------------
 
    procedure Free_Column_Info
-     (Column_Info : in out Columns_Config_Access) is
+     (Column_Info : in Columns_Config_Access) is
    begin
       if Column_Info /= null then
          if Column_Info.all /= null then

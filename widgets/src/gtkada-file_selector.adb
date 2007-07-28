@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --               GtkAda - Ada95 binding for Gtk+/Gnome               --
 --                                                                   --
---                   Copyright (C) 2001-2007 AdaCore                 --
+--                  Copyright (C) 2001-2007, AdaCore                 --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -398,7 +398,9 @@ package body Gtkada.File_Selector is
    -----------------------------
 
    procedure On_Display_Idle_Destroy
-     (Win : in out File_Selector_Window_Access) is
+     (Win : in out File_Selector_Window_Access)
+   is
+      pragma Warnings (Off, Win);
    begin
       Win.Display_Idle_Handler := 0;
    end On_Display_Idle_Destroy;
@@ -408,6 +410,7 @@ package body Gtkada.File_Selector is
    ---------------------
 
    procedure On_Read_Idle_Destroy (Win : in out File_Selector_Window_Access) is
+      pragma Warnings (Off, Win);
    begin
       Win.Read_Idle_Handler := 0;
    end On_Read_Idle_Destroy;

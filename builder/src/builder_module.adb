@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                             AdaCore                               --
+--                 Copyright (C) 2001-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1214,6 +1213,7 @@ package body Builder_Module is
       Command   : Command_Access;
       Result    : out Command_Return_Type)
    is
+      pragma Warnings (Off, Xref_Data);
       D            : Compute_Xref_Data_Access renames Xref_Data;
       Handler      : constant Language_Handler :=
                        Language_Handler (Get_Language_Handler (D.Kernel));
@@ -1704,6 +1704,7 @@ package body Builder_Module is
       Kernel       : access Kernel_Handle_Record'Class;
       Set_Shortcut : Boolean)
    is
+      pragma Warnings (Off, Menu);
       Group : constant Gtk_Accel_Group := Get_Default_Accelerators (Kernel);
       Mitem : Dynamic_Menu_Item;
    begin

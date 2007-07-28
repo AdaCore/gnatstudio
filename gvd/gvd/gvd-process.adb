@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2007, AdaCore              --
+--                 Copyright (C) 2000-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -203,7 +203,7 @@ package body GVD.Process is
 
    procedure Save_Breakpoints_In_Properties
      (Process  : access Visual_Debugger_Record'Class;
-      Property : in out Breakpoint_Property);
+      Property : in Breakpoint_Property);
    --  Save the breakpoints currently set in Process into Property.
    --  Breakpoints that are set automatically by GPS are filtered out
 
@@ -1093,7 +1093,7 @@ package body GVD.Process is
 
    procedure Save_Breakpoints_In_Properties
      (Process  : access Visual_Debugger_Record'Class;
-      Property : in out Breakpoint_Property)
+      Property : in Breakpoint_Property)
    is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Breakpoint_Array, Breakpoint_Array_Ptr);

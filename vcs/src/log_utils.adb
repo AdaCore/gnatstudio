@@ -611,7 +611,7 @@ package body Log_Utils is
       --  directories.
       Logs_Dir : constant String :=
                    Name_As_Directory (Get_Home_Dir (Kernel) & "log_files");
-      Mapper   : File_Mapper_Access := Get_Logs_Mapper (Kernel);
+      Mapper   : constant File_Mapper_Access := Get_Logs_Mapper (Kernel);
    begin
       Remove_Entry (Mapper, Full_Name (File_Name, Normalize => True).all);
       Save_Mapper (Mapper, Logs_Dir & "mapping");

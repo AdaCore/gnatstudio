@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2003-2007, AdaCore              --
+--                Copyright (C) 2003-2007, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -447,7 +447,7 @@ package body KeyManager_Module.GUI is
       Bold      : Gtk_Text_Tag;
 
       procedure Insert_Details
-        (Comp_Iter : in out Component_Iterator; Prefix : String);
+        (Comp_Iter : in Component_Iterator; Prefix : String);
       --  Insert the detail for the components of the action
 
       --------------------
@@ -455,7 +455,7 @@ package body KeyManager_Module.GUI is
       --------------------
 
       procedure Insert_Details
-        (Comp_Iter : in out Component_Iterator; Prefix : String)
+        (Comp_Iter : in Component_Iterator; Prefix : String)
       is
          Comp    : Command_Component;
          Failure : Component_Iterator;

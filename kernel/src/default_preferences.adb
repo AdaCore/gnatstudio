@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                             AdaCore                               --
+--                Copyright (C) 2001-2007, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -259,7 +258,7 @@ package body Default_Preferences is
    --  Handling of Param_Spec_Style
 
    procedure Get_Font
-     (Info : in out Pref_Description_Access;
+     (Info : in Pref_Description_Access;
       Desc : in out Pango_Font_Description);
    --  Check that Desc is a valid font, and associate it with the node N.
 
@@ -285,6 +284,7 @@ package body Default_Preferences is
    ----------------------
 
    procedure Param_Spec_Unref (P : in out Glib.Param_Spec) is
+      pragma Warnings (Off, P);
    begin
       Unref (P);
    end Param_Spec_Unref;
@@ -715,7 +715,8 @@ package body Default_Preferences is
    function Get_Pref_Font
      (Pref : Param_Spec_Style) return Pango_Font_Description
    is
-      Info : Pref_Description_Access := Get_Description (Param_Spec (Pref));
+      Info : constant Pref_Description_Access :=
+               Get_Description (Param_Spec (Pref));
       Desc : Pango_Font_Description;
    begin
       if Info /= null and then Info.Value /= null then
@@ -738,7 +739,7 @@ package body Default_Preferences is
    --------------
 
    procedure Get_Font
-     (Info : in out Pref_Description_Access;
+     (Info : in Pref_Description_Access;
       Desc : in out Pango_Font_Description)
    is
       use type Gdk.Gdk_Font;
@@ -814,7 +815,7 @@ package body Default_Preferences is
    function Get_Pref
      (Pref    : Param_Spec_Font) return Pango.Font.Pango_Font_Description
    is
-      Info : Pref_Description_Access :=
+      Info : constant Pref_Description_Access :=
                Get_Description (Param_Spec (Pref));
       Desc : Pango_Font_Description;
    begin

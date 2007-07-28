@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
---                            ACT-Europe                             --
+--                 Copyright (C) 2003-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -68,7 +67,7 @@ package body Basic_Mapper is
    ------------------
 
    procedure Remove_Entry
-     (Mapper : in out File_Mapper_Access;
+     (Mapper : in File_Mapper_Access;
       Text   : String)
    is
       Other : constant String := Get_Other_Text (Mapper, Text);

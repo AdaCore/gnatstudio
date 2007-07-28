@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2007                      --
---                              AdaCore                              --
+--                 Copyright (C) 2005-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -119,6 +118,7 @@ package body Entities.Commands is
       Command : Command_Access;
       Result  : out Command_Return_Type)
    is
+      pragma Warnings (Off, Data);
       Parent : Entity_Information;
       Ref    : Entity_Reference;
    begin
