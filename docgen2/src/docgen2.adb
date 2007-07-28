@@ -220,7 +220,7 @@ package body Docgen2 is
    procedure Set_Printout
      (Construct   : Simple_Construct_Information;
       File_Buffer : GNAT.Strings.String_Access;
-      E_Info      : in out Entity_Info);
+      E_Info      : in Entity_Info);
    --  Retrieve the Source extract representing the construct, and
    --  set the printout field of E_Info
 
@@ -228,7 +228,7 @@ package body Docgen2 is
      (Construct   : Simple_Construct_Information;
       Entity      : Entity_Information;
       File_Buffer : GNAT.Strings.String_Access;
-      E_Info      : in out Entity_Info);
+      E_Info      : in Entity_Info);
    --  Retrieve the Source extract representing the header of the package, or
    --  the full construct if the package is an instantiation or a renaming.
 
@@ -835,7 +835,7 @@ package body Docgen2 is
    procedure Set_Printout
      (Construct   : Simple_Construct_Information;
       File_Buffer : GNAT.Strings.String_Access;
-      E_Info      : in out Entity_Info)
+      E_Info      : in Entity_Info)
    is
       Col, Line          : Natural;
       Idx_Start, Idx_End : Natural;
@@ -901,7 +901,7 @@ package body Docgen2 is
      (Construct   : Simple_Construct_Information;
       Entity      : Entity_Information;
       File_Buffer : GNAT.Strings.String_Access;
-      E_Info      : in out Entity_Info)
+      E_Info      : in Entity_Info)
    is
       Start_Index : Natural;
       End_Index   : Natural;
