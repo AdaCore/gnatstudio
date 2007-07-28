@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007, AdaCore             --
+--                 Copyright (C) 2001-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -733,11 +733,11 @@ package body Commands.Custom is
    ------------
 
    procedure Create
-     (Item         : out Custom_Command_Access;
-      Name         : String;
-      Kernel       : Kernel_Handle;
-      Command      : String;
-      Script       : Scripting_Language) is
+     (Item    : out Custom_Command_Access;
+      Name    : String;
+      Kernel  : Kernel_Handle;
+      Command : String;
+      Script  : Scripting_Language) is
    begin
       Item := new Custom_Command;
       Item.Kernel := Kernel;
@@ -761,12 +761,14 @@ package body Commands.Custom is
      (Kernel  : access Kernel_Handle_Record'Class;
       Command : Glib.Xml_Int.Node_Ptr) return Command_Component
    is
-      Output : constant String := Get_Attribute (Command, "output", "@@");
-      Outp   : GNAT.Strings.String_Access := null;
+      Output       : constant String :=
+                       Get_Attribute (Command, "output", "@@");
+      Script       : constant String :=
+                       Get_Attribute (Command, "lang", GPS_Shell_Name);
       Show_Command : constant Boolean :=
-        Get_Attribute (Command, "show-command", "true") = "true";
-      Script : constant String :=
-        Get_Attribute (Command, "lang", GPS_Shell_Name);
+                       Get_Attribute
+                         (Command, "show-command", "true") = "true";
+      Outp         : GNAT.Strings.String_Access := null;
 
    begin
       if Output /= "@@" then
@@ -792,27 +794,33 @@ package body Commands.Custom is
       Default_Show_In_Task_Manager : Boolean;
       Default_Show_Command         : Boolean) return Command_Component
    is
-      Output : constant String := Get_Attribute (Command, "output", "@@");
-      Outp   : GNAT.Strings.String_Access := null;
-      Show_Command : constant String :=
-        Get_Attribute (Command, "show-command");
-      Show_C          : Boolean := Show_Command = "true";
+      Output            : constant String :=
+                            Get_Attribute (Command, "output", "@@");
+      Show_Command      : constant String :=
+                            Get_Attribute (Command, "show-command");
+      Show_C            : Boolean := Show_Command = "true";
       Show_Task_Manager : constant String :=
-        Get_Attribute (Command, "show-task-manager");
-      Show_TM         : Boolean := Show_Task_Manager = "false";
-      Progress_Regexp : constant String :=
-        Get_Attribute (Command, "progress-regexp", "");
-      Progress_Current : constant Integer :=
-        Safe_Value (Get_Attribute (Command, "progress-current", "1"));
-      Progress_Final : constant Integer :=
-        Safe_Value (Get_Attribute (Command, "progress-final", "2"));
-      Progress_Hide : constant Boolean :=
-        Get_Attribute (Command, "progress-hide", "true") = "true";
-      Server        : constant String :=
-        Get_Attribute (Command, "server", "gps_server");
-      Check_Password : constant Boolean :=
-        Get_Attribute (Command, "check-password", "false") = "true";
-      Server_T      : Server_Type;
+                            Get_Attribute (Command, "show-task-manager");
+      Show_TM           : Boolean := Show_Task_Manager = "false";
+      Progress_Regexp   : constant String :=
+                            Get_Attribute (Command, "progress-regexp", "");
+      Progress_Current  : constant Integer :=
+                            Safe_Value
+                              (Get_Attribute
+                                 (Command, "progress-current", "1"));
+      Progress_Final    : constant Integer :=
+                            Safe_Value
+                              (Get_Attribute (Command, "progress-final", "2"));
+      Progress_Hide     : constant Boolean :=
+                            Get_Attribute
+                              (Command, "progress-hide", "true") = "true";
+      Server            : constant String :=
+                            Get_Attribute (Command, "server", "gps_server");
+      Check_Password    : constant Boolean :=
+                            Get_Attribute
+                              (Command, "check-password", "false") = "true";
+      Outp              : GNAT.Strings.String_Access := null;
+      Server_T          : Server_Type;
    begin
       if Show_Task_Manager = "" then
          Show_TM := Default_Show_In_Task_Manager or else Progress_Regexp /= "";
@@ -835,17 +843,17 @@ package body Commands.Custom is
 
       return new Custom_Component_Record'
         (Command_Component_Record with
-         The_Type         => Component_External,
-         Server           => Server_T,
-         Check_Password   => Check_Password,
-         Show_Command     => Show_C,
-         Output           => Outp,
-         Command          => new String'(Command.Value.all),
+         The_Type             => Component_External,
+         Server               => Server_T,
+         Check_Password       => Check_Password,
+         Show_Command         => Show_C,
+         Output               => Outp,
+         Command              => new String'(Command.Value.all),
          Show_In_Task_Manager => Show_TM,
-         Progress_Regexp  => new String'(Progress_Regexp),
-         Progress_Current => Progress_Current,
-         Progress_Final   => Progress_Final,
-         Progress_Hide    => Progress_Hide);
+         Progress_Regexp      => new String'(Progress_Regexp),
+         Progress_Current     => Progress_Current,
+         Progress_Final       => Progress_Final,
+         Progress_Hide        => Progress_Hide);
    end External_From_XML;
 
    --------------
@@ -859,9 +867,9 @@ package body Commands.Custom is
       Default_Show_In_Task_Manager : Boolean;
       Default_Show_Command         : Boolean) return Components_Array_Access
    is
-      N, M   : Node_Ptr := Command;
-      Count  : Natural := 0;
-      Result : Components_Array_Access;
+      N, M       : Node_Ptr := Command;
+      Count      : Natural := 0;
+      Result     : Components_Array_Access;
       On_Failure : Integer := -1;
    begin
       while N /= null loop
@@ -1160,8 +1168,8 @@ package body Commands.Custom is
          Num   : Integer;
          Done  : aliased Boolean := False;
          Macro : constant String :=
-           Substitute (Param, Command.Execution.Context,
-                       Quoted, Done'Access, Current_Server);
+                   Substitute (Param, Command.Execution.Context,
+                               Quoted, Done'Access, Current_Server);
       begin
          if Done then
             return Macro;
@@ -1324,8 +1332,6 @@ package body Commands.Custom is
          function Execute_External
            (Component : Custom_Component_Record'Class) return Boolean
          is
-            Tmp  : GNAT.Strings.String_Access;
-            Args : String_List_Access;
             Subst_Cmd_Line  : constant String := Trim
               (Substitute
                  (Subst_Percent,
@@ -1334,6 +1340,8 @@ package body Commands.Custom is
                   Recursive         => False),
                Left  => To_Set (' ' & ASCII.LF & ASCII.HT),
                Right => Ada.Strings.Maps.Null_Set);
+            Tmp             : GNAT.Strings.String_Access;
+            Args            : String_List_Access;
          begin
             Trace (Me, "Executing external command " & Component.Command.all);
 
@@ -1426,6 +1434,7 @@ package body Commands.Custom is
          case Component.The_Type is
             when Component_Shell =>
                Success := Execute_Shell (Component.all);
+
             when Component_External =>
                Old_Server     := Current_Server;
                Current_Server := Component.Server;
@@ -1600,8 +1609,8 @@ package body Commands.Custom is
         or else Component.all not in Custom_Component_Record'Class
         or else Custom_Component (Component).The_Type = Component_Shell
         or else Iter.Current = Iter.Command.Components'Last
-        or else Iter.Command.Components (Iter.Current + 1).On_Failure_For /=
-           Iter.Current
+        or else Iter.Command.Components
+          (Iter.Current + 1).On_Failure_For /= Iter.Current
       then
          return null;
       end if;
@@ -1645,13 +1654,13 @@ package body Commands.Custom is
      (Command : access Custom_Command;
       Kernel  : access Kernel_Handle_Record'Class) return Command_Editor
    is
-      Box   : constant Custom_Command_Editor_Widget :=
-        new Custom_Command_Editor_Record;
-      Hbox  : Gtk_Box;
+      Box         : constant Custom_Command_Editor_Widget :=
+                      new Custom_Command_Editor_Record;
       Command_Cst : aliased String := "command";
-      Bbox  : Gtk_Vbutton_Box;
-      Scrolled : Gtk_Scrolled_Window;
-      Button   : Gtk_Button;
+      Hbox        : Gtk_Box;
+      Bbox        : Gtk_Vbutton_Box;
+      Scrolled    : Gtk_Scrolled_Window;
+      Button      : Gtk_Button;
    begin
       Initialize_Vbox (Box, Homogeneous => False);
       Box.Kernel := Kernel_Handle (Kernel);
@@ -1750,13 +1759,13 @@ package body Commands.Custom is
      (Editor : access Custom_Command_Editor_Record'Class;
       Selected : Integer := -1)
    is
-      Model : constant Gtk_Tree_Store :=
-        Gtk_Tree_Store (Get_Model (Editor.Tree));
-      Parent : Gtk_Tree_Iter;
-      Iter   : Gtk_Tree_Iter;
-      First, Last : Gtk_Text_Iter;
+      Model         : constant Gtk_Tree_Store :=
+                        Gtk_Tree_Store (Get_Model (Editor.Tree));
+      Parent        : Gtk_Tree_Iter;
+      Iter          : Gtk_Tree_Iter;
+      First, Last   : Gtk_Text_Iter;
       Selected_Iter : Gtk_Tree_Iter := Null_Iter;
-      On_Failure : Gtk_Tree_Iter := Null_Iter;
+      On_Failure    : Gtk_Tree_Iter := Null_Iter;
    begin
       Clear (Model);
       Parent := Null_Iter;
@@ -1822,7 +1831,7 @@ package body Commands.Custom is
 
    procedure On_Destroy (Editor : access Gtk_Widget_Record'Class) is
       Ed : constant Custom_Command_Editor_Widget :=
-        Custom_Command_Editor_Widget (Editor);
+             Custom_Command_Editor_Widget (Editor);
    begin
       if Ed.Components /= null then
          for C in Ed.Components'Range loop
@@ -1856,11 +1865,11 @@ package body Commands.Custom is
    ---------------
 
    procedure On_Remove (Editor : access Gtk_Widget_Record'Class) is
-      Ed : constant Custom_Command_Editor_Widget :=
-        Custom_Command_Editor_Widget (Editor);
+      Ed        : constant Custom_Command_Editor_Widget :=
+                    Custom_Command_Editor_Widget (Editor);
       Component : constant Integer := Get_Selected_Component (Ed);
-      Comp : Component_Array_Access := Ed.Components;
-      Count : Natural := 1;
+      Comp      : Component_Array_Access := Ed.Components;
+      Count     : Natural := 1;
    begin
       if Component /= -1 then
          Destroy (Comp (Component).Component);
@@ -1889,8 +1898,8 @@ package body Commands.Custom is
    --------------------------
 
    procedure On_Component_Changed (Editor : access Gtk_Widget_Record'Class) is
-      Ed : constant Custom_Command_Editor_Widget :=
-        Custom_Command_Editor_Widget (Editor);
+      Ed        : constant Custom_Command_Editor_Widget :=
+                    Custom_Command_Editor_Widget (Editor);
       Component : Integer;
    begin
       --  Preserve the current component editor, since we'll need it to
@@ -1914,11 +1923,11 @@ package body Commands.Custom is
    ------------------------
 
    procedure On_Command_Changed (Editor : access Gtk_Widget_Record'Class) is
-      Ed : constant Custom_Command_Editor_Widget :=
-        Custom_Command_Editor_Widget (Editor);
-      Model : Gtk_Tree_Model;
-      Iter  : Gtk_Tree_Iter;
-      Component : Custom_Component_Editor;
+      Ed          : constant Custom_Command_Editor_Widget :=
+                      Custom_Command_Editor_Widget (Editor);
+      Model       : Gtk_Tree_Model;
+      Iter        : Gtk_Tree_Iter;
+      Component   : Custom_Component_Editor;
       First, Last : Gtk_Text_Iter;
 
    begin
@@ -1940,13 +1949,14 @@ package body Commands.Custom is
      (Editor : access Gtk_Widget_Record'Class;
       Data   : Component_Type_And_Lang)
    is
-      Ed : constant Custom_Command_Editor_Widget :=
-        Custom_Command_Editor_Widget (Editor);
-      Component : Integer;
-      Comp : Component_Array_Access := Ed.Components;
-      Model : Gtk_Tree_Model;
-      Iter  : Gtk_Tree_Iter;
+      Ed             : constant Custom_Command_Editor_Widget :=
+                         Custom_Command_Editor_Widget (Editor);
+      Component      : Integer;
+      Comp           : Component_Array_Access := Ed.Components;
+      Model          : Gtk_Tree_Model;
+      Iter           : Gtk_Tree_Iter;
       On_Failure_For : Integer := -1;
+
    begin
       Get_Selected (Get_Selection (Ed.Tree), Model, Iter);
       if Iter /= Null_Iter then
@@ -2262,9 +2272,10 @@ package body Commands.Custom is
      (Editor         : access Custom_Component_Editor_Record'Class)
       return Glib.Xml_Int.Node_Ptr
    is
-      Node : Node_Ptr;
+      Output      : constant String := Get_Text (Editor.Output);
+      Node        : Node_Ptr;
       First, Last : Gtk_Text_Iter;
-      Output : constant String := Get_Text (Editor.Output);
+
    begin
       Get_Start_Iter (Editor.Command, First);
       Get_End_Iter   (Editor.Command, Last);

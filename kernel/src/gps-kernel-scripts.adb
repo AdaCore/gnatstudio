@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2007, AdaCore             --
+--                 Copyright (C) 2003-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -97,7 +97,6 @@ package body GPS.Kernel.Scripts is
          when Debug_Handles =>
             Handle   : Trace_Handle;
       end case;
-
    end record;
 
    type GPS_Properties is access all GPS_Properties_Record'Class;
@@ -506,10 +505,10 @@ package body GPS.Kernel.Scripts is
          Name_Parameters (Data, Xml_Custom_Parameters);
          declare
             Err : constant String :=
-              GPS.Kernel.Custom.Add_Customization_String
-                (Kernel, Nth_Arg (Data, 1),
-                 From_File  => Current_Script (Get_Script (Data)),
-                 Start_Line => 1);
+                    GPS.Kernel.Custom.Add_Customization_String
+                      (Kernel, Nth_Arg (Data, 1),
+                       From_File  => Current_Script (Get_Script (Data)),
+                       Start_Line => 1);
          begin
             if Err /= "" then
                Set_Error_Msg (Data, Err);
@@ -522,21 +521,24 @@ package body GPS.Kernel.Scripts is
          Name_Parameters (Data, Exec_Action_Parameters);
 
          declare
+            Synchronous : constant Boolean := Command = "execute_action";
             Action      : constant Action_Record_Access := Lookup_Action
               (Kernel, Nth_Arg (Data, 1));
             Context     : constant Selection_Context :=
-              Get_Current_Context (Kernel);
+                            Get_Current_Context (Kernel);
             Custom      : Command_Access;
             Args        : String_List_Access;
-            Synchronous : constant Boolean := Command = "execute_action";
          begin
             if Action = null then
                Set_Error_Msg (Data, -"No such registered action");
+
             elsif Context = No_Context then
                Set_Error_Msg
                  (Data, -"No current context, can't execute action");
+
             elsif not Filter_Matches (Action.Filter, Context) then
                Set_Error_Msg (Data, -"Invalid context for the action");
+
             else
                Args := new String_List (1 .. Number_Of_Arguments (Data) - 1);
                for Index in 2 .. Number_Of_Arguments (Data) loop
@@ -559,10 +561,11 @@ package body GPS.Kernel.Scripts is
                     (Kernel, Custom, Destroy_On_Exit => True);
                else
                   Launch_Background_Command
-                    (Kernel, Custom, Destroy_On_Exit => True,
-                     Active   => Synchronous,
-                     Show_Bar => True,
-                     Queue_Id => "");
+                    (Kernel, Custom,
+                     Destroy_On_Exit => True,
+                     Active          => Synchronous,
+                     Show_Bar        => True,
+                     Queue_Id        => "");
                end if;
             end if;
          end;
@@ -601,7 +604,7 @@ package body GPS.Kernel.Scripts is
       elsif Command = "scenario_variables_values" then
          declare
             Vars : constant Scenario_Variable_Array :=
-              Scenario_Variables (Kernel);
+                     Scenario_Variables (Kernel);
          begin
             for V in Vars'Range loop
                declare
@@ -1517,10 +1520,10 @@ package body GPS.Kernel.Scripts is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Console_Class_Name : constant String := "Console";
-      Console_Class : constant Class_Type := New_Class
+      Console_Class      : constant Class_Type := New_Class
         (Kernel.Scripts, Console_Class_Name, Base => Get_GUI_Class (Kernel));
-      Logger  : constant Class_Type :=
-        New_Class (Kernel.Scripts, Logger_Class_Name);
+      Logger             : constant Class_Type :=
+                             New_Class (Kernel.Scripts, Logger_Class_Name);
    begin
       GNAT.Scripts.Register_Standard_Classes
         (Get_Scripts (Kernel),
@@ -2352,7 +2355,8 @@ package body GPS.Kernel.Scripts is
       if Command = Constructor_Method then
          Set_Error_Msg
            (Data, -("Cannot build instances of GPS.GUI, these are returned"
-                    & " by other functions"));
+            & " by other functions"));
+
       elsif Command = "set_sensitive" then
          Name_Parameters (Data, Set_Sensitive_Parameters);
          W := Gtk_Widget (GObject'(Get_Data (Inst)));
@@ -2369,6 +2373,7 @@ package body GPS.Kernel.Scripts is
          else
             Set_Error_Msg (Data, "Widget has been destroyed");
          end if;
+
       elsif Command = "destroy" then
          W := Gtk_Widget (GObject'(Get_Data (Inst)));
          if W /= null then

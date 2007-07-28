@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007, AdaCore             --
+--                 Copyright (C) 2001-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
@@ -666,6 +666,10 @@ package body GPS.Kernel is
       function Get_Project_Name return Virtual_File;
       --  Return the project name to match in the file
 
+      ----------------------
+      -- Get_Project_Name --
+      ----------------------
+
       function Get_Project_Name return Virtual_File is
          Project : constant Project_Type := Get_Project (Handle);
       begin
@@ -676,6 +680,8 @@ package body GPS.Kernel is
          end if;
       end Get_Project_Name;
 
+      Main_Window : constant Gdk.Window.Gdk_Window :=
+                      Get_Window (Handle.Main_Window);
       MDI          : constant MDI_Window := Get_MDI (Handle);
       File_Name    : constant String := Handle.Home_Dir.all & Desktop_Name;
       Project_Name : constant Virtual_File := Get_Project_Name;
@@ -683,8 +689,6 @@ package body GPS.Kernel is
       M            : Node_Ptr;
       Old          : Node_Ptr;
       Err          : GNAT.Strings.String_Access;
-      Main_Window : constant Gdk.Window.Gdk_Window :=
-        Get_Window (Handle.Main_Window);
 
    begin
       if Project_Name = VFS.No_File and then not As_Default_Desktop then
@@ -804,10 +808,12 @@ package body GPS.Kernel is
             Trace (Me, "loading desktop file " & File
                    & " Project=" & Full_Name (Project_Name).all);
             XML_Parsers.Parse (File, Node, Err);
+
          elsif GNAT.OS_Lib.Is_Regular_File (Predefined_Desktop) then
             Trace (Me, "loading predefined desktop");
             Is_Default_Desktop := True;
             XML_Parsers.Parse (Predefined_Desktop, Node, Err);
+
          else
             Trace (Me, "No desktop to load");
             Set_Default_Size (Main_Window, 800, 600);
@@ -818,6 +824,7 @@ package body GPS.Kernel is
          if Node = null then
             Insert (Handle, Err.all, Mode => Error);
             Free (Err);
+
          else
             Child := Node.Child;
          end if;
@@ -840,6 +847,7 @@ package body GPS.Kernel is
 
          --  Call Show_All before restoring the desktop, in case some
          --  children stored in the desktop have something to hide.
+
          Show_All (Get_Child (Main_Window));
 
          Success_Loading_Desktop := False;
@@ -848,6 +856,7 @@ package body GPS.Kernel is
             Trace (Me, "loading desktop for " & Full_Name (Project_Name).all);
             Success_Loading_Desktop := Kernel_Desktop.Restore_Desktop
               (MDI, Desktop_Node, Kernel_Handle (Handle));
+
          elsif Default_Desktop_Node /= null then
             Trace (Me, "loading default desktop (from file)");
             Success_Loading_Desktop := Kernel_Desktop.Restore_Desktop
@@ -857,7 +866,7 @@ package body GPS.Kernel is
          Free (Node);
 
          --  If we fail loading the user desktop, we still want to load the
-         --  default desktop
+         --  default desktop.
 
          Try_User_Desktop := False;
 

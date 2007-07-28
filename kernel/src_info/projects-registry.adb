@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2007                      --
---                              AdaCore                              --
+--                 Copyright (C) 2002-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -78,7 +77,7 @@ package body Projects.Registry is
    --  A dummy suffixes that is used for languages that have either no spec or
    --  no implementation suffix defined.
 
-   procedure Do_Nothing (Project : in out Project_Type);
+   procedure Do_Nothing (Project : in out Project_Type) is null;
    --  Do not free the project (in the hash tables), since it shared by several
    --  entries and several htables
 
@@ -94,7 +93,7 @@ package body Projects.Registry is
    --  dependency, or because one of its subdirs belong to the project, or
    --  doesn't belong at all.
 
-   procedure Do_Nothing (Dep : in out Directory_Dependency);
+   procedure Do_Nothing (Dep : in out Directory_Dependency) is null;
    package Directory_Htable is new String_Hash
      (Data_Type      => Directory_Dependency,
       Free_Data      => Do_Nothing,
@@ -113,7 +112,7 @@ package body Projects.Registry is
    --   set in the project (for instance through the Source_Files attribute),
    --   but no matching language was found.
 
-   procedure Do_Nothing (Data : in out Source_File_Data);
+   procedure Do_Nothing (Data : in out Source_File_Data) is null;
    package Source_Htable is new String_Hash
      (Data_Type      => Source_File_Data,
       Free_Data      => Do_Nothing,
@@ -121,14 +120,14 @@ package body Projects.Registry is
       Case_Sensitive => Is_Case_Sensitive (Build_Server));
    use Source_Htable.String_Hash_Table;
 
-   procedure Do_Nothing (Name : in out Name_Id);
+   procedure Do_Nothing (Name : in out Name_Id) is null;
    package Languages_Htable is new String_Hash
      (Data_Type => Name_Id,
       Free_Data => Do_Nothing,
       Null_Ptr  => No_Name);
    use Languages_Htable.String_Hash_Table;
 
-   procedure Do_Nothing (Bool : in out Boolean);
+   procedure Do_Nothing (Bool : in out Boolean) is null;
    package Boolean_Htable is new String_Hash
         (Data_Type => Boolean,
          Free_Data => Do_Nothing,
@@ -259,16 +258,6 @@ package body Projects.Registry is
    --  Return access to the various tables that contain information about the
    --  project
 
-   ----------------
-   -- Do_Nothing --
-   ----------------
-
-   procedure Do_Nothing (Bool : in out Boolean) is
-      pragma Unreferenced (Bool);
-   begin
-      null;
-   end Do_Nothing;
-
    --------------------
    -- Array_Elements --
    --------------------
@@ -298,34 +287,6 @@ package body Projects.Registry is
    begin
       return R.Data.View_Tree.String_Elements.Table;
    end String_Elements;
-
-   ----------------
-   -- Do_Nothing --
-   ----------------
-
-   procedure Do_Nothing (Project : in out Project_Type) is
-      pragma Unreferenced (Project);
-   begin
-      null;
-   end Do_Nothing;
-
-   procedure Do_Nothing (Data : in out Source_File_Data) is
-      pragma Unreferenced (Data);
-   begin
-      null;
-   end Do_Nothing;
-
-   procedure Do_Nothing (Dep : in out Directory_Dependency) is
-      pragma Unreferenced (Dep);
-   begin
-      null;
-   end Do_Nothing;
-
-   procedure Do_Nothing (Name : in out Name_Id) is
-      pragma Unreferenced (Name);
-   begin
-      null;
-   end Do_Nothing;
 
    ---------------------------
    -- Is_Valid_Project_Name --
@@ -670,7 +631,7 @@ package body Projects.Registry is
 
          --  We cannot simply use Clock here, since this returns local time,
          --  and the file timestamps will be returned in GMT, therefore we
-         --  won't be able to compare
+         --  won't be able to compare.
 
          Registry.Data.Timestamp := VFS.No_Time;
          Iter := Start (Registry.Data.Root);
@@ -1068,6 +1029,7 @@ package body Projects.Registry is
          end loop;
 
          --  Canonicalize the file names in the naming exception lists
+
          Canonicalize_File_Names_In_Project (Registry);
 
          --  Add the other languages' files
@@ -1589,7 +1551,8 @@ package body Projects.Registry is
 
                   if File_In_Sources (UTF8) then
                      --  First check naming scheme in the project, in case the
-                     --  naming scheme overrides GPS's default
+                     --  naming scheme overrides GPS's default.
+
                      Get_Unit_Part_And_Name_From_Filename
                        (UTF8, Project, Part, Unit_Name, Lang);
 
@@ -2332,6 +2295,7 @@ package body Projects.Registry is
    begin
       if Is_Absolute_Path_Or_URL (Name) then
          return Create (Full_Filename => Name);
+
       else
          declare
             Full : constant String := Get_Full_Path_From_File

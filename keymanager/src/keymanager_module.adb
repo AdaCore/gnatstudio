@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2007, AdaCore             --
+--                 Copyright (C) 2003-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -71,9 +71,9 @@ package body KeyManager_Module is
 
    use Key_Htable;
 
-   Command_Cst               : aliased constant String := "command";
-   Key_Cst                   : aliased constant String := "key";
-   Count_Cst                 : aliased constant String := "count";
+   Command_Cst : aliased constant String := "command";
+   Key_Cst     : aliased constant String := "key";
+   Count_Cst   : aliased constant String := "count";
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Key_Description, Key_Description_List);
@@ -230,7 +230,7 @@ package body KeyManager_Module is
      (Command  : Interactive_Command'Class;
       Argument : String);
    --  This command reads a numeric argument, and will then execute the next
-   --  action a number of times
+   --  action a number of times.
 
    ----------------------
    -- Save_Custom_Keys --
@@ -242,6 +242,10 @@ package body KeyManager_Module is
 
       procedure Save_Table (Table : in out Key_Htable.HTable; Prefix : String);
       --  Save the contents of a specific keymap
+
+      ----------------
+      -- Save_Table --
+      ----------------
 
       procedure Save_Table
         (Table : in out Key_Htable.HTable; Prefix : String)
@@ -308,7 +312,7 @@ package body KeyManager_Module is
 
    procedure Destroy (Module : in out Keymanager_Module_Record) is
       Key : constant String :=
-        Get_Home_Dir (Get_Kernel (Module)) & "custom_key";
+              Get_Home_Dir (Get_Kernel (Module)) & "custom_key";
    begin
       Gtk.Accel_Map.Save (Key);
 
@@ -343,12 +347,13 @@ package body KeyManager_Module is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Event_Handler_Record, Event_Handler_Access);
       pragma Unreferenced (Kernel);
-      Tmp      : Event_Handler_Access := Keymanager_Module.Handlers;
-      N        : Event_Handler_Access;
+      Tmp : Event_Handler_Access := Keymanager_Module.Handlers;
+      N   : Event_Handler_Access;
    begin
       if Tmp.Handler = Handler then
          Keymanager_Module.Handlers := Tmp.Next;
          Unchecked_Free (Tmp);
+
       else
          while Tmp.Next /= null loop
             if Tmp.Next.Handler = Handler then
@@ -369,8 +374,7 @@ package body KeyManager_Module is
    procedure General_Event_Handler
      (Event : Gdk_Event; Kernel : System.Address)
    is
-      Event_Type  : constant Gdk_Event_Type := Get_Event_Type (Event);
-      Tmp         : Event_Handler_Access;
+      Event_Type : constant Gdk_Event_Type := Get_Event_Type (Event);
 
    begin
       if Keymanager_Module = null then
@@ -380,12 +384,15 @@ package body KeyManager_Module is
          return;
       end if;
 
-      Tmp := Keymanager_Module.Handlers;
-      while Tmp /= null
-        and then not Tmp.Handler (Event, Convert (Kernel))
-      loop
-         Tmp := Tmp.Next;
-      end loop;
+      Call_Handlers : declare
+         EH : Event_Handler_Access := Keymanager_Module.Handlers;
+      begin
+         while EH /= null
+           and then not EH.Handler (Event, Convert (Kernel))
+         loop
+            EH := EH.Next;
+         end loop;
+      end Call_Handlers;
 
       --  We do not put a global exception handler in this procedure since
       --  it is called very often, so when using setjmp/longjmp, the cost
@@ -458,6 +465,7 @@ package body KeyManager_Module is
    ----------
 
    procedure Free (Element : in out Key_Description_List) is
+      pragma Warnings (Off, Element);
       Current : Key_Description_List := Element;
       N       : Key_Description_List;
    begin
@@ -678,11 +686,11 @@ package body KeyManager_Module is
          end loop;
       end Remove_In_Keymap;
 
-      Partial_Key : Gdk_Key_Type;
+      Partial_Key           : Gdk_Key_Type;
       Modif, Mnemonic_Modif : Gdk_Modifier_Type;
-      First, Last : Integer;
-      Keymap  : Keymap_Access;
-      Success : Boolean;
+      First, Last           : Integer;
+      Keymap                : Keymap_Access;
+      Success               : Boolean;
       pragma Unreferenced (Success);
    begin
       --  Are we trying to cancel all bindings to Action ?
@@ -862,6 +870,10 @@ package body KeyManager_Module is
       procedure Undo_Group (Start : Boolean);
       --  Start or end an undo group
 
+      ---------------------
+      -- Compute_Context --
+      ---------------------
+
       procedure Compute_Context is
       begin
          if not Context_Computed then
@@ -870,6 +882,10 @@ package body KeyManager_Module is
          end if;
       end Compute_Context;
 
+      -------------------
+      -- Compute_Child --
+      -------------------
+
       procedure Compute_Child is
          C : constant MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
       begin
@@ -877,6 +893,10 @@ package body KeyManager_Module is
             Child := GPS_MDI_Child (C);
          end if;
       end Compute_Child;
+
+      ----------------
+      -- Undo_Group --
+      ----------------
 
       procedure Undo_Group (Start : Boolean) is
       begin
@@ -1131,10 +1151,10 @@ package body KeyManager_Module is
    procedure Load_Custom_Keys
      (Kernel  : access Kernel_Handle_Record'Class)
    is
-      Filename : constant String := Get_Home_Dir (Kernel) & "keys.xml";
+      Filename    : constant String := Get_Home_Dir (Kernel) & "keys.xml";
       File, Child : Node_Ptr;
-      Err : String_Access;
-      Prev : Boolean;
+      Err         : String_Access;
+      Prev        : Boolean;
    begin
       Keymanager_Module.Custom_Keys_Loaded := True;
 
@@ -1594,9 +1614,9 @@ package body KeyManager_Module is
       Accel_Path : constant String := To_String (Args, 1);
       Accel_Key  : constant Gdk_Key_Type := Gdk_Key_Type (To_Guint (Args, 2));
       Accel_Mods : constant Gdk_Modifier_Type :=
-        Gdk_Modifier_Type (Get_Flags (Nth (Args, 3)));
+                     Gdk_Modifier_Type (Get_Flags (Nth (Args, 3)));
       pragma Unreferenced (Map);
-      First : Natural := Accel_Path'First + 1;
+      First      : Natural := Accel_Path'First + 1;
    begin
       while First <= Accel_Path'Last
         and then Accel_Path (First - 1) /= '>'
@@ -1644,6 +1664,7 @@ package body KeyManager_Module is
                Block_Accel_Map_Refresh (Kernel, Block => False);
             end if;
          end;
+
       else
          --  Remove any other keybinding associated with that action, as well
          --  as any action associated with that key.
@@ -1668,8 +1689,8 @@ package body KeyManager_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Key : constant String := Get_Home_Dir (Kernel) & "custom_key";
-      Command    : Interactive_Command_Access;
+      Key     : constant String := Get_Home_Dir (Kernel) & "custom_key";
+      Command : Interactive_Command_Access;
 
    begin
       Keymanager_Module := new Keymanager_Module_Record;

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
---                              AdaCore                              --
+--                Copyright (C) 2001-2007, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -96,6 +95,7 @@ package body Commands is
       if X /= null then
          if X.Do_Not_Free then
             X.To_Be_Freed := True;
+
          else
             --  Do not free commands registered as actions, except if we are
             --  freeing the actions themselves

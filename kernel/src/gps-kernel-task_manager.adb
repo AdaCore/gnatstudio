@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2007, AdaCore              --
+--                 Copyright (C) 2003-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -392,6 +392,8 @@ package body GPS.Kernel.Task_Manager is
       C.Command := Command_Access (Command);
       C.Destroy_On_Exit := Destroy_On_Exit;
 
+      --  Add the consequence actions to the wrapper
+
       Queue := Get_Consequence_Actions (Command);
 
       Node := First (Queue);
@@ -404,6 +406,8 @@ package body GPS.Kernel.Task_Manager is
 
          Node := Next (Node);
       end loop;
+
+      --  Add the alternate actions to the wrapper
 
       Queue := Get_Alternate_Actions (Command);
 
@@ -470,7 +474,7 @@ package body GPS.Kernel.Task_Manager is
    is
       Manager : constant Task_Manager_Access := Get_Task_Manager (Kernel);
       Wrapper : constant Scheduled_Command_Access :=
-        Create_Wrapper (Command, Destroy_On_Exit);
+                  Create_Wrapper (Command, Destroy_On_Exit);
    begin
       Add_Command
         (Manager,
@@ -490,7 +494,7 @@ package body GPS.Kernel.Task_Manager is
       Destroy_On_Exit : Boolean := True)
    is
       Wrapper : Scheduled_Command_Access :=
-        Create_Wrapper (Command, Destroy_On_Exit);
+                  Create_Wrapper (Command, Destroy_On_Exit);
       Result : Command_Return_Type;
    begin
       Push_State (Kernel, Busy);

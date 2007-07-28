@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002-2007, AdaCore           --
+--                 Copyright (C) 2002-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -83,11 +83,11 @@ package Commands.Custom is
    --  sent to the console.
 
    procedure Create
-     (Item         : out Custom_Command_Access;
-      Name         : String;
-      Kernel       : Kernel_Handle;
-      Command      : String;
-      Script       : GNAT.Scripts.Scripting_Language);
+     (Item    : out Custom_Command_Access;
+      Name    : String;
+      Kernel  : Kernel_Handle;
+      Command : String;
+      Script  : GNAT.Scripts.Scripting_Language);
    --  Create a new custom command.
    --  If Script is null, the command is launched as a system
    --  command (Unix or Windows). Otherwise, it is interpreted as a GPS

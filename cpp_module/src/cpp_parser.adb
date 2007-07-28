@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2007, AdaCore             --
+--                 Copyright (C) 2003-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -2987,7 +2987,7 @@ package body CPP_Parser is
             return;
          end if;
 
-         --  Create the list of files that need to be analyzed.
+         --  Create the list of files that need to be analyzed
 
          Iterator.List_Filename := new String'(DB_Dir & "gps_list");
          Create (Tmp_File, Out_File, Name => Iterator.List_Filename.all);

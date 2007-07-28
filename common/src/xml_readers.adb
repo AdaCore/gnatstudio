@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                    Copyright (C) 2004-2007                        --
---                             AdaCore                               --
+--                Copyright (C) 2004-2007, AdaCore                   --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -265,7 +264,7 @@ package body XML_Readers is
       Tree  : out Glib_XML.Node_Ptr;
       Error : out Unicode.CES.Byte_Sequence_Access)
    is
-      Input  : File_Input;
+      Input : File_Input;
    begin
       Open (File, Input);
       Set_Public_Id (Input, File);
