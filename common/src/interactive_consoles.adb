@@ -470,7 +470,7 @@ package body Interactive_Consoles is
       Add_To_History : Boolean := False;
       Show_Prompt    : Boolean := True)
    is
-      UTF8        : constant String := Glib.Convert.Locale_To_UTF8 (Text);
+      UTF8 : constant String := Glib.Convert.Locale_To_UTF8 (Text);
    begin
       Insert_UTF8
         (Console, UTF8, Add_LF, Highlight, Add_To_History, Show_Prompt);
@@ -1771,15 +1771,15 @@ package body Interactive_Consoles is
             Get_End_Iter (Console.Buffer, Start_Iter);
             if Highlight then
                Insert_With_Tags
-                 (Buffer         => Console.Buffer,
-                  Iter           => Start_Iter,
-                  Text           => Text (Index .. Text'Last),
-                  Tag            => Console.Highlight_Tag);
+                 (Buffer => Console.Buffer,
+                  Iter   => Start_Iter,
+                  Text   => Text (Index .. Text'Last),
+                  Tag    => Console.Highlight_Tag);
             else
                Insert
-                 (Buffer         => Console.Buffer,
-                  Iter           => Start_Iter,
-                  Text           => Text (Index .. Text'Last));
+                 (Buffer => Console.Buffer,
+                  Iter   => Start_Iter,
+                  Text   => Text (Index .. Text'Last));
             end if;
             Index := Text'Last + 1;
          end if;

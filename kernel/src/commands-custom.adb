@@ -339,7 +339,7 @@ package body Commands.Custom is
    is
       use type Glib.String_Ptr;
       Filter : Macro_Filter;
-      N : Node_Ptr := Command;
+      N      : Node_Ptr := Command;
    begin
       while N /= null loop
          if N.Value /= null then
@@ -357,7 +357,7 @@ package body Commands.Custom is
 
    procedure Exit_Cb (Data : Process_Data; Status : Integer) is
       D : constant Custom_Callback_Data_Access :=
-        Custom_Callback_Data_Access (Data.Callback_Data);
+            Custom_Callback_Data_Access (Data.Callback_Data);
    begin
       D.Command.Execution.External_Process_In_Progress := False;
       D.Command.Execution.Process_Exit_Status := Status;
@@ -368,8 +368,9 @@ package body Commands.Custom is
    --------------------------
 
    procedure Store_Command_Output (Data : Process_Data; Output : String) is
-      D : constant Custom_Callback_Data_Access :=
-        Custom_Callback_Data_Access (Data.Callback_Data);
+
+      D       : constant Custom_Callback_Data_Access :=
+                  Custom_Callback_Data_Access (Data.Callback_Data);
       Command : constant Custom_Command_Access := D.Command;
 
       procedure Append (S : in out String_Access; Value : String);
@@ -384,7 +385,7 @@ package body Commands.Custom is
 
       procedure Insert (Message : String) is
          Console : constant Interactive_Console :=
-           Command.Execution.External_Process_Console;
+                     Command.Execution.External_Process_Console;
       begin
          if Console /= null then
             Insert (Console, Message, Add_LF => False);
@@ -500,6 +501,7 @@ package body Commands.Custom is
                        (Command.Execution.Current_Output,
                         Output (Index .. EOL));
                   end if;
+
                else
                   declare
                      Outp : constant String :=
@@ -632,6 +634,10 @@ package body Commands.Custom is
         (Param  : String;
          Quoted : Boolean) return String;
       --  Check whether the command has a '%' + digit parameter
+
+      ------------------
+      -- Substitution --
+      ------------------
 
       function Substitution
         (Param  : String;
@@ -896,12 +902,14 @@ package body Commands.Custom is
                  or else M.Tag.all = "external"
                then
                   Count := Count + 1;
+
                elsif M.Tag.all = "on-failure" then
                   Insert (Kernel,
                           "Nested <on-failure> nodes not supported, in "
                           & "definition of action """ & Name & """",
                           Mode => Error);
                   return new Components_Array (1 .. 0);
+
                else
                   Insert (Kernel,
                           "Unknown tag in action definition: " & M.Tag.all
@@ -939,6 +947,7 @@ package body Commands.Custom is
          if N.Tag.all = "shell" then
             Result (Count) := (Shell_From_XML (Kernel, N), -1);
             Count := Count + 1;
+
          elsif N.Tag.all = "external" then
             Result (Count) := (External_From_XML
               (N,
@@ -946,6 +955,7 @@ package body Commands.Custom is
                Default_Show_Command         => Default_Show_Command),
               -1);
             Count := Count + 1;
+
          elsif N.Tag.all = "on-failure" then
             if Count = Result'First
               or else Custom_Component (Result (Count - 1).Component).The_Type
@@ -965,6 +975,7 @@ package body Commands.Custom is
                if M.Tag.all = "shell" then
                   Result (Count) := (Shell_From_XML (Kernel, M), On_Failure);
                   Count := Count + 1;
+
                elsif M.Tag.all = "external" then
                   Result (Count) := (External_From_XML
                     (M,
@@ -1275,11 +1286,11 @@ package body Commands.Custom is
          function Execute_Shell
            (Component : Custom_Component_Record'Class) return Boolean
          is
-            Errors  : aliased Boolean;
-            Old_Dir : GNAT.Strings.String_Access;
+            Errors         : aliased Boolean;
+            Old_Dir        : GNAT.Strings.String_Access;
             --  has to be determined here so that Current_Server is
             --  correctly set:
-            Subst_Cmd_Line  : constant String := Substitute
+            Subst_Cmd_Line : constant String := Substitute
               (Subst_Percent,
                Substitution_Char => GPS.Kernel.Macros.Special_Character,
                Callback          => Substitution'Unrestricted_Access,
@@ -1379,7 +1390,8 @@ package body Commands.Custom is
 
             else
                --  Set the console before launching the process, so that
-               --  synchronous calls correctly output
+               --  synchronous calls correctly output.
+
                Command.Execution.External_Process_Console := Console;
 
                Launch_Process
@@ -1394,7 +1406,8 @@ package body Commands.Custom is
                   Show_Command         => Component.Show_Command,
 
                   --  Showing the output is already handled by the callback
-                  --  Store_Command_Output
+                  --  Store_Command_Output.
+
                   Show_Output          => False,
 
                   Callback_Data        => new Custom_Callback_Data'
@@ -1756,7 +1769,7 @@ package body Commands.Custom is
    -------------
 
    procedure Refresh_And_Select
-     (Editor : access Custom_Command_Editor_Record'Class;
+     (Editor   : access Custom_Command_Editor_Record'Class;
       Selected : Integer := -1)
    is
       Model         : constant Gtk_Tree_Store :=
