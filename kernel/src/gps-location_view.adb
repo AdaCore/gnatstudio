@@ -761,24 +761,15 @@ package body GPS.Location_View is
 
          if Line /= 0 then
             --  Delete one specific line location in one specific file
-            declare
-               Not_Yet_Removed : Boolean := True;
-            begin
-               while Loc_Iter /= Null_Iter or else Not_Yet_Removed loop
-                  if Get_Int (View.Tree.Model, Loc_Iter, Line_Column)
-                    = Gint (Line) then
-                     Remove_Line (View, Categories, Loc_Iter);
-                     Remove (View.Tree.Model, Loc_Iter);
-                     Not_Yet_Removed := False;
-
-                     if Children (View.Tree.Model, File_Iter) = Null_Iter then
-                        Remove (View.Tree.Model, File_Iter);
-                     end if;
-                  end if;
-
+            while Loc_Iter /= Null_Iter loop
+               if Get_Int (View.Tree.Model, Loc_Iter, Line_Column)
+                 = Gint (Line) then
+                  Remove_Line (View, Categories, Loc_Iter);
+                  Remove (View.Tree.Model, Loc_Iter);
+               else
                   Next (View.Tree.Model, Loc_Iter);
-               end loop;
-            end;
+               end if;
+            end loop;
          else
             while Loc_Iter /= Null_Iter loop
                Remove_Line (View, Categories, Loc_Iter);
@@ -799,6 +790,10 @@ package body GPS.Location_View is
          end loop;
 
          if Line /= 0 then
+            if Children (View.Tree.Model, File_Iter) = Null_Iter then
+               Remove (View.Tree.Model, File_Iter);
+            end if;
+
             return;
          end if;
 
