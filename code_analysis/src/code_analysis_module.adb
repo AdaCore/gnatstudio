@@ -21,65 +21,53 @@ with Ada.Calendar;                           use Ada.Calendar;
 with Ada.Containers.Indefinite_Ordered_Sets; use Ada.Containers;
 with Ada.Strings.Equal_Case_Insensitive;
 with Ada.Strings.Less_Case_Insensitive;
-with Basic_Types;                            use Basic_Types;
-with Code_Analysis;                          use Code_Analysis;
-with Code_Analysis_Tree_Model;               use Code_Analysis_Tree_Model;
-with Code_Coverage;                          use Code_Coverage;
-with Entities;                               use Entities;
-with GNAT.OS_Lib;                            use GNAT.OS_Lib;
-with GNAT.Scripts;                           use GNAT.Scripts;
 with GNAT.Strings;
+with GNAT.Scripts;                           use GNAT.Scripts;
+with GNAT.OS_Lib;                            use GNAT.OS_Lib;
 with GNAT.Traces;
+with Glib;                                   use Glib;
+with Glib.Object;
+with Gtk.Button;
+with Gtk.Enums;                              use Gtk.Enums;
+with Gtk.Handlers;                           use Gtk.Handlers;
+with Gtk.Menu;                               use Gtk.Menu;
+with Gtk.Menu_Item;                          use Gtk.Menu_Item;
+with Gtk.Tree_Selection;                     use Gtk.Tree_Selection;
+with Gtk.Tree_View;                          use Gtk.Tree_View;
+with Gtk.Tree_Model;                         use Gtk.Tree_Model;
+with Gtk.Tree_Store;                         use Gtk.Tree_Store;
+with Gtk.Tree_View_Column;                   use Gtk.Tree_View_Column;
+with Gtk.Widget;                             use Gtk.Widget;
+with Gtk.Box;                                use Gtk.Box;
+with Gtk.Object;                             use Gtk.Object;
+with Gtkada.Dialogs;                         use Gtkada.Dialogs;
+with Gtkada.Handlers;                        use Gtkada.Handlers;
+with Gtkada.MDI;                             use Gtkada.MDI;
+with GPS.Kernel.Console;
 with GPS.Intl;                               use GPS.Intl;
 with GPS.Kernel;                             use GPS.Kernel;
-with GPS.Kernel.Console;
+with GPS.Kernel.MDI;                         use GPS.Kernel.MDI;
 with GPS.Kernel.Contexts;                    use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;                       use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;                         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;                     use GPS.Kernel.Modules;
 with GPS.Kernel.Project;                     use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;                     use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;              use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;                      use GPS.Kernel.Styles;
 with GPS.Location_View;                      use GPS.Location_View;
-with Gdk.Event;                              use Gdk.Event;
-with Gdk.Pixbuf;                             use Gdk.Pixbuf;
-with Glib.Object;
-with Glib.Properties;
-with Glib;                                   use Glib;
-with Gtk.Box;                                use Gtk.Box;
-with Gtk.Button;                             use Gtk.Button;
-with Gtk.Cell_Renderer;
-with Gtk.Cell_Renderer_Pixbuf;               use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Cell_Renderer_Progress;             use Gtk.Cell_Renderer_Progress;
-with Gtk.Cell_Renderer_Text;                 use Gtk.Cell_Renderer_Text;
-with Gtk.Enums;                              use Gtk.Enums;
-with Gtk.Handlers;                           use Gtk.Handlers;
-with Gtk.Image;                              use Gtk.Image;
-with Gtk.Label;                              use Gtk.Label;
-with Gtk.Menu;                               use Gtk.Menu;
-with Gtk.Menu_Item;                          use Gtk.Menu_Item;
-with Gtk.Object;                             use Gtk.Object;
-with Gtk.Scrolled_Window;                    use Gtk.Scrolled_Window;
-with Gtk.Stock;                              use Gtk.Stock;
-with Gtk.Tree_Model;                         use Gtk.Tree_Model;
-with Gtk.Tree_Selection;                     use Gtk.Tree_Selection;
-with Gtk.Tree_Store;                         use Gtk.Tree_Store;
-with Gtk.Tree_View;                          use Gtk.Tree_View;
-with Gtk.Tree_View_Column;                   use Gtk.Tree_View_Column;
-with Gtk.Widget;                             use Gtk.Widget;
-with Gtk.Window;                             use Gtk.Window;
-with Gtkada.Dialogs;                         use Gtkada.Dialogs;
-with Gtkada.Handlers;                        use Gtkada.Handlers;
-with Gtkada.MDI;                             use Gtkada.MDI;
 with Language.Tree.Database;
 with Language.Tree;                          use Language.Tree;
 with Language;                               use Language;
 with Language_Handlers;                      use Language_Handlers;
 with Projects.Registry;                      use Projects.Registry;
 with Projects;                               use Projects;
-with Traces;                                 use Traces;
 with VFS;                                    use VFS;
+with Entities;                               use Entities;
+with Traces;                                 use Traces;
+with Code_Analysis_Tree_Model;               use Code_Analysis_Tree_Model;
+with Code_Coverage;                          use Code_Coverage;
+with Code_Analysis;                          use Code_Analysis;
+with Code_Analysis_GUI;                      use Code_Analysis_GUI;
 
 package body Code_Analysis_Module is
 
@@ -97,21 +85,6 @@ package body Code_Analysis_Module is
    --  of the GPS.CodeAnalysis.get_analysis command
    Gcov_Extension_Cst :     constant String := ".gcov";
    --  Constant String that represents the extension of GCOV files
-   Progress_Bar_Width_Cst : constant Gint   := 150;
-   --  Constant used to set the width of the progress bars of the analysis
-   --  report
-
-   Line_Info_Cst  : constant String := "Coverage Analysis";
-   --  Name of the text info column used for the annotations
-   Line_Icons_Cst : constant String := "Coverage Icons";
-   --  Name of the pixmap column used for the annotations
-
-   Prj_Pixbuf_Cst  : constant String := "gps-project-closed";
-   --  Name of the pixbuf used for project node in the analysis report
-   File_Pixbuf_Cst : constant String := "gps-file";
-   --  Name of the pixbuf used for file node in the analysis report
-   Subp_Pixbuf_Cst : constant String := "gps-entity-subprogram";
-   --  Name of the pixbuf used for subprogram node in the analysis report
 
    Binary_Coverage_Trace : constant Debug_Handle :=
                              Create ("BINARY_COVERAGE_MODE", GNAT.Traces.On);
@@ -119,25 +92,8 @@ package body Code_Analysis_Module is
    --  Boolean that allows to determine wether we are in binary coverage mode
    --  or not.
 
-   Code_Analysis_Cst_Str : constant String := "CodeAnalysis";
-   Coverage_Category     : constant Glib.UTF8_String := -"Uncovered lines";
-
-   ---------------
-   -- Tree view --
-   ---------------
-
-   type Code_Analysis_View_Record is new Gtk_Vbox_Record with record
-      Tree        : Gtk_Tree_View;
-      Model       : Gtk_Tree_Store;
-      Node_Column : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
-      Cov_Column  : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
-      Cov_Percent : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
-      Error_Box   : Gtk_Hbox;
-      Icons       : Code_Analysis_Icons;
-      Projects    : Code_Analysis_Tree;  -- Used by Show_Flat_List_* callbacks
-   end record;
-
-   type Code_Analysis_View is access all Code_Analysis_View_Record;
+   CodeAnalysis_Cst  : constant String := "CodeAnalysis";
+   Coverage_Category : constant Glib.UTF8_String := -"Uncovered lines";
 
    package Kernel_Return_Cb is new User_Return_Callback
      (Gtk.Widget.Gtk_Widget_Record, Boolean, Kernel_Handle);
@@ -208,42 +164,6 @@ package body Code_Analysis_Module is
      (Glib.Object.GObject_Record, Context_And_Analysis);
    --  Used to connect handlers on the global Coverage contextual menu
 
-   function Get_Iter_From_Context
-     (Context : Selection_Context;
-      Model   : Gtk_Tree_Store) return Gtk_Tree_Iter;
-   --  Return the Gtk_Tree_Iter of the context described entity in the Report
-   --  of Analysis
-   --  Return Null_Iter if Model is empty
-
-   procedure Show_Empty_Analysis_Report
-     (Kernel : Kernel_Handle; Analysis : Code_Analysis_Instance);
-   --  Build an error stating Report of Analysis and insert it in the MDI
-
-   procedure Show_Analysis_Report
-     (Kernel       : Kernel_Handle;
-      Cont_N_Anal  : Context_And_Analysis;
-      Raise_Report : Boolean := True);
-   --  Check if the context pointed project has data in the current
-   --  code_analysis instance, if not, tries to find a project that has some
-   --  and if it's not possible, show an error report
-   --  Then Build the Report of Analysis N, populate it, expand the
-   --  the appropriate item following given context information and finally
-   --  insert the new Report in the MDI.
-   --  If Raise_Report is set to True, the Report of Analysis N will be raised
-   --  at the end of the treatment
-   --  Should be called by :
-   --   - Show_Analysis_Report_From_Menu
-   --   - Show_Analysis_Report_From_Shell
-   --   - and at every addition of data to code_analysis from file or projects
-
-   procedure Build_Analysis_Report
-     (Kernel   : Kernel_Handle;
-      Analysis : Code_Analysis_Instance);
-   --  Actually builds the tree view report.
-   --  If Is_Error is True, then the Report of Analysis will be built with an
-   --  emptiness warning header.
-   --  Should be called by Show_Analysis_Report or Show_Empty_Analysis_Report
-
    procedure List_Uncovered_Lines_In_All_Projects
      (Kernel   : Kernel_Handle;
       Analysis : Code_Analysis_Instance);
@@ -255,6 +175,12 @@ package body Code_Analysis_Module is
    --  Return the 1st project that contains coverage data from the given
    --  analysis.
    --  Return No_Project if no project contains such data
+
+   function Get_Iter_From_Context
+     (Context : Selection_Context;
+      Model   : Gtk_Tree_Store) return Gtk_Tree_Iter;
+   --  Returns the Gtk_Tree_Iter corresponding of the Gtk_Tree node of
+   --  contextual elements (project, file, subprogram) of the coverage report
 
    ---------------------
    -- Contextual menu --
@@ -354,11 +280,51 @@ package body Code_Analysis_Module is
    --  menu, or in a generated submenu. Submenus are created if many instances
    --  are loaded
 
+   procedure Show_Analysis_Report_From_Menu
+     (Widget      : access Glib.Object.GObject_Record'Class;
+      Cont_N_Anal : Context_And_Analysis);
+   --  Menu callback that calls Show_Analysis_Report with no context info
+
+   procedure Show_Analysis_Report_From_Shell
+     (Data    : in out Callback_Data'Class;
+      Command : String);
+   --  Create and display a Code_Analysis tree view within a MDI Child
+
+   procedure Show_Analysis_Report
+     (Kernel       : Kernel_Handle;
+      Cont_N_Anal  : Context_And_Analysis;
+      Raise_Report : Boolean := True);
+   --  Check if the context pointed project has data in the current
+   --  code_analysis instance, if not, tries to find a project that has some
+   --  and if it's not possible, show an error report
+   --  Then Build the Report of Analysis N, populate it, expand the
+   --  the appropriate item following given context information and finally
+   --  insert the new Report in the MDI.
+   --  If Raise_Report is set to True, the Report of Analysis N will be raised
+   --  at the end of the treatment
+   --  Should be called by :
+   --   - Show_Analysis_Report_From_Menu
+   --   - Show_Analysis_Report_From_Shell
+   --   - and at every addition of data to code_analysis from file or projects
+
    procedure Show_Empty_Analysis_Report_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
    --  Call to build the tree view report and then put inside it an error
    --  message
+
+   procedure Show_Empty_Analysis_Report
+     (Kernel : Kernel_Handle; Analysis : Code_Analysis_Instance);
+   --  Build an error stating Report of Analysis and insert it in the MDI
+
+   procedure Connect_Report
+     (Kernel : Kernel_Handle; Cont_N_Anal : Context_And_Analysis);
+   --  Connect some signals to the widgets of the Cont_N_Anal.Analysis.View
+   --  Also create and put the report in an MDI child
+
+   procedure On_Destroy (Widget      : access Glib.Object.GObject_Record'Class;
+                         Cont_N_Anal : Context_And_Analysis);
+   --  Callback for the "destroy" signal that mark the report as destroyed
 
    procedure Shell_CodeAnalysis_Constructor
      (Data : in out Callback_Data'Class; Command : String);
@@ -451,11 +417,6 @@ package body Code_Analysis_Module is
    --  of each loaded projects
    --  Does nothing if the lines are not listed in
 
-   procedure Show_Analysis_Report_From_Shell
-     (Data    : in out Callback_Data'Class;
-      Command : String);
-   --  Create and display a Code_Analysis tree view within a MDI Child
-
    procedure Destroy_Analysis_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
@@ -479,36 +440,6 @@ package body Code_Analysis_Module is
      (Kernel   : Kernel_Handle;
       Analysis : Code_Analysis_Instance);
    --  Free the memory used by the given analysis instance
-
-   procedure On_Destroy (Widget      : access Glib.Object.GObject_Record'Class;
-                         Cont_N_Anal : Context_And_Analysis);
-   --  Callback for the "destroy" signal that cleanly destroy the widget
-
-   function On_Double_Click (Object : access Gtk_Widget_Record'Class;
-                             Event  : Gdk_Event;
-                             Kernel : Kernel_Handle) return Boolean;
-   --  Callback for the "2button_press" signal that show the File or Subprogram
-   --  indicated by the selected Report of Analysis tree node
-
-   procedure Context_Func
-     (Context      : in out Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu);
-   --  Determines the content of the contextual menu displayed on the Report of
-   --  Analysis MDI child, using its selected node and sets project and file
-   --  information to the given context
-
-   procedure Open_File_Editor_On_File
-     (Kernel : Kernel_Handle; Model : Gtk_Tree_Model; Iter : Gtk_Tree_Iter);
-   --  Opens a file editor on the source file pointed out by Iter in Model
-
-   procedure Open_File_Editor_On_Subprogram
-     (Kernel : Kernel_Handle; Model : Gtk_Tree_Model; Iter : Gtk_Tree_Iter);
-   --  Opens a file editor on the source file containing the Subprogram
-   --  pointed out by Iter in Model
 
    procedure Add_Coverage_Annotations_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
@@ -634,28 +565,6 @@ package body Code_Analysis_Module is
       Cont_N_Anal : Context_And_Analysis);
    --  Remove the selected project node from the related report and instance
 
-   procedure Expand_All_From_Report (Object : access Gtk_Widget_Record'Class);
-   --  Expand the whole tree vien in a code_analysis report
-
-   procedure Collapse_All_From_Report
-     (Object : access Gtk_Widget_Record'Class);
-   --  Collapse the whole tree vien in a code_analysis report
-
-   procedure Show_Full_Tree (Object : access Gtk_Widget_Record'Class);
-   --  Fill again the Gtk_Tree_Store with the full tree
-
-   procedure Show_Flat_List_Of_Files (Object : access Gtk_Widget_Record'Class);
-   --  Fill the Gtk_Tree_Store with only on level of file
-
-   procedure Show_Flat_List_Of_Subprograms
-     (Object : access Gtk_Widget_Record'Class);
-   --  Fill the Gtk_Tree_Store with only on level of subprograms
-
-   procedure Show_Analysis_Report_From_Menu
-     (Widget      : access Glib.Object.GObject_Record'Class;
-      Cont_N_Anal : Context_And_Analysis);
-   --  Menu callback that calls Show_Analysis_Report with no context info
-
    --------------------------------------------
    -- CodeAnalysis_Default_Shell_Constructor --
    --------------------------------------------
@@ -695,7 +604,7 @@ package body Code_Analysis_Module is
          Set (Analysis.Instances.all, Get_Script (Data), Instance);
          Property := new Code_Analysis_Property_Record;
          Property.Analysis := Analysis;
-         Set_Data (Instance, Code_Analysis_Cst_Str,
+         Set_Data (Instance, CodeAnalysis_Cst,
                    Instance_Property_Record (Property.all));
       end Attach_Instance_And_Analysis;
 
@@ -874,7 +783,7 @@ package body Code_Analysis_Module is
       Prj_Node : Project_Access;
    begin
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
-      Property := Get_Data (Instance, Code_Analysis_Cst_Str);
+      Property := Get_Data (Instance, CodeAnalysis_Cst);
 
       if Code_Analysis_Property (Property).Analysis = null then
          Set_Error_Msg (Data, -"The analysis no longer exists");
@@ -1052,7 +961,7 @@ package body Code_Analysis_Module is
       Prj_Node : Project_Access;
    begin
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
-      Property := Get_Data (Instance, Code_Analysis_Cst_Str);
+      Property := Get_Data (Instance, CodeAnalysis_Cst);
 
       if Code_Analysis_Property (Property).Analysis = null then
          Set_Error_Msg (Data, -"The analysis no longer exists");
@@ -1193,7 +1102,7 @@ package body Code_Analysis_Module is
       Prj_Iter : Imported_Project_Iterator;
    begin
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
-      Property := Get_Data (Instance, Code_Analysis_Cst_Str);
+      Property := Get_Data (Instance, CodeAnalysis_Cst);
 
       if Code_Analysis_Property (Property).Analysis = null then
          Set_Error_Msg (Data, -"The analysis no longer exists");
@@ -1233,7 +1142,7 @@ package body Code_Analysis_Module is
       Instance : Class_Instance;
    begin
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
-      Property := Get_Data (Instance, Code_Analysis_Cst_Str);
+      Property := Get_Data (Instance, CodeAnalysis_Cst);
 
       if Code_Analysis_Property (Property).Analysis = null then
          Set_Error_Msg (Data, -"The analysis no longer exists");
@@ -1259,7 +1168,7 @@ package body Code_Analysis_Module is
       Instance : Class_Instance;
    begin
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
-      Property := Get_Data (Instance, Code_Analysis_Cst_Str);
+      Property := Get_Data (Instance, CodeAnalysis_Cst);
 
       if Code_Analysis_Property (Property).Analysis = null then
          Set_Error_Msg (Data, -"The analysis no longer exists");
@@ -1360,7 +1269,7 @@ package body Code_Analysis_Module is
       Property : Instance_Property;
    begin
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
-      Property := Get_Data (Instance, Code_Analysis_Cst_Str);
+      Property := Get_Data (Instance, CodeAnalysis_Cst);
 
       if Code_Analysis_Property (Property).Analysis = null then
          Set_Error_Msg (Data, -"The analysis no longer exists");
@@ -1390,6 +1299,101 @@ package body Code_Analysis_Module is
          Trace (Exception_Handle, E);
    end Show_Analysis_Report_From_Menu;
 
+   --------------------------
+   -- Show_Analysis_Report --
+   --------------------------
+
+   procedure Show_Analysis_Report
+     (Kernel       : Kernel_Handle;
+      Cont_N_Anal  : Context_And_Analysis;
+      Raise_Report : Boolean := True)
+   is
+      Local_Context : Selection_Context;
+      Iter          : Gtk_Tree_Iter;
+      Path          : Gtk_Tree_Path;
+   begin
+
+      --------------------------------------
+      --  Check for analysis information  --
+      --------------------------------------
+
+      if Local_Context = No_Context then
+         Local_Context := Check_Context (Kernel, No_Context);
+      end if;
+
+      declare
+         Prj_Name : Project_Type;
+         Prj_Node : Code_Analysis.Project_Access;
+      begin
+         Prj_Node := Get_Or_Create
+           (Cont_N_Anal.Analysis.Projects,
+            Project_Information (Local_Context));
+
+         if Prj_Node.Analysis_Data.Coverage_Data = null then
+            --  If the current context's project has no coverage data, it has
+            --  to be modified or an erro message is shown
+            Prj_Name := First_Project_With_Coverage_Data
+              (Cont_N_Anal.Analysis);
+
+            if Prj_Name /= No_Project then
+               --  Set in the context the 1st project that has analysis
+               --  data
+               Set_File_Information
+                 (Local_Context, Project => Prj_Name);
+            else
+               Show_Empty_Analysis_Report (Kernel, Cont_N_Anal.Analysis);
+               return;
+            end if;
+         end if;
+      end;
+
+      --  Here we have a context that point on elements that will be added to
+      --  the report of analysis
+
+      --------------------------
+      --  Building the report --
+      --------------------------
+
+      if Cont_N_Anal.Analysis.View = null then
+         Cont_N_Anal.Analysis.View := Build_Analysis_Report
+           (Kernel,
+            Cont_N_Anal.Analysis.Name,
+            Cont_N_Anal.Analysis.Projects,
+            Binary_Coverage_Mode);
+         Connect_Report (Kernel, Cont_N_Anal);
+      elsif Cont_N_Anal.Analysis.View.Error_Box /= null then
+         Hide_All (Cont_N_Anal.Analysis.View.Error_Box);
+      end if;
+
+      Clear (Cont_N_Anal.Analysis.View.Model);
+      Iter := Get_Iter_First (Cont_N_Anal.Analysis.View.Model);
+      Fill_Iter (Cont_N_Anal.Analysis.View.Model, Iter,
+                 Cont_N_Anal.Analysis.Projects, Binary_Coverage_Mode,
+                 Cont_N_Anal.Analysis.View.Icons);
+
+      --------------------------------------
+      --  Selection of the context caller --
+      --------------------------------------
+
+      Iter := Get_Iter_From_Context
+        (Local_Context, Cont_N_Anal.Analysis.View.Model);
+
+      if Iter = Null_Iter then
+         Show_Empty_Analysis_Report (Kernel, Cont_N_Anal.Analysis);
+         return;
+      end if;
+
+      Path := Get_Path (Cont_N_Anal.Analysis.View.Model, Iter);
+      Collapse_All (Cont_N_Anal.Analysis.View.Tree);
+      Expand_To_Path (Cont_N_Anal.Analysis.View.Tree, Path);
+      Select_Path (Get_Selection (Cont_N_Anal.Analysis.View.Tree), Path);
+      Path_Free (Path);
+
+      if Raise_Report then
+         Raise_Child (Cont_N_Anal.Analysis.Child);
+      end if;
+   end Show_Analysis_Report;
+
    ------------------------------------------
    -- Show_Empty_Analysis_Report_From_Menu --
    ------------------------------------------
@@ -1415,7 +1419,11 @@ package body Code_Analysis_Module is
      (Kernel : Kernel_Handle; Analysis : Code_Analysis_Instance) is
    begin
       if Analysis.View = null then
-         Build_Analysis_Report (Kernel, Analysis);
+         Analysis.View := Build_Analysis_Report
+           (Kernel, Analysis.Name, Analysis.Projects, Binary_Coverage_Mode);
+         Connect_Report
+           (Kernel, Context_And_Analysis'(Check_Context (Kernel, No_Context),
+            Analysis));
       end if;
 
       if Get_No_Show_All (Analysis.View.Error_Box) then
@@ -1425,6 +1433,62 @@ package body Code_Analysis_Module is
       Show_All (Analysis.View.Error_Box);
       Raise_Child (Analysis.Child);
    end Show_Empty_Analysis_Report;
+
+   --------------------
+   -- Connect_Report --
+   --------------------
+
+   procedure Connect_Report
+     (Kernel : Kernel_Handle; Cont_N_Anal : Context_And_Analysis) is
+   begin
+      Context_And_Analysis_CB.Connect
+        (Cont_N_Anal.Analysis.View.Load_Button,
+         Gtk.Button.Signal_Clicked,
+         Context_And_Analysis_CB.To_Marshaller
+           (Add_All_Gcov_Project_Info_From_Menu'Access), Cont_N_Anal);
+
+      ---------------
+      -- MDI child --
+      ---------------
+
+      GPS.Kernel.MDI.Gtk_New
+        (Cont_N_Anal.Analysis.Child, Cont_N_Anal.Analysis.View,
+         Group  => Group_VCS_Explorer,
+         Module => Code_Analysis_Module_ID);
+      Set_Title
+        (Cont_N_Anal.Analysis.Child,
+         -"Report of " & Cont_N_Anal.Analysis.Name.all);
+      Register_Contextual_Menu
+        (Kernel          => Kernel,
+         Event_On_Widget => Cont_N_Anal.Analysis.View.Tree,
+         Object          => Cont_N_Anal.Analysis.View,
+         ID              => Module_ID (Code_Analysis_Module_ID),
+         Context_Func    => Context_Func'Access);
+      Kernel_Return_Cb.Object_Connect
+        (Cont_N_Anal.Analysis.View.Tree, Signal_Button_Press_Event,
+         Kernel_Return_Cb.To_Marshaller
+           (On_Double_Click'Access), Cont_N_Anal.Analysis.View.Tree, Kernel);
+      Context_And_Analysis_CB.Connect
+        (Cont_N_Anal.Analysis.View, Signal_Destroy,
+         Context_And_Analysis_CB.To_Marshaller (On_Destroy'Access),
+         Cont_N_Anal);
+      Put (Get_MDI (Kernel), Cont_N_Anal.Analysis.Child);
+   end Connect_Report;
+
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy
+     (Widget      : access Glib.Object.GObject_Record'Class;
+      Cont_N_Anal : Context_And_Analysis)
+   is
+      pragma Unreferenced (Widget);
+   begin
+      Cont_N_Anal.Analysis.View := null;
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end On_Destroy;
 
    --------------------------------------
    -- First_Project_With_Coverage_Data --
@@ -1550,250 +1614,6 @@ package body Code_Analysis_Module is
       return Iter;
    end Get_Iter_From_Context;
 
-   --------------------------
-   -- Show_Analysis_Report --
-   --------------------------
-
-   procedure Show_Analysis_Report
-     (Kernel       : Kernel_Handle;
-      Cont_N_Anal  : Context_And_Analysis;
-      Raise_Report : Boolean := True)
-   is
-      Local_Context : Selection_Context;
-      Iter          : Gtk_Tree_Iter;
-      Path          : Gtk_Tree_Path;
-   begin
-
-      --------------------------------------
-      --  Check for analysis information  --
-      --------------------------------------
-
-      if Local_Context = No_Context then
-         Local_Context := Check_Context (Kernel, No_Context);
-      end if;
-
-      declare
-         Prj_Name : Project_Type;
-         Prj_Node : Code_Analysis.Project_Access;
-      begin
-         Prj_Node := Get_Or_Create
-           (Cont_N_Anal.Analysis.Projects,
-            Project_Information (Local_Context));
-
-         if Prj_Node.Analysis_Data.Coverage_Data = null then
-            --  If the current context's project has no coverage data, it has
-            --  to be modified or an erro message is shown
-            Prj_Name := First_Project_With_Coverage_Data
-              (Cont_N_Anal.Analysis);
-
-            if Prj_Name /= No_Project then
-               --  Set in the context the 1st project that has analysis
-               --  data
-               Set_File_Information
-                 (Local_Context, Project => Prj_Name);
-            else
-               Show_Empty_Analysis_Report (Kernel, Cont_N_Anal.Analysis);
-               return;
-            end if;
-         end if;
-      end;
-
-      --  Here we have a context that point on elements that will be added to
-      --  the report of analysis
-
-      --------------------------
-      --  Building the report --
-      --------------------------
-
-      if Cont_N_Anal.Analysis.View = null then
-         Build_Analysis_Report (Kernel, Cont_N_Anal.Analysis);
-      elsif Cont_N_Anal.Analysis.View.Error_Box /= null then
-         Hide_All (Cont_N_Anal.Analysis.View.Error_Box);
-      end if;
-
-      Clear (Cont_N_Anal.Analysis.View.Model);
-      Iter := Get_Iter_First (Cont_N_Anal.Analysis.View.Model);
-      Fill_Iter (Cont_N_Anal.Analysis.View.Model, Iter,
-                 Cont_N_Anal.Analysis.Projects, Binary_Coverage_Mode,
-                 Cont_N_Anal.Analysis.View.Icons);
-
-      --------------------------------------
-      --  Selection of the context caller --
-      --------------------------------------
-
-      Iter := Get_Iter_From_Context
-        (Local_Context, Cont_N_Anal.Analysis.View.Model);
-
-      if Iter = Null_Iter then
-         Show_Empty_Analysis_Report (Kernel, Cont_N_Anal.Analysis);
-         return;
-      end if;
-
-      Path := Get_Path (Cont_N_Anal.Analysis.View.Model, Iter);
-      Collapse_All (Cont_N_Anal.Analysis.View.Tree);
-      Expand_To_Path (Cont_N_Anal.Analysis.View.Tree, Path);
-      Select_Path (Get_Selection (Cont_N_Anal.Analysis.View.Tree), Path);
-      Path_Free (Path);
-
-      if Raise_Report then
-         Raise_Child (Cont_N_Anal.Analysis.Child);
-      end if;
-   end Show_Analysis_Report;
-
-   ---------------------------
-   -- Build_Analysis_Report --
-   ---------------------------
-
-   procedure Build_Analysis_Report
-     (Kernel   : Kernel_Handle;
-      Analysis : Code_Analysis_Instance)
-   is
-      Scrolled    : Gtk_Scrolled_Window;
-      Text_Render : Gtk_Cell_Renderer_Text;
-      Pixbuf_Rend : Gtk_Cell_Renderer_Pixbuf;
-      Bar_Render  : Gtk_Cell_Renderer_Progress;
-      Dummy       : Gint;
-      Cont_N_Anal : constant Context_And_Analysis :=
-                      (Context => No_Context, Analysis => Analysis);
-      pragma Unreferenced (Dummy);
-      --  Error box widgets
-      Warning_Image    : Gtk_Image;
-      Error_Label      : Gtk_Label;
-      Label_And_Button : Gtk_Vbox;
-      Button_Box       : Gtk_Hbox;
-      Load_Data_Button : Gtk_Button;
-   begin
-      Analysis.View := new Code_Analysis_View_Record;
-      Analysis.View.Icons.Prj_Pixbuf  := Render_Icon
-        (Get_Main_Window (Kernel), Prj_Pixbuf_Cst, Gtk.Enums.Icon_Size_Menu);
-      Analysis.View.Icons.File_Pixbuf := Render_Icon
-        (Get_Main_Window (Kernel), File_Pixbuf_Cst, Gtk.Enums.Icon_Size_Menu);
-      Analysis.View.Icons.Subp_Pixbuf := Render_Icon
-        (Get_Main_Window (Kernel), Subp_Pixbuf_Cst, Gtk.Enums.Icon_Size_Menu);
-      Initialize_Vbox (Analysis.View, False, 0);
-      Analysis.View.Projects := Analysis.Projects;
-      Gtk_New (Analysis.View.Model, GType_Array'
-          (Pix_Col     => Gdk.Pixbuf.Get_Type,
-           Name_Col    => GType_String,
-           Node_Col    => GType_Pointer,
-           File_Col    => GType_Pointer,
-           Prj_Col     => GType_Pointer,
-           Cov_Col     => GType_String,
-           Cov_Sort    => GType_Int,
-           Cov_Bar_Txt => GType_String,
-           Cov_Bar_Val => GType_Int));
-      Gtk_New (Analysis.View.Tree, Gtk_Tree_Model (Analysis.View.Model));
-      Set_Name (Analysis.View.Tree, Analysis.Name.all); --  testsuite
-
-      --  Create and append an error box in every cases
-      --  Set its children visible or not after
-      Gtk_New_Hbox (Analysis.View.Error_Box, False, 7);
-            Gtk_New_Vbox (Label_And_Button, False, 7);
-      Gtk_New_Hbox (Button_Box);
-      Gtk_New_From_Icon_Name
-        (Warning_Image, Stock_Dialog_Warning, Icon_Size_Dialog);
-      Gtk_New
-        (Error_Label,
-         -"This analysis report is empty. You can populate it with the "
-         & '"' & (-"Load data..." & '"' &
-           (-" entries of the /Tools/Coverage menu or the button below."
-             )));
-      Set_Line_Wrap (Error_Label, True);
-      Set_Justify (Error_Label, Justify_Left);
-      Gtk_New (Load_Data_Button, -"Load data for all projects");
-      Context_And_Analysis_CB.Connect
-        (Load_Data_Button, Gtk.Button.Signal_Clicked,
-         Context_And_Analysis_CB.To_Marshaller
-           (Add_All_Gcov_Project_Info_From_Menu'Access),
-         Context_And_Analysis'
-           (Check_Context (Kernel, Get_Current_Context (Kernel)), Analysis));
-      Pack_Start (Analysis.View.Error_Box, Warning_Image, False, False, 7);
-      Pack_Start (Label_And_Button, Error_Label, False, True, 7);
-      Pack_Start (Button_Box, Load_Data_Button, False, False, 0);
-      Pack_Start (Label_And_Button, Button_Box, False, True, 0);
-      Pack_Start (Analysis.View.Error_Box, Label_And_Button, False, True, 0);
-      Pack_Start (Analysis.View, Analysis.View.Error_Box, False, True, 0);
-      Set_No_Show_All (Analysis.View.Error_Box, True);
-
-      -----------------
-      -- Node column --
-      -----------------
-
-      Gtk_New (Analysis.View.Node_Column);
-      Gtk_New (Pixbuf_Rend);
-      Pack_Start (Analysis.View.Node_Column, Pixbuf_Rend, False);
-      Add_Attribute
-        (Analysis.View.Node_Column, Pixbuf_Rend, "pixbuf", Pix_Col);
-      Gtk_New (Text_Render);
-      Pack_Start (Analysis.View.Node_Column, Text_Render, False);
-      Add_Attribute
-        (Analysis.View.Node_Column, Text_Render, "text", Name_Col);
-      Dummy := Append_Column
-        (Analysis.View.Tree, Analysis.View.Node_Column);
-      Set_Title (Analysis.View.Node_Column, -"Entities");
-      Set_Resizable (Analysis.View.Node_Column, True);
-      Set_Sort_Column_Id (Analysis.View.Node_Column, Name_Col);
-
-      ----------------------
-      -- Coverage columns --
-      ----------------------
-
-      Gtk_New (Analysis.View.Cov_Column);
-      Dummy :=
-        Append_Column (Analysis.View.Tree, Analysis.View.Cov_Column);
-      Gtk_New (Text_Render);
-      Pack_Start (Analysis.View.Cov_Column, Text_Render, False);
-      Add_Attribute
-        (Analysis.View.Cov_Column, Text_Render, "text", Cov_Col);
-      Set_Title (Analysis.View.Cov_Column, -"Coverage");
-      Set_Sort_Column_Id (Analysis.View.Cov_Column, Cov_Sort);
-      Gtk_New (Analysis.View.Cov_Percent);
-      Dummy :=
-        Append_Column (Analysis.View.Tree, Analysis.View.Cov_Percent);
-      Gtk_New (Bar_Render);
-      Glib.Properties.Set_Property
-        (Bar_Render,
-         Gtk.Cell_Renderer.Width_Property,
-         Progress_Bar_Width_Cst);
-      Pack_Start (Analysis.View.Cov_Percent, Bar_Render, False);
-      Add_Attribute
-        (Analysis.View.Cov_Percent, Bar_Render, "text", Cov_Bar_Txt);
-      Add_Attribute
-        (Analysis.View.Cov_Percent, Bar_Render, "value", Cov_Bar_Val);
-      Set_Title (Analysis.View.Cov_Percent, -"Coverage Percentage");
-      Set_Sort_Column_Id (Analysis.View.Cov_Percent, Cov_Bar_Val);
-      Gtk_New (Scrolled);
-      Set_Policy
-        (Scrolled, Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
-      Add (Scrolled, Analysis.View.Tree);
-      Add (Analysis.View, Scrolled);
-
-      ---------------
-      -- MDI child --
-      ---------------
-
-      GPS.Kernel.MDI.Gtk_New
-        (Analysis.Child, Analysis.View,
-         Group  => Group_VCS_Explorer,
-         Module => Code_Analysis_Module_ID);
-      Set_Title
-        (Analysis.Child, -"Report of " & Analysis.Name.all);
-      Register_Contextual_Menu
-        (Kernel          => Kernel,
-         Event_On_Widget => Analysis.View.Tree,
-         Object          => Analysis.View,
-         ID              => Module_ID (Code_Analysis_Module_ID),
-         Context_Func    => Context_Func'Access);
-      Kernel_Return_Cb.Object_Connect
-        (Analysis.View.Tree, Signal_Button_Press_Event,
-         Kernel_Return_Cb.To_Marshaller
-           (On_Double_Click'Access), Analysis.View.Tree, Kernel);
-      Context_And_Analysis_CB.Connect
-        (Analysis.View, Signal_Destroy, Context_And_Analysis_CB.To_Marshaller
-           (On_Destroy'Access), Cont_N_Anal);
-      Put (Get_MDI (Kernel), Analysis.Child);
-   end Build_Analysis_Report;
-
    --------------------------------
    -- Destroy_Analysis_From_Menu --
    --------------------------------
@@ -1890,15 +1710,14 @@ package body Code_Analysis_Module is
       end if;
 
       Remove_Location_Category (Kernel, Coverage_Category);
-      Remove_Line_Information_Column (Kernel, No_File, Line_Icons_Cst);
-      Remove_Line_Information_Column (Kernel, No_File, Line_Info_Cst);
+      Remove_Line_Information_Column (Kernel, No_File, CodeAnalysis_Cst);
       Free_Code_Analysis (Analysis.Projects);
 
       --  For each shell instance, get its property and set the Analysis field
       --  to null
       for J in Instances'Range loop
 
-         Property := Get_Data (Instances (J), Code_Analysis_Cst_Str);
+         Property := Get_Data (Instances (J), CodeAnalysis_Cst);
 
          if Property /= null then
             Code_Analysis_Property (Property).Analysis := null;
@@ -1911,95 +1730,6 @@ package body Code_Analysis_Module is
 
       GNAT.Strings.Free (Analysis.Name);
    end Destroy_Analysis_Instance;
-
-   ----------------
-   -- On_Destroy --
-   ----------------
-
-   procedure On_Destroy
-     (Widget      : access Glib.Object.GObject_Record'Class;
-      Cont_N_Anal : Context_And_Analysis)
-   is
-      pragma Unreferenced (Widget);
-   begin
-      Cont_N_Anal.Analysis.View := null;
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end On_Destroy;
-
-   ---------------------
-   -- On_Double_Click --
-   ---------------------
-
-   function On_Double_Click
-     (Object : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event;
-      Kernel : Kernel_Handle) return Boolean
-   is
-      use Code_Analysis_Tree_Model.File_Set;
-      Tree  : constant Gtk_Tree_View := Gtk_Tree_View (Object);
-      Iter  : Gtk_Tree_Iter;
-      Model : Gtk_Tree_Model;
-   begin
-      if Get_Button (Event) = 1
-        and then Get_Event_Type (Event) = Gdk_2button_Press
-      then
-         Get_Selected (Get_Selection (Tree), Model, Iter);
-
-         declare
-            Node : constant Node_Access := Code_Analysis.Node_Access
-              (Node_Set.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
-         begin
-            if Node.all in Code_Analysis.Project'Class then
-               --  So we are on a project node
-               null;
-            elsif Node.all in Code_Analysis.File'Class then
-               --  So we are on a file node
-               Open_File_Editor_On_File (Kernel, Model, Iter);
-            elsif Node.all in Code_Analysis.Subprogram'Class then
-               --  So we are on a subprogram node
-               Open_File_Editor_On_Subprogram (Kernel, Model, Iter);
-            end if;
-         end;
-
-         return True;
-      end if;
-
-      return False;
-   exception
-      when E : others => Trace (Exception_Handle, E);
-         return False;
-   end On_Double_Click;
-
-   ------------------------------
-   -- Open_File_Editor_On_File --
-   ------------------------------
-
-   procedure Open_File_Editor_On_File
-     (Kernel : Kernel_Handle; Model : Gtk_Tree_Model; Iter : Gtk_Tree_Iter)
-   is
-      File_Node : constant File_Access := File_Access
-        (File_Set.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
-   begin
-      Open_File_Editor (Kernel, File_Node.Name);
-   end Open_File_Editor_On_File;
-
-   ------------------------------------
-   -- Open_File_Editor_On_Subprogram --
-   ------------------------------------
-
-   procedure Open_File_Editor_On_Subprogram
-     (Kernel : Kernel_Handle; Model : Gtk_Tree_Model; Iter : Gtk_Tree_Iter)
-   is
-      File_Node : constant File_Access := File_Access
-        (File_Set.Get (Gtk_Tree_Store (Model), Iter, File_Col));
-      Subp_Node : constant Subprogram_Access := Subprogram_Access
-        (Subprogram_Set.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
-   begin
-      Open_File_Editor
-        (Kernel, File_Node.Name, Subp_Node.Line,
-         Basic_Types.Visible_Column_Type (Subp_Node.Column));
-   end Open_File_Editor_On_Subprogram;
 
    ----------------------------------------
    -- Add_Coverage_Annotations_From_Menu --
@@ -2047,8 +1777,10 @@ package body Code_Analysis_Module is
          end if;
       end loop;
 
-      Create_Line_Information_Column (Kernel, File_Node.Name, Line_Info_Cst);
-      Add_Line_Information (Kernel, File_Node.Name, Line_Info_Cst, Line_Info);
+      Create_Line_Information_Column
+        (Kernel, File_Node.Name, CodeAnalysis_Cst);
+      Add_Line_Information
+        (Kernel, File_Node.Name, CodeAnalysis_Cst, Line_Info);
       Unchecked_Free (Line_Info);
    end Add_Coverage_Annotations;
 
@@ -2084,8 +1816,8 @@ package body Code_Analysis_Module is
      (Kernel : Kernel_Handle;
       File_Node : Code_Analysis.File_Access) is
    begin
-      Remove_Line_Information_Column (Kernel, File_Node.Name, Line_Icons_Cst);
-      Remove_Line_Information_Column (Kernel, File_Node.Name, Line_Info_Cst);
+      Remove_Line_Information_Column
+        (Kernel, File_Node.Name, CodeAnalysis_Cst);
    exception
       when E : others => Trace (Exception_Handle, E);
    end Remove_Coverage_Annotations;
@@ -2290,19 +2022,17 @@ package body Code_Analysis_Module is
    begin
       if File_Node.Analysis_Data.Coverage_Data.Status = Valid then
          for J in Subp_Node.Start .. Subp_Node.Stop loop
-            if File_Node.Lines (J) /= Null_Line then
-               if File_Node.Lines (J).Analysis_Data.Coverage_Data.Coverage
-                 = 0 then
-                  Insert_Location
-                    (Kernel             => Kernel,
-                     Category           => Coverage_Category,
-                     File               => File_Node.Name,
-                     Text               => File_Node.Lines (J).Contents.all,
-                     Line               => J,
-                     Column             => 1,
-                     Highlight          => True,
-                     Highlight_Category => Builder_Warnings_Style);
-               end if;
+            if File_Node.Lines (J) /= Null_Line and then
+              File_Node.Lines (J).Analysis_Data.Coverage_Data.Coverage = 0 then
+               Insert_Location
+                 (Kernel             => Kernel,
+                  Category           => Coverage_Category,
+                  File               => File_Node.Name,
+                  Text               => File_Node.Lines (J).Contents.all,
+                  Line               => J,
+                  Column             => 1,
+                  Highlight          => True,
+                  Highlight_Category => Builder_Warnings_Style);
             end if;
          end loop;
       else
@@ -2336,15 +2066,13 @@ package body Code_Analysis_Module is
    begin
       if File_Node.Analysis_Data.Coverage_Data.Status = Valid then
          for J in Subp_Node.Start .. Subp_Node.Stop loop
-            if File_Node.Lines (J) /= Null_Line then
-               if File_Node.Lines (J).Analysis_Data.Coverage_Data.Coverage
-                 = 0 then
-                  Remove_Location_Category
-                    (Kernel,
-                     Coverage_Category,
-                     File_Node.Name,
-                     File_Node.Lines (J).Number);
-               end if;
+            if File_Node.Lines (J) /= Null_Line and then
+              File_Node.Lines (J).Analysis_Data.Coverage_Data.Coverage = 0 then
+               Remove_Location_Category
+                 (Kernel,
+                  Coverage_Category,
+                  File_Node.Name,
+                  File_Node.Lines (J).Number);
             end if;
          end loop;
       end if;
@@ -2519,196 +2247,6 @@ package body Code_Analysis_Module is
       when E : others => Trace (Exception_Handle, E);
    end Remove_Project_From_Menu;
 
-   ----------------------------
-   -- Expand_All_From_Report --
-   ----------------------------
-
-   procedure Expand_All_From_Report (Object : access Gtk_Widget_Record'Class)
-   is
-      View : constant Code_Analysis_View := Code_Analysis_View (Object);
-   begin
-      Expand_All (View.Tree);
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end Expand_All_From_Report;
-
-   ------------------------------
-   -- Collapse_All_From_Report --
-   ------------------------------
-
-   procedure Collapse_All_From_Report (Object : access Gtk_Widget_Record'Class)
-   is
-      View : constant Code_Analysis_View := Code_Analysis_View (Object);
-   begin
-      Collapse_All (View.Tree);
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end Collapse_All_From_Report;
-
-   --------------------
-   -- Show_Full_Tree --
-   --------------------
-
-   procedure Show_Full_Tree (Object : access Gtk_Widget_Record'Class) is
-      View : constant Code_Analysis_View := Code_Analysis_View (Object);
-      Iter : Gtk_Tree_Iter := Get_Iter_First (View.Model);
-      Path : Gtk_Tree_Path;
-   begin
-      Clear (View.Model);
-      Fill_Iter
-        (View.Model, Iter, View.Projects, Binary_Coverage_Mode, View.Icons);
-      Iter := Get_Iter_First (View.Model);
-      Path := Get_Path (View.Model, Iter);
-      Collapse_All (View.Tree);
-      Expand_To_Path (View.Tree, Path);
-      Select_Path (Get_Selection (View.Tree), Path);
-      Path_Free (Path);
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end Show_Full_Tree;
-
-   -----------------------------
-   -- Show_Flat_List_Of_Files --
-   -----------------------------
-
-   procedure Show_Flat_List_Of_Files (Object : access Gtk_Widget_Record'Class)
-   is
-      View : constant Code_Analysis_View := Code_Analysis_View (Object);
-      Iter : Gtk_Tree_Iter := Get_Iter_First (View.Model);
-   begin
-      Clear (View.Model);
-      Fill_Iter_With_Files
-        (View.Model, Iter, View.Projects, Binary_Coverage_Mode, View.Icons);
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end Show_Flat_List_Of_Files;
-
-   -----------------------------------
-   -- Show_Flat_List_Of_Subprograms --
-   -----------------------------------
-
-   procedure Show_Flat_List_Of_Subprograms
-     (Object : access Gtk_Widget_Record'Class)
-   is
-      View : constant Code_Analysis_View := Code_Analysis_View (Object);
-      Iter : Gtk_Tree_Iter := Get_Iter_First (View.Model);
-   begin
-      Clear (View.Model);
-      Fill_Iter_With_Subprograms
-        (View.Model, Iter, View.Projects, Binary_Coverage_Mode, View.Icons);
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end Show_Flat_List_Of_Subprograms;
-
-   ------------------
-   -- Context_Func --
-   ------------------
-
-   procedure Context_Func
-     (Context      : in out Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk_Event;
-      Menu         : Gtk_Menu)
-   is
-      pragma Unreferenced (Kernel, Event_Widget);
-      View      : constant Code_Analysis_View := Code_Analysis_View (Object);
-      X         : constant Gdouble := Get_X (Event);
-      Y         : constant Gdouble := Get_Y (Event);
-      Path      : Gtk_Tree_Path;
-      Prj_Node  : Code_Analysis.Project_Access;
-      File_Node : Code_Analysis.File_Access;
-      Column    : Gtk_Tree_View_Column;
-      Buffer_X  : Gint;
-      Buffer_Y  : Gint;
-      Row_Found : Boolean;
-      Item      : Gtk_Menu_Item;
-      Iter      : Gtk_Tree_Iter := Get_Iter_First (View.Model);
-   begin
-
-      Get_Path_At_Pos (View.Tree, Gint (X), Gint (Y), Path, Column,
-                       Buffer_X, Buffer_Y, Row_Found);
-
-      ---------------------------------------------------------------
-      --  Insert Report of Analysis # specific contextual entries  --
-      ---------------------------------------------------------------
-
-      Gtk_New (Item, -"Show flat list of files");
-      Gtkada.Handlers.Widget_Callback.Object_Connect
-        (Item, Gtk.Menu_Item.Signal_Activate,
-         Show_Flat_List_Of_Files'Access, View);
-      Append (Menu, Item);
-      Gtk_New (Item, -"Show flat list of subprograms");
-      Gtkada.Handlers.Widget_Callback.Object_Connect
-        (Item, Gtk.Menu_Item.Signal_Activate,
-         Show_Flat_List_Of_Subprograms'Access, View);
-      Append (Menu, Item);
-
-      if not Has_Child (View.Model, Iter) then
-         Gtk_New (Item, -"Show full tree");
-         Gtkada.Handlers.Widget_Callback.Object_Connect
-           (Item, Gtk.Menu_Item.Signal_Activate, Show_Full_Tree'Access, View);
-         Append (Menu, Item);
-      else
-         Gtk_New (Item, -"Expand all");
-         Gtkada.Handlers.Widget_Callback.Object_Connect
-           (Item, Gtk.Menu_Item.Signal_Activate,
-            Expand_All_From_Report'Access, View);
-         Append (Menu, Item);
-         Gtk_New (Item, -"Collapse all");
-         Gtkada.Handlers.Widget_Callback.Object_Connect
-           (Item, Gtk.Menu_Item.Signal_Activate,
-            Collapse_All_From_Report'Access, View);
-         Append (Menu, Item);
-      end if;
-
-      ----------------------------------
-      --  Set up context information  --
-      ----------------------------------
-
-      if Path /= null then
-         Gtk_New (Item);
-         Append (Menu, Item);
-         Select_Path (Get_Selection (View.Tree), Path);
-         Iter := Get_Iter (Gtk_Tree_Model (View.Model), Path);
-
-         declare
-            Node : constant Node_Access := Code_Analysis.Node_Access
-              (Node_Set.Get (Gtk_Tree_Store (View.Model), Iter, Node_Col));
-         begin
-            if Node.all in Code_Analysis.Project'Class then
-               --  So we are on a project node
-               --  Context receive project information
-               Set_File_Information
-                 (Context, Project => Project_Access (Node).Name);
-            elsif Node.all in Code_Analysis.File'Class then
-               --  So we are on a file node
-               --  Context receive project and file information
-               Prj_Node := Project_Access
-                 (Project_Set.Get
-                    (Gtk_Tree_Store (View.Model), Iter, Prj_Col));
-               Set_File_Information
-                 (Context,
-                  File    => Code_Analysis.File_Access (Node).Name,
-                  Project => Prj_Node.Name);
-            elsif Node.all in Code_Analysis.Subprogram'Class then
-               --  So we are on a subprogram node
-               --  Context receive project, file and entity information
-               File_Node := Code_Analysis.File_Access
-                 (File_Set.Get (Gtk_Tree_Store (View.Model),
-                  Iter, File_Col));
-               Prj_Node  := Project_Access
-                 (Project_Set.Get (Gtk_Tree_Store (View.Model),
-                  Iter, Prj_Col));
-               Set_File_Information (Context, File_Node.Name, Prj_Node.Name);
-               Set_Entity_Information
-                 (Context, Subprogram_Access (Node).Name.all);
-            end if;
-         end;
-      end if;
-   end Context_Func;
-
    ------------------------------
    -- Filter_Matches_Primitive --
    ------------------------------
@@ -2749,11 +2287,11 @@ package body Code_Analysis_Module is
    is
       use Code_Analysis_Instances;
       pragma Unreferenced (Factory, Object);
-      Cont_N_Anal  : Context_And_Analysis;
-      Project_Node : Project_Access;
-      Submenu      : Gtk_Menu;
-      Item         : Gtk_Menu_Item;
-      Cur          : Cursor := Code_Analysis_Module_ID.Analyzes.First;
+      Cont_N_Anal : Context_And_Analysis;
+      Prj_Node    : Project_Access;
+      Submenu     : Gtk_Menu;
+      Item        : Gtk_Menu_Item;
+      Cur         : Cursor := Code_Analysis_Module_ID.Analyzes.First;
    begin
       Cont_N_Anal.Context := Context;
 
@@ -2761,19 +2299,19 @@ package body Code_Analysis_Module is
          exit when Cur = No_Element;
 
          Cont_N_Anal.Analysis := Element (Cur);
-         Project_Node         := Get_Or_Create
+         Prj_Node             := Get_Or_Create
            (Cont_N_Anal.Analysis.Projects,
             Project_Information (Cont_N_Anal.Context));
 
          if Code_Analysis_Module_ID.Analyzes.Length > 1 then
-            Gtk_New (Item, -(Cont_N_Anal.Analysis.Name.all));
+            Gtk_New (Item, Cont_N_Anal.Analysis.Name.all);
             Append (Menu, Item);
             Gtk_New (Submenu);
             Set_Submenu (Item, Submenu);
             Set_Sensitive (Item, True);
-            Append_To_Contextual_Submenu (Cont_N_Anal, Submenu, Project_Node);
+            Append_To_Contextual_Submenu (Cont_N_Anal, Submenu, Prj_Node);
          else
-            Append_To_Contextual_Submenu (Cont_N_Anal, Menu, Project_Node);
+            Append_To_Contextual_Submenu (Cont_N_Anal, Menu, Prj_Node);
          end if;
 
          Next (Cur);
@@ -3126,29 +2664,28 @@ package body Code_Analysis_Module is
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      pragma Unreferenced (Kernel);
       use Code_Analysis_Instances;
-      Cur      : Cursor := Code_Analysis_Module_ID.Analyzes.First;
-      Item     : Gtk_Menu_Item;
-      Analysis : Code_Analysis_Instance;
+      Cont_N_Anal : Context_And_Analysis;
+      Cur         : Cursor := Code_Analysis_Module_ID.Analyzes.First;
+      Item        : Gtk_Menu_Item;
    begin
+      Cont_N_Anal.Context := Check_Context (Kernel_Handle (Kernel), Context);
+
       if Cur = No_Element then
          --  So there's currently no instances
-         Gtk_New (Item, -"Show Report of Analysis");
+         Gtk_New (Item, -"Show Report of Coverage");
          Append (Menu, Item);
          Context_And_Analysis_CB.Connect
            (Item, Gtk.Menu_Item.Signal_Activate,
             Context_And_Analysis_CB.To_Marshaller
-              (Show_Empty_Analysis_Report_From_Menu'Access),
-            Context_And_Analysis'(Context, Analysis));
+              (Show_Empty_Analysis_Report_From_Menu'Access), Cont_N_Anal);
          return;
       end if;
 
       loop
          exit when Cur = No_Element;
-         Analysis := Element (Cur);
-         Append_Show_Analysis_Report_To_Menu
-           (Context_And_Analysis'(Context, Analysis), Menu);
+         Cont_N_Anal.Analysis := Element (Cur);
+         Append_Show_Analysis_Report_To_Menu (Cont_N_Anal, Menu);
          Next (Cur);
       end loop;
    end Dynamic_Views_Menu_Factory;
@@ -3302,7 +2839,7 @@ package body Code_Analysis_Module is
    is
       Contextual_Menu     : Code_Analysis_Contextual_Menu_Access;
       Code_Analysis_Class : constant Class_Type
-        := New_Class (Kernel, Code_Analysis_Cst_Str);
+        := New_Class (Kernel, CodeAnalysis_Cst);
    begin
       Binary_Coverage_Mode := Active (Binary_Coverage_Trace);
       Code_Analysis_Module_ID := new Code_Analysis_Module_ID_Record;
@@ -3311,7 +2848,7 @@ package body Code_Analysis_Module is
       Register_Module
         (Module      => Code_Analysis_Module_ID,
          Kernel      => Kernel,
-         Module_Name => Code_Analysis_Cst_Str);
+         Module_Name => CodeAnalysis_Cst);
       Register_Contextual_Submenu
         (Kernel      => Kernel,
          Name        => -"Coverage",

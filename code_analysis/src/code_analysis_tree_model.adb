@@ -26,7 +26,6 @@ with Glib;                     use Glib;
 with GPS.Intl;                 use GPS.Intl;
 with Projects;                 use Projects;
 with Code_Analysis_Tree_Model; use Code_Analysis_Tree_Model;
-with Code_Analysis_Module;     use Code_Analysis_Module;
 with Code_Coverage;            use Code_Coverage;
 with VFS;
 
@@ -321,7 +320,7 @@ package body Code_Analysis_Tree_Model is
       Iter     : in out Gtk_Tree_Iter;
       Projects : Code_Analysis_Tree;
       Bin_Mode : Boolean := False;
-      Icons     : Code_Analysis_Icons)
+      Icons    : Code_Analysis_Icons)
    is
       use Project_Maps;
       Map_Cur  : Project_Maps.Cursor := Projects.First;
@@ -348,7 +347,7 @@ package body Code_Analysis_Tree_Model is
       Iter     : in out Gtk_Tree_Iter;
       Projects : Code_Analysis_Tree;
       Bin_Mode : Boolean := False;
-      Icons    : Code_Analysis_Module.Code_Analysis_Icons)
+      Icons    : Code_Analysis_Icons)
    is
       use Project_Maps;
       Map_Cur  : Project_Maps.Cursor := Projects.First;

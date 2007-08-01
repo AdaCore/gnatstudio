@@ -24,7 +24,6 @@
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
 with Gtk.Tree_Store;         use Gtk.Tree_Store;
 with Gtk.Tree_Model;         use Gtk.Tree_Model;
-
 with Language.Tree.Database; use Language.Tree.Database;
 with Code_Analysis;          use Code_Analysis;
 

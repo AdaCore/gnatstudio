@@ -17,16 +17,17 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;
 with Ada.Text_IO;            use Ada.Text_IO;
 with Ada.Strings;            use Ada.Strings;
 with Ada.Strings.Fixed;      use Ada.Strings.Fixed;
 with GNAT.Regpat;            use GNAT.Regpat;
+with Glib;
+with GPS.Intl;               use GPS.Intl;
 with String_Utils;           use String_Utils;
 with VFS;                    use VFS;
 with Language;               use Language;
 with Language.Tree;          use Language.Tree;
-with GPS.Intl;               use GPS.Intl;
+with Code_Analysis_GUI;      use Code_Analysis_GUI;
 
 package body Code_Coverage is
 
