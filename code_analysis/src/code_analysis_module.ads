@@ -17,11 +17,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+--  <description>
 --  This package defines the module for code analysis storage structure
 --  It defines shell commands that allow to create graphical interfaces for
 --  coverage informations inside GPS.
+--  </description>
 
-with Gdk.Pixbuf;
 with GPS.Kernel;
 
 package Code_Analysis_Module is
@@ -29,11 +30,5 @@ package Code_Analysis_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module
-
-   type Code_Analysis_Icons is record
-      Prj_Pixbuf  : Gdk.Pixbuf.Gdk_Pixbuf;
-      File_Pixbuf : Gdk.Pixbuf.Gdk_Pixbuf;
-      Subp_Pixbuf : Gdk.Pixbuf.Gdk_Pixbuf;
-   end record;
 
 end Code_Analysis_Module;
