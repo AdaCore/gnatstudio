@@ -26,7 +26,7 @@ with GNAT.Scripts;                           use GNAT.Scripts;
 with GNAT.OS_Lib;                            use GNAT.OS_Lib;
 with GNAT.Traces;
 with Glib;                                   use Glib;
-with Glib.Object;
+with Glib.Object;                            use Glib.Object;
 with Gtk.Button;
 with Gtk.Enums;                              use Gtk.Enums;
 with Gtk.Handlers;                           use Gtk.Handlers;
@@ -90,7 +90,14 @@ package body Code_Analysis_Module is
                              Create ("BINARY_COVERAGE_MODE", GNAT.Traces.On);
    Binary_Coverage_Mode  : Boolean;
    --  Boolean that allows to determine wether we are in binary coverage mode
-   --  or not.
+   --  or not, if true no line execution coverage count will be displayed
+
+   Single_Analysis_Trace : constant Debug_Handle :=
+                             Create ("SINGLE_ANALYSIS", GNAT.Traces.On);
+   Single_Analysis_Mode  : Boolean;
+   --  Boolean that allows to determine wether we should display only one
+   --  analysis at a time or if we can display more, if true the user wont be
+   --  able to create more than one analysis structure
 
    CodeAnalysis_Cst  : constant String := "CodeAnalysis";
    Coverage_Category : constant Glib.UTF8_String := -"Uncovered lines";
@@ -224,7 +231,8 @@ package body Code_Analysis_Module is
 
    procedure Append_Show_Analysis_Report_To_Menu
      (Cont_N_Anal : Context_And_Analysis;
-      Menu        : access Gtk_Menu_Record'Class);
+      Menu        : access Gtk_Menu_Record'Class;
+      Label       : String);
    --  Actually fills the given Menu, with the "Show Analysis Report" entry
    --  With no context information, so the 1st node will be expanded
 
@@ -280,6 +288,11 @@ package body Code_Analysis_Module is
    --  menu, or in a generated submenu. Submenus are created if many instances
    --  are loaded
 
+   procedure On_Single_View_Menu
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle);
+   --  Show the report of code coverage when we are in single analysis mode
+
    procedure Show_Analysis_Report_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
@@ -306,12 +319,6 @@ package body Code_Analysis_Module is
    --   - Show_Analysis_Report_From_Menu
    --   - Show_Analysis_Report_From_Shell
    --   - and at every addition of data to code_analysis from file or projects
-
-   procedure Show_Empty_Analysis_Report_From_Menu
-     (Widget      : access Glib.Object.GObject_Record'Class;
-      Cont_N_Anal : Context_And_Analysis);
-   --  Call to build the tree view report and then put inside it an error
-   --  message
 
    procedure Show_Empty_Analysis_Report
      (Kernel : Kernel_Handle; Analysis : Code_Analysis_Instance);
@@ -422,12 +429,17 @@ package body Code_Analysis_Module is
       Cont_N_Anal : Context_And_Analysis);
    --  Call Destroy_Analysis_Instance
 
+   procedure Clear_Analysis_From_Menu
+     (Widget      : access Glib.Object.GObject_Record'Class;
+      Cont_N_Anal : Context_And_Analysis);
+   --  Call Clear_Analysis_Instance
+
    procedure Destroy_All_Analyzes_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
    --  Call Destroy_All_Instances
 
-   procedure Destroy_All_Analyzes_From_Project_Changing_Hook
+   procedure On_Project_Changing_Hook
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
    --  Call Destroy_All_Instances
@@ -440,6 +452,11 @@ package body Code_Analysis_Module is
      (Kernel   : Kernel_Handle;
       Analysis : Code_Analysis_Instance);
    --  Free the memory used by the given analysis instance
+
+   procedure Clear_Analysis_Instance
+     (Kernel   : Kernel_Handle;
+      Analysis : Code_Analysis_Instance);
+   --  Remove code coverage informations
 
    procedure Add_Coverage_Annotations_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
@@ -669,10 +686,10 @@ package body Code_Analysis_Module is
    procedure Create_Analysis_From_Menu
      (Widget : access Gtk_Widget_Record'Class)
    is
-      Dummy : Code_Analysis_Instance;
+      Dummy : constant Code_Analysis_Instance := Create_Analysis_Instance;
       pragma Unreferenced (Dummy, Widget);
    begin
-      Dummy := Create_Analysis_Instance;
+      null;
    exception
       when E : others => Trace (Exception_Handle, E);
    end Create_Analysis_From_Menu;
@@ -684,8 +701,8 @@ package body Code_Analysis_Module is
    function Create_Analysis_Instance
      (Name : String := "") return Code_Analysis_Instance
    is
-      Analysis : constant Code_Analysis_Instance
-        := new Code_Analysis_Instance_Record;
+      Analysis : constant Code_Analysis_Instance := new
+        Code_Analysis_Instance_Record;
       Date     : Time;
    begin
       Date := Clock;
@@ -693,14 +710,19 @@ package body Code_Analysis_Module is
       Code_Analysis_Module_ID.Count := Code_Analysis_Module_ID.Count + 1;
 
       if Name = "" then
-         Analysis.Name   := new String'
-           (-"Code Coverage" & Integer'Image (Code_Analysis_Module_ID.Count));
+         if Code_Analysis_Module_ID.Count = 1 then
+            Analysis.Name := new String'(-"Coverage");
+         else
+            Analysis.Name := new String'
+              (-"Coverage" & Integer'Image
+                 (Code_Analysis_Module_ID.Count));
+         end if;
       else
-         Analysis.Name   := new String'(Name);
+         Analysis.Name    := new String'(Name);
       end if;
 
-      Analysis.Instances := new Instance_List;
-      Analysis.Projects  := new Project_Maps.Map;
+      Analysis.Instances  := new Instance_List;
+      Analysis.Projects   := new Project_Maps.Map;
       Code_Analysis_Module_ID.Analyzes.Insert (Analysis);
       return Analysis;
    end Create_Analysis_Instance;
@@ -720,16 +742,8 @@ package body Code_Analysis_Module is
       Src_File : constant VFS.Virtual_File :=
                    File_Information (Cont_N_Anal.Context);
       Cov_File : VFS.Virtual_File;
-      Analysis : Code_Analysis_Instance;
    begin
-      if Cont_N_Anal.Analysis = null then
-         Analysis := Create_Analysis_Instance;
-      else
-         Analysis := Cont_N_Anal.Analysis;
-      end if;
-
-      Prj_Node := Get_Or_Create
-        (Analysis.Projects, Prj_Name);
+      Prj_Node := Get_Or_Create (Cont_N_Anal.Analysis.Projects, Prj_Name);
       Cov_File := Create (Object_Path (Prj_Name, False, False) &
                               "/" & Base_Name (Src_File) & Gcov_Extension_Cst);
 
@@ -756,9 +770,7 @@ package body Code_Analysis_Module is
       end if;
 
       --  Build/Refresh Report of Analysis
-      Show_Analysis_Report
-        (Get_Kernel (Cont_N_Anal.Context),
-         Context_And_Analysis'(Cont_N_Anal.Context, Analysis));
+      Show_Analysis_Report (Get_Kernel (Cont_N_Anal.Context), Cont_N_Anal);
    exception
       when E : others => Trace (Exception_Handle, E);
    end Add_Gcov_File_Info_From_Menu;
@@ -921,24 +933,14 @@ package body Code_Analysis_Module is
       Cont_N_Anal : Context_And_Analysis)
    is
       pragma Unreferenced (Widget);
-      Analysis : Code_Analysis_Instance;
       Prj_Node : Project_Access;
       Prj_Name : constant Project_Type :=
                    Project_Information (Cont_N_Anal.Context);
    begin
-      if Cont_N_Anal.Analysis = null then
-         Analysis := Create_Analysis_Instance;
-      else
-         Analysis := Cont_N_Anal.Analysis;
-      end if;
-
-      Prj_Node := Get_Or_Create
-        (Analysis.Projects, Prj_Name);
+      Prj_Node := Get_Or_Create (Cont_N_Anal.Analysis.Projects, Prj_Name);
       Add_Gcov_Project_Info (Get_Kernel (Cont_N_Anal.Context), Prj_Node);
       --  Build/Refresh Report of Analysis
-      Show_Analysis_Report
-        (Get_Kernel (Cont_N_Anal.Context),
-         Context_And_Analysis'(Cont_N_Anal.Context, Analysis));
+      Show_Analysis_Report (Get_Kernel (Cont_N_Anal.Context), Cont_N_Anal);
    exception
       when E : others => Trace (Exception_Handle, E);
    end Add_Gcov_Project_Info_From_Menu;
@@ -1056,24 +1058,17 @@ package body Code_Analysis_Module is
       Cont_N_Anal : Context_And_Analysis)
    is
       pragma Unreferenced (Widget);
-      Analysis : Code_Analysis_Instance;
       Prj_Iter : Imported_Project_Iterator;
       Prj_Node : Project_Access;
       Prj_Name : constant Project_Type :=
                    Project_Information (Cont_N_Anal.Context);
    begin
-      if Cont_N_Anal.Analysis = null then
-         Analysis := Create_Analysis_Instance;
-      else
-         Analysis := Cont_N_Anal.Analysis;
-      end if;
-
       Prj_Iter := Start (Prj_Name);
 
       loop
          exit when Current (Prj_Iter) = No_Project;
          Prj_Node := Get_Or_Create
-           (Analysis.Projects, Current (Prj_Iter));
+           (Cont_N_Anal.Analysis.Projects, Current (Prj_Iter));
          Add_Gcov_Project_Info (Get_Kernel (Cont_N_Anal.Context), Prj_Node);
          Next (Prj_Iter);
       end loop;
@@ -1081,7 +1076,7 @@ package body Code_Analysis_Module is
       --  Build/Refresh Report of Analysis
       Show_Analysis_Report
         (Get_Kernel (Cont_N_Anal.Context),
-         Context_And_Analysis'(No_Context, Analysis));
+         Context_And_Analysis'(No_Context, Cont_N_Anal.Analysis));
    exception
       when E : others => Trace (Exception_Handle, E);
    end Add_All_Gcov_Project_Info_From_Menu;
@@ -1317,8 +1312,10 @@ package body Code_Analysis_Module is
       --  Check for analysis information  --
       --------------------------------------
 
-      if Local_Context = No_Context then
+      if Cont_N_Anal.Context = No_Context then
          Local_Context := Check_Context (Kernel, No_Context);
+      else
+         Local_Context := Cont_N_Anal.Context;
       end if;
 
       declare
@@ -1394,23 +1391,6 @@ package body Code_Analysis_Module is
       end if;
    end Show_Analysis_Report;
 
-   ------------------------------------------
-   -- Show_Empty_Analysis_Report_From_Menu --
-   ------------------------------------------
-
-   procedure Show_Empty_Analysis_Report_From_Menu
-     (Widget      : access Glib.Object.GObject_Record'Class;
-      Cont_N_Anal : Context_And_Analysis)
-   is
-      pragma Unreferenced (Widget);
-      Analysis : constant Code_Analysis_Instance := Create_Analysis_Instance;
-   begin
-      Show_Empty_Analysis_Report (Get_Kernel (Cont_N_Anal.Context), Analysis);
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
-   end Show_Empty_Analysis_Report_From_Menu;
-
    --------------------------------
    -- Show_Empty_Analysis_Report --
    --------------------------------
@@ -1457,7 +1437,7 @@ package body Code_Analysis_Module is
          Module => Code_Analysis_Module_ID);
       Set_Title
         (Cont_N_Anal.Analysis.Child,
-         -"Report of " & Cont_N_Anal.Analysis.Name.all);
+         Cont_N_Anal.Analysis.Name.all & (-" Report"));
       Register_Contextual_Menu
         (Kernel          => Kernel,
          Event_On_Widget => Cont_N_Anal.Analysis.View.Tree,
@@ -1638,6 +1618,29 @@ package body Code_Analysis_Module is
       when E : others => Trace (Exception_Handle, E);
    end Destroy_Analysis_From_Menu;
 
+   ------------------------------
+   -- Clear_Analysis_From_Menu --
+   ------------------------------
+
+   procedure Clear_Analysis_From_Menu
+     (Widget      : access Glib.Object.GObject_Record'Class;
+      Cont_N_Anal : Context_And_Analysis)
+   is
+      pragma Unreferenced (Widget);
+   begin
+      if Message_Dialog
+        ((-"Clear ")
+         & Cont_N_Anal.Analysis.Name.all & (-"?"),
+         Confirmation, Button_Yes or Button_No, Justification => Justify_Left,
+         Title => -"Clear " & Cont_N_Anal.Analysis.Name.all & (-"?")) = 1
+      then
+         Clear_Analysis_Instance
+           (Get_Kernel (Cont_N_Anal.Context), Cont_N_Anal.Analysis);
+      end if;
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end Clear_Analysis_From_Menu;
+
    ------------------------------------
    -- Destroy_All_Analyzes_From_Menu --
    ------------------------------------
@@ -1646,9 +1649,10 @@ package body Code_Analysis_Module is
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis)
    is
-      pragma Unreferenced (Widget);
+      Dummy       : Code_Analysis_Instance;
       Analysis_Nb : constant Integer := Integer
         (Code_Analysis_Module_ID.Analyzes.Length);
+      pragma Unreferenced (Widget, Dummy);
    begin
       if Message_Dialog
         ((-"Destroy") & Integer'Image (Analysis_Nb) & (-" analysis?"),
@@ -1656,25 +1660,30 @@ package body Code_Analysis_Module is
          Title => Integer'Image (Analysis_Nb) & (-" destructions?")) = 1
       then
          Destroy_All_Analyzes (Get_Kernel (Cont_N_Anal.Context));
+         Code_Analysis_Module_ID.Count := 0;
+         Dummy := Create_Analysis_Instance;
       end if;
    exception
       when E : others => Trace (Exception_Handle, E);
    end Destroy_All_Analyzes_From_Menu;
 
-   -----------------------------------------------------
-   -- Destroy_All_Analyzes_From_Project_Changing_Hook --
-   -----------------------------------------------------
+   ------------------------------
+   -- On_Project_Changing_Hook --
+   ------------------------------
 
-   procedure Destroy_All_Analyzes_From_Project_Changing_Hook
+   procedure On_Project_Changing_Hook
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      pragma Unreferenced (Data);
+      Dummy  : Code_Analysis_Instance;
+      pragma Unreferenced (Data, Dummy);
    begin
       Destroy_All_Analyzes (Kernel_Handle (Kernel));
+      Code_Analysis_Module_ID.Count := 0;
+      Dummy  := Create_Analysis_Instance;
    exception
       when E : others => Trace (Exception_Handle, E);
-   end Destroy_All_Analyzes_From_Project_Changing_Hook;
+   end On_Project_Changing_Hook;
 
    --------------------------
    -- Destroy_All_Analyzes --
@@ -1716,7 +1725,6 @@ package body Code_Analysis_Module is
       --  For each shell instance, get its property and set the Analysis field
       --  to null
       for J in Instances'Range loop
-
          Property := Get_Data (Instances (J), CodeAnalysis_Cst);
 
          if Property /= null then
@@ -1730,6 +1738,23 @@ package body Code_Analysis_Module is
 
       GNAT.Strings.Free (Analysis.Name);
    end Destroy_Analysis_Instance;
+
+   -----------------------------
+   -- Clear_Analysis_Instance --
+   -----------------------------
+
+   procedure Clear_Analysis_Instance
+     (Kernel   : Kernel_Handle;
+      Analysis : Code_Analysis_Instance) is
+   begin
+      if Analysis.View /= null then
+         Close_Child (Analysis.Child, Force => True);
+      end if;
+
+      Remove_Location_Category (Kernel, Coverage_Category);
+      Remove_Line_Information_Column (Kernel, No_File, CodeAnalysis_Cst);
+      Free_Code_Analysis (Analysis.Projects);
+   end Clear_Analysis_Instance;
 
    ----------------------------------------
    -- Add_Coverage_Annotations_From_Menu --
@@ -2266,10 +2291,9 @@ package body Code_Analysis_Module is
       elsif Has_Entity_Name_Information (Context) then
          Entity := Get_Entity (Context);
 
-         return (Entity /= null
-                 and then Is_Subprogram (Entity))
-           or else Get_Creator (Context) = Abstract_Module_ID
-           (Code_Analysis_Module_ID);
+         return (Entity /= null and then
+                 Is_Subprogram (Entity)) or else
+         Get_Creator (Context) = Abstract_Module_ID (Code_Analysis_Module_ID);
       end if;
 
       return False;
@@ -2368,7 +2392,8 @@ package body Code_Analysis_Module is
         Abstract_Module_ID (Code_Analysis_Module_ID) then
          Gtk_New (Item);
          Append (Submenu, Item);
-         Append_Show_Analysis_Report_To_Menu (Cont_N_Anal, Submenu);
+         Append_Show_Analysis_Report_To_Menu
+           (Cont_N_Anal, Submenu, -"Show report");
       end if;
    end Append_To_Contextual_Submenu;
 
@@ -2612,9 +2637,6 @@ package body Code_Analysis_Module is
                Context_And_Analysis_CB.To_Marshaller
                  (Add_Gcov_File_Info_From_Menu'Access), Cont_N_Anal);
          end if;
-
-         Gtk_New (Item);
-         Append (Menu, Item);
       else
          loop
             exit when Cur = No_Element;
@@ -2633,25 +2655,27 @@ package body Code_Analysis_Module is
                Append_To_Submenu (Cont_N_Anal, Submenu, Prj_Node);
             else
                Append_To_Submenu (Cont_N_Anal, Menu, Prj_Node);
-               Gtk_New (Item);
-               Append (Menu, Item);
             end if;
          end loop;
       end if;
 
-      Gtk_New (Item, -"Create code analysis");
-      Append (Menu, Item);
-      Gtkada.Handlers.Widget_Callback.Connect
-        (Item, Gtk.Menu_Item.Signal_Activate,
-         Create_Analysis_From_Menu'Access);
-
-      if Code_Analysis_Module_ID.Analyzes.Length > 1 then
-         Gtk_New (Item, -"Remove all analysis");
+      if not Single_Analysis_Mode then
+         Gtk_New (Item);
          Append (Menu, Item);
-         Context_And_Analysis_CB.Connect
+         Gtk_New (Item, -"Create code analysis");
+         Append (Menu, Item);
+         Gtkada.Handlers.Widget_Callback.Connect
            (Item, Gtk.Menu_Item.Signal_Activate,
-            Context_And_Analysis_CB.To_Marshaller
-              (Destroy_All_Analyzes_From_Menu'Access), Cont_N_Anal);
+            Create_Analysis_From_Menu'Access);
+
+         if Code_Analysis_Module_ID.Analyzes.Length > 1 then
+            Gtk_New (Item, -"Remove all analyzes");
+            Append (Menu, Item);
+            Context_And_Analysis_CB.Connect
+              (Item, Gtk.Menu_Item.Signal_Activate,
+               Context_And_Analysis_CB.To_Marshaller
+                 (Destroy_All_Analyzes_From_Menu'Access), Cont_N_Anal);
+         end if;
       end if;
    end Dynamic_Tools_Menu_Factory;
 
@@ -2666,29 +2690,37 @@ package body Code_Analysis_Module is
    is
       use Code_Analysis_Instances;
       Cont_N_Anal : Context_And_Analysis;
-      Cur         : Cursor := Code_Analysis_Module_ID.Analyzes.First;
-      Item        : Gtk_Menu_Item;
+      Cur         : Cursor := Code_Analysis_Module_ID.Analyzes.Last;
    begin
       Cont_N_Anal.Context := Check_Context (Kernel_Handle (Kernel), Context);
 
-      if Cur = No_Element then
-         --  So there's currently no instances
-         Gtk_New (Item, -"Show Report of Coverage");
-         Append (Menu, Item);
-         Context_And_Analysis_CB.Connect
-           (Item, Gtk.Menu_Item.Signal_Activate,
-            Context_And_Analysis_CB.To_Marshaller
-              (Show_Empty_Analysis_Report_From_Menu'Access), Cont_N_Anal);
-         return;
-      end if;
-
-      loop
-         exit when Cur = No_Element;
-         Cont_N_Anal.Analysis := Element (Cur);
-         Append_Show_Analysis_Report_To_Menu (Cont_N_Anal, Menu);
-         Next (Cur);
-      end loop;
+         loop
+            exit when Cur = No_Element;
+            Cont_N_Anal.Analysis := Element (Cur);
+            Append_Show_Analysis_Report_To_Menu
+              (Cont_N_Anal, Menu,
+               -(Cont_N_Anal.Analysis.Name.all & (-" Report")));
+            Next (Cur);
+         end loop;
    end Dynamic_Views_Menu_Factory;
+
+   -------------------------
+   -- On_Single_View_Menu --
+   -------------------------
+
+   procedure On_Single_View_Menu
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      use Code_Analysis_Instances;
+      Cur : constant Cursor := Code_Analysis_Module_ID.Analyzes.First;
+   begin
+      Show_Analysis_Report (Kernel, Context_And_Analysis'(Check_Context
+        (Kernel, No_Context), Element (Cur)));
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end On_Single_View_Menu;
 
    -----------------------
    -- Append_To_Submenu --
@@ -2699,15 +2731,28 @@ package body Code_Analysis_Module is
       Submenu      : access Gtk_Menu_Record'Class;
       Project_Node : Project_Access)
    is
-      Item     : Gtk_Menu_Item;
+      use Code_Analysis_Instances;
+      Item : Gtk_Menu_Item;
    begin
-      Append_Show_Analysis_Report_To_Menu (Cont_N_Anal, Submenu);
-      Gtk_New (Item, -"Remove " & Cont_N_Anal.Analysis.Name.all);
-      Append (Submenu, Item);
-      Context_And_Analysis_CB.Connect
-        (Item, Gtk.Menu_Item.Signal_Activate,
-         Context_And_Analysis_CB.To_Marshaller
-           (Destroy_Analysis_From_Menu'Access), Cont_N_Anal);
+      Append_Show_Analysis_Report_To_Menu
+        (Cont_N_Anal, Submenu, -"Show report");
+
+      if Code_Analysis_Module_ID.Analyzes.Length > 1 then
+         Gtk_New (Item, -"Remove " & Cont_N_Anal.Analysis.Name.all);
+         Append (Submenu, Item);
+         Context_And_Analysis_CB.Connect
+           (Item, Gtk.Menu_Item.Signal_Activate,
+            Context_And_Analysis_CB.To_Marshaller
+              (Destroy_Analysis_From_Menu'Access), Cont_N_Anal);
+      else
+         Gtk_New (Item, -"Clear " & Cont_N_Anal.Analysis.Name.all);
+         Append (Submenu, Item);
+         Context_And_Analysis_CB.Connect
+           (Item, Gtk.Menu_Item.Signal_Activate,
+            Context_And_Analysis_CB.To_Marshaller
+              (Clear_Analysis_From_Menu'Access), Cont_N_Anal);
+      end if;
+
       Gtk_New (Item);
       Append (Submenu, Item);
       Append_Load_Data_For_All_Projects (Cont_N_Anal, Submenu);
@@ -2750,12 +2795,12 @@ package body Code_Analysis_Module is
 
    procedure Append_Show_Analysis_Report_To_Menu
      (Cont_N_Anal : Context_And_Analysis;
-      Menu        : access Gtk_Menu_Record'Class)
+      Menu        : access Gtk_Menu_Record'Class;
+      Label       : String)
    is
-      Item     : Gtk_Menu_Item;
+      Item        : Gtk_Menu_Item;
    begin
-      Gtk_New (Item, -"Show Report of " &
-               Cont_N_Anal.Analysis.Name.all);
+      Gtk_New (Item, -Label);
       Append (Menu, Item);
       Context_And_Analysis_CB.Connect
         (Item, Gtk.Menu_Item.Signal_Activate,
@@ -2838,13 +2883,16 @@ package body Code_Analysis_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Contextual_Menu     : Code_Analysis_Contextual_Menu_Access;
-      Code_Analysis_Class : constant Class_Type
-        := New_Class (Kernel, CodeAnalysis_Cst);
+      Code_Analysis_Class : constant Class_Type :=
+                              New_Class (Kernel, CodeAnalysis_Cst);
+      Analysis            : Code_Analysis_Instance;
    begin
-      Binary_Coverage_Mode := Active (Binary_Coverage_Trace);
-      Code_Analysis_Module_ID := new Code_Analysis_Module_ID_Record;
-      Code_Analysis_Module_ID.Class  := Code_Analysis_Class;
-      Contextual_Menu := new Code_Analysis_Contextual_Menu;
+      Binary_Coverage_Mode          := Active (Binary_Coverage_Trace);
+      Single_Analysis_Mode          := Active (Single_Analysis_Trace);
+      Code_Analysis_Module_ID       := new Code_Analysis_Module_ID_Record;
+      Code_Analysis_Module_ID.Class := Code_Analysis_Class;
+      Analysis                      := Create_Analysis_Instance;
+      Contextual_Menu               := new Code_Analysis_Contextual_Menu;
       Register_Module
         (Module      => Code_Analysis_Module_ID,
          Kernel      => Kernel,
@@ -2861,18 +2909,26 @@ package body Code_Analysis_Module is
          Ref_Item    => -"Documentation",
          Add_Before  => False,
          Factory     => Dynamic_Tools_Menu_Factory'Access);
-      Register_Dynamic_Menu
-        (Kernel      => Kernel,
-         Parent_Path => '/' & (-"Tools" & ('/' & (-"Views"))),
-         Text        => -"Covera_ge",
-         Ref_Item    => -"Clipboard",
-         Add_Before  => False,
-         Factory     => Dynamic_Views_Menu_Factory'Access);
+
+      if not Single_Analysis_Mode then
+         Register_Dynamic_Menu
+           (Kernel      => Kernel,
+            Parent_Path => '/' & (-"Tools" & ('/' & (-"Views"))),
+            Text        => -"Covera_ge",
+            Ref_Item    => -"Clipboard",
+            Add_Before  => False,
+            Factory     => Dynamic_Views_Menu_Factory'Access);
+      else
+         Register_Menu
+           (Kernel, '/' & (-"Tools" & ('/' & (-"Views"))),
+            Analysis.Name.all & (-" Report"), "", On_Single_View_Menu'Access);
+      end if;
+
       Add_Hook
         (Kernel  => Kernel,
          Hook    => Project_Changing_Hook,
          Func    =>
-           Wrapper (Destroy_All_Analyzes_From_Project_Changing_Hook'Access),
+           Wrapper (On_Project_Changing_Hook'Access),
          Name    => "destroy_all_code_analysis");
       Register_Command
         (Kernel, Constructor_Method,
