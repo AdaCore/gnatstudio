@@ -19,8 +19,6 @@
 
 with Ada.Calendar;                           use Ada.Calendar;
 with Ada.Containers.Indefinite_Ordered_Sets; use Ada.Containers;
-with Ada.Strings.Equal_Case_Insensitive;
-with Ada.Strings.Less_Case_Insensitive;
 with GNAT.Strings;
 with GNAT.Scripts;                           use GNAT.Scripts;
 with GNAT.OS_Lib;                            use GNAT.OS_Lib;
@@ -93,7 +91,7 @@ package body Code_Analysis_Module is
    --  or not, if true no line execution coverage count will be displayed
 
    Single_Analysis_Trace : constant Debug_Handle :=
-                             Create ("SINGLE_ANALYSIS", GNAT.Traces.On);
+                             Create ("SINGLE_ANALYSIS_MODE", GNAT.Traces.On);
    Single_Analysis_Mode  : Boolean;
    --  Boolean that allows to determine wether we should display only one
    --  analysis at a time or if we can display more, if true the user wont be
@@ -124,18 +122,12 @@ package body Code_Analysis_Module is
    -- Analyzes --
    --------------
 
-   Miss_Analysis_Name : exception;
-
-   function Less_Case_Insensitive
-     (Left, Right : Code_Analysis_Instance) return Boolean;
-   function Equal_Case_Insensitive
-     (Left, Right : Code_Analysis_Instance) return Boolean;
-   --  Use the Code_Analysis user property "Instance_Name" to perform the test
+   function Less (Left, Right : Code_Analysis_Instance) return Boolean;
+   function Equal (Left, Right : Code_Analysis_Instance) return Boolean;
+   --  Use the Code_Analysis_Instance.Date to perform the test
 
    package Code_Analysis_Instances is new Indefinite_Ordered_Sets
-     (Element_Type => Code_Analysis_Instance,
-      "<" => Less_Case_Insensitive,
-      "=" => Equal_Case_Insensitive);
+     (Element_Type => Code_Analysis_Instance, "<" => Less, "=" => Equal);
    --  Sets package for declared instances of the CodeAnalysis module.
    --  Allow to handle many instances.
 
@@ -2835,45 +2827,23 @@ package body Code_Analysis_Module is
          Cont_N_Anal_Root_Prj);
    end Append_Load_Data_For_All_Projects;
 
-   ---------------------------
-   -- Less_Case_Insensitive --
-   ---------------------------
+   ----------
+   -- Less --
+   ----------
 
-   function Less_Case_Insensitive
-     (Left, Right : Code_Analysis_Instance) return Boolean is
+   function Less (Left, Right : Code_Analysis_Instance) return Boolean is
    begin
+      return Left.Date < Right.Date;
+   end Less;
 
-      if Left.Name = null then
-         raise Miss_Analysis_Name with "Property_Left.Instance_Name is null";
-      end if;
+   -----------
+   -- Equal --
+   -----------
 
-      if Right.Name = null then
-         raise Miss_Analysis_Name with "Property_Right.Instance_Name is null";
-      end if;
-
-      return Ada.Strings.Less_Case_Insensitive
-        (Left.Name.all, Right.Name.all);
-   end Less_Case_Insensitive;
-
-   ----------------------------
-   -- Equal_Case_Insensitive --
-   ----------------------------
-
-   function Equal_Case_Insensitive
-     (Left, Right : Code_Analysis_Instance) return Boolean is
+   function Equal (Left, Right : Code_Analysis_Instance) return Boolean is
    begin
-
-      if Left.Name = null then
-         raise Miss_Analysis_Name with "Property_Left.Instance_Name is null";
-      end if;
-
-      if Right.Name = null then
-         raise Miss_Analysis_Name with "Property_Right.Instance_Name is null";
-      end if;
-
-      return Ada.Strings.Equal_Case_Insensitive
-        (Left.Name.all, Right.Name.all);
-   end Equal_Case_Insensitive;
+      return Left.Date = Right.Date;
+   end Equal;
 
    ---------------------
    -- Register_Module --
