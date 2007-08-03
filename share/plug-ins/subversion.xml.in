@@ -157,7 +157,6 @@
 
    <action name="generic_svn_remove" show-command="true" output="none" category="">
       <shell output="">echo "removing file(s) $2-"</shell>
-      <shell>delete "$2-"</shell>
       <external check-password="true">svn --non-interactive remove "$2-"</external>
       <on-failure>
          <shell output="">echo "SVN error:"</shell>
@@ -176,7 +175,6 @@
 
    <action name="generic_svn_remove_no_commit" show-command="true" output="none" category="">
       <shell output="">echo "removing file(s) $2-"</shell>
-      <shell>delete "$2-"</shell>
       <external check-password="true">svn --non-interactive remove "$2-"</external>
       <on-failure>
          <shell output="">echo "SVN error:"</shell>
@@ -417,7 +415,7 @@
       <status label="Added" stock="gps-vcs-added" />
 
       <status_parser>
-         <regexp>(^|\n)([^\?S].......)\s+([0-9]+)\s+([0-9]+)\s+([^\s]+)\s+([^\n]+)</regexp>
+         <regexp>(^|\n)([^\?S].......)\s+([0-9]+)\s+([0-9?]+)\s+([^\s]+)\s+([^\n]+)</regexp>
 
          <file_index>6</file_index>
          <status_index>2</status_index>
@@ -428,14 +426,14 @@
          <status_matcher label="Locally modified">M.......</status_matcher>
          <status_matcher label="Property modified">( M......)</status_matcher>
          <status_matcher label="Needs update">(.......\*)</status_matcher>
-         <status_matcher label="Added">(A.......)</status_matcher>
+         <status_matcher label="Added">A.......</status_matcher>
          <status_matcher label="Removed">D.......</status_matcher>
          <status_matcher label="Needs merge">M......\*</status_matcher>
          <status_matcher label="Contains merge conflicts">C.......</status_matcher>
       </status_parser>
 
       <local_status_parser>
-         <regexp>(^|\n)([^\?S].......)\s+([0-9]+)\s+([0-9]+)\s+([^\s]+)\s+([^\n]+)</regexp>
+         <regexp>(^|\n)([^\?S].......)\s+([0-9]+)\s+([0-9?]+)\s+([^\s]+)\s+([^\n]+)</regexp>
 
          <file_index>6</file_index>
          <status_index>2</status_index>
@@ -446,7 +444,7 @@
          <status_matcher label="Locally modified">M.......</status_matcher>
          <status_matcher label="Property modified">( M......)</status_matcher>
          <status_matcher label="Needs update">(.......\*)</status_matcher>
-         <status_matcher label="Added">(A.......)</status_matcher>
+         <status_matcher label="Added">A.......</status_matcher>
          <status_matcher label="Removed">D.......</status_matcher>
          <status_matcher label="Needs merge">M......\*</status_matcher>
          <status_matcher label="Contains merge conflicts">C.......</status_matcher>
