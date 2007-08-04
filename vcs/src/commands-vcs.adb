@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
---                              AdaCore                              --
+--                  Copyright (C) 2001-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -258,16 +257,21 @@ package body Commands.VCS is
       Files_It  : String_List.List_Node;
       Closed    : Boolean := True;
    begin
-      --  Set the committed status if all files are up-to-date
+      --  Set the committed status if all files are up-to-date or removed
 
       Files_It := String_List.First (Files);
 
       while Files_It /= String_List.Null_Node loop
-         Closed := Closed
-           and Has_Status
-             (Get_Status_Cache,
-              Create (Full_Filename => String_List.Data (Files_It)),
-              VCS_Ref, Up_To_Date_Id);
+         declare
+            File : constant Virtual_File :=
+                     Create (Full_Filename => String_List.Data (Files_It));
+         begin
+            Closed := Closed
+              and then
+                (Has_Status (Get_Status_Cache, File, VCS_Ref, Up_To_Date_Id)
+                 or else
+                 Has_Status (Get_Status_Cache, File, VCS_Ref, Removed_Id));
+         end;
          Files_It := String_List.Next (Files_It);
       end loop;
 
