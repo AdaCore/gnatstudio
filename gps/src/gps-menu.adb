@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                              AdaCore                              --
+--                  Copyright (C) 2001-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -462,6 +461,30 @@ package body GPS.Menu is
                      null, Command,
                      GDK_Insert, Control_Mask + Shift_Mask,
                      Ref_Item => -"Preferences");
+
+      --  Gtk+ provides hard-coded bindings for Cut (ctrl-x), Copy (ctrl-c)
+      --  and Paste (ctrl-v). Making use of these mechanisms in GPS is not a
+      --  good idea, because copying/cutting and pasting within the same buffer
+      --  preserves the tags.
+      --  For example, when copying and pasting "non-editable" text (such as in
+      --  the debugger console), the pasted text becomes non-editable.
+      --  Also, pasting a line which contains multiple tag changes (for example
+      --  a line containing two keywords) confuses the syntax highlighting.
+      --  To avoid this, we completely circumvent the Gtk+ mechanisms by
+      --  providing default bindings to the corresponding GPS actions.
+
+      Bind_Default_Key
+        (Kernel      => Kernel,
+         Action      => -"Cut to Clipboard",
+         Default_Key => "control-X");
+      Bind_Default_Key
+        (Kernel      => Kernel,
+         Action      => -"Copy to Clipboard",
+         Default_Key => "control-C");
+      Bind_Default_Key
+        (Kernel      => Kernel,
+         Action      => -"Paste From Clipboard",
+         Default_Key => "control-V");
    end Register_Common_Menus;
 
 end GPS.Menu;
