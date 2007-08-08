@@ -7910,22 +7910,22 @@ utility.
 
 Code coverage information can be loaded into GPS for an entire project
 (including recursive projects), a single project or a single file belonging
- to a loaded project into a tree-structure with the following nodes : Project,
+to a loaded project into a tree-structure with the following nodes: Project,
 File, Subprogram, Line.
 
-Once loaded, severeal treatments of the coverage information are provided such
-as coverage reporting or line highlighting for each levels, through the
- "@command{Tools/Coverage}" menu.
+Once loaded, the coverage information is taken into account to generate
+coverage reporting or line highlighting for each levels, through the
+@command{Tools->Coverage} menu.
 
 @table @b
 @item @ref{The Tools Menu}
 
 @table @command
 @item Coverage->Load data for all projects
-Load the coverage data of the main project, and every recursively included ones.
+Load the coverage data of the main project and its subprojects.
 
 @item Coverage->Load data for project @code{project}
-Load the coverage data of the @code{project} project only.
+Load the coverage data of the given @code{project} only.
 
 @item Coverage->Load data for @file{xxx.adb} (@file{xxx.ads})
 Load the coverage data of the @file{xxx.adb} (@file{xxx.ads}) source file.
@@ -7933,15 +7933,15 @@ Load the coverage data of the @file{xxx.adb} (@file{xxx.ads}) source file.
 @end table
 @end table
 
-This "@command{Tools->Coverage}" menu can have two incremental sets of
-entries, depending on the context and the quantity of information loaded in GPS :
+The @command{Tools->Coverage} menu can have two incremental sets of
+entries, depending on the context and the amount of information loaded in GPS:
 
 @itemize
 @item The first set is the one described above, allowing you to load the information.
 
-@item The second set, induced by the quantity of information loaded, includes
- entries applicable to the whole set of data and the treatments available for
- different scales.
+@item The second set, depending on the quantity of information loaded, includes
+entries applicable to the whole set of data and the treatments available for
+different scales.
 
 @end itemize
 
@@ -7950,8 +7950,7 @@ entries, depending on the context and the quantity of information loaded in GPS 
 
 @table @command
 @item Coverage->Show report
-Open a new window in the center area of GPS summarizing the coverage
-information.
+Open a new window summarizing the coverage information.
 
 @item Coverage->Clear Coverage
 Drop the coverage information, and return to the first set of entries.
@@ -7959,11 +7958,10 @@ Drop the coverage information, and return to the first set of entries.
 @c \hline
 
 @item Coverage->Load data for all projects
-Load or re-load the data of every projects
-(including recursively included ones).
+Load or re-load the data of every projects and subprojects.
 
 @item Coverage->List uncovered lines in all projects
-Highlight every not covered lines in the files of every projects. The lines
+Highlight every uncovered lines in the files of every projects. The lines
 are listed in the location view.
 
 @item Coverage->Clear all project listed locations
@@ -8011,17 +8009,17 @@ Remove the coverage data of the specified source file.
 @item The Contextual Menu
 
 When clicking on a project, file or subprogram entity (including the entities
-of the analysis reports), you have access to a "@command{Coverage}" submenu.
+of the analysis reports), you have access to a @command{Coverage} submenu.
 
 These submenus contain an appropriate subset of entries from the
-"@command{Tools/Coverage}" menu allowing to handle the current contextual
+@command{Tools->Coverage} menu allowing to handle the current contextual
 entity.
 
 @item The Coverage Report
 
-When asked from the "@command{Tools/Coverage}" menu or the contextual menu, or
-when coverage information are loaded, a report of coverage is displayed in the
-center area of GPS. This report contains a tree view of the analysis elements
+When asked from the @command{Tools->Coverage} menu or the contextual menu, or
+when coverage information are loaded, a report of coverage is displayed.
+This report contains a tree view of the analysis elements
 and the corresponding coverage information are displayed for each node in sided
 columns.
 
@@ -8036,10 +8034,10 @@ columns.
 @end ifhtml
 
 The contextual menus generated on this widget contain, in addition to the
-regular entries, some analysis report specific entries on the top of the menu.
+regular entries, some specific analysis report entries.
 These entries allow to expand or fold the tree view, and also to display flat
 lists (of files or subprograms) instead of a tree. A flat list of file will
-look like :
+look like:
 
 @iftex
 @cindex screen shot
@@ -8054,14 +8052,14 @@ look like :
 @end table
 
 Note that, in order to be loaded in GPS, the coverage
-information need to be computed before, using Gcov. To be able to produce
-coverage information from Gcov, your project need to have been compiled with
-the "@command{-fprofile-arcs}" and "@command{-ftest-coverage}" switches,
-respectively "Instrument arcs" and "Code coverage" preferences in @ref{The
+information needs to be computed before, using Gcov. To be able to produce
+coverage information from Gcov, your project must have been compiled with
+the @command{-fprofile-arcs} and @command{-ftest-coverage}" switches,
+respectively "Instrument arcs" and "Code coverage" entries in @ref{The
 Project Properties Editor}.
 
 Also note that if you change the current main project in GPS, using the
-"@command{Project/Open}" menu entry for instance, you will also drop every
+@command{Project->Open} menu entry for instance, you will also drop every
 loaded coverage information as they are related with the working project.
 
 @c --------------------------------------------------------------------
