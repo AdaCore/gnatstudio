@@ -31,6 +31,7 @@ with System.Address_Image;
 with Gdk.Color;                           use Gdk.Color;
 
 with Glib.Convert;                        use Glib.Convert;
+with Glib.Error;                          use Glib.Error;
 with Glib.Object;                         use Glib.Object;
 with Glib.Properties;                     use Glib.Properties;
 with Glib.Unicode;                        use Glib.Unicode;
@@ -57,6 +58,7 @@ with Commands.Editor;                     use Commands.Editor;
 with Commands.Controls;                   use Commands.Controls;
 with Completion_Module;                   use Completion_Module;
 with GPS.Intl;                            use GPS.Intl;
+with GPS.Location_View;                   use GPS.Location_View;
 with GPS.Kernel;                          use GPS.Kernel;
 with GPS.Kernel.Charsets;                 use GPS.Kernel.Charsets;
 with GPS.Kernel.Console;                  use GPS.Kernel.Console;
@@ -466,6 +468,10 @@ package body Src_Editor_Buffer is
 
    procedure Highlight_Parenthesis (Buffer : Source_Buffer);
    --  Highlight the matching parenthesis that are next to the cursor, if any.
+
+   function Conversion_Error_Message (Charset : String) return UTF8_String;
+   --  Return the location category corresponding to errors when converting
+   --  to Charset.
 
    -----------
    -- Hooks --
@@ -1729,7 +1735,7 @@ package body Src_Editor_Buffer is
             Insert
               (Buffer.Kernel,
                -"Trying to delete a blank line",
-               Mode => Error);
+               Mode => GPS.Kernel.Console.Error);
             Emit_Stop_By_Name (Buffer, "delete_range");
             return;
          end if;
@@ -2893,6 +2899,15 @@ package body Src_Editor_Buffer is
          Success := False;
    end Load_File;
 
+   ------------------------------
+   -- Conversion_Error_Message --
+   ------------------------------
+
+   function Conversion_Error_Message (Charset : String) return UTF8_String is
+   begin
+      return -"Error converting from UTF8 to " & Charset;
+   end Conversion_Error_Message;
+
    ---------------------------
    -- Internal_Save_To_File --
    ---------------------------
@@ -2911,6 +2926,7 @@ package body Src_Editor_Buffer is
       U_Buffer    : Unbounded_String;
       S           : Ada.Strings.Unbounded.String_Access;
       Length      : Natural;
+      Has_Errors  : Boolean := False;
 
       procedure New_Line;
       --  Append a new line on U_Buffer.
@@ -2931,45 +2947,6 @@ package body Src_Editor_Buffer is
    begin
       Success := True;
 
-      FD := Write_File (Filename);
-
-      --  The file could not be opened, check whether it is read-only.
-
-      if FD = Invalid_File
-        and then Is_Regular_File (Filename)
-        and then not Is_Writable (Filename)
-      then
-         declare
-            Buttons : Message_Dialog_Buttons;
-         begin
-            Buttons := Message_Dialog
-              (Msg            => -"The file "
-                 & Base_Name (Filename) & ASCII.LF
-                 & (-"is read-only. Do you want to overwrite it ?"),
-               Dialog_Type    => Confirmation,
-               Buttons        => Button_Yes or Button_No,
-               Default_Button => Button_No,
-               Title          => -"File is read-only",
-               Justification  => Justify_Left,
-               Parent         => Get_Current_Window (Buffer.Kernel));
-
-            if Buttons = Button_Yes then
-               Force_Write := True;
-               Set_Writable (Filename, True);
-               FD := Write_File (Filename);
-            end if;
-         end;
-      end if;
-
-      if FD = Invalid_File then
-         Insert
-           (Buffer.Kernel,
-            -"Could not open file for writing: " & Full_Name (Filename).all,
-            Mode => Error);
-         Success := False;
-         return;
-      end if;
-
       declare
          Terminator_Pref : constant Line_Terminators :=
            Line_Terminators'Val (Get_Pref (Line_Terminator));
@@ -2978,6 +2955,10 @@ package body Src_Editor_Buffer is
 
          Strip_Blank     : Boolean;
          Index           : Natural;
+         Error           : GError_Access := new GError'(null);
+
+         procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+           (GError, GError_Access);
 
       begin
          case Terminator_Pref is
@@ -3006,28 +2987,45 @@ package body Src_Editor_Buffer is
                   declare
                      Contents : constant String := Glib.Convert.Convert
                        (Str.Contents (1 .. Str.Length),
-                        Buffer.Charset.all, "UTF-8");
+                        Buffer.Charset.all, "UTF-8", Error);
                      Prev     : Natural;
                   begin
-                     if Strip_Blank then
-                        Index := Contents'Length;
-                        Prev  := Index + 1;
+                     if Error.all = null then
+                        if Strip_Blank then
+                           Index := Contents'Length;
+                           Prev  := Index + 1;
 
-                        while Index >= Contents'First loop
-                           C := UTF8_Get_Char
-                             (Contents (Index .. Contents'First));
-                           exit when C /= Character'Pos (' ')
-                             and then C /= Character'Pos (ASCII.HT);
+                           while Index >= Contents'First loop
+                              C := UTF8_Get_Char
+                                (Contents (Index .. Contents'First));
+                              exit when C /= Character'Pos (' ')
+                                and then C /= Character'Pos (ASCII.HT);
 
-                           Prev  := Index;
-                           Index := UTF8_Find_Prev_Char (Contents, Index);
-                        end loop;
+                              Prev  := Index;
+                              Index := UTF8_Find_Prev_Char (Contents, Index);
+                           end loop;
 
-                        Append
-                          (U_Buffer, Contents (Contents'First .. Prev - 1));
+                           Append
+                             (U_Buffer, Contents (Contents'First .. Prev - 1));
 
+                        else
+                           Append (U_Buffer, Contents);
+                        end if;
                      else
-                        Append (U_Buffer, Contents);
+                        --  An error has occurred on this line.
+                        Has_Errors := True;
+
+                        Insert_Location
+                          (Kernel   => Buffer.Kernel,
+                           Category => Conversion_Error_Message
+                             (Buffer.Charset.all),
+                           File => Buffer.Filename,
+                           Column => 0,
+                           Text => Get_Message (Error.all),
+                           Line => Positive (Line));
+
+                        Error_Free (Error.all);
+                        Error.all := null;
                      end if;
                   end;
 
@@ -3037,7 +3035,75 @@ package body Src_Editor_Buffer is
                Free (Str);
             end;
          end loop;
+
+         Unchecked_Free (Error);
       end;
+
+      --  If we observed UTF-8 conversion errors, warn the user.
+      if Has_Errors
+        and then not Internal
+      then
+         declare
+            Buttons : Message_Dialog_Buttons;
+            pragma Unreferenced (Buttons);
+         begin
+            Buttons := Message_Dialog
+              (Msg            =>
+               -("This buffer contains UTF-8 characters which"
+                 & " could not be translated to ") & Buffer.Charset.all
+               & "." & ASCII.LF & ASCII.LF &
+               (-("Some data may be missing in the saved file: check the"
+                  & " Locations View."))
+               & ASCII.LF & ASCII.LF &
+               (-("You may change the character set of this file through"
+                  & " the ""Properties..."" contextual menu.")),
+               Dialog_Type    => Warning,
+               Buttons        => Button_OK,
+               Default_Button => Button_OK,
+               Title          => -"Warning: Conversion Incomplete",
+               Justification  => Justify_Left,
+               Parent         => Get_Current_Window (Buffer.Kernel));
+         end;
+      end if;
+
+      FD := Write_File (Filename);
+
+      --  The file could not be opened, check whether it is read-only.
+
+      if FD = Invalid_File
+        and then Is_Regular_File (Filename)
+        and then not Is_Writable (Filename)
+      then
+         declare
+            Buttons : Message_Dialog_Buttons;
+         begin
+            Buttons := Message_Dialog
+              (Msg            => -"The file "
+               & Base_Name (Filename) & ASCII.LF
+               & (-"is read-only. Do you want to overwrite it ?"),
+               Dialog_Type    => Confirmation,
+               Buttons        => Button_Yes or Button_No,
+               Default_Button => Button_No,
+               Title          => -"File is read-only",
+               Justification  => Justify_Left,
+               Parent         => Get_Current_Window (Buffer.Kernel));
+
+            if Buttons = Button_Yes then
+               Force_Write := True;
+               Set_Writable (Filename, True);
+               FD := Write_File (Filename);
+            end if;
+         end;
+      end if;
+
+      if FD = Invalid_File then
+         Insert
+           (Buffer.Kernel,
+            -"Could not open file for writing: " & Full_Name (Filename).all,
+            Mode => GPS.Kernel.Console.Error);
+         Success := False;
+         return;
+      end if;
 
       Get_String (U_Buffer, S, Length);
 
@@ -3058,6 +3124,8 @@ package body Src_Editor_Buffer is
       if Success
         and then not Internal
       then
+         Buffer.Save_Complete := not Has_Errors;
+
          if Buffer.Filename /= Filename then
             --  If we "save as" the buffer, we emit a closed for the previous
             --  name
@@ -3237,6 +3305,14 @@ package body Src_Editor_Buffer is
       if Buffer.Charset /= null
         and then Buffer.Charset.all /= Charset
       then
+         --  The charset is being changed: remove from the Locations View
+         --  the category listing the conversion errors from that charset for
+         --  this file.
+         Remove_Location_Category
+           (Buffer.Kernel,
+            Conversion_Error_Message (Buffer.Charset.all),
+            Buffer.Filename);
+
          GNAT.Strings.Free (Buffer.Charset);
          Buffer.Charset := new String'(Charset);
 
@@ -3256,7 +3332,12 @@ package body Src_Editor_Buffer is
                Title       => -"Warning: charset modified",
                Parent      => Get_Main_Window (Buffer.Kernel));
          else
-            Load_File (Buffer, Buffer.Filename, Success => Success);
+            --  If the user has tried to save Buffer and got errors, do not
+            --  reload the file from the disk, as the user would then lose his
+            --  modifications that could not be saved.
+            if Buffer.Save_Complete then
+               Load_File (Buffer, Buffer.Filename, Success => Success);
+            end if;
          end if;
       else
          GNAT.Strings.Free (Buffer.Charset);
