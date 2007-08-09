@@ -35,6 +35,11 @@ Known Problems fixed in GPS 4.2.0
               cached statuses.
   Workaround: Use the Query Status action to recover the proper status
 
+- G601-027 Open File dialog is very slow/buggy on Windows Vista
+  Problem:    On Windows Vista, the "Open file" dialog is very slow, and
+              sometimes hangs.
+  Workaround: Use either "Open from project" or "Open from host" dialogs.
+
 - G526-001 Incorrect display of block highlighting
   Problem:    In some very long source files, the block highlighing line may
               be drawn incorrectly on very large areas containing no block
