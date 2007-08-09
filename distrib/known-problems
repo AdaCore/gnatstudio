@@ -1,11 +1,20 @@
 Known Problems fixed in GPS 4.2.0
 
+- G730-004 Wrong syntax highlighting after pasting text
+  Problem:    After using Ctrl-C to copy text or Ctrl-X to cut text, the pasted
+              text might keep the syntax highligting corresponding to the
+              original text, even if the highlighting is no longer pertinent in
+              the new context.
+  Workaround: Use Ctrl+Insert to copy text and Shift+Delete to cut text.
+              Alternatively, use the Key Manager to assign Ctrl-C and Ctrl-X
+              to the General actions "Copy to Clipboard" and "Cut to Clipboard"
+
 - G717-004 Remote connection using ssh on Windows no longer handles passwords
   Problem:    Under Windows, when GPS tries to connect to a remote machine
               using ssh, and ssh asks for a username or a password, then GPS
               won't receive this request, thus blocking the connection.
   Workaround: In share/gps/plug-ins/protocols.xml, set the use_pipes attribute
-              of the start_command tag to "false" for the ssh 
+              of the start_command tag to "false" for the ssh
               remote_connection_config
 
 - G628-004 Generated AUnit test cases are missing a use clause
