@@ -1218,6 +1218,11 @@ private
       Charset : GNAT.Strings.String_Access;
       --  The charset associated with the buffer
 
+      Save_Complete : Boolean := True;
+      --  Whether the buffer was saved successfully during the last attempt.
+      --  This can be False if only an approximate save was done, for
+      --  instance if characters have been lost in the conversion from UTF8.
+
       Constructs : Language.Construct_List;
       --  The parsed constructs in the buffer. This list might or might not
       --  be up to date, see Constructs_State below.
