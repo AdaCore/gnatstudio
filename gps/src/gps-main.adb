@@ -363,10 +363,6 @@ procedure GPS.Main is
 
       Free (Tmp);
 
-      --  Reset any artificial memory limit
-
-      Setenv ("GNAT_MEMORY_LIMIT", "");
-
       Charset := Getenv ("CHARSET");
 
       if Charset.all = "" then
