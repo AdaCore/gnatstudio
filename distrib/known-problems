@@ -1,9 +1,9 @@
 Known Problems fixed in GPS 4.2.0
 
 - G809-010 Read-only configuration files are not handled by GPS
-  Problem:    If the GPS's user configuration files are read-only, then
-              GPS will not detect it and may crash.
-  Workaround: Make sure the .gps user directory and its content is writable.
+  Problem:    If files under .gps are read-only, then GPS will not detect it
+              and may crash.
+  Workaround: Make sure the .gps directory and its contents are writable.
 
 - G730-004 Wrong syntax highlighting after pasting text
   Problem:    After using Ctrl-C to copy text or Ctrl-X to cut text, the pasted
