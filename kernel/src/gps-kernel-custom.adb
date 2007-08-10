@@ -489,6 +489,8 @@ package body GPS.Kernel.Custom is
       File, Child : Node_Ptr;
       Iter        : Scripts_Hash.String_Hash_Table.Iterator;
       Script      : Script_Description_Access;
+      Success     : Boolean;
+
    begin
       File     := new Node;
       File.Tag := new String'("GPS");
@@ -515,8 +517,12 @@ package body GPS.Kernel.Custom is
       end loop;
 
       Trace (Me, "Saving " & Startup);
-      Print (File, Startup);
+      Print (File, Startup, Success);
       Free (File);
+
+      if not Success then
+         Report_Preference_File_Error (Kernel, Startup);
+      end if;
    end Save_Startup_Scripts_List;
 
    ------------------------------

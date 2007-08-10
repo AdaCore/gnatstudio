@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2007                      --
---                              AdaCore                              --
+--                  Copyright (C) 2002-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -269,6 +268,8 @@ package body Navigation_Module is
       M           : constant Navigation_Module :=
                       Navigation_Module (Navigation_Module_ID);
       File, Child : Node_Ptr;
+      Success     : Boolean;
+
    begin
       if M.Markers /= null then
          Trace (Me, "Saving " & Filename);
@@ -285,8 +286,12 @@ package body Navigation_Module is
             end if;
          end loop;
 
-         Print (File, Filename);
+         Print (File, Filename, Success);
          Free (File);
+
+         if not Success then
+            Report_Preference_File_Error (Kernel, Filename);
+         end if;
       end if;
    end Save_History_Markers;
 

@@ -533,6 +533,7 @@ package body Aliases_Module is
       Iter              : Iterator;
       Value             : Alias_Record;
       P                 : Param_Access;
+      Success           : Boolean;
 
    begin
       File := new Node;
@@ -584,8 +585,12 @@ package body Aliases_Module is
          Get_Next (Aliases_Module_Id.Aliases, Iter);
       end loop;
 
-      Print (File, Filename);
+      Print (File, Filename, Success);
       Free (File);
+
+      if not Success then
+         Report_Preference_File_Error (Kernel, Filename);
+      end if;
    end Save_Aliases;
 
    ----------------

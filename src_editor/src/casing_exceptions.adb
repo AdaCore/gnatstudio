@@ -345,6 +345,7 @@ package body Casing_Exceptions is
       Name : constant String := Get_Name;
       Filename : constant String :=
         Get_Home_Dir (Get_Kernel (Context.Context)) & Case_Exceptions_Filename;
+      Success  : Boolean;
 
    begin
       if Command.Substring then
@@ -361,7 +362,14 @@ package body Casing_Exceptions is
          end if;
       end if;
 
-      Save_Exceptions (Casing_Module_Id.Casing_Exceptions_Table, Filename);
+      Save_Exceptions
+        (Casing_Module_Id.Casing_Exceptions_Table, Filename, Success);
+
+      if not Success then
+         Report_Preference_File_Error (Get_Kernel (Context.Context), Filename);
+
+         return Commands.Failure;
+      end if;
 
       return Commands.Success;
    end Execute;

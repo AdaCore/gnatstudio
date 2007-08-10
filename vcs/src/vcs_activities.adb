@@ -223,6 +223,8 @@ package body VCS_Activities is
       Child, F_Child  : Node_Ptr;
       F_Iter          : String_List.List_Node;
       Item            : Activity_Record;
+      Success         : Boolean;
+
    begin
       File     := new Node;
       File.Tag := new String'("custom_section");
@@ -267,8 +269,12 @@ package body VCS_Activities is
       end loop;
 
       Trace (Me, "Saving " & Filename);
-      Print (File, Filename);
+      Print (File, Filename, Success);
       Free (File);
+
+      if not Success then
+         Report_Preference_File_Error (Kernel, Filename);
+      end if;
 
    exception
       when E : others => Trace (Exception_Handle, E);

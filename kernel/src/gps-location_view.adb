@@ -2937,13 +2937,19 @@ package body GPS.Location_View is
      (Kernel : access Kernel_Handle_Record'Class;
       File   : VFS.Virtual_File)
    is
-      View : constant Location_View :=
-                 Get_Or_Create_Location_View (Kernel);
-      N    : Node_Ptr;
+      View    : constant Location_View :=
+                  Get_Or_Create_Location_View (Kernel);
+      N       : Node_Ptr;
+      Success : Boolean;
+
    begin
       N := Save_Desktop (View, Kernel_Handle (Kernel));
-      Print (N, Full_Name (File).all);
+      Print (N, Full_Name (File).all, Success);
       Free (N);
+
+      if not Success then
+         Report_Preference_File_Error (Kernel, Full_Name (File).all);
+      end if;
    end Dump_To_File;
 
    --------------------------

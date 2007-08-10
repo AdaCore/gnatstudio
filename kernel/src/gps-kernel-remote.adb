@@ -720,6 +720,7 @@ package body GPS.Kernel.Remote is
       File, Item, Child, Cmd_Node : Node_Ptr;
       Desc       : Machine_Descriptor;
       Nb_Desc    : Natural;
+      Success    : Boolean;
 
    begin
       Trace (Me, "Saving " & Filename);
@@ -817,9 +818,14 @@ package body GPS.Kernel.Remote is
          end if;
       end loop;
 
-      Print (File, Filename);
-      Trace (Me, Filename & " saved");
+      Print (File, Filename, Success);
       Free (File);
+
+      if not Success then
+         Report_Preference_File_Error (Kernel, Filename);
+      elsif Active (Me) then
+         Trace (Me, Filename & " saved.");
+      end if;
    end Save_Remote_Config;
 
    -------------

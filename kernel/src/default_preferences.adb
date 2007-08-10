@@ -987,7 +987,9 @@ package body Default_Preferences is
    ----------------------
 
    procedure Save_Preferences
-     (Manager : access Preferences_Manager_Record; File_Name : String)
+     (Manager   : access Preferences_Manager_Record;
+      File_Name : String;
+      Success   : out Boolean)
    is
       File, Node : Node_Ptr;
       Info       : Pref_Description_Access;
@@ -995,8 +997,10 @@ package body Default_Preferences is
    begin
       File := new Glib.Xml_Int.Node;
       File.Tag := new String'("Prefs");
+
       while L /= Param_Spec_List.Null_Node loop
          Info := Get_Description (Data (L));
+
          if Info.Value /= null then
             Node := new Glib.Xml_Int.Node;
             Node.Tag := new String'("pref");
@@ -1008,7 +1012,8 @@ package body Default_Preferences is
          L := Next (L);
       end loop;
 
-      Print (File, File_Name);
+      Print (File, File_Name, Success);
+
    exception
       when E : others => Trace (Exception_Handle, E);
    end Save_Preferences;

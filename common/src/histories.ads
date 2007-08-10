@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2007                      --
---                              AdaCore                              --
+--                  Copyright (C) 2002-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -42,7 +41,10 @@ package Histories is
    procedure Load (Hist : in out History_Record; File_Name : String);
    --  Load Hist from file File_Name
 
-   procedure Save (Hist : in out History_Record; File_Name : String);
+   procedure Save
+     (Hist      : in out History_Record;
+      File_Name : String;
+      Success   : out Boolean);
    --  Save Hist to a file
 
    procedure Free (Hist : in out History_Record);
@@ -220,4 +222,3 @@ private
    end record;
 
 end Histories;
-

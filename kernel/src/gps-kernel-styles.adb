@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2007                      --
---                              AdaCore                              --
+--                  Copyright (C) 2005-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,6 +25,7 @@ with Gtk.Widget;             use Gtk.Widget;
 with Gtk.Window;             use Gtk.Window;
 
 with GPS.Intl;               use GPS.Intl;
+with GPS.Kernel.Console;     use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with Traces;                 use Traces;
@@ -280,8 +280,9 @@ package body GPS.Kernel.Styles is
       File   : Virtual_File)
    is
       Main, Node, Child : Node_Ptr;
-      Iter : Iterator;
-      Info : Style_Access;
+      Iter    : Iterator;
+      Info    : Style_Access;
+      Success : Boolean;
 
    begin
       Main := new Glib.Xml_Int.Node;
@@ -323,7 +324,18 @@ package body GPS.Kernel.Styles is
          Get_Next (Style_Htable_Access (Kernel.Styles).Table, Iter);
       end loop;
 
-      Print (Main, Full_Name (File).all);
+      Print (Main, Full_Name (File).all, Success);
+
+      if not Success then
+         Report_Preference_File_Error (Kernel, Full_Name (File).all);
+         GPS.Kernel.Console.Insert
+           (Kernel,
+            "Could not save the configuration file " & Full_Name (File).all &
+            ASCII.LF &
+            "Please verify that you have write access to this file.",
+            Mode => GPS.Kernel.Console.Error);
+         Raise_Console (Kernel);
+      end if;
    end Save_Styles;
 
    -----------------

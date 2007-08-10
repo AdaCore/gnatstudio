@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2007                      --
---                              AdaCore                              --
+--                  Copyright (C) 2002-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -304,10 +303,15 @@ package body Histories is
    -- Save --
    ----------
 
-   procedure Save (Hist : in out History_Record; File_Name : String) is
+   procedure Save
+     (Hist      : in out History_Record;
+      File_Name : String;
+      Success   : out Boolean)
+   is
       File, Key, N : Node_Ptr;
       Iter         : Iterator;
       Value        : History_Key_Access;
+
    begin
       File := new Node;
       File.Tag := new String'("History");
@@ -354,7 +358,7 @@ package body Histories is
          Get_Next (Hist.Table.all, Iter);
       end loop;
 
-      Print (File, File_Name);
+      Print (File, File_Name, Success);
       Free (File);
    end Save;
 

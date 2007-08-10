@@ -846,6 +846,7 @@ package body Bookmark_Views is
       File, Child : Node_Ptr;
       List        : Bookmark_List.List_Node :=
                       First (Bookmark_Views_Module.List);
+      Success     : Boolean;
    begin
       Trace (Me, "Saving " & Filename);
       File := new Node;
@@ -863,8 +864,12 @@ package body Bookmark_Views is
          List := Next (List);
       end loop;
 
-      Print (File, Filename);
+      Print (File, Filename, Success);
       Free (File);
+
+      if not Success then
+         Report_Preference_File_Error (Kernel, Filename);
+      end if;
    end Save_Bookmarks;
 
    ------------------------

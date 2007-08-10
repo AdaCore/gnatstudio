@@ -212,6 +212,12 @@ package GPS.Kernel is
      (Handle : access Kernel_Handle_Record) return Boolean;
    --  When return True, the kernel is in the process of being destroyed.
 
+   procedure Report_Preference_File_Error
+     (Handle : access Kernel_Handle_Record;
+      Filename : String);
+   --  Print out an error message in messages window, or display a dialog
+   --  if GPS is exiting.
+
    -------------
    -- Modules --
    -------------
@@ -862,7 +868,6 @@ private
    type Pattern_Matcher_Access is access GNAT.Regpat.Pattern_Matcher;
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (GNAT.Regpat.Pattern_Matcher, Pattern_Matcher_Access);
-
 
    type Kernel_Handle_Record is new Glib.Object.GObject_Record with record
       Database : Entities.Entities_Database;

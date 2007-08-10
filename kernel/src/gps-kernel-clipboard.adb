@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2007                      --
---                              AdaCore                              --
+--                  Copyright (C) 2005-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -175,6 +174,8 @@ package body GPS.Kernel.Clipboard is
       File      : Node_Ptr;
       Child     : Node_Ptr;
       Clipboard : Clipboard_Access;
+      Success   : Boolean;
+
    begin
       if Kernel.Clipboard /= System.Null_Address then
          Clipboard := Convert (Kernel.Clipboard);
@@ -195,8 +196,13 @@ package body GPS.Kernel.Clipboard is
                Add_Child (File, Child, Append => True);
             end if;
          end loop;
-         Print (File, Filename);
+
+         Print (File, Filename, Success);
          Free (File);
+
+         if not Success then
+            Report_Preference_File_Error (Kernel, Filename);
+         end if;
 
          for L in Clipboard.List'Range loop
             Free (Clipboard.List (L));
@@ -671,6 +677,5 @@ package body GPS.Kernel.Clipboard is
          end if;
       end if;
    end Clipboard_Handler;
-
 
 end GPS.Kernel.Clipboard;

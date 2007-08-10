@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                             AdaCore                               --
+--                Copyright (C) 2001-2007, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -246,7 +245,9 @@ package Default_Preferences is
    --  yet.
 
    procedure Save_Preferences
-     (Manager : access Preferences_Manager_Record; File_Name : String);
+     (Manager   : access Preferences_Manager_Record;
+      File_Name : String;
+      Success   : out Boolean);
    --  Save the default preferences to File_Name.
 
    -------------------------

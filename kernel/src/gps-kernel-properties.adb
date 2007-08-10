@@ -515,12 +515,14 @@ package body GPS.Kernel.Properties is
      (Kernel : access Kernel_Handle_Record'Class)
    is
       Filename : constant String := Get_Properties_Filename (Kernel);
-      Iter  : Properties_Hash.String_Hash_Table.Iterator;
-      Iter2 : Properties_Description_Hash.String_Hash_Table.Iterator;
-      Hash  : Properties_Description_HTable;
+      Iter     : Properties_Hash.String_Hash_Table.Iterator;
+      Iter2    : Properties_Description_Hash.String_Hash_Table.Iterator;
+      Hash     : Properties_Description_HTable;
       Root, File, Prop : Node_Ptr;
-      Descr : Property_Description_Access;
-      Val   : String_Ptr;
+      Descr    : Property_Description_Access;
+      Val      : String_Ptr;
+      Success  : Boolean;
+
    begin
       Trace (Me, "Saving " & Filename);
       Root := new Node'
@@ -606,8 +608,12 @@ package body GPS.Kernel.Properties is
          Get_Next (All_Properties, Iter);
       end loop;
 
-      Print (Root, Filename);
+      Print (Root, Filename, Success);
       Free (Root);
+
+      if not Success then
+         Report_Preference_File_Error (Kernel, Filename);
+      end if;
    end Save_Persistent_Properties;
 
    ----------------------

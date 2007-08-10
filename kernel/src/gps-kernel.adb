@@ -56,6 +56,7 @@ with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
 
+with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 
@@ -689,6 +690,7 @@ package body GPS.Kernel is
       M            : Node_Ptr;
       Old          : Node_Ptr;
       Err          : GNAT.Strings.String_Access;
+      Success      : Boolean;
 
    begin
       if Project_Name = VFS.No_File and then not As_Default_Desktop then
@@ -751,9 +753,39 @@ package body GPS.Kernel is
       Set_Attribute (M, "project", Full_Name (Project_Name).all);
       Add_Child (N, M);
 
-      Print (N, File_Name);
+      Print (N, File_Name, Success);
       Free (N);
+
+      if not Success then
+         Report_Preference_File_Error (Handle, File_Name);
+      end if;
    end Save_Desktop;
+
+   ----------------------------------
+   -- Report_Preference_File_Error --
+   ----------------------------------
+
+   procedure Report_Preference_File_Error
+     (Handle   : access Kernel_Handle_Record;
+      Filename : String)
+   is
+      Button : Message_Dialog_Buttons;
+      pragma Unreferenced (Button);
+   begin
+      if Is_In_Destruction (Handle) then
+         Button := Message_Dialog
+           ((-"Could not save the configuration file ") & Filename & ASCII.LF &
+            (-"Please verify that you have write access to this file."),
+            Error, Button_OK, Justification => Justify_Left);
+      else
+         GPS.Kernel.Console.Insert
+           (Handle,
+            (-"Could not save the configuration file ") & Filename & ASCII.LF &
+            (-"Please verify that you have write access to this file."),
+            Mode => GPS.Kernel.Console.Error);
+         Raise_Console (Handle);
+      end if;
+   end Report_Preference_File_Error;
 
    ----------------------
    -- Has_User_Desktop --
@@ -1430,6 +1462,8 @@ package body GPS.Kernel is
    -------------
 
    procedure Destroy (Handle : access Kernel_Handle_Record) is
+      Success : Boolean;
+
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (History_Record, History);
    begin
@@ -1439,9 +1473,16 @@ package body GPS.Kernel is
 
       Reset_Properties (Handle);
 
-      Save (Handle.History.all, Handle.Home_Dir.all & "histories.xml");
+      Save (Handle.History.all,
+            Handle.Home_Dir.all & "histories.xml",
+            Success);
       Free (Handle.History.all);
       Unchecked_Free (Handle.History);
+
+      if not Success then
+         Report_Preference_File_Error
+           (Handle, Handle.Home_Dir.all & "histories.xml");
+      end if;
 
       Reset (Handle.Startup_Scripts);
 

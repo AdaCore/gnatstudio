@@ -528,6 +528,7 @@ package body Action_Editor is
       Action_Iter : Action_Iterator := Start (Kernel);
       Child       : Node_Ptr;
       Descr       : Node_Ptr;
+      Success     : Boolean;
 
    begin
       --  We need to preserve the actions that were already defined in this
@@ -579,8 +580,12 @@ package body Action_Editor is
       end loop;
 
       Trace (Me, "Saving " & Filename);
-      Print (Tree, Filename);
+      Print (Tree, Filename, Success);
       Free (Tree);
+
+      if not Success then
+         Report_Preference_File_Error (Kernel, Filename);
+      end if;
    end Save_Custom_Actions;
 
    ---------------------

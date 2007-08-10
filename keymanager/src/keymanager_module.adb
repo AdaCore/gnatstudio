@@ -238,7 +238,8 @@ package body KeyManager_Module is
 
    procedure Save_Custom_Keys (Kernel : access Kernel_Handle_Record'Class) is
       Filename : constant String := Get_Home_Dir (Kernel) & "keys.xml";
-      File : Node_Ptr;
+      File     : Node_Ptr;
+      Success  : Boolean;
 
       procedure Save_Table (Table : in out Key_Htable.HTable; Prefix : String);
       --  Save the contents of a specific keymap
@@ -302,8 +303,12 @@ package body KeyManager_Module is
       Save_Table (Keymanager_Module.Table.all, "");
 
       Trace (Me, "Saving " & Filename);
-      Print (File, Filename);
+      Print (File, Filename, Success);
       Free (File);
+
+      if not Success then
+         Report_Preference_File_Error (Kernel, Filename);
+      end if;
    end Save_Custom_Keys;
 
    -------------

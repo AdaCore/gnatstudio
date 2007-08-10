@@ -141,6 +141,7 @@ package body VCS_Status is
       Iter     : Status_Hash.Iterator;
       Item     : Internal_Record;
       Status   : Status_Id;
+      Success  : Boolean;
 
    begin
       File     := new Node;
@@ -205,8 +206,12 @@ package body VCS_Status is
          Status_Hash.Get_Next (Cache.T.all, Iter);
       end loop;
 
-      Print (File, Filename);
+      Print (File, Filename, Success);
       Free (File);
+
+      if not Success then
+         Report_Preference_File_Error (Kernel, Filename);
+      end if;
 
    exception
       when E : others => Trace (Exception_Handle, E);

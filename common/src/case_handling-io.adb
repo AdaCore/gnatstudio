@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2004-2007                      --
---                              AdaCore                              --
+--                  Copyright (C) 2004-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -97,7 +96,11 @@ package body Case_Handling.IO is
    -- Save_Exceptions --
    ---------------------
 
-   procedure Save_Exceptions (C : in Casing_Exceptions; Filename : String) is
+   procedure Save_Exceptions
+     (C        : in Casing_Exceptions;
+      Filename : String;
+      Success  : out Boolean)
+   is
       File, Ada_Child : Node_Ptr;
       Child           : Node_Ptr;
       Iter            : String_Hash_Table.Iterator;
@@ -105,6 +108,8 @@ package body Case_Handling.IO is
 
    begin
       if C.E = null and then C.S = null then
+         Success := True;
+
          return;
       end if;
 
@@ -156,7 +161,7 @@ package body Case_Handling.IO is
       end if;
 
       Trace (Me, "Saving " & Filename);
-      Print (File, Filename);
+      Print (File, Filename, Success);
       Free (File);
 
    exception
