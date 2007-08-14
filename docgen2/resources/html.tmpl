@@ -180,7 +180,7 @@
     <div class="class">
       <h3><a name='@_CLASS_LOC_@' id='@_CLASS_LOC_@'></a>@_CLASS_@</h3>
       <div class='details'>@_CLASS_PRINTOUT_@</div>
-      @@IF@@ (@_EXIST:CLASS_PARENTS_@) or (@_EXIST:CLASS_PRIMITIVES_@) or (@_EXIST:CLASS_PRIMITIVES_INHERITED_@)
+      @@IF@@ (@_EXIST:CLASS_PARENTS_@) or (@_EXIST:CLASS_PRIMITIVES_@)
       <div class='profile'>
         @@IF@@ @_EXIST:CLASS_PARENTS_@
         <div>
@@ -192,17 +192,12 @@
           @@END_TABLE@@
         </div>
         @@END_IF@@
-        @@IF@@ (@_EXIST:CLASS_PRIMITIVES_@) or (@_EXIST:CLASS_PRIMITIVES_INHERITED_@)
+        @@IF@@ (@_EXIST:CLASS_PRIMITIVES_@)
         <div>
           <h4>Primitive operations:</h4>
           @@TABLE@@
             @@IF@@ @_NO_SPACE:CLASS_PRIMITIVES_@ /= ""
-            <div>@_CLASS_PRIMITIVES_@</div>
-            @@END_IF@@
-          @@END_TABLE@@
-          @@TABLE@@
-            @@IF@@ @_NO_SPACE:CLASS_PRIMITIVES_INHERITED_@ /= ""
-            <div><i>@_CLASS_PRIMITIVES_INHERITED_@ (inherited)</i></div>
+              <div>@_REPLACE(((\(overriding .+|.*\(Inherited)\))/<i>\1</i>):CLASS_PRIMITIVES_@</div>
             @@END_IF@@
           @@END_TABLE@@
         </div>

@@ -2512,7 +2512,6 @@ package body Docgen2 is
       Class_CI               : Common_Info_Tags;
       Class_Parents          : Vector_Tag;
       Class_Primitives       : Vector_Tag;
-      Class_Primitives_Inh   : Vector_Tag;
       Task_CI                : Common_Info_Tags;
       Task_Type              : Vector_Tag;
       Task_Is_Type           : Vector_Tag;
@@ -2659,7 +2658,7 @@ package body Docgen2 is
          elsif Child_EInfo.Category = Cat_Class then
 
             declare
-               Prim_Tag, Prim_Inh_Tag, Parent_Tag : Vector_Tag;
+               Prim_Tag, Parent_Tag : Vector_Tag;
                Xref        : Cross_Ref;
                Prim_Op_Str : Ada.Strings.Unbounded.Unbounded_String;
             begin
@@ -2692,23 +2691,23 @@ package body Docgen2 is
                   then
                      Append
                        (Prim_Op_Str,
-                        " (" &
-                        Gen_Href (Backend, Xref.Overriding_Op, "overriding") &
+                        " (overriding " &
+                        Gen_Href
+                          (Backend,
+                           Xref.Overriding_Op) &
                         ")");
                   end if;
 
                   if Xref.Inherited then
-                     Append (Prim_Inh_Tag, Prim_Op_Str);
-                  else
-                     Append (Prim_Tag, Prim_Op_Str);
+                     Append
+                       (Prim_Op_Str, " (Inherited)");
                   end if;
+
+                  Append (Prim_Tag, Prim_Op_Str);
                end loop;
 
                Append (Class_Primitives, Prim_Tag);
                Clear (Prim_Tag);
-               Append
-                 (Class_Primitives_Inh, Prim_Inh_Tag);
-               Clear (Prim_Inh_Tag);
             end;
 
             --  TASKS HANDLING --
@@ -2885,8 +2884,6 @@ package body Docgen2 is
       Insert_Common_Informations ("CLASS", Class_CI);
       Insert (Translation, Assoc ("CLASS_PARENTS", Class_Parents));
       Insert (Translation, Assoc ("CLASS_PRIMITIVES", Class_Primitives));
-      Insert (Translation,
-              Assoc ("CLASS_PRIMITIVES_INH", Class_Primitives_Inh));
       Insert_Common_Informations ("TASK", Task_CI);
       Insert (Translation, Assoc ("TASK_TYPE", Task_Type));
       Insert (Translation, Assoc ("TASK_IS_TYPE", Task_Is_Type));
