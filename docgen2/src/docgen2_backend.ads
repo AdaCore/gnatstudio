@@ -85,13 +85,11 @@ package Docgen2_Backend is
    --  Pkg_Nb is the indes of the pkg in the source file, or "0" if not
    --   applicable
 
-   function To_Loc_Ref
-     (Backend  : access Backend_Record;
-      Location : String)
-      return String is abstract;
+   function Gen_Ref
+     (Backend : access Backend_Record;
+      Name    : String) return String is abstract;
    --  Generate the ref that will allow the navigation to this point.
-   --  for example: gps-kernel.ads:10:5 will be converted to "10:5" by the
-   --  html backend
+   --  for example: in HTML, this will generate <a name="Name"></a>
 
    function Gen_Href
      (Backend                : access Backend_Record;

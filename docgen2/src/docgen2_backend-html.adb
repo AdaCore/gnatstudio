@@ -111,19 +111,18 @@ package body Docgen2_Backend.HTML is
       return Backend.To_Destination_Name (Src_File, Pkg_Nb) & "#" & Location;
    end To_Href;
 
-   ----------------
-   -- To_Loc_Ref --
-   ----------------
+   -------------
+   -- Gen_Ref --
+   -------------
 
-   function To_Loc_Ref
-     (Backend  : access HTML_Backend_Record;
-      Location : String)
-      return String
+   function Gen_Ref
+     (Backend : access HTML_Backend_Record;
+      Name    : String) return String
    is
       pragma Unreferenced (Backend);
    begin
-      return Location;
-   end To_Loc_Ref;
+      return "<a name=""" & Name & """></a>";
+   end Gen_Ref;
 
    --------------
    -- Gen_Href --

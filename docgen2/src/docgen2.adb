@@ -261,23 +261,25 @@ package body Docgen2 is
 
    --  Command --
    type Docgen_Command is new Commands.Root_Command with record
-      Kernel         : Kernel_Handle;
-      Backend        : Docgen2_Backend.Backend_Handle;
-      Project        : Projects.Project_Type;
-      Source_Files   : File_Array_Access;
-      Xref_List      : Cross_Ref_List.Vector;
-      EInfo_Map      : Entity_Info_Map.Map;
-      Class_List     : Cross_Ref_List.Vector;
-      Documentation  : Entity_Info_List.Vector;
-      File_Index     : Natural;
-      Src_File_Index : Natural;
-      Buffer         : GNAT.Strings.String_Access;
-      Src_Files      : Files_List.Vector;
-      Files          : Cross_Ref_List.Vector;
-      Analysis_Ctxt  : Analysis_Context;
-      Options        : Docgen_Options;
-      Cursor         : Entity_Info_List.Cursor;
-      Doc_Gen        : Boolean := False;
+      Kernel          : Kernel_Handle;
+      Backend         : Docgen2_Backend.Backend_Handle;
+      Project         : Projects.Project_Type;
+      Source_Files    : File_Array_Access;
+      Annotated_Files : File_Array_Access := null;
+      Xref_List       : Cross_Ref_List.Vector;
+      EInfo_Map       : Entity_Info_Map.Map;
+      Class_List      : Cross_Ref_List.Vector;
+      Documentation   : Entity_Info_List.Vector;
+      File_Index      : Natural;
+      Src_File_Index  : Natural;
+      Src_A_Files_Idx : Natural;
+      Buffer          : GNAT.Strings.String_Access;
+      Src_Files       : Files_List.Vector;
+      Files           : Cross_Ref_List.Vector;
+      Analysis_Ctxt   : Analysis_Context;
+      Options         : Docgen_Options;
+      Cursor          : Entity_Info_List.Cursor;
+      Doc_Gen         : Boolean := False;
    end record;
    --  Command used for generating the documentation
 
@@ -350,6 +352,7 @@ package body Docgen2 is
       Db        : Entities_Database;
       File      : Source_File;
       Files     : in out Cross_Ref_List.Vector;
+      Prj_Files : File_Array;
       E_Info    : Entity_Info);
    --  Generate the final documentation for the specified Entity_Info.
    --  E_Info's category must be Cat_File
@@ -1754,9 +1757,11 @@ package body Docgen2 is
                      end if;
                   end;
                else
+
                   Parse_Constructs
                     (Language, File_Buffer.all, Constructs);
                end if;
+
                Construct_T := To_Construct_Tree (Constructs'Access, True);
 
                --  Retrieve the file's main unit comments, if any
@@ -1822,47 +1827,10 @@ package body Docgen2 is
                              Parent_Iter   => Null_Construct_Tree_Iterator);
                Push (Command.Analysis_Ctxt, Ctxt_Elem);
                --  Push it twice, so that one remains when the file analysis
-               --  is finished
+               --  is (finished
                Push (Command.Analysis_Ctxt, Ctxt_Elem);
             end;
          end if;
-
-      elsif not Command.Doc_Gen then
-         --  All files analysed. Let's generate the documentation
-
-         --  Clean-up previous context if needed
-         Free (Command.Analysis_Ctxt.Tree);
-         Free (Command.Analysis_Ctxt.File_Buffer);
-
-         Generate_Support_Files (Command.Kernel, Command.Backend);
-
-         --  Generate all cross-refs
-         Trace (Me, "Generate all Cross-Refs");
-         Generate_Xrefs (Command.Xref_List, Command.EInfo_Map);
-
-         Command.Doc_Gen := True;
-         Command.Cursor := Command.Documentation.First;
-
-      elsif Entity_Info_List.Has_Element (Command.Cursor) then
-         --  Documentation generation has already started.
-
-         --  For every file, generate the documentation.
-         declare
-            EInfo   : constant Entity_Info :=
-                        Entity_Info_List.Element (Command.Cursor);
-         begin
-            Trace (Me, "Generate doc for " & EInfo.Name.all);
-            Generate_Doc
-              (Kernel  => Command.Kernel,
-               Backend => Command.Backend,
-               Xrefs   => Command.EInfo_Map,
-               Lang    => EInfo.Language,
-               Db      => Database,
-               File    => EInfo.File,
-               Files   => Command.Files,
-               E_Info  => EInfo);
-            Entity_Info_List.Next (Command.Cursor);
-         end;
 
       elsif Command.Src_File_Index < Command.Source_Files'Last then
          --  Generate annotated source files
@@ -1873,12 +1841,23 @@ package body Docgen2 is
             Command.Source_Files (Command.File_Index));
 
          if (Is_Spec_File (Command.Kernel,
-                          Command.Source_Files (Command.Src_File_Index))
+                           Command.Source_Files (Command.Src_File_Index))
              or else Command.Options.Process_Body_Files)
            and then
              (not Command.Options.Process_Up_To_Date_Only
               or else Is_Up_To_Date (File))
          then
+            if Command.Annotated_Files = null then
+               Command.Annotated_Files :=
+                 new File_Array (1 .. Command.Source_Files'Length);
+               Command.Src_A_Files_Idx := 0;
+            end if;
+
+            --  Add file in the list of annotated source files
+            Command.Src_A_Files_Idx := Command.Src_A_Files_Idx + 1;
+            Command.Annotated_Files (Command.Src_A_Files_Idx) :=
+              Command.Source_Files (Command.Src_File_Index);
+
             Command.Src_Files.Append
               (Command.Source_Files (Command.Src_File_Index));
 
@@ -1913,6 +1892,45 @@ package body Docgen2 is
 
             Free (Command.Buffer);
          end if;
+
+      elsif not Command.Doc_Gen then
+         --  All files analysed. Let's generate the documentation
+
+         --  Clean-up previous context if needed
+         Free (Command.Analysis_Ctxt.Tree);
+         Free (Command.Analysis_Ctxt.File_Buffer);
+
+         Generate_Support_Files (Command.Kernel, Command.Backend);
+
+         --  Generate all cross-refs
+         Trace (Me, "Generate all Cross-Refs");
+         Generate_Xrefs (Command.Xref_List, Command.EInfo_Map);
+
+         Command.Doc_Gen := True;
+         Command.Cursor := Command.Documentation.First;
+
+      elsif Entity_Info_List.Has_Element (Command.Cursor) then
+         --  Documentation generation has already started.
+
+         --  For every file, generate the documentation.
+         declare
+            EInfo   : constant Entity_Info :=
+                        Entity_Info_List.Element (Command.Cursor);
+         begin
+            Trace (Me, "Generate doc for " & EInfo.Name.all);
+            Generate_Doc
+              (Kernel    => Command.Kernel,
+               Backend   => Command.Backend,
+               Xrefs     => Command.EInfo_Map,
+               Lang      => EInfo.Language,
+               Db        => Database,
+               File      => EInfo.File,
+               Files     => Command.Files,
+               Prj_Files => Command.Annotated_Files
+                              (1 .. Command.Src_A_Files_Idx),
+               E_Info    => EInfo);
+            Entity_Info_List.Next (Command.Cursor);
+         end;
 
       else
          --  No more file processing. Let's print indexes.
@@ -2063,6 +2081,7 @@ package body Docgen2 is
       Printout     : Unbounded_String;
       File_Handle  : File_Type;
       Translation  : Translate_Set;
+      Line_Nb      : Natural := 1;
       Tmpl         : constant String :=
                        Backend.Get_Template
                          (Get_System_Dir (Kernel), Tmpl_Src);
@@ -2179,6 +2198,33 @@ package body Docgen2 is
       Trace (Me, "Parse entities");
       Parse_Entities (Lang, Buffer.all, CB'Unrestricted_Access);
 
+      --  Annotate line numbers
+      Last_Idx := 1;
+      Line_Nb := 1;
+
+      Printout := Backend.Gen_Ref (Natural'Image (Line_Nb)) & Printout;
+      Line_Nb := Line_Nb + 1;
+
+      loop
+         Last_Idx := Index
+           (Source  => Printout,
+            Pattern => "" & ASCII.LF,
+            From    => Last_Idx);
+
+         exit when Last_Idx = 0;
+
+         if Last_Idx > 0 then
+            declare
+               Str : constant String :=
+                       Backend.Gen_Ref (Natural'Image (Line_Nb));
+            begin
+               Insert (Printout, Before => Last_Idx + 1, New_Item => Str);
+               Line_Nb := Line_Nb + 1;
+               Last_Idx := Last_Idx + Str'Length + 1;
+            end;
+         end if;
+      end loop;
+
       Insert
         (Translation, Assoc ("SOURCE_FILE", Get_Filename (File).Base_Name));
       Insert
@@ -2207,6 +2253,7 @@ package body Docgen2 is
       Db        : Entities_Database;
       File      : Source_File;
       Files     : in out Cross_Ref_List.Vector;
+      Prj_Files : File_Array;
       E_Info    : Entity_Info)
    is
       Tmpl        : constant String :=
@@ -2295,7 +2342,35 @@ package body Docgen2 is
 
          for J in E_Info.References.First_Index .. E_Info.References.Last_Index
          loop
-            Append (Ref_Tag, Location_Image (E_Info.References.Element (J)));
+            declare
+               Src_File : constant VFS.Virtual_File :=
+                            Get_Filename (E_Info.References.Element (J).File);
+               Found    : Boolean := False;
+            begin
+
+               for J in Prj_Files'Range loop
+                  if Prj_Files (J) = Src_File then
+                     Found := True;
+                     exit;
+                  end if;
+               end loop;
+
+               if Found then
+                  Append
+                    (Ref_Tag,
+                     Gen_Href
+                       (Backend,
+                        Location_Image (E_Info.References.Element (J)),
+                        Backend.To_Href
+                          (Natural'Image (E_Info.References.Element (J).Line),
+                           "src_" & Base_Name (Src_File),
+                           1),
+                        Location_Image (E_Info.References.Element (J))));
+               else
+                  Append
+                    (Ref_Tag, Location_Image (E_Info.References.Element (J)));
+               end if;
+            end;
          end loop;
 
          Append (Tags.References_Tag, Ref_Tag);
@@ -2556,7 +2631,8 @@ package body Docgen2 is
             then
                Pkg_Found := True;
                Generate_Doc
-                 (Kernel, Backend, Xrefs, Lang, Db, File, Files, Child_EInfo);
+                 (Kernel, Backend, Xrefs, Lang, Db,
+                  File, Files, Prj_Files, Child_EInfo);
             end if;
          end if;
 

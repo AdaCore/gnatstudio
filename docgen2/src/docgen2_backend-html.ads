@@ -53,10 +53,9 @@ package Docgen2_Backend.HTML is
       return String;
    --  See inherited doc.
 
-   function To_Loc_Ref
-     (Backend  : access HTML_Backend_Record;
-      Location : String)
-      return String;
+   function Gen_Ref
+     (Backend : access HTML_Backend_Record;
+      Name    : String) return String;
    --  See inherited doc.
 
    function Gen_Href
