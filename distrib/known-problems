@@ -9,11 +9,16 @@ Known Problems fixed in GPS 4.1.2
               constant text (or a more complex script if interaction with the
               user is needed)
 
+- G601-027 Open File dialog is very slow/buggy on Windows Vista
+  Problem:    On Windows Vista, the "Open file" dialog is very slow, and
+              sometimes hangs.
+  Workaround: Use either "Open from project" or "Open from host" dialogs.
+
 - G523-021 Search & Replace recursion when the pattern is in the replacement
   Problem:    When the pattern of a search is in the replacement string, doing
               multiple "search & replace" will always replace the pattern from
               the replacement.
-  Workaround: Move the cursor after the "search & replace" after the 
+  Workaround: Move the cursor after the "search & replace" after the
               replacement.
 
 - G515-005 Casing a multi-line selection does not work
@@ -35,7 +40,7 @@ Known Problems fixed in GPS 4.1.2
 
 - G507-019 Some operations not working with "ClearCase Native" VCS.
   Problem:    When working on a project with "ClearCase Native" selected as
-              Version Control system, the "Query status" and "Annotate" 
+              Version Control system, the "Query status" and "Annotate"
               operations do not work.
   Workaround: Edit the "clearcase.xml" file in the directory share/gps/plug-ins
               from your GPS installation, look for the lines containing
@@ -48,13 +53,13 @@ Known Problems fixed in GPS 4.1.2
   Problem:    Under unix environments where firefox is the default browser,
               if it is not already launched at the time you want to display
               some documentation, GPS cannot open the browser and issue an
-              "Error: No running window found" message. 
+              "Error: No running window found" message.
   Workaround: Launch firefox and try again to open the documentation.
 
 Known Problems fixed in GPS 4.1.1
 
 - G423-010 "Replace all" miss matches with open buffers
-  Problem:    When "replace all" is done on more than one file, and if there 
+  Problem:    When "replace all" is done on more than one file, and if there
               are opened files with no matches, some matches will be missed
               by the replacement process.
   Workaround: Close all the files before doing the "replace all".
@@ -153,16 +158,16 @@ Known Problems fixed in GPS 4.1.1
 
 - G322-009 "Replace all" loops when the pattern is in the replacement string.
   Problem:    Replacing all the occurences of a pattern with a replacement
-              string containing this pattern (e.g. replacing ("A" with "AB") 
+              string containing this pattern (e.g. replacing ("A" with "AB")
               will loop if the context is "current file".
   Workaround: Do the replacement in two steps, first replacing the pattern by
-              an arbitrary name and then this name by the desired string.  
+              an arbitrary name and then this name by the desired string.
 
 - G321-024 Find & Replace not working with successive matches.
-  Problem:    With successives matches, for example with the text "mmmmm", 
-              Doing successive replace & search (on "m" in this example) will 
-              replace every other occurence. 
-  Workaround: Do a new replace & search after the first one. 
+  Problem:    With successives matches, for example with the text "mmmmm",
+              Doing successive replace & search (on "m" in this example) will
+              replace every other occurence.
+  Workaround: Do a new replace & search after the first one.
 
 - G321-011 Context is invalid in scripts when only a directory is concerned
   Problem:    When a context only concerns a directory, then the Context in
