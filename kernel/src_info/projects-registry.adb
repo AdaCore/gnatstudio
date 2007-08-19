@@ -890,26 +890,27 @@ package body Projects.Registry is
       ------------------------
 
       procedure Register_Directory (Directory : String) is
-         Last : Integer := Directory'Last - 1;
+         Dir  : constant String := Name_As_Directory (Directory);
+         Last : Integer := Dir'Last - 1;
       begin
-         Set (Registry.Data.Directories, K => Directory, E => Direct);
+         Set (Registry.Data.Directories, K => Dir, E => Direct);
 
          loop
-            while Last >= Directory'First
-              and then not OS_Utils.Is_Directory_Separator (Directory (Last))
+            while Last >= Dir'First
+              and then not OS_Utils.Is_Directory_Separator (Dir (Last))
             loop
                Last := Last - 1;
             end loop;
 
             Last := Last - 1;
 
-            exit when Last <= Directory'First;
+            exit when Last <= Dir'First;
 
             if Get (Registry.Data.Directories,
-                    Directory (Directory'First .. Last)) /= Direct
+                    Dir (Dir'First .. Last)) /= Direct
             then
                Set (Registry.Data.Directories,
-                    K => Directory (Directory'First .. Last), E => As_Parent);
+                    K => Dir (Dir'First .. Last), E => As_Parent);
             end if;
          end loop;
       end Register_Directory;
