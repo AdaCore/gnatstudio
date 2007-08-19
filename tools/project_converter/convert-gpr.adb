@@ -1,3 +1,22 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                 Copyright (C) 2002-2007, AdaCore                  --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
 with GNAT.IO;                   use GNAT.IO;
 with Csets;                     use Csets;
 with Prj;                       use Prj;
@@ -12,6 +31,7 @@ with Snames;                    use Snames;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Command_Line;          use Ada.Command_Line;
+with File_Utils;                use File_Utils;
 
 package body Convert.Gpr is
 
@@ -57,7 +77,8 @@ package body Convert.Gpr is
          end loop;
 
          Put_Line (Prefix
-                   & Format_Pathname (Path (Start .. Last - 1), UNIX) & '/');
+                   & Name_As_Directory
+                      (Format_Pathname (Path (Start .. Last - 1), UNIX)));
          Start := Last + 1;
       end loop;
    end Output_Path;
