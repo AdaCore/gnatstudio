@@ -29,6 +29,7 @@ with Gdk.Types;               use Gdk.Types;
 with Glib.Generic_Properties; use Glib.Generic_Properties;
 with Glib.Properties;         use Glib.Properties;
 with Glib.Xml_Int;            use Glib.Xml_Int;
+with Gtk.Style;
 
 with Pango.Font;              use Pango.Font;
 
@@ -185,6 +186,10 @@ package body GPS.Kernel.Preferences is
                Set_Return_Value
                  (Data, To_String (Get_Pref (Param_Spec_Font (Param))));
 
+            elsif Typ = Gtk.Style.Get_Type then
+               Set_Return_Value
+                 (Data, Get_Pref (Param_Spec_String (Param)));
+
             elsif Fundamental (Typ) = GType_Enum then
                Set_Return_Value
                  (Data,
@@ -193,7 +198,7 @@ package body GPS.Kernel.Preferences is
                      Guint (Get_Pref (Param_Spec_Enum (Param)))));
 
             else
-               Set_Error_Msg (Data, -"Preference not supported");
+               Set_Error_Msg (Data, -"Preference type not supported");
             end if;
          exception
             when others =>
@@ -235,18 +240,25 @@ package body GPS.Kernel.Preferences is
                  (Kernel.Preferences, Param_Spec_Boolean (Param),
                   Nth_Arg (Data, 2));
 
+            elsif Typ = Gtk.Style.Get_Type then
+               Set_Pref
+                 (Kernel.Preferences,
+                  Param_Spec_String (Param),
+                  String'(Nth_Arg (Data, 2)));
+
             elsif Fundamental (Typ) = GType_Enum then
                Set_Pref
                  (Kernel.Preferences,
                   Param_Spec_Int (Param),
                   Get_Index
                     (Param_Spec_Enum (Param), String'(Nth_Arg (Data, 2))));
+
             else
                Done := False;
                Set_Error_Msg (Data, -"Preference not supported");
             end if;
 
-            if Done then
+            if Done and then Nth_Arg (Data, 3, True) then
                Save_Preferences
                  (Kernel, Get_Home_Dir (Kernel) & "preferences");
                Run_Hook (Kernel, Preferences_Changed_Hook);
@@ -1421,7 +1433,7 @@ package body GPS.Kernel.Preferences is
       Register_Command
         (Kernel, "set",
          Minimum_Args  => 1,
-         Maximum_Args  => 1,
+         Maximum_Args  => 2,
          Class         => Pref_Class,
          Handler       => Get_Command_Handler'Access);
    end Register_Module;
