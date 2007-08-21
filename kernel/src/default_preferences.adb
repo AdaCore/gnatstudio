@@ -594,14 +594,19 @@ package body Default_Preferences is
       N : constant Pref_Description_Access := Get_Description (P);
    begin
       if N /= null
-        and then (Value_Type (P) = Val_Type
-                  or else Fundamental (Value_Type (P)) = Val_Type)
         and then N.Value /= null
       then
-         return Convert (N.Value.all);
-      else
-         return Default (Pref);
+         if Value_Type (P) = Val_Type
+           or else Fundamental (Value_Type (P)) = Val_Type
+         then
+            return Convert (N.Value.all);
+
+         elsif Val_Type = GType_String then
+            return Convert (N.Value.all);
+         end if;
       end if;
+
+      return Default (Pref);
 
    exception
       when Constraint_Error =>
@@ -853,6 +858,7 @@ package body Default_Preferences is
 
       Free (Info.Value);
       Info.Value := new String'(Value);
+      Info.Descr := null;
 
       if Manager.Pref_Editor /= null then
          Widget_Callback.Emit_By_Name
