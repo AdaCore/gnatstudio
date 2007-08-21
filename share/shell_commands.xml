@@ -3863,7 +3863,8 @@ GPS.Hook ("debugger_process_stopped").add (debugger_stopped)
   <shell_doc name="GPS.Preference.set">
      <param name="self">The instance of GPS.Preference</param>
      <param name="value">A string, boolean or integer</param>
-     <description>Set value for the given preference. The type of the parameter depends on the type of the preference</description>
+     <param name="save" default="true">A boolean</param>
+     <description>Set value for the given preference. The type of the parameter depends on the type of the preference. If the save parameter is true, the new value is immediately saved for future GPS sessions, and the new value is taken into account by GPS itself. Otherwise, if set to false, you will need to call the hook "preferences_changed" to force it</description>
   </shell_doc>
 
   <!--#################################################################
