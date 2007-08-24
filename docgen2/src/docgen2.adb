@@ -1686,6 +1686,12 @@ package body Docgen2 is
       elsif Command.File_Index < Command.Source_Files'Last then
          --  Current file has been analysed, Let's start the next one
 
+         if Command.File_Index < Command.Source_Files'First then
+            --  Very first file analysed. Let's first create the destination
+            --  directory with support files
+            Generate_Support_Files (Command.Kernel, Command.Backend);
+         end if;
+
          Command.File_Index := Command.File_Index + 1;
 
          --  Clean-up previous context if needed
@@ -1899,8 +1905,6 @@ package body Docgen2 is
          --  Clean-up previous context if needed
          Free (Command.Analysis_Ctxt.Tree);
          Free (Command.Analysis_Ctxt.File_Buffer);
-
-         Generate_Support_Files (Command.Kernel, Command.Backend);
 
          --  Generate all cross-refs
          Trace (Me, "Generate all Cross-Refs");
