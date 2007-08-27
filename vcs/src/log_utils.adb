@@ -762,9 +762,13 @@ package body Log_Utils is
                while Files_Temp /= Null_Node loop
                   --  Save any open log editors, and then get the corresponding
                   --  logs.
-
                   File := Create (Full_Filename => Data (Files_Temp));
-                  Append (L, "* " & Base_Name (File) & ":" & ASCII.LF);
+                  if Is_Directory (File) then
+                     Append (L, "* directory ");
+                  else
+                     Append (L, "* ");
+                  end if;
+                  Append (L, Base_Dir_Name (File) & ":" & ASCII.LF);
 
                   Has_Log :=
                     Get_Log_From_File (Kernel, File, False) /= VFS.No_File;

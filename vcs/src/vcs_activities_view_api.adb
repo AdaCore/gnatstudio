@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2007                      --
---                              AdaCore                              --
+--                  Copyright (C) 2005-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -732,9 +731,15 @@ package body VCS_Activities_View_API is
       for K in 1 .. String_List.Length (Files) loop
          declare
             use type String_List.List_Node;
-            File : constant Virtual_File := Create (String_List.Data (Iter));
+            Filename : constant String := String_List.Data (Iter);
+            File     : constant Virtual_File := Create (Filename);
          begin
-            Append (Content, Tab & "* " & Base_Name (File) & ASCII.LF);
+            if Is_Directory (File) then
+               Append (Content, Tab & "* directory ");
+            else
+               Append (Content, Tab & "* ");
+            end if;
+            Append (Content, Base_Dir_Name (File) & ":" & ASCII.LF);
             Append_Indent (Get_Log (Kernel, File));
             Append (Content, ASCII.LF);
             Iter := String_List.Next (Iter);
