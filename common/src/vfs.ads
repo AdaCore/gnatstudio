@@ -132,7 +132,7 @@ package VFS is
    function File_Extension (File : Virtual_File) return UTF8_String;
    --  Return the extension of the file, or the empty string if there is no
    --  extension. This extension includes the last dot and all the following
-   --  characters;
+   --  characters.
 
    function Get_Host (File : Virtual_File) return UTF8_String;
    --  Returns the host containing the file. If the host is the localhost,
@@ -174,10 +174,10 @@ package VFS is
    --  contains the base name or a relative name.
 
    procedure Set_Writable (File : VFS.Virtual_File; Writable : Boolean);
-   --  If Writable is True, make File writable, otherwise make File unwritable.
+   --  If Writable is True, make File writable, otherwise make File unwritable
 
    procedure Set_Readable (File : VFS.Virtual_File; Readable : Boolean);
-   --  If Readable is True, make File readable, otherwise make File unreadable.
+   --  If Readable is True, make File readable, otherwise make File unreadable
 
    function File_Time_Stamp (File : Virtual_File) return Ada.Calendar.Time;
    --  Return the timestamp for this file. This is GMT time, not local time.
@@ -216,11 +216,11 @@ package VFS is
    --  returns root directory of the file
 
    function Get_Parent (Dir : Virtual_File) return Virtual_File;
-   --  return the parent directory if it exists, else No_File is returned.
+   --  return the parent directory if it exists, else No_File is returned
 
    function Sub_Dir
      (Dir : Virtual_File; Name : UTF8_String) return Virtual_File;
-   --  returns sub directory Name if it exists, else No_File is returned.
+   --  returns sub directory Name if it exists, else No_File is returned
 
    procedure Change_Dir (Dir : Virtual_File);
    --  Changes working directory. Raises Directory_Error if Dir_Name does not
@@ -288,7 +288,7 @@ package VFS is
 
    procedure Close (File : in out Writable_File);
    --  Closes File, and write the file to disk.
-   --  Use_Error is raised if the file could not be saved
+   --  Use_Error is raised if the file could not be saved.
 
    ---------------------
    -- Locale encoding --
