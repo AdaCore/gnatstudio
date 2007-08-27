@@ -259,7 +259,7 @@ package body Shell_Script is
          if Number_Of_Arguments (Data) = 0 then
             Insert_Text
               (Get_Script (Data), null,
-               -"The following commands are defined:");
+               -"The following commands are defined:" & ASCII.LF);
             List_Commands (Shell_Scripting (Get_Script (Data)), null);
             Insert_Text
               (Get_Script (Data), null,
