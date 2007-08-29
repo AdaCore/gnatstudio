@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2007                       --
---                             AdaCore                               --
+--                Copyright (C) 2000-2007, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -889,11 +888,6 @@ package body Debugger.Gdb is
                Debugger_Executable_Changed_Hook);
          end if;
 
-         --  Detect the current language. Note that most of the work is done
-         --  in fact directly by Language_Filter.
-
-         Send (Debugger, "show lang", Mode => Internal);
-
          --  Get the initial file name, so that we can display the appropriate
          --  file in the code editor.
          --  This should be done only after we have detected the current
@@ -1153,10 +1147,7 @@ package body Debugger.Gdb is
             Debugger_Executable_Changed_Hook);
       end if;
 
-      --  Detect the current language, and get the name and line of the
-      --  initial file.
-
-      Send (Debugger, "show lang", Mode => Internal);
+      --  Get the name and line of the initial file.
 
       if Get_Language (Debugger).all in Gdb_Ada_Language'Class then
          Switch_Language (Debugger, "c");
@@ -1272,8 +1263,6 @@ package body Debugger.Gdb is
       if Mode in Visible_Command then
          Wait_User_Command (Debugger);
       end if;
-
-      Send (Debugger, "show lang", Mode => Internal);
    end Add_Symbols;
 
    --------------------

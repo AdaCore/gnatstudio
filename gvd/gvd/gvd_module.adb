@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                             AdaCore                               --
+--                Copyright (C) 2001-2007, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -2248,6 +2247,10 @@ package body GVD_Module is
       --  Change the project to match the executable
 
       Load_Project_From_Executable (Kernel, Process);
+
+      --  Verify the language used in the executable
+
+      Detect_Language (Process.Debugger);
 
       --  Re-create all debugger columns.
 
