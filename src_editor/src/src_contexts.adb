@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                             AdaCore                               --
+--                  Copyright (C) 2001-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1615,7 +1614,7 @@ package body Src_Contexts is
                  (Get_Buffer (Editor),
                   Context.End_Line,
                   Context.End_Column,
-                  True);
+                  With_Margin);
 
                Save_Cursor_Position (Get_View (Editor));
             end if;
