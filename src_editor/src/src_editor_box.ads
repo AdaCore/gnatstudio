@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
---                              AdaCore                              --
+--                   Copyright (C) 2001-2007, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -174,11 +173,14 @@ package Src_Editor_Box is
      (Editor      : access Source_Editor_Box_Record;
       Line        : Editable_Line_Type;
       Column      : Character_Offset_Type := 1;
-      Force_Focus : Boolean  := True);
+      Force_Focus : Boolean := True;
+      Centering   : Centering_Type := Minimal);
    --  Move the insert cursor to the given location. Success is set to False
    --  if the position is outside of the buffer.
    --  If Force_Focus is False, then the editor will not grab the focus
    --  before setting the cursor position.
+   --  Centering indicates the behavior when scrolling the editor to reveal
+   --  the cursor location.
 
    procedure Replace_Sliced
      (Editor       : access Source_Editor_Box_Record;
