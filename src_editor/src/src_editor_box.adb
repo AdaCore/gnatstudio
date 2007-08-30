@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
---                              AdaCore                              --
+--                   Copyright (C) 2001-2007, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -2069,7 +2068,8 @@ package body Src_Editor_Box is
      (Editor      : access Source_Editor_Box_Record;
       Line        : Editable_Line_Type;
       Column      : Character_Offset_Type := 1;
-      Force_Focus : Boolean  := True)
+      Force_Focus : Boolean := True;
+      Centering   : Centering_Type := Minimal)
    is
       Editable_Line : Editable_Line_Type renames Line;
 
@@ -2080,9 +2080,10 @@ package body Src_Editor_Box is
          end if;
 
          Set_Cursor_Position
-           (Editor.Source_Buffer, Editable_Line, Column, Center => False);
+           (Editor.Source_Buffer, Editable_Line, Column,
+            Centering => Centering);
          Save_Cursor_Position (Editor.Source_View);
-         Scroll_To_Cursor_Location (Editor.Source_View, Center => False);
+         Scroll_To_Cursor_Location (Editor.Source_View, Centering);
 
       elsif Is_Valid_Position (Editor.Source_Buffer, Editable_Line) then
          --  We used to generate an error message (Invalid column number),
@@ -2096,9 +2097,9 @@ package body Src_Editor_Box is
          end if;
 
          Set_Cursor_Position
-           (Editor.Source_Buffer, Editable_Line, 1, Center => False);
+           (Editor.Source_Buffer, Editable_Line, 1, Centering);
          Save_Cursor_Position (Editor.Source_View);
-         Scroll_To_Cursor_Location (Editor.Source_View, Center => False);
+         Scroll_To_Cursor_Location (Editor.Source_View, Centering);
 
       else
          if Column = 1 then
