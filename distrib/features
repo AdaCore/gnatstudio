@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.2 NEW FEATURES LIST Current as of Aug 16, 2007
+GPS 4.2 NEW FEATURES LIST Current as of Aug 30, 2007
 ====================================================
 
 Copyright (c) 2006-2007, AdaCore
@@ -14,6 +14,11 @@ of the feature.
 
 New features in GPS 4.2.0
 -------------------------
+
+NF-42-G817-004 better alignment support for arrows (2007-08-30)
+
+  The GPS alignment support on arrows has been enhanced to properly
+  handle multi-level of arrows.
 
 NF-42-G816-003 gnatpsta plug-in enabled by default (2007-08-16)
 
@@ -32,6 +37,11 @@ NF-42-G724-010 Locations window highlights current line error (2007-07-25)
   errors. In addition, it will now highlight the error corresponding to the
   current line in the editor, making it easier to find what is the error that
   occurred on that line.
+
+NF-42-G713-003 better alignment for routine parameters (2007-08-30)
+
+  The GPS alignment support for routine parameters has been enhanced
+  to better align the routine parameter mode.
 
 NF-42-G611-029 Specifying "recursive" directory status for VCS (2007-06-18)
 
