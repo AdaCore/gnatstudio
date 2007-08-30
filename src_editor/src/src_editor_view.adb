@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
---                              AdaCore                              --
+--                   Copyright (C) 2001-2007, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -709,7 +708,7 @@ package body Src_Editor_View is
         Get_Focus_Child (Get_MDI (User.Kernel))
       then
          Save_Cursor_Position (User);
-         Scroll_To_Cursor_Location (User, False);
+         Scroll_To_Cursor_Location (User, Minimal);
       end if;
 
       --  If we are doing block highlighting, re-expose the entire view if the
@@ -761,8 +760,11 @@ package body Src_Editor_View is
         and then V.Cursor_Position >= 0.0
         and then V.Cursor_Position <= 1.0
       then
-         Scroll_To_Cursor_Location
-           (V, Center => Position_Set_Explicitely (Buffer));
+         if Position_Set_Explicitely (Buffer) then
+            Scroll_To_Cursor_Location (V, Center);
+         else
+            Scroll_To_Cursor_Location (V, Minimal);
+         end if;
       end if;
 
    exception
@@ -1509,9 +1511,11 @@ package body Src_Editor_View is
            (Get_Hadjustment (View.Scroll),
             Get_Value (Get_Hadjustment (View.Synchronized_Editor.Scroll)));
       else
-         Scroll_To_Cursor_Location
-           (View, Position_Set_Explicitely
-              (Source_Buffer (Get_Buffer (View))));
+         if Position_Set_Explicitely (Source_Buffer (Get_Buffer (View))) then
+            Scroll_To_Cursor_Location (View, Center);
+         else
+            Scroll_To_Cursor_Location (View, Minimal);
+         end if;
       end if;
 
       View.Scrolling := False;
@@ -1660,18 +1664,33 @@ package body Src_Editor_View is
    -------------------------------
 
    procedure Scroll_To_Cursor_Location
-     (View   : access Source_View_Record;
-      Center : Boolean := False) is
+     (View      : access Source_View_Record;
+      Centering : Centering_Type := Minimal) is
    begin
       --  We want to use the alignments, so that the line appears in the middle
       --  of the screen if possible. This provides a more user-friendly
       --  behavior.
 
-      Scroll_To_Mark
-        (View, View.Saved_Cursor_Mark, Use_Align => Center,
-         Within_Margin                           => 0.0,
-         Xalign                                  => 0.5,
-         Yalign                                  => 0.5);
+      case Centering is
+         when Minimal =>
+            Scroll_To_Mark
+              (View, View.Saved_Cursor_Mark, Use_Align => False,
+               Within_Margin                           => 0.0,
+               Xalign                                  => 0.5,
+               Yalign                                  => 0.5);
+         when Center =>
+            Scroll_To_Mark
+              (View, View.Saved_Cursor_Mark, Use_Align => True,
+               Within_Margin                           => 0.0,
+               Xalign                                  => 0.5,
+               Yalign                                  => 0.5);
+         when With_Margin =>
+            Scroll_To_Mark
+              (View, View.Saved_Cursor_Mark, Use_Align => False,
+               Within_Margin                           => 0.2,
+               Xalign                                  => 0.5,
+               Yalign                                  => 0.5);
+      end case;
    end Scroll_To_Cursor_Location;
 
    -------------------
@@ -2288,7 +2307,7 @@ package body Src_Editor_View is
                  (View.Speed_Column_Buffer,
                   GC,
                   True,
-                  0, (Height * Gint (J)) / Total_Lines,
+                  0, (Height * J) / Total_Lines,
                   Speed_Column_Width, Line_Height);
 
                Info_Exists := True;
