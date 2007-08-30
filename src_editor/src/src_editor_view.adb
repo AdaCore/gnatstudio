@@ -1667,24 +1667,24 @@ package body Src_Editor_View is
      (View      : access Source_View_Record;
       Centering : Centering_Type := Minimal) is
    begin
-      --  We want to use the alignments, so that the line appears in the middle
-      --  of the screen if possible. This provides a more user-friendly
-      --  behavior.
-
       case Centering is
          when Minimal =>
+            --  Perform minimal scrolling.
             Scroll_To_Mark
               (View, View.Saved_Cursor_Mark, Use_Align => False,
                Within_Margin                           => 0.0,
                Xalign                                  => 0.5,
                Yalign                                  => 0.5);
          when Center =>
+            --  Place the cursor in the exact center of the screen.
             Scroll_To_Mark
               (View, View.Saved_Cursor_Mark, Use_Align => True,
                Within_Margin                           => 0.0,
                Xalign                                  => 0.5,
                Yalign                                  => 0.5);
          when With_Margin =>
+            --  Perform minimal scrolling to place the cursor on the screen,
+            --  with a margin to see context above and below the cursor.
             Scroll_To_Mark
               (View, View.Saved_Cursor_Mark, Use_Align => False,
                Within_Margin                           => 0.2,
