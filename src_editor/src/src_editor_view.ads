@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
---                              AdaCore                              --
+--                   Copyright (C) 2001-2007, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -75,12 +74,11 @@ package Src_Editor_View is
    --  See the section "Creating your own widgets" in the documentation.
 
    procedure Scroll_To_Cursor_Location
-     (View   : access Source_View_Record;
-      Center : Boolean := False);
+     (View      : access Source_View_Record;
+      Centering : Src_Editor_Buffer.Centering_Type :=
+        Src_Editor_Buffer.Minimal);
    --  Scroll the Source View if the position of the insert cursor is not
    --  within the part of the text currently visible.
-   --  If Center is True, the view will scroll so that the cursor line is
-   --  in the middle, otherwise only a minimal scrolling is performed.
 
    procedure Center_Cursor (View : access Source_View_Record);
    --  Place the cursor within a small margin of the border of the view. This
