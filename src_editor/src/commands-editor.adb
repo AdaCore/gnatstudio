@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003 - 2006                     --
---                              AdaCore                              --
+--                     Copyright (C) 2003-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -291,7 +290,7 @@ package body Commands.Editor is
                  (Command.Buffer,
                   Command.Line,
                   Command.Column,
-                  Center => False);
+                  Centering => Minimal);
                Scroll_To_Cursor_Location (View);
                Insert
                  (Command.Buffer,
@@ -306,7 +305,7 @@ package body Commands.Editor is
                     (Command.Buffer,
                      Command.Cursor_Line,
                      Command.Cursor_Column,
-                     Center => False);
+                     Centering => Minimal);
                   Scroll_To_Cursor_Location (View);
 
                elsif Command.Direction = Backward then
@@ -314,7 +313,7 @@ package body Commands.Editor is
                     (Command.Buffer,
                      Command.Line,
                      Command.Column,
-                     Center => False);
+                     Centering => Minimal);
                   Scroll_To_Cursor_Location (View);
                end if;
 
@@ -334,7 +333,7 @@ package body Commands.Editor is
                  (Command.Buffer,
                   Command.Line,
                   Command.Column,
-                  Center => False);
+                  Centering => Minimal);
                Scroll_To_Cursor_Location (View);
          end case;
       end if;
@@ -410,7 +409,7 @@ package body Commands.Editor is
            (Command.Buffer,
             Command.End_Line_After,
             Command.End_Column_After,
-            Center => False);
+            Centering => Minimal);
          Scroll_To_Cursor_Location (Get_View (Editor));
       end if;
 
@@ -451,13 +450,13 @@ package body Commands.Editor is
            (Command.Buffer,
             Command.End_Line_Before,
             Command.End_Column_Before,
-            Center => False);
+            Centering => Minimal);
       else
          Set_Cursor_Position
            (Command.Buffer,
             Command.Start_Line,
             Command.Start_Column,
-            Center => False);
+            Centering => Minimal);
       end if;
 
       Scroll_To_Cursor_Location (Get_View (Editor));
