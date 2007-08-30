@@ -717,7 +717,7 @@ package body Src_Editor_Buffer is
       Last   : Editable_Line_Type;
    begin
       for J in A'Range loop
-         A (J) := Get_String (Source_Buffer (Buffer), Editable_Line_Type (J));
+         A (J) := Get_String (Source_Buffer (Buffer), J);
          Len := Len + A (J).Length;
       end loop;
 
@@ -3373,10 +3373,10 @@ package body Src_Editor_Buffer is
    -------------------------
 
    procedure Set_Cursor_Position
-     (Buffer : access Source_Buffer_Record;
-      Line   : Gint;
-      Column : Gint;
-      Center : Boolean)
+     (Buffer    : access Source_Buffer_Record;
+      Line      : Gint;
+      Column    : Gint;
+      Centering : Centering_Type)
    is
       Iter : Gtk_Text_Iter;
    begin
@@ -3393,7 +3393,7 @@ package body Src_Editor_Buffer is
 
          Get_Iter_At_Line_Offset (Buffer, Iter, Line, Column);
 
-         if Center then
+         if Centering /= Minimal then
             Buffer.Cursor_Set_Explicitely := 2;
          end if;
 
@@ -3402,10 +3402,10 @@ package body Src_Editor_Buffer is
    end Set_Cursor_Position;
 
    procedure Set_Cursor_Position
-     (Buffer : access Source_Buffer_Record;
-      Line   : Editable_Line_Type;
-      Column : Character_Offset_Type;
-      Center : Boolean := True)
+     (Buffer    : access Source_Buffer_Record;
+      Line      : Editable_Line_Type;
+      Column    : Character_Offset_Type;
+      Centering : Centering_Type := Center)
    is
       Buffer_Line : Buffer_Line_Type := Get_Buffer_Line (Buffer, Line);
    begin
@@ -3422,7 +3422,7 @@ package body Src_Editor_Buffer is
 
       Set_Cursor_Position
         (Buffer, Gint (Buffer_Line - 1), Gint (Column - 1),
-         Center);
+         Centering);
    end Set_Cursor_Position;
 
    ---------------------------------
