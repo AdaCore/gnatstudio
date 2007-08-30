@@ -1309,7 +1309,8 @@ package body Src_Editor_Module is
       if D.Line /= 0
         and then Is_Valid_Position (Get_Buffer (D.Edit), D.Line)
       then
-         Set_Cursor_Location (D.Edit, D.Line, D.Column, D.Focus);
+         Set_Cursor_Location (D.Edit, D.Line, D.Column, D.Focus,
+                              Centering => With_Margin);
 
          if D.Column_End /= 0
            and then Is_Valid_Position
