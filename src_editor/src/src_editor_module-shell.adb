@@ -1456,7 +1456,7 @@ package body Src_Editor_Module.Shell is
          begin
             Scroll_To_Cursor_Location
               (Get_View (Source_Editor_Box (Get_Widget (Child))),
-               Center => True);
+               Centering => Center);
          end;
 
       elsif Command = "get_buffer" then
