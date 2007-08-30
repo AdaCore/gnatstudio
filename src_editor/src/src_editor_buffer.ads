@@ -205,15 +205,24 @@ package Src_Editor_Buffer is
    pragma Inline (Is_Valid_Position);
    --  Same as above
 
+   type Centering_Type is (Minimal, Center, With_Margin);
+   --  Indicates the behaviour when scrolling a text view to reveal the cursor:
+   --    - Minimal indicates that minimal scrolling should be performed
+   --    - Center indicates that the cursor should be placed in the exact
+   --      middle of the view
+   --    - With_Margin indicates that minimal scrolling should occur in order
+   --      to place the cursor onscreen, with a margin above and below the
+   --      cursor.
+
    procedure Set_Cursor_Position
-     (Buffer : access Source_Buffer_Record;
-      Line   : Editable_Line_Type;
-      Column : Character_Offset_Type;
-      Center : Boolean := True);
+     (Buffer    : access Source_Buffer_Record;
+      Line      : Editable_Line_Type;
+      Column    : Character_Offset_Type;
+      Centering : Centering_Type := Center);
    --  Move the insert cursor to the given position.
    --  If, following this call, the cursor location needs to be displayed, the
-   --  editor will scroll so that the cursor is centered if Center is True.
-   --  Otherwise, only a minimal scrolling will be performed.
+   --  editor will scroll so that the cursor is visible, with the behavior
+   --  specified in Centering.
    --
    --  The validity of the cursor position must be verified before invoking
    --  this procedure. An incorrect position will cause an Assertion_Failure
@@ -877,10 +886,10 @@ package Src_Editor_Buffer is
 private
 
    procedure Set_Cursor_Position
-     (Buffer : access Source_Buffer_Record;
-      Line   : Gint;
-      Column : Gint;
-      Center : Boolean);
+     (Buffer    : access Source_Buffer_Record;
+      Line      : Gint;
+      Column    : Gint;
+      Centering : Centering_Type);
    --  Move the insert cursor to the given position.
    --  If, following this call, the cursor location needs to be displayed, the
    --  editor will scroll so that the cursor is centered if Center is True.
