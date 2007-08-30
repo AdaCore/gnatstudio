@@ -46,7 +46,8 @@ when editing other languages
                    Default     :        Boolean );
 
  - Aligning arrows (Ada specific)
-   aligns the => symbols   
+   aligns the => symbols (this implementation supports only 9 levels
+   of arrows).
    For example,
       Call (A => 2,
             Long_Name => 3);
@@ -131,31 +132,32 @@ def range_align_on (top, bottom, sep, replace_with=None):
          break
  
    if pos != 0:
-     try:
-        top.buffer().start_undo_group()
-        line = top.beginning_of_line ()
-        while line <= bottom:
-           chars   = top.buffer ().get_chars (line, line.end_of_line())
-           matched = sep_re.search (chars)
-           if matched:
-              width  = pos - len (chars[:matched.start()].rstrip()) - 1
-              try:
-                 sub    = sep_re.sub (replace_with, matched.group())
-              except:
-                 sub = matched.group()
-              width2 = replace_len - len (sub)
+     line = top.beginning_of_line ()
+     while line <= bottom:
+        chars   = top.buffer ().get_chars (line, line.end_of_line())
+        matched = sep_re.search (chars)
+        if matched:
+           width  = pos - len (chars[:matched.start()].rstrip()) - 1
+           try:
+              sub = sep_re.sub (replace_with, matched.group())
+           except:
+              sub = matched.group()
+           width2 = replace_len - len (sub)
 
-              top.buffer().delete (line, line.end_of_line())
-              top.buffer().insert \
-                 (line, chars[:matched.start()].rstrip() \
-                  + (' ' * width) + sub + (' ' * width2) \
-                  + chars[matched.end():].lstrip())
-           prev = line
-           line = line.forward_line ()
-           if prev == line:
-              break
-     finally:
-        top.buffer().finish_undo_group()
+           # special case for out parameters, spaces before
+           if sub == " : out ":
+              sub = " :    out "
+              width2 = width2 - 3
+
+           top.buffer().delete (line, line.end_of_line())
+           top.buffer().insert \
+              (line, chars[:matched.start()].rstrip() \
+               + (' ' * width) + sub + (' ' * width2) \
+               + chars[matched.end():].lstrip())
+        prev = line
+        line = line.forward_line ()
+        if prev == line:
+           break
 
 def buffer_align_on (sep, replace_with=None, buffer=None):
    """Align the current selection in buffer, based on the separator sep.
@@ -164,11 +166,20 @@ def buffer_align_on (sep, replace_with=None, buffer=None):
       buffer = GPS.EditorBuffer.get ()
    top    = buffer.selection_start ()
    bottom = buffer.selection_end ()
+   tmark  = top.create_mark ("top")
+   bmark  = bottom.create_mark ("bottom")
    if top == bottom:
       GPS.MDI.dialog ("You must first select the intended text")
       return
-   range_align_on (top, bottom, sep, replace_with)
-   
+   try:
+      buffer.start_undo_group ()
+      buffer.indent (top, bottom)
+      top = buffer.get_mark ("top").location ()
+      bottom = buffer.get_mark ("bottom").location ()
+      range_align_on (top, bottom, sep, replace_with)
+   finally:
+      top.buffer().finish_undo_group ()
+
 def align_colons ():
    """Aligns colons (eg in object and record type declarations"""
    buffer_align_on (sep=":(?!=)", replace_with=" : ")
@@ -183,7 +194,43 @@ def align_use_clauses ():
 
 def align_arrows ():
    """Aligns the '=>' symbols"""
-   buffer_align_on (sep="=>", replace_with=" => ")
+   # The algorithm is the following:
+   #   - indent the selection
+   #   - for N 1 .. 9:
+   #      - replace level Nth of => by a special tag @>
+   #      - aling on the special tag @> replacing it with =>
+   buffer = GPS.EditorBuffer.get ()
+   top    = buffer.selection_start ()
+   bottom = buffer.selection_end ()
+   tmark  = top.create_mark("top")
+   bmark  = bottom.create_mark("bottom")
+   if top == bottom:
+      GPS.MDI.dialog ("You must first select the intended text")
+      return
+   try:
+      buffer.start_undo_group()
+      for lr in range(9):
+         buffer.indent (top, bottom)
+         top = buffer.get_mark ("top").location()
+         bottom = buffer.get_mark ("bottom").location()
+         chars = buffer.get_chars (top, bottom)
+         level = -1
+         for k in range(len(chars)):
+            if chars[k] == '(':
+               level = level + 1
+            elif chars[k] == ')':
+               level = level - 1
+            elif (level == lr) and (k < len(chars) + 2) and (chars[k:k+2] == "=>"):
+               chars = chars[:k] + "@>" + chars[k+2:]
+         buffer.delete (top, bottom)
+         buffer.insert (top, chars)
+         tmark = top.create_mark("top")
+         bmark = bottom.create_mark("bottom")
+         top = buffer.get_mark ("top").location()
+         bottom = buffer.get_mark ("bottom").location()
+         range_align_on (top, bottom, sep="@>", replace_with=" => ")
+   finally:
+      top.buffer().finish_undo_group()
 
 def align_assignments ():
    """Aligns the ':=' symbols in selected text"""
