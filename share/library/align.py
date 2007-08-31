@@ -177,6 +177,10 @@ def buffer_align_on (sep, replace_with=None, buffer=None):
       top = buffer.get_mark ("top").location ()
       bottom = buffer.get_mark ("bottom").location ()
       range_align_on (top, bottom, sep, replace_with)
+      # re-select the region to be able to call back this routine
+      top = buffer.get_mark ("top").location ()
+      bottom = buffer.get_mark ("bottom").location ()
+      buffer.select (top, bottom)
    finally:
       top.buffer().finish_undo_group ()
 
