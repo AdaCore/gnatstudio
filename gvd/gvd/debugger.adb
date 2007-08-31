@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2007                      --
---                              AdaCore                              --
+--                  Copyright (C) 2000-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -720,7 +719,11 @@ package body Debugger is
       begin
          Send_Internal_Post (Debugger, Cmd, Mode);
 
-         if Need_To_Strip_CR then
+         --  Strip CRs in remote mode, as we can't know in advance if the debug
+         --  server outputs CR/LF or just LF, and the consequences or removing
+         --  CRs in the latter case are better than not removing them in the
+         --  first case
+         if Need_To_Strip_CR or else not Is_Local (Debug_Server) then
             Strip_CR (S, Last, CR_Found);
             return S (S'First .. Last);
          else
