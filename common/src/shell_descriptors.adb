@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006-2007                      --
---                              AdaCore                              --
+--                  Copyright (C) 2006-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -60,6 +59,7 @@ package body Shell_Descriptors is
       Generic_Prompt      : String             := "";
       Configured_Prompt   : String             := "";
       FS                  : Filesystem_Record'Class;
+      No_Echo_Command     : String             := "";
       Init_Commands       : String_List        := Null_String_List;
       Exit_Commands       : String_List        := Null_String_List;
       Cd_Command          : String             := "";
@@ -73,6 +73,7 @@ package body Shell_Descriptors is
         (Name             => new String'(Name),
          Filesystem       => new Filesystem_Record'Class'(FS),
          Start_Cmd        => new String'(Start_Command),
+         No_Echo_Cmd      => new String'(No_Echo_Command),
          Init_Cmds        => new String_List'(Init_Commands),
          Exit_Cmds        => new String_List'(Exit_Commands),
          Cd_Cmd           => new String'(Cd_Command),
