@@ -749,7 +749,11 @@ package body GVD.Process is
       Str        : String;
       Window     : System.Address) is
    begin
-      if Need_To_Strip_CR then
+      --  Strip CRs in remote mode, as we can't know in advance if the debug
+      --  server outputs CR/LF or just LF, and the consequences or removing
+      --  CRs in the latter case are better than not removing them in the
+      --  first case
+      if Need_To_Strip_CR or else not Is_Local (Debug_Server) then
          Text_Output_Filter (Descriptor, Strip_CR (Str), Window);
       else
          Text_Output_Filter (Descriptor, Str, Window);
@@ -774,15 +778,23 @@ package body GVD.Process is
       Last_Match     : Natural := 0;
       Min_Size       : Natural;
       New_Size       : Natural;
+      Str_Match      : Boolean;
 
    begin
-      --  Concatenate current output
+      --  Replace current output
 
       if Process.Current_Output = null then
          Process.Current_Output := new String (1 .. 1024);
          Process.Current_Output_Pos := 1;
          Process.Last_Match := 0;
       end if;
+--        if Process.Current_Output /= null then
+--           Free (Process.Current_Output);
+--        end if;
+--
+--        Process.Current_Output := new String (1 .. 1024);
+--        Process.Current_Output_Pos := 1;
+--        Process.Last_Match := 0;
 
       Min_Size := Process.Current_Output_Pos + Str'Length;
 
@@ -815,16 +827,37 @@ package body GVD.Process is
             Process.Current_Output
               (Process.Last_Match + 1 .. Process.Current_Output_Pos - 1),
             Matched);
+         Str_Match := False;
+
+         if Matched (0) = No_Match then
+            --  Try with just the input (Str)
+            Str_Match := True;
+            Match
+              (Current_Filter.Regexp.all,
+               Process.Current_Output
+                 (Process.Current_Output_Pos - Str'Length ..
+                    Process.Current_Output_Pos - 1),
+               Matched);
+         end if;
 
          if Matched (0) /= No_Match then
             if Matched (0).Last > Last_Match then
                Last_Match := Matched (0).Last;
             end if;
 
-            Current_Filter.Filter
-              (Process,
-               Process.Current_Output (1 .. Process.Current_Output_Pos - 1),
-               Matched);
+            if Str_Match then
+               Current_Filter.Filter
+                 (Process,
+                  Process.Current_Output
+                    (Process.Current_Output_Pos - Str'Length ..
+                       Process.Current_Output_Pos - 1),
+                  Matched);
+            else
+               Current_Filter.Filter
+                 (Process,
+                  Process.Current_Output (1 .. Process.Current_Output_Pos - 1),
+                  Matched);
+            end if;
          end if;
 
          Current_Filter := Current_Filter.Next;
@@ -863,7 +896,7 @@ package body GVD.Process is
             else
                Output_Text (Process, Str (Str'First .. First - 1));
                Output_Text
-               (Process, Str (Last + 1 .. Str'Last), Set_Position => True);
+                 (Process, Str (Last + 1 .. Str'Last), Set_Position => True);
             end if;
 
          when Hidden | Internal =>
