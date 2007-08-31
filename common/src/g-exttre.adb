@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---                     Copyright (C) 2006-2007 AdaCore                      --
+--                     Copyright (C) 2006-2007, AdaCore                     --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -757,6 +757,15 @@ package body GNAT.Expect.TTY.Remote is
          Wait_For_Prompt (True);
 
          --  Determine if the machine echoes commands
+         if Descriptor.Shell.No_Echo_Cmd.all /= "" then
+            Print
+              (Descriptor.Machine.Desc.Dbg,
+               Descriptor.Shell.No_Echo_Cmd.all,
+               Input);
+            Send (Descriptor.Machine.Sessions (Session_Nb).Pd,
+                  Descriptor.Shell.No_Echo_Cmd.all);
+            Wait_For_Prompt (True);
+         end if;
 
          if Descriptor.Machine.Determine_Echoing then
             if Descriptor.Machine.Desc.Dbg /= null then
@@ -1129,6 +1138,7 @@ package body GNAT.Expect.TTY.Remote is
             Desc.Buffer := Tmp_Buf;
             Desc.Busy := False;
             Desc.Terminated := True;
+
             if Desc.Buffer'Length = 0 then
                raise Process_Died;
             end if;
