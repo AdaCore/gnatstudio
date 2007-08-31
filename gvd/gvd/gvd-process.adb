@@ -788,13 +788,6 @@ package body GVD.Process is
          Process.Current_Output_Pos := 1;
          Process.Last_Match := 0;
       end if;
---        if Process.Current_Output /= null then
---           Free (Process.Current_Output);
---        end if;
---
---        Process.Current_Output := new String (1 .. 1024);
---        Process.Current_Output_Pos := 1;
---        Process.Last_Match := 0;
 
       Min_Size := Process.Current_Output_Pos + Str'Length;
 
