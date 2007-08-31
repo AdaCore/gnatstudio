@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2007                       --
---                             AdaCore                               --
+--                  Copyright (C) 2002-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1105,7 +1104,7 @@ package Codefix.Errors_Parser is
    --  Fix problem 'use would make operation legal'
 
    type Redundant_Conversion is new Error_Parser
-     (new String'("Useless_Conversion"), 1)
+     (new String'("Useless_Conversion"), 2)
    with null record;
 
    overriding

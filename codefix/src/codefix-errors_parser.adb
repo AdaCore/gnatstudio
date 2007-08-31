@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2007                      --
---                              AdaCore                              --
+--                  Copyright (C) 2002-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1891,8 +1890,11 @@ package body Codefix.Errors_Parser is
 
    procedure Initialize (This : in out Redundant_Conversion) is
    begin
-      This.Matcher := (1 => new Pattern_Matcher'
-        (Compile ("useless conversion, ""([^""])"" has this type")));
+      This.Matcher :=
+        (1 => new Pattern_Matcher'
+           (Compile ("useless conversion, ""([^""])"" has this type")),
+         2 => new Pattern_Matcher'
+           (Compile ("redundant conversion, ""([^""])"" is of type")));
    end Initialize;
 
    procedure Fix
