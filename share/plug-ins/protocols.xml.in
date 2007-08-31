@@ -90,6 +90,7 @@
     <cd_command>cd %d</cd_command>
     <get_status_command>echo $?</get_status_command>
     <get_status_ptrn>^([0-9]+)\s*$</get_status_ptrn>
+    <no_echo_command>stty -echo</no_echo_command>
   </remote_shell_config>
 
   <!-- BASH shell -->
@@ -112,6 +113,7 @@
     <cd_command>cd %d</cd_command>
     <get_status_command>echo $?</get_status_command>
     <get_status_ptrn>^([0-9]+)\s*$</get_status_ptrn>
+    <no_echo_command>stty -echo</no_echo_command>
   </remote_shell_config>
 
   <!-- CSH shell -->
@@ -133,6 +135,7 @@
     <cd_command>cd %d</cd_command>
     <get_status_command>echo $status</get_status_command>
     <get_status_ptrn>^([0-9]+)\s*$</get_status_ptrn>
+    <no_echo_command>stty -echo</no_echo_command>
   </remote_shell_config>
 
   <!-- TCSH shell -->
@@ -154,6 +157,7 @@
     <cd_command>cd %d</cd_command>
     <get_status_command>echo $status</get_status_command>
     <get_status_ptrn>^([0-9]+)\s*$</get_status_ptrn>
+    <no_echo_command>stty -echo</no_echo_command>
   </remote_shell_config>
 
   <!-- CMD.EXE shell -->
