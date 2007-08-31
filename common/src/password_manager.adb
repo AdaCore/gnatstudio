@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006-2007                      --
---                              AdaCore                              --
+--                  Copyright (C) 2006-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -56,7 +55,7 @@ package body Password_Manager is
    Tool_List       : Tool_Access        := null;
 
    Password_Regexp : constant Pattern_Matcher :=
-                       Compile ("^[^\n]*[Pp]assword: *$",
+                       Compile ("^[^\n]*[Pp]ass[^p].*: *$",
                                 Multiple_Lines or Single_Line);
    Passphrase_Regexp : constant Pattern_Matcher :=
                          Compile ("^[^\n]*[Pp]assphrase for key '([^']*)': *$",
