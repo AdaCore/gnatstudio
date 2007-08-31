@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.2.0
 
+- G829-018 Remote debugging problems
+  Problem:    With some remote servers, and depending on the protocol used,
+              remote debugging is very slow and behaves incorrectly. The main
+              symptoms are: the breakpoints are not reported to the editor,
+              the program pointer is not visible in the editor.
+  Workaround: Try other protocols, like ssh wich is less subject to the error.
+
 - G809-010 Read-only configuration files are not handled by GPS
   Problem:    If files under .gps are read-only, then GPS will not detect it
               and may crash.
