@@ -2939,6 +2939,7 @@ package body GPS.Kernel.Remote is
             Generic_Prompt         : Glib.String_Ptr;
             GPS_Prompt             : Glib.String_Ptr;
             FS_Str                 : Glib.String_Ptr;
+            No_Echo_Cmd            : Glib.String_Ptr;
             Windows_FS             : aliased Windows_Filesystem_Record;
             Unix_FS                : aliased Unix_Filesystem_Record;
             FS                     : Filesystem_Access;
@@ -2990,6 +2991,7 @@ package body GPS.Kernel.Remote is
                   Mode => Error);
                return;
             end if;
+
             if FS_Str.all = "windows" then
                FS := Windows_FS'Unchecked_Access;
             elsif FS_Str.all = "unix" then
@@ -3001,6 +3003,11 @@ package body GPS.Kernel.Remote is
                   " value. Only 'windows' or 'unix' values are supported",
                   Mode => Error);
                return;
+            end if;
+
+            No_Echo_Cmd := Get_Field (Node, "no_echo_command");
+            if No_Echo_Cmd = null then
+               No_Echo_Cmd := new String'("");
             end if;
 
             Init_Cmds_Child := Find_Tag (Node.Child, "init_commands");
@@ -3090,6 +3097,7 @@ package body GPS.Kernel.Remote is
                   Generic_Prompt.all,
                   GPS_Prompt.all,
                   FS.all,
+                  No_Echo_Cmd.all,
                   Init_Cmds,
                   Exit_Cmds,
                   Cd_Cmd.all,
