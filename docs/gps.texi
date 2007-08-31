@@ -13143,6 +13143,9 @@ initialise a new session.
 Complex child. Each @code{cmd} child contains a command used to
 exit a session.
 
+@item no_echo_command (optional)
+Command used to suppress the echo of the remote shell.
+
 @item cd_command (mandatory)
 Command used to go to a directory. @code{%d} is replaced by the
 directory's full name.
