@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2007, AdaCore             --
+--                 Copyright (C) 2005-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,6 +18,8 @@
 -----------------------------------------------------------------------
 
 with GNAT.Scripts;       use GNAT.Scripts;
+with Templates_Parser;   use Templates_Parser;
+
 with GPS.Kernel;         use GPS.Kernel;
 with String_List_Utils;  use String_List_Utils;
 with VFS;                use VFS;
@@ -85,17 +87,17 @@ package VCS_Activities is
    --  Invert the committed status
 
    function Has_Log
-     (Kernel   : Kernel_Handle;
+     (Kernel   : access Kernel_Handle_Record'Class;
       Activity : Activity_Id) return Boolean;
    --  Returns True if this activity has a log file
 
    function Get_Log_File
-     (Kernel   : Kernel_Handle;
+     (Kernel   : access Kernel_Handle_Record'Class;
       Activity : Activity_Id) return Virtual_File;
    --  Retruns the log file for the given activity
 
    function Get_Log
-     (Kernel   : Kernel_Handle;
+     (Kernel   : access Kernel_Handle_Record'Class;
       Activity : Activity_Id) return String;
    --  Returns the Log for the activity
 
@@ -137,6 +139,18 @@ package VCS_Activities is
      (Kernel   : access Kernel_Handle_Record'Class;
       Activity : Activity_Id);
    --  Invert the group-commit status
+
+   function Get_Activity_Log_Template
+     (Kernel : access Kernel_Handle_Record'Class) return String;
+   --  Return the activity log template to use for group commit and to build
+   --  patch file header. The template is first checked into the user GPS home
+   --  and if not found into GPS system directory.
+
+   function Get_Activity_Template_Tags
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Activity : Activity_Id) return Translate_Set;
+   --  Return the translate set for the given acitvity, this set is to be used
+   --  with the group commit acitivity template returned by the routine above.
 
 private
 

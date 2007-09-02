@@ -1,0 +1,53 @@
+@@-- This is the template file used for activities. It is used for building
+@@-- the activity pacth header and the activity group commit-log.
+@@--
+@@-- IS_PATCH          boolean tag, TRUE if for patch file
+@@-- ACTIVITY_NAME     string tag, the name of the activity
+@@-- FILES             vector tag, the activity's files
+@@-- LOGS              vector tag, the corresponding log content
+@@-- IS_DIRECTORY      vector tag, whether the entry is a file or directory
+@@-- ACTIVITY_LOG      string tag, the activity main log content
+@@--
+@@-- This is the default log format, you can place a copy of this file into
+@@-- $HOME/.gps and adapt it to your needs.
+@@--
+@@IF@@ @_IS_PATCH_@
+
+This is a patch file for a GPS activity.
+It has been generated on @_DAY_@/@_MONTH_@/@_YEAR_@ at @_HOUR_@:@_MINUTE_@.
+
+Activity : @_ACTIVITY_NAME_@
+
+@@TABLE@@
+@@IF@@ not @_IS_EMPTY:LOGS_@
+@@INLINE@@
+@@IF@@ @_IS_DIRECTORY_@
+	* directory
+@@ELSE@@
+	*
+@@END_IF@@
+@_FILES_@:
+@@END_INLINE@@
+	@_REPLACE_ALL(\n/\n\t):LOGS_@
+@@END_IF@@
+@@END_TABLE@@
+@@ELSE@@
+@@TABLE@@
+@@IF@@ not @_IS_EMPTY:LOGS_@
+@@INLINE@@
+@@IF@@ @_IS_DIRECTORY_@
+* directory
+@@ELSE@@
+*
+@@END_IF@@
+@_FILES_@:
+@@END_INLINE@@
+@_LOGS_@
+@@END_IF@@
+@@END_TABLE@@
+@@END_IF@@
+@_ACTIVITY_LOG_@
+@@-- Add an empty line after the patch header, before the diffs
+@@IF@@ @_IS_PATCH_@
+
+@@END_IF@@

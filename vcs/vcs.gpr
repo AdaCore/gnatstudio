@@ -1,6 +1,7 @@
 with "gtkada";
 with "../kernel/kernel";
 with "../widgets/widgets";
+with "../templates_parser/templates_parser";
 with "../shared";
 
 project VCS is

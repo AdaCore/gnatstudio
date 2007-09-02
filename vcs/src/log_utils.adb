@@ -19,8 +19,6 @@
 
 with Ada.Calendar;              use Ada.Calendar;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
-with Ada.Strings.Unbounded;
-with Traces;                    use Traces;
 
 with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -29,6 +27,7 @@ with GNAT.Strings;
 
 with Gtk.Enums;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
+with Templates_Parser;          use Templates_Parser;
 
 with Basic_Mapper;              use Basic_Mapper;
 with Commands;                  use Commands;
@@ -45,6 +44,7 @@ with GPS.Intl;                  use GPS.Intl;
 with GPS.Location_View;         use GPS.Location_View;
 with Projects;                  use Projects;
 with Projects.Registry;         use Projects.Registry;
+with Traces;                    use Traces;
 with VFS;                       use VFS;
 with VCS_Module;                use VCS_Module;
 with VCS_Status;                use VCS_Status;
@@ -688,7 +688,6 @@ package body Log_Utils is
       Activity : Activity_Id)
    is
       use String_List;
-      use Ada.Strings.Unbounded;
 
       function Add_LF_To_Log (Log : in String) return String;
       --  Returns Log with LF added if there is no ending line separator. We
@@ -756,38 +755,12 @@ package body Log_Utils is
 
          if Get_Group_Commit (Activity) then
             declare
-               L       : Unbounded_String;
-               Has_Log : Boolean;
+               T_Set : Translate_Set :=
+                         Get_Activity_Template_Tags (Kernel, Activity);
             begin
-               while Files_Temp /= Null_Node loop
-                  --  Save any open log editors, and then get the corresponding
-                  --  logs.
-                  File := Create (Full_Filename => Data (Files_Temp));
-                  if Is_Directory (File) then
-                     Append (L, "* directory ");
-                  else
-                     Append (L, "* ");
-                  end if;
-                  Append (L, Base_Dir_Name (File) & ":" & ASCII.LF);
-
-                  Has_Log :=
-                    Get_Log_From_File (Kernel, File, False) /= VFS.No_File;
-
-                  if Has_Log then
-                     Append (L, Add_LF_To_Log (Get_Log (Kernel, File)));
-                  end if;
-
-                  Files_Temp := Next (Files_Temp);
-
-                  if Files_Temp /= Null_Node and then Has_Log then
-                     --  Skip a line between each file log
-                     Append (L, ASCII.LF);
-                  end if;
-               end loop;
-
-               Append (L, Get_Log (Kernel, Activity));
-
-               Append (Logs, To_String (L));
+               Insert (T_Set, Assoc ("IS_PATCH", False));
+               Append
+                 (Logs, Parse (Get_Activity_Log_Template (Kernel), T_Set));
             end;
 
          else

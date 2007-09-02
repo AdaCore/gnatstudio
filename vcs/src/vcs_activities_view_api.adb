@@ -17,14 +17,13 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Calendar;              use Ada.Calendar;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Directories;           use Ada.Directories;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
-with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
 with GNAT.OS_Lib;               use GNAT;
 with GNAT.Strings;
+with Templates_Parser;          use Templates_Parser;
 
 with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
@@ -660,10 +659,6 @@ package body VCS_Activities_View_API is
    is
       pragma Unreferenced (Widget);
 
-      procedure Append_Indent (Str : String);
-      --  Append Str into the patch file content, add Tab before each new line
-
-      Tab          : constant String := "        ";
       Kernel       : constant Kernel_Handle := Get_Kernel (Context);
       Logs_Dir     : constant String := Get_Home_Dir (Kernel) & "log_files";
       Activity     : constant Activity_Id :=
@@ -675,6 +670,8 @@ package body VCS_Activities_View_API is
       Filename     : constant String :=
                        Logs_Dir & OS_Lib.Directory_Separator
                          & Image (Activity) & ".dif";
+      T_Set        : Translate_Set :=
+                       Get_Activity_Template_Tags (Kernel, Activity);
       File         : Virtual_File;
       W_File       : Writable_File;
       Content      : Unbounded_String;
@@ -683,68 +680,14 @@ package body VCS_Activities_View_API is
       Edit_File    : Edit_Action_Command_Access;
       Adjust_Patch : Adjust_Patch_Action_Command_Access;
 
-      ------------
-      -- Indent --
-      ------------
-
-      procedure Append_Indent (Str : String) is
-      begin
-         if Str'Length = 0 then
-            return;
-         end if;
-
-         if Str (Str'First) /= ASCII.LF then
-            Append (Content, Tab);
-         end if;
-
-         for K in Str'Range loop
-            Append (Content, Str (K));
-
-            if Str (K) = ASCII.LF then
-               Append (Content, Tab);
-            end if;
-         end loop;
-         Append (Content, ASCII.LF);
-      end Append_Indent;
-
    begin
       File := Create (Filename);
       W_File := Write_File (File);
 
       --  Add activity name and log
 
-      Append (Content, ASCII.LF);
-      Append (Content,
-              "This is a patch file for a GPS activity." & ASCII.LF);
-      Append (Content,
-              "It has been generated on " & Image (Clock, ISO_Date) &
-              '.' & ASCII.LF & ASCII.LF);
-      Append (Content,
-              "Activity : " & Get_Name (Activity) & ASCII.LF & ASCII.LF);
-
-      Append_Indent (Get_Log (Kernel, Activity));
-
-      --  Add file logs
-
-      Iter := String_List.First (Files);
-
-      for K in 1 .. String_List.Length (Files) loop
-         declare
-            use type String_List.List_Node;
-            Filename : constant String := String_List.Data (Iter);
-            File     : constant Virtual_File := Create (Filename);
-         begin
-            if Is_Directory (File) then
-               Append (Content, Tab & "* directory ");
-            else
-               Append (Content, Tab & "* ");
-            end if;
-            Append (Content, Base_Dir_Name (File) & ":" & ASCII.LF);
-            Append_Indent (Get_Log (Kernel, File));
-            Append (Content, ASCII.LF);
-            Iter := String_List.Next (Iter);
-         end;
-      end loop;
+      Insert (T_Set, Assoc ("IS_PATCH", True));
+      Content := Parse (Get_Activity_Log_Template (Kernel), T_Set);
 
       Write (W_File, To_String (Content));
       Close (W_File);

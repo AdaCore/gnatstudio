@@ -7084,9 +7084,8 @@ opened it is possible to close it manually.
 Remove the activity.
 
 @item Commit activity
-Commit the activity. If group commit is activated then the shared log
-content is the catenation of the activity file's log plus the activity
-log. If group commit is not activated then the log content for each
+Commit the activity. If group commit is activated then the commit log
+content is generated using a template file fully configurable. ????. If group commit is not activated then the log content for each
 activity file is the file log catenated with the activity log. After
 this operation the file's log are removed but the activity log is kept
 as documentation.
@@ -7103,7 +7102,9 @@ version of those files in the repository.
 
 @item Build patch file
 Create a path file (in text format) for the activity. The patch file
-contains the activity log, file's logs and the diff of each file.
+contains and header (the activity log and file's logs) and the diff of
+each file. The header format is fully configurable using a template
+file. ????
 
 @item Edit revision log
 Edit the current revision log for activity. This log is shared with
@@ -16307,6 +16308,13 @@ start GPS.
 This file contains the list of scripts to load at startup, as well as
 additional code that need to be executed to setup the script.
 
+   @item $HOME/.gpe/activity_log.tmplt
+Template file used to generate activities' group commit-log and patch
+file's header. If not present the system wide template (see below) is
+used. The set of configurable tags are described into this template.
+@cindex activity log template
+@cindex activity, log template
+
    @item @i{prefix}
 The prefix directory where GPS is installed, e.g @file{/opt/gps}.
 
@@ -16377,6 +16385,11 @@ provide useful default for a given system or project.
    @item @i{prefix}/share/gps/readonly.gpr
 Project used by GPS as the default project when working in a read-only
 directory.
+
+   @item @i{prefix}/share/gps/activity_log.tmplt
+Template file used by default to generate activities' group commit-log
+and patch file's header. This file can be copied into user home
+directory and customized (see above).
 
    @item @i{prefix}/share/locale
 Directory used to retrieve the translation files, when relevant.

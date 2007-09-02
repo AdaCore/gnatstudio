@@ -20,6 +20,7 @@
 with Ada.Calendar;               use Ada.Calendar;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
+
 with GNAT.OS_Lib;                use GNAT;
 with GNAT.Strings;
 with GNAT.HTable;
@@ -28,6 +29,7 @@ with GNAT.Calendar.Time_IO;      use GNAT.Calendar.Time_IO;
 with Glib.Xml_Int;               use Glib.Xml_Int;
 
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
+with Log_Utils;                  use Log_Utils;
 with Projects;                   use Projects;
 with Projects.Registry;          use Projects.Registry;
 with String_Hash;
@@ -404,7 +406,7 @@ package body VCS_Activities is
    -------------
 
    function Has_Log
-     (Kernel   : Kernel_Handle;
+     (Kernel   : access Kernel_Handle_Record'Class;
       Activity : Activity_Id) return Boolean
    is
       Logs_Dir  : constant String := Get_Home_Dir (Kernel) & "log_files";
@@ -422,7 +424,7 @@ package body VCS_Activities is
    ------------------
 
    function Get_Log_File
-     (Kernel   : Kernel_Handle;
+     (Kernel   : access Kernel_Handle_Record'Class;
       Activity : Activity_Id) return Virtual_File
    is
       Logs_Dir  : constant String := Get_Home_Dir (Kernel) & "log_files";
@@ -447,7 +449,7 @@ package body VCS_Activities is
    -------------
 
    function Get_Log
-     (Kernel   : Kernel_Handle;
+     (Kernel   : access Kernel_Handle_Record'Class;
       Activity : Activity_Id) return String
    is
       use type Strings.String_Access;
@@ -731,5 +733,75 @@ package body VCS_Activities is
       Set (Activity, Item);
       Save_Activities (Kernel);
    end Toggle_Closed_Status;
+
+   -------------------------------
+   -- Get_Activity_Log_Template --
+   -------------------------------
+
+   function Get_Activity_Log_Template
+     (Kernel : access Kernel_Handle_Record'Class) return String
+   is
+      Activity_Log_Template : constant String := "activity_log.tmplt";
+      Home_Template         : constant String :=
+                                Get_Home_Dir (Kernel) & Activity_Log_Template;
+      Sys_Template          : constant String :=
+                                Get_System_Dir (Kernel)
+                                  & "share" & OS_Lib.Directory_Separator
+                                  & "gps" & OS_Lib.Directory_Separator
+                                  & Activity_Log_Template;
+   begin
+      if OS_Lib.Is_Regular_File (Home_Template) then
+         return Home_Template;
+      else
+         return Sys_Template;
+      end if;
+   end Get_Activity_Log_Template;
+
+   --------------------------------
+   -- Get_Activity_Template_Tags --
+   --------------------------------
+
+   function Get_Activity_Template_Tags
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Activity : Activity_Id) return Translate_Set
+   is
+      Files          : constant String_List.List :=
+                         Get_Files_In_Activity (Activity);
+      Iter           : String_List.List_Node;
+
+      V_Files        : Tag; -- vector tag (string), file names
+      V_Logs         : Tag; -- vector tag (string), corresponding log
+      V_Is_Directory : Tag; -- vector tag (boolean), true if a directory
+      T_Set          : Translate_Set;
+
+   begin
+      Insert (T_Set, Assoc ("ACTIVITY_LOG", Get_Log (Kernel, Activity)));
+      Insert (T_Set, Assoc ("ACTIVITY_NAME", Get_Name (Activity)));
+      Iter := String_List.First (Files);
+
+      for K in 1 .. String_List.Length (Files) loop
+         declare
+            use type String_List.List_Node;
+            Filename : constant String := String_List.Data (Iter);
+            File     : constant Virtual_File := Create (Filename);
+         begin
+            if Is_Directory (File) then
+               Append (V_Is_Directory, True);
+            else
+               Append (V_Is_Directory, False);
+            end if;
+
+            Append (V_Files, Base_Dir_Name (File));
+            Append (V_Logs, Get_Log (Kernel, File));
+            Iter := String_List.Next (Iter);
+         end;
+      end loop;
+
+      Insert (T_Set, Assoc ("FILES", V_Files));
+      Insert (T_Set, Assoc ("LOGS", V_Logs));
+      Insert (T_Set, Assoc ("IS_DIRECTORY", V_Is_Directory));
+
+      return T_Set;
+   end Get_Activity_Template_Tags;
 
 end VCS_Activities;

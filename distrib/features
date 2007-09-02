@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.2 NEW FEATURES LIST Current as of Aug 30, 2007
+GPS 4.2 NEW FEATURES LIST Current as of Sep 02, 2007
 ====================================================
 
 Copyright (c) 2006-2007, AdaCore
@@ -14,6 +14,13 @@ of the feature.
 
 New features in GPS 4.2.0
 -------------------------
+
+NF-42-G827-022 add customization for activity logs (2007-09-02)
+
+  The activity group commit log format is now fully configurable
+  using a template file (activity_log.tmplt). This format is
+  also used to create the header of generated activities patch
+  files.
 
 NF-42-G817-004 better alignment support for arrows (2007-08-30)
 
