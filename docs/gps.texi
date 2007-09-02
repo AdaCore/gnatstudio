@@ -7085,7 +7085,9 @@ Remove the activity.
 
 @item Commit activity
 Commit the activity. If group commit is activated then the commit log
-content is generated using a template file fully configurable. ????. If group commit is not activated then the log content for each
+content is generated using a template file fully configurable.
+@c ????.
+If group commit is not activated then the log content for each
 activity file is the file log catenated with the activity log. After
 this operation the file's log are removed but the activity log is kept
 as documentation.
@@ -7101,10 +7103,11 @@ Show a visual comparison between the local activity files and the most recent
 version of those files in the repository.
 
 @item Build patch file
-Create a path file (in text format) for the activity. The patch file
-contains and header (the activity log and file's logs) and the diff of
+Create a patch file (in text format) for the activity. The patch file
+contains a header (the activity log and file's logs) and the diff of
 each file. The header format is fully configurable using a template
-file. ????
+file.
+@c ????
 
 @item Edit revision log
 Edit the current revision log for activity. This log is shared with
