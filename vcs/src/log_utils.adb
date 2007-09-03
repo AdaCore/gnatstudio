@@ -830,6 +830,12 @@ package body Log_Utils is
       --  ??? Should we add check for the activity log and in this case which
       --  check script should be used.
 
+      --  First clear the current category, this is done here and not in
+      --  Check_Handler as we want to keep the output of multiple check
+      --  commands.
+
+      Remove_Location_Category (Kernel, -"Style/Log Check");
+
       Files_Temp := First (Files);
 
       while not Cancel_All and then Files_Temp /= Null_Node loop
@@ -875,7 +881,7 @@ package body Log_Utils is
                      C_Args := OS_Lib.Argument_String_To_List
                        (File_Check_Command);
 
-                     --  Add all arguments form the command string
+                     --  Add all arguments from the command string
 
                      for K in C_Args'First + 1 .. C_Args'Last loop
                         Append (File_Args, C_Args (K).all);
