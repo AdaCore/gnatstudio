@@ -2976,41 +2976,38 @@ package body Src_Editor_Buffer is
            Buffer.Editable_Lines'First .. Buffer.Last_Editable_Line
          loop
             declare
-               Str : Src_String := Get_String (Buffer, Line);
-               C   : Gunichar;
+               Str  : Src_String := Get_String (Buffer, Line);
             begin
                if Str.Length = 0 then
                   if Line /= Buffer.Last_Editable_Line then
                      New_Line;
                   end if;
+
                else
+                  Index := Str.Length;
+
+                  if Strip_Blank then
+                     --  Safe to use 1 here as Str.Contents'First as this is
+                     --  the type definition
+                     for J in reverse 1 .. Str.Length loop
+                        --  No need for special utf8 handling, as we are just
+                        --  looking for spaces.
+
+                        Index := J;
+
+                        exit when Str.Contents (J) /= ' '
+                          and then Str.Contents (J) /= ASCII.HT;
+
+                     end loop;
+                  end if;
+
                   declare
                      Contents : constant String := Glib.Convert.Convert
-                       (Str.Contents (1 .. Str.Length),
+                       (Str.Contents (Str.Contents'First .. Index),
                         Buffer.Charset.all, "UTF-8", Error);
-                     Prev     : Natural;
                   begin
                      if Error.all = null then
-                        if Strip_Blank then
-                           Index := Contents'Length;
-                           Prev  := Index + 1;
-
-                           while Index >= Contents'First loop
-                              C := UTF8_Get_Char
-                                (Contents (Index .. Contents'First));
-                              exit when C /= Character'Pos (' ')
-                                and then C /= Character'Pos (ASCII.HT);
-
-                              Prev  := Index;
-                              Index := UTF8_Find_Prev_Char (Contents, Index);
-                           end loop;
-
-                           Append
-                             (U_Buffer, Contents (Contents'First .. Prev - 1));
-
-                        else
-                           Append (U_Buffer, Contents);
-                        end if;
+                        Append (U_Buffer, Contents);
                      else
                         --  An error has occurred on this line.
                         Has_Errors := True;
@@ -3019,10 +3016,10 @@ package body Src_Editor_Buffer is
                           (Kernel   => Buffer.Kernel,
                            Category => Conversion_Error_Message
                              (Buffer.Charset.all),
-                           File => Buffer.Filename,
-                           Column => 0,
-                           Text => Get_Message (Error.all),
-                           Line => Positive (Line));
+                           File     => Buffer.Filename,
+                           Column   => 0,
+                           Text     => Get_Message (Error.all),
+                           Line     => Positive (Line));
 
                         Error_Free (Error.all);
                         Error.all := null;
