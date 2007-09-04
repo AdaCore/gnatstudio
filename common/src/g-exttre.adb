@@ -758,10 +758,12 @@ package body GNAT.Expect.TTY.Remote is
 
          --  Determine if the machine echoes commands
          if Descriptor.Shell.No_Echo_Cmd.all /= "" then
-            Print
-              (Descriptor.Machine.Desc.Dbg,
-               Descriptor.Shell.No_Echo_Cmd.all,
-               Input);
+            if Descriptor.Machine.Desc.Dbg /= null then
+               Print
+                 (Descriptor.Machine.Desc.Dbg,
+                  Descriptor.Shell.No_Echo_Cmd.all,
+                  Input);
+            end if;
             Send (Descriptor.Machine.Sessions (Session_Nb).Pd,
                   Descriptor.Shell.No_Echo_Cmd.all);
             Wait_For_Prompt (True);
