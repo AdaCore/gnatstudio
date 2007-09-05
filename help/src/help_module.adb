@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                              AdaCore                              --
+--                 Copyright (C) 2001-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -154,23 +153,22 @@ package body Help_Module is
       User : Kernel_Handle) return MDI_Child;
    function Save_Desktop
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle)
-      return Node_Ptr;
+      User   : Kernel_Handle) return Node_Ptr;
    --  Support functions for the MDI
 
    function Open_Help_Hook
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Data      : access Hooks_Data'Class) return Boolean;
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class) return Boolean;
    --  Process, if possible, the data sent by the kernel
 
    procedure Display_Help
-     (Kernel    : access Kernel_Handle_Record'Class;
-      URL       : String);
+     (Kernel : access Kernel_Handle_Record'Class;
+      URL    : String);
    --  Display HTML Help file.
 
    procedure Display_Help
-     (Kernel    : access Kernel_Handle_Record'Class;
-      URL       : String) is separate;
+     (Kernel : access Kernel_Handle_Record'Class;
+      URL    : String) is separate;
 
    procedure On_Load_HTML
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -237,9 +235,9 @@ package body Help_Module is
    --  Parse the index file for one specific directory
 
    function Get_Shell_Documentation
-     (XML_Doc_File : Glib.Xml_Int.Node_Ptr;
+     (XML_Doc_File        : Glib.Xml_Int.Node_Ptr;
       Language, Full_Name : String;
-      HTML_Format : Boolean) return String;
+      HTML_Format         : Boolean) return String;
    --  Return the documentation for Entity, as read in the XML file.
    --  The documentation is formated in HTML if HTML_Format is True
 
@@ -347,14 +345,14 @@ package body Help_Module is
    -----------------------------
 
    function Get_Shell_Documentation
-     (XML_Doc_File : Glib.Xml_Int.Node_Ptr;
+     (XML_Doc_File        : Glib.Xml_Int.Node_Ptr;
       Language, Full_Name : String;
-      HTML_Format : Boolean) return String
+      HTML_Format         : Boolean) return String
    is
-      Tmp     : Node_Ptr := XML_Doc_File.Child;
-      Descr, Params, Returns, See_Also, Example : Unbounded_String;
-      Child   : Node_Ptr;
-      Obsolescent : Unbounded_String;
+      Tmp                              : Node_Ptr := XML_Doc_File.Child;
+      Child                            : Node_Ptr;
+      Descr, Params, Returns, See_Also : Unbounded_String;
+      Obsolescent, Example             : Unbounded_String;
    begin
       Tmp := XML_Doc_File.Child;
 
