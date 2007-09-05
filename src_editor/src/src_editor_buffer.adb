@@ -2996,7 +2996,7 @@ package body Src_Editor_Buffer is
                         exit when Str.Contents (J) /= ' '
                           and then Str.Contents (J) /= ASCII.HT;
 
-                        --  J points to a blank charactere. Let's set Index to
+                        --  J points to a blank character. Let's set Index to
                         --  the previous character in the string.
                         Index := J - 1;
                      end loop;
