@@ -21,6 +21,15 @@ Known Problems fixed in GPS 4.2.0
               Alternatively, use the Key Manager to assign Ctrl-C and Ctrl-X
               to the General actions "Copy to Clipboard" and "Cut to Clipboard"
 
+- G723-003 Percent sign lost in revision history
+  Problem:    When commiting a file, percent signs that were par tof the
+              revision log are sent to the underlying version control system.
+              Likewise, revision logs already entered in the version control
+              system that contain percent sign will not be rendered properly
+              in GPS.
+  Workaround: Use two percent signs in a row. For example, write "%%a" instead
+              of "%a".
+
 - G717-004 Remote connection using ssh on Windows no longer handles passwords
   Problem:    Under Windows, when GPS tries to connect to a remote machine
               using ssh, and ssh asks for a username or a password, then GPS

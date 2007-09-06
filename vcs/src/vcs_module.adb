@@ -1104,6 +1104,8 @@ package body VCS_Module is
       File           : constant VFS.Virtual_File :=
                          Create (Nth_Arg (Data, 2), Kernel);
       S              : constant String := Nth_Arg (Data, 3);
+      Escaped        : String (S'First .. S'First + S'Length * 2);
+      Last           : Integer := S'First;
    begin
       Ref := Get_VCS_From_Id (VCS_Identifier);
 
@@ -1114,7 +1116,17 @@ package body VCS_Module is
          return;
       end if;
 
-      Parse_Log (Ref, File, S);
+      for J in S'Range loop
+         if S (J) = '%' then
+            Escaped (Last .. Last + 1) := "%%";
+            Last := Last + 2;
+         else
+            Escaped (Last) := S (J);
+            Last := Last + 1;
+         end if;
+      end loop;
+
+      Parse_Log (Ref, File, Escaped);
    exception
       when E : others => Trace (Exception_Handle, E);
    end Log_Parse_Handler;

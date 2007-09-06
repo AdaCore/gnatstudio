@@ -840,11 +840,23 @@ package body VCS.Generic_VCS is
       Filenames : String_List.List;
       Log       : String)
    is
-      Args : GNAT.Strings.String_List_Access;
+      Args    : GNAT.Strings.String_List_Access;
+      Escaped : String (Log'First .. Log'First + Log'Length * 2);
+      Last    : Integer := Escaped'First;
 
    begin
+      for J in Log'Range loop
+         if Log (J) = '%' then
+            Escaped (Last .. Last + 1) := "%%";
+            Last := Last + 2;
+         else
+            Escaped (Last) := Log (J);
+            Last := Last + 1;
+         end if;
+      end loop;
+
       Args := new GNAT.Strings.String_List (1 .. 1);
-      Args (1) := new String'(Log);
+      Args (1) := new String'(Escaped (Escaped'First .. Last - 1));
 
       Generic_Command (Rep, Filenames, Args, Commit);
 
