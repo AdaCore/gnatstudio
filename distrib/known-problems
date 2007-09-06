@@ -1,5 +1,15 @@
 Known Problems fixed in GPS 4.2.0
 
+- G905-023 Source_Files attribute not working for languages other than Ada
+  Problem:    If your project file specifies languages other than Ada, and
+              uses the attributes Source_Files or Source_List_File, then
+              GPS systematically displays a warning in the console (which
+              can safely be ignored), and fails to load some of the source
+              files
+  Workaround: none, this is a memory corruption. Try and remove the above
+              attributes from your project, and let GPS compute the list of
+              source files automatically
+
 - G829-018 Remote debugging problems
   Problem:    With some remote servers, and depending on the protocol used,
               remote debugging is very slow and behaves incorrectly. The main
