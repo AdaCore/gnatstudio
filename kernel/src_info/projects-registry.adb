@@ -1211,6 +1211,14 @@ package body Projects.Registry is
       Seen                    : Boolean_Htable.String_Hash_Table.HTable;
       use Boolean_Htable.String_Hash_Table;
 
+      Languages  : Argument_List := Get_Languages (Project);
+      Languages2 : Name_Id_Array (Languages'Range);
+      Languages3 : Name_Id_Array (Languages'Range);
+      --  The list of languages. Languages2 is a precomputed version of
+      --  Languages to speed up string comparison. Languages3's contents is
+      --  reset to No_Name if at least one file exists for the given language.
+      --  Thus we can easily issue warnings when a language has no file.
+
       package Virtual_File_List is new Ada.Containers.Doubly_Linked_Lists
         (Element_Type => Virtual_File);
       use Virtual_File_List;
@@ -1264,6 +1272,7 @@ package body Projects.Registry is
             --  (returned by the debugger itself) cannot be found (they were
             --  used to compile the run-time for example but are not part of
             --  the compiler distribution).
+
             if F.Is_Regular_File then
                Append (Source_File_List, F);
                Set (Seen, File, True);
@@ -1301,6 +1310,14 @@ package body Projects.Registry is
                     Get_View (Project),
                    Registry.Data.View_Tree);
          else
+            --  Mark this language has having at least one source
+            for Index in Languages2'Range loop
+               if Languages2 (Index) = Src.Lang then
+                  Languages3 (Index) := No_Name;
+                  exit;
+               end if;
+            end loop;
+
             Set (Registry.Data.Sources,
                  K => F,
                  E => (Project, Src.Lang, No_Name));
@@ -1372,14 +1389,6 @@ package body Projects.Registry is
          Set_Source_Files (Project, Files);
       end Set_Source_Files;
 
-      Languages  : Argument_List := Get_Languages (Project);
-      Languages2 : Name_Id_Array (Languages'Range);
-      Languages3 : Name_Id_Array (Languages'Range);
-      --  The list of languages. Languages2 is a precomputed version of
-      --  Languages to speed up string comparison. Languages3's contents is
-      --  reset to No_Name if at least one file exists for the given language.
-      --  Thus we can easily issue warnings when a language has no file.
-
       Dirs      : GNAT.Strings.String_List_Access;
       Dir       : Dir_Type;
       Length    : Natural;
@@ -1390,6 +1399,12 @@ package body Projects.Registry is
       Src       : String_List_Id;
 
    begin
+      for L in Languages'Range loop
+         Languages2 (L) := Get_String (Languages (L).all);
+      end loop;
+
+      Languages3 := Languages2;
+
       --  We already know if the directories contain Ada files. Update the
       --  status accordingly, in case they don't contain any other file.
 
@@ -1512,12 +1527,6 @@ package body Projects.Registry is
       --  by sharing code with Prj-Nmsc.
       --  Given the implementation in prj-nmsc, does this attribute apply for
       --  languages other than Ada ?
-
-      for L in Languages'Range loop
-         Languages2 (L) := Get_String (Languages (L).all);
-      end loop;
-
-      Languages3 := Languages2;
 
       if not Sources_Specified then
          --  Parse all directories to find the files that match the naming
@@ -2147,8 +2156,11 @@ package body Projects.Registry is
                  Filename
                then
                   declare
-                     S : constant String :=
-                           Full_Name (Project_Path (Project2)).all;
+                     --  Use a temporary variable to hold project path, since
+                     --  otherwise references to S in this block are reported
+                     --  by valgrind as reference memory that has been freed
+                     P : constant Virtual_File := Project_Path (Project2);
+                     S : constant String := Full_Name (P).all;
                   begin
                      Name_Len := S'Length;
                      Name_Buffer (1 .. Name_Len) := S;
