@@ -892,6 +892,10 @@ time. This is in particular useful when you want to copy lines from separate
 places in the initial file, merge them, and then paste them together one or
 more times later on, through a single operation.
 
+The Clipboard View content is preserved between GPS sessions. As an exception,
+huge entries are removed and replaced with an entry saying "[Big entry has
+been removed]".
+
 @c --------------------------------------------------------------------
 @node The Callgraph View
 @section The Callgraph View

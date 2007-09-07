@@ -48,6 +48,13 @@ Known Problems fixed in GPS 4.2.0
               of the start_command tag to "false" for the ssh
               remote_connection_config
 
+- G714-002 Problems with huge clipboard entries
+  Problem:    If you copy a huge piece of code to the clipboard and then exit
+              GPS, the next time GPS is launched it could take a very long time
+              to start up.
+  Workaround: Remove the clipboards.xml file that you can find in the
+              $HOME/.gps directory before restarting GPS.
+
 - G628-004 Generated AUnit test cases are missing a use clause
   Problem:    When GPS generates a new AUnit test case for AUnit 2.x, a use
               clause for the AUnit unit is missing.

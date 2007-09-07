@@ -192,7 +192,12 @@ package body GPS.Kernel.Clipboard is
                   Set_Attribute (Child, "last", "true");
                end if;
 
-               Child.Value := new String'(Clipboard.List (L).all);
+               if Clipboard.List (L)'Length <= 100_000 then
+                  Child.Value := new String'(Clipboard.List (L).all);
+               else
+                  Child.Value := new String'("[Big entry has been removed]");
+               end if;
+
                Add_Child (File, Child, Append => True);
             end if;
          end loop;
