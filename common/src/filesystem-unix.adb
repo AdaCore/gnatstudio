@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006-2007                      --
---                             AdaCore                               --
+--                      Copyright (C) 2006-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,11 +21,12 @@ with GNAT.Expect;            use GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote; use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
+with GNAT.Mmap;              use GNAT.Mmap;
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
 with GNAT.Regpat;            use GNAT.Regpat;
 
 with Basic_Types;
-with OS_Utils;
+with Glib.Convert;           use Glib.Convert;
 with String_Utils;           use String_Utils;
 with VFS;
 
@@ -484,7 +484,10 @@ package body Filesystem.Unix is
                     Args                  => Args);
 
       declare
-         Content : String_Access := OS_Utils.Read_File (Temporary_File);
+         Content : String_Access :=
+           GNAT.Mmap.Read_Whole_File
+             (Locale_From_UTF8 (Temporary_File),
+              Empty_If_Not_Found => True);
       begin
          Send (Pd.all, Content.all);
          Free (Content);

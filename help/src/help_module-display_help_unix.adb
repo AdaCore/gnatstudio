@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                              AdaCore                              --
+--                     Copyright (C) 2001-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -90,7 +89,7 @@ is
 
       for A in Args'Range loop
          declare
-            Arg : constant String := Unprotect (Args (A).all);
+            Arg : constant String := String_Utils.Unprotect (Args (A).all);
          begin
             Free (Args (A));
             Args (A) := new String'(Arg);
@@ -160,7 +159,7 @@ begin
    Args := Get_Command (HTML_Browser);
 
    if not Launch_Browser
-     (Unprotect (Protect (Args (Args'First).all, False)),
+     (String_Utils.Unprotect (Protect (Args (Args'First).all, False)),
       Args (Args'First + 1 .. Args'Last))
    then
       Insert

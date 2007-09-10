@@ -22,6 +22,7 @@ with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
+with GNAT.Mmap;                  use GNAT.Mmap;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Scripts;               use GNAT.Scripts;
 with GNAT.Strings;
@@ -50,7 +51,6 @@ with GPS.Main_Window;            use GPS.Main_Window;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Custom;          use GPS.Kernel.Custom;
 with Traces;                     use Traces;
-with OS_Utils;                   use OS_Utils;
 with File_Utils;                 use File_Utils;
 with String_Utils;               use String_Utils;
 with Generic_List;
@@ -890,15 +890,12 @@ package body Help_Module is
                      GPS_Window (Get_Main_Window (Kernel));
       About_File : constant String :=
                      GNAT.Directory_Operations.Format_Pathname
-                       (Get_System_Dir (Kernel) & "/share/gps/about.txt");
+          (Get_System_Dir (Kernel) & "/share/gps/about.txt");
       Contents   : GNAT.Strings.String_Access;
 
    begin
-      Contents := Read_File (About_File);
-
-      if Contents = null then
-         Contents := new String'("");
-      end if;
+      Contents := GNAT.Mmap.Read_Whole_File
+        (About_File, Empty_If_Not_Found => True);
 
       Button := Message_Dialog
         (GPS_Name (Top) & " " & Config.Version & " (" & Config.Source_Date &

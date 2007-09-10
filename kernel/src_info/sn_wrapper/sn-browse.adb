@@ -22,11 +22,11 @@ with GNAT.Calendar.Time_IO; use GNAT.Calendar.Time_IO;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.IO_Aux;               use GNAT.IO_Aux;
 with GNAT.Expect;               use GNAT.Expect;
+with GNAT.Mmap;                 use GNAT.Mmap;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 with Basic_Types;
 with SN.Xref_Pools; use SN.Xref_Pools;
-with OS_Utils;
 with File_Utils;    use File_Utils;
 with String_Utils;  use String_Utils;
 with Traces;        use Traces;
@@ -158,13 +158,14 @@ package body SN.Browse is
             if Tail (Dir_Entry (1 .. Last), Xref_Suffix'Length) =
               Xref_Suffix
             then
-               Content := OS_Utils.Read_File
+               Content := Read_Whole_File
                  (Name_As_Directory (DB_Directory) & Dir_Entry (1 .. Last));
 
                if Content /= null then
                   if Content'Length /=
                     Write (Temp_File, Content.all'Address, Content'Length)
                   then
+                     Free (Content);
                      raise Temp_File_Failure;
                   end if;
 

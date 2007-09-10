@@ -33,6 +33,7 @@ with System;
 with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Heap_Sort;            use GNAT.Heap_Sort;
+with GNAT.Mmap;                 use GNAT.Mmap;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Traces;               use GNAT.Traces;
 
@@ -713,7 +714,8 @@ package body VFS is
          return null;
 
       elsif File.Is_Local then
-         return Read_File (File.Full_Name.all);
+         return GNAT.Mmap.Read_Whole_File
+           (Locale_From_UTF8 (File.Full_Name.all));
 
       else
          return File.Get_Filesystem.Read_File

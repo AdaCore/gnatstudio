@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2001-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,9 +23,6 @@ with Interfaces.C.Strings;      use Interfaces.C.Strings;
 
 with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Directory_Operations; use GNAT, GNAT.Directory_Operations;
-with GNAT.Scripts.Utils;
-
-with Glib.Convert;              use Glib.Convert;
 
 package body OS_Utils is
 
@@ -175,15 +171,6 @@ package body OS_Utils is
    begin
       return Max_Path;
    end Max_Path_Len;
-
-   ---------------
-   -- Read_File --
-   ---------------
-
-   function Read_File (File : String) return String_Access is
-   begin
-      return GNAT.Scripts.Utils.Read_File (Locale_From_UTF8 (File));
-   end Read_File;
 
    ----------------------
    -- Set_OpenVMS_Host --

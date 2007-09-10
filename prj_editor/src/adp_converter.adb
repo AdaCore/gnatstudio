@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2004-2006                      --
---                              AdaCore                              --
+--                      Copyright (C) 2004-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,6 +23,7 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Ada.Unchecked_Deallocation;
 with Traces;                    use Traces;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.Mmap;                 use GNAT.Mmap;
 
 package body Adp_Converter is
 
@@ -55,9 +55,6 @@ package body Adp_Converter is
    --  the value, not at the beginning of the line.
    --  Last is left on the last character of the line, before ASCII.LF
 
-   function Read_File (Filename : String) return String_Access;
-   --  Return the contents of Filename
-
    function Parse_Main_Units
      (Buffer : String_Access) return String_List_Access;
    --  Get the list of main units for the project
@@ -82,7 +79,7 @@ package body Adp_Converter is
       Spec_Extension : String;
       Body_Extension : String)
    is
-      Buffer : String_Access := Read_File (Adp_Filename);
+      Buffer : String_Access := Read_Whole_File (Adp_Filename);
       Source_Dirs, Object_Dirs, Main_Units : String_List_Access;
    begin
       if Buffer = null then
@@ -314,28 +311,5 @@ package body Adp_Converter is
          return Buffer (Line.First .. Line.Last);
       end if;
    end Get_Attribute_Value;
-
-   ---------------
-   -- Read_File --
-   ---------------
-
-   function Read_File (Filename : String) return String_Access is
-      Name_Zero : aliased constant String := Filename & ASCII.NUL;
-      F         : File_Descriptor;
-      Length    : Long_Integer;
-      pragma Warnings (Off, Length);
-      Buffer    : String_Access;
-   begin
-      F := Open_Read (Name_Zero'Address, Text);
-      if F = Invalid_FD then
-         return null;
-      end if;
-
-      Length := File_Length (F);
-      Buffer := new String (1 .. Natural (Length));
-      Length := Long_Integer (Read (F, Buffer.all'Address, Integer (Length)));
-      Close (F);
-      return Buffer;
-   end Read_File;
 
 end Adp_Converter;

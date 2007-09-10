@@ -25,6 +25,7 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Mmap;                 use GNAT.Mmap;
 with GNAT.Scripts;              use GNAT.Scripts;
 with GNAT.Strings;
 with GNAT.Traces;
@@ -570,13 +571,10 @@ procedure GPS.Main is
 
       Gtk_New (GPS_Main, Dir.all, Prefix.all);
 
-      About_Contents := Read_File
+      About_Contents := GNAT.Mmap.Read_Whole_File
         (Directory_Operations.Format_Pathname
-           (Prefix.all & "/share/gps/about.txt"));
-
-      if About_Contents = null then
-         About_Contents := new String'("");
-      end if;
+           (Prefix.all & "/share/gps/about.txt"),
+         Empty_If_Not_Found => True);
 
       if Is_Regular_File
         (Directory_Operations.Format_Pathname

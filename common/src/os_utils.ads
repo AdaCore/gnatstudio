@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
---                              AdaCore                              --
+--                      Copyright (C) 2001-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -40,12 +39,6 @@ package OS_Utils is
 
    function Max_Path_Len return Natural;
    --  Return the maximum length of a pathname for the current host.
-
-   function Read_File (File : String) return String_Access;
-   --  Return the contents of an entire file.
-   --  If the file cannot be found, return null.
-   --  The caller is responsible for freeing the returned memory.
-   --  File is a UTF8-encoded string
 
    procedure Put (File : File_Descriptor; Str : String);
    --  Write Str to File.

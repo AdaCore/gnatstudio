@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001-2006                    --
---                              AdaCore                              --
+--                        Copyright (C) 2001-2007, AdaCore           --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,11 +18,12 @@
 -----------------------------------------------------------------------
 
 with GNAT.OS_Lib;
+with GNAT.Mmap;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Glib.Convert;            use Glib.Convert;
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
 with Language;                use Language;
 with Language.Ada;            use Language.Ada;
-with OS_Utils;                use OS_Utils;
 with Projects;                use Projects;
 with Namet;                   use Namet;
 
@@ -69,7 +69,9 @@ package body Aunit_Filters is
          return;
       end if;
 
-      File_Buffer := Read_File (File_Name);
+      File_Buffer := GNAT.Mmap.Read_Whole_File
+        (Locale_From_UTF8 (File_Name),
+         Empty_If_Not_Found => True);
       Parse_Constructs (Ada_Lang, File_Buffer.all, Constructs);
       Current_Construct := Constructs.First;
 
