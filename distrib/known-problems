@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.2.0
 
+- G910-002 Wrong links in python API documentation
+  Problem:    In the python API documentation generated through the
+              /Help/Python extensions menus, links corresponding to classes
+              point to the Global routines page.
+  Workaround: Access the class page using the links in the left menu.
+
 - G905-023 Source_Files attribute not working for languages other than Ada
   Problem:    If your project file specifies languages other than Ada, and
               uses the attributes Source_Files or Source_List_File, then
