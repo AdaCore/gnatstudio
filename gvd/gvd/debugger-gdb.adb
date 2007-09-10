@@ -28,6 +28,7 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY;         use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.Regpat;             use GNAT.Regpat;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Gtk.Window;              use Gtk.Window;
 
@@ -2359,8 +2360,13 @@ package body Debugger.Gdb is
          Result := True;
       else
          declare
+            --  Send the gdb command to get the list of lines with code.
+            --  The call to "Format_Pathname" is to work a bug in some versions
+            --  of gdb under Windows.
             S              : constant String := Send
-              (Debugger, "-symbol-list-lines " & Full_Name (File).all,
+              (Debugger,
+               "-symbol-list-lines "
+               & Format_Pathname (Full_Name (File).all, UNIX),
                Mode => Internal);
             Num_Lines, Pos : Natural;
 
