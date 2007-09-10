@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
---                              AdaCore                              --
+--                  Copyright (C) 2001-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,9 +24,14 @@ procedure Display_Help
   (Kernel    : access Kernel_Handle_Record'Class;
    URL       : String)
 is
+   File_Protocol : constant String := "file://";
+
    function Shell_Open (File : String) return Boolean;
    --  Open file with the associated command registered under Windows.
    --  Return True in case of success.
+
+   procedure Display_Help_Internal (URL : String);
+   --  Display help file, and insert message in kernel console.
 
    ----------------
    -- Shell_Open --
@@ -39,32 +43,43 @@ is
 
       function ShellExecute
         (Hwnd         : System.Address;
-         Lpoperation  : System.Address;
-         Lpfile       : System.Address;
-         Lpparameters : System.Address;
-         Lpdirectory  : System.Address;
-         Nshowcmd     : Integer) return Long_Integer;
+         Lpoperation  : String;
+         Lpfile       : String;
+         Lpparameters : System.Address := System.Null_Address;
+         Lpdirectory  : System.Address := System.Null_Address;
+         Nshowcmd     : Integer := SW_SHOW) return Long_Integer;
       pragma Import (Stdcall, ShellExecute, "ShellExecuteA");
-
-      C_Open : aliased constant String := "open" & ASCII.NUL;
-      C_File : aliased constant String := File & ASCII.NUL;
 
    begin
       return ShellExecute
-        (System.Null_Address,
-         C_Open'Address,
-         C_File'Address,
-         System.Null_Address,
-         System.Null_Address,
-         SW_SHOW) > 32;
+        (System.Null_Address, "open" & ASCII.NUL, File & ASCII.NUL) > 32;
    end Shell_Open;
 
+   ---------------------------
+   -- Display_Help_Internal --
+   ---------------------------
+
+   procedure Display_Help_Internal (URL : String) is
+   begin
+      if Shell_Open (URL) then
+         Insert
+           (Kernel, -"Using default browser to view " & URL, Mode => Info);
+      else
+         Insert
+           (Kernel, -"Could not display help file " & URL, Mode => Error);
+      end if;
+   end Display_Help_Internal;
+
 begin
-   if Shell_Open (URL) then
-      Insert
-        (Kernel, -"Using default browser to view " & URL, Mode => Info);
+   if URL'Length > File_Protocol'Length
+     and then URL (URL'First .. URL'First + File_Protocol'Length - 1)
+       = File_Protocol
+   then
+      --  Strip file:// part, since it causes troubles on some configurations
+
+      Display_Help_Internal
+        (URL (URL'First + File_Protocol'Length .. URL'Last));
    else
-      Insert
-        (Kernel, -"Could not display help file " & URL, Mode => Error);
+      Display_Help_Internal (URL);
    end if;
 end Display_Help;
