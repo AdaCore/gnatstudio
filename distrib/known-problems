@@ -1,3 +1,15 @@
+Known Problems fixed in GPS 4.1.3
+
+- G907-020 Help page not displayed in browser under Windows
+  Problem:    Under Windows, sometimes (depending on the system settings),
+              the help pages (html) will not open in an external browser.
+  Workaround: Open the html file from the Windows explorer.
+
+- G601-027 Open File dialog is very slow/buggy on Windows Vista
+  Problem:    On Windows Vista, the "Open file" dialog is very slow, and
+              sometimes hangs.
+  Workaround: Use either "Open from project" or "Open from host" dialogs.
+
 Known Problems fixed in GPS 4.1.2
 
 - G613-006 Inserting % character in alias expansion
@@ -8,11 +20,6 @@ Known Problems fixed in GPS 4.1.2
   Workaround: A python script can replace the alias expansion to insert
               constant text (or a more complex script if interaction with the
               user is needed)
-
-- G601-027 Open File dialog is very slow/buggy on Windows Vista
-  Problem:    On Windows Vista, the "Open file" dialog is very slow, and
-              sometimes hangs.
-  Workaround: Use either "Open from project" or "Open from host" dialogs.
 
 - G523-021 Search & Replace recursion when the pattern is in the replacement
   Problem:    When the pattern of a search is in the replacement string, doing
