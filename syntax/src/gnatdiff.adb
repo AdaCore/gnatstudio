@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,9 +20,9 @@
 with Syntax_Diff;      use Syntax_Diff;
 with Ada_Analyzer;     use Ada_Analyzer;
 with Ada.Command_Line; use Ada.Command_Line;
+with GNAT.Mmap;        use GNAT.Mmap;
 with GNAT.OS_Lib;      use GNAT.OS_Lib;
 with Ada.Text_IO;      use Ada.Text_IO;
-with OS_Utils;         use OS_Utils;
 with Language;         use Language;
 
 --  ??? TODO:
@@ -54,7 +53,7 @@ procedure Gnatdiff is
       Result     : aliased Construct_List;
 
    begin
-      Buffer := Read_File (File);
+      Buffer := Read_Whole_File (File);
       Analyze_Ada_Source
         (Buffer.all, Default_Indent_Parameters,
          Format           => False,
