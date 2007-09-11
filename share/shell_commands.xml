@@ -2244,6 +2244,13 @@ If the line and column are not specified, then the current selection is returned
        <description>Remove name from the case exception dictionary</description>
   </shell_doc>
 
+  <shell_doc name="GPS.Editor.print_line_info">
+       <param name="file">A string</param>
+       <param name="line">An integer</param>
+       <description>Print the contents of the items attached to the side of a line. This is used mainly for debugging and testing purposes.</description>
+  </shell_doc>
+
+
   <!--#################################################################
     ####  VCS class
     ###################################################################-->
