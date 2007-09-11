@@ -19,6 +19,8 @@
 
 with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
+with Ada.Tags;                  use Ada.Tags;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Scripts.Gtkada;       use GNAT.Scripts, GNAT.Scripts.Gtkada;
 with GNAT.Strings;
@@ -999,6 +1001,59 @@ package body Src_Editor_Module.Shell is
                      Column, Length);
                   Set_Return_Value (Data, Get_Id (Marker));
                end if;
+            end if;
+         end;
+
+      elsif Command = "print_line_info" then
+         declare
+            File : constant Virtual_File :=
+              Create (Nth_Arg (Data, 1), Kernel, Use_Source_Path => True);
+            Child : constant MDI_Child := Find_Editor (Kernel, File);
+            Info  : Line_Info_Width_Array_Access;
+            Box   : Source_Editor_Box;
+
+            procedure Print_Line_Info (Info : Line_Information_Access);
+
+            procedure Print_Line_Info (Info : Line_Information_Access) is
+               Print : Unbounded_String;
+            begin
+               if Info = null then
+                  return;
+               end if;
+
+               if Info.Text = null then
+                  Print := Print & "[no text], ";
+               else
+                  Print := Print & """" & Info.Text.all & """, ";
+               end if;
+
+               if Info.Tooltip_Text = null then
+                  Print := Print & "[no tooltip], ";
+               else
+                  Print := Print & """" & Info.Tooltip_Text.all & """, ";
+               end if;
+
+               if Info.Associated_Command = null then
+                  Print := Print & "[no command]";
+               else
+                  Print := Print & """"
+                    & External_Tag (Info.Associated_Command.all'Tag) & """";
+               end if;
+
+               Set_Return_Value (Data, To_String (Print));
+            end Print_Line_Info;
+
+         begin
+            if Child /= null then
+               Box  := Source_Editor_Box (Get_Widget (Child));
+               Line := Nth_Arg (Data, 2, Default => 1);
+               Info := Get_Side_Information (Get_Buffer (Box),
+                                             Editable_Line_Type (Line));
+               Set_Return_Value_As_List (Data);
+
+               for J in Info'Range loop
+                  Print_Line_Info (Info (J).Info);
+               end loop;
             end if;
          end;
 
@@ -3343,6 +3398,9 @@ package body Src_Editor_Module.Shell is
          True);
       Register_Command
         (Kernel, "create_mark", 1, 4, Edit_Command_Handler'Access,
+         Editor_Class, True);
+      Register_Command
+        (Kernel, "print_line_info", 2, 2, Edit_Command_Handler'Access,
          Editor_Class, True);
       Register_Command
         (Kernel, "highlight", 2, 3,
