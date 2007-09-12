@@ -67,7 +67,7 @@ although the scope is less ambitious here.
 ############################################################################
 # Customization variables
 # These variables can be changed in the initialization commands associated
-# with this script (see /Edit/Startup Scripts)
+# with this script (see /Tools/Plug-ins)
 
 background_color = "red"
 ## Background color to use for the command line window

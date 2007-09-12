@@ -38,7 +38,7 @@ It also shows how to get the word under the cursor in GPS.
 ############################################################################
 # Customization variables
 # These variables can be changed in the initialization commands associated
-# with this script (see /Edit/Startup Scripts)
+# with this script (see /Tools/Plug-ins)
 
 #ispell_command = "ispell -S -a"
 ispell_command = "aspell -a --lang=en "

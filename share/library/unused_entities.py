@@ -24,7 +24,7 @@ through the GPS.Locations.dump() method in the python console.
 ############################################################################
 # Customization variables
 # These variables can be changed in the initialization commands associated
-# with this script (see /Edit/Startup Scripts)
+# with this script (see /Tools/Plug-ins)
 
 xmlada_projects=["xmlada_sax", "xmlada_dom", "xmlada_schema", "xmlada_unicode",
                  "xmlada_input", "xmlada_shared", "xmlada"]

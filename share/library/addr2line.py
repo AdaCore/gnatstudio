@@ -21,7 +21,7 @@ It asks you for the location of the executable
 ############################################################################
 # Customization variables
 # These variables can be changed in the initialization commands associated
-# with this script (see /Edit/Startup Scripts)
+# with this script (see /Tools/Plug-ins)
 
 addr2line_args="--functions --demangle=gnat"
 # Additional arguments to pass to addr2line

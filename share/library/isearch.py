@@ -58,7 +58,7 @@ pattern is modified, and will slow things down a little
 ############################################################################
 # Customization variables
 # These variables can be changed in the initialization commands associated
-# with this script (see /Edit/Startup Scripts)
+# with this script (see /Tools/Plug-ins)
 
 highlight_next_matches = True
 ## Whether GPS should highlight the next matches. This highlighting will be

@@ -20,7 +20,7 @@ Locations window.
 ############################################################################
 # Customization variables
 # These variables can be changed in the initialization commands associated
-# with this script (see /Edit/Startup Scripts)
+# with this script (see /Tools/Plug-ins)
 
 menu_name = "/Navigate/Mark Occurrences in File"
 mark_action_name = "Mark occurrences"

@@ -4,7 +4,7 @@ This script shows how you can implement what other editors call
 skeletons. Any time you create a new file from within GPS, the
 text set in the variable skeleton will be inserted in the file.
 
-The text inserted can be customized through the /Edit/Startup Scripts
+The text inserted can be customized through the /Tools/Plug-ins
 menu.
 
 Another possible implementation is to use text aliases (/Edit/Aliases),
@@ -15,7 +15,7 @@ advanced contents containing for instance the current date.
 ###########################################################################
 # Customization variables
 # These variables can be changed in the initialization commands associated
-# with this script (see /Edit/Startup Scripts)
+# with this script (see /Tools/Plug-ins)
 
 skeleton="""------------------------------------------------------------------
 -- Demo for a skeleton, see skeleton.py in the GPS installation --
