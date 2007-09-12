@@ -1,4 +1,5 @@
 CP              = cp -p
+MV              = mv
 MKDIR           = mkdir -p
 RMDIR           = rmdir
 STRIP           = strip
@@ -30,6 +31,12 @@ install-common:
 	$(MKDIR) $(sharedir)/gps
 	$(MKDIR) $(sharedir)/gps/docgen
 	$(MKDIR) $(sharedir)/gps/aunit
+ifeq ($(OS),Windows_NT)
+# On Windows we distribute two versions of subversion.xml, one that
+# supports Cygwin/Subversion and one for native Subversion.
+	sed -e "s/System_Default/CYGWIN/" share/plug-ins/subversion.xml \
+		> share/plug-ins/subversion_cygwin.xml
+endif
 	(cd share; tar cf - plug-ins/*.xml) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - plug-ins/*.py) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - plug-ins/*.png) | (cd $(sharedir)/gps; tar xf -)

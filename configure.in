@@ -264,7 +264,6 @@ AC_SUBST(PATCH_CMD)
 AC_SUBST(OPAQUE_MDI)
 AC_SUBST(HOST_TYPE)
 AC_SUBST(EXECUTION_WINDOW)
-AC_SUBST(PATH_STYLE)
 AC_SUBST(SSH_ESCAPE)
 
 AC_CONFIG_SUBDIRS(kernel/src_info/sn)
@@ -279,4 +278,4 @@ AC_MSG_NOTICE([ Xml/Ada: $XMLADA_GPR])
 AC_MSG_NOTICE([    use ADA_PROJECT_PATH to find xmlada.gpr])
 AC_MSG_NOTICE([--------------------------------------------------])
 
-AC_OUTPUT(Makefile Makefile.common gnat/sdefault/sdefault.adb docs/Makefile po/Makefile common/Makefile.common common/src/config.ads common/expect/Makefile common/common.gpr:common/common_${XMLADA_GPR}.gpr.in share/plug-ins/subversion.xml share/plug-ins/protocols.xml widgets/Makefile.widgets)
+AC_OUTPUT(Makefile Makefile.common gnat/sdefault/sdefault.adb docs/Makefile po/Makefile common/Makefile.common common/src/config.ads common/expect/Makefile common/common.gpr:common/common_${XMLADA_GPR}.gpr.in share/plug-ins/protocols.xml widgets/Makefile.widgets)

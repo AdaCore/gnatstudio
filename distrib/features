@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.2 NEW FEATURES LIST Current as of Sep 02, 2007
+GPS 4.2 NEW FEATURES LIST Current as of Sep 12, 2007
 ====================================================
 
 Copyright (c) 2006-2007, AdaCore
@@ -37,6 +37,11 @@ NF-42-G814-013 New plug-in to generate ALI files (2007-08-14)
   A new plug-in (generate_ali.xml) is provided which adds a menu
   Build->Recompute Ada xrefs to ease generation of ali files for non
   compilable or incomplete Ada files, for source navigation purposes.
+
+NF-42-G813-006 add customization for activity logs (2007-09-12)
+
+  Add easier configuration for choosing between native or Cygwin
+  version of Subversion on Windows.
 
 NF-42-G724-010 Locations window highlights current line error (2007-07-25)
 

@@ -6814,7 +6814,10 @@ ClearCase. There are two interfaces to ClearCase: the standard
 ClearCase interface, which is built-in and uses a generic GPS
 terminology for VCS operations, and the Native ClearCase interface,
 which is fully customizable and uses by default the terminology
-specific to ClearCase.
+specific to ClearCase. There are also two interfaces for Subversion on
+Windows, one for Cygwin/Subversion and one for native Subversion. Only
+one of the plug-in (@pxref{The Plug-ins Editor}) must be activated at the
+same time.
 
 Note that, at the moment, only Snapshot Views are supported in the
 ClearCase integration; Dynamic Views are not supported.
@@ -9952,7 +9955,7 @@ the Plug-ins Editor). These plug-ins are visible to any user on the
 system that uses the same GPS installation. This directory should be reserved
 for critical plug-ins that almost every one should use.
 
-@item Not automatically system wide modules
+@item Not automatically loaded system wide modules
 
 The @file{INSTALL/share/gps/library} directory should contain the files that
 GPS should show in the Plug-ins Editor, but not load automatically.

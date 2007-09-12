@@ -371,7 +371,7 @@
    <!-- SVN -->
 
    <vcs name="Subversion"
-        path_style="@PATH_STYLE@"
+        path_style="System_Default"
         group_queries_by_directory="TRUE"
         absolute_names="TRUE" atomic_commands="TRUE"
         commit_directory="TRUE">

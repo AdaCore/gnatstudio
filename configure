@@ -311,7 +311,7 @@ ac_includes_default="\
 ac_subdirs_all="$ac_subdirs_all kernel/src_info/sn"
 ac_subdirs_all="$ac_subdirs_all kernel/src_info/sn/snsrc"
 ac_subdirs_all="$ac_subdirs_all gnatlib"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os XMLADA_GPR CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP GNATMAKE SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB DVIPS MAKEINFO TEXI2DVI PKG_CONFIG GTK_GCC_FLAGS WITH_GTK GTK_CONFIG GTK_PREFIX GLIB_PREFIX ATK_PREFIX PANGO_PREFIX CAIRO_PREFIX GTKADA_SRC GTKADA_OBJ GTK_CFLAGS GTK_LIBS GTK_STATIC_LIBS GTKADA_PREFIX GPS_VERSION opsysfile TARGET EXEC_PREFIX STRIP_CR CAN_OUTPUT TARGET_CFLAGS TARGET_LFLAGS EXEC_COMMAND DEFAULT_PS DEFAULT_FONT PRINT_CMD DIFF_CMD PATCH_CMD OPAQUE_MDI HOST_TYPE EXECUTION_WINDOW PATH_STYLE SSH_ESCAPE subdirs LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os XMLADA_GPR CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP GNATMAKE SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB DVIPS MAKEINFO TEXI2DVI PKG_CONFIG GTK_GCC_FLAGS WITH_GTK GTK_CONFIG GTK_PREFIX GLIB_PREFIX ATK_PREFIX PANGO_PREFIX CAIRO_PREFIX GTKADA_SRC GTKADA_OBJ GTK_CFLAGS GTK_LIBS GTK_STATIC_LIBS GTKADA_PREFIX GPS_VERSION opsysfile TARGET EXEC_PREFIX STRIP_CR CAN_OUTPUT TARGET_CFLAGS TARGET_LFLAGS EXEC_COMMAND DEFAULT_PS DEFAULT_FONT PRINT_CMD DIFF_CMD PATCH_CMD OPAQUE_MDI HOST_TYPE EXECUTION_WINDOW SSH_ESCAPE subdirs LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -843,6 +843,11 @@ fi
 if test -n "$ac_init_help"; then
 
   cat <<\_ACEOF
+
+Optional Features:
+  --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
+  --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+  --disable-gtk           Disable support for GTK [default=enabled]
 
 Some influential environment variables:
   CC          C compiler command
@@ -3215,7 +3220,17 @@ done
 
 ######### checking for gtk
 
-   # Extract the first word of "pkg-config", so it can be a program name with args.
+   # Check whether --enable-gtk or --disable-gtk was given.
+if test "${enable_gtk+set}" = set; then
+  enableval="$enable_gtk"
+  WITH_GTK=$enableval
+else
+  WITH_GTK=yes
+fi;
+
+
+   if test $WITH_GTK = yes; then
+     # Extract the first word of "pkg-config", so it can be a program name with args.
 set dummy pkg-config; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
 echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
@@ -3255,23 +3270,30 @@ else
 echo "${ECHO_T}no" >&6
 fi
 
-   echo "$as_me:$LINENO: checking gtk+" >&5
-echo $ECHO_N "checking gtk+... $ECHO_C" >&6
-   if test "$PKG_CONFIG" = "no" ; then
-      echo "$as_me:$LINENO: result: not found" >&5
+     echo "$as_me:$LINENO: checking for gtk+" >&5
+echo $ECHO_N "checking for gtk+... $ECHO_C" >&6
+     if test "$PKG_CONFIG" = "no" ; then
+        echo "$as_me:$LINENO: result: not found" >&5
 echo "${ECHO_T}not found" >&6
-      WITH_GTK=no
-   else
-      GTK_PREFIX=`$PKG_CONFIG gtk+-2.0 --variable=prefix`
-      echo "$as_me:$LINENO: result: $GTK_PREFIX" >&5
+        WITH_GTK=no
+     else
+        GTK_PREFIX=`$PKG_CONFIG gtk+-2.0 --variable=prefix`
+        echo "$as_me:$LINENO: result: $GTK_PREFIX" >&5
 echo "${ECHO_T}$GTK_PREFIX" >&6
-      GTK_GCC_FLAGS=`$PKG_CONFIG gtk+-2.0 --cflags`
-      if test x"$GTK_GCC_FLAGS" != x ; then
-         WITH_GTK=yes
-      else
-         WITH_GTK=no
-      fi
+        GTK_GCC_FLAGS=`$PKG_CONFIG gtk+-2.0 --cflags`
+        if test x"$GTK_GCC_FLAGS" != x ; then
+           WITH_GTK=yes
+        else
+           WITH_GTK=no
+        fi
+     fi
+   else
+     echo "$as_me:$LINENO: checking for gtk+" >&5
+echo $ECHO_N "checking for gtk+... $ECHO_C" >&6
+     echo "$as_me:$LINENO: result: $WITH_GTK (from switch)" >&5
+echo "${ECHO_T}$WITH_GTK (from switch)" >&6
    fi
+
 
 
 
@@ -4845,7 +4867,6 @@ opsysfile="\\\"system/${opsys}.h\\\""
 
 
 
-
 subdirs="$subdirs kernel/src_info/sn"
 
 
@@ -4869,7 +4890,7 @@ echo "$as_me:     use ADA_PROJECT_PATH to find xmlada.gpr" >&6;}
 { echo "$as_me:$LINENO: --------------------------------------------------" >&5
 echo "$as_me: --------------------------------------------------" >&6;}
 
-                                                                                                                        ac_config_files="$ac_config_files Makefile Makefile.common gnat/sdefault/sdefault.adb docs/Makefile po/Makefile common/Makefile.common common/src/config.ads common/expect/Makefile common/common.gpr:common/common_${XMLADA_GPR}.gpr.in share/plug-ins/subversion.xml share/plug-ins/protocols.xml widgets/Makefile.widgets"
+                                                                                                              ac_config_files="$ac_config_files Makefile Makefile.common gnat/sdefault/sdefault.adb docs/Makefile po/Makefile common/Makefile.common common/src/config.ads common/expect/Makefile common/common.gpr:common/common_${XMLADA_GPR}.gpr.in share/plug-ins/protocols.xml widgets/Makefile.widgets"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -5429,7 +5450,6 @@ do
   "common/src/config.ads" ) CONFIG_FILES="$CONFIG_FILES common/src/config.ads" ;;
   "common/expect/Makefile" ) CONFIG_FILES="$CONFIG_FILES common/expect/Makefile" ;;
   "common/common.gpr" ) CONFIG_FILES="$CONFIG_FILES common/common.gpr:common/common_${XMLADA_GPR}.gpr.in" ;;
-  "share/plug-ins/subversion.xml" ) CONFIG_FILES="$CONFIG_FILES share/plug-ins/subversion.xml" ;;
   "share/plug-ins/protocols.xml" ) CONFIG_FILES="$CONFIG_FILES share/plug-ins/protocols.xml" ;;
   "widgets/Makefile.widgets" ) CONFIG_FILES="$CONFIG_FILES widgets/Makefile.widgets" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
@@ -5579,7 +5599,6 @@ s,@PATCH_CMD@,$PATCH_CMD,;t t
 s,@OPAQUE_MDI@,$OPAQUE_MDI,;t t
 s,@HOST_TYPE@,$HOST_TYPE,;t t
 s,@EXECUTION_WINDOW@,$EXECUTION_WINDOW,;t t
-s,@PATH_STYLE@,$PATH_STYLE,;t t
 s,@SSH_ESCAPE@,$SSH_ESCAPE,;t t
 s,@subdirs@,$subdirs,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
