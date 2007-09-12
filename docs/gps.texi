@@ -10056,7 +10056,7 @@ encoding="..." ?>} declaration, as in the following example:
 <?xml version="1.0" encoding="iso-8859-1"?>
 <!--  general description -->
 <submenu>
-  <title>encoded text/title>
+  <title>encoded text</title>
 </submenu>
 @end smallexample
 
