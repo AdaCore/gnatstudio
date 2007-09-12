@@ -423,11 +423,20 @@ package body Commands.Custom is
          declare
             Matched : Match_Array (0 .. 2);
             Force   : Boolean;
+            Idx     : Integer :=
+                        Ada.Strings.Fixed.Index (Output, "" & ASCII.LF);
          begin
+            --  Only the first received line is taken into account for custom
+            --  commands.
+            --  This allows custom tools to output text that matches the
+            --  password regexp without reacting here.
+            if Idx < Output'First then
+               Idx := Output'Last;
+            end if;
 
             --  Retrieve password prompt if any
             Match (Get_Default_Password_Regexp,
-                   Output,
+                   Output (Output'First .. Idx),
                    Matched);
 
             if Matched (0) /= No_Match then
@@ -440,16 +449,20 @@ package body Commands.Custom is
                     Get_Tool_Password (Command.Name.all,
                                        Force);
                begin
-                  Send (Data.Descriptor.all, Password);
+                  if Password /= "" then
+                     Send (Data.Descriptor.all, Password);
+
+                     --  Do not output password prompt
+                     return;
+
+                  end if;
                end;
 
-               --  Do not output password prompt
-               return;
             end if;
 
             --  Retrieve passphrase prompt if any
             Match (Get_Default_Passphrase_Regexp,
-                   Output,
+                   Output (Output'First .. Idx),
                    Matched);
 
             if Matched (0) /= No_Match then
@@ -463,13 +476,23 @@ package body Commands.Custom is
                       (Output (Matched (1).First .. Matched (1).Last),
                        Force);
                begin
-                  Send (Data.Descriptor.all, Password);
-               end;
+                  if Password /= "" then
+                     Send (Data.Descriptor.all, Password);
 
-               --  Do not output password prompt
-               return;
+                     --  Do not output password prompt
+                     return;
+
+                  end if;
+               end;
             end if;
          end;
+
+         --  If we received a line without matching any password regexp, and
+         --  this line is not empty, then we won't look for password anymore.
+         if Output'Length > 0 and then Output /= "" & ASCII.LF then
+            Command.Execution.Check_Password := False;
+         end if;
+
       end if;
 
       if Command.Execution.Progress_Matcher /= null then
