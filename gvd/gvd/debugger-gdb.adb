@@ -245,6 +245,9 @@ package body Debugger.Gdb is
    --  used. Ideally, it should be called every time we change the remote
    --  protocol.
 
+   procedure Connect_To_Target_If_Needed (Debugger : access Gdb_Debugger);
+   --  Connect to the target if not already connected.
+
    --------------------------
    -- Detect_Debugger_Mode --
    --------------------------
@@ -877,6 +880,12 @@ package body Debugger.Gdb is
          Set_Executable (Debugger, Debugger.Executable, Mode => Visible);
 
       else
+         --  Connect to the target, if needed. This is normally done by
+         --  Set_Executable, but GPS should also connect immediately if
+         --  the corresponding options were passed on the command line.
+
+         Connect_To_Target_If_Needed (Debugger);
+
          --  Indicate that a new executable is present (even if there is none,
          --  we still need to reset some data).
          --  Do this before looking for the current file, since the explorer
@@ -1030,6 +1039,38 @@ package body Debugger.Gdb is
       return Debugger.Executable;
    end Get_Executable;
 
+   ---------------------------------
+   -- Connect_To_Target_If_Needed --
+   ---------------------------------
+
+   procedure Connect_To_Target_If_Needed (Debugger : access Gdb_Debugger) is
+   begin
+      if Debugger.Remote_Target /= null
+        and then not Debugger.Target_Connected
+      then
+         declare
+            Cmd : constant String :=
+                    "target " & Debugger.Remote_Protocol.all & " "
+                      & Debugger.Remote_Target.all;
+         begin
+            if Debugger.Window = null then
+               Send (Debugger, Cmd, Mode => Internal);
+
+            else
+               Output_Text
+                 (Convert (Debugger.Window, Debugger),
+                  Send (Debugger, Cmd, Mode => Internal) & ASCII.LF);
+            end if;
+
+            if Debugger.Remote_Protocol.all = "remote" then
+               Set_Is_Started (Debugger, True);
+            end if;
+         end;
+
+         Debugger.Target_Connected := True;
+      end if;
+   end Connect_To_Target_If_Needed;
+
    --------------------
    -- Set_Executable --
    --------------------
@@ -1100,30 +1141,7 @@ package body Debugger.Gdb is
 
       --  Connect to the remote target if needed.
 
-      if Debugger.Remote_Target /= null
-        and then not Debugger.Target_Connected
-      then
-         declare
-            Cmd : constant String :=
-                    "target " & Debugger.Remote_Protocol.all & " "
-                      & Debugger.Remote_Target.all;
-         begin
-            if Debugger.Window = null then
-               Send (Debugger, Cmd, Mode => Internal);
-
-            else
-               Output_Text
-                 (Convert (Debugger.Window, Debugger),
-                  Send (Debugger, Cmd, Mode => Internal) & ASCII.LF);
-            end if;
-
-            if Debugger.Remote_Protocol.all = "remote" then
-               Set_Is_Started (Debugger, True);
-            end if;
-         end;
-
-         Debugger.Target_Connected := True;
-      end if;
+      Connect_To_Target_If_Needed (Debugger);
 
       --  Send the "load" command if needed
 
