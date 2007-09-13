@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.2 NEW FEATURES LIST Current as of Sep 12, 2007
+GPS 4.2 NEW FEATURES LIST Current as of Sep 13, 2007
 ====================================================
 
 Copyright (c) 2006-2007, AdaCore
@@ -136,6 +136,13 @@ NF-42-G213-014 Add support for Project Explorer filters (2007-02-20)
   designed to filter out version control specific directories
   like CVS or .svn for example.
 
+NF-42-FC20-002 copy text together with line numbers (2007-09-13)
+
+  A new plug-in has been added that provides the capability to copy some text
+  and have each line preceded with its number. This can be useful when pasting
+  some source code to another application such a a mailer.
+  See /Tools/Plug-ins and copy_paste.py.
+
 NF-42-FB24-021 Detect UTF8 conversion errors when saving files (2007-08-10)
 
   When saving editors which contain UTF8 characters which cannot be converted
@@ -198,6 +205,12 @@ NF-42-E525-006 Disabling editing of projects with variables (2007-07-25)
   GPS will now prevent you from graphically editing a project that uses
   variables (of the form "a:=value"), since the graphical editor does not
   support those and would mess the project up.
+
+NF-42-E519-015 contextual menu for copy/cut/paste (2007-08-02)
+
+  A new plugin has been added that adds contextual menus corresponding to the
+  /Edit/Copy, /Edit/Cut and /Edit/Paste menus.
+  See /Tools/Plug-ins and copy_paste.py.
 
 NF-42-D914-005 Better feedback when build fails w/o src location (2007-04-19)
 
