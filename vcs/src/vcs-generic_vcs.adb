@@ -54,6 +54,7 @@ package body VCS.Generic_VCS is
    use type GNAT.Strings.String_Access;
 
    Me : constant Debug_Handle := Create ("Generic_VCS");
+   Revision_Handling_Queue : constant String := "Revision View";
 
    Max_Matches : constant := 64;
    --  The number of matches in each parsing loop
@@ -1837,7 +1838,8 @@ package body VCS.Generic_VCS is
             " """ & P_Rev & """ """ & Rev & """", Script);
 
          Launch_Background_Command
-           (Kernel, Command_Access (Command), True, False, "");
+           (Kernel, Command_Access (Command), True, False,
+            Revision_Handling_Queue);
       end Create_Link;
 
       -----------
@@ -1911,7 +1913,8 @@ package body VCS.Generic_VCS is
             First := False;
 
             Launch_Background_Command
-              (Kernel, Command_Access (Command), True, False, "");
+              (Kernel, Command_Access (Command), True, False,
+               Revision_Handling_Queue);
 
             Branch := Parse (Rev, Rep.Branch_Root_Revision_Regexp);
 
@@ -1982,7 +1985,8 @@ package body VCS.Generic_VCS is
                Script);
 
             Launch_Background_Command
-              (Rep.Kernel, Command_Access (Command), True, False, "");
+              (Rep.Kernel, Command_Access (Command), True, False,
+               Revision_Handling_Queue);
          end;
 
          Start := Matches (0).Last + 1;
