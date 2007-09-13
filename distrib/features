@@ -206,7 +206,7 @@ NF-42-E525-006 Disabling editing of projects with variables (2007-07-25)
   variables (of the form "a:=value"), since the graphical editor does not
   support those and would mess the project up.
 
-NF-42-E519-015 contextual menu for copy/cut/paste (2007-08-02)
+NF-42-E519-015 contextual menu for copy/cut/paste (2007-09-13)
 
   A new plugin has been added that adds contextual menus corresponding to the
   /Edit/Copy, /Edit/Cut and /Edit/Paste menus.
