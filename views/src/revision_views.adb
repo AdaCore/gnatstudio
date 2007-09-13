@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006-2007                      --
---                              AdaCore                              --
+--                   Copyright (C) 2006-2007, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -171,8 +170,8 @@ package body Revision_Views is
 
    procedure Add_Link_If_Not_Present
      (View : Revision_View; Log_1, Log_2 : Log_Data);
-   --  Add a link between Log_1 and Long_2 if not already present. Note that
-   --  the algorithm here expect that a link is given as soon as possible for
+   --  Add a link between Log_1 and Log_2 if not already present. Note that
+   --  the algorithm here expects that a link is given as soon as possible for
    --  each new node inserted into the view.
    --  ??? It would be possible to remove this limitation by first building a
    --  linked list of nodes and then mapping it into the revision view. Not
