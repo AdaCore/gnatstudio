@@ -12,6 +12,11 @@ Known Problems fixed in GPS 4.1.3
               graphically.
   Workaround: Disable the debugger preference "Show lines with code".
 
+- G808-014 Crash when using visual diff or when loading another project
+  Problem:    Under Windows only, GPS will sometimes crash after doing
+              a comparison between two files, or after loading a new project.
+  Workaround: To load a new project, quite GPS and restart it.
+
 - G601-027 Open File dialog is very slow/buggy on Windows Vista
   Problem:    On Windows Vista, the "Open file" dialog is very slow, and
               sometimes hangs.
