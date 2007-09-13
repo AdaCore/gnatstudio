@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                             AdaCore                               --
+--                     Copyright (C) 2001-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1126,7 +1125,7 @@ package body VCS_Module is
          end if;
       end loop;
 
-      Parse_Log (Ref, File, Escaped);
+      Parse_Log (Ref, File, Escaped (Escaped'First .. Last));
    exception
       when E : others => Trace (Exception_Handle, E);
    end Log_Parse_Handler;
