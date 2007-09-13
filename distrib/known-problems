@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.1.3
 
+- G912-024 Potential crashes when using Revision View
+  Problem:    When using the Revision View to display Version Control
+              history for a file, GPS might crash.
+  Workaround: Use the menu "View entire revision history (as text)"
+              instead.
+
 - G907-020 Help page not displayed in browser under Windows
   Problem:    Under Windows, sometimes (depending on the system settings),
               the help pages (html) will not open in an external browser.
