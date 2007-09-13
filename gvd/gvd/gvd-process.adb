@@ -79,6 +79,7 @@ with Projects;                   use Projects;
 with Projects.Editor;            use Projects.Editor;
 with Projects.Registry;          use Projects.Registry;
 with Remote;                     use Remote;
+with Remote.Path.Translator;     use Remote.Path.Translator;
 with String_Utils;               use String_Utils;
 with Traces;                     use Traces;
 with VFS;                        use VFS;
@@ -680,7 +681,9 @@ package body GVD.Process is
                --  ??? Normalize_Pathname only needed when to get absolute
                --  file name
                  Normalize_Pathname
-                   (Process.Current_Output (File_First .. File_Last),
+                   (To_Local
+                        (Process.Current_Output (File_First .. File_Last),
+                         Debug_Server),
                     Resolve_Links => False));
          begin
             Load_File (Process.Editor_Text, File_Name);
@@ -2003,15 +2006,21 @@ package body GVD.Process is
 
          for L in List'Range loop
             declare
-               Dir   : constant String := GNAT.OS_Lib.Normalize_Pathname
-                 (Dir_Name (List (L).all),
-                  Dir_Name (Exec).all,
-                  Resolve_Links => False);
-               Base  : constant String := Base_Name (List (L).all);
+               Dir   : constant String :=
+                         To_Local
+                           (GNAT.OS_Lib.Normalize_Pathname
+                              (Dir_Name (List (L).all),
+                               Dir_Name (Exec).all,
+                               Resolve_Links => False),
+                            Debug_Server);
+               Base  : constant String :=
+                         Base_Name (To_Local (List (L).all, Debug_Server));
                Lang  : constant String :=
                          Get_Language_From_File
                            (Get_Language_Handler (Kernel),
-                            Create (Full_Filename => List (L).all));
+                            Create
+                              (Full_Filename => To_Local
+                                 (List (L).all, Debug_Server)));
                Found : Boolean;
             begin
                Found := False;

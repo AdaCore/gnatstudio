@@ -1081,13 +1081,16 @@ package body GNAT.Expect.TTY.Remote is
       function Convert is new
         Ada.Unchecked_Conversion (System.Address, Remote_PD_Access);
 
-      Desc           : Remote_PD_Access renames Convert (User_Data);
-      Size           : Natural;
-      Matched        : GNAT.Regpat.Match_Array (0 .. 1);
-      Tmp_Buf        : String_Access;
-      Current_Filter : Filter_List;
+      Desc                : Remote_PD_Access renames Convert (User_Data);
+      Size                : Natural;
+      Matched             : GNAT.Regpat.Match_Array (0 .. 1);
+      Tmp_Buf             : String_Access;
+      Current_Filter      : Filter_List;
+      Idx_First, Idx_Last : Natural;
 
    begin
+      Idx_First := Str'First;
+      Idx_Last := Str'Last;
       --  The following buffer accesses suppose that the descriptor's buffer
       --  is dynamically allocated (i.e. buffer_size is 0)
 
@@ -1097,8 +1100,10 @@ package body GNAT.Expect.TTY.Remote is
                Log ("Remove", Str (Str'First .. J));
                Size := Str'Last - J;
                Tmp_Buf := Desc.Buffer;
+               Idx_First := J + 1;
+               Idx_Last := Str'Last;
                Desc.Buffer := new String (1 .. Size);
-               Desc.Buffer.all := Str (J + 1 .. Str'Last);
+               Desc.Buffer.all := Str (Idx_First .. Idx_Last);
                Desc.Buffer_Index := Size;
                Desc.Current_Echo_Skipped := True;
 
@@ -1133,6 +1138,13 @@ package body GNAT.Expect.TTY.Remote is
                   Desc.Buffer (1 .. Matched (0).Last), Output);
             end if;
 
+            if Desc.Buffer'Last - Matched (0).First + 1 > Str'First then
+               Idx_Last :=
+                 Str'Last - (Desc.Buffer'Last - Matched (0).First + 1);
+            else
+               Idx_Last := 0;
+            end if;
+
             Tmp_Buf := new String'
               (Desc.Buffer (1 .. Matched (0).First - 1));
             Desc.Buffer_Index := Matched (0).First - 1;
@@ -1140,25 +1152,29 @@ package body GNAT.Expect.TTY.Remote is
             Desc.Buffer := Tmp_Buf;
             Desc.Busy := False;
             Desc.Terminated := True;
-
-            if Desc.Buffer'Length = 0 then
-               raise Process_Died;
-            end if;
          end if;
       end if;
 
       --  Call filters with modified buffer
-      if Desc.R_Filters_Lock = 0 then
+      if Desc.R_Filters_Lock = 0 and then Idx_Last > Idx_First then
          Current_Filter := Desc.R_Filters;
 
          while Current_Filter /= null loop
             if Current_Filter.Filter_On = Output then
                Current_Filter.Filter
-                 (Desc.all, Desc.Buffer.all, Current_Filter.User_Data);
+                 (Desc.all, Str (Idx_First .. Idx_Last),
+                  Current_Filter.User_Data);
             end if;
 
             Current_Filter := Current_Filter.Next;
          end loop;
+      end if;
+
+      if not Desc.Busy
+        and then Desc.Terminated
+        and then Desc.Buffer'Length = 0
+      then
+         raise Process_Died;
       end if;
    end Filter_Out;
 

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2006-2007                       --
---                              AdaCore                              --
+--                 Copyright (C) 2006-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -291,15 +290,25 @@ package body Remote.Path.Translator is
          Path_From  : constant String := Mirror.Get_Remote_Path;
          Path_To    : constant String := Mirror.Get_Local_Path;
          FS         : constant Filesystem_Record'Class :=
-           Get_Filesystem (From);
+                        Get_Filesystem (From);
          U_Path     : constant String := To_Unix (FS, Path);
          --  The input path in unix style
          U_Frompath : constant String := To_Unix (FS, Path_From);
          --  The local root dir, in unix style
          U_Subpath  : constant String :=
-           U_Path (U_Path'First + U_Frompath'Length .. U_Path'Last);
+                        U_Path
+                          (U_Path'First + U_Frompath'Length .. U_Path'Last);
 
       begin
+         if Active (Me) then
+            Trace
+              (Me, " => " &
+               Concat
+                 (Get_Local_Filesystem,
+                  Path_To,
+                  From_Unix (Get_Local_Filesystem, U_Subpath)));
+         end if;
+
          return Concat
            (Get_Local_Filesystem,
             Path_To,

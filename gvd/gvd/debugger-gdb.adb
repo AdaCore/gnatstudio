@@ -3277,8 +3277,11 @@ package body Debugger.Gdb is
 
                Match (File_Name_In_Breakpoint, S (Tmp .. Index - 2), Matched);
                if Matched (0) /= No_Match then
+                  --  Translate the matched filename into local file if needed.
                   Br (Num).File := Create_From_Base
-                    (S (Matched (1).First .. Matched (1).Last),
+                    (To_Local
+                       (S (Matched (1).First .. Matched (1).Last),
+                        Debug_Server),
                      GPS_Window (Debugger.Window).Kernel);
 
                   Br (Num).Line := Integer'Value
