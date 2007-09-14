@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2004                      --
---                            ACT-Europe                             --
+--                      Copyright (C) 2001-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -71,7 +70,6 @@
 --  combined, and the pattern is moved forward by the maximum amount reported
 --  by the two functions.
 
-
 with Unchecked_Deallocation;
 with Ada.Text_IO;             use Ada.Text_IO;
 with Ada.Integer_Text_IO;     use Ada.Integer_Text_IO;
@@ -81,6 +79,18 @@ package body Boyer_Moore is
 
    Debug     : constant Boolean := False;
    Debug_Run : constant Boolean := False;
+
+   procedure Dump_Str (Str : String);
+   --  Print string, replacing the newlines with spaces for clarity
+
+   procedure Dump
+      (M, Shift, J : Natural;
+       Num_Comp  : in out Natural;
+       Motif     : Pattern;
+       In_String : String);
+   --  Print the current state of the search.
+   --  The parameters are the internal state in Search. We do not use a
+   --  nested subprogram for efficiency reasons
 
    -------------
    -- Compile --
@@ -234,6 +244,66 @@ package body Boyer_Moore is
       Internal (Motif.Motif);
    end Free;
 
+   --------------
+   -- Dump_Str --
+   --------------
+
+   procedure Dump_Str (Str : String) is
+   begin
+      for S in Str'Range loop
+         if Str (S) = ASCII.LF then
+            Put (' ');
+         else
+            Put (Str (S));
+         end if;
+      end loop;
+      New_Line;
+   end Dump_Str;
+
+   ----------
+   -- Dump --
+   ----------
+
+   procedure Dump
+      (M, Shift, J : Natural;
+       Num_Comp  : in out Natural;
+       Motif     : Pattern;
+       In_String : String) is
+   begin
+      --  Show current automaton state
+      Num_Comp := Num_Comp + M - J + 1;
+
+      if Debug_Run then
+         New_Line;
+         Put_Line ("Offset : Shift+j="
+                   & Integer'Image (Shift + J)
+                   & " J=" & J'Img
+                   & " Last_Occ=" & In_String (Shift + J)
+                   & " Max ("
+                   & Motif.Good_Suffix (J)'Img
+                   & ","
+                   & Integer'Image
+                   (J - Motif.Last_Occurrence (In_String (Shift + J)))
+                   & ")");
+
+         if In_String'Length < 400 then
+            Dump_Str (In_String);
+            Put ((1 .. Shift - In_String'First + 1 => ' '));
+         end if;
+         Dump_Str (Motif.Motif.all);
+
+         if Shift + J - In_String'First < 400 then
+            Put ((1 .. Shift + J - In_String'First => ' '));
+            Put_Line ("^");
+         end if;
+      end if;
+
+      if J = 0 then
+         Put_Line ("Matched at position" & Natural'Image (Shift + 1)
+                   & " after" & Num_Comp'Img & " comparisons");
+      end if;
+   end Dump;
+
    ------------
    -- Search --
    ------------
@@ -243,61 +313,6 @@ package body Boyer_Moore is
       Shift : Natural := In_String'First - 1;
       J : Natural;
       Num_Comp : Natural := 0;
-
-      procedure Dump;
-      --  Print the current state of the search
-
-      procedure Dump_Str (Str : String);
-      --  Print string, replacing the newlines with spaces for clarity
-
-      procedure Dump_Str (Str : String) is
-      begin
-         for S in Str'Range loop
-            if Str (S) = ASCII.LF then
-               Put (' ');
-            else
-               Put (Str (S));
-            end if;
-         end loop;
-         New_Line;
-      end Dump_Str;
-
-      procedure Dump is
-      begin
-         --  Show current automaton state
-         Num_Comp := Num_Comp + M - J + 1;
-
-         if Debug_Run then
-            New_Line;
-            Put_Line ("Offset : Shift+j="
-                      & Integer'Image (Shift + J)
-                      & " J=" & J'Img
-                      & " Last_Occ=" & In_String (Shift + J)
-                      & " Max ("
-                      & Motif.Good_Suffix (J)'Img
-                      & ","
-                      & Integer'Image
-                      (J - Motif.Last_Occurrence (In_String (Shift + J)))
-                      & ")");
-
-            if In_String'Length < 400 then
-               Dump_Str (In_String);
-               Put ((1 .. Shift - In_String'First + 1 => ' '));
-            end if;
-            Dump_Str (Motif.Motif.all);
-
-            if Shift + J - In_String'First < 400 then
-               Put ((1 .. Shift + J - In_String'First => ' '));
-               Put_Line ("^");
-            end if;
-         end if;
-
-         if J = 0 then
-            Put_Line ("Matched at position" & Natural'Image (Shift + 1)
-                      & " after" & Num_Comp'Img & " comparisons");
-         end if;
-      end Dump;
-
    begin
       pragma Assert (Motif.Motif'First = 1);
 
@@ -312,9 +327,8 @@ package body Boyer_Moore is
 
             if J = 0 then
                return Shift + 1;
-               --  Shift := Shift + Motif.Good_Suffix (0)   to find next
             elsif Debug then
-               Dump;
+               Dump (M, Shift, J, Num_Comp, Motif, In_String);
             end if;
 
             Shift := Shift +
@@ -332,9 +346,8 @@ package body Boyer_Moore is
 
             if J = 0 then
                return Shift + 1;
-               --  Shift := Shift + Motif.Good_Suffix (0)   to find next
             elsif Debug then
-               Dump;
+               Dump (M, Shift, J, Num_Comp, Motif, In_String);
             end if;
 
             Shift := Shift +
