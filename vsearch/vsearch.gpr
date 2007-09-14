@@ -2,6 +2,7 @@ with "gtkada";
 with "../common/common";
 with "../kernel/kernel";
 with "../shared";
+with "../gnatlib/src/gnatlib";
 
 project Vsearch is
 

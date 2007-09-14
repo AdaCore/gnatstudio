@@ -47,7 +47,7 @@
 --    undefined behavior.
 --  * Allowed chars in a word are found in g-regpat.ads.
 
-with Boyer_Moore;
+with GNAT.Boyer_Moore;
 with GNAT.Strings;
 with GNAT.Regpat;
 with GPS.Kernel;
@@ -129,7 +129,7 @@ package Find_Utils is
 
    procedure Context_As_Boyer_Moore
      (Context : access Root_Search_Context;
-      Matcher : out Boyer_Moore.Pattern);
+      Matcher : out GNAT.Boyer_Moore.Pattern);
    --  Return the search string as a Boyer-Moore pattern.
    --  Matcher is computed on demand, and cached for efficiency. It
    --  automatically includes the "case insensitive" options.
@@ -411,7 +411,7 @@ private
       RE_Matcher     : Pattern_Matcher_Access := null;
       Sub_Matches    : Match_Array_Access := null;
 
-      BM_Matcher     : Boyer_Moore.Pattern;
+      BM_Matcher     : GNAT.Boyer_Moore.Pattern;
       BM_Initialized : Boolean := False;
 
       End_Notif_Done : Boolean := False;

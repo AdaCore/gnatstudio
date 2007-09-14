@@ -22,7 +22,7 @@ with Ada.Unchecked_Deallocation;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Glib.Convert;              use Glib.Convert;
 with Glib.Unicode;              use Glib.Unicode;
-with Boyer_Moore;               use Boyer_Moore;
+with GNAT.Boyer_Moore;          use GNAT.Boyer_Moore;
 with GPS.Kernel;                use GPS.Kernel;
 with Traces;                    use Traces;
 with GNAT.Regpat;               use GNAT.Regpat;
@@ -288,7 +288,7 @@ package body Find_Utils is
       ---------------
 
       procedure BM_Search is
-         BM  : Boyer_Moore.Pattern;
+         BM  : Pattern;
          Pos : Integer := Start_Index;
       begin
          Context_As_Boyer_Moore (Context, BM);
@@ -523,7 +523,7 @@ package body Find_Utils is
 
    procedure Context_As_Boyer_Moore
      (Context : access Root_Search_Context;
-      Matcher : out Boyer_Moore.Pattern) is
+      Matcher : out Pattern) is
    begin
       if not Context.BM_Initialized then
          if Context.Options.Regexp or else Context.Look_For = null then
