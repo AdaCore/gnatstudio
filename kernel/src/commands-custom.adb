@@ -1325,13 +1325,14 @@ package body Commands.Custom is
             end if;
 
             if Component.Script /= null then
+               --  Output the command whether or not we are saving its output
+               if Console /= null and then Component.Show_Command then
+                  Insert (Console, Subst_Cmd_Line, Add_LF => True);
+               end if;
+
                if Command.Execution.Save_Output
                  (Command.Execution.Cmd_Index)
                then
-                  if Console /= null and then Component.Show_Command then
-                     Insert (Console, Subst_Cmd_Line, Add_LF => True);
-                  end if;
-
                   Command.Execution.Outputs (Command.Execution.Cmd_Index) :=
                     new String'
                       (Execute_Command
