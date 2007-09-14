@@ -1333,6 +1333,20 @@ package body GPS.Kernel.Scripts is
             --   ??? If the console was already associated with an instance,
             --  we would lose that original instance and all data the user
             --  might have stored in it.
+
+            if Console = null then
+               if Title = "Python" or else Title = "Shell" then
+                  Set_Error_Msg
+                    (Data, "To create the python or shell console, please use"
+                     & " the menus /Tools/Consoles/... through "
+                     & " GPS.execute_action");
+               else
+                  Set_Error_Msg
+                    (Data, "Could not create the console " & Title);
+               end if;
+               return;
+            end if;
+
             GNAT.Scripts.Set_Data
               (Inst, Get_Or_Create_Virtual_Console (Console));
 

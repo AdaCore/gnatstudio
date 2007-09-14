@@ -2932,6 +2932,8 @@ Access the various suggested fixes through the methods of the Codefix class</des
       <param name="accept_input" default="True">A boolean</param>
       <description>Create a new instance of GPS.Console. GPS will try to reuse any existing console with the same name. If none exists yet, or the parameter force is set to True, then GPS will create a new console.
 
+You cannot create the Python and Shell consoles through this call. If you do, an exception is raised. Instead, use GPS.execute_action ("/Tools/Consoles/Python"), and then get a handle on the console through GPS.Console. This is because these two consoles are tightly associated with each of the scripting languages.
+
 If GPS reuses an existing console, on_input overrides the callback that was
 already set on the console, whereas on_destroy will be called in addition to
 the one that was already set on the console.
