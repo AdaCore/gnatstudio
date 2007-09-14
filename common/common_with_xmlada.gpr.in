@@ -24,6 +24,10 @@ project Common is
 
    package IDE renames Shared.IDE;
 
+   package Binder is
+       for Default_Switches ("Ada") use ("-E");
+   end Binder;
+
    package Naming is
       for Implementation ("xml_parsers") use "xml_parsers_xmlada.adb";
    end Naming;
