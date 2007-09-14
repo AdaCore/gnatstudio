@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006-2007                      --
---                              AdaCore                              --
+--                 Copyright (C) 2006-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,6 +24,8 @@ with Language.Documentation; use Language.Documentation;
 with Language.Unknown;       use Language.Unknown;
 
 with String_Utils; use String_Utils;
+
+with Glib.Convert; use Glib.Convert;
 
 package body Language.Tree is
 
@@ -1228,11 +1229,12 @@ package body Language.Tree is
       if Beginning /= 0 then
          Append
            (Result,
-            Comment_Block
-              (Language,
-               Buffer (Beginning .. Current),
-               Comment => False,
-               Clean   => True));
+            Escape_Text
+              (Comment_Block
+                 (Language,
+                  Buffer (Beginning .. Current),
+                  Comment => False,
+                  Clean   => True)));
 
          Add_New_Line := True;
       end if;
@@ -1285,8 +1287,7 @@ package body Language.Tree is
                      Success);
 
                   Append
-                    (Result,
-                     Get_Construct (Sub_Iter).Name.all);
+                    (Result, Escape_Text (Get_Construct (Sub_Iter).Name.all));
 
                   for J in Get_Construct (Sub_Iter).Name'Length + 1
                     .. Biggest_Parameter_Name
@@ -1297,7 +1298,8 @@ package body Language.Tree is
                   if Success then
                      Append
                        (Result,
-                        " : " & Buffer (Type_Start.Index .. Type_End.Index));
+                        " : " & Escape_Text
+                          (Buffer (Type_Start.Index .. Type_End.Index)));
                   else
                      Append (Result, " : ???");
                   end if;
@@ -1323,8 +1325,10 @@ package body Language.Tree is
             Append
               (Result,
                "<b>Return:</b>"
-               & ASCII.LF & Buffer (Type_Start.Index .. Type_End.Index));
+               & ASCII.LF
+               & Escape_Text (Buffer (Type_Start.Index .. Type_End.Index)));
          end if;
+
       elsif Get_Construct (Node).Category in Data_Category then
          declare
             Var_Start, Var_End : Source_Location;
@@ -1345,7 +1349,7 @@ package body Language.Tree is
                Append
                  (Result,
                   "<b>Type: </b>"
-                  & Buffer (Var_Start.Index .. Var_End.Index));
+                  & Escape_Text (Buffer (Var_Start.Index .. Var_End.Index)));
             end if;
          end;
       end if;
