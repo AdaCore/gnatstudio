@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                       Copyright (C) 2006-2007                     --
---                              AdaCore                              --
+--                    Copyright (C) 2006-2007, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,6 +16,8 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
+
+with Glib.Convert; use Glib.Convert;
 
 with Ada.Strings.Unbounded; use Ada.Strings;
 with Ada.Unchecked_Deallocation; use Ada;
@@ -2049,11 +2050,12 @@ package body Language.Tree.Ada is
       if Beginning /= 0 then
          Unbounded.Append
            (Result,
-            Comment_Block
-              (Language,
-               Buffer (Beginning .. Current),
-               Comment => False,
-               Clean   => True));
+            Escape_Text
+              (Comment_Block
+                 (Language,
+                  Buffer (Beginning .. Current),
+                  Comment => False,
+                  Clean   => True)));
 
          Add_New_Line := True;
       end if;
@@ -2159,7 +2161,7 @@ package body Language.Tree.Ada is
 
                   Unbounded.Append
                     (Result,
-                     Get_Construct (Sub_Iter).Name.all);
+                     Escape_Text (Get_Construct (Sub_Iter).Name.all));
 
                   --  ??? These loops are highly inefficient. Consider
                   --  improving these
@@ -2186,7 +2188,9 @@ package body Language.Tree.Ada is
                      end loop;
 
                      Unbounded.Append
-                       (Result, Buffer (Type_Start.Index .. Type_End.Index));
+                       (Result,
+                        Escape_Text
+                          (Buffer (Type_Start.Index .. Type_End.Index)));
 
                      if Get_Construct (Sub_Iter).Attributes
                        (Ada_Class_Attribute)
@@ -2210,7 +2214,8 @@ package body Language.Tree.Ada is
 
                      Unbounded.Append
                        (Result, " :="
-                        & Get_Default_Value (Get_Construct (Sub_Iter))
+                        & Escape_Text
+                          (Get_Default_Value (Get_Construct (Sub_Iter)))
                         & "]</span>");
                   end if;
                end if;
@@ -2237,7 +2242,8 @@ package body Language.Tree.Ada is
                "<b>Return:</b>"
                & ASCII.LF & " <b>"
                & Attribute_Decoration (Get_Construct (Node), False)
-               & "</b>" & Buffer (Type_Start.Index .. Type_End.Index));
+               & "</b>"
+               & Escape_Text (Buffer (Type_Start.Index .. Type_End.Index)));
 
             if Get_Construct (Node).Attributes (Ada_Class_Attribute) then
                Unbounded.Append (Result, "'Class");
@@ -2265,7 +2271,7 @@ package body Language.Tree.Ada is
                   "<b>Type: "
                   & Attribute_Decoration (Get_Construct (Node), False)
                   & "</b>"
-                  & Buffer (Var_Start.Index .. Var_End.Index));
+                  & Escape_Text (Buffer (Var_Start.Index .. Var_End.Index)));
 
                if Get_Construct (Node).Attributes (Ada_Class_Attribute) then
                   Unbounded.Append (Result, "'Class");
