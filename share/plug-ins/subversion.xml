@@ -11,7 +11,7 @@
 
    <!-- SVN status -->
 
-   <action name="generic_svn_status" show-command="true" output="none" category="">
+   <action name="generic_svn_status" show-command="false" output="none" category="">
       <shell>pwd</shell>
       <shell output="">echo "Querying status for files in %1"</shell>
       <external check-password="true">svn --non-interactive status -N -u -v "$2-"</external>
@@ -24,7 +24,7 @@
 
    <!-- SVN status dir -->
 
-   <action name="generic_svn_status_dir" show-command="true" output="none" category="">
+   <action name="generic_svn_status_dir" show-command="false" output="none" category="">
       <shell>pwd</shell>
       <shell output="">echo "Querying status for %1"</shell>
       <external check-password="true">svn --non-interactive status --non-recursive -u -v .</external>
@@ -37,7 +37,7 @@
 
    <!-- SVN status dir recursive -->
 
-   <action name="generic_svn_status_dir_recursive" show-command="true" output="none" category="">
+   <action name="generic_svn_status_dir_recursive" show-command="false" output="none" category="">
       <shell>pwd</shell>
       <shell output="">echo "Querying status for %1"</shell>
       <external check-password="true">svn --non-interactive status -u -v .</external>
@@ -49,7 +49,7 @@
    </action>
    <!-- SVN tag/branch -->
 
-   <action name="generic_svn_create_tag" show-command="true" output="" category="">
+   <action name="generic_svn_create_tag" show-command="false" output="" category="">
       <shell output="none">VCS.repository_dir /tags/$2</shell>
       <shell output="none">VCS.repository_dir /tags/$2/$1</shell>
       <shell output="">echo "Create tag on %1"</shell>
@@ -61,7 +61,7 @@
       </on-failure>
    </action>
 
-   <action name="generic_svn_create_branch" show-command="true" output="" category="">
+   <action name="generic_svn_create_branch" show-command="false" output="" category="">
       <shell output="none">VCS.repository_dir /branches/$2</shell>
       <shell output="none">VCS.repository_dir /branches/$2/$1</shell>
       <shell>echo "Create branch on %1"</shell>
@@ -75,7 +75,7 @@
 
    <!-- SVN switch -->
 
-   <action name="generic_svn_switch" show-command="true" output="" category="">
+   <action name="generic_svn_switch" show-command="false" output="" category="">
       <shell output="none">VCS.repository_dir $2</shell>
       <shell output="">echo "Switch to %1"</shell>
       <external check-password="true" output="none">svn switch %2</external>
@@ -87,7 +87,7 @@
 
    <!-- SVN annotate -->
 
-   <action name="generic_svn_annotate" show-command="true" output="" category="">
+   <action name="generic_svn_annotate" show-command="false" output="" category="">
       <shell>echo "Querying annotations for $1"</shell>
       <external check-password="true" output="none">svn --non-interactive annotate -v "$1"</external>
       <on-failure>
@@ -99,7 +99,7 @@
 
    <!-- SVN local status -->
 
-   <action name="generic_svn_local_status" show-command="true" output="none" category="">
+   <action name="generic_svn_local_status" show-command="false" output="none" category="">
       <shell>pwd</shell>
       <external check-password="true">svn --non-interactive status --non-recursive -v .</external>
       <on-failure>
@@ -111,7 +111,7 @@
 
    <!-- SVN commit -->
 
-   <action name="generic_svn_commit" show-command="true" output="none" category="">
+   <action name="generic_svn_commit" show-command="false" output="none" category="">
       <shell output="">echo "Committing file(s) $2-"</shell>
       <shell>dump "$1" TRUE</shell>
       <external check-password="true">svn --non-interactive --non-recursive commit -F "%1" "$2-"</external>
@@ -126,7 +126,7 @@
 
    <!-- SVN add -->
 
-   <action name="generic_svn_add" show-command="true" output="none" category="">
+   <action name="generic_svn_add" show-command="false" output="none" category="">
       <shell output="">echo "adding file(s) $2-"</shell>
       <external check-password="true">svn add "$2-"</external>
       <on-failure>
@@ -144,7 +144,7 @@
 
    <!-- SVN add (no commit) -->
 
-   <action name="generic_svn_add_no_commit" show-command="true" output="none" category="">
+   <action name="generic_svn_add_no_commit" show-command="false" output="none" category="">
       <shell output="">echo "adding (no commit) file(s) $2-"</shell>
       <external check-password="true">svn add --non-recursive "$2-"</external>
       <on-failure>
@@ -155,7 +155,7 @@
 
    <!-- SVN remove -->
 
-   <action name="generic_svn_remove" show-command="true" output="none" category="">
+   <action name="generic_svn_remove" show-command="false" output="none" category="">
       <shell output="">echo "removing file(s) $2-"</shell>
       <external check-password="true">svn --non-interactive remove "$2-"</external>
       <on-failure>
@@ -173,7 +173,7 @@
 
    <!-- SVN remove (no commit) -->
 
-   <action name="generic_svn_remove_no_commit" show-command="true" output="none" category="">
+   <action name="generic_svn_remove_no_commit" show-command="false" output="none" category="">
       <shell output="">echo "removing file(s) $2-"</shell>
       <external check-password="true">svn --non-interactive remove "$2-"</external>
       <on-failure>
@@ -184,7 +184,7 @@
 
    <!-- SVN history -->
 
-   <action name="generic_svn_history" show-command="true" output="none" category="">
+   <action name="generic_svn_history" show-command="false" output="none" category="">
       <shell output="">echo "Querying history for $1"</shell>
       <external check-password="true">svn --non-interactive -v log "$1"</external>
       <on-failure>
@@ -195,7 +195,7 @@
       <shell>VCS.log_parse "Subversion" "$1" "%2"</shell>
    </action>
 
-   <action name="generic_svn_history_text" show-command="true" output="none" category="">
+   <action name="generic_svn_history_text" show-command="false" output="none" category="">
       <shell output="">echo "Querying history for $1"</shell>
       <external check-password="true">svn --non-interactive log "$1"</external>
       <on-failure>
@@ -208,7 +208,7 @@
       <shell>delete "%3"</shell>
    </action>
 
-   <action name="generic_svn_history_rev" show-command="true" output="none" category="">
+   <action name="generic_svn_history_rev" show-command="false" output="none" category="">
       <shell output="">echo "Querying history for $2"</shell>
       <external check-password="true">svn --non-interactive log -r$1 "$2"</external>
       <on-failure>
@@ -221,7 +221,7 @@
 
    <!-- SVN update -->
 
-   <action name="generic_svn_update" show-command="true" output="none" category="">
+   <action name="generic_svn_update" show-command="false" output="none" category="">
       <external check-password="true" output="">svn --non-interactive update "$*"</external>
       <on-failure>
          <shell output="">echo "SVN error:"</shell>
@@ -233,7 +233,7 @@
 
    <!-- SVN merge -->
 
-   <action name="generic_svn_merge" show-command="true" output="none" category="">
+   <action name="generic_svn_merge" show-command="false" output="none" category="">
       <shell>VCS.repository_path "$2"</shell>
       <shell>VCS.repository_path "$2" "$1"</shell>
       <external check-password="true" output="">svn --non-interactive merge "%2" "%1"</external>
@@ -247,7 +247,7 @@
 
    <!-- SVN resolved -->
 
-   <action name="generic_svn_resolved" show-command="true" output="none" category="">
+   <action name="generic_svn_resolved" show-command="false" output="none" category="">
       <external check-password="true" output="">svn resolved "$*"</external>
       <on-failure>
          <shell output="">echo "SVN error:"</shell>
@@ -257,13 +257,13 @@
 
    <!-- SVN diff -->
 
-   <action name="generic_svn_diff_patch" show-command="true" output="none" category="">
+   <action name="generic_svn_diff_patch" show-command="false" output="none" category="">
       <shell output="">echo "Getting comparison for $2 ..."</shell>
       <external check-password="true">svn --non-interactive diff --diff-cmd diff -x -c "$2"</external>
       <shell>dump_file "%1" "$1" TRUE</shell>
    </action>
 
-   <action name="generic_svn_diff_head" show-command="true" output="none" category="">
+   <action name="generic_svn_diff_head" show-command="false" output="none" category="">
       <shell output="">echo "Getting comparison for $1 ..."</shell>
       <external check-password="true">svn --non-interactive diff --diff-cmd diff -x --normal -rHEAD "$1"</external>
       <on-failure>
@@ -278,7 +278,7 @@
       <shell>delete "%5"</shell>
    </action>
 
-   <action name="generic_svn_diff" show-command="true" output="none" category="">
+   <action name="generic_svn_diff" show-command="false" output="none" category="">
       <shell output="">echo "Getting comparison for revision $1 of $2 ..."</shell>
       <external check-password="true">svn --non-interactive diff --diff-cmd diff -x --normal -r $1 "$2"</external>
       <on-failure>
@@ -293,7 +293,7 @@
       <shell>delete "%5"</shell>
    </action>
 
-   <action name="generic_svn_diff2" show-command="true" output="none" category="">
+   <action name="generic_svn_diff2" show-command="false" output="none" category="">
       <shell output="">echo "Getting comparison between revisions $1 / $2 of $3 ..."</shell>
       <external check-password="true">svn --non-interactive diff --diff-cmd diff -x --normal -r$1:$2 "$3"</external>
       <on-failure>
@@ -308,7 +308,7 @@
       <shell>delete "%8"</shell>
    </action>
 
-   <action name="generic_svn_diff_base_head" show-command="true" output="none" category="">
+   <action name="generic_svn_diff_base_head" show-command="false" output="none" category="">
       <shell output="">echo "Getting comparison between base and head of $1 ..."</shell>
       <external check-password="true">svn --non-interactive diff --diff-cmd diff -x --normal -rBASE:HEAD "$1"</external>
       <on-failure>
@@ -323,7 +323,7 @@
       <shell>delete "%8"</shell>
    </action>
 
-   <action name="generic_svn_diff_tag" show-command="true" output="none" category="">
+   <action name="generic_svn_diff_tag" show-command="false" output="none" category="">
       <shell output="">echo "Getting comparison for revision $1 of $3/$2 ..."</shell>
       <shell output="">VCS.repository_path "$2"</shell>
       <shell output="">VCS.repository_path "$2" "$1"</shell>
@@ -343,7 +343,7 @@
 
    <!-- SVN revert -->
 
-   <action name="generic_svn_revert" show-command="true" output="none" category="">
+   <action name="generic_svn_revert" show-command="false" output="none" category="">
       <external check-password="true" output="">svn revert "$*"</external>
       <on-failure>
          <shell output="">echo "SVN error:"</shell>
@@ -355,7 +355,7 @@
 
    <!-- SVN revision -->
 
-   <action name="generic_svn_revision" show-command="true" output="none" category="">
+   <action name="generic_svn_revision" show-command="false" output="none" category="">
       <shell output="">echo "Getting $2 at revision $1"</shell>
       <external check-password="true" output="none">svn cat -r "$1" "$2"</external>
       <on-failure>
