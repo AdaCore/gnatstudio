@@ -303,8 +303,9 @@ package body Commands.Custom is
       Default_Show_In_Task_Manager : Boolean;
       Default_Show_Command         : Boolean) return Command_Component;
    function Shell_From_XML
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Command : Glib.Xml_Int.Node_Ptr) return Command_Component;
+     (Kernel               : access Kernel_Handle_Record'Class;
+      Command              : Glib.Xml_Int.Node_Ptr;
+      Default_Show_Command : Boolean) return Command_Component;
    --  Create a command component from an XML node
 
    function From_XML
@@ -787,16 +788,17 @@ package body Commands.Custom is
    --------------------
 
    function Shell_From_XML
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Command : Glib.Xml_Int.Node_Ptr) return Command_Component
+     (Kernel               : access Kernel_Handle_Record'Class;
+      Command              : Glib.Xml_Int.Node_Ptr;
+      Default_Show_Command : Boolean) return Command_Component
    is
       Output       : constant String :=
                        Get_Attribute (Command, "output", "@@");
       Script       : constant String :=
                        Get_Attribute (Command, "lang", GPS_Shell_Name);
-      Show_Command : constant Boolean :=
-                       Get_Attribute
-                         (Command, "show-command", "true") = "true";
+      Show_Command : constant String :=
+                       Get_Attribute (Command, "show-command");
+      Show_C       : Boolean := Show_Command = "true";
       Outp         : GNAT.Strings.String_Access := null;
 
    begin
@@ -804,10 +806,14 @@ package body Commands.Custom is
          Outp := new String'(Output);
       end if;
 
+      if Show_Command = "" then
+         Show_C := Default_Show_Command;
+      end if;
+
       return new Custom_Component_Record'
         (Command_Component_Record with
          The_Type     => Component_Shell,
-         Show_Command => Show_Command,
+         Show_Command => Show_C,
          Output       => Outp,
          Command      => new String'(Command.Value.all),
          Script       =>
@@ -968,7 +974,8 @@ package body Commands.Custom is
 
       while N /= null loop
          if N.Tag.all = "shell" then
-            Result (Count) := (Shell_From_XML (Kernel, N), -1);
+            Result (Count) :=
+              (Shell_From_XML (Kernel, N, Default_Show_Command), -1);
             Count := Count + 1;
 
          elsif N.Tag.all = "external" then
@@ -996,15 +1003,17 @@ package body Commands.Custom is
             M := N.Child;
             while M /= null loop
                if M.Tag.all = "shell" then
-                  Result (Count) := (Shell_From_XML (Kernel, M), On_Failure);
+                  Result (Count) :=
+                    (Shell_From_XML (Kernel, M, Default_Show_Command),
+                     On_Failure);
                   Count := Count + 1;
 
                elsif M.Tag.all = "external" then
                   Result (Count) := (External_From_XML
                     (M,
-                     Default_Show_In_Task_Manager =>
-                       Default_Show_In_Task_Manager,
-                     Default_Show_Command => Default_Show_Command),
+                       Default_Show_In_Task_Manager =>
+                         Default_Show_In_Task_Manager,
+                       Default_Show_Command         => Default_Show_Command),
                     On_Failure);
                   Count := Count + 1;
                end if;
