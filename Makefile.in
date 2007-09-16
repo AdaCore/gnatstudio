@@ -34,7 +34,10 @@ install-common:
 ifeq ($(OS),Windows_NT)
 # On Windows we distribute two versions of subversion.xml, one that
 # supports Cygwin/Subversion and one for native Subversion.
-	sed -e "s/System_Default/CYGWIN/" share/plug-ins/subversion.xml \
+	sed -e "s/System_Default/CYGWIN/" \
+		-e "s/generic_svn/generic_cygwin_svn/g" \
+		-e "s/Subversion/Subversion Cygwin/g" \
+		share/plug-ins/subversion.xml \
 		> share/plug-ins/subversion_cygwin.xml
 endif
 	(cd share; tar cf - plug-ins/*.xml) | (cd $(sharedir)/gps; tar xf -)
