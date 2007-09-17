@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2005                         --
---                              AdaCore                              --
+--                  Copyright (C) 2005-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -37,6 +36,7 @@ package GPS.Kernel.Styles is
 
    type Style_Record is private;
    type Style_Access is access Style_Record;
+   pragma No_Strict_Aliasing (Style_Access);
 
    ---------------------------
    -- GPS predefined styles --
