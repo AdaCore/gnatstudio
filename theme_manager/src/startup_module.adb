@@ -114,10 +114,15 @@ package body Startup_Module is
       Iter   : Gtk_Tree_Iter);
    --  Mark the corresponding script as modified
 
+   pragma Warnings (Off);
+   --  These UC are safe aliasing-wise
+
    function "+" is new Ada.Unchecked_Conversion
      (Glib.Xml_Int.Node_Ptr, System.Address);
    function "+" is new Ada.Unchecked_Conversion
      (System.Address, Glib.Xml_Int.Node_Ptr);
+
+   pragma Warnings (On);
 
    ------------------
    -- Set_Modified --
