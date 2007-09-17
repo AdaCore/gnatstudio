@@ -56,6 +56,7 @@ package GPS.Kernel is
 
    type Kernel_Handle_Record is new Glib.Object.GObject_Record with private;
    type Kernel_Handle is access all Kernel_Handle_Record'Class;
+   pragma No_Strict_Aliasing (Kernel_Handle);
    --  A kernel handle used to share information throughout GPS.
 
    package Kernel_Desktop is new Gtkada.MDI.Desktop (Kernel_Handle);

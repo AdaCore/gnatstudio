@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2006                      --
---                              AdaCore                              --
+--                   Copyright (C) 2005-2007, AdaCore                --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,6 +24,7 @@ package GPS.Kernel.Clipboard is
 
    type Clipboard_Record is private;
    type Clipboard_Access is access all Clipboard_Record;
+   pragma No_Strict_Aliasing (Clipboard_Access);
 
    type Selection_List is
      array (Natural range <>) of GNAT.Strings.String_Access;
