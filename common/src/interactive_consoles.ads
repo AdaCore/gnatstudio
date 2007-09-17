@@ -48,6 +48,7 @@ package Interactive_Consoles is
      Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record with private;
    type Interactive_Console is
      access all Interactive_Console_Record'Class;
+   pragma No_Strict_Aliasing (Interactive_Console);
 
    type Command_Handler is access
      function
