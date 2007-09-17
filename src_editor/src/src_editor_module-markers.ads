@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005 - 2006                     --
---                              AdaCore                              --
+--                  Copyright (C) 2005-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -31,6 +30,7 @@ package Src_Editor_Module.Markers is
    type File_Marker_Record
      is new GPS.Kernel.Location_Marker_Record with private;
    type File_Marker is access all File_Marker_Record'Class;
+   pragma No_Strict_Aliasing (File_Marker);
 
    function Create_File_Marker
      (Kernel : access Kernel_Handle_Record'Class;
