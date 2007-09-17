@@ -1256,8 +1256,10 @@ package body ALI_Parser is
       Result                : out ALI_Id;
       First_Sect, Last_Sect : out Nat)
    is
+      pragma Warnings (Off);
       function Convert is new Ada.Unchecked_Conversion
         (GNAT.Strings.String_Access, Text_Buffer_Ptr);
+      pragma Warnings (On);
       Full   : constant String := Full_Name (ALI_Filename).all;
       Buffer : GNAT.Strings.String_Access := Read_File (ALI_Filename);
 
