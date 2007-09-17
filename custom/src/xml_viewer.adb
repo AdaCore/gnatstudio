@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2007                      --
---                              AdaCore                              --
+--                  Copyright (C) 2005-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -340,8 +339,11 @@ package body XML_Viewer is
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean
    is
+      pragma Warnings (Off);
       function Convert is new Ada.Unchecked_Conversion
         (System.Address, Node_Ptr);
+      pragma Warnings (On);
+
       View : constant XML_Viewer := XML_Viewer (Widget);
       Iter : Gtk_Tree_Iter;
       N    : Node_Ptr;
