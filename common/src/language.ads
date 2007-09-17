@@ -27,7 +27,7 @@ with GNAT.Strings;
 
 package Language is
 
-   type Language_Root is abstract tagged private;
+   type Language_Root is abstract tagged limited private;
    type Language_Access is access all Language_Root'Class;
 
    Unexpected_Type : exception;
@@ -723,9 +723,10 @@ package Language is
    --  separately in the explorer.
 
 private
-   type Language_Root is abstract tagged record
-      Indent_Params : Indent_Parameters := Default_Indent_Parameters;
-      Indent_Style  : Indentation_Kind  := Extended;
+   type Language_Root is abstract tagged limited record
+      Indent_Params   : Indent_Parameters := Default_Indent_Parameters;
+      Indent_Style    : Indentation_Kind  := Extended;
+      Actual_Language : Language_Access   := Language_Root'Unchecked_Access;
    end record;
 
    function Comment_Line
