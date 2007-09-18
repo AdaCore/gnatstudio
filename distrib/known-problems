@@ -14,7 +14,7 @@ Known Problems fixed in GPS 4.2.0
               files
   Workaround: none, this is a memory corruption. Try and remove the above
               attributes from your project, and let GPS compute the list of
-              source files automatically
+              source files automatically.
 
 - G829-018 Remote debugging problems
   Problem:    With some remote servers, and depending on the protocol used,
@@ -52,7 +52,7 @@ Known Problems fixed in GPS 4.2.0
               won't receive this request, thus blocking the connection.
   Workaround: In share/gps/plug-ins/protocols.xml, set the use_pipes attribute
               of the start_command tag to "false" for the ssh
-              remote_connection_config
+              remote_connection_config.
 
 - G714-002 Problems with huge clipboard entries
   Problem:    If you copy a huge piece of code to the clipboard and then exit
@@ -72,14 +72,14 @@ Known Problems fixed in GPS 4.2.0
               the line on which the entity occurs has already been modified
   Workaround: Make sure to save all files before starting a refactoring. GPS
               will then display a dialog warning you that some files might not
-              be up-to-date, and in this case you should cancel the refactoring
+              be up-to-date, and in this case you should cancel the refactoring.
 
 - G625-004 GPS.execute_action not synchronous, and hiding its output
   Problem:    If your script uses GPS.execute_action, it will not properly
               execute external commands synchronously (meaning the call will
               return before the external process has finished executing). In
               addition, the output of the external process is never displayed
-  Workaround: use the GPS.Process class
+  Workaround: use the GPS.Process class.
 
 - G611-028 Files status overriden
   Problem:    When opening a file the status in the VCS Explorer and
@@ -104,11 +104,11 @@ Known Problems fixed in GPS 4.2.0
               full path names are also not displayed correctly
   Workaround: This warning can be safely ignored
 
-- G502-009 <on-failure> not executed whith empty <external> command
+- G502-009 <on-failure> not executed with empty <external> command
   Problem:    If you create an XML file with an action that executes an
               empty <external> command, an internal error is reported, but
               GPS doesn't execute the following <on-failure> node.
-  Workaround: Make sure the command to execute cannot be empty
+  Workaround: Make sure the command to execute cannot be empty.
 
 - G503-011 Bad indentation of single line C constructs
   Problem:    GPS does not properly unindent single line construct (statements
@@ -142,7 +142,7 @@ Known Problems fixed in GPS 4.2.0
               shortcut, then the key itself is no longer usable in this GPS
               session (for instance if it was bound to backspace, then you
               won't be able to use it later on)
-  Workaround: Exit GPS and restart
+  Workaround: Exit GPS and restart.
 
 - G413-018 Python/Shell commands related to EditorView not working
   Problem:    Python/Shell commands related to the class EditorView, for
@@ -171,7 +171,7 @@ Known Problems fixed in GPS 4.2.0
               files for which xref information has already been loaded in
               memory.
   Workaround: First select the menu /Build/Load xref info in memory", and
-              only then click on the down arrow
+              only then click on the down arrow.
 
 - G323-009 Documentation gives wrong return type
   Problem:    When the parameter initialization of a function contains the
@@ -224,7 +224,7 @@ Known Problems fixed in GPS 4.2.0
   Problem:    In the entity browser, it might happen that clicking several
               times on an hyper link will create duplicate links between
               entities.
-  Workaround: This is purely graphical, and does not impact the semantic
+  Workaround: This is purely graphical, and does not impact the semantic.
 
 - F907-001 Code fixing doesn't work with double quotes
   Problem:    When strings involves double quotes, the autofix process is
@@ -237,7 +237,7 @@ Known Problems fixed in GPS 4.2.0
               "Browsers/is called by" on the same entity, GPS would duplicate
               the locations of the call within the box representing the entity
   Workaround: This is purely graphical, you can close the box and reopen to
-              clean it up if you need
+              clean it up if you need.
 
 - DB25-010 Symbols not loaded when initializing cross debugger
   Problem:    When using GPS in a remote debugging configuration (ie, with the
