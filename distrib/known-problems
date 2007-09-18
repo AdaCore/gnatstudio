@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 4.2.0
 
+- G914-001 "pango" warnings in the Messages window
+  Problem:    Error messages beginning with:
+              "sys:1: PangoWarning: pango_layout_set_markup_with_accel"
+              might appear in the Messages window, when displaying
+              tooltips for an entity, when the documentation associated
+              with this entity contains characters '<' or '>'.
+  Workaround: This message can be safely ignored.
+
 - G910-002 Wrong links in python API documentation
   Problem:    In the python API documentation generated through the
               /Help/Python extensions menus, links corresponding to classes
