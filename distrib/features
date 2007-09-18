@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.2 NEW FEATURES LIST Current as of Sep 13, 2007
+GPS 4.2 NEW FEATURES LIST Current as of Sep 18, 2007
 ====================================================
 
 Copyright (c) 2006-2007, AdaCore
@@ -15,14 +15,14 @@ of the feature.
 New features in GPS 4.2.0
 -------------------------
 
-NF-42-G827-022 add customization for activity logs (2007-09-02)
+NF-42-G827-022 Add customization for activity logs (2007-09-02)
 
   The activity group commit log format is now fully configurable
   using a template file (activity_log.tmplt). This format is
   also used to create the header of generated activities patch
   files.
 
-NF-42-G817-004 better alignment support for arrows (2007-08-30)
+NF-42-G817-004 Better alignment support for arrows (2007-08-30)
 
   The GPS alignment support on arrows has been enhanced to properly
   handle multi-level of arrows.
@@ -38,7 +38,7 @@ NF-42-G814-013 New plug-in to generate ALI files (2007-08-14)
   Build->Recompute Ada xrefs to ease generation of ali files for non
   compilable or incomplete Ada files, for source navigation purposes.
 
-NF-42-G813-006 add customization for activity logs (2007-09-12)
+NF-42-G813-006 Enhanced Subversion support under Windows (2007-09-12)
 
   Add easier configuration for choosing between native or Cygwin
   version of Subversion on Windows.
@@ -50,7 +50,7 @@ NF-42-G724-010 Locations window highlights current line error (2007-07-25)
   current line in the editor, making it easier to find what is the error that
   occurred on that line.
 
-NF-42-G713-003 better alignment for routine parameters (2007-08-30)
+NF-42-G713-003 Better alignment for routine parameters (2007-08-30)
 
   The GPS alignment support for routine parameters has been enhanced
   to better align the routine parameter mode.
@@ -136,11 +136,11 @@ NF-42-G213-014 Add support for Project Explorer filters (2007-02-20)
   designed to filter out version control specific directories
   like CVS or .svn for example.
 
-NF-42-FC20-002 copy text together with line numbers (2007-09-13)
+NF-42-FC20-002 Copy text together with line numbers (2007-09-13)
 
   A new plug-in has been added that provides the capability to copy some text
   and have each line preceded with its number. This can be useful when pasting
-  some source code to another application such a a mailer.
+  some source code to another application such as a mailer.
   See /Tools/Plug-ins and copy_paste.py.
 
 NF-42-FB24-021 Detect UTF8 conversion errors when saving files (2007-08-10)
@@ -171,7 +171,7 @@ NF-42-F803-003 Config files saved after each change (2007-07-22)
   the behavior is more user-friendly, and that these files can be edited
   manually even when GPS is running
 
-NF-42-F731-011 Dynamic Key Bindings preference remove (2007-07-25)
+NF-42-F731-011 Dynamic Key Bindings preference removed (2007-07-25)
 
   This preference was removed because it could result in unexpected shortcut
   change when a menu is open and the user press an incorrect key accelerator
@@ -206,7 +206,7 @@ NF-42-E525-006 Disabling editing of projects with variables (2007-07-25)
   variables (of the form "a:=value"), since the graphical editor does not
   support those and would mess the project up.
 
-NF-42-E519-015 contextual menu for copy/cut/paste (2007-09-13)
+NF-42-E519-015 Contextual menu for copy/cut/paste (2007-09-13)
 
   A new plugin has been added that adds contextual menus corresponding to the
   /Edit/Copy, /Edit/Cut and /Edit/Paste menus.
