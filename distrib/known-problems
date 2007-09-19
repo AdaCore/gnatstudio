@@ -223,6 +223,15 @@ Known Problems fixed in GPS 4.2.0
               SHIFT to keep the current selection) to make sure it is not
               actually located on the following line.
 
+- G118-012 Ctrl-C and Ctrl-V do not work with Clipboard view
+  Problem:    Although Ctrl-C and Ctrl-C keys perform Copy and Paste 
+              operations, these operations are not connected to the Clipboard
+              View.
+  Workaround: Use Ctrl+Insert to copy text and Shift+Insert to paste text.
+              Alternatively, use the Key Manager to assign Ctrl-C and Ctrl-V
+              to the General actions "Copy to Clipboard" and "Paste from
+              Clipboard"
+
 - FB30-007 Completion doesn't work on symbol operators
   Problem:    When completing symbol operators, for example A."+" (|, the
               completion engine doesn't provide any completion.
