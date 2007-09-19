@@ -15,6 +15,11 @@ of the feature.
 New features in GPS 4.2.0
 -------------------------
 
+NF-42-G919-006 Remove selected items in browsers (2007-09-19)
+
+  A new contextual menu is now available in browser to remove selected
+  items
+
 NF-42-G919-004 Layout in the entities browser (2007-09-19)
 
   If you select the contextual menu "Refresh Layout" in the entities

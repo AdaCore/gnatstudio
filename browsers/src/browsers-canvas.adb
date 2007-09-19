@@ -98,6 +98,7 @@ package body Browsers.Canvas is
       Browser : General_Browser;
       Item    : Canvas_Item;
       Zoom    : Guint;
+      Keep_Selected : Boolean;
    end record;
 
    package Contextual_Cb is new Gtk.Handlers.User_Callback
@@ -716,13 +717,19 @@ package body Browsers.Canvas is
          Append (Menu, Mitem);
          Contextual_Cb.Connect
            (Mitem, Gtk.Menu_Item.Signal_Activate, Toggle_Links'Access,
-            (Browser => B, Item => Item, Zoom => 100));
+            (Browser => B, Item => Item, Zoom => 100, Keep_Selected => True));
 
-         Gtk_New (Mitem, Label => -"Remove all other items");
+         Gtk_New (Mitem, Label => -"Remove unselected items");
          Append (Menu, Mitem);
          Contextual_Cb.Connect
            (Mitem, Gtk.Menu_Item.Signal_Activate, Set_Root'Access,
-            (Browser => B, Item => Item, Zoom => 100));
+            (Browser => B, Item => Item, Zoom => 100, Keep_Selected => True));
+
+         Gtk_New (Mitem, Label => -"Remove selected items");
+         Append (Menu, Mitem);
+         Contextual_Cb.Connect
+           (Mitem, Gtk.Menu_Item.Signal_Activate, Set_Root'Access,
+            (Browser => B, Item => Item, Zoom => 100, Keep_Selected => False));
 
          Xsave := Get_X (Event);
          Ysave := Get_Y (Event);
@@ -785,6 +792,7 @@ package body Browsers.Canvas is
               (Mitem, Gtk.Menu_Item.Signal_Activate, Zoom_Level'Access,
                (Browser => B,
                 Item    => null,
+                Keep_Selected => True,
                 Zoom    => Zoom_Levels (J)));
          end loop;
 
@@ -820,20 +828,30 @@ package body Browsers.Canvas is
 
          Next (Iter);
 
-         if Item /= Data.Item
-           and then not Is_Selected (Get_Canvas (Data.Browser), Item)
-         then
-            Remove (Get_Canvas (Data.Browser), Item);
+         if Data.Keep_Selected then
+            if Item /= Data.Item
+              and then not Is_Selected (Get_Canvas (Data.Browser), Item)
+            then
+               Remove (Get_Canvas (Data.Browser), Item);
+            end if;
+         else
+            if Is_Selected (Get_Canvas (Data.Browser), Item) then
+               Remove (Get_Canvas (Data.Browser), Item);
+            end if;
          end if;
       end loop;
 
-      Reset (Browser_Item (Data.Item), True, True);
-      Refresh (Browser_Item (Data.Item));
+      if Data.Keep_Selected then
+         Reset (Browser_Item (Data.Item), True, True);
+         Refresh (Browser_Item (Data.Item));
+      end if;
 
       Layout (Data.Browser);
       Refresh_Canvas (Get_Canvas (Data.Browser));
 
-      Show_Item (Get_Canvas (Data.Browser), Data.Item);
+      if Data.Keep_Selected then
+         Show_Item (Get_Canvas (Data.Browser), Data.Item);
+      end if;
 
       Pop_State (Get_Kernel (Data.Browser));
 
