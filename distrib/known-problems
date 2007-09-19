@@ -230,7 +230,7 @@ Known Problems fixed in GPS 4.2.0
   Workaround: Use Ctrl+Insert to copy text and Shift+Insert to paste text.
               Alternatively, use the Key Manager to assign Ctrl-C and Ctrl-V
               to the General actions "Copy to Clipboard" and "Paste from
-              Clipboard"
+              Clipboard".
 
 - FB30-007 Completion doesn't work on symbol operators
   Problem:    When completing symbol operators, for example A."+" (|, the
