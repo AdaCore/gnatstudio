@@ -3385,18 +3385,16 @@ package body Src_Editor_Buffer is
          return;
       end if;
 
-      if not Buffer.Inserting then
-         --  At this point, we know that the (Line, Column) position is
-         --  valid, so we can safely get the iterator at this position.
+      --  At this point, we know that the (Line, Column) position is
+      --  valid, so we can safely get the iterator at this position.
 
-         Get_Iter_At_Line_Offset (Buffer, Iter, Line, Column);
+      Get_Iter_At_Line_Offset (Buffer, Iter, Line, Column);
 
-         if Centering /= Minimal then
-            Buffer.Cursor_Set_Explicitely := 2;
-         end if;
-
-         Place_Cursor (Buffer, Iter);
+      if Centering /= Minimal then
+         Buffer.Cursor_Set_Explicitely := 2;
       end if;
+
+      Place_Cursor (Buffer, Iter);
    end Set_Cursor_Position;
 
    procedure Set_Cursor_Position
