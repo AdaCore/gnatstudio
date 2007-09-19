@@ -9402,7 +9402,8 @@ Color to use for the background of the items linked from the selected item.
 @item Vertical layout
 @cindex vertical layout
 Whether the layout of the graph should be vertical (@i{True}) or
-horizontal (@i{False}).
+horizontal (@i{False}). This setting applies to most browsers (call graph
+for instance), but does not apply to the entities browsers.
 
 @end table
 

@@ -805,8 +805,10 @@ package body GPS.Kernel.Preferences is
         (Name    => "Browsers-Vertical-Layout",
          Default => False,
          Blurb   => -("If enabled, the boxes in the browsers will be"
-             & " organized into layers displayed one below the other. The"
-             & " graph will tend to grow vertically when you open new boxes"),
+           & " organized into layers displayed one below the other. The"
+           & " graph will tend to grow vertically when you open new boxes."
+           & " This setting does not affect the entities browser, though,"
+           & " where the layout is always vertical."),
          Nick    => -"Vertical layout"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Browsers_Vertical_Layout),
