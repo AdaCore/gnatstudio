@@ -15,6 +15,12 @@ of the feature.
 New features in GPS 4.2.0
 -------------------------
 
+NF-42-G919-004 Layout in the entities browser (2007-09-19)
+
+  If you select the contextual menu "Refresh Layout" in the entities
+  browser, it will preferrably put derived types below their parent,
+  and other entities to the side
+
 NF-42-G919-002 Remove All Other Items keeps all selected (2007-09-19)
 
   In a browser (entity browser or call graph for instance), if you select

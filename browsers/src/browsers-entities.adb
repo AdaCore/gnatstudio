@@ -1346,11 +1346,13 @@ package body Browsers.Entities is
       elsif Reverse_Link then
          if not Has_Link (Canvas, New_Item, Item, Link_Name) then
             Link := new Browser_Link_Record;
+            Browser_Link (Link).Orthogonal := True;
             Add_Link (Canvas, Link, New_Item, Item, Descr => Link_Name);
          end if;
 
       elsif not Has_Link (Canvas, Item, New_Item, Link_Name) then
          Link := new Browser_Link_Record;
+         Browser_Link (Link).Orthogonal := True;
          Add_Link (Canvas, Link, Item, New_Item, Descr => Link_Name);
       end if;
 

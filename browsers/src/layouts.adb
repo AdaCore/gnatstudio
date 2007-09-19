@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
---                            AdaCore                                --
+--                     Copyright (C) 2001-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,6 +22,7 @@ with Glib.Graphs;   use Glib.Graphs;
 with Gdk.Rectangle; use Gdk.Rectangle;
 with Gtkada.Canvas; use Gtkada.Canvas;
 with Line_Sweep;    use Line_Sweep;
+with Browsers.Canvas; use Browsers.Canvas;
 --  with Traces;        use Traces;
 
 package body Layouts is
@@ -202,7 +202,7 @@ package body Layouts is
       V       : Vertex_Access;
       Num     : Natural := 0;
    begin
-      pragma Assert (Is_Directed (G), "graph must directed");
+      pragma Assert (Is_Directed (G), "graph must be directed");
       pragma Assert (Acyclic, "graph must be acyclic");
 
       Layers := (others => 0);
@@ -211,17 +211,24 @@ package body Layouts is
          if not New_Items_Only
            or else Never_Positionned (Sorted (S).Vertex)
          then
-            Max := 0;
+            Max := 1;
 
             Eit := First (G, Dest => Sorted (S).Vertex);
             while not At_End (Eit) loop
                V   := Get_Src (Get (Eit));
-               Max := Natural'Max (Layers (Get_Index (V)), Max);
+
+               if Get_Orthogonal (Browser_Link (Get (Eit))) then
+                  --  Preferrable on same layer as Src
+                  Max := Natural'Max (Layers (Get_Index (V)), Max);
+               else
+                  Max := Natural'Max (Layers (Get_Index (V)) + 1, Max);
+               end if;
+
                Next (Eit);
             end loop;
 
-            Layers (Get_Index (Sorted (S).Vertex)) := Max + 1;
-            Num := Natural'Max (Num, Max + 1);
+            Layers (Get_Index (Sorted (S).Vertex)) := Max;
+            Num := Natural'Max (Num, Max);
          end if;
       end loop;
 

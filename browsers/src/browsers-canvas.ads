@@ -51,7 +51,10 @@ package Browsers.Canvas is
    type General_Browser is access all General_Browser_Record'Class;
 
    type Browser_Link_Record is new Gtkada.Canvas.Canvas_Link_Record
-     with private;
+   with record
+      Orthogonal : Boolean := False;
+      --  See Get_Orthogonal
+   end record;
    type Browser_Link is access all Browser_Link_Record'Class;
    --  The type of links that are put in the canvas. These are automatically
    --  highlighted if they connect a selected item to another one.
@@ -68,6 +71,14 @@ package Browsers.Canvas is
    --  If Create_Toolbar is True, then a button_bar is added at the bottom.
    --  Parents_Pixmap and Children_Pixmap are the pixmaps to use in the title
    --  bar to get access to the parents/ancestors of an item or its children.
+
+   function Get_Orthogonal (E : access Browser_Link_Record) return Boolean;
+   --  If true, the two vertices will be layed out on the same row/column.
+   --  If False, Dest will appear to the right (resp. bottom) of Src.
+   --  This is only a recommendation, and the layout algorithm is allowed
+   --  to chose other organization. Likewise, Dest might not end up on the
+   --  same row if for some reason it should also be to the bottom of
+   --  another item.
 
    procedure Register_Actions
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
@@ -567,9 +578,6 @@ private
       Close_Pixmap          : Gdk.Pixbuf.Gdk_Pixbuf;
       Up_Arrow, Down_Arrow  : Gdk.Pixbuf.Gdk_Pixbuf;
    end record;
-
-   type Browser_Link_Record is new Gtkada.Canvas.Canvas_Link_Record
-     with null record;
 
    type Active_Area_Tree_Record;
    type Active_Area_Tree is access Active_Area_Tree_Record;

@@ -2580,6 +2580,15 @@ package body Browsers.Canvas is
         (Location_Marker_Record with Title => new String'(Browser_Name));
    end Create_Browser_Marker;
 
+   --------------------
+   -- Get_Orthogonal --
+   --------------------
+
+   function Get_Orthogonal (E : access Browser_Link_Record) return Boolean is
+   begin
+      return E.Orthogonal;
+   end Get_Orthogonal;
+
    ----------------------
    -- Register_Actions --
    ----------------------
