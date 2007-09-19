@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.2 NEW FEATURES LIST Current as of Sep 18, 2007
+GPS 4.2 NEW FEATURES LIST Current as of Sep 19, 2007
 ====================================================
 
 Copyright (c) 2006-2007, AdaCore
@@ -14,6 +14,12 @@ of the feature.
 
 New features in GPS 4.2.0
 -------------------------
+
+NF-42-G919-002 Remove All Other Items keeps all selected (2007-09-19)
+
+  In a browser (entity browser or call graph for instance), if you select
+  the contextual menu "Remove All Other Items", then all selected items
+  are kept. Previous behavior was to remove all but the current one.
 
 NF-42-G827-022 Add customization for activity logs (2007-09-02)
 

@@ -820,7 +820,9 @@ package body Browsers.Canvas is
 
          Next (Iter);
 
-         if Item /= Data.Item then
+         if Item /= Data.Item
+           and then not Is_Selected (Get_Canvas (Data.Browser), Item)
+         then
             Remove (Get_Canvas (Data.Browser), Item);
          end if;
       end loop;

@@ -5136,7 +5136,9 @@ or from it will be visible. Selecting the item will still
 highlight linked items, so that this information remains available.
 
 @item Remove all other items
-Selecting this menu item will remove all items but the selected one.
+Selecting this menu item will remove all the items that are not currently
+selected. This is a convenient method to clean up the contents of the
+browser.
 
 @end table
 
