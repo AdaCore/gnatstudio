@@ -8,9 +8,9 @@ Known Problems fixed in GPS 4.2.0
               with this entity contains characters '<' or '>'.
   Workaround: This message can be safely ignored.
 
-- G913-009 Unwanting scrolling when pasting with middle mouse button
+- G913-009 Unwanted scrolling when pasting with middle mouse button
   Problem:    Under UNIX systems, when pasting text from the X11
-              clipboard using the middle mouse button, GPS scrolls editor
+              clipboard using the middle mouse button, GPS scrolls the editor
               to the position of the cursor or selection, instead of
               scrolling to the point of insertion.
   Workaround: Place the cursor on screen before inserting.
