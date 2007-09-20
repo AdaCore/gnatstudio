@@ -1204,10 +1204,14 @@ package body Browsers.Entities is
             --  Hide discriminants (already displayed) and subprograms
             --  (would happen in C++, but these are primitive operations in
             --  this case)
+
             if not Get_Kind (Field).Is_Type   --  only variables
               and then In_Range (Get_Declaration_Of (Field), Item.Entity)
               and then not Is_Discriminant (Field, Item.Entity)
-              and then not Is_Container (Get_Kind (Field).Kind)
+              and then (not Is_Container (Get_Kind (Field).Kind)
+                        --  no containers (e.g subprograms
+                        or else Get_Kind (Field).Kind = Enumeration_Kind)
+                        --  but enumarations
             then
                if Is_Enum then
                   Add_Line (List, Get_Name (Field).all);

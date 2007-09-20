@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 4.2.0
 
+- G919-023: enumeration fields not listed in entity browser
+  Problem:    When displaying a record type in the entity browser,
+              fields of enumeration types are not listed.
+  Workaround: No known workaround.
+
 - G914-001 "pango" warnings in the Messages window
   Problem:    Error messages beginning with:
               "sys:1: PangoWarning: pango_layout_set_markup_with_accel"
