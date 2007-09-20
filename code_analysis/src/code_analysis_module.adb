@@ -208,16 +208,14 @@ package body Code_Analysis_Module is
    --  a generated submenu. Submenus are created if many instances are loaded
 
    procedure Append_To_Contextual_Submenu
-     (Cont_N_Anal  : Context_And_Analysis;
-      Submenu      : access Gtk_Menu_Record'Class;
-      Project_Node : Project_Access);
+     (Cont_N_Anal : Context_And_Analysis;
+      Submenu     : access Gtk_Menu_Record'Class);
    --  Allows to fill the given Submenu, in the appropriate order for
    --  contextual menu
 
    procedure Append_To_Submenu
      (Cont_N_Anal  : Context_And_Analysis;
-      Submenu      : access Gtk_Menu_Record'Class;
-      Project_Node : Project_Access);
+      Submenu      : access Gtk_Menu_Record'Class);
    --  Allows to fill the given Submenu, in the appropriate order for Tools
    --  menu
 
@@ -237,23 +235,20 @@ package body Code_Analysis_Module is
 
    procedure Append_Subprogram_Menu_Entries
      (Cont_N_Anal : Context_And_Analysis;
-      Submenu     : access Gtk_Menu_Record'Class;
-      Subp_Node   : Subprogram_Access);
+      Submenu     : access Gtk_Menu_Record'Class);
    --  Actually fills the given Submenu with the appropriate coverage action
    --  entries to handle subprograms (List line not covered, Remove data of...)
 
    procedure Append_File_Menu_Entries
      (Cont_N_Anal : Context_And_Analysis;
-      Submenu     : access Gtk_Menu_Record'Class;
-      File_Node   : File_Access);
+      Submenu     : access Gtk_Menu_Record'Class);
    --  Actually fills the given Submenu with the appropriate coverage action
    --  entries to handle files (Add/Remove coverage annotations,
    --  Show coverage report, ...)
 
    procedure Append_Project_Menu_Entries
      (Cont_N_Anal  : Context_And_Analysis;
-      Submenu      : access Gtk_Menu_Record'Class;
-      Project_Node : Project_Access);
+      Submenu      : access Gtk_Menu_Record'Class);
    --  Actually fills the given Submenu with the appropriate coverage action
    --  entries to handle projects (Add/Remove coverage annotations,
    --  Show coverage report, Load full data...)
@@ -345,16 +340,26 @@ package body Code_Analysis_Module is
    --  Create a new analysis instance, intended to contain analysis data
    --  The instance is inserted in the Instances set of the Module_ID
 
+   function Have_Gcov_Info (Cont_N_Anal : Context_And_Analysis) return Boolean;
+   --  Verify that contextual Project and/or file if any, have associated
+   --  coverage information in their corresponding node of the analysis tree
+
    procedure Add_Gcov_File_Info_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
-   --  Looks for a corresponding GCOV file, and adds its node and coverage info
-   --  into the current code_analysis structure
+   --  Simple wrapper for Add_Gcov_File_Info_In_Callback
+   --  Also calls Show_Report
 
    procedure Add_Gcov_File_Info_From_Shell
      (Data    : in out Callback_Data'Class;
       Command : String);
    --  Add node and coverage info provided by a gcov file parsing
+
+   procedure Add_Gcov_File_Info_In_Callback
+     (Cont_N_Anal : Context_And_Analysis);
+   --  Allow to add gcov file info from any callback that should use gcov info
+   --  Looks for GCOV files corresponding to the contextual file
+   --  Then call Add_Gcov_File_Info
 
    procedure Add_Gcov_File_Info
      (Kernel       : Kernel_Handle;
@@ -362,8 +367,7 @@ package body Code_Analysis_Module is
       Cov_File     : VFS.Virtual_File;
       Project_Node : Project_Access);
    --  Actually adds the node and coverage info provided by the gcov file
-   --  parsing. Should be called by Add_Gcov_File_Info_From_Shell or
-   --  Add_Gcov_File_Info_From_Menu
+   --  parsing into the corresponding code_analysis node.
 
    procedure Add_Gcov_Project_Info_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
@@ -376,22 +380,29 @@ package body Code_Analysis_Module is
       Command : String);
    --  Basically do an Add_Gcov_File_Info on every files of the given project
 
+   procedure Add_Gcov_Project_Info_In_Callback
+     (Cont_N_Anal : Context_And_Analysis);
+   --  Actually looks for a corresponding .gcov files to every source files in
+   --  the given project
+
    procedure Add_Gcov_Project_Info
      (Kernel   : Kernel_Handle;
       Prj_Node : Project_Access);
-   --  Actually looks for a corresponding .gcov files to every source files in
-   --  the given project and when its possible, add every file coverage
-   --  information to the Code_Analysis structure of given Project_Node
+   --  Adds every project file coverage information to the Code_Analysis
+   --  structure of given Project_Node
 
    procedure Add_All_Gcov_Project_Info_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
-   --  Try to load gcov info for every file of the Root_Project and every
-   --  imported projects
+   --  Wrapper for Add_All_Gcov_Project_Info_In_Callback
 
    procedure Add_All_Gcov_Project_Info_From_Shell
      (Data    : in out Callback_Data'Class;
       Command : String);
+   --  Wrapper for Add_All_Gcov_Project_Info_In_Callback
+
+   procedure Add_All_Gcov_Project_Info_In_Callback
+     (Cont_N_Anal : Context_And_Analysis);
    --  Try to load gcov info for every file of the Root_Project and every
    --  imported projects
 
@@ -546,6 +557,10 @@ package body Code_Analysis_Module is
    --  given project_node
    --  Does nothing if the uncovered lines aren't listed there
 
+   procedure Remove_Project_Coverage_Annotations
+     (Kernel : Kernel_Handle; Project_Node : Project_Access);
+   --  Removes coverage annotations of src_editors of its files
+
    procedure List_Uncovered_Lines_In_File
      (Kernel    : Kernel_Handle;
       File_Node : Code_Analysis.File_Access);
@@ -557,6 +572,14 @@ package body Code_Analysis_Module is
       File_Node : Code_Analysis.File_Access);
    --  Remove from the Locations view the uncovered lines of the given
    --  file_node
+   --  Does nothing if the uncovered lines aren't listed there
+
+   procedure Clear_Subprogram_Locations
+     (Kernel    : Kernel_Handle;
+      File_Node : Code_Analysis.File_Access;
+      Subp_Node : Subprogram_Access);
+   --  Remove from the Locations view the uncovered lines of the given
+   --  subp_node
    --  Does nothing if the uncovered lines aren't listed there
 
    procedure Remove_Subprogram_From_Menu
@@ -719,6 +742,40 @@ package body Code_Analysis_Module is
       return Analysis;
    end Create_Analysis_Instance;
 
+   --------------------
+   -- Have_Gcov_Info --
+   --------------------
+
+   function Have_Gcov_Info (Cont_N_Anal : Context_And_Analysis) return Boolean
+   is
+      Prj_Node : Code_Analysis.Project_Access;
+   begin
+      Prj_Node := Get_Or_Create
+        (Cont_N_Anal.Analysis.Projects,
+         Project_Information (Cont_N_Anal.Context));
+
+      if Has_File_Information (Cont_N_Anal.Context) then
+         declare
+            File_Node : Code_Analysis.File_Access;
+         begin
+            File_Node := Get_Or_Create
+              (Prj_Node, File_Information (Cont_N_Anal.Context));
+
+            if File_Node.Analysis_Data.Coverage_Data /= null and then
+              File_Node.Analysis_Data.Coverage_Data.Status = Valid then
+               return True;
+            end if;
+         end;
+      else
+         if Prj_Node.Analysis_Data.Coverage_Data /= null and then
+           Prj_Node.Analysis_Data.Coverage_Data.Status = Valid then
+            return True;
+         end if;
+      end if;
+
+      return False;
+   end Have_Gcov_Info;
+
    ----------------------------------
    -- Add_Gcov_File_Info_From_Menu --
    ----------------------------------
@@ -728,39 +785,8 @@ package body Code_Analysis_Module is
       Cont_N_Anal : Context_And_Analysis)
    is
       pragma Unreferenced (Widget);
-      Prj_Name : constant Project_Type :=
-                   Project_Information (Cont_N_Anal.Context);
-      Prj_Node : Project_Access;
-      Src_File : constant VFS.Virtual_File :=
-                   File_Information (Cont_N_Anal.Context);
-      Cov_File : VFS.Virtual_File;
    begin
-      Prj_Node := Get_Or_Create (Cont_N_Anal.Analysis.Projects, Prj_Name);
-      Cov_File := Create (Object_Path (Prj_Name, False, False) &
-                              "/" & Base_Name (Src_File) & Gcov_Extension_Cst);
-
-      if not Is_Regular_File (Cov_File) then
-         GPS.Kernel.Console.Insert
-           (Get_Kernel (Cont_N_Anal.Context),
-            -"There is no loadable GCOV information" &
-            (-" associated with " & Base_Name (Src_File)),
-            Mode => GPS.Kernel.Console.Error);
-
-         declare
-            File_Node : constant Code_Analysis.File_Access
-              := Get_Or_Create (Prj_Node, Src_File);
-         begin
-            Set_Error (File_Node, File_Not_Found);
-            --  Set an empty line array in order to make File_Node a valid
-            --  Code_Analysis node
-            File_Node.Lines := new Line_Array (1 .. 1);
-         end;
-      else
-         Add_Gcov_File_Info
-           (Get_Kernel (Cont_N_Anal.Context), Src_File, Cov_File, Prj_Node);
-         Compute_Project_Coverage (Prj_Node);
-      end if;
-
+      Add_Gcov_File_Info_In_Callback (Cont_N_Anal);
       --  Build/Refresh Report of Analysis
       Show_Analysis_Report (Get_Kernel (Cont_N_Anal.Context), Cont_N_Anal);
    exception
@@ -855,6 +881,47 @@ package body Code_Analysis_Module is
       when E : others => Trace (Exception_Handle, E);
    end Add_Gcov_File_Info_From_Shell;
 
+   ------------------------------------
+   -- Add_Gcov_File_Info_In_Callback --
+   ------------------------------------
+
+   procedure Add_Gcov_File_Info_In_Callback
+     (Cont_N_Anal : Context_And_Analysis)
+   is
+      Prj_Name : constant Project_Type :=
+                   Project_Information (Cont_N_Anal.Context);
+      Prj_Node : Project_Access;
+      Src_File : constant VFS.Virtual_File :=
+                   File_Information (Cont_N_Anal.Context);
+      Cov_File : VFS.Virtual_File;
+   begin
+      Prj_Node := Get_Or_Create (Cont_N_Anal.Analysis.Projects, Prj_Name);
+      Cov_File := Create (Object_Path (Prj_Name, False, False) &
+                              "/" & Base_Name (Src_File) & Gcov_Extension_Cst);
+
+      if not Is_Regular_File (Cov_File) then
+         GPS.Kernel.Console.Insert
+           (Get_Kernel (Cont_N_Anal.Context),
+            -"There is no loadable GCOV information" &
+            (-" associated with " & Base_Name (Src_File)),
+            Mode => GPS.Kernel.Console.Error);
+
+         declare
+            File_Node : constant Code_Analysis.File_Access
+              := Get_Or_Create (Prj_Node, Src_File);
+         begin
+            Set_Error (File_Node, File_Not_Found);
+            --  Set an empty line array in order to make File_Node a valid
+            --  Code_Analysis node
+            File_Node.Lines := new Line_Array (1 .. 1);
+         end;
+      else
+         Add_Gcov_File_Info
+           (Get_Kernel (Cont_N_Anal.Context), Src_File, Cov_File, Prj_Node);
+         Compute_Project_Coverage (Prj_Node);
+      end if;
+   end Add_Gcov_File_Info_In_Callback;
+
    ------------------------
    -- Add_Gcov_File_Info --
    ------------------------
@@ -925,12 +992,8 @@ package body Code_Analysis_Module is
       Cont_N_Anal : Context_And_Analysis)
    is
       pragma Unreferenced (Widget);
-      Prj_Node : Project_Access;
-      Prj_Name : constant Project_Type :=
-                   Project_Information (Cont_N_Anal.Context);
    begin
-      Prj_Node := Get_Or_Create (Cont_N_Anal.Analysis.Projects, Prj_Name);
-      Add_Gcov_Project_Info (Get_Kernel (Cont_N_Anal.Context), Prj_Node);
+      Add_Gcov_Project_Info_In_Callback (Cont_N_Anal);
       --  Build/Refresh Report of Analysis
       Show_Analysis_Report (Get_Kernel (Cont_N_Anal.Context), Cont_N_Anal);
    exception
@@ -994,6 +1057,21 @@ package body Code_Analysis_Module is
       when E : others => Trace (Exception_Handle, E);
    end Add_Gcov_Project_Info_From_Shell;
 
+   ---------------------------------------
+   -- Add_Gcov_Project_Info_In_Callback --
+   ---------------------------------------
+
+   procedure Add_Gcov_Project_Info_In_Callback
+     (Cont_N_Anal : Context_And_Analysis)
+   is
+      Prj_Node : Project_Access;
+      Prj_Name : constant Project_Type :=
+                   Project_Information (Cont_N_Anal.Context);
+   begin
+      Prj_Node := Get_Or_Create (Cont_N_Anal.Analysis.Projects, Prj_Name);
+      Add_Gcov_Project_Info (Get_Kernel (Cont_N_Anal.Context), Prj_Node);
+   end Add_Gcov_Project_Info_In_Callback;
+
    ---------------------------
    -- Add_Gcov_Project_Info --
    ---------------------------
@@ -1050,21 +1128,8 @@ package body Code_Analysis_Module is
       Cont_N_Anal : Context_And_Analysis)
    is
       pragma Unreferenced (Widget);
-      Prj_Iter : Imported_Project_Iterator;
-      Prj_Node : Project_Access;
-      Prj_Name : constant Project_Type :=
-                   Project_Information (Cont_N_Anal.Context);
    begin
-      Prj_Iter := Start (Prj_Name);
-
-      loop
-         exit when Current (Prj_Iter) = No_Project;
-         Prj_Node := Get_Or_Create
-           (Cont_N_Anal.Analysis.Projects, Current (Prj_Iter));
-         Add_Gcov_Project_Info (Get_Kernel (Cont_N_Anal.Context), Prj_Node);
-         Next (Prj_Iter);
-      end loop;
-
+      Add_All_Gcov_Project_Info_In_Callback (Cont_N_Anal);
       --  Build/Refresh Report of Analysis
       Show_Analysis_Report
         (Get_Kernel (Cont_N_Anal.Context),
@@ -1115,6 +1180,29 @@ package body Code_Analysis_Module is
    exception
       when E : others => Trace (Exception_Handle, E);
    end Add_All_Gcov_Project_Info_From_Shell;
+
+   -------------------------------------------
+   -- Add_All_Gcov_Project_Info_In_Callback --
+   -------------------------------------------
+
+   procedure Add_All_Gcov_Project_Info_In_Callback
+     (Cont_N_Anal : Context_And_Analysis)
+   is
+      Prj_Iter : Imported_Project_Iterator;
+      Prj_Node : Project_Access;
+      Prj_Name : constant Project_Type :=
+                   Project_Information (Cont_N_Anal.Context);
+   begin
+      Prj_Iter := Start (Prj_Name);
+
+      loop
+         exit when Current (Prj_Iter) = No_Project;
+         Prj_Node := Get_Or_Create
+           (Cont_N_Anal.Analysis.Projects, Current (Prj_Iter));
+         Add_Gcov_Project_Info (Get_Kernel (Cont_N_Anal.Context), Prj_Node);
+         Next (Prj_Iter);
+      end loop;
+   end Add_All_Gcov_Project_Info_In_Callback;
 
    -----------------------------------------------------
    -- List_Uncovered_Lines_In_All_Projects_From_Shell --
@@ -1178,6 +1266,20 @@ package body Code_Analysis_Module is
    is
       pragma Unreferenced (Widget);
    begin
+      if First_Project_With_Coverage_Data (Cont_N_Anal.Analysis) =
+        No_Project then
+         Add_All_Gcov_Project_Info_In_Callback (Cont_N_Anal);
+
+         if First_Project_With_Coverage_Data (Cont_N_Anal.Analysis) =
+           No_Project then
+            GPS.Kernel.Console.Insert
+              (Get_Kernel (Cont_N_Anal.Context),
+               -"Abort all project uncovered lines listing due to lack of " &
+               (-"coverage information"), Mode => GPS.Kernel.Console.Error);
+            return;
+         end if;
+      end if;
+
       List_Uncovered_Lines_In_All_Projects
         (Get_Kernel (Cont_N_Anal.Context), Cont_N_Anal.Analysis);
    exception
@@ -1519,7 +1621,8 @@ package body Code_Analysis_Module is
                      --  So we have a subprogram information
                      --  Find in the list the context's subprogram
                      loop
-                        exit when Get_String (Model, Iter, Num_Col) =
+                        exit when Iter = Null_Iter or else
+                        Get_String (Model, Iter, Num_Col) =
                           Entity_Name_Information (Context);
                         Next (Model, Iter);
                      end loop;
@@ -1528,14 +1631,16 @@ package body Code_Analysis_Module is
             elsif Has_File_Information (Context) then
                --  Find in the list the context's file
                loop
-                  exit when Get_String (Model, Iter, Num_Col) =
+                  exit when Iter = Null_Iter or else
+                  Get_String (Model, Iter, Num_Col) =
                     Base_Name (File_Information (Context));
                   Next (Model, Iter);
                end loop;
             else
                --  Find in the list the context's project
                loop
-                  exit when Get_String (Model, Iter, Num_Col) =
+                  exit when Iter = Null_Iter or else
+                  Get_String (Model, Iter, Num_Col) =
                     Project_Name (Project_Information (Context));
                   Next (Model, Iter);
                end loop;
@@ -1543,7 +1648,8 @@ package body Code_Analysis_Module is
          else
             --  Find in the tree the context's project
             loop
-               exit when Get_String (Model, Iter, Num_Col) =
+               exit when Iter = Null_Iter or else
+               Get_String (Model, Iter, Num_Col) =
                  Project_Name (Project_Information (Context));
                Next (Model, Iter);
             end loop;
@@ -1554,7 +1660,8 @@ package body Code_Analysis_Module is
 
                --  Find in the tree the context's file
                loop
-                  exit when Get_String (Model, Iter, Num_Col) =
+                  exit when Iter = Null_Iter or else
+                  Get_String (Model, Iter, Num_Col) =
                     Base_Name (File_Information (Context));
                   Next (Model, Iter);
                end loop;
@@ -1573,7 +1680,8 @@ package body Code_Analysis_Module is
                      Iter := Children (Model, Iter);
                      --  Find in the tree the context's subprogram
                      loop
-                        exit when Get_String (Model, Iter, Num_Col) =
+                        exit when Iter = Null_Iter or else
+                        Get_String (Model, Iter, Num_Col) =
                           Entity_Name_Information (Context);
                         Next (Model, Iter);
                      end loop;
@@ -1757,14 +1865,26 @@ package body Code_Analysis_Module is
       Cont_N_Anal : Context_And_Analysis)
    is
       pragma Unreferenced (Widget);
-      Project_Node : Project_Access;
-      File_Node    : Code_Analysis.File_Access;
+      Prj_Node  : constant Project_Access := Get_Or_Create
+           (Cont_N_Anal.Analysis.Projects,
+            Project_Information (Cont_N_Anal.Context));
+      File_Node : constant Code_Analysis.File_Access := Get_Or_Create
+        (Prj_Node, File_Information (Cont_N_Anal.Context));
    begin
-      Project_Node := Get_Or_Create
-        (Cont_N_Anal.Analysis.Projects,
-         Project_Information (Cont_N_Anal.Context));
-      File_Node := Get_Or_Create
-        (Project_Node, File_Information (Cont_N_Anal.Context));
+      if not Have_Gcov_Info (Cont_N_Anal) then
+         Add_Gcov_File_Info_In_Callback (Cont_N_Anal);
+
+         if not Have_Gcov_Info (Cont_N_Anal) then
+            GPS.Kernel.Console.Insert
+              (Get_Kernel (Cont_N_Anal.Context),
+               -"Abort coverage annotation addition for "
+               & Base_Name (File_Node.Name)
+               & (-" due to lack of gcov information"),
+               Mode => GPS.Kernel.Console.Error);
+            return;
+         end if;
+      end if;
+
       Open_File_Editor (Get_Kernel (Cont_N_Anal.Context), File_Node.Name);
       Add_Coverage_Annotations
         (Get_Kernel (Cont_N_Anal.Context), File_Node);
@@ -1848,13 +1968,25 @@ package body Code_Analysis_Module is
       Cont_N_Anal : Context_And_Analysis)
    is
       pragma Unreferenced (Widget);
-      Project_Node : Project_Access;
+      Prj_Node  : constant Project_Access := Get_Or_Create
+           (Cont_N_Anal.Analysis.Projects,
+            Project_Information (Cont_N_Anal.Context));
    begin
-      Project_Node := Get_Or_Create
-        (Cont_N_Anal.Analysis.Projects,
-         Project_Information (Cont_N_Anal.Context));
+      if not Have_Gcov_Info (Cont_N_Anal) then
+         Add_Gcov_Project_Info_In_Callback (Cont_N_Anal);
+
+         if not Have_Gcov_Info (Cont_N_Anal) then
+            GPS.Kernel.Console.Insert
+              (Get_Kernel (Cont_N_Anal.Context),
+               -"Abort " & Project_Name (Prj_Node.Name)
+               & (-" uncovered line listing due to lack of gcov information"),
+               Mode => GPS.Kernel.Console.Error);
+            return;
+         end if;
+      end if;
+
       List_Uncovered_Lines_In_Project
-        (Get_Kernel (Cont_N_Anal.Context), Project_Node);
+        (Get_Kernel (Cont_N_Anal.Context), Prj_Node);
    exception
       when E : others => Trace (Exception_Handle, E);
    end List_Uncovered_Lines_In_Project_From_Menu;
@@ -1868,11 +2000,10 @@ package body Code_Analysis_Module is
       Cont_N_Anal : Context_And_Analysis)
    is
       pragma Unreferenced (Widget);
-      Project_Node : Project_Access;
-   begin
-      Project_Node := Get_Or_Create
+      Project_Node : constant Project_Access := Get_Or_Create
         (Cont_N_Anal.Analysis.Projects,
          Project_Information (Cont_N_Anal.Context));
+   begin
       Clear_Project_Locations
         (Get_Kernel (Cont_N_Anal.Context), Project_Node);
    exception
@@ -1894,6 +2025,19 @@ package body Code_Analysis_Module is
       File_Node : constant Code_Analysis.File_Access := Get_Or_Create
         (Prj_Node, File_Information (Cont_N_Anal.Context));
    begin
+      if not Have_Gcov_Info (Cont_N_Anal) then
+         Add_Gcov_File_Info_In_Callback (Cont_N_Anal);
+
+         if not Have_Gcov_Info (Cont_N_Anal) then
+            GPS.Kernel.Console.Insert
+              (Get_Kernel (Cont_N_Anal.Context),
+               -"Abort " & Base_Name (File_Node.Name)
+               & (-" uncovered line listing due to lack of gcov information"),
+               Mode => GPS.Kernel.Console.Error);
+            return;
+         end if;
+      end if;
+
       Open_File_Editor (Get_Kernel (Cont_N_Anal.Context), File_Node.Name);
       List_Uncovered_Lines_In_File
         (Get_Kernel (Cont_N_Anal.Context), File_Node);
@@ -1963,6 +2107,22 @@ package body Code_Analysis_Module is
       end loop;
    end Clear_Project_Locations;
 
+   -----------------------------------------
+   -- Remove_Project_Coverage_Annotations --
+   -----------------------------------------
+
+   procedure Remove_Project_Coverage_Annotations
+     (Kernel : Kernel_Handle; Project_Node : Project_Access)
+   is
+      use File_Maps;
+      Map_Cur : File_Maps.Cursor := Project_Node.Files.First;
+   begin
+      for J in 1 .. Integer (Project_Node.Files.Length) loop
+         Remove_Coverage_Annotations (Kernel, Element (Map_Cur));
+         Next (Map_Cur);
+      end loop;
+   end Remove_Project_Coverage_Annotations;
+
    ----------------------------------
    -- List_Uncovered_Lines_In_File --
    ----------------------------------
@@ -2013,9 +2173,7 @@ package body Code_Analysis_Module is
      (Kernel    : Kernel_Handle;
       File_Node : Code_Analysis.File_Access) is
    begin
-      if File_Node.Analysis_Data.Coverage_Data.Status = Valid then
-         Remove_Location_Category (Kernel, Coverage_Category, File_Node.Name);
-      end if;
+      Remove_Location_Category (Kernel, Coverage_Category, File_Node.Name);
    end Clear_File_Locations;
 
    --------------------------------------------------
@@ -2037,6 +2195,20 @@ package body Code_Analysis_Module is
         (File_Node, new String'(Entity_Name_Information
          (Cont_N_Anal.Context)));
    begin
+      if not Have_Gcov_Info (Cont_N_Anal) then
+         Add_Gcov_File_Info_In_Callback (Cont_N_Anal);
+
+         if not Have_Gcov_Info (Cont_N_Anal) then
+            GPS.Kernel.Console.Insert
+              (Get_Kernel (Cont_N_Anal.Context),
+               -"Abort " & Subp_Node.Name.all
+               & (-" uncovered line listing due to lack of "
+                 & (-"coverage information")),
+               Mode => GPS.Kernel.Console.Error);
+            return;
+         end if;
+      end if;
+
       if File_Node.Analysis_Data.Coverage_Data.Status = Valid then
          for J in Subp_Node.Start .. Subp_Node.Stop loop
             if File_Node.Lines (J) /= Null_Line and then
@@ -2081,6 +2253,20 @@ package body Code_Analysis_Module is
         (File_Node, new String'(Entity_Name_Information
          (Cont_N_Anal.Context)));
    begin
+      Clear_Subprogram_Locations (Kernel, File_Node, Subp_Node);
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end Clear_Subprogram_Locations_From_Menu;
+
+   --------------------------------
+   -- Clear_Subprogram_Locations --
+   --------------------------------
+
+   procedure Clear_Subprogram_Locations
+     (Kernel    : Kernel_Handle;
+      File_Node : Code_Analysis.File_Access;
+      Subp_Node : Subprogram_Access) is
+   begin
       if File_Node.Analysis_Data.Coverage_Data.Status = Valid then
          for J in Subp_Node.Start .. Subp_Node.Stop loop
             if File_Node.Lines (J) /= Null_Line and then
@@ -2093,9 +2279,7 @@ package body Code_Analysis_Module is
             end if;
          end loop;
       end if;
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end Clear_Subprogram_Locations_From_Menu;
+   end Clear_Subprogram_Locations;
 
    ---------------------------------
    -- Remove_Subprogram_From_Menu --
@@ -2114,61 +2298,71 @@ package body Code_Analysis_Module is
       Subp_Node : Code_Analysis.Subprogram_Access := Get_Or_Create
         (File_Node, new String'(Entity_Name_Information
          (Cont_N_Anal.Context)));
-      Prj_Iter   : Gtk_Tree_Iter;
-      File_Iter  : Gtk_Tree_Iter;
-      Subp_Iter  : Gtk_Tree_Iter;
+      Prj_Iter  : Gtk_Tree_Iter;
+      File_Iter : Gtk_Tree_Iter;
+      Subp_Iter : Gtk_Tree_Iter;
    begin
       if Cont_N_Anal.Analysis.View = null then
          Show_Analysis_Report
            (Get_Kernel (Cont_N_Anal.Context), Cont_N_Anal, False);
       end if;
 
-      --  Update project coverage information
-      Prj_Node.Analysis_Data.Coverage_Data.Coverage :=
-        Prj_Node.Analysis_Data.Coverage_Data.Coverage -
-          Subp_Node.Analysis_Data.Coverage_Data.Coverage;
-      Project_Coverage
-        (Prj_Node.Analysis_Data.Coverage_Data.all).Children :=
-        Project_Coverage
-          (Prj_Node.Analysis_Data.Coverage_Data.all).Children -
-          Subprogram_Coverage
-            (Subp_Node.Analysis_Data.Coverage_Data.all).Children;
+      if Have_Gcov_Info (Cont_N_Anal) then
+         --  Removes potential listed locations
+         Clear_Subprogram_Locations
+           (Get_Kernel (Cont_N_Anal.Context), File_Node, Subp_Node);
+         --  Update file coverage information
+         File_Node.Analysis_Data.Coverage_Data.Coverage :=
+           File_Node.Analysis_Data.Coverage_Data.Coverage -
+             Subp_Node.Analysis_Data.Coverage_Data.Coverage;
+         Node_Coverage (File_Node.Analysis_Data.Coverage_Data.all).Children :=
+           Node_Coverage (File_Node.Analysis_Data.Coverage_Data.all).Children -
+           Subprogram_Coverage
+             (Subp_Node.Analysis_Data.Coverage_Data.all).Children;
 
-      if Project_Coverage
-        (Prj_Node.Analysis_Data.Coverage_Data.all).Children = 0 then
-         --  No more children means no more usable coverage data
-         Unchecked_Free (Prj_Node.Analysis_Data.Coverage_Data);
-      end if;
+         if Node_Coverage
+           (File_Node.Analysis_Data.Coverage_Data.all).Children = 0 then
+            --  No more children means no more usable coverage data
+            Unchecked_Free (File_Node.Analysis_Data.Coverage_Data);
+         end if;
 
-      --  Update file coverage information
-      File_Node.Analysis_Data.Coverage_Data.Coverage :=
-        File_Node.Analysis_Data.Coverage_Data.Coverage -
-          Subp_Node.Analysis_Data.Coverage_Data.Coverage;
-      Node_Coverage (File_Node.Analysis_Data.Coverage_Data.all).Children :=
-        Node_Coverage (File_Node.Analysis_Data.Coverage_Data.all).Children -
-        Subprogram_Coverage
-          (Subp_Node.Analysis_Data.Coverage_Data.all).Children;
+         --  Update project coverage information
+         Prj_Node.Analysis_Data.Coverage_Data.Coverage :=
+           Prj_Node.Analysis_Data.Coverage_Data.Coverage -
+             Subp_Node.Analysis_Data.Coverage_Data.Coverage;
+         Project_Coverage
+           (Prj_Node.Analysis_Data.Coverage_Data.all).Children :=
+           Project_Coverage
+             (Prj_Node.Analysis_Data.Coverage_Data.all).Children -
+             Subprogram_Coverage
+               (Subp_Node.Analysis_Data.Coverage_Data.all).Children;
 
-      if Node_Coverage
-        (File_Node.Analysis_Data.Coverage_Data.all).Children = 0 then
-         --  No more children means no more usable coverage data
-         Unchecked_Free (File_Node.Analysis_Data.Coverage_Data);
+         if Project_Coverage
+           (Prj_Node.Analysis_Data.Coverage_Data.all).Children = 0 then
+            --  No more children means no more usable coverage data
+            Unchecked_Free (Prj_Node.Analysis_Data.Coverage_Data);
+         end if;
       end if;
 
       Subp_Iter := Get_Iter_From_Context
         (Cont_N_Anal.Context, Cont_N_Anal.Analysis.View.Model);
-      File_Iter := Parent (Cont_N_Anal.Analysis.View.Model, Subp_Iter);
-      Fill_Iter (Cont_N_Anal.Analysis.View.Model, File_Iter,
-                 File_Node.Analysis_Data, Binary_Coverage_Mode);
-      Prj_Iter  := Parent (Cont_N_Anal.Analysis.View.Model, File_Iter);
-      Fill_Iter (Cont_N_Anal.Analysis.View.Model, Prj_Iter,
-                 Prj_Node.Analysis_Data, Binary_Coverage_Mode);
-      --  Removes Subp_Iter from the report
-      Remove (Cont_N_Anal.Analysis.View.Model, Subp_Iter);
-      --  Removes Subp_Iter from its container
+
+      if Subp_Iter /= Null_Iter then
+         File_Iter := Parent (Cont_N_Anal.Analysis.View.Model, Subp_Iter);
+         Fill_Iter (Cont_N_Anal.Analysis.View.Model, File_Iter,
+                    File_Node.Analysis_Data, Binary_Coverage_Mode);
+         Prj_Iter  := Parent (Cont_N_Anal.Analysis.View.Model, File_Iter);
+         Fill_Iter (Cont_N_Anal.Analysis.View.Model, Prj_Iter,
+                    Prj_Node.Analysis_Data, Binary_Coverage_Mode);
+         --  Removes Subp_Iter from the report
+         Remove (Cont_N_Anal.Analysis.View.Model, Subp_Iter);
+      end if;
+
+      --  Removes Subp_Node from its container
       Subprogram_Maps.Delete (File_Node.Subprograms, Subp_Node.Name.all);
       --  Free Subprogram analysis node
       Free_Subprogram (Subp_Node);
+
    exception
       when E : others => Trace (Exception_Handle, E);
    end Remove_Subprogram_From_Menu;
@@ -2195,34 +2389,47 @@ package body Code_Analysis_Module is
            (Get_Kernel (Cont_N_Anal.Context), Cont_N_Anal, False);
       end if;
 
-      --  Update project coverage information
-      Prj_Node.Analysis_Data.Coverage_Data.Coverage :=
-        Prj_Node.Analysis_Data.Coverage_Data.Coverage -
-          File_Node.Analysis_Data.Coverage_Data.Coverage;
-      Project_Coverage
-        (Prj_Node.Analysis_Data.Coverage_Data.all).Children :=
-        Project_Coverage
-          (Prj_Node.Analysis_Data.Coverage_Data.all).Children -
-          Node_Coverage
-            (File_Node.Analysis_Data.Coverage_Data.all).Children;
+      if Have_Gcov_Info (Cont_N_Anal) then
+         --  Update project coverage information
+         Prj_Node.Analysis_Data.Coverage_Data.Coverage :=
+           Prj_Node.Analysis_Data.Coverage_Data.Coverage -
+             File_Node.Analysis_Data.Coverage_Data.Coverage;
+         Project_Coverage
+           (Prj_Node.Analysis_Data.Coverage_Data.all).Children :=
+           Project_Coverage
+             (Prj_Node.Analysis_Data.Coverage_Data.all).Children -
+             Node_Coverage
+               (File_Node.Analysis_Data.Coverage_Data.all).Children;
 
-      if Project_Coverage
-        (Prj_Node.Analysis_Data.Coverage_Data.all).Children = 0 then
-         --  No more children means no more usable coverage data
-         Unchecked_Free (Prj_Node.Analysis_Data.Coverage_Data);
+         if Project_Coverage
+           (Prj_Node.Analysis_Data.Coverage_Data.all).Children = 0 then
+            --  No more children means no more usable coverage data
+            Unchecked_Free (Prj_Node.Analysis_Data.Coverage_Data);
+         end if;
+
+         --  Removes potential listed locations
+         Clear_File_Locations (Get_Kernel (Cont_N_Anal.Context), File_Node);
+         --  Removes potential annotations
+         Remove_Coverage_Annotations
+           (Get_Kernel (Cont_N_Anal.Context), File_Node);
       end if;
 
       File_Iter := Get_Iter_From_Context
         (Cont_N_Anal.Context, Cont_N_Anal.Analysis.View.Model);
-      Prj_Iter  := Parent (Cont_N_Anal.Analysis.View.Model, File_Iter);
-      Fill_Iter (Cont_N_Anal.Analysis.View.Model, Prj_Iter,
-                 Prj_Node.Analysis_Data, Binary_Coverage_Mode);
-      --  Removes File_Iter from the report
-      Remove (Cont_N_Anal.Analysis.View.Model, File_Iter);
-      --  Removes File_Iter from its container
+
+      if File_Iter /= Null_Iter then
+         Prj_Iter  := Parent (Cont_N_Anal.Analysis.View.Model, File_Iter);
+         Fill_Iter (Cont_N_Anal.Analysis.View.Model, Prj_Iter,
+                    Prj_Node.Analysis_Data, Binary_Coverage_Mode);
+         --  Removes File_Iter from the report
+         Remove (Cont_N_Anal.Analysis.View.Model, File_Iter);
+      end if;
+
+      --  Removes File_Node from its container
       File_Maps.Delete (Prj_Node.Files, File_Node.Name);
       --  Free the file analysis node
       Free_File (File_Node);
+
    exception
       when E : others => Trace (Exception_Handle, E);
    end Remove_File_From_Menu;
@@ -2248,12 +2455,21 @@ package body Code_Analysis_Module is
 
       Iter := Get_Iter_From_Context
         (Cont_N_Anal.Context, Cont_N_Anal.Analysis.View.Model);
-      --  Removes it from the report
-      Remove (Cont_N_Anal.Analysis.View.Model, Iter);
-      --  Removes it from its container
+
+      if Iter /= Null_Iter then
+         --  Removes Iter from the report
+         Remove (Cont_N_Anal.Analysis.View.Model, Iter);
+      end if;
+
+      --  Removes potential listed locations
+      Clear_Project_Locations (Get_Kernel (Cont_N_Anal.Context), Prj_Node);
+      --  Removes potential src_editor annotations
+      Remove_Project_Coverage_Annotations
+        (Get_Kernel (Cont_N_Anal.Context), Prj_Node);
+      --  Removes Prj_Node from its container
       Project_Maps.Delete
         (Cont_N_Anal.Analysis.Projects.all, Prj_Node.Name);
-      --  Free it
+      --  Free Prj_Node
       Free_Project (Prj_Node);
 
       if Project_Maps.Length (Cont_N_Anal.Analysis.Projects.all) = 0 then
@@ -2304,7 +2520,6 @@ package body Code_Analysis_Module is
       use Code_Analysis_Instances;
       pragma Unreferenced (Factory, Object);
       Cont_N_Anal : Context_And_Analysis;
-      Prj_Node    : Project_Access;
       Submenu     : Gtk_Menu;
       Item        : Gtk_Menu_Item;
       Cur         : Cursor := Code_Analysis_Module_ID.Analyzes.First;
@@ -2315,9 +2530,6 @@ package body Code_Analysis_Module is
          exit when Cur = No_Element;
 
          Cont_N_Anal.Analysis := Element (Cur);
-         Prj_Node             := Get_Or_Create
-           (Cont_N_Anal.Analysis.Projects,
-            Project_Information (Cont_N_Anal.Context));
 
          if Code_Analysis_Module_ID.Analyzes.Length > 1 then
             Gtk_New (Item, Cont_N_Anal.Analysis.Name.all);
@@ -2325,9 +2537,9 @@ package body Code_Analysis_Module is
             Gtk_New (Submenu);
             Set_Submenu (Item, Submenu);
             Set_Sensitive (Item, True);
-            Append_To_Contextual_Submenu (Cont_N_Anal, Submenu, Prj_Node);
+            Append_To_Contextual_Submenu (Cont_N_Anal, Submenu);
          else
-            Append_To_Contextual_Submenu (Cont_N_Anal, Menu, Prj_Node);
+            Append_To_Contextual_Submenu (Cont_N_Anal, Menu);
          end if;
 
          Next (Cur);
@@ -2339,22 +2551,20 @@ package body Code_Analysis_Module is
    ----------------------------------
 
    procedure Append_To_Contextual_Submenu
-     (Cont_N_Anal  : Context_And_Analysis;
-      Submenu      : access Gtk_Menu_Record'Class;
-      Project_Node : Project_Access)
-   is
-      Item : Gtk_Menu_Item;
+     (Cont_N_Anal : Context_And_Analysis;
+      Submenu     : access Gtk_Menu_Record'Class) is
    begin
+      if Get_Creator (Cont_N_Anal.Context) /=
+        Abstract_Module_ID (Code_Analysis_Module_ID) then
+         Append_Show_Analysis_Report_To_Menu
+           (Cont_N_Anal, Submenu, -"Show report");
+      end if;
+
       if Has_File_Information (Cont_N_Anal.Context) then
-         declare
-            File_Node : constant Code_Analysis.File_Access := Get_Or_Create
-              (Project_Node, File_Information (Cont_N_Anal.Context));
-         begin
             if Has_Entity_Name_Information (Cont_N_Anal.Context) then
                declare
-                  Entity    : constant Entities.Entity_Information :=
-                                Get_Entity (Cont_N_Anal.Context);
-                  Subp_Node : Subprogram_Access;
+                  Entity : constant Entities.Entity_Information :=
+                          Get_Entity (Cont_N_Anal.Context);
                begin
                   if (Entity /= null
                       and then Is_Subprogram (Entity))
@@ -2362,30 +2572,16 @@ package body Code_Analysis_Module is
                     Abstract_Module_ID (Code_Analysis_Module_ID)
                   then
                      --  So we have a subprogram information
-                     Subp_Node := Get_Or_Create
-                       (File_Node, new String'(Entity_Name_Information
-                        (Cont_N_Anal.Context)));
-                     Append_Subprogram_Menu_Entries
-                       (Cont_N_Anal, Submenu, Subp_Node);
+                     Append_Subprogram_Menu_Entries (Cont_N_Anal, Submenu);
                   else
-                     Append_File_Menu_Entries
-                       (Cont_N_Anal, Submenu, File_Node);
+                     Append_File_Menu_Entries (Cont_N_Anal, Submenu);
                   end if;
                end;
             else
-               Append_File_Menu_Entries (Cont_N_Anal, Submenu, File_Node);
+               Append_File_Menu_Entries (Cont_N_Anal, Submenu);
             end if;
-         end;
       else
-         Append_Project_Menu_Entries (Cont_N_Anal, Submenu, Project_Node);
-      end if;
-
-      if Get_Creator (Cont_N_Anal.Context) /=
-        Abstract_Module_ID (Code_Analysis_Module_ID) then
-         Gtk_New (Item);
-         Append (Submenu, Item);
-         Append_Show_Analysis_Report_To_Menu
-           (Cont_N_Anal, Submenu, -"Show report");
+         Append_Project_Menu_Entries (Cont_N_Anal, Submenu);
       end if;
    end Append_To_Contextual_Submenu;
 
@@ -2395,42 +2591,38 @@ package body Code_Analysis_Module is
 
    procedure Append_Subprogram_Menu_Entries
      (Cont_N_Anal : Context_And_Analysis;
-      Submenu     : access Gtk_Menu_Record'Class;
-      Subp_Node   : Subprogram_Access)
+      Submenu     : access Gtk_Menu_Record'Class)
    is
       Item : Gtk_Menu_Item;
    begin
-      if Subp_Node.Analysis_Data.Coverage_Data /= null then
-         Gtk_New (Item, -"List uncovered lines");
-         Append (Submenu, Item);
-         Context_And_Analysis_CB.Connect
-           (Item, Gtk.Menu_Item.Signal_Activate,
-            Context_And_Analysis_CB.To_Marshaller
-              (List_Uncovered_Lines_In_Subprogram_From_Menu'Access),
-            Cont_N_Anal);
-         Gtk_New (Item, -"Clear listed locations");
-         Append (Submenu, Item);
-         Context_And_Analysis_CB.Connect
-           (Item, Gtk.Menu_Item.Signal_Activate,
-            Context_And_Analysis_CB.To_Marshaller
-              (Clear_Subprogram_Locations_From_Menu'Access),
-            Cont_N_Anal);
-         Gtk_New (Item, -"Remove data of " & Entity_Name_Information
-                  (Cont_N_Anal.Context));
-         Append (Submenu, Item);
-         Context_And_Analysis_CB.Connect
-           (Item, Gtk.Menu_Item.Signal_Activate,
-            Context_And_Analysis_CB.To_Marshaller
-              (Remove_Subprogram_From_Menu'Access), Cont_N_Anal);
-      else
-         Gtk_New (Item, -"Load data for " &
-                  Locale_Base_Name (File_Information (Cont_N_Anal.Context)));
-         Append (Submenu, Item);
-         Context_And_Analysis_CB.Connect
-           (Item, Gtk.Menu_Item.Signal_Activate,
-            Context_And_Analysis_CB.To_Marshaller
-              (Add_Gcov_File_Info_From_Menu'Access), Cont_N_Anal);
-      end if;
+      Gtk_New (Item, -"Load data for " &
+               Locale_Base_Name (File_Information (Cont_N_Anal.Context)));
+      Append (Submenu, Item);
+      Context_And_Analysis_CB.Connect
+        (Item, Gtk.Menu_Item.Signal_Activate,
+         Context_And_Analysis_CB.To_Marshaller
+           (Add_Gcov_File_Info_From_Menu'Access), Cont_N_Anal);
+      Gtk_New (Item, -"List uncovered lines");
+      Append (Submenu, Item);
+      Context_And_Analysis_CB.Connect
+        (Item, Gtk.Menu_Item.Signal_Activate,
+         Context_And_Analysis_CB.To_Marshaller
+           (List_Uncovered_Lines_In_Subprogram_From_Menu'Access),
+         Cont_N_Anal);
+      Gtk_New (Item, -"Clear listed locations");
+      Append (Submenu, Item);
+      Context_And_Analysis_CB.Connect
+        (Item, Gtk.Menu_Item.Signal_Activate,
+         Context_And_Analysis_CB.To_Marshaller
+           (Clear_Subprogram_Locations_From_Menu'Access),
+         Cont_N_Anal);
+      Gtk_New (Item, -"Remove data of " & Entity_Name_Information
+               (Cont_N_Anal.Context));
+      Append (Submenu, Item);
+      Context_And_Analysis_CB.Connect
+        (Item, Gtk.Menu_Item.Signal_Activate,
+         Context_And_Analysis_CB.To_Marshaller
+           (Remove_Subprogram_From_Menu'Access), Cont_N_Anal);
    end Append_Subprogram_Menu_Entries;
 
    ------------------------------
@@ -2439,62 +2631,69 @@ package body Code_Analysis_Module is
 
    procedure Append_File_Menu_Entries
      (Cont_N_Anal : Context_And_Analysis;
-      Submenu     : access Gtk_Menu_Record'Class;
-      File_Node   : Code_Analysis.File_Access)
+      Submenu     : access Gtk_Menu_Record'Class)
    is
-      Item : Gtk_Menu_Item;
+      Item    : Gtk_Menu_Item;
+      Context : Selection_Context :=
+                  Get_Current_Context (Get_Kernel (Cont_N_Anal.Context));
    begin
-      if File_Node.Analysis_Data.Coverage_Data /= null and then
-        File_Node.Analysis_Data.Coverage_Data.Status = Valid then
-         Gtk_New (Item, -"Reload data for " &
-                  Locale_Base_Name (File_Information (Cont_N_Anal.Context)));
-         Append (Submenu, Item);
-         Context_And_Analysis_CB.Connect
-           (Item, Gtk.Menu_Item.Signal_Activate,
-            Context_And_Analysis_CB.To_Marshaller
-              (Add_Gcov_File_Info_From_Menu'Access), Cont_N_Anal);
-         Gtk_New (Item, -"Add coverage annotations");
-         Append (Submenu, Item);
-         Context_And_Analysis_CB.Connect
-           (Item, Gtk.Menu_Item.Signal_Activate,
-            Context_And_Analysis_CB.To_Marshaller
-              (Add_Coverage_Annotations_From_Menu'Access), Cont_N_Anal);
-         Gtk_New (Item, -"Remove coverage annotations");
-         Append (Submenu, Item);
-         Context_And_Analysis_CB.Connect
-           (Item, Gtk.Menu_Item.Signal_Activate,
-            Context_And_Analysis_CB.To_Marshaller
-              (Remove_Coverage_Annotations_From_Menu'Access), Cont_N_Anal);
-         Gtk_New (Item, -"List uncovered lines");
-         Append (Submenu, Item);
-         Context_And_Analysis_CB.Connect
-           (Item, Gtk.Menu_Item.Signal_Activate,
-            Context_And_Analysis_CB.To_Marshaller
-              (List_Uncovered_Lines_In_File_From_Menu'Access),
-            Cont_N_Anal);
-         Gtk_New (Item, -"Clear listed locations");
-         Append (Submenu, Item);
-         Context_And_Analysis_CB.Connect
-           (Item, Gtk.Menu_Item.Signal_Activate,
-            Context_And_Analysis_CB.To_Marshaller
-              (Clear_File_Locations_From_Menu'Access),
-            Cont_N_Anal);
-         Gtk_New (Item, -"Remove data of " &
-                  Base_Name (File_Information (Cont_N_Anal.Context)));
-         Append (Submenu, Item);
-         Context_And_Analysis_CB.Connect
-           (Item, Gtk.Menu_Item.Signal_Activate,
-            Context_And_Analysis_CB.To_Marshaller
-              (Remove_File_From_Menu'Access), Cont_N_Anal);
-      else
-         Gtk_New (Item, -"Load data for " &
-                  Locale_Base_Name (File_Information (Cont_N_Anal.Context)));
-         Append (Submenu, Item);
-         Context_And_Analysis_CB.Connect
-           (Item, Gtk.Menu_Item.Signal_Activate,
-            Context_And_Analysis_CB.To_Marshaller
-              (Add_Gcov_File_Info_From_Menu'Access), Cont_N_Anal);
+      --  Remove entity information
+      Set_Entity_Information (Context);
+
+      if Get_Creator (Cont_N_Anal.Context) =
+        Abstract_Module_ID (Code_Analysis_Module_ID) then
+         --  If context has been filled by Coverage Report, then fill it again
+         --  because the new gotten context from kernel will be empty too
+         Set_File_Information
+           (Context,
+            File_Information (Cont_N_Anal.Context),
+            Project_Information (Cont_N_Anal.Context));
       end if;
+
+      Gtk_New (Item, -"Load data for " &
+               Locale_Base_Name (File_Information (Context)));
+      Append (Submenu, Item);
+      Context_And_Analysis_CB.Connect
+        (Item, Gtk.Menu_Item.Signal_Activate,
+         Context_And_Analysis_CB.To_Marshaller
+           (Add_Gcov_File_Info_From_Menu'Access),
+         Context_And_Analysis'(Context, Cont_N_Anal.Analysis));
+      Gtk_New (Item, -"Add coverage annotations");
+      Append (Submenu, Item);
+      Context_And_Analysis_CB.Connect
+        (Item, Gtk.Menu_Item.Signal_Activate,
+         Context_And_Analysis_CB.To_Marshaller
+           (Add_Coverage_Annotations_From_Menu'Access),
+         Context_And_Analysis'(Context, Cont_N_Anal.Analysis));
+      Gtk_New (Item, -"Remove coverage annotations");
+      Append (Submenu, Item);
+      Context_And_Analysis_CB.Connect
+        (Item, Gtk.Menu_Item.Signal_Activate,
+         Context_And_Analysis_CB.To_Marshaller
+           (Remove_Coverage_Annotations_From_Menu'Access),
+         Context_And_Analysis'(Context, Cont_N_Anal.Analysis));
+      Gtk_New (Item, -"List uncovered lines");
+      Append (Submenu, Item);
+      Context_And_Analysis_CB.Connect
+        (Item, Gtk.Menu_Item.Signal_Activate,
+         Context_And_Analysis_CB.To_Marshaller
+           (List_Uncovered_Lines_In_File_From_Menu'Access),
+         Context_And_Analysis'(Context, Cont_N_Anal.Analysis));
+      Gtk_New (Item, -"Clear listed locations");
+      Append (Submenu, Item);
+      Context_And_Analysis_CB.Connect
+        (Item, Gtk.Menu_Item.Signal_Activate,
+         Context_And_Analysis_CB.To_Marshaller
+           (Clear_File_Locations_From_Menu'Access),
+         Context_And_Analysis'(Context, Cont_N_Anal.Analysis));
+      Gtk_New (Item, -"Remove data of " &
+               Base_Name (File_Information (Context)));
+      Append (Submenu, Item);
+      Context_And_Analysis_CB.Connect
+        (Item, Gtk.Menu_Item.Signal_Activate,
+         Context_And_Analysis_CB.To_Marshaller
+           (Remove_File_From_Menu'Access),
+         Context_And_Analysis'(Context, Cont_N_Anal.Analysis));
    end Append_File_Menu_Entries;
 
    ---------------------------------
@@ -2503,54 +2702,45 @@ package body Code_Analysis_Module is
 
    procedure Append_Project_Menu_Entries
      (Cont_N_Anal  : Context_And_Analysis;
-      Submenu      : access Gtk_Menu_Record'Class;
-      Project_Node : Project_Access)
+      Submenu      : access Gtk_Menu_Record'Class)
    is
-      Item : Gtk_Menu_Item;
+      Item    : Gtk_Menu_Item;
+      Context : Selection_Context :=
+                  Get_Current_Context (Get_Kernel (Cont_N_Anal.Context));
    begin
-      if Project_Node.Analysis_Data.Coverage_Data /= null then
-         Gtk_New (Item, -"Reload data for project " &
-                  Project_Name (Project_Information (Cont_N_Anal.Context)));
-         Append (Submenu, Item);
-         Context_And_Analysis_CB.Connect
-           (Item, Gtk.Menu_Item.Signal_Activate,
-            Context_And_Analysis_CB.To_Marshaller
-              (Add_Gcov_Project_Info_From_Menu'Access), Cont_N_Anal);
-         Gtk_New (Item, -"List uncovered lines");
-         Append (Submenu, Item);
-         Context_And_Analysis_CB.Connect
-           (Item, Gtk.Menu_Item.Signal_Activate,
-            Context_And_Analysis_CB.To_Marshaller
-              (List_Uncovered_Lines_In_Project_From_Menu'Access),
-            Cont_N_Anal);
-         Gtk_New (Item, -"Clear listed locations");
-         Append (Submenu, Item);
-         Context_And_Analysis_CB.Connect
-           (Item, Gtk.Menu_Item.Signal_Activate,
-            Context_And_Analysis_CB.To_Marshaller
-              (Clear_Project_Locations_From_Menu'Access),
-            Cont_N_Anal);
-         Gtk_New (Item, -"Remove data of project " &
-                  Project_Name (Project_Information (Cont_N_Anal.Context)));
-         Append (Submenu, Item);
-         Context_And_Analysis_CB.Connect
-           (Item, Gtk.Menu_Item.Signal_Activate,
-            Context_And_Analysis_CB.To_Marshaller
-              (Remove_Project_From_Menu'Access), Cont_N_Anal);
-      else
-         Gtk_New (Item, -"Load data for project " &
-                  Project_Name (Project_Information (Cont_N_Anal.Context)));
-         Append (Submenu, Item);
-         Context_And_Analysis_CB.Connect
-           (Item, Gtk.Menu_Item.Signal_Activate,
-            Context_And_Analysis_CB.To_Marshaller
-              (Add_Gcov_Project_Info_From_Menu'Access), Cont_N_Anal);
-      end if;
+      Set_File_Information
+        (Context, VFS.No_File, Project_Information (Cont_N_Anal.Context));
+      Gtk_New (Item, -"Load data for project " &
+               Project_Name (Project_Information (Context)));
+      Append (Submenu, Item);
+      Context_And_Analysis_CB.Connect
+        (Item, Gtk.Menu_Item.Signal_Activate,
+         Context_And_Analysis_CB.To_Marshaller
+           (Add_Gcov_Project_Info_From_Menu'Access),
+         Context_And_Analysis'(Context, Cont_N_Anal.Analysis));
+      Gtk_New (Item, -"List uncovered lines");
+      Append (Submenu, Item);
+      Context_And_Analysis_CB.Connect
+        (Item, Gtk.Menu_Item.Signal_Activate,
+         Context_And_Analysis_CB.To_Marshaller
+           (List_Uncovered_Lines_In_Project_From_Menu'Access),
+         Context_And_Analysis'(Context, Cont_N_Anal.Analysis));
+      Gtk_New (Item, -"Clear listed locations");
+      Append (Submenu, Item);
+      Context_And_Analysis_CB.Connect
+        (Item, Gtk.Menu_Item.Signal_Activate,
+         Context_And_Analysis_CB.To_Marshaller
+           (Clear_Project_Locations_From_Menu'Access),
+         Context_And_Analysis'(Context, Cont_N_Anal.Analysis));
+      Gtk_New (Item, -"Remove data of project " &
+               Project_Name (Project_Information (Cont_N_Anal.Context)));
+      Append (Submenu, Item);
+      Context_And_Analysis_CB.Connect
+        (Item, Gtk.Menu_Item.Signal_Activate,
+         Context_And_Analysis_CB.To_Marshaller
+           (Remove_Project_From_Menu'Access),
+         Context_And_Analysis'(Context, Cont_N_Anal.Analysis));
    end Append_Project_Menu_Entries;
-
-   ------------------
-   -- Menu entries --
-   ------------------
 
    -------------------
    -- Check_Context --
@@ -2601,55 +2791,28 @@ package body Code_Analysis_Module is
    is
       use Code_Analysis_Instances;
       Cont_N_Anal : Context_And_Analysis;
-      Prj_Node    : Project_Access;
       Submenu     : Gtk_Menu;
       Item        : Gtk_Menu_Item;
       Cur         : Cursor := Code_Analysis_Module_ID.Analyzes.First;
    begin
       Cont_N_Anal.Context := Check_Context (Kernel_Handle (Kernel), Context);
 
-      if Cur = No_Element then
-         Cont_N_Anal.Analysis := null;
-         Append_Load_Data_For_All_Projects (Cont_N_Anal, Menu);
-         Gtk_New (Item, -"Load data for project " &
-                  Project_Name (Project_Information (Cont_N_Anal.Context)));
-         Append (Menu, Item);
-         Context_And_Analysis_CB.Connect
-           (Item, Gtk.Menu_Item.Signal_Activate,
-            Context_And_Analysis_CB.To_Marshaller
-              (Add_Gcov_Project_Info_From_Menu'Access), Cont_N_Anal);
+      loop
+         exit when Cur = No_Element;
+         Cont_N_Anal.Analysis := Element (Cur);
+         Next (Cur);
 
-         if Has_File_Information (Cont_N_Anal.Context) then
-            Gtk_New
-              (Item, -"Load data for " &
-               Locale_Base_Name (File_Information (Cont_N_Anal.Context)));
+         if Code_Analysis_Module_ID.Analyzes.Length > 1 then
+            Gtk_New (Item, -(Cont_N_Anal.Analysis.Name.all));
             Append (Menu, Item);
-            Context_And_Analysis_CB.Connect
-              (Item, Gtk.Menu_Item.Signal_Activate,
-               Context_And_Analysis_CB.To_Marshaller
-                 (Add_Gcov_File_Info_From_Menu'Access), Cont_N_Anal);
+            Gtk_New (Submenu);
+            Set_Submenu (Item, Submenu);
+            Set_Sensitive (Item, True);
+            Append_To_Submenu (Cont_N_Anal, Submenu);
+         else
+            Append_To_Submenu (Cont_N_Anal, Menu);
          end if;
-      else
-         loop
-            exit when Cur = No_Element;
-            Cont_N_Anal.Analysis := Element (Cur);
-            Next (Cur);
-            Prj_Node             := Get_Or_Create
-              (Cont_N_Anal.Analysis.Projects,
-               Project_Information (Cont_N_Anal.Context));
-
-            if Code_Analysis_Module_ID.Analyzes.Length > 1 then
-               Gtk_New (Item, -(Cont_N_Anal.Analysis.Name.all));
-               Append (Menu, Item);
-               Gtk_New (Submenu);
-               Set_Submenu (Item, Submenu);
-               Set_Sensitive (Item, True);
-               Append_To_Submenu (Cont_N_Anal, Submenu, Prj_Node);
-            else
-               Append_To_Submenu (Cont_N_Anal, Menu, Prj_Node);
-            end if;
-         end loop;
-      end if;
+      end loop;
 
       if not Single_Analysis_Mode then
          Gtk_New (Item);
@@ -2720,14 +2883,28 @@ package body Code_Analysis_Module is
 
    procedure Append_To_Submenu
      (Cont_N_Anal  : Context_And_Analysis;
-      Submenu      : access Gtk_Menu_Record'Class;
-      Project_Node : Project_Access)
+      Submenu      : access Gtk_Menu_Record'Class)
    is
       use Code_Analysis_Instances;
       Item : Gtk_Menu_Item;
    begin
       Append_Show_Analysis_Report_To_Menu
         (Cont_N_Anal, Submenu, -"Show report");
+      Append_Load_Data_For_All_Projects (Cont_N_Anal, Submenu);
+      Gtk_New (Item, -"List uncovered lines in all projects");
+      Append (Submenu, Item);
+      Context_And_Analysis_CB.Connect
+        (Item, Gtk.Menu_Item.Signal_Activate,
+         Context_And_Analysis_CB.To_Marshaller
+           (List_Uncovered_Lines_In_All_Projects_From_Menu'Access),
+         Cont_N_Anal);
+      Gtk_New (Item, -"Clear all project listed locations");
+      Append (Submenu, Item);
+      Context_And_Analysis_CB.Connect
+        (Item, Gtk.Menu_Item.Signal_Activate,
+         Context_And_Analysis_CB.To_Marshaller
+           (Clear_All_Project_Locations_From_Menu'Access),
+         Cont_N_Anal);
 
       if Code_Analysis_Module_ID.Analyzes.Length > 1 then
          Gtk_New (Item, -"Remove " & Cont_N_Anal.Analysis.Name.all);
@@ -2747,37 +2924,12 @@ package body Code_Analysis_Module is
 
       Gtk_New (Item);
       Append (Submenu, Item);
-      Append_Load_Data_For_All_Projects (Cont_N_Anal, Submenu);
-
-      if First_Project_With_Coverage_Data (Cont_N_Anal.Analysis) /=
-        No_Project then
-         Gtk_New (Item, -"List uncovered lines in all projects");
-         Append (Submenu, Item);
-         Context_And_Analysis_CB.Connect
-           (Item, Gtk.Menu_Item.Signal_Activate,
-            Context_And_Analysis_CB.To_Marshaller
-              (List_Uncovered_Lines_In_All_Projects_From_Menu'Access),
-            Cont_N_Anal);
-         Gtk_New (Item, -"Clear all project listed locations");
-         Append (Submenu, Item);
-         Context_And_Analysis_CB.Connect
-           (Item, Gtk.Menu_Item.Signal_Activate,
-            Context_And_Analysis_CB.To_Marshaller
-              (Clear_All_Project_Locations_From_Menu'Access),
-            Cont_N_Anal);
-      end if;
-
-      Append_Project_Menu_Entries (Cont_N_Anal, Submenu, Project_Node);
+      Append_Project_Menu_Entries (Cont_N_Anal, Submenu);
 
       if Has_File_Information (Cont_N_Anal.Context) then
-         declare
-            File_Node : constant Code_Analysis.File_Access := Get_Or_Create
-              (Project_Node, File_Information (Cont_N_Anal.Context));
-         begin
             Gtk_New (Item);
             Append (Submenu, Item);
-            Append_File_Menu_Entries (Cont_N_Anal, Submenu, File_Node);
-         end;
+            Append_File_Menu_Entries (Cont_N_Anal, Submenu);
       end if;
    end Append_To_Submenu;
 
