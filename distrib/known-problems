@@ -1,6 +1,6 @@
 Known Problems fixed in GPS 4.2.0
 
-- G919-023: enumeration fields not listed in entity browser
+- G919-023: Enumeration fields not listed in entity browser
   Problem:    When displaying a record type in the entity browser,
               fields of enumeration types are not listed.
   Workaround: No known workaround.
