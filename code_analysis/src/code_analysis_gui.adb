@@ -269,23 +269,24 @@ package body Code_Analysis_GUI is
       then
          Get_Selected (Get_Selection (Tree), Model, Iter);
 
-         declare
-            Node : constant Node_Access := Code_Analysis.Node_Access
-              (Node_Set.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
-         begin
-            if Node.all in Code_Analysis.Project'Class then
-               --  So we are on a project node
-               null;
-            elsif Node.all in Code_Analysis.File'Class then
-               --  So we are on a file node
-               Open_File_Editor_On_File (Kernel, Model, Iter);
-            elsif Node.all in Code_Analysis.Subprogram'Class then
-               --  So we are on a subprogram node
-               Open_File_Editor_On_Subprogram (Kernel, Model, Iter);
-            end if;
-         end;
-
-         return True;
+         if Iter /= Null_Iter then
+            declare
+               Node : constant Node_Access := Code_Analysis.Node_Access
+                 (Node_Set.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
+            begin
+               if Node.all in Code_Analysis.Project'Class then
+                  --  So we are on a project node
+                  null;
+               elsif Node.all in Code_Analysis.File'Class then
+                  --  So we are on a file node
+                  Open_File_Editor_On_File (Kernel, Model, Iter);
+               elsif Node.all in Code_Analysis.Subprogram'Class then
+                  --  So we are on a subprogram node
+                  Open_File_Editor_On_Subprogram (Kernel, Model, Iter);
+               end if;
+            end;
+            return True;
+         end if;
       end if;
 
       return False;
@@ -337,6 +338,7 @@ package body Code_Analysis_GUI is
       Menu         : Gtk_Menu)
    is
       pragma Unreferenced (Kernel, Event_Widget);
+      use Project_Maps;
       View      : constant Code_Analysis_View := Code_Analysis_View (Object);
       X         : constant Gdouble := Get_X (Event);
       Y         : constant Gdouble := Get_Y (Event);
@@ -358,7 +360,7 @@ package body Code_Analysis_GUI is
       --  Report of Coverage # specific contextual entries  --
       --------------------------------------------------------
 
-      if Iter /= Null_Iter then
+      if First (View.Projects.all) /= No_Element then
          Gtk_New (Item, -"Show flat list of files");
          Gtkada.Handlers.Widget_Callback.Object_Connect
            (Item, Gtk.Menu_Item.Signal_Activate,
@@ -428,7 +430,8 @@ package body Code_Analysis_GUI is
                Prj_Node  := Project_Access
                  (Project_Set.Get (Gtk_Tree_Store (View.Model),
                   Iter, Prj_Col));
-               Set_File_Information (Context, File_Node.Name, Prj_Node.Name);
+               Set_File_Information
+                 (Context, File_Node.Name, Prj_Node.Name);
                Set_Entity_Information
                  (Context, Subprogram_Access (Node).Name.all);
             end if;
