@@ -1,0 +1,635 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                      Copyright (C) 2007, AdaCore                  --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this library; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
+with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
+with Ada.Assertions;             use Ada.Assertions;
+
+package body Switches_Chooser is
+
+   use Switch_Description_Vectors, Combo_Switch_Vectors;
+   use Frame_Description_Vectors;
+
+   procedure Add_To_Getopt
+     (Config        : Switches_Editor_Config;
+      Switch        : String;
+      Separator     : Character);
+   --  Add Switch to the automatically constructed getopt string.
+   --  If Separator is ASCII.NUL, then the switches takes a parameter, but
+   --  might have no separator.
+   --  If it is ASCII.LF, the switch takes no parameter.
+   --  If it is ASCII.CR, the switch takes an optional parameter
+
+   ------------
+   -- Create --
+   ------------
+
+   function Create
+     (Config            : Command_Line_Configuration;
+      Default_Separator : String;
+      Switch_Char       : Character := '-';
+      Scrolled_Window   : Boolean := False;
+      Lines             : Positive := 1;
+      Columns           : Positive := 1) return Switches_Editor_Config
+   is
+   begin
+      return new Switches_Editor_Config_Record'
+        (Lines             => Lines,
+         Columns           => Columns,
+         Default_Separator => To_Unbounded_String (Default_Separator),
+         Getopt_Switches   => Null_Unbounded_String,
+         Scrolled_Window   => Scrolled_Window,
+         Switch_Char       => Switch_Char,
+         Config            => Config,
+         Max_Radio         => 0,
+         Max_Popup         => Main_Window,
+         Switches          => <>,
+         Frames            => <>);
+   end Create;
+
+   ---------------------
+   -- Set_Frame_Title --
+   ---------------------
+
+   procedure Set_Frame_Title
+     (Config    : Switches_Editor_Config;
+      Title     : String;
+      Line      : Positive := 1;
+      Column    : Positive := 1;
+      Line_Span : Positive := 1;
+      Col_Span  : Positive := 1;
+      Popup     : Popup_Index := Main_Window)
+   is
+   begin
+      Append
+        (Config.Frames,
+         Frame_Description'
+           (Title     => To_Unbounded_String (Title),
+            Line      => Line,
+            Column    => Column,
+            Popup     => Popup,
+            Line_Span => Line_Span,
+            Col_Span  => Col_Span));
+   end Set_Frame_Title;
+
+   -------------------
+   -- Add_To_Getopt --
+   -------------------
+
+   procedure Add_To_Getopt
+     (Config        : Switches_Editor_Config;
+      Switch        : String;
+      Separator     : Character)
+   is
+   begin
+      Assert (Switch (Switch'First) = Config.Switch_Char);
+
+      if Separator = ASCII.NUL then
+         Append (Config.Getopt_Switches,
+                 " " & Switch (Switch'First + 1 .. Switch'Last) & "!");
+      elsif Separator = '=' then
+         Append (Config.Getopt_Switches,
+                 " " & Switch (Switch'First + 1 .. Switch'Last) & "=");
+      elsif Separator = ASCII.LF then
+         Append (Config.Getopt_Switches,
+                 " " & Switch (Switch'First + 1 .. Switch'Last));
+      elsif Separator = ASCII.CR then
+         Append (Config.Getopt_Switches,
+                 " " & Switch (Switch'First + 1 .. Switch'Last) & "?");
+      else
+         Append (Config.Getopt_Switches,
+                 " " & Switch (Switch'First + 1 .. Switch'Last) & ":");
+      end if;
+   end Add_To_Getopt;
+
+   ---------------
+   -- Add_Check --
+   ---------------
+
+   procedure Add_Check
+     (Config : Switches_Editor_Config;
+      Label  : String;
+      Switch : String;
+      Tip    : String := "";
+      Line   : Positive := 1;
+      Column : Positive := 1;
+      Popup  : Popup_Index := Main_Window)
+   is
+   begin
+      Append
+        (Config.Switches,
+         Switch_Description'
+           (Typ => Switch_Check,
+            Switch => To_Unbounded_String (Switch),
+            Label  => To_Unbounded_String (Label),
+            Tip    => To_Unbounded_String (Tip),
+            Separator => ASCII.NUL,
+            Popup  => Popup,
+            Line   => Line,
+            Column => Column));
+      Add_To_Getopt (Config, Switch, ASCII.LF);
+   end Add_Check;
+
+   ---------------
+   -- Add_Field --
+   ---------------
+
+   procedure Add_Field
+     (Config       : Switches_Editor_Config;
+      Label        : String;
+      Switch       : String;
+      Separator    : Character := ASCII.NUL; --  no separator
+      Tip          : String := "";
+      As_Directory : Boolean := False;
+      As_File      : Boolean := False;
+      Line         : Positive := 1;
+      Column       : Positive := 1;
+      Popup  : Popup_Index := Main_Window)
+   is
+   begin
+      Append
+        (Config.Switches,
+         Switch_Description'
+           (Typ => Switch_Field,
+            Switch => To_Unbounded_String (Switch),
+            Label  => To_Unbounded_String (Label),
+            Tip    => To_Unbounded_String (Tip),
+            Separator => Separator,
+            As_Directory => As_Directory,
+            As_File      => As_File,
+            Line   => Line,
+            Column => Column,
+            Popup  => Popup));
+      Add_To_Getopt (Config, Switch, Separator);
+   end Add_Field;
+
+   --------------
+   -- Add_Spin --
+   --------------
+
+   procedure Add_Spin
+     (Config    : Switches_Editor_Config;
+      Label     : String;
+      Switch    : String;
+      Separator : Character := ASCII.NUL; --  no separator
+      Min       : Integer;
+      Max       : Integer;
+      Default   : Integer;
+      Tip       : String := "";
+      Line      : Positive := 1;
+      Column    : Positive := 1;
+      Popup  : Popup_Index := Main_Window)
+   is
+   begin
+      Append
+        (Config.Switches,
+         Switch_Description'
+           (Typ       => Switch_Spin,
+            Switch    => To_Unbounded_String (Switch),
+            Label     => To_Unbounded_String (Label),
+            Tip       => To_Unbounded_String (Tip),
+            Separator => Separator,
+            Min       => Min,
+            Max       => Max,
+            Default   => Default,
+            Line      => Line,
+            Column    => Column,
+            Popup     => Popup));
+      Add_To_Getopt (Config, Switch, Separator);
+   end Add_Spin;
+
+   ---------------
+   -- Add_Combo --
+   ---------------
+
+   procedure Add_Combo
+     (Config    : Switches_Editor_Config;
+      Label     : String;
+      Switch    : String;
+      No_Switch : String;
+      No_Digit  : String;
+      Entries   : Combo_Switch_Array;
+      Tip       : String := "";
+      Line      : Positive := 1;
+      Column    : Positive := 1;
+      Popup  : Popup_Index := Main_Window)
+   is
+      Ent : Combo_Switch_Vectors.Vector;
+   begin
+      for E in Entries'Range loop
+         Append (Ent, Entries (E));
+      end loop;
+
+      Append
+        (Config.Switches,
+         Switch_Description'
+           (Typ       => Switch_Combo,
+            Switch    => To_Unbounded_String (Switch),
+            Label     => To_Unbounded_String (Label),
+            Tip       => To_Unbounded_String (Tip),
+            Separator => ASCII.NUL,
+            No_Switch => To_Unbounded_String (No_Switch),
+            No_Digit  => To_Unbounded_String (No_Digit),
+            Entries   => Ent,
+            Line      => Line,
+            Column    => Column,
+            Popup     => Popup));
+      Add_To_Getopt (Config, Switch, ASCII.CR);      --  optional parameter
+   end Add_Combo;
+
+   ---------------
+   -- Add_Popup --
+   ---------------
+
+   function Add_Popup
+     (Config        : Switches_Editor_Config;
+      Label         : String;
+      Lines         : Positive := 1;
+      Columns       : Positive := 1;
+      Line          : Positive := 1;
+      Column        : Positive := 1;
+      Popup         : Popup_Index := Main_Window) return Popup_Index
+   is
+   begin
+      Config.Max_Popup := Config.Max_Popup + 1;
+      Append
+        (Config.Switches,
+         Switch_Description'
+           (Typ       => Switch_Popup,
+            Switch    => Null_Unbounded_String,
+            Label     => To_Unbounded_String (Label),
+            Tip       => Null_Unbounded_String,
+            Separator => ASCII.NUL,
+            Line      => Line,
+            Column    => Column,
+            Lines     => Lines,
+            Columns   => Columns,
+            Popup     => Popup,
+            To_Popup  => Config.Max_Popup));
+      return Config.Max_Popup;
+   end Add_Popup;
+
+   ---------------
+   -- Add_Radio --
+   ---------------
+
+   function Add_Radio
+     (Config    : Switches_Editor_Config;
+      Line      : Positive := 1;
+      Column    : Positive := 1;
+      Popup  : Popup_Index := Main_Window) return Radio_Switch
+   is
+   begin
+      Config.Max_Radio := Config.Max_Radio;
+      Append
+        (Config.Switches,
+         Switch_Description'
+           (Typ       => Switch_Radio,
+            Switch    => Null_Unbounded_String,
+            Label     => Null_Unbounded_String,
+            Tip       => Null_Unbounded_String,
+            Separator => ASCII.NUL,
+            Group     => Config.Max_Radio,
+            Line      => Line,
+            Column    => Column,
+            Popup     => Popup));
+      return Config.Max_Radio;
+   end Add_Radio;
+
+   ---------------------
+   -- Add_Radio_Entry --
+   ---------------------
+
+   procedure Add_Radio_Entry
+     (Config    : Switches_Editor_Config;
+      Radio     : Radio_Switch;
+      Label     : String;
+      Switch    : String;
+      Tip       : String := "")
+   is
+   begin
+      Append
+        (Config.Switches,
+         Switch_Description'
+           (Typ       => Switch_Radio,
+            Switch    => To_Unbounded_String (Switch),
+            Label     => To_Unbounded_String (Label),
+            Tip       => To_Unbounded_String (Tip),
+            Separator => ASCII.NUL,
+            Group     => Radio,
+            Line      => 1,
+            Column    => 1,
+            Popup     => Main_Window));
+      Add_To_Getopt (Config, Switch, ASCII.LF);
+   end Add_Radio_Entry;
+
+   ---------------------------
+   -- Root_Switches_Editors --
+   ---------------------------
+
+   package body Switches_Editors is
+
+      ----------------
+      -- Initialize --
+      ----------------
+
+      procedure Initialize
+        (Editor : in out Root_Switches_Editor;
+         Config : Switches_Editor_Config)
+      is
+      begin
+         Set_Configuration (Editor.Cmd_Line, Config.Config);
+         Editor.Config := Config;
+         Editor.Widgets := new Widget_Array
+           (0 .. Integer (Length (Config.Switches)));
+      end Initialize;
+
+      ----------------
+      -- Set_Widget --
+      ----------------
+
+      procedure Set_Widget
+        (Editor       : in out Root_Switches_Editor;
+         Switch_Index : Integer;
+         Widget       : access Root_Widget_Record'Class)
+      is
+      begin
+         Editor.Widgets (Switch_Index) := Root_Widget (Widget);
+      end Set_Widget;
+
+      -------------------
+      -- Change_Switch --
+      -------------------
+
+      procedure Change_Switch
+        (Editor    : in out Root_Switches_Editor;
+         Widget    : access Root_Widget_Record'Class;
+         Parameter : String)
+      is
+         Iter : Command_Line_Iterator;
+         Cmd  : Unbounded_String;
+         Combo : Combo_Switch_Vectors.Cursor;
+      begin
+         if not Editor.Block then
+            for W in Editor.Widgets'Range loop
+               if Editor.Widgets (W) = Root_Widget (Widget) then
+                  declare
+                     S : constant Switch_Description :=
+                       Element (Editor.Config.Switches, W);
+                  begin
+                     Remove_Switch (Editor.Cmd_Line, To_String (S.Switch));
+                     case S.Typ is
+                        when Switch_Check | Switch_Radio =>
+                           if Boolean'Value (Parameter) then
+                              Add_Switch
+                                (Editor.Cmd_Line, To_String (S.Switch));
+                           end if;
+
+                        when Switch_Field =>
+                           if Parameter /= "" then
+                              Add_Switch
+                                (Editor.Cmd_Line,
+                                 To_String (S.Switch), Parameter,
+                                 S.Separator);
+                           end if;
+
+                        when Switch_Spin =>
+                           if Integer'Value (Parameter) /= S.Default then
+                              Add_Switch
+                                (Editor.Cmd_Line,
+                                 To_String (S.Switch), Parameter,
+                                 S.Separator);
+                           end if;
+
+                        when Switch_Combo =>
+                           Combo := First (S.Entries);
+                           while Has_Element (Combo) loop
+                              if Element (Combo).Label = Parameter then
+                                 if Element (Combo).Value = S.No_Switch then
+                                    null;
+                                 elsif Element (Combo).Value = S.No_Digit then
+                                    Add_Switch
+                                      (Editor.Cmd_Line, To_String (S.Switch));
+                                 else
+                                    Add_Switch
+                                      (Editor.Cmd_Line,
+                                       To_String (S.Switch),
+                                       To_String (Element (Combo).Value),
+                                       S.Separator);
+                                 end if;
+
+                              end if;
+                              Next (Combo);
+                           end loop;
+
+                        when Switch_Popup =>
+                           null;
+                     end case;
+
+                     --  Update the command line
+                     Editor.Block := True;
+
+                     Start (Editor.Cmd_Line, Iter, Expanded => False);
+                     while Has_More (Iter) loop
+                        if Current_Parameter (Iter) /= "" then
+                           Append (Cmd, Current_Switch (Iter)
+                                   & Current_Separator (Iter)
+                                   & Current_Parameter (Iter) & " ");
+                        else
+                           Append (Cmd, Current_Switch (Iter) & " ");
+                        end if;
+                        Next (Iter);
+                     end loop;
+
+                     Set_Graphical_Command_Line
+                       (Root_Switches_Editor'Class (Editor), To_String (Cmd));
+                     Editor.Block := False;
+
+                     return;
+                  end;
+               end if;
+            end loop;
+         end if;
+      end Change_Switch;
+
+      -----------------------------
+      -- On_Command_Line_Changed --
+      -----------------------------
+
+      procedure On_Command_Line_Changed
+        (Editor   : in out Root_Switches_Editor;
+         Cmd_Line : String)
+      is
+      begin
+         if Editor.Block then
+            return;
+         end if;
+
+         Editor.Block := True;
+         Set_Command_Line
+           (Editor.Cmd_Line, Cmd_Line,
+            To_String (Editor.Config.Getopt_Switches),
+            Switch_Char => Editor.Config.Switch_Char);
+         Editor.Block := False;
+         On_Command_Line_Changed (Editor);
+      end On_Command_Line_Changed;
+
+      -----------------------------
+      -- On_Command_Line_Changed --
+      -----------------------------
+
+      procedure On_Command_Line_Changed
+        (Editor   : in out Root_Switches_Editor'Class)
+      is
+         Iter   : Command_Line_Iterator;
+         Switch : Switch_Description_Vectors.Cursor :=
+           First (Editor.Config.Switches);
+         Current_Radio_Group : Radio_Switch := -1;
+      begin
+         if Editor.Block then
+            return;
+         end if;
+
+         Editor.Block := True;
+
+         while Has_Element (Switch) loop
+            declare
+               S : constant Switch_Description := Element (Switch);
+            begin
+               if Editor.Widgets (To_Index (Switch)) /= null then
+                  Start (Editor.Cmd_Line, Iter, Expanded => True);
+                  while Has_More (Iter) loop
+                     exit when To_String (S.Switch) = Current_Switch (Iter);
+                     Next (Iter);
+                  end loop;
+
+                  case S.Typ is
+                     when Switch_Check =>
+                        Set_Graphical_Widget
+                          (Editor,
+                           Editor.Widgets (To_Index (Switch)),
+                           S.Typ,
+                           Boolean'Image (Has_More (Iter)));
+
+                     when Switch_Spin =>
+                        if Current_Parameter (Iter) = "" then
+                           Set_Graphical_Widget
+                             (Editor,
+                              Editor.Widgets (To_Index (Switch)),
+                              S.Typ,
+                              Integer'Image (S.Default));
+
+                        else
+                           Set_Graphical_Widget
+                             (Editor,
+                              Editor.Widgets (To_Index (Switch)),
+                              S.Typ,
+                              Current_Parameter (Iter));
+                        end if;
+
+                     when Switch_Field =>
+                        Set_Graphical_Widget
+                          (Editor,
+                           Editor.Widgets (To_Index (Switch)),
+                           S.Typ,
+                           Current_Parameter (Iter));
+
+                     when Switch_Radio =>
+                        --  If we are starting a new radio group, pre-select
+                        --  the first in the group, which is the default. It
+                        --  will automatically get unselected if some other
+                        --  element in the group is selected
+
+                        if Editor.Widgets (To_Index (Switch)) /= null then
+                           Set_Graphical_Widget
+                             (Editor,
+                              Editor.Widgets (To_Index (Switch)),
+                              S.Typ,
+                              Boolean'Image
+                                (S.Group /= Current_Radio_Group
+                                 or else Has_More (Iter)));
+                           Current_Radio_Group := S.Group;
+                        end if;
+
+                     when Switch_Combo =>
+                        declare
+                           Combo : Combo_Switch_Vectors.Cursor
+                             := First (S.Entries);
+                           Param : constant String := Current_Parameter (Iter);
+                        begin
+                           while Has_Element (Combo) loop
+                              if not Has_More (Iter) then
+                                 exit when Element (Combo).Value = S.No_Switch;
+                              else
+                                 exit when
+                                   (Param = ""
+                                    and then
+                                       Element (Combo).Value = S.No_Digit)
+                                   or else Element (Combo).Value = Param;
+                              end if;
+                              Next (Combo);
+                           end loop;
+
+                           if Has_Element (Combo) then
+                              Set_Graphical_Widget
+                                (Editor,
+                                 Editor.Widgets (To_Index (Switch)),
+                                 S.Typ,
+                                 To_String (Element (Combo).Label));
+                           end if;
+                        end;
+
+                     when Switch_Popup =>
+                        null;
+                  end case;
+               end if;
+            end;
+
+            Next (Switch);
+         end loop;
+
+         Editor.Block := False;
+      end On_Command_Line_Changed;
+
+      ----------------------
+      -- Set_Command_Line --
+      ----------------------
+
+      procedure Set_Command_Line
+        (Editor   : access Root_Switches_Editor'Class;
+         Cmd_Line : String)
+      is
+      begin
+         Set_Graphical_Command_Line (Editor.all, Cmd_Line);
+         On_Command_Line_Changed (Editor.all, Cmd_Line);
+      end Set_Command_Line;
+
+      ----------------
+      -- Get_Config --
+      ----------------
+
+      function Get_Config
+        (Editor : access Root_Switches_Editor)
+         return Switches_Editor_Config is
+      begin
+         return Editor.Config;
+      end Get_Config;
+
+   end Switches_Editors;
+
+end Switches_Chooser;

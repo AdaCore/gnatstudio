@@ -1,0 +1,324 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                      Copyright (C) 2007, AdaCore                  --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this library; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
+--  This package describes how to graphically edit switches. It does not
+--  perform any actual gtk+ operation, so that it can be shared among multiple
+--  GUI backends as much as possible.
+
+with Ada.Containers.Indefinite_Vectors;
+with Ada.Containers.Vectors;
+with Ada.Strings.Unbounded;
+with GNAT.Command_Line;   use GNAT.Command_Line;
+
+package Switches_Chooser is
+
+   type Switches_Editor_Config_Record (<>) is private;
+   type Switches_Editor_Config is access all Switches_Editor_Config_Record;
+
+   type Popup_Index is private;
+   Main_Window : constant Popup_Index;
+
+   type Switch_Type is
+     (Switch_Check,
+      Switch_Field,
+      Switch_Spin,
+      Switch_Radio,
+      Switch_Combo,
+      Switch_Popup);
+
+   function Create
+     (Config            : Command_Line_Configuration;
+      Default_Separator : String;
+      Switch_Char       : Character := '-';
+      Scrolled_Window   : Boolean := False;
+      Lines             : Positive := 1;
+      Columns           : Positive := 1) return Switches_Editor_Config;
+   --  A switches editor can be split into several lines and columns. Each cell
+   --  act as a group for some switches, to help make the interface clearer for
+   --  the user.
+   --  Default_Separator is the string that goes between a switch and its
+   --  attribute.
+   --  If Scrolled_Window is true, the editor will be contained in a
+   --  scrolling window, which is useful if the number of switches is
+   --  especially important.
+
+   procedure Set_Frame_Title
+     (Config    : Switches_Editor_Config;
+      Title     : String;
+      Line      : Positive := 1;
+      Column    : Positive := 1;
+      Line_Span : Positive := 1;
+      Col_Span  : Positive := 1;
+      Popup     : Popup_Index := Main_Window);
+   --  Specify the title for a group of switches within the editor. It also
+   --  defines how big the group is, since a cell can be merged with one or
+   --  more of its neighbors through the *_Span parameters.
+
+   procedure Add_Check
+     (Config : Switches_Editor_Config;
+      Label  : String;
+      Switch : String;
+      Tip    : String := "";
+      Line   : Positive := 1;
+      Column : Positive := 1;
+      Popup  : Popup_Index := Main_Window);
+   --  Adds a check button in a specific area of the editor.
+   --  When the button is active, the corresponding command line switch is
+   --  present, otherwise it is omitted.
+
+   procedure Add_Field
+     (Config       : Switches_Editor_Config;
+      Label        : String;
+      Switch       : String;
+      Separator    : Character := ASCII.NUL; --  no separator
+      Tip          : String := "";
+      As_Directory : Boolean := False;
+      As_File      : Boolean := False;
+      Line         : Positive := 1;
+      Column       : Positive := 1;
+      Popup        : Popup_Index := Main_Window);
+   --  Add a text field
+
+   procedure Add_Spin
+     (Config    : Switches_Editor_Config;
+      Label     : String;
+      Switch    : String;
+      Separator : Character := ASCII.NUL; --  no separator
+      Min       : Integer;
+      Max       : Integer;
+      Default   : Integer;
+      Tip       : String := "";
+      Line      : Positive := 1;
+      Column    : Positive := 1;
+      Popup     : Popup_Index := Main_Window);
+   --  Add a switch that takes a numeric argument
+
+   type Radio_Switch is private;
+   function Add_Radio
+     (Config    : Switches_Editor_Config;
+      Line      : Positive := 1;
+      Column    : Positive := 1;
+      Popup     : Popup_Index := Main_Window) return Radio_Switch;
+   procedure Add_Radio_Entry
+     (Config    : Switches_Editor_Config;
+      Radio     : Radio_Switch;
+      Label     : String;
+      Switch    : String;
+      Tip       : String := "");
+   --  Create a radio button: only one of these switches is active at any time.
+   --  A radio_entry is in all ways similar to a check button.
+
+   type Combo_Switch is record
+      Label : Ada.Strings.Unbounded.Unbounded_String;
+      Value : Ada.Strings.Unbounded.Unbounded_String;
+   end record;
+   type Combo_Switch_Array is array (Positive range <>) of Combo_Switch;
+
+   procedure Add_Combo
+     (Config    : Switches_Editor_Config;
+      Label     : String;
+      Switch    : String;
+      No_Switch : String;
+      No_Digit  : String;
+      Entries   : Combo_Switch_Array;
+      Tip       : String := "";
+      Line      : Positive := 1;
+      Column    : Positive := 1;
+      Popup  : Popup_Index := Main_Window);
+   --  Add a combo box.
+   --  When selected, the switch inserted in the command line will be
+   --  Switch & Separator & <value of current entry>
+   --  If the current entry is the same as No_Digit, then only the  text of
+   --  the switch attribute is put on the command line (this is used for
+   --  instance to interpret "-O" as "-O1").
+   --  If the current entry is the same as No_Switch, then nothing is put in
+   --  the command line.
+
+   function Add_Popup
+     (Config        : Switches_Editor_Config;
+      Label         : String;
+      Lines         : Positive := 1;
+      Columns       : Positive := 1;
+      Line          : Positive := 1;
+      Column        : Positive := 1;
+      Popup         : Popup_Index := Main_Window) return Popup_Index;
+   --  Adds a new button, which, when clicked, displays a popup window with
+   --  additional switches. These additional switches can be set by passing
+   --  the returned value as the Popup parameter to the subprograms in this
+   --  package.
+   --  (Lines, Columns) are the number of lines and columns in the popup.
+
+   generic
+      type Root_Widget_Record is tagged private;
+      --  The general type used for widget in the graphical toolkit
+
+      type Root_Editor is new Root_Widget_Record with private;
+      --  So that your editor itself is a widget
+   package Switches_Editors is
+      type Root_Switches_Editor is abstract new Root_Editor with private;
+      --  A graphical window representing a switches editor. This type is
+      --  abstract because it isn't directly related to any GUI toolkit, and
+      --  thus needs to be instanced. But it provides services to be used by
+      --  the various GUI implementations. In a GUI widget, each switch is
+      --  associated with a graphical widget, represented here as a
+      --  Root_Widget
+
+      procedure Set_Command_Line
+        (Editor   : access Root_Switches_Editor'Class;
+         Cmd_Line : String);
+      --  Set the switches to display on the command line. This can be used to
+      --  initialize the widget
+
+      ------------------------------
+      --  The subprograms below are only useful when you are implementing a
+      --  switches editor for a specific toolkit
+      ------------------------------
+
+      procedure Initialize
+        (Editor : in out Root_Switches_Editor;
+         Config : Switches_Editor_Config);
+      --  Initialize the editor
+
+      procedure Set_Widget
+        (Editor       : in out Root_Switches_Editor;
+         Switch_Index : Integer;
+         Widget       : access Root_Widget_Record'Class);
+      --  Set the widget used for the Switch_Index-th switch as described in
+      --  the editors's configuration
+
+      procedure Change_Switch
+        (Editor    : in out Root_Switches_Editor;
+         Widget    : access Root_Widget_Record'Class;
+         Parameter : String);
+      --  Widget was changed interactively by the user, and therefore its
+      --  switch needs to be updated on the command line. Parameter indicates
+      --  the parameter to be set for the switch, and is interpreted
+      --  differently depending on the type of the switch.
+      --  For a check button, it should be either "TRUE" or "FALSE" to indicate
+      --  whether the switch should be on the command line.
+
+      procedure On_Command_Line_Changed
+        (Editor    : in out Root_Switches_Editor;
+         Cmd_Line  : String);
+      procedure On_Command_Line_Changed
+        (Editor    : in out Root_Switches_Editor'Class);
+      --  The command line widget was typed in by the user, and we need to
+      --  reflect the new list of switches on the widgets.
+      --  The second version is only used to refresh the widgets, from an
+      --  already parsed command line.
+
+      procedure Set_Graphical_Command_Line
+        (Editor    : in out Root_Switches_Editor;
+         Cmd_Line  : String) is abstract;
+      --  Show Cmd_Line in the graphical widget showing the current command
+      --  line. No update of the other widgets should take place
+
+      procedure Set_Graphical_Widget
+        (Editor    : in out Root_Switches_Editor;
+         Widget    : access Root_Widget_Record'Class;
+         Switch    : Switch_Type;
+         Parameter : String) is abstract;
+      --  Change Widget so that it shows the value of Parameter. The exact
+      --  meaning of Parameter depends on the type of Switch
+
+      function Get_Config
+        (Editor : access Root_Switches_Editor)
+         return Switches_Editor_Config;
+      --  Return the switches configuration used for this editor
+
+   private
+      type Root_Widget is access all Root_Widget_Record'Class;
+      type Widget_Array is array (Natural range <>) of Root_Widget;
+      type Widget_Array_Access is access Widget_Array;
+
+      type Root_Switches_Editor is abstract new Root_Editor with record
+         Config     : Switches_Editor_Config;
+         Cmd_Line   : Command_Line;
+         Widgets    : Widget_Array_Access;
+         Block      : Boolean := False;
+      end record;
+   end Switches_Editors;
+
+private
+   type Radio_Switch is new Integer;
+   type Popup_Index is new Integer;
+   Main_Window : constant Popup_Index := 0;
+
+   package Combo_Switch_Vectors is new
+     Ada.Containers.Vectors (Natural, Combo_Switch);
+
+   type Switch_Description (Typ : Switch_Type) is record
+      Switch    : Ada.Strings.Unbounded.Unbounded_String;
+      Label     : Ada.Strings.Unbounded.Unbounded_String;
+      Tip       : Ada.Strings.Unbounded.Unbounded_String;
+      Line      : Positive := 1;
+      Column    : Positive := 1;
+      Separator : Character;
+      Popup     : Popup_Index := Main_Window;
+
+      case Typ is
+         when Switch_Check =>
+            null;
+         when Switch_Field =>
+            As_Directory : Boolean;
+            As_File      : Boolean;
+         when Switch_Spin =>
+            Min, Max, Default : Integer;
+         when Switch_Radio =>
+            Group : Radio_Switch;
+         when Switch_Combo =>
+            No_Switch : Ada.Strings.Unbounded.Unbounded_String;
+            No_Digit  : Ada.Strings.Unbounded.Unbounded_String;
+            Entries   : Combo_Switch_Vectors.Vector;
+         when Switch_Popup =>
+            To_Popup  : Popup_Index;
+            Lines     : Positive;
+            Columns   : Positive;
+      end case;
+   end record;
+
+   package Switch_Description_Vectors is new
+     Ada.Containers.Indefinite_Vectors (Natural, Switch_Description);
+
+   type Frame_Description is record
+      Title     : Ada.Strings.Unbounded.Unbounded_String;
+      Line      : Positive;
+      Column    : Positive;
+      Line_Span : Positive := 1;
+      Col_Span  : Positive := 1;
+      Popup     : Popup_Index := Main_Window;
+   end record;
+   package Frame_Description_Vectors is new
+     Ada.Containers.Indefinite_Vectors (Natural, Frame_Description);
+
+   type Switches_Editor_Config_Record is record
+      Lines             : Positive;
+      Columns           : Positive;
+      Config            : Command_Line_Configuration;
+      Default_Separator : Ada.Strings.Unbounded.Unbounded_String;
+      Getopt_Switches   : Ada.Strings.Unbounded.Unbounded_String;
+      Scrolled_Window   : Boolean := False;
+      Switch_Char       : Character;
+      Frames            : Frame_Description_Vectors.Vector;
+      Switches          : Switch_Description_Vectors.Vector;
+      Max_Radio         : Radio_Switch := 0;
+      Max_Popup         : Popup_Index := Main_Window;
+   end record;
+
+end Switches_Chooser;
