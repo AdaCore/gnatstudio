@@ -1094,7 +1094,8 @@ package body Browsers.Canvas is
       Link        : access Browser_Link_Record;
       Invert_Mode : Boolean;
       GC          : Gdk.GC.Gdk_GC;
-      Edge_Number : Glib.Gint)
+      Edge_Number : Glib.Gint;
+      Show_Annotation : Boolean := True)
    is
       Browser : constant General_Browser := To_Browser (Canvas);
    begin
@@ -1113,12 +1114,12 @@ package body Browsers.Canvas is
             Set_Foreground (GC, Browser.Unselected_Link_Color);
             Draw_Link
               (Canvas, Canvas_Link_Access (Link),
-               Invert_Mode, GC, Edge_Number);
+               Invert_Mode, GC, Edge_Number, Show_Annotation);
          else
             Set_Foreground (GC, Browser.Selected_Link_Color);
             Draw_Link
               (Canvas, Canvas_Link_Access (Link),
-               Invert_Mode, GC, Edge_Number);
+               Invert_Mode, GC, Edge_Number, Show_Annotation);
          end if;
       end if;
    end Draw_Link;
@@ -2697,12 +2698,14 @@ package body Browsers.Canvas is
 
          Clip_Line
            (Src,
+            Canvas,
             Dest_Coord.X + Gint (Gfloat (Dest_Coord.Width) * Link_Dest_X_Pos),
             Dest_Coord.Y + Gint (Gfloat (Dest_Coord.Height) * Link_Dest_Y_Pos),
             X_Pos => Link_Src_X_Pos, Y_Pos => Link_Src_Y_Pos,
             Side  => Src_Side, X_Out => X1, Y_Out => Y1);
          Clip_Line
            (Dest,
+            Canvas,
             Src_Coord.X + Gint (Gfloat (Src_Coord.Width) * Link_Src_X_Pos),
             Src_Coord.Y + Gint (Gfloat (Src_Coord.Height) * Link_Src_Y_Pos),
             X_Pos => Link_Dest_X_Pos, Y_Pos => Link_Dest_Y_Pos,

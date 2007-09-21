@@ -295,12 +295,13 @@ package body Browsers.Call_Graph is
    --  A renaming link should always be created from the renaming entity to the
    --  renamed entity.
 
-   procedure Draw_Link
+   overriding procedure Draw_Link
      (Canvas      : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
       Link        : access Renaming_Link_Record;
       Invert_Mode : Boolean;
       GC          : Gdk.GC.Gdk_GC;
-      Edge_Number : Glib.Gint);
+      Edge_Number : Glib.Gint;
+      Show_Annotation : Boolean := True);
    --  Override the default drawing procedure for links
 
    ----------
@@ -1356,7 +1357,8 @@ package body Browsers.Call_Graph is
    is
       pragma Unreferenced (Module);
       Browser : constant Call_Graph_Browser := Call_Graph_Browser (Child);
-      Iter    : constant Selection_Iterator := Start (Get_Canvas (Browser));
+      Iter    : constant Item_Iterator :=
+        Start (Get_Canvas (Browser), Selected_Only => True);
    begin
       --  If there is no selection, or more than one item, nothing we can do
       if Get (Iter) /= null
@@ -2267,7 +2269,8 @@ package body Browsers.Call_Graph is
       Link        : access Renaming_Link_Record;
       Invert_Mode : Boolean;
       GC          : Gdk.GC.Gdk_GC;
-      Edge_Number : Glib.Gint)
+      Edge_Number : Glib.Gint;
+      Show_Annotation : Boolean := True)
    is
    begin
       Set_Line_Attributes
@@ -2279,7 +2282,7 @@ package body Browsers.Call_Graph is
 
       Draw_Link
         (Canvas, Browser_Link_Record (Link.all)'Access,
-         Invert_Mode, GC, Edge_Number);
+         Invert_Mode, GC, Edge_Number, Show_Annotation);
 
       Set_Line_Attributes
         (GC,

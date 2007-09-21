@@ -482,12 +482,13 @@ package Browsers.Canvas is
    -- Links --
    -----------
 
-   procedure Draw_Link
+   overriding procedure Draw_Link
      (Canvas      : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
       Link        : access Browser_Link_Record;
       Invert_Mode : Boolean;
       GC          : Gdk.GC.Gdk_GC;
-      Edge_Number : Glib.Gint);
+      Edge_Number : Glib.Gint;
+      Show_Annotation : Boolean := True);
    --  Override the drawing of links (so that links can be drawn in different
    --  colors when an item is selected).
 

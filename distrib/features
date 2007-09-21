@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.2 NEW FEATURES LIST Current as of Sep 19, 2007
+GPS 4.2 NEW FEATURES LIST Current as of Sep 21, 2007
 ====================================================
 
 Copyright (c) 2006-2007, AdaCore
@@ -14,6 +14,11 @@ of the feature.
 
 New features in GPS 4.2.0
 -------------------------
+
+NF-42-G919-007 Scrolling while selecting in browsers (2007-09-21)
+
+  While selecting multiple items in the browsers, the browser will scroll
+  to allow you to select items outside of the currently visible area
 
 NF-42-G919-006 Remove selected items in browsers (2007-09-19)
 

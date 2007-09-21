@@ -943,7 +943,8 @@ package body Browsers.Dependency_Items is
    is
       pragma Unreferenced (Module);
       Browser : constant Dependency_Browser := Dependency_Browser (Child);
-      Iter    : constant Selection_Iterator := Start (Get_Canvas (Browser));
+      Iter    : constant Item_Iterator :=
+        Start (Get_Canvas (Browser), Selected_Only => True);
    begin
       --  If there is no selection, or more than one item, nothing we can do
       if Get (Iter) /= null

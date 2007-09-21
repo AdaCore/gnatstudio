@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2001-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -623,7 +622,8 @@ package body Browsers.Projects is
    is
       pragma Unreferenced (Module);
       Browser : constant Project_Browser := Project_Browser (Child);
-      Iter    : constant Selection_Iterator := Start (Get_Canvas (Browser));
+      Iter    : constant Item_Iterator :=
+        Start (Get_Canvas (Browser), Selected_Only => True);
    begin
       --  If there is no selection, or more than one item, nothing we can do
       if Get (Iter) /= null
@@ -674,7 +674,7 @@ package body Browsers.Projects is
       Browser      : Project_Browser;
       Iter         : Item_Iterator;
       It           : Browser_Project_Vertex_Access;
-      Selection    : Selection_Iterator;
+      Selection    : Item_Iterator;
 
    begin
       if Child = null then
@@ -684,7 +684,7 @@ package body Browsers.Projects is
       end if;
 
       Browser := Project_Browser (Get_Widget (Child));
-      Selection := Start (Get_Canvas (Browser));
+      Selection := Start (Get_Canvas (Browser), Selected_Only => True);
 
       Saw_Selected := Get (Selection) = null;
 

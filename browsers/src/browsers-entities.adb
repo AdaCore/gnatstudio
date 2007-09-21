@@ -174,24 +174,25 @@ package body Browsers.Entities is
 
    type Generic_Item_Record is new Type_Item_Record with null record;
 
-   procedure Resize_And_Draw
+   overriding procedure Resize_And_Draw
      (Item             : access Generic_Item_Record;
       Width, Height    : Glib.Gint;
       Width_Offset     : Glib.Gint;
       Height_Offset    : Glib.Gint;
       Xoffset, Yoffset : in out Glib.Gint;
       Layout           : access Pango.Layout.Pango_Layout_Record'Class);
-   function Point_In_Item
+   overriding function Point_In_Item
      (Item   : access Generic_Item_Record;
       X, Y   : Glib.Gint) return Boolean;
-   procedure Draw
+   overriding procedure Draw
      (Item   : access Generic_Item_Record;
       Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
       GC     : Gdk.GC.Gdk_GC;
       Xdest  : Glib.Gint;
       Ydest  : Glib.Gint);
-   procedure Clip_Line
+   overriding procedure Clip_Line
      (Src   : access Generic_Item_Record;
+      Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
       To_X  : Gint;
       To_Y  : Gint;
       X_Pos : Gfloat;
@@ -1801,7 +1802,8 @@ package body Browsers.Entities is
    is
       pragma Unreferenced (Module);
       Browser : constant Type_Browser := Type_Browser (Child);
-      Iter    : constant Selection_Iterator := Start (Get_Canvas (Browser));
+      Iter    : constant Item_Iterator :=
+        Start (Get_Canvas (Browser), Selected_Only => True);
    begin
       --  If there is no selection, or more than one item, nothing we can do
       if Get (Iter) /= null
@@ -2002,6 +2004,7 @@ package body Browsers.Entities is
 
    procedure Clip_Line
      (Src   : access Generic_Item_Record;
+      Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
       To_X  : Gint;
       To_Y  : Gint;
       X_Pos : Gfloat;
@@ -2012,7 +2015,7 @@ package body Browsers.Entities is
    is
       Coord : constant Gdk_Rectangle := Get_Coord (Src);
    begin
-      Clip_Line (Type_Item_Record (Src.all)'Access,
+      Clip_Line (Type_Item_Record (Src.all)'Access, Canvas,
                  To_X, To_Y, X_Pos, Y_Pos, Side, X_Out, Y_Out);
 
       case Side is
