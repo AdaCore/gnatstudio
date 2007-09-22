@@ -2323,6 +2323,8 @@ package body Code_Analysis_Module is
          if Node_Coverage
            (File_Node.Analysis_Data.Coverage_Data.all).Children = 0 then
             --  No more children means no more usable coverage data
+            Remove_Coverage_Annotations
+              (Get_Kernel (Cont_N_Anal.Context), File_Node);
             Unchecked_Free (File_Node.Analysis_Data.Coverage_Data);
          end if;
 
