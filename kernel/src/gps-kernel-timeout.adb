@@ -19,6 +19,7 @@
 
 with Ada.Calendar;               use Ada.Calendar;
 with Ada.Unchecked_Conversion;
+with GNAT.Calendar.Time_IO;      use GNAT.Calendar.Time_IO;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Expect;                use GNAT.Expect;
 pragma Warnings (Off);
@@ -216,9 +217,7 @@ package body GPS.Kernel.Timeout is
                Delete_Handler'Access, GObject (Command.Data));
          end if;
 
-         if Command.Data.Timeout /= -1 then
-            Command.Data.Start_Time := Ada.Calendar.Clock;
-         end if;
+         Command.Data.Start_Time := Ada.Calendar.Clock;
 
          Trace (Me, "Spawn the process");
          Spawn (Command.Data.D.Kernel,
@@ -296,20 +295,32 @@ package body GPS.Kernel.Timeout is
          Console := Get_Console (Data.D.Kernel);
       end if;
 
-      --  The console might no longer exists if we are exiting GPS
-      if Console /= null then
-         if Data.Interrupted then
-            Insert (Console, -"<^C> process interrupted");
-            --  ??? elsif Data.Show_Output or else Data.Show_Command then
-         elsif Data.Show_Exit_Status then
-            if Status = 0 then
-               Insert (Console, -"process terminated successfully");
-            else
-               Insert
-                 (Console, -"process exited with status " & Image (Status));
+      declare
+         End_Time   : constant Ada.Calendar.Time := Ada.Calendar.Clock;
+         Time_Stamp : constant String :=
+                        "[" & Image (End_Time, ISO_Date & " %T") & "] ";
+         Dur_Step   : constant String :=
+                        Duration'Image (End_Time - Data.Start_Time);
+         Duration   : constant String := -" (duration" &
+                        Dur_Step (Dur_Step'First .. Dur_Step'Last - 6) & "s)";
+      begin
+         --  The console might no longer exists if we are exiting GPS
+         if Console /= null then
+            if Data.Interrupted then
+               Insert (Console, Time_Stamp &
+                       (-"<^C> process interrupted") & Duration);
+               --  ??? elsif Data.Show_Output or else Data.Show_Command then
+            elsif Data.Show_Exit_Status then
+               if Status = 0 then
+                  Insert (Console, Time_Stamp &
+                          (-"process terminated successfully") & Duration);
+               else
+                  Insert (Console, Time_Stamp & (-"process exited with status")
+                     & Image (Status) & Duration);
+               end if;
             end if;
          end if;
-      end if;
+      end;
 
       if Data.D.Exit_Cb /= null then
          Data.D.Exit_Cb (Data.D, Status);
