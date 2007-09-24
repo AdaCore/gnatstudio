@@ -338,7 +338,6 @@ package body Commands.Custom is
    function Create_Filter
      (Command : Glib.Xml_Int.Node_Ptr) return Action_Filter
    is
-      use type Glib.String_Ptr;
       Filter : Macro_Filter;
       N      : Node_Ptr := Command;
    begin
@@ -1552,7 +1551,6 @@ package body Commands.Custom is
          end if;
       end Terminate_Command;
 
-      use type Glib.String_Ptr;
       Old_Dir        : GNAT.Strings.String_Access;
 
    begin  --  Execute
