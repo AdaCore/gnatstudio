@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2005-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -521,7 +520,6 @@ package body VCS_View is
          Data  : Explorer_Selection_Foreach.Data_Type_Access)
       is
          pragma Unreferenced (Model, Path, Data);
-         use type Gtk_Tree_Iter;
       begin
          if not (Parent (Explorer.Model, Iter) = Null_Iter) then
             --  Do not take root nodes, those are the activity name or the VCS

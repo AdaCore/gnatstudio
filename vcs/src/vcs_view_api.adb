@@ -1809,7 +1809,6 @@ package body VCS_View_API is
       File           : Virtual_File;
 
       use String_List;
-      use type String_List.List_Node;
    begin
       if String_List.Is_Empty (Files) then
          Console.Insert

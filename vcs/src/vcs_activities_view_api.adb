@@ -489,8 +489,6 @@ package body VCS_Activities_View_API is
       Activity : Activity_Id)
    is
       use String_List;
-      use type String_List.List_Node;
-
       Files          : String_List.List;
       All_Logs_Exist : Boolean := True;
    begin
