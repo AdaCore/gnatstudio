@@ -918,6 +918,7 @@ package body Src_Contexts is
    begin
       Directory_List.Free (Context.Dirs);
       Free (Context.Directory);
+      Context.At_End := True;
       Free (Search_Context (Context));
    end Free;
 
@@ -1835,6 +1836,7 @@ package body Src_Contexts is
 
       More_Matches : Boolean := False;
       Matches_Found : Boolean := False;
+      Already_Looped : Boolean := False;
 
    begin
       if not Context.All_Occurrences then
@@ -1850,19 +1852,27 @@ package body Src_Contexts is
                Context.Begin_Column := 0;
 
                if Current_File (C) = VFS.No_File then
-                  Button := Message_Dialog
-                    (Msg           => (-"No more occurrences of '")
-                     & Context_As_String (C) &
-                     (-("' found."
-                        & ASCII.LF
-                        & "Search from the beginning ?")),
-                     Title         => -"Search",
-                     Buttons       => Button_Yes or Button_No,
-                     Justification => Justify_Left,
-                     Parent        => Get_Current_Window (Kernel));
+                  if not Already_Looped then
+                     Button := Message_Dialog
+                       (Msg           => (-"No more occurrences of '")
+                        & Context_As_String (C) &
+                        (-("' found."
+                           & ASCII.LF
+                           & "Search from the beginning ?")),
+                        Title         => -"Search",
+                        Buttons       => Button_Yes or Button_No,
+                        Justification => Justify_Left,
+                        Parent        => Get_Current_Window (Kernel));
 
-                  if Button = Button_Yes then
-                     Move_To_First_File (C);
+                     Already_Looped := True;
+
+                     if Button = Button_Yes then
+                        Move_To_First_File (C);
+                     else
+                        Set_End_Notif_Done (Context.all, True);
+
+                        return False;
+                     end if;
                   else
                      return False;
                   end if;
@@ -2112,8 +2122,10 @@ package body Src_Contexts is
    begin
       --  ??? Can this function be called at any other place than when the end
       --  is reached ?
+      Context.At_End := False;
+      Directory_List.Free (Context.Dirs);
+      Context.Current_Dir := 0;
       Move_To_Next_File (Context);
-      Context.Current_Dir := 1;
    end Move_To_First_File;
 
    -----------------------
@@ -2130,7 +2142,7 @@ package body Src_Contexts is
       Context.Current_Lexical := Statements;
 
       --  If not at the end
-      if Context.Directory = null then
+      if Context.At_End then
          return;
       end if;
 
@@ -2149,7 +2161,7 @@ package body Src_Contexts is
 
             if Context.Dirs = Null_List then
                --  No more searches
-               Free (Context.Directory);
+               Context.At_End := True;
                return;
             end if;
 

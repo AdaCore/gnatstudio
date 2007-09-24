@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
---                              AdaCore                              --
+--                 Copyright (C) 2001-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -858,7 +857,12 @@ package body Vsearch is
    ---------------
 
    procedure On_Search (Object : access Gtk_Widget_Record'Class) is
+      Vsearch : constant Vsearch_Access := Vsearch_Access (Object);
    begin
+      if Vsearch.Last_Search_Context /= null then
+         Set_End_Notif_Done (Vsearch.Last_Search_Context.all, False);
+      end if;
+
       Internal_Search (Vsearch_Access (Object));
 
    exception
@@ -876,6 +880,10 @@ package body Vsearch is
       Has_Next       : Boolean;
 
    begin
+      if Vsearch.Last_Search_Context /= null then
+         Set_End_Notif_Done (Vsearch.Last_Search_Context.all, False);
+      end if;
+
       if not Vsearch.Find_Next then
          Create_Context (Vsearch, False);
       end if;
@@ -936,6 +944,10 @@ package body Vsearch is
       pragma Unreferenced (Has_Next);
 
    begin
+      if Vsearch.Last_Search_Context /= null then
+         Set_End_Notif_Done (Vsearch.Last_Search_Context.all, False);
+      end if;
+
       Push_State (Vsearch.Kernel, Processing);
       Has_Next := Replace
         (Vsearch.Last_Search_Context,
@@ -960,6 +972,10 @@ package body Vsearch is
       Has_Next    : Boolean;
       pragma Unreferenced (Has_Next);
    begin
+      if Vsearch.Last_Search_Context /= null then
+         Set_End_Notif_Done (Vsearch.Last_Search_Context.all, False);
+      end if;
+
       Push_State (Vsearch.Kernel, Processing);
 
       Has_Next := Replace

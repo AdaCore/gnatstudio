@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                            AdaCore                                --
+--                 Copyright (C) 2001-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -373,7 +372,9 @@ private
       Current_File  : VFS.Virtual_File;
 
       Directory     : GNAT.Strings.String_Access := null;
-      --  Set to null at the end of the search
+
+      At_End        : Boolean := False;
+      --  Set to true at the end of the search
 
       Total_Dirs    : Natural := 0;
       Current_Dir   : Natural := 0;
