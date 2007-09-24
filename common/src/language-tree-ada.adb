@@ -32,8 +32,6 @@ with Language.Documentation; use Language.Documentation;
 
 package body Language.Tree.Ada is
 
-   use type GNAT.Strings.String_Access;
-
    ----------
    -- Free --
    ----------

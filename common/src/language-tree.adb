@@ -29,8 +29,6 @@ with Glib.Convert; use Glib.Convert;
 
 package body Language.Tree is
 
-   use type GNAT.Strings.String_Access;
-
    --------------
    -- Contains --
    --------------

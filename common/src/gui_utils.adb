@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2000-2007, AdaCore             --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -382,7 +381,6 @@ package body GUI_Utils is
       Data   : Contextual_Menu_Data) return Boolean
    is
       Menu : Gtk_Menu;
-      use type Gdk.Types.Gdk_Key_Type;
 
    begin
       if Get_Key_Val (Event) = GDK_Menu then
@@ -557,7 +555,6 @@ package body GUI_Utils is
          User   : Callback_User_Data) return Boolean
       is
          Menu : Gtk_Menu;
-         use type Gdk.Types.Gdk_Key_Type;
 
       begin
          if Get_Key_Val (Event) = GDK_Menu then
