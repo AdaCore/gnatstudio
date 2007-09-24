@@ -1730,7 +1730,6 @@ package body Docgen2 is
                Construct_T   : Construct_Tree;
                Constructs    : aliased Construct_List;
                Ctxt_Elem     : Context_Stack_Element;
-               use type Ada.Containers.Count_Type;
 
             begin
                File_EInfo.Language := Language;
