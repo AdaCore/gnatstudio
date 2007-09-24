@@ -1,6 +1,6 @@
 """Add a menu to close all editors
 
-This script adds a new menu /File/Close Add Editors that close all open editors
+This script adds a new menu /File/Close All Editors that close all open editors
 and only editors upon activation.
 """
 
