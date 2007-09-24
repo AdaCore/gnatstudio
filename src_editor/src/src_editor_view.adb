@@ -85,7 +85,6 @@ package body Src_Editor_View is
    Margin : constant := 3;
    --  The margin left of the text.
 
-   use type Pango.Font.Pango_Font_Description;
    procedure Setup (Data : Source_View; Id : Gtk.Handlers.Handler_Id);
    package Source_Buffer_Callback is new Gtk.Handlers.User_Callback_With_Setup
      (Widget_Type => Source_Buffer_Record,
