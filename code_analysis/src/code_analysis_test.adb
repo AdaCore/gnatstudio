@@ -344,7 +344,7 @@ procedure Code_Analysis_Test is
       Add (Window, Container);
 
       for J in 1 .. Node_Col_Count + Cov_Col_Count loop
-         Types_Array (Guint (J)) := GType_String;
+         Types_Array (J) := GType_String;
       end loop;
       --  1 text column to display the nodes
       --  2 text columns to display the coverage info
