@@ -476,15 +476,15 @@ package body GPS.Menu is
       Bind_Default_Key
         (Kernel      => Kernel,
          Action      => -"Cut to Clipboard",
-         Default_Key => "control-X");
+         Default_Key => "control-x");
       Bind_Default_Key
         (Kernel      => Kernel,
          Action      => -"Copy to Clipboard",
-         Default_Key => "control-C");
+         Default_Key => "control-c");
       Bind_Default_Key
         (Kernel      => Kernel,
          Action      => -"Paste From Clipboard",
-         Default_Key => "control-V");
+         Default_Key => "control-v");
    end Register_Common_Menus;
 
 end GPS.Menu;
