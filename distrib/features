@@ -46,7 +46,8 @@ NF-42-G919-002 Remove All Other Items keeps all selected (2007-09-19)
 NF-42-G918-003 New plug-in to highlight dispatching calls (2007-09-24)
 
   The dispatching.py plug-in highlights, in open editors, all calls to
-  dispatching subprograms
+  dispatching subprograms. It requires a recent version of GNAT, after
+  2007-09-21
 
 NF-42-G827-022 Add customization for activity logs (2007-09-02)
 
