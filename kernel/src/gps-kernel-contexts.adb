@@ -640,6 +640,7 @@ package body GPS.Kernel.Contexts is
             Column            => Entity_Column_Information (Context),
             Ask_If_Overloaded => Ask_If_Overloaded,
             Entity            => Context.Data.Data.Entity,
+            Closest_Ref       => Context.Data.Data.Closest_Ref,
             Status            => Context.Data.Data.Entity_Resolved);
 
          if Context.Data.Data.Entity_Resolved = Fuzzy_Match
@@ -650,6 +651,7 @@ package body GPS.Kernel.Contexts is
             end if;
          elsif Context.Data.Data.Entity_Resolved /= Success then
             Context.Data.Data.Entity := null;
+            Context.Data.Data.Closest_Ref := No_Entity_Reference;
             Context.Data.Data.Entity_Resolved := Success;
          end if;
 
@@ -660,6 +662,26 @@ package body GPS.Kernel.Contexts is
 
       return Context.Data.Data.Entity;
    end Get_Entity;
+
+   ---------------------
+   -- Get_Closest_Ref --
+   ---------------------
+
+   function Get_Closest_Ref
+     (Context           : Selection_Context)
+      return Entities.Entity_Reference
+   is
+      --  Make sure the info is computed
+      Entity : constant Entity_Information :=
+        Get_Entity (Context, Ask_If_Overloaded => False);
+      pragma Unreferenced (Entity);
+   begin
+      if Context.Data.Data.Entity_Resolved = Success then
+         return Context.Data.Data.Closest_Ref;
+      else
+         return No_Entity_Reference;
+      end if;
+   end Get_Closest_Ref;
 
    ------------------------------
    -- Set_Activity_Information --
