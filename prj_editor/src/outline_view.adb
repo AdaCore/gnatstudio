@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005-2007                       --
---                            AdaCore                                --
+--                     Copyright (C) 2005-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -254,6 +253,7 @@ package body Outline_View is
         (Get_Model (Tooltip.Outline.Tree));
       Line       : Integer;
       Column     : Visible_Column_Type;
+      Closest    : Entity_Reference;
    begin
       Pixmap := null;
       Initialize_Tooltips (Tooltip.Outline.Tree, Area, Iter);
@@ -273,6 +273,7 @@ package body Outline_View is
             Column            => Column,
             Ask_If_Overloaded => False,
             Entity            => Entity,
+            Closest_Ref       => Closest,
             Status            => Status);
          if Entity /= null then
             Ref (Entity);
