@@ -551,8 +551,6 @@ package body XML_Viewer is
             V : constant Virtual_File := Create (Buffer);
             S : GNAT.Strings.String_Access := Read_File (V);
             W : Writable_File;
-
-            use type GNAT.Strings.String_Access;
          begin
             if S /= null
               and then S.all'Length > 2
