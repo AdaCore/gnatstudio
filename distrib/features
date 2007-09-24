@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.2 NEW FEATURES LIST Current as of Sep 21, 2007
+GPS 4.2 NEW FEATURES LIST Current as of Sep 24, 2007
 ====================================================
 
 Copyright (c) 2006-2007, AdaCore
@@ -15,20 +15,26 @@ of the feature.
 New features in GPS 4.2.0
 -------------------------
 
+NF-42-G921-015 Plug-in to close all editors (2007-09-24)
+
+  The editors.py plug-in provides a new menu /File/Close Add Editors that
+  closes all open editors (and only editors) upon activation. Have a look at
+  the plug-in editor (/Tools/Plug-ins) to activate this plug-in.
+
 NF-42-G919-007 Scrolling while selecting in browsers (2007-09-21)
 
-  While selecting multiple items in the browsers, the browser will scroll
-  to allow you to select items outside of the currently visible area
+  While selecting multiple items in a browser, the browser will scroll
+  to allow you to select items outside of the currently visible area.
 
 NF-42-G919-006 Remove selected items in browsers (2007-09-19)
 
-  A new contextual menu is now available in browser to remove selected
-  items
+  A new contextual menu is now available in browsers to remove selected
+  items.
 
 NF-42-G919-004 Improved layout in the Entity Browser (2007-09-19)
 
   If you select the contextual menu "Refresh Layout" in the Entity
-  Browser, it will preferrably put derived types below their parent,
+  Browser, it will preferably put derived types below their parent,
   and other entities to the side.
 
 NF-42-G919-002 Remove All Other Items keeps all selected (2007-09-19)
