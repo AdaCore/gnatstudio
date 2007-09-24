@@ -164,6 +164,7 @@ package body Entities is
       Task_Kind             => True,
       Package_Kind          => True,
       Enumeration_Kind      => True,
+      Record_Kind           => True,
       Overloaded_Entity     => True,
       --  ??? Should we check that at least one of the possible
       --  completions is a subprogram
@@ -1574,6 +1575,14 @@ package body Entities is
       end if;
    end Add_Called;
 
+   --------------------
+   -- Add_Index_Type --
+   --------------------
+
+   procedure Add_Index_Type
+     (Entity : Entity_Information; Index : Entity_Information)
+      renames Add_Called;
+
    -------------------------------
    -- Set_Caller_At_Declaration --
    -------------------------------
@@ -1857,6 +1866,15 @@ package body Entities is
    begin
       return Is_Subprogram_Entity (Entity.Kind.Kind);
    end Is_Subprogram;
+
+   --------------
+   -- Is_Array --
+   --------------
+
+   function Is_Array (Entity : Entity_Information) return Boolean is
+   begin
+      return Entity.Kind.Kind = Array_Kind;
+   end Is_Array;
 
    -------------------------------
    -- Is_Primitive_Operation_Of --

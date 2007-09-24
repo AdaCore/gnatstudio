@@ -2358,6 +2358,11 @@ package body Entities.Queries is
       Loc     : File_Location := No_File_Location;
       Old_Loc : File_Location;
    begin
+      if not Is_Container (Entity.Kind.Kind) then
+         return (Entity => Entity,
+                 Index  => Entity_Information_Arrays.Index_Type'Last);
+      end if;
+
       loop
          Old_Loc := Loc;
          Find_Next_Body
@@ -2724,6 +2729,24 @@ package body Entities.Queries is
       Destroy (Iter.Refs);
       Unchecked_Free (Iter.Parents);
    end Destroy;
+
+   -----------------------
+   -- Array_Index_types --
+   -----------------------
+
+   function Array_Index_Types
+     (Entity : Entity_Information) return Entity_Information_Array
+   is
+      Result : Entity_Information_Array
+        (1 .. Integer (Last (Entity.Called_Entities)));
+   begin
+      for P in Entity_Information_Arrays.First .. Last (Entity.Called_Entities)
+      loop
+         Result (Integer (P)) := Entity.Called_Entities.Table (P);
+      end loop;
+
+      return Result;
+   end Array_Index_Types;
 
    -------------------------------
    -- Get_Parent_Or_Child_Types --

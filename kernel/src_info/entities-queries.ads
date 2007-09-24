@@ -400,6 +400,11 @@ package Entities.Queries is
      (Entity : Entity_Information) return Entity_Information;
    --  Return the type of entities contained in an array
 
+   function Array_Index_Types
+     (Entity : Entity_Information) return Entity_Information_Array;
+   --  Return the list of types for the indexes of a one-dimensional or
+   --  multi-dimensional array.
+
    function Pointed_Type
      (Entity : Entity_Information) return Entity_Information;
    --  Return the type pointed to by entity

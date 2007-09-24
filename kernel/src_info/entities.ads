@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2007                       --
---                             AdaCore                               --
+--                     Copyright (C) 2003-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -668,12 +667,19 @@ package Entities is
      (Entity : Entity_Information; Returns : Entity_Information);
    --  Stores the type returned by a subprogram
 
+   procedure Add_Index_Type
+     (Entity : Entity_Information; Index : Entity_Information);
+   --  For an array type, indicates the type of one of the indexes. For a
+   --  multi-dimensional array, the indexes should be registered from left to
+   --  right, and this order is preserved.
+
    -------------
    -- Queries --
    -------------
 
    function Is_Subprogram (Entity : Entity_Information) return Boolean;
-   --  Return True if Entity is associated with a subprograms
+   function Is_Array      (Entity : Entity_Information) return Boolean;
+   --  Return True if Entity is associated with a subprograms or an array
 
    type Entity_Reference is private;
    No_Entity_Reference : constant Entity_Reference;
@@ -1019,6 +1025,7 @@ private
       --  The entity that this one renames.
 
       Primitive_Subprograms : Entity_Information_List;
+      --  For an array, this is the list of index types.
 
       Child_Types           : Entity_Information_List;
       --  All the types derived from this one.
@@ -1029,6 +1036,7 @@ private
       Called_Entities       : Entity_Information_List;
       --  List of entities that have a reference between the body and the
       --  end-of-scope of the entity.
+      --  For an array, this is the list of index types.
 
       Instantiation_Of      : Entity_Information;
       --  The generic entity that this one instantiates
