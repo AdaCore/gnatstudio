@@ -3249,6 +3249,20 @@ This capability requires support for cross-references.
 Go to the body/implementation of @i{entity}.
 This capability requires support for cross-references.
 
+@item Goto declarations of @i{entity}
+@cindex goto declaration
+This contextual menu appears when you are clicking on a subprogram call that
+is a dispatching call. In such a case, there is no possibility for GPS to
+know what subprogram will actually be called at run time, since that depends
+on dynamic information. It therefore gives you a list of all entities in the
+tagged type hierarchy, and let's you chose which of the declarations you want
+to jump to.
+
+@item Goto bodies of @i{entity}
+@cindex goto body
+This is similar to @i{Goto declarations of}, but applies to the bodies of
+the entities.
+
 @item Goto file spec/body
 @cindex goto file spec/body
 @cindex Ada
