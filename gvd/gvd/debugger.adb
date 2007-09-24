@@ -469,7 +469,6 @@ package body Debugger is
       Empty_Buffer : Boolean := True;
       Mode         : Command_Type)
    is
-      use type Gtk.Window.Gtk_Window;
       Data    : History_Data;
       Process : Visual_Debugger;
 
