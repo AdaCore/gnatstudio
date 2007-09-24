@@ -242,6 +242,14 @@ Known Problems fixed in GPS 4.2.0
               completion engine doesn't provide any completion.
   Workaround: Manually complete the code.
 
+- FB13-028 Extra dialog when no more occurences in a search
+  Problem:    When doing a search, if there are no new occurences, a dialog
+              is opened to ask if the search has to be re-started at the
+              beginning. If the answer is "no", a useless extra dialog is
+              raised. This was partially fixed in GPS 4.1 (for the "current
+              file" context) and now fixed for all search contexts.
+  Workaround: Close the extra dialog.
+
 - FA17-011 Refactoring C sources
   Problem:    When renaming a C entity, it happens that some references are
               not properly renamed, even after selecting "Recompute C/C++
