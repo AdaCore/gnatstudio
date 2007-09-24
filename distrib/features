@@ -18,9 +18,7 @@ New features in GPS 4.2.0
 NF-42-G921-015 Plug-in to close all editors (2007-09-24)
 
   The editors.py plug-in provides a new menu /File/Close All Editors that
-  closes all open editors (and only editors) upon activation. Have a look at
-  the editors.py plug-in (available from /Tools/Plug-ins) to activate this
-  plug-in.
+  closes all open editors (and only editors) upon activation.
 
 NF-42-G919-007 Scrolling while selecting in browsers (2007-09-21)
 
@@ -48,7 +46,7 @@ NF-42-G918-003 New plug-in to highlight dispatching calls (2007-09-24)
 
   The dispatching.py plug-in highlights, in open editors, all calls to
   dispatching subprograms. It requires a recent version of GNAT, after
-  2007-09-21
+  2007-09-21.
 
 NF-42-G827-022 Add customization for activity logs (2007-09-02)
 
