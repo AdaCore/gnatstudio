@@ -1437,9 +1437,9 @@ package body GPS.Kernel is
       Column            : Basic_Types.Visible_Column_Type;
       Ask_If_Overloaded : Boolean;
       Entity            : out Entities.Entity_Information;
+      Closest_Ref       : out Entities.Entity_Reference;
       Status            : out Entities.Queries.Find_Decl_Or_Body_Query_Status)
    is
-      Closest_Ref : Entities.Entity_Reference;
    begin
       Find_Declaration
         (Kernel.Database, File, Entity_Name,

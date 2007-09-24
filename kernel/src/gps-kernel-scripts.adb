@@ -685,6 +685,7 @@ package body GPS.Kernel.Scripts is
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       Entity : Entity_Information;
+      Ref    : Entity_Reference;
 
    begin
       if Command = Constructor_Method then
@@ -727,6 +728,7 @@ package body GPS.Kernel.Scripts is
                Line              => L,
                Column            => C,
                Ask_If_Overloaded => False,
+               Closest_Ref       => Ref,
                Entity            => Entity,
                Status            => Status);
 

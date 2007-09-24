@@ -300,6 +300,7 @@ package GPS.Kernel is
       Column            : Basic_Types.Visible_Column_Type;
       Ask_If_Overloaded : Boolean;
       Entity            : out Entities.Entity_Information;
+      Closest_Ref       : out Entities.Entity_Reference;
       Status            : out Entities.Queries.Find_Decl_Or_Body_Query_Status);
    --  Find the declaration of the given entity in the file.
    --  If Ask_If_Overloaded is True and there are several possible matches for
@@ -607,6 +608,9 @@ package GPS.Kernel is
      (Glib.Object.GObject_Record, File_Project_Record);
    --  Generic callback that can be used to connect a signal to a kernel
 
+   package Entity_Callback is new Gtk.Handlers.User_Callback
+     (Glib.Object.GObject_Record, Entities.Entity_Information);
+
    -----------
    -- Hooks --
    -----------
@@ -769,7 +773,8 @@ private
       Entity_Name   : GNAT.Strings.String_Access := null;  --  ??? Use Text
       Entity_Column : Basic_Types.Visible_Column_Type := 0;
 
-      Entity        : Entities.Entity_Information := null;
+      Entity       : Entities.Entity_Information := null;
+      Closest_Ref  : Entities.Entity_Reference := Entities.No_Entity_Reference;
       --  The entity on which the user has clicked
 
       Activity_Id : GNAT.Strings.String_Access := null;
