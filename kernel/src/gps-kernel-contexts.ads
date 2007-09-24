@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2006                       --
---                              AdaCore                              --
+--                     Copyright (C) 2003-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -238,6 +237,15 @@ package GPS.Kernel.Contexts is
    --  If Ask_If_Overloaded is true and there are several possible matches for
    --  the entity, an interactive dialog is opened for the user. Otherwise, the
    --  closest matching entity is returned
+
+   function Get_Closest_Ref
+     (Context           : Selection_Context)
+      return Entities.Entity_Reference;
+   --  Return the entity reference corresponding to the current context. You
+   --  should call Get_Entity first if you want to check for overloading
+   --  entities.
+   --  This information is cached in the context in case multiple places need
+   --  to recompute it
 
    ----------------------
    -- Activity_Context --
