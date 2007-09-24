@@ -80,6 +80,7 @@ package body Entities.Debug is
 
    Reference_Kind_To_Char : constant array (Reference_Kind) of Character :=
      (Reference                                => 'r',
+      Dispatching_Call                         => 'R',
       Instantiation_Reference                  => ' ',
       Modification                             => 'm',
       Declaration                              => 'D',

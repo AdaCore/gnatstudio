@@ -196,6 +196,7 @@ package Entities is
 
    type Reference_Kind is
      (Reference,
+      Dispatching_Call,
       Modification,
       Instantiation_Reference,
       Body_Entity,
@@ -1290,6 +1291,7 @@ private
 
    Real_References_Filter : constant Reference_Kind_Filter :=
      (Reference                                => True,
+      Dispatching_Call                         => True,
       Declaration                              => True,
       Instantiation_Reference                  => True,
       Modification                             => True,
@@ -1303,6 +1305,7 @@ private
 
    Read_Reference_Filter  : constant Reference_Kind_Filter :=
      (Reference                                => True,
+      Dispatching_Call                         => True,
       Instantiation_Reference                  => True,
       Body_Entity                              => True,
       Completion_Of_Private_Or_Incomplete_Type => True,

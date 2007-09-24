@@ -185,9 +185,10 @@ package body Entities is
       others                      => False);
 
    Show_In_Call_Graph_Array : constant Reference_Kind_Filter :=
-     (Reference    => True,
-      Modification => True,
-      others       => False);
+     (Reference        => True,
+      Dispatching_Call => True,
+      Modification     => True,
+      others           => False);
 
    ---------
    -- Ref --
@@ -2274,6 +2275,7 @@ package body Entities is
    begin
       case Kind is
          when Reference               => return -"read reference";
+         when Dispatching_Call        => return -"dispatching call";
          when Modification            => return -"write reference";
          when Instantiation_Reference => return -"instantiation";
          when Body_Entity             => return -"body";
