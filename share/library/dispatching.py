@@ -44,9 +44,9 @@ def highlight_dispatching_calls (buffer):
   for e in entities:
      refs = e.references (show_kind = True)
      for r in refs:
-        if refs[r] == "dispatching call":
+        if refs[r] == "dispatching call" and r.file() == buffer.file():
            loc = EditorLocation (buffer, r.line(), r.column())
-           buffer.apply_overlay (over, loc, loc + len (e.name()))
+           buffer.apply_overlay (over, loc, loc + len (e.name()) - 1)
 
 
 def on_highlight_dispatching_calls (menu):
