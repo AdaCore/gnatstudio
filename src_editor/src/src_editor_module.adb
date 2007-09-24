@@ -2471,8 +2471,10 @@ package body Src_Editor_Module is
       Filter             : Action_Filter;
       Label              : Contextual_Menu_Label_Creator;
       Line_Numbers_Area_Filter : Action_Filter;
+      Submenu            : Submenu_Factory;
 
       Has_Type           : constant Action_Filter := new Has_Type_Filter;
+      Is_Dispatching     : constant Action_Filter := new Is_Dispatching_Filter;
       Src_Action_Context : constant Action_Filter :=
                              new Src_Editor_Action_Context;
       --  Memory is never freed, but this is needed for the whole life of
@@ -2637,9 +2639,21 @@ package body Src_Editor_Module is
          Action     => Command,
          Label      => -"Goto declaration of %e",
          Filter     => Action_Filter
-           ((not Line_Numbers_Area_Filter
-            and Create (Module => Src_Editor_Module_Name))
-            or Has_Type));
+           ((not Is_Dispatching)
+            and ((not Line_Numbers_Area_Filter
+              and Create (Module => Src_Editor_Module_Name))
+              or Has_Type)));
+
+      Submenu := new Goto_Dispatch_Declaration_Submenu;
+      Register_Contextual_Submenu
+        (Kernel, "Goto dispatching declaration of entity",
+         Label      => -"Goto declarations of %e",
+         Submenu    => Submenu,
+         Filter     => Action_Filter
+           (Is_Dispatching
+            and ((not Line_Numbers_Area_Filter
+              and Create (Module => Src_Editor_Module_Name))
+              or Has_Type)));
 
       Command := new Goto_Next_Body_Command;
       Filter  := new Has_Body_Filter;
@@ -2648,7 +2662,14 @@ package body Src_Editor_Module is
         (Kernel, "Goto body of entity",
          Action     => Command,
          Label      => Label,
-         Filter     => Filter);
+         Filter     => (not Is_Dispatching) and Filter);
+
+      Submenu := new Goto_Dispatch_Body_Submenu;
+      Register_Contextual_Submenu
+        (Kernel, "Goto dispatching bodies of entity",
+         Label      => "Goto bodies of %e",
+         Submenu    => Submenu,
+         Filter     => Is_Dispatching and Filter);
 
       Command := new Goto_Type_Command;
       Register_Contextual_Menu

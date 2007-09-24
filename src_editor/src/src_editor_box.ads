@@ -291,7 +291,7 @@ package Src_Editor_Box is
 
    type In_Line_Numbers_Area_Filter is new GPS.Kernel.Action_Filter_Record
       with null record;
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access In_Line_Numbers_Area_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean;
    --  True if the event currently processed was in an editor's line numbers
@@ -299,21 +299,28 @@ package Src_Editor_Box is
 
    type Has_Body_Filter is new GPS.Kernel.Action_Filter_Record
      with null record;
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Has_Body_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean;
    --  True if the current entity has a body
 
    type Has_Type_Filter is new GPS.Kernel.Action_Filter_Record
      with null record;
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Has_Type_Filter;
+      Context : GPS.Kernel.Selection_Context) return Boolean;
+   --  True if the current entity has a type
+
+   type Is_Dispatching_Filter is new GPS.Kernel.Action_Filter_Record
+     with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Is_Dispatching_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean;
    --  True if the current entity has a type
 
    type Has_Other_File_Filter is new GPS.Kernel.Action_Filter_Record
      with null record;
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Has_Other_File_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean;
    --  True if the current file has a spec/body
@@ -321,39 +328,57 @@ package Src_Editor_Box is
    type Goto_Line_Command is new Interactive_Command with record
       Kernel : GPS.Kernel.Kernel_Handle;
    end record;
-   function Execute
+   overriding function Execute
      (Command : access Goto_Line_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Ask the user on which line to jump to
 
    type Goto_Other_File_Command is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Goto_Other_File_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Go to the file spec/body, depending on what is currently open
 
    type Goto_Declaration_Command is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Goto_Declaration_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Go to the declaration of the entity in the context
 
    type Goto_Next_Body_Command is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Goto_Next_Body_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Go to the body of the entity in the context
 
+   type Goto_Dispatch_Declaration_Submenu is new
+     GPS.Kernel.Modules.Submenu_Factory_Record with null record;
+   overriding procedure Append_To_Menu
+     (Factory : access Goto_Dispatch_Declaration_Submenu;
+      Object  : access Glib.Object.GObject_Record'Class;
+      Context : GPS.Kernel.Selection_Context;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
+   --  Adds submenus to the "Goto dispatching declaration" contextual menu
+
+   type Goto_Dispatch_Body_Submenu is new
+     GPS.Kernel.Modules.Submenu_Factory_Record with null record;
+   overriding procedure Append_To_Menu
+     (Factory : access Goto_Dispatch_Body_Submenu;
+      Object  : access Glib.Object.GObject_Record'Class;
+      Context : GPS.Kernel.Selection_Context;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
+   --  Adds submenus to the "Goto dispatching body" contextual menu
+
    type Goto_Body_Menu_Label is new
      GPS.Kernel.Modules.Contextual_Menu_Label_Creator_Record
      with null record;
-   function Get_Label
+   overriding function Get_Label
      (Creator : access Goto_Body_Menu_Label;
       Context : GPS.Kernel.Selection_Context) return String;
    --  Return the label to use for the contextual menu "Goto body"
 
    type Goto_Type_Command is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Goto_Type_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Go to the type declaration of the entity in the context

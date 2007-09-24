@@ -42,6 +42,7 @@ with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu;                  use Gtk.Menu;
+with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Object;                use Gtk.Object;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Separator;             use Gtk.Separator;
@@ -1396,6 +1397,134 @@ package body Src_Editor_Box is
       return "";
    end Get_Label;
 
+   ----------------------------
+   -- On_Goto_Declaration_Of --
+   ----------------------------
+
+   procedure On_Goto_Declaration_Of
+     (Kernel : access GObject_Record'Class;
+      Entity : Entity_Information);
+
+   procedure On_Goto_Declaration_Of
+     (Kernel : access GObject_Record'Class;
+      Entity : Entity_Information)
+   is
+      Location : constant File_Location := Get_Declaration_Of (Entity);
+   begin
+      Go_To_Closest_Match
+        (Kernel_Handle (Kernel),
+         Filename => Get_Filename (Location.File),
+         Line     => Convert (Location.Line),
+         Column   => Location.Column,
+         Entity   => Entity);
+   end On_Goto_Declaration_Of;
+
+   ---------------------
+   -- On_Goto_Body_Of --
+   ---------------------
+
+   procedure On_Goto_Body_Of
+     (Kernel : access GObject_Record'Class;
+      Entity : Entity_Information);
+
+   procedure On_Goto_Body_Of
+     (Kernel : access GObject_Record'Class;
+      Entity : Entity_Information)
+   is
+      Location : File_Location;
+   begin
+      Find_Next_Body
+        (Entity               => Entity,
+         Location             => Location);
+      Go_To_Closest_Match
+        (Kernel_Handle (Kernel),
+         Filename => Get_Filename (Location.File),
+         Line     => Convert (Location.Line),
+         Column   => Location.Column,
+         Entity   => Entity);
+   end On_Goto_Body_Of;
+
+   --------------------
+   -- Append_To_Menu --
+   --------------------
+
+   procedure Append_To_Menu
+     (Factory : access Goto_Dispatch_Declaration_Submenu;
+      Object  : access Glib.Object.GObject_Record'Class;
+      Context : GPS.Kernel.Selection_Context;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      pragma Unreferenced (Factory, Object);
+      Iter : Entity_Reference_Iterator;
+      Item : Gtk_Menu_Item;
+      E, E2 : Entity_Information;
+   begin
+      Find_All_References
+        (Iter                  => Iter,
+         Entity                => Get_Entity (Context),
+         File_Has_No_LI_Report => null,
+         In_File               => null,
+         Filter                => (Declaration => True, others => False),
+         Include_Overriding    => True);
+      while not At_End (Iter) loop
+         E := Get_Entity (Iter);
+         if E /= null then
+            E2 := Is_Primitive_Operation_Of (E);
+            if E2 /= null then
+               Gtk_New (Item, "Primitive of: " & Get_Name (E2).all);
+               GPS.Kernel.Entity_Callback.Object_Connect
+                 (Item, Gtk.Menu_Item.Signal_Activate,
+                  On_Goto_Declaration_Of'Access, Get_Kernel (Context), E);
+            end if;
+            Add (Menu, Item);
+         end if;
+
+         Next (Iter);
+      end loop;
+      Destroy (Iter);
+   end Append_To_Menu;
+
+   --------------------
+   -- Append_To_Menu --
+   --------------------
+
+   procedure Append_To_Menu
+     (Factory : access Goto_Dispatch_Body_Submenu;
+      Object  : access Glib.Object.GObject_Record'Class;
+      Context : GPS.Kernel.Selection_Context;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      pragma Unreferenced (Factory, Object);
+      Iter  : Entity_Reference_Iterator;
+      Item  : Gtk_Menu_Item;
+      E, E2 : Entity_Information;
+   begin
+      --  ??? Should share the loop with the one for the specs
+      Find_All_References
+        (Iter                  => Iter,
+         Entity                => Get_Entity (Context),
+         File_Has_No_LI_Report => null,
+         In_File               => null,
+         Filter                => (Body_Entity => True, others => False),
+         Include_Overriding    => True);
+      while not At_End (Iter) loop
+         E := Get_Entity (Iter);
+         if E /= null then
+            E2 := Is_Primitive_Operation_Of (E);
+            if E2 /= null then
+               Gtk_New (Item, "Primitive of: " & Get_Name (E2).all);
+               GPS.Kernel.Entity_Callback.Object_Connect
+                 (Item, Gtk.Menu_Item.Signal_Activate,
+                  On_Goto_Body_Of'Access, Get_Kernel (Context), E);
+            end if;
+            Add (Menu, Item);
+         end if;
+
+         Next (Iter);
+      end loop;
+      Destroy (Iter);
+   end Append_To_Menu;
+
    ------------------------------
    -- Filter_Matches_Primitive --
    ------------------------------
@@ -1470,6 +1599,20 @@ package body Src_Editor_Box is
            and then Location /= Current_Location;
       end if;
       return False;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   function Filter_Matches_Primitive
+     (Filter  : access Is_Dispatching_Filter;
+      Context : GPS.Kernel.Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+      Ref : constant Entity_Reference := Get_Closest_Ref (Context);
+   begin
+      return Get_Kind (Ref) = Dispatching_Call;
    end Filter_Matches_Primitive;
 
    -------------
@@ -2343,6 +2486,7 @@ package body Src_Editor_Box is
       Status          : Find_Decl_Or_Body_Query_Status;
       L               : Buffer_Line_Type;
       Normalized_Line : Editable_Line_Type := Line;
+      Ref             : Entity_Reference;
    begin
       if Normalized_Line = Editable_Line_Type'Last then
          Normalized_Line := Editor.Current_Line;
@@ -2364,6 +2508,7 @@ package body Src_Editor_Box is
             Ask_If_Overloaded => False,
             Column      => 1,
             Entity      => Entity,
+            Closest_Ref => Ref,
             Status      => Status);
          return Entity;
       else
