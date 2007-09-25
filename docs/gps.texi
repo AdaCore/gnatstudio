@@ -3256,7 +3256,11 @@ is a dispatching call. In such a case, there is no possibility for GPS to
 know what subprogram will actually be called at run time, since that depends
 on dynamic information. It therefore gives you a list of all entities in the
 tagged type hierarchy, and let's you chose which of the declarations you want
-to jump to.
+to jump to. See also the plug-in @file{methods.py} which given an object lists
+all its primitive operations in a contextual menu so that you can easily jump
+to them. See also the contextual menu @file{References/Find References To...}
+which allows you to find all calls to a subprogram or to one of its overriding
+subprograms.
 
 @item Goto bodies of @i{entity}
 @cindex goto body
