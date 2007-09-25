@@ -3325,6 +3325,15 @@ top level unit for Ada sources).
 See @ref{Find All References} for more details.
 @end table
 
+@item Methods of @i{entity}
+@cindex methods
+@cindex primitive operations
+This submenu is only visible if you have activated the plug-in
+@file{methods.py} (which is the case by default), and when you click on
+a tagged type or an instance of a tagged type. This menu lists all the
+primitive operations of that type, and you can therefore easily jump to
+the declaration of any of these operations.
+
 @item Browsers
 @cindex browsers
 This item gives access to graph representations of callers and callees for
