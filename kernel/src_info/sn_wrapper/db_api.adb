@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2007                      --
---                              AdaCore                              --
+--                Copyright (C) 2002-2007, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -32,7 +31,6 @@ package body DB_API is
    package CStrings renames Interfaces.C.Strings;
 
    use type C.int;
-   use type CStrings.chars_ptr;
    use type System.Address;
 
    procedure Internal_Free (DB : DB_File);
