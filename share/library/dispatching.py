@@ -30,7 +30,60 @@ highlight_color="#FFDC4F"
 
 from GPS import *
 
+try:
+   ## If we have PyGTK installed, we'll do the highlighting of the next
+   ## matches in the background, which makes the interface more responsive
+   import gobject
+   has_pygtk = 1
+except:
+   has_pygtk = 0
+
+insert_overlays_id = 0
+to_highlight=[]
+current_entities=[]
+current_entity=None
+
+def highlight_entity_references (buffer, overlay, entity):
+  """Highlight all dispatching calls to entity in buffer"""
+  refs = entity.references (show_kind = True, in_file = buffer.file())
+  for r in refs:
+    if refs[r] == "dispatching call":
+       try:
+         loc = EditorLocation (buffer, r.line(), r.column())
+         buffer.apply_overlay (overlay, loc, loc + len (entity.name()) - 1)
+       except:
+         # The xref location might no longer be valid, just ignore it
+         pass
+
+def highlight_file_idle ():
+  """Process the next entity or file to highlight"""
+  global to_highlight
+  global current_entities
+  global current_entity
+  global insert_overlays_id
+
+  if to_highlight == []:
+     insert_overlays_id = 0
+     current_entities=[]
+     return False
+
+  (buffer, overlay) = to_highlight[0]
+  if current_entities == []:
+     current_entities = buffer.file().entities (local = False)
+     current_entity   = current_entities.__iter__()
+  try:
+     e = current_entity.next()
+     highlight_entity_references (buffer, overlay, e)
+     return True
+  except StopIteration:
+     to_highlight.pop (0)
+     current_entities=[]
+     return True
+
 def highlight_dispatching_calls (buffer):
+  global insert_overlays_id
+  global to_highlight
+
   if not buffer:
      return
 
@@ -38,19 +91,15 @@ def highlight_dispatching_calls (buffer):
   over.set_property ("background", highlight_color)
   buffer.remove_overlay (over)
 
-  buffer.dispatch_calls_highlighted = True
+  if has_pygtk:
+     to_highlight.append ((buffer, over))
+     if insert_overlays_id == 0:
+        insert_overlays_id = gobject.idle_add (highlight_file_idle)
 
-  entities = buffer.file().entities (local = False)
-  for e in entities:
-     refs = e.references (show_kind = True, in_file = buffer.file())
-     for r in refs:
-        if refs[r] == "dispatching call":
-           try:
-              loc = EditorLocation (buffer, r.line(), r.column())
-              buffer.apply_overlay (over, loc, loc + len (e.name()) - 1)
-           except:
-              # The xref location might no longer be valid, just ignore it
-              pass
+  else:
+     entities = buffer.file().entities (local = False)
+     for e in entities:
+        highlight_entity_references (buffer, over, e)
 
 
 def on_highlight_dispatching_calls (menu):
