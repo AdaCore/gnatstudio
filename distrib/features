@@ -42,16 +42,15 @@ NF-42-G919-002 Remove All Other Items keeps all selected (2007-09-19)
   the contextual menu "Remove All Other Items", then all selected items
   are kept. Previous behavior was to remove all but the current one.
 
-NF-42-G918-003 New plug-in to highlight dispatching calls (2007-09-24)
+NF-42-G918-003 Better handling of dispatching calls (2007-09-24)
 
   The dispatching.py plug-in highlights, in open editors, all calls to
-  dispatching subprograms. It requires a recent version of GNAT, after
-  2007-09-21.
-  The standard cross-reference contextual menu ("Go to declaration"
-  and "Go to body") has been enhanced so that when you click on a
-  dispatching call, you are given a choice among all overriding
-  subprograms instead of jumping to the parent. This requires a
-  version of GNAT more recent than 2007-09-21
+  dispatching subprograms.
+  Also, the standard cross-reference contextual menus ("Go to declaration"
+  and "Go to body") have been enhanced so that when you click on a
+  dispatching call, you are given a choice among all known overriding
+  subprograms instead of jumping to the root subprogram.
+  These changes require a version of GNAT more recent than 2007-09-21.
 
 NF-42-G827-022 Add customization for activity logs (2007-09-02)
 
