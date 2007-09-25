@@ -164,6 +164,16 @@ package body Src_Editor_Box is
       Box    : Source_Editor_Box);
    --  Callback for the "destroy" signal
 
+   procedure On_Goto_Declaration_Of
+     (Kernel : access GObject_Record'Class;
+      Entity : Entity_Information);
+   --  Jump to the declaration of the given entity
+
+   procedure On_Goto_Body_Of
+     (Kernel : access GObject_Record'Class;
+      Entity : Entity_Information);
+   --  Jump to the body of the given entity
+
    procedure On_Toggle_Overwrite
      (Object : access Glib.Object.GObject_Record'Class;
       Params : Glib.Values.GValues;
@@ -1403,10 +1413,6 @@ package body Src_Editor_Box is
 
    procedure On_Goto_Declaration_Of
      (Kernel : access GObject_Record'Class;
-      Entity : Entity_Information);
-
-   procedure On_Goto_Declaration_Of
-     (Kernel : access GObject_Record'Class;
       Entity : Entity_Information)
    is
       Location : constant File_Location := Get_Declaration_Of (Entity);
@@ -1422,10 +1428,6 @@ package body Src_Editor_Box is
    ---------------------
    -- On_Goto_Body_Of --
    ---------------------
-
-   procedure On_Goto_Body_Of
-     (Kernel : access GObject_Record'Class;
-      Entity : Entity_Information);
 
    procedure On_Goto_Body_Of
      (Kernel : access GObject_Record'Class;
