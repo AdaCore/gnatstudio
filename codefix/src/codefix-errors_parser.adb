@@ -53,14 +53,23 @@ package body Codefix.Errors_Parser is
            (General_Preferences_List,
             Data (Current_Node).Category.all) /= Disabled
          then
-            Fix
-              (Data (Current_Node).all,
-               Errors_List,
-               Current_Text,
-               Message,
-               Options,
-               Solutions,
-               Success);
+            begin
+               Fix
+                 (Data (Current_Node).all,
+                  Errors_List,
+                  Current_Text,
+                  Message,
+                  Options,
+                  Solutions,
+                  Success);
+
+            exception
+               when E : Codefix_Panic =>
+                  Traces.Trace
+                    (Handle => Me,
+                     E      => E,
+                     Msg    => "Cannot propose a fix.");
+            end;
          end if;
 
          if Success then
