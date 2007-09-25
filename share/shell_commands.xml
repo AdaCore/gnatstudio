@@ -1233,10 +1233,13 @@ Some entities have several bodies. This is for instance the case of a separate s
       <param name="include_implicit" default="False">A boolean</param>
       <param name="synchronous" default="True">A boolean</param>
       <param name="show_kind"   default="False">A boolean</param>
+      <param name="in_file"     default="None">An instance of GPS.File</param>
       <return>List of GPS.FileLocation, htable or GPS.Command</return>
       <description>List all references to the entity in the project sources. If include_implicit is true, then implicit uses of the entity will also
 be referenced, for instance when the entity appears as an implicit parameter
-to a generic instantiation in Ada. If synchronous is True, then the result will be directly returned, otherwise a command will be returned and its result will be accessible with get_result(). The result, then, is either a list of locations (if show_kind is False), or a htable indexed by location, and whose value is a string indicating the kind of the reference (declaration, body, label, end-of-spec,...)</description>
+to a generic instantiation in Ada. If synchronous is True, then the result will be directly returned, otherwise a command will be returned and its result will be accessible with get_result(). The result, then, is either a list of locations (if show_kind is False), or a htable indexed by location, and whose value is a string indicating the kind of the reference (declaration, body, label, end-of-spec,...).
+The parameter in_file can be used to limit the search to references in a particular file. This is a lot faster.
+</description>
       <example lang="python">
          for r in GPS.Entity ("GPS", GPS.File("gps.adb")).references():
              print "One reference in " + r.file().name()

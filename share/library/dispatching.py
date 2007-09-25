@@ -42,11 +42,15 @@ def highlight_dispatching_calls (buffer):
 
   entities = buffer.file().entities (local = False)
   for e in entities:
-     refs = e.references (show_kind = True)
+     refs = e.references (show_kind = True, in_file = buffer.file())
      for r in refs:
-        if refs[r] == "dispatching call" and r.file() == buffer.file():
-           loc = EditorLocation (buffer, r.line(), r.column())
-           buffer.apply_overlay (over, loc, loc + len (e.name()) - 1)
+        if refs[r] == "dispatching call":
+           try:
+              loc = EditorLocation (buffer, r.line(), r.column())
+              buffer.apply_overlay (over, loc, loc + len (e.name()) - 1)
+           except:
+              # The xref location might no longer be valid, just ignore it
+              pass
 
 
 def on_highlight_dispatching_calls (menu):
@@ -60,13 +64,17 @@ def on_compilation_finished (hook, category):
   for l in EditorBuffer.list():
      highlight_dispatching_calls (l)
   
+def on_gps_start (hook):
+  if highlight_on_open:
+     Hook ("file_edited").add (on_file_edited)
+     Hook ("file_changed_on_disk").add (on_file_edited)
+     Hook ("compilation_finished").add (on_compilation_finished)
+     on_compilation_finished (hook, "")
 
+
+Hook ("gps_started").add (on_gps_start)
 Menu.create ("/Navigate/Highlight Dispatching Calls",
              on_highlight_dispatching_calls,
              ref = "Find All References",
              add_before = False)
 
-if highlight_on_open:
-   Hook ("file_edited").add (on_file_edited)
-   Hook ("file_changed_on_disk").add (on_file_edited)
-   Hook ("compilation_finished").add (on_compilation_finished)

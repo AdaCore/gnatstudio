@@ -103,10 +103,12 @@ package body Browsers.Call_Graph is
    Include_Implicit_Cst : aliased constant String := "include_implicit";
    Synchronous_Cst      : aliased constant String := "synchronous";
    Show_Kind_Cst        : aliased constant String := "show_kind";
+   In_File_Cst          : aliased constant String := "in_file";
    References_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Include_Implicit_Cst'Access,
       2 => Synchronous_Cst'Access,
-      3 => Show_Kind_Cst'Access);
+      3 => Show_Kind_Cst'Access,
+      4 => In_File_Cst'Access);
 
    type Filters_Buttons is array (Reference_Kind) of Gtk_Check_Button;
    type References_Filter_Dialog_Record is new Gtk_Dialog_Record with record
@@ -1452,10 +1454,20 @@ package body Browsers.Call_Graph is
 
             Synchronous      : constant Boolean := Nth_Arg (Data, 3, True);
             Show_Ref_Type    : constant Boolean := Nth_Arg (Data, 4, False);
+            Inst_In_File     : constant Class_Instance :=
+              Nth_Arg (Data, 5, Get_File_Class (Get_Kernel (Data)),
+                       Allow_Null => True);
+            In_File          : Source_File := null;
             Instance         : Class_Instance;
             Launched_Command : Scheduled_Command_Access;
          begin
             Ref_Command.Show_Ref_Kind := Show_Ref_Type;
+
+            if Inst_In_File /= No_Class_Instance then
+               In_File := Get_Or_Create
+                 (Get_Database (Get_Kernel (Data)),
+                  File => Get_Data (Inst_In_File));
+            end if;
 
             Filter := Real_References_Filter;
             Filter (Implicit) := Nth_Arg (Data, 2, False);
@@ -1463,6 +1475,7 @@ package body Browsers.Call_Graph is
               (Ref_Command.Iter,
                Entity                => Entity,
                Filter                => Filter,
+               In_File               => In_File,
                File_Has_No_Li_Report => null);
 
             if Synchronous then
@@ -2193,7 +2206,7 @@ package body Browsers.Call_Graph is
       Register_Command
         (Kernel, "references",
          Class        => Get_Entity_Class (Kernel),
-         Maximum_Args => 3,
+         Maximum_Args => 4,
          Handler      => Call_Graph_Command_Handler'Access);
       Register_Command
         (Kernel, "calls",
