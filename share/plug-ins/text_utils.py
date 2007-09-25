@@ -325,13 +325,13 @@ def join_line ():
    """Join the current line and the following one, separated by a single
       space, and leaves the cursor on the space"""
    buffer = GPS.EditorBuffer.get()
-   cursor = buffer.current_view().cursor().end_of_line()
+   eol = buffer.current_view().cursor().end_of_line()
    buffer.start_undo_group ()
-   buffer.delete (cursor, cursor)  ## Newline character
-   buffer.current_view().goto (cursor)
-   delete_horizontal_space (backward=1, forward=1)
-   buffer.insert (cursor, " ")
-   buffer.current_view().goto (cursor)
+   buffer.current_view().goto (eol)
+   buffer.delete (eol, eol)  ## Newline character
+   delete_horizontal_space (backward=0, forward=1)
+   if not is_space (eol.forward_char (-1).get_char ()):
+      buffer.insert (eol, "XXX")
    buffer.finish_undo_group ()
 
 def apply_func_to_word (func, location=None):
