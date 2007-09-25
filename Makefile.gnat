@@ -144,6 +144,8 @@ GNAT_SOURCES= \
   makeutl.ads \
   makeutl.adb \
   impunit.adb \
+  g-comlin.ads \
+  g-comlin.adb \
   gnat_style.css
 
 list-sources:
