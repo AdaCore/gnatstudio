@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.2 NEW FEATURES LIST Current as of Sep 24, 2007
+GPS 4.2 NEW FEATURES LIST Current as of Sep 25, 2007
 ====================================================
 
 Copyright (c) 2006-2007, AdaCore
@@ -47,6 +47,11 @@ NF-42-G918-003 New plug-in to highlight dispatching calls (2007-09-24)
   The dispatching.py plug-in highlights, in open editors, all calls to
   dispatching subprograms. It requires a recent version of GNAT, after
   2007-09-21.
+  The standard cross-reference contextual menu ("Go to declaration"
+  and "Go to body") has been enhanced so that when you click on a
+  dispatching call, you are given a choice among all overriding
+  subprograms instead of jumping to the parent. This requires a
+  version of GNAT more recent than 2007-09-21
 
 NF-42-G827-022 Add customization for activity logs (2007-09-02)
 
