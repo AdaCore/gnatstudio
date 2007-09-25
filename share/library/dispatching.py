@@ -20,7 +20,7 @@ highlight_on_open = True
 # slow down the opening of a file, though, so should be deactivated if opening
 # a file appears slow.
 
-highlight_color="cyan"
+highlight_color="#FFDC4F"
 # The background color to use for the dispatching calls in the editors
 
 
