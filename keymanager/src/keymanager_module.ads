@@ -197,4 +197,7 @@ private
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Save the current custom keys
 
+   procedure Set_GUI_Running (Running : Boolean);
+   --  Inform the module whether the GUI is currently running.
+
 end KeyManager_Module;
