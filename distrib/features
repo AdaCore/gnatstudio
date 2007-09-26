@@ -15,6 +15,16 @@ of the feature.
 New features in GPS 4.2.0
 -------------------------
 
+NF-42-G924-017 Completion engine enhancements (2007-09-26)
+
+  A lot of internal enhancements have been done in the completion engine, which
+  should make the "smart complete" command faster. Some new features have been
+  implemented as well:
+  - Ada 2005 prefix notation for tagged types can now be completed.
+  - Visibility is better handled - hiding variables & privacy rules are now
+    more respected by the engine.
+  - The completion engine can now work if there are on multiple units per file.
+
 NF-42-G921-015 Plug-in to close all editors (2007-09-24)
 
   The editors.py plug-in provides a new menu /File/Close All Editors that
@@ -119,6 +129,11 @@ NF-42-G608-003 Grouping VCS queries for better performance (2007-06-11)
   files, the VCS performs "Query status for directories" on each source
   directory instead of file-by-file queries. This is activated by default, and
   can be controlled on the VCS that are described through XML files.
+
+NF-42-G608-002 Completion on protected types (2007-09-26)
+
+  Completions are now proposing contents (entries, fields, subprograms...) of
+  protected types.
 
 NF-42-G526-001 Performance improvements with highlighted lines (2007-06-15)
 
