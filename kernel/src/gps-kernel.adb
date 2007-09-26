@@ -89,6 +89,7 @@ with Language.Tree.Database;    use Language.Tree.Database;
 with Namet;                     use Namet;
 with Prj.Attr;                  use Prj.Attr;
 with Projects.Registry;         use Projects, Projects.Registry;
+with Switches_Chooser;          use Switches_Chooser;
 with String_Utils;              use String_Utils;
 with System.Address_Image;
 with Traces;                    use Traces;
@@ -1779,6 +1780,8 @@ package body GPS.Kernel is
       Free (Tool.Project_Attribute);
       Free (Tool.Project_Index);
       Free (Tool.Initial_Cmd_Line);
+      Free (Tool.Languages);
+      Free (Tool.Config);
    end Free;
 
    -------------------
@@ -1787,7 +1790,6 @@ package body GPS.Kernel is
 
    procedure Register_Tool
      (Kernel    : access Kernel_Handle_Record;
-      Tool_Name : String;
       Tool      : Tool_Properties_Record)
    is
       Pkg  : Package_Node_Id;
@@ -1821,8 +1823,41 @@ package body GPS.Kernel is
          end if;
       end if;
 
-      Tools_Htable.String_Hash_Table.Set (Kernel.Tools, Tool_Name, Tool);
+      Tools_Htable.String_Hash_Table.Set
+        (Kernel.Tools, Tool.Tool_Name.all, Tool);
    end Register_Tool;
+
+   -------------------
+   -- Get_All_Tools --
+   -------------------
+
+   function Get_All_Tools
+     (Kernel    : access Kernel_Handle_Record)
+      return Tool_Properties_Array
+   is
+      use Tools_Htable.String_Hash_Table;
+      Iter : Tools_Htable.String_Hash_Table.Iterator;
+      Count : Natural := 0;
+   begin
+      Get_First (Kernel.Tools, Iter);
+      while Get_Element (Iter) /= No_Tool loop
+         Count := Count + 1;
+         Get_Next (Kernel.Tools, Iter);
+      end loop;
+
+      declare
+         Result : Tool_Properties_Array (1 .. Count);
+      begin
+         Count := Result'First;
+         Get_First (Kernel.Tools, Iter);
+         while Count <= Result'Last loop
+            Result (Count) := Get_Element (Iter);
+            Count := Count + 1;
+            Get_Next (Kernel.Tools, Iter);
+         end loop;
+         return Result;
+      end;
+   end Get_All_Tools;
 
    -------------------------
    -- Get_Tool_Properties --

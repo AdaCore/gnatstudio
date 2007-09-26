@@ -58,6 +58,11 @@ package Switches_Chooser is
    --  scrolling window, which is useful if the number of switches is
    --  especially important.
 
+   procedure Free (Config : in out Switches_Editor_Config) is null;
+   --  Free the memory associated with Config.
+   --  Does nothing for now, but at least ensures that appropriate calls are
+   --  done where needed.
+
    procedure Set_Configuration
      (Config     : access Switches_Editor_Config_Record;
       Cmd_Config : Command_Line_Configuration);

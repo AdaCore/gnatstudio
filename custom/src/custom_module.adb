@@ -18,6 +18,8 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+with GComLin;                   use GComLin;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Scripts.Gtkada;       use GNAT.Scripts, GNAT.Scripts.Gtkada;
@@ -61,6 +63,7 @@ with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
 with Projects;                  use Projects;
 with String_Utils;              use String_Utils;
+with Switches_Chooser;          use Switches_Chooser;
 with Traces;                    use Traces;
 with VFS;                       use VFS;
 with XML_Viewer;
@@ -201,6 +204,518 @@ package body Custom_Module is
       Factory : Dynamic_Context);
    --  Called when an entry is a dynamic contextual menu created through a
    --  scripting language was activated.
+
+   procedure Parse_Switches_Node
+     (Kernel : access Kernel_Handle_Record'Class;
+      Node   : Node_Ptr;
+      Config : out Switches_Editor_Config);
+   --  Parse a <switches> node, and returns the corresponding configuration
+
+   -------------------------
+   -- Parse_Switches_Node --
+   -------------------------
+
+   procedure Parse_Switches_Node
+     (Kernel : access Kernel_Handle_Record'Class;
+      Node   : Node_Ptr;
+      Config : out Switches_Editor_Config)
+   is
+      Comlin_Config : Command_Line_Configuration;
+      Char       : constant String := Get_Attribute (Node, "switch_char", "-");
+      Default_Sep : constant String := Get_Attribute (Node, "separator", "");
+
+      procedure Coordinates_From_Node (N : Node_Ptr; Line, Col : out Natural);
+      --  Get the line and column from N
+
+      function Check_Space_In_Switch (Switch : String) return Boolean;
+      --  Return True if Switch contains a space
+
+      procedure Process_Title_Node      (N : Node_Ptr; Popup : Popup_Index);
+      procedure Process_Check_Node      (N : Node_Ptr; Popup : Popup_Index);
+      procedure Process_Spin_Node       (N : Node_Ptr; Popup : Popup_Index);
+      procedure Process_Field_Node      (N : Node_Ptr; Popup : Popup_Index);
+      procedure Process_Radio_Node      (N : Node_Ptr; Popup : Popup_Index);
+      procedure Process_Combo_Node      (N : Node_Ptr; Popup : Popup_Index);
+      procedure Process_Popup_Node      (N : Node_Ptr; Popup : Popup_Index);
+      procedure Process_Dependency_Node (N : Node_Ptr);
+      procedure Process_Expansion_Node  (N : Node_Ptr);
+      --  Process a child node (resp. <title>, <check>, <spin>, <radio>,
+      --  <combo>, <popup>, <dependency>, <expansion>)
+
+      procedure Process_Radio_Entry_Nodes
+        (Parent : Node_Ptr; Radio : Radio_Switch);
+      function Process_Combo_Entry_Nodes
+        (Parent : Node_Ptr) return Combo_Switch_Array;
+      --  Return the contents of all the <radio-entry> and
+      --  <combo-entry> nodes of Parent
+
+      procedure Parse_Popup_Or_Main
+        (N     : Node_Ptr;
+         Popup : Popup_Index);
+      --  Parse the subnodes of <switches>
+
+      ---------------------------
+      -- Check_Space_In_Switch --
+      ---------------------------
+
+      function Check_Space_In_Switch (Switch : String) return Boolean is
+      begin
+         for S in Switch'Range loop
+            if Is_Blank (Switch (S)) then
+               Insert
+                 (Kernel,
+                  -("Attribute switch cannot contain spaces. Use the separator"
+                    & " attribute if you need to separate the switch and its"
+                    & " argument"),
+                  Mode => GPS.Kernel.Console.Error);
+               return True;
+            end if;
+         end loop;
+         return False;
+      end Check_Space_In_Switch;
+
+      ---------------------------
+      -- Coordinates_From_Node --
+      ---------------------------
+
+      procedure Coordinates_From_Node
+        (N : Node_Ptr; Line, Col : out Natural)
+      is
+      begin
+         Line := Safe_Value (Get_Attribute (N, "line", "1"));
+         Col  := Safe_Value (Get_Attribute (N, "column", "1"));
+      end Coordinates_From_Node;
+
+      ------------------------
+      -- Process_Title_Node --
+      ------------------------
+
+      procedure Process_Title_Node (N : Node_Ptr; Popup : Popup_Index) is
+         Line, Col : Natural;
+         Line_Span : constant Integer :=
+                       Safe_Value (Get_Attribute (N, "line-span", "1"));
+         Col_Span  : constant Integer :=
+                       Safe_Value (Get_Attribute (N, "column-span", "1"));
+      begin
+         Coordinates_From_Node (N, Line, Col);
+         Set_Frame_Title
+           (Config,
+            Title     => N.Value.all,
+            Line      => Line,
+            Column    => Col,
+            Line_Span => Line_Span,
+            Col_Span  => Col_Span,
+            Popup     => Popup);
+      end Process_Title_Node;
+
+      -----------------------------
+      -- Process_Dependency_Node --
+      -----------------------------
+
+      procedure Process_Dependency_Node (N : Node_Ptr) is
+         Master_Page   : constant String := Get_Attribute (N, "master-page");
+         Master_Switch : constant String := Get_Attribute (N, "master-switch");
+         Slave_Page    : constant String := Get_Attribute (N, "slave-page");
+         Slave_Switch  : constant String := Get_Attribute (N, "slave-switch");
+         Master_Status : constant String :=
+                           Get_Attribute (N, "master-status", "true");
+         Slave_Status  : constant String :=
+                           Get_Attribute (N, "slave-status", "true");
+         pragma Unreferenced (Master_Status, Slave_Status);
+      begin
+         if Master_Page = ""
+           or else Master_Switch = ""
+           or else Slave_Page = ""
+           or else Slave_Switch = ""
+         then
+            Insert
+              (Kernel,
+                 -("Invalid <dependency> node in custom file,"
+                   & " all attributes must be specified"),
+               Mode => GPS.Kernel.Console.Error);
+            return;
+         end if;
+
+--           Add_Dependency
+--             (Page,
+--              Master_Page,
+--              Master_Switch,
+--              Master_Status = "true" or else Master_Status = "on",
+--              Slave_Page,
+--              Slave_Switch,
+--              Slave_Status = "true" or else Slave_Status = "on");
+      end Process_Dependency_Node;
+
+      -------------------------------
+      -- Process_Radio_Entry_Nodes --
+      -------------------------------
+
+      procedure Process_Radio_Entry_Nodes
+        (Parent : Node_Ptr;
+         Radio  : Radio_Switch)
+      is
+         N            : Node_Ptr := Parent.Child;
+      begin
+         while N /= null loop
+            if N.Tag.all = "radio-entry" then
+               declare
+                  Label  : constant String := Get_Attribute (N, "label");
+                  Switch : constant String := Get_Attribute (N, "switch");
+               begin
+                  if Label = "" then
+                     Insert
+                       (Kernel,
+                          -("Invalid <radio-entry> node in custom file,"
+                            & " requires a label and a switch attributes"),
+                        Mode => GPS.Kernel.Console.Error);
+                     return;
+                  end if;
+
+                  if Check_Space_In_Switch (Switch) then
+                     return;
+                  end if;
+
+                  Add_Radio_Entry
+                    (Config => Config,
+                     Radio  => Radio,
+                     Label  => Label,
+                     Switch => Switch,
+                     Tip    => Get_Attribute (N, "tip"));
+               end;
+            end if;
+            N := N.Next;
+         end loop;
+      end Process_Radio_Entry_Nodes;
+
+      -------------------------------
+      -- Process_Combo_Entry_Nodes --
+      -------------------------------
+
+      function Process_Combo_Entry_Nodes
+        (Parent : Node_Ptr) return Combo_Switch_Array
+      is
+         N            : Node_Ptr := Parent.Child;
+         Num_Children : Natural := 0;
+      begin
+         while N /= null loop
+            if N.Tag.all = "combo-entry" then
+               Num_Children := Num_Children + 1;
+            end if;
+            N := N.Next;
+         end loop;
+
+         declare
+            Buttons : Combo_Switch_Array (1 .. Num_Children);
+         begin
+            N := Parent.Child;
+            for B in Buttons'Range loop
+               while N.Tag.all /= "combo-entry" loop
+                  N := N.Next;
+               end loop;
+
+               declare
+                  Label : constant String := Get_Attribute (N, "label");
+                  Value : constant String := Get_Attribute (N, "value");
+               begin
+                  if Label = "" or else Value = "" then
+                     Insert
+                       (Kernel,
+                          -("Invalid <combo-entry> node in custom file,"
+                            & " requires a label and a switch attributes"),
+                        Mode => GPS.Kernel.Console.Error);
+                     return Buttons (1 .. 0);
+                  end if;
+
+                  Buttons (B) :=
+                    (Label => To_Unbounded_String (Label),
+                     Value => To_Unbounded_String (Value));
+               end;
+
+               N := N.Next;
+            end loop;
+
+            return Buttons;
+         end;
+      end Process_Combo_Entry_Nodes;
+
+      ------------------------
+      -- Process_Radio_Node --
+      ------------------------
+
+      procedure Process_Radio_Node (N : Node_Ptr; Popup : Popup_Index) is
+         Line, Col : Natural;
+         R         : Radio_Switch;
+      begin
+         Coordinates_From_Node (N, Line, Col);
+
+         R := Add_Radio
+           (Config => Config,
+            Line   => Line,
+            Column => Col,
+            Popup  => Popup);
+         Process_Radio_Entry_Nodes (N, R);
+      end Process_Radio_Node;
+
+      ------------------------
+      -- Process_Popup_Node --
+      ------------------------
+
+      procedure Process_Popup_Node (N : Node_Ptr; Popup : Popup_Index) is
+         Line, Col : Natural;
+         Label     : constant String := Get_Attribute (N, "label");
+         Pop       : Popup_Index;
+      begin
+         Coordinates_From_Node (N, Line, Col);
+         if Label = "" then
+            Insert
+              (Kernel,
+                 -("Invalid <popup> node in custom file,"
+                   & " requires a label attributes"),
+               Mode => GPS.Kernel.Console.Error);
+            return;
+         end if;
+
+         Pop := Add_Popup
+           (Config  => Config,
+            Label   => Label,
+            Lines   => Safe_Value (Get_Attribute (N, "lines", "1")),
+            Columns => Safe_Value (Get_Attribute (N, "columns", "1")),
+            Line    => Line,
+            Column  => Col,
+            Popup   => Popup);
+
+         Parse_Popup_Or_Main
+           (N     => N,
+            Popup => Pop);
+      end Process_Popup_Node;
+
+      ------------------------
+      -- Process_Combo_Node --
+      ------------------------
+
+      procedure Process_Combo_Node (N : Node_Ptr; Popup : Popup_Index) is
+         Line, Col : Natural;
+         Label     : constant String := Get_Attribute (N, "label");
+         Switch    : constant String := Get_Attribute (N, "switch");
+      begin
+         Coordinates_From_Node (N, Line, Col);
+
+         if Switch = "" then
+            Insert (Kernel,
+                      -("Invalid <combo> node in custom file, requires"
+                        & " a switch attributes"),
+                    Mode => GPS.Kernel.Console.Error);
+            return;
+         end if;
+
+         if Check_Space_In_Switch (Switch) then
+            return;
+         end if;
+
+         Add_Combo
+           (Config    => Config,
+            Label     => Label,
+            Switch    => Switch,
+            Separator => Get_Attribute (N, "separator", " "),
+            No_Switch => Get_Attribute (N, "noswitch"),
+            No_Digit  => Get_Attribute (N, "nodigit"),
+            Entries   => Process_Combo_Entry_Nodes (N),
+            Tip       => Get_Attribute (N, "tip"),
+            Line      => Line,
+            Column    => Col,
+            Popup     => Popup);
+      end Process_Combo_Node;
+
+      ------------------------
+      -- Process_Field_Node --
+      ------------------------
+
+      procedure Process_Field_Node (N : Node_Ptr; Popup : Popup_Index) is
+         Line, Col : Natural;
+         Label   : constant String := Get_Attribute (N, "label");
+         Switch  : constant String := Get_Attribute (N, "switch");
+      begin
+         Coordinates_From_Node (N, Line, Col);
+
+         if Label = "" or else Switch = "" then
+            Insert (Kernel,
+                      -("Invalid <field> node in custom file, requires"
+                        & " a label and a switch attributes"),
+                    Mode => GPS.Kernel.Console.Error);
+            return;
+         end if;
+
+         if Check_Space_In_Switch (Switch) then
+            return;
+         end if;
+
+         Add_Field
+           (Config,
+            Label        => Label,
+            Switch       => Switch,
+            Separator    => Get_Attribute (N, "separator", Default_Sep),
+            Tip          => Get_Attribute (N, "tip"),
+            As_Directory =>
+              Get_Attribute (N, "as-directory", "false") = "true",
+            As_File      => Get_Attribute (N, "as-file", "false") = "true",
+            Line         => Line,
+            Column       => Col,
+            Popup        => Popup);
+      end Process_Field_Node;
+
+      -----------------------
+      -- Process_Spin_Node --
+      -----------------------
+
+      procedure Process_Spin_Node  (N : Node_Ptr; Popup : Popup_Index) is
+         Line, Col : Natural;
+         Label     : constant String := Get_Attribute (N, "label");
+         Switch    : constant String := Get_Attribute (N, "switch");
+      begin
+         Coordinates_From_Node (N, Line, Col);
+
+         if Label = "" or else Switch = "" then
+            Insert (Kernel,
+                      -("Invalid <spin> node in custom file, requires"
+                        & " a label and a switch attributes"),
+                    Mode => GPS.Kernel.Console.Error);
+            return;
+         end if;
+
+         if Check_Space_In_Switch (Switch) then
+            return;
+         end if;
+
+         Add_Spin
+           (Config    => Config,
+            Label     => Label,
+            Switch    => Switch,
+            Tip       => Get_Attribute (N, "tip"),
+            Separator => Get_Attribute (N, "separator", Default_Sep),
+            Min       => Safe_Value (Get_Attribute (N, "min", "1")),
+            Max       => Safe_Value (Get_Attribute (N, "max", "1")),
+            Default   => Safe_Value (Get_Attribute (N, "default", "1")),
+            Line      => Line,
+            Column    => Col,
+            Popup     => Popup);
+      end Process_Spin_Node;
+
+      ------------------------
+      -- Process_Check_Node --
+      ------------------------
+
+      procedure Process_Check_Node (N : Node_Ptr; Popup : Popup_Index) is
+         Line, Col : Natural;
+         Label     : constant String := Get_Attribute (N, "label");
+         Switch    : constant String := Get_Attribute (N, "switch");
+      begin
+         Coordinates_From_Node (N, Line, Col);
+
+         if Label = "" or else Switch = "" then
+            Insert (Kernel,
+                      -("Invalid <check> node in custom file, requires"
+                        & " a label and a switch attributes"),
+                    Mode => GPS.Kernel.Console.Error);
+            return;
+         end if;
+
+         if Check_Space_In_Switch (Switch) then
+            return;
+         end if;
+
+         Add_Check
+           (Config => Config,
+            Label  => Label,
+            Switch => Switch,
+            Tip    => Get_Attribute (N, "tip"),
+            Line   => Line,
+            Column => Col,
+            Popup  => Popup);
+      end Process_Check_Node;
+
+      ----------------------------
+      -- Process_Expansion_Node --
+      ----------------------------
+
+      procedure Process_Expansion_Node (N : Node_Ptr) is
+         Switch       : constant String := Get_Attribute (N, "switch");
+         Alias        : constant String := Get_Attribute (N, "alias");
+      begin
+         if Switch = "" then
+            Insert (Kernel,
+                      -("Invalid <expansion> node in custom file, requires"
+                        & " a switch attributes"),
+                    Mode => GPS.Kernel.Console.Error);
+            return;
+         end if;
+
+         if Check_Space_In_Switch (Switch) then
+            return;
+         end if;
+
+         if Alias = "" then
+            Define_Prefix (Comlin_Config, Prefix => Switch);
+         else
+            Define_Alias  (Comlin_Config, Switch, Alias);
+         end if;
+      end Process_Expansion_Node;
+
+      -------------------------
+      -- Parse_Popup_Or_Main --
+      -------------------------
+
+      procedure Parse_Popup_Or_Main
+        (N     : Node_Ptr;
+         Popup : Popup_Index)
+      is
+         N2 : Node_Ptr := N.Child;
+      begin
+         while N2 /= null loop
+            if N2.Tag.all = "title" then
+               Process_Title_Node (N2, Popup);
+            elsif N2.Tag.all = "check" then
+               Process_Check_Node (N2, Popup);
+            elsif N2.Tag.all = "spin" then
+               Process_Spin_Node (N2, Popup);
+            elsif N2.Tag.all = "radio" then
+               Process_Radio_Node (N2, Popup);
+            elsif N2.Tag.all = "field" then
+               Process_Field_Node (N2, Popup);
+            elsif N2.Tag.all = "combo" then
+               Process_Combo_Node (N2, Popup);
+            elsif N2.Tag.all = "popup" then
+               Process_Popup_Node (N2, Popup);
+            elsif N2.Tag.all = "dependency" then
+               Process_Dependency_Node (N2);
+            elsif N2.Tag.all = "expansion" then
+               Process_Expansion_Node (N2);
+            else
+               Insert (Kernel,
+                       -"Invalid xml tag child for <switches>: "
+                       & N2.Tag.all);
+            end if;
+
+            N2 := N2.Next;
+         end loop;
+      exception
+         when E : others => Trace (Exception_Handle, E);
+      end Parse_Popup_Or_Main;
+
+   begin
+      Config := Create
+        (Default_Separator => Default_Sep,
+         Switch_Char     => Char (Char'First),
+         Scrolled_Window => Boolean'Value
+           (Get_Attribute (Node, "use_scrolled_window", "false")),
+         Lines           => Safe_Value (Get_Attribute (Node, "lines", "1")),
+         Columns         => Safe_Value (Get_Attribute (Node, "columns", "1")));
+
+      Parse_Popup_Or_Main (Node, Main_Window);
+
+      --  Set the configuration only after it has potentially
+      --  been created by Parsing_Switches_XML
+      Set_Configuration (Config, Comlin_Config);
+   end Parse_Switches_Node;
 
    ------------------------------
    -- On_Dynamic_Menu_Activate --
@@ -387,7 +902,7 @@ package body Custom_Module is
          Before  : constant String := Get_Attribute (Node, "before", "");
          After   : constant String := Get_Attribute (Node, "after", "");
          Child   : Node_Ptr;
-         Title   : String_Access;
+         Title   : GNAT.OS_Lib.String_Access;
          Command : Action_Record_Access;
       begin
          Title := new String'(Action);
@@ -463,8 +978,10 @@ package body Custom_Module is
                        To_Lower (Get_Attribute (Node, "index", Name));
          Attribute : constant String :=
                        Get_Attribute (Node, "attribute", "default_switches");
-         Switches  : String_Access;
+         Switches  : GNAT.OS_Lib.String_Access;
          N         : Node_Ptr := Node.Child;
+         Languages : String_List_Access;
+         Config    : Switches_Editor_Config;
 
       begin
          if Name = "" then
@@ -478,11 +995,16 @@ package body Custom_Module is
             if N.Tag.all = "initial-cmd-line" then
                Free (Switches);
                Switches := new String'(N.Value.all);
-            elsif N.Tag.all = "language"
-              or else N.Tag.all = "switches"
-            then
-               --  Handled in prj_editor module
-               null;
+
+            elsif N.Tag.all = "language" then
+               Append (Languages, (1 => new String'(To_Lower (N.Value.all))));
+
+            elsif N.Tag.all = "switches" then
+               Parse_Switches_Node
+                 (Kernel => Kernel,
+                  Node   => N,
+                  Config => Config);
+
             else
                Insert (Kernel,
                        -"Unsupport child tag for <tool>: " & N.Tag.all,
@@ -494,11 +1016,13 @@ package body Custom_Module is
 
          Register_Tool
            (Kernel,
-            Tool_Name => Name,
-            Tool      => (Project_Package   => new String'(Pack),
+            Tool      => (Tool_Name         => new String'(Name),
+                          Project_Package   => new String'(Pack),
                           Project_Attribute => new String'(Attribute),
                           Project_Index     => new String'(Index),
-                          Initial_Cmd_Line  => Switches));
+                          Initial_Cmd_Line  => Switches,
+                          Languages         => Languages,
+                          Config            => Config));
       end Parse_Tool_Node;
 
       -----------------------
@@ -611,7 +1135,7 @@ package body Custom_Module is
                              Get_Attribute (Node, "category", "General");
          Child           : Node_Ptr;
          Command         : Custom_Command_Access;
-         Description     : String_Access := new String'("");
+         Description     : GNAT.OS_Lib.String_Access := new String'("");
          Filter_A        : Action_Filter;
          Implicit_Filter : Action_Filter;
       begin
@@ -704,8 +1228,8 @@ package body Custom_Module is
       procedure Parse_Button_Node (Node : Node_Ptr) is
          Action  : constant String := Get_Attribute (Node, "action");
          Child   : Node_Ptr;
-         Title   : String_Access := new String'("");
-         Pixmap  : String_Access := new String'("");
+         Title   : GNAT.OS_Lib.String_Access := new String'("");
+         Pixmap  : GNAT.OS_Lib.String_Access := new String'("");
          Image   : Gtk_Image;
          Command : Action_Record_Access;
          Space   : Gtk_Separator_Tool_Item;
@@ -840,7 +1364,7 @@ package body Custom_Module is
          Before : constant String := Get_Attribute (Node, "before");
          After  : constant String := Get_Attribute (Node, "after");
          Child  : Node_Ptr := Node.Child;
-         Title  : String_Access := new String'("");
+         Title  : GNAT.OS_Lib.String_Access := new String'("");
       begin
          --  First look for the title of the submenu
          while Child /= null loop
@@ -924,7 +1448,7 @@ package body Custom_Module is
          Before  : constant String := Get_Attribute (Node, "before");
          After   : constant String := Get_Attribute (Node, "after");
          Child   : Node_Ptr;
-         Title   : String_Access := new String'("");
+         Title   : GNAT.OS_Lib.String_Access := new String'("");
          Item    : Gtk_Menu_Item;
          Command : Action_Record_Access;
       begin

@@ -48,7 +48,6 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel;                use GPS.Kernel;
 with Language_Handlers;         use Language_Handlers;
 with Prj;
-with Project_Viewers;           use Project_Viewers;
 with Projects.Editor;           use Projects.Editor;
 with Projects;                  use Projects;
 with Scenario_Selectors;        use Scenario_Selectors;
@@ -446,10 +445,8 @@ package body Switches_Editors is
       Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Tab    : Gtk_Label;
-      Config : Switches_Editor_Config;
-      Tool   : String_Access;
-      Props  : Tool_Properties_Record;
-      Lang   : String_List_Access;
+      T      : Integer;
+      Tools  : constant Tool_Properties_Array := Get_All_Tools (Kernel);
 
    begin
       Editor := new Switches_Edit_Record;
@@ -457,35 +454,27 @@ package body Switches_Editors is
       Set_Scrollable (Editor);
 
       Editor.Kernel := Kernel_Handle (Kernel);
-      Editor.Pages := new Pages_Array (1 .. Switches_Page_Count (Kernel));
+      Editor.Pages := new Pages_Array (1 .. Tools'Length);
 
       for P in Editor.Pages'Range loop
-         Get_Nth_Switches_Page
-           (Kernel,
-            Num       => P,
-            Config    => Config,
-            Tool      => Tool,
-            Languages => Lang);
-         Props := Get_Tool_Properties
-           (Kernel    => Kernel,
-            Tool_Name => Tool.all);
+         T := P - Editor.Pages'First + 1;
+         if Tools (T).Config /= null then
+            Gtk_New
+              (Page           => Editor.Pages (P),
+               Kernel         => Kernel,
+               Title          => Tools (T).Tool_Name.all,
+               Project_Package => Tools (T).Project_Package.all,
+               Attribute_Index => Tools (T).Project_Index.all,
+               Config          => Tools (T).Config);
+            Gtk_New (Tab, Editor.Pages (P).Title.all);
+            Append_Page (Editor, Editor.Pages (P), Tab);
 
-         Gtk_New
-           (Page            => Editor.Pages (P),
-            Kernel          => Kernel,
-            Title           => Tool.all,
-            Project_Package => Props.Project_Package.all,
-            Attribute_Index => Props.Project_Index.all,
-            Config          => Config);
-         Gtk_New (Tab, Editor.Pages (P).Title.all);
-         Append_Page (Editor, Editor.Pages (P), Tab);
-
-         if Lang /= null then
-            for L in Lang'Range loop
-               Add_Language (Editor.Pages (P), Lang (L).all);
-            end loop;
+            if Tools (T).Languages /= null then
+               for L in Tools (T).Languages'Range loop
+                  Add_Language (Editor.Pages (P), Tools (T).Languages (L).all);
+               end loop;
+            end if;
          end if;
-
       end loop;
 
       --  Then once all the pages have been created, setup the dependencies
@@ -534,14 +523,16 @@ package body Switches_Editors is
       Current : Gint := Get_Current_Page (Editor);
    begin
       for P in Editor.Pages'Range loop
-         if (Editor.Pages (P).Lang_Filter = null
-             or else Has_Supported_Language (Editor.Pages (P), Languages))
-           and then (not File_Specific
-                     or else Editor.Pages (P).Pkg.all /= Ide_Package)
-         then
-            Show (Editor.Pages (P));
-         elsif not Show_Only then
-            Hide (Editor.Pages (P));
+         if Editor.Pages (P) /= null then
+            if (Editor.Pages (P).Lang_Filter = null
+                or else Has_Supported_Language (Editor.Pages (P), Languages))
+              and then (not File_Specific
+                        or else Editor.Pages (P).Pkg.all /= Ide_Package)
+            then
+               Show (Editor.Pages (P));
+            elsif not Show_Only then
+               Hide (Editor.Pages (P));
+            end if;
          end if;
       end loop;
 
@@ -565,17 +556,19 @@ package body Switches_Editors is
       S : constant Switches_Edit := Switches_Edit (Switches);
    begin
       for P in S.Pages'Range loop
-         declare
-            List : GNAT.Strings.String_List := Get_Switches
-              (S,
-               S.Pages (P).Pkg.all,
-               S.Pages (P).Attribute_Index.all,
-               Files => (1 .. 0 => VFS.No_File),
-               Use_Initial_Value => True);
-         begin
-            Set_Command_Line (S.Pages (P).Switches, List);
-            Free (List);
-         end;
+         if S.Pages (P) /= null then
+            declare
+               List : GNAT.Strings.String_List := Get_Switches
+                 (S,
+                  S.Pages (P).Pkg.all,
+                  S.Pages (P).Attribute_Index.all,
+                  Files => (1 .. 0 => VFS.No_File),
+                  Use_Initial_Value => True);
+            begin
+               Set_Command_Line (S.Pages (P).Switches, List);
+               Free (List);
+            end;
+         end if;
       end loop;
 
    exception
@@ -791,7 +784,9 @@ package body Switches_Editors is
       procedure Process_File (File_Name : Virtual_File) is
       begin
          for P in Switches.Pages'Range loop
-            Change_Switches (Switches.Pages (P), File_Name);
+            if Switches.Pages (P) /= null then
+               Change_Switches (Switches.Pages (P), File_Name);
+            end if;
          end loop;
       end Process_File;
 
@@ -936,18 +931,20 @@ package body Switches_Editors is
       --  Set the switches for all the pages
 
       for P in Switches.Pages'Range loop
-         declare
-            List : GNAT.Strings.String_List := Get_Switches
-              (Switches,
-               Switches.Pages (P).Pkg.all,
-               Switches.Pages (P).Attribute_Index.all,
-               Files,
-               Use_Initial_Value => False);
-         begin
-            Set_Command_Line
-              (Switches.Pages (P), Argument_List_To_String (List));
-            Free (List);
-         end;
+         if Switches.Pages (P) /= null then
+            declare
+               List : GNAT.Strings.String_List := Get_Switches
+                 (Switches,
+                  Switches.Pages (P).Pkg.all,
+                  Switches.Pages (P).Attribute_Index.all,
+                  Files,
+                  Use_Initial_Value => False);
+            begin
+               Set_Command_Line
+                 (Switches.Pages (P), Argument_List_To_String (List));
+               Free (List);
+            end;
+         end if;
       end loop;
 
    exception

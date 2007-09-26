@@ -48,6 +48,7 @@ with String_Hash;
 with Default_Preferences;
 with Histories;
 with Projects.Registry;
+with Switches_Chooser;
 with Task_Manager;
 with VFS;
 with Ada.Unchecked_Deallocation;
@@ -512,16 +513,15 @@ package GPS.Kernel is
    --  The following subprograms are used to register the properties of the
    --  various external tools declared by the user in the customization files.
    --  These are associated with the <tool> tag.
-   --  Not all the information is stored here, since some of the modules have
-   --  their own handling. This is the case for the <switches> attribute, which
-   --  is handled internally by the prj_editor module. This is also the case
-   --  for the <language> tag.
 
    type Tool_Properties_Record is record
+      Tool_Name         : GNAT.Strings.String_Access;
       Project_Package   : GNAT.Strings.String_Access;
       Project_Attribute : GNAT.Strings.String_Access;
       Project_Index     : GNAT.Strings.String_Access;
       Initial_Cmd_Line  : GNAT.Strings.String_Access;
+      Config            : Switches_Chooser.Switches_Editor_Config;
+      Languages         : GNAT.Strings.String_List_Access;
    end record;
    --  (Project_Package, Project_Attribute, Project_Index) describe where its
    --  switches are stored in a project.
@@ -530,11 +530,13 @@ package GPS.Kernel is
    --  Any of these field can be left to null if it has no special
    --  signification for this tool.
 
+   type Tool_Properties_Array
+     is array (Natural range <>) of Tool_Properties_Record;
+
    No_Tool : constant Tool_Properties_Record;
 
    procedure Register_Tool
      (Kernel    : access Kernel_Handle_Record;
-      Tool_Name : String;
       Tool      : Tool_Properties_Record);
    --  Register a new tool.
    --  No copy is made for Tool, which must therefore not be freed by the
@@ -545,6 +547,11 @@ package GPS.Kernel is
       Tool_Name : String) return Tool_Properties_Record;
    --  Return the properties of the tool.
    --  The resulting record must not be freed by the caller.
+
+   function Get_All_Tools
+     (Kernel    : access Kernel_Handle_Record)
+      return Tool_Properties_Array;
+   --  Return all registered tools
 
    function Get_Tool_Name
      (Kernel    : access Kernel_Handle_Record;
@@ -819,7 +826,8 @@ private
    No_Context : constant Selection_Context :=
      (Data => (Ada.Finalization.Controlled with null));
 
-   No_Tool : constant Tool_Properties_Record := (null, null, null, null);
+   No_Tool : constant Tool_Properties_Record :=
+     (null, null, null, null, null, null, null);
 
    procedure Free (Tool : in out Tool_Properties_Record);
    package Tools_Htable is new String_Hash

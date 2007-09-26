@@ -23,7 +23,6 @@ with Gtk.Widget;
 
 with GPS.Kernel;
 with Projects;
-with Switches_Chooser;
 with Naming_Editors;
 
 package Project_Viewers is
@@ -163,26 +162,6 @@ package Project_Viewers is
       return Project_Editor_Page;
    --  Return the Num-th registered project editor page.
    --  First page is number 1.
-
-   ------------------------------------
-   -- Registering new switches pages --
-   ------------------------------------
-   --  See switches_editors.ads
-
-   procedure Get_Nth_Switches_Page
-     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Num       : Positive;
-      Config    : out Switches_Chooser.Switches_Editor_Config;
-      Tool      : out GNAT.Strings.String_Access;
-      Languages : out GNAT.Strings.String_List_Access);
-   --  Return the Num-th switches editor page, or null if there are no more
-   --  such pages.
-   --  The first page is number 1.
-   --  The returned widget must be Unref-ed by the caller.
-
-   function Switches_Page_Count
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) return Natural;
-   --  Return the number of switches pages registered
 
    --------------------------------------------
    -- Registering new naming schemes editors --
