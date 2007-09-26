@@ -2,7 +2,6 @@
 --                              G P S                                --
 --                                                                   --
 --                     Copyright (C) 2001-2007, AdaCore              --
---                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,7 +18,9 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling;      use Ada.Characters.Handling;
+with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
+with GComLin;                      use GComLin;
 with GNAT.Case_Util;               use GNAT.Case_Util;
 with GNAT.Strings;                 use GNAT.Strings;
 with GNAT.OS_Lib;
@@ -36,12 +37,9 @@ with Glib.Xml_Int;                 use Glib.Xml_Int;
 with Gtk.Box;                      use Gtk.Box;
 with Gtk.Cell_Renderer_Text;       use Gtk.Cell_Renderer_Text;
 with Gtk.Enums;                    use Gtk.Enums;
-with Gtk.Frame;                    use Gtk.Frame;
 with Gtk.Menu;                     use Gtk.Menu;
 with Gtk.Menu_Item;                use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;          use Gtk.Scrolled_Window;
-with Gtk.Size_Group;               use Gtk.Size_Group;
-with Gtk.Table;                    use Gtk.Table;
 with Gtk.Tree_Model;               use Gtk.Tree_Model;
 with Gtk.Tree_Selection;           use Gtk.Tree_Selection;
 with Gtk.Tree_Store;               use Gtk.Tree_Store;
@@ -79,6 +77,7 @@ with Projects.Editor;              use Projects, Projects.Editor;
 with Projects.Registry;            use Projects.Registry;
 with Remote;                       use Remote;
 with String_Utils;                 use String_Utils;
+with Switches_Chooser;             use Switches_Chooser;
 with Switches_Editors;             use Switches_Editors;
 with System;
 with Traces;                       use Traces;
@@ -93,32 +92,17 @@ package body Project_Viewers is
      of Project_Editor_Page;
    type Project_Editor_Page_Array_Access is access Project_Editor_Page_Array;
 
-   type Switches_Page_Creator_Data is record
-      Creator : Switches_Page_Creator;
-      Page    : Switches_Editors.Switches_Editor_Page;
-   end record;
-   --  Page is the cached version of the page. It is created lazily, and never
-   --  destroyed afterwards.
-
-   type XML_Switches_Record is new Switches_Page_Creator_Record with record
-      XML_Node  : Node_Ptr;   --  The <switches> node
+   type Switch_Page_Description is record
+      Config    : Switches_Chooser.Switches_Editor_Config;
       Tool_Name : GNAT.Strings.String_Access;
       Languages : GNAT.Strings.String_List_Access;
    end record;
-   type XML_Switches is access all XML_Switches_Record'Class;
 
-   function Create
-     (Creator : access XML_Switches_Record;
-      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Switches_Editors.Switches_Editor_Page;
-   function Tool_Name (Creator : access XML_Switches_Record) return String;
-   procedure Destroy (Creator : in out XML_Switches_Record);
-   --  See inherited subprograms
-
-   type Pages_Array is array (Natural range <>) of Switches_Page_Creator_Data;
-   type Page_Array_Access is access Pages_Array;
+   type Switches_Config_Array is array (Natural range <>)
+      of Switch_Page_Description;
+   type Switches_Config_Array_Access is access Switches_Config_Array;
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Pages_Array, Page_Array_Access);
+     (Switches_Config_Array, Switches_Config_Array_Access);
 
    type Naming_Page is record
       Language : Name_Id;
@@ -135,11 +119,20 @@ package body Project_Viewers is
       --  The pages to be added in the project properties editor and the
       --  project creation wizard.
 
-      Switches_Pages       : Page_Array_Access;
+      Switches_Pages       : Switches_Config_Array_Access;
+      --  ??? We should really point into the list of tools known to the kernel
+
       Naming_Pages         : Naming_Pages_Array_Access;
    end record;
    type Prj_Editor_Module_Id_Access is access all
      Prj_Editor_Module_Id_Record'Class;
+
+   procedure Register_Switches_Page
+     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Config    : Switches_Editor_Config;
+      Tool_Name : String;
+      Languages : String_List_Access);
+   --  Registers a new page of switches in the module
 
    procedure Customize
      (Module : access Prj_Editor_Module_Id_Record;
@@ -316,13 +309,11 @@ package body Project_Viewers is
 
    procedure Parsing_Switches_XML
      (Kernel               : access Kernel_Handle_Record'Class;
-      Page                 : Switches_Editor_Page;
-      Table                : access Gtk_Table_Record'Class;
-      Lines                : Natural;
-      Cols                 : Natural;
+      Config               : in out Switches_Editor_Config;
+      Comlin_Config        : in out Command_Line_Configuration;
+      Popup                : Popup_Index;
       Node                 : Node_Ptr;
-      Default_Separator    : String;
-      Use_Scrolled_Windows : Boolean);
+      Default_Separator    : String);
    --  Subprogram for Parse_Switches_Page, this is used to handle both the
    --  <switches> and the <popup> tags
 
@@ -427,8 +418,6 @@ package body Project_Viewers is
    procedure Destroy (Module : in out Prj_Editor_Module_Id_Record) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Project_Editor_Page_Record'Class, Project_Editor_Page);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Switches_Page_Creator_Record'Class, Switches_Page_Creator);
    begin
       if Module.Project_Editor_Pages /= null then
          for P in Module.Project_Editor_Pages'Range loop
@@ -441,13 +430,12 @@ package body Project_Viewers is
 
       if Module.Switches_Pages /= null then
          for P in Module.Switches_Pages'Range loop
-            Destroy (Module.Switches_Pages (P).Creator);
-            Unchecked_Free (Module.Switches_Pages (P).Creator);
+            Free (Module.Switches_Pages (P).Tool_Name);
+            Free (Module.Switches_Pages (P).Languages);
          end loop;
          Unchecked_Free (Module.Switches_Pages);
       end if;
 
-      Unchecked_Free (Module.Switches_Pages);
       Unchecked_Free (Module.Naming_Pages);
 
       Destroy (Module_ID_Record (Module));
@@ -1700,40 +1688,24 @@ package body Project_Viewers is
    ----------------------------
 
    procedure Register_Switches_Page
-     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Creator : access Switches_Page_Creator_Record'Class)
+     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Config    : Switches_Editor_Config;
+      Tool_Name : String;
+      Languages : String_List_Access)
    is
       pragma Unreferenced (Kernel);
-      Tmp : Page_Array_Access;
+      Tmp : Switches_Config_Array_Access;
    begin
       if Prj_Editor_Module_ID /= null then
          if Prj_Editor_Module_ID.Switches_Pages = null then
             Prj_Editor_Module_ID.Switches_Pages :=
-              new Pages_Array'(1 => (Switches_Page_Creator (Creator), null));
+              new Switches_Config_Array'
+                (1 => (Config, new String'(Tool_Name), Languages));
          else
-            for J in Prj_Editor_Module_ID.Switches_Pages'Range loop
-               if Tool_Name (Creator) =
-                 Tool_Name (Prj_Editor_Module_ID.Switches_Pages (J).Creator)
-               then
-                  Destroy (Prj_Editor_Module_ID.Switches_Pages (J).Creator);
-
-                  if Prj_Editor_Module_ID.Switches_Pages (J).Page /= null then
-                     Unref (Prj_Editor_Module_ID.Switches_Pages (J).Page);
-                  end if;
-
-                  Prj_Editor_Module_ID.Switches_Pages (J) :=
-                    Switches_Page_Creator_Data'
-                      (Switches_Page_Creator (Creator), null);
-
-                  return;
-
-               end if;
-            end loop;
-
             Tmp := Prj_Editor_Module_ID.Switches_Pages;
-            Prj_Editor_Module_ID.Switches_Pages := new Pages_Array'
-              (Tmp.all & Switches_Page_Creator_Data'
-                 (Switches_Page_Creator (Creator), null));
+            Prj_Editor_Module_ID.Switches_Pages := new Switches_Config_Array'
+              (Tmp.all & Switch_Page_Description'
+                 (Config, new String'(Tool_Name), Languages));
             Unchecked_Free (Tmp);
          end if;
       else
@@ -1745,28 +1717,26 @@ package body Project_Viewers is
    -- Get_Nth_Switches_Page --
    ---------------------------
 
-   function Get_Nth_Switches_Page
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Num    : Positive)
-      return Switches_Editors.Switches_Editor_Page
+   procedure Get_Nth_Switches_Page
+     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Num       : Positive;
+      Config    : out Switches_Chooser.Switches_Editor_Config;
+      Tool      : out GNAT.Strings.String_Access;
+      Languages : out GNAT.Strings.String_List_Access)
    is
-      Pages : constant Page_Array_Access :=
+      pragma Unreferenced (Kernel);
+      Pages : constant Switches_Config_Array_Access :=
                 Prj_Editor_Module_ID.Switches_Pages;
    begin
       if Pages = null or else Num not in Pages'Range then
-         return null;
+         Config := null;
+         Tool   := null;
+         Languages := null;
+      else
+         Config    := Pages (Num).Config;
+         Tool      := Pages (Num).Tool_Name;
+         Languages := Pages (Num).Languages;
       end if;
-
-      if Pages (Num).Page = null and then Pages (Num).Creator /= null then
-         Pages (Num).Page := Create (Pages (Num).Creator, Kernel);
-         Destroy (Pages (Num).Creator);
-      end if;
-
-      if Pages (Num).Page /= null then
-         Ref (Pages (Num).Page);
-      end if;
-
-      return Pages (Num).Page;
    end Get_Nth_Switches_Page;
 
    -------------------------
@@ -1784,30 +1754,6 @@ package body Project_Viewers is
          return Prj_Editor_Module_ID.Switches_Pages'Length;
       end if;
    end Switches_Page_Count;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (Creator : in out Switches_Page_Creator_Record) is
-      pragma Unreferenced (Creator);
-   begin
-      null;
-   end Destroy;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (Creator : in out Switches_Page_Creator) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Switches_Page_Creator_Record'Class, Switches_Page_Creator);
-   begin
-      if Creator /= null then
-         Destroy (Creator.all);
-         Unchecked_Free (Creator);
-      end if;
-   end Destroy;
 
    -----------------------------------
    -- Register_Naming_Scheme_Editor --
@@ -1865,25 +1811,12 @@ package body Project_Viewers is
 
    procedure Parsing_Switches_XML
      (Kernel               : access Kernel_Handle_Record'Class;
-      Page                 : Switches_Editor_Page;
-      Table                : access Gtk_Table_Record'Class;
-      Lines                : Natural;
-      Cols                 : Natural;
+      Config               : in out Switches_Editor_Config;
+      Comlin_Config        : in out Command_Line_Configuration;
+      Popup                : Popup_Index;
       Node                 : Node_Ptr;
-      Default_Separator    : String;
-      Use_Scrolled_Windows : Boolean)
+      Default_Separator    : String)
    is
-      type Frame_Array is array (1 .. Lines, 1 .. Cols) of Gtk_Frame;
-      type Box_Array   is array (1 .. Lines, 1 .. Cols) of Gtk_Box;
-      type S_Window_Array is array (1 .. Lines, 1 .. Cols) of
-        Gtk_Scrolled_Window;
-      type Size_Group_Array is array (1 .. Lines, 1 .. Cols) of Gtk_Size_Group;
-
-      Frames   : Frame_Array;
-      Boxes    : Box_Array;
-      S_Window : S_Window_Array;
-      Sizes    : Size_Group_Array;
-
       procedure Coordinates_From_Node
         (N : Node_Ptr; Line, Col : out Natural);
       --  Get the line and column from N
@@ -1903,8 +1836,8 @@ package body Project_Viewers is
       --  Process a child node (resp. <title>, <check>, <spin>, <radio>,
       --  <combo>, <popup>, <dependency>, <expansion>)
 
-      function Process_Radio_Entry_Nodes
-        (Parent : Node_Ptr) return Radio_Switch_Array;
+      procedure Process_Radio_Entry_Nodes
+        (Parent : Node_Ptr; Radio : Radio_Switch);
       function Process_Combo_Entry_Nodes
         (Parent : Node_Ptr) return Combo_Switch_Array;
       --  Return the contents of all the <radio-entry> and
@@ -1938,10 +1871,8 @@ package body Project_Viewers is
         (N : Node_Ptr; Line, Col : out Natural)
       is
       begin
-         Line :=
-           Natural'Min (Safe_Value (Get_Attribute (N, "line", "1")), Lines);
-         Col :=
-           Natural'Min (Safe_Value (Get_Attribute (N, "column", "1")), Cols);
+         Line := Safe_Value (Get_Attribute (N, "line", "1"));
+         Col  := Safe_Value (Get_Attribute (N, "column", "1"));
       end Coordinates_From_Node;
 
       ------------------------
@@ -1956,22 +1887,14 @@ package body Project_Viewers is
                        Safe_Value (Get_Attribute (N, "column-span", "1"));
       begin
          Coordinates_From_Node (N, Line, Col);
-         Set_Label (Frames (Line, Col), N.Value.all);
-
-         if Line_Span = 0 or else Col_Span = 0 then
-            Set_Child_Visible (Frames (Line, Col), False);
-
-         elsif Line_Span /= 1 or else Col_Span /= 1 then
-            Ref (Frames (Line, Col));
-            Remove (Table, Frames (Line, Col));
-            Attach (Table,
-                    Frames (Line, Col),
-                    Left_Attach   => Guint (Col - 1),
-                    Right_Attach  => Guint (Col + Col_Span - 1),
-                    Top_Attach    => Guint (Line - 1),
-                    Bottom_Attach => Guint (Line + Line_Span - 1));
-            Unref (Frames (Line, Col));
-         end if;
+         Set_Frame_Title
+           (Config,
+            Title     => N.Value.all,
+            Line      => Line,
+            Column    => Col,
+            Line_Span => Line_Span,
+            Col_Span  => Col_Span,
+            Popup     => Popup);
       end Process_Title_Node;
 
       -----------------------------
@@ -1987,6 +1910,7 @@ package body Project_Viewers is
                            Get_Attribute (N, "master-status", "true");
          Slave_Status  : constant String :=
                            Get_Attribute (N, "slave-status", "true");
+         pragma Unreferenced (Master_Status, Slave_Status);
       begin
          if Master_Page = ""
            or else Master_Switch = ""
@@ -2001,46 +1925,31 @@ package body Project_Viewers is
             return;
          end if;
 
-         Add_Dependency
-           (Page,
-            Master_Page,
-            Master_Switch,
-            Master_Status = "true" or else Master_Status = "on",
-            Slave_Page,
-            Slave_Switch,
-            Slave_Status = "true" or else Slave_Status = "on");
+--           Add_Dependency
+--             (Page,
+--              Master_Page,
+--              Master_Switch,
+--              Master_Status = "true" or else Master_Status = "on",
+--              Slave_Page,
+--              Slave_Switch,
+--              Slave_Status = "true" or else Slave_Status = "on");
       end Process_Dependency_Node;
 
       -------------------------------
       -- Process_Radio_Entry_Nodes --
       -------------------------------
 
-      function Process_Radio_Entry_Nodes
-        (Parent : Node_Ptr) return Radio_Switch_Array
+      procedure Process_Radio_Entry_Nodes
+        (Parent : Node_Ptr;
+         Radio  : Radio_Switch)
       is
          N            : Node_Ptr := Parent.Child;
-         Num_Children : Natural := 0;
       begin
          while N /= null loop
             if N.Tag.all = "radio-entry" then
-               Num_Children := Num_Children + 1;
-            end if;
-            N := N.Next;
-         end loop;
-
-         declare
-            Buttons : Radio_Switch_Array (1 .. Num_Children);
-         begin
-            N := Parent.Child;
-            for B in Buttons'Range loop
-               while  N.Tag.all /= "radio-entry" loop
-                  N := N.Next;
-               end loop;
-
                declare
                   Label  : constant String := Get_Attribute (N, "label");
                   Switch : constant String := Get_Attribute (N, "switch");
-                  Tip    : constant String := Get_Attribute (N, "tip");
                begin
                   if Label = "" then
                      Insert
@@ -2048,24 +1957,23 @@ package body Project_Viewers is
                           -("Invalid <radio-entry> node in custom file,"
                             & " requires a label and a switch attributes"),
                         Mode => GPS.Kernel.Console.Error);
-                     return Buttons (1 .. 0);
+                     return;
                   end if;
 
                   if Check_Space_In_Switch (Switch) then
-                     return Buttons (1 .. 0);
+                     return;
                   end if;
 
-                  Buttons (B) :=
-                    (Label  => new String'(Label),
-                     Switch => new String'(Switch),
-                     Tip    => new String'(Tip));
+                  Add_Radio_Entry
+                    (Config => Config,
+                     Radio  => Radio,
+                     Label  => Label,
+                     Switch => Switch,
+                     Tip    => Get_Attribute (N, "tip"));
                end;
-
-               N := N.Next;
-            end loop;
-
-            return Buttons;
-         end;
+            end if;
+            N := N.Next;
+         end loop;
       end Process_Radio_Entry_Nodes;
 
       -------------------------------
@@ -2108,8 +2016,8 @@ package body Project_Viewers is
                   end if;
 
                   Buttons (B) :=
-                    (Label => new String'(Label),
-                     Value => new String'(Value));
+                    (Label => To_Unbounded_String (Label),
+                     Value => To_Unbounded_String (Value));
                end;
 
                N := N.Next;
@@ -2125,10 +2033,16 @@ package body Project_Viewers is
 
       procedure Process_Radio_Node (N : Node_Ptr) is
          Line, Col : Natural;
+         R         : Radio_Switch;
       begin
          Coordinates_From_Node (N, Line, Col);
-         Create_Radio
-           (Page, Boxes (Line, Col), Process_Radio_Entry_Nodes (N));
+
+         R := Add_Radio
+           (Config => Config,
+            Line   => Line,
+            Column => Col,
+            Popup  => Popup);
+         Process_Radio_Entry_Nodes (N, R);
       end Process_Radio_Node;
 
       ------------------------
@@ -2138,13 +2052,7 @@ package body Project_Viewers is
       procedure Process_Popup_Node (N : Node_Ptr) is
          Line, Col : Natural;
          Label     : constant String := Get_Attribute (N, "label");
-         Table     : Gtk_Table;
-         Lines     : constant Integer :=
-                       Safe_Value (Get_Attribute (N, "lines", "1"));
-         Cols      : constant Integer :=
-                       Safe_Value (Get_Attribute (N, "columns", "1"));
-         Scrolled_Windows  : constant Boolean := Boolean'Value
-                       (Get_Attribute (N, "use_scrolled_window", "false"));
+         Pop       : Popup_Index;
       begin
          Coordinates_From_Node (N, Line, Col);
          if Label = "" then
@@ -2156,13 +2064,21 @@ package body Project_Viewers is
             return;
          end if;
 
-         Gtk_New (Table, Guint (Lines), Guint (Cols), Homogeneous => False);
+         Pop := Add_Popup
+           (Config  => Config,
+            Label   => Label,
+            Lines   => Safe_Value (Get_Attribute (N, "lines", "1")),
+            Columns => Safe_Value (Get_Attribute (N, "columns", "1")),
+            Line    => Line,
+            Column  => Col,
+            Popup   => Popup);
          Parsing_Switches_XML
-           (Kernel, Page, Table, Lines, Cols, N, Default_Separator,
-            Scrolled_Windows);
-
-         Pack_Start
-           (Boxes (Line, Col), Create_Popup (Label, Table), False, False);
+           (Kernel               => Kernel,
+            Config               => Config,
+            Comlin_Config        => Comlin_Config,
+            Popup                => Pop,
+            Node                 => N,
+            Default_Separator    => Default_Separator);
       end Process_Popup_Node;
 
       ------------------------
@@ -2173,11 +2089,6 @@ package body Project_Viewers is
          Line, Col : Natural;
          Label     : constant String := Get_Attribute (N, "label");
          Switch    : constant String := Get_Attribute (N, "switch");
-         Tip       : constant String := Get_Attribute (N, "tip");
-         No_Switch : constant String := Get_Attribute (N, "noswitch");
-         No_Digit  : constant String := Get_Attribute (N, "nodigit");
-         Sep       : constant String :=
-                       Get_Attribute (N, "separator", Default_Separator);
       begin
          Coordinates_From_Node (N, Line, Col);
 
@@ -2193,17 +2104,18 @@ package body Project_Viewers is
             return;
          end if;
 
-         Pack_Start
-           (Boxes (Line, Col), Create_Combo
-              (Page, Label,
-               Switch            => Switch,
-               Default_No_Switch => No_Switch,
-               Default_No_Digit  => No_Digit,
-               Buttons           => Process_Combo_Entry_Nodes (N),
-               Tip               => Tip,
-               Label_Size_Group  => Sizes (Line, Col),
-               Separator         => Sep),
-            False, False);
+         Add_Combo
+           (Config    => Config,
+            Label     => Label,
+            Switch    => Switch,
+            Separator => Get_Attribute (N, "separator", " "),
+            No_Switch => Get_Attribute (N, "noswitch"),
+            No_Digit  => Get_Attribute (N, "nodigit"),
+            Entries   => Process_Combo_Entry_Nodes (N),
+            Tip       => Get_Attribute (N, "tip"),
+            Line      => Line,
+            Column    => Col,
+            Popup     => Popup);
       end Process_Combo_Node;
 
       ------------------------
@@ -2214,13 +2126,6 @@ package body Project_Viewers is
          Line, Col : Natural;
          Label   : constant String := Get_Attribute (N, "label");
          Switch  : constant String := Get_Attribute (N, "switch");
-         Tip     : constant String := Get_Attribute (N, "tip");
-         As_Dir  : constant Boolean :=
-                       Get_Attribute (N, "as-directory", "false") = "true";
-         As_File : constant Boolean :=
-                       Get_Attribute (N, "as-file", "false") = "true";
-         Sep     : constant String :=
-                       Get_Attribute (N, "separator", Default_Separator);
       begin
          Coordinates_From_Node (N, Line, Col);
 
@@ -2236,12 +2141,18 @@ package body Project_Viewers is
             return;
          end if;
 
-         Create_Field
-           (Page, Boxes (Line, Col), Label, Switch, Tip,
-            As_Directory     => As_Dir and not As_File,
-            As_File          => As_File,
-            Label_Size_Group => Sizes (Line, Col),
-            Separator        => Sep);
+         Add_Field
+           (Config,
+            Label        => Label,
+            Switch       => Switch,
+            Separator    => Get_Attribute (N, "separator", Default_Separator),
+            Tip          => Get_Attribute (N, "tip"),
+            As_Directory =>
+              Get_Attribute (N, "as-directory", "false") = "true",
+            As_File      => Get_Attribute (N, "as-file", "false") = "true",
+            Line         => Line,
+            Column       => Col,
+            Popup        => Popup);
       end Process_Field_Node;
 
       -----------------------
@@ -2252,15 +2163,6 @@ package body Project_Viewers is
          Line, Col : Natural;
          Label     : constant String := Get_Attribute (N, "label");
          Switch    : constant String := Get_Attribute (N, "switch");
-         Tip       : constant String := Get_Attribute (N, "tip");
-         Min       : constant Integer :=
-                      Safe_Value (Get_Attribute (N, "min", "1"));
-         Max       : constant Integer :=
-                       Safe_Value (Get_Attribute (N, "max", "1"));
-         Default   : constant Integer :=
-                       Safe_Value (Get_Attribute (N, "default", "1"));
-         Sep       : constant String :=
-                       Get_Attribute (N, "separator", Default_Separator);
       begin
          Coordinates_From_Node (N, Line, Col);
 
@@ -2276,9 +2178,18 @@ package body Project_Viewers is
             return;
          end if;
 
-         Create_Spin
-           (Page, Boxes (Line, Col), Label, Switch, Min, Max, Default, Tip,
-            Sizes (Line, Col), Sep);
+         Add_Spin
+           (Config    => Config,
+            Label     => Label,
+            Switch    => Switch,
+            Tip       => Get_Attribute (N, "tip"),
+            Separator => Get_Attribute (N, "separator", Default_Separator),
+            Min       => Safe_Value (Get_Attribute (N, "min", "1")),
+            Max       => Safe_Value (Get_Attribute (N, "max", "1")),
+            Default   => Safe_Value (Get_Attribute (N, "default", "1")),
+            Line      => Line,
+            Column    => Col,
+            Popup     => Popup);
       end Process_Spin_Node;
 
       ------------------------
@@ -2289,7 +2200,6 @@ package body Project_Viewers is
          Line, Col : Natural;
          Label     : constant String := Get_Attribute (N, "label");
          Switch    : constant String := Get_Attribute (N, "switch");
-         Tip       : constant String := Get_Attribute (N, "tip");
       begin
          Coordinates_From_Node (N, Line, Col);
 
@@ -2305,7 +2215,14 @@ package body Project_Viewers is
             return;
          end if;
 
-         Create_Check (Page, Boxes (Line, Col), Label, Switch, Tip);
+         Add_Check
+           (Config => Config,
+            Label  => Label,
+            Switch => Switch,
+            Tip    => Get_Attribute (N, "tip"),
+            Line   => Line,
+            Column => Col,
+            Popup  => Popup);
       end Process_Check_Node;
 
       ----------------------------
@@ -2315,8 +2232,6 @@ package body Project_Viewers is
       procedure Process_Expansion_Node (N : Node_Ptr) is
          Switch       : constant String := Get_Attribute (N, "switch");
          Alias        : constant String := Get_Attribute (N, "alias");
-         N2           : Node_Ptr := N.Child;
-         Num_Children : Natural := 0;
       begin
          if Switch = "" then
             Insert (Kernel,
@@ -2330,63 +2245,16 @@ package body Project_Viewers is
             return;
          end if;
 
-         Add_Coalesce_Switch (Page, Switch, Alias);
-
-         while N2 /= null loop
-            if N2.Tag.all = "entry" then
-               Num_Children := Num_Children + 1;
-            end if;
-            N2 := N2.Next;
-         end loop;
-
-         if Num_Children /= 0 then
-            declare
-               Switches : Switches_Editors.Cst_Argument_List
-                 (1 .. Num_Children);
-            begin
-               N2 := N.Child;
-               for S in Switches'Range loop
-                  while N2.Tag.all /= "entry" loop
-                     N2 := N2.Next;
-                  end loop;
-
-                  Switches (S) := new String'
-                    (Get_Attribute (N2, "switch"));
-                  N2 := N2.Next;
-               end loop;
-
-               Add_Custom_Expansion (Page, Switch, Switches);
-            end;
+         if Alias = "" then
+            Define_Prefix (Comlin_Config, Prefix => Switch);
+         else
+            Define_Alias  (Comlin_Config, Switch, Alias);
          end if;
       end Process_Expansion_Node;
 
       N      : Node_Ptr;
 
    begin
-      --  Create all the frames
-
-      for L in Frame_Array'Range (1) loop
-         for C in Frame_Array'Range (2) loop
-            Gtk_New (Frames (L, C));
-            Set_Border_Width (Frames (L, C), 5);
-            Attach (Table, Frames (L, C), Guint (C - 1), Guint (C),
-                    Guint (L - 1), Guint (L));
-            Gtk_New_Vbox (Boxes (L, C), False, 0);
-            if Use_Scrolled_Windows then
-               Gtk_New (S_Window (L, C));
-               Add (Frames (L, C), S_Window (L, C));
-               S_Window (L, C).Set_Policy
-                 (Policy_Automatic, Policy_Automatic);
-               Add_With_Viewport (S_Window (L, C), Boxes (L, C));
-            else
-               Add (Frames (L, C), Boxes (L, C));
-            end if;
-            Gtk_New (Sizes (L, C));
-         end loop;
-      end loop;
-
-      --  Parse the contents of the XML tree
-
       N := Node.Child;
       while N /= null loop
          begin
@@ -2422,65 +2290,6 @@ package body Project_Viewers is
       end loop;
    end Parsing_Switches_XML;
 
-   ------------
-   -- Create --
-   ------------
-
-   function Create
-     (Creator : access XML_Switches_Record;
-      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Switches_Editors.Switches_Editor_Page
-   is
-      Lines             : constant Integer := Safe_Value
-        (Get_Attribute (Creator.XML_Node, "lines", "1"));
-      Cols              : constant Integer := Safe_Value
-        (Get_Attribute (Creator.XML_Node, "columns", "1"));
-      Scrolled_Windows  : constant Boolean := Boolean'Value
-        (Get_Attribute (Creator.XML_Node, "use_scrolled_window", "false"));
-      Default_Separator : constant String :=
-                            Get_Attribute (Creator.XML_Node, "separator", "");
-      Page              : Switches_Editor_Page;
-      Tool              : constant Tool_Properties_Record :=
-                            Get_Tool_Properties
-                              (Kernel, Creator.Tool_Name.all);
-   begin
-      Gtk_New (Page, Kernel, Creator.Tool_Name.all,
-               Tool.Project_Package.all,
-               Tool.Project_Index.all,
-               Guint (Lines), Guint (Cols), Get_Tooltips (Kernel));
-
-      if Creator.Languages /= null then
-         for L in Creator.Languages'Range loop
-            Add_Language (Page, Creator.Languages (L).all);
-         end loop;
-      end if;
-
-      Parsing_Switches_XML
-        (Kernel, Page, Page, Lines, Cols, Creator.XML_Node,
-         Default_Separator, Scrolled_Windows);
-      return Page;
-   end Create;
-
-   ---------------
-   -- Tool_Name --
-   ---------------
-
-   function Tool_Name (Creator : access XML_Switches_Record) return String is
-   begin
-      return Creator.Tool_Name.all;
-   end Tool_Name;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (Creator : in out XML_Switches_Record) is
-   begin
-      Free (Creator.XML_Node);
-      Free (Creator.Tool_Name);
-      Free (Creator.Languages);
-   end Destroy;
-
    ----------------------------------
    -- Get_Languages_From_Tool_Node --
    ----------------------------------
@@ -2514,9 +2323,8 @@ package body Project_Viewers is
       Level  : Customization_Level)
    is
       pragma Unreferenced (Level, File);
-      N2, Child : Node_Ptr;
-      Creator   : XML_Switches;
-      Valid     : Boolean;
+      N2        : Node_Ptr;
+      Config    : Switches_Editor_Config;
    begin
       if Node.Tag.all = "tool" then
          declare
@@ -2530,40 +2338,42 @@ package body Project_Viewers is
                N2 := Node.Child;
                while N2 /= null loop
                   if N2.Tag.all = "switches" then
-                     Valid := True;
+                     declare
+                        Comlin_Config : Command_Line_Configuration;
+                        Char : constant String :=
+                          Get_Attribute (N2, "switch_char", "-");
+                     begin
+                        Config := Create
+                          (Default_Separator =>
+                             Get_Attribute (N2, "separator", ""),
+                           Switch_Char       => Char (Char'First),
+                           Scrolled_Window   => Boolean'Value
+                             (Get_Attribute
+                                (N2, "use_scrolled_window", "false")),
+                           Lines             =>
+                             Safe_Value (Get_Attribute (N2, "lines", "1")),
+                           Columns           =>
+                             Safe_Value (Get_Attribute (N2, "columns", "1")));
 
-                     Child := N2.Child;
-                     while Child /= null loop
-                        if Child.Tag.all /= "title"
-                          and then Child.Tag.all /= "check"
-                          and then Child.Tag.all /= "spin"
-                          and then Child.Tag.all /= "radio"
-                          and then Child.Tag.all /= "combo"
-                          and then Child.Tag.all /= "field"
-                          and then Child.Tag.all /= "popup"
-                          and then Child.Tag.all /= "dependency"
-                          and then Child.Tag.all /= "expansion"
-                        then
-                           Insert (Get_Kernel (Module.all),
-                                   -("Invalid child tag for <switches>"
-                                     & " in customization files: <")
-                                   & Child.Tag.all & '>',
-                                   Mode => GPS.Kernel.Console.Error);
-                           Valid := False;
-                        end if;
+                        Parsing_Switches_XML
+                          (Kernel               => Get_Kernel (Module.all),
+                           Config               => Config,
+                           Comlin_Config        => Comlin_Config,
+                           Popup                => Main_Window,
+                           Node                 => N2,
+                           Default_Separator    =>
+                             Get_Attribute (N2, "separator", ""));
 
-                        Child := Child.Next;
-                     end loop;
+                        --  Set the configuration only after it has potentially
+                        --  been created by Parsing_Switches_XML
+                        Set_Configuration (Config, Comlin_Config);
+                     end;
 
-                     if Valid then
-                        Creator := new XML_Switches_Record'
-                          (Switches_Page_Creator_Record with
-                           XML_Node  => Deep_Copy (N2),
-                           Tool_Name => new String'(Tool_Name),
-                           Languages => Get_Languages_From_Tool_Node (Node));
-                        Register_Switches_Page
-                          (Get_Kernel (Module.all), Creator);
-                     end if;
+                     Register_Switches_Page
+                       (Get_Kernel (Module.all),
+                        Config,
+                        Tool_Name => Tool_Name,
+                        Languages => Get_Languages_From_Tool_Node (Node));
                   end if;
 
                   N2 := N2.Next;

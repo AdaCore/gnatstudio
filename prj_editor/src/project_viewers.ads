@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                             AdaCore                               --
+--                     Copyright (C) 2001-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,7 +23,7 @@ with Gtk.Widget;
 
 with GPS.Kernel;
 with Projects;
-with Switches_Editors;
+with Switches_Chooser;
 with Naming_Editors;
 
 package Project_Viewers is
@@ -170,40 +169,12 @@ package Project_Viewers is
    ------------------------------------
    --  See switches_editors.ads
 
-   type Switches_Page_Creator_Record is abstract tagged null record;
-   type Switches_Page_Creator is access all Switches_Page_Creator_Record'Class;
-
-   function Create
-     (Creator : access Switches_Page_Creator_Record;
-      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Switches_Editors.Switches_Editor_Page is abstract;
-   --  Create a new switches editor page.
-
-   function Tool_Name (Creator : access Switches_Page_Creator_Record)
-                       return String is abstract;
-   --  Retrieve the tool name corresponding to the Creator
-
-   procedure Destroy (Creator : in out Switches_Page_Creator_Record);
-   procedure Destroy (Creator : in out Switches_Page_Creator);
-   --  Free the memory occupied by the creator object. The default is to do
-   --  nothing. This is called when the page has been created the first time,
-   --  since the page is then cached.
-
-   procedure Register_Switches_Page
-     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Creator : access Switches_Page_Creator_Record'Class);
-   --  Register a new switches page creator. This will be called to create
-   --  the page initially when the project properties or project wizard are
-   --  displayed, and the resulting switches page is destroyed when the project
-   --  properties dialog is closed.
-   --
-   --  The reason to register a creator instead of the page itself is to save
-   --  startup time, and create widgets lazily.
-
-   function Get_Nth_Switches_Page
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Num    : Positive)
-      return Switches_Editors.Switches_Editor_Page;
+   procedure Get_Nth_Switches_Page
+     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Num       : Positive;
+      Config    : out Switches_Chooser.Switches_Editor_Config;
+      Tool      : out GNAT.Strings.String_Access;
+      Languages : out GNAT.Strings.String_List_Access);
    --  Return the Num-th switches editor page, or null if there are no more
    --  such pages.
    --  The first page is number 1.

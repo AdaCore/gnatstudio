@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
---                              AdaCore                              --
+--                      Copyright (C) 2001-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,17 +25,11 @@
 --  edit them through an interactive command line.
 --  </description>
 
-with Glib;
-with Gtk.Box;
-with Gtk.Table;        use Gtk.Table;
-with Gtk.GEntry;
 with Gtk.Notebook;     use Gtk.Notebook;
-with Gtk.Size_Group;
-with Gtk.Tooltips;
-with Gtk.Widget;
 with GNAT.Strings;
 with GPS.Kernel;
 with Projects;
+with Switches_Chooser.Gtkada;
 with VFS;
 with Commands.Interactive;
 
@@ -49,7 +42,8 @@ package Switches_Editors is
    -- Pages --
    -----------
 
-   type Switches_Editor_Page_Record is new Gtk_Table_Record with private;
+   type Switches_Editor_Page_Record is new
+     Switches_Chooser.Gtkada.Switches_Editor_Record with private;
    type Switches_Editor_Page is access all Switches_Editor_Page_Record'Class;
 
    procedure Gtk_New
@@ -58,8 +52,7 @@ package Switches_Editors is
       Title            : String;
       Project_Package  : String;
       Attribute_Index  : String := "";
-      Lines, Cols      : Glib.Guint;
-      Tips             : access Gtk.Tooltips.Gtk_Tooltips_Record'Class);
+      Config           : Switches_Chooser.Switches_Editor_Config);
    --  Create a new page, that should be displayed.
    --  You can restrict the display of this page to specific languages by
    --  calling Add_Language below. However, by default it is displayed for
@@ -80,104 +73,6 @@ package Switches_Editors is
    --  By default, the page is displayed for all languages, until you have
    --  added at least one filter.
 
-   procedure Create_Check
-     (Page   : access Switches_Editor_Page_Record;
-      Box    : access Gtk.Box.Gtk_Box_Record'Class;
-      Label  : String;
-      Switch : String;
-      Tip    : String := "");
-   --  Create a new check button for a simple switch in Page.
-   --  The new button is added at the end of Box.
-   --  Switch is the switch to put on the command line when the button is
-   --  activated.
-
-   procedure Create_Spin
-     (Page              : access Switches_Editor_Page_Record;
-      Box               : access Gtk.Box.Gtk_Box_Record'Class;
-      Label             : String;
-      Switch            : String;
-      Min, Max, Default : Integer;
-      Tip               : String := "";
-      Label_Size_Group  : Gtk.Size_Group.Gtk_Size_Group := null;
-      Separator         : String := "");
-   --  Create a new spin button for a switch with multiple levels.
-   --  The actual switch on the command line is "-" & Switch & Level, as in
-   --  "-j2".
-   --  If Default is selected, then no switch is needed on the command line.
-
-   procedure Create_Field
-     (Page             : access Switches_Editor_Page_Record;
-      Box              : access Gtk.Box.Gtk_Box_Record'Class;
-      Label            : String;
-      Switch           : String;
-      Tip              : String := "";
-      As_Directory     : Boolean := False;
-      As_File          : Boolean := False;
-      Label_Size_Group : Gtk.Size_Group.Gtk_Size_Group := null;
-      Separator        : String := " ");
-   --  Create a new field switch.
-   --  If As_Directory is true, the field is expected to contain a directory,
-   --  and a browse button is added.
-   --  If both As_File and As_Directory are specified, As_File has priority.
-
-   type Cst_String_Access is access constant String;
-   type Cst_Argument_List is array (Positive range <>) of Cst_String_Access;
-
-   type Radio_Switch is record
-      Label  : Cst_String_Access;
-      Switch : Cst_String_Access;
-      Tip    : Cst_String_Access := null;
-   end record;
-
-   type Radio_Switch_Array is array (Positive range <>) of Radio_Switch;
-
-   procedure Create_Radio
-     (Page    : access Switches_Editor_Page_Record;
-      Box     : access Gtk.Box.Gtk_Box_Record'Class;
-      Buttons : Radio_Switch_Array);
-   --  Create a series of radio buttons. Only one of them can be active at any
-   --  time. No copy is made of the string accesses in Buttons.
-   --  Separator is used between the switch and its argument
-
-   type Combo_Switch is record
-      Label : Cst_String_Access;
-      Value : Cst_String_Access;
-   end record;
-
-   type Combo_Switch_Array is array (Positive range <>) of Combo_Switch;
-
-   function Create_Combo
-     (Page              : access Switches_Editor_Page_Record;
-      Label             : String;
-      Switch            : String;
-      Default_No_Switch : String;
-      Default_No_Digit  : String;
-      Buttons           : Combo_Switch_Array;
-      Tip               : String := "";
-      Label_Size_Group  : Gtk.Size_Group.Gtk_Size_Group := null;
-      Separator         : String := "")
-      return Gtk.Widget.Gtk_Widget;
-   --  Create a new combo button. Switch is displayed on the left of the combo
-   --  box. The newly created widget is returned, and it includes the label,
-   --  combo,...
-   --  Switch is always used when the button is actived, followed by the value
-   --  for the specific line selected in the combo.
-   --
-   --  If the value is Default_No_Switch, no switch is necessary on the command
-   --  line.
-   --  If the value is Default_No_Digit, no additional digit is necessary in
-   --  addition to Switch.
-   --
-   --  if Label_Size_Group is not null, then the label is added to that
-   --  group. This can be used to provide a nicer layout of the widgets.
-
-   function Create_Popup
-     (Label  : String;
-      Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
-      return Gtk.Widget.Gtk_Widget;
-   --  Create a new button. This will open a popup window, which displays
-   --  additional switches.
-
    procedure Add_Dependency
      (Page           : access Switches_Editor_Page_Record;
       Master_Page    : String;
@@ -195,52 +90,6 @@ package Switches_Editors is
    --  Slave_Activate=True, then everytime the user selects "-g" for the
    --  builder, "-g" will also be forced for the compiler.
 
-   function Get_Page
-     (Editor : access Switches_Edit_Record'Class;
-      Title  : String) return Switches_Editor_Page;
-   --  Return the page with the given title, or null if no such page has been
-   --  added yet.
-
-   procedure Add_Coalesce_Switch
-     (Page              : access Switches_Editor_Page_Record'Class;
-      Switch            : String;
-      Default_As_String : String := "");
-   --  Defines Switch as a common switch (ie all other switches that start with
-   --  Switch will be collapse into one (for instance: if Switch is "-gnaty",
-   --  then "-gnatya" and "-gnatyl" are collapsed into "-gnatyal").
-   --  Default_As_String is the switch that Switch by itself on the command
-   --  line is equal to (e.g. -gnaty = -gnaty3abcefhiklmnprst). In case the
-   --  result of coalescing switches comes down to Default_As_String, then only
-   --  Switch will be put on the command line
-   --
-   --  See also Add_Custom_Expansion below.
-
-   procedure Add_Custom_Expansion
-     (Page    : access Switches_Editor_Page_Record'Class;
-      Switch  : String;
-      Default : Cst_Argument_List);
-   --  Default are the switches used when Switch is found on the command line
-   --  by itself.
-   --  This works in close coordination with coalesce switches: when updating
-   --  the command line, for instance after the user has selected a button,
-   --  this package does the following:
-   --   - Expand the switches found on the command line.
-   --      => e.g.:  -gnaty => -gnaty3 -gnatya -gnatyb -gnatyc
-   --   - Add or remove switches from the command line, depending on the
-   --     currently activated GUI elements.
-   --      => e.g.:  If the button for -gnatyc is not activated, the command
-   --                line becomes   -gnatya -gnatyb
-   --   - The command line is post-processed to coalesce switches.
-   --      => e.g.:  -gnatya -gnatyb  => -gnatyab
-   --   - Simplify the command line if possible through the
-   --     Default_As_String parameter to Add_Coalesce_Switch
-   --
-   --  Therefore, the purpose of this expansion step is to decompose complex
-   --  switches in the list of their components so that each component is
-   --  associated with only one GUI element.
-   --  The purpose of the coalesce step is to make the switches more readable
-   --  by the user.
-
    ---------------------
    -- Switches editor --
    ---------------------
@@ -249,6 +98,12 @@ package Switches_Editors is
      (Editor : out Switches_Edit;
       Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Create a new switches editor.
+
+   function Get_Page
+     (Editor : access Switches_Edit_Record'Class;
+      Title  : String) return Switches_Editor_Page;
+   --  Return the page with the given title, or null if no such page has been
+   --  added yet.
 
    procedure Set_Visible_Pages
      (Editor : access Switches_Edit_Record;
@@ -303,36 +158,6 @@ package Switches_Editors is
 
 private
 
-   type Switch_Basic_Widget_Record (Switch_Length : Natural) is abstract
-   tagged record
-      Switch : String (1 .. Switch_Length);
-   end record;
-   type Switch_Basic_Widget is access all Switch_Basic_Widget_Record'Class;
-
-   function Get_Switch (Switch : Switch_Basic_Widget_Record) return String
-      is abstract;
-   --  Return the string to add to the command line if the widget is active. If
-   --  the widget is not active, the empty string is returned
-
-   procedure Filter_Switch
-     (Switch : Switch_Basic_Widget_Record;
-      List   : in out GNAT.Strings.String_List) is abstract;
-   --  Remove (and free) from List the switches that would correspond to the
-   --  one edited by Switch.
-
-   procedure Set_And_Filter_Switch
-     (Switch : Switch_Basic_Widget_Record;
-      List   : in out GNAT.Strings.String_List) is abstract;
-   --  If one of the switches in List matches Switch, the widget is actived as
-   --  appropriate, and the entry in List is freed and set to null.
-
-   type Widget_Array is array (Natural range <>) of Switch_Basic_Widget;
-   type Widget_Array_Access is access Widget_Array;
-
-   type String_List_Array is array (Natural range <>) of
-     GNAT.Strings.String_List_Access;
-   type String_List_Array_Access is access all String_List_Array;
-
    type Dependency_Description;
    type Dependency_Description_Access is access Dependency_Description;
    type Dependency_Description is record
@@ -345,8 +170,10 @@ private
    --  the dependencies can only be fully setup once all pages have been
    --  created.
 
-   type Switches_Editor_Page_Record is new Gtk_Table_Record with record
-      Kernel : GPS.Kernel.Kernel_Handle;
+   type Switches_Editor_Page_Record is new
+     Switches_Chooser.Gtkada.Switches_Editor_Record with
+      record
+      Kernel      : GPS.Kernel.Kernel_Handle;
       Lang_Filter : GNAT.Strings.String_List_Access;
       --  List of languages for which this page applies
 
@@ -355,25 +182,9 @@ private
       Attribute_Index : GNAT.Strings.String_Access;
       Title    : GNAT.Strings.String_Access;
       Pkg      : GNAT.Strings.String_Access;
-      Switches : Widget_Array_Access;
-      Cmd_Line : Gtk.GEntry.Gtk_Entry;
-      Tips     : Gtk.Tooltips.Gtk_Tooltips;
 
-      Coalesce_Switches : GNAT.Strings.String_List_Access;
-      --  List of coalesce switches (see Add_Coalesce_Switch). This is never
-      --  null once the widget has been created.
-
-      Coalesce_Switches_Default : GNAT.Strings.String_List_Access;
-      --  This array has the same size as Coalesce_Switches, and contains the
-      --  values of Default_As_String passed to Add_Coalesce_Switch
-
-      Expansion_Switches : String_List_Array_Access;
-      --  List of custom expansions. The first string in each element is the
-      --  command line switch we are replacing
-
-      Block_Refresh : Boolean := False;
-      --  Used to avoid infinite recursion in the handling of signals
-   end record;
+      Switches : Switches_Chooser.Gtkada.Switches_Editor;
+      end record;
 
    type Pages_Array is array (Natural range <>) of Switches_Editor_Page;
    type Page_Array_Access is access Pages_Array;
