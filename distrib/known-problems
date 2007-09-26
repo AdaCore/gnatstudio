@@ -214,6 +214,13 @@ Known Problems fixed in GPS 4.2.0
   Workaround: Deactivate the auto-casing, or use a newline character after
               the string quote character.
 
+- G315-031 Re-arranging linker switches in project properties
+  Problem:    If you specified several additional "-l..." flags for the linker
+              in the project properties dialog, then switching them will not
+              be detected by GPS, that will keep the previous order
+  Workaround: Remove them all, close the dialog, reopen it and set them in
+              the correct order
+
 - G306-007 Multiple dialogs appearing on key shortcuts.
   Problem:    Some dialogs, such as the "Continue Search?" dialog or the
               "Open File" dialog, might appear multiple times when launched
