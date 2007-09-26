@@ -43,14 +43,14 @@ to_highlight=[]
 current_entities=[]
 current_entity=None
 
-def highlight_entity_references (buffer, overlay, entity):
+def highlight_entity_references (buffer, entity):
   """Highlight all dispatching calls to entity in buffer"""
   refs = entity.references (show_kind = True, in_file = buffer.file())
   for r in refs:
     if refs[r] == "dispatching call":
        try:
          loc = EditorLocation (buffer, r.line(), r.column())
-         buffer.apply_overlay (overlay, loc, loc + len (entity.name()) - 1)
+         buffer.apply_overlay (buffer.dispatch_overlay, loc, loc + len (entity.name()) - 1)
        except:
          # The xref location might no longer be valid, just ignore it
          pass
@@ -67,13 +67,13 @@ def highlight_file_idle ():
      current_entities=[]
      return False
 
-  (buffer, overlay) = to_highlight[0]
+  buffer = to_highlight[0]
   if current_entities == []:
      current_entities = buffer.file().entities (local = False)
      current_entity   = current_entities.__iter__()
   try:
      e = current_entity.next()
-     highlight_entity_references (buffer, overlay, e)
+     highlight_entity_references (buffer, e)
      return True
   except StopIteration:
      to_highlight.pop (0)
@@ -87,19 +87,21 @@ def highlight_dispatching_calls (buffer):
   if not buffer:
      return
 
-  over = buffer.create_overlay ("dispatchcalls")
-  over.set_property ("background", highlight_color)
-  buffer.remove_overlay (over)
+  try:
+     buffer.remove_overlay (buffer.dispatch_overlay)
+  except:
+     buffer.dispatch_overlay = buffer.create_overlay ("dispatchcalls")
+     buffer.dispatch_overlay.set_property ("background", highlight_color)
 
   if has_pygtk:
-     to_highlight.append ((buffer, over))
+     to_highlight.append (buffer)
      if insert_overlays_id == 0:
         insert_overlays_id = gobject.idle_add (highlight_file_idle)
 
   else:
      entities = buffer.file().entities (local = False)
      for e in entities:
-        highlight_entity_references (buffer, over, e)
+        highlight_entity_references (buffer, e)
 
 
 def on_highlight_dispatching_calls (menu):
