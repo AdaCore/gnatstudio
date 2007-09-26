@@ -19,6 +19,7 @@
 
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with Ada.Assertions;             use Ada.Assertions;
+with String_Utils;               use String_Utils;
 
 package body Switches_Chooser is
 
@@ -40,8 +41,7 @@ package body Switches_Chooser is
    ------------
 
    function Create
-     (Config            : Command_Line_Configuration;
-      Default_Separator : String;
+     (Default_Separator : String;
       Switch_Char       : Character := '-';
       Scrolled_Window   : Boolean := False;
       Lines             : Positive := 1;
@@ -55,12 +55,24 @@ package body Switches_Chooser is
          Getopt_Switches   => Null_Unbounded_String,
          Scrolled_Window   => Scrolled_Window,
          Switch_Char       => Switch_Char,
-         Config            => Config,
+         Config            => <>,
          Max_Radio         => 0,
          Max_Popup         => Main_Window,
          Switches          => <>,
          Frames            => <>);
    end Create;
+
+   -----------------------
+   -- Set_Configuration --
+   -----------------------
+
+   procedure Set_Configuration
+     (Config     : access Switches_Editor_Config_Record;
+      Cmd_Config : Command_Line_Configuration)
+   is
+   begin
+      Config.Config := Cmd_Config;
+   end Set_Configuration;
 
    ---------------------
    -- Set_Frame_Title --
@@ -71,8 +83,8 @@ package body Switches_Chooser is
       Title     : String;
       Line      : Positive := 1;
       Column    : Positive := 1;
-      Line_Span : Positive := 1;
-      Col_Span  : Positive := 1;
+      Line_Span : Natural := 1;
+      Col_Span  : Natural := 1;
       Popup     : Popup_Index := Main_Window)
    is
    begin
@@ -153,7 +165,7 @@ package body Switches_Chooser is
      (Config       : Switches_Editor_Config;
       Label        : String;
       Switch       : String;
-      Separator    : Character := ASCII.NUL; --  no separator
+      Separator    : String := ""; --  no separator
       Tip          : String := "";
       As_Directory : Boolean := False;
       As_File      : Boolean := False;
@@ -161,7 +173,12 @@ package body Switches_Chooser is
       Column       : Positive := 1;
       Popup  : Popup_Index := Main_Window)
    is
+      Sep : Character := ASCII.NUL;
    begin
+      if Separator /= "" then
+         Sep := Separator (Separator'First);
+      end if;
+
       Append
         (Config.Switches,
          Switch_Description'
@@ -169,13 +186,13 @@ package body Switches_Chooser is
             Switch => To_Unbounded_String (Switch),
             Label  => To_Unbounded_String (Label),
             Tip    => To_Unbounded_String (Tip),
-            Separator => Separator,
+            Separator => Sep,
             As_Directory => As_Directory,
             As_File      => As_File,
             Line   => Line,
             Column => Column,
             Popup  => Popup));
-      Add_To_Getopt (Config, Switch, Separator);
+      Add_To_Getopt (Config, Switch, Sep);
    end Add_Field;
 
    --------------
@@ -186,7 +203,7 @@ package body Switches_Chooser is
      (Config    : Switches_Editor_Config;
       Label     : String;
       Switch    : String;
-      Separator : Character := ASCII.NUL; --  no separator
+      Separator : String := ""; --  no separator
       Min       : Integer;
       Max       : Integer;
       Default   : Integer;
@@ -195,7 +212,11 @@ package body Switches_Chooser is
       Column    : Positive := 1;
       Popup  : Popup_Index := Main_Window)
    is
+      Sep : Character := ASCII.NUL;
    begin
+      if Separator /= "" then
+         Sep := Separator (Separator'First);
+      end if;
       Append
         (Config.Switches,
          Switch_Description'
@@ -203,14 +224,14 @@ package body Switches_Chooser is
             Switch    => To_Unbounded_String (Switch),
             Label     => To_Unbounded_String (Label),
             Tip       => To_Unbounded_String (Tip),
-            Separator => Separator,
+            Separator => Sep,
             Min       => Min,
             Max       => Max,
             Default   => Default,
             Line      => Line,
             Column    => Column,
             Popup     => Popup));
-      Add_To_Getopt (Config, Switch, Separator);
+      Add_To_Getopt (Config, Switch, Sep);
    end Add_Spin;
 
    ---------------
@@ -221,6 +242,7 @@ package body Switches_Chooser is
      (Config    : Switches_Editor_Config;
       Label     : String;
       Switch    : String;
+      Separator : String := ""; --  no separator
       No_Switch : String;
       No_Digit  : String;
       Entries   : Combo_Switch_Array;
@@ -229,6 +251,7 @@ package body Switches_Chooser is
       Column    : Positive := 1;
       Popup  : Popup_Index := Main_Window)
    is
+      pragma Unreferenced (Separator);
       Ent : Combo_Switch_Vectors.Vector;
    begin
       for E in Entries'Range loop
@@ -338,6 +361,61 @@ package body Switches_Chooser is
       Add_To_Getopt (Config, Switch, ASCII.LF);
    end Add_Radio_Entry;
 
+   ----------------------
+   -- Get_Command_Line --
+   ----------------------
+
+   procedure Get_Command_Line
+     (Cmd      : in out Command_Line;
+      Expanded : Boolean;
+      Result   : out GNAT.Strings.String_List_Access)
+   is
+      Iter  : Command_Line_Iterator;
+      Count : Natural := 0;
+   begin
+      Start (Cmd, Iter, Expanded => Expanded);
+      while Has_More (Iter) loop
+         Count := Count + 1;
+
+         if Current_Separator (Iter) = " "
+           and then Current_Parameter (Iter) /= ""
+         then
+            Count := Count + 1;
+         end if;
+
+         Next (Iter);
+      end loop;
+
+      Result := new String_List (1 .. Count);
+      Count := Result'First;
+      Start (Cmd, Iter, Expanded => Expanded);
+      while Has_More (Iter) loop
+         if Current_Separator (Iter) /= " " then
+            if Current_Parameter (Iter) /= "" then
+               Result (Count) := new String'
+                 (Current_Switch (Iter)
+                  & Current_Separator (Iter)
+                  & Current_Parameter (Iter));
+            else
+               Result (Count) := new String'(Current_Switch (Iter));
+            end if;
+
+            Count := Count + 1;
+
+         else
+            Result (Count) := new String'(Current_Switch (Iter));
+            Count := Count + 1;
+
+            if Current_Parameter (Iter) /= "" then
+               Result (Count) := new String'(Current_Parameter (Iter));
+               Count := Count + 1;
+            end if;
+         end if;
+
+         Next (Iter);
+      end loop;
+   end Get_Command_Line;
+
    ---------------------------
    -- Root_Switches_Editors --
    ---------------------------
@@ -358,6 +436,20 @@ package body Switches_Chooser is
          Editor.Widgets := new Widget_Array
            (0 .. Integer (Length (Config.Switches)));
       end Initialize;
+
+      ----------------------
+      -- Get_Command_Line --
+      ----------------------
+
+      function Get_Command_Line
+        (Editor   : access Root_Switches_Editor;
+         Expanded : Boolean) return GNAT.Strings.String_List_Access
+      is
+         Result : String_List_Access;
+      begin
+         Get_Command_Line (Editor.Cmd_Line, Expanded, Result);
+         return Result;
+      end Get_Command_Line;
 
       ----------------
       -- Set_Widget --
@@ -466,6 +558,53 @@ package body Switches_Chooser is
             end loop;
          end if;
       end Change_Switch;
+
+      ---------
+      -- "=" --
+      ---------
+
+      function "="
+        (Editor : access Root_Switches_Editor;
+         Args   : GNAT.Strings.String_List) return Boolean
+      is
+         Cmd2 : Command_Line;
+         Iter1, Iter2 : Command_Line_Iterator;
+      begin
+         --  ??? Not efficient to go back to a string
+
+         Set_Command_Line
+           (Cmd2,
+            Argument_List_To_String (Args),
+            To_String (Editor.Config.Getopt_Switches),
+            Switch_Char => Editor.Config.Switch_Char);
+
+         --  The two command lines are equal if the switches are exactly in the
+         --  same order. This is needed for instance when the user has typed
+         --  some libraries to link with, and their order should be preserved.
+         --  That means, however, that if the user unchecks and then rechecks
+         --  a check button, then the command line will appear as modified.
+         --  (See G315-031)
+
+         Start (Editor.Cmd_Line, Iter1, Expanded => True);
+         Start (Cmd2,            Iter2, Expanded => True);
+         while Has_More (Iter1) loop
+            if not Has_More (Iter2) then
+               return False;
+            end if;
+
+            if Current_Switch (Iter1) /= Current_Switch (Iter2)
+              or else Current_Separator (Iter1) /= Current_Separator (Iter2)
+              or else Current_Parameter (Iter1) /= Current_Parameter (Iter2)
+            then
+               return False;
+            end if;
+
+            Next (Iter1);
+            Next (Iter2);
+         end loop;
+
+         return not Has_More (Iter2);
+      end "=";
 
       -----------------------------
       -- On_Command_Line_Changed --
@@ -611,12 +750,29 @@ package body Switches_Chooser is
       ----------------------
 
       procedure Set_Command_Line
-        (Editor   : access Root_Switches_Editor'Class;
+        (Editor   : access Root_Switches_Editor;
          Cmd_Line : String)
       is
       begin
-         Set_Graphical_Command_Line (Editor.all, Cmd_Line);
-         On_Command_Line_Changed (Editor.all, Cmd_Line);
+         Set_Graphical_Command_Line
+           (Root_Switches_Editor'Class (Editor.all), Cmd_Line);
+         On_Command_Line_Changed
+           (Root_Switches_Editor'Class (Editor.all), Cmd_Line);
+      end Set_Command_Line;
+
+      ----------------------
+      -- Set_Command_Line --
+      ----------------------
+
+      procedure Set_Command_Line
+        (Editor   : access Root_Switches_Editor;
+         Cmd_Line : GNAT.Strings.String_List)
+      is
+      begin
+         --  ??? Not very efficient to go through a string
+         Set_Command_Line
+           (Root_Switches_Editor'Class (Editor.all)'Access,
+            Argument_List_To_String (Cmd_Line));
       end Set_Command_Line;
 
       ----------------
@@ -629,6 +785,18 @@ package body Switches_Chooser is
       begin
          return Editor.Config;
       end Get_Config;
+
+      ----------------------
+      -- Get_Command_Line --
+      ----------------------
+
+      function Get_Command_Line
+        (Editor : access Root_Switches_Editor)
+         return Command_Line
+      is
+      begin
+         return Editor.Cmd_Line;
+      end Get_Command_Line;
 
    end Switches_Editors;
 

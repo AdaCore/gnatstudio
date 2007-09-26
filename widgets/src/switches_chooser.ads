@@ -25,6 +25,7 @@ with Ada.Containers.Indefinite_Vectors;
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;
 with GComLin;   use GComLin;
+with GNAT.Strings; use GNAT.Strings;
 
 package Switches_Chooser is
 
@@ -43,8 +44,7 @@ package Switches_Chooser is
       Switch_Popup);
 
    function Create
-     (Config            : Command_Line_Configuration;
-      Default_Separator : String;
+     (Default_Separator : String;
       Switch_Char       : Character := '-';
       Scrolled_Window   : Boolean := False;
       Lines             : Positive := 1;
@@ -58,13 +58,19 @@ package Switches_Chooser is
    --  scrolling window, which is useful if the number of switches is
    --  especially important.
 
+   procedure Set_Configuration
+     (Config     : access Switches_Editor_Config_Record;
+      Cmd_Config : Command_Line_Configuration);
+   --  Set the command line configuration, ie how to group command line
+   --  arguments
+
    procedure Set_Frame_Title
      (Config    : Switches_Editor_Config;
       Title     : String;
       Line      : Positive := 1;
       Column    : Positive := 1;
-      Line_Span : Positive := 1;
-      Col_Span  : Positive := 1;
+      Line_Span : Natural := 1;
+      Col_Span  : Natural := 1;
       Popup     : Popup_Index := Main_Window);
    --  Specify the title for a group of switches within the editor. It also
    --  defines how big the group is, since a cell can be merged with one or
@@ -86,7 +92,7 @@ package Switches_Chooser is
      (Config       : Switches_Editor_Config;
       Label        : String;
       Switch       : String;
-      Separator    : Character := ASCII.NUL; --  no separator
+      Separator    : String := ""; --  no separator
       Tip          : String := "";
       As_Directory : Boolean := False;
       As_File      : Boolean := False;
@@ -99,7 +105,7 @@ package Switches_Chooser is
      (Config    : Switches_Editor_Config;
       Label     : String;
       Switch    : String;
-      Separator : Character := ASCII.NUL; --  no separator
+      Separator : String := ""; --  no separator
       Min       : Integer;
       Max       : Integer;
       Default   : Integer;
@@ -134,6 +140,7 @@ package Switches_Chooser is
      (Config    : Switches_Editor_Config;
       Label     : String;
       Switch    : String;
+      Separator : String := ""; --  no separator
       No_Switch : String;
       No_Digit  : String;
       Entries   : Combo_Switch_Array;
@@ -164,6 +171,13 @@ package Switches_Chooser is
    --  package.
    --  (Lines, Columns) are the number of lines and columns in the popup.
 
+   procedure Get_Command_Line
+     (Cmd      : in out Command_Line;
+      Expanded : Boolean;
+      Result   : out GNAT.Strings.String_List_Access);
+   --  Return the arguments of the command line. Expanded indicates whether
+   --  the expanded command line, or the shortest command line, is returned.
+
    generic
       type Root_Widget_Record is tagged private;
       --  The general type used for widget in the graphical toolkit
@@ -180,10 +194,20 @@ package Switches_Chooser is
       --  Root_Widget
 
       procedure Set_Command_Line
-        (Editor   : access Root_Switches_Editor'Class;
+        (Editor   : access Root_Switches_Editor;
          Cmd_Line : String);
+      procedure Set_Command_Line
+        (Editor   : access Root_Switches_Editor;
+         Cmd_Line : GNAT.Strings.String_List);
       --  Set the switches to display on the command line. This can be used to
       --  initialize the widget
+
+      function "="
+        (Editor : access Root_Switches_Editor;
+         Args   : GNAT.Strings.String_List) return Boolean;
+      --  Whether Editor's command line is exactly equivalent to Args.
+      --  This properly ungroup arguments from Args, so that the expanded
+      --  command lines are compared.
 
       ------------------------------
       --  The subprograms below are only useful when you are implementing a
@@ -241,6 +265,16 @@ package Switches_Chooser is
         (Editor : access Root_Switches_Editor)
          return Switches_Editor_Config;
       --  Return the switches configuration used for this editor
+
+      function Get_Command_Line
+        (Editor : access Root_Switches_Editor)
+         return Command_Line;
+      --  Return the current command line
+
+      function Get_Command_Line
+        (Editor   : access Root_Switches_Editor;
+         Expanded : Boolean) return GNAT.Strings.String_List_Access;
+      --  Return the command line. Result value must be freed by the user
 
    private
       type Root_Widget is access all Root_Widget_Record'Class;
@@ -300,8 +334,8 @@ private
       Title     : Ada.Strings.Unbounded.Unbounded_String;
       Line      : Positive;
       Column    : Positive;
-      Line_Span : Positive := 1;
-      Col_Span  : Positive := 1;
+      Line_Span : Natural := 1;
+      Col_Span  : Natural := 1;
       Popup     : Popup_Index := Main_Window;
    end record;
    package Frame_Description_Vectors is new
