@@ -2777,9 +2777,9 @@ Access the various suggested fixes through the methods of the Codefix class</des
       <return>An instance of GPS.CodeAnalysis associated to a code analysis data structure in GPS.</return>
       <description>Creates an empty code analysis data structure. Data can be put in this structure by using one of the primitive operations.</description>
       <example lang="python">
-          a = GPS.CodeAnalysis.get ("Analysis 1")
+          a = GPS.CodeAnalysis.get ("Coverage Report")
           a.add_all_gcov_project_info ()
-          a.list_lines_not_covered ()
+          a.show_coverage_information ()
       </example>
   </shell_doc>
 
@@ -2791,7 +2791,7 @@ Access the various suggested fixes through the methods of the Codefix class</des
       <see_also name="GPS.CodeAnalysis.add_all_gcov_project_info" />
       <see_also name="GPS.CodeAnalysis.add_gcov_project_info" />
       <example lang="python">
-          a = GPS.CodeAnalysis.get ("Code Coverage")
+          a = GPS.CodeAnalysis.get ("Coverage Report")
           a.add_gcov_file_info (src=GPS.File ("source_file.adb"), cov=GPS.File ("source_file.adb.gcov"))
       </example>
   </shell_doc>
@@ -2816,16 +2816,16 @@ Access the various suggested fixes through the methods of the Codefix class</des
       <description>Displays the data stored in the CodeAnalysis instance into a new MDI window. This window contains a tree view that can be interactively manipulated to analyze the results of the code analysis (Coverage, ...).</description>
   </shell_doc>
 
-  <shell_doc name="GPS.CodeAnalysis.list_uncovered_lines">
+  <shell_doc name="GPS.CodeAnalysis.show_coverage_information">
       <param name="self">An instance of GPS.CodeAnalysis</param>
-      <description>Lists in the Locations view the lines that are not covered in the files loaded in the CodeAnalysis instance. The lines are also highlighted in the corresponding source files currently edited.</description>
-      <see_also name="GPS.CodeAnalysis.clear_locations" />
+      <description>Lists in the Locations view the lines that are not covered in the files loaded in the CodeAnalysis instance. The lines are also highlighted in the corresponding source file editors, and an annotation column is added to the source editors.</description>
+      <see_also name="GPS.CodeAnalysis.hide_coverage_information" />
   </shell_doc>
 
-  <shell_doc name="GPS.CodeAnalysis.clear_locations">
+  <shell_doc name="GPS.CodeAnalysis.hide_coverage_information">
       <param name="self">An instance of GPS.CodeAnalysis</param>
-      <description>Remove from the Locations view any listed coverage locations.</description>
-      <see_also name="GPS.CodeAnalysis.list_uncovered_lines" />
+      <description>Removes from the Locations view any listed coverage locations, and remove from the source editors their annotation column if any.</description>
+      <see_also name="GPS.CodeAnalysis.show_coverage_information" />
   </shell_doc>
 
   <!--#################################################################
