@@ -94,7 +94,8 @@ def highlight_dispatching_calls (buffer):
      buffer.dispatch_overlay.set_property ("background", highlight_color)
 
   if has_pygtk:
-     to_highlight.append (buffer)
+     if not buffer in to_highlight:
+        to_highlight.append (buffer)
      if insert_overlays_id == 0:
         insert_overlays_id = gobject.idle_add (highlight_file_idle)
 
