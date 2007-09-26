@@ -135,7 +135,7 @@ a = """<?xml version="1.0"?>
   <tool name="Examiner">
     <language>SPARK</language>
     <language>Ada</language>
-    <switches columns ="2" lines="5">
+    <switches columns ="2" lines="5" switch_char="~">
       <title line="1" column-span="2">Examiner Files</title>
       <field line="1" label=" Index File " as-file="true" switch="~index_file=" />
       <field line="1" label=" Warning File " as-file="true" switch="~warning_file=" />
@@ -181,7 +181,7 @@ a = """<?xml version="1.0"?>
   <tool name="SPARKSimp">
     <language>SPARK</language>
     <language>Ada</language>
-    <switches lines="3">
+    <switches lines="3" switch_char="~">
       <title line="1">Simplification order</title>
       <check line="1" label="Simplify all" switch="~a" />
       <check line="1" label="Sort files, largest first" switch="~t" />
@@ -200,7 +200,7 @@ a = """<?xml version="1.0"?>
   <tool name="Simplifier">
     <language>SPARK</language>
     <language>Ada</language>
-    <switches lines="3">
+    <switches lines="3" switch_char="~">
       <title line="1">Output</title>
       <check line="1" label="No Echo" switch="/noecho" />
       <check line="1" label="Plain Output" switch="/plain" />
@@ -220,7 +220,7 @@ a = """<?xml version="1.0"?>
   <tool name="SPARKFormat">
     <language>SPARK</language>
     <language>Ada</language>
-    <switches lines="5">
+    <switches lines="5" switch_char="~">
       <title line="1">Global variables modes</title>
       <radio line="1">
             <radio-entry label="Unchanged" switch="~noadd_modes" />
@@ -257,7 +257,7 @@ a = """<?xml version="1.0"?>
   <tool name="POGS">
     <language>SPARK</language>
     <language>Ada</language>
-    <switches lines="1">
+    <switches lines="1" switch_char="~">
       <title line="1">Options</title>
       <check line="1" label="Plain Output" switch="~p" />
       <check line="1" label="Ignore Dates" switch="~i" />
@@ -267,7 +267,7 @@ a = """<?xml version="1.0"?>
   <tool name="SPARKmake">
     <language>SPARK</language>
     <language>Ada</language>
-    <switches lines="2">
+    <switches lines="2" switch_char="~">
       <title line="1">Input File Options</title>
          <field line="1" label=" Directory "  switch="~dir=" />
          <field line="1" label=" Include " switch="~inc=" />

@@ -13477,6 +13477,11 @@ This optional attribute specifies if the boxes of the project editor are placed
 into scrolled window. This is particularily useful if the number of displayed
 switches if important.
 
+@item switch_char (Default value is "-")
+This is the leading character of command line arguments that indicate they
+are considered as switches. Arguments not starting with this character will
+be kept as is, and cannot have graphical widgets associated with them
+
 @end table
 
 This @code{<switches>} tag can have any number of child tag, among the
@@ -13695,57 +13700,24 @@ Both these aspects are defined in a unique @code{<expansion>} tag, which
 accepts two attributes: @code{switch} is mandatory, and @code{alias} is
 optional. Alias contains the text "-gnatyabcefhiklmnprst" in our example.
 
-It also accepts any number of @code{<entry>} children, each has a mandatory
-@code{switch} access. The set of all these children define the expanded
-equivalent of the switch. In our example, we need one @code{<entry>} child
-for "-gnatya", one for "-gnatyb", @dots{}
+There are two possible uses for this tag:
+@itemize -
+@item If the "alias" attribute is not specified, then the "switch" attribute
+indicates that all switches starting with that prefix should be grouped.
+For instance, if you pass "-gnatw" as the value for the "switch" attribute,
+then a command line with "-gnatwa -gnatwb" will in fact result in "-gnatwab".
 
-The exact algorithm used by GPS is the following:
-@itemize
-@item For each switch on the command line, it is expanded either through the
- standard GNAT handling (thus "-gnatwuv" is made equivalent to
- "-gnatwu -gnatwv"), or through the definition in the custom file (if an XML
- node has a @code{switch} attribute that matches exactly, then it is replaced
- by all the switches given in the @code{<entry>} children).
-
-@smallexample
-If we have
-  <expansion switch="-gnatwa">
-     <entry switch="-gnatwc" />
-     <entry switch="-gnatwd" />
-  </expansion>
-then any occurrence of "-gnatwa" on the command line is expanded to
-"-gnatwc -gnatwd"
-@end smallexample
-
-@item Then the switches on the command line are grouped together as much
- as possible. For all switch on the command line, if it starts with one of
- the values given to the @code{switch} attribute of an @code{<expansion>} node,
- then it is grouped with all other similar switches.
-
-@smallexample
-if the XML file contains
-  <expansion switch="-gnatw" />
-then the command line "-gnatwc -gnatt -gnatwd" is transformed
-into "-gnatwcd -gnatt", grouping the switches that start with
-"-gnatw".
-@end smallexample
-
-@item Finally, the resuling switches are compared with the
-@code{alias} attributes of the @code{<expansion>} nodes, and
-replaced appropriately.
-
-@smallexample
-if the XML file contains
-   <expansion switch="-gnatwa" alias="-gnatwcd" />
-then the command line generated at the second step is further
-transformed into "-gnatwa -gnatt".
-@end smallexample
-
+@item If the "alias" attribute is specified, then the "switch" attribute is
+considered as a shorter way of writting "alias". For instance, if "switch"
+is "-gnaty" and "alias" is "-gnatyabcefhiklmnprst", then the user can simply
+type "-gnaty" to mean the whole set of options.
 @end itemize
 
-This rather complex mechanism allows one to either use the various buttons
-and GUI widgets to edit the switches, or to manually edit the command line.
+The same "switch" attribute can be used in two expansion nodes if you want
+to combine the behavior.
+
+For historical reasons, this tag accepts @code{<entry>} children, but these
+are no longer used.
 
 @end table
 

@@ -106,20 +106,7 @@
            <check label="Size/align warnings for unchecked conversion"
                   switch="-gnatwz" />
            <expansion switch="-gnatw" />
-           <expansion switch="-gnatwa" alias="-gnatwcfijkmopruvz">
-               <entry switch="-gnatwc" />
-               <entry switch="-gnatwf" />
-               <entry switch="-gnatwi" />
-               <entry switch="-gnatwj" />
-               <entry switch="-gnatwk" />
-               <entry switch="-gnatwm" />
-               <entry switch="-gnatwo" />
-               <entry switch="-gnatwp" />
-               <entry switch="-gnatwr" />
-               <entry switch="-gnatwu" />
-               <entry switch="-gnatwv" />
-               <entry switch="-gnatwz" />
-           </expansion>
+           <expansion switch="-gnatwa" alias="-gnatwcfijkmopruvz" />
          </popup>
 
          <popup label="Validity checking mode" line="2" column="1" >
@@ -140,17 +127,7 @@
             <check label="Checking for tests" switch="-gnatVt"
                    tip="Expressions used as conditions in if, while or exit statements are checked, as well as guard expressions in entry calls" />
             <expansion switch="-gnatV" />
-            <expansion switch="-gnatVa" alias="-gnatVcdfimorst">
-               <entry switch="-gnatVc" />
-               <entry switch="-gnatVd" />
-               <entry switch="-gnatVf" />
-               <entry switch="-gnatVi" />
-               <entry switch="-gnatVm" />
-               <entry switch="-gnatVo" />
-               <entry switch="-gnatVr" />
-               <entry switch="-gnatVs" />
-               <entry switch="-gnatVt" />
-            </expansion>
+            <expansion switch="-gnatVa" alias="-gnatVcdfimorst" />
          </popup>
 
          <popup label="Style checks" line="2" column="1">
@@ -175,24 +152,8 @@
             <check label="Check token separation rules" switch="-gnatyt" />
             <spin label="Line length" switch="-gnatyM"
                   min="0" max="255" default="79" />
-            <expansion switch="-gnaty" alias="-gnatyabcefhiklmnprst" >
-               <entry switch="-gnaty3" />
-               <entry switch="-gnatya" />
-               <entry switch="-gnatyb" />
-               <entry switch="-gnatyc" />
-               <entry switch="-gnatye" />
-               <entry switch="-gnatyf" />
-               <entry switch="-gnatyh" />
-               <entry switch="-gnatyi" />
-               <entry switch="-gnatyk" />
-               <entry switch="-gnatyl" />
-               <entry switch="-gnatym" />
-               <entry switch="-gnatyn" />
-               <entry switch="-gnatyp" />
-               <entry switch="-gnatyr" />
-               <entry switch="-gnatys" />
-               <entry switch="-gnatyt" />
-            </expansion>
+            <expansion switch="-gnaty" alias="-gnaty3abcefhiklmnprst" />
+            <expansion switch="-gnaty" />
          </popup>
 
          <check label="Overflow checking" switch="-gnato" column="2"
