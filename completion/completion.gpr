@@ -2,6 +2,7 @@ with "../kernel/kernel";
 with "../common/common";
 with "../vsearch/vsearch";
 with "../shared";
+with "../ada_module/ada_module.gpr";
 
 project Completion is
 
@@ -9,10 +10,6 @@ project Completion is
    for Languages use ("Ada");
    for Object_Dir use "obj/";
    for Exec_Dir use "obj/";
-
-   package Binder is
-      for Default_Switches ("ada") use ("-static");
-   end Binder;
 
    package Linker is
       for Default_Switches ("ada") use ("-g");

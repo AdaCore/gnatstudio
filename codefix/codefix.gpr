@@ -1,6 +1,7 @@
 with "../kernel/kernel";
 with "../common/common";
 with "../vdiff/vdiff";
+with "../ada_module/ada_module";
 with "../shared";
 
 project Codefix is

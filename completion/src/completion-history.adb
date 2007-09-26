@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2007                         --
---                              AdaCore                              --
+--                     Copyright (C) 2007, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,19 +17,20 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Unchecked_Deallocation;
+
 package body Completion.History is
 
-   -----------------------
-   -- Get_Possibilities --
-   -----------------------
+   Resolver_ID : constant String := "CNST_HIS";
 
-   procedure Get_Possibilities
+   -------------------------
+   -- Get_Completion_Root --
+   -------------------------
+
+   procedure Get_Completion_Root
      (Resolver   : access Completion_History;
-      Identifier : String;
-      Is_Partial : Boolean;
-      Context    : Completion_Context;
       Offset     : Integer;
-      Filter     : Possibilities_Filter;
+      Context    : Completion_Context;
       Result     : in out Completion_List)
    is
       It : Proposal_Stack.Cursor := First (Resolver.Stack);
@@ -42,11 +42,11 @@ package body Completion.History is
       while It /= Proposal_Stack.No_Element loop
          declare
             Proposal : Completion_Proposal_Access :=
-              From_Completion_Id
-                (Resolver.Manager, Element (It), Context, Filter);
+              From_Stored_Proposal
+                (Resolver.Manager, Element (It).all, Context);
          begin
-            if Proposal /= null and then Match
-              (Proposal.all, Identifier, Is_Partial, Context, Offset, Filter)
+            if Proposal /= null
+              and then Match (Proposal.all, Context, Offset)
             then
                Completion_List_Extensive_Pckg.Extensive_List_Pckg.Append
                  (List, Proposal.all);
@@ -60,23 +60,17 @@ package body Completion.History is
 
       Completion_List_Pckg.Append
         (Result.List, Completion_List_Extensive_Pckg.To_Extensive_List (List));
-   end Get_Possibilities;
+   end Get_Completion_Root;
 
-   ------------------------
-   -- From_Completion_Id --
-   ------------------------
+   ------------
+   -- Get_Id --
+   ------------
 
-   function From_Completion_Id
-     (Resolver : access Completion_History;
-      Id       : Completion_Id;
-      Context  : Completion_Context;
-      Filter   : Possibilities_Filter)
-      return Completion_Proposal_Access
-   is
-      pragma Unreferenced (Resolver, Id, Context, Filter);
+   function Get_Id (Resolver : Completion_History) return String is
+      pragma Unreferenced (Resolver);
    begin
-      return null;
-   end From_Completion_Id;
+      return Resolver_ID;
+   end Get_Id;
 
    ----------
    -- Free --
@@ -95,12 +89,28 @@ package body Completion.History is
      (Resolver : access Completion_History;
       Proposal : Completion_Proposal'Class)
    is
-      It : Proposal_Stack.Cursor := First (Resolver.Stack);
-      Id : constant Completion_Id :=  To_Completion_Id (Proposal);
+      Stored     : Stored_Proposal_Access;
+      It         : Proposal_Stack.Cursor;
+      It_Element : Stored_Proposal_Access;
+
+      procedure Free is new Ada.Unchecked_Deallocation
+        (Stored_Proposal'Class, Stored_Proposal_Access);
    begin
+      if Proposal not in Storable_Proposal'Class then
+         return;
+      end if;
+
+      Stored := To_Stored_Proposal (Storable_Proposal'Class (Proposal));
+      It     := First (Resolver.Stack);
+
+      --  Free all elements equals to the one given in parameter form the
+      --  history - we only keep one instance of each choice.
       while It /= Proposal_Stack.No_Element loop
-         if Element (It) = Id then
+         if Equal (Element (It).all, Stored.all) then
+            It_Element := Element (It);
             Delete (Resolver.Stack, It);
+            Free (It_Element.all);
+            Free (It_Element);
 
             exit;
          end if;
@@ -108,13 +118,16 @@ package body Completion.History is
          It := Next (It);
       end loop;
 
-      Prepend (Resolver.Stack, Id);
+      Prepend (Resolver.Stack, Stored);
 
-      if Natural (Length (Resolver.Stack)) > Resolver.Size then
-         Delete_Last
-           (Resolver.Stack,
-            Length (Resolver.Stack) - Count_Type (Resolver.Size));
-      end if;
+      while Natural (Length (Resolver.Stack)) > Resolver.Size loop
+         It_Element := Element (Last (Resolver.Stack));
+
+         Delete_Last (Resolver.Stack, 1);
+
+         Free (It_Element.all);
+         Free (It_Element);
+      end loop;
    end Prepend_Proposal;
 
    ----------------------

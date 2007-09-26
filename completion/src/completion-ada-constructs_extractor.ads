@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006-2007                    --
---                              AdaCore                              --
+--                  Copyright (C) 2006-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,10 +20,15 @@
 --  Provides a completer working on language constructs for Ada
 
 with Ada.Containers.Doubly_Linked_Lists; use Ada.Containers;
+with Ada.Unchecked_Deallocation;
 
-with Language.Tree;          use Language.Tree;
-with Language.Tree.Ada;      use Language.Tree.Ada;
-with Language.Tree.Database; use Language.Tree.Database;
+with Language.Tree;              use Language.Tree;
+with Language.Tree.Database;     use Language.Tree.Database;
+with Ada_Semantic_Tree.List_Resolver;
+use Ada_Semantic_Tree.List_Resolver;
+with Ada_Semantic_Tree.Declarations;  use Ada_Semantic_Tree.Declarations;
+
+private with Completion.History;
 
 package Completion.Ada.Constructs_Extractor is
 
@@ -39,22 +43,16 @@ package Completion.Ada.Constructs_Extractor is
    --  Create a new resolver, based on a construct tree, and the current
    --  analyzed file.
 
-   procedure Get_Possibilities
-     (Resolver   : access Construct_Completion_Resolver;
-      Identifier : String;
-      Is_Partial : Boolean;
-      Context    : Completion_Context;
-      Offset     : Integer;
-      Filter     : Possibilities_Filter;
-      Result     : in out Completion_List);
+   overriding
+   procedure Get_Completion_Root
+     (Resolver : access Construct_Completion_Resolver;
+      Offset   : Integer;
+      Context  : Completion_Context;
+      Result   : in out Completion_List);
    --  See inherited documentation
 
-   function From_Completion_Id
-     (Resolver : access Construct_Completion_Resolver;
-      Id       : Completion_Id;
-      Context  : Completion_Context;
-      Filter   : Possibilities_Filter)
-      return Completion_Proposal_Access;
+   overriding
+   function Get_Id (Resolver : Construct_Completion_Resolver) return String;
    --  See inherited documentation
 
    procedure Free (This : in out Construct_Completion_Resolver);
@@ -65,105 +63,111 @@ private
    package Tree_List is new Doubly_Linked_Lists (Construct_Tree);
 
    use Tree_List;
-
-   type Full_Construct_Cell is record
-      It     : Construct_Tree_Iterator;
-      Tree   : Construct_Tree;
-      Buffer : String_Access;
-   end record;
-
-   package Construct_List is new Doubly_Linked_Lists (Full_Construct_Cell);
-
-   use Construct_List;
+   use Completion.History;
 
    type Construct_Completion_Resolver is new Completion_Resolver with record
       Construct_Db    : Construct_Database_Access;
       Current_File    : Structured_File_Access;
       Current_Buffer  : String_Access;
-
-      Tree_Collection : Tree_List.List;
-      --  This is the list of the tree that have to be freed when the resolver
-      --  is freed.
-
-      Excluded_List   : Construct_List.List;
-      --  Since completion is working on non compilable files, there might be
-      --  cirtularities in the references. We don't want to enter in an
-      --  infinite loop in this case, so we maitain a list of constructs that
-      --  have been found during the process, in order to avoid cycling.
-
    end record;
 
-   type Construct_Completion_Proposal is new Completion_Proposal with record
-      Tree_Node            : Construct_Tree_Iterator;
-      File                 : Structured_File_Access;
-      Is_All               : Boolean := False;
-      Params_In_Expression : Integer := 0;
-      Tree                 : Construct_Tree;
-      Filter               : Possibilities_Filter;
-      Buffer               : String_Access;
-      Is_In_Profile        : Boolean := False;
+   ------------------------------------------
+   -- Stored_Construct_Completion_Proposal --
+   ------------------------------------------
+
+   type Stored_Construct_Completion_Proposal is new Stored_Proposal with record
+      Persistent_Entity : Entity_Persistent_Access;
+      Is_All            : Boolean;
+      Is_In_Call        : Boolean;
+      Actual_Params     : Actual_Parameter_Resolver_Access;
    end record;
 
+   overriding
+   function Equal
+     (Left  : Stored_Construct_Completion_Proposal;
+      Right : Stored_Proposal'Class)
+      return Boolean;
+
+   overriding
+   function From_Stored_Proposal
+     (Manager : Completion_Manager_Access;
+      Stored  : Stored_Construct_Completion_Proposal;
+      Context : Completion_Context)
+      return Completion_Proposal_Access;
+
+   overriding
+   procedure Free
+     (Stored : in out Stored_Construct_Completion_Proposal);
+
+   -----------------------------------
+   -- Construct_Completion_Proposal --
+   -----------------------------------
+
+   type Construct_Completion_Proposal is new Storable_Proposal
+   with record
+      Tree_Node     : Construct_Tree_Iterator;
+      File          : Structured_File_Access;
+      Is_All        : Boolean := False;
+      Actual_Params : Actual_Parameter_Resolver_Access;
+      Is_In_Call    : Boolean;
+   end record;
+
+   overriding
    function To_Completion_Id
      (Proposal : Construct_Completion_Proposal) return Completion_Id;
    --  See inherited documentation
 
+   overriding
    function Get_Completion
      (Proposal : Construct_Completion_Proposal) return UTF8_String;
    --  See inherited documentation
 
+   overriding
    function Get_Label
      (Proposal : Construct_Completion_Proposal) return UTF8_String;
    --  See inherited documentation
 
+   overriding
    function Get_Caret_Offset
      (Proposal : Construct_Completion_Proposal)
       return Basic_Types.Character_Offset_Type;
    --  See inherited documentation
 
+   overriding
    function Get_Category
      (Proposal : Construct_Completion_Proposal) return Language_Category;
    --  See inherited documentation
 
+   overriding
    function Get_Visibility
      (Proposal : Construct_Completion_Proposal) return Construct_Visibility;
    --  See inherited documentation
 
+   overriding
    function Get_Documentation
      (Proposal : Construct_Completion_Proposal) return UTF8_String;
    --  See inherited documentation
 
+   overriding
    function Get_Location
      (Proposal : Construct_Completion_Proposal) return File_Location;
    --  See inherited documentation
 
-   procedure Get_Composition
-     (Proposal   : Construct_Completion_Proposal;
-      Identifier : String;
-      Offset     : Positive;
-      Is_Partial : Boolean;
-      Result     : in out Completion_List);
-   --  See inherited documentation
-
-   function Get_Number_Of_Parameters
-     (Proposal : Construct_Completion_Proposal) return Natural;
-   --  See inherited documentation
-
-   procedure Append_Expression
-     (Proposal             : in out Construct_Completion_Proposal;
-      Number_Of_Parameters : Natural);
-   --  See inherited documentation
-
+   overriding
    function Match
-     (Proposal   : Construct_Completion_Proposal;
-      Identifier : String;
-      Is_Partial : Boolean;
-      Context    : Completion_Context;
-      Offset     : Integer;
-      Filter     : Possibilities_Filter) return Boolean;
+     (Proposal : Construct_Completion_Proposal;
+      Context  : Completion_Context;
+      Offset   : Integer) return Boolean;
    --  See inherited documentation
 
+   overriding
    procedure Free (Proposal : in out Construct_Completion_Proposal);
+   --  See inherited documentation
+
+   overriding
+   function To_Stored_Proposal
+     (Proposal : Construct_Completion_Proposal)
+      return Stored_Proposal_Access;
    --  See inherited documentation
 
    --------------------------
@@ -174,15 +178,9 @@ private
 
    type Construct_Db_Wrapper is new Completion_List_Pckg.Virtual_List_Component
    with record
-      First_File   : Structured_File_Access;
-      First_Buffer : String_Access;
-      First_Tree   : Construct_Tree;
-      Construct_Db : Construct_Database_Access;
-      Name         : String_Access;
-      Is_Partial   : Boolean;
-      Offset       : Integer;
-      Resolver     : access Construct_Completion_Resolver'Class;
-      Filter       : Possibilities_Filter;
+      Context  : Visibility_Context;
+      Resolver : Completion_Resolver_Access;
+      List     : Declaration_List;
    end record;
 
    overriding
@@ -196,45 +194,23 @@ private
    procedure Free (This : in out Construct_Tree_Iterator_Array_Access);
    --  Free the data associated to this array
 
+   type Formal_Parameter_Array_Access is access all Formal_Parameter_Array;
+
+   procedure Free is new Standard.Ada.Unchecked_Deallocation
+     (Formal_Parameter_Array, Formal_Parameter_Array_Access);
+
    type Construct_Iterator_Wrapper is new
      Completion_List_Pckg.Virtual_List_Component_Iterator
    with record
+      Context  : Visibility_Context;
+      Resolver : Completion_Resolver_Access;
+      Iter     : Declaration_Iterator;
 
-      --  Common data
+      Current_Decl : Declaration_View := Null_Declaration_View;
 
-      Resolver   : access Construct_Completion_Resolver'Class;
-      Stage      : Iteration_Stage := Initial_File;
-      Name       : String_Access;
-      Is_Partial : Boolean;
-      Filter     : Possibilities_Filter;
-
-      --  Data needed by the first completion stage (current file)
-
-      First_Buffer        : String_Access;
-      First_Tree          : Construct_Tree;
-      First_Spec_Ada_Tree : Ada_Construct_Tree;
-      First_Ada_Tree      : Ada_Construct_Tree;
-
-      Visible_Constructs : Construct_Tree_Iterator_Array_Access;
-      Visible_Index      : Integer;
-
-      --  Data needed by the second completion stage (parent files)
-
-      First_File       : Structured_File_Access;
-      Current_File     : Structured_File_Access;
-      Current_It       : Construct_Tree_Iterator
-        := Null_Construct_Tree_Iterator;
-
-      Current_Tree      : Construct_Tree;
-      Current_Ada_Tree  : Ada_Construct_Tree;
-      Current_Body_Tree : Ada_Construct_Tree;
-      Is_Current_Spec   : Boolean := False;
-
-      --  Data needed by the third completion stage (database)
-
-      Construct_Db : Construct_Database_Access;
-      Db_Iterator  : Construct_Db_Iterator;
-
+      --  This is used when completing with possible parameters
+      Params_Array : Formal_Parameter_Array_Access;
+      Params_It : Integer;
    end record;
 
    function First
@@ -258,31 +234,5 @@ private
 
    procedure Free (This : in out Construct_Iterator_Wrapper);
    --  Free the data associated to the wrapper
-
-   function To_Profile_Manager
-     (Tree : Construct_Tree; It : Construct_Tree_Iterator)
-      return Profile_Manager_Access;
-   --  Return a profile manager build on the iterator given in parameter, null
-   --  if none.
-
-   type Ada_Construct_Extractor_Context is new Completion_Context_Record with
-      record
-         File : Structured_File_Access;
-      end record;
-
-   procedure Push_Excluded_Construct
-     (Resolver : access Construct_Completion_Resolver;
-      Pointer  : Full_Construct_Cell);
-   --  Add an element to exclude from the extracted constructs.
-
-   procedure Pop_Excluded_Construct
-     (Resolver : access Construct_Completion_Resolver);
-   --  Removes the last element added in the extraction list.
-
-   function Is_Excluded
-     (Resolver : access Construct_Completion_Resolver;
-      Pointer  : Full_Construct_Cell) return Boolean;
-   --  Return true if the construct given in parameter has to be excluded from
-   --  the completion analyzis.
 
 end Completion.Ada.Constructs_Extractor;

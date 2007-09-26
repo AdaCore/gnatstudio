@@ -433,7 +433,9 @@ package body Codefix_Module is
             Warning_Index_In_Regexp => Wi);
       end if;
 
-      Set_Registry    (Session.Current_Text.all, Get_Registry (Kernel));
+      Set_Registry (Session.Current_Text.all, Get_Registry (Kernel));
+      Set_Construct_Database
+        (Session.Current_Text.all, Get_Construct_Database (Kernel));
       Set_Error_Cb
         (Session.Corrector.all, new GPS_Execute_Corrupted_Record);
       Set_Last_Output (Errors_Found, Kernel, Output);
@@ -1008,6 +1010,7 @@ package body Codefix_Module is
      (This : GPS_Navigator;
       File : in out Text_Interface'Class) is
    begin
+      Initialize (Text_Navigator_Abstr (This), File);
       Set_Kernel (Console_Interface (File), This.Kernel);
    end Initialize;
 

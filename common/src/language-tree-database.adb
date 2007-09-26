@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006-2007                      --
---                             AdaCore                               --
+--                  Copyright (C) 2006-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,6 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with System;            use System;
+
 with Language.Tree.Ada; use Language.Tree.Ada;
 
 package body Language.Tree.Database is
@@ -27,6 +28,19 @@ package body Language.Tree.Database is
    --  Same as Update_Contents, but takes into account differences depending on
    --  the fact that the file is a brand new one, or an existing one.
 
+   ----------------
+   -- Get_Buffer --
+   ----------------
+
+   function Get_Buffer
+     (Provider : access File_Buffer_Provider;
+      File     : VFS.Virtual_File) return String_Access
+   is
+      pragma Unreferenced (Provider);
+   begin
+      return Read_File (File);
+   end Get_Buffer;
+
    ----------
    -- Free --
    ----------
@@ -35,7 +49,6 @@ package body Language.Tree.Database is
       procedure Internal is new Standard.Ada.Unchecked_Deallocation
         (Buffer_Provider'Class, Buffer_Provider_Access);
    begin
-      Free (This.all);
       Internal (This);
    end Free;
 
@@ -47,55 +60,23 @@ package body Language.Tree.Database is
       procedure Internal is new Standard.Ada.Unchecked_Deallocation
         (Structured_File, Structured_File_Access);
    begin
-      Free (File.Cache_Tree);
       Free (File.Cache_Buffer);
-      Free (File.Public_Tree);
+      Free_Annotations (File.Tree);
+      Free (File.Tree);
       Free (File.Db_Data_Tree);
       Free (File.Line_Starts);
 
       Internal (File);
    end Free;
 
-   -------------------
-   -- Get_Full_Tree --
-   -------------------
+   --------------
+   -- Get_Tree --
+   --------------
 
-   function Get_Full_Tree
-     (File : Structured_File_Access) return Construct_Tree is
+   function Get_Tree (File : Structured_File_Access) return Construct_Tree is
    begin
-      if File.Cache_Tree = null then
-         declare
-            Constructs : aliased Construct_List;
-         begin
-            Parse_Constructs
-              (Get_Language (File.Lang), Get_Buffer (File).all, Constructs);
-            File.Cache_Tree := To_Construct_Tree (Constructs'Access, True);
-         end;
-      end if;
-
-      return File.Cache_Tree;
-   end Get_Full_Tree;
-
-   -------------------
-   -- Get_Full_Tree --
-   -------------------
-
-   function Get_Public_Tree
-     (File : Structured_File_Access) return Construct_Tree is
-   begin
-      return File.Public_Tree;
-   end Get_Public_Tree;
-
-   ---------------------
-   -- Get_Parent_File --
-   ---------------------
-
-   function Get_Parent_File
-     (File : Structured_File_Access) return Structured_File_Access
-   is
-   begin
-      return File.Parent_File;
-   end Get_Parent_File;
+      return File.Tree;
+   end Get_Tree;
 
    ----------------
    -- Get_Buffer --
@@ -104,15 +85,9 @@ package body Language.Tree.Database is
    function Get_Buffer
      (File : Structured_File_Access) return GNAT.Strings.String_Access
    is
-      Provider : Buffer_Provider_Access;
    begin
       if File.Cache_Buffer = null then
-         if Contains (File.Db.Providers_Db, File.File) then
-            Provider := Element (File.Db.Providers_Db, File.File);
-            File.Cache_Buffer := new String'(Get_Buffer (Provider).all);
-         else
-            File.Cache_Buffer := Read_File (File.File);
-         end if;
+         File.Cache_Buffer := Get_Buffer (File.Db.Provider, File.File);
       end if;
 
       return File.Cache_Buffer;
@@ -168,6 +143,16 @@ package body Language.Tree.Database is
       return File.Line_Starts (Line);
    end Get_Offset_Of_Line;
 
+   ------------------
+   -- Get_Language --
+   ------------------
+
+   function Get_Language
+     (File : Structured_File_Access) return Tree_Language_Access is
+   begin
+      return File.Lang;
+   end Get_Language;
+
    ---------------------
    -- Update_Contents --
    ---------------------
@@ -184,145 +169,201 @@ package body Language.Tree.Database is
    procedure Internal_Update_Contents
      (File : Structured_File_Access; Is_New_File : Boolean)
    is
-
-      function Is_Spec_Of
-        (Supposed_Spec, Supposed_Body : Structured_File_Access) return Boolean;
-
-      function Is_Spec_Of
-        (Supposed_Spec, Supposed_Body : Structured_File_Access) return Boolean
-      is
-         Spec_Tree, Body_Tree : Construct_Tree;
-      begin
-         if Supposed_Spec = null or else Supposed_Body = null then
-            return False;
-         end if;
-
-         Spec_Tree := Get_Public_Tree (Supposed_Spec);
-         Body_Tree := Get_Public_Tree (Supposed_Body);
-
-         return Get_Unit_Construct
-           (File.Lang, Spec_Tree).Node.Construct.Is_Declaration
-           and then not Get_Unit_Construct
-             (File.Lang, Body_Tree).Node.Construct.Is_Declaration
-           and then To_String (Get_Unit_Name (File.Lang, Spec_Tree))
-           = To_String (Get_Unit_Name (File.Lang, Body_Tree));
-      end Is_Spec_Of;
-
-      Buffer     : GNAT.Strings.String_Access := Read_File (File.File);
-      Full_Tree  : aliased Construct_Tree;
+      Buffer     : GNAT.Strings.String_Access := Get_Buffer
+        (File.Db.Provider, File.File);
       Constructs : aliased Construct_List;
-   begin
-      --  Phase 1 : remove previous construct information from the database
 
-      if not Is_New_File then
-         if File.Public_Tree /= null then
-            for J in File.Public_Tree.Contents'Range loop
-               if File.Db_Data_Tree (J).Position
-                 /= Construct_Vector.Null_Iterator
-               then
-                  Delete (File.Db_Data_Tree (J).Position);
-               end if;
-            end loop;
+      Current_Update_Kind : Update_Kind;
+
+      New_Tree         : Construct_Tree;
+      New_Db_Data_Tree : Construct_Db_Data_Access;
+
+      procedure Add_New_Construct_If_Needed (It : Construct_Tree_Iterator);
+
+      procedure Diff_Callback
+        (Old_Obj, New_Obj : Construct_Tree_Iterator; Kind : Diff_Kind);
+
+      ---------------------------------
+      -- Add_New_Construct_If_Needed --
+      ---------------------------------
+
+      procedure Add_New_Construct_If_Needed (It : Construct_Tree_Iterator)
+      is
+         Data      : Trie_Additional_Data;
+         Construct : constant access Simple_Construct_Information :=
+           Get_Construct (It);
+      begin
+         --  We add only named constructs in the database, and we dismiss some
+         --  categories.
+
+         if Construct.Name = null
+           or else Construct.Category = Cat_Parameter
+           or else Construct.Category = Cat_Field
+           or else Construct.Category = Cat_With
+           or else Construct.Category = Cat_Use
+         then
+            return;
          end if;
 
-         --  Remove all the links to this file
+         Data.File := File;
 
-         declare
-            C : File_Map.Cursor := First (File.Db.Files_Db);
-         begin
-            while C /= File_Map.No_Element loop
-               if Element (C).Parent_File = File then
-                  Element (C).Parent_File := null;
+         Construct_Db_Trie.Insert
+           (File.Db.Entities_Db'Access,
+            It,
+            Data,
+            File.Lang,
+            New_Db_Data_Tree (It.Index));
+      end Add_New_Construct_If_Needed;
+
+      -------------------
+      -- Diff_Callback --
+      -------------------
+
+      procedure Diff_Callback
+        (Old_Obj, New_Obj : Construct_Tree_Iterator; Kind : Diff_Kind) is
+      begin
+         case Kind is
+            when Removed =>
+               Current_Update_Kind := Structural_Change;
+
+               Delete
+                 (File.Db.Entities_Db'Access,
+                  File.Db_Data_Tree (Old_Obj.Index));
+
+               Construct_Annotations_Pckg.Free
+                 (Get_Annotation_Container (File.Tree, Old_Obj).all);
+
+            when Added =>
+               Current_Update_Kind := Structural_Change;
+               Add_New_Construct_If_Needed (New_Obj);
+
+            when Preserved =>
+               if Get_Construct (Old_Obj).Attributes /=
+                 Get_Construct (New_Obj).Attributes
+                 or else Get_Construct (Old_Obj).Is_Declaration /=
+                 Get_Construct (New_Obj).Is_Declaration
+                 or else Get_Construct (Old_Obj).Visibility /=
+                 Get_Construct (Old_Obj).Visibility
+               then
+                  Current_Update_Kind := Structural_Change;
                end if;
 
-               C := Next (C);
-            end loop;
-         end;
+               New_Db_Data_Tree (New_Obj.Index) :=
+                 File.Db_Data_Tree (Old_Obj.Index);
 
-         Free (File.Cache_Tree);
-         Free (File.Cache_Buffer);
-         Free (File.Public_Tree);
-         Free (File.Db_Data_Tree);
-         Free (File.Line_Starts);
-         File.Parent_File := null;
-      end if;
+               --  Copy the annotation from the old obj to the new obj
 
-      --  Phase 2 : analyze the file and add data in the database
+               New_Tree.Contents (New_Obj.Index).Annotations :=
+                 File.Tree.Contents (Old_Obj.Index).Annotations;
 
-      Parse_Constructs (Get_Language (File.Lang), Buffer.all, Constructs);
-      Full_Tree := To_Construct_Tree (Constructs'Access, True);
-      File.Public_Tree := Get_Public_Tree (File.Lang, Full_Tree'Access, True);
-      File.Db_Data_Tree := new Construct_Db_Data_Array
-        (1 .. File.Public_Tree.Contents'Length);
+               --  If we're in a structural change, there may have been object
+               --  inserted / removed before this construct, so we have to
+               --  update the index and the persistent entity.
 
-      for J in File.Public_Tree.Contents'Range loop
-         declare
-            Wrapper : Construct_Node_Wrapper;
-         begin
-            Wrapper.Index := J;
-            Wrapper.File := File;
-            Wrapper.Node := File.Public_Tree.Contents (J);
+               if Current_Update_Kind = Structural_Change then
+                  --  Update the construct wrapper if the construct is stored
+                  --  in the database.
 
-            if Wrapper.Node.Construct.Name /= null
-              and then Wrapper.Node.Construct.Category /= Cat_Parameter
-              and then Wrapper.Node.Construct.Category /= Cat_Field
-              and then Wrapper.Node.Construct.Category /= Cat_With
-              and then Wrapper.Node.Construct.Category /= Cat_Use
-              and then (Wrapper.Node.Construct.Category /= Cat_Package
-                        or else Wrapper.Node.Construct.Is_Declaration)
-            then
-               declare
-                  Name : constant String :=
-                    Get_Name_Index (File.Lang, Wrapper.Node.Construct);
-                  List : Construct_Node_List_Access := Get
-                    (File.Db.Entities_Db'Access, Name);
-               begin
-                  if List = null then
-                     List := new Construct_Node_List;
-                     List.Name := new String'(Name);
-                     List.Constructs :=
-                       new Construct_Vector.Lazy_Vector_Record;
-                     Insert (File.Db.Entities_Db, List);
+                  if New_Db_Data_Tree (New_Obj.Index) /=
+                    Construct_Db_Trie.Null_Construct_Trie_Index
+                  then
+                     Replace
+                       (File.Db.Entities_Db'Access,
+                        New_Db_Data_Tree (New_Obj.Index),
+                        New_Obj,
+                        (File => File));
                   end if;
 
-                  Insert
-                    (List.Constructs, Wrapper, File.Db_Data_Tree (J).Position);
-               end;
-            end if;
+                  --  Update the persistent annotation if any.
+
+                  declare
+                     use Construct_Annotations_Pckg;
+
+                     Annotations : constant access Annotation_Container :=
+                       Get_Annotation_Container (New_Tree, New_Obj);
+                     Persistent_Annotation : Annotation (Other_Kind);
+                  begin
+                     if Is_Set
+                       (Annotations.all, File.Db.Persistent_Entity_Key)
+                     then
+                        Get_Annotation
+                          (Annotations.all,
+                           File.Db.Persistent_Entity_Key,
+                           Persistent_Annotation);
+
+                        Entity_Persistent_Annotation
+                          (Persistent_Annotation.Other_Val.all).Info.Index :=
+                          New_Obj.Index;
+                     end if;
+                  end;
+               end if;
+         end case;
+      end Diff_Callback;
+
+   begin
+      --  Phase 1 : analyze the new tree
+
+      Parse_Constructs (Get_Language (File.Lang), Buffer.all, Constructs);
+      New_Tree := To_Construct_Tree (Constructs'Access, True);
+      Analyze_Referenced_Identifiers
+        (Buffer.all, Get_Language (File.Lang), File.Db, New_Tree);
+      Analyze_Constructs_Identifiers (File.Db, New_Tree);
+      New_Db_Data_Tree := new Construct_Db_Data_Array
+        (1 .. New_Tree.Contents'Length);
+      New_Db_Data_Tree.all :=
+        (others => Construct_Db_Trie.Null_Construct_Trie_Index);
+
+      --  Phase 2 : replace previous content by the new one
+
+      if Is_New_File then
+         Current_Update_Kind := Full_Change;
+
+         declare
+            It : Construct_Tree_Iterator := First (New_Tree);
+         begin
+            while It /= Null_Construct_Tree_Iterator loop
+               Add_New_Construct_If_Needed (It);
+
+               It := Next (New_Tree, It, Jump_Into);
+            end loop;
          end;
-      end loop;
+      else
+         Current_Update_Kind := Minor_Change;
+         New_Tree.Annotations := File.Tree.Annotations;
 
-      --  Compute the child / parent information
+         Diff
+           (File.Lang,
+            File.Tree,
+            New_Tree,
+            Diff_Callback'Unrestricted_Access);
 
-      declare
-         C          : File_Map.Cursor := First (File.Db.Files_Db);
-         Parent     : Get_Parent_Tree_Result;
-      begin
-         while C /= File_Map.No_Element loop
-            Parent := Get_Parent_Tree
-              (File.Lang,
-               File.Public_Tree,
-               Get_Public_Tree (Element (C)));
+         File.Tree.Annotations :=
+           Tree_Annotations_Pckg.Null_Annotation_Container;
 
-            if Parent = Left
-              and then not
-                Is_Spec_Of (Element (C).Parent_File, Element (C))
-            then
-               Element (C).Parent_File := File;
-            elsif Parent = Right
-              and then not
-                Is_Spec_Of (File.Parent_File, File)
-            then
-               File.Parent_File := Element (C);
-            end if;
-
-            C := Next (C);
-         end loop;
-      end;
+         Free (File.Cache_Buffer);
+         Free (File.Tree);
+         Free (File.Db_Data_Tree);
+         Free (File.Line_Starts);
+      end if;
 
       Free (Constructs);
-      Free (Full_Tree);
       Free (Buffer);
+
+      File.Tree := New_Tree;
+      File.Db_Data_Tree := New_Db_Data_Tree;
+
+      --  Notify database assistants
+
+      declare
+         Cur : Assistant_List.Cursor;
+      begin
+         Cur := First (File.Db.Ordered_Assistants);
+
+         while Cur /= Assistant_List.No_Element loop
+            File_Updated (Element (Cur), File, Current_Update_Kind);
+            Cur := Next (Cur);
+         end loop;
+      end;
    end Internal_Update_Contents;
 
    ---------
@@ -339,14 +380,8 @@ package body Language.Tree.Database is
    ---------
 
    function "<" (Left, Right : Structured_File_Access) return Boolean is
-      Left_Name : constant Composite_Identifier :=
-        Get_Unit_Name (Left.Lang, Get_Public_Tree (Left));
-      Right_Name : constant Composite_Identifier :=
-        Get_Unit_Name (Right.Lang, Get_Public_Tree (Right));
    begin
-      return Get_Item
-        (Left_Name, Length (Left_Name))
-        < Get_Item (Right_Name, Length (Right_Name));
+      return Left.File < Right.File;
    end "<";
 
    ----------
@@ -357,10 +392,26 @@ package body Language.Tree.Database is
       procedure Internal is new Standard.Ada.Unchecked_Deallocation
         (Construct_Database, Construct_Database_Access);
    begin
-      Clear (This);
-      Clear (This.Entities_Db);
+      Destroy (This);
       Internal (This);
    end Free;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Db       : in out Construct_Database;
+      Provider : Buffer_Provider_Access)
+   is
+   begin
+      Db.Tree_Registry := Tree_Annotations_Pckg.Create_Annotation_Key_Registry;
+      Db.Construct_Registry :=
+        Construct_Annotations_Pckg.Create_Annotation_Key_Registry;
+      Construct_Annotations_Pckg.Get_Annotation_Key
+        (Db.Construct_Registry, Db.Persistent_Entity_Key);
+      Db.Provider := Provider;
+   end Initialize;
 
    -------------------
    -- Get_Or_Create --
@@ -383,10 +434,10 @@ package body Language.Tree.Database is
             New_File.Lang := Lang;
             New_File.Db := Db;
 
-            Internal_Update_Contents (New_File, True);
-
             Insert (Db.Files_Db, File, New_File);
             Insert (Db.Sorted_Files_Db, New_File);
+
+            Internal_Update_Contents (New_File, True);
 
             return New_File;
          end;
@@ -407,38 +458,6 @@ package body Language.Tree.Database is
       end if;
    end Update_Contents;
 
-   -----------------------------
-   -- Install_Buffer_Provider --
-   -----------------------------
-
-   procedure Install_Buffer_Provider
-     (Db       : access Construct_Database;
-      File     : VFS.Virtual_File;
-      Provider : access Buffer_Provider'Class) is
-   begin
-      if Contains (Db.Providers_Db, File) then
-         Replace (Db.Providers_Db, File, Buffer_Provider_Access (Provider));
-      else
-         Insert (Db.Providers_Db, File, Buffer_Provider_Access (Provider));
-      end if;
-   end Install_Buffer_Provider;
-
-   -------------------------------
-   -- Uninstall_Buffer_Provider --
-   -------------------------------
-
-   procedure Uninstall_Buffer_Provider
-     (Db       : access Construct_Database;
-      File     : VFS.Virtual_File;
-      Provider : access Buffer_Provider'Class) is
-   begin
-      if Contains (Db.Providers_Db, File) then
-         if Element (Db.Providers_Db, File) = Provider then
-            Delete (Db.Providers_Db, File);
-         end if;
-      end if;
-   end Uninstall_Buffer_Provider;
-
    -----------
    -- Clear --
    -----------
@@ -454,40 +473,38 @@ package body Language.Tree.Database is
          C := Next (C);
       end loop;
 
-      Clear (Db.Entities_Db);
+      Clear (Db.Entities_Db'Access);
       Clear (Db.Files_Db);
       Clear (Db.Sorted_Files_Db);
    end Clear;
-
-   --------------
-   -- Get_Name --
-   --------------
-
-   function Get_Name
-     (Node : Construct_Node_List_Access) return GNAT.Strings.String_Access is
-   begin
-      if Node /= null then
-         return Node.Name;
-      else
-         return null;
-      end if;
-   end Get_Name;
 
    ----------
    -- Free --
    ----------
 
-   procedure Free (Node : in out Construct_Node_List_Access) is
-      procedure Internal is new Standard.Ada.Unchecked_Deallocation
-        (Construct_Node_List, Construct_Node_List_Access);
-   begin
-      if Node /= null then
-         Free (Node.Name);
+   procedure Destroy (Db : access Construct_Database) is
+      Assistant_Cur : Assistant_Map.Cursor;
+      Assistant     : Database_Assistant_Access;
 
-         Free (Node.Constructs);
-         Internal (Node);
-      end if;
-   end Free;
+      procedure Unchecked_Free_Assistant is new
+        Standard.Ada.Unchecked_Deallocation
+          (Database_Assistant'Class, Database_Assistant_Access);
+   begin
+      Clear (Db);
+
+      Assistant_Cur := First (Db.Assistants);
+
+      while Assistant_Cur /= Assistant_Map.No_Element loop
+         Assistant := Element (Assistant_Cur);
+
+         Free (Assistant.all);
+         Unchecked_Free_Assistant (Assistant);
+         Assistant_Cur := Next (Assistant_Cur);
+      end loop;
+
+      Tree_Annotations_Pckg.Free (Db.Tree_Registry);
+      Construct_Annotations_Pckg.Free (Db.Construct_Registry);
+   end Destroy;
 
    ----------
    -- Free --
@@ -510,22 +527,7 @@ package body Language.Tree.Database is
    is
       It : Construct_Db_Iterator;
    begin
-      It.Is_Partial := Is_Partial;
-      It.It_Db := Start (Db.Entities_Db'Access, Prefix);
-
-      if not At_End (It.It_Db) then
-         It.It_Vector := First (Get (It.It_Db).Constructs);
-
-         if not It.Is_Partial
-           and then Get (It.It_Db).Name.all /= Prefix
-         then
-            It.It_Db := Construct_Trie_Trees.Null_Iterator;
-         end if;
-      end if;
-
-      if not Is_Valid (It) then
-         Next (It);
-      end if;
+      It.It := Start (Db.Entities_Db'Access, Prefix, Is_Partial);
 
       return It;
    end Start;
@@ -538,8 +540,7 @@ package body Language.Tree.Database is
      (It : Construct_Db_Iterator) return Construct_Tree_Iterator
    is
    begin
-      return
-        (Node => Get (It.It_Vector).Node, Index => Get (It.It_Vector).Index);
+      return Get_Construct_It (It.It);
    end Get_Construct;
 
    --------------------
@@ -548,7 +549,7 @@ package body Language.Tree.Database is
 
    function Get_Current_Id (It : Construct_Db_Iterator) return String is
    begin
-      return Get_Index (It.It_Db);
+      return Get_Index (It.It);
    end Get_Current_Id;
 
    --------------
@@ -558,8 +559,19 @@ package body Language.Tree.Database is
    function Get_File
      (It : Construct_Db_Iterator) return Structured_File_Access is
    begin
-      return Get (It.It_Vector).File;
+      return Get_Additional_Data (It.It).File;
    end Get_File;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get (It : Construct_Db_Iterator) return Entity_Access is
+   begin
+      return
+        (File => Get_Additional_Data (It.It).File,
+         It   => Get_Construct_It (It.It));
+   end Get;
 
    ----------
    -- Next --
@@ -567,23 +579,7 @@ package body Language.Tree.Database is
 
    procedure Next (It : in out Construct_Db_Iterator) is
    begin
-      loop
-         if not At_End (It.It_Vector) then
-            Next (It.It_Vector);
-         else
-            if It.Is_Partial then
-               Next (It.It_Db);
-
-               if not At_End (It.It_Db) then
-                  It.It_Vector := First (Get (It.It_Db).Constructs);
-               end if;
-            else
-               It.It_Db := Construct_Trie_Trees.Null_Iterator;
-            end if;
-         end if;
-
-         exit when Is_Valid (It);
-      end loop;
+      Next (It.It);
    end Next;
 
    ------------
@@ -592,7 +588,7 @@ package body Language.Tree.Database is
 
    function At_End (It : Construct_Db_Iterator) return Boolean is
    begin
-      return At_End (It.It_Db);
+      return At_End (It.It);
    end At_End;
 
    --------------
@@ -601,7 +597,7 @@ package body Language.Tree.Database is
 
    function Is_Valid (It : Construct_Db_Iterator) return Boolean is
    begin
-      return At_End (It) or else not At_End (It.It_Vector);
+      return Is_Valid (It.It);
    end Is_Valid;
 
    ----------
@@ -610,8 +606,31 @@ package body Language.Tree.Database is
 
    procedure Free (It : in out Construct_Db_Iterator) is
    begin
-      Free (It.It_Db);
+      Free (It.It);
    end Free;
+
+   --------------------------------------
+   -- Get_Tree_Annotation_Key_Registry --
+   --------------------------------------
+
+   function Get_Tree_Annotation_Key_Registry
+     (Db : Construct_Database_Access)
+      return access Tree_Annotations_Pckg.Annotation_Key_Registry is
+   begin
+      return Db.Tree_Registry'Access;
+   end Get_Tree_Annotation_Key_Registry;
+
+   -------------------------------------------
+   -- Get_Construct_Annotation_Key_Registry --
+   -------------------------------------------
+
+   function Get_Construct_Annotation_Key_Registry
+     (Db : Construct_Database_Access)
+      return access Construct_Annotations_Pckg.Annotation_Key_Registry
+   is
+   begin
+      return Db.Construct_Registry'Access;
+   end Get_Construct_Annotation_Key_Registry;
 
    ---------------
    -- Get_Files --
@@ -624,24 +643,315 @@ package body Language.Tree.Database is
       return First (Db.Sorted_Files_Db);
    end Start_File_Search;
 
+   ----------------------
+   -- To_Entity_Access --
+   ----------------------
+
+   function To_Entity_Access
+     (File       : Structured_File_Access;
+      Construct  : Construct_Tree_Iterator) return Entity_Access
+   is
+      Result : Entity_Access;
+   begin
+      if Construct = Null_Construct_Tree_Iterator then
+         return Null_Entity_Access;
+      else
+         pragma Assert (Construct.Index in File.Tree.Contents'Range);
+
+         Result.File := File;
+         Result.It := Construct;
+
+         return Result;
+      end if;
+   end To_Entity_Access;
+
+   --------------------------------
+   -- To_Construct_Tree_Iterator --
+   --------------------------------
+
+   function To_Construct_Tree_Iterator
+     (Entity : Entity_Access) return Construct_Tree_Iterator
+   is
+   begin
+      return Entity.It;
+   end To_Construct_Tree_Iterator;
+
+   --------------
+   -- Get_File --
+   --------------
+
+   function Get_File (Entity : Entity_Access) return Structured_File_Access is
+   begin
+      return Entity.File;
+   end Get_File;
+
    -------------------
-   -- Is_In_Parents --
+   -- Get_Construct --
    -------------------
 
-   function Is_In_Parents
-     (Parent, Child : Structured_File_Access) return Boolean
-   is
-      Current : Structured_File_Access := Child;
+   function Get_Construct
+     (Entity : Entity_Access) return access Simple_Construct_Information is
    begin
-      while Current /= null loop
-         if Current = Parent then
-            return True;
+      return Get_Construct (Entity.It);
+   end Get_Construct;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (This : in out Entity_Array_Access) is
+      procedure Internal is new Standard.Ada.Unchecked_Deallocation
+        (Entity_Array, Entity_Array_Access);
+   begin
+      Internal (This);
+   end Free;
+
+   ---------
+   -- "<" --
+   ---------
+
+   function "<" (Left, Right : Entity_Access) return Boolean is
+   begin
+      --  Since file comparison is very expensive, it has to be tried first.
+
+      return Left.It < Right.It
+        or else (Left.It = Right.It
+          and then Left.File < Right.File);
+   end "<";
+
+   ---------
+   -- "=" --
+   ---------
+
+   function "=" (Left, Right : Entity_Access) return Boolean is
+   begin
+      --  Since file comparison is very expensive, it has to be tried first.
+
+      return Left.It = Right.It and then Left.File = Right.File;
+   end "=";
+
+   ----------------------
+   -- To_Entity_Access --
+   ----------------------
+
+   function To_Entity_Access
+     (Entity : Entity_Persistent_Access) return Entity_Access is
+   begin
+      if not Exists (Entity) then
+         return Null_Entity_Access;
+      else
+         return To_Entity_Access
+           (Entity.File,
+            (Get_Tree (Entity.File).Contents (Entity.Index)'Access,
+             Entity.Index));
+      end if;
+   end To_Entity_Access;
+
+   ---------
+   -- "<" --
+   ---------
+
+   function "<" (Left, Right : Entity_Persistent_Access) return Boolean is
+   begin
+      if Left = null then
+         return False;
+      elsif Right = null then
+         return True;
+      else
+         return Left.all'Address < Right.all'Address;
+      end if;
+   end "<";
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (This : in out Entity_Persistent_Array_Access) is
+      procedure Internal is new Standard.Ada.Unchecked_Deallocation
+        (Entity_Persistent_Array, Entity_Persistent_Array_Access);
+   begin
+      Internal (This);
+   end Free;
+
+   ---------------------------------
+   -- To_Entity_Persistent_Access --
+   ---------------------------------
+
+   function To_Entity_Persistent_Access
+     (Entity : Entity_Access) return Entity_Persistent_Access
+   is
+      use Construct_Annotations_Pckg;
+
+      Db : Construct_Database_Access;
+
+      It          : constant Construct_Tree_Iterator :=
+        To_Construct_Tree_Iterator (Entity);
+      Annotations : access Annotation_Container;
+
+      Persistent_Annotation : Annotation (Other_Kind);
+   begin
+      if It = Null_Construct_Tree_Iterator then
+         return Null_Entity_Persistent_Access;
+      end if;
+
+      Db := Get_Database (Get_File (Entity));
+      Annotations := Get_Annotation_Container
+        (Get_Tree (Get_File (Entity)), It);
+
+      if Is_Set (Annotations.all, Db.Persistent_Entity_Key) then
+         Get_Annotation
+           (Annotations.all, Db.Persistent_Entity_Key, Persistent_Annotation);
+      else
+         Persistent_Annotation.Other_Val := new Entity_Persistent_Annotation'
+           (Info => new Entity_Persistent_Info'
+              (Exists => True,
+               File   => Get_File (Entity),
+               Index  => To_Construct_Tree_Iterator (Entity).Index,
+               Refs   => 0));
+
+         Set_Annotation
+           (Annotations.all, Db.Persistent_Entity_Key, Persistent_Annotation);
+      end if;
+
+      return Entity_Persistent_Annotation
+        (Persistent_Annotation.Other_Val.all).Info;
+   end To_Entity_Persistent_Access;
+
+   -------------------
+   -- Get_Construct --
+   -------------------
+
+   function Get_Construct
+     (Entity : Entity_Persistent_Access) return Simple_Construct_Information is
+   begin
+      return Get_Tree (Entity.File).
+        Contents (Natural (Entity.Index)).Construct;
+   end Get_Construct;
+
+   ---------
+   -- Ref --
+   ---------
+
+   procedure Ref (Entity : in out Entity_Persistent_Access) is
+   begin
+      if Entity /= Null_Entity_Persistent_Access then
+         Entity.Refs := Entity.Refs + 1;
+      end if;
+   end Ref;
+
+   -----------
+   -- Unref --
+   -----------
+
+   procedure Unref (Entity : in out Entity_Persistent_Access) is
+      procedure Free is new Standard.Ada.Unchecked_Deallocation
+        (Entity_Persistent_Info, Entity_Persistent_Access);
+   begin
+      if Entity /= Null_Entity_Persistent_Access then
+         Entity.Refs := Entity.Refs - 1;
+
+         if Entity.Refs = 0 and then not Entity.Exists then
+            Free (Entity);
          end if;
 
-         Current := Current.Parent_File;
-      end loop;
+         Entity := Null_Entity_Persistent_Access;
+      end if;
+   end Unref;
 
-      return False;
-   end Is_In_Parents;
+   -------------
+   -- Is_Null --
+   -------------
+
+   function Exists (Entity : Entity_Persistent_Access) return Boolean is
+   begin
+      return Entity /= null and then Entity.Exists;
+   end Exists;
+
+   --------------
+   -- Get_File --
+   --------------
+
+   function Get_File
+     (Entity : Entity_Persistent_Access) return Structured_File_Access is
+   begin
+      return Entity.File;
+   end Get_File;
+
+   ------------------------
+   -- Register_Assistant --
+   ------------------------
+
+   procedure Register_Assistant
+     (Db        : Construct_Database_Access;
+      Name      : String;
+      Assistant : Database_Assistant_Access)
+   is
+   begin
+      Insert (Db.Assistants, Name, Assistant);
+      Append (Db.Ordered_Assistants, Assistant);
+   end Register_Assistant;
+
+   -------------------
+   -- Get_Assistant --
+   -------------------
+
+   function Get_Assistant
+     (Db : Construct_Database_Access; Name : String)
+      return Database_Assistant_Access
+   is
+   begin
+      return Element (Db.Assistants, Name);
+   end Get_Assistant;
+
+   ------------------
+   -- Get_Database --
+   ------------------
+
+   function Get_Database
+     (File : Structured_File_Access) return Construct_Database_Access is
+   begin
+      return Construct_Database_Access (File.Db);
+   end Get_Database;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free
+     (Obj : in out Entity_Persistent_Annotation)
+   is
+      procedure Internal is new Standard.Ada.Unchecked_Deallocation
+        (Entity_Persistent_Info, Entity_Persistent_Access);
+   begin
+      Obj.Info.Exists := False;
+
+      if Obj.Info.Refs = 0 then
+         Internal (Obj.Info);
+      end if;
+   end Free;
+
+   --------------------
+   -- Get_Identifier --
+   --------------------
+
+   function Get_Identifier
+     (Manager : access Construct_Database; Name : String)
+      return Distinct_Identifier
+   is
+   begin
+      return Distinct_Identifier
+        (Get_Name_Index (Manager.Entities_Db'Access, Name));
+   end Get_Identifier;
+
+   --------------------
+   -- Get_Identifier --
+   --------------------
+
+   function Get_Identifier
+     (Entity : Entity_Access) return Distinct_Identifier
+   is
+   begin
+      return Entity.It.Node.Id;
+   end Get_Identifier;
 
 end Language.Tree.Database;

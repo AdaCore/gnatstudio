@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2006                      --
---                              AdaCore                              --
+--                  Copyright (C) 2000-2007, AdaCore                 --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -155,7 +154,7 @@ package body Language.Unknown is
    is
       pragma Unreferenced (Lang, Buffer);
    begin
-      Result := (null, null, null);
+      Result := (null, null, null, 0);
    end Parse_Constructs;
 
    --------------------

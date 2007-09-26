@@ -26,6 +26,9 @@ with Basic_Types;    use Basic_Types;
 with String_Utils;   use String_Utils;
 with VFS;            use VFS;
 
+with Ada_Semantic_Tree.Parts; use Ada_Semantic_Tree.Parts;
+with Language.Tree.Ada;       use Language.Tree.Ada;
+
 package body Codefix.Text_Manager is
 
    ------------------
@@ -261,9 +264,8 @@ package body Codefix.Text_Manager is
      (This : Text_Navigator_Abstr;
       File : in out Text_Interface'Class)
    is
-      pragma Unreferenced (This, File);
    begin
-      null;
+      File.Construct_Db := This.Construct_Db;
    end Initialize;
 
    ------------------
@@ -490,11 +492,9 @@ package body Codefix.Text_Manager is
       Unit_Info := Get_Iterator_At (Current_Text, Cursor);
 
       if Get_Construct (Unit_Info).Is_Declaration then
-
-         Body_Info := To_Construct_Tree_Iterator (Get_First_Body
-           (Get_Tree (Current_Text, Cursor),
-            Get_Ada_Tree (Current_Text, Cursor),
-            Unit_Info));
+         Body_Info := To_Construct_Tree_Iterator (Get_Second_Occurence
+           (To_Entity_Access
+              (Get_Structured_File (Current_Text, Cursor), Unit_Info)));
 
          for J in Get_Construct (Body_Info).Sloc_Start.Line
            .. Get_Construct (Body_Info).Sloc_End.Line
@@ -656,10 +656,9 @@ package body Codefix.Text_Manager is
       Unit_Info := Get_Iterator_At (Current_Text, Cursor);
 
       if Get_Construct (Unit_Info).Is_Declaration then
-         Body_Info := To_Construct_Tree_Iterator (Get_First_Body
-           (Get_Tree (Current_Text, Cursor),
-            Get_Ada_Tree (Current_Text, Cursor),
-            Unit_Info));
+         Body_Info := To_Construct_Tree_Iterator (Get_Second_Occurence
+           (To_Entity_Access
+              (Get_Structured_File (Current_Text, Cursor), Unit_Info)));
       else
          Body_Info := Null_Construct_Tree_Iterator;
       end if;
@@ -787,23 +786,12 @@ package body Codefix.Text_Manager is
    -- Get_Tree --
    --------------
 
-   function Get_Tree
+   function Get_Structured_File
      (This : Text_Navigator_Abstr'Class; Cursor : File_Cursor'Class)
-      return Construct_Tree is
+      return Structured_File_Access is
    begin
-      return Get_Tree (Get_File (This, Get_File (Cursor)));
-   end Get_Tree;
-
-   ------------------
-   -- Get_Ada_Tree --
-   ------------------
-
-   function Get_Ada_Tree
-     (This : Text_Navigator_Abstr'Class; Cursor : File_Cursor'Class)
-      return Ada_Construct_Tree is
-   begin
-      return Get_Ada_Tree (Get_File (This, Get_File (Cursor)));
-   end Get_Ada_Tree;
+      return Get_Structured_File (Get_File (This, Get_File (Cursor)));
+   end Get_Structured_File;
 
    --------------------
    -- Parse_Entities --
@@ -832,8 +820,6 @@ package body Codefix.Text_Manager is
       Free (This.Structure.all);
       Free (This.Structure);
       Free (This.Structure_Up_To_Date);
-      Free (This.Tree, This.Ada_Tree);
-      Free (This.Tree);
    end Free;
 
    ----------
@@ -864,7 +850,7 @@ package body Codefix.Text_Manager is
       It          : Construct_Tree_Iterator;
    begin
       It := Get_Iterator_At
-        (Get_Tree (Current_Text),
+        (Get_Tree (Get_Structured_File (Current_Text)),
          (Absolute_Offset => False,
           Line            => Get_Line (Cursor),
           Line_Offset     =>
@@ -1103,7 +1089,8 @@ package body Codefix.Text_Manager is
 
       declare
          It_Id : constant Composite_Identifier :=
-           To_Composite_Identifier (Get_Full_Name (Get_Tree (This), It));
+           To_Composite_Identifier
+             (Get_Full_Name (Get_Tree (Get_Structured_File (This)), It));
       begin
          if Length (It_Id) = 1 then
             return "";
@@ -1301,25 +1288,13 @@ package body Codefix.Text_Manager is
    -- Get_Tree --
    --------------
 
-   function Get_Tree
-     (This : access Text_Interface'Class) return Construct_Tree is
+   function Get_Structured_File
+     (This : access Text_Interface'Class) return Structured_File_Access is
    begin
       Update_Structure_If_Needed (This);
 
-      return This.Tree;
-   end Get_Tree;
-
-   ------------------
-   -- Get_Ada_Tree --
-   ------------------
-
-   function Get_Ada_Tree
-     (This : access Text_Interface'Class) return Ada_Construct_Tree is
-   begin
-      Update_Structure_If_Needed (This);
-
-      return This.Ada_Tree;
-   end Get_Ada_Tree;
+      return This.Construct_File;
+   end Get_Structured_File;
 
    --------------------------------
    -- Update_Structure_If_Needed --
@@ -1328,8 +1303,6 @@ package body Codefix.Text_Manager is
    procedure Update_Structure_If_Needed (This : access Text_Interface'Class) is
    begin
       if not This.Structure_Up_To_Date.all then
-         Free (This.Tree, This.Ada_Tree);
-         Free (This.Tree);
          Free (This.Structure);
          Free (This.Buffer);
 
@@ -1343,13 +1316,13 @@ package body Codefix.Text_Manager is
             Format           => False,
             Constructs       => This.Structure);
 
-         This.Tree := To_Construct_Tree (This.Structure, False);
-
-         This.Ada_Tree := Generate_Ada_Construct_Tree
-           (This.Tree, This.Buffer);
+         --  ??? Should be language independent
+         This.Construct_File := Get_Or_Create
+           (This.Construct_Db,
+            This.File_Name,
+            Ada_Tree_Lang);
 
          This.Structure_Up_To_Date.all := True;
-
       end if;
    end Update_Structure_If_Needed;
 
@@ -4240,6 +4213,29 @@ package body Codefix.Text_Manager is
    begin
       return Text.Registry;
    end Get_Registry;
+
+   ----------------------------
+   -- Set_Construct_Database --
+   ----------------------------
+
+   procedure Set_Construct_Database
+     (Text : in out Text_Navigator_Abstr;
+      Db   : Construct_Database_Access)
+   is
+   begin
+      Text.Construct_Db := Db;
+   end Set_Construct_Database;
+
+   ----------------------------
+   -- Get_Construct_Database --
+   ----------------------------
+
+   function Get_Construct_Database
+     (Text : Text_Navigator_Abstr) return Construct_Database_Access
+   is
+   begin
+      return Text.Construct_Db;
+   end Get_Construct_Database;
 
    --------------
    -- Get_Line --

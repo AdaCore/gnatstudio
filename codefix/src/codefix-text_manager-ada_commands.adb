@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2006                      --
---                              AdaCore                              --
+--                  Copyright (C) 2002-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -310,7 +309,7 @@ package body Codefix.Text_Manager.Ada_Commands is
             It : constant Construct_Tree_Iterator := Get_Iterator_At
               (Current_Text, Word, Position, (1 => Category));
          begin
-            Pkg_Info := Get_Construct (It);
+            Pkg_Info := Get_Construct (It).all;
          end;
       end if;
 
@@ -1044,7 +1043,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Source_Position : File_Cursor'Class) return String
    is
       Tree : constant Construct_Tree :=
-        Get_Tree (Current_Text, Source_Position);
+        Get_Tree (Get_Structured_File (Current_Text, Source_Position));
       It   : Construct_Tree_Iterator :=
         Get_Iterator_At (Current_Text, Source_Position, After);
    begin

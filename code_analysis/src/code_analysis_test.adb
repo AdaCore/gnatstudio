@@ -397,6 +397,8 @@ begin
       return;
    end if;
 
+   Language.Tree.Database.Initialize (Database.all, new File_Buffer_Provider);
+
    if Argument (Arg_Count) = "build_display_destroy" then
       Build_Display_Destroy (Projects, Database, Argument (1), Argument (2));
    elsif Argument (Arg_Count) = "benchmark" then

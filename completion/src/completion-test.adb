@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006-2007                    --
---                              AdaCore                              --
+--                  Copyright (C) 2006-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -27,7 +26,6 @@ with Ada.Directories;               use Ada.Directories;
 with GNAT.OS_Lib;
 
 with Completion.Ada;                  use Completion.Ada;
-with Completion.Expression_Parser;    use Completion.Expression_Parser;
 with Completion.History;              use Completion.History;
 
 with Completion.Ada.Constructs_Extractor;
@@ -38,6 +36,9 @@ with String_Utils;           use String_Utils;
 with Language.Tree;          use Language.Tree;
 with Language.Tree.Ada;      use Language.Tree.Ada;
 with Language.Tree.Database; use Language.Tree.Database;
+with Ada_Semantic_Tree.Expression_Parser;
+use Ada_Semantic_Tree.Expression_Parser;
+with Ada_Semantic_Tree.Assistants; use Ada_Semantic_Tree.Assistants;
 with Projects;               use Projects;
 with Projects.Registry;      use Projects.Registry;
 with Entities;               use Entities;
@@ -216,7 +217,7 @@ procedure Completion.Test is
    ----------------
 
    procedure Parse_File (File : Virtual_File) is
-      Result      : Token_List.List;
+      Result      : Parsed_Expression;
 
       Buffer : constant String_Access := String_Access (Read_File (File));
 
@@ -240,16 +241,13 @@ procedure Completion.Test is
             when Tok_Identifier =>
                Put (" ");
                Put (Buffer
-                    (Token.Token_Name_First ..  Token.Token_Name_Last));
-            when Tok_List_Item =>
-               if Token.Token_Name_First /= 0 then
-                  Put (" ");
-                  Put (Buffer
-                       (Token.Token_Name_First ..  Token.Token_Name_Last));
-               end if;
+                    (Token.Token_First ..  Token.Token_Last));
             when Tok_Expression =>
-               Put (" ");
-               Put (Natural'Image (Token.Number_Of_Parameters));
+               Put (" (");
+               Put (Natural'Image (Token.Token_First));
+               Put (",");
+               Put (Natural'Image (Token.Token_Last));
+               Put (")");
             when others =>
                null;
          end case;
@@ -258,8 +256,10 @@ procedure Completion.Test is
       end Display;
 
    begin
-      Result := Parse_Current_List (Buffer.all, Buffer'Last);
-      Display (Result);
+      Result := Parse_Current_List
+        (Ada_Semantic_Tree.Expression_Parser.UTF8_String_Access
+           (Buffer), Buffer'Last);
+      Display (Result.Tokens);
    end Parse_File;
 
    ---------------------------------
@@ -267,7 +267,7 @@ procedure Completion.Test is
    ---------------------------------
 
    New_Registry : aliased Project_Registry;
-   Construct_Db : constant Construct_Database_Access := new Construct_Database;
+   Construct_Db : Construct_Database_Access := new Construct_Database;
    Db           : Entities_Database;
    pragma Unreferenced (Db);
 
@@ -287,9 +287,11 @@ procedure Completion.Test is
       Current_File : Structured_File_Access;
 
    begin
-      if Project /= "" then
-         Projects.Registry.Initialize;
+      Initialize (Construct_Db.all, new File_Buffer_Provider);
 
+      Ada_Semantic_Tree.Assistants.Register_Ada_Assistants (Construct_Db);
+
+      if Project /= "" then
          Db := Create (New_Registry'Unchecked_Access);
 
          Load
@@ -362,14 +364,10 @@ procedure Completion.Test is
 
          Start_Date := Clock;
 
-         Get_Possibilities
-           (Resolver   => Resolver,
-            Identifier => Buffer (Start_Word .. End_Word),
-            Is_Partial => True,
-            Context    => Create_Context (Manager, Buffer, End_Word),
-            Offset     => Start_Word - 1,
-            Filter     => All_Visible_Entities,
-            Result     => Result);
+         Result := Get_Initial_Completion_List
+           (Manager => Manager,
+            Context =>
+              Create_Context (Manager, File, Buffer, End_Word));
 
          Time_Passed := Clock - Start_Date;
 
@@ -419,8 +417,8 @@ procedure Completion.Test is
          Start_Date := Clock;
 
          Result := Get_Initial_Completion_List
-           (Manager      => Manager.all,
-            Context      => Create_Context (Manager, Buffer, End_Word));
+           (Manager => Manager,
+            Context => Create_Context (Manager, File, Buffer, End_Word));
 
          Time_Passed := Clock - Start_Date;
 
@@ -466,14 +464,11 @@ procedure Completion.Test is
 
          Start_Date := Clock;
 
-         Get_Possibilities
-           (Resolver   => Resolver,
-            Identifier => Buffer (Start_Word .. End_Word),
-            Is_Partial => True,
-            Context    => Create_Context (Manager, Buffer, End_Word),
-            Offset     => End_Word,
-            Filter     => All_Visible_Entities,
-            Result     => Result);
+         Get_Completion_Root
+           (Resolver => Resolver,
+            Offset   => End_Word,
+            Context  => Create_Context (Manager, File, Buffer, End_Word),
+            Result   => Result);
 
          Time_Passed := Clock - Start_Date;
 
@@ -547,8 +542,8 @@ procedure Completion.Test is
          Start_Date := Clock;
 
          Result := Get_Initial_Completion_List
-           (Manager      => Manager.all,
-            Context      => Create_Context (Manager, Buffer, End_Word));
+           (Manager => Manager,
+            Context => Create_Context (Manager, File, Buffer, End_Word));
 
          Time_Passed := Clock - Start_Date;
 
@@ -571,7 +566,9 @@ procedure Completion.Test is
                   Next (Iter);
                end loop;
 
-               Prepend_Proposal (History_Resolver, Get_Proposal (Iter));
+               if Get_Proposal (Iter) in Storable_Proposal'Class then
+                  Prepend_Proposal (History_Resolver, Get_Proposal (Iter));
+               end if;
             end;
          end if;
       end loop;
@@ -584,6 +581,8 @@ begin
       Put_Line ("Usage : <command> <file_name> <mode>");
       return;
    end if;
+
+   Projects.Registry.Initialize;
 
    Given_File := Create_From_Base
      (Current_Directory & GNAT.OS_Lib.Directory_Separator & Argument (1));
@@ -620,6 +619,9 @@ begin
    end if;
 
    Flush;
+
+   Free (Construct_Db);
+   Projects.Registry.Finalize;
 
 exception
    when E : others =>

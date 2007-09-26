@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006-2007                      --
---                             AdaCore                               --
+--                  Copyright (C) 2006-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,18 +17,16 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Language; use Language;
-
-with GNAT.Strings; use GNAT.Strings;
+with Annotations;
 
 package Language.Tree is
 
    type Relative_Position is (Before, After, Specified, Enclosing);
 
-   type General_Order is (Greater_Than, Lower_Than, Equals, Equivalent);
-
    function Contains (Scope, Item : Construct_Access) return Boolean;
    --  Returns true if Item is contained by Scope, false otherwise.
+
+   type Construct_Tree_Iterator is private;
 
    --------------------
    -- Construct_Tree --
@@ -39,8 +36,16 @@ package Language.Tree is
 
    Null_Construct_Tree : constant Construct_Tree;
 
+   package Tree_Annotations_Pckg is new Annotations;
+
+   package Construct_Annotations_Pckg is new Annotations;
+
    procedure Free (Tree : in out Construct_Tree);
-   --  Free the data associated to a construct tree.
+   --  Free the data associated to a construct tree. Annotation have to be
+   --  freed separately.
+
+   procedure Free_Annotations (Tree : in out Construct_Tree);
+   --  Free all the annotations associated to this construct tree.
 
    function To_Construct_Tree
      (List      : access Construct_List;
@@ -51,18 +56,31 @@ package Language.Tree is
    --  be freed at the end of the process.
 
    function To_Construct_Tree
-     (Buffer : String; Lang : access Language_Root'Class)
+     (Buffer : String;
+      Lang   : access Language_Root'Class)
       return Construct_Tree;
    --  Same as above
+
+   function Get_Annotation_Container
+     (Tree : Construct_Tree)
+      return access Tree_Annotations_Pckg.Annotation_Container;
+   --  Return the annotation container holding annotations for the given tree.
 
    -----------------------------
    -- Construct_Tree_Iterator --
    -----------------------------
 
-   type Construct_Tree_Iterator is private;
-   --  This type is used to iterate over a construct tree
-
    Null_Construct_Tree_Iterator : constant Construct_Tree_Iterator;
+
+   function "=" (Left, Right : Construct_Tree_Iterator) return Boolean;
+   function "<" (Left, Right : Construct_Tree_Iterator) return Boolean;
+   function ">" (Left, Right : Construct_Tree_Iterator) return Boolean;
+   function "<=" (Left, Right : Construct_Tree_Iterator) return Boolean;
+   function ">=" (Left, Right : Construct_Tree_Iterator) return Boolean;
+   --  Provided that the two constructs are coming from the same tree, these
+   --  function are doing positional comparaison between the iterators.
+   --  The result of these functions is unexpectable if the two iterators are
+   --  coming from different trees.
 
    function First (Tree : Construct_Tree) return Construct_Tree_Iterator;
    --  Return the first element of a construct tree, typically the first item
@@ -78,11 +96,18 @@ package Language.Tree is
    --  Return the parent scope of the given iterator, Null_Construct_Tree if
    --  none.
 
+   function Is_Parent_Scope
+     (Scope, It : Construct_Tree_Iterator) return Boolean;
+   --  Return true if Scope is the direct parent scope of It.
+
    function Get_Construct
-     (Iter : Construct_Tree_Iterator) return Simple_Construct_Information;
+     (Iter : Construct_Tree_Iterator)
+      return access Simple_Construct_Information;
    --  Return the construct pointed by the iterator given in parameter.
    --  The user should not free the fields of the returned
-   --  Simple_Construct_Information
+   --  Simple_Construct_Information.The lifetime of the returned
+   --  object is the one of the corresponding tree. For longer storage, the
+   --  construct and its fields should be copied.
 
    type Category_Array is array (Natural range <>) of Language_Category;
    Null_Category_Array : Category_Array (1 .. 0) := (others => Cat_Unknown);
@@ -186,15 +211,13 @@ package Language.Tree is
    --  true.
 
    function Encloses
-     (Tree              : Construct_Tree;
-      Scope             : Construct_Tree_Iterator;
+     (Scope             : Construct_Tree_Iterator;
       Line, Line_Offset : Positive)
       return Boolean;
    function Encloses
-     (Tree   : Construct_Tree;
-      Scope  : Construct_Tree_Iterator;
+     (Scope  : Construct_Tree_Iterator;
       Offset : Positive)
-      return Boolean;
+       return Boolean;
    --  Same as above, but doesn't need a "real" entity, only a location
 
    function Get_Full_Name
@@ -202,31 +225,15 @@ package Language.Tree is
    --  Return the name of the construct given in parameter, prefixed by all the
    --  relevant enclosing units.
 
-   ---------------------------
-   -- Construct_Cell_Access --
-   ---------------------------
+   function Get_Annotation_Container
+     (Tree : Construct_Tree; It : Construct_Tree_Iterator)
+      return access Construct_Annotations_Pckg.Annotation_Container;
+   --  Return the annotation container holding annotations for this iterator.
+   --  ??? Is the tree really needed here?
 
-   type Construct_Cell_Access is private;
-   --  This type is used to point to a particular node of a tree.
-
-   Null_Construct_Cell_Access : constant Construct_Cell_Access;
-
-   function To_Construct_Access
-     (Tree : Construct_Tree; Iterator : Construct_Tree_Iterator)
-      return Construct_Cell_Access;
-   --  Creates a construct access
-
-   function To_Construct_Tree_Iterator
-     (Construct : Construct_Cell_Access) return Construct_Tree_Iterator;
-   --  Returns the construct iterator store in this construct access
-
-   function Get_Tree (Construct : Construct_Cell_Access) return Construct_Tree;
-   --  Return the tree stored in this construct access
-
-   function Is_Same_Construct
-     (Left, Right : Construct_Cell_Access) return Boolean;
-   --  Return true if the two cell access points to the same construct, even
-   --  if they may not come from the exact same tree.
+   function Has_Same_Scope
+     (Left, Right : Construct_Tree_Iterator) return Boolean;
+   --  Return True if Left and Right are on the same scope.
 
    --------------------------
    -- Composite_Identifier --
@@ -276,15 +283,118 @@ package Language.Tree is
    --  Return an identifier bases on the slice of items specified in
    --  parameterers.
 
+   function Is_Prefix_Of
+     (Potential_Prefix, Full_Id : Composite_Identifier;
+      Case_Sensitive            : Boolean)
+      return Boolean;
+   --  Return true if Prefix is a prefix of Full_Path. This checks categories
+   --  & name.
+
+   function Equal
+     (Left, Right : Composite_Identifier; Case_Sensitive : Boolean)
+     return Boolean;
+   --  Return true if the two identifiers are equals, according to the case
+   --  sensitivity.
+
    type Construct_Tree_Iterator_Array is array (Natural range <>) of
      Construct_Tree_Iterator;
 
    Null_Construct_Tree_Iterator_Array : constant Construct_Tree_Iterator_Array;
 
    function Full_Construct_Path
-     (Cell : Construct_Cell_Access) return Construct_Tree_Iterator_Array;
+     (Tree         : Construct_Tree;
+      Construct_It : Construct_Tree_Iterator)
+      return Construct_Tree_Iterator_Array;
    --  Return an array containing all the parents of the construct cell given
    --  in parameter.
+
+   function Full_Construct_Path
+     (Tree : Construct_Tree;
+      Offset : Natural) return Construct_Tree_Iterator_Array;
+   --  Return an array containing all the parents around the offset given in
+
+   -----------------
+   -- Identifiers --
+   -----------------
+
+   type Distinct_Identifier is access all String;
+   --  A distinct identifier is publicly implemented as a access string. The
+   --  identifier manager is responsible for ensuring that for a given string,
+   --  only one access value is possible, taking into account. For example,
+   --  two distinct names "Bla" and "BLA", if the language is case insensitive,
+   --  should both be associated to a single string on the heap holding, e.g.
+   --  "bla".
+
+   Null_Distinct_Identifier : constant Distinct_Identifier := new String'("");
+
+   --  ??? This could be an Ada 2005 interface
+   type Identifier_Manager is abstract tagged null record;
+   --  This manager is responsible for carrying unique values for identifiers.
+   --  See the declaration of Distinct_Identifier for more details.
+
+   function Get_Identifier
+     (Manager : access Identifier_Manager; Name : String)
+      return Distinct_Identifier is abstract;
+   --  Return the unique identifier corresponding to this string.
+
+   type Referenced_Identifiers_List is private;
+   --  This is a list of referenced datas.
+
+   Null_Referenced_Identifiers_List : constant Referenced_Identifiers_List;
+
+   function "=" (Left, Right : Referenced_Identifiers_List) return Boolean;
+   --  Return true if all the elements of the two lists are the same, and if
+   --  the two lists contains the same number of elements, false otherwise.
+
+   function "="
+     (Left : Referenced_Identifiers_List; Right : Distinct_Identifier)
+      return Boolean;
+   --  Return true if Left contains only one element, equals to Right.
+
+   function "="
+     (Left : Distinct_Identifier; Right : Referenced_Identifiers_List)
+      return Boolean;
+   --  Return true if Right contains only one element, equals to Left.
+
+   function Get_Identifier
+     (It : Construct_Tree_Iterator) return Distinct_Identifier;
+   --  Return the identifier stored at this iterator location.
+
+   function Get_Referenced_Identifiers
+     (It : Construct_Tree_Iterator) return Referenced_Identifiers_List;
+   --  Return the referenced data list pointed by this iterator.
+
+   function Get_Next_Referenced_Identifiers
+     (Ref : Referenced_Identifiers_List) return Referenced_Identifiers_List;
+   --  Return the list of referenced identifiers starting at the next element
+   --  of the one given in parameter.
+
+   function Get_Identifier
+     (Ref : Referenced_Identifiers_List) return Distinct_Identifier;
+   --  Return the first distinct identifier of the list.
+
+   procedure Analyze_Constructs_Identifiers
+     (Manager : access Identifier_Manager'Class;
+      Tree    : Construct_Tree);
+   --  Initialize the indentifier information of the contents of the tree.
+   --  Get_Identifier needs to have this function called before.
+
+   procedure Analyze_Referenced_Identifiers
+     (Buffer  : String;
+      Lang    : access Language_Root'Class;
+      Manager : access Identifier_Manager'Class;
+      Tree    : Construct_Tree);
+   --  Initialize the referenced indentifier information of the contents of the
+   --  tree. Get_Referenced_Identifiers needs to have this function called
+   --  before.
+
+   function Match
+     (Seeked_Name, Tested_Name : Distinct_Identifier;
+      Seeked_Is_Partial : Boolean)
+      return Boolean;
+   --  If Seeked_Is_Partial is false, return true if Seeked_Name equals
+   --  Tested_Name. Otherwise, return true if Seeked_Name is a prefix of
+   --  Tested_Name
 
    -------------------
    -- Tree_Language --
@@ -300,59 +410,12 @@ package Language.Tree is
      (Tree : access Tree_Language) return Language_Access is abstract;
    --  Return the language associated to this tree.
 
-   type Get_Parent_Tree_Result is (Left, Right, None);
-
-   function Get_Parent_Tree
-     (Lang       : access Tree_Language;
-      Left_Tree  : Construct_Tree;
-      Right_Tree : Construct_Tree)
-      return Get_Parent_Tree_Result;
-   --  Return Left if Left if the parent of Right, Right if it's the parent
-   --  of Left, None if no parent relationship can be estalished. Default
-   --  implementation always returns None.
-
-   function Get_Public_Tree
-     (Lang      : access Tree_Language;
-      Full_Tree : access Construct_Tree;
-      Free_Tree : Boolean) return Construct_Tree;
-   --  Return a tree containing only the public information of the tree given
-   --  in parameter. If Free_Tree is True, then Full_Tree will be freed at
-   --  the end of the process. By default, the same tree is returned.
-
-   function Get_Unit_Construct
-     (Lang : access Tree_Language;
-      Tree : Construct_Tree) return Construct_Tree_Iterator;
-   --  Return the construct representing the unit of the file, if such a
-   --  notion exists in the target language. Otherwise, return
-   --  Null_Construct_Tree_Iterator. Default implementation returns
-   --  Null_Construct_Iterator.
-
-   function Get_Unit_Name
-     (Lang : access Tree_Language;
-      Tree : Construct_Tree) return Composite_Identifier;
-   --  Return the identifier representing the unit of the file, if such a
-   --  notion exists in the target language. Default implementation returns
-   --  an empty name.
-
    function Get_Name_Index
      (Lang      : access Tree_Language;
       Construct : Simple_Construct_Information) return String;
    --  Return the name that should be used to index the given construct. Takes
    --  care of e.g. case handling. Default implementation return the actual
    --  construct name.
-
-   function Compare_Entities
-     (Lang                      : access Tree_Language;
-      Left_Iter, Right_Iter     : Construct_Tree_Iterator;
-      Left_Tree, Right_Tree     : Construct_Tree;
-      Left_Buffer, Right_Buffer : String_Access) return General_Order;
-   --  Return a the order relationship between the two cell. The definition of
-   --  order is language dependant, and can be based on the name, categories
-   --  or structure of the two cells. This function is aimed to be used
-   --  efficiently by generic sort procedures. If two entities are
-   --  "equivalent", they both refer to differents views of the same entity.
-   --  Default implementation compares computed full names of the two
-   --  iterators.
 
    function Get_Documentation
      (Lang   : access Tree_Language;
@@ -364,6 +427,21 @@ package Language.Tree is
    --  documentation from generic knowledge on the constructs.
    --  Language-specific computation may give more accurate information.
 
+   type Diff_Kind is (Removed, Added, Preserved);
+
+   type Diff_Callback is access procedure
+     (Old_Obj, New_Obj : Construct_Tree_Iterator; Kind : Diff_Kind);
+
+   procedure Diff
+     (Lang               : access Tree_Language;
+      Old_Tree, New_Tree : Construct_Tree;
+      Callback           : Diff_Callback);
+   --  Calls the callback on each construct, showing if it's an added, modified
+   --  or unmodified construct. The default implementation calls remove on all
+   --  the contents of the old tree, and add to all the contents of the new
+   --  tree. The implementer may use the referenced data stored in the
+   --  constructs nodes.
+
    type Unknown_Tree_Language is new Tree_Language with private;
 
    function Get_Language
@@ -374,47 +452,70 @@ package Language.Tree is
 
 private
 
+   type Referenced_Identifiers_List_Record;
+
+   type Access_Referenced_List is access all
+     Referenced_Identifiers_List_Record;
+
+   type Referenced_Identifiers_List is record
+      Contents : Access_Referenced_List;
+   end record;
+
+   Null_Referenced_Identifiers_List : constant Referenced_Identifiers_List :=
+     (Contents => null);
+
+   type Referenced_Identifiers_List_Record is record
+      Element : Distinct_Identifier;
+      Next    : Referenced_Identifiers_List;
+   end record;
+
    type Construct_Tree_Node is record
-      Construct              : Simple_Construct_Information;
+      Construct              : aliased Simple_Construct_Information;
       Sub_Nodes_Length       : Natural := 0;
       Previous_Sibling_Index : Natural := 0;
       Parent_Index           : Natural := 0;
+      Annotations            : aliased
+        Construct_Annotations_Pckg.Annotation_Container;
+      Id                     : Distinct_Identifier;
+      Referenced_Ids         : Referenced_Identifiers_List;
    end record;
 
-   type Node_Array is array (Natural range <>) of Construct_Tree_Node;
+   type Node_Array is array (Natural range <>) of aliased Construct_Tree_Node;
 
    type Construct_Tree_Record (Length : Natural) is record
-      Contents : Node_Array (1 .. Length);
+      Contents     : Node_Array (1 .. Length);
 
-      Unit_Index : Integer := -1;
-      Unit_Name : Composite_Identifier_Access := null;
-      --  These two fields may be set by the implementations of
-      --  Get_Unit_Construct.
+      Annotations : aliased Tree_Annotations_Pckg.Annotation_Container;
    end record;
 
    type Construct_Tree is access all Construct_Tree_Record;
 
+   Null_Construct_Tree_Node : aliased Construct_Tree_Node :=
+     (Null_Simple_Construct_Info, 0, 0, 0,
+      Construct_Annotations_Pckg.Null_Annotation_Container, null,
+      (Contents => null));
+
    type Construct_Tree_Iterator is record
-      Node  : Construct_Tree_Node;
-      Index : Natural;
+      Node  : access Construct_Tree_Node := Null_Construct_Tree_Node'Access;
+      Index : Natural := 0;
    end record;
 
-   Null_Construct_Tree_Node : constant Construct_Tree_Node :=
-     (Null_Simple_Construct_Info, 0, 0, 0);
+   type Construct_Index is new Natural;
 
    Null_Construct_Tree_Iterator : constant Construct_Tree_Iterator :=
-     (Null_Construct_Tree_Node, 0);
+     (Null_Construct_Tree_Node'Access, 0);
 
    Null_Construct_Tree : constant Construct_Tree := null;
 
    Null_Construct_Tree_Record : constant Construct_Tree_Record :=
      (0,
-      Contents    => (others => Null_Construct_Tree_Node),
-      Unit_Index  => -1,
-      Unit_Name   => null);
+      Contents     => (others => Null_Construct_Tree_Node),
+      Annotations  => Tree_Annotations_Pckg.Null_Annotation_Container);
 
    Null_Construct_Tree_Iterator_Array : constant Construct_Tree_Iterator_Array
      (1 .. 0) := (others => Null_Construct_Tree_Iterator);
+
+   Null_Construct_Index : constant Construct_Index := 0;
 
    type Construct_Cell_Access is record
       Tree  : Construct_Tree;

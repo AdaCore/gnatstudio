@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
---                              AdaCore                              --
+--                  Copyright (C) 2001-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -68,5 +67,6 @@ package Ada_Analyzer is
    Ada_Record_Attribute    : constant Construct_Att_Key := Last_Gen_Att + 15;
    Ada_Tagged_Attribute    : constant Construct_Att_Key := Last_Gen_Att + 16;
    Ada_Class_Attribute     : constant Construct_Att_Key := Last_Gen_Att + 17;
+   Ada_Renames_Attribute     : constant Construct_Att_Key := Last_Gen_Att + 18;
 
 end Ada_Analyzer;

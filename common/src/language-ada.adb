@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2006                      --
---                              AdaCore                              --
+--                     Copyright (C) 2000-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,6 +24,8 @@ with String_Utils;              use String_Utils;
 with Ada_Analyzer;              use Ada_Analyzer;
 
 package body Language.Ada is
+
+   use GNAT.Strings;
 
    Keywords_Regexp : aliased String :=
                    "a(b(ort|s(tract)?)|cce(pt|ss)|l(iased|l)|nd|rray|t)|b"
@@ -646,12 +647,6 @@ package body Language.Ada is
 
       Index_Begin : Natural;
    begin
-      if From_Index = 0 then
-         Index_Begin := Construct.Sloc_Entity.Index + Construct.Name'Length;
-      else
-         Index_Begin := From_Index;
-      end if;
-
       Success := False;
 
       if Construct.Category in Type_Category
@@ -659,10 +654,25 @@ package body Language.Ada is
         or else Construct.Category in Cat_Variable .. Cat_Field
         or else Construct.Category in Namespace_Category
       then
-         Parse_Entities
-           (Lang,
-            Buffer (Index_Begin .. Construct.Sloc_End.Index),
-            Callback => Token_Callback'Unrestricted_Access);
+         if From_Index = 0 then
+            if Construct.Name = null then
+               Index_Begin := Construct.Sloc_Start.Index;
+            else
+               Index_Begin :=
+                 Construct.Sloc_Entity.Index + Construct.Name'Length;
+            end if;
+         else
+            Index_Begin := From_Index;
+         end if;
+
+         if Index_Begin in Buffer'Range
+           and then Construct.Sloc_End.Index in Buffer'Range
+         then
+            Parse_Entities
+              (Lang,
+               Buffer (Index_Begin .. Construct.Sloc_End.Index),
+               Callback => Token_Callback'Unrestricted_Access);
+         end if;
       end if;
 
    end Get_Referenced_Entity;

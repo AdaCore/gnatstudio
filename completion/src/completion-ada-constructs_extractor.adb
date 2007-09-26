@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006-2007                      --
---                              AdaCore                              --
+--                  Copyright (C) 2006-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,15 +17,17 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Characters.Handling;    use Ada.Characters.Handling;
-with Ada.Unchecked_Deallocation; use Ada;
-
 with GNAT.Strings;
 
 with Glib.Unicode; use Glib.Unicode;
 
-with Language.Ada;           use Language.Ada;
-with Basic_Types;            use Basic_Types;
+with Ada_Semantic_Tree.Expression_Parser;
+use Ada_Semantic_Tree.Expression_Parser;
+with Language.Tree.Ada;               use Language.Tree.Ada;
+with Ada_Semantic_Tree.Visibility; use Ada_Semantic_Tree.Visibility;
+with Ada_Semantic_Tree.Dependency_Tree;
+use Ada_Semantic_Tree.Dependency_Tree;
+with Basic_Types;                use Basic_Types;
 
 package body Completion.Ada.Constructs_Extractor is
 
@@ -60,6 +61,73 @@ package body Completion.Ada.Constructs_Extractor is
       return Resolver_Acc;
    end New_Construct_Completion_Resolver;
 
+   -----------
+   -- Equal --
+   -----------
+
+   function Equal
+     (Left  : Stored_Construct_Completion_Proposal;
+      Right : Stored_Proposal'Class)
+      return Boolean
+   is
+   begin
+      return Right in Stored_Construct_Completion_Proposal'Class
+        and then
+      Stored_Construct_Completion_Proposal (Right).Persistent_Entity
+        = Left.Persistent_Entity;
+   end Equal;
+
+   --------------------------
+   -- From_Stored_Proposal --
+   --------------------------
+
+   function From_Stored_Proposal
+     (Manager : Completion_Manager_Access;
+      Stored  : Stored_Construct_Completion_Proposal;
+      Context : Completion_Context)
+      return Completion_Proposal_Access
+   is
+      pragma Unreferenced (Context);
+
+      Result : constant Completion_Proposal_Access :=
+        new Construct_Completion_Proposal;
+
+      Constr_Result : Construct_Completion_Proposal renames
+        Construct_Completion_Proposal (Result.all);
+
+      Entity : Entity_Access;
+   begin
+      if not Exists (Stored.Persistent_Entity) then
+         return null;
+      end if;
+
+      Entity := To_Entity_Access (Stored.Persistent_Entity);
+
+      Constr_Result.Tree_Node := To_Construct_Tree_Iterator (Entity);
+      Constr_Result.File := Get_File (Entity);
+      Constr_Result.Is_All := Stored.Is_All;
+      Constr_Result.Is_In_Call := Stored.Is_In_Call;
+      Constr_Result.Resolver := Get_Resolver (Manager, Resolver_ID);
+
+      if Constr_Result.Actual_Params /= null then
+         Constr_Result.Actual_Params :=
+           new Actual_Parameter_Resolver'(Stored.Actual_Params.all);
+      end if;
+
+      return Result;
+   end From_Stored_Proposal;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free
+     (Stored : in out Stored_Construct_Completion_Proposal)
+   is
+   begin
+      Unref (Stored.Persistent_Entity);
+   end Free;
+
    ----------------------
    -- To_Completion_Id --
    ----------------------
@@ -70,39 +138,55 @@ package body Completion.Ada.Constructs_Extractor is
       Id_Length : Integer := 0;
 
       It : Construct_Tree_Iterator := Proposal.Tree_Node;
+      Construct : access Simple_Construct_Information;
    begin
       while It /= Null_Construct_Tree_Iterator loop
-         if Get_Construct (It).Name /= null then
-            Id_Length := Id_Length + Get_Construct (It).Name'Length + 1;
+         Construct := Get_Construct (It);
+
+         if Construct.Name /= null then
+            Id_Length := Id_Length + Construct.Name'Length + 1;
          end if;
 
-         It := Get_Parent_Scope (Proposal.Tree, It);
+         It := Get_Parent_Scope (Get_Tree (Proposal.File), It);
       end loop;
 
+      if Proposal.Is_All then
+         Id_Length := Id_Length + 4;
+      end if;
+
       declare
-         Id : String (1 .. Id_Length);
-         Index : Integer := Id'Length;
+         Id        : String (1 .. Id_Length);
+         Index     : Integer := Id'Length;
       begin
          It := Proposal.Tree_Node;
 
          while It /= Null_Construct_Tree_Iterator loop
-            if Get_Construct (It).Name /= null then
-               Id (Index - (Get_Construct (It).Name'Length + 1 - 1)
+            Construct := Get_Construct (It);
+
+            if Construct.Name /= null then
+               Id (Index - (Construct.Name'Length + 1 - 1)
                    .. Index) :=
-                 Get_Construct (It).Name.all & ".";
-               Index := Index - (Get_Construct (It).Name'Length + 1);
+                 Construct.Name.all & ".";
+               Index := Index - (Construct.Name'Length + 1);
             end if;
 
-            It := Get_Parent_Scope (Proposal.Tree, It);
+            It := Get_Parent_Scope (Get_Tree (Proposal.File), It);
          end loop;
+
+         if Proposal.Is_All then
+            Id (Index - 3 .. Index) := "all.";
+            Index := Index - 4;
+         end if;
+
+         Construct := Get_Construct (Proposal.Tree_Node);
 
          return
            (Id'Length - 1,
             Resolver_ID,
             Id (1 .. Id'Length  - 1), --  -1 to Remove the last dot
             Get_File_Path (Proposal.File),
-            Get_Construct (Proposal.Tree_Node).Sloc_Start.Line,
-            Get_Construct (Proposal.Tree_Node).Sloc_Start.Column);
+            Construct.Sloc_Start.Line,
+            Construct.Sloc_Start.Column);
       end;
    end To_Completion_Id;
 
@@ -115,54 +199,52 @@ package body Completion.Ada.Constructs_Extractor is
    is
       Comma         : Boolean := False;
       Max_Size_Name : Integer := 0;
-      Nb_Params     : Integer := 0;
    begin
-      if Proposal.Is_In_Profile then
-         if Get_Construct (Proposal.Tree_Node).Category in Data_Category then
-            return Get_Label (Proposal) & " => ";
-         else
-            if Proposal.Profile.Parameters'Length > 0 then
-               for J in Proposal.Profile.Parameters'Range loop
-                  if not Proposal.Profile.Parameters (J).Is_Written then
-                     if Proposal.Profile.Parameters (J).Name'Length
-                       > Max_Size_Name
-                     then
-                        Max_Size_Name :=
-                          Proposal.Profile.Parameters (J).Name'Length;
-                     end if;
+      if Proposal.Is_In_Call then
+         return Get_Label (Proposal) & " => ";
+      elsif Proposal.Actual_Params /= null then
+         declare
+            Missing_Formals : constant Formal_Parameter_Array :=
+              Get_Missing_Formals (Proposal.Actual_Params.all);
+            Construct : access Simple_Construct_Information;
+         begin
+            if Missing_Formals'Length > 0 then
+               for J in Missing_Formals'Range loop
+                  Construct := Get_Construct (Missing_Formals (J));
 
-                     Nb_Params := Nb_Params + 1;
+                  if Construct.Name'Length > Max_Size_Name then
+                     Max_Size_Name := Construct.Name'Length;
                   end if;
                end loop;
 
                declare
                   Buffer : String
-                    (1 .. Nb_Params * (Max_Size_Name + 6) - 1) :=
+                    (1 .. Missing_Formals'Length
+                     * (Max_Size_Name + 6) - 1) :=
                     (others => ' ');
 
                   Index : Integer := 1;
                begin
-                  for J in Proposal.Profile.Parameters'Range loop
-                     if not Proposal.Profile.Parameters (J).Is_Written then
-                        if Comma then
-                           Buffer (Index .. Index + 1) := "," & ASCII.LF;
-                           Index := Index + 2;
-                        end if;
+                  for J in Missing_Formals'Range loop
+                     Construct := Get_Construct (Missing_Formals (J));
 
-                        Buffer
-                          (Index ..
-                             Index
-                           + Proposal.Profile.Parameters (J).Name'Length
-                           - 1) := Proposal.Profile.Parameters (J).Name.all;
-
-                        Index := Index + Max_Size_Name;
-
-                        Buffer (Index .. Index + 3) := " => ";
-
-                        Index := Index + 4;
-
-                        Comma := True;
+                     if Comma then
+                        Buffer (Index .. Index + 1) := "," & ASCII.LF;
+                        Index := Index + 2;
                      end if;
+
+                     Buffer
+                       (Index ..
+                          Index
+                        + Construct.Name'Length - 1) := Construct.Name.all;
+
+                     Index := Index + Max_Size_Name;
+
+                     Buffer (Index .. Index + 3) := " => ";
+
+                     Index := Index + 4;
+
+                     Comma := True;
                   end loop;
 
                   Buffer (Buffer'Last .. Buffer'Last) := ")";
@@ -170,9 +252,9 @@ package body Completion.Ada.Constructs_Extractor is
                   return Buffer;
                end;
             end if;
+         end;
 
-            return "";
-         end if;
+         return "";
       else
          return Get_Label (Proposal);
       end if;
@@ -183,27 +265,28 @@ package body Completion.Ada.Constructs_Extractor is
    ---------------
 
    function Get_Label
-     (Proposal : Construct_Completion_Proposal) return UTF8_String is
+     (Proposal : Construct_Completion_Proposal) return UTF8_String
+   is
+      Construct : constant access Simple_Construct_Information :=
+        Get_Construct (Proposal.Tree_Node);
    begin
-      if Proposal.Is_In_Profile and then
-        Get_Construct (Proposal.Tree_Node).Category not in Data_Category
-      then
-         return "params of " & Get_Construct (Proposal.Tree_Node).Name.all;
+      if Proposal.Actual_Params /= null then
+         return "params of " & Construct.Name.all;
       else
          if Proposal.Is_All then
             return "all";
-         elsif Get_Construct (Proposal.Tree_Node).Category = Cat_Package
-           or else Get_Construct (Proposal.Tree_Node).Category = Cat_Function
-           or else Get_Construct (Proposal.Tree_Node).Category = Cat_Procedure
+         elsif Construct.Category = Cat_Package
+           or else Construct.Category = Cat_Function
+           or else Construct.Category = Cat_Procedure
          then
             declare
                Id : constant Composite_Identifier := To_Composite_Identifier
-                 (Get_Construct (Proposal.Tree_Node).Name.all);
+                 (Construct.Name.all);
             begin
                return Get_Item (Id, Length (Id));
             end;
          else
-            return Get_Construct (Proposal.Tree_Node).Name.all;
+            return Construct.Name.all;
          end if;
       end if;
    end Get_Label;
@@ -218,27 +301,33 @@ package body Completion.Ada.Constructs_Extractor is
    is
       Max_Param_Length     : Glong := 0;
       Current_Param_Length : Glong := 0;
+      Construct            : constant access Simple_Construct_Information :=
+        Get_Construct (Proposal.Tree_Node);
    begin
-      if Proposal.Is_In_Profile and then
-        Get_Construct (Proposal.Tree_Node).Category not in Data_Category
+      if Proposal.Actual_Params /= null
+        and then Construct.Category not in Data_Category
       then
-         if Proposal.Profile.Parameters'Length > 0 then
-            for J in Proposal.Profile.Parameters'Range loop
-               if not Proposal.Profile.Parameters (J).Is_Written then
+         declare
+            Missing_Formals : constant Formal_Parameter_Array :=
+              Get_Missing_Formals (Proposal.Actual_Params.all);
+         begin
+            if Missing_Formals'Length > 0 then
+               for J in Missing_Formals'Range loop
                   Current_Param_Length :=
-                    UTF8_Strlen (Proposal.Profile.Parameters (J).Name.all);
+                    UTF8_Strlen
+                      (Get_Construct (Missing_Formals (J)).Name.all);
 
                   if Current_Param_Length > Max_Param_Length then
                      Max_Param_Length := Current_Param_Length;
                   end if;
-               end if;
-            end loop;
+               end loop;
 
-            return Basic_Types.Character_Offset_Type (Max_Param_Length) + 4;
-            --  4 is for the " => " string.
-         else
-            return 0;
-         end if;
+               return Basic_Types.Character_Offset_Type (Max_Param_Length) + 4;
+               --  4 is for the " => " string.
+            else
+               return 0;
+            end if;
+         end;
       else
          return Basic_Types.Character_Offset_Type
           (UTF8_Strlen
@@ -251,17 +340,19 @@ package body Completion.Ada.Constructs_Extractor is
    --------------
 
    function Get_Category
-     (Proposal : Construct_Completion_Proposal) return Language_Category is
+     (Proposal : Construct_Completion_Proposal) return Language_Category
+   is
+      Construct : constant access Simple_Construct_Information :=
+        Get_Construct (Proposal.Tree_Node);
    begin
       if Proposal.Is_All then
          return Cat_Literal;
-      elsif Proposal.Is_In_Profile
-        and then Get_Construct
-          (Proposal.Tree_Node).Category not in Data_Category
+      elsif Proposal.Actual_Params /= null
+        and then Construct.Category not in Data_Category
       then
          return Cat_Unknown;
       else
-         return Get_Construct (Proposal.Tree_Node).Category;
+         return Construct.Category;
       end if;
    end Get_Category;
 
@@ -288,8 +379,8 @@ package body Completion.Ada.Constructs_Extractor is
    begin
       return Get_Documentation
         (Ada_Tree_Lang,
-         Proposal.Buffer.all,
-         Proposal.Tree,
+         Get_Buffer (Proposal.File).all,
+         Get_Tree (Proposal.File),
          Proposal.Tree_Node);
    end Get_Documentation;
 
@@ -298,514 +389,15 @@ package body Completion.Ada.Constructs_Extractor is
    ------------------
 
    function Get_Location
-     (Proposal : Construct_Completion_Proposal) return File_Location is
+     (Proposal : Construct_Completion_Proposal) return File_Location
+   is
+      Construct : constant access Simple_Construct_Information :=
+        Get_Construct (Proposal.Tree_Node);
    begin
       return (Get_File_Path (Proposal.File),
-              Get_Construct (Proposal.Tree_Node).Sloc_Start.Line,
-              Basic_Types.Visible_Column_Type
-                (Get_Construct (Proposal.Tree_Node).Sloc_Start.Column));
+              Construct.Sloc_Start.Line,
+              Basic_Types.Visible_Column_Type (Construct.Sloc_Start.Column));
    end Get_Location;
-
-   --------------------
-   -- Get_Compositon --
-   --------------------
-
-   procedure Get_Composition
-     (Proposal   : Construct_Completion_Proposal;
-      Identifier : String;
-      Offset     : Positive;
-      Is_Partial : Boolean;
-      Result     : in out Completion_List)
-   is
-      Ada_Tree : Ada_Construct_Tree;
-
-      procedure Add_To_List
-        (List          : in out Extensive_List_Pckg.List;
-         Tree_Node     : Construct_Tree_Iterator;
-         Is_All        : Boolean := False;
-         File          : Structured_File_Access;
-         Tree          : Construct_Tree;
-         Buffer        : GNAT.Strings.String_Access;
-         Name          : String := "";
-         Is_In_Profile : Boolean := False;
-         Profile       : Profile_Manager_Access := null);
-
-      procedure Add_Children_Of
-        (Tree               : Construct_Tree;
-         Scope              : Construct_Tree_Iterator;
-         List               : in out Extensive_List_Pckg.List;
-         Private_Visibility : Boolean);
-      --  Add all the children of the scope given in parameter in the list.
-      --  Consider private elements if Private_Visibility is true.
-
-      procedure Handle_Referenced_Entity
-        (Proposal        : Construct_Completion_Proposal;
-         Cut_Access      : Boolean;
-         Cut_Subprograms : Boolean);
-      --  Adds the relevant content from the sub entity of the proposal. If
-      --  Cut_Access is true, then accesses won't be appened to the result.
-
-      procedure Add_To_List
-        (List          : in out Extensive_List_Pckg.List;
-         Tree_Node     : Construct_Tree_Iterator;
-         Is_All        : Boolean := False;
-         File          : Structured_File_Access;
-         Tree          : Construct_Tree;
-         Buffer        : GNAT.Strings.String_Access;
-         Name          : String := "";
-         Is_In_Profile : Boolean := False;
-         Profile       : Profile_Manager_Access := null)
-      is
-         P : Construct_Completion_Proposal :=
-           (Get_Resolver (Proposal),
-            Profile,
-            Tree_Node,
-            File,
-            Is_All,
-            0,
-            Tree,
-            Proposal.Filter,
-            Buffer,
-            Is_In_Profile);
-      begin
-         if P.Profile = null then
-            P.Profile := To_Profile_Manager (Tree, Tree_Node);
-         end if;
-
-         if Get_Construct (Tree_Node).Name /= null
-           and then
-             ((Name = "" and then Match (Identifier, Get_Id (P), Is_Partial))
-              or else Match (Identifier, Name, Is_Partial))
-         then
-            Append (List, P);
-         end if;
-      end Add_To_List;
-
-      ---------------------
-      -- Add_Children_Of --
-      ---------------------
-
-      procedure Add_Children_Of
-        (Tree               : Construct_Tree;
-         Scope              : Construct_Tree_Iterator;
-         List               : in out Extensive_List_Pckg.List;
-         Private_Visibility : Boolean)
-      is
-         Child_Iterator : Construct_Tree_Iterator :=
-           Next (Tree, Scope, Jump_Into);
-      begin
-         while Get_Parent_Scope (Tree, Child_Iterator) = Scope loop
-            if Private_Visibility
-              or else
-                Get_Construct (Child_Iterator).Visibility
-                = Visibility_Public
-            then
-               if (Proposal.Filter and All_Visible_Entities) /= 0
-                 or else Get_Construct
-                   (Child_Iterator).Category = Cat_Package
-               then
-                  Add_To_List
-                    (List,
-                     Child_Iterator,
-                     False,
-                     Proposal.File,
-                     Proposal.Tree,
-                     Proposal.Buffer);
-
-                  if Is_Enum_Type (Tree, Child_Iterator) then
-                     Add_Children_Of (Tree, Child_Iterator, List, True);
-                  end if;
-               end if;
-            end if;
-
-            Child_Iterator := Next (Tree, Child_Iterator, Jump_Over);
-         end loop;
-      end Add_Children_Of;
-
-      ------------------------------
-      -- Handle_Referenced_Entity --
-      ------------------------------
-
-      procedure Handle_Referenced_Entity
-        (Proposal        : Construct_Completion_Proposal;
-         Cut_Access      : Boolean;
-         Cut_Subprograms : Boolean)
-      is
-         Parent_Sloc_Start, Parent_Sloc_End : Source_Location;
-         Parent_Found                       : Boolean;
-      begin
-         Get_Referenced_Entity
-           (Ada_Lang,
-            Proposal.Buffer.all,
-            Get_Construct (Proposal.Tree_Node),
-            Parent_Sloc_Start,
-            Parent_Sloc_End,
-            Parent_Found);
-
-         if Parent_Found
-           and then not Is_Excluded
-             (Construct_Completion_Resolver (Proposal.Resolver.all)'Access,
-              (Proposal.Tree_Node, Proposal.Tree, Proposal.Buffer))
-         then
-            Push_Excluded_Construct
-              (Construct_Completion_Resolver (Proposal.Resolver.all)'Access,
-               (Proposal.Tree_Node, Proposal.Tree, Proposal.Buffer));
-
-            declare
-               Context : constant Completion_Context :=
-                 new Ada_Construct_Extractor_Context;
-               List : Completion_List;
-
-               It        : Completion_Iterator;
-               Construct : Simple_Construct_Information;
-
-               Completion_Proposal : Construct_Completion_Proposal;
-            begin
-               Context.Buffer := Proposal.Buffer;
-               Context.Offset := Parent_Sloc_End.Index;
-               Ada_Construct_Extractor_Context (Context.all).File :=
-                 Proposal.File;
-
-               Append (Get_Resolver (Proposal).Manager.Contexts, Context);
-
-               List := Get_Initial_Completion_List
-                 (Get_Resolver (Proposal).Manager.all,
-                  Context,
-                  False);
-
-               It := First (List);
-
-               while not At_End (It) loop
-                  if Get_Proposal (It)
-                  in Construct_Completion_Proposal'Class
-                  then
-                     Completion_Proposal := Construct_Completion_Proposal
-                       (Get_Proposal (It));
-                     Completion_Proposal.Params_In_Expression :=
-                       Proposal.Params_In_Expression;
-
-                     if not Is_Excluded
-                       (Construct_Completion_Resolver
-                          (Completion_Proposal.Resolver.all)'Access,
-                        (Completion_Proposal.Tree_Node,
-                         Completion_Proposal.Tree,
-                         Completion_Proposal.Buffer))
-                     then
-                        Construct := Get_Construct
-                          (Construct_Completion_Proposal
-                             (Get_Proposal (It)).Tree_Node);
-
-                        if (not Cut_Access
-                            or else not
-                              Construct.Attributes (Ada_Access_Attribute))
-                          and then
-                            (not Cut_Subprograms
-                             or else
-                               Construct.Category not in Subprogram_Category)
-                        then
-                           Get_Composition
-                             (Completion_Proposal,
-                              Identifier,
-                              1,
-                              Is_Partial,
-                              Result);
-                        end if;
-                     end if;
-                  else
-                     Get_Composition
-                       (Get_Proposal (It),
-                        Identifier,
-                        1,
-                        Is_Partial,
-                        Result);
-                  end if;
-
-                  Next (It);
-               end loop;
-
-               Free (List);
-            end;
-
-            Pop_Excluded_Construct
-              (Construct_Completion_Resolver (Proposal.Resolver.all)'Access);
-         end if;
-      end Handle_Referenced_Entity;
-
-      List : Extensive_List_Pckg.List;
-
-      Proposal_Is_All    : Boolean := False;
-   begin
-      --  If we are completing a parameter profile, then return all the
-      --  possible remaining parameters.
-
-      if Proposal.Profile /= null
-        and then Proposal.Profile.Is_In_Profile
-      then
-         declare
-            Param_List : Extensive_List_Pckg.List;
-
-            Param : Construct_Tree_Iterator := Next
-              (Proposal.Tree, Proposal.Tree_Node, Jump_Into);
-
-            Actual_Param_It : Integer := 1;
-         begin
-            --  This first object is the subprogam itself. It will be used to
-            --  add the full parameters list in one time.
-            Add_To_List
-              (Param_List,
-               Proposal.Tree_Node,
-               False,
-               Proposal.File,
-               Proposal.Tree,
-               Proposal.Buffer,
-               Is_In_Profile => True,
-               Profile => new Profile_Manager'(Proposal.Profile.all));
-
-            while Param /= Null_Construct_Tree_Iterator
-              and then Get_Parent_Scope (Proposal.Tree, Param)
-              = Proposal.Tree_Node
-              and then Get_Construct (Param).Category = Cat_Parameter
-            loop
-               if not
-                 Proposal.Profile.Parameters (Actual_Param_It).Is_Written
-               then
-                  Add_To_List
-                   (Param_List,
-                    Param,
-                    False,
-                    Proposal.File,
-                    Proposal.Tree,
-                    Proposal.Buffer,
-                    Is_In_Profile => True);
-               end if;
-
-               Param := Next (Proposal.Tree, Param, Jump_Over);
-               Actual_Param_It := Actual_Param_It + 1;
-            end loop;
-
-            Append (Result.List, To_Extensive_List (Param_List));
-
-            return;
-         end;
-      end if;
-
-      Ada_Tree := Generate_Ada_Construct_Tree
-        (Proposal.Tree, Proposal.Buffer);
-
-      case Get_Construct (Proposal.Tree_Node).Category is
-         when Cat_Variable | Cat_Local_Variable | Cat_Field | Cat_Parameter
-            | Cat_Class .. Cat_Subtype | Subprogram_Category =>
-
-            if Get_Construct (Proposal.Tree_Node).Category in
-              Subprogram_Category
-              and then Proposal.Params_In_Expression
-                > Get_Number_Of_Parameters (Proposal)
-            then
-               return;
-            end if;
-
-            if Get_Construct (Proposal.Tree_Node).
-              Attributes (Ada_Array_Attribute)
-              and then Proposal.Params_In_Expression < 1
-            then
-               --  We know that arrays have at least one dimension, so we don't
-               --  complete if none is given. We could do something a bit more
-               --  fancy at some point.
-
-               return;
-            end if;
-
-            if Get_Construct (Proposal.Tree_Node).
-              Attributes (Ada_Access_Attribute)
-              and then not Proposal.Is_All
-            then
-               declare
-                  All_List : Extensive_List_Pckg.List;
-               begin
-                  Add_To_List
-                    (All_List,
-                     Proposal.Tree_Node,
-                     True,
-                     Proposal.File,
-                     Proposal.Tree,
-                     Proposal.Buffer,
-                     "all");
-
-                  Append (Result.List, To_Extensive_List (All_List));
-                  --  We do that now because we want "all" to be displayed in
-                  --  front of other possibilities.
-
-                  Proposal_Is_All := True;
-               end;
-            end if;
-
-            Handle_Referenced_Entity
-              (Proposal,
-               Proposal_Is_All,
-               Get_Construct
-                 (Proposal.Tree_Node).Category in Subprogram_Category);
-
-            if Get_Construct (Proposal.Tree_Node).Category
-              in Cat_Class .. Cat_Subtype
-              and then not Is_Enum_Type (Proposal.Tree, Proposal.Tree_Node)
-            then
-               declare
-                  Child_Iterator : Construct_Tree_Iterator;
-                  Type_Iterator  : constant Construct_Tree_Iterator
-                    := Proposal.Tree_Node;
-               begin
-                  Child_Iterator := Next
-                    (Proposal.Tree, Type_Iterator, Jump_Into);
-
-                  while
-                    Get_Parent_Scope (Proposal.Tree, Child_Iterator)
-                    = Type_Iterator
-                  loop
-                     Add_To_List
-                       (List,
-                        Child_Iterator,
-                        False,
-                        Proposal.File,
-                        Proposal.Tree,
-                        Proposal.Buffer);
-
-                     Child_Iterator := Next
-                       (Proposal.Tree, Child_Iterator, Jump_Over);
-                  end loop;
-               end;
-            end if;
-
-            Append (Result.List, To_Extensive_List (List));
-
-         when Cat_Package =>
-            Handle_Referenced_Entity (Proposal, False, False);
-
-            declare
-               Spec_It         : Construct_Tree_Iterator;
-               Body_It         : Construct_Tree_Iterator;
-               Private_Spec_Visibility : Boolean;
-               Body_Visibility : Boolean;
-            begin
-               --  ??? Should we check that we are still in the same file ?
-               Spec_It := To_Construct_Tree_Iterator
-                 (Get_Spec (Proposal.Tree, Ada_Tree, Proposal.Tree_Node));
-               Body_It := To_Construct_Tree_Iterator
-                 (Get_First_Body
-                    (Proposal.Tree, Ada_Tree, Proposal.Tree_Node));
-
-               Body_Visibility :=
-                 Get_Construct (Body_It).Sloc_Start.Index <= Offset
-                 and then Get_Construct
-                   (Body_It).Sloc_End.Index >= Offset;
-
-               Private_Spec_Visibility :=
-                 Body_Visibility
-                 or else (Get_Construct (Spec_It).Sloc_Start.Index <= Offset
-                          and then Get_Construct
-                            (Spec_It).Sloc_End.Index >= Offset);
-
-               --  Add the entities from the specification
-
-               Add_Children_Of
-                 (Proposal.Tree, Spec_It, List, Private_Spec_Visibility);
-
-               --  If we have to add the entries in the body if needed
-
-               if Body_Visibility and then Body_It /= Spec_It then
-                  Add_Children_Of (Proposal.Tree, Body_It, List, True);
-               end if;
-
-               if Is_Same_Construct
-                 (To_Construct_Access
-                    (Get_Public_Tree (Proposal.File),
-                     Get_Unit_Construct
-                       (Ada_Tree_Lang, Get_Public_Tree (Proposal.File))),
-                  To_Construct_Access (Proposal.Tree, Proposal.Tree_Node))
-               then
-                  --  If we are completing a unit name, then look for its
-                  --  children
-
-                  declare
-                     use Language.Tree.Database.File_Set;
-
-                     C : Language.Tree.Database.File_Set.Cursor :=
-                       Start_File_Search
-                          (Construct_Completion_Resolver
-                             (Proposal.Resolver.all).Construct_Db.all);
-                  begin
-                     while C /= Language.Tree.Database.File_Set.No_Element loop
-                        if Get_Parent_File (Element (C)) = Proposal.File
-                          and then Get_Construct
-                            (Get_Unit_Construct
-                                 (Ada_Tree_Lang,
-                                  Get_Public_Tree (Element (C))))
-                          .Is_Declaration
-                        then
-                           Add_To_List
-                             (List,
-                              Get_Unit_Construct
-                                (Ada_Tree_Lang,
-                                 Get_Public_Tree (Element (C))),
-                              False,
-                              Element (C),
-                              Get_Public_Tree (Element (C)),
-                              Get_Buffer (Element (C)));
-                        end if;
-
-                        C := Next (C);
-                     end loop;
-                  end;
-               end if;
-
-               Append (Result.List, To_Extensive_List (List));
-
-               return;
-            end;
-
-         when others =>
-            null;
-      end case;
-
-      Free (Proposal.Tree, Ada_Tree);
-   end Get_Composition;
-
-   ------------------------------
-   -- Get_Number_Of_Parameters --
-   ------------------------------
-
-   function Get_Number_Of_Parameters
-     (Proposal : Construct_Completion_Proposal) return Natural
-   is
-      Total : Integer := 0;
-      Tree  : Construct_Tree;
-      It    : Construct_Tree_Iterator;
-   begin
-      Tree := Proposal.Tree;
-
-      It := Next (Tree, Proposal.Tree_Node, Jump_Into);
-
-      while Get_Parent_Scope (Tree, It) = Proposal.Tree_Node loop
-         if Get_Construct (It).Category = Cat_Parameter then
-            Total := Total + 1;
-         end if;
-
-         It := Next (Tree, It, Jump_Over);
-      end loop;
-
-      return Total;
-   end Get_Number_Of_Parameters;
-
-   -----------------------
-   -- Append_Expression --
-   -----------------------
-
-   procedure Append_Expression
-     (Proposal             : in out Construct_Completion_Proposal;
-      Number_Of_Parameters : Natural)
-   is
-   begin
-      Proposal.Params_In_Expression := Number_Of_Parameters;
-   end Append_Expression;
 
    -----------
    -- Match --
@@ -813,66 +405,92 @@ package body Completion.Ada.Constructs_Extractor is
 
    function Match
      (Proposal   : Construct_Completion_Proposal;
-      Identifier : String;
-      Is_Partial : Boolean;
       Context    : Completion_Context;
-      Offset     : Integer;
-      Filter     : Possibilities_Filter) return Boolean
+      Offset     : Integer) return Boolean
    is
-      pragma Unreferenced (Filter);
+      Construct : constant access Simple_Construct_Information :=
+        Get_Construct (Proposal.Tree_Node);
+
+      Ada_Context : Ada_Completion_Context;
+
+      Entity     : Entity_Access;
+      File       : Structured_File_Access;
+      Resolver   : Construct_Completion_Resolver renames
+        Construct_Completion_Resolver (Proposal.Resolver.all);
    begin
-      if Get_Construct (Proposal.Tree_Node).Name = null then
+      if Context.all not in Ada_Completion_Context'Class then
          return False;
-      elsif Get_Construct (Proposal.Tree_Node).Category = Cat_Field then
+      end if;
+
+      Ada_Context := Ada_Completion_Context (Context.all);
+
+      if Construct.Name = null then
+         return False;
+      elsif Construct.Category = Cat_Field then
          return False;
       else
          declare
-            Source_Tree : Construct_Tree;
-            Source_Ada_Tree : Ada_Construct_Tree;
-            Result : Boolean;
             Name : constant Composite_Identifier :=
               To_Composite_Identifier
-                (Get_Construct (Proposal.Tree_Node).Name.all);
+                (Construct.Name.all);
          begin
             if not Match
-              (Identifier,
+              (Get_Name
+                 (Ada_Context.Expression,
+                  Token_List.Data
+                    (Token_List.Last (Ada_Context.Expression.Tokens))),
                Get_Item (Name, Length (Name)),
-               Is_Partial)
+               Token_List.Length (Ada_Context.Expression.Tokens) = 1)
             then
                return False;
             end if;
 
-            if Context.all in Ada_Construct_Extractor_Context'Class then
-               Source_Tree := Get_Full_Tree
-                 (Ada_Construct_Extractor_Context (Context.all).File);
-               Source_Ada_Tree :=  Generate_Ada_Construct_Tree
-                 (Tree   => Source_Tree,
-                  Buffer => Get_Buffer
-                    (Ada_Construct_Extractor_Context (Context.all).File));
-            else
-               Source_Tree := To_Construct_Tree (Context.Buffer.all, Ada_Lang);
-               Source_Ada_Tree :=  Generate_Ada_Construct_Tree
-                 (Tree   => Source_Tree,
-                  Buffer => Context.Buffer);
+            Entity := To_Entity_Access (Proposal.File, Proposal.Tree_Node);
+
+            if Is_Public_Library_Visible (Entity) then
+               --  ??? We should probably check with / use visibility if
+               --  needed...
+               return True;
             end if;
 
-            Result := Is_Visible
-              (Db       => Construct_Completion_Resolver
-                 (Proposal.Resolver.all).Construct_Db,
-               Cell     => To_Construct_Access
-                 (Proposal.Tree, Proposal.Tree_Node),
-               Tree     => Source_Tree,
-               Ada_Tree => Source_Ada_Tree,
-               Offset   => Offset);
+            File := Resolver.Current_File;
 
-            --  ??? Shouldn't we cache this tree instead of regenerating it
-            --  each time?
-            Free (Source_Tree, Source_Ada_Tree);
-
-            return Result;
+            return Is_Locally_Visible
+              (File     => File,
+               Offset   => Offset,
+               Entity   => Entity,
+               Use_Wise => True);
+            --  ??? Use-wise should be set according to preferences (context?)
          end;
       end if;
    end Match;
+
+   ------------------------
+   -- To_Stored_Proposal --
+   ------------------------
+
+   function To_Stored_Proposal
+     (Proposal : Construct_Completion_Proposal)
+      return Stored_Proposal_Access
+   is
+      Result        : constant Stored_Proposal_Access :=
+        new Stored_Construct_Completion_Proposal;
+      Constr_Result : Stored_Construct_Completion_Proposal renames
+        Stored_Construct_Completion_Proposal (Result.all);
+   begin
+      Constr_Result.Persistent_Entity := To_Entity_Persistent_Access
+        (To_Entity_Access (Proposal.File, Proposal.Tree_Node));
+      Ref (Constr_Result.Persistent_Entity);
+      Constr_Result.Is_All := Proposal.Is_All;
+      Constr_Result.Is_In_Call := Proposal.Is_In_Call;
+
+      if Proposal.Actual_Params /= null then
+         Constr_Result.Actual_Params :=
+           new Actual_Parameter_Resolver'(Proposal.Actual_Params.all);
+      end if;
+
+      return Result;
+   end To_Stored_Proposal;
 
    ----------
    -- Free --
@@ -880,7 +498,7 @@ package body Completion.Ada.Constructs_Extractor is
 
    procedure Free (Proposal : in out Construct_Completion_Proposal) is
    begin
-      Free (Proposal.Profile);
+      Free (Proposal.Actual_Params);
    end Free;
 
    ----------
@@ -889,7 +507,7 @@ package body Completion.Ada.Constructs_Extractor is
 
    procedure Free (This : in out Construct_Db_Wrapper) is
    begin
-      Free (This.Name);
+      Free (This.List);
    end Free;
 
    ----------
@@ -898,7 +516,7 @@ package body Completion.Ada.Constructs_Extractor is
 
    procedure Free (This : in out Construct_Tree_Iterator_Array_Access) is
       procedure Internal_Free is new
-        Unchecked_Deallocation
+        Standard.Ada.Unchecked_Deallocation
           (Construct_Tree_Iterator_Array,
            Construct_Tree_Iterator_Array_Access);
    begin
@@ -909,286 +527,69 @@ package body Completion.Ada.Constructs_Extractor is
    -- Get_Possibilities --
    -----------------------
 
-   procedure Get_Possibilities
-     (Resolver   : access Construct_Completion_Resolver;
-      Identifier : String;
-      Is_Partial : Boolean;
-      Context    : Completion_Context;
-      Offset     : Integer;
-      Filter     : Possibilities_Filter;
-      Result     : in out Completion_List) is
-   begin
-      Result.Searched_Identifier := new String'(Identifier);
-
-      if (Filter and All_Accessible_Units) /= 0 then
-         --  Create an extensive list of all the accessible units with no
-         --  parent.
-         declare
-            use File_Set;
-
-            C : File_Set.Cursor := Start_File_Search
-              (Resolver.Construct_Db.all);
-            List : Extensive_List_Pckg.List;
-            Construct_It : Construct_Tree_Iterator;
-
-         begin
-            while C /= File_Set.No_Element loop
-               Construct_It := Get_Unit_Construct
-                 (Ada_Tree_Lang,
-                  Get_Public_Tree (Element (C)));
-
-               if Construct_It /= Null_Construct_Tree_Iterator
-                 and then Get_Construct (Construct_It).Is_Declaration
-               then
-                  declare
-                     Name : constant Composite_Identifier :=
-                       Get_Unit_Name
-                         (Ada_Tree_Lang, Get_Public_Tree (Element (C)));
-                  begin
-                     if Match
-                       (Identifier,
-                        Get_Item (Name, Length (Name)),
-                        Is_Partial)
-                     then
-                        Append
-                          (List,
-                           Construct_Completion_Proposal'
-                             (Resolver,
-                              To_Profile_Manager
-                                (Get_Public_Tree (Element (C)), Construct_It),
-                              Construct_It,
-                              Element (C),
-                              False,
-                              0,
-                              Get_Public_Tree (Element (C)),
-                              Filter,
-                              Get_Buffer (Element (C)),
-                              False));
-                     end if;
-                  end;
-               end if;
-
-               C := Next (C);
-            end loop;
-
-            Append (Result.List, To_Extensive_List (List));
-         end;
-      end if;
-
-      if (Filter and All_Visible_Entities) /= 0 and then Offset > 0 then
-         declare
-            File : Structured_File_Access;
-            Tree : aliased Construct_Tree;
-         begin
-            Tree := To_Construct_Tree (Context.Buffer.all, Ada_Lang);
-
-            if Context.all in Ada_Construct_Extractor_Context then
-               if not Is_In_Parents
-                 (Ada_Construct_Extractor_Context (Context.all).File,
-                  Construct_Completion_Resolver (Resolver.all).Current_File)
-               then
-                  Tree := Get_Public_Tree (Ada_Tree_Lang, Tree'Access, True);
-               end if;
-
-               File := Ada_Construct_Extractor_Context (Context.all).File;
-            else
-               File := Resolver.Current_File;
-               Tree := To_Construct_Tree (Context.Buffer.all, Ada_Lang);
-            end if;
-
-            Append (Resolver.Tree_Collection, Tree);
-
-            Append
-              (Result.List,
-               Construct_Db_Wrapper'
-                 (First_File   => File,
-                  First_Buffer => Context.Buffer,
-                  First_Tree   => Tree,
-                  Construct_Db => Resolver.Construct_Db,
-                  Name         => new String'(Identifier),
-                  Is_Partial   => Is_Partial,
-                  Offset       => Offset,
-                  Resolver     => Resolver,
-                  Filter       => Filter));
-         end;
-      end if;
-   end Get_Possibilities;
-
-   ------------------------
-   -- From_Completion_Id --
-   ------------------------
-
-   function From_Completion_Id
+   procedure Get_Completion_Root
      (Resolver : access Construct_Completion_Resolver;
-      Id       : Completion_Id;
+      Offset   : Integer;
       Context  : Completion_Context;
-      Filter   : Possibilities_Filter)
-      return Completion_Proposal_Access
+      Result   : in out Completion_List)
    is
-      pragma Unreferenced (Context);
-
-      function Extract_Construct
-        (Id    : Composite_Identifier;
-         Step  : Integer;
-         Scope : Construct_Tree_Iterator;
-         Tree  : Construct_Tree) return Construct_Tree_Iterator;
-
-      function Extract_Construct
-        (Id    : Composite_Identifier;
-         Step  : Integer;
-         Scope : Construct_Tree_Iterator;
-         Tree  : Construct_Tree) return Construct_Tree_Iterator
-      is
-         Result : Construct_Tree_Iterator;
-
-         It : Construct_Tree_Iterator := Next (Tree, Scope, Jump_Into);
-
-         Current_Item : constant String := Get_Item (Id, Step);
-      begin
-         --  ??? We should take into account line & column as well...
-
-         while Get_Parent_Scope (Tree, It) = Scope loop
-            if Get_Construct (It).Name /= null
-              and then Get_Construct (It).Name.all = Current_Item
-            then
-               if Step = Length (Id) then
-                  return It;
-               else
-                  Result := Extract_Construct (Id, Step + 1, It, Tree);
-
-                  if Result /= Null_Construct_Tree_Iterator then
-                     return Result;
-                  end if;
-               end if;
-            end if;
-
-            It := Next (Tree, It, Jump_Over);
-         end loop;
-
-         return Null_Construct_Tree_Iterator;
-      end Extract_Construct;
-
-      Found_Id_Length : Natural;
-      Found_Node      : Construct_Tree_Iterator;
-
-      File : constant Structured_File_Access := Get_Or_Create
-           (Resolver.Construct_Db,
-            Id.File,
-            Ada_Tree_Lang);
-
-      Full_Tree : constant Construct_Tree := Get_Full_Tree (File);
-
-      Node_At_Loc : constant Construct_Tree_Iterator := Get_Iterator_At
-        (Tree              => Full_Tree,
-         Location          => (False, Id.Line, Id.Column),
-         From_Type         => Start_Construct,
-         Position          => Specified,
-         Categories_Seeked => Null_Category_Array);
-
+      Visibility : Visibility_Context;
+      Expression : Parsed_Expression;
    begin
-      if Id.Resolver_Id /= Resolver_ID then
-         return null;
+      if Context.all in Ada_Completion_Context then
+         Expression := Ada_Completion_Context (Context.all).Expression;
+
+         if Token_List.Data
+           (Token_List.Last (Expression.Tokens)).Tok_Type = Tok_Identifier
+         then
+            Result.Searched_Identifier := new String'
+              (Get_Name
+                 (Expression,
+                  Token_List.Data (Token_List.Last (Expression.Tokens))));
+         else
+            Result.Searched_Identifier := new String'("");
+         end if;
+      else
+         Expression := Null_Parsed_Expression;
       end if;
 
-      declare
-         Composite_ID : constant Composite_Identifier :=
-           To_Composite_Identifier (Id.Id);
+      Visibility.Offset := Offset;
+      Visibility.Filter := Everything;
+      Visibility.File := Resolver.Current_File;
+      Visibility.Min_Visibility_Confidence := Public_Library_Visible;
 
-         It : Construct_Tree_Iterator := First (Full_Tree);
-      begin
+      Append
+        (Result.List,
+         Construct_Db_Wrapper'
+           (Visibility,
+            Completion_Resolver_Access (Resolver),
+            Find_Declarations
+              (File                      => Resolver.Current_File,
+               Offset                    => Offset,
+               From_Visibility           => Visibility,
+               Expression                => Expression,
+               Categories                => Null_Category_Array,
+               Is_Partial                => True)));
+   end Get_Completion_Root;
 
-         --  First, check if the node looks correct at {line, col}
+   ------------
+   -- Get_Id --
+   ------------
 
-         if Node_At_Loc /= Null_Construct_Tree_Iterator
-           and then Get_Construct (Node_At_Loc).Name /= null
-         then
-            declare
-               Name_At_Loc : constant Composite_Identifier :=
-                 To_Composite_Identifier
-                   (Get_Construct (Node_At_Loc).Name.all);
-            begin
-               if Length (Name_At_Loc) >= Length (Composite_ID)
-                 and then Name_At_Loc =
-                   Get_Slice
-                     (Composite_ID,
-                      Length (Composite_ID) - Length (Name_At_Loc) + 1,
-                      Length (Composite_ID))
-               then
-                  return new Construct_Completion_Proposal'
-                       (Resolver             => Resolver,
-                        Profile              => To_Profile_Manager
-                          (Full_Tree, Node_At_Loc),
-                        Tree_Node            => Node_At_Loc,
-                        File                 => File,
-                        Is_All               => False,
-                        Params_In_Expression => 0,
-                        Tree                 => Full_Tree,
-                        Filter               => Filter,
-                        Buffer               => Get_Buffer (File),
-                        Is_In_Profile        => False);
-               end if;
-            end;
-         end if;
-
-         --  If not, try to retreive a construct of the same name. This usually
-         --  means that the file has been modified, and is done on a best
-         --  effort basis.
-
-         while It /= Null_Construct_Tree_Iterator loop
-            case Get_Construct (It).Category is
-               when Cat_Package | Cat_Procedure | Cat_Function =>
-                  Found_Id_Length := Length
-                    (To_Composite_Identifier
-                       (Get_Construct (It).Name.all));
-
-                  if Found_Id_Length <= Length (Composite_ID) then
-                     if Found_Id_Length < Length (Composite_ID) then
-                        Found_Node := Extract_Construct
-                          (Composite_ID, Found_Id_Length + 1, It, Full_Tree);
-                     else
-                        Found_Node := It;
-                     end if;
-
-                     return new Construct_Completion_Proposal'
-                       (Resolver             => Resolver,
-                        Profile              => To_Profile_Manager
-                          (Full_Tree, Found_Node),
-                        Tree_Node            => Found_Node,
-                        File                 => File,
-                        Is_All               => False,
-                        Params_In_Expression => 0,
-                        Tree                 => Full_Tree,
-                        Filter               => Filter,
-                        Buffer               => Get_Buffer (File),
-                        Is_In_Profile        => False);
-                  end if;
-               when others =>
-                  null;
-            end case;
-
-            It := Next (Full_Tree, It);
-         end loop;
-      end;
-
-      return null;
-   end From_Completion_Id;
+   function Get_Id (Resolver : Construct_Completion_Resolver) return String is
+      pragma Unreferenced (Resolver);
+   begin
+      return Resolver_ID;
+   end Get_Id;
 
    ----------
    -- Free --
    ----------
 
    procedure Free (This : in out Construct_Completion_Resolver) is
-      C : Tree_List.Cursor := First (This.Tree_Collection);
+      pragma Unreferenced (This);
    begin
-      while C /= Tree_List.No_Element loop
-         declare
-            Tree : Construct_Tree := Element (C);
-         begin
-            Free (Tree);
-         end;
-
-         C := Next (C);
-      end loop;
+      null;
    end Free;
 
    -----------
@@ -1199,60 +600,14 @@ package body Completion.Ada.Constructs_Extractor is
      (Db_Construct : Construct_Db_Wrapper)
       return Completion_List_Pckg.Virtual_List_Component_Iterator'Class
    is
-      Result         : Construct_Iterator_Wrapper;
-      Unit_Construct : Construct_Tree_Iterator;
+      Result : Construct_Iterator_Wrapper;
    begin
-      Result.Stage := Initial_File;
-      Result.First_File := Db_Construct.First_File;
-      Result.Name := Db_Construct.Name;
-      Result.Construct_Db := Db_Construct.Construct_Db;
-      Result.Resolver := Db_Construct.Resolver;
-      Result.Is_Partial := Db_Construct.Is_Partial;
-      Result.Filter := Db_Construct.Filter;
-      Result.First_File := Db_Construct.First_File;
-      Result.First_Tree := Db_Construct.First_Tree;
-      Result.First_Buffer := Db_Construct.First_Buffer;
+      Result.Resolver := Completion_Resolver_Access (Db_Construct.Resolver);
+      Result.Iter := First (Db_Construct.List);
+      Result.Context := Db_Construct.Context;
 
-      Unit_Construct := Get_Unit_Construct (Ada_Tree_Lang, Result.First_Tree);
-
-      if Get_Construct (Unit_Construct).Category = Cat_Package
-        and then not Get_Construct (Unit_Construct).Is_Declaration
-        and then Get_Parent_File (Result.First_File) /= null
-        and then Is_Body_Of
-          (Result.First_Tree,
-           Get_Full_Tree (Get_Parent_File (Result.First_File)))
-      then
-         Generate_Ada_Construct_Trees
-           (Spec_Tree     => Get_Full_Tree
-              (Get_Parent_File (Result.First_File)),
-            Body_Tree     => Result.First_Tree,
-            Spec_Buffer   => Get_Buffer (Get_Parent_File (Result.First_File)),
-            Body_Buffer   => Result.First_Buffer,
-            Spec_Ada_Tree => Result.First_Spec_Ada_Tree,
-            Body_Ada_Tree => Result.First_Ada_Tree);
-      else
-         Result.First_Ada_Tree := Generate_Ada_Construct_Tree
-           (Result.First_Tree, Result.First_Buffer);
-      end if;
-
-      Result.Visible_Constructs :=
-        new Construct_Tree_Iterator_Array'
-          (Get_Visible_Constructs
-               (Result.First_Tree,
-                Result.First_Ada_Tree,
-                Db_Construct.Offset,
-                Db_Construct.Name.all,
-                Is_Partial => Db_Construct.Is_Partial));
-
-      if Result.Visible_Constructs'Length = 0 then
-         Result.Visible_Index := 0;
-         Next (Result);
-      else
-         Result.Visible_Index := Result.Visible_Constructs'First;
-      end if;
-
-      if not Is_Valid (Result) then
-         Next (Result);
+      if Is_Valid (Result) and then not At_End (Result) then
+         Result.Current_Decl := Get_View (Result.Iter);
       end if;
 
       return Result;
@@ -1264,14 +619,7 @@ package body Completion.Ada.Constructs_Extractor is
 
    function At_End (It : Construct_Iterator_Wrapper) return Boolean is
    begin
-      return It.Stage = Database and then
-        (At_End (It.Db_Iterator)
-         or else
-           (not It.Is_Partial
-            and then not Match
-              (It.Name.all,
-               Get_Current_Id (It.Db_Iterator),
-               False)));
+      return At_End (It.Iter);
    end At_End;
 
    --------------
@@ -1279,30 +627,8 @@ package body Completion.Ada.Constructs_Extractor is
    --------------
 
    function Is_Valid (It : Construct_Iterator_Wrapper) return Boolean is
+      pragma Unreferenced (It);
    begin
-      if At_End (It) then
-         return True;
-      end if;
-
-      if It.Stage = Initial_File then
-         return It.Visible_Constructs /= null
-           and then It.Visible_Index <= It.Visible_Constructs'Last
-           and then
-             (Get_Construct (It.Visible_Constructs (It.Visible_Index))
-              .Category /= Cat_Package
-              or else
-              Get_Construct (It.Visible_Constructs (It.Visible_Index))
-              .Is_Declaration)
-           and then Is_First_Occurence
-             (It.First_Tree,
-              It.First_Ada_Tree,
-              It.Visible_Constructs (It.Visible_Index));
-      elsif It.Stage = Parent_File then
-         return It.Current_It /= Null_Construct_Tree_Iterator;
-      elsif It.Stage = Database then
-         return not Is_In_Parents (Get_File (It.Db_Iterator), It.First_File);
-      end if;
-
       return True;
    end Is_Valid;
 
@@ -1312,125 +638,40 @@ package body Completion.Ada.Constructs_Extractor is
 
    procedure Next (It : in out Construct_Iterator_Wrapper) is
    begin
-      loop
-         if It.Stage = Initial_File then
-            --  Stage 1: We return the visible constructs from the current
-            --  file.
+      if Get_Actual_Parameters (It.Current_Decl) /= null
+        or else It.Params_Array /= null
+      then
+         if It.Params_Array = null then
+            It.Params_Array := new Formal_Parameter_Array'
+              (Get_Missing_Formals
+                 (Get_Actual_Parameters (It.Current_Decl).all));
 
-            if It.Visible_Index < It.Visible_Constructs'Length then
-               It.Visible_Index := It.Visible_Index + 1;
-            else
-               It.Stage := Parent_File;
-               Free (It.Visible_Constructs);
-               It.Visible_Index := 0;
-               It.Current_It := Null_Construct_Tree_Iterator;
-               It.Current_File := Get_Parent_File (It.First_File);
-
-               if It.Current_File /= null then
-                  if Is_Body_Of
-                    (It.First_Tree, Get_Full_Tree (It.Current_File))
-                  then
-                     It.Is_Current_Spec := True;
-                  else
-                     It.Is_Current_Spec := False;
-                  end if;
-               end if;
-            end if;
-         elsif It.Stage = Parent_File then
-            --  Stage 2: We return the constructs from the parent files
-
-            if It.Current_File = null then
-               It.Stage := Database;
-               It.Db_Iterator := Start
-                 (It.Construct_Db, To_Lower (It.Name.all), It.Is_Partial);
-            else
-               if It.Current_It = Null_Construct_Tree_Iterator
-                 and then It.Current_File /= null
-               then
-                  It.Current_It := First (Get_Full_Tree (It.Current_File));
-
-                  if Is_In_Parents
-                    (It.Current_File,
-                     Construct_Completion_Resolver
-                       (It.Resolver.all).Current_File)
-                  then
-                     It.Current_Tree := Get_Full_Tree (It.Current_File);
-                  else
-                     It.Current_Tree := Get_Public_Tree (It.Current_File);
-                  end if;
-
-                  if It.Is_Current_Spec then
-                     Generate_Ada_Construct_Trees
-                       (It.Current_Tree, It.First_Tree,
-                        Get_Buffer (It.Current_File), It.First_Buffer,
-                        It.Current_Ada_Tree, It.Current_Body_Tree);
-                  else
-                     It.Current_Ada_Tree := Generate_Ada_Construct_Tree
-                       (It.Current_Tree, Get_Buffer (It.Current_File));
-                  end if;
-               end if;
-
-               while It.Current_It /= Null_Construct_Tree_Iterator loop
-                  if Get_Construct (It.Current_It).Category = Cat_Package
-                    or else Is_Enum_Type (It.Current_Tree, It.Current_It)
-                  then
-                     It.Current_It :=
-                       Next (It.Current_Tree, It.Current_It, Jump_Into);
-                  else
-                     It.Current_It :=
-                       Next (It.Current_Tree, It.Current_It, Jump_Over);
-                  end if;
-
-                  declare
-                     Constr : constant Simple_Construct_Information :=
-                       Get_Construct (It.Current_It);
-                  begin
-                     exit when It.Current_It /= Null_Construct_Tree_Iterator
-                       and then Constr.Name /= null
-                       and then Constr.Category /= Cat_Use
-                       and then Constr.Category /= Cat_With
-                       and then Get_Parent_Scope
-                         (It.Current_Tree, It.Current_It)
-                         /= Null_Construct_Tree_Iterator
-                       and then Is_First_Occurence
-                           (It.Current_Tree,
-                            It.Current_Ada_Tree,
-                            It.Current_It)
-                       and then Match
-                         (It.Name.all,
-                          Constr.Name.all,
-                          It.Is_Partial);
-                  end;
-               end loop;
-
-               if It.Current_It = Null_Construct_Tree_Iterator then
-                  if It.Current_Tree /= Null_Construct_Tree then
-                     Free (It.Current_Tree, It.Current_Ada_Tree);
-                     --  ??? Todo: fix the leak here, we should free the
-                     --  current tree even when the iteration is interrupted.
-                  end if;
-
-                  if It.Is_Current_Spec then
-                     Free (It.First_Tree, It.Current_Body_Tree);
-                     It.Is_Current_Spec := False;
-                  end if;
-
-                  It.Current_File := Get_Parent_File (It.Current_File);
-                  It.Current_It := Null_Construct_Tree_Iterator;
-                  It.Current_Tree := Null_Construct_Tree;
-               end if;
-            end if;
-
-         elsif It.Stage = Database then
-            --  Stage 3: We return the files from the database
-
-            if not At_End (It.Db_Iterator) then
-               Next (It.Db_Iterator);
-            end if;
+            It.Params_It := 0;
          end if;
 
-         exit when Is_Valid (It);
-      end loop;
+         It.Params_It := It.Params_It + 1;
+
+         if It.Params_It > It.Params_Array'Last then
+            Free (It.Params_Array);
+         end if;
+      end if;
+
+      if It.Params_Array = null then
+         Free (It.Current_Decl);
+         Next (It.Iter);
+
+         if Is_Valid (It) and then not At_End (It) then
+            It.Current_Decl := Get_View (It.Iter);
+         else
+            It.Current_Decl := Null_Declaration_View;
+         end if;
+      else
+         It.Current_Decl := To_Declaration
+              (To_Entity_Access
+                 (Get_File (Get_Entity (It.Iter)),
+                  Get_Construct_Tree_Iterator
+                    (It.Params_Array (It.Params_It))));
+      end if;
    end Next;
 
    ---------
@@ -1440,84 +681,22 @@ package body Completion.Ada.Constructs_Extractor is
    function Get
      (This : Construct_Iterator_Wrapper) return Completion_Proposal'Class
    is
-      Proposal  : Construct_Completion_Proposal;
-      Full_Cell : Construct_Cell_Access;
+      Entity : constant Entity_Access := Get_Entity (This.Current_Decl);
+      Actuals : Actual_Parameter_Resolver_Access;
    begin
-      case This.Stage is
-         when Initial_File =>
-            Proposal := Construct_Completion_Proposal'
-              (Resolver             => This.Resolver,
-               Profile              => To_Profile_Manager
-                 (This.First_Tree,
-                  This.Visible_Constructs (This.Visible_Index)),
-               Tree_Node            =>
-                  This.Visible_Constructs (This.Visible_Index),
-               File                 => This.First_File,
-               Is_All               => False,
-               Params_In_Expression => 0,
-               Tree                 => This.First_Tree,
-               Buffer               => This.First_Buffer,
-               Filter               => This.Filter,
-               Is_In_Profile        => False);
+      Actuals := Get_Actual_Parameters (This.Current_Decl);
 
-            Full_Cell := Get_Most_Complete_View
-                (This.First_Tree,
-                 This.First_Ada_Tree,
-                 This.Visible_Constructs (This.Visible_Index));
+      if Actuals /= null then
+         Actuals := new Actual_Parameter_Resolver'(Actuals.all);
+      end if;
 
-            if Get_Tree (Full_Cell) = This.First_Tree then
-               Proposal.Tree_Node := To_Construct_Tree_Iterator (Full_Cell);
-            end if;
-
-            return Proposal;
-         when Parent_File =>
-            Proposal :=
-              (Resolver             => This.Resolver,
-               Profile              => To_Profile_Manager
-                 (Get_Full_Tree (This.Current_File), This.Current_It),
-               Tree_Node            => This.Current_It,
-               File                 => This.Current_File,
-               Tree                 => This.Current_Tree,
-               Buffer               => Get_Buffer (This.Current_File),
-               Is_All               => False,
-               Params_In_Expression => 0,
-               Filter               => This.Filter,
-               Is_In_Profile        => False);
-
-            Full_Cell := Get_Most_Complete_View
-                (This.Current_Tree, This.Current_Ada_Tree, This.Current_It);
-
-            if Get_Tree (Full_Cell) = This.First_Tree then
-               Proposal.Tree := Get_Tree (Full_Cell);
-               Proposal.Tree_Node := To_Construct_Tree_Iterator (Full_Cell);
-               Proposal.Buffer := This.First_Buffer;
-               Proposal.File := This.First_File;
-            elsif  To_Construct_Tree_Iterator (Full_Cell) /=
-              Proposal.Tree_Node
-            then
-               Proposal.Tree_Node := To_Construct_Tree_Iterator (Full_Cell);
-               Proposal.Tree := Get_Tree (Full_Cell);
-            end if;
-
-            return Proposal;
-         when Database =>
-            return Construct_Completion_Proposal'
-              (Resolver             => This.Resolver,
-               Profile              => To_Profile_Manager
-                 (Get_Public_Tree (Get_File (This.Db_Iterator)),
-                  Get_Construct (This.Db_Iterator)),
-               Tree_Node            =>
-                  Get_Construct (This.Db_Iterator),
-               File                 => Get_File (This.Db_Iterator),
-               Is_All               => False,
-               Params_In_Expression => 0,
-               Tree                 => Get_Public_Tree
-                 (Get_File (This.Db_Iterator)),
-               Buffer               => Get_Buffer
-                 (Get_File (This.Db_Iterator)),
-               Filter               => This.Filter,
-               Is_In_Profile        => False);
-      end case;
+      return Construct_Completion_Proposal'
+        (Resolver      => This.Resolver,
+         Tree_Node     => To_Construct_Tree_Iterator (Entity),
+         File          => Get_File (This.Current_Decl),
+         Is_All        => Is_All (This.Current_Decl),
+         Actual_Params => Actuals,
+         Is_In_Call    => This.Params_Array /= null);
    end Get;
 
    ----------
@@ -1526,117 +705,9 @@ package body Completion.Ada.Constructs_Extractor is
 
    procedure Free (This : in out Construct_Iterator_Wrapper) is
    begin
-      if This.Current_Tree /= Null_Construct_Tree then
-         Free (This.Current_Tree, This.Current_Ada_Tree);
-      end if;
-
-      if This.Is_Current_Spec then
-         Free (This.First_Tree, This.Current_Body_Tree);
-         This.Is_Current_Spec := False;
-      end if;
+      Free (This.Params_Array);
+      Free (This.Iter);
+      Free (This.Current_Decl);
    end Free;
-
-   ------------------------
-   -- To_Profile_Manager --
-   ------------------------
-
-   function To_Profile_Manager
-     (Tree : Construct_Tree; It : Construct_Tree_Iterator)
-      return Profile_Manager_Access
-   is
-      Profile : Profile_Manager_Access;
-      Index   : Integer;
-   begin
-      if Get_Construct (It).Category in Subprogram_Category then
-         declare
-            Param     : Construct_Tree_Iterator := Next (Tree, It, Jump_Into);
-            Nb_Params : Integer := 0;
-         begin
-            while Param /= Null_Construct_Tree_Iterator
-              and then Get_Parent_Scope (Tree, Param) = It
-              and then Get_Construct (Param).Category = Cat_Parameter
-            loop
-               Nb_Params := Nb_Params + 1;
-
-               Param := Next (Tree, Param, Jump_Over);
-            end loop;
-
-            Profile := new Profile_Manager (Nb_Params);
-            Profile.Case_Sensitive := False;
-
-            Param :=  Next (Tree, It, Jump_Into);
-
-            Index := 1;
-
-            while Param /= Null_Construct_Tree_Iterator
-              and then Get_Parent_Scope (Tree, Param) = It
-              and then Get_Construct (Param).Category = Cat_Parameter
-            loop
-               Profile.Parameters (Index).Name :=
-                 GNAT.Strings.String_Access (Get_Construct (Param).Name);
-
-               Index := Index + 1;
-
-               Param := Next (Tree, Param, Jump_Over);
-            end loop;
-
-            return Profile;
-         end;
-      else
-         return null;
-      end if;
-   end To_Profile_Manager;
-
-   -----------------------------
-   -- Push_Excluded_Construct --
-   -----------------------------
-
-   procedure Push_Excluded_Construct
-     (Resolver : access Construct_Completion_Resolver;
-      Pointer  : Full_Construct_Cell) is
-   begin
-      Append (Resolver.Excluded_List, Pointer);
-   end Push_Excluded_Construct;
-
-   ----------------------------
-   -- Pop_Excluded_Construct --
-   ----------------------------
-
-   procedure Pop_Excluded_Construct
-     (Resolver : access Construct_Completion_Resolver) is
-   begin
-      Delete_Last (Resolver.Excluded_List);
-   end Pop_Excluded_Construct;
-
-   -----------------
-   -- Is_Excluded --
-   -----------------
-
-   function Is_Excluded
-     (Resolver : access Construct_Completion_Resolver;
-      Pointer  : Full_Construct_Cell) return Boolean
-   is
-      It : Construct_List.Cursor := First (Resolver.Excluded_List);
-      Relation : General_Order;
-   begin
-      while It /= Construct_List.No_Element loop
-         Relation := Compare_Entities
-           (Lang         => Ada_Tree_Lang,
-            Left_Iter    => Element (It).It,
-            Right_Iter   => Pointer.It,
-            Left_Tree    => Element (It).Tree,
-            Right_Tree   => Pointer.Tree,
-            Left_Buffer  => Element (It).Buffer,
-            Right_Buffer => Pointer.Buffer);
-
-         if Relation = Equals or else Relation = Equivalent then
-            return True;
-         end if;
-
-         It := Next (It);
-      end loop;
-
-      return False;
-   end Is_Excluded;
 
 end Completion.Ada.Constructs_Extractor;

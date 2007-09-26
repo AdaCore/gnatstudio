@@ -211,9 +211,9 @@ package body Code_Coverage is
      (File_Node : Code_Analysis.File_Access;
       Data_File : Structured_File_Access)
    is
-      Tree       : constant Construct_Tree := Get_Full_Tree (Data_File);
+      Tree       : constant Construct_Tree := Get_Tree (Data_File);
       Node       : Construct_Tree_Iterator := First (Tree);
-      Node_Info  : Simple_Construct_Information;
+      Node_Info  : access Simple_Construct_Information;
       Subp_Node  : Subprogram_Access;
       Subp_Name  : String_Access;
       Subp_Cov   : access Subprogram_Coverage := null;

@@ -477,7 +477,7 @@ package body Language is
       end Forward;
 
    begin
-      Result := (null, null, null);
+      Result := (null, null, null, 0);
 
       --  For each category, parse the buffer
 

@@ -586,6 +586,7 @@ package Language is
 
    type Construct_List is record
       First, Current, Last : Construct_Access;
+      Size                 : Integer := 0;
    end record;
 
    type Construct_List_Access is access all Construct_List;

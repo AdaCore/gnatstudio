@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2007                       --
---                             AdaCore                               --
+--                  Copyright (C) 2000-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -105,6 +104,7 @@ package Language.Ada is
       Buffer   : String;
       Callback : Entity_Callback);
 
+   overriding
    procedure Get_Referenced_Entity
      (Lang       : access Ada_Language;
       Buffer     : String;
@@ -153,6 +153,13 @@ package Language.Ada is
                                Ada_Analyzer.Ada_Tagged_Attribute;
    Ada_Class_Attribute     : constant Construct_Att_Key :=
                                Ada_Analyzer.Ada_Class_Attribute;
+   Ada_Renames_Attribute   : constant Construct_Att_Key :=
+                               Ada_Analyzer.Ada_Renames_Attribute;
+
+   Ada_Library_Visibility_Attribute : constant Construct_Att_Key :=
+                                        Language.Ada.Ada_Renames_Attribute + 1;
+   --  This attribute is not set by the parser itself - but external
+   --  process will need to compute & store this value
 
    function Get_Name (Lang : access Ada_Language) return String;
 

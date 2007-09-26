@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006                         --
---                              AdaCore                              --
+--                  Copyright (C) 2006-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -52,26 +51,6 @@ package body Virtual_Lists is
       Append
         (List.Contents, new Virtual_List_Component'Class'(Component));
    end Append;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Component : in out Virtual_List_Component) is
-      pragma Unreferenced (Component);
-   begin
-      null;
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (It : in out Virtual_List_Component_Iterator) is
-      pragma Unreferenced (It);
-   begin
-      null;
-   end Free;
 
    -----------
    -- First --
@@ -175,8 +154,10 @@ package body Virtual_Lists is
         (Virtual_List_Component_Iterator'Class,
          Virtual_List_Component_Iterator_Access);
    begin
-      Free (This.all);
-      Internal_Free (This);
+      if This /= null then
+         Free (This.all);
+         Internal_Free (This);
+      end if;
    end Free;
 
 end Virtual_Lists;

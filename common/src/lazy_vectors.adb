@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006                           --
---                             AdaCore                               --
+--                  Copyright (C) 2006-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -38,7 +37,7 @@ package body Lazy_Vectors is
    -- Insert --
    ------------
 
-   procedure Insert  (Vector : access Lazy_Vector_Record; Data : Data_Type) is
+   procedure Insert  (Vector : Lazy_Vector; Data : Data_Type) is
       Dummy : Iterator;
    begin
       Insert (Vector, Data, Dummy);
@@ -49,7 +48,7 @@ package body Lazy_Vectors is
    ------------
 
    procedure Insert
-     (Vector : access Lazy_Vector_Record;
+     (Vector : Lazy_Vector;
       Data   : Data_Type;
       Pos    : out Iterator)
    is
@@ -59,6 +58,7 @@ package body Lazy_Vectors is
       if Vector.Datas = null then
          Vector.Datas := new Data_Array'(1 => Data);
          Pos.Index := 1;
+         Vector.Last_Item_Index := 1;
          return;
       end if;
 
@@ -66,6 +66,11 @@ package body Lazy_Vectors is
          if Vector.Datas (J) = Null_Data_Type then
             Vector.Datas (J) := Data;
             Pos.Index := J;
+
+            if J > Vector.Last_Item_Index then
+               Vector.Last_Item_Index := J;
+            end if;
+
             return;
          end if;
       end loop;
@@ -80,6 +85,8 @@ package body Lazy_Vectors is
          Vector.Datas (Old_Array'Last + 2 .. Vector.Datas'Last) :=
            (others => Null_Data_Type);
          Free (Old_Array);
+
+         Vector.Last_Item_Index := Pos.Index;
       end;
    end Insert;
 
@@ -119,7 +126,7 @@ package body Lazy_Vectors is
 
    function At_End (It : Iterator) return Boolean is
    begin
-      return It.Vector = null or else It.Index > It.Vector.Datas'Last;
+      return It.Vector = null or else It.Index > It.Vector.Last_Item_Index;
    end At_End;
 
    ---------
@@ -131,6 +138,24 @@ package body Lazy_Vectors is
       return It.Vector.Datas (It.Index);
    end Get;
 
+   ---------
+   -- Set --
+   ---------
+
+   procedure Set (It : Iterator; Value : Data_Type) is
+   begin
+      It.Vector.Datas (It.Index) := Value;
+   end Set;
+
+   ----------------
+   -- Get_Vector --
+   ----------------
+
+   function Get_Vector (It : Iterator) return access Lazy_Vector_Record is
+   begin
+      return It.Vector;
+   end Get_Vector;
+
    ------------
    -- Delete --
    ------------
@@ -138,6 +163,18 @@ package body Lazy_Vectors is
    procedure Delete (It : Iterator) is
    begin
       It.Vector.Datas (It.Index) := Null_Data_Type;
+
+      if It.Index = It.Vector.Last_Item_Index then
+         It.Vector.Last_Item_Index := 0;
+
+         for J in reverse 1 .. It.Index - 1 loop
+            if It.Vector.Datas (J) /= Null_Data_Type then
+               It.Vector.Last_Item_Index := J;
+
+               exit;
+            end if;
+         end loop;
+      end if;
    end Delete;
 
    --------------

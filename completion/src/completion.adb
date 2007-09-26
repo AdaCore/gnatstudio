@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006-2007                      --
---                              AdaCore                              --
+--                  Copyright (C) 2006-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,9 +17,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib.Unicode; use Glib.Unicode;
-
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Unchecked_Deallocation;
+
+with Glib.Unicode; use Glib.Unicode;
 
 package body Completion is
 
@@ -91,6 +91,15 @@ package body Completion is
       return Context.Offset;
    end Get_Completion_Offset;
 
+   --------------
+   -- Get_File --
+   --------------
+
+   function Get_File (Context : Completion_Context) return VFS.Virtual_File is
+   begin
+      return Context.File;
+   end Get_File;
+
    ---------
    -- "<" --
    ---------
@@ -141,13 +150,13 @@ package body Completion is
      (Resolver : access Completion_Resolver'Class)
       return Completion_Resolver_Access
    is
-      It : Completion_Resolver_List_Pckg.List_Node := First
+      It : Completion_Resolver_Map_Pckg.Cursor := First
         (Resolver.Manager.Resolvers);
    begin
-      while It /= Completion_Resolver_List_Pckg.Null_Node loop
-         if Data (It) = Completion_Resolver_Access (Resolver) then
-            if Next (It) /= Completion_Resolver_List_Pckg.Null_Node then
-               return Data (Next (It));
+      while It /= Completion_Resolver_Map_Pckg.No_Element loop
+         if Element (It) = Completion_Resolver_Access (Resolver) then
+            if Next (It) /= Completion_Resolver_Map_Pckg.No_Element then
+               return Element (Next (It));
             else
                return null;
             end if;
@@ -168,7 +177,6 @@ package body Completion is
         Ada.Unchecked_Deallocation
           (Completion_Manager'Class, Completion_Manager_Access);
    begin
-      Free (This.Resolvers, False);
       Free (This.Contexts, True);
       Internal_Free (This);
    end Free;
@@ -181,7 +189,13 @@ package body Completion is
      (Manager  : access Completion_Manager;
       Resolver : access Completion_Resolver'Class) is
    begin
-      Append (Manager.Resolvers, Completion_Resolver_Access (Resolver));
+      Insert
+        (Manager.Resolvers,
+         Get_Id (Resolver.all),
+         Completion_Resolver_Access (Resolver));
+      Append
+        (Manager.Ordered_Resolvers,
+         Completion_Resolver_Access (Resolver));
       Resolver.Manager := Completion_Manager_Access (Manager);
    end Register_Resolver;
 
@@ -191,6 +205,7 @@ package body Completion is
 
    function Create_Context
      (Manager : access Completion_Manager;
+      File    : VFS.Virtual_File;
       Buffer  : String_Access;
       Offset  : Natural) return Completion_Context
    is
@@ -199,39 +214,24 @@ package body Completion is
    begin
       New_Context.Buffer := Buffer;
       New_Context.Offset := Offset;
+      New_Context.File := File;
 
       Append (Manager.Contexts, New_Context);
 
       return New_Context;
    end Create_Context;
 
-   ------------------------
-   -- From_Completion_Id --
-   ------------------------
+   ------------------
+   -- Get_Resolver --
+   ------------------
 
-   function From_Completion_Id
+   function Get_Resolver
      (Manager : access Completion_Manager;
-      Id      : Completion_Id;
-      Context : Completion_Context;
-      Filter  : Possibilities_Filter)
-      return Completion_Proposal_Access
+      Name    : String) return Completion_Resolver_Access
    is
-      It : Completion_Resolver_List_Pckg.List_Node := First
-        (Manager.Resolvers);
-      Result : Completion_Proposal_Access := null;
    begin
-      while It /= Completion_Resolver_List_Pckg.Null_Node loop
-         Result := From_Completion_Id (Data (It), Id, Context, Filter);
-
-         if Result /= null then
-            return Result;
-         end if;
-
-         It := Next (It);
-      end loop;
-
-      return null;
-   end From_Completion_Id;
+      return Element (Manager.Resolvers, Name);
+   end Get_Resolver;
 
    ----------
    -- Free --
@@ -324,19 +324,6 @@ package body Completion is
       return Null_File_Location;
    end Get_Location;
 
-   -----------------------
-   -- Append_Expression --
-   -----------------------
-
-   procedure Append_Expression
-     (Proposal             : in out Completion_Proposal;
-      Number_Of_Parameters : Natural)
-   is
-      pragma Unreferenced (Proposal, Number_Of_Parameters);
-   begin
-      null;
-   end Append_Expression;
-
    --------------
    -- Is_Valid --
    --------------
@@ -397,7 +384,7 @@ package body Completion is
                  To_Completion_Id (Get_Proposal (This));
             begin
                if Completion_Id_Set.Find
-                 (This.Already_Extracted, Id) = Completion_Id_Set.No_Element
+               (This.Already_Extracted, Id) = Completion_Id_Set.No_Element
                then
                   Completion_Id_Set.Insert (This.Already_Extracted, Id);
 
@@ -461,52 +448,21 @@ package body Completion is
       return Visibility_Public;
    end Get_Visibility;
 
-   ---------------------
-   -- Get_Composition --
-   ---------------------
-
-   procedure Get_Composition
-     (Proposal   : Simple_Completion_Proposal;
-      Identifier : String;
-      Offset     : Positive;
-      Is_Partial : Boolean;
-      Result     : in out Completion_List)
-   is
-      pragma Unreferenced (Proposal, Identifier, Offset, Is_Partial, Result);
-   begin
-      null;
-   end Get_Composition;
-
-   ------------------------------
-   -- Get_Number_Of_Parameters --
-   ------------------------------
-
-   function Get_Number_Of_Parameters
-     (Proposal : Simple_Completion_Proposal) return Natural
-   is
-      pragma Unreferenced (Proposal);
-   begin
-      return 0;
-   end Get_Number_Of_Parameters;
-
    -----------
    -- Match --
    -----------
 
    function Match
-     (Proposal   : Simple_Completion_Proposal;
-      Identifier : String;
-      Is_Partial : Boolean;
-      Context    : Completion_Context;
-      Offset     : Integer;
-      Filter     : Possibilities_Filter) return Boolean
+     (Proposal : Simple_Completion_Proposal;
+      Context  : Completion_Context;
+      Offset   : Integer) return Boolean
    is
-      pragma Unreferenced
-        (Proposal, Identifier, Is_Partial, Context, Offset, Filter);
+      pragma Unreferenced (Proposal, Context, Offset);
    begin
       --  ??? Implement correcly this function
       return True;
    end Match;
+
    ----------
    -- Free --
    ----------
@@ -571,55 +527,5 @@ package body Completion is
    begin
       return At_End (This.It);
    end At_End;
-
-   ----------------------------
-   -- Set_Next_Param_Written --
-   ----------------------------
-
-   procedure Set_Next_Param_Written
-     (Profile : Profile_Manager_Access; Success : out Boolean) is
-   begin
-      if Profile = null then
-         Success := False;
-         return;
-      end if;
-
-      for J in Profile.Parameters'Range loop
-         if not Profile.Parameters (J).Is_Written then
-            Profile.Parameters (J).Is_Written := True;
-            Success := True;
-            return;
-         end if;
-      end loop;
-
-      Success := False;
-   end Set_Next_Param_Written;
-
-   -----------------------
-   -- Set_Param_Written --
-   -----------------------
-
-   procedure Set_Param_Written
-     (Profile : Profile_Manager_Access; Name : String; Success : out Boolean)
-   is
-   begin
-      if Profile = null then
-         Success := False;
-         return;
-      end if;
-
-      for J in Profile.Parameters'Range loop
-         --  ??? Handle case sensitivity here !
-         if Profile.Parameters (J).Name.all = Name
-           and then not Profile.Parameters (J).Is_Written
-         then
-            Profile.Parameters (J).Is_Written := True;
-            Success := True;
-            return;
-         end if;
-      end loop;
-
-      Success := False;
-   end Set_Param_Written;
 
 end Completion;

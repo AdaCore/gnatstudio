@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006                           --
---                             AdaCore                               --
+--                  Copyright (C) 2006-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -38,7 +37,7 @@ package Lazy_Vectors is
    procedure Free (This : in out Lazy_Vector);
    --  Free the data associated to a lazy vector.
 
-   procedure Insert (Vector : access Lazy_Vector_Record; Data : Data_Type);
+   procedure Insert (Vector : Lazy_Vector; Data : Data_Type);
    --  Insert a data in a lazy vector. There is no garantee on the actual
    --  position of the data regarding already existing one. The first hole
    --  available will be taken, if any. If no, then the vector size will be
@@ -50,7 +49,7 @@ package Lazy_Vectors is
    Null_Iterator : constant Iterator;
 
    procedure Insert
-     (Vector : access Lazy_Vector_Record;
+     (Vector : Lazy_Vector;
       Data   : Data_Type;
       Pos    : out Iterator);
    --  Same as previous function insert, but gives the position where the data
@@ -68,6 +67,11 @@ package Lazy_Vectors is
    function Get (It : Iterator) return Data_Type;
    --  Return the data store at the position of the iterator.
 
+   function Get_Vector (It : Iterator) return access Lazy_Vector_Record;
+
+   procedure Set (It : Iterator; Value : Data_Type);
+   --  Change the value of the object stored at this position in the iterator.
+
    procedure Delete (It : Iterator);
    --  Deletes the data at the position of the iterator
 
@@ -81,11 +85,12 @@ private
    --  Free the data associated to a data array access
 
    type Lazy_Vector_Record is record
-      Datas  : Data_Array_Access;
+      Datas           : Data_Array_Access;
+      Last_Item_Index : Natural := 0;
    end record;
 
    type Iterator is record
-      Vector : access Lazy_Vector_Record;
+      Vector : Lazy_Vector;
       Index  : Natural;
    end record;
 

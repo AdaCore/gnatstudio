@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2007                      --
---                              AdaCore                              --
+--                  Copyright (C) 2002-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,9 +20,9 @@
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;
 
-with Language;          use Language;
-with Language.Tree;     use Language.Tree;
-with Language.Tree.Ada; use Language.Tree.Ada;
+with Language;               use Language;
+with Language.Tree;          use Language.Tree;
+with Language.Tree.Database; use Language.Tree.Database;
 with VFS;
 with Projects.Registry;
 
@@ -318,13 +317,9 @@ package Codefix.Text_Manager is
      (This : access Text_Interface'Class) return Construct_List_Access;
    --  Return the parsed strucutre of the text_interface.
 
-   function Get_Tree
-     (This : access Text_Interface'Class) return Construct_Tree;
+   function Get_Structured_File
+     (This : access Text_Interface'Class) return Structured_File_Access;
    --  Return the tree associated to this text.
-
-   function Get_Ada_Tree
-     (This : access Text_Interface'Class) return Ada_Construct_Tree;
-   --  Return the ada-specific tree asssociated to this text.
 
    procedure Constrain_Update (This : in out Text_Interface) is abstract;
    --  This function should constrain the update of the information contained
@@ -369,6 +364,13 @@ package Codefix.Text_Manager is
    function Get_Registry
      (Text : Text_Navigator_Abstr)
       return Projects.Registry.Project_Registry_Access;
+
+   procedure Set_Construct_Database
+     (Text : in out Text_Navigator_Abstr;
+      Db   : Construct_Database_Access);
+
+   function Get_Construct_Database
+     (Text : Text_Navigator_Abstr) return Construct_Database_Access;
 
    function Get_Body_Or_Spec
      (Text : Text_Navigator_Abstr; File_Name : VFS.Virtual_File)
@@ -554,17 +556,11 @@ package Codefix.Text_Manager is
      (This : Text_Navigator_Abstr'Class; File_Name : VFS.Virtual_File);
    --  Undo the last action from the File_Name.
 
-   function Get_Tree
+   function Get_Structured_File
      (This : Text_Navigator_Abstr'Class; Cursor : File_Cursor'Class)
-      return Construct_Tree;
+      return Structured_File_Access;
    --  Return the construct tree corresponding to the file pointed by the given
    --  cursor.
-
-   function Get_Ada_Tree
-     (This : Text_Navigator_Abstr'Class; Cursor : File_Cursor'Class)
-      return Ada_Construct_Tree;
-   --  Return the ada-specific tree corresponding to the file pointed by the
-   --  given cursor.
 
    procedure Parse_Entities
      (Lang     : access Language_Root'Class;
@@ -1282,8 +1278,9 @@ private
      is new Ada.Unchecked_Deallocation (Text_List.List, Ptr_List_Text);
 
    type Text_Navigator_Abstr is abstract tagged record
-      Files    : Ptr_List_Text := new Text_List.List;
-      Registry : Projects.Registry.Project_Registry_Access;
+      Files        : Ptr_List_Text := new Text_List.List;
+      Registry     : Projects.Registry.Project_Registry_Access;
+      Construct_Db : Construct_Database_Access;
    end record;
 
    function Get_File
@@ -1309,11 +1306,11 @@ private
 
    type Text_Interface is abstract tagged record
       Structure            : Construct_List_Access := new Construct_List;
-      Tree                 : Construct_Tree := Null_Construct_Tree;
-      Ada_Tree             : Ada_Construct_Tree;
+      Construct_File       : Structured_File_Access := null;
       Buffer               : GNAT.Strings.String_Access := null;
       File_Name            : VFS.Virtual_File;
       Structure_Up_To_Date : Ptr_Boolean := new Boolean'(False);
+      Construct_Db         : Construct_Database_Access;
    end record;
 
    function Get_Iterator_At

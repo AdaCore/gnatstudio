@@ -29,6 +29,8 @@ with Glib.Convert; use Glib.Convert;
 
 package body Language.Tree is
 
+   use GNAT.Strings;
+
    --------------
    -- Contains --
    --------------
@@ -46,34 +48,60 @@ package body Language.Tree is
    procedure Free (Tree : in out Construct_Tree) is
       procedure Internal is new Ada.Unchecked_Deallocation
         (Construct_Tree_Record, Construct_Tree);
+      procedure Internal is new Ada.Unchecked_Deallocation
+        (Referenced_Identifiers_List_Record, Access_Referenced_List);
+
+      Ref : Referenced_Identifiers_List;
+      Garbage : Referenced_Identifiers_List;
    begin
       if Tree /= null then
          for J in Tree.Contents'Range loop
             GNAT.Strings.Free (Tree.Contents (J).Construct.Name);
+
+            Ref := Tree.Contents (J).Referenced_Ids;
+
+            while Ref.Contents /= null loop
+               Garbage := Ref;
+               Ref := Ref.Contents.Next;
+               Internal (Garbage.Contents);
+            end loop;
          end loop;
 
-         Free (Tree.Unit_Name);
          Internal (Tree);
       end if;
    end Free;
+
+   ----------------------
+   -- Free_Annotations --
+   ----------------------
+
+   procedure Free_Annotations (Tree : in out Construct_Tree) is
+   begin
+      if Tree /= null then
+         for J in Tree.Contents'Range loop
+            Construct_Annotations_Pckg.Free (Tree.Contents (J).Annotations);
+         end loop;
+      end if;
+
+      Tree_Annotations_Pckg.Free (Tree.Annotations);
+   end Free_Annotations;
 
    -----------------------
    -- To_Construct_Tree --
    -----------------------
 
    function To_Construct_Tree
-     (List : access Construct_List; Free_List : Boolean := False)
+     (List      : access Construct_List;
+      Free_List : Boolean := False)
       return Construct_Tree
    is
-      Size              : Natural := 0;
+      pragma Suppress (All_Checks);
+      --  For efficiency
+
+      Size              : constant Natural := List.Size;
       Current_Construct : Construct_Access;
    begin
-      Current_Construct := List.First;
-
-      while Current_Construct /= null loop
-         Size := Size + 1;
-         Current_Construct := Current_Construct.Next;
-      end loop;
+      Current_Construct := List.Last;
 
       if Size = 0 then
          return new Construct_Tree_Record (0);
@@ -127,20 +155,33 @@ package body Language.Tree is
             Tree.Contents (Tree_Index).Sub_Nodes_Length :=
               Start_Index - Tree_Index - 1;
 
-            for J in Tree_Index + 1
-              .. Tree_Index + Tree.Contents (Tree_Index).Sub_Nodes_Length
-            loop
-               if Tree.Contents (J).Parent_Index = 0 then
+            declare
+               J         : Integer := Tree_Index + 1;
+               End_Bound : constant Integer :=
+                 Tree_Index + Tree.Contents (Tree_Index).Sub_Nodes_Length;
+            begin
+               while J <= End_Bound loop
                   Tree.Contents (J).Parent_Index := Tree_Index;
-               end if;
-            end loop;
+
+                  J := J + Tree.Contents (J).Sub_Nodes_Length + 1;
+               end loop;
+            end;
          end Analyze_Construct;
+
+         Previous_Index : Positive;
 
       begin
          Current_Construct := List.Last;
 
          while Current_Construct /= null loop
+            Previous_Index := Tree_Index;
             Analyze_Construct;
+
+            if Previous_Index in Tree.Contents'Range then
+               --  This is false when we are on the root node
+               Tree.Contents (Previous_Index).Previous_Sibling_Index :=
+                 Tree_Index;
+            end if;
          end loop;
 
          if Free_List then
@@ -167,6 +208,18 @@ package body Language.Tree is
       return To_Construct_Tree (List'Access, True);
    end To_Construct_Tree;
 
+   ------------------------------
+   -- Get_Annotation_Container --
+   ------------------------------
+
+   function Get_Annotation_Container
+     (Tree : Construct_Tree)
+      return access Tree_Annotations_Pckg.Annotation_Container
+   is
+   begin
+      return Tree.Annotations'Access;
+   end Get_Annotation_Container;
+
    -----------
    -- First --
    -----------
@@ -174,7 +227,7 @@ package body Language.Tree is
    function First (Tree : Construct_Tree) return Construct_Tree_Iterator is
    begin
       if Tree.Contents'Length > 0 then
-         return (Tree.Contents (1), 1);
+         return (Tree.Contents (1)'Access, 1);
       else
          return Null_Construct_Tree_Iterator;
       end if;
@@ -187,7 +240,8 @@ package body Language.Tree is
    function Last (Tree : Construct_Tree) return Construct_Tree_Iterator is
    begin
       if Tree.Contents'Length > 0 then
-         return (Tree.Contents (Tree.Contents'Last), Tree.Contents'Last);
+         return
+           (Tree.Contents (Tree.Contents'Last)'Access, Tree.Contents'Last);
       else
          return Null_Construct_Tree_Iterator;
       end if;
@@ -204,21 +258,34 @@ package body Language.Tree is
    begin
       if Iter.Node.Parent_Index /= 0 then
          return
-           (Tree.Contents (Iter.Node.Parent_Index), Iter.Node.Parent_Index);
+           (Tree.Contents
+              (Iter.Node.Parent_Index)'Access, Iter.Node.Parent_Index);
       else
          return Null_Construct_Tree_Iterator;
       end if;
    end Get_Parent_Scope;
 
+   ---------------------
+   -- Is_Parent_Scope --
+   ---------------------
+
+   function Is_Parent_Scope
+     (Scope, It : Construct_Tree_Iterator) return Boolean is
+   begin
+      return It /= Null_Construct_Tree_Iterator
+        and then Scope.Index = It.Node.Parent_Index;
+   end Is_Parent_Scope;
+
    -------------------
    -- Get_Construct --
    -------------------
 
-   function Get_Construct (Iter : Construct_Tree_Iterator)
-      return Simple_Construct_Information
+   function Get_Construct
+     (Iter : Construct_Tree_Iterator)
+      return access Simple_Construct_Information
    is
    begin
-      return Iter.Node.Construct;
+      return Iter.Node.Construct'Access;
    end Get_Construct;
 
    ----------------------
@@ -247,6 +314,34 @@ package body Language.Tree is
    end "=";
 
    ---------
+   -- "=" --
+   ---------
+
+   function "="
+     (Left : Referenced_Identifiers_List; Right : Distinct_Identifier)
+      return Boolean
+   is
+   begin
+      return Left.Contents /= null
+        and then Left.Contents.Element = Right
+        and then Left.Contents.Next.Contents = null;
+   end "=";
+
+   ---------
+   -- "=" --
+   ---------
+
+   function "="
+     (Left : Distinct_Identifier; Right : Referenced_Identifiers_List)
+      return Boolean
+   is
+   begin
+      return Right.Contents /= null
+        and then Right.Contents.Element = Left
+        and then Right.Contents.Next.Contents = null;
+   end "=";
+
+   ---------
    -- "<" --
    ---------
 
@@ -270,7 +365,14 @@ package body Language.Tree is
    function "<="
      (Left : Text_Location; Right : Source_Location) return Boolean is
    begin
-      return Left = Right or else Left < Right;
+      case Left.Absolute_Offset is
+         when True =>
+            return Left.Offset <= Right.Index;
+         when False =>
+            return Left.Line <= Right.Line
+              or else (Left.Line = Right.Line
+                       and then Left.Line_Offset <= Right.Column);
+      end case;
    end "<=";
 
    ---------
@@ -297,7 +399,14 @@ package body Language.Tree is
    function ">="
      (Left : Text_Location; Right : Source_Location) return Boolean is
    begin
-      return Left = Right or else Left > Right;
+      case Left.Absolute_Offset is
+         when True =>
+            return Left.Offset >= Right.Index;
+         when False =>
+            return Left.Line >= Right.Line
+              or else (Left.Line = Right.Line
+                       and then Left.Line_Offset >= Right.Column);
+      end case;
    end ">=";
 
    -----------------
@@ -344,10 +453,6 @@ package body Language.Tree is
 
       function Is_On (Construct : Simple_Construct_Information) return Boolean;
       --  Return true is the construct is on the specified position
-
-      function Is_Enclosing
-        (Construct : Simple_Construct_Information) return Boolean;
-      --  Return true if the construct encloses the specified position
 
       --------------------
       -- Match_Category --
@@ -417,18 +522,6 @@ package body Language.Tree is
          end if;
       end Is_On;
 
-      ------------------
-      -- Is_Enclosing --
-      ------------------
-
-      function Is_Enclosing
-        (Construct : Simple_Construct_Information) return Boolean
-      is
-      begin
-         return Location >= Construct.Sloc_Start
-           and then Location <= Construct.Sloc_End;
-      end Is_Enclosing;
-
       Last_Matched : Construct_Tree_Iterator :=
         Null_Construct_Tree_Iterator;
 
@@ -439,7 +532,7 @@ package body Language.Tree is
 
       if Position = Before then
          if Match_Category (Tree.Contents (1).Construct.Category) then
-            Last_Matched := (Tree.Contents (1), 1);
+            Last_Matched := (Tree.Contents (1)'Access, 1);
          end if;
 
          for J in 2 .. Tree.Contents'Last loop
@@ -448,7 +541,7 @@ package body Language.Tree is
             end if;
 
             if Match_Category (Tree.Contents (J).Construct.Category) then
-               Last_Matched := (Tree.Contents (J), J);
+               Last_Matched := (Tree.Contents (J)'Access, J);
             end if;
          end loop;
 
@@ -458,7 +551,7 @@ package body Language.Tree is
             if Is_On_Or_After (Tree.Contents (J).Construct)
               and then Match_Category (Tree.Contents (J).Construct.Category)
             then
-               return (Tree.Contents (J), J);
+               return (Tree.Contents (J)'Access, J);
             end if;
          end loop;
       elsif Position = Specified then
@@ -466,21 +559,29 @@ package body Language.Tree is
             if Is_On (Tree.Contents (J).Construct)
               and then Match_Category (Tree.Contents (J).Construct.Category)
             then
-               return (Tree.Contents (J), J);
+               return (Tree.Contents (J)'Access, J);
             elsif Is_After (Tree.Contents (J).Construct) then
                return Null_Construct_Tree_Iterator;
             end if;
          end loop;
       elsif Position = Enclosing then
-         for J in 1 .. Tree.Contents'Last loop
-            if Is_Enclosing (Tree.Contents (J).Construct)
-              and then Match_Category (Tree.Contents (J).Construct.Category)
-            then
-               Last_Matched := (Tree.Contents (J), J);
-            end if;
+         declare
+            It : Construct_Tree_Iterator := First (Tree);
+         begin
+            while It /= Null_Construct_Tree_Iterator loop
+               exit when Location < It.Node.Construct.Sloc_Start;
 
-            exit when Is_After (Tree.Contents (J).Construct);
-         end loop;
+               if Location <= It.Node.Construct.Sloc_End then
+                  if Match_Category (It.Node.Construct.Category) then
+                     Last_Matched := It;
+                  end if;
+
+                  It := Next (Tree, It, Jump_Into);
+               else
+                  It := Next (Tree, It, Jump_Over);
+               end if;
+            end loop;
+         end;
 
          return Last_Matched;
       end if;
@@ -500,16 +601,20 @@ package body Language.Tree is
    is
       Next_Index : Positive;
    begin
-      if Scope_Policy = Jump_Into then
-         Next_Index := Iter.Index + 1;
-      else
-         Next_Index := Iter.Index + Iter.Node.Sub_Nodes_Length + 1;
-      end if;
+      if Tree /= Null_Construct_Tree then
+         if Scope_Policy = Jump_Into then
+            Next_Index := Iter.Index + 1;
+         else
+            Next_Index := Iter.Index + Iter.Node.Sub_Nodes_Length + 1;
+         end if;
 
-      if Next_Index > Tree.Contents'Last then
-         return Null_Construct_Tree_Iterator;
+         if Next_Index > Tree.Contents'Last then
+            return Null_Construct_Tree_Iterator;
+         else
+            return (Tree.Contents (Next_Index)'Access, Next_Index);
+         end if;
       else
-         return (Tree.Contents (Next_Index), Next_Index);
+         return Null_Construct_Tree_Iterator;
       end if;
    end Next;
 
@@ -538,7 +643,7 @@ package body Language.Tree is
       if Next_Index = 0 then
          return Null_Construct_Tree_Iterator;
       else
-         return (Tree.Contents (Next_Index), Next_Index);
+         return (Tree.Contents (Next_Index)'Access, Next_Index);
       end if;
    end Prev;
 
@@ -560,9 +665,10 @@ package body Language.Tree is
       return Construct_Tree_Iterator
    is
       Last_Index : constant Natural := Iter.Index + Iter.Node.Sub_Nodes_Length;
-      It : Construct_Tree_Iterator := (Tree.Contents (Last_Index), Last_Index);
+      It : Construct_Tree_Iterator :=
+        (Tree.Contents (Last_Index)'Access, Last_Index);
    begin
-      while It /= Iter and then Get_Parent_Scope (Tree, It) /= Iter loop
+      while It /= Iter and then not Is_Parent_Scope (Iter, It) loop
          It := Prev (Tree, It, Jump_Over);
       end loop;
 
@@ -593,9 +699,11 @@ package body Language.Tree is
             return Is_Same_Entity
               (Tree,
                (Tree.Contents
-                  (Iter1.Node.Parent_Index), Iter1.Node.Parent_Index),
+                  (Iter1.Node.Parent_Index)'Access,
+                Iter1.Node.Parent_Index),
                (Tree.Contents
-                  (Iter2.Node.Parent_Index), Iter2.Node.Parent_Index));
+                  (Iter2.Node.Parent_Index)'Access,
+                Iter2.Node.Parent_Index));
          end if;
       else
          return False;
@@ -617,7 +725,7 @@ package body Language.Tree is
 
       for J in reverse 1 .. Tree.Contents'Last loop
          if Tree.Contents (J).Construct.Sloc_Start.Index <= Offset then
-            Last_Relevant_Construct := (Tree.Contents (J), J);
+            Last_Relevant_Construct := (Tree.Contents (J)'Access, J);
             It := Last_Relevant_Construct;
 
             while It /= Null_Construct_Tree_Iterator loop
@@ -661,7 +769,8 @@ package body Language.Tree is
          return False;
       elsif Is_Same_Entity
         (Tree,
-         (Tree.Contents (Iter.Node.Parent_Index), Iter.Node.Parent_Index),
+         (Tree.Contents
+            (Iter.Node.Parent_Index)'Access, Iter.Node.Parent_Index),
          Scope)
       then
          return True;
@@ -669,7 +778,8 @@ package body Language.Tree is
          return Encloses
            (Tree,
             Scope,
-            (Tree.Contents (Iter.Node.Parent_Index), Iter.Node.Parent_Index));
+            (Tree.Contents (Iter.Node.Parent_Index)'Access,
+             Iter.Node.Parent_Index));
       end if;
    end Encloses;
 
@@ -678,47 +788,28 @@ package body Language.Tree is
    --------------
 
    function Encloses
-     (Tree              : Construct_Tree;
-      Scope             : Construct_Tree_Iterator;
+     (Scope             : Construct_Tree_Iterator;
       Line, Line_Offset : Positive)
       return Boolean
    is
-      Last_Relevant_Entity : Natural := 0;
    begin
-      --  Find the closest scope
-
-      for J in 1 .. Tree.Contents'Last loop
-         if (Tree.Contents (J).Construct.Sloc_Start.Line < Line
-           or else
-             (Tree.Contents (J).Construct.Sloc_Start.Line = Line
-              and then Tree.Contents (J).Construct.Sloc_Start.Column
-              < Line_Offset))
-           and then
-             (Tree.Contents (J).Construct.Sloc_End.Line > Line
-              or else
-                (Tree.Contents (J).Construct.Sloc_End.Line = Line
-                 and then Tree.Contents (J).Construct.Sloc_End.Column
-                 > Line_Offset))
-         then
-            Last_Relevant_Entity := J;
-         end if;
-      end loop;
-
-      if Last_Relevant_Entity = 0 then
-         --  ??? See why we get a warning here !
-         pragma Warnings (Off);
-         return Encloses
-           (Tree,
-            Scope,
-            (Tree.Contents (Last_Relevant_Entity), Last_Relevant_Entity))
-           or else Is_Same_Entity
-             (Tree,
-              Scope,
-              (Tree.Contents (Last_Relevant_Entity), Last_Relevant_Entity));
-         pragma Warnings (On);
-      else
+      if Line < Get_Construct (Scope).Sloc_Start.Line
+        or else
+          (Line = Get_Construct (Scope).Sloc_Start.Line
+           and then Line_Offset < Get_Construct (Scope).Sloc_Start.Column)
+      then
          return False;
       end if;
+
+      if Line > Get_Construct (Scope).Sloc_End.Line
+        or else
+          (Line = Get_Construct (Scope).Sloc_End.Line
+           and then Line_Offset > Get_Construct (Scope).Sloc_End.Column)
+      then
+         return False;
+      end if;
+
+      return True;
    end Encloses;
 
    --------------
@@ -726,24 +817,13 @@ package body Language.Tree is
    --------------
 
    function Encloses
-     (Tree   : Construct_Tree;
-      Scope  : Construct_Tree_Iterator;
+     (Scope  : Construct_Tree_Iterator;
       Offset : Positive)
       return Boolean
    is
-      Last_Relevant_Entity : constant Construct_Tree_Iterator :=
-        Get_Last_Relevant_Construct (Tree, Offset);
    begin
-      if Last_Relevant_Entity /= Null_Construct_Tree_Iterator then
-         return Encloses
-           (Tree, Scope, Last_Relevant_Entity)
-           or else Is_Same_Entity
-             (Tree,
-              Scope,
-              Last_Relevant_Entity);
-      else
-         return False;
-      end if;
+      return Offset >= Get_Construct (Scope).Sloc_Start.Index
+        and then Offset <= Get_Construct (Scope).Sloc_End.Index;
    end Encloses;
 
    -------------------
@@ -796,75 +876,80 @@ package body Language.Tree is
       end;
    end Get_Full_Name;
 
-   -------------------------
-   -- To_Construct_Access --
-   -------------------------
+   ------------------------------
+   -- Get_Annotation_Container --
+   ------------------------------
 
-   function To_Construct_Access
-     (Tree : Construct_Tree; Iterator : Construct_Tree_Iterator)
-      return Construct_Cell_Access
+   function Get_Annotation_Container
+     (Tree : Construct_Tree; It : Construct_Tree_Iterator)
+      return access Construct_Annotations_Pckg.Annotation_Container
    is
    begin
-      return (Tree, Iterator.Index);
-   end To_Construct_Access;
+      --  Using the tree is needed here, since we can't rely on the copy of
+      --  the node contained in It.
+      return Tree.Contents (It.Index).Annotations'Access;
+   end Get_Annotation_Container;
 
-   --------------------------------
-   -- To_Construct_Tree_Iterator --
-   --------------------------------
+   --------------------
+   -- Has_Same_Scope --
+   --------------------
 
-   function To_Construct_Tree_Iterator
-     (Construct : Construct_Cell_Access) return Construct_Tree_Iterator is
+   function Has_Same_Scope
+     (Left, Right : Construct_Tree_Iterator) return Boolean is
    begin
-      return (Construct.Tree.Contents (Construct.Index), Construct.Index);
-   end To_Construct_Tree_Iterator;
+      return Left.Node.Parent_Index = Right.Node.Parent_Index;
+   end Has_Same_Scope;
 
-   --------------
-   -- Get_Tree --
-   --------------
+   ---------
+   -- "=" --
+   ---------
 
-   function Get_Tree
-     (Construct : Construct_Cell_Access) return Construct_Tree is
+   function "=" (Left, Right : Construct_Tree_Iterator) return Boolean is
    begin
-      return Construct.Tree;
-   end Get_Tree;
+      --  This function is supposed to be called a lot, so it has to be as
+      --  efficient as possible. That's why we overload it, in order to test
+      --  only the indexes, and avoid comparison on the actual constructs,
+      --  which is useless if the precondition (both iterators are coming from
+      --  the same tree) is correct.
 
-   -----------------------
-   -- Is_Same_Construct --
-   -----------------------
+      return Left.Index = Right.Index;
+   end "=";
 
-   function Is_Same_Construct
-     (Left, Right : Construct_Cell_Access) return Boolean
-   is
-      function Equals (C1, C2 : Simple_Construct_Information) return Boolean;
+   ---------
+   -- "<" --
+   ---------
 
-      function Equals (C1, C2 : Simple_Construct_Information) return Boolean is
-      begin
-         return C1.Category = C2.Category
-           and then C1.Is_Declaration = C2.Is_Declaration
-           and then C1.Visibility = C2.Visibility
-           and then C1.Attributes = C2.Attributes
-           and then C1.Name.all = C2.Name.all;
-      end Equals;
-
-      It_Left, It_Right : Construct_Tree_Iterator;
+   function "<" (Left, Right : Construct_Tree_Iterator) return Boolean is
    begin
-      It_Left := (Left.Tree.Contents (Left.Index), Left.Index);
-      It_Right := (Right.Tree.Contents (Right.Index), Right.Index);
+      return Left.Index < Right.Index;
+   end "<";
 
-      while It_Left /= Null_Construct_Tree_Iterator
-        and then It_Right /= Null_Construct_Tree_Iterator
-      loop
-         if not Equals (Get_Construct (It_Left), Get_Construct (It_Right)) then
-            return False;
-         end if;
+   ---------
+   -- ">" --
+   ---------
 
-         It_Left := Get_Parent_Scope (Left.Tree, It_Left);
-         It_Right := Get_Parent_Scope (Right.Tree, It_Right);
-      end loop;
+   function ">" (Left, Right : Construct_Tree_Iterator) return Boolean is
+   begin
+      return Left.Index > Right.Index;
+   end ">";
 
-      return It_Left = Null_Construct_Tree_Iterator
-        and then It_Right = Null_Construct_Tree_Iterator;
-   end Is_Same_Construct;
+   ----------
+   -- "<=" --
+   ----------
+
+   function "<=" (Left, Right : Construct_Tree_Iterator) return Boolean is
+   begin
+      return Left.Index <= Right.Index;
+   end "<=";
+
+   ----------
+   -- ">=" --
+   ----------
+
+   function ">=" (Left, Right : Construct_Tree_Iterator) return Boolean is
+   begin
+      return Left.Index >= Right.Index;
+   end ">=";
 
    ----------
    -- Free --
@@ -919,8 +1004,7 @@ package body Language.Tree is
       Result.Position_End (1) := Word_End;
       Result.Position_Start (2 .. Result.Position_Start'Last)
         := Id.Position_Start;
-      Result.Position_End (2 .. Result.Position_End'Last)
-        := Id.Position_End;
+      Result.Position_End (2 .. Result.Position_End'Last) := Id.Position_End;
 
       return Result;
    end Prepend;
@@ -932,25 +1016,28 @@ package body Language.Tree is
    function To_Composite_Identifier (Identifier : String)
      return Composite_Identifier
    is
-      Index : Natural;
+      Number_Of_Parts : Natural := 0;
+      Number_Of_Chars : Natural := 0;
+      Index_In_Id     : Integer := Identifier'First;
 
-      function Internal_To_Composite_Identifier return Composite_Identifier;
-      --  Internal function, analyzing recursively the various parts of the
-      --  composite identifier
+      Word_Begin, Word_End : Natural;
 
-      --------------------------------------
-      -- Internal_To_Composite_Identifier --
-      --------------------------------------
+      Tmp : Composite_Identifier (Identifier'Length, Identifier'Length);
 
-      function Internal_To_Composite_Identifier return Composite_Identifier is
-         Word_Begin, Word_End : Natural;
-      begin
-         Skip_Blanks (Identifier, Index);
+   begin
+      if Identifier = "" then
+         return (0, 0, "", (others => 0), (others => 0));
+      end if;
 
-         Word_Begin := Index;
-         Word_End := Word_Begin;
+      --  First, compute the size of the result.
 
-         if Identifier (Word_Begin) = '"' then
+      loop
+         Skip_Blanks (Identifier, Index_In_Id);
+
+         Word_Begin := Index_In_Id;
+         Word_End   := Word_Begin;
+
+         if Identifier (Index_In_Id) = '"' then
             Word_End := Word_End + 1;
             Skip_To_Char (Identifier, Word_End, '"');
             Word_End := Word_End + 1;
@@ -958,41 +1045,100 @@ package body Language.Tree is
             Skip_Word (Identifier, Word_End);
          end if;
 
-         Index := Word_End;
+         Index_In_Id := Word_End;
          Word_End := Word_End - 1;
 
-         Skip_Blanks (Identifier, Index);
+         Tmp.Identifier
+           (Number_Of_Chars + 1 ..
+              Number_Of_Chars + 1 + Word_End - Word_Begin) :=
+             Identifier (Word_Begin .. Word_End);
+         Tmp.Position_Start (Number_Of_Parts + 1) := Number_Of_Chars + 1;
+         Tmp.Position_End (Number_Of_Parts + 1) :=
+           Number_Of_Chars + 1 + Word_End - Word_Begin;
 
-         if Index > Identifier'Last or else Identifier (Index) /= '.' then
-            declare
-               Id : Composite_Identifier (Word_End - Identifier'First + 1, 1);
-            begin
-               Id.Identifier := Identifier (Identifier'First .. Word_End);
-               Id.Position_Start (1) := Word_Begin - Identifier'First + 1;
-               Id.Position_End (1) := Word_End - Identifier'First + 1;
+         Number_Of_Parts := Number_Of_Parts + 1;
+         Number_Of_Chars := Number_Of_Chars + Word_End - Word_Begin + 1;
 
-               return Id;
-            end;
+         Skip_Blanks (Identifier, Index_In_Id);
+
+         if Index_In_Id > Identifier'Last
+           or else Identifier (Index_In_Id) /= '.'
+         then
+            exit;
          end if;
 
-         if Index < Identifier'Last then
-            Index := Index + 1;
+         if Index_In_Id < Identifier'Last then
+            Index_In_Id := Index_In_Id + 1;
+         else
+            exit;
          end if;
 
-         return Prepend
-           (Internal_To_Composite_Identifier,
-            Word_Begin - Identifier'First + 1,
-            Word_End - Identifier'First + 1);
-      end Internal_To_Composite_Identifier;
+         Tmp.Identifier (Number_Of_Chars + 1) := '.';
+         Number_Of_Chars := Number_Of_Chars + 1;
+      end loop;
 
-   begin
-      if Identifier = "" then
-         return (0, 0, "", (others => 0), (others => 0));
-      end if;
+      --  Then, do the same iteration a second time with the actual result.
 
-      Index := Identifier'First;
+      declare
+         Result : Composite_Identifier (Number_Of_Chars, Number_Of_Parts);
+      begin
+         Result.Identifier := Tmp.Identifier (1 .. Number_Of_Chars);
+         Result.Position_Start := Tmp.Position_Start (1 .. Number_Of_Parts);
+         Result.Position_End := Tmp.Position_End (1 .. Number_Of_Parts);
 
-      return Internal_To_Composite_Identifier;
+         return Result;
+--           Number_Of_Parts := 0;
+--           Number_Of_Chars := 0;
+--
+--           loop
+--              Skip_Blanks (Identifier, Index_In_Id);
+--
+--              Word_Begin := Index_In_Id;
+--              Word_End   := Word_Begin;
+--
+--              if Identifier (Index_In_Id) = '"' then
+--                 Word_End := Word_End + 1;
+--                 Skip_To_Char (Identifier, Word_End, '"');
+--                 Word_End := Word_End + 1;
+--              else
+--                 Skip_Word (Identifier, Word_End);
+--              end if;
+--
+--              Index_In_Id := Word_End;
+--              Word_End := Word_End - 1;
+--
+--              Result.Identifier
+--                (Number_Of_Chars + 1 ..
+--                   Number_Of_Chars + 1 + Word_End - Word_Begin) :=
+--                  Identifier (Word_Begin .. Word_End);
+--              Result.Position_Start (Number_Of_Parts + 1) := Number_Of_Chars
+--           + 1;
+--              Result.Position_End (Number_Of_Parts + 1) :=
+--                Number_Of_Chars + 1 + Word_End - Word_Begin;
+--
+--              Number_Of_Parts := Number_Of_Parts + 1;
+--              Number_Of_Chars := Number_Of_Chars + Word_End - Word_Begin + 1;
+--
+--              Skip_Blanks (Identifier, Index_In_Id);
+--
+--              if Index_In_Id > Identifier'Last
+--                or else Identifier (Index_In_Id) /= '.'
+--              then
+--                 exit;
+--              end if;
+--
+--              if Index_In_Id < Identifier'Last then
+--                 Index_In_Id := Index_In_Id + 1;
+--              else
+--                 exit;
+--              end if;
+--
+--              Result.Identifier (Number_Of_Chars + 1) := '.';
+--              Number_Of_Chars := Number_Of_Chars + 1;
+--           end loop;
+--
+--           return Result;
+      end;
    end To_Composite_Identifier;
 
    ---------------
@@ -1047,18 +1193,77 @@ package body Language.Tree is
       return Result;
    end Get_Slice;
 
+   ------------------
+   -- Is_Prefix_Of --
+   ------------------
+
+   function Is_Prefix_Of
+     (Potential_Prefix, Full_Id : Composite_Identifier;
+      Case_Sensitive            : Boolean)
+     return Boolean
+   is
+   begin
+      if Length (Full_Id) /= Length (Potential_Prefix) + 1 then
+         return False;
+      end if;
+
+      for J in 1 .. Length (Potential_Prefix) loop
+         if not Equal
+           (Get_Item (Potential_Prefix, J),
+            Get_Item (Full_Id, J),
+            Case_Sensitive)
+         then
+            return False;
+         end if;
+      end loop;
+
+      return True;
+   end Is_Prefix_Of;
+
+   -----------
+   -- Equal --
+   -----------
+
+   function Equal
+     (Left, Right : Composite_Identifier; Case_Sensitive : Boolean)
+      return Boolean
+   is
+   begin
+      if Left.Number_Of_Elements /= Right.Number_Of_Elements then
+         return False;
+      end if;
+
+      for J in 1 .. Length (Left) loop
+         if not Equal
+           (Get_Item (Left, J), Get_Item (Right, J), Case_Sensitive)
+         then
+            return False;
+         end if;
+      end loop;
+
+      return True;
+   end Equal;
+
    -------------------------
    -- Full_Construct_Path --
    -------------------------
 
    function Full_Construct_Path
-     (Cell : Construct_Cell_Access) return Construct_Tree_Iterator_Array
+     (Tree         : Construct_Tree;
+      Construct_It : Construct_Tree_Iterator)
+      return Construct_Tree_Iterator_Array
    is
-      It   : Construct_Tree_Iterator := To_Construct_Tree_Iterator (Cell);
+      It   : Construct_Tree_Iterator;
       Size : Integer := 0;
    begin
+      if Construct_It.Index = 0 then
+         return Null_Construct_Tree_Iterator_Array;
+      end if;
+
+      It := Construct_It;
+
       while It /= Null_Construct_Tree_Iterator loop
-         It := Get_Parent_Scope (Get_Tree (Cell), It);
+         It := Get_Parent_Scope (Tree, It);
 
          Size := Size + 1;
       end loop;
@@ -1067,12 +1272,12 @@ package body Language.Tree is
          Result : Construct_Tree_Iterator_Array (1 .. Size);
          Ind    : Integer := Result'Length;
       begin
-         It := To_Construct_Tree_Iterator (Cell);
+         It := Construct_It;
 
          while It /= Null_Construct_Tree_Iterator loop
             Result (Ind) := It;
 
-            It := Get_Parent_Scope (Get_Tree (Cell), It);
+            It := Get_Parent_Scope (Tree, It);
 
             Ind := Ind - 1;
          end loop;
@@ -1081,75 +1286,192 @@ package body Language.Tree is
       end;
    end Full_Construct_Path;
 
-   ---------------------
-   -- Get_Parent_Tree --
-   ---------------------
-
-   function Get_Parent_Tree
-     (Lang       : access Tree_Language;
-      Left_Tree  : Construct_Tree;
-      Right_Tree : Construct_Tree)
-      return Get_Parent_Tree_Result
+   function Full_Construct_Path
+     (Tree   : Construct_Tree;
+      Offset : Natural) return Construct_Tree_Iterator_Array
    is
-      pragma Unreferenced (Lang, Left_Tree, Right_Tree);
+      It : constant Construct_Tree_Iterator := Get_Iterator_At
+        (Tree              => Tree,
+         Location          => To_Location (Offset),
+         From_Type         => Start_Construct,
+         Position          => Enclosing,
+         Categories_Seeked => Null_Category_Array);
    begin
-      return None;
-   end Get_Parent_Tree;
-
-   ---------------------
-   -- Get_Public_Tree --
-   ---------------------
-
-   function Get_Public_Tree
-     (Lang      : access Tree_Language;
-      Full_Tree : access Construct_Tree;
-      Free_Tree : Boolean) return Construct_Tree
-   is
-      pragma Unreferenced (Lang);
-
-      New_Tree : Construct_Tree;
-   begin
-      if Free_Tree then
-         New_Tree := Full_Tree.all;
+      if It /= Null_Construct_Tree_Iterator then
+         return Full_Construct_Path (Tree, It);
       else
-         --  Since we're not supposed to free the orininal tree, the new one
-         --  has to be a copy.
-         New_Tree := new Construct_Tree_Record'(Full_Tree.all.all);
-
-         for J in New_Tree.Contents'Range loop
-            New_Tree.Contents (J).Construct.Name :=
-              new String'(New_Tree.Contents (J).Construct.Name.all);
-         end loop;
+         return Null_Construct_Tree_Iterator_Array;
       end if;
+   end Full_Construct_Path;
 
-      return New_Tree;
-   end Get_Public_Tree;
+   ---------
+   -- "=" --
+   ---------
 
-   ------------------------
-   -- Get_Unit_Construct --
-   ------------------------
-
-   function Get_Unit_Construct
-     (Lang : access Tree_Language;
-      Tree : Construct_Tree) return Construct_Tree_Iterator
-   is
-      pragma Unreferenced (Lang, Tree);
+   function "=" (Left, Right : Referenced_Identifiers_List) return Boolean is
+      Left_Node  : Referenced_Identifiers_List := Left;
+      Right_Node : Referenced_Identifiers_List := Right;
    begin
-      return Null_Construct_Tree_Iterator;
-   end Get_Unit_Construct;
+      while Left_Node.Contents /= null
+        and then Right_Node.Contents /= null
+      loop
+         if Left_Node.Contents.Element /= Right_Node.Contents.Element then
+            return False;
+         end if;
 
-   -------------------
-   -- Get_Unit_Name --
-   -------------------
+         Left_Node := Left_Node.Contents.Next;
+         Right_Node := Right_Node.Contents.Next;
+      end loop;
 
-   function Get_Unit_Name
-     (Lang : access Tree_Language;
-      Tree : Construct_Tree) return Composite_Identifier
-   is
-      pragma Unreferenced (Lang, Tree);
+      return Left_Node.Contents = null and then Right_Node.Contents = null;
+   end "=";
+
+   --------------------
+   -- Get_Identifier --
+   --------------------
+
+   function Get_Identifier
+     (It : Construct_Tree_Iterator) return Distinct_Identifier is
    begin
-      return To_Composite_Identifier ("");
-   end Get_Unit_Name;
+      return It.Node.Id;
+   end Get_Identifier;
+
+   --------------------------------
+   -- Get_Referenced_Identifiers --
+   --------------------------------
+
+   function Get_Referenced_Identifiers
+     (It : Construct_Tree_Iterator) return Referenced_Identifiers_List is
+   begin
+      return It.Node.Referenced_Ids;
+   end Get_Referenced_Identifiers;
+
+   --------------------------------
+   -- Get_Referenced_Identifiers --
+   --------------------------------
+
+   function Get_Next_Referenced_Identifiers
+     (Ref : Referenced_Identifiers_List) return Referenced_Identifiers_List is
+   begin
+      return Ref.Contents.Next;
+   end Get_Next_Referenced_Identifiers;
+
+   --------------------
+   -- Get_Identifier --
+   --------------------
+
+   function Get_Identifier
+     (Ref : Referenced_Identifiers_List) return Distinct_Identifier is
+   begin
+      if Ref.Contents /= null then
+         return Ref.Contents.Element;
+      else
+         return Null_Distinct_Identifier;
+      end if;
+   end Get_Identifier;
+
+   ------------------------------------
+   -- Analyze_Constructs_Identifiers --
+   ------------------------------------
+
+   procedure Analyze_Constructs_Identifiers
+     (Manager : access Identifier_Manager'Class;
+      Tree    : Construct_Tree)
+   is
+   begin
+      for J in Tree.Contents'Range loop
+         if Tree.Contents (J).Construct.Name = null then
+            Tree.Contents (J).Id := Null_Distinct_Identifier;
+         else
+            Tree.Contents (J).Id :=
+              Manager.Get_Identifier
+                (Tree.Contents (J).Construct.Name.all);
+         end if;
+      end loop;
+   end Analyze_Constructs_Identifiers;
+
+   ---------------------------------
+   -- Analyze_Referenced_Identifiers --
+   ---------------------------------
+
+   procedure Analyze_Referenced_Identifiers
+     (Buffer  : String;
+      Lang    : access Language_Root'Class;
+      Manager : access Identifier_Manager'Class;
+      Tree    : Construct_Tree)
+   is
+      Sloc_Start, Sloc_End : Source_Location;
+      Index                : Natural;
+      Success              : Boolean;
+      Current_Node         : Referenced_Identifiers_List;
+   begin
+      for J in Tree.Contents'Range loop
+         Index := 0;
+
+         loop
+            Get_Referenced_Entity
+              (Lang       => Lang,
+               Buffer     => Buffer,
+               Construct  => Tree.Contents (J).Construct,
+               Sloc_Start => Sloc_Start,
+               Sloc_End   => Sloc_End,
+               Success    => Success,
+               From_Index => Index);
+
+            exit when not Success;
+
+            if Index = 0 then
+               Tree.Contents (J).Referenced_Ids.Contents :=
+                 new Referenced_Identifiers_List_Record;
+               Tree.Contents (J).Referenced_Ids.Contents.Element :=
+                 Manager.Get_Identifier
+                   (Buffer (Sloc_Start.Index .. Sloc_End.Index));
+               Current_Node := Tree.Contents (J).Referenced_Ids;
+            else
+               Current_Node.Contents.Next.Contents :=
+                 new Referenced_Identifiers_List_Record;
+               Current_Node.Contents.Next.Contents.Element :=
+                 Manager.Get_Identifier
+                   (Buffer (Sloc_Start.Index .. Sloc_End.Index));
+               Current_Node := Current_Node.Contents.Next;
+            end if;
+
+            Index := Sloc_End.Index;
+         end loop;
+      end loop;
+   end Analyze_Referenced_Identifiers;
+
+   -----------
+   -- Match --
+   -----------
+
+   function Match
+     (Seeked_Name, Tested_Name : Distinct_Identifier;
+      Seeked_Is_Partial : Boolean)
+      return Boolean
+   is
+   begin
+      if not Seeked_Is_Partial then
+         --  If the two names have to be strictly equals, then we'll just
+         --  compare the value of their pointers, since these pointers are
+         --  coming from the trie and each string has a unique corresponding
+         --  pointer.
+
+         return Seeked_Name = Tested_Name;
+      else
+         --  Otherwise, we'll compare their contents.
+
+         if Tested_Name'Length = Seeked_Name'Length then
+            return Seeked_Name = Tested_Name;
+         elsif Tested_Name'Length > Seeked_Name'Length then
+            return Tested_Name
+              (Tested_Name'First .. Tested_Name'First
+               + Seeked_Name'Length - 1) = Seeked_Name.all;
+         else
+            return False;
+         end if;
+      end if;
+   end Match;
 
    --------------------
    -- Get_Name_Index --
@@ -1163,31 +1485,6 @@ package body Language.Tree is
    begin
       return Construct.Name.all;
    end Get_Name_Index;
-
-   ----------------------
-   -- Compare_Entities --
-   ----------------------
-
-   function Compare_Entities
-     (Lang                      : access Tree_Language;
-      Left_Iter, Right_Iter     : Construct_Tree_Iterator;
-      Left_Tree, Right_Tree     : Construct_Tree;
-      Left_Buffer, Right_Buffer : GNAT.Strings.String_Access)
-      return General_Order
-   is
-      pragma Unreferenced (Lang, Left_Buffer, Right_Buffer);
-
-      Left_Name  : String := Get_Full_Name (Left_Tree, Left_Iter);
-      Right_Name : String := Get_Full_Name (Right_Tree, Right_Iter);
-   begin
-      if Left_Name < Right_Name then
-         return Lower_Than;
-      elsif Left_Name > Right_Name then
-         return Greater_Than;
-      else
-         return Equals;
-      end if;
-   end Compare_Entities;
 
    -----------------------
    -- Get_Documentation --
@@ -1244,7 +1541,7 @@ package body Language.Tree is
             Has_Parameter          : Boolean := False;
             Biggest_Parameter_Name : Integer := 0;
          begin
-            while Get_Parent_Scope (Tree, Sub_Iter) = Node loop
+            while Is_Parent_Scope (Node, Sub_Iter) loop
                if Get_Construct (Sub_Iter).Category = Cat_Parameter then
                   Add_New_Line := True;
 
@@ -1261,7 +1558,7 @@ package body Language.Tree is
 
             Sub_Iter := Next (Tree, Node, Jump_Into);
 
-            while Get_Parent_Scope (Tree, Sub_Iter) = Node loop
+            while Is_Parent_Scope (Node, Sub_Iter) loop
                if Get_Construct (Sub_Iter).Category = Cat_Parameter then
                   if not Has_Parameter then
                      if Add_New_Line then
@@ -1279,7 +1576,7 @@ package body Language.Tree is
                   Get_Referenced_Entity
                     (Language,
                      Buffer,
-                     Get_Construct (Sub_Iter),
+                     Get_Construct (Sub_Iter).all,
                      Type_Start,
                      Type_End,
                      Success);
@@ -1310,7 +1607,7 @@ package body Language.Tree is
          Get_Referenced_Entity
            (Language,
             Buffer,
-            Get_Construct (Node),
+            Get_Construct (Node).all,
             Type_Start,
             Type_End,
             Success);
@@ -1334,7 +1631,7 @@ package body Language.Tree is
             Get_Referenced_Entity
               (Language,
                Buffer,
-               Get_Construct (Node),
+               Get_Construct (Node).all,
                Var_Start,
                Var_End,
                Success);
@@ -1354,6 +1651,32 @@ package body Language.Tree is
 
       return To_String (Result);
    end Get_Documentation;
+
+   ----------
+   -- Diff --
+   ----------
+
+   procedure Diff
+     (Lang               : access Tree_Language;
+      Old_Tree, New_Tree : Construct_Tree;
+      Callback           : Diff_Callback)
+   is
+      pragma Unreferenced (Lang);
+   begin
+      for J in Old_Tree.Contents'Range loop
+         Callback
+           ((Old_Tree.Contents (J)'Access, J),
+            Null_Construct_Tree_Iterator,
+            Removed);
+      end loop;
+
+      for J in New_Tree.Contents'Range loop
+         Callback
+           (Null_Construct_Tree_Iterator,
+            (New_Tree.Contents (J)'Access, J),
+            Added);
+      end loop;
+   end Diff;
 
    ------------------
    -- Get_Language --

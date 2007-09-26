@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006                         --
---                              AdaCore                              --
+--                  Copyright (C) 2006-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,7 +21,8 @@
 --  component, using a generic list.
 
 generic
-
+   with procedure Free (Data : in out Data_Type) is <>;
+   --  Free the given data
 package Virtual_Lists.Extensive is
 
    ------------------------------

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                              AdaCore                              --
+--                  Copyright (C) 2001-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1599,6 +1598,7 @@ package body Ada_Analyzer is
             end if;
 
             Constructs.Last := Constructs.Current;
+            Constructs.Size := Constructs.Size + 1;
 
             Constructs.Current.Visibility := Value.Visibility;
             Constructs.Current.Attributes := Value.Attributes;
@@ -1800,6 +1800,8 @@ package body Ada_Analyzer is
                   Top_Token.Attributes (Ada_Interface_Attribute) := True;
                when Tok_Record =>
                   Top_Token.Attributes (Ada_Record_Attribute) := True;
+               when Tok_Renames =>
+                  Top_Token.Attributes (Ada_Renames_Attribute) := True;
                when others =>
                   null;
             end case;
@@ -3554,6 +3556,10 @@ package body Ada_Analyzer is
           and then Buffer (Buffer_Last) /= ASCII.LF)
         or else Terminated
       then
+         Clear (Paren_Stack);
+         Clear (Tokens);
+         Clear (Indents);
+
          return;
       end if;
 
@@ -3730,6 +3736,7 @@ package body Ada_Analyzer is
          end loop;
       end if;
 
+      Clear (Paren_Stack);
       Clear (Tokens);
       Clear (Indents);
 
@@ -3742,6 +3749,7 @@ package body Ada_Analyzer is
          --  expected that exceptions (e.g. Constraint_Error) may be raised,
          --  and we do not want to behave unexpectedly in such cases.
 
+         Clear (Paren_Stack);
          Clear (Tokens);
          Clear (Indents);
    end Analyze_Ada_Source;

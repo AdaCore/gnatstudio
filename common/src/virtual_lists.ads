@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006                         --
---                              AdaCore                              --
+--                  Copyright (C) 2006-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -29,11 +28,6 @@ with Generic_List;
 generic
    type Data_Type (<>) is private;
    --  Type of the data contained in the list
-
-   with procedure Free (Data : in out Data_Type) is <>;
-   --  Free the given data
-
-   pragma Unreferenced (Free);
 package Virtual_Lists is
 
    type Virtual_List is private;
@@ -84,13 +78,11 @@ package Virtual_Lists is
      (List : in out Virtual_List; Component : Virtual_List_Component'Class);
    --  Adds an actual sub-list to a virtual list.
 
-   procedure Free (Component : in out Virtual_List_Component);
+   procedure Free (Component : in out Virtual_List_Component) is null;
    --  Free a list component. The default implementation of this is empty.
-   --  ??? This should be implemented as a null procedure in Ada 2005
 
-   procedure Free (It : in out Virtual_List_Component_Iterator);
+   procedure Free (It : in out Virtual_List_Component_Iterator) is null;
    --  Free a list iterator. The default implementation of this is empty.
-   --  ??? This should be implemented as a null procedure in Ada 2005
 
    ---------------------------
    -- Virtual_List_Iterator --

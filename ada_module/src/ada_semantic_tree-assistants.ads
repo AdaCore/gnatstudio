@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2007, AdaCore                 --
+--                    Copyright (C) 2007, AdaCore                    --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,29 +17,17 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  This package provides an Ada-specific completer
+--  This package provides the entry point registering all assistants needed
+--  by the ada queries.
 
-with Ada_Semantic_Tree.Expression_Parser;
-use Ada_Semantic_Tree.Expression_Parser;
+with Language.Tree.Database; use Language.Tree.Database;
 
-package Completion.Ada is
+package Ada_Semantic_Tree.Assistants is
 
-   type Ada_Completion_Manager is new Completion_Manager with private;
+   procedure Register_Ada_Assistants (Db : Construct_Database_Access);
+   --  This procedure will register all the assistants needed to compute ada
+   --  semantics. It has to be invoked before any file is added to the
+   --  database, and as soon as possible in the assistant registration. No
+   --  query should be made before the assistants have been registered.
 
-   function Get_Initial_Completion_List
-     (Manager : access Ada_Completion_Manager; Context : Completion_Context)
-      return Completion_List;
-   --  See inherited documentation
-
-private
-
-   type Ada_Completion_Manager is new Completion_Manager with record
-      null;
-   end record;
-
-   type Ada_Completion_Context is new Completion_Context_Record with
-      record
-         Expression : Parsed_Expression;
-      end record;
-
-end Completion.Ada;
+end Ada_Semantic_Tree.Assistants;

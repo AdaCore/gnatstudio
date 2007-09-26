@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2007                       --
---                             AdaCore                               --
+--                  Copyright (C) 2002-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,9 +19,10 @@
 
 with Ada.Unchecked_Deallocation;
 
-with Language;      use Language;
-with Language.Tree; use Language.Tree;
-with String_Utils;  use String_Utils;
+with Language;               use Language;
+with Language.Tree;          use Language.Tree;
+with Language.Tree.Database; use Language.Tree.Database;
+with String_Utils;           use String_Utils;
 
 package body Codefix.Ada_Tools is
 
@@ -361,37 +361,36 @@ package body Codefix.Ada_Tools is
    is
       Current_Cursor : File_Cursor;
       Current_Info   : Construct_Tree_Iterator;
-      Found_With     : Boolean := False;
+      Last_Info      : Construct_Tree_Iterator := Null_Construct_Tree_Iterator;
+      Tree           : Construct_Tree;
    begin
       Set_File (Current_Cursor, File_Name);
       Set_Location (Current_Cursor, 1, 1);
+      Tree := Get_Tree
+        (Current_Text.Get_Structured_File (Current_Cursor));
 
+      Current_Info := Get_Iterator_At (Current_Text, Current_Cursor, After);
+
+      while Get_Construct (Current_Info).Category = Cat_With
+         or else Get_Construct (Current_Info).Category = Cat_Use
       loop
-         Current_Info := Get_Iterator_At (Current_Text, Current_Cursor, After);
+         Last_Info := Current_Info;
 
-         exit when Get_Construct (Current_Info).Category /= Cat_With
-           and then Get_Construct (Current_Info).Category /= Cat_Use;
+         Current_Info := Next (Tree, Current_Info, Jump_Over);
+      end loop;
 
-         Found_With := True;
-
-         Set_Location
-           (Current_Cursor,
-            Get_Construct (Current_Info).Sloc_End.Line,
-            1);
-
+      if Last_Info /= Null_Construct_Tree_Iterator then
          declare
             Line : constant String := Get_Line (Current_Text, Current_Cursor);
          begin
             Set_Location
               (Current_Cursor,
-               Get_Construct (Current_Info).Sloc_End.Line,
+               Get_Construct (Last_Info).Sloc_End.Line,
                To_Column_Index
                  (Char_Index
-                    (Get_Construct (Current_Info).Sloc_End.Column) + 1, Line));
+                    (Get_Construct (Last_Info).Sloc_End.Column) + 1, Line));
          end;
-      end loop;
-
-      if not Found_With then
+      else
          Set_Location
            (Current_Cursor,
             Get_Construct (Current_Info).Sloc_Start.Line - 1,

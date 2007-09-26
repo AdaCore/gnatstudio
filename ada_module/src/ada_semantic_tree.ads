@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2007, AdaCore                 --
+--                    Copyright (C) 2007, AdaCore                    --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,29 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  This package provides an Ada-specific completer
+--  base package of all ada semantic tree queries.
 
-with Ada_Semantic_Tree.Expression_Parser;
-use Ada_Semantic_Tree.Expression_Parser;
+package Ada_Semantic_Tree is
 
-package Completion.Ada is
-
-   type Ada_Completion_Manager is new Completion_Manager with private;
-
-   function Get_Initial_Completion_List
-     (Manager : access Ada_Completion_Manager; Context : Completion_Context)
-      return Completion_List;
-   --  See inherited documentation
-
-private
-
-   type Ada_Completion_Manager is new Completion_Manager with record
-      null;
-   end record;
-
-   type Ada_Completion_Context is new Completion_Context_Record with
-      record
-         Expression : Parsed_Expression;
-      end record;
-
-end Completion.Ada;
+end Ada_Semantic_Tree;
