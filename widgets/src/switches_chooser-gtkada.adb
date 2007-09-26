@@ -181,11 +181,19 @@ package body Switches_Chooser.Gtkada is
       S        : constant Switch_Description :=
         Element (Config.Switches, Popup_Button (Pop).Switch);
       Tmp      : Gtk_Widget;
+      Flags    : Gtk_Dialog_Flags := 0;
    begin
+      --  If the parent window is modal, we need to make the popup modal as
+      --  well, since otherwise the user will not be able to click on any of
+      --  its children.
+      if Get_Modal (Gtk_Window (Get_Toplevel (Data.Editor))) then
+         Flags := Modal;
+      end if;
+
       Gtk_New (Dialog,
                Title  => To_String (S.Label),
                Parent => Gtk_Window (Get_Toplevel (Data.Editor)),
-               Flags  => 0);
+               Flags  => Flags);
       Set_Sensitive (Pop, False);
 
       Gtk_New
@@ -400,7 +408,7 @@ package body Switches_Chooser.Gtkada is
       Combo    : Gtk_Combo;
       Combo_Iter : Combo_Switch_Vectors.Cursor;
       Switch2  : Switch_Description_Vectors.Cursor;
-      List     : String_List.Glist;
+      List     : Gtk.Enums.String_List.Glist;
       Pop      : Popup_Button;
 
    begin
@@ -500,7 +508,7 @@ package body Switches_Chooser.Gtkada is
 
             Combo_Iter := First (S.Entries);
             while Has_Element (Combo_Iter) loop
-               String_List.Append
+               Gtk.Enums.String_List.Append
                  (List, To_String (Element (Combo_Iter).Label));
                Next (Combo_Iter);
             end loop;
@@ -637,7 +645,20 @@ package body Switches_Chooser.Gtkada is
       Tooltips           : Gtk.Tooltips.Gtk_Tooltips;
       Use_Native_Dialogs : Boolean) is
    begin
-      Editor                := new Switches_Editor_Record;
+      Editor := new Switches_Editor_Record;
+      Initialize (Editor, Config, Tooltips, Use_Native_Dialogs);
+   end Gtk_New;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Editor             : access Switches_Editor_Record'Class;
+      Config             : Switches_Editor_Config;
+      Tooltips           : Gtk.Tooltips.Gtk_Tooltips;
+      Use_Native_Dialogs : Boolean) is
+   begin
       Editor.Native_Dialogs := Use_Native_Dialogs;
       Editor.Tooltips       := Tooltips;
       Initialize (Editor.all, Config);
@@ -663,6 +684,6 @@ package body Switches_Chooser.Gtkada is
          Widget_Callback.To_Marshaller (On_Command_Line_Changed'Access),
          Editor);
       On_Command_Line_Changed (Editor.all, "");
-   end Gtk_New;
+   end Initialize;
 
 end Switches_Chooser.Gtkada;

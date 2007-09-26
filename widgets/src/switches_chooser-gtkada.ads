@@ -36,6 +36,11 @@ package Switches_Chooser.Gtkada is
       Config             : Switches_Editor_Config;
       Tooltips           : Gtk.Tooltips.Gtk_Tooltips;
       Use_Native_Dialogs : Boolean);
+   procedure Initialize
+     (Editor             : access Switches_Editor_Record'Class;
+      Config             : Switches_Editor_Config;
+      Tooltips           : Gtk.Tooltips.Gtk_Tooltips;
+      Use_Native_Dialogs : Boolean);
    --  Create a new switches editor based on Config.
    --  Use_Native_Dialogs applies to the file selector and directory selector
    --  dialogs
