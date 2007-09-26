@@ -219,7 +219,7 @@ Known Problems fixed in GPS 4.2.0
               in the project properties dialog, then switching them will not
               be detected by GPS, that will keep the previous order
   Workaround: Remove them all, close the dialog, reopen it and set them in
-              the correct order
+              the correct order.
 
 - G306-007 Multiple dialogs appearing on key shortcuts.
   Problem:    Some dialogs, such as the "Continue Search?" dialog or the
