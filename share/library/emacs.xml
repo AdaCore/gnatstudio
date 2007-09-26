@@ -22,6 +22,14 @@
 -->
 
 <GPS>
+  <!--  disable GPS key shortcuts which conflict with emacs shortcuts -->
+
+  <key action="/Edit/Smart Completion" />
+  <key action="Cut to Clipboard" />
+  <key action="Copy to Clipboard" />
+
+  <!--  define key shortcuts -->
+
   <key action="subprogram box">control-c n</key>
   <key action="kill line">control-k</key>
   <key action="kill forward">control-d</key>
@@ -50,7 +58,6 @@
   <key action="Capitalize word">alt-c</key>
   <key action="/Navigate/Goto Line...">alt-g</key>
 
-  <key action="/Edit/Smart Completion" />  <!--  disable control-space -->
   <key action="set mark command">control-space</key>
   <key action="Cancel mark command">control-g</key>
 
