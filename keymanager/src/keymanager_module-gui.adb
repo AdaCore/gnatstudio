@@ -989,9 +989,13 @@ package body KeyManager_Module.GUI is
 
       Show_All (Editor);
 
+      Set_GUI_Running (True);
+
       if Run (Editor) = Gtk_Response_OK then
          Save_Editor (Editor);
       end if;
+
+      Set_GUI_Running (False);
 
       Reset (Editor.Bindings.all);
       Unchecked_Free (Editor.Bindings);
