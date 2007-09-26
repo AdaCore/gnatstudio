@@ -163,11 +163,11 @@ package body Code_Analysis_Module is
      (Glib.Object.GObject_Record, Context_And_Analysis);
    --  Used to connect handlers on the global Coverage contextual menu
 
-   procedure List_Uncovered_Lines_In_All_Projects
+   procedure Show_All_Coverage_Information
      (Kernel   : Kernel_Handle;
       Analysis : Code_Analysis_Instance);
-   --  Call List_Lines_Not_Covered_In_Project for every projects of the given
-   --  code analysis instance
+   --  Call List_Uncovered_Lines_In_Project and Add_Project_Annotations for
+   --  every projects of the given code analysis instance
 
    function First_Project_With_Coverage_Data
      (Analysis : Code_Analysis_Instance) return Project_Type;
@@ -406,13 +406,13 @@ package body Code_Analysis_Module is
    --  Try to load gcov info for every file of the Root_Project and every
    --  imported projects
 
-   procedure List_Uncovered_Lines_In_All_Projects_From_Shell
+   procedure Show_All_Coverage_Information_From_Shell
      (Data    : in out Callback_Data'Class;
       Command : String);
    --  Add in the location view every not covered lines of any projects loaded
    --  in the Code_Analysis structure of the current Instance.
 
-   procedure Clear_All_Project_Locations_From_Shell
+   procedure Hide_All_Coverage_Information_From_Shell
      (Data    : in out Callback_Data'Class;
       Command : String);
    --  Shell command callback
@@ -420,7 +420,7 @@ package body Code_Analysis_Module is
    --  of each loaded projects
    --  Does nothing if the lines are not listed in
 
-   procedure Clear_All_Project_Locations
+   procedure Hide_All_Coverage_Information
      (Kernel   : Kernel_Handle;
       Analysis : Code_Analysis_Instance);
    --  Remove from the Locations view the listed uncovered lines of each files
@@ -461,82 +461,75 @@ package body Code_Analysis_Module is
       Analysis : Code_Analysis_Instance);
    --  Remove code coverage informations
 
-   procedure Add_Coverage_Annotations_From_Menu
-     (Widget      : access Glib.Object.GObject_Record'Class;
-      Cont_N_Anal : Context_And_Analysis);
-   --  Add coverage annotations to source file editor
-   --  Callback to the global contextual menu entry
-   --  "View with coverage annotations"
-
-   procedure Add_Coverage_Annotations
+   procedure Add_File_Coverage_Annotations
      (Kernel    : Kernel_Handle;
       File_Node : Code_Analysis.File_Access);
    --  Actually add the annotation columns
 
-   procedure Remove_Coverage_Annotations_From_Menu
-     (Widget      : access Glib.Object.GObject_Record'Class;
-      Cont_N_Anal : Context_And_Analysis);
-   --  Callback attached to the "Remove coverage annotations" contextual
-   --  menu entry of every objects that have File or Subprogram information in
-   --  its context
-
-   procedure Remove_Coverage_Annotations
+   procedure Remove_File_Coverage_Annotations
      (Kernel    : Kernel_Handle;
       File_Node : Code_Analysis.File_Access);
    --  Actually removes coverage annotations of src_editors of file represented
    --  by File_Node
 
-   procedure List_Uncovered_Lines_In_Subprogram_From_Menu
+   procedure Show_Subprogram_Coverage_Information_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
-   --  Callback of the "List lines not covered" entry of the global "Coverage"
-   --  submenu when the Context contains subprogram information.
+   --  Callback of the "Show subprogram coverage information" entry of the
+   --  global "Coverage" submenu when the Context contains subprogram
+   --  information.
    --  Add to the location view the unexecuted lines of the given current
    --  entity, that is a subprogram and has associated coverage information
+   --  Add to the related file a coverage annotations column
 
-   procedure Clear_Subprogram_Locations_From_Menu
+   procedure Hide_Subprogram_Coverage_Information_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
    --  Callback that aim to remove from the Locations view the lines
    --  corresponding to uncovered lines of the contextual subprogram
    --  Does nothing if the lines are absent from the Locations view
 
-   procedure List_Uncovered_Lines_In_File_From_Menu
+   procedure Show_File_Coverage_Information_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
-   --  Callback of the "List lines not covered" entry of the global "Coverage"
-   --  submenu when the Context contains file information.
-   --  Just call the List_Lines_Not_Covered_In_File subprogram
+   --  Callback of the "Show file coverage information" entry of the global
+   --  "Coverage" submenu when the Context contains file information.
+   --  Add to the location view the unexecuted lines of the given file
+   --  Also add a coverage annotations column
 
-   procedure Clear_File_Locations_From_Menu
+   procedure Hide_File_Coverage_Information_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
    --  Callback that aim to remove from the Locations view the lines
    --  corresponding to uncovered lines of the contextual file
    --  Does nothing if the file is absent from the Locations view
 
-   procedure List_Uncovered_Lines_In_Project_From_Menu
+   procedure Show_Project_Coverage_Information_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
-   --  Callback of the "List lines not covered" entry of the global "Coverage"
-   --  submenu when the Context only contains Project information.
-   --  Just call the subprogram List_Lines_Not_Covered_In_File
+   --  Callback of the "Show project coverage information" entry of the global
+   --  "Coverage" submenu when the Context only contains Project information.
+   --  Add to the location view the unexecuted lines of every files of the
+   --  given project
+   --  Also add a coverage annotations column to every files of the given
+   --  project
 
-   procedure Clear_Project_Locations_From_Menu
+   procedure Hide_Project_Coverage_Information_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
-   --  Callback that aim to remove from the Locations view the lines
-   --  corresponding to uncovered lines of the contextual project
+   --  Callback that aim to remove from the Location view the lines
+   --  corresponding to uncovered lines and annotations of the files of the
+   --  contextual project
    --  Does nothing if the files of the project are absent from the Locations
-   --  view
+   --  view, or not fitted with an annotations column
 
-   procedure List_Uncovered_Lines_In_All_Projects_From_Menu
+   procedure Show_All_Coverage_Information_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
    --  Callback of the "List lines not covered in all projects" menu entry
    --  Calls List_Lines_Not_Covered_In_All_Projects
 
-   procedure Clear_All_Project_Locations_From_Menu
+   procedure Hide_All_Coverage_Information_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
    --  Callback that aim to remove from the Locations view the lines
@@ -544,7 +537,7 @@ package body Code_Analysis_Module is
    --  Does nothing if the files of the projects are absent from the Locations
    --  view
 
-   procedure List_Uncovered_Lines_In_Project
+   procedure List_Project_Uncovered_Lines
      (Kernel       : Kernel_Handle;
       Project_Node : Project_Access);
    --  Add to the location view the unexecuted lines of the given Project of a
@@ -557,11 +550,15 @@ package body Code_Analysis_Module is
    --  given project_node
    --  Does nothing if the uncovered lines aren't listed there
 
+   procedure Add_Project_Coverage_Annotations
+     (Kernel : Kernel_Handle; Project_Node : Project_Access);
+   --  Adds coverage annotations of src_editors of its files
+
    procedure Remove_Project_Coverage_Annotations
      (Kernel : Kernel_Handle; Project_Node : Project_Access);
    --  Removes coverage annotations of src_editors of its files
 
-   procedure List_Uncovered_Lines_In_File
+   procedure List_File_Uncovered_Lines
      (Kernel    : Kernel_Handle;
       File_Node : Code_Analysis.File_Access);
    --  Add to the location view the unexecuted lines of the given File of a
@@ -573,6 +570,13 @@ package body Code_Analysis_Module is
    --  Remove from the Locations view the uncovered lines of the given
    --  file_node
    --  Does nothing if the uncovered lines aren't listed there
+
+   procedure List_Subprogram_Uncovered_Lines
+     (Kernel    : Kernel_Handle;
+      File_Node : Code_Analysis.File_Access;
+      Subp_Node : Subprogram_Access);
+   --  Add to the location view the unexecuted lines of the given Subprogram
+   --  of a Coverage Report.
 
    procedure Clear_Subprogram_Locations
      (Kernel    : Kernel_Handle;
@@ -1204,11 +1208,11 @@ package body Code_Analysis_Module is
       end loop;
    end Add_All_Gcov_Project_Info_In_Callback;
 
-   -----------------------------------------------------
-   -- List_Uncovered_Lines_In_All_Projects_From_Shell --
-   -----------------------------------------------------
+   ----------------------------------------------
+   -- Show_All_Coverage_Information_From_Shell --
+   ----------------------------------------------
 
-   procedure List_Uncovered_Lines_In_All_Projects_From_Shell
+   procedure Show_All_Coverage_Information_From_Shell
      (Data    : in out Callback_Data'Class;
       Command : String)
    is
@@ -1224,17 +1228,21 @@ package body Code_Analysis_Module is
          return;
       end if;
 
-      List_Uncovered_Lines_In_All_Projects
+      Show_All_Coverage_Information
         (Get_Kernel (Data), Code_Analysis_Property (Property).Analysis);
+      --  Build/Refresh the Coverage Report
+      Show_Analysis_Report (Get_Kernel (Data),
+        Context_And_Analysis'(No_Context,
+          Code_Analysis_Property (Property).Analysis));
    exception
       when E : others => Trace (Exception_Handle, E);
-   end List_Uncovered_Lines_In_All_Projects_From_Shell;
+   end Show_All_Coverage_Information_From_Shell;
 
-   --------------------------------------------
-   -- Clear_All_Project_Locations_From_Shell --
-   --------------------------------------------
+   ----------------------------------------------
+   -- Hide_All_Coverage_Information_From_Shell --
+   ----------------------------------------------
 
-   procedure Clear_All_Project_Locations_From_Shell
+   procedure Hide_All_Coverage_Information_From_Shell
      (Data    : in out Callback_Data'Class;
       Command : String)
    is
@@ -1250,17 +1258,21 @@ package body Code_Analysis_Module is
          return;
       end if;
 
-      Clear_All_Project_Locations
+      Hide_All_Coverage_Information
         (Get_Kernel (Data), Code_Analysis_Property (Property).Analysis);
+      --  Build/Refresh the Coverage Report
+      Show_Analysis_Report (Get_Kernel (Data),
+        Context_And_Analysis'(No_Context,
+          Code_Analysis_Property (Property).Analysis));
    exception
       when E : others => Trace (Exception_Handle, E);
-   end Clear_All_Project_Locations_From_Shell;
+   end Hide_All_Coverage_Information_From_Shell;
 
-   ----------------------------------------------------
-   -- List_Uncovered_Lines_In_All_Projects_From_Menu --
-   ----------------------------------------------------
+   ---------------------------------------------
+   -- Show_All_Coverage_Information_From_Menu --
+   ---------------------------------------------
 
-   procedure List_Uncovered_Lines_In_All_Projects_From_Menu
+   procedure Show_All_Coverage_Information_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis)
    is
@@ -1280,33 +1292,35 @@ package body Code_Analysis_Module is
          end if;
       end if;
 
-      List_Uncovered_Lines_In_All_Projects
+      Show_All_Coverage_Information
         (Get_Kernel (Cont_N_Anal.Context), Cont_N_Anal.Analysis);
+      --  Build/Refresh the Coverage Report
+      Show_Analysis_Report (Get_Kernel (Cont_N_Anal.Context), Cont_N_Anal);
    exception
       when E : others => Trace (Exception_Handle, E);
-   end List_Uncovered_Lines_In_All_Projects_From_Menu;
+   end Show_All_Coverage_Information_From_Menu;
 
-   -------------------------------------------
-   -- Clear_All_Project_Locations_From_Menu --
-   -------------------------------------------
+   ---------------------------------------------
+   -- Hide_All_Coverage_Information_From_Menu --
+   ---------------------------------------------
 
-   procedure Clear_All_Project_Locations_From_Menu
+   procedure Hide_All_Coverage_Information_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis)
    is
       pragma Unreferenced (Widget);
    begin
-      Clear_All_Project_Locations
+      Hide_All_Coverage_Information
         (Get_Kernel (Cont_N_Anal.Context), Cont_N_Anal.Analysis);
    exception
       when E : others => Trace (Exception_Handle, E);
-   end Clear_All_Project_Locations_From_Menu;
+   end Hide_All_Coverage_Information_From_Menu;
 
-   ------------------------------------------
-   -- List_Uncovered_Lines_In_All_Projects --
-   ------------------------------------------
+   -----------------------------------
+   -- Show_All_Coverage_Information --
+   -----------------------------------
 
-   procedure List_Uncovered_Lines_In_All_Projects
+   procedure Show_All_Coverage_Information
      (Kernel   : Kernel_Handle;
       Analysis : Code_Analysis_Instance)
    is
@@ -1324,15 +1338,16 @@ package body Code_Analysis_Module is
       Sort_Projects (Sort_Arr);
 
       for J in Sort_Arr'Range loop
-         List_Uncovered_Lines_In_Project (Kernel, Sort_Arr (J));
+         List_Project_Uncovered_Lines (Kernel, Sort_Arr (J));
+         Add_Project_Coverage_Annotations (Kernel, Sort_Arr (J));
       end loop;
-   end List_Uncovered_Lines_In_All_Projects;
+   end Show_All_Coverage_Information;
 
-   ---------------------------------
-   -- Clear_All_Project_Locations --
-   ---------------------------------
+   -----------------------------------
+   -- Hide_All_Coverage_Information --
+   -----------------------------------
 
-   procedure Clear_All_Project_Locations
+   procedure Hide_All_Coverage_Information
    (Kernel   : Kernel_Handle;
     Analysis : Code_Analysis_Instance)
    is
@@ -1341,9 +1356,10 @@ package body Code_Analysis_Module is
    begin
       for J in 1 .. Integer (Analysis.Projects.Length) loop
          Clear_Project_Locations (Kernel, Element (Map_Cur));
+         Remove_Project_Coverage_Annotations (Kernel, Element (Map_Cur));
          Next (Map_Cur);
       end loop;
-   end Clear_All_Project_Locations;
+   end Hide_All_Coverage_Information;
 
    -------------------------------------
    -- Show_Analysis_Report_From_Shell --
@@ -1856,100 +1872,42 @@ package body Code_Analysis_Module is
       Free_Code_Analysis (Analysis.Projects);
    end Clear_Analysis_Instance;
 
-   ----------------------------------------
-   -- Add_Coverage_Annotations_From_Menu --
-   ----------------------------------------
+   -----------------------------------
+   -- Add_File_Coverage_Annotations --
+   -----------------------------------
 
-   procedure Add_Coverage_Annotations_From_Menu
-     (Widget      : access Glib.Object.GObject_Record'Class;
-      Cont_N_Anal : Context_And_Analysis)
-   is
-      pragma Unreferenced (Widget);
-      Prj_Node  : constant Project_Access := Get_Or_Create
-           (Cont_N_Anal.Analysis.Projects,
-            Project_Information (Cont_N_Anal.Context));
-      File_Node : constant Code_Analysis.File_Access := Get_Or_Create
-        (Prj_Node, File_Information (Cont_N_Anal.Context));
-   begin
-      if not Have_Gcov_Info (Cont_N_Anal) then
-         Add_Gcov_File_Info_In_Callback (Cont_N_Anal);
-
-         if not Have_Gcov_Info (Cont_N_Anal) then
-            GPS.Kernel.Console.Insert
-              (Get_Kernel (Cont_N_Anal.Context),
-               -"Abort coverage annotation addition for "
-               & Base_Name (File_Node.Name)
-               & (-" due to lack of gcov information"),
-               Mode => GPS.Kernel.Console.Error);
-            return;
-         end if;
-      end if;
-
-      Open_File_Editor (Get_Kernel (Cont_N_Anal.Context), File_Node.Name);
-      Add_Coverage_Annotations
-        (Get_Kernel (Cont_N_Anal.Context), File_Node);
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end Add_Coverage_Annotations_From_Menu;
-
-   ------------------------------
-   -- Add_Coverage_Annotations --
-   ------------------------------
-
-   procedure Add_Coverage_Annotations
+   procedure Add_File_Coverage_Annotations
      (Kernel    : Kernel_Handle;
       File_Node : Code_Analysis.File_Access)
    is
       Line_Info  : Line_Information_Data;
    begin
-      Line_Info  := new Line_Information_Array (File_Node.Lines'Range);
+      if File_Node.Analysis_Data.Coverage_Data.Status = Valid then
+         Line_Info  := new Line_Information_Array (File_Node.Lines'Range);
 
-      for J in File_Node.Lines'Range loop
-         if File_Node.Lines (J) /= Null_Line then
-            Line_Info (J).Text := Line_Coverage_Info
-              (File_Node.Lines (J).Analysis_Data.Coverage_Data,
-               Binary_Coverage_Mode);
-         else
-            Line_Info (J).Text := new String'("-");
-         end if;
-      end loop;
+         for J in File_Node.Lines'Range loop
+            if File_Node.Lines (J) /= Null_Line then
+               Line_Info (J).Text := Line_Coverage_Info
+                 (File_Node.Lines (J).Analysis_Data.Coverage_Data,
+                  Binary_Coverage_Mode);
+            else
+               Line_Info (J).Text := new String'("-");
+            end if;
+         end loop;
 
-      Create_Line_Information_Column
-        (Kernel, File_Node.Name, CodeAnalysis_Cst);
-      Add_Line_Information
-        (Kernel, File_Node.Name, CodeAnalysis_Cst, Line_Info);
-      Unchecked_Free (Line_Info);
-   end Add_Coverage_Annotations;
+         Create_Line_Information_Column
+           (Kernel, File_Node.Name, CodeAnalysis_Cst);
+         Add_Line_Information
+           (Kernel, File_Node.Name, CodeAnalysis_Cst, Line_Info);
+         Unchecked_Free (Line_Info);
+      end if;
+   end Add_File_Coverage_Annotations;
 
-   -------------------------------------------
-   -- Remove_Coverage_Annotations_From_Menu --
-   -------------------------------------------
+   --------------------------------------
+   -- Remove_File_Coverage_Annotations --
+   --------------------------------------
 
-   procedure Remove_Coverage_Annotations_From_Menu
-     (Widget      : access Glib.Object.GObject_Record'Class;
-      Cont_N_Anal : Context_And_Analysis)
-   is
-      pragma Unreferenced (Widget);
-      Project_Node : Project_Access;
-      File_Node    : Code_Analysis.File_Access;
-   begin
-      Project_Node := Get_Or_Create
-        (Cont_N_Anal.Analysis.Projects,
-         Project_Information (Cont_N_Anal.Context));
-      File_Node := Get_Or_Create
-        (Project_Node, File_Information (Cont_N_Anal.Context));
-      Open_File_Editor (Get_Kernel (Cont_N_Anal.Context), File_Node.Name);
-      Remove_Coverage_Annotations
-        (Get_Kernel (Cont_N_Anal.Context), File_Node);
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end Remove_Coverage_Annotations_From_Menu;
-
-   ---------------------------------
-   -- Remove_Coverage_Annotations --
-   ---------------------------------
-
-   procedure Remove_Coverage_Annotations
+   procedure Remove_File_Coverage_Annotations
      (Kernel : Kernel_Handle;
       File_Node : Code_Analysis.File_Access) is
    begin
@@ -1957,13 +1915,13 @@ package body Code_Analysis_Module is
         (Kernel, File_Node.Name, CodeAnalysis_Cst);
    exception
       when E : others => Trace (Exception_Handle, E);
-   end Remove_Coverage_Annotations;
+   end Remove_File_Coverage_Annotations;
 
-   -----------------------------------------------
-   -- List_Uncovered_Lines_In_Project_From_Menu --
-   -----------------------------------------------
+   -------------------------------------------------
+   -- Show_Project_Coverage_Information_From_Menu --
+   -------------------------------------------------
 
-   procedure List_Uncovered_Lines_In_Project_From_Menu
+   procedure Show_Project_Coverage_Information_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis)
    is
@@ -1985,17 +1943,19 @@ package body Code_Analysis_Module is
          end if;
       end if;
 
-      List_Uncovered_Lines_In_Project
+      List_Project_Uncovered_Lines
+        (Get_Kernel (Cont_N_Anal.Context), Prj_Node);
+      Add_Project_Coverage_Annotations
         (Get_Kernel (Cont_N_Anal.Context), Prj_Node);
    exception
       when E : others => Trace (Exception_Handle, E);
-   end List_Uncovered_Lines_In_Project_From_Menu;
+   end Show_Project_Coverage_Information_From_Menu;
 
-   ---------------------------------------
-   -- Clear_Project_Locations_From_Menu --
-   ---------------------------------------
+   -------------------------------------------------
+   -- Hide_Project_Coverage_Information_From_Menu --
+   -------------------------------------------------
 
-   procedure Clear_Project_Locations_From_Menu
+   procedure Hide_Project_Coverage_Information_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis)
    is
@@ -2006,15 +1966,17 @@ package body Code_Analysis_Module is
    begin
       Clear_Project_Locations
         (Get_Kernel (Cont_N_Anal.Context), Project_Node);
+      Remove_Project_Coverage_Annotations
+        (Get_Kernel (Cont_N_Anal.Context), Project_Node);
    exception
       when E : others => Trace (Exception_Handle, E);
-   end Clear_Project_Locations_From_Menu;
+   end Hide_Project_Coverage_Information_From_Menu;
 
-   --------------------------------------------
-   -- List_Uncovered_Lines_In_File_From_Menu --
-   --------------------------------------------
+   ----------------------------------------------
+   -- Show_File_Coverage_Information_From_Menu --
+   ----------------------------------------------
 
-   procedure List_Uncovered_Lines_In_File_From_Menu
+   procedure Show_File_Coverage_Information_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis)
    is
@@ -2039,17 +2001,19 @@ package body Code_Analysis_Module is
       end if;
 
       Open_File_Editor (Get_Kernel (Cont_N_Anal.Context), File_Node.Name);
-      List_Uncovered_Lines_In_File
+      List_File_Uncovered_Lines
+        (Get_Kernel (Cont_N_Anal.Context), File_Node);
+      Add_File_Coverage_Annotations
         (Get_Kernel (Cont_N_Anal.Context), File_Node);
    exception
       when E : others => Trace (Exception_Handle, E);
-   end List_Uncovered_Lines_In_File_From_Menu;
+   end Show_File_Coverage_Information_From_Menu;
 
-   ------------------------------------
-   -- Clear_File_Locations_From_Menu --
-   ------------------------------------
+   ----------------------------------------------
+   -- Hide_File_Coverage_Information_From_Menu --
+   ----------------------------------------------
 
-   procedure Clear_File_Locations_From_Menu
+   procedure Hide_File_Coverage_Information_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis)
    is
@@ -2061,15 +2025,17 @@ package body Code_Analysis_Module is
         (Prj_Node, File_Information (Cont_N_Anal.Context));
    begin
       Clear_File_Locations (Get_Kernel (Cont_N_Anal.Context), File_Node);
+      Remove_File_Coverage_Annotations
+        (Get_Kernel (Cont_N_Anal.Context), File_Node);
    exception
       when E : others => Trace (Exception_Handle, E);
-   end Clear_File_Locations_From_Menu;
+   end Hide_File_Coverage_Information_From_Menu;
 
-   -------------------------------------
-   -- List_Uncovered_Lines_In_Project --
-   -------------------------------------
+   ----------------------------------
+   -- List_Project_Uncovered_Lines --
+   ----------------------------------
 
-   procedure List_Uncovered_Lines_In_Project
+   procedure List_Project_Uncovered_Lines
      (Kernel : Kernel_Handle; Project_Node : Project_Access)
    is
       use File_Maps;
@@ -2086,10 +2052,36 @@ package body Code_Analysis_Module is
 
       for J in Sort_Arr'Range loop
          if Sort_Arr (J).Analysis_Data.Coverage_Data /= null then
-            List_Uncovered_Lines_In_File (Kernel, Sort_Arr (J));
+            List_File_Uncovered_Lines (Kernel, Sort_Arr (J));
          end if;
       end loop;
-   end List_Uncovered_Lines_In_Project;
+   end List_Project_Uncovered_Lines;
+
+   --------------------------------------
+   -- Add_Project_Coverage_Annotations --
+   --------------------------------------
+
+   procedure Add_Project_Coverage_Annotations
+     (Kernel : Kernel_Handle; Project_Node : Project_Access)
+   is
+      use File_Maps;
+      Map_Cur  : File_Maps.Cursor := Project_Node.Files.First;
+      Sort_Arr : Code_Analysis.File_Array
+        (1 .. Integer (Project_Node.Files.Length));
+   begin
+      for J in Sort_Arr'Range loop
+         Sort_Arr (J) := Element (Map_Cur);
+         Next (Map_Cur);
+      end loop;
+
+      Sort_Files (Sort_Arr);
+
+      for J in Sort_Arr'Range loop
+         if Sort_Arr (J).Analysis_Data.Coverage_Data /= null then
+            Add_File_Coverage_Annotations (Kernel, Sort_Arr (J));
+         end if;
+      end loop;
+   end Add_Project_Coverage_Annotations;
 
    -----------------------------
    -- Clear_Project_Locations --
@@ -2118,16 +2110,16 @@ package body Code_Analysis_Module is
       Map_Cur : File_Maps.Cursor := Project_Node.Files.First;
    begin
       for J in 1 .. Integer (Project_Node.Files.Length) loop
-         Remove_Coverage_Annotations (Kernel, Element (Map_Cur));
+         Remove_File_Coverage_Annotations (Kernel, Element (Map_Cur));
          Next (Map_Cur);
       end loop;
    end Remove_Project_Coverage_Annotations;
 
-   ----------------------------------
-   -- List_Uncovered_Lines_In_File --
-   ----------------------------------
+   -------------------------------
+   -- List_File_Uncovered_Lines --
+   -------------------------------
 
-   procedure List_Uncovered_Lines_In_File
+   procedure List_File_Uncovered_Lines
      (Kernel    : Kernel_Handle;
       File_Node : Code_Analysis.File_Access)
    is
@@ -2163,7 +2155,7 @@ package body Code_Analysis_Module is
             Base_Name (File_Node.Name),
             Mode => GPS.Kernel.Console.Error);
       end if;
-   end List_Uncovered_Lines_In_File;
+   end List_File_Uncovered_Lines;
 
    --------------------------
    -- Clear_File_Locations --
@@ -2176,11 +2168,11 @@ package body Code_Analysis_Module is
       Remove_Location_Category (Kernel, Coverage_Category, File_Node.Name);
    end Clear_File_Locations;
 
-   --------------------------------------------------
-   -- List_Uncovered_Lines_In_Subprogram_From_Menu --
-   --------------------------------------------------
+   ----------------------------------------------------
+   -- Show_Subprogram_Coverage_Information_From_Menu --
+   ----------------------------------------------------
 
-   procedure List_Uncovered_Lines_In_Subprogram_From_Menu
+   procedure Show_Subprogram_Coverage_Information_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis)
    is
@@ -2209,6 +2201,21 @@ package body Code_Analysis_Module is
          end if;
       end if;
 
+      List_Subprogram_Uncovered_Lines (Kernel, File_Node, Subp_Node);
+      Add_File_Coverage_Annotations (Kernel, File_Node);
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end Show_Subprogram_Coverage_Information_From_Menu;
+
+   -------------------------------------
+   -- List_Subprogram_Uncovered_Lines --
+   -------------------------------------
+
+   procedure List_Subprogram_Uncovered_Lines
+     (Kernel    : Kernel_Handle;
+      File_Node : Code_Analysis.File_Access;
+      Subp_Node : Subprogram_Access) is
+   begin
       if File_Node.Analysis_Data.Coverage_Data.Status = Valid then
          for J in Subp_Node.Start .. Subp_Node.Stop loop
             if File_Node.Lines (J) /= Null_Line and then
@@ -2230,15 +2237,13 @@ package body Code_Analysis_Module is
             Base_Name (File_Node.Name),
             Mode => GPS.Kernel.Console.Error);
       end if;
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end List_Uncovered_Lines_In_Subprogram_From_Menu;
+   end List_Subprogram_Uncovered_Lines;
 
-   ------------------------------------------
-   -- Clear_Subprogram_Locations_From_Menu --
-   ------------------------------------------
+   ----------------------------------------------------
+   -- Hide_Subprogram_Coverage_Information_From_Menu --
+   ----------------------------------------------------
 
-   procedure Clear_Subprogram_Locations_From_Menu
+   procedure Hide_Subprogram_Coverage_Information_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis)
    is
@@ -2254,9 +2259,10 @@ package body Code_Analysis_Module is
          (Cont_N_Anal.Context)));
    begin
       Clear_Subprogram_Locations (Kernel, File_Node, Subp_Node);
+      Remove_File_Coverage_Annotations (Kernel, File_Node);
    exception
       when E : others => Trace (Exception_Handle, E);
-   end Clear_Subprogram_Locations_From_Menu;
+   end Hide_Subprogram_Coverage_Information_From_Menu;
 
    --------------------------------
    -- Clear_Subprogram_Locations --
@@ -2308,7 +2314,7 @@ package body Code_Analysis_Module is
       end if;
 
       if Have_Gcov_Info (Cont_N_Anal) then
-         --  Removes potential listed locations
+         --  Remove potential listed locations
          Clear_Subprogram_Locations
            (Get_Kernel (Cont_N_Anal.Context), File_Node, Subp_Node);
          --  Update file coverage information
@@ -2323,7 +2329,7 @@ package body Code_Analysis_Module is
          if Node_Coverage
            (File_Node.Analysis_Data.Coverage_Data.all).Children = 0 then
             --  No more children means no more usable coverage data
-            Remove_Coverage_Annotations
+            Remove_File_Coverage_Annotations
               (Get_Kernel (Cont_N_Anal.Context), File_Node);
             Unchecked_Free (File_Node.Analysis_Data.Coverage_Data);
          end if;
@@ -2412,7 +2418,7 @@ package body Code_Analysis_Module is
          --  Removes potential listed locations
          Clear_File_Locations (Get_Kernel (Cont_N_Anal.Context), File_Node);
          --  Removes potential annotations
-         Remove_Coverage_Annotations
+         Remove_File_Coverage_Annotations
            (Get_Kernel (Cont_N_Anal.Context), File_Node);
       end if;
 
@@ -2604,20 +2610,20 @@ package body Code_Analysis_Module is
         (Item, Gtk.Menu_Item.Signal_Activate,
          Context_And_Analysis_CB.To_Marshaller
            (Add_Gcov_File_Info_From_Menu'Access), Cont_N_Anal);
-      Gtk_New (Item, -"List uncovered lines");
+      Gtk_New (Item, -"Show coverage information");
       Append (Submenu, Item);
       Context_And_Analysis_CB.Connect
         (Item, Gtk.Menu_Item.Signal_Activate,
          Context_And_Analysis_CB.To_Marshaller
-           (List_Uncovered_Lines_In_Subprogram_From_Menu'Access),
-         Cont_N_Anal);
-      Gtk_New (Item, -"Clear listed locations");
+           (Show_Subprogram_Coverage_Information_From_Menu'Access),
+         Context_And_Analysis'(Cont_N_Anal.Context, Cont_N_Anal.Analysis));
+      Gtk_New (Item, -"Hide coverage information");
       Append (Submenu, Item);
       Context_And_Analysis_CB.Connect
         (Item, Gtk.Menu_Item.Signal_Activate,
          Context_And_Analysis_CB.To_Marshaller
-           (Clear_Subprogram_Locations_From_Menu'Access),
-         Cont_N_Anal);
+           (Hide_Subprogram_Coverage_Information_From_Menu'Access),
+         Context_And_Analysis'(Cont_N_Anal.Context, Cont_N_Anal.Analysis));
       Gtk_New (Item, -"Remove data of " & Entity_Name_Information
                (Cont_N_Anal.Context));
       Append (Submenu, Item);
@@ -2660,33 +2666,19 @@ package body Code_Analysis_Module is
          Context_And_Analysis_CB.To_Marshaller
            (Add_Gcov_File_Info_From_Menu'Access),
          Context_And_Analysis'(Context, Cont_N_Anal.Analysis));
-      Gtk_New (Item, -"Add coverage annotations");
+      Gtk_New (Item, -"Show coverage information");
       Append (Submenu, Item);
       Context_And_Analysis_CB.Connect
         (Item, Gtk.Menu_Item.Signal_Activate,
          Context_And_Analysis_CB.To_Marshaller
-           (Add_Coverage_Annotations_From_Menu'Access),
+           (Show_File_Coverage_Information_From_Menu'Access),
          Context_And_Analysis'(Context, Cont_N_Anal.Analysis));
-      Gtk_New (Item, -"Remove coverage annotations");
+      Gtk_New (Item, -"Hide coverage information");
       Append (Submenu, Item);
       Context_And_Analysis_CB.Connect
         (Item, Gtk.Menu_Item.Signal_Activate,
          Context_And_Analysis_CB.To_Marshaller
-           (Remove_Coverage_Annotations_From_Menu'Access),
-         Context_And_Analysis'(Context, Cont_N_Anal.Analysis));
-      Gtk_New (Item, -"List uncovered lines");
-      Append (Submenu, Item);
-      Context_And_Analysis_CB.Connect
-        (Item, Gtk.Menu_Item.Signal_Activate,
-         Context_And_Analysis_CB.To_Marshaller
-           (List_Uncovered_Lines_In_File_From_Menu'Access),
-         Context_And_Analysis'(Context, Cont_N_Anal.Analysis));
-      Gtk_New (Item, -"Clear listed locations");
-      Append (Submenu, Item);
-      Context_And_Analysis_CB.Connect
-        (Item, Gtk.Menu_Item.Signal_Activate,
-         Context_And_Analysis_CB.To_Marshaller
-           (Clear_File_Locations_From_Menu'Access),
+           (Hide_File_Coverage_Information_From_Menu'Access),
          Context_And_Analysis'(Context, Cont_N_Anal.Analysis));
       Gtk_New (Item, -"Remove data of " &
                Base_Name (File_Information (Context)));
@@ -2720,19 +2712,19 @@ package body Code_Analysis_Module is
          Context_And_Analysis_CB.To_Marshaller
            (Add_Gcov_Project_Info_From_Menu'Access),
          Context_And_Analysis'(Context, Cont_N_Anal.Analysis));
-      Gtk_New (Item, -"List uncovered lines");
+      Gtk_New (Item, -"Show coverage information");
       Append (Submenu, Item);
       Context_And_Analysis_CB.Connect
         (Item, Gtk.Menu_Item.Signal_Activate,
          Context_And_Analysis_CB.To_Marshaller
-           (List_Uncovered_Lines_In_Project_From_Menu'Access),
+           (Show_Project_Coverage_Information_From_Menu'Access),
          Context_And_Analysis'(Context, Cont_N_Anal.Analysis));
-      Gtk_New (Item, -"Clear listed locations");
+      Gtk_New (Item, -"Hide coverage information");
       Append (Submenu, Item);
       Context_And_Analysis_CB.Connect
         (Item, Gtk.Menu_Item.Signal_Activate,
          Context_And_Analysis_CB.To_Marshaller
-           (Clear_Project_Locations_From_Menu'Access),
+           (Hide_Project_Coverage_Information_From_Menu'Access),
          Context_And_Analysis'(Context, Cont_N_Anal.Analysis));
       Gtk_New (Item, -"Remove data of project " &
                Project_Name (Project_Information (Cont_N_Anal.Context)));
@@ -2893,20 +2885,20 @@ package body Code_Analysis_Module is
       Append_Show_Analysis_Report_To_Menu
         (Cont_N_Anal, Submenu, -"Show report");
       Append_Load_Data_For_All_Projects (Cont_N_Anal, Submenu);
-      Gtk_New (Item, -"List uncovered lines in all projects");
+      Gtk_New (Item, -"Show all coverage information");
       Append (Submenu, Item);
       Context_And_Analysis_CB.Connect
         (Item, Gtk.Menu_Item.Signal_Activate,
          Context_And_Analysis_CB.To_Marshaller
-           (List_Uncovered_Lines_In_All_Projects_From_Menu'Access),
-         Cont_N_Anal);
-      Gtk_New (Item, -"Clear all project listed locations");
+           (Show_All_Coverage_Information_From_Menu'Access),
+         Context_And_Analysis'(Cont_N_Anal.Context, Cont_N_Anal.Analysis));
+      Gtk_New (Item, -"Hide all coverage information");
       Append (Submenu, Item);
       Context_And_Analysis_CB.Connect
         (Item, Gtk.Menu_Item.Signal_Activate,
          Context_And_Analysis_CB.To_Marshaller
-           (Clear_All_Project_Locations_From_Menu'Access),
-         Cont_N_Anal);
+           (Hide_All_Coverage_Information_From_Menu'Access),
+         Context_And_Analysis'(Cont_N_Anal.Context, Cont_N_Anal.Analysis));
 
       if Code_Analysis_Module_ID.Analyzes.Length > 1 then
          Gtk_New (Item, -"Remove " & Cont_N_Anal.Analysis.Name.all);
@@ -3082,14 +3074,13 @@ package body Code_Analysis_Module is
          Class        => Code_Analysis_Class,
          Handler      => Add_Gcov_File_Info_From_Shell'Access);
       Register_Command
-        (Kernel, "list_uncovered_lines",
+        (Kernel, "show_coverage_information",
          Class   => Code_Analysis_Class,
-         Handler => List_Uncovered_Lines_In_All_Projects_From_Shell'Access);
+         Handler => Show_All_Coverage_Information_From_Shell'Access);
       Register_Command
-        (Kernel, "clear_locations",
+        (Kernel, "hide_coverage_information",
          Class   => Code_Analysis_Class,
-         Handler =>
-           Clear_All_Project_Locations_From_Shell'Access);
+         Handler => Hide_All_Coverage_Information_From_Shell'Access);
       Register_Command
         (Kernel, "show_analysis_report",
          Class   => Code_Analysis_Class,
