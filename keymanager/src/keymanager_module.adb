@@ -46,6 +46,7 @@ with Gtk.Window;              use Gtk.Window;
 with Gtk.Widget;              use Gtk.Widget;
 
 with Gtkada.MDI;              use Gtkada.MDI;
+with Gtkada.Dialogs;          use Gtkada.Dialogs;
 
 with Commands.Interactive;    use Commands, Commands.Interactive;
 with GPS.Intl;                use GPS.Intl;
@@ -168,6 +169,10 @@ package body KeyManager_Module is
       --  shell command "last_command" if set (otherwise the field
       --  Last_Command) is returned. Last_User_Command is freed whenever a
       --  command different from Last_Command is executed by the user.
+
+      GUI_Running : Boolean := False;
+      --  Whether the GUI is currently running. This affect the locations
+      --  where messages are displayed.
    end record;
    type Keymanager_Module_ID is access all Keymanager_Module_Record'Class;
 
@@ -231,6 +236,12 @@ package body KeyManager_Module is
       Argument : String);
    --  This command reads a numeric argument, and will then execute the next
    --  action a number of times.
+
+   procedure Error_Message
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Message : String);
+   --  Emit a message in the context of the key manager shortcut, sending
+   --  it to the key manager GUI if present, and to the Messages window if not.
 
    ----------------------
    -- Save_Custom_Keys --
@@ -790,11 +801,40 @@ package body KeyManager_Module is
             end if;
 
          else
-            if Keymap = null then
-               Get_Secondary_Keymap (Table, Partial_Key, Modif, Keymap);
-            else
-               Get_Secondary_Keymap (Keymap.Table, Partial_Key, Modif, Keymap);
-            end if;
+            --  We are defining a multiple-stroke key shortcut (for instance
+            --  "control-x a".
+            --  Check that the prefix (in the example, "control-x") is not
+            --  already bound to an action. If it is, display an error
+            --  message and return.
+
+            declare
+               B : Key_Description_List;
+            begin
+               if Keymap = null then
+                  B := Get (Table, Key_Binding'(Partial_Key, Modif));
+                  Get_Secondary_Keymap (Table, Partial_Key, Modif, Keymap);
+               else
+                  B := Get (Keymap.Table, Key_Binding'(Partial_Key, Modif));
+                  Get_Secondary_Keymap
+                    (Keymap.Table, Partial_Key, Modif, Keymap);
+               end if;
+
+               while B /= null loop
+                  if B.Action /= null then
+                     Error_Message
+                       (Kernel,
+                        (-"Cannot use key shortcut <") & Key
+                        & (-"' for action """) & Action & """:" & ASCII.LF
+                        & (-"prefixing key shortcut <")
+                        & Key (Key'First .. Last - 1)
+                        & (-"> is already bound to action """)
+                        & B.Action.all & """.");
+                     return;
+                  end if;
+
+                  B := B.Next;
+               end loop;
+            end;
          end if;
 
          First := Last + 1;
@@ -1769,5 +1809,37 @@ package body KeyManager_Module is
    procedure Register_Key_Menu
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       renames Standard.KeyManager_Module.GUI.Register_Key_Menu;
+
+   -------------------
+   -- Error_Message --
+   -------------------
+
+   procedure Error_Message
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Message : String)
+   is
+      Dummy : Message_Dialog_Buttons;
+      pragma Unreferenced (Dummy);
+   begin
+      if Keymanager_Module.GUI_Running then
+         Dummy := Message_Dialog
+           (Msg            => Message,
+            Dialog_Type    => Error,
+            Buttons        => Button_OK,
+            Default_Button => Button_OK,
+            Title          => -"Key binding error");
+      else
+         Insert (Kernel, Message, Mode => Error);
+      end if;
+   end Error_Message;
+
+   ---------------------
+   -- Set_GUI_Running --
+   ---------------------
+
+   procedure Set_GUI_Running (Running : Boolean) is
+   begin
+      Keymanager_Module.GUI_Running := Running;
+   end Set_GUI_Running;
 
 end KeyManager_Module;
