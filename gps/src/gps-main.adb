@@ -114,6 +114,7 @@ with GVD_Module;
 with Help_Module;
 with KeyManager_Module;
 with KeyManager_Module.Macros;
+with Ada_Semantic_Tree_Module;
 with Navigation_Module;
 with Outline_View;
 with Project_Explorers;
@@ -1232,6 +1233,10 @@ procedure GPS.Main is
       --  to access marks that are handled by this module.
 
       Src_Editor_Module.Register_Module (GPS_Main.Kernel);
+
+      --  Initialize the ada semantic tree module
+
+      Ada_Semantic_Tree_Module.Register_Module (GPS_Main.Kernel);
 
       if Active (Call_Graph_Trace) then
          Browsers.Call_Graph.Register_Module (GPS_Main.Kernel);

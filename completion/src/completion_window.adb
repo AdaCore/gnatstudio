@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2006-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -773,8 +772,12 @@ package body Completion_Window is
          Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Mark);
          Insert (Window.Buffer, Text_Begin, Window.Info (Pos).Text.all);
 
-         Prepend_Proposal
-           (Window.Completion_History, Window.Info (Pos).Proposal.all);
+         --  If the proposal can be stored, store it in the history.
+
+         if Window.Info (Pos).Proposal.all in Storable_Proposal'Class then
+            Prepend_Proposal
+              (Window.Completion_History, Window.Info (Pos).Proposal.all);
+         end if;
 
          Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Mark);
          Forward_Chars (Iter   => Text_Begin,

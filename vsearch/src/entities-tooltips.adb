@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2006-2007                       --
---                             AdaCore                               --
+--                  Copyright (C) 2006-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -116,7 +115,7 @@ package body Entities.Tooltips is
          return Get_Documentation (Handler, Entity);
       end if;
 
-      Tree := Get_Full_Tree (Data_File);
+      Tree := Get_Tree (Data_File);
 
       Node := Get_Iterator_At
         (Tree        => Tree,

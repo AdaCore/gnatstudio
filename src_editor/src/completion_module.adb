@@ -779,6 +779,14 @@ package body Completion_Module is
          begin
             Kernel.Push_State (Busy);
 
+            --  At this point, we want to be as close as possible to the state
+            --  of the file where the completion occures - that's why we force
+            --  an update of its contents.
+
+            Update_Contents
+              (Get_Construct_Database (Kernel),
+               Get_Filename (Buffer));
+
             Data.Manager := new Ada_Completion_Manager;
             Data.The_Text := Get_String (Buffer);
             Constructs := Get_Constructs (Buffer, Exact);
@@ -823,10 +831,11 @@ package body Completion_Module is
 
                Trace (Me_Adv, "Getting completions ...");
                Data.Result := Get_Initial_Completion_List
-                 (Manager => Data.Manager.all,
+                 (Manager => Data.Manager,
                   Context =>
                     Create_Context
                       (Data.Manager,
+                       Get_Filename (Buffer),
                        GNAT.Strings.String_Access (Data.The_Text),
                        Offset));
                Trace (Me_Adv, "Getting completions done");

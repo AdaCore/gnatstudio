@@ -1052,7 +1052,7 @@ package body Docgen2 is
       Xref_List   : in out Cross_Ref_List.Vector;
       Class_List  : in out Cross_Ref_List.Vector)
    is
-      Construct   : Simple_Construct_Information;
+      Construct   : access Simple_Construct_Information;
       Entity      : Entity_Information := null;
       E_Info      : Entity_Info;
       Entity_Kind : E_Kind;
@@ -1227,9 +1227,10 @@ package body Docgen2 is
          --  Retrieve printout
 
          if Construct.Category not in Namespace_Category then
-            Set_Printout (Construct, Context.File_Buffer, E_Info);
+            Set_Printout (Construct.all, Context.File_Buffer, E_Info);
          elsif Construct.Category = Cat_Package then
-            Set_Pkg_Printout (Construct, Entity, Context.File_Buffer, E_Info);
+            Set_Pkg_Printout
+              (Construct.all, Entity, Context.File_Buffer, E_Info);
          end if;
 
          --  Retrieve references

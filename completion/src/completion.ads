@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006-2007                      --
---                              AdaCore                              --
+--                  Copyright (C) 2006-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,7 +24,9 @@
 --  it might depend on different datas. You can see for example the subprogram
 --  Full_Test in the test driver Completion.Test.
 
-with Ada.Unchecked_Deallocation;
+with Ada.Containers.Indefinite_Ordered_Maps;
+with Ada.Containers.Indefinite_Ordered_Sets;
+with Ada.Containers.Doubly_Linked_Lists;
 
 with Glib;         use Glib;
 
@@ -37,11 +38,10 @@ with Virtual_Lists;
 with Virtual_Lists.Extensive;
 
 with VFS; use VFS;
-with Ada.Containers.Indefinite_Ordered_Sets;
 
 package Completion is
 
-   type Completion_Proposal is abstract tagged private;
+   type Completion_Proposal;
    --  This is the type of a proposal.
 
    type Completion_Proposal_Access is access all Completion_Proposal'Class;
@@ -82,6 +82,9 @@ package Completion is
    function Get_Completion_Offset
      (Context : Completion_Context) return Natural;
    --  Return the offset associated to this context.
+
+   function Get_File (Context : Completion_Context) return VFS.Virtual_File;
+   --  Return the file associated with this context
 
    -------------------
    -- Completion_Id --
@@ -127,50 +130,29 @@ package Completion is
    --  Return the next completion resolver in the parent Completion_Manager,
    --  null if none.
 
-   type Possibilities_Filter is mod 2 ** 32;
-
-   All_Visible_Packages : constant Possibilities_Filter := 2#0000_0001#;
-   --  Denotes only the packages that are already in the visible scope.
-   All_Visible_Entities : constant Possibilities_Filter :=
-     2#0000_0010# or All_Visible_Packages;
-   --  Denotes all the visible entities.
-   All_Accessible_Units : constant Possibilities_Filter := 2#0000_0100#;
-   --  Denote all the units that are accessible, even if they are not visible.
-   Everything           : constant Possibilities_Filter := 16#FFFFFF#;
-
-   procedure Get_Possibilities
-     (Resolver   : access Completion_Resolver;
-      Identifier : String;
-      Is_Partial : Boolean;
-      Context    : Completion_Context;
-      Offset     : Integer;
-      Filter     : Possibilities_Filter;
-      Result     : in out Completion_List) is abstract;
-   --  Return the possible completion for the given identifier, using the
-   --  resolver given in parameter. If Is_Partial is false, then only
-   --  identifiers matching exactly the profile will be returned. Even in this
-   --  case, there might be serveal identifiers returned in case of overloaded
-   --  subprogram. However, this procedure should take care of visibility
-   --  problems, and return only the visible possibilities. Offset should be
-   --  the offset of the place from where we try to find the corresponding
-   --  identifier, in bytes, and visiblity will be calculated for this offset.
-   --  If offset is lower than zero, it means that the completion is done from
-   --  the very begining of the file, and therefore nothing from the file
-   --  should be extracted.
-
-   function From_Completion_Id
+   procedure Get_Completion_Root
      (Resolver : access Completion_Resolver;
-      Id       : Completion_Id;
+      Offset   : Integer;
       Context  : Completion_Context;
-      Filter   : Possibilities_Filter)
-      return Completion_Proposal_Access is abstract;
-   --  Create a proposal based on the id given in parameter. Returns null if
-   --  the resolver cannot retreive any completion. This can happen because the
-   --  id does not correspond to this resolver, or because the underlying data
-   --  has changed and the completion is not valid anymore.
+      Result   : in out Completion_List) is abstract;
+   --  Starts a completion, looking from the offset given in parameter.
+   --  Offset should be the offset of the place from where we try to find the
+   --  corresponding identifier, in bytes, and visiblity will be calculated
+   --  for this offset. If offset is lower than zero, it means that the
+   --  completion is done from the very begining of the file, and therefore
+   --  nothing from the file should be extracted. The completions returned by
+   --  this procedure are either resolved, or need to be expanded by an other
+   --  completion resolver.
 
    procedure Free (Resolver : in out Completion_Resolver) is abstract;
    --  Free the data of a Resolver.
+
+   function Get_Id (Resolver : Completion_Resolver) return String is abstract;
+   --  Return a unique ID corresponing to this resolver.
+
+   ------------------------
+   -- Completion_Manager --
+   ------------------------
 
    type Completion_Manager is abstract tagged private;
    --  A completion manager is a type holding a list of completions resolvers.
@@ -193,23 +175,24 @@ package Completion is
 
    function Create_Context
      (Manager : access Completion_Manager;
+      File    : VFS.Virtual_File;
       Buffer  : String_Access;
       Offset  : Natural) return Completion_Context;
    --  Creates a new context for this manager, with the offset and the buffer
    --  given in parameter.
 
-   function From_Completion_Id
+   function Get_Resolver
      (Manager : access Completion_Manager;
-      Id      : Completion_Id;
-      Context : Completion_Context;
-      Filter  : Possibilities_Filter)
-      return Completion_Proposal_Access;
-   --  Look from all the resolvers, and return the first proposal that has been
-   --  built according to this id. If none found, return null.
+      Name    : String) return Completion_Resolver_Access;
+   --  Return the resolver registered in the manager of the given name.
 
    -------------------------
    -- Completion_Proposal --
    -------------------------
+
+   type Completion_Proposal is abstract tagged record
+      Resolver : access Completion_Resolver'Class;
+   end record;
 
    type File_Location is record
       File_Path : Virtual_File;
@@ -261,31 +244,6 @@ package Completion is
      (Proposal : Completion_Proposal) return Construct_Visibility is abstract;
    --  Return the visibility of the object proposed for completion
 
-   procedure Get_Composition
-     (Proposal   : Completion_Proposal;
-      Identifier : String;
-      Offset     : Positive;
-      Is_Partial : Boolean;
-      Result     : in out Completion_List) is abstract;
-   --  Return the possible children of this completion,
-   --  Null_Completion_Proposal if none.
-
-   function Get_Number_Of_Parameters
-     (Proposal : Completion_Proposal) return Natural is abstract;
-   --  If the completion proposal is a subprogram, then this will return the
-   --  number of its parameters, otherwise 0.
-
-   procedure Append_Expression
-     (Proposal             : in out Completion_Proposal;
-      Number_Of_Parameters : Natural);
-   --  This function specify the expression that have been found after the
-   --  proposal given in parameters. Some proposals, like functions or arrays,
-   --  need this before returning their composition. The default implementation
-   --  of this function do nothing.
-   --  ??? This is currently a simple minded way of checking the profile of
-   --  a subprogram. We could do a little more analyzsis there, e.g. extract
-   --  named parameters if any.
-
    function Is_Valid (Proposal : Completion_Proposal) return Boolean;
    --  Return true if the proposal should be accessible by the user. By
    --  default, this is always true. Unvalid proposal are automatically skipped
@@ -296,23 +254,16 @@ package Completion is
    --  on the iterator will make the completion valid again.
 
    function Get_Initial_Completion_List
-     (Manager        : Completion_Manager;
-      Context        : Completion_Context;
-      End_Is_Partial : Boolean := True) return Completion_List is abstract;
+     (Manager : access Completion_Manager; Context : Completion_Context)
+      return Completion_List is abstract;
    --  Generates an initial completion list, for the cursor pointing at the
    --  given offset. This operation is time consuming, so it would be good
    --  to use the one below afterwards, until the completion process is done.
-   --  It End_Is_Partial is true, then the position given is possibly an
-   --  incomplete identifier. Otherwise, the expression will be analyzed as a
-   --  complete expression. Start_Offset has to be given in bytes.
 
    function Match
      (Proposal   : Completion_Proposal;
-      Identifier : String;
-      Is_Partial : Boolean;
       Context    : Completion_Context;
-      Offset     : Integer;
-      Filter     : Possibilities_Filter) return Boolean is abstract;
+      Offset     : Integer) return Boolean is abstract;
    --  Return true if the proposal given in parameter matches the completion
    --  search parameters given, false otherwise.
 
@@ -364,6 +315,7 @@ private
    type Completion_Context_Record is tagged record
       Buffer : String_Access;
       Offset : Integer;
+      File   : VFS.Virtual_File;
    end record;
 
    type Completion_Context is access all Completion_Context_Record'Class;
@@ -374,9 +326,14 @@ private
       Manager : Completion_Manager_Access;
    end record;
 
-   package Completion_Resolver_List_Pckg is new Generic_List
-     (Completion_Resolver_Access);
+   package Completion_Resolver_Map_Pckg is new
+     Ada.Containers.Indefinite_Ordered_Maps
+       (String, Completion_Resolver_Access);
 
+   package Completion_Resolver_List_Pckg is new
+     Ada.Containers.Doubly_Linked_Lists (Completion_Resolver_Access);
+
+   use Completion_Resolver_Map_Pckg;
    use Completion_Resolver_List_Pckg;
 
    package Context_List_Pckg is new Generic_List (Completion_Context);
@@ -384,43 +341,9 @@ private
    use Context_List_Pckg;
 
    type Completion_Manager is abstract tagged record
-      Resolvers : Completion_Resolver_List_Pckg.List;
+      Resolvers : Completion_Resolver_Map_Pckg.Map;
+      Ordered_Resolvers : Completion_Resolver_List_Pckg.List;
       Contexts  : Context_List_Pckg.List;
-   end record;
-
-   type Parameter is record
-      Name       : String_Access;
-      Is_Written : Boolean := False;
-      --  When this flag is true, the parameter has already been given a value
-      --  in the completing expression.
-   end record;
-
-   type Parameter_List is array (Natural range <>) of Parameter;
-
-   type Profile_Manager (Params_Number : Integer) is record
-      Parameters     : Parameter_List (1 .. Params_Number);
-      Case_Sensitive : Boolean;
-      Is_In_Profile  : Boolean := False;
-   end record;
-
-   type Profile_Manager_Access is access all Profile_Manager;
-
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Profile_Manager, Profile_Manager_Access);
-
-   procedure Set_Next_Param_Written
-     (Profile : Profile_Manager_Access; Success : out Boolean);
-   --  The first non written parameter is flagged as written. If there's no
-   --  such parameter available, Success is false.
-
-   procedure Set_Param_Written
-     (Profile : Profile_Manager_Access; Name : String; Success : out Boolean);
-   --  If there's a non-written parameter of the name given in parameter, it's
-   --  marked written. Otherwise, Success is false.
-
-   type Completion_Proposal is abstract tagged record
-      Resolver : access Completion_Resolver'Class;
-      Profile  : Profile_Manager_Access;
    end record;
 
    Null_File_Location : constant File_Location := (No_File, 0, 0);
@@ -434,10 +357,10 @@ private
    ---------------------
 
    package Completion_List_Pckg is new Virtual_Lists
-     (Completion_Proposal'Class, Free => Free_Proposal);
+     (Completion_Proposal'Class);
 
    package Completion_List_Extensive_Pckg is new
-     Completion_List_Pckg.Extensive;
+     Completion_List_Pckg.Extensive (Free => Free_Proposal);
 
    type Completion_List is record
       List                : Completion_List_Pckg.Virtual_List;
@@ -480,25 +403,10 @@ private
      (Proposal : Simple_Completion_Proposal) return Construct_Visibility;
    --  See inherited documentation
 
-   procedure Get_Composition
-     (Proposal   : Simple_Completion_Proposal;
-      Identifier : String;
-      Offset     : Positive;
-      Is_Partial : Boolean;
-      Result     : in out Completion_List);
-   --  See inherited documentation
-
-   function Get_Number_Of_Parameters
-     (Proposal : Simple_Completion_Proposal) return Natural;
-   --  See inherited documentation
-
    function Match
-     (Proposal   : Simple_Completion_Proposal;
-      Identifier : String;
-      Is_Partial : Boolean;
-      Context    : Completion_Context;
-      Offset     : Integer;
-      Filter     : Possibilities_Filter) return Boolean;
+     (Proposal : Simple_Completion_Proposal;
+      Context  : Completion_Context;
+      Offset   : Integer) return Boolean;
    --  See inherited documentation
 
    function To_Completion_Id
@@ -516,6 +424,6 @@ private
 
    Null_Completion_Proposal : constant Completion_Proposal'Class :=
      Simple_Completion_Proposal'
-       (Resolver => null, Name => null, Profile => null);
+       (Resolver => null, Name => null);
 
 end Completion;
