@@ -3,11 +3,12 @@
 dir=`dirname $0`
 dir=`cd $dir; /bin/pwd`
 
-valgrind="valgrind -v --suppressions=$dir/valgrind-python.supp --suppressions=$dir/gps.supp --track-fds=yes"
+valgrind="valgrind --suppressions=$dir/valgrind-python.supp --suppressions=$dir/gps.supp --track-fds=yes --leak-resolution=high"
 
 # use --db-attach=yes        to attach to a debugger for every error found
 # use --gen-suppressions=all to generate a suppression file 
 # use --show-reachable=yes   to show unfreed blocks for which we still have a handle
+# use --log-file=gps_valgrind.$$ to log the output
 
 
 ## See http://www.lrz-muenchen.de/services/software/programmierung/valgrind/html_3.0/ms-manual.html
