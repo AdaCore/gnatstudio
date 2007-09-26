@@ -215,8 +215,9 @@ package body Browsers.Call_Graph is
       Show_Ref_Kind : Boolean;
    end record;
    type References_Command_Access is access all References_Command'Class;
-   function Execute
+   overriding function Execute
      (Command : access References_Command) return Command_Return_Type;
+   overriding procedure Free (Command : in out References_Command);
 
    ------------------
    -- Entity items --
@@ -1012,6 +1013,16 @@ package body Browsers.Call_Graph is
       return Commands.Success;
    end Execute;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Command : in out References_Command) is
+   begin
+      Destroy (Command.Iter);
+      Free (Command.Locations);
+   end Free;
+
    -------------
    -- Execute --
    -------------
@@ -1445,8 +1456,7 @@ package body Browsers.Call_Graph is
          Name_Parameters (Data, References_Cmd_Parameters);
 
          declare
-            Ref_Command              : constant References_Command_Access :=
-                                         new References_Command;
+            Ref_Command : References_Command_Access := new References_Command;
             References_Command_Class : constant Class_Type := New_Class
               (Get_Kernel (Data),
                References_Command_Class_Name,
@@ -1483,16 +1493,17 @@ package body Browsers.Call_Graph is
 
                Launch_Synchronous (Ref_Command);
                Put_Locations_In_Return (Ref_Command, Data, Show_Ref_Type);
+               Destroy (Command_Access (Ref_Command));
 
             else
                --  Not synchronous, return a command
 
                Launched_Command := Launch_Background_Command
-                 (Kernel,
-                  Ref_Command,
-                  False,
-                  False,
-                  Destroy_On_Exit => False);
+                 (Kernel          => Kernel,
+                  Command         => Ref_Command,
+                  Active          => False,
+                  Show_Bar        => False,
+                  Destroy_On_Exit => True);
 
                Set_Progress
                  (Ref_Command,
