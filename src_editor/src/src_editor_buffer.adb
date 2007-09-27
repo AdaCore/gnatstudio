@@ -3385,6 +3385,12 @@ package body Src_Editor_Buffer is
          return;
       end if;
 
+      --  Any explicit (ie, forced programatically, as opposed to through
+      --  user typing) cursor movement should end the current action, and
+      --  destroy the smart completion window.
+      End_Action (Buffer);
+      Remove_Completion;
+
       --  At this point, we know that the (Line, Column) position is
       --  valid, so we can safely get the iterator at this position.
 
