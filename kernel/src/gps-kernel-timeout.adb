@@ -301,7 +301,7 @@ package body GPS.Kernel.Timeout is
                         "[" & Image (End_Time, ISO_Date & " %T") & "] ";
          Dur_Step   : constant String :=
                         Duration'Image (End_Time - Data.Start_Time);
-         Duration   : constant String := -" (duration" &
+         Duration   : constant String := -" (elapsed time" &
                         Dur_Step (Dur_Step'First .. Dur_Step'Last - 6) & "s)";
       begin
          --  The console might no longer exists if we are exiting GPS
