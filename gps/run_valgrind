@@ -3,7 +3,7 @@
 dir=`dirname $0`
 dir=`cd $dir; /bin/pwd`
 
-valgrind="valgrind --suppressions=$dir/valgrind-python.supp --suppressions=$dir/gps.supp --track-fds=yes --leak-resolution=high"
+valgrind="valgrind --suppressions=$dir/valgrind-python.supp --suppressions=$dir/gps.supp --track-fds=yes --leak-resolution=med --num-callers=20"
 
 # use --db-attach=yes        to attach to a debugger for every error found
 # use --gen-suppressions=all to generate a suppression file 
