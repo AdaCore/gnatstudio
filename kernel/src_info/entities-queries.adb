@@ -974,6 +974,9 @@ package body Entities.Queries is
       end if;
 
       while Repeat loop
+         --  Return the references we already know about (from inspecting
+         --  prior files or parsing them in memory)
+
          while Iter.Index <= Last (Iter.Entity.References) loop
             if Iter.Returning_Existing_Refs
               and then Iter.Entity.References.Table (Iter.Index).Location.File
@@ -1036,7 +1039,8 @@ package body Entities.Queries is
             Setup_For_Entity
               (Iter, Iter.Extra_Entities.Table (Iter.Extra_Entities_Index));
             Iter.Extra_Entities_Index := Iter.Extra_Entities_Index + 1;
-         else
+
+         elsif Iter.Filter (Get_Kind (Get (Iter))) then
             Repeat := False;
          end if;
 
