@@ -565,7 +565,7 @@ package body Switches_Editors is
                   Files => (1 .. 0 => VFS.No_File),
                   Use_Initial_Value => True);
             begin
-               Set_Command_Line (S.Pages (P).Switches, List);
+               Set_Command_Line (S.Pages (P), List);
                Free (List);
             end;
          end if;

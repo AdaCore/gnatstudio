@@ -182,8 +182,6 @@ private
       Attribute_Index : GNAT.Strings.String_Access;
       Title    : GNAT.Strings.String_Access;
       Pkg      : GNAT.Strings.String_Access;
-
-      Switches : Switches_Chooser.Gtkada.Switches_Editor;
       end record;
 
    type Pages_Array is array (Natural range <>) of Switches_Editor_Page;
