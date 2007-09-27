@@ -150,6 +150,10 @@ package body Completion_Module is
       Has_Smart_Completion            : Boolean := False;
       --   Whereas we are currently doing a Smart Completion
 
+      Smart_Completion : Completion_Window_Access := null;
+      --  The current completion window. This is only valid when
+      --  Has_Smart_Completion is True.
+
       Completion_Triggers_Callback    : Function_With_Args_Access;
       --  The hook callback corresponding to character triggers
 
@@ -338,6 +342,7 @@ package body Completion_Module is
       Free (D.The_Text);
 
       Completion_Module.Has_Smart_Completion := False;
+      Completion_Module.Smart_Completion := null;
 
       End_Completion (Source_View (Win));
 
@@ -396,6 +401,22 @@ package body Completion_Module is
       Reset_Completion_Data;
       Completion_Module := null;
    end Destroy;
+
+   -----------------------
+   -- Remove_Completion --
+   -----------------------
+
+   procedure Remove_Completion is
+   begin
+      if Completion_Module = null
+        or else Completion_Module.Has_Smart_Completion = False
+        or else Completion_Module.Smart_Completion = null
+      then
+         return;
+      end if;
+
+      Delete (Completion_Module.Smart_Completion);
+   end Remove_Completion;
 
    ---------------------------
    -- Reset_Completion_Data --
@@ -771,7 +792,8 @@ package body Completion_Module is
          end if;
 
          declare
-            Win  : Completion_Window_Access;
+            Win  : Completion_Window_Access
+            renames Completion_Module.Smart_Completion;
             Data : Smart_Completion_Data;
             It   : Gtk_Text_Iter;
             Constructs : aliased Construct_List;
