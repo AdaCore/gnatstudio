@@ -18,7 +18,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
-with Ada.Assertions;             use Ada.Assertions;
 with String_Utils;               use String_Utils;
 
 package body Switches_Chooser is
@@ -109,7 +108,7 @@ package body Switches_Chooser is
       Separator     : Character)
    is
    begin
-      Assert (Switch (Switch'First) = Config.Switch_Char);
+      pragma Assert (Switch (Switch'First) = Config.Switch_Char);
 
       if Separator = ASCII.NUL then
          Append (Config.Getopt_Switches,
