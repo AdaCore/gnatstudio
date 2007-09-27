@@ -1146,6 +1146,7 @@ package body Browsers.Call_Graph is
       Result  : out Command_Return_Type)
    is
       Count : Integer := 0;
+      Ref   : Entity_Reference;
    begin
       Result := Execute_Again;
 
@@ -1171,19 +1172,23 @@ package body Browsers.Call_Graph is
             Result := Success;
             exit;
 
-            --  Not done parsing all the files yet
-         elsif Get (Data.Iter.all) = No_Entity_Reference then
-            Next (Data.Iter.all);
-            exit;
-
          else
-            Print_Ref
-              (Data.Kernel,
-               Get (Data.Iter.all),
-               Get_Name (Data.Entity).all,
-               Data.Category.all,
-               Show_Caller  => Data.Show_Caller,
-               Sort_In_File => False);
+            Ref := Get (Data.Iter.all);
+
+            --  Not done parsing all the files yet
+            if Ref = No_Entity_Reference then
+               Next (Data.Iter.all);
+               exit;
+
+            else
+               Print_Ref
+                 (Data.Kernel,
+                  Ref,
+                  Get_Name (Data.Entity).all,
+                  Data.Category.all,
+                  Show_Caller  => Data.Show_Caller,
+                  Sort_In_File => False);
+            end if;
 
             Count := Count + 1;
          end if;
