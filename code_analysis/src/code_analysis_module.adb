@@ -233,6 +233,18 @@ package body Code_Analysis_Module is
    --  This entry try to load coverage data for root project and every imported
    --  projects.
 
+   procedure Append_Load_Project_Data
+     (Cont_N_Anal : Context_And_Analysis;
+      Menu        : access Gtk_Menu_Record'Class);
+   --  Actually fills the given Menu with the "Load data for project XXX" entry
+   --  This entry try to load coverage data for the context pointed project
+
+   procedure Append_Load_File_Data
+     (Cont_N_Anal : Context_And_Analysis;
+      Menu        : access Gtk_Menu_Record'Class);
+   --  Actually fills the given Menu with the "Load data for XXX.ad[b,s]" entry
+   --  This entry try to load coverage data for the context pointed file
+
    procedure Append_Subprogram_Menu_Entries
      (Cont_N_Anal : Context_And_Analysis;
       Submenu     : access Gtk_Menu_Record'Class);
@@ -536,6 +548,12 @@ package body Code_Analysis_Module is
    --  corresponding to uncovered lines of all projects
    --  Does nothing if the files of the projects are absent from the Locations
    --  view
+
+   pragma Unreferenced (Show_All_Coverage_Information_From_Menu,
+                        Hide_All_Coverage_Information_From_Menu);
+   --  On G917-013 request, these functions are not used anymore
+   --  but they are functional, and could be needed soon
+   --  ??? Should be totally removed after beta-testing campaign
 
    procedure List_Project_Uncovered_Lines
      (Kernel       : Kernel_Handle;
@@ -2658,14 +2676,7 @@ package body Code_Analysis_Module is
             Project_Information (Cont_N_Anal.Context));
       end if;
 
-      Gtk_New (Item, -"Load data for " &
-               Locale_Base_Name (File_Information (Context)));
-      Append (Submenu, Item);
-      Context_And_Analysis_CB.Connect
-        (Item, Gtk.Menu_Item.Signal_Activate,
-         Context_And_Analysis_CB.To_Marshaller
-           (Add_Gcov_File_Info_From_Menu'Access),
-         Context_And_Analysis'(Context, Cont_N_Anal.Analysis));
+      Append_Load_File_Data (Cont_N_Anal, Submenu);
       Gtk_New (Item, -"Show coverage information");
       Append (Submenu, Item);
       Context_And_Analysis_CB.Connect
@@ -2704,14 +2715,7 @@ package body Code_Analysis_Module is
    begin
       Set_File_Information
         (Context, VFS.No_File, Project_Information (Cont_N_Anal.Context));
-      Gtk_New (Item, -"Load data for project " &
-               Project_Name (Project_Information (Context)));
-      Append (Submenu, Item);
-      Context_And_Analysis_CB.Connect
-        (Item, Gtk.Menu_Item.Signal_Activate,
-         Context_And_Analysis_CB.To_Marshaller
-           (Add_Gcov_Project_Info_From_Menu'Access),
-         Context_And_Analysis'(Context, Cont_N_Anal.Analysis));
+      Append_Load_Project_Data (Cont_N_Anal, Submenu);
       Gtk_New (Item, -"Show coverage information");
       Append (Submenu, Item);
       Context_And_Analysis_CB.Connect
@@ -2884,21 +2888,17 @@ package body Code_Analysis_Module is
    begin
       Append_Show_Analysis_Report_To_Menu
         (Cont_N_Anal, Submenu, -"Show report");
+      Gtk_New (Item);
+      Append (Submenu, Item);
       Append_Load_Data_For_All_Projects (Cont_N_Anal, Submenu);
-      Gtk_New (Item, -"Show all coverage information");
+      Append_Load_Project_Data (Cont_N_Anal, Submenu);
+
+      if Has_File_Information (Cont_N_Anal.Context) then
+         Append_Load_File_Data (Cont_N_Anal, Submenu);
+      end if;
+
+      Gtk_New (Item);
       Append (Submenu, Item);
-      Context_And_Analysis_CB.Connect
-        (Item, Gtk.Menu_Item.Signal_Activate,
-         Context_And_Analysis_CB.To_Marshaller
-           (Show_All_Coverage_Information_From_Menu'Access),
-         Context_And_Analysis'(Cont_N_Anal.Context, Cont_N_Anal.Analysis));
-      Gtk_New (Item, -"Hide all coverage information");
-      Append (Submenu, Item);
-      Context_And_Analysis_CB.Connect
-        (Item, Gtk.Menu_Item.Signal_Activate,
-         Context_And_Analysis_CB.To_Marshaller
-           (Hide_All_Coverage_Information_From_Menu'Access),
-         Context_And_Analysis'(Cont_N_Anal.Context, Cont_N_Anal.Analysis));
 
       if Code_Analysis_Module_ID.Analyzes.Length > 1 then
          Gtk_New (Item, -"Remove " & Cont_N_Anal.Analysis.Name.all);
@@ -2914,16 +2914,6 @@ package body Code_Analysis_Module is
            (Item, Gtk.Menu_Item.Signal_Activate,
             Context_And_Analysis_CB.To_Marshaller
               (Clear_Analysis_From_Menu'Access), Cont_N_Anal);
-      end if;
-
-      Gtk_New (Item);
-      Append (Submenu, Item);
-      Append_Project_Menu_Entries (Cont_N_Anal, Submenu);
-
-      if Has_File_Information (Cont_N_Anal.Context) then
-            Gtk_New (Item);
-            Append (Submenu, Item);
-            Append_File_Menu_Entries (Cont_N_Anal, Submenu);
       end if;
    end Append_To_Submenu;
 
@@ -2972,6 +2962,46 @@ package body Code_Analysis_Module is
            (Add_All_Gcov_Project_Info_From_Menu'Access),
          Cont_N_Anal_Root_Prj);
    end Append_Load_Data_For_All_Projects;
+
+   ------------------------------
+   -- Append_Load_Project_Data --
+   ------------------------------
+
+   procedure Append_Load_Project_Data
+     (Cont_N_Anal : Context_And_Analysis;
+      Menu        : access Gtk_Menu_Record'Class)
+   is
+      Item : Gtk_Menu_Item;
+   begin
+      Gtk_New (Item, -"Load data for project " &
+               Project_Name (Project_Information (Cont_N_Anal.Context)));
+      Append (Menu, Item);
+      Context_And_Analysis_CB.Connect
+        (Item, Gtk.Menu_Item.Signal_Activate,
+         Context_And_Analysis_CB.To_Marshaller
+           (Add_Gcov_Project_Info_From_Menu'Access),
+         Context_And_Analysis'(Cont_N_Anal.Context, Cont_N_Anal.Analysis));
+   end Append_Load_Project_Data;
+
+   ---------------------------
+   -- Append_Load_File_Data --
+   ---------------------------
+
+   procedure Append_Load_File_Data
+     (Cont_N_Anal : Context_And_Analysis;
+      Menu        : access Gtk_Menu_Record'Class)
+   is
+      Item : Gtk_Menu_Item;
+   begin
+      Gtk_New (Item, -"Load data for " &
+               Locale_Base_Name (File_Information (Cont_N_Anal.Context)));
+      Append (Menu, Item);
+      Context_And_Analysis_CB.Connect
+        (Item, Gtk.Menu_Item.Signal_Activate,
+         Context_And_Analysis_CB.To_Marshaller
+           (Add_Gcov_File_Info_From_Menu'Access),
+         Context_And_Analysis'(Cont_N_Anal.Context, Cont_N_Anal.Analysis));
+   end Append_Load_File_Data;
 
    ----------
    -- Less --
