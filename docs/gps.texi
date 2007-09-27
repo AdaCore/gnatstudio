@@ -7972,57 +7972,21 @@ depending on the context.
 @item Coverage->Show report
 Open a new window summarizing the coverage information.
 
+@c \hline
+
 @item Coverage->Load data for all projects
 Load or re-load the data of every projects and subprojects.
-
-@item Coverage->List uncovered lines in all projects
-Highlight every uncovered lines in the files of every projects. The lines
-are listed in the location view.
-
-@item Coverage->Clear all project listed locations
-Remove all the project related lines, listed in the location view for coverage
-highlighting purpose.
-
-@item Coverage->Clear Coverage
-Drop the coverage information, and return to the first set of entries.
-
-@c \hline
 
 @item Coverage->Load data for project @code{XXX}
 Try to load again the coverage data of the project @code{XXX}.
 
-@item Coverage->List uncovered lines
-Highlight the not covered lines of every files of the project @code{XXX}.
-
-@item Coverage->Clear listed locations
-Remove the project related lines, listed in the location view for coverage
-highlighting purpose.
-
-@item Coverage->Remove data of project @code{XXX}
-Drop the data of the specified project.
-
-@c \hline
-
 @item Coverage->Load data for @file{xxx.adb} (@file{xxx.ads})
 Try to reload the coverage data of the specified source file.
 
-@item Coverage->Add coverage annotations
-Append an annotation column to the left side of the current source editor.
-This column indicates which lines are covered and which aren't.
+@c \hline
 
-@item Coverage->Remove coverage annotations
-Withdraw from the current source editor a previously set coverage annotation
-column.
-
-@item Coverage->List uncovered lines
-Highlight the not covered lines of the current contextual file.
-
-@item Coverage->Clear listed locations
-Remove the file related lines, listed in the location view for coverage
-highlighting purpose.
-
-@item Coverage->Remove data of @file{xxx.adb} (@file{xxx.ads})
-Remove the coverage data of the specified source file.
+@item Coverage->Clear Coverage
+Drop the coverage information, and return to the first set of entries.
 
 @end table
 
@@ -8031,9 +7995,29 @@ Remove the coverage data of the specified source file.
 When clicking on a project, file or subprogram entity (including the entities
 of the coverage report), you have access to a @command{Coverage} submenu.
 
-These submenus contain an appropriate subset of entries from the
-@command{Tools->Coverage} menu allowing to handle the current contextual
-entity.
+These submenus contain the following entries, adapted to the elements in the
+context. For instance, if you click on a file, you will have :
+
+@table @command
+@item Coverage->Show report
+Open a new window summarizing the coverage information.
+
+@item Coverage->Load data for @file{xxx.adb} (@file{xxx.ads})
+Try to reload the coverage data of the specified source file.
+
+@item Coverage->Show coverage information
+Append an annotation column to the left side of the current source editor.
+This column indicates which lines are covered and which aren't.
+
+@item Coverage->Hide coverage information
+Withdraw from the current source editor a previously set coverage annotation
+column.
+
+@item Coverage->Remove data of @file{xxx.adb} (@file{xxx.ads})
+Remove the coverage data of the specified source file.
+Try to reload the coverage data of the specified source file.
+
+@end table
 
 @item The Coverage Report
 
