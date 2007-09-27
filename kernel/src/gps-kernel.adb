@@ -951,6 +951,11 @@ package body GPS.Kernel is
 
             Garbage := Context.Data;
             Context.Data := null;
+
+            --  Do not access Context any more below, since the call to Free
+            --  will free instances and their user data, and the current call
+            --  to Finalize might come from such a user data.
+
             Free (Garbage.all);
             Unchecked_Free (Garbage);
 
@@ -958,17 +963,19 @@ package body GPS.Kernel is
                GNAT.Traces.Decrease_Indent
                  (Ref_Me, "Done destroying selection context");
             end if;
+
+         else
+            --  In any case, Context is no longer used, so we reset Data to
+            --  null. Not sure why, but Finalize seems to be called multiple
+            --  time when GNAT finalizes the controlled objects.
+
+            Context.Data := null;
          end if;
 
-         --  In any case, Context is no longer used, so we reset Data to null.
-         --  Not sure why, but Finalize seems to be called multiple time when
-         --  GNAT finalizes the controlled objects.
-
-         Context.Data := null;
       end if;
    exception
-      when E : others => Trace (Exception_Handle, E);
-
+      when E : others =>
+         Trace (Exception_Handle, E);
          if Active (Ref_Me) then
             GNAT.Traces.Decrease_Indent;
          end if;
