@@ -299,7 +299,9 @@ package body GPS.Main_Window is
          return False;
 
       elsif Advance (Window.Animation_Iter) then
-         Set (Window.Animation_Image, Get_Pixbuf (Window.Animation_Iter));
+         if Window.Animation_Image /= null then
+            Set (Window.Animation_Image, Get_Pixbuf (Window.Animation_Iter));
+         end if;
       end if;
 
       return True;
