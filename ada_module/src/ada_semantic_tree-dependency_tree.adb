@@ -59,23 +59,26 @@ package body Ada_Semantic_Tree.Dependency_Tree is
      (Units                 : Unit_Array_Access;
       First_Index_To_Update : Integer);
 
-   type Dependency_Info;
+   type Scope_Info;
 
-   type Dependency_Info_Access is access all Dependency_Info;
+   type Scope_Info_Access is access all Scope_Info;
 
-   type Dependency_Info is record
+   type Scope_Info is record
       Visible_Nested_Packages : Entity_List.List;
       With_Clauses            : Entity_List.List;
       Use_Clauses             : Entity_List.List;
 
-      Parent                  : Dependency_Info_Access := null;
-      Spec                    : Dependency_Info_Access := null;
+      Parent                  : Scope_Info_Access := null;
+      Spec                    : Scope_Info_Access := null;
 
       Entity                  : Entity_Access;
    end record;
+   --  This type holds the dependency list related to a given scope. It's just
+   --  dependencies added for that scope - in order to have all dep infos,
+   --  it's necessary to analyze parent scopes as well.
 
    package Dependency_Assocation is new Ada.Containers.Ordered_Maps
-     (Entity_Access, Dependency_Info_Access);
+     (Entity_Access, Scope_Info_Access);
 
    use Dependency_Assocation;
 
@@ -800,9 +803,12 @@ package body Ada_Semantic_Tree.Dependency_Tree is
       It           : Construct_Tree_Iterator;
       Tree         : Construct_Tree;
       Dependencies : Dependency_Assocation.Map;
-      Deps_Total   : Integer := 0;
 
-      Current_Dep  : Dependency_Info_Access;
+      Max_Depth   : Integer := 0;
+      --  This variable holds the maximum depth of scopes -  needed when we
+      --  want to constraint an array for a scope hierarchy analysis.
+
+      Current_Scope  : Scope_Info_Access;
 
       Ref_Key : constant Construct_Annotations_Pckg.Annotation_Key :=
         Get_Ref_Key
@@ -811,8 +817,8 @@ package body Ada_Semantic_Tree.Dependency_Tree is
       procedure Handle_Current_Location (It : Construct_Tree_Iterator);
 
       function Get_Dependency_Information
-        (Entity : Entity_Access; Parent_Info : Dependency_Info_Access)
-         return Dependency_Info_Access;
+        (Entity : Entity_Access; Parent_Info : Scope_Info_Access)
+         return Scope_Info_Access;
 
       -----------------------------
       -- Handle_Current_Location --
@@ -860,10 +866,14 @@ package body Ada_Semantic_Tree.Dependency_Tree is
 
             Result : Entity_Access;
 
-            type Dep_Info_Array is array
-              (Integer range <>) of Dependency_Info_Access;
+            type Scope_Info_Array is array
+              (Integer range <>) of Scope_Info_Access;
 
-            Ordered_Deps   : Dep_Info_Array (1 .. Deps_Total);
+            Ordered_Scopes   : Scope_Info_Array (1 .. Max_Depth * 2);
+            --  We want to store a whole scope hierarchy in this variable,
+            --  potentially a spec and a body for each element of the scope
+            --  hierarchy.
+
             Ordered_Length : Integer := 0;
             Length_Increment : Integer;
          begin
@@ -877,31 +887,31 @@ package body Ada_Semantic_Tree.Dependency_Tree is
             --  the spec and then retreive the ones from the parent,
             --  recursively.
 
-            Ordered_Deps (1) := Current_Dep;
+            Ordered_Scopes (1) := Current_Scope;
             Ordered_Length := 1;
 
-            while Ordered_Length <= Ordered_Deps'Length
+            while Ordered_Length <= Ordered_Scopes'Length
               and then
-                (Ordered_Deps (Ordered_Length).Parent /= null
-                 or else Ordered_Deps (Ordered_Length).Spec /= null)
+                (Ordered_Scopes (Ordered_Length).Parent /= null
+                 or else Ordered_Scopes (Ordered_Length).Spec /= null)
             loop
                Length_Increment := 0;
 
-               if Ordered_Deps (Ordered_Length).Spec /= null
+               if Ordered_Scopes (Ordered_Length).Spec /= null
                  and then
-                   (Ordered_Deps (Ordered_Length).Parent = null
+                   (Ordered_Scopes (Ordered_Length).Parent = null
                     or else
-                      Ordered_Deps (Ordered_Length).Parent /=
-                      Ordered_Deps (Ordered_Length).Spec)
+                      Ordered_Scopes (Ordered_Length).Parent /=
+                      Ordered_Scopes (Ordered_Length).Spec)
                then
-                  Ordered_Deps (Ordered_Length + 1) :=
-                    Ordered_Deps (Ordered_Length).Spec;
+                  Ordered_Scopes (Ordered_Length + 1) :=
+                    Ordered_Scopes (Ordered_Length).Spec;
                   Length_Increment := Length_Increment + 1;
                end if;
 
-               if Ordered_Deps (Ordered_Length).Parent /= null then
-                  Ordered_Deps (Ordered_Length + 1 + Length_Increment) :=
-                    Ordered_Deps (Ordered_Length).Parent;
+               if Ordered_Scopes (Ordered_Length).Parent /= null then
+                  Ordered_Scopes (Ordered_Length + 1 + Length_Increment) :=
+                    Ordered_Scopes (Ordered_Length).Parent;
                   Length_Increment := Length_Increment + 1;
                end if;
 
@@ -913,7 +923,7 @@ package body Ada_Semantic_Tree.Dependency_Tree is
             if Root = Null_Entity_Access then
                Unit_Loop : for J in 1 .. Ordered_Length loop
                   Entity_Iterator := First
-                    (Ordered_Deps (J).Visible_Nested_Packages);
+                    (Ordered_Scopes (J).Visible_Nested_Packages);
 
                   while Entity_Iterator /= Entity_List.No_Element loop
                      Entity := Element (Entity_Iterator);
@@ -940,7 +950,7 @@ package body Ada_Semantic_Tree.Dependency_Tree is
                Unit_Loop_1 : for J in 1 .. Ordered_Length loop
                   Name_It := Start
                     (Db         => Get_Database
-                       (Get_File (Ordered_Deps (J).Entity)),
+                       (Get_File (Ordered_Scopes (J).Entity)),
                      Prefix     => To_Lower (Get_Item (Id, 1)),
                      Is_Partial => False);
 
@@ -997,7 +1007,7 @@ package body Ada_Semantic_Tree.Dependency_Tree is
                         Use_Entity : Entity_Access;
                      begin
                         Use_Entity_Iterator := First
-                          (Ordered_Deps (J).Use_Clauses);
+                          (Ordered_Scopes (J).Use_Clauses);
 
                         while Use_Entity_Iterator /= Entity_List.No_Element
                         loop
@@ -1031,7 +1041,7 @@ package body Ada_Semantic_Tree.Dependency_Tree is
                Unit_Loop_3 : for J in 1 .. Ordered_Length loop
                   declare
                      Use_Iterator : Entity_List.Cursor :=
-                       First (Ordered_Deps (J).Use_Clauses);
+                       First (Ordered_Scopes (J).Use_Clauses);
                   begin
                      while Use_Iterator /= Entity_List.No_Element loop
                         if Element (Use_Iterator) /= Null_Entity_Access then
@@ -1148,9 +1158,9 @@ package body Ada_Semantic_Tree.Dependency_Tree is
                      (Entity => To_Entity_Persistent_Access (Unit))));
 
                if Get_Construct (It).Category = Cat_With then
-                  Append (Current_Dep.With_Clauses, Unit);
+                  Append (Current_Scope.With_Clauses, Unit);
                else
-                  Append (Current_Dep.Use_Clauses, Unit);
+                  Append (Current_Scope.Use_Clauses, Unit);
                end if;
             end if;
          elsif Get_Construct (It).Category = Cat_Package
@@ -1160,9 +1170,9 @@ package body Ada_Semantic_Tree.Dependency_Tree is
             --  use clauses to it...
 
             Prepend
-              (Current_Dep.Visible_Nested_Packages,
+              (Current_Scope.Visible_Nested_Packages,
                To_Entity_Access
-                 (File       => Get_File (Current_Dep.Entity),
+                 (File       => Get_File (Current_Scope.Entity),
                   Construct  => It));
          end if;
       end Handle_Current_Location;
@@ -1172,18 +1182,18 @@ package body Ada_Semantic_Tree.Dependency_Tree is
       --------------------------------
 
       function Get_Dependency_Information
-        (Entity : Entity_Access; Parent_Info : Dependency_Info_Access)
-         return Dependency_Info_Access
+        (Entity : Entity_Access; Parent_Info : Scope_Info_Access)
+         return Scope_Info_Access
       is
          It : constant Construct_Tree_Iterator :=
            To_Construct_Tree_Iterator (Entity);
-         Result : Dependency_Info_Access;
+         Result : Scope_Info_Access;
       begin
          if Get_Construct (It).Is_Declaration then
             --  In this case, we're on a new package scope, create
             --  the corresponding package dep.
 
-            Result := new Dependency_Info'
+            Result := new Scope_Info'
               (Parent => Parent_Info,
                Entity => Entity,
                others => <>);
@@ -1199,13 +1209,13 @@ package body Ada_Semantic_Tree.Dependency_Tree is
                  and then First_Occ /= Entity
                  and then Contains (Dependencies, First_Occ)
                then
-                  Result := new Dependency_Info'
+                  Result := new Scope_Info'
                     (Parent  => Parent_Info,
                      Spec    => Element (Dependencies, First_Occ),
                      Entity  => Entity,
                      others  => <>);
                else
-                  Result := new Dependency_Info'
+                  Result := new Scope_Info'
                     (Parent => Parent_Info,
                      Entity => Entity,
                      others => <>);
@@ -1213,7 +1223,7 @@ package body Ada_Semantic_Tree.Dependency_Tree is
             end;
          end if;
 
-         Deps_Total := Deps_Total + 1;
+         Max_Depth := Max_Depth + 1;
 
          Insert (Dependencies, Result.Entity, Result);
 
@@ -1241,11 +1251,11 @@ package body Ada_Semantic_Tree.Dependency_Tree is
          Tree := Get_Tree (Get_File (Get_Start_Entity (Units (J))));
          It := To_Construct_Tree_Iterator (Get_Start_Entity (Units (J)));
 
-         Current_Dep := Get_Dependency_Information
+         Current_Scope := Get_Dependency_Information
            (Get_Entity (Units (J)), null);
          End_Entity := Get_End_Entity (Units (J));
 
-         while Current_Dep /= null
+         while Current_Scope /= null
            and then It /= To_Construct_Tree_Iterator (End_Entity)
          loop
             --  Manage the current location
@@ -1257,7 +1267,7 @@ package body Ada_Semantic_Tree.Dependency_Tree is
                case Get_Construct (It).Category is
                   when Cat_Use =>
                      Prepend
-                       (Current_Dep.Use_Clauses,
+                       (Current_Scope.Use_Clauses,
                         Get_Dep_Entity
                           (Ref_Key,
                            To_Entity_Access
@@ -1266,7 +1276,7 @@ package body Ada_Semantic_Tree.Dependency_Tree is
 
                   when Cat_With =>
                      Prepend
-                       (Current_Dep.With_Clauses,
+                       (Current_Scope.With_Clauses,
                         Get_Dep_Entity
                           (Ref_Key,
                            To_Entity_Access
@@ -1275,7 +1285,7 @@ package body Ada_Semantic_Tree.Dependency_Tree is
 
                   when Cat_Package =>
                      Prepend
-                       (Current_Dep.Visible_Nested_Packages,
+                       (Current_Scope.Visible_Nested_Packages,
                         To_Entity_Access
                           (Get_File (Get_Start_Entity (Units (J))),
                            It));
@@ -1294,13 +1304,17 @@ package body Ada_Semantic_Tree.Dependency_Tree is
                   (J >= First_Index_To_Update
                    and then Get_Construct (It).Category in
                      Cat_Package .. Cat_Entry))
-                and then not Is_Compilation_Unit (It)
+              and then not Is_Compilation_Unit (It)
             then
-               Current_Dep := Get_Dependency_Information
+               --  We stack a dep scope of there are possible items on it, if
+               --  it's not a compil unit (stacked by the enclosing loop) and
+               --  if we're potentially going to look into it.
+
+               Current_Scope := Get_Dependency_Information
                  (To_Entity_Access
                     (Get_File (Get_Start_Entity (Units (J))),
                      It),
-                  Current_Dep);
+                  Current_Scope);
             end if;
 
             --  Iterate, and create the relevant dependency information if
@@ -1321,16 +1335,17 @@ package body Ada_Semantic_Tree.Dependency_Tree is
             end if;
 
             --  Then analyze the new iterator, if it's out the parent, we need
-            --  to unroll the dependencies until we reach the current one.
+            --  to unroll the scopes until we reach the current one.
 
-            if not Is_Parent_Scope (It, New_It)
-              and then not Has_Same_Scope (It, New_It)
-            then
-               while Current_Dep /= null
-                 and then not Is_Parent_Scope
-                   (To_Construct_Tree_Iterator (Current_Dep.Entity), New_It)
+            if New_It /= Null_Construct_Tree_Iterator then
+               while Current_Scope /= null
+                 and then not Encloses
+                   (To_Construct_Tree_Iterator (Current_Scope.Entity),
+                    Get_Construct (New_It).Sloc_Start.Index)
                loop
-                  Current_Dep := Current_Dep.Parent;
+                  Current_Scope := Current_Scope.Parent;
+
+                  Max_Depth := Max_Depth - 1;
                end loop;
             end if;
 
@@ -1342,9 +1357,9 @@ package body Ada_Semantic_Tree.Dependency_Tree is
          Cur : Dependency_Assocation.Cursor := First (Dependencies);
 
          procedure Free is new Ada.Unchecked_Deallocation
-           (Dependency_Info, Dependency_Info_Access);
+           (Scope_Info, Scope_Info_Access);
 
-         Obj : Dependency_Info_Access;
+         Obj : Scope_Info_Access;
       begin
          while Cur /= Dependency_Assocation.No_Element loop
             Obj := Element (Cur);
