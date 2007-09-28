@@ -18,6 +18,8 @@
 -----------------------------------------------------------------------
 
 --  This package provides a generic diff algorithm for any kind of data.
+--  See a description of the algorithm at:
+--     http://en.wikipedia.org/wiki/Longest_common_subsequence_problem
 
 generic
    type Object (<>) is limited private;
@@ -26,14 +28,14 @@ generic
 
    Null_Object : Object;
 
-   with function "=" (Left, Right : Object) return Boolean;
-   with function Length (C : Container) return Natural;
-   with function First (C : Container) return Iterator;
-   with function Last (C : Container) return Iterator;
-   with function Get (I : Iterator) return Object;
-   with function Next (I : Iterator) return Iterator;
-   with function Prev (I : Iterator) return Iterator;
-   with function At_End (I : Iterator) return Boolean;
+   with function "=" (Left, Right : Object) return Boolean is <>;
+   with function Length (C : Container) return Natural is <>;
+   with function First (C : Container) return Iterator is <>;
+   with function Last (C : Container) return Iterator is <>;
+   with function Get (I : Iterator) return Object is <>;
+   with function Next (I : Iterator) return Iterator is <>;
+   with function Prev (I : Iterator) return Iterator is <>;
+   with function At_End (I : Iterator) return Boolean is <>;
 
 package Diffing is
 
