@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with GNAT.Strings;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 pragma Warnings (Off);
@@ -844,11 +845,9 @@ package body GPS.Kernel.Project is
    ------------------
 
    function Get_Switches
-     (Handle            : access Kernel_Handle_Record'Class;
-      Project           : Project_Type;
-      In_Pkg            : String;
+     (Project           : Project_Type;
+      Tool              : Tool_Properties_Record;
       File              : VFS.Virtual_File := VFS.No_File;
-      Index             : String;
       Use_Initial_Value : Boolean := False) return GNAT.OS_Lib.Argument_List
    is
       use type Prj.Variable_Value;
@@ -856,39 +855,27 @@ package body GPS.Kernel.Project is
       Is_Default : Boolean;
    begin
       Get_Switches
-        (Project, In_Pkg, File, Get_String (Index), Value, Is_Default);
+        (Project,
+         To_Lower (Tool.Project_Package.all),
+         File,
+         To_Lower (Tool.Project_Index.all), Value, Is_Default);
 
       --  If no value was found, we might have to return the initial value
       if Value = Prj.Nil_Variable_Value and then Use_Initial_Value then
-         declare
-            Tool_Name : constant String := Get_Tool_Name
-              (Handle,
-               Pkg_Name  => In_Pkg,
-               Attribute => "default_switches",
-               Index     => Index);
-            Prop : Tool_Properties_Record;
-         begin
-            if Tool_Name /= "" then
-               Prop := Get_Tool_Properties (Handle, Tool_Name);
-
-               if Prop.Initial_Cmd_Line /= null then
-                  declare
-                     procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-                       (Argument_List, Argument_List_Access);
-                     Cmd : Argument_List_Access :=
-                       Argument_String_To_List (Prop.Initial_Cmd_Line.all);
-                     Cmd2 : constant Argument_List := Cmd.all;
-                  begin
-                     Unchecked_Free (Cmd);
-                     return Cmd2;
-                  end;
-               else
-                  return (1 .. 0 => null);
-               end if;
-            else
-               return (1 .. 0 => null);
-            end if;
-         end;
+         if Tool.Initial_Cmd_Line /= null then
+            declare
+               procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+                 (Argument_List, Argument_List_Access);
+               Cmd : Argument_List_Access :=
+                 Argument_String_To_List (Tool.Initial_Cmd_Line.all);
+               Cmd2 : constant Argument_List := Cmd.all;
+            begin
+               Unchecked_Free (Cmd);
+               return Cmd2;
+            end;
+         else
+            return (1 .. 0 => null);
+         end if;
       else
          return To_Argument_List (Get_Tree (Project), Value);
       end if;

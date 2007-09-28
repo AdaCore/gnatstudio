@@ -17,7 +17,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Strings;              use GNAT.Strings;
 
@@ -47,7 +46,6 @@ with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel;                use GPS.Kernel;
 with Language_Handlers;         use Language_Handlers;
-with Prj;
 with Projects.Editor;           use Projects.Editor;
 with Projects;                  use Projects;
 with Scenario_Selectors;        use Scenario_Selectors;
@@ -55,42 +53,15 @@ with Snames;                    use Snames;
 with String_Utils;              use String_Utils;
 with Switches_Chooser.Gtkada;   use Switches_Chooser, Switches_Chooser.Gtkada;
 with Traces;                    use Traces;
-with Namet;                     use Namet;
 with VFS;                       use VFS;
 
 package body Switches_Editors is
 
    Me : constant Debug_Handle := Create ("Switches_Editors");
 
-   ------------------
-   -- Dependencies --
-   ------------------
-
---     type Dependency_Data is record
---        Master_Status  : Boolean;
---        Slave_Switch   : Switch_Check_Widget_Access;
---        Slave_Activate : Boolean;
---     end record;
---
---     package Dependency_Callback is new Gtk.Handlers.User_Callback
---       (Gtk_Widget_Record, Dependency_Data);
---
---     procedure Check_Dependency
---       (Check : access Gtk_Widget_Record'Class;
---        Data  : Dependency_Data);
---     procedure Check_Field_Dependency
---       (Field : access Gtk_Widget_Record'Class;
---        Data  : Dependency_Data);
-   --  Callback to handle the dependencies between two items
-
    -----------------------
    -- Local subprograms --
    -----------------------
-
---     procedure Unchecked_Free is new Ada.Unchecked_Deallocation
---       (Pages_Array, Page_Array_Access);
---     procedure Unchecked_Free is new Ada.Unchecked_Deallocation
---       (GNAT.Strings.String_List, String_List_Access);
 
    function Close_Switch_Editor
      (Switches  : access Switches_Edit_Record'Class;
@@ -107,15 +78,9 @@ package body Switches_Editors is
    procedure Revert_To_Default (Switches : access Gtk_Widget_Record'Class);
    --  Revert to the default switches in the editor
 
---     procedure Activate_Dependencies
---       (Page   : access Switches_Editor_Page_Record'Class;
---        Editor : access Switches_Edit_Record'Class);
-   --  Activate all the dependencies defined for page
-
    function Get_Switches
      (Switches : access Switches_Edit_Record'Class;
-      Pkg_Name : String;
-      Language : String;
+      Tool     : Tool_Properties_Record;
       Files    : File_Array;
       Use_Initial_Value : Boolean := True) return GNAT.Strings.String_List;
    --  Return the list of switches for Files, found in the package Pkg_Name,
@@ -141,130 +106,11 @@ package body Switches_Editors is
    --  File_Specific should be True if the editor is open for a specific set
    --  of files, as opposed to a project-wide setting.
 
---     function Filter_Matches
---       (Page : access Switches_Editor_Page_Record'Class;
---        Language : String) return Boolean;
-   --  Return True if Page applies to Language.
-
    function Has_Supported_Language
-     (Page                : access Switches_Editor_Page_Record'Class;
+     (Tool                : Tool_Properties_Record;
       Supported_Languages : GNAT.Strings.String_List) return Boolean;
    --  Return True if Page applies to one of the languages in
    --  Supported_Language
-
---     function Get_Parameter
---       (Switch          : String;
---        Separator       : String;
---        List            : GNAT.Strings.String_List;
---        Index_In_List   : Natural;
---        Skip_Next_Index : access Boolean) return String;
-   --  Get the parameter for Switch, assuming it was first seen at position
-   --  Index_In_List in List.
-
---     function Switch_Matches
---       (Switch        : String;
---        Separator     : String;
---        Candidate     : GNAT.Strings.String_Access) return Boolean;
-   --  Whether Candidate matches Switch & Separator (properly take into
-   --  account the case where Separator is a space, and the argument appears
-   --  in a separate item in the argument_list
-
-   --------------------
-   -- Switch_Matches --
-   --------------------
-
---     function Switch_Matches
---       (Switch        : String;
---        Separator     : String;
---        Candidate     : GNAT.Strings.String_Access) return Boolean is
---     begin
---        if Candidate = null then
---           return False;
---
---        elsif Separator'Length > 0
---          and then Separator (Separator'First) = ' '
---        then
---           return Candidate.all = Switch;
---
---        else
---           return Candidate'Length >= Switch'Length + Separator'Length
---             and then Candidate
---             (Candidate'First ..
---                Candidate'First + Switch'Length + Separator'Length - 1) =
---               Switch & Separator;
---        end if;
---     end Switch_Matches;
-
-   -------------------
-   -- Get_Parameter --
-   -------------------
-
---     function Get_Parameter
---       (Switch          : String;
---        Separator       : String;
---        List            : GNAT.Strings.String_List;
---        Index_In_List   : Natural;
---        Skip_Next_Index : access Boolean) return String is
---     begin
---        if Separator'Length >= 1
---          and then Separator (Separator'First) = ' '
---        then
---           if Index_In_List < List'Last
---             and then List (Index_In_List + 1) /= null
---           then
---              Skip_Next_Index.all := True;
---              return List (Index_In_List + 1).all;
---           else
---              Skip_Next_Index.all := False;
---              return "";
---           end if;
---
---        else
---           Skip_Next_Index.all := False;
---           return List (Index_In_List)
---             (List (Index_In_List)'First + Switch'Length + Separator'Length
---              .. List (Index_In_List)'Last);
---        end if;
---     end Get_Parameter;
-
-   ----------------------------
-   -- Check_Field_Dependency --
-   ----------------------------
-
---     procedure Check_Field_Dependency
---       (Field : access Gtk_Widget_Record'Class;
---        Data  : Dependency_Data)
---     is
---        Has_Text : constant Boolean := Get_Text (Gtk_Entry (Field)) /= "";
---     begin
---        if (Has_Text and then Data.Master_Status)
---          or else (not Has_Text and then not Data.Master_Status)
---        then
---           Set_Sensitive (Data.Slave_Switch.Check, False);
---           Set_Active (Data.Slave_Switch.Check, Data.Slave_Activate);
---        else
---           Set_Sensitive (Data.Slave_Switch.Check, True);
---           Set_Active (Data.Slave_Switch.Check, not Data.Slave_Activate);
---        end if;
---     end Check_Field_Dependency;
-
-   ----------------------
-   -- Check_Dependency --
-   ----------------------
-
---     procedure Check_Dependency
---       (Check : access Gtk_Widget_Record'Class;
---        Data  : Dependency_Data) is
---     begin
---        if Get_Active (Gtk_Check_Button (Check)) = Data.Master_Status then
---           Set_Sensitive (Data.Slave_Switch.Check, False);
---           Set_Active (Data.Slave_Switch.Check, Data.Slave_Activate);
---
---        else
---           Set_Sensitive (Data.Slave_Switch.Check, True);
---           Set_Active (Data.Slave_Switch.Check, not Data.Slave_Activate);
---        end if;
---     end Check_Dependency;
 
    --------------
    -- Get_Page --
@@ -277,7 +123,7 @@ package body Switches_Editors is
       if Editor.Pages /= null then
          for Num in Editor.Pages'Range loop
             if Editor.Pages (Num) /= null
-              and then Editor.Pages (Num).Title.all = Title
+              and then Editor.Pages (Num).Tool_Name.all = Title
             then
                return Editor.Pages (Num);
             end if;
@@ -287,154 +133,27 @@ package body Switches_Editors is
       return null;
    end Get_Page;
 
-   --------------------
-   -- Add_Dependency --
-   --------------------
-
-   procedure Add_Dependency
-     (Page           : access Switches_Editor_Page_Record;
-      Master_Page    : String;
-      Master_Switch  : String;
-      Master_Status  : Boolean;
-      Slave_Page     : String;
-      Slave_Switch   : String;
-      Slave_Activate : Boolean := True) is
-   begin
-      Page.Dependencies := new Dependency_Description'
-        (Next          => Page.Dependencies,
-         Master_Page   => new String'(Master_Page),
-         Master_Switch => new String'(Master_Switch),
-         Master_Status => Master_Status,
-         Slave_Page    => new String'(Slave_Page),
-         Slave_Switch  => new String'(Slave_Switch),
-         Slave_Status  => Slave_Activate);
-   end Add_Dependency;
-
-   ---------------------------
-   -- Activate_Dependencies --
-   ---------------------------
-
---     procedure Activate_Dependencies
---       (Page   : access Switches_Editor_Page_Record'Class;
---        Editor : access Switches_Edit_Record'Class)
---     is
---        Master_Page, Slave_Page : Switches_Editor_Page;
---        S1, S2  : Switch_Basic_Widget;
---        Dep : Dependency_Description_Access := Page.Dependencies;
---     begin
---        while Dep /= null loop
---           Master_Page := Get_Page (Editor, Dep.Master_Page.all);
---           Slave_Page  := Get_Page (Editor, Dep.Slave_Page.all);
---
---           if Master_Page /= null and then Slave_Page /= null then
---              S1 := Get_Switch_Widget (Master_Page, Dep.Master_Switch.all);
---              S2 := Get_Switch_Widget (Slave_Page, Dep.Slave_Switch.all);
---              if S1 = null
---                or else S2 = null
---                or else (S1.all not in Switch_Check_Widget'Class
---                         and then S1.all not in Switch_Field_Widget'Class)
---                or else S2.all not in Switch_Check_Widget'Class
---              then
---                 Insert
---                   (Page.Kernel,
---                  "Can only add dependencies between check button switches "
---                    & Master_Page.Title.all & ' ' & Dep.Master_Switch.all
---                   & ' ' & Slave_Page.Title.all & ' ' & Dep.Slave_Switch.all,
---                    Mode => GPS.Kernel.Console.Error);
---              else
---                 if S1.all in Switch_Check_Widget'Class then
---                    Dependency_Callback.Connect
---                      (Switch_Check_Widget_Access (S1).Check, Signal_Toggled,
---                       Check_Dependency'Access,
---                       (Dep.Master_Status,
---                        Switch_Check_Widget_Access (S2),
---                        Dep.Slave_Status));
---                    Check_Dependency
---                      (Switch_Check_Widget_Access (S1).Check,
---                       (Dep.Master_Status,
---                        Switch_Check_Widget_Access (S2),
---                        Dep.Slave_Status));
---                 else
---                    Dependency_Callback.Connect
---                      (Switch_Field_Widget_Access (S1).Field, Signal_Changed,
---                       Check_Field_Dependency'Access,
---                       (Dep.Master_Status,
---                        Switch_Check_Widget_Access (S2),
---                        Dep.Slave_Status));
---                    Check_Field_Dependency
---                      (Switch_Field_Widget_Access (S1).Field,
---                       (Dep.Master_Status,
---                        Switch_Check_Widget_Access (S2),
---                        Dep.Slave_Status));
---                 end if;
---              end if;
---           end if;
---
---           Dep := Dep.Next;
---        end loop;
---     end Activate_Dependencies;
-
    -------------
    -- Gtk_New --
    -------------
 
    procedure Gtk_New
-     (Page            : out Switches_Editor_Page;
-      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Title           : String;
-      Project_Package : String;
-      Attribute_Index : String := "";
-      Config          : Switches_Editor_Config) is
+     (Page             : out Switches_Editor_Page;
+      In_Editor        : Switches_Edit;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Tool             : GPS.Kernel.Tool_Properties_Record) is
    begin
       Page := new Switches_Editor_Page_Record;
       Initialize
         (Editor             => Page,
-         Config             => Config,
+         Config             => Tool.Config,
          Tooltips           => Get_Tooltips (Kernel),
          Use_Native_Dialogs => Get_Pref (Use_Native_Dialogs));
       Widget_Callback.Connect (Page, Signal_Destroy, Page_Destroyed'Access);
 
-      Page.Kernel := Kernel_Handle (Kernel);
-      Page.Lang_Filter := null;
-
-      Page.Attribute_Index := new String'(Attribute_Index);
-      Page.Title := new String'(Title);
-      Page.Pkg   := new String'(To_Lower (Project_Package));
+      Page.Switches  := In_Editor;
+      Page.Tool_Name := new String'(Tool.Tool_Name.all);
    end Gtk_New;
-
-   ------------------
-   -- Add_Language --
-   ------------------
-
-   procedure Add_Language
-     (Page : access Switches_Editor_Page_Record;
-      Language_Filter : String) is
-   begin
-      Append (Page.Lang_Filter, (1 => new String'(Language_Filter)));
-      To_Lower (Page.Lang_Filter (Page.Lang_Filter'Last).all);
-   end Add_Language;
-
-   --------------------
-   -- Filter_Matches --
-   --------------------
-
---     function Filter_Matches
---       (Page : access Switches_Editor_Page_Record'Class;
---        Language : String) return Boolean
---     is
---     begin
---        if Page.Lang_Filter = null then
---           return True;
---        end if;
---
---        for F in Page.Lang_Filter'Range loop
---           if Language = Page.Lang_Filter (F).all then
---              return True;
---           end if;
---        end loop;
---
---        return False;
---     end Filter_Matches;
 
    -------------
    -- Gtk_New --
@@ -461,26 +180,13 @@ package body Switches_Editors is
          if Tools (T).Config /= null then
             Gtk_New
               (Page           => Editor.Pages (P),
+               In_Editor      => Editor,
                Kernel         => Kernel,
-               Title          => Tools (T).Tool_Name.all,
-               Project_Package => Tools (T).Project_Package.all,
-               Attribute_Index => Tools (T).Project_Index.all,
-               Config          => Tools (T).Config);
-            Gtk_New (Tab, Editor.Pages (P).Title.all);
+               Tool           => Tools (T));
+            Gtk_New (Tab, Editor.Pages (P).Tool_Name.all);
             Append_Page (Editor, Editor.Pages (P), Tab);
-
-            if Tools (T).Languages /= null then
-               for L in Tools (T).Languages'Range loop
-                  Add_Language (Editor.Pages (P), Tools (T).Languages (L).all);
-               end loop;
-            end if;
          end if;
       end loop;
-
-      --  Then once all the pages have been created, setup the dependencies
---        for P in Editor.Pages'Range loop
---           Activate_Dependencies (Editor.Pages (P), Editor);
---        end loop;
 
       Set_Current_Page (Editor, 0);
    end Gtk_New;
@@ -492,10 +198,7 @@ package body Switches_Editors is
    procedure Page_Destroyed (Page : access Gtk_Widget_Record'Class) is
       P : constant Switches_Editor_Page := Switches_Editor_Page (Page);
    begin
-      Free (P.Lang_Filter);
-      Free (P.Attribute_Index);
-      Free (P.Title);
-      Free (P.Pkg);
+      Free (P.Tool_Name);
    end Page_Destroyed;
 
    -----------------------
@@ -521,13 +224,16 @@ package body Switches_Editors is
       File_Specific : Boolean)
    is
       Current : Gint := Get_Current_Page (Editor);
+      Tool    : Tool_Properties_Record;
    begin
       for P in Editor.Pages'Range loop
          if Editor.Pages (P) /= null then
-            if (Editor.Pages (P).Lang_Filter = null
-                or else Has_Supported_Language (Editor.Pages (P), Languages))
+            Tool := Get_Tool_Properties
+              (Editor.Kernel, Editor.Pages (P).Tool_Name.all);
+
+            if Has_Supported_Language (Tool, Languages)
               and then (not File_Specific
-                        or else Editor.Pages (P).Pkg.all /= Ide_Package)
+                        or else Tool.Project_Package.all /= Ide_Package)
             then
                Show (Editor.Pages (P));
             elsif not Show_Only then
@@ -558,10 +264,11 @@ package body Switches_Editors is
       for P in S.Pages'Range loop
          if S.Pages (P) /= null then
             declare
+               Tool : constant Tool_Properties_Record :=
+                 Get_Tool_Properties (S.Kernel, S.Pages (P).Tool_Name.all);
                List : GNAT.Strings.String_List := Get_Switches
                  (S,
-                  S.Pages (P).Pkg.all,
-                  S.Pages (P).Attribute_Index.all,
+                  Tool,
                   Files => (1 .. 0 => VFS.No_File),
                   Use_Initial_Value => True);
             begin
@@ -580,14 +287,17 @@ package body Switches_Editors is
    ----------------------------
 
    function Has_Supported_Language
-     (Page                : access Switches_Editor_Page_Record'Class;
-      Supported_Languages : GNAT.Strings.String_List) return Boolean is
+     (Tool                : Tool_Properties_Record;
+      Supported_Languages : GNAT.Strings.String_List) return Boolean
+   is
    begin
-      if Page.Lang_Filter /= null then
-         for L in Page.Lang_Filter'Range loop
+      if Tool.Languages /= null then
+         for L in Tool.Languages'Range loop
             for PL in Supported_Languages'Range loop
-               if To_Lower (Page.Lang_Filter (L).all) =
-                 To_Lower (Supported_Languages (PL).all)
+               if Equal
+                 (Tool.Languages (L).all,
+                  Supported_Languages (PL).all,
+                  Case_Sensitive => False)
                then
                   return True;
                end if;
@@ -615,6 +325,7 @@ package body Switches_Editors is
 
       procedure Change_Switches
         (Page      : access Switches_Editor_Page_Record'Class;
+         Tool      : Tool_Properties_Record;
          File_Name : Virtual_File);
       --  Changes the switches for a specific package and tool.
 
@@ -629,22 +340,22 @@ package body Switches_Editors is
 
       procedure Change_Switches
         (Page      : access Switches_Editor_Page_Record'Class;
+         Tool      : Tool_Properties_Record;
          File_Name : Virtual_File)
       is
-         Language : constant Name_Id := Get_String (Page.Attribute_Index.all);
-         Value    : Prj.Variable_Value;
          Is_Default_Value : Boolean;
          Rename_Prj : Project_Type;
          To_Remove : Boolean := False;
       begin
-         Rename_Prj := Find_Project_Of_Package (Project, Page.Pkg.all);
+         Rename_Prj :=
+           Find_Project_Of_Package (Project, Tool.Project_Package.all);
 
          --  Language not supported => Ignore the attribute.
          --  We shouldn't remove it, since it might have been added by another
          --  page for a different language (Compiler'Switches is modified by
          --  several pages, for instance).
 
-         if not Has_Supported_Language (Page, Languages) then
+         if not Has_Supported_Language (Tool, Languages) then
             return;
          end if;
 
@@ -660,17 +371,12 @@ package body Switches_Editors is
             else
                --  If the switches are exactly the ones set by default for the
                --  language, remove the file-specific attribute
-
-               Get_Switches
-                 (Project          => Rename_Prj,
-                  In_Pkg           => Page.Pkg.all,
-                  File             => VFS.No_File,
-                  Language         => Language,
-                  Value            => Value,
-                  Is_Default_Value => Is_Default_Value);
                declare
                   Default_Args : GNAT.Strings.String_List :=
-                    To_Argument_List (Get_Tree (Project), Value);
+                    Get_Switches
+                      (Rename_Prj,
+                       Tool => Tool,
+                       Use_Initial_Value => Is_Default_Value);
                begin
                   Is_Default_Value := Page = Default_Args;
                   if not Is_Default_Value and then Active (Me) then
@@ -687,16 +393,12 @@ package body Switches_Editors is
                   --  If the switches are the ones already set for the file,
                   --  no change has been done in the dialog
 
-                  Get_Switches
-                    (Project          => Rename_Prj,
-                     In_Pkg           => Page.Pkg.all,
-                     File             => File_Name,
-                     Language         => Language,
-                     Value            => Value,
-                     Is_Default_Value => Is_Default_Value);
                   declare
                      Default_Args : GNAT.Strings.String_List :=
-                       To_Argument_List (Get_Tree (Project), Value);
+                       Get_Switches
+                         (Rename_Prj, Tool,
+                          File => File_Name,
+                          Use_Initial_Value => Is_Default_Value);
                   begin
                      Is_Default_Value := Page = Default_Args;
                      if not Is_Default_Value and then Active (Me) then
@@ -716,7 +418,7 @@ package body Switches_Editors is
                     (Project            => Rename_Prj,
                      Scenario_Variables => Scenario_Variables,
                      Attribute          => Build
-                       (Page.Pkg.all, Get_String (Name_Switches)),
+                       (Tool.Project_Package.all, Get_String (Name_Switches)),
                      Attribute_Index    => Base_Name (File_Name));
                   Changed := True;
                end if;
@@ -729,8 +431,9 @@ package body Switches_Editors is
                      Update_Attribute_Value_In_Scenario
                        (Project            => Rename_Prj,
                         Scenario_Variables => Scenario_Variables,
-                        Attribute          =>
-                          Build (Page.Pkg.all, Get_String (Name_Switches)),
+                        Attribute          => Build
+                          (Tool.Project_Package.all,
+                           Get_String (Name_Switches)),
                         Values             => Args.all,
                         Attribute_Index    => Base_Name (File_Name),
                         Prepend            => False);
@@ -741,34 +444,39 @@ package body Switches_Editors is
                      Delete_Attribute
                        (Project            => Rename_Prj,
                         Scenario_Variables => Scenario_Variables,
-                        Attribute          =>
-                          Build (Page.Pkg.all, Get_String (Name_Switches)),
+                        Attribute          => Build
+                          (Tool.Project_Package.all,
+                           Get_String (Name_Switches)),
                         Attribute_Index    => Base_Name (File_Name));
                      Changed := True;
                   end if;
 
                elsif Args'Length /= 0 then
                   Trace (Me, "Changing default switches for "
-                         & Page.Pkg.all & " " & Page.Attribute_Index.all);
+                         & Tool.Project_Package.all
+                         & " " & Tool.Project_Index.all);
                   Update_Attribute_Value_In_Scenario
                     (Project            => Rename_Prj,
                      Scenario_Variables => Scenario_Variables,
-                     Attribute          =>
-                      Build (Page.Pkg.all, Get_String (Name_Default_Switches)),
+                     Attribute          => Build
+                       (Tool.Project_Package.all,
+                        Get_String (Name_Default_Switches)),
                      Values             => Args.all,
-                     Attribute_Index    => Page.Attribute_Index.all,
+                     Attribute_Index    => Tool.Project_Index.all,
                      Prepend            => False);
                   Changed := True;
 
                else
                   Trace (Me, "Removing default switches for "
-                         & Page.Pkg.all & " " & Page.Attribute_Index.all);
+                         & Tool.Project_Package.all & " "
+                         & Tool.Project_Index.all);
                   Delete_Attribute
                     (Project            => Rename_Prj,
                      Scenario_Variables => Scenario_Variables,
-                     Attribute          =>
-                      Build (Page.Pkg.all, Get_String (Name_Default_Switches)),
-                     Attribute_Index    => Page.Attribute_Index.all);
+                     Attribute          => Build
+                       (Tool.Project_Package.all,
+                        Get_String (Name_Default_Switches)),
+                     Attribute_Index    => Tool.Project_Index.all);
                   Changed := True;
                end if;
             end if;
@@ -782,10 +490,15 @@ package body Switches_Editors is
       ------------------
 
       procedure Process_File (File_Name : Virtual_File) is
+         Tool : Tool_Properties_Record;
       begin
          for P in Switches.Pages'Range loop
             if Switches.Pages (P) /= null then
-               Change_Switches (Switches.Pages (P), File_Name);
+               Tool := Get_Tool_Properties
+                 (Switches.Kernel, Switches.Pages (P).Tool_Name.all);
+               if Tool /= No_Tool then
+                  Change_Switches (Switches.Pages (P), Tool, File_Name);
+               end if;
             end if;
          end loop;
       end Process_File;
@@ -868,22 +581,19 @@ package body Switches_Editors is
 
    function Get_Switches
      (Switches          : access Switches_Edit_Record'Class;
-      Pkg_Name          : String;
-      Language          : String;
+      Tool              : Tool_Properties_Record;
       Files             : File_Array;
       Use_Initial_Value : Boolean := True) return GNAT.Strings.String_List is
    begin
       if Files'Length = 0 then
          return Get_Switches
-           (Switches.Kernel,
-            Switches.Project, Pkg_Name, VFS.No_File,
-            Language, Use_Initial_Value => Use_Initial_Value);
+           (Switches.Project, Tool, VFS.No_File,
+            Use_Initial_Value => Use_Initial_Value);
       else
          --  ??? Should we merge all the switches ?
          return Get_Switches
-           (Switches.Kernel,
-            Switches.Project, Pkg_Name, Files (Files'First),
-            Language, Use_Initial_Value => Use_Initial_Value);
+           (Switches.Project, Tool, Files (Files'First),
+            Use_Initial_Value => Use_Initial_Value);
       end if;
    end Get_Switches;
 
@@ -933,11 +643,13 @@ package body Switches_Editors is
       for P in Switches.Pages'Range loop
          if Switches.Pages (P) /= null then
             declare
+               Tool : constant Tool_Properties_Record :=
+                 Get_Tool_Properties (Switches.Kernel,
+                                      Switches.Pages (P).Tool_Name.all);
                List : GNAT.Strings.String_List := Get_Switches
-                 (Switches,
-                  Switches.Pages (P).Pkg.all,
-                  Switches.Pages (P).Attribute_Index.all,
-                  Files,
+                 (Switches          => Switches,
+                  Tool              => Tool,
+                  Files             => Files,
                   Use_Initial_Value => False);
             begin
                Set_Command_Line
@@ -1066,5 +778,28 @@ package body Switches_Editors is
       Destroy (Dialog);
       return Modified;
    end Edit_Switches_For_Files;
+
+   ----------------------
+   -- Get_Tool_By_Name --
+   ----------------------
+
+   function Get_Tool_By_Name
+     (Editor    : Switches_Editor_Page_Record;
+      Tool_Name : String)
+      return Gtk_Switches_Editors.Root_Switches_Editor_Access
+   is
+   begin
+      if Editor.Switches /= null then
+         for P in Editor.Switches.Pages'Range loop
+            if Editor.Switches.Pages (P) /= null
+              and then Editor.Switches.Pages (P).Tool_Name.all = Tool_Name
+            then
+               return Gtk_Switches_Editors.Root_Switches_Editor_Access
+                 (Editor.Switches.Pages (P));
+            end if;
+         end loop;
+      end if;
+      return null;
+   end Get_Tool_By_Name;
 
 end Switches_Editors;

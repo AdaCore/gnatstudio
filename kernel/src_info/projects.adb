@@ -2407,7 +2407,7 @@ package body Projects is
      (Project          : Project_Type;
       In_Pkg           : String;
       File             : VFS.Virtual_File;
-      Language         : Namet.Name_Id;
+      Language         : String;
       Value            : out Variable_Value;
       Is_Default_Value : out Boolean) is
    begin
@@ -2431,7 +2431,7 @@ package body Projects is
             Attribute      =>
               Attribute_Pkg
                 (In_Pkg & '#' & Get_String (Name_Default_Switches)),
-            Index          => Get_String (Language));
+            Index          => Language);
          Is_Default_Value := True;
       end if;
    end Get_Switches;

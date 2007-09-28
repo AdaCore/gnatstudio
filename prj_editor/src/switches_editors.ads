@@ -48,11 +48,9 @@ package Switches_Editors is
 
    procedure Gtk_New
      (Page             : out Switches_Editor_Page;
+      In_Editor        : Switches_Edit;
       Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Title            : String;
-      Project_Package  : String;
-      Attribute_Index  : String := "";
-      Config           : Switches_Chooser.Switches_Editor_Config);
+      Tool             : GPS.Kernel.Tool_Properties_Record);
    --  Create a new page, that should be displayed.
    --  You can restrict the display of this page to specific languages by
    --  calling Add_Language below. However, by default it is displayed for
@@ -64,31 +62,6 @@ package Switches_Editors is
    --  Project_Package is the name of the package, in the project files, where
    --  the switches are stored. Attribute_Index is the index of the attribute
    --  to be created in Project_Package.
-
-   procedure Add_Language
-     (Page : access Switches_Editor_Page_Record;
-      Language_Filter : String);
-   --  Add a new language to the list of languages for which this page should
-   --  be displayed.
-   --  By default, the page is displayed for all languages, until you have
-   --  added at least one filter.
-
-   procedure Add_Dependency
-     (Page           : access Switches_Editor_Page_Record;
-      Master_Page    : String;
-      Master_Switch  : String;
-      Master_Status  : Boolean;
-      Slave_Page     : String;
-      Slave_Switch   : String;
-      Slave_Activate : Boolean := True);
-   --  Add dependency between two switches: if Master switch's status becomes
-   --  Master_Status, then Slave_Switch will be automatically set to a new
-   --  state (Activate), and set insensitive until Master_Switch is set
-   --  insensitive again.
-   --  For instance: if Master_Switch is "-g" for the builder, and Slave_Switch
-   --  is "-g" for the compiler, with Master_Status=True and
-   --  Slave_Activate=True, then everytime the user selects "-g" for the
-   --  builder, "-g" will also be forced for the compiler.
 
    ---------------------
    -- Switches editor --
@@ -157,41 +130,28 @@ package Switches_Editors is
    --  displayed.
 
 private
-
-   type Dependency_Description;
-   type Dependency_Description_Access is access Dependency_Description;
-   type Dependency_Description is record
-      Master_Page, Slave_Page     : GNAT.Strings.String_Access;
-      Master_Switch, Slave_Switch : GNAT.Strings.String_Access;
-      Master_Status, Slave_Status : Boolean;
-      Next                        : Dependency_Description_Access;
-   end record;
-   --  Description of a dependency (see Add_Dependency). This is needed because
-   --  the dependencies can only be fully setup once all pages have been
-   --  created.
-
    type Switches_Editor_Page_Record is new
      Switches_Chooser.Gtkada.Switches_Editor_Record with
       record
-      Kernel      : GPS.Kernel.Kernel_Handle;
-      Lang_Filter : GNAT.Strings.String_List_Access;
-      --  List of languages for which this page applies
-
-      Dependencies : Dependency_Description_Access;
-
-      Attribute_Index : GNAT.Strings.String_Access;
-      Title    : GNAT.Strings.String_Access;
-      Pkg      : GNAT.Strings.String_Access;
+         Tool_Name : GNAT.Strings.String_Access;
+         Switches  : Switches_Edit;
       end record;
+
+   overriding function Get_Tool_By_Name
+     (Editor    : Switches_Editor_Page_Record;
+      Tool_Name : String)
+      return Switches_Chooser.Gtkada.Gtk_Switches_Editors.
+         Root_Switches_Editor_Access;
+   --  See inherited documentation
 
    type Pages_Array is array (Natural range <>) of Switches_Editor_Page;
    type Page_Array_Access is access Pages_Array;
 
    type Switches_Edit_Record is new Gtk_Notebook_Record with record
-      Kernel       : GPS.Kernel.Kernel_Handle;
-      Files        : VFS.File_Array_Access;
-      Project      : Projects.Project_Type;
-      Pages        : Page_Array_Access;
+      Kernel   : GPS.Kernel.Kernel_Handle;
+      Files    : VFS.File_Array_Access;
+      Project  : Projects.Project_Type;
+      Pages    : Page_Array_Access;
    end record;
 
 end Switches_Editors;

@@ -395,10 +395,10 @@ package body Project_Viewers is
 
       File_Name  : constant Virtual_File := Create
         (Get_String (Viewer.Model, Iter, Absolute_File_Name_Column));
-      Language   : constant Name_Id := Get_String
-        (Get_Language_From_File
-         (Language_Handler (Get_Language_Handler (Viewer.Kernel)),
-          File_Name));
+      Language   : constant String :=
+        Get_Language_From_File
+          (Language_Handler (Get_Language_Handler (Viewer.Kernel)),
+           File_Name);
       Color      : Gdk_Color;
       Value      : Prj.Variable_Value;
       Is_Default : Boolean;

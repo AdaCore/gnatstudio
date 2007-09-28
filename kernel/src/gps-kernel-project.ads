@@ -162,11 +162,9 @@ package GPS.Kernel.Project is
    ----------------
 
    function Get_Switches
-     (Handle            : access Kernel_Handle_Record'Class;
-      Project           : Projects.Project_Type;
-      In_Pkg            : String;
+     (Project           : Projects.Project_Type;
+      Tool              : Tool_Properties_Record;
       File              : VFS.Virtual_File := VFS.No_File;
-      Index             : String;
       Use_Initial_Value : Boolean := False) return GNAT.OS_Lib.Argument_List;
    --  Same as Projects.Get_Switches.
    --  If the package or its attribute isn't defined, or Project is No_Project,

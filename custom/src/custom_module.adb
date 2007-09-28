@@ -206,9 +206,10 @@ package body Custom_Module is
    --  scripting language was activated.
 
    procedure Parse_Switches_Node
-     (Kernel : access Kernel_Handle_Record'Class;
-      Node   : Node_Ptr;
-      Config : out Switches_Editor_Config);
+     (Kernel       : access Kernel_Handle_Record'Class;
+      File         : VFS.Virtual_File;
+      Current_Tool : in out Tool_Properties_Record;
+      Node         : Node_Ptr);
    --  Parse a <switches> node, and returns the corresponding configuration
 
    -------------------------
@@ -216,9 +217,10 @@ package body Custom_Module is
    -------------------------
 
    procedure Parse_Switches_Node
-     (Kernel : access Kernel_Handle_Record'Class;
-      Node   : Node_Ptr;
-      Config : out Switches_Editor_Config)
+     (Kernel       : access Kernel_Handle_Record'Class;
+      File         : VFS.Virtual_File;
+      Current_Tool : in out Tool_Properties_Record;
+      Node         : Node_Ptr)
    is
       Comlin_Config : Command_Line_Configuration;
       Char       : constant String := Get_Attribute (Node, "switch_char", "-");
@@ -299,7 +301,7 @@ package body Custom_Module is
       begin
          Coordinates_From_Node (N, Line, Col);
          Set_Frame_Title
-           (Config,
+           (Current_Tool.Config,
             Title     => N.Value.all,
             Line      => Line,
             Column    => Col,
@@ -320,8 +322,9 @@ package body Custom_Module is
          Master_Status : constant String :=
                            Get_Attribute (N, "master-status", "true");
          Slave_Status  : constant String :=
-                           Get_Attribute (N, "slave-status", "true");
-         pragma Unreferenced (Master_Status, Slave_Status);
+           Get_Attribute (N, "slave-status", "true");
+         Tool          : Tool_Properties_Record;
+         Config        : Switches_Editor_Config;
       begin
          if Master_Page = ""
            or else Master_Switch = ""
@@ -331,19 +334,35 @@ package body Custom_Module is
             Insert
               (Kernel,
                  -("Invalid <dependency> node in custom file,"
-                   & " all attributes must be specified"),
+                 & " all attributes must be specified, in file "
+                 & Full_Name (File).all),
                Mode => GPS.Kernel.Console.Error);
             return;
          end if;
 
---           Add_Dependency
---             (Page,
---              Master_Page,
---              Master_Switch,
---              Master_Status = "true" or else Master_Status = "on",
---              Slave_Page,
---              Slave_Switch,
---              Slave_Status = "true" or else Slave_Status = "on");
+         if Master_Page = Current_Tool.Tool_Name.all then
+            Config := Current_Tool.Config;
+         else
+            Tool := Get_Tool_Properties (Kernel, Master_Page);
+            if Tool /= No_Tool then
+               Config := Tool.Config;
+            else
+               Insert
+                 (Kernel,
+                  -("<dependency> node in custom file references"
+                    & " unknown tool: ")
+                  & Master_Page & (-" in file ") & Full_Name (File).all,
+                  Mode => GPS.Kernel.Console.Error);
+            end if;
+         end if;
+
+         Add_Dependency
+           (Config,
+            Master_Switch,
+            Master_Status = "true" or else Master_Status = "on",
+            Slave_Page,
+            Slave_Switch,
+            Slave_Status = "true" or else Slave_Status = "on");
       end Process_Dependency_Node;
 
       -------------------------------
@@ -376,7 +395,7 @@ package body Custom_Module is
                   end if;
 
                   Add_Radio_Entry
-                    (Config => Config,
+                    (Config => Current_Tool.Config,
                      Radio  => Radio,
                      Label  => Label,
                      Switch => Switch,
@@ -449,7 +468,7 @@ package body Custom_Module is
          Coordinates_From_Node (N, Line, Col);
 
          R := Add_Radio
-           (Config => Config,
+           (Config => Current_Tool.Config,
             Line   => Line,
             Column => Col,
             Popup  => Popup);
@@ -476,7 +495,7 @@ package body Custom_Module is
          end if;
 
          Pop := Add_Popup
-           (Config  => Config,
+           (Config  => Current_Tool.Config,
             Label   => Label,
             Lines   => Safe_Value (Get_Attribute (N, "lines", "1")),
             Columns => Safe_Value (Get_Attribute (N, "columns", "1")),
@@ -513,7 +532,7 @@ package body Custom_Module is
          end if;
 
          Add_Combo
-           (Config    => Config,
+           (Config    => Current_Tool.Config,
             Label     => Label,
             Switch    => Switch,
             Separator => Get_Attribute (N, "separator", " "),
@@ -550,7 +569,7 @@ package body Custom_Module is
          end if;
 
          Add_Field
-           (Config,
+           (Current_Tool.Config,
             Label        => Label,
             Switch       => Switch,
             Separator    => Get_Attribute (N, "separator", Default_Sep),
@@ -587,7 +606,7 @@ package body Custom_Module is
          end if;
 
          Add_Spin
-           (Config    => Config,
+           (Config    => Current_Tool.Config,
             Label     => Label,
             Switch    => Switch,
             Tip       => Get_Attribute (N, "tip"),
@@ -624,7 +643,7 @@ package body Custom_Module is
          end if;
 
          Add_Check
-           (Config => Config,
+           (Config => Current_Tool.Config,
             Label  => Label,
             Switch => Switch,
             Tip    => Get_Attribute (N, "tip"),
@@ -702,7 +721,7 @@ package body Custom_Module is
       end Parse_Popup_Or_Main;
 
    begin
-      Config := Create
+      Current_Tool.Config := Create
         (Default_Separator => Default_Sep,
          Switch_Char     => Char (Char'First),
          Scrolled_Window => Boolean'Value
@@ -714,7 +733,7 @@ package body Custom_Module is
 
       --  Set the configuration only after it has potentially
       --  been created by Parsing_Switches_XML
-      Set_Configuration (Config, Comlin_Config);
+      Set_Configuration (Current_Tool.Config, Comlin_Config);
    end Parse_Switches_Node;
 
    ------------------------------
@@ -978,10 +997,8 @@ package body Custom_Module is
                        To_Lower (Get_Attribute (Node, "index", Name));
          Attribute : constant String :=
                        Get_Attribute (Node, "attribute", "default_switches");
-         Switches  : GNAT.OS_Lib.String_Access;
          N         : Node_Ptr := Node.Child;
-         Languages : String_List_Access;
-         Config    : Switches_Editor_Config;
+         Tool      : Tool_Properties_Record;
 
       begin
          if Name = "" then
@@ -991,19 +1008,26 @@ package body Custom_Module is
             raise Assert_Failure;
          end if;
 
+         Tool.Tool_Name         := new String'(Name);
+         Tool.Project_Package   := new String'(Pack);
+         Tool.Project_Attribute := new String'(Attribute);
+         Tool.Project_Index     := new String'(Index);
+
          while N /= null loop
             if N.Tag.all = "initial-cmd-line" then
-               Free (Switches);
-               Switches := new String'(N.Value.all);
+               Free (Tool.Initial_Cmd_Line);
+               Tool.Initial_Cmd_Line := new String'(N.Value.all);
 
             elsif N.Tag.all = "language" then
-               Append (Languages, (1 => new String'(To_Lower (N.Value.all))));
+               Append
+                 (Tool.Languages, (1 => new String'(To_Lower (N.Value.all))));
 
             elsif N.Tag.all = "switches" then
                Parse_Switches_Node
-                 (Kernel => Kernel,
-                  Node   => N,
-                  Config => Config);
+                 (Kernel       => Kernel,
+                  File         => File,
+                  Current_Tool => Tool,
+                  Node         => N);
 
             else
                Insert (Kernel,
@@ -1014,15 +1038,7 @@ package body Custom_Module is
             N := N.Next;
          end loop;
 
-         Register_Tool
-           (Kernel,
-            Tool      => (Tool_Name         => new String'(Name),
-                          Project_Package   => new String'(Pack),
-                          Project_Attribute => new String'(Attribute),
-                          Project_Index     => new String'(Index),
-                          Initial_Cmd_Line  => Switches,
-                          Languages         => Languages,
-                          Config            => Config));
+         Register_Tool (Kernel, Tool);
       end Parse_Tool_Node;
 
       -----------------------

@@ -412,7 +412,7 @@ package Projects is
      (Project          : Project_Type;
       In_Pkg           : String;
       File             : VFS.Virtual_File;
-      Language         : Namet.Name_Id;
+      Language         : String;
       Value            : out Prj.Variable_Value;
       Is_Default_Value : out Boolean);
    --  Return the switches to use for a file in a given package (gnatmake,
