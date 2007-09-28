@@ -176,6 +176,22 @@ package Switches_Chooser is
    --  package.
    --  (Lines, Columns) are the number of lines and columns in the popup.
 
+   procedure Add_Dependency
+     (Config         : Switches_Editor_Config;
+      Switch         : String;
+      Status         : Boolean;
+      Slave_Tool     : String;
+      Slave_Switch   : String;
+      Slave_Activate : Boolean := True);
+   --  Add dependency between two switches: if Switch's status becomes
+   --  Status, then Slave_Switch will be automatically set to a new
+   --  state (Activate), and set insensitive until Switch is set
+   --  insensitive again.
+   --  For instance: if Switch is "-g" for the builder, and Slave_Switch
+   --  is "-g" for the compiler, with Status=True and
+   --  Slave_Activate=True, then everytime the user selects "-g" for the
+   --  builder, "-g" will also be forced for the compiler.
+
    procedure Get_Command_Line
      (Cmd      : in out Command_Line;
       Expanded : Boolean;
@@ -191,6 +207,8 @@ package Switches_Chooser is
       --  So that your editor itself is a widget
    package Switches_Editors is
       type Root_Switches_Editor is abstract new Root_Editor with private;
+      type Root_Switches_Editor_Access is access all
+        Root_Switches_Editor'Class;
       --  A graphical window representing a switches editor. This type is
       --  abstract because it isn't directly related to any GUI toolkit, and
       --  thus needs to be instanced. But it provides services to be used by
@@ -213,6 +231,21 @@ package Switches_Chooser is
       --  Whether Editor's command line is exactly equivalent to Args.
       --  This properly ungroup arguments from Args, so that the expanded
       --  command lines are compared.
+
+      function Get_Config
+        (Editor : access Root_Switches_Editor)
+         return Switches_Editor_Config;
+      --  Return the switches configuration used for this editor
+
+      function Get_Command_Line
+        (Editor : access Root_Switches_Editor)
+         return Command_Line;
+      --  Return the current command line
+
+      function Get_Command_Line
+        (Editor   : access Root_Switches_Editor;
+         Expanded : Boolean) return GNAT.Strings.String_List_Access;
+      --  Return the command line. Result value must be freed by the user
 
       ------------------------------
       --  The subprograms below are only useful when you are implementing a
@@ -242,6 +275,14 @@ package Switches_Chooser is
       --  For a check button, it should be either "TRUE" or "FALSE" to indicate
       --  whether the switch should be on the command line.
 
+      function Get_Tool_By_Name
+        (Editor : Root_Switches_Editor;
+         Tool_Name : String) return Root_Switches_Editor_Access;
+      --  Return the editor for the switches of Tool. By default, this returns
+      --  null. When the editor is found, it is possible that changing some
+      --  switches in Editor will also impact switches from the returned editor
+      --  depending on how the dependencies were set up.
+
       procedure On_Command_Line_Changed
         (Editor    : in out Root_Switches_Editor;
          Cmd_Line  : String);
@@ -251,6 +292,10 @@ package Switches_Chooser is
       --  reflect the new list of switches on the widgets.
       --  The second version is only used to refresh the widgets, from an
       --  already parsed command line.
+
+      procedure Update_Graphical_Command_Line
+        (Editor    : in out Root_Switches_Editor);
+      --  Recompute what should be displayed in the command line widget
 
       procedure Set_Graphical_Command_Line
         (Editor    : in out Root_Switches_Editor;
@@ -265,21 +310,6 @@ package Switches_Chooser is
          Parameter : String) is abstract;
       --  Change Widget so that it shows the value of Parameter. The exact
       --  meaning of Parameter depends on the type of Switch
-
-      function Get_Config
-        (Editor : access Root_Switches_Editor)
-         return Switches_Editor_Config;
-      --  Return the switches configuration used for this editor
-
-      function Get_Command_Line
-        (Editor : access Root_Switches_Editor)
-         return Command_Line;
-      --  Return the current command line
-
-      function Get_Command_Line
-        (Editor   : access Root_Switches_Editor;
-         Expanded : Boolean) return GNAT.Strings.String_List_Access;
-      --  Return the command line. Result value must be freed by the user
 
    private
       type Root_Widget is access all Root_Widget_Record'Class;
@@ -346,6 +376,18 @@ private
    package Frame_Description_Vectors is new
      Ada.Containers.Indefinite_Vectors (Natural, Frame_Description);
 
+   type Dependency_Description;
+   type Dependency_Description_Access is access Dependency_Description;
+   type Dependency_Description is record
+      Slave_Tool                  : GNAT.Strings.String_Access;
+      Master_Switch, Slave_Switch : GNAT.Strings.String_Access;
+      Master_Status, Slave_Status : Boolean;
+      Next                        : Dependency_Description_Access;
+   end record;
+   --  Description of a dependency (see Add_Dependency). This is needed because
+   --  the dependencies can only be fully setup once all pages have been
+   --  created.
+
    type Switches_Editor_Config_Record is record
       Lines             : Positive;
       Columns           : Positive;
@@ -358,6 +400,7 @@ private
       Switches          : Switch_Description_Vectors.Vector;
       Max_Radio         : Radio_Switch := 0;
       Max_Popup         : Popup_Index := Main_Window;
+      Dependencies      : Dependency_Description_Access;
    end record;
 
 end Switches_Chooser;

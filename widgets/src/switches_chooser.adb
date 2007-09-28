@@ -58,7 +58,8 @@ package body Switches_Chooser is
          Max_Radio         => 0,
          Max_Popup         => Main_Window,
          Switches          => <>,
-         Frames            => <>);
+         Frames            => <>,
+         Dependencies      => null);
    end Create;
 
    -----------------------
@@ -360,6 +361,27 @@ package body Switches_Chooser is
       Add_To_Getopt (Config, Switch, ASCII.LF);
    end Add_Radio_Entry;
 
+   --------------------
+   -- Add_Dependency --
+   --------------------
+
+   procedure Add_Dependency
+     (Config         : Switches_Editor_Config;
+      Switch         : String;
+      Status         : Boolean;
+      Slave_Tool     : String;
+      Slave_Switch   : String;
+      Slave_Activate : Boolean := True) is
+   begin
+      Config.Dependencies := new Dependency_Description'
+        (Next          => Config.Dependencies,
+         Master_Switch => new String'(Switch),
+         Master_Status => Status,
+         Slave_Tool    => new String'(Slave_Tool),
+         Slave_Switch  => new String'(Slave_Switch),
+         Slave_Status  => Slave_Activate);
+   end Add_Dependency;
+
    ----------------------
    -- Get_Command_Line --
    ----------------------
@@ -437,6 +459,19 @@ package body Switches_Chooser is
       end Initialize;
 
       ----------------------
+      -- Get_Tool_By_Name --
+      ----------------------
+
+      function Get_Tool_By_Name
+        (Editor : Root_Switches_Editor;
+         Tool_Name : String) return Root_Switches_Editor_Access
+      is
+         pragma Unreferenced (Editor, Tool_Name);
+      begin
+         return null;
+      end Get_Tool_By_Name;
+
+      ----------------------
       -- Get_Command_Line --
       ----------------------
 
@@ -472,8 +507,43 @@ package body Switches_Chooser is
          Widget    : access Root_Widget_Record'Class;
          Parameter : String)
       is
-         Iter : Command_Line_Iterator;
-         Cmd  : Unbounded_String;
+         procedure Change_Switch_Status (Switch : String; Status : Boolean);
+         --  If necessary, toggle other switches in other tools to reflect
+         --  the change of status of Switch
+
+         procedure Change_Switch_Status (Switch : String; Status : Boolean) is
+            Deps : Dependency_Description_Access := Editor.Config.Dependencies;
+            Tool : Root_Switches_Editor_Access;
+         begin
+            while Deps /= null loop
+               if Deps.Master_Switch.all = Switch
+                 and then Deps.Master_Status = Status
+               then
+                  Tool := Get_Tool_By_Name
+                    (Root_Switches_Editor'Class (Editor),
+                     Deps.Slave_Tool.all);
+                  if Tool /= null then
+                     --  We give just a hint to the user that the switch should
+                     --  be added, by preselecting it. The user is still free
+                     --  to force another value for the slave switch. Even if
+                     --  we were setting the widget as insensitive, the command
+                     --  line would still be editable anyway.
+
+                     if Deps.Slave_Status then
+                        Add_Switch (Tool.Cmd_Line, Deps.Slave_Switch.all);
+                     else
+                        Remove_Switch (Tool.Cmd_Line, Deps.Slave_Switch.all);
+                     end if;
+
+                     On_Command_Line_Changed (Tool.all);
+                     Update_Graphical_Command_Line (Tool.all);
+                  end if;
+               end if;
+
+               Deps := Deps.Next;
+            end loop;
+         end Change_Switch_Status;
+
          Combo : Combo_Switch_Vectors.Cursor;
       begin
          if not Editor.Block then
@@ -490,6 +560,9 @@ package body Switches_Chooser is
                               Add_Switch
                                 (Editor.Cmd_Line, To_String (S.Switch));
                            end if;
+                           Change_Switch_Status
+                             (To_String (S.Switch),
+                              Boolean'Value (Parameter));
 
                         when Switch_Field =>
                            if Parameter /= "" then
@@ -498,6 +571,9 @@ package body Switches_Chooser is
                                  To_String (S.Switch), Parameter,
                                  S.Separator);
                            end if;
+                           Change_Switch_Status
+                             (To_String (S.Switch),
+                              Parameter /= "");
 
                         when Switch_Spin =>
                            if Integer'Value (Parameter) /= S.Default then
@@ -506,22 +582,30 @@ package body Switches_Chooser is
                                  To_String (S.Switch), Parameter,
                                  S.Separator);
                            end if;
+                           Change_Switch_Status
+                             (To_String (S.Switch),
+                              Integer'Value (Parameter) /= S.Default);
 
                         when Switch_Combo =>
                            Combo := First (S.Entries);
                            while Has_Element (Combo) loop
                               if Element (Combo).Label = Parameter then
                                  if Element (Combo).Value = S.No_Switch then
-                                    null;
+                                    Change_Switch_Status
+                                      (To_String (S.Switch), False);
                                  elsif Element (Combo).Value = S.No_Digit then
                                     Add_Switch
                                       (Editor.Cmd_Line, To_String (S.Switch));
+                                    Change_Switch_Status
+                                      (To_String (S.Switch), True);
                                  else
                                     Add_Switch
                                       (Editor.Cmd_Line,
                                        To_String (S.Switch),
                                        To_String (Element (Combo).Value),
                                        S.Separator);
+                                    Change_Switch_Status
+                                      (To_String (S.Switch), True);
                                  end if;
 
                               end if;
@@ -532,31 +616,43 @@ package body Switches_Chooser is
                            null;
                      end case;
 
-                     --  Update the command line
-                     Editor.Block := True;
-
-                     Start (Editor.Cmd_Line, Iter, Expanded => False);
-                     while Has_More (Iter) loop
-                        if Current_Parameter (Iter) /= "" then
-                           Append (Cmd, Current_Switch (Iter)
-                                   & Current_Separator (Iter)
-                                   & Current_Parameter (Iter) & " ");
-                        else
-                           Append (Cmd, Current_Switch (Iter) & " ");
-                        end if;
-                        Next (Iter);
-                     end loop;
-
-                     Set_Graphical_Command_Line
-                       (Root_Switches_Editor'Class (Editor), To_String (Cmd));
-                     Editor.Block := False;
-
+                     Update_Graphical_Command_Line
+                       (Root_Switches_Editor'Class (Editor));
                      return;
                   end;
                end if;
             end loop;
          end if;
       end Change_Switch;
+
+      -----------------------------------
+      -- Update_Graphical_Command_Line --
+      -----------------------------------
+
+      procedure Update_Graphical_Command_Line
+        (Editor : in out Root_Switches_Editor)
+      is
+         Iter : Command_Line_Iterator;
+         Cmd  : Unbounded_String;
+      begin
+         Editor.Block := True;
+
+         Start (Editor.Cmd_Line, Iter, Expanded => False);
+         while Has_More (Iter) loop
+            if Current_Parameter (Iter) /= "" then
+               Append (Cmd, Current_Switch (Iter)
+                       & Current_Separator (Iter)
+                       & Current_Parameter (Iter) & " ");
+            else
+               Append (Cmd, Current_Switch (Iter) & " ");
+            end if;
+            Next (Iter);
+         end loop;
+
+         Set_Graphical_Command_Line
+           (Root_Switches_Editor'Class (Editor), To_String (Cmd));
+         Editor.Block := False;
+      end Update_Graphical_Command_Line;
 
       ---------
       -- "=" --
