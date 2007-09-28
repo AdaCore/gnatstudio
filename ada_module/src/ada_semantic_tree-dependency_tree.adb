@@ -1248,23 +1248,25 @@ package body Ada_Semantic_Tree.Dependency_Tree is
       end loop;
 
       for J in Units'Range loop
-         Tree := Get_Tree (Get_File (Get_Start_Entity (Units (J))));
-         It := To_Construct_Tree_Iterator (Get_Start_Entity (Units (J)));
+         if Get_Start_Entity (Units (J)) /= Null_Entity_Access then
 
-         Current_Scope := Get_Dependency_Information
-           (Get_Entity (Units (J)), null);
-         End_Entity := Get_End_Entity (Units (J));
+            Tree := Get_Tree (Get_File (Get_Start_Entity (Units (J))));
+            It := To_Construct_Tree_Iterator (Get_Start_Entity (Units (J)));
 
-         while Current_Scope /= null
-           and then It /= To_Construct_Tree_Iterator (End_Entity)
-         loop
-            --  Manage the current location
+            Current_Scope := Get_Dependency_Information
+              (Get_Entity (Units (J)), null);
+            End_Entity := Get_End_Entity (Units (J));
 
-            if J < First_Index_To_Update then
-               --  If we're still in the up to date units, just add the known
-               --  reference to the list.
+            while Current_Scope /= null
+              and then It /= To_Construct_Tree_Iterator (End_Entity)
+            loop
+               --  Manage the current location
 
-               case Get_Construct (It).Category is
+               if J < First_Index_To_Update then
+                  --  If we're still in the up to date units, just add the
+                  --  known reference to the list.
+
+                  case Get_Construct (It).Category is
                   when Cat_Use =>
                      Prepend
                        (Current_Scope.Use_Clauses,
@@ -1292,65 +1294,67 @@ package body Ada_Semantic_Tree.Dependency_Tree is
 
                   when others =>
                      null;
-               end case;
-            else
-               --  Otherwise, use the target use resolution
+                  end case;
+               else
+                  --  Otherwise, use the target use resolution
 
-               Handle_Current_Location (It);
-            end if;
+                  Handle_Current_Location (It);
+               end if;
 
-            if (Get_Construct (It).Category = Cat_Package
-                or else
-                  (J >= First_Index_To_Update
-                   and then Get_Construct (It).Category in
-                     Cat_Package .. Cat_Entry))
-              and then not Is_Compilation_Unit (It)
-            then
-               --  We stack a dep scope of there are possible items on it, if
-               --  it's not a compil unit (stacked by the enclosing loop) and
-               --  if we're potentially going to look into it.
+               if (Get_Construct (It).Category = Cat_Package
+                   or else
+                     (J >= First_Index_To_Update
+                      and then Get_Construct (It).Category in
+                        Cat_Package .. Cat_Entry))
+                 and then not Is_Compilation_Unit (It)
+               then
+                  --  We stack a dep scope of there are possible items on it,
+                  --  if it's not a compil unit (stacked by the enclosing loop)
+                  --  and if we're potentially going to look into it.
 
-               Current_Scope := Get_Dependency_Information
-                 (To_Entity_Access
-                    (Get_File (Get_Start_Entity (Units (J))),
-                     It),
-                  Current_Scope);
-            end if;
+                  Current_Scope := Get_Dependency_Information
+                    (To_Entity_Access
+                       (Get_File (Get_Start_Entity (Units (J))),
+                        It),
+                     Current_Scope);
+               end if;
 
-            --  Iterate, and create the relevant dependency information if
-            --  needed
+               --  Iterate, and create the relevant dependency information if
+               --  needed
 
-            --  We jump into the scope in two cases:
-            --    The file is already up to date, in which case we only need to
-            --    load the relevant use info, we jump only on the packages.
-            --    The file is not up to date, so we need to update all the use
-            --    clauses including the ones located within subprograms.
+               --  We jump into the scope in two cases:
+               --    The file is already up to date, in which case we only need
+               --    to load the relevant use info, we jump only on the
+               --    packages.
+               --    The file is not up to date, so we need to update all the
+               --    use clauses including the ones located within subprograms.
 
-            if Get_Construct (It).Category = Cat_Package
-              or else J >= First_Index_To_Update
-            then
-               New_It := Next (Tree, It, Jump_Into);
-            else
-               New_It := Next (Tree, It, Jump_Over);
-            end if;
+               if Get_Construct (It).Category = Cat_Package
+                 or else J >= First_Index_To_Update
+               then
+                  New_It := Next (Tree, It, Jump_Into);
+               else
+                  New_It := Next (Tree, It, Jump_Over);
+               end if;
 
-            --  Then analyze the new iterator, if it's out the parent, we need
-            --  to unroll the scopes until we reach the current one.
+               --  Then analyze the new iterator, if it's out the parent, we
+               --  need to unroll the scopes until we reach the current one.
 
-            if New_It /= Null_Construct_Tree_Iterator then
-               while Current_Scope /= null
-                 and then not Encloses
-                   (To_Construct_Tree_Iterator (Current_Scope.Entity),
-                    Get_Construct (New_It).Sloc_Start.Index)
-               loop
-                  Current_Scope := Current_Scope.Parent;
+               if New_It /= Null_Construct_Tree_Iterator then
+                  while Current_Scope /= null
+                    and then not Encloses
+                      (To_Construct_Tree_Iterator (Current_Scope.Entity),
+                       Get_Construct (New_It).Sloc_Start.Index)
+                  loop
+                     Current_Scope := Current_Scope.Parent;
 
-                  Max_Depth := Max_Depth - 1;
-               end loop;
-            end if;
+                     Max_Depth := Max_Depth - 1;
+                  end loop;
+               end if;
 
-            It := New_It;
-         end loop;
+               It := New_It;
+            end loop;
+         end if;
       end loop;
 
       declare
