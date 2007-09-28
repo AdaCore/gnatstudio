@@ -23,7 +23,7 @@ project Libkernel is
    end Compiler;
 
    package Naming is
-      for Implementation ("mlib.tgt") use "mlib-tgt-linux.adb";
+      for Implementation ("mlib.tgt.specific") use "mlib-tgt-linux.adb";
       for Implementation ("xml_parsers") use "xml_parsers_gtk.adb";
    end Naming;
 
