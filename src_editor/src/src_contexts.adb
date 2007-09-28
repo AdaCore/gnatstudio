@@ -781,7 +781,7 @@ package body Src_Contexts is
             if not Continue_Till_End then
                if Current_Line = 1 and then Current_Column = 1 then
                   return;
-               elsif  not Continue_Dialog
+               elsif not Continue_Dialog
                  (-"No more matches, restart from the beginning ?")
                then
                   Set_End_Notif_Done (Context.all, True);
