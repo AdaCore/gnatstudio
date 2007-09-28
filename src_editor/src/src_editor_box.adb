@@ -1477,8 +1477,8 @@ package body Src_Editor_Box is
                GPS.Kernel.Entity_Callback.Object_Connect
                  (Item, Gtk.Menu_Item.Signal_Activate,
                   On_Goto_Declaration_Of'Access, Get_Kernel (Context), E);
+               Add (Menu, Item);
             end if;
-            Add (Menu, Item);
          end if;
 
          Next (Iter);
@@ -1501,7 +1501,8 @@ package body Src_Editor_Box is
       Item  : Gtk_Menu_Item;
       E, E2 : Entity_Information;
    begin
-      --  ??? Should share the loop with the one for the specs
+      --  ??? Should share the loop with the one for the specs, since it isn't
+      --  that fast to compute, even when all ALI files are in memory
       Find_All_References
         (Iter                  => Iter,
          Entity                => Get_Entity (Context),
@@ -1518,8 +1519,8 @@ package body Src_Editor_Box is
                GPS.Kernel.Entity_Callback.Object_Connect
                  (Item, Gtk.Menu_Item.Signal_Activate,
                   On_Goto_Body_Of'Access, Get_Kernel (Context), E);
+               Add (Menu, Item);
             end if;
-            Add (Menu, Item);
          end if;
 
          Next (Iter);
