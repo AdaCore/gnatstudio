@@ -1155,7 +1155,7 @@ package body Codefix.Errors_Parser is
    begin
       This.Matcher :=
         (1 => new Pattern_Matcher'
-           (Compile ("""([\w])+"" is already use_visible")));
+           (Compile ("""([\w])+"" is already use.visible")));
    end Initialize;
 
    procedure Fix
