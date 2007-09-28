@@ -7996,7 +7996,7 @@ When clicking on a project, file or subprogram entity (including the entities
 of the coverage report), you have access to a @command{Coverage} submenu.
 
 These submenus contain the following entries, adapted to the elements in the
-context. For instance, if you click on a file, you will have :
+context. For instance, if you click on a file, you will have:
 
 @table @command
 @item Coverage->Show report
