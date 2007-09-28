@@ -168,6 +168,8 @@ private
    --  and the action is saved in keys.xml so that it will be unattached the
    --  next time GPS is started.
    --
+   --  Action can be the empty string to just remove existing bindings.
+   --
    --  If Save_In_Keys_XML is true, then the action will be saved in keys.xml
    --  when GPS exits, and reloaded the next time it is started.
    --

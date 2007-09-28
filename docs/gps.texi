@@ -11204,6 +11204,9 @@ attribute to specify what to do when the key is pressed. The name of the
 action can start with a '/' to indicate that a menu should be executed
 instead of a user-defined action.
 
+If the action is the empty string, then instead the key will no longer be
+bound to any action.
+
 This tag doesn't contain any child tag. Instead, its text contents specified
 the keyboard shortcut. The name
 of the key can be prefixed by @code{control-}, @code{alt-}, @code{shift-} or
@@ -11212,7 +11215,9 @@ any combination of these to specify the key modifiers to apply.
 You can also define multiple key bindings similar to Emacs's by separating them
 by a space. For instance, @code{control-x control-k} means that the user should
 press @key{control-x}, followed by a @key{control-k} to activate the
-corresponding action.
+corresponding action. This is only possible if the prefix key is not already
+bound to an action. If it is, you should first unbound it by passing an
+empty action to @code{<key>}.
 
 Use an empty string to describe the key binding if you wish to deactivate a
 preexisting binding. The second example below deactivates the standard binding.

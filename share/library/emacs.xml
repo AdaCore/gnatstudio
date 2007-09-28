@@ -25,8 +25,9 @@
   <!--  disable GPS key shortcuts which conflict with emacs shortcuts -->
 
   <key action="/Edit/Smart Completion" />
-  <key action="Cut to Clipboard" />
-  <key action="Copy to Clipboard" />
+
+  <key action="">control-x</key>
+  <key action="">control-c</key>
 
   <!--  define key shortcuts -->
 

@@ -621,18 +621,22 @@ package body KeyManager_Module is
 
          --  We need to clone memory associated to Binding3, since it is
          --  freed in the call to Set below.
-         if Binding3 /= null then
-            Clone (From => Binding3, To => Tmp);
-         else
-            Tmp := null;
-         end if;
+         if Action /= "" then
+            if Binding3 /= null then
+               Clone (From => Binding3, To => Tmp);
+            else
+               Tmp := null;
+            end if;
 
-         Binding2 := new Key_Description'
-           (Action         => new String'(Action),
-            Changed        => Save_In_Keys_XML,
-            Keymap         => null,
-            Next           => Tmp);
-         Set (Table, Key_Binding'(Default_Key, Default_Mod), Binding2);
+            Binding2 := new Key_Description'
+              (Action         => new String'(Action),
+               Changed        => Save_In_Keys_XML,
+               Keymap         => null,
+               Next           => Tmp);
+            Set (Table, Key_Binding'(Default_Key, Default_Mod), Binding2);
+         else
+            Remove (Table, Key_Binding'(Default_Key, Default_Mod));
+         end if;
       end Bind_Internal;
 
       ----------------------
@@ -715,7 +719,10 @@ package body KeyManager_Module is
       then
          Remove_In_Keymap (Table);
 
-         if Update_Menus and then Action (Action'First) = '/' then
+         if Update_Menus
+           and then Action /= ""
+           and then Action (Action'First) = '/'
+         then
             --  Guess the accel path from the menu
             Success := Change_Entry
               ("<gps>" & Action,
@@ -743,7 +750,7 @@ package body KeyManager_Module is
          Value (Key (First .. Last - 1), Partial_Key, Modif);
 
          if Last > Key'Last then
-            if Action (Action'First) = '/' then
+            if Action /= "" and then Action (Action'First) = '/' then
                --  For a menu, ensure the accel map entry exists. If we don't
                --  do that, the following scenario will fail:
                --     - The emacs mode registers a binding for a menu that
@@ -759,7 +766,10 @@ package body KeyManager_Module is
             if Keymap = null then
                Bind_Internal (Table, Partial_Key, Modif);
 
-               if Update_Menus and then Action (Action'First) = '/' then
+               if Update_Menus
+                 and then Action /= ""
+                 and then Action (Action'First) = '/'
+               then
                   --  Guess the accel path from the menu. This operation might
                   --  fail if the shortcut is already used as a mnemonic for a
                   --  menu, so we temporarily change the modifier for mnemonics
@@ -1396,10 +1406,19 @@ package body KeyManager_Module is
             Action : constant String := Get_Attribute (Node, "action");
          begin
             if Action = "" then
-               Insert (Get_Kernel (Module.all),
-                       -"<key> nodes must have an action attribute",
-                       Mode => Error);
-               raise Assert_Failure;
+               if Node.Value /= null
+                 and then Node.Value.all /= ""
+               then
+                  Bind_Default_Key_Internal
+                    (Kernel => Get_Kernel (Module.all),
+                     Table  => Keymanager_Module.Table.all,
+                     Action => "",
+                     Key    => Node.Value.all,
+                     Save_In_Keys_XML                     => False,
+                     Remove_Existing_Shortcuts_For_Action => False,
+                     Remove_Existing_Actions_For_Shortcut => True,
+                     Update_Menus                         => True);
+               end if;
             end if;
 
             if Node.Value = null then
