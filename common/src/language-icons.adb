@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006-2007                      --
---                              AdaCore                              --
+--                 Copyright (C) 2006-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,7 +19,7 @@
 
 with Gtk.Widget; use Gtk.Widget;
 with Gdk.Pixbuf; use Gdk.Pixbuf;
-with Gtk.Enums; use Gtk.Enums;
+with Gtk.Enums;  use Gtk.Enums;
 
 package body Language.Icons is
 
@@ -29,16 +28,25 @@ package body Language.Icons is
    -------------------
 
    procedure Init_Graphics (Widget : Gtk_Widget) is
+
       function R (Id : String) return Gdk_Pixbuf;
       --  Convenience function: create the Gdk_Pixbuf from stock Id.
 
       function Predefined_Array (Suffix : String) return Cat_Array;
       --  Convenience function to produce the predefined entity graphics.
 
+      -------
+      -- R --
+      -------
+
       function R (Id : String) return Gdk_Pixbuf is
       begin
          return Render_Icon (Widget, Id, Icon_Size_Menu);
       end R;
+
+      ----------------------
+      -- Predefined_Array --
+      ----------------------
 
       function Predefined_Array (Suffix : String) return Cat_Array is
       begin
@@ -63,7 +71,7 @@ package body Language.Icons is
       end Predefined_Array;
 
    begin
-      --  If initialization has already been done, exit.
+      --  If initialization has already been done, exit
       if Entity_Icons (False, Visibility_Public) (Cat_Unknown) /= null then
          return;
       end if;

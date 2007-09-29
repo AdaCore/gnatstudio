@@ -33,6 +33,6 @@ package Completion_Module is
    --  the user performs a completion operation.
 
    procedure Remove_Completion;
-   --  Remove the completion window.
+   --  Remove the completion window
 
 end Completion_Module;

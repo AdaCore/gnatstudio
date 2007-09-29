@@ -2507,6 +2507,7 @@ package body VCS_View_API is
               (Kernel,
                -"Warning: no VCS set in project properties for project "
                & Project_Name (The_Project));
+
          else
             if Real_Query then
                if Group_Query_Status_By_Dir (Ref) then

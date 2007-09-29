@@ -549,8 +549,8 @@ package body Docgen2 is
    -- To_Category --
    -----------------
 
-   function To_Category (Category : Language_Category)
-                         return Entity_Info_Category is
+   function To_Category
+     (Category : Language_Category) return Entity_Info_Category is
    begin
       case Category is
          when Cat_Package =>
@@ -638,6 +638,11 @@ package body Docgen2 is
 
    function Location_Image (Loc : File_Location) return String is
       function Int_Img (I : Integer) return String;
+
+      -------------
+      -- Int_Img --
+      -------------
+
       function Int_Img (I : Integer) return String is
          Str : constant String := Integer'Image (I);
       begin
@@ -911,12 +916,16 @@ package body Docgen2 is
       Pkg_Found   : Boolean;
       Entity_Kind : constant E_Kind := Get_Kind (Entity);
 
-      function Is_Token (Token : String; Start_Index : Natural)
-                         return Boolean;
-      --  Test if Token is found at index Start_Index;
+      function Is_Token
+        (Token : String; Start_Index : Natural) return Boolean;
+      --  Test if Token is found at index Start_Index
 
-      function Is_Token (Token : String; Start_Index : Natural)
-                         return Boolean is
+      --------------
+      -- Is_Token --
+      --------------
+
+      function Is_Token
+        (Token : String; Start_Index : Natural) return Boolean is
       begin
          return Start_Index >= File_Buffer'First
            and then Start_Index + Token'Length <= File_Buffer'Last
@@ -1063,20 +1072,22 @@ package body Docgen2 is
       Context_Elem  : constant Context_Stack_Element := Current (Context);
 
       function Create_Xref (E    : Entity_Information) return Cross_Ref;
-      function Create_Xref (Name : String; Loc : File_Location)
-                            return Cross_Ref;
+      function Create_Xref
+        (Name : String; Loc : File_Location) return Cross_Ref;
       --  Create a new Cross-Ref and update the Cross-Refs list
 
-      function Create_EInfo (Cat : Language_Category;
-                             Loc : File_Location) return Entity_Info;
+      function Create_EInfo
+        (Cat : Language_Category;
+         Loc : File_Location) return Entity_Info;
       --  Create a new Entity Info and update the Entity info list
 
       -----------------
       -- Create_Xref --
       -----------------
 
-      function Create_Xref (Name : String; Loc : File_Location)
-                            return Cross_Ref is
+      function Create_Xref
+        (Name : String; Loc : File_Location) return Cross_Ref
+      is
          Xref : Cross_Ref;
       begin
          if Loc = No_File_Location then
@@ -1118,8 +1129,9 @@ package body Docgen2 is
       -- Create_EInfo --
       ------------------
 
-      function Create_EInfo (Cat : Language_Category;
-                             Loc : File_Location) return Entity_Info
+      function Create_EInfo
+        (Cat : Language_Category;
+         Loc : File_Location) return Entity_Info
       is
          E_Info : Entity_Info;
 
@@ -1192,8 +1204,8 @@ package body Docgen2 is
       if Entity /= null then
          Entity_Kind := Get_Kind (Entity);
 
-         E_Info := Create_EInfo (Construct.Category,
-                                 Get_Declaration_Of (Entity));
+         E_Info := Create_EInfo
+           (Construct.Category, Get_Declaration_Of (Entity));
          Context_Elem.Parent_Entity.Children.Append (E_Info);
          E_Info.Entity_Loc := Construct.Sloc_Entity;
 
@@ -2584,28 +2596,28 @@ package body Docgen2 is
       Child_EInfo      : Entity_Info;
       Displayed        : Boolean;
 
-      Pkg_CI                 : Common_Info_Tags;
-      Pkg_Full_Link          : Vector_Tag;
-      Pkg_Gen_Params         : Vector_Tag;
-      Pkg_Gen_Params_Loc     : Vector_Tag;
-      Class_CI               : Common_Info_Tags;
-      Class_Parents          : Vector_Tag;
-      Class_Primitives       : Vector_Tag;
-      Task_CI                : Common_Info_Tags;
-      Task_Type              : Vector_Tag;
-      Task_Is_Type           : Vector_Tag;
-      Task_Entry             : Vector_Tag;
-      Task_Entry_Cat         : Vector_Tag;
-      Task_Entry_Parent      : Vector_Tag;
-      Task_Entry_Parent_Loc  : Vector_Tag;
-      Task_Entry_Loc         : Vector_Tag;
-      Task_Entry_Description : Vector_Tag;
-      Task_Entry_Printout    : Vector_Tag;
-      Type_CI                : Common_Info_Tags;
-      Cst_CI                 : Common_Info_Tags;
-      Cst_Type               : Vector_Tag;
-      Subp_CI                : Common_Info_Tags;
-      Subp_Generic_Params    : Vector_Tag;
+      Pkg_CI                  : Common_Info_Tags;
+      Pkg_Full_Link           : Vector_Tag;
+      Pkg_Gen_Params          : Vector_Tag;
+      Pkg_Gen_Params_Loc      : Vector_Tag;
+      Class_CI                : Common_Info_Tags;
+      Class_Parents           : Vector_Tag;
+      Class_Primitives        : Vector_Tag;
+      Task_CI                 : Common_Info_Tags;
+      Task_Type               : Vector_Tag;
+      Task_Is_Type            : Vector_Tag;
+      Task_Entry              : Vector_Tag;
+      Task_Entry_Cat          : Vector_Tag;
+      Task_Entry_Parent       : Vector_Tag;
+      Task_Entry_Parent_Loc   : Vector_Tag;
+      Task_Entry_Loc          : Vector_Tag;
+      Task_Entry_Description  : Vector_Tag;
+      Task_Entry_Printout     : Vector_Tag;
+      Type_CI                 : Common_Info_Tags;
+      Cst_CI                  : Common_Info_Tags;
+      Cst_Type                : Vector_Tag;
+      Subp_CI                 : Common_Info_Tags;
+      Subp_Generic_Params     : Vector_Tag;
       Subp_Generic_Params_Loc : Vector_Tag;
 
    begin
@@ -2868,12 +2880,12 @@ package body Docgen2 is
             Init_Common_Informations (Child_EInfo, Subp_CI);
 
             declare
-               Param_Tag         : Tag;
-               Param_Loc_Tag     : Tag;
-               Param_Cursor      : Entity_Info_List.Cursor;
-               Param             : Entity_Info;
-               Param_Type        : Cross_Ref;
-               Name_Str          : Ada.Strings.Unbounded.Unbounded_String;
+               Param_Tag     : Tag;
+               Param_Loc_Tag : Tag;
+               Param_Cursor  : Entity_Info_List.Cursor;
+               Param         : Entity_Info;
+               Param_Type    : Cross_Ref;
+               Name_Str      : Ada.Strings.Unbounded.Unbounded_String;
             begin
                Param_Cursor := Entity_Info_List.First
                  (Child_EInfo.Generic_Params);
@@ -3022,18 +3034,18 @@ package body Docgen2 is
    ------------------
 
    procedure Generate_TOC
-     (Kernel     : access Kernel_Handle_Record'Class;
-      Backend    : Backend_Handle;
-      Files      : in out Cross_Ref_List.Vector)
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Backend : Backend_Handle;
+      Files   : in out Cross_Ref_List.Vector)
    is
-      Tmpl         : constant String :=
-                      Backend.Get_Template
-                        (Get_System_Dir (Kernel), Tmpl_TOC);
-      Translation  : Translate_Set;
-      File_Handle  : File_Type;
-      Xref         : Cross_Ref;
-      First_Letter : Character;
-      Prev_Letter  : Character := ASCII.NUL;
+      Tmpl               : constant String :=
+                             Backend.Get_Template
+                               (Get_System_Dir (Kernel), Tmpl_TOC);
+      Translation        : Translate_Set;
+      File_Handle        : File_Type;
+      Xref               : Cross_Ref;
+      First_Letter       : Character;
+      Prev_Letter        : Character := ASCII.NUL;
       Letter_Tag         : Vector_Tag;
       Letter_Changed_Tag : Vector_Tag;
       Files_Tag          : Vector_Tag;
@@ -3145,11 +3157,11 @@ package body Docgen2 is
          Class : Entity_Info;
          Depth : Natural) return String
       is
-         Cursor        : Cross_Ref_List.Cursor;
-         Translation   : Translate_Set;
-         Tree_Tag      : Vector_Tag;
-         Tree_Loc_Tag  : Vector_Tag;
-         Root_Tree_Tag : Vector_Tag;
+         Cursor            : Cross_Ref_List.Cursor;
+         Translation       : Translate_Set;
+         Tree_Tag          : Vector_Tag;
+         Tree_Loc_Tag      : Vector_Tag;
+         Root_Tree_Tag     : Vector_Tag;
          Tree_Children_Tag : Vector_Tag;
       begin
          if Class = null then
@@ -3232,13 +3244,13 @@ package body Docgen2 is
    ---------------------------
 
    procedure Generate_Global_Index
-     (Kernel     : access Kernel_Handle_Record'Class;
-      Backend    : Backend_Handle;
-      EInfo_Map  : Entity_Info_Map.Map)
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Backend   : Backend_Handle;
+      EInfo_Map : Entity_Info_Map.Map)
    is
-      Tmpl        : constant String :=
-                      Backend.Get_Template
-                        (Get_System_Dir (Kernel), Tmpl_Index);
+      Tmpl         : constant String :=
+                       Backend.Get_Template
+                         (Get_System_Dir (Kernel), Tmpl_Index);
       Letter       : Character;
       Map_Cursor   : Entity_Info_Map.Cursor;
       EInfo        : Entity_Info;
@@ -3321,7 +3333,7 @@ package body Docgen2 is
    ----------------------------
 
    procedure Generate_Support_Files
-     (Kernel : access Kernel_Handle_Record'Class;
+     (Kernel  : access Kernel_Handle_Record'Class;
       Backend : Backend_Handle)
    is
       Src_Dir : constant VFS.Virtual_File :=

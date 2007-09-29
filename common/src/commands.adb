@@ -203,13 +203,13 @@ package body Commands is
 
    procedure Execute_Next_Action (Queue : Command_Queue) is
    begin
-      --  If there is already a command running, then do nothing.
+      --  If there is already a command running, then do nothing
 
       if Queue.Command_In_Progress then
          return;
       end if;
 
-      --  If the queue is empty, set its state accordingly.
+      --  If the queue is empty, set its state accordingly
 
       if Is_Empty (Queue.The_Queue) then
          Queue.Command_In_Progress := False;
@@ -251,8 +251,7 @@ package body Commands is
    begin
       if Queue = null then
          --  If we are not calling the commands in "Queue" mode, do not execute
-         --  the Next/Alternate command
-
+         --  the Next/Alternate command.
          return;
       end if;
 
@@ -264,11 +263,16 @@ package body Commands is
 
       Queue.Command_In_Progress := False;
 
+      --  Copy all actions from the proper list pointed to by Node into the
+      --  queue.
+
       while Node /= Null_Node loop
          Prepend (Queue.The_Queue, Data (Node));
          Data (Node).Queue := Queue;
          Node := Next (Node);
       end loop;
+
+      --  And release them from the current list
 
       if Success then
          Free (Action.Next_Commands, Free_Data => False);
@@ -300,6 +304,8 @@ package body Commands is
             Prepend (Queue.Undo_Queue, Command_Access (Action));
             Queue.Position := Queue.Position + 1;
       end case;
+
+      --  Execute the registered hooks
 
       Node := First (Queue.Queue_Change_Hook);
 
@@ -557,7 +563,7 @@ package body Commands is
          exit when Result = Success or else Result = Failure;
 
          if Wait /= 0.0 then
-            delay (Wait);
+            delay Wait;
          end if;
       end loop;
 

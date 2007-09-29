@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
---                              AdaCore                              --
+--                 Copyright (C) 2001-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -82,7 +81,7 @@ package Commands is
 
       Execute_Again,
       --  The command should be executed again as soon as possible. This value
-      --  might also means that the command has never been execute.
+      --  might also means that the command has never been executed.
 
       Lower_Priority,
       --  Same as Execute_Again, and lower the priority of the command
@@ -211,7 +210,7 @@ package Commands is
    -------------------
    --  Command queues are used to store lists of commands, mostly for
    --  Undo/Redo purposes.
-   --  There are also used if you need to execute several commands one after
+   --  They are also used if you need to execute several commands one after
    --  the other, when these commands do not have strong links one to another.
    --  If a command should only be executed depending on the result of another
    --  command, you should use Add_Consequence_Action and Add_Alternate_Action
@@ -245,7 +244,7 @@ package Commands is
    --  This has no effect on Null_Command_Queue.
 
    procedure End_Group (Q : Command_Queue);
-   --  Ends grouping of commands.
+   --  Ends grouping of commands
 
    procedure Enqueue
      (Queue         : Command_Queue;
@@ -315,8 +314,7 @@ private
    --  the success of Action.
 
    function Get_Queue_Change_Hook
-     (Queue : Command_Queue)
-      return Command_Queues.List;
+     (Queue : Command_Queue) return Command_Queues.List;
    --  Return the queue change hook
 
    type Command_Queue_Record is record
@@ -327,19 +325,19 @@ private
       --  This contains the actions that have already been done,
       --  in reverse chronological order (ie, most ancient actions are
       --  at the end of the queue, recent actions are prepended at the
-      --  beginning.)
+      --  beginning).
 
       Redo_Queue          : Command_Queues.List;
       --  This contains the actions that have been done and undone.
       --  (Again, most recent additions to this queue are at its
-      --  beginning.)
+      --  beginning).
 
       Queue_Change_Hook   : Command_Queues.List;
       --  These are the actions that will be executed every time the state
       --  of the queue changes.
 
       Hook_Identifiers    : String_List_Utils.String_List.List;
-      --  A list of identifiers corresponding to elements in Queue_Change_Hook.
+      --  A list of identifiers corresponding to elements in Queue_Change_Hook
 
       Position            : Integer := 0;
       --  The position in the queue.

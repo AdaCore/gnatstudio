@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2007, AdaCore             --
+--                 Copyright (C) 2003-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -975,7 +975,7 @@ package body Entities.Queries is
 
       while Repeat loop
          --  Return the references we already know about (from inspecting
-         --  prior files or parsing them in memory)
+         --  prior files or parsing them in memory).
 
          while Iter.Index <= Last (Iter.Entity.References) loop
             if Iter.Returning_Existing_Refs
@@ -984,7 +984,7 @@ package body Entities.Queries is
             then
                --  Are we still parsing the list of references that were there
                --  before the call to Find_All_References ? If yes, we need to
-               --  check whether the file is still up-to-date
+               --  check whether the file is still up-to-date.
 
                Iter.Last_Returned_File :=
                  Iter.Entity.References.Table (Iter.Index).Location.File;
@@ -1000,7 +1000,7 @@ package body Entities.Queries is
                then
                   --  Special case here: if the entity has no separate
                   --  declaration, then the location of the body and the spec
-                  --  are the same. Avoid duplicates with the following test
+                  --  are the same. Avoid duplicates with the following test.
                   if Iter.Decl_Returned
                     and then Iter.Entity.References.Table (Iter.Index).Kind =
                     Body_Entity
@@ -1163,7 +1163,7 @@ package body Entities.Queries is
       else
          if Project = No_Project then
             --  Project not found ? We'll have to parse all projects, since
-            --  it might be from the GNAT runtime
+            --  it might be from the GNAT runtime.
             Importing := Start
               (Get_Root_Project (File.Db.Registry.all), Recursive => True);
          else
@@ -1609,7 +1609,7 @@ package body Entities.Queries is
             Ref := Entity.References.Table (R);
 
             --  Use this as the "declaration", since otherwise the
-            --  End_Of_Spec reference is meaningless
+            --  End_Of_Spec reference is meaningless.
             if Ref.Kind = Completion_Of_Private_Or_Incomplete_Type
               and then Get_File (Ref.Location) = File
             then
@@ -1684,7 +1684,7 @@ package body Entities.Queries is
             --  location of the last parameter declaration. This however fails
             --  with some languages (C...) where the backend might generate
             --  the parameters declaration associated with the body. We need to
-            --  protect against that
+            --  protect against that.
 
             if Force_Spec
               and then not Body_Seen
@@ -1779,7 +1779,7 @@ package body Entities.Queries is
                return;
 
             --  Case 4: the entity contains the current tree entity and any
-            --  number of the sibling tree entities
+            --  number of the sibling tree entities.
             else
                Sib := T;
                while Sib.Sibling /= null
@@ -1911,7 +1911,7 @@ package body Entities.Queries is
 
             --  Add the spec too, since if it is on multiple lines, we
             --  want the parameters to be associated with that subprogram,
-            --  and not to the caller
+            --  and not to the caller.
 
             End_Of_Scope := Get_End_Of_Scope_In_File
               (Entity, File, Force_Spec => True);
@@ -2297,7 +2297,7 @@ package body Entities.Queries is
       end loop;
 
       --  If there is no more caller in the tree, we still need to
-      --  look for possible parent packages
+      --  look for possible parent packages.
 
       E := Last_Not_Null;
       loop
@@ -2926,12 +2926,12 @@ package body Entities.Queries is
             Add_Child_Types (Iter, Iter.Entity);
          else
             --  We haven't finished looking for all files that potentially
-            --  contain extensions of the entity, so we'll keep looking
+            --  contain extensions of the entity, so we'll keep looking.
             null;
          end if;
       else
          --  We are not searching for possible extensions, so return the
-         --  current results
+         --  current results.
 
          if Iter.Recursive
            and then Iter.Current <= Last (Iter.Results)

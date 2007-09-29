@@ -4902,7 +4902,7 @@ package body Src_Editor_Buffer is
       Force             : Boolean := False) return Boolean
    is
       Iter, End_Pos : Gtk_Text_Iter;
-      Result : Boolean;
+      Result        : Boolean;
    begin
       if not Buffer.Writable then
          End_Action (Buffer);
@@ -4968,7 +4968,7 @@ package body Src_Editor_Buffer is
          Replace       : Replace_Text_Callback;
          From, To      : Natural := 0;
          Indent_Params : Indent_Parameters);
-      --  Wrapper around Format_Buffer to take into account Indent_Style.
+      --  Wrapper around Format_Buffer to take into account Indent_Style
 
       procedure Replace_Text
         (L       : Natural;

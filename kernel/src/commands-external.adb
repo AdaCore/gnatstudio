@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                             AdaCore                               --
+--                Copyright (C) 2001-2007, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -206,6 +205,7 @@ package body Commands.External is
                return Failure;
             end if;
          end if;
+
       else
          declare
             Len       : constant Natural := Length (Command.Args);
@@ -276,7 +276,6 @@ package body Commands.External is
                  -"Could not launch command "
                    & Command.Command.all, Mode => Error);
          return Failure;
-
    end Execute;
 
    ----------

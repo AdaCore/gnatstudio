@@ -1221,8 +1221,8 @@ package body Projects is
       Default   : String := "";
       Index     : String := "") return String
    is
-      Value : Variable_Value;
       View  : constant Project_Id := Get_View (Project);
+      Value : Variable_Value;
    begin
       if Project = No_Project or else View = Prj.No_Project then
          return Default;

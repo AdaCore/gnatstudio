@@ -26,9 +26,9 @@ package body Switches_Chooser is
    use Frame_Description_Vectors;
 
    procedure Add_To_Getopt
-     (Config        : Switches_Editor_Config;
-      Switch        : String;
-      Separator     : Character);
+     (Config    : Switches_Editor_Config;
+      Switch    : String;
+      Separator : Character);
    --  Add Switch to the automatically constructed getopt string.
    --  If Separator is ASCII.NUL, then the switches takes a parameter, but
    --  might have no separator.
@@ -104,9 +104,9 @@ package body Switches_Chooser is
    -------------------
 
    procedure Add_To_Getopt
-     (Config        : Switches_Editor_Config;
-      Switch        : String;
-      Separator     : Character)
+     (Config    : Switches_Editor_Config;
+      Switch    : String;
+      Separator : Character)
    is
    begin
       pragma Assert (Switch (Switch'First) = Config.Switch_Char);
@@ -171,7 +171,7 @@ package body Switches_Chooser is
       As_File      : Boolean := False;
       Line         : Positive := 1;
       Column       : Positive := 1;
-      Popup  : Popup_Index := Main_Window)
+      Popup        : Popup_Index := Main_Window)
    is
       Sep : Character := ASCII.NUL;
    begin
@@ -210,7 +210,7 @@ package body Switches_Chooser is
       Tip       : String := "";
       Line      : Positive := 1;
       Column    : Positive := 1;
-      Popup  : Popup_Index := Main_Window)
+      Popup     : Popup_Index := Main_Window)
    is
       Sep : Character := ASCII.NUL;
    begin
@@ -249,7 +249,7 @@ package body Switches_Chooser is
       Tip       : String := "";
       Line      : Positive := 1;
       Column    : Positive := 1;
-      Popup  : Popup_Index := Main_Window)
+      Popup     : Popup_Index := Main_Window)
    is
       pragma Unreferenced (Separator);
       Ent : Combo_Switch_Vectors.Vector;
@@ -280,13 +280,13 @@ package body Switches_Chooser is
    ---------------
 
    function Add_Popup
-     (Config        : Switches_Editor_Config;
-      Label         : String;
-      Lines         : Positive := 1;
-      Columns       : Positive := 1;
-      Line          : Positive := 1;
-      Column        : Positive := 1;
-      Popup         : Popup_Index := Main_Window) return Popup_Index
+     (Config  : Switches_Editor_Config;
+      Label   : String;
+      Lines   : Positive := 1;
+      Columns : Positive := 1;
+      Line    : Positive := 1;
+      Column  : Positive := 1;
+      Popup   : Popup_Index := Main_Window) return Popup_Index
    is
    begin
       Config.Max_Popup := Config.Max_Popup + 1;
@@ -312,9 +312,9 @@ package body Switches_Chooser is
    ---------------
 
    function Add_Radio
-     (Config    : Switches_Editor_Config;
-      Line      : Positive := 1;
-      Column    : Positive := 1;
+     (Config : Switches_Editor_Config;
+      Line   : Positive := 1;
+      Column : Positive := 1;
       Popup  : Popup_Index := Main_Window) return Radio_Switch
    is
    begin
@@ -511,6 +511,10 @@ package body Switches_Chooser is
          --  If necessary, toggle other switches in other tools to reflect
          --  the change of status of Switch
 
+         --------------------------
+         -- Change_Switch_Status --
+         --------------------------
+
          procedure Change_Switch_Status (Switch : String; Status : Boolean) is
             Deps : Dependency_Description_Access := Editor.Config.Dependencies;
             Tool : Root_Switches_Editor_Access;
@@ -662,7 +666,7 @@ package body Switches_Chooser is
         (Editor : access Root_Switches_Editor;
          Args   : GNAT.Strings.String_List) return Boolean
       is
-         Cmd2 : Command_Line;
+         Cmd2         : Command_Line;
          Iter1, Iter2 : Command_Line_Iterator;
       begin
          --  ??? Not efficient to go back to a string
@@ -730,9 +734,9 @@ package body Switches_Chooser is
       procedure On_Command_Line_Changed
         (Editor   : in out Root_Switches_Editor'Class)
       is
-         Iter   : Command_Line_Iterator;
-         Switch : Switch_Description_Vectors.Cursor :=
-           First (Editor.Config.Switches);
+         Iter                : Command_Line_Iterator;
+         Switch              : Switch_Description_Vectors.Cursor :=
+                                 First (Editor.Config.Switches);
          Current_Radio_Group : Radio_Switch := -1;
       begin
          if Editor.Block then
