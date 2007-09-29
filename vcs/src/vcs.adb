@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
---                              AdaCore                              --
+--                 Copyright (C) 2001-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,16 +23,17 @@ with Commands.VCS;            use Commands.VCS;
 with Commands;                use Commands;
 with GPS.Kernel.Console;      use GPS.Kernel.Console;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
+with VCS.Unknown_VCS;         use VCS.Unknown_VCS;
 
 package body VCS is
 
    procedure Free (Identifier : in out VCS_Id_Identifier);
-   --  Dummy function used to instanciate Identifiers list.
+   --  Dummy function used to instanciate Identifiers list
 
    package Identifiers is new Generic_List (VCS_Id_Identifier);
 
    Identifiers_List : Identifiers.List;
-   --  Global variable to store all the registered handlers.
+   --  Global variable to store all the registered handlers
 
    ----------------------
    -- Commit_Directory --
@@ -122,7 +122,7 @@ package body VCS is
          Temp := Next (Temp);
       end loop;
 
-      return Result;
+      return Unknown_VCS_Reference;
    end Get_VCS_From_Id;
 
    ---------------
