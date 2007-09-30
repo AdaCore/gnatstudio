@@ -1580,7 +1580,10 @@ package body KeyManager_Module is
       Modifier : Gdk_Modifier_Type) return Boolean is
    begin
       return (Modifier = 0 or else Modifier = Shift_Mask)
-        and then (Key in GDK_KP_0 .. GDK_KP_9 or else Key in GDK_0 .. GDK_9);
+        and then
+          (Key in GDK_KP_0 .. GDK_KP_9
+           or else Key in GDK_0 .. GDK_9
+           or else Key in GDK_Shift_L .. GDK_Shift_R);
    end Is_Numeric_Key;
 
    --------------------------
@@ -1800,7 +1803,7 @@ package body KeyManager_Module is
          -("Repeat the next action a number of times. Executing this action"
            & " takes a numeric argument (read from the keyboard). For"
            & " instance, if this is associated with ctrl-u, you can type"
-           & " ""ctrl-u 30 t"" to insert the character t 30 times"),
+           & " ""ctrl-u 30 t"" to  the character t 30 times"),
          Category => -"General");
       Bind_Default_Key (Kernel, "Repeat Next", "control-u");
 
