@@ -1800,7 +1800,7 @@ package body KeyManager_Module is
          -("Repeat the next action a number of times. Executing this action"
            & " takes a numeric argument (read from the keyboard). For"
            & " instance, if this is associated with ctrl-u, you can type"
-           & " ""ctrl-u 30 t"" to instead the character t 30 times"),
+           & " ""ctrl-u 30 t"" to insert the character t 30 times"),
          Category => -"General");
       Bind_Default_Key (Kernel, "Repeat Next", "control-u");
 
