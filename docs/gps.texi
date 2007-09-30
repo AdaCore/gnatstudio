@@ -11175,7 +11175,7 @@ that particular value is selected.
 
 @smallexample
    <action name="animal_changed">
-      <shell>echo A new animal was selected in combo $1: animal is $2"</shell>
+      <shell>echo A new animal was selected in combo $1: animal is $2</shell>
    </action>
    <action name="gnu-selected">
       <shell>echo Congratulations on choosing a Gnu</shell>
