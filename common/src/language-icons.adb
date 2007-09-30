@@ -30,10 +30,10 @@ package body Language.Icons is
    procedure Init_Graphics (Widget : Gtk_Widget) is
 
       function R (Id : String) return Gdk_Pixbuf;
-      --  Convenience function: create the Gdk_Pixbuf from stock Id.
+      --  Convenience function: create the Gdk_Pixbuf from stock Id
 
       function Predefined_Array (Suffix : String) return Cat_Array;
-      --  Convenience function to produce the predefined entity graphics.
+      --  Convenience function to produce the predefined entity graphics
 
       -------
       -- R --
@@ -62,7 +62,7 @@ package body Language.Icons is
             | Cat_Protected | Cat_Entry =>
               R ("gps-entity-subprogram" & Suffix),
             Cat_Class | Cat_Structure | Cat_Union |
-            Cat_Type  | Cat_Subtype =>
+            Cat_Type  | Cat_Subtype | Cat_Case_Inside_Record =>
               R ("gps-entity-type" & Suffix),
             Cat_Variable    | Cat_Local_Variable
             | Cat_Parameter | Cat_Field

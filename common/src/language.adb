@@ -461,6 +461,10 @@ package body Language is
          Sloc  : in out Source_Location);
       --  Compute Line and Column fields in Sloc and update Line and Line_Pos
 
+      -------------
+      -- Forward --
+      -------------
+
       procedure Forward
         (Index : Natural;
          Sloc  : in out Source_Location) is
@@ -729,6 +733,7 @@ package body Language is
          when Cat_Entry                 => return "entry";
          when Cat_Class                 => return "class";
          when Cat_Structure             => return "structure";
+         when Cat_Case_Inside_Record    => return "structure variant part";
          when Cat_Union                 => return "union";
          when Cat_Type                  => return "type";
          when Cat_Subtype               => return "subtype";

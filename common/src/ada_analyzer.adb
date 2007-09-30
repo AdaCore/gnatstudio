@@ -229,9 +229,7 @@ package body Ada_Analyzer is
       others                               => False);
 
    Max_Identifier : constant := 256;
-   --  Maximum length of an identifier.
-
-   No_Attribute : constant Construct_Attribute_Map := (others => False);
+   --  Maximum length of an identifier
 
    type Extended_Token is record
       Token         : Token_Type := No_Token;
@@ -1558,7 +1556,6 @@ package body Ada_Analyzer is
          Token_Stack.Pop (Stack, Value);
 
          --  Tok_Record will be taken into account by Tok_Type if needed.
-         --  Tok_Case inside a type definition should also not be recorded.
          --  Build next entry of Constructs
 
          if Value.Token = Tok_Colon and then Constructs /= null then
@@ -1581,8 +1578,6 @@ package body Ada_Analyzer is
          elsif Value.Token /= Tok_Record
            and then Value.Token /= Tok_When
            and then Constructs /= null
-           and then
-             (Value.Token /= Tok_Case or else Top (Stack).Token /= Tok_Record)
            and then (Value.Token /= Tok_Type or else not In_Generic)
          then
             Column             := Prec - Line_Start (Buffer, Prec) + 1;
@@ -1607,7 +1602,12 @@ package body Ada_Analyzer is
                Constructs.Current.Category := Cat_Class;
 
             elsif Value.Attributes (Ada_Record_Attribute) then
-               Constructs.Current.Category := Cat_Structure;
+               if Value.Token = Tok_Case then
+                  --  A case statement inside a record
+                  Constructs.Current.Category := Cat_Case_Inside_Record;
+               else
+                  Constructs.Current.Category := Cat_Structure;
+               end if;
 
             else
                case Value.Token is

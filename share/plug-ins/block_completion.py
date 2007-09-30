@@ -46,17 +46,18 @@ import re, string, GPS
 #                         pattern.
 
 BLOCKS_DEFS = {
-    'CAT_IF_STATEMENT'   : ['end if;', ''],
-    'CAT_CASE_STATEMENT' : ['end case;', ''],
-    'CAT_LOOP_STATEMENT' : [r'end loop \1;', r'\s*([^ ]+)\s*:\s*loop.*'],
-    'CAT_PROCEDURE'      : [r'end \1;', r'\s*procedure\s+([^ \n]+).*'],
-    'CAT_FUNCTION'       : [r'end \1;', r'\s*function\s+([^ \n]+).*'],
-    'CAT_DECLARE_BLOCK'  : [r'end \1;', r'\s*([^ ]+)\s*:\s*declare.*'],
-    'CAT_PACKAGE'        : [r'end \2;', r'\s*package\s+(body\s+)?([^ \n]+).*'],
-    'CAT_STRUCTURE'      : ['end record;', ''],
-    'CAT_CLASS'          : ['end record;', ''],
-    'CAT_PROTECTED'      : [r'end \2;', r'\s*protected\s+(body\s+)?([^ \n]+).*'],
-    'CAT_ENTRY'          : [r'end \1;', r'\s*entry\s+([^ \n]+).*']
+    'CAT_IF_STATEMENT'       : ['end if;', ''],
+    'CAT_CASE_STATEMENT'     : ['end case;', ''],
+    'CAT_CASE_INSIDE_RECORD' : ['end case;', ''],
+    'CAT_LOOP_STATEMENT'     : [r'end loop \1;', r'\s*([^ ]+)\s*:\s*loop.*'],
+    'CAT_PROCEDURE'          : [r'end \1;', r'\s*procedure\s+([^ \n]+).*'],
+    'CAT_FUNCTION'           : [r'end \1;', r'\s*function\s+([^ \n]+).*'],
+    'CAT_DECLARE_BLOCK'      : [r'end \1;', r'\s*([^ ]+)\s*:\s*declare.*'],
+    'CAT_PACKAGE'            : [r'end \2;', r'\s*package\s+(body\s+)?([^ \n]+).*'],
+    'CAT_STRUCTURE'          : ['end record;', ''],
+    'CAT_CLASS'              : ['end record;', ''],
+    'CAT_PROTECTED'          : [r'end \2;', r'\s*protected\s+(body\s+)?([^ \n]+).*'],
+    'CAT_ENTRY'              : [r'end \1;', r'\s*entry\s+([^ \n]+).*']
     }
 
 def on_gps_started (hook_name):

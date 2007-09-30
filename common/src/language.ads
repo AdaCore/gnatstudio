@@ -425,6 +425,7 @@ package Language is
 
       Cat_Class,
       Cat_Structure,
+      Cat_Case_Inside_Record,
       Cat_Union,
       Cat_Type,
       Cat_Subtype,
@@ -508,9 +509,10 @@ package Language is
    --  start at Last_Gen_Att + 1.
    --  We migh consider raising the limit if we have specific needs.
 
-   type Construct_Attribute_Map is array
-     (Construct_Att_Key) of Boolean;
+   type Construct_Attribute_Map is array (Construct_Att_Key) of Boolean;
    pragma Pack (Construct_Attribute_Map);
+
+   No_Attribute : constant Construct_Attribute_Map := (others => False);
 
    Access_Attribute : constant Construct_Att_Key  := 1;
    Array_Attribute  : constant Construct_Att_Key  := 2;
