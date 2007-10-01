@@ -16,7 +16,7 @@
     <Keywords>^@\w+</Keywords>
     <Wordchars>@</Wordchars>
     <Context>
-      <New_Line_Comment_Start>@c </New_Line_Comment_Start>
+      <New_Line_Comment_Start>@c\W</New_Line_Comment_Start>
       <String_Delimiter>&quot;</String_Delimiter>
       <Can_Indent>False</Can_Indent>
       <Syntax_Highlighting>True</Syntax_Highlighting>
@@ -50,7 +50,7 @@
     <Spec_Suffix>.awk</Spec_Suffix>
     <Keywords>^(BEGIN|END|ARG(C|IND|V)|CONVFMT|E(NVIRON|RRNO)|FI(ELDWIDTHS|LENAME)|F(NR|S)|IGNORECASE|N(F|R)|O(F(MT|S)|RS)|R(LENGTH|S|START|UBSEP)|break|continue|delete|e(xit|lse)|f(or|unction)|getline|if|next|printf?|return|while|atan2|c(lose|os|time)|exp|gsub|in(dex|t)|l(ength|og)|match|rand|s(in|plit|printf|qrt|rand|ub(str)?|ystem)|t(ime|o(lower|upper)))\b</Keywords>
     <Context>
-      <New_Line_Comment_Start># </New_Line_Comment_Start>
+      <New_Line_Comment_Start>#</New_Line_Comment_Start>
       <String_Delimiter>&quot;</String_Delimiter>
       <Can_Indent>False</Can_Indent>
       <Syntax_Highlighting>True</Syntax_Highlighting>
