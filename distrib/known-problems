@@ -21,6 +21,12 @@ Known Problems fixed in GPS 4.2.0
               with this entity contains characters '<' or '>'.
   Workaround: This message can be safely ignored.
 
+- G913-015 Ispell plugin not working
+  Problem:    When using the ispell.py plugin, right clicking on a word
+              displays an exception.
+  Workaround: Use the "Edit->Spell Checks" menu on a text selection instead of
+              the contextual menu.
+
 - G913-009 Unwanted scrolling when pasting with middle mouse button
   Problem:    Under UNIX systems, when pasting text from the X11
               clipboard using the middle mouse button, GPS scrolls the editor
