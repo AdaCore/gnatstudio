@@ -121,13 +121,30 @@ function showLocationFromA (tag) {
 }
 
 function showLocation (loc) {
-  links = document.getElementsByTagName('a');
+  var links = document.getElementsByTagName('a');
   for (var j=0; j < links.length; j++) {
     if (links[j].getAttribute ('name') == loc) {
-      var elem = links[j].parentNode.firstChild;
-      if (elem.firstChild == null) return;
-      if (elem.firstChild.nodeValue == '▼') return;
-      toggle (elem);
+      var parent = links[j].parentNode;
+      while (parent != document) {
+        var elem = parent.firstChild;
+        if (elem.firstChild != null)
+          if (elem.firstChild.nodeValue == '►')
+            toggle (elem);
+        if (parent.tagName.toLowerCase() == 'div') {
+          for (var k=0; k < parent.childNodes.length; k++) {
+            if (parent.childNodes[k].nodeType == 1 &&
+                parent.childNodes[k].firstChild != null &&
+                parent.childNodes[k].firstChild.nodeType == 1 &&
+                parent.childNodes[k].firstChild.tagName.toLowerCase() == 'a') {
+              elem = parent.childNodes[k].firstChild;
+              if (elem.firstChild != null)
+                if (elem.firstChild.nodeValue == '►')
+                  toggle (elem);
+            }
+          }
+        }
+        parent = parent.parentNode;
+      }
       return;
     }
   }
