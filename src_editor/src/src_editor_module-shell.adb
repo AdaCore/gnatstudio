@@ -2525,7 +2525,7 @@ package body Src_Editor_Module.Shell is
 
       elsif Command = "starts_word" then
          Get_Location (Iter, Data, 1, Iter, Success);
-         if not Success then
+         if Success then
             Set_Return_Value (Data, Src_Editor_Buffer.Starts_Word (Iter));
          else
             Set_Error_Msg (Data, -"Invalid location");
