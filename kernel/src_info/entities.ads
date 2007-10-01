@@ -120,6 +120,7 @@ package Entities is
       Enumeration_Kind,
       Exception_Entity,
       Floating_Point,
+      Interface_Kind,
       Label_On_Block,
       Label_On_Loop,
       Label_On_Statement,

@@ -2222,6 +2222,8 @@ package body Entities is
             --  -"floating point type"  -"floating point"
          when Function_Or_Operator =>
             return Get_Value ("function", "function"); --  -"function"
+         when Interface_Kind =>
+            return Get_Value ("interface", "interface"); --  "interface
          when Package_Kind =>
             return Get_Value ("package", "package");  --  -"package"
          when Procedure_Kind =>

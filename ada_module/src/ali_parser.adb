@@ -101,7 +101,7 @@ package body ALI_Parser is
       'F'    => (Floating_Point,         False, True,  False),
       'g'    => Unresolved_Entity_Kind,
       'G'    => Unresolved_Entity_Kind,
-      'h'    => Unresolved_Entity_Kind,
+      'h'    => (Interface_Kind,         False, True,  True),
       'H'    => (Record_Kind,            False, True,  True),
       'i'    => (Signed_Integer,         False, False, False),
       'I'    => (Signed_Integer,         False, True,  False),
@@ -841,8 +841,35 @@ package body ALI_Parser is
       Inst      : Entity_Instantiation;
 
    begin
+      if Xref.Table (Current_Ref).Rtype = Array_Index_Reference then
+         if Xref.Table (Current_Ref).Name /= No_Name then
+            Primitive := Get_Or_Create
+              (Name   => Locale_To_UTF8
+                 (Get_String (Xref.Table (Current_Ref).Name)),
+               File   => Get_Predefined_File (Get_Database (LI), Handler),
+               Line   => Predefined_Line,
+               Column => Predefined_Column);
+         else
+            Primitive := Find_Entity_In_ALI
+              (Handler,
+               LI, Sfiles, Current_Sfile, Xref.Table (Current_Ref).Line,
+               Xref.Table (Current_Ref).Col, First_Sect, Last_Sect);
+         end if;
+
+         if Primitive /= null then
+            Add_Index_Type (Entity, Primitive);
+         end if;
+
+      elsif Xref.Table (Current_Ref).Rtype = Interface_Reference then
+         Set_Type_Of
+           (Entity,
+            Find_Entity_In_ALI
+              (Handler,
+               LI, Sfiles, Current_Sfile, Xref.Table (Current_Ref).Line,
+               Xref.Table (Current_Ref).Col, First_Sect, Last_Sect));
+
       --  This is processed in the context of the previous reference already
-      if Kind /= Instantiation_Reference then
+      elsif Kind /= Instantiation_Reference then
          Current_Sfile := Xref.Table (Current_Ref).File_Num;
 
          --  Check to avoid the constraint error (index check failed)
