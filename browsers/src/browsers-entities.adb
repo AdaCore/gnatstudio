@@ -1275,12 +1275,31 @@ package body Browsers.Entities is
       Info_Added : out Boolean)
    is
       Typ : constant Entity_Information := Array_Contents_Type (Entity);
+      Indexes : constant Entity_Information_Array :=
+        Array_Index_Types (Entity);
    begin
       if Typ /= null then
-         Add_Line
-           (List, "array of " & Entity_As_Link (Typ),
-            Callback => (1 => Build (Item, Typ)));
-         --  Do not destroy Typ, needed for callbacks
+         Add_Line (List, "array ");
+         for Ind in Indexes'Range loop
+            if Ind = Indexes'First then
+               if Ind = Indexes'Last then
+                  Add_Line (List, "  (" & Entity_As_Link (Indexes (Ind)) & ")",
+                            Callback => (1 => Build (Item, Indexes (Ind))));
+               else
+                  Add_Line (List, "  (" & Entity_As_Link (Indexes (Ind)) & ",",
+                            Callback => (1 => Build (Item, Indexes (Ind))));
+               end if;
+            elsif Ind = Indexes'Last then
+               Add_Line (List, "   " & Entity_As_Link (Indexes (Ind)) & ")",
+                         Callback => (1 => Build (Item, Indexes (Ind))));
+            else
+               Add_Line (List, "   " & Entity_As_Link (Indexes (Ind)) & ",",
+                         Callback => (1 => Build (Item, Indexes (Ind))));
+            end if;
+         end loop;
+
+         Add_Line (List, "of " & Entity_As_Link (Typ),
+                   Callback => (1 => Build (Item, Typ)));
          Info_Added := True;
       else
          Info_Added := False;
@@ -1536,6 +1555,7 @@ package body Browsers.Entities is
               | Class
               | Union
               | Record_Kind
+              | Interface_Kind
               | Protected_Kind
               | Task_Kind =>
                Add_Primitive_Operations (Meth_Lines, Item);
