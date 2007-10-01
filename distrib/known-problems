@@ -1,11 +1,5 @@
 Known Problems fixed in GPS 4.1.3
 
-- G913-015 Ispell plugin not working
-  Problem:    When using the ispell.py plugin, right clicking on a word
-              displays an exception.
-  Workaround: Use the "Edit->Spell Checks" menu on a text selection instead of
-              the contextual menu.
-
 - G912-024 Potential crashes when using Revision View
   Problem:    When using the Revision View to display Version Control
               history for a file, GPS might crash.
