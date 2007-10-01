@@ -2554,6 +2554,8 @@ package body Docgen2 is
                        (Printout,
                         Backend.Gen_Tag
                           (Identifier_Text,
+                           Backend.Gen_Ref
+                             (Location_Image (EInfo.Location.File_Loc)) &
                            Extract (Sloc_Start.Index, Sloc_End.Index)));
 
                   elsif EInfo = null then
