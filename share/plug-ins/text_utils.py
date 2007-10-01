@@ -331,7 +331,7 @@ def join_line ():
    buffer.delete (eol, eol)  ## Newline character
    delete_horizontal_space (backward=0, forward=1)
    if not is_space (eol.forward_char (-1).get_char ()):
-      buffer.insert (eol, "XXX")
+      buffer.insert (eol, " ")
    buffer.finish_undo_group ()
 
 def apply_func_to_word (func, location=None):
