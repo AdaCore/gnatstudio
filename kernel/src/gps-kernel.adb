@@ -121,6 +121,10 @@ package body GPS.Kernel is
    --  Called when a specific entity declaration has been selected in the
    --  overloaded entities dialog.
 
+   procedure Free (Tool : in out Tool_Properties_Record);
+   procedure Free_Tools (Kernel : access Kernel_Handle_Record'Class);
+   --  Free the list of registered tools
+
    procedure Select_Entity_Declaration
      (Kernel      : access Kernel_Handle_Record'Class;
       File        : Source_File;
@@ -1516,7 +1520,7 @@ package body GPS.Kernel is
       Reset (Handle.Actions);
       Reset (Handle.Styles);
       Hooks_Hash.String_Hash_Table.Reset (Handle.Hooks);
-      Tools_Htable.String_Hash_Table.Reset (Handle.Tools);
+      Free_Tools (Handle);
 
       --  We do not finalize the scripts module anymore in order to allow
       --  user scripts to perform some very last processing.
@@ -1791,6 +1795,23 @@ package body GPS.Kernel is
       Free (Tool.Config);
    end Free;
 
+   ----------------
+   -- Free_Tools --
+   ----------------
+
+   procedure Free_Tools (Kernel : access Kernel_Handle_Record'Class) is
+      use Tools_List;
+      Cursor : Tools_List.Cursor := First (Kernel.Tools);
+      Tool   : Tool_Properties_Record;
+   begin
+      while Has_Element (Cursor) loop
+         Tool := Element (Cursor);
+         Free (Tool);
+         Next (Cursor);
+      end loop;
+      Clear (Kernel.Tools);
+   end Free_Tools;
+
    -------------------
    -- Register_Tool --
    -------------------
@@ -1830,8 +1851,7 @@ package body GPS.Kernel is
          end if;
       end if;
 
-      Tools_Htable.String_Hash_Table.Set
-        (Kernel.Tools, Tool.Tool_Name.all, Tool);
+      Tools_List.Append (Kernel.Tools, Tool);
    end Register_Tool;
 
    -------------------
@@ -1842,28 +1862,17 @@ package body GPS.Kernel is
      (Kernel    : access Kernel_Handle_Record)
       return Tool_Properties_Array
    is
-      use Tools_Htable.String_Hash_Table;
-      Iter : Tools_Htable.String_Hash_Table.Iterator;
-      Count : Natural := 0;
+      use Tools_List;
+      Iter   : Tools_List.Cursor := First (Kernel.Tools);
+      Result : Tool_Properties_Array (1 .. Integer (Length (Kernel.Tools)));
+      Count  : Natural := Result'First;
    begin
-      Get_First (Kernel.Tools, Iter);
-      while Get_Element (Iter) /= No_Tool loop
+      while Has_Element (Iter) loop
+         Result (Count) := Element (Iter);
          Count := Count + 1;
-         Get_Next (Kernel.Tools, Iter);
+         Next (Iter);
       end loop;
-
-      declare
-         Result : Tool_Properties_Array (1 .. Count);
-      begin
-         Count := Result'First;
-         Get_First (Kernel.Tools, Iter);
-         while Count <= Result'Last loop
-            Result (Count) := Get_Element (Iter);
-            Count := Count + 1;
-            Get_Next (Kernel.Tools, Iter);
-         end loop;
-         return Result;
-      end;
+      return Result;
    end Get_All_Tools;
 
    -------------------------
@@ -1872,44 +1881,19 @@ package body GPS.Kernel is
 
    function Get_Tool_Properties
      (Kernel    : access Kernel_Handle_Record;
-      Tool_Name : String) return Tool_Properties_Record is
-   begin
-      return Tools_Htable.String_Hash_Table.Get (Kernel.Tools, Tool_Name);
-   end Get_Tool_Properties;
-
-   -------------------
-   -- Get_Tool_Name --
-   -------------------
-
-   function Get_Tool_Name
-     (Kernel    : access Kernel_Handle_Record;
-      Pkg_Name  : String;
-      Attribute : String;
-      Index     : String) return String
+      Tool_Name : String) return Tool_Properties_Record
    is
-      Iter : Tools_Htable.String_Hash_Table.Iterator;
-      Prop : Tool_Properties_Record;
+      use Tools_List;
+      Iter   : Tools_List.Cursor := First (Kernel.Tools);
    begin
-      Tools_Htable.String_Hash_Table.Get_First (Kernel.Tools, Iter);
-      loop
-         Prop := Tools_Htable.String_Hash_Table.Get_Element (Iter);
-         exit when Prop = No_Tool;
-
-         if Prop.Project_Package /= null
-           and then Prop.Project_Index /= null
-           and then Prop.Project_Attribute /= null
-           and then Equal (Prop.Project_Package.all, Pkg_Name, False)
-           and then Equal (Prop.Project_Attribute.all, Attribute, False)
-           and then Equal (Prop.Project_Index.all, Index, False)
-         then
-            return Tools_Htable.String_Hash_Table.Get_Key (Iter);
+      while Has_Element (Iter) loop
+         if To_Lower (Element (Iter).Tool_Name.all) = To_Lower (Tool_Name) then
+            return Element (Iter);
          end if;
-
-         Tools_Htable.String_Hash_Table.Get_Next (Kernel.Tools, Iter);
+         Next (Iter);
       end loop;
-
-      return "";
-   end Get_Tool_Name;
+      return No_Tool;
+   end Get_Tool_Properties;
 
    ------------
    -- Create --

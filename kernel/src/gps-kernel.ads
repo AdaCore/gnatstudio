@@ -19,6 +19,7 @@
 
 --  This package is the root of the GPS' kernel API.
 
+with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Finalization;
 with GNAT.Scripts;
 with GNAT.Strings;
@@ -553,14 +554,6 @@ package GPS.Kernel is
       return Tool_Properties_Array;
    --  Return all registered tools
 
-   function Get_Tool_Name
-     (Kernel    : access Kernel_Handle_Record;
-      Pkg_Name  : String;
-      Attribute : String;
-      Index     : String) return String;
-   --  Return the name of the tool associated with a specific attribute to save
-   --  the switches. The empty string is returned if there is no such tool
-
    ------------------
    -- Key handlers --
    ------------------
@@ -829,9 +822,12 @@ private
    No_Tool : constant Tool_Properties_Record :=
      (null, null, null, null, null, null, null);
 
-   procedure Free (Tool : in out Tool_Properties_Record);
-   package Tools_Htable is new String_Hash
-     (Tool_Properties_Record, Free, No_Tool);
+   package Tools_List is new Ada.Containers.Doubly_Linked_Lists
+     (Tool_Properties_Record);
+   --  Tools are stored in a list (we expect only a limited number of tools in
+   --  any case), so that we also preserve the order in which they were
+   --  registered. This is important when displaying the project properties
+   --  dialog for instance.
 
    ------------------------------------
    -- Abstract type defining a table --
@@ -890,7 +886,7 @@ private
       Construct_Database : Language.Tree.Database.Construct_Database_Access;
       --  The construct information
 
-      Tools   : Tools_Htable.String_Hash_Table.HTable;
+      Tools   : Tools_List.List;
       --  The tools registered in the kernel
 
       Actions : Root_Table_Access;
