@@ -2097,7 +2097,7 @@ package body Docgen2 is
       Printout     : Unbounded_String;
       File_Handle  : File_Type;
       Translation  : Translate_Set;
-      Line_Nb      : Natural := 1;
+      Line_Nb      : Natural := 0;
       Tmpl         : constant String :=
                        Backend.Get_Template
                          (Get_System_Dir (Kernel), Tmpl_Src);
@@ -2134,6 +2134,13 @@ package body Docgen2 is
          end if;
 
          Last_Idx := Sloc_End.Index;
+
+         --  Print line number
+         if Sloc_Start.Line > Line_Nb then
+            Line_Nb := Sloc_Start.Line;
+            Ada.Strings.Unbounded.Append
+              (Printout, Backend.Gen_Ref (Natural'Image (Line_Nb)));
+         end if;
 
          if Entity /= Identifier_Text
            and then Entity /= Partial_Identifier_Text
@@ -2214,33 +2221,6 @@ package body Docgen2 is
       Trace (Me, "Parse entities");
       Parse_Entities (Lang, Buffer.all, CB'Unrestricted_Access);
 
-      --  Annotate line numbers
-      Last_Idx := 1;
-      Line_Nb := 1;
-
-      Printout := Backend.Gen_Ref (Natural'Image (Line_Nb)) & Printout;
-      Line_Nb := Line_Nb + 1;
-
-      loop
-         Last_Idx := Index
-           (Source  => Printout,
-            Pattern => "" & ASCII.LF,
-            From    => Last_Idx);
-
-         exit when Last_Idx = 0;
-
-         if Last_Idx > 0 then
-            declare
-               Str : constant String :=
-                       Backend.Gen_Ref (Natural'Image (Line_Nb));
-            begin
-               Insert (Printout, Before => Last_Idx + 1, New_Item => Str);
-               Line_Nb := Line_Nb + 1;
-               Last_Idx := Last_Idx + Str'Length + 1;
-            end;
-         end if;
-      end loop;
-
       Insert
         (Translation, Assoc ("SOURCE_FILE", Get_Filename (File).Base_Name));
       Insert
@@ -2251,7 +2231,6 @@ package body Docgen2 is
          Backend.To_Destination_Name
            (VFS.Base_Name (Get_Filename (File))));
 
-      Trace (Me, "Generating file");
       Ada.Text_IO.Put
         (File_Handle, Parse (Tmpl, Translation, Cached => True));
       Ada.Text_IO.Close (File_Handle);
