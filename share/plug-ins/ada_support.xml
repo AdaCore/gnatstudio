@@ -6,7 +6,7 @@
 -->
 
 <GPS>
-   <tool name="Make" package="Builder" index="ada">
+   <tool name="Gnatmake" package="Builder" index="ada">
       <language>Ada</language>
       <initial-cmd-line></initial-cmd-line>
       <switches columns="2">
