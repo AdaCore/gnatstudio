@@ -353,6 +353,7 @@ package body Custom_Module is
                     & " unknown tool: ")
                   & Master_Page & (-" in file ") & Full_Name (File).all,
                   Mode => GPS.Kernel.Console.Error);
+               return;
             end if;
          end if;
 
