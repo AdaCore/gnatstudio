@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.2 NEW FEATURES LIST Current as of Oct 01, 2007
+GPS 4.2 NEW FEATURES LIST Current as of Oct 03, 2007
 ====================================================
 
 Copyright (c) 2006-2007, AdaCore
@@ -14,6 +14,13 @@ of the feature.
 
 New features in GPS 4.2.0
 -------------------------
+
+NF-42-GA03-007 Plug-in to fill Revision Logs (2007-10-03)
+
+  When GPS opens a new Version Control revision log for a source file, the
+  plug-in "auto_changelog.py" will look at exisiting Visual Differences for
+  this source file, and pre-fill the revision log with the names of subprograms
+  being changed.
 
 NF-42-G924-017 Completion engine enhancements (2007-09-26)
 
