@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                              AdaCore                              --
+--                  Copyright (C) 2001-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -44,6 +43,9 @@ with HTables;
 with Src_Contexts;
 with Src_Editor_Box;
 with VFS;                use VFS;
+
+with Basic_Types;        use Basic_Types;
+with Src_Editor_Buffer;  use Src_Editor_Buffer;
 
 package Src_Editor_Module is
 
@@ -279,6 +281,9 @@ private
       Create_New : Boolean := True;
       Focus      : Boolean := True;
       Force      : Boolean := False;
+      Line       : Editable_Line_Type;
+      Column     : Visible_Column_Type;
+      Column_End : Visible_Column_Type;
       Group      : Gtkada.MDI.Child_Group := Gtkada.MDI.Group_Default;
       Initial_Position : Gtkada.MDI.Child_Position :=
         Gtkada.MDI.Position_Automatic)
