@@ -498,6 +498,13 @@ This directory always ends with a directory separator</description>
      <see_also name="GPS.get_home_dir()" />
   </shell_doc>
 
+
+  <shell_doc name="GPS.get_tmp_dir">
+     <return>The install directory for GPS</return>
+     <description>Return the directory where gps creates temporary files.
+This directory always ends with a directory separator</description>
+  </shell_doc>
+
   <shell_doc name="GPS.get_home_dir">
      <return>The user's GPS directory</return>
      <description>Return the directory that contains the user-specific files.
@@ -3738,6 +3745,14 @@ highlight_category, style_category and warning_category reference the colors to 
   <shell_doc name="GPS.Locations.list_categories">
      <return>A list of strings</return>
      <description>Return the list of all categories currently displayed in the Locations window. These are the top-level nodes used to group information generally related to one command, like the result of a compilation.</description>
+     <see_also name="GPS.Locations.remove_category" />
+  </shell_doc>
+
+  <shell_doc name="GPS.Locations.list_locations">
+     <param name="category">A string</param>
+     <param name="file">A string</param>
+     <return>A list of EditorLocation</return>
+     <description>Return the list of all file locations currently listed in the given category and file.</description>
      <see_also name="GPS.Locations.remove_category" />
   </shell_doc>
 
