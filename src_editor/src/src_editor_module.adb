@@ -61,7 +61,6 @@ with Pango.Font;
 with Pango.Layout;                      use Pango.Layout;
 
 with Aliases_Module;                    use Aliases_Module;
-with Basic_Types;                       use Basic_Types;
 with Casing_Exceptions;                 use Casing_Exceptions;
 with Commands.Interactive;              use Commands, Commands.Interactive;
 with Completion_Module;                 use Completion_Module;
@@ -91,7 +90,6 @@ with Src_Editor_Buffer.Hooks;           use Src_Editor_Buffer.Hooks;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 with Src_Editor_Buffer.Text_Handling;   use Src_Editor_Buffer.Text_Handling;
-with Src_Editor_Buffer;                 use Src_Editor_Buffer;
 with Src_Editor_Module.Line_Highlighting;
 with Src_Editor_Module.Markers;         use Src_Editor_Module.Markers;
 with Src_Editor_Module.Shell;           use Src_Editor_Module.Shell;
@@ -170,9 +168,6 @@ package body Src_Editor_Module is
       Kernel : Kernel_Handle;
       Focus  : Boolean;
    end record;
-
-   function Location_Callback (D : Location_Idle_Data) return Boolean;
-   --  Idle callback used to scroll the source editors
 
    function File_Edit_Callback (D : Location_Idle_Data) return Boolean;
    --  Emit the File_Edited signal
@@ -718,7 +713,11 @@ package body Src_Editor_Module is
 
             F := Create (Full_Filename => File.all);
             if not Is_Open (User, F) then
-               Src := Open_File (User, F, False);
+               Src := Open_File
+                 (User, F, False,
+                  Line   => Line,
+                  Column => Column,
+                  Column_End => Column);
                Child := Find_Editor (User, F);
             else
                Child := Find_Editor (User, F);
@@ -1130,6 +1129,9 @@ package body Src_Editor_Module is
       Create_New       : Boolean := True;
       Focus            : Boolean := True;
       Force            : Boolean := False;
+      Line             : Editable_Line_Type;
+      Column           : Visible_Column_Type;
+      Column_End       : Visible_Column_Type;
       Group            : Gtkada.MDI.Child_Group := Gtkada.MDI.Group_Default;
       Initial_Position : Gtkada.MDI.Child_Position :=
         Gtkada.MDI.Position_Automatic) return Source_Editor_Box
@@ -1141,6 +1143,43 @@ package body Src_Editor_Module is
       Editor  : Source_Editor_Box;
       Child   : GPS_MDI_Child;
       Child2  : MDI_Child;
+
+      procedure Jump_To_Location;
+      --  Jump to the location given in parameter to Open_File.
+
+      ----------------------
+      -- Jump_To_Location --
+      ----------------------
+
+      procedure Jump_To_Location is
+         Real_Column, Real_Column_End : Character_Offset_Type;
+      begin
+         if Line /= 0
+           and then Is_Valid_Position (Get_Buffer (Editor), Line)
+         then
+            Real_Column := Collapse_Tabs
+              (Get_Buffer (Editor), Line, Column);
+
+            Set_Cursor_Location
+              (Editor, Line, Real_Column, Focus,
+               Centering => With_Margin);
+
+            if Column_End /= 0
+              and then Is_Valid_Position
+                (Get_Buffer (Editor), Line, Column_End)
+            then
+               Real_Column_End := Collapse_Tabs
+                 (Get_Buffer (Editor), Line, Column_End);
+
+               Select_Region
+                 (Get_Buffer (Editor),
+                  Line,
+                  Real_Column,
+                  Line,
+                  Real_Column_End);
+            end if;
+         end if;
+      end Jump_To_Location;
 
    begin
       Create_Files_Pixbufs_If_Needed (Kernel);
@@ -1160,8 +1199,11 @@ package body Src_Editor_Module is
                Always_Reload => Force);
 
             Raise_Child (Child2, Focus);
+            Editor := Source_Editor_Box (Get_Widget (Child2));
 
-            return Source_Editor_Box (Get_Widget (Child2));
+            Jump_To_Location;
+
+            return Editor;
          end if;
       end if;
 
@@ -1208,6 +1250,8 @@ package body Src_Editor_Module is
             User_Data => File);
 
          Raise_Child (Child, Focus);
+
+         Jump_To_Location;
 
          if File /= VFS.No_File then
             if Is_Local (File) then
@@ -1299,39 +1343,6 @@ package body Src_Editor_Module is
 
       return Editor;
    end Open_File;
-
-   -----------------------
-   -- Location_Callback --
-   -----------------------
-
-   function Location_Callback (D : Location_Idle_Data) return Boolean is
-   begin
-      if D.Line /= 0
-        and then Is_Valid_Position (Get_Buffer (D.Edit), D.Line)
-      then
-         Set_Cursor_Location (D.Edit, D.Line, D.Column, D.Focus,
-                              Centering => With_Margin);
-
-         if D.Column_End /= 0
-           and then Is_Valid_Position
-             (Get_Buffer (D.Edit), D.Line, D.Column_End)
-         then
-            Select_Region
-              (Get_Buffer (D.Edit),
-               D.Line,
-               D.Column,
-               D.Line,
-               D.Column_End);
-         end if;
-      end if;
-
-      return False;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
-         return False;
-   end Location_Callback;
 
    ------------------
    -- Save_To_File --
@@ -1625,7 +1636,9 @@ package body Src_Editor_Module is
       Editor : Source_Editor_Box;
       pragma Unreferenced (Widget, Editor);
    begin
-      Editor := Open_File (Kernel, File => VFS.No_File);
+      Editor := Open_File
+        (Kernel, File => VFS.No_File,
+         Line => 1, Column => 1, Column_End => 1);
 
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -2070,10 +2083,7 @@ package body Src_Editor_Module is
       D               : constant Source_File_Hooks_Args :=
                           Source_File_Hooks_Args (Data.all);
       Child           : MDI_Child;
-      No_Location     : Boolean := False;
       Column          : Visible_Column_Type := D.Column;
-      Real_Column     : Character_Offset_Type;
-      Real_Column_End : Character_Offset_Type;
       Source          : Source_Editor_Box;
       Edit            : Source_Editor_Box;
       Tmp             : Boolean;
@@ -2094,15 +2104,16 @@ package body Src_Editor_Module is
          return True;
 
       else
-         No_Location := D.Line = 0;
-
          Source := Open_File
            (Kernel, D.File,
             Create_New       => D.New_File,
             Focus            => D.Focus,
             Force            => D.Force_Reload,
             Group            => D.Group,
-            Initial_Position => D.Initial_Position);
+            Initial_Position => D.Initial_Position,
+            Line             => Editable_Line_Type (D.Line),
+            Column           => D.Column,
+            Column_End       => D.Column);
 
          --  This used to be done in Open_File_Editor itself, before we call
          --  the Hook, but then we wouldn't have access to Create_File_Marker.
@@ -2124,27 +2135,6 @@ package body Src_Editor_Module is
 
          if Column = 0 then
             Column := 1;
-         end if;
-
-         if Edit /= null
-           and then not No_Location
-         then
-            Real_Column := Collapse_Tabs
-              (Get_Buffer (Edit),
-               Editable_Line_Type (D.Line), Column);
-            Real_Column_End := Collapse_Tabs
-              (Get_Buffer (Edit),
-               Editable_Line_Type (D.Line), D.Column_End);
-
-            Trace (Me, "Setup editor to go to line,col="
-                   & D.Line'Img & Column'Img);
-            Tmp := Location_Callback
-              ((Edit,
-                Editable_Line_Type (D.Line),
-                Real_Column,
-                Real_Column_End,
-                Kernel_Handle (Kernel),
-                D.Focus));
          end if;
 
          return Edit /= null;
