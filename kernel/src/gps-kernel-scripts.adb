@@ -439,6 +439,9 @@ package body GPS.Kernel.Scripts is
       if Command = "get_system_dir" then
          Set_Return_Value (Data, Get_System_Dir (Kernel));
 
+      elsif Command = "get_tmp_dir" then
+         Set_Return_Value (Data, OS_Utils.Get_Tmp_Dir);
+
       elsif Command = "get_home_dir" then
          Set_Return_Value (Data, Get_Home_Dir (Kernel));
 
@@ -1589,6 +1592,9 @@ package body GPS.Kernel.Scripts is
 
       Register_Command
         (Kernel, "get_system_dir",
+         Handler => Default_Command_Handler'Access);
+      Register_Command
+        (Kernel, "get_tmp_dir",
          Handler => Default_Command_Handler'Access);
       Register_Command
         (Kernel, "get_home_dir",
