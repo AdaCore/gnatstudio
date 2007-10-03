@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006-2007                      --
---                              AdaCore                              --
+--                   Copyright (C) 2006-2007, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -80,6 +79,8 @@ package Completion_Window is
    --  Mark is set on the position which the cursor should occupy after a
    --  completion. It should be initialized and freed by the caller.
    --  Show the window.
+   --  If Complete is true, select the first entry in the list and complete to
+   --  the biggest common prefix.
 
    procedure Set_Completion_Iterator
      (Window : Completion_Window_Access;
@@ -167,6 +168,9 @@ private
 
       Pattern : String_Access;
       --  The currently typed pattern.
+
+      Volatile : Boolean := False;
+      --  Whether the completion window was created using an automated trigger.
 
       Completion_History : Completion_History_Access;
    end record;
