@@ -2829,6 +2829,13 @@ package body GPS.Location_View is
          Static_Method => True,
          Handler      => Default_Command_Handler'Access);
       Register_Command
+        (Kernel, "list_locations",
+         Class         => Locations_Class,
+         Minimum_Args  => 2,
+         Maximum_Args  => 2,
+         Static_Method => True,
+         Handler       => Default_Command_Handler'Access);
+      Register_Command
         (Kernel, "dump",
          Minimum_Args => 1,
          Maximum_Args => 1,
@@ -2897,6 +2904,54 @@ package body GPS.Location_View is
 
                while Iter /= Null_Iter loop
                   Set_Return_Value (Data, Get_Category_Name (Model, Iter));
+                  Next (Model, Iter);
+               end loop;
+            end if;
+         end;
+
+      elsif Command = "list_locations" then
+         declare
+            View      : constant Location_View := Get_Or_Create_Location_View
+              (Get_Kernel (Data), Allow_Creation => False);
+            Model     : Gtk_Tree_Store;
+            Iter, Dummy : Gtk_Tree_Iter;
+            Dummy_B   : Boolean;
+            Script    : constant Scripting_Language := Get_Script (Data);
+            Category  : constant String := Nth_Arg (Data, 1);
+            File      : constant VFS.Virtual_File := Create
+              (Nth_Arg (Data, 2), Get_Kernel (Data), Use_Source_Path => True);
+            Line, Col : Gint;
+         begin
+            Set_Return_Value_As_List (Data);
+
+            if View /= null then
+               Model := View.Tree.Model;
+               Get_Category_File
+                 (View          => View,
+                  Category      => Category,
+                  H_Category    => null,
+                  File          => File,
+                  Category_Iter => Dummy,
+                  File_Iter     => Iter,
+                  New_Category  => Dummy_B,
+                  Create        => False);
+
+               if Iter /= Null_Iter then
+                  Iter := Children (Model, Iter);
+               end if;
+
+               while Iter /= Null_Iter loop
+                  Line := Get_Int (Model, Iter, Line_Column);
+                  Col  := Get_Int (Model, Iter, Column_Column);
+                  Set_Return_Value
+                    (Data,
+                     Create_File_Location
+                       (Script => Script,
+                        File   => Create_File (Script, File),
+                        Line   => Integer (Line),
+                        Column => Visible_Column_Type (Col)));
+                  Set_Return_Value
+                    (Data, Get_String (Model, Iter, Base_Name_Column));
                   Next (Model, Iter);
                end loop;
             end if;
