@@ -2227,7 +2227,8 @@ package body Src_Editor_Box is
 
          Set_Cursor_Position
            (Editor.Source_Buffer, Editable_Line, Column,
-            Centering => Centering);
+            Centering => Centering,
+            Internal  => False);
          Save_Cursor_Position (Editor.Source_View);
          Scroll_To_Cursor_Location (Editor.Source_View, Centering);
 
@@ -2243,7 +2244,7 @@ package body Src_Editor_Box is
          end if;
 
          Set_Cursor_Position
-           (Editor.Source_Buffer, Editable_Line, 1, Centering);
+           (Editor.Source_Buffer, Editable_Line, 1, Centering, False);
          Save_Cursor_Position (Editor.Source_View);
          Scroll_To_Cursor_Location (Editor.Source_View, Centering);
 
