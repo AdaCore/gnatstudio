@@ -896,12 +896,22 @@ package body Completion_Window is
 
             if Iter /= Null_Iter then
                Select_Iter (Sel, Iter);
+               --  We have selected an iter: the window is no longer volatile.
+               Window.Volatile := False;
             end if;
 
          when GDK_Page_Down =>
             Move_Page (Down);
+            Window.Volatile := False;
 
          when GDK_Up | GDK_KP_Up =>
+            --  If the window is volatile, the window should be destroyed.
+
+            if Window.Volatile then
+               Delete (Window);
+               return False;
+            end if;
+
             Sel := Get_Selection (Window.View);
             Get_Selected (Sel, Model, Iter);
 
@@ -921,6 +931,11 @@ package body Completion_Window is
             end if;
 
          when GDK_Page_Up =>
+            if Window.Volatile then
+               Delete (Window);
+               return False;
+            end if;
+
             Move_Page (Up);
 
          when others =>
@@ -1233,6 +1248,8 @@ package body Completion_Window is
             Select_Iter (Get_Selection (Window.View), Tree_Iter);
          end if;
       end if;
+
+      Window.Volatile := not Complete;
 
       On_Selection_Changed (Window);
 
