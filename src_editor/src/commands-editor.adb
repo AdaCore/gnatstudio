@@ -290,7 +290,8 @@ package body Commands.Editor is
                  (Command.Buffer,
                   Command.Line,
                   Command.Column,
-                  Centering => Minimal);
+                  Centering => Minimal,
+                  Internal  => True);
                Scroll_To_Cursor_Location (View);
                Insert
                  (Command.Buffer,
@@ -305,7 +306,8 @@ package body Commands.Editor is
                     (Command.Buffer,
                      Command.Cursor_Line,
                      Command.Cursor_Column,
-                     Centering => Minimal);
+                     Centering => Minimal,
+                     Internal  => True);
                   Scroll_To_Cursor_Location (View);
 
                elsif Command.Direction = Backward then
@@ -313,7 +315,8 @@ package body Commands.Editor is
                     (Command.Buffer,
                      Command.Line,
                      Command.Column,
-                     Centering => Minimal);
+                     Centering => Minimal,
+                     Internal  => True);
                   Scroll_To_Cursor_Location (View);
                end if;
 
@@ -333,7 +336,8 @@ package body Commands.Editor is
                  (Command.Buffer,
                   Command.Line,
                   Command.Column,
-                  Centering => Minimal);
+                  Centering => Minimal,
+                  Internal  => True);
                Scroll_To_Cursor_Location (View);
          end case;
       end if;
@@ -409,7 +413,8 @@ package body Commands.Editor is
            (Command.Buffer,
             Command.End_Line_After,
             Command.End_Column_After,
-            Centering => Minimal);
+            Centering => Minimal,
+            Internal  => True);
          Scroll_To_Cursor_Location (Get_View (Editor));
       end if;
 
@@ -450,13 +455,15 @@ package body Commands.Editor is
            (Command.Buffer,
             Command.End_Line_Before,
             Command.End_Column_Before,
-            Centering => Minimal);
+            Centering => Minimal,
+            Internal  => True);
       else
          Set_Cursor_Position
            (Command.Buffer,
             Command.Start_Line,
             Command.Start_Column,
-            Centering => Minimal);
+            Centering => Minimal,
+            Internal  => True);
       end if;
 
       Scroll_To_Cursor_Location (Get_View (Editor));
