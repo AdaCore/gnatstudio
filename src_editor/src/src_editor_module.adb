@@ -2113,7 +2113,7 @@ package body Src_Editor_Module is
             Initial_Position => D.Initial_Position,
             Line             => Editable_Line_Type (D.Line),
             Column           => D.Column,
-            Column_End       => D.Column);
+            Column_End       => D.Column_End);
 
          --  This used to be done in Open_File_Editor itself, before we call
          --  the Hook, but then we wouldn't have access to Create_File_Marker.
