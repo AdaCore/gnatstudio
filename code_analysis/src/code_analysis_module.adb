@@ -1465,7 +1465,7 @@ package body Code_Analysis_Module is
                --  data
                Set_File_Information
                  (Local_Context, Project => Prj_Name);
-            else
+            elsif Cont_N_Anal.Analysis.Child = null then
                Show_Empty_Analysis_Report (Kernel, Cont_N_Anal.Analysis);
                return;
             end if;
@@ -1888,6 +1888,7 @@ package body Code_Analysis_Module is
       Remove_Location_Category (Kernel, Coverage_Category);
       Remove_Line_Information_Column (Kernel, No_File, CodeAnalysis_Cst);
       Free_Code_Analysis (Analysis.Projects);
+      Analysis.Child := null;
    end Clear_Analysis_Instance;
 
    -----------------------------------
