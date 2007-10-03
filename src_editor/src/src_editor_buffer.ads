@@ -218,7 +218,8 @@ package Src_Editor_Buffer is
      (Buffer    : access Source_Buffer_Record;
       Line      : Editable_Line_Type;
       Column    : Character_Offset_Type;
-      Centering : Centering_Type := Center);
+      Centering : Centering_Type := Center;
+      Internal  : Boolean);
    --  Move the insert cursor to the given position.
    --  If, following this call, the cursor location needs to be displayed, the
    --  editor will scroll so that the cursor is visible, with the behavior
@@ -227,6 +228,10 @@ package Src_Editor_Buffer is
    --  The validity of the cursor position must be verified before invoking
    --  this procedure. An incorrect position will cause an Assertion_Failure
    --  when compiled with assertion checks, or an undefined behavior otherwise.
+   --
+   --  Internal should be set to True if the call is due to internal
+   --  mechanics of GPS (ie, implementation of editor commands), and False if
+   --  it is due to something external (ie, through python/xml commands).
 
    procedure Get_Cursor_Position
      (Buffer : access Source_Buffer_Record;
@@ -844,9 +849,13 @@ package Src_Editor_Buffer is
    --  Refresh the side columns in Buffer.
 
    function Position_Set_Explicitely
-     (Buffer : access Source_Buffer_Record) return Boolean;
+     (Buffer : access Source_Buffer_Record;
+      Reset  : Boolean) return Boolean;
    --  Return True if the position of the cursor has been set explicitely (ie
    --  not as a side effect of a text change)
+   --  If Reset is true, deactivate the flag saying that the cursor has been
+   --  set explicitely: further calls to Position_Set_Explicitely will return
+   --  False.
 
    procedure End_Action (Buffer : access Source_Buffer_Record'Class);
    --  This procedure should be called every time that an internal
@@ -889,7 +898,8 @@ private
      (Buffer    : access Source_Buffer_Record;
       Line      : Gint;
       Column    : Gint;
-      Centering : Centering_Type);
+      Centering : Centering_Type;
+      Internal  : Boolean);
    --  Move the insert cursor to the given position.
    --  If, following this call, the cursor location needs to be displayed, the
    --  editor will scroll so that the cursor is centered if Center is True.
@@ -899,6 +909,10 @@ private
    --  this procedure. An incorrect position will cause an Assertion_Failure
    --  when compiled with assertion checks, or an undefined behavior otherwise.
    --  This is obsolete, Set_Cursor_Position above should be called.
+   --
+   --  Internal should be set to True if the call is due to internal
+   --  mechanics of GPS (ie, implementation of editor commands), and False if
+   --  it is due to something external (ie, through python/xml commands).
 
    function Is_In_Comment
      (Buffer : Source_Buffer;
@@ -1218,8 +1232,10 @@ private
       Tab_Width : Gint := 8;
       --  Width of a Tab character
 
-      Cursor_Set_Explicitely : Natural := 0;
-      --  > 0 when the cursor position has been set explicitely in the code
+      Cursor_Set_Explicitely : Boolean := False;
+      --  True when the user requested to scroll to this position when the
+      --  editor was first opened. This is used to scroll to this position in
+      --  the callbacks that display the editor.
 
       In_Destruction : Boolean := False;
       --  Indicates whether the buffer is currently being destroyed
