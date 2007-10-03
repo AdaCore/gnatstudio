@@ -367,7 +367,9 @@ package body GPS.Kernel.Preferences is
             Blurb => -("If enabled, and if you are using a version of GNAT"
               & " more recent than 2007-09-21, then cross-references on"
               & " dispatching calls will also list all possible calls,"
-              & " not only the primitive operation of the parent type"),
+              & " not only the primitive operation of the parent type."
+              & ASCII.LF
+              & "Changing this preference requires a restart of GPS"),
             Default => False));
       Register_Property
            (Kernel.Preferences,
