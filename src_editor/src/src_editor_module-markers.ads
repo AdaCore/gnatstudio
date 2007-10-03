@@ -22,8 +22,6 @@ with Gtk.Text_Mark;
 
 with GPS.Kernel;
 with VFS;
-with Basic_Types;       use Basic_Types;
-with Src_Editor_Buffer; use Src_Editor_Buffer;
 
 package Src_Editor_Module.Markers is
 
