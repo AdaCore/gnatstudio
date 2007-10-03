@@ -1926,10 +1926,6 @@ package body Src_Editor_Buffer is
 
       Get_Screen_Position (Buffer, L, C);
 
-      if Buffer.Cursor_Set_Explicitely > 0 then
-         Buffer.Cursor_Set_Explicitely := Buffer.Cursor_Set_Explicitely - 1;
-      end if;
-
       Emit_By_Name
         (Get_Object (Buffer), "cursor_position_changed" & ASCII.NUL,
          Line   => Gint (Get_Editable_Line (Buffer, Buffer_Line_Type (L + 1))),
@@ -3374,7 +3370,8 @@ package body Src_Editor_Buffer is
      (Buffer    : access Source_Buffer_Record;
       Line      : Gint;
       Column    : Gint;
-      Centering : Centering_Type)
+      Centering : Centering_Type;
+      Internal  : Boolean)
    is
       Iter : Gtk_Text_Iter;
    begin
@@ -3385,11 +3382,13 @@ package body Src_Editor_Buffer is
          return;
       end if;
 
-      --  Any explicit (ie, forced programatically, as opposed to through
-      --  user typing) cursor movement should end the current action, and
-      --  destroy the smart completion window.
-      End_Action (Buffer);
-      Remove_Completion;
+      if not Internal then
+         --  Any explicit (ie, forced programatically, as opposed to through
+         --  user typing) cursor movement should end the current action, and
+         --  destroy the smart completion window.
+         End_Action (Buffer);
+         Remove_Completion;
+      end if;
 
       --  At this point, we know that the (Line, Column) position is
       --  valid, so we can safely get the iterator at this position.
@@ -3397,7 +3396,7 @@ package body Src_Editor_Buffer is
       Get_Iter_At_Line_Offset (Buffer, Iter, Line, Column);
 
       if Centering /= Minimal then
-         Buffer.Cursor_Set_Explicitely := 2;
+         Buffer.Cursor_Set_Explicitely := True;
       end if;
 
       Place_Cursor (Buffer, Iter);
@@ -3407,7 +3406,8 @@ package body Src_Editor_Buffer is
      (Buffer    : access Source_Buffer_Record;
       Line      : Editable_Line_Type;
       Column    : Character_Offset_Type;
-      Centering : Centering_Type := Center)
+      Centering : Centering_Type := Center;
+      Internal  : Boolean)
    is
       Buffer_Line : Buffer_Line_Type := Get_Buffer_Line (Buffer, Line);
    begin
@@ -3424,7 +3424,7 @@ package body Src_Editor_Buffer is
 
       Set_Cursor_Position
         (Buffer, Gint (Buffer_Line - 1), Gint (Column - 1),
-         Centering);
+         Centering, Internal => Internal);
    end Set_Cursor_Position;
 
    ---------------------------------
@@ -4122,7 +4122,7 @@ package body Src_Editor_Buffer is
       Bound_Iter   : Gtk.Text_Iter.Gtk_Text_Iter)
    is
    begin
-      Buffer.Cursor_Set_Explicitely := 2;
+      Buffer.Cursor_Set_Explicitely := True;
       Select_Range (Buffer, Ins => Cursor_Iter, Bound => Bound_Iter);
    end Select_Region;
 
@@ -4160,7 +4160,7 @@ package body Src_Editor_Buffer is
            (Buffer, Start_Iter, Start_Line, Start_Column);
          Get_Iter_At_Line_Offset (Buffer, End_Iter, End_Line, End_Column);
          Select_Range (Buffer, Ins => End_Iter, Bound => Start_Iter);
-         Buffer.Cursor_Set_Explicitely := 2;
+         Buffer.Cursor_Set_Explicitely := True;
       end if;
    end Select_Region;
 
@@ -6012,9 +6012,16 @@ package body Src_Editor_Buffer is
    ------------------------------
 
    function Position_Set_Explicitely
-     (Buffer : access Source_Buffer_Record) return Boolean is
+     (Buffer : access Source_Buffer_Record;
+      Reset  : Boolean) return Boolean
+   is
+      Set : constant Boolean := Buffer.Cursor_Set_Explicitely;
    begin
-      return Buffer.Cursor_Set_Explicitely > 0;
+      if Reset then
+         Buffer.Cursor_Set_Explicitely := False;
+      end if;
+
+      return Set;
    end Position_Set_Explicitely;
 
    ---------------------------
