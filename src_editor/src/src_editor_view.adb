@@ -759,7 +759,7 @@ package body Src_Editor_View is
         and then V.Cursor_Position >= 0.0
         and then V.Cursor_Position <= 1.0
       then
-         if Position_Set_Explicitely (Buffer) then
+         if Position_Set_Explicitely (Buffer, False) then
             Scroll_To_Cursor_Location (V, Center);
          else
             Scroll_To_Cursor_Location (V, Minimal);
@@ -1510,7 +1510,9 @@ package body Src_Editor_View is
            (Get_Hadjustment (View.Scroll),
             Get_Value (Get_Hadjustment (View.Synchronized_Editor.Scroll)));
       else
-         if Position_Set_Explicitely (Source_Buffer (Get_Buffer (View))) then
+         if Position_Set_Explicitely
+           (Source_Buffer (Get_Buffer (View)), True)
+         then
             Scroll_To_Cursor_Location (View, Center);
          else
             Scroll_To_Cursor_Location (View, Minimal);
