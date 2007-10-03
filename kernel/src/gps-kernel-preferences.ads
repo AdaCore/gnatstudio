@@ -220,6 +220,8 @@ package GPS.Kernel.Preferences is
    Highlight_Column          : Param_Spec_Int;
    Speed_Column_Policy       : Param_Spec_Enum;
 
+   Submenu_For_Dispatching_Calls : Param_Spec_Boolean;
+
    -- External Commands --
    List_Processes                : Param_Spec_String;
    Html_Browser                  : Param_Spec_String;

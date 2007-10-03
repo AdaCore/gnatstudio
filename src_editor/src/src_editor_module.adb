@@ -2623,43 +2623,64 @@ package body Src_Editor_Module is
          Action => Command,
          Filter => Line_Numbers_Area_Filter);
 
-      Command := new Goto_Declaration_Command;
-      Register_Contextual_Menu
-        (Kernel, "Goto declaration of entity",
-         Action     => Command,
-         Label      => -"Goto declaration of %e",
-         Filter     => Action_Filter
-           ((not Is_Dispatching)
-            and ((not Line_Numbers_Area_Filter
-              and Create (Module => Src_Editor_Module_Name))
-              or Has_Type)));
+      if Get_Pref (Submenu_For_Dispatching_Calls) then
+         Command := new Goto_Declaration_Command;
+         Register_Contextual_Menu
+           (Kernel, "Goto declaration of entity",
+            Action     => Command,
+            Label      => -"Goto declaration of %e",
+            Filter     => Action_Filter
+              ((not Is_Dispatching)
+               and ((not Line_Numbers_Area_Filter
+                 and Create (Module => Src_Editor_Module_Name))
+                 or Has_Type)));
 
-      Submenu := new Goto_Dispatch_Declaration_Submenu;
-      Register_Contextual_Submenu
-        (Kernel, "Goto dispatching declaration of entity",
-         Label      => -"Goto declarations of %e",
-         Submenu    => Submenu,
-         Filter     => Action_Filter
-           (Is_Dispatching
-            and ((not Line_Numbers_Area_Filter
-              and Create (Module => Src_Editor_Module_Name))
-              or Has_Type)));
+         Submenu := new Goto_Dispatch_Declaration_Submenu;
+         Register_Contextual_Submenu
+           (Kernel, "Goto dispatching declaration of entity",
+            Label      => -"Goto declarations of %e",
+            Submenu    => Submenu,
+            Filter     => Action_Filter
+              (Is_Dispatching
+               and ((not Line_Numbers_Area_Filter
+                 and Create (Module => Src_Editor_Module_Name))
+                 or Has_Type)));
 
-      Command := new Goto_Next_Body_Command;
-      Filter  := new Has_Body_Filter;
-      Label   := new Goto_Body_Menu_Label;
-      Register_Contextual_Menu
-        (Kernel, "Goto body of entity",
-         Action     => Command,
-         Label      => Label,
-         Filter     => (not Is_Dispatching) and Filter);
+         Command := new Goto_Next_Body_Command;
+         Filter  := new Has_Body_Filter;
+         Label   := new Goto_Body_Menu_Label;
+         Register_Contextual_Menu
+           (Kernel, "Goto body of entity",
+            Action     => Command,
+            Label      => Label,
+            Filter     => (not Is_Dispatching) and Filter);
 
-      Submenu := new Goto_Dispatch_Body_Submenu;
-      Register_Contextual_Submenu
-        (Kernel, "Goto dispatching bodies of entity",
-         Label      => "Goto bodies of %e",
-         Submenu    => Submenu,
-         Filter     => Is_Dispatching and Filter);
+         Submenu := new Goto_Dispatch_Body_Submenu;
+         Register_Contextual_Submenu
+           (Kernel, "Goto dispatching bodies of entity",
+            Label      => "Goto bodies of %e",
+            Submenu    => Submenu,
+            Filter     => Is_Dispatching and Filter);
+      else
+         Command := new Goto_Declaration_Command;
+         Register_Contextual_Menu
+           (Kernel, "Goto declaration of entity",
+            Action     => Command,
+            Label      => -"Goto declaration of %e",
+            Filter     => Action_Filter
+              ((not Line_Numbers_Area_Filter
+                 and Create (Module => Src_Editor_Module_Name))
+                 or Has_Type));
+
+         Command := new Goto_Next_Body_Command;
+         Filter  := new Has_Body_Filter;
+         Label   := new Goto_Body_Menu_Label;
+         Register_Contextual_Menu
+           (Kernel, "Goto body of entity",
+            Action     => Command,
+            Label      => Label,
+            Filter     => Filter);
+      end if;
 
       Command := new Goto_Type_Command;
       Register_Contextual_Menu

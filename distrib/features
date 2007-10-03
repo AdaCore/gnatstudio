@@ -72,7 +72,8 @@ NF-42-G918-003 Better handling of dispatching calls (2007-09-24)
   Also, the standard cross-reference contextual menus ("Go to declaration"
   and "Go to body") have been enhanced so that when you click on a
   dispatching call, you are given a choice among all known overriding
-  subprograms instead of jumping to the root subprogram.
+  subprograms instead of jumping to the root subprogram. You must
+  activate the preference Editor/Submenu For Dispatching Calls
   These changes require a version of GNAT more recent than 2007-09-21.
 
 NF-42-G827-022 Add customization for activity logs (2007-09-02)

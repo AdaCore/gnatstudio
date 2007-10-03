@@ -360,6 +360,19 @@ package body GPS.Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Toolbar_Show_Text), -"General");
 
+      Submenu_For_Dispatching_Calls := Param_Spec_Boolean
+        (Gnew_Boolean
+           (Name => "Submenu-For-Dispatching",
+            Nick => -"Submenu for dispatching calls",
+            Blurb => -("If enabled, and if you are using a version of GNAT"
+              & " more recent than 2007-09-21, then cross-references on"
+              & " dispatching calls will also list all possible calls,"
+              & " not only the primitive operation of the parent type"),
+            Default => False));
+      Register_Property
+           (Kernel.Preferences,
+            Param_Spec (Submenu_For_Dispatching_Calls), -"Editor");
+
       Auto_Save := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "General-Auto-Save",
          Nick    => -"Auto save",
