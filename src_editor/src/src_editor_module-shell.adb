@@ -43,7 +43,6 @@ with Gtk.Text_Tag_Table;        use Gtk.Text_Tag_Table;
 
 with Pango.Enums;               use Pango.Enums;
 
-with Basic_Types;               use Basic_Types;
 with Casing_Exceptions;         use Casing_Exceptions;
 with Commands;                  use Commands;
 with Find_Utils;                use Find_Utils;
@@ -60,7 +59,6 @@ with Projects;                  use Projects;
 with Src_Contexts;              use Src_Contexts;
 with Src_Editor_Box;            use Src_Editor_Box;
 with Src_Editor_Buffer.Line_Information;
-with Src_Editor_Buffer;         use Src_Editor_Buffer;
 use Src_Editor_Buffer.Line_Information;
 with Src_Editor_Buffer.Text_Handling;
 use Src_Editor_Buffer.Text_Handling;
@@ -1267,7 +1265,8 @@ package body Src_Editor_Module.Shell is
             Before : constant Integer := Nth_Arg (Data, 5, Default => -1);
             After  : constant Integer := Nth_Arg (Data, 6, Default => -1);
             Editor : constant Source_Editor_Box := Open_File
-              (Kernel, Create (File, Kernel), Create_New => False);
+              (Kernel, Create (File, Kernel), Create_New => False,
+               Line => 0, Column => 0, Column_End => 0);
 
             Real_Col : Character_Offset_Type;
          begin
@@ -1499,7 +1498,7 @@ package body Src_Editor_Module.Shell is
 
                Set_Cursor_Position
                  (Get_Buffer (Source_Editor_Box (Get_Widget (Child))),
-                  Line, Real_Col);
+                  Line, Real_Col, Internal => False);
             end if;
          end;
 
@@ -1897,7 +1896,8 @@ package body Src_Editor_Module.Shell is
 
          if Child = null then
             if Nth_Arg (Data, 3, Default => True) then
-               Box := Open_File (Get_Kernel (Data), File);
+               Box := Open_File (Get_Kernel (Data), File,
+                                 Line => 0, Column => 0, Column_End => 0);
             else
                Set_Return_Value (Data, No_Class_Instance);
                return;
@@ -2040,13 +2040,21 @@ package body Src_Editor_Module.Shell is
       elsif Command = "characters_count" then
          Get_Buffer (Buffer, Data, 1);
          if Buffer /= null then
+            --  ??? This is incompatible with blank/folded lines.
             Set_Return_Value (Data, Integer (Get_Char_Count (Buffer)));
          end if;
 
       elsif Command = "lines_count" then
          Get_Buffer (Buffer, Data, 1);
          if Buffer /= null then
-            Set_Return_Value (Data, Integer (Get_Line_Count (Buffer)));
+            Get_End_Iter (Buffer, Iter);
+            declare
+               Line   : Editable_Line_Type;
+               Column : Visible_Column_Type;
+            begin
+               Get_Iter_Position (Buffer, Iter, Line, Column);
+               Set_Return_Value (Data, Integer (Line));
+            end;
          end if;
 
       elsif Command = "select" then
@@ -2712,8 +2720,11 @@ package body Src_Editor_Module.Shell is
       elsif Command = "block_unfold" then
          Get_Location (Iter, Data, 1, Iter, Success);
          if Success then
-            Unfold_Line (Source_Buffer (Get_Buffer (Iter)),
-                         Editable_Line_Type (Get_Line (Iter)));
+            Buffer := Source_Buffer (Get_Buffer (Iter));
+            Unfold_Line
+              (Buffer,
+               Get_Editable_Line (Buffer,
+                 Buffer_Line_Type (Get_Line (Iter) + 1)));
          else
             Set_Error_Msg (Data, -"Invalid location");
          end if;
@@ -2782,9 +2793,11 @@ package body Src_Editor_Module.Shell is
          Get_Location (Iter, Data, 1, Iter, Success);
 
          if Success then
+            Buffer := Source_Buffer (Get_Buffer (Iter));
             Block := Get_Subprogram_Block
-              (Source_Buffer (Get_Buffer (Iter)),
-               Editable_Line_Type (Get_Line (Iter) + 1));
+              (Buffer,
+               Get_Editable_Line (Buffer,
+                 Buffer_Line_Type (Get_Line (Iter) + 1)));
             if Block.Name = null then
                Set_Return_Value (Data, "");
             else
