@@ -17,12 +17,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Basic_Types;        use Basic_Types;
 with GNAT.Scripts;       use GNAT.Scripts;
 with GPS.Intl;           use GPS.Intl;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 with Src_Editor_Box;     use Src_Editor_Box;
-with Src_Editor_Buffer;  use Src_Editor_Buffer;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 
