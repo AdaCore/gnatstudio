@@ -1616,7 +1616,8 @@ package body Src_Contexts is
                  (Get_Buffer (Editor),
                   Context.End_Line,
                   Context.End_Column,
-                  With_Margin);
+                  With_Margin,
+                  Internal => True);
 
                Save_Cursor_Position (Get_View (Editor));
             end if;
