@@ -372,6 +372,8 @@ package body Ada_Semantic_Tree.Units is
 
          Info            : Unit_Access;
          Already_Found   : Boolean := False;
+         Last_End_Entity : Entity_Persistent_Access :=
+           Null_Entity_Persistent_Access;
       begin
          declare
             Unit_It : Persistent_Entity_List.Cursor := First
@@ -477,7 +479,7 @@ package body Ada_Semantic_Tree.Units is
                     To_Entity_Persistent_Access
                       (To_Entity_Access (File, First (Tree)));
                else
-                  Info.Start_Entity := Info.End_Entity;
+                  Info.Start_Entity := Last_End_Entity;
                end if;
 
                Ref (Info.Start_Entity);
@@ -487,6 +489,8 @@ package body Ada_Semantic_Tree.Units is
                     (File, Next (Tree, It, Jump_Over)));
 
                Ref (Info.End_Entity);
+
+               Last_End_Entity := Info.End_Entity;
 
                Already_Found := True;
             end if;
@@ -811,7 +815,7 @@ package body Ada_Semantic_Tree.Units is
               and then
                 (End_Unit_It = Null_Construct_Tree_Iterator
                  or else Offset <
-                   Get_Construct (Start_Unit_It).Sloc_Start.Index)
+                   Get_Construct (End_Unit_It).Sloc_Start.Index)
             then
                return Unit_Info;
             end if;
