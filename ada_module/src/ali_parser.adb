@@ -852,7 +852,9 @@ package body ALI_Parser is
          else
             Primitive := Find_Entity_In_ALI
               (Handler,
-               LI, Sfiles, Current_Sfile, Xref.Table (Current_Ref).Line,
+               LI, Sfiles,
+               Xref.Table (Current_Ref).File_Num,
+               Xref.Table (Current_Ref).Line,
                Xref.Table (Current_Ref).Col, First_Sect, Last_Sect);
          end if;
 
@@ -861,12 +863,23 @@ package body ALI_Parser is
          end if;
 
       elsif Xref.Table (Current_Ref).Rtype = Interface_Reference then
-         Set_Type_Of
-           (Entity,
-            Find_Entity_In_ALI
-              (Handler,
-               LI, Sfiles, Current_Sfile, Xref.Table (Current_Ref).Line,
-               Xref.Table (Current_Ref).Col, First_Sect, Last_Sect));
+         Primitive := Find_Entity_In_ALI
+           (Handler,
+            LI, Sfiles,
+            Xref.Table (Current_Ref).File_Num,
+            Xref.Table (Current_Ref).Line,
+            Xref.Table (Current_Ref).Col, First_Sect, Last_Sect);
+
+         if Primitive = null then
+            Trace (Assert_Me, "Couldn't find interface in ALI file: "
+                   & Full_Name (Get_LI_Filename (LI)).all
+                   & Xref.Table (Current_Ref).File_Num'Img & " "
+                   & Xref.Table (Current_Ref).Line'Img
+                   & Xref.Table (Current_Ref).Col'Img);
+
+         else
+            Set_Type_Of (Entity, Primitive);
+         end if;
 
       --  This is processed in the context of the previous reference already
       elsif Kind /= Instantiation_Reference then
