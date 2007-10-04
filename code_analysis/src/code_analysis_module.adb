@@ -1762,15 +1762,8 @@ package body Code_Analysis_Module is
    is
       pragma Unreferenced (Widget);
    begin
-      if Message_Dialog
-        ((-"Clear ")
-         & Cont_N_Anal.Analysis.Name.all & (-"?"),
-         Confirmation, Button_Yes or Button_No, Justification => Justify_Left,
-         Title => -"Clear " & Cont_N_Anal.Analysis.Name.all & (-"?")) = 1
-      then
-         Clear_Analysis_Instance
-           (Get_Kernel (Cont_N_Anal.Context), Cont_N_Anal.Analysis);
-      end if;
+      Clear_Analysis_Instance
+        (Get_Kernel (Cont_N_Anal.Context), Cont_N_Anal.Analysis);
    exception
       when E : others => Trace (Exception_Handle, E);
    end Clear_Analysis_From_Menu;
