@@ -109,17 +109,27 @@ package body Switches_Chooser is
       Separator : Character)
    is
    begin
-      pragma Assert (Switch (Switch'First) = Config.Switch_Char);
+      --  If the switch has an argument, it must start with Switch_Char.
+      --  Otherwise, Getopt (called in Set_Command_Line) will not recognize it
+      --  and cannot properly associate its parameter with it.
+      --  If this proves to be too much of an issue, and when the switch does
+      --  not start with Switch_Char, we mark it as having no parameter, which
+      --  is not ideal but should work.
+      --  The most common case of having two or more switch_char is for
+      --  enabling and disabling options as in "+opt -opt", so these are
+      --  check buttons, with no parameter anyway
 
-      if Separator = ASCII.NUL then
+      if Separator /= ASCII.LF
+        or else Switch (Switch'First) /= Config.Switch_Char
+      then
+         Append (Config.Getopt_Switches,
+                 " " & Switch (Switch'First + 1 .. Switch'Last));
+      elsif Separator = ASCII.NUL then
          Append (Config.Getopt_Switches,
                  " " & Switch (Switch'First + 1 .. Switch'Last) & "!");
       elsif Separator = '=' then
          Append (Config.Getopt_Switches,
                  " " & Switch (Switch'First + 1 .. Switch'Last) & "=");
-      elsif Separator = ASCII.LF then
-         Append (Config.Getopt_Switches,
-                 " " & Switch (Switch'First + 1 .. Switch'Last));
       elsif Separator = ASCII.CR then
          Append (Config.Getopt_Switches,
                  " " & Switch (Switch'First + 1 .. Switch'Last) & "?");
