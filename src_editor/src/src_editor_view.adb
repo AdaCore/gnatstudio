@@ -2047,6 +2047,10 @@ package body Src_Editor_View is
          return True;
       end if;
 
+      --  As soon as a key is pressed on an editor, reset the flag
+      --  position_set_explicitely, so that scrolling does not occur.
+      Result := Position_Set_Explicitely (Buffer, True);
+
       if not Get_Editable (View) then
          return False;
       end if;
