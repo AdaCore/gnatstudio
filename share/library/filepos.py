@@ -24,12 +24,17 @@ def on_file_closed (hook, file):
 
 def on_file_edited (hook, file):
    try:
-      line   = file.get_property ("lastloc_line")
-      column = file.get_property ("lastloc_column")
-      Logger ("FileLoc").log ("Restoring last location " + line + " " + column)
       buffer = EditorBuffer.get (file)
-      buffer.current_view().goto \
-        (EditorLocation (buffer, int (line), int (column)))
+      cursor = buffer.cursor()
+
+      # Do not change the line if the editor was already scrolled for
+      # any reason
+      if cursor.line() == 1 and cursor.column() == 1:
+         line   = file.get_property ("lastloc_line")
+         column = file.get_property ("lastloc_column")
+         Logger ("FileLoc").log ("Restoring last location " + line + " " + column)
+         buffer.current_view().goto \
+            (EditorLocation (buffer, int (line), int (column)))
    except:
       pass
 
