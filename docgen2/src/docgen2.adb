@@ -35,7 +35,9 @@ with Entities;                  use Entities;
 with Entities.Queries;          use Entities.Queries;
 with File_Utils;
 with Find_Utils;
+with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
@@ -1348,11 +1350,9 @@ package body Docgen2 is
          --  Is the entity a partial declaration ?
          Body_Location := No_File_Location;
 
-         if not Is_Container (Get_Kind (Entity).Kind) then
-            Find_Next_Body
-              (Entity   => Entity,
-               Location => Body_Location);
-         end if;
+         Find_Next_Body
+           (Entity   => Entity,
+            Location => Body_Location);
 
          if Body_Location /= No_File_Location
            and then Body_Location /= E_Info.Location.File_Loc
@@ -1711,204 +1711,229 @@ package body Docgen2 is
          Free (Command.Analysis_Ctxt.Tree);
          Free (Command.Analysis_Ctxt.File_Buffer);
 
-         File := Get_Or_Create
-           (Database,
-            Command.Source_Files (Command.File_Index));
-
          --  Only analyze specs
          if Is_Spec_File (Command.Kernel,
                           Command.Source_Files (Command.File_Index))
-           and then (not Command.Options.Process_Up_To_Date_Only
-                       or else Is_Up_To_Date (File))
          then
-            --  Create the new entity info structure
-            File_EInfo := new Entity_Info_Record
-              (Category => Cat_File);
-            File_EInfo.Name := new String'
-              (Base_Name (Command.Source_Files (Command.File_Index)));
-            File_EInfo.Short_Name := File_EInfo.Name;
+            File := Get_Or_Create
+              (Database,
+               Command.Source_Files (Command.File_Index));
 
-            Trace (Me, "Analysis of file " & File_EInfo.Name.all);
+            if not Command.Options.Process_Up_To_Date_Only
+              or else Is_Up_To_Date (File)
+            then
+               --  Create the new entity info structure
+               File_EInfo := new Entity_Info_Record
+                 (Category => Cat_File);
+               File_EInfo.Name := new String'
+                 (Base_Name (Command.Source_Files (Command.File_Index)));
+               File_EInfo.Short_Name := File_EInfo.Name;
 
-            --  And add it to the global documentation list
-            Command.Documentation.Append (File_EInfo);
+               Trace (Me, "Analysis of file " & File_EInfo.Name.all);
 
-            declare
-               Lang_Handler  : constant Language_Handler :=
-                                 Get_Language_Handler (Command.Kernel);
-               Language      : constant Language_Access :=
-                                 Get_Language_From_File
-                                   (Lang_Handler,
-                                    Command.Source_Files (Command.File_Index));
-               Construct_T   : Construct_Tree;
-               Constructs    : aliased Construct_List;
-               Ctxt_Elem     : Context_Stack_Element;
+               --  And add it to the global documentation list
+               Command.Documentation.Append (File_EInfo);
 
-            begin
-               File_EInfo.Language := Language;
-               File_EInfo.File := File;
-               Ref (File_EInfo.File);
-               File_Buffer := Read_File
-                 (Command.Source_Files (Command.File_Index));
+               declare
+                  Lang_Handler  : constant Language_Handler :=
+                                    Get_Language_Handler (Command.Kernel);
+                  Language      : constant Language_Access :=
+                                    Get_Language_From_File
+                                      (Lang_Handler,
+                                       Command.Source_Files
+                                         (Command.File_Index));
+                  Construct_T   : Construct_Tree;
+                  Constructs    : aliased Construct_List;
+                  Ctxt_Elem     : Context_Stack_Element;
 
-               --  In case of C/C++, the LI_Handler's Parse_File_Construct
-               --  work much better than Language's Parse_Construct.
-               if Language.all in Cpp.Cpp_Language'Class
-                 or else Language.all in C.C_Language'Class
-               then
-                  declare
-                     Handler : LI_Handler;
-                  begin
-                     Handler := Get_LI_Handler_From_File
-                       (Lang_Handler,
-                        Command.Source_Files (Command.File_Index));
+               begin
+                  File_EInfo.Language := Language;
+                  File_EInfo.File := File;
+                  Ref (File_EInfo.File);
+                  File_Buffer := Read_File
+                    (Command.Source_Files (Command.File_Index));
 
-                     if Handler /= null then
-                        Parse_File_Constructs
-                          (Handler,
-                           Lang_Handler,
-                           Command.Source_Files (Command.File_Index),
-                           Constructs);
-                     else
-                        Parse_Constructs
-                          (Language, File_Buffer.all, Constructs);
-                     end if;
-                  end;
-               else
+                  --  In case of C/C++, the LI_Handler's Parse_File_Construct
+                  --  work much better than Language's Parse_Construct.
+                  if Language.all in Cpp.Cpp_Language'Class
+                    or else Language.all in C.C_Language'Class
+                  then
+                     declare
+                        Handler : LI_Handler;
+                     begin
+                        Handler := Get_LI_Handler_From_File
+                          (Lang_Handler,
+                           Command.Source_Files (Command.File_Index));
 
-                  Parse_Constructs
-                    (Language, File_Buffer.all, Constructs);
-               end if;
+                        if Handler /= null then
+                           Parse_File_Constructs
+                             (Handler,
+                              Lang_Handler,
+                              Command.Source_Files (Command.File_Index),
+                              Constructs);
+                        else
+                           Parse_Constructs
+                             (Language, File_Buffer.all, Constructs);
+                        end if;
+                     end;
+                  else
 
-               Construct_T := To_Construct_Tree (Constructs'Access, True);
+                     Parse_Constructs
+                       (Language, File_Buffer.all, Constructs);
+                  end if;
 
-               --  Retrieve the file's main unit comments, if any
+                  Construct_T := To_Construct_Tree (Constructs'Access, True);
 
-               --  If the main unit is documented, then there are
-               --  great chances that the comment is at the beginning
-               --  of the file. Let's look for it
+                  --  Retrieve the file's main unit comments, if any
 
-               --  Try to retrieve the documentation before the first
-               --  construct.
+                  --  If the main unit is documented, then there are
+                  --  great chances that the comment is at the beginning
+                  --  of the file. Let's look for it
 
-               Comment_End :=
-                 Get_Construct (First (Construct_T)).Sloc_Start.Index - 1;
+                  --  Try to retrieve the documentation before the first
+                  --  construct.
 
-               --  Now skip all blanks before this first construct
-               while Comment_End > File_Buffer'First loop
-                  Skip_Blanks (File_Buffer.all,
-                               Comment_End,
-                               -1);
-                  exit when File_Buffer (Comment_End) /= ASCII.LF;
-                  Comment_End := Comment_End - 1;
-               end loop;
+                  Comment_End :=
+                    Get_Construct (First (Construct_T)).Sloc_Start.Index - 1;
 
-               --  Now try to get a documentation before where we are
-               Get_Documentation_Before
-                 (Get_Language_Context (Language).all,
-                  File_Buffer.all,
-                  Comment_End + 1,
-                  Comment_Start,
-                  Comment_End);
+                  --  Now skip all blanks before this first construct
+                  while Comment_End > File_Buffer'First loop
+                     Skip_Blanks (File_Buffer.all,
+                                  Comment_End,
+                                  -1);
+                     exit when File_Buffer (Comment_End) /= ASCII.LF;
+                     Comment_End := Comment_End - 1;
+                  end loop;
 
-               --  Now that we have a comment block, we need to
-               --  extract it without the comment markups
-               if Comment_Start /= 0 then
-                  declare
-                     Block : constant String :=
-                               Filter_Documentation
-                                 (Comment_Block
-                                    (Language,
-                                     File_Buffer
-                                       (Comment_Start .. Comment_End),
-                                     Comment => False,
-                                     Clean   => True),
-                                  Command.Options);
-                  begin
-                     if Block /= "" then
-                        --  Add this description to the unit node
-                        File_EInfo.Description := new String'(Block);
-                     end if;
-                  end;
-               end if;
+                  --  Now try to get a documentation before where we are
+                  Get_Documentation_Before
+                    (Get_Language_Context (Language).all,
+                     File_Buffer.all,
+                     Comment_End + 1,
+                     Comment_Start,
+                     Comment_End);
 
-               --  We now create the command's analysis_ctxt structure
-               Command.Analysis_Ctxt.Iter        := First (Construct_T);
-               Command.Analysis_Ctxt.Tree        := Construct_T;
-               Command.Analysis_Ctxt.File_Buffer := File_Buffer;
-               Command.Analysis_Ctxt.Language    := Lang_Handler;
-               Command.Analysis_Ctxt.File        := File_EInfo.File;
-               Command.Analysis_Ctxt.Pkg_Nb      := 0;
+                  --  Now that we have a comment block, we need to
+                  --  extract it without the comment markups
+                  if Comment_Start /= 0 then
+                     declare
+                        Block : constant String :=
+                                  Filter_Documentation
+                                    (Comment_Block
+                                       (Language,
+                                        File_Buffer
+                                          (Comment_Start .. Comment_End),
+                                        Comment => False,
+                                        Clean   => True),
+                                     Command.Options);
+                     begin
+                        if Block /= "" then
+                           --  Add this description to the unit node
+                           File_EInfo.Description := new String'(Block);
+                        end if;
+                     end;
+                  end if;
 
-               Ctxt_Elem := (Parent_Entity => File_EInfo,
-                             Pkg_Entity    => null,
-                             Parent_Iter   => Null_Construct_Tree_Iterator);
-               Push (Command.Analysis_Ctxt, Ctxt_Elem);
-               --  Push it twice, so that one remains when the file analysis
-               --  is (finished
-               Push (Command.Analysis_Ctxt, Ctxt_Elem);
-            end;
+                  --  We now create the command's analysis_ctxt structure
+                  Command.Analysis_Ctxt.Iter        := First (Construct_T);
+                  Command.Analysis_Ctxt.Tree        := Construct_T;
+                  Command.Analysis_Ctxt.File_Buffer := File_Buffer;
+                  Command.Analysis_Ctxt.Language    := Lang_Handler;
+                  Command.Analysis_Ctxt.File        := File_EInfo.File;
+                  Command.Analysis_Ctxt.Pkg_Nb      := 0;
+
+                  Ctxt_Elem := (Parent_Entity => File_EInfo,
+                                Pkg_Entity    => null,
+                                Parent_Iter   => Null_Construct_Tree_Iterator);
+                  Push (Command.Analysis_Ctxt, Ctxt_Elem);
+                  --  Push it twice, so that one remains when the file analysis
+                  --  is (finished
+                  Push (Command.Analysis_Ctxt, Ctxt_Elem);
+               end;
+            else
+               Insert
+                 (Command.Kernel,
+                  -("Documentation generation warning: " &
+                    "The cross references for file ") &
+                  VFS.Base_Name (Command.Source_Files (Command.File_Index))
+                  & (-" are not up-to-date. Documentation is not generated."),
+                  Mode => Error);
+            end if;
          end if;
 
       elsif Command.Src_File_Index < Command.Source_Files'Last then
          --  Generate annotated source files
 
          Command.Src_File_Index := Command.Src_File_Index + 1;
-         File := Get_Or_Create
-           (Database,
-            Command.Source_Files (Command.File_Index));
 
-         if (Is_Spec_File (Command.Kernel,
-                           Command.Source_Files (Command.Src_File_Index))
-             or else Command.Options.Process_Body_Files)
-           and then
-             (not Command.Options.Process_Up_To_Date_Only
-              or else Is_Up_To_Date (File))
+         if Is_Spec_File
+             (Command.Kernel,
+              Command.Source_Files (Command.Src_File_Index))
+           or else Command.Options.Process_Body_Files
          then
-            if Command.Annotated_Files = null then
-               Command.Annotated_Files :=
-                 new File_Array (1 .. Command.Source_Files'Length);
-               Command.Src_A_Files_Idx := 0;
+            File := Get_Or_Create
+              (Database,
+               Command.Source_Files (Command.Src_File_Index));
+
+            if not Command.Options.Process_Up_To_Date_Only
+              or else Is_Up_To_Date (File)
+            then
+               if Command.Annotated_Files = null then
+                  Command.Annotated_Files :=
+                    new File_Array (1 .. Command.Source_Files'Length);
+                  Command.Src_A_Files_Idx := 0;
+               end if;
+
+               --  Add file in the list of annotated source files
+               Command.Src_A_Files_Idx := Command.Src_A_Files_Idx + 1;
+               Command.Annotated_Files (Command.Src_A_Files_Idx) :=
+                 Command.Source_Files (Command.Src_File_Index);
+
+               Command.Src_Files.Append
+                 (Command.Source_Files (Command.Src_File_Index));
+
+               if Active (Me) then
+                  Trace
+                    (Me, "Generate annotated source for " &
+                     Base_Name
+                       (Command.Source_Files (Command.Src_File_Index)));
+               end if;
+
+               Command.Buffer :=
+                 VFS.Read_File (Command.Source_Files (Command.Src_File_Index));
+
+               declare
+                  Lang_Handler  : constant Language_Handler :=
+                                    Get_Language_Handler (Command.Kernel);
+                  Language      : constant Language_Access :=
+                                    Get_Language_From_File
+                                      (Lang_Handler,
+                                       Command.Source_Files
+                                         (Command.Src_File_Index));
+               begin
+                  Generate_Annotated_Source
+                    (Kernel  => Command.Kernel,
+                     Backend => Command.Backend,
+                     File    => Get_Or_Create
+                       (Database,
+                        Command.Source_Files (Command.Src_File_Index)),
+                     Buffer  => Command.Buffer,
+                     Lang    => Language,
+                     Db      => Database,
+                     Xrefs   => Command.EInfo_Map);
+               end;
+
+               Free (Command.Buffer);
+
+            else
+               Insert
+                 (Command.Kernel,
+                  -("Documentation generation warning: " &
+                    "The cross references for file ") &
+                  VFS.Base_Name (Command.Source_Files (Command.Src_File_Index))
+                  & (-" are not up-to-date. Annotated file is not generated"),
+                  Mode => Error);
             end if;
-
-            --  Add file in the list of annotated source files
-            Command.Src_A_Files_Idx := Command.Src_A_Files_Idx + 1;
-            Command.Annotated_Files (Command.Src_A_Files_Idx) :=
-              Command.Source_Files (Command.Src_File_Index);
-
-            Command.Src_Files.Append
-              (Command.Source_Files (Command.Src_File_Index));
-
-            if Active (Me) then
-               Trace
-                 (Me, "Generate annotated source for " &
-                  Base_Name (Command.Source_Files (Command.Src_File_Index)));
-            end if;
-
-            Command.Buffer :=
-              VFS.Read_File (Command.Source_Files (Command.Src_File_Index));
-
-            declare
-               Lang_Handler  : constant Language_Handler :=
-                                 Get_Language_Handler (Command.Kernel);
-               Language      : constant Language_Access :=
-                                 Get_Language_From_File
-                                   (Lang_Handler,
-                                    Command.Source_Files
-                                      (Command.Src_File_Index));
-            begin
-               Generate_Annotated_Source
-                 (Kernel  => Command.Kernel,
-                  Backend => Command.Backend,
-                  File    => Get_Or_Create
-                    (Database, Command.Source_Files (Command.Src_File_Index)),
-                  Buffer  => Command.Buffer,
-                  Lang    => Language,
-                  Db      => Database,
-                  Xrefs   => Command.EInfo_Map);
-            end;
-
-            Free (Command.Buffer);
          end if;
 
       elsif not Command.Doc_Gen then
@@ -1923,7 +1948,10 @@ package body Docgen2 is
          Generate_Xrefs (Command.Xref_List, Command.EInfo_Map);
 
          Command.Doc_Gen := True;
-         Command.Cursor := Command.Documentation.First;
+
+         if not Command.Documentation.Is_Empty then
+            Command.Cursor := Command.Documentation.First;
+         end if;
 
       elsif Entity_Info_List.Has_Element (Command.Cursor) then
          --  Documentation generation has already started.
@@ -1934,6 +1962,7 @@ package body Docgen2 is
                         Entity_Info_List.Element (Command.Cursor);
          begin
             Trace (Me, "Generate doc for " & EInfo.Name.all);
+
             Generate_Doc
               (Kernel    => Command.Kernel,
                Backend   => Command.Backend,
@@ -1943,7 +1972,7 @@ package body Docgen2 is
                File      => EInfo.File,
                Files     => Command.Files,
                Prj_Files => Command.Annotated_Files
-                              (1 .. Command.Src_A_Files_Idx),
+                 (1 .. Command.Src_A_Files_Idx),
                E_Info    => EInfo);
             Entity_Info_List.Next (Command.Cursor);
          end;
