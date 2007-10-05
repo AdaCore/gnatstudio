@@ -619,6 +619,11 @@ package body Code_Analysis_Module is
       Cont_N_Anal : Context_And_Analysis);
    --  Remove the selected project node from the related report and instance
 
+   function Find_Gcov_File
+     (Kernel  : Kernel_Handle;
+      Source  : VFS.Virtual_File) return VFS.Virtual_File;
+   --  Return the gcov file associated with Source.
+
    --------------------------------------------
    -- CodeAnalysis_Default_Shell_Constructor --
    --------------------------------------------
@@ -903,6 +908,47 @@ package body Code_Analysis_Module is
       when E : others => Trace (Exception_Handle, E);
    end Add_Gcov_File_Info_From_Shell;
 
+   --------------------
+   -- Find_Gcov_File --
+   --------------------
+
+   function Find_Gcov_File
+     (Kernel  : Kernel_Handle;
+      Source  : VFS.Virtual_File) return VFS.Virtual_File
+   is
+      Gcov_Root : String_Access;
+      Result    : VFS.Virtual_File;
+   begin
+      Gcov_Root := Getenv ("GCOV_ROOT");
+
+      if Gcov_Root /= null
+        and then Gcov_Root.all = ""
+      then
+         --  If GCOV_ROOT is set but empty, look for files in the object
+         --  directory of the root project.
+         Free (Gcov_Root);
+      end if;
+
+      if Gcov_Root = null then
+         --  Look for the gcov file in the object directory of the root
+         --  project.
+         return Create
+           (Object_Path
+              (Get_Root_Project (Get_Registry (Kernel).all),
+               False, False)
+            & Directory_Separator & Base_Name (Source) & Gcov_Extension_Cst);
+
+      else
+         --  Look for the gcov file in the path pointed by GCOV_ROOT.
+
+         Result := Create
+           (Gcov_Root.all & Directory_Separator &
+            Base_Name (Source) & Gcov_Extension_Cst);
+         Free (Gcov_Root);
+         return Result;
+      end if;
+   end Find_Gcov_File;
+
    ------------------------------------
    -- Add_Gcov_File_Info_In_Callback --
    ------------------------------------
@@ -918,15 +964,12 @@ package body Code_Analysis_Module is
       Cov_File : VFS.Virtual_File;
    begin
       Prj_Node := Get_Or_Create (Cont_N_Anal.Analysis.Projects, Prj_Name);
-      Cov_File := Create (Object_Path (Prj_Name, False, False) &
-                              "/" & Base_Name (Src_File) & Gcov_Extension_Cst);
+      Cov_File := Find_Gcov_File (Get_Kernel (Cont_N_Anal.Context), Src_File);
 
       if not Is_Regular_File (Cov_File) then
          GPS.Kernel.Console.Insert
            (Get_Kernel (Cont_N_Anal.Context),
-            -"There is no loadable GCOV information" &
-            (-" associated with " & Base_Name (Src_File)),
-            Mode => GPS.Kernel.Console.Error);
+            -"Could not find coverage file " & Full_Name (Cov_File).all);
 
          declare
             File_Node : constant Code_Analysis.File_Access
@@ -1113,16 +1156,14 @@ package body Code_Analysis_Module is
 
       for J in Src_Files'First .. Src_Files'Last loop
          Src_File := Src_Files (J);
-         Cov_File := Create (Object_Path (Prj_Node.Name, False, False) &
-                             "/" & Base_Name (Src_File) & Gcov_Extension_Cst);
+         Cov_File := Find_Gcov_File (Kernel, Src_File);
 
          if Is_Regular_File (Cov_File) then
             Add_Gcov_File_Info (Kernel, Src_File, Cov_File, Prj_Node);
          else
             GPS.Kernel.Console.Insert
-              (Kernel, -"There is no loadable GCOV information" &
-               (-" associated with " & Base_Name (Src_File)),
-               Mode => GPS.Kernel.Console.Error);
+              (Kernel,
+               -"Could not find coverage file " & Full_Name (Cov_File).all);
 
             declare
                File_Node : constant Code_Analysis.File_Access
@@ -1304,8 +1345,7 @@ package body Code_Analysis_Module is
            No_Project then
             GPS.Kernel.Console.Insert
               (Get_Kernel (Cont_N_Anal.Context),
-               -"Abort all project uncovered lines listing due to lack of " &
-               (-"coverage information"), Mode => GPS.Kernel.Console.Error);
+               -"No coverage information available");
             return;
          end if;
       end if;
@@ -1948,9 +1988,8 @@ package body Code_Analysis_Module is
          if not Have_Gcov_Info (Cont_N_Anal) then
             GPS.Kernel.Console.Insert
               (Get_Kernel (Cont_N_Anal.Context),
-               -"Abort " & Project_Name (Prj_Node.Name)
-               & (-" uncovered line listing due to lack of gcov information"),
-               Mode => GPS.Kernel.Console.Error);
+               -"No coverage information to display for "
+               & Project_Name (Prj_Node.Name));
             return;
          end if;
       end if;
@@ -2005,9 +2044,8 @@ package body Code_Analysis_Module is
          if not Have_Gcov_Info (Cont_N_Anal) then
             GPS.Kernel.Console.Insert
               (Get_Kernel (Cont_N_Anal.Context),
-               -"Abort " & Base_Name (File_Node.Name)
-               & (-" uncovered line listing due to lack of gcov information"),
-               Mode => GPS.Kernel.Console.Error);
+               -"No coverage information to display for "
+               & Base_Name (File_Node.Name));
             return;
          end if;
       end if;
@@ -2165,7 +2203,7 @@ package body Code_Analysis_Module is
          GPS.Kernel.Console.Insert
            (Kernel, -"There is no Gcov information associated with " &
             Base_Name (File_Node.Name),
-            Mode => GPS.Kernel.Console.Error);
+            Mode => GPS.Kernel.Console.Info);
       end if;
    end List_File_Uncovered_Lines;
 
@@ -2205,10 +2243,8 @@ package body Code_Analysis_Module is
          if not Have_Gcov_Info (Cont_N_Anal) then
             GPS.Kernel.Console.Insert
               (Get_Kernel (Cont_N_Anal.Context),
-               -"Abort " & Subp_Node.Name.all
-               & (-" uncovered line listing due to lack of "
-                 & (-"coverage information")),
-               Mode => GPS.Kernel.Console.Error);
+               -"No coverage information to display for "
+               & Subp_Node.Name.all);
             return;
          end if;
       end if;
@@ -2572,36 +2608,41 @@ package body Code_Analysis_Module is
 
    procedure Append_To_Contextual_Submenu
      (Cont_N_Anal : Context_And_Analysis;
-      Submenu     : access Gtk_Menu_Record'Class) is
+      Submenu     : access Gtk_Menu_Record'Class)
+   is
+      Item : Gtk_Menu_Item;
    begin
-      if Get_Creator (Cont_N_Anal.Context) /=
-        Abstract_Module_ID (Code_Analysis_Module_ID) then
-         Append_Show_Analysis_Report_To_Menu
-           (Cont_N_Anal, Submenu, -"Show report");
-      end if;
-
       if Has_File_Information (Cont_N_Anal.Context) then
-            if Has_Entity_Name_Information (Cont_N_Anal.Context) then
-               declare
-                  Entity : constant Entities.Entity_Information :=
+         if Has_Entity_Name_Information (Cont_N_Anal.Context) then
+            declare
+               Entity : constant Entities.Entity_Information :=
                           Get_Entity (Cont_N_Anal.Context);
-               begin
-                  if (Entity /= null
-                      and then Is_Subprogram (Entity))
-                    or else  Get_Creator (Cont_N_Anal.Context) =
-                    Abstract_Module_ID (Code_Analysis_Module_ID)
-                  then
-                     --  So we have a subprogram information
-                     Append_Subprogram_Menu_Entries (Cont_N_Anal, Submenu);
-                  else
-                     Append_File_Menu_Entries (Cont_N_Anal, Submenu);
-                  end if;
-               end;
-            else
-               Append_File_Menu_Entries (Cont_N_Anal, Submenu);
-            end if;
+            begin
+               if (Entity /= null
+                    and then Is_Subprogram (Entity))
+                 or else  Get_Creator (Cont_N_Anal.Context) =
+                 Abstract_Module_ID (Code_Analysis_Module_ID)
+               then
+                  --  So we have a subprogram information
+                  Append_Subprogram_Menu_Entries (Cont_N_Anal, Submenu);
+               else
+                  Append_File_Menu_Entries (Cont_N_Anal, Submenu);
+               end if;
+            end;
+         else
+            Append_File_Menu_Entries (Cont_N_Anal, Submenu);
+         end if;
       else
          Append_Project_Menu_Entries (Cont_N_Anal, Submenu);
+      end if;
+
+      if Get_Creator (Cont_N_Anal.Context) /=
+        Abstract_Module_ID (Code_Analysis_Module_ID)
+      then
+         Gtk_New (Item);
+         Append (Submenu, Item);
+         Append_Show_Analysis_Report_To_Menu
+           (Cont_N_Anal, Submenu, -"Show Coverage Report");
       end if;
    end Append_To_Contextual_Submenu;
 
@@ -2615,13 +2656,6 @@ package body Code_Analysis_Module is
    is
       Item : Gtk_Menu_Item;
    begin
-      Gtk_New (Item, -"Load data for " &
-               Locale_Base_Name (File_Information (Cont_N_Anal.Context)));
-      Append (Submenu, Item);
-      Context_And_Analysis_CB.Connect
-        (Item, Gtk.Menu_Item.Signal_Activate,
-         Context_And_Analysis_CB.To_Marshaller
-           (Add_Gcov_File_Info_From_Menu'Access), Cont_N_Anal);
       Gtk_New (Item, -"Show coverage information");
       Append (Submenu, Item);
       Context_And_Analysis_CB.Connect
@@ -2629,6 +2663,7 @@ package body Code_Analysis_Module is
          Context_And_Analysis_CB.To_Marshaller
            (Show_Subprogram_Coverage_Information_From_Menu'Access),
          Context_And_Analysis'(Cont_N_Anal.Context, Cont_N_Anal.Analysis));
+
       Gtk_New (Item, -"Hide coverage information");
       Append (Submenu, Item);
       Context_And_Analysis_CB.Connect
@@ -2636,6 +2671,18 @@ package body Code_Analysis_Module is
          Context_And_Analysis_CB.To_Marshaller
            (Hide_Subprogram_Coverage_Information_From_Menu'Access),
          Context_And_Analysis'(Cont_N_Anal.Context, Cont_N_Anal.Analysis));
+
+      Gtk_New (Item);
+      Append (Submenu, Item);
+
+      Gtk_New (Item, -"Load data for " &
+               Locale_Base_Name (File_Information (Cont_N_Anal.Context)));
+      Append (Submenu, Item);
+      Context_And_Analysis_CB.Connect
+        (Item, Gtk.Menu_Item.Signal_Activate,
+         Context_And_Analysis_CB.To_Marshaller
+           (Add_Gcov_File_Info_From_Menu'Access), Cont_N_Anal);
+
       Gtk_New (Item, -"Remove data of " & Entity_Name_Information
                (Cont_N_Anal.Context));
       Append (Submenu, Item);
@@ -2670,7 +2717,6 @@ package body Code_Analysis_Module is
             Project_Information (Cont_N_Anal.Context));
       end if;
 
-      Append_Load_File_Data (Cont_N_Anal, Submenu);
       Gtk_New (Item, -"Show coverage information");
       Append (Submenu, Item);
       Context_And_Analysis_CB.Connect
@@ -2678,6 +2724,7 @@ package body Code_Analysis_Module is
          Context_And_Analysis_CB.To_Marshaller
            (Show_File_Coverage_Information_From_Menu'Access),
          Context_And_Analysis'(Context, Cont_N_Anal.Analysis));
+
       Gtk_New (Item, -"Hide coverage information");
       Append (Submenu, Item);
       Context_And_Analysis_CB.Connect
@@ -2685,6 +2732,12 @@ package body Code_Analysis_Module is
          Context_And_Analysis_CB.To_Marshaller
            (Hide_File_Coverage_Information_From_Menu'Access),
          Context_And_Analysis'(Context, Cont_N_Anal.Analysis));
+
+      Gtk_New (Item);
+      Append (Submenu, Item);
+
+      Append_Load_File_Data (Cont_N_Anal, Submenu);
+
       Gtk_New (Item, -"Remove data of " &
                Base_Name (File_Information (Context)));
       Append (Submenu, Item);
@@ -2709,7 +2762,7 @@ package body Code_Analysis_Module is
    begin
       Set_File_Information
         (Context, VFS.No_File, Project_Information (Cont_N_Anal.Context));
-      Append_Load_Project_Data (Cont_N_Anal, Submenu);
+
       Gtk_New (Item, -"Show coverage information");
       Append (Submenu, Item);
       Context_And_Analysis_CB.Connect
@@ -2717,6 +2770,7 @@ package body Code_Analysis_Module is
          Context_And_Analysis_CB.To_Marshaller
            (Show_Project_Coverage_Information_From_Menu'Access),
          Context_And_Analysis'(Context, Cont_N_Anal.Analysis));
+
       Gtk_New (Item, -"Hide coverage information");
       Append (Submenu, Item);
       Context_And_Analysis_CB.Connect
@@ -2724,6 +2778,12 @@ package body Code_Analysis_Module is
          Context_And_Analysis_CB.To_Marshaller
            (Hide_Project_Coverage_Information_From_Menu'Access),
          Context_And_Analysis'(Context, Cont_N_Anal.Analysis));
+
+      Gtk_New (Item);
+      Append (Submenu, Item);
+
+      Append_Load_Project_Data (Cont_N_Anal, Submenu);
+
       Gtk_New (Item, -"Remove data of project " &
                Project_Name (Project_Information (Cont_N_Anal.Context)));
       Append (Submenu, Item);
