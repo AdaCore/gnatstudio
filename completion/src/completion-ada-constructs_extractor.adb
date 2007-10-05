@@ -82,8 +82,8 @@ package body Completion.Ada.Constructs_Extractor is
    --------------------------
 
    function From_Stored_Proposal
-     (Manager : Completion_Manager_Access;
-      Stored  : Stored_Construct_Completion_Proposal;
+     (Stored  : Stored_Construct_Completion_Proposal;
+      Manager : Completion_Manager_Access;
       Context : Completion_Context)
       return Completion_Proposal_Access
    is

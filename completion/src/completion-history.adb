@@ -43,7 +43,7 @@ package body Completion.History is
          declare
             Proposal : Completion_Proposal_Access :=
               From_Stored_Proposal
-                (Resolver.Manager, Element (It).all, Context);
+                (Element (It).all, Resolver.Manager, Context);
          begin
             if Proposal /= null
               and then Match (Proposal.all, Context, Offset)

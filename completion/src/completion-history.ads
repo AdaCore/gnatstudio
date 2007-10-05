@@ -59,8 +59,8 @@ package Completion.History is
    --  will only store unique proposals.
 
    function From_Stored_Proposal
-     (Manager : Completion_Manager_Access;
-      Stored  : Stored_Proposal;
+     (Stored  : Stored_Proposal;
+      Manager : Completion_Manager_Access;
       Context : Completion_Context)
       return Completion_Proposal_Access is abstract;
    --  Recreates a completion proposal out of a stored proposal. If the
