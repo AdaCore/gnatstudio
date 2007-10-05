@@ -518,9 +518,15 @@ package body Code_Coverage is
               := Natural'Image (Coverage.Coverage);
             Lig_Count   : constant Natural
               := Node_Coverage (Coverage.all).Children;
-            Cov_Percent : constant Natural
-              := (Lig_Count - Coverage.Coverage) * 100 / Lig_Count;
+            Cov_Percent : Natural;
          begin
+            if Lig_Count = 0 then
+               Cov_Percent := 100;
+            else
+               Cov_Percent := (Lig_Count - Coverage.Coverage) * 100
+                 / Lig_Count;
+            end if;
+
             Set (Tree_Store, Iter, Cov_Col,
                  Image (Lig_Count, Int_Image_Padding)
                  & Txt_Lig (Lig_Count)
