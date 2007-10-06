@@ -23,9 +23,6 @@ with Ada.Calendar;             use Ada.Calendar;
 
 with Code_Analysis;            use Code_Analysis;
 with Code_Analysis_Dump;       use Code_Analysis_Dump;
---  with Code_Analysis_Tree_Model; use Code_Analysis_Tree_Model;
---  ??? will be decommented when gui will be separated from module
---  [G608-020]
 with Code_Coverage;            use Code_Coverage;
 
 with Projects;                 use Projects;
@@ -136,7 +133,7 @@ procedure Code_Analysis_Test is
    begin
       Cov_File_Name := Create (File_Name);
       Src_File_Name := Create
-        ("src/" & File_Name (File_Name'First + 4 .. File_Name'Last - 5));
+        (File_Name (File_Name'First .. File_Name'Last - 5));
 
       Initialize; --  From Projects.Registry
       Load
