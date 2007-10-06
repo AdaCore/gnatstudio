@@ -319,10 +319,6 @@ package body Code_Analysis_Module is
    --   - Show_Analysis_Report_From_Shell
    --   - and at every addition of data to code_analysis from file or projects
 
-   procedure Show_Empty_Analysis_Report
-     (Kernel : Kernel_Handle; Analysis : Code_Analysis_Instance);
-   --  Build an error stating Report of Analysis and insert it in the MDI
-
    procedure Connect_Report
      (Kernel : Kernel_Handle; Cont_N_Anal : Context_And_Analysis);
    --  Connect some signals to the widgets of the Cont_N_Anal.Analysis.View
@@ -1476,6 +1472,21 @@ package body Code_Analysis_Module is
       Path          : Gtk_Tree_Path;
    begin
 
+      -----------------------
+      --  Build the report --
+      -----------------------
+
+      if Cont_N_Anal.Analysis.View = null then
+         Cont_N_Anal.Analysis.View := Build_Analysis_Report
+           (Kernel,
+            Cont_N_Anal.Analysis.Name,
+            Cont_N_Anal.Analysis.Projects,
+            Binary_Coverage_Mode);
+         Connect_Report (Kernel, Cont_N_Anal);
+      elsif Cont_N_Anal.Analysis.View.Error_Box /= null then
+         Hide_All (Cont_N_Anal.Analysis.View.Error_Box);
+      end if;
+
       --------------------------------------
       --  Check for analysis information  --
       --------------------------------------
@@ -1505,30 +1516,23 @@ package body Code_Analysis_Module is
                --  data
                Set_File_Information
                  (Local_Context, Project => Prj_Name);
-            elsif Cont_N_Anal.Analysis.Child = null then
-               Show_Empty_Analysis_Report (Kernel, Cont_N_Anal.Analysis);
-               return;
+            else
+               --  Show the empty report warning board
+               if Get_No_Show_All (Cont_N_Anal.Analysis.View.Error_Box) then
+                  Set_No_Show_All (Cont_N_Anal.Analysis.View.Error_Box, False);
+               end if;
+
+               Show_All (Cont_N_Anal.Analysis.View.Error_Box);
             end if;
          end if;
       end;
 
       --  Here we have a context that point on elements that will be added to
-      --  the report of analysis
+      --  the coverage report
 
-      --------------------------
-      --  Building the report --
-      --------------------------
-
-      if Cont_N_Anal.Analysis.View = null then
-         Cont_N_Anal.Analysis.View := Build_Analysis_Report
-           (Kernel,
-            Cont_N_Anal.Analysis.Name,
-            Cont_N_Anal.Analysis.Projects,
-            Binary_Coverage_Mode);
-         Connect_Report (Kernel, Cont_N_Anal);
-      elsif Cont_N_Anal.Analysis.View.Error_Box /= null then
-         Hide_All (Cont_N_Anal.Analysis.View.Error_Box);
-      end if;
+      ----------------------
+      --  Fill the report --
+      ----------------------
 
       Clear (Cont_N_Anal.Analysis.View.Model);
       Iter := Get_Iter_First (Cont_N_Anal.Analysis.View.Model);
@@ -1543,44 +1547,20 @@ package body Code_Analysis_Module is
       Iter := Get_Iter_From_Context
         (Local_Context, Cont_N_Anal.Analysis.View.Model);
 
-      if Iter = Null_Iter then
-         Show_Empty_Analysis_Report (Kernel, Cont_N_Anal.Analysis);
-         return;
+      if Iter /= Null_Iter then
+         Path := Get_Path (Cont_N_Anal.Analysis.View.Model, Iter);
+         Collapse_All (Cont_N_Anal.Analysis.View.Tree);
+         Expand_To_Path (Cont_N_Anal.Analysis.View.Tree, Path);
+         Select_Path (Get_Selection (Cont_N_Anal.Analysis.View.Tree), Path);
+         Path_Free (Path);
+      else
+         Expend_All (Cont_N_Anal.Analysis.View.Tree);
       end if;
-
-      Path := Get_Path (Cont_N_Anal.Analysis.View.Model, Iter);
-      Collapse_All (Cont_N_Anal.Analysis.View.Tree);
-      Expand_To_Path (Cont_N_Anal.Analysis.View.Tree, Path);
-      Select_Path (Get_Selection (Cont_N_Anal.Analysis.View.Tree), Path);
-      Path_Free (Path);
 
       if Raise_Report then
          Raise_Child (Cont_N_Anal.Analysis.Child);
       end if;
    end Show_Analysis_Report;
-
-   --------------------------------
-   -- Show_Empty_Analysis_Report --
-   --------------------------------
-
-   procedure Show_Empty_Analysis_Report
-     (Kernel : Kernel_Handle; Analysis : Code_Analysis_Instance) is
-   begin
-      if Analysis.View = null then
-         Analysis.View := Build_Analysis_Report
-           (Kernel, Analysis.Name, Analysis.Projects, Binary_Coverage_Mode);
-         Connect_Report
-           (Kernel, Context_And_Analysis'(Check_Context (Kernel, No_Context),
-            Analysis));
-      end if;
-
-      if Get_No_Show_All (Analysis.View.Error_Box) then
-         Set_No_Show_All (Analysis.View.Error_Box, False);
-      end if;
-
-      Show_All (Analysis.View.Error_Box);
-      Raise_Child (Analysis.Child);
-   end Show_Empty_Analysis_Report;
 
    --------------------
    -- Connect_Report --
@@ -2529,8 +2509,8 @@ package body Code_Analysis_Module is
       Free_Project (Prj_Node);
 
       if Project_Maps.Length (Cont_N_Anal.Analysis.Projects.all) = 0 then
-         Show_Empty_Analysis_Report
-           (Get_Kernel (Cont_N_Anal.Context), Cont_N_Anal.Analysis);
+         Show_Analysis_Report
+           (Get_Kernel (Cont_N_Anal.Context), Cont_N_Anal);
       end if;
    exception
       when E : others => Trace (Exception_Handle, E);
