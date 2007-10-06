@@ -17,17 +17,17 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Text_IO;            use Ada.Text_IO;
-with Ada.Strings;            use Ada.Strings;
-with Ada.Strings.Fixed;      use Ada.Strings.Fixed;
-with GNAT.Regpat;            use GNAT.Regpat;
+with Ada.Text_IO;              use Ada.Text_IO;
+with Ada.Strings;              use Ada.Strings;
+with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
+with GNAT.Regpat;              use GNAT.Regpat;
 with Glib;
-with GPS.Intl;               use GPS.Intl;
-with String_Utils;           use String_Utils;
-with VFS;                    use VFS;
-with Language;               use Language;
-with Language.Tree;          use Language.Tree;
-with Code_Analysis_GUI;      use Code_Analysis_GUI;
+with GPS.Intl;                 use GPS.Intl;
+with String_Utils;             use String_Utils;
+with VFS;                      use VFS;
+with Language;                 use Language;
+with Language.Tree;            use Language.Tree;
+with Code_Analysis_GUI;        use Code_Analysis_GUI;
 
 package body Code_Coverage is
 
@@ -43,7 +43,7 @@ package body Code_Coverage is
       Error_Code : Coverage_Status) is
    begin
       if File_Node.Analysis_Data.Coverage_Data = null then
-         File_Node.Analysis_Data.Coverage_Data := new Coverage;
+         File_Node.Analysis_Data.Coverage_Data := new Node_Coverage;
       end if;
 
       File_Node.Analysis_Data.Coverage_Data.Status := Error_Code;
@@ -166,6 +166,7 @@ package body Code_Coverage is
       Node_Coverage (File_Node.Analysis_Data.Coverage_Data.all).Children :=
         Lines_Count;
       File_Node.Analysis_Data.Coverage_Data.Coverage := Not_Cov_Count;
+      File_Node.Analysis_Data.Coverage_Data.Status := Valid;
    end Add_File_Info;
 
    -----------------------------
