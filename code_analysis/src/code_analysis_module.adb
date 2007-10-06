@@ -1554,7 +1554,7 @@ package body Code_Analysis_Module is
          Select_Path (Get_Selection (Cont_N_Anal.Analysis.View.Tree), Path);
          Path_Free (Path);
       else
-         Expend_All (Cont_N_Anal.Analysis.View.Tree);
+         Expand_All (Cont_N_Anal.Analysis.View.Tree);
       end if;
 
       if Raise_Report then
