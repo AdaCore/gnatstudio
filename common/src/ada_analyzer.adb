@@ -1799,7 +1799,14 @@ package body Ada_Analyzer is
                when Tok_Interface =>
                   Top_Token.Attributes (Ada_Interface_Attribute) := True;
                when Tok_Record =>
-                  Top_Token.Attributes (Ada_Record_Attribute) := True;
+                  if Prev_Token /= Tok_Null
+                    or else Prev_Prev_Token = Tok_Is
+                  then
+                     --  Do not take aggregates like (null record) as a record
+                     --  definition but we still want "is null record" to be
+                     --  properly reported as record type.
+                     Top_Token.Attributes (Ada_Record_Attribute) := True;
+                  end if;
                when Tok_Renames =>
                   Top_Token.Attributes (Ada_Renames_Attribute) := True;
                when others =>
