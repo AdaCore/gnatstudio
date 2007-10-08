@@ -115,7 +115,11 @@ on which you have permission to read and write.
             if access (gcda, F_OK):
                gcda_file_found = True
                # Write one entry in response file
-               res.write (gcda + "\n")
+
+               # Escape all backslashes.
+               gcda = gcda.replace('\\', '\\\\')
+
+               res.write ('"' + gcda + '"' +"\n")
 
    res.close()
 
