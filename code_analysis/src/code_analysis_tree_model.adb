@@ -103,6 +103,7 @@ package body Code_Analysis_Tree_Model is
    procedure Fill_Iter
      (Model     : in out Gtk_Tree_Store;
       Iter      : in out Gtk_Tree_Iter;
+      Sibling   : in out Gtk_Tree_Iter;
       Parent    : Gtk_Tree_Iter;
       Prj_Node  : Project_Access;
       File_Node : File_Access;
@@ -115,7 +116,14 @@ package body Code_Analysis_Tree_Model is
       Sort_Arr  : Subprogram_Array
         (1 .. Integer (File_Node.Subprograms.Length));
    begin
-      Append (Model, Iter, Parent);
+      if File_Node.Analysis_Data.Coverage_Data /= null and then
+         File_Node.Analysis_Data.Coverage_Data.Status = Valid then
+         Insert_After (Model, Iter, Parent, Sibling);
+         Sibling := Iter;
+      else
+         Append (Model, Iter, Parent);
+      end if;
+
       Self_Iter := Iter;
       Gtk.Tree_Store.Set (Model, Iter, Pix_Col, C_Proxy (Icons.File_Pixbuf));
       Gtk.Tree_Store.Set
@@ -133,8 +141,8 @@ package body Code_Analysis_Tree_Model is
       Sort_Subprograms (Sort_Arr);
 
       for J in Sort_Arr'Range loop
-         Fill_Iter (Model, Iter, Self_Iter, Prj_Node, File_Node,
-                    Sort_Arr (J), Bin_Mode, Icons);
+         Fill_Iter (Model, Iter, Self_Iter, Prj_Node, File_Node, Sort_Arr (J),
+                    Bin_Mode, Icons);
       end loop;
    end Fill_Iter;
 
@@ -145,12 +153,20 @@ package body Code_Analysis_Tree_Model is
    procedure Fill_Iter_With_Files
      (Model     : in out Gtk_Tree_Store;
       Iter      : in out Gtk_Tree_Iter;
+      Sibling   : in out Gtk_Tree_Iter;
       Prj_Node  : Project_Access;
       File_Node : File_Access;
       Bin_Mode  : Boolean := False;
       Icons     : Code_Analysis_Icons) is
    begin
-      Append (Model, Iter, Null_Iter);
+      if File_Node.Analysis_Data.Coverage_Data /= null and then
+         File_Node.Analysis_Data.Coverage_Data.Status = Valid then
+         Insert_After (Model, Iter, Null_Iter, Sibling);
+         Sibling := Iter;
+      else
+         Append (Model, Iter, Null_Iter);
+      end if;
+
       Gtk.Tree_Store.Set (Model, Iter, Pix_Col, C_Proxy (Icons.File_Pixbuf));
       Gtk.Tree_Store.Set
         (Model, Iter, Name_Col, VFS.Base_Name (File_Node.Name));
@@ -197,21 +213,30 @@ package body Code_Analysis_Tree_Model is
    procedure Fill_Iter
      (Model    : in out Gtk_Tree_Store;
       Iter     : in out Gtk_Tree_Iter;
+      Sibling  : in out Gtk_Tree_Iter;
       Prj_Node : Project_Access;
       Bin_Mode : Boolean := False;
-      Icons     : Code_Analysis_Icons)
+      Icons    : Code_Analysis_Icons)
    is
       use File_Maps;
-      Map_Cur   : File_Maps.Cursor := Prj_Node.Files.First;
-      Self_Iter : Gtk_Tree_Iter;
-      Sort_Arr  : File_Array (1 .. Integer (Prj_Node.Files.Length));
+      Map_Cur    : File_Maps.Cursor := Prj_Node.Files.First;
+      Self_Iter  : Gtk_Tree_Iter;
+      Sort_Arr   : File_Array (1 .. Integer (Prj_Node.Files.Length));
+      Child_Sibl : Gtk_Tree_Iter := Null_Iter;
    begin
-      Append (Model, Iter, Null_Iter);
+      if Prj_Node.Analysis_Data.Coverage_Data /= null and then
+         Prj_Node.Analysis_Data.Coverage_Data.Status = Valid then
+         Insert_After (Model, Iter, Null_Iter, Sibling);
+         Sibling := Iter;
+      else
+         Append (Model, Iter, Null_Iter);
+      end if;
+
       Self_Iter := Iter;
       Gtk.Tree_Store.Set
         (Model, Iter, Pix_Col, C_Proxy (Icons.Prj_Pixbuf));
       Gtk.Tree_Store.Set (Model, Iter, Name_Col,
-           UTF8_String (String'(Project_Name (Prj_Node.Name))));
+                          UTF8_String (String'(Project_Name (Prj_Node.Name))));
       Project_Set.Set (Model, Iter, Node_Col, Prj_Node.all'Access);
       Fill_Iter (Model, Iter, Prj_Node.Analysis_Data, Bin_Mode);
 
@@ -223,8 +248,8 @@ package body Code_Analysis_Tree_Model is
       Sort_Files (Sort_Arr);
 
       for J in Sort_Arr'Range loop
-         Fill_Iter
-           (Model, Iter, Self_Iter, Prj_Node, Sort_Arr (J), Bin_Mode, Icons);
+         Fill_Iter (Model, Iter, Child_Sibl, Self_Iter, Prj_Node, Sort_Arr (J),
+                    Bin_Mode, Icons);
       end loop;
    end Fill_Iter;
 
@@ -233,10 +258,11 @@ package body Code_Analysis_Tree_Model is
    --------------------------
 
    procedure Fill_Iter_With_Files
-     (Model    : in out Gtk_Tree_Store;
-      Iter     : in out Gtk_Tree_Iter;
-      Prj_Node : Project_Access;
-      Bin_Mode : Boolean := False;
+     (Model     : in out Gtk_Tree_Store;
+      Iter      : in out Gtk_Tree_Iter;
+      Sibling   : in out Gtk_Tree_Iter;
+      Prj_Node  : Project_Access;
+      Bin_Mode  : Boolean := False;
       Icons     : Code_Analysis_Icons)
    is
       use File_Maps;
@@ -252,7 +278,7 @@ package body Code_Analysis_Tree_Model is
 
       for J in Sort_Arr'Range loop
          Fill_Iter_With_Files
-           (Model, Iter, Prj_Node, Sort_Arr (J), Bin_Mode, Icons);
+           (Model, Iter, Sibling, Prj_Node, Sort_Arr (J), Bin_Mode, Icons);
       end loop;
    end Fill_Iter_With_Files;
 
@@ -298,6 +324,7 @@ package body Code_Analysis_Tree_Model is
       use Project_Maps;
       Map_Cur  : Project_Maps.Cursor := Projects.First;
       Sort_Arr : Project_Array (1 .. Integer (Projects.Length));
+      Sibling  : Gtk_Tree_Iter := Null_Iter;
    begin
       for J in Sort_Arr'Range loop
          Sort_Arr (J) := Element (Map_Cur);
@@ -307,7 +334,7 @@ package body Code_Analysis_Tree_Model is
       Sort_Projects (Sort_Arr);
 
       for J in Sort_Arr'Range loop
-         Fill_Iter (Model, Iter, Sort_Arr (J), Bin_Mode, Icons);
+         Fill_Iter (Model, Iter, Sibling, Sort_Arr (J), Bin_Mode, Icons);
       end loop;
    end Fill_Iter;
 
@@ -325,6 +352,7 @@ package body Code_Analysis_Tree_Model is
       use Project_Maps;
       Map_Cur  : Project_Maps.Cursor := Projects.First;
       Sort_Arr : Project_Array (1 .. Integer (Projects.Length));
+      Sibling  : Gtk_Tree_Iter := Null_Iter;
    begin
       for J in Sort_Arr'Range loop
          Sort_Arr (J) := Element (Map_Cur);
@@ -334,7 +362,8 @@ package body Code_Analysis_Tree_Model is
       Sort_Projects (Sort_Arr);
 
       for J in Sort_Arr'Range loop
-         Fill_Iter_With_Files (Model, Iter, Sort_Arr (J), Bin_Mode, Icons);
+         Fill_Iter_With_Files
+           (Model, Iter, Sibling, Sort_Arr (J), Bin_Mode, Icons);
       end loop;
    end Fill_Iter_With_Files;
 
