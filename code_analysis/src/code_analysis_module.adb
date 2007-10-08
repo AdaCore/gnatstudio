@@ -71,31 +71,31 @@ package body Code_Analysis_Module is
 
    Src_File_Cst : aliased   constant String := "src";
    --  Constant String that represents the name of the source file parameter
-   --  of the GPS.CodeAnalysis.add_gcov_file_info subprogram
+   --  of the GPS.CodeAnalysis.add_gcov_file_info subprogram.
    Cov_File_Cst : aliased   constant String := "cov";
    --  Constant String that represents the name of the .gcov file parameter
-   --  of the GPS.CodeAnalysis.add_gcov_file_info subprogram
+   --  of the GPS.CodeAnalysis.add_gcov_file_info subprogram.
    Prj_File_Cst : aliased   constant String := "prj";
    --  Constant String that represents the name of the .gpr file parameter
-   --  of the GPS.CodeAnalysis.add_gcov_project_info subprogram
+   --  of the GPS.CodeAnalysis.add_gcov_project_info subprogram.
    Ana_Name_Cst : aliased   constant String := "name";
    --  Constant String that represents a name of Analysis_Instance in parameter
-   --  of the GPS.CodeAnalysis.get_analysis command
+   --  of the GPS.CodeAnalysis.get_analysis command.
    Gcov_Extension_Cst :     constant String := ".gcov";
-   --  Constant String that represents the extension of GCOV files
+   --  Constant String that represents the extension of GCOV files.
 
    Binary_Coverage_Trace : constant Debug_Handle :=
                              Create ("BINARY_COVERAGE_MODE", GNAT.Traces.On);
    Binary_Coverage_Mode  : Boolean;
    --  Boolean that allows to determine wether we are in binary coverage mode
-   --  or not, if true no line execution coverage count will be displayed
+   --  or not, if true no line execution coverage count will be displayed.
 
    Single_Analysis_Trace : constant Debug_Handle :=
                              Create ("SINGLE_ANALYSIS_MODE", GNAT.Traces.On);
    Single_Analysis_Mode  : Boolean;
    --  Boolean that allows to determine wether we should display only one
    --  analysis at a time or if we can display more, if true the user wont be
-   --  able to create more than one analysis structure
+   --  able to create more than one analysis structure.
 
    CodeAnalysis_Cst  : constant String := "CodeAnalysis";
    Coverage_Category : constant Glib.UTF8_String := -"Uncovered lines";
@@ -124,7 +124,7 @@ package body Code_Analysis_Module is
 
    function Less (Left, Right : Code_Analysis_Instance) return Boolean;
    function Equal (Left, Right : Code_Analysis_Instance) return Boolean;
-   --  Use the Code_Analysis_Instance.Date to perform the test
+   --  Use the Code_Analysis_Instance.Date to perform the test.
 
    package Code_Analysis_Instances is new Indefinite_Ordered_Sets
      (Element_Type => Code_Analysis_Instance, "<" => Less, "=" => Equal);
@@ -161,25 +161,25 @@ package body Code_Analysis_Module is
 
    package Context_And_Analysis_CB is new User_Callback
      (Glib.Object.GObject_Record, Context_And_Analysis);
-   --  Used to connect handlers on the global Coverage contextual menu
+   --  Used to connect handlers on the global Coverage contextual menu.
 
    procedure Show_All_Coverage_Information
      (Kernel   : Kernel_Handle;
       Analysis : Code_Analysis_Instance);
-   --  Call List_Uncovered_Lines_In_Project and Add_Project_Annotations for
-   --  every projects of the given code analysis instance
+   --  List uncovered lines and add coverage annotations for every projects of
+   --  the given code analysis instance.
 
    function First_Project_With_Coverage_Data
      (Analysis : Code_Analysis_Instance) return Project_Type;
    --  Return the 1st project that contains coverage data from the given
    --  analysis.
-   --  Return No_Project if no project contains such data
+   --  Return No_Project if no project contains such data.
 
    function Get_Iter_From_Context
      (Context : Selection_Context;
       Model   : Gtk_Tree_Store) return Gtk_Tree_Iter;
-   --  Returns the Gtk_Tree_Iter corresponding of the Gtk_Tree node of
-   --  contextual elements (project, file, subprogram) of the coverage report
+   --  Return the Gtk_Tree_Iter of the Gtk_Tree_Store corresponding to the
+   --  contextual elements (project, file, subprogram) of the coverage report.
 
    ---------------------
    -- Contextual menu --
@@ -197,110 +197,110 @@ package body Code_Analysis_Module is
      (Filter  : access Has_Coverage_Filter;
       Context : Selection_Context) return Boolean;
    --  True when the current context is associated with project, file or
-   --  subprogram information
+   --  subprogram information.
 
    procedure Append_To_Menu
      (Factory : access Code_Analysis_Contextual_Menu;
       Object  : access Glib.Object.GObject_Record'Class;
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
-   --  Determines wether we add entries directly in the contextual menu, or in
-   --  a generated submenu. Submenus are created if many instances are loaded
+   --  Determine wether we add entries directly in the contextual menu, or in
+   --  a generated submenu. Submenus are created if many instances are loaded.
 
    procedure Append_To_Contextual_Submenu
      (Cont_N_Anal : Context_And_Analysis;
       Submenu     : access Gtk_Menu_Record'Class);
-   --  Allows to fill the given Submenu, in the appropriate order for
-   --  contextual menu
+   --  Allow to fill the given Submenu with coverage entries in the appropriate
+   --  order for a contextual menu.
 
    procedure Append_To_Submenu
      (Cont_N_Anal  : Context_And_Analysis;
       Submenu      : access Gtk_Menu_Record'Class);
-   --  Allows to fill the given Submenu, in the appropriate order for Tools
-   --  menu
+   --  Allow to fill the given Submenu, in the appropriate order for Tools
+   --  menu.
 
    procedure Append_Show_Analysis_Report_To_Menu
      (Cont_N_Anal : Context_And_Analysis;
       Menu        : access Gtk_Menu_Record'Class;
       Label       : String);
-   --  Actually fills the given Menu, with the "Show Analysis Report" entry
-   --  With no context information, so the 1st node will be expanded
+   --  Fill the given Menu, with the "Show report" entry with no context
+   --  information, so the 1st node will be expanded.
 
    procedure Append_Load_Data_For_All_Projects
      (Cont_N_Anal : Context_And_Analysis;
       Menu        : access Gtk_Menu_Record'Class);
-   --  Actually fills the given Menu with the "Load data for all projecs" entry
-   --  This entry try to load coverage data for root project and every imported
-   --  projects.
+   --  Fill the given Menu with the "Load data for all projecs" entry
+   --  The associated callback tries to load coverage data for root project
+   --  and every imported projects.
 
    procedure Append_Load_Project_Data
      (Cont_N_Anal : Context_And_Analysis;
       Menu        : access Gtk_Menu_Record'Class);
-   --  Actually fills the given Menu with the "Load data for project XXX" entry
-   --  This entry try to load coverage data for the context pointed project
+   --  Fill the given Menu with the "Load data for project XXX" entry
+   --  The associated callback tries to load coverage data of the context
+   --  pointed project.
 
    procedure Append_Load_File_Data
      (Cont_N_Anal : Context_And_Analysis;
       Menu        : access Gtk_Menu_Record'Class);
-   --  Actually fills the given Menu with the "Load data for XXX.ad[b,s]" entry
-   --  This entry try to load coverage data for the context pointed file
+   --  Fill the given Menu with the "Load data for XXX.ad[b,s]" entry
+   --  The associated callback tries to load coverage data of the context
+   --  pointed file.
 
    procedure Append_Subprogram_Menu_Entries
      (Cont_N_Anal : Context_And_Analysis;
       Submenu     : access Gtk_Menu_Record'Class);
-   --  Actually fills the given Submenu with the appropriate coverage action
-   --  entries to handle subprograms (List line not covered, Remove data of...)
+   --  Fill the given Submenu with the coverage entries that allow to handle
+   --  subprograms.
 
    procedure Append_File_Menu_Entries
      (Cont_N_Anal : Context_And_Analysis;
       Submenu     : access Gtk_Menu_Record'Class);
-   --  Actually fills the given Submenu with the appropriate coverage action
-   --  entries to handle files (Add/Remove coverage annotations,
-   --  Show coverage report, ...)
+   --  Fill the given Submenu with the coverage entries that allow to handle
+   --  files.
 
    procedure Append_Project_Menu_Entries
      (Cont_N_Anal  : Context_And_Analysis;
       Submenu      : access Gtk_Menu_Record'Class);
-   --  Actually fills the given Submenu with the appropriate coverage action
-   --  entries to handle projects (Add/Remove coverage annotations,
-   --  Show coverage report, Load full data...)
+   --  Fill the given Submenu with the coverage entries that allow to handle
+   --  projects.
 
    function Check_Context
      (Kernel        : Kernel_Handle;
       Given_Context : Selection_Context) return Selection_Context;
    --  Check and correct the presence of project information in the
-   --  Given_Context
+   --  Given_Context.
 
    procedure Dynamic_Tools_Menu_Factory
      (Kernel  : access Kernel_Handle_Record'Class;
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
-   --  Determines wether we add entries directly in the "Tools/Coverage" menu,
+   --  Determine wether we add entries directly in the "Tools/Coverage" menu,
    --  or in a generated submenu. Submenus are created if many instances are
-   --  loaded
+   --  loaded.
 
    procedure Dynamic_Views_Menu_Factory
      (Kernel  : access Kernel_Handle_Record'Class;
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
-   --  Determines wether we add entries directly in the "Tools/Views/Coverage"
+   --  Determine wether we add entries directly in the "Tools/Views/Coverage"
    --  menu, or in a generated submenu. Submenus are created if many instances
-   --  are loaded
+   --  are loaded.
 
    procedure On_Single_View_Menu
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle);
-   --  Show the report of code coverage when we are in single analysis mode
+   --  Show the coverage report when we are in single analysis mode.
 
    procedure Show_Analysis_Report_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
-   --  Menu callback that calls Show_Analysis_Report with no context info
+   --  Menu callback that calls Show_Analysis_Report with no context info.
 
    procedure Show_Analysis_Report_From_Shell
      (Data    : in out Callback_Data'Class;
       Command : String);
-   --  Create and display a Code_Analysis tree view within a MDI Child
+   --  Create and display a Coverage Report.
 
    procedure Show_Analysis_Report
      (Kernel       : Kernel_Handle;
@@ -308,21 +308,16 @@ package body Code_Analysis_Module is
       Raise_Report : Boolean := True);
    --  Check if the context pointed project has data in the current
    --  code_analysis instance, if not, tries to find a project that has some
-   --  and if it's not possible, show an error report
-   --  Then Build the Report of Analysis N, populate it, expand the
-   --  the appropriate item following given context information and finally
-   --  insert the new Report in the MDI.
-   --  If Raise_Report is set to True, the Report of Analysis N will be raised
-   --  at the end of the treatment
-   --  Should be called by :
-   --   - Show_Analysis_Report_From_Menu
-   --   - Show_Analysis_Report_From_Shell
-   --   - and at every addition of data to code_analysis from file or projects
+   --  and if it's not possible, show the empty report warning board.
+   --  Then Build the Coverage Report, populate it, expand the
+   --  the appropriate item following given context information. Finally
+   --  insert the new Report in the MDI. (via Connect_Report)
+   --  If Raise_Report is True, the Coverage Report will be raised.
 
    procedure Connect_Report
      (Kernel : Kernel_Handle; Cont_N_Anal : Context_And_Analysis);
-   --  Connect some signals to the widgets of the Cont_N_Anal.Analysis.View
-   --  Also create and put the report in an MDI child
+   --  Connect some signals to the widgets of the Cont_N_Anal.Analysis.View.
+   --  Also create and put the report in an MDI child.
 
    procedure On_Destroy (Widget      : access Glib.Object.GObject_Record'Class;
                          Cont_N_Anal : Context_And_Analysis);
@@ -331,73 +326,74 @@ package body Code_Analysis_Module is
    procedure Shell_CodeAnalysis_Constructor
      (Data : in out Callback_Data'Class; Command : String);
    --  Empty subprogram that just raise an exception in order to prevent users
-   --  from using the default shell constructor
+   --  from using the default shell constructor.
    --  The Shell_Get_Command should be used instead.
 
    procedure Shell_Get_Command
      (Data    : in out Callback_Data'Class;
       Command : String);
-   --  Create a shell scripting instance of the module
+   --  Create a shell scripting instance of the module.
 
    procedure Create_Analysis_From_Menu
      (Widget : access Gtk_Widget_Record'Class);
-   --  Create a new analysis instance from the "Tools/Coverage" menu
+   --  Create a new analysis instance from the "Tools/Coverage" menu.
 
    function Create_Analysis_Instance
      (Name : String := "") return Code_Analysis_Instance;
-   --  Create a new analysis instance, intended to contain analysis data
-   --  The instance is inserted in the Instances set of the Module_ID
+   --  Create a new analysis instance.
+   --  The instance is inserted in the Instances set of the Module_ID.
 
    function Have_Gcov_Info (Cont_N_Anal : Context_And_Analysis) return Boolean;
    --  Verify that contextual Project and/or file if any, have associated
-   --  coverage information in their corresponding node of the analysis tree
+   --  coverage information in their corresponding node of the analysis tree.
 
    procedure Add_Gcov_File_Info_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
    --  Simple wrapper for Add_Gcov_File_Info_In_Callback
-   --  Also calls Show_Report
+   --  Also calls Show_Analysis_Report.
 
    procedure Add_Gcov_File_Info_From_Shell
      (Data    : in out Callback_Data'Class;
       Command : String);
-   --  Add node and coverage info provided by a gcov file parsing
+   --  Add node and coverage info provided by a gcov file parsing.
 
    procedure Add_Gcov_File_Info_In_Callback
      (Cont_N_Anal : Context_And_Analysis);
-   --  Allow to add gcov file info from any callback that should use gcov info
-   --  Looks for GCOV files corresponding to the contextual file
-   --  Then call Add_Gcov_File_Info
+   --  Allow to add Gcov file info in any file level callback that should
+   --  use gcov info.
+   --  Looks for Gcov files corresponding to the contextual file.
+   --  Then call Add_Gcov_File_Info on it.
 
    procedure Add_Gcov_File_Info
      (Kernel       : Kernel_Handle;
       Src_File     : VFS.Virtual_File;
       Cov_File     : VFS.Virtual_File;
       Project_Node : Project_Access);
-   --  Actually adds the node and coverage info provided by the gcov file
-   --  parsing into the corresponding code_analysis node.
+   --  Add into the corresponding code_analysis nodes the coverage info
+   --  provided by the given-gcov-file parsing.
 
    procedure Add_Gcov_Project_Info_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
-   --  Basically do an Add_Gcov_File_Info on every files of the project in
-   --  Context
+   --  Call Add_Gcov_File_Info on every files of the contextual project.
 
    procedure Add_Gcov_Project_Info_From_Shell
      (Data    : in out Callback_Data'Class;
       Command : String);
-   --  Basically do an Add_Gcov_File_Info on every files of the given project
+   --  Call Add_Gcov_File_Info on every files of the given project.
 
    procedure Add_Gcov_Project_Info_In_Callback
      (Cont_N_Anal : Context_And_Analysis);
-   --  Actually looks for a corresponding .gcov files to every source files in
-   --  the given project
+   --  Allow to add Gcov project info in any project level callback that should
+   --  use gcov info.
+   --  Looks for Gcov files corresponding to every files of the contextual
+   --  project and call Add_Gcov_File_Info on it.
 
    procedure Add_Gcov_Project_Info
      (Kernel   : Kernel_Handle;
       Prj_Node : Project_Access);
-   --  Adds every project file coverage information to the Code_Analysis
-   --  structure of given Project_Node
+   --  Try to load Gcov information for every files of the given project.
 
    procedure Add_All_Gcov_Project_Info_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
@@ -411,8 +407,8 @@ package body Code_Analysis_Module is
 
    procedure Add_All_Gcov_Project_Info_In_Callback
      (Cont_N_Anal : Context_And_Analysis);
-   --  Try to load gcov info for every file of the Root_Project and every
-   --  imported projects
+   --  Try to load gcov info for every files of the Root_Project and every
+   --  imported projects.
 
    procedure Show_All_Coverage_Information_From_Shell
      (Data    : in out Callback_Data'Class;
@@ -425,180 +421,174 @@ package body Code_Analysis_Module is
       Command : String);
    --  Shell command callback
    --  Remove from the Locations view the listed uncovered lines of each files
-   --  of each loaded projects
-   --  Does nothing if the lines are not listed in
+   --  of each loaded projects.
+   --  Does nothing if the lines are not listed in.
+   --  Remove every coverage annotations of opened source file editors.
 
    procedure Hide_All_Coverage_Information
      (Kernel   : Kernel_Handle;
       Analysis : Code_Analysis_Instance);
    --  Remove from the Locations view the listed uncovered lines of each files
-   --  of each loaded projects
-   --  Does nothing if the lines are not listed in
+   --  of each loaded projects.
+   --  Does nothing if the lines are not listed in.
+   --  Remove every coverage annotations of opened source file editors.
 
    procedure Destroy_Analysis_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
-   --  Call Destroy_Analysis_Instance
+   --  Call Destroy_Analysis_Instance.
 
    procedure Clear_Analysis_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
-   --  Call Clear_Analysis_Instance
+   --  Call Clear_Analysis_Instance.
 
    procedure Destroy_All_Analyzes_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
-   --  Call Destroy_All_Instances
+   --  Call Destroy_All_Analyzes.
 
    procedure On_Project_Changing_Hook
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
-   --  Call Destroy_All_Instances
+   --  Call Destroy_All_Analyzes.
+   --  Then create a new analysis.
 
    procedure Destroy_All_Analyzes (Kernel : Kernel_Handle);
    --  Call Destroy_Analysis_Instance for every element in
-   --  Code_Analysis_Module_ID.Instances
+   --  Code_Analysis_Module_ID.Instances.
 
    procedure Destroy_Analysis_Instance
      (Kernel   : Kernel_Handle;
       Analysis : Code_Analysis_Instance);
-   --  Free the memory used by the given analysis instance
+   --  Free the memory used by the given analysis instance.
 
    procedure Clear_Analysis_Instance
      (Kernel   : Kernel_Handle;
       Analysis : Code_Analysis_Instance);
-   --  Remove code coverage informations
+   --  Remove informations from the given analysis.
+   --  Destroy the associated Coverage Report if built.
 
    procedure Add_File_Coverage_Annotations
      (Kernel    : Kernel_Handle;
       File_Node : Code_Analysis.File_Access);
-   --  Actually add the annotation columns
+   --  Add the coverage annotation columns to the corresponding src_editor.
 
    procedure Remove_File_Coverage_Annotations
      (Kernel    : Kernel_Handle;
       File_Node : Code_Analysis.File_Access);
-   --  Actually removes coverage annotations of src_editors of file represented
-   --  by File_Node
+   --  Removes coverage annotations of src_editor of the given file.
 
    procedure Show_Subprogram_Coverage_Information_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
-   --  Callback of the "Show subprogram coverage information" entry of the
-   --  global "Coverage" submenu when the Context contains subprogram
-   --  information.
-   --  Add to the location view the unexecuted lines of the given current
-   --  entity, that is a subprogram and has associated coverage information
-   --  Add to the related file a coverage annotations column
+   --  Callback of the "Show subprogram coverage information" contextual entry.
+   --  Add to the location view the uncovered lines of the given current
+   --  contextual subprogram.
+   --  Add to the related file a coverage annotations column.
 
    procedure Hide_Subprogram_Coverage_Information_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
-   --  Callback that aim to remove from the Locations view the lines
-   --  corresponding to uncovered lines of the contextual subprogram
-   --  Does nothing if the lines are absent from the Locations view
+   --  Remove from the Locations view the uncovered lines of the contextual
+   --  subprogram.
+   --  Does nothing if the lines are absent from the Locations view.
 
    procedure Show_File_Coverage_Information_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
-   --  Callback of the "Show file coverage information" entry of the global
-   --  "Coverage" submenu when the Context contains file information.
-   --  Add to the location view the unexecuted lines of the given file
-   --  Also add a coverage annotations column
+   --  Callback of the "Show file coverage information" contextual entry.
+   --  Add to the location view the uncovered lines of the given file.
+   --  Also add a coverage annotations column to the corresponding src_editor.
 
    procedure Hide_File_Coverage_Information_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
-   --  Callback that aim to remove from the Locations view the lines
-   --  corresponding to uncovered lines of the contextual file
-   --  Does nothing if the file is absent from the Locations view
+   --  Remove from the Locations view the uncovered lines of the contextual
+   --  file.
+   --  Does nothing if the file is absent from the Locations view.
 
    procedure Show_Project_Coverage_Information_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
-   --  Callback of the "Show project coverage information" entry of the global
-   --  "Coverage" submenu when the Context only contains Project information.
-   --  Add to the location view the unexecuted lines of every files of the
-   --  given project
-   --  Also add a coverage annotations column to every files of the given
-   --  project
+   --  Callback of the "Show project coverage information" contextual entry.
+   --  Add to the Locations view the uncovered lines of every files of the
+   --  given project.
+   --  Also add a coverage annotations column to every opened src_editor.
 
    procedure Hide_Project_Coverage_Information_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
-   --  Callback that aim to remove from the Location view the lines
-   --  corresponding to uncovered lines and annotations of the files of the
-   --  contextual project
+   --  Remove from the Location view the uncovered lines of the files of the
+   --  contextual project.
+   --  Also tries to remove the scoped src_editor coverage annotations column.
    --  Does nothing if the files of the project are absent from the Locations
-   --  view, or not fitted with an annotations column
+   --  view, or not fitted with an annotations column.
 
    procedure Show_All_Coverage_Information_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
-   --  Callback of the "List lines not covered in all projects" menu entry
-   --  Calls List_Lines_Not_Covered_In_All_Projects
+   --  Callback of the "List lines not covered in all projects" menu entry.
+   --  Calls List_Lines_Not_Covered_In_All_Projects.
 
    procedure Hide_All_Coverage_Information_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
-   --  Callback that aim to remove from the Locations view the lines
-   --  corresponding to uncovered lines of all projects
-   --  Does nothing if the files of the projects are absent from the Locations
-   --  view
+   --  Remove from the Locations view the uncovered lines of all projects.
+   --  Does nothing if the corresponding files are absent from the Locations
+   --  view.
 
    pragma Unreferenced (Show_All_Coverage_Information_From_Menu,
                         Hide_All_Coverage_Information_From_Menu);
    --  On G917-013 request, these functions are not used anymore
-   --  but they are functional, and could be needed soon
-   --  ??? Should be totally removed after beta-testing campaign
+   --  but they are functional, and could be needed soon.
+   --  ??? Should be totally removed after beta-testing campaign.
 
    procedure List_Project_Uncovered_Lines
      (Kernel       : Kernel_Handle;
       Project_Node : Project_Access);
-   --  Add to the location view the unexecuted lines of the given Project of a
-   --  Coverage Report
+   --  Add to the location view the not covered lines of the given Project.
 
    procedure Clear_Project_Locations
      (Kernel       : Kernel_Handle;
       Project_Node : Project_Access);
    --  Remove from the Locations view the uncovered lines of each files of the
-   --  given project_node
-   --  Does nothing if the uncovered lines aren't listed there
+   --  given Project_Node.
+   --  Does nothing if the uncovered lines are not listed there.
 
    procedure Add_Project_Coverage_Annotations
      (Kernel : Kernel_Handle; Project_Node : Project_Access);
-   --  Adds coverage annotations of src_editors of its files
+   --  Add coverage annotations of the src_editors of the files of the project.
 
    procedure Remove_Project_Coverage_Annotations
      (Kernel : Kernel_Handle; Project_Node : Project_Access);
-   --  Removes coverage annotations of src_editors of its files
+   --  Removes coverage annotations from the src_editors of the project files.
 
    procedure List_File_Uncovered_Lines
      (Kernel    : Kernel_Handle;
       File_Node : Code_Analysis.File_Access);
-   --  Add to the location view the unexecuted lines of the given File of a
-   --  Coverage Report.
+   --  Add to the Locations view the not covered lines of the given File_Node.
 
    procedure Clear_File_Locations
      (Kernel    : Kernel_Handle;
       File_Node : Code_Analysis.File_Access);
    --  Remove from the Locations view the uncovered lines of the given
-   --  file_node
-   --  Does nothing if the uncovered lines aren't listed there
+   --  File_Node.
+   --  Does nothing if the uncovered lines aren't listed there.
 
    procedure List_Subprogram_Uncovered_Lines
      (Kernel    : Kernel_Handle;
       File_Node : Code_Analysis.File_Access;
       Subp_Node : Subprogram_Access);
-   --  Add to the location view the unexecuted lines of the given Subprogram
-   --  of a Coverage Report.
+   --  Add to the Locations view the not covered lines of the given Subprogram.
 
    procedure Clear_Subprogram_Locations
      (Kernel    : Kernel_Handle;
       File_Node : Code_Analysis.File_Access;
       Subp_Node : Subprogram_Access);
    --  Remove from the Locations view the uncovered lines of the given
-   --  subp_node
-   --  Does nothing if the uncovered lines aren't listed there
+   --  subp_node.
+   --  Does nothing if the uncovered lines aren't listed there.
 
    procedure Remove_Subprogram_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
@@ -608,12 +598,12 @@ package body Code_Analysis_Module is
    procedure Remove_File_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
-   --  Remove the selected file node from the related report and instance
+   --  Remove the selected file node from the related report and instance.
 
    procedure Remove_Project_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
-   --  Remove the selected project node from the related report and instance
+   --  Remove the selected project node from the related report and instance.
 
    function Find_Gcov_File
      (Kernel  : Kernel_Handle;
@@ -1901,7 +1891,6 @@ package body Code_Analysis_Module is
       Remove_Location_Category (Kernel, Coverage_Category);
       Remove_Line_Information_Column (Kernel, No_File, CodeAnalysis_Cst);
       Free_Code_Analysis (Analysis.Projects);
-      Analysis.Child := null;
    end Clear_Analysis_Instance;
 
    -----------------------------------
