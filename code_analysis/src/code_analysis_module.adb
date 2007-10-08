@@ -252,6 +252,7 @@ package body Code_Analysis_Module is
       Submenu     : access Gtk_Menu_Record'Class);
    --  Fill the given Submenu with the coverage entries that allow to handle
    --  subprograms.
+   pragma Unreferenced (Append_Subprogram_Menu_Entries);
 
    procedure Append_File_Menu_Entries
      (Cont_N_Anal : Context_And_Analysis;
@@ -2582,25 +2583,29 @@ package body Code_Analysis_Module is
       Item : Gtk_Menu_Item;
    begin
       if Has_File_Information (Cont_N_Anal.Context) then
-         if Has_Entity_Name_Information (Cont_N_Anal.Context) then
-            declare
-               Entity : constant Entities.Entity_Information :=
-                          Get_Entity (Cont_N_Anal.Context);
-            begin
-               if (Entity /= null
-                    and then Is_Subprogram (Entity))
-                 or else  Get_Creator (Cont_N_Anal.Context) =
-                 Abstract_Module_ID (Code_Analysis_Module_ID)
-               then
-                  --  So we have a subprogram information
-                  Append_Subprogram_Menu_Entries (Cont_N_Anal, Submenu);
-               else
-                  Append_File_Menu_Entries (Cont_N_Anal, Submenu);
-               end if;
-            end;
-         else
-            Append_File_Menu_Entries (Cont_N_Anal, Submenu);
-         end if;
+         --  Comment out the code making a distinction between clicking on
+         --  a subprogram entity and clicking anywhere else. We do not want
+         --  this refinement for the first release.
+
+--           if Has_Entity_Name_Information (Cont_N_Anal.Context) then
+--              declare
+--                 Entity : constant Entities.Entity_Information :=
+--                            Get_Entity (Cont_N_Anal.Context);
+--              begin
+--                 if (Entity /= null
+--                      and then Is_Subprogram (Entity))
+--                   or else  Get_Creator (Cont_N_Anal.Context) =
+--                   Abstract_Module_ID (Code_Analysis_Module_ID)
+--                 then
+--                    --  So we have a subprogram information
+--                    Append_Subprogram_Menu_Entries (Cont_N_Anal, Submenu);
+--                 else
+--                    Append_File_Menu_Entries (Cont_N_Anal, Submenu);
+--                 end if;
+--              end;
+--           else
+         Append_File_Menu_Entries (Cont_N_Anal, Submenu);
+--           end if;
       else
          Append_Project_Menu_Entries (Cont_N_Anal, Submenu);
       end if;
