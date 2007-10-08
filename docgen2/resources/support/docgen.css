@@ -126,7 +126,7 @@ div#leftSideInside a .button2
    list-style-position: inside;
    z-index: 1;
 }
-div#leftSideInside i .button2 
+div#leftSideInside i .button2
 {
    color: #802020;
 }
@@ -265,6 +265,8 @@ div.subprograms div.profile
 }
 div.subprograms div.details
 {
+   font-family: courier, courier new;
+   font-size: 10px;
    padding-top: 0px;
    padding-left: 5px;
    padding-top: 3px;
