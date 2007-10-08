@@ -45,7 +45,6 @@ with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with Language;                  use Language;
 with Language.C;
 with Language.Cpp;
-with Language.Documentation;    use Language.Documentation;
 with Language.Tree;             use Language.Tree;
 with Language_Handlers;         use Language_Handlers;
 with Projects;                  use Projects;
@@ -219,6 +218,11 @@ package body Docgen2 is
       Options : Docgen_Options) return String;
    --  Filters the doc according to the Options.
 
+   procedure Ensure_Loc_Index
+     (File_Buffer : GNAT.Strings.String_Access;
+      Loc         : in out Source_Location);
+   --  Ensures that loc.Index is properly set.
+
    procedure Set_Printout
      (Construct   : Simple_Construct_Information;
       File_Buffer : GNAT.Strings.String_Access;
@@ -244,6 +248,15 @@ package body Docgen2 is
      (Index_Type   => Natural,
       Element_Type => Context_Stack_Element);
 
+   type Comment is record
+      Start_Loc : Source_Location;
+      End_Loc   : Source_Location;
+   end record;
+
+   package Comments_List is new Ada.Containers.Vectors
+     (Index_Type   => Natural,
+      Element_Type => Comment);
+
    type Analysis_Context is record
       Stack       : Context_Stack.Vector;
       Iter        : Construct_Tree_Iterator;
@@ -252,6 +265,7 @@ package body Docgen2 is
       File        : Source_File;
       Language    : Language_Handler;
       Pkg_Nb      : Natural;
+      Comments    : Comments_List.Vector;
    end record;
 
    procedure Push
@@ -838,6 +852,50 @@ package body Docgen2 is
          Options);
    end Filter_Documentation;
 
+   ----------------------
+   -- Ensure_Loc_Index --
+   ----------------------
+
+   procedure Ensure_Loc_Index
+     (File_Buffer : GNAT.Strings.String_Access;
+      Loc         : in out Source_Location)
+   is
+      Col, Line : Natural;
+   begin
+      if File_Buffer = null then
+         return;
+      end if;
+
+      if Loc.Index >= File_Buffer'First then
+         --  Nothing to do: location index is initialized
+         return;
+      end if;
+
+      --  Case where index is not initialized in the construct
+      --  This happens with the C++ parser, for example.
+      if Loc.Column /= 0 then
+         Col := 1;
+         Line := 1;
+
+         for J in File_Buffer'Range loop
+
+            if File_Buffer (J) = ASCII.LF then
+               Line := Line + 1;
+               Col := 0;
+            elsif File_Buffer (J) /= ASCII.CR then
+               --  ??? what about utf-8 characters ?
+               Col := Col + 1;
+            end if;
+
+            if Line = Loc.Line and then Col = Loc.Column then
+               Loc.Index := J;
+               exit;
+            end if;
+
+         end loop;
+      end if;
+   end Ensure_Loc_Index;
+
    ------------------
    -- Set_Printout --
    ------------------
@@ -847,60 +905,19 @@ package body Docgen2 is
       File_Buffer : GNAT.Strings.String_Access;
       E_Info      : in Entity_Info)
    is
-      Col, Line          : Natural;
-      Idx_Start, Idx_End : Natural;
+      Sloc_Start, Sloc_End : Source_Location;
    begin
       E_Info.Printout_Loc := Construct.Sloc_Start;
 
-      if Construct.Sloc_Start.Index < File_Buffer'First then
-         --  Case where index is not initialized in the construct
-         --  This happens with the C++ parser, for example.
-         if Construct.Sloc_Start.Column /= 0
-           and then Construct.Sloc_End.Column /= 0
-         then
-            Col := 1;
-            Line := 1;
-            Idx_Start := 0;
-            Idx_End := 0;
+      Sloc_Start := Construct.Sloc_Start;
+      Sloc_End   := Construct.Sloc_End;
 
-            for J in File_Buffer'Range loop
-
-               if File_Buffer (J) = ASCII.LF then
-                  Line := Line + 1;
-                  Col := 0;
-               else
-                  --  ??? what about utf-8 characters ?
-                  Col := Col + 1;
-               end if;
-
-               if Line = Construct.Sloc_Start.Line
-                 and then Col = Construct.Sloc_Start.Column
-               then
-                  Idx_Start := J;
-               end if;
-
-               if Line = Construct.Sloc_End.Line
-                 and then Col = Construct.Sloc_End.Column
-               then
-                  Idx_End := J;
-               end if;
-
-               exit when Idx_Start /= 0 and then Idx_End /= 0;
-            end loop;
-
-            if Idx_Start /= 0 and then Idx_End /= 0 then
-               E_Info.Printout_Loc.Index := Idx_Start;
-               E_Info.Printout := new String'
-                 (File_Buffer (Idx_Start .. Idx_End));
-
-               return;
-            end if;
-         end if;
-      end if;
+      Ensure_Loc_Index (File_Buffer, Sloc_Start);
+      Ensure_Loc_Index (File_Buffer, Sloc_End);
 
       E_Info.Printout := new String'
         (File_Buffer
-           (Construct.Sloc_Start.Index .. Construct.Sloc_End.Index));
+           (Sloc_Start.Index .. Sloc_End.Index));
    end Set_Printout;
 
    ----------------------
@@ -1225,17 +1242,45 @@ package body Docgen2 is
 
          --  Retrieve documentation comments
          declare
-            Doc : constant String :=
-                    Filter_Documentation
-                      (Get_Documentation
-                         (Context.Language,
-                          Entity,
-                          Context.File_Buffer.all),
-                       Options);
+            Index : Natural;
          begin
-            if Doc /= "" then
-               E_Info.Description := new String'(Doc);
-            end if;
+            Index := Context.Comments.First_Index;
+
+            while Index <= Context.Comments.Last_Index loop
+               if Construct.Sloc_Start.Line - 1 =
+                 Context.Comments.Element (Index).End_Loc.Line
+               then
+                  E_Info.Description := new String'
+                    (Filter_Documentation
+                       (Comment_Block
+                       (Lang,
+                        Context.File_Buffer
+                          (Context.Comments.Element (Index).Start_Loc.Index ..
+                             Context.Comments.Element (Index).End_Loc.Index),
+                           Comment => False,
+                           Clean   => True),
+                        Options));
+
+               elsif Construct.Sloc_End.Line + 1 =
+                 Context.Comments.Element (Index).Start_Loc.Line
+               then
+                  E_Info.Description := new String'
+                    (Filter_Documentation
+                       (Comment_Block
+                       (Lang,
+                        Context.File_Buffer
+                          (Context.Comments.Element (Index).Start_Loc.Index ..
+                             Context.Comments.Element (Index).End_Loc.Index),
+                           Comment => False,
+                           Clean   => True),
+                        Options));
+               end if;
+
+               exit when Context.Comments.Element (Index).Start_Loc >
+                 Construct.Sloc_End;
+
+               Index := Index + 1;
+            end loop;
          end;
 
          --  Retrieve printout
@@ -1678,9 +1723,74 @@ package body Docgen2 is
    function Execute (Command : access Docgen_Command)
                      return Command_Return_Type
    is
+      function Get_All_Comments
+        (Lang   : Language_Access;
+         Buffer : String) return Comments_List.Vector;
+      --  Retrieve all comment blocks from a file
+
+      ----------------------
+      -- Get_All_Comments --
+      ----------------------
+
+      function Get_All_Comments
+        (Lang   : Language_Access;
+         Buffer : String) return Comments_List.Vector
+      is
+         Comments : Comments_List.Vector;
+         Last_Entity : Language_Entity := Normal_Text;
+
+         function CB
+           (Entity         : Language_Entity;
+            Sloc_Start     : Source_Location;
+            Sloc_End       : Source_Location;
+            Partial_Entity : Boolean) return Boolean;
+         --  Callback used when parsing the file.
+
+         --------
+         -- CB --
+         --------
+
+         function CB
+           (Entity         : Language_Entity;
+            Sloc_Start     : Source_Location;
+            Sloc_End       : Source_Location;
+            Partial_Entity : Boolean) return Boolean
+         is
+            pragma Unreferenced (Partial_Entity);
+            Elem : Comment;
+         begin
+            --  If last entity was a comment, then set its end to new
+            --  non-comment entity location - 1
+            if Entity = Comment_Text then
+               if Last_Entity = Comment_Text then
+                  Elem := Comments.Last_Element;
+                  Elem.End_Loc := Sloc_End;
+                  Comments.Replace_Element (Comments.Last_Index, Elem);
+
+               else
+                  Comments.Append
+                    ((Start_Loc => Sloc_Start,
+                      End_Loc   => Sloc_End));
+               end if;
+            end if;
+
+            Last_Entity := Entity;
+
+            return False;
+
+         exception
+            when E : others =>
+               Trace (Exception_Handle, E);
+               return True;
+         end CB;
+
+      begin
+         Parse_Entities (Lang, Buffer, CB'Unrestricted_Access);
+         return Comments;
+      end Get_All_Comments;
+
       File_EInfo    : Entity_Info;
       File_Buffer   : GNAT.Strings.String_Access;
-      Comment_Start : Natural;
       Comment_End   : Integer;
       Database      : constant Entities_Database :=
                         Get_Database (Command.Kernel);
@@ -1745,6 +1855,7 @@ package body Docgen2 is
                   Construct_T   : Construct_Tree;
                   Constructs    : aliased Construct_List;
                   Ctxt_Elem     : Context_Stack_Element;
+                  Comments      : Comments_List.Vector;
 
                begin
                   File_EInfo.Language := Language;
@@ -1784,6 +1895,8 @@ package body Docgen2 is
 
                   Construct_T := To_Construct_Tree (Constructs'Access, True);
 
+                  Comments := Get_All_Comments (Language, File_Buffer.all);
+
                   --  Retrieve the file's main unit comments, if any
 
                   --  If the main unit is documented, then there are
@@ -1794,53 +1907,57 @@ package body Docgen2 is
                   --  construct.
 
                   Comment_End :=
-                    Get_Construct (First (Construct_T)).Sloc_Start.Index - 1;
+                    Get_Construct (First (Construct_T)).Sloc_Start.Line - 1;
 
-                  --  Now skip all blanks before this first construct
-                  while Comment_End > File_Buffer'First loop
-                     Skip_Blanks (File_Buffer.all,
-                                  Comment_End,
-                                  -1);
-                     exit when File_Buffer (Comment_End) /= ASCII.LF;
-                     Comment_End := Comment_End - 1;
+                  for J in Comments.First_Index .. Comments.Last_Index loop
+                     if Comments.Element (J).Start_Loc.Line > Comment_End then
+                        --  Concatenate all comments before this
+                        for K in Comments.First_Index .. J - 1 loop
+                           --  Add this description to the unit node
+                           if File_EInfo.Description /= null then
+                              File_EInfo.Description := new String'
+                                (File_EInfo.Description.all & ASCII.LF &
+                                 Filter_Documentation
+                                   (Comment_Block
+                                      (Language,
+                                       File_Buffer
+                                         (Comments.Element
+                                            (K).Start_Loc.Index ..
+                                            Comments.Element
+                                              (K).End_Loc.Index),
+                                       Comment => False,
+                                       Clean   => True),
+                                    Command.Options));
+                           else
+                              File_EInfo.Description := new String'
+                                (Filter_Documentation
+                                   (Comment_Block
+                                      (Language,
+                                       File_Buffer
+                                         (Comments.Element
+                                            (K).Start_Loc.Index ..
+                                            Comments.Element
+                                              (K).End_Loc.Index),
+                                       Comment => False,
+                                       Clean   => True),
+                                    Command.Options));
+                           end if;
+                        end loop;
+
+                        exit;
+                     end if;
                   end loop;
 
-                  --  Now try to get a documentation before where we are
-                  Get_Documentation_Before
-                    (Get_Language_Context (Language).all,
-                     File_Buffer.all,
-                     Comment_End + 1,
-                     Comment_Start,
-                     Comment_End);
-
-                  --  Now that we have a comment block, we need to
-                  --  extract it without the comment markups
-                  if Comment_Start /= 0 then
-                     declare
-                        Block : constant String :=
-                                  Filter_Documentation
-                                    (Comment_Block
-                                       (Language,
-                                        File_Buffer
-                                          (Comment_Start .. Comment_End),
-                                        Comment => False,
-                                        Clean   => True),
-                                     Command.Options);
-                     begin
-                        if Block /= "" then
-                           --  Add this description to the unit node
-                           File_EInfo.Description := new String'(Block);
-                        end if;
-                     end;
-                  end if;
-
                   --  We now create the command's analysis_ctxt structure
-                  Command.Analysis_Ctxt.Iter        := First (Construct_T);
-                  Command.Analysis_Ctxt.Tree        := Construct_T;
-                  Command.Analysis_Ctxt.File_Buffer := File_Buffer;
-                  Command.Analysis_Ctxt.Language    := Lang_Handler;
-                  Command.Analysis_Ctxt.File        := File_EInfo.File;
-                  Command.Analysis_Ctxt.Pkg_Nb      := 0;
+                  Command.Analysis_Ctxt
+                    := (Stack       => Context_Stack.Empty_Vector,
+                        Iter        => First (Construct_T),
+                        Tree        => Construct_T,
+                        File_Buffer => File_Buffer,
+                        Language    => Lang_Handler,
+                        File        => File_EInfo.File,
+                        Comments    => Comments,
+                        Pkg_Nb      => 0);
 
                   Ctxt_Elem := (Parent_Entity => File_EInfo,
                                 Pkg_Entity    => null,
@@ -2164,13 +2281,6 @@ package body Docgen2 is
 
          Last_Idx := Sloc_End.Index;
 
-         --  Print line number
-         if Sloc_Start.Line > Line_Nb then
-            Line_Nb := Sloc_Start.Line;
-            Ada.Strings.Unbounded.Append
-              (Printout, Backend.Gen_Ref (Natural'Image (Line_Nb)));
-         end if;
-
          if Entity /= Identifier_Text
            and then Entity /= Partial_Identifier_Text
          then
@@ -2208,6 +2318,21 @@ package body Docgen2 is
             if EInfo /= null then
                --  The entity references an entity that we've analysed
                --  We generate a href to this entity declaration.
+
+               --  Print line number
+               if Sloc_Start.Line > Line_Nb then
+                  Line_Nb := Sloc_Start.Line;
+
+                  declare
+                     Line : constant String := Natural'Image (Line_Nb);
+                  begin
+                     Ada.Strings.Unbounded.Append
+                       (Printout,
+                        Backend.Gen_Ref (Line (Line'First + 1 .. Line'Last)));
+                  end;
+               end if;
+
+               --  Print href to entity declaration
                Ada.Strings.Unbounded.Append
                  (Printout,
                   Gen_Href
@@ -2289,6 +2414,7 @@ package body Docgen2 is
 
       type Common_Info_Tags is record
          Name_Tag           : Vector_Tag;
+         Src_Tag            : Vector_Tag;
          Printout_Tag       : Vector_Tag;
          Description_Tag    : Vector_Tag;
          References_Tag     : Vector_Tag;
@@ -2349,7 +2475,22 @@ package body Docgen2 is
       is
          Ref_Tag : Tag;
       begin
-         Append (Tags.Name_Tag, Get_Name (E_Info));
+         Append
+           (Tags.Name_Tag, Get_Name (E_Info));
+         declare
+            Line : constant String :=
+                     Integer'Image (E_Info.Location.File_Loc.Line);
+         begin
+            Append
+              (Tags.Src_Tag,
+               Backend.To_Href
+                 (Location => Line (Line'First + 1 .. Line'Last),
+                  Src_File => "src_" &
+                    VFS.Base_Name
+                      (Get_Filename (E_Info.Location.File_Loc.File)),
+                  Pkg_Nb   => 1));
+         end;
+
          Format_Printout (E_Info);
 
          if E_Info.Printout /= null then
@@ -2417,6 +2558,7 @@ package body Docgen2 is
          CI       : Common_Info_Tags) is
       begin
          Insert (Translation, Assoc (Tag_Name, CI.Name_Tag));
+         Insert (Translation, Assoc (Tag_Name & "_SRC", CI.Src_Tag));
          Insert (Translation, Assoc (Tag_Name & "_PRINTOUT", CI.Printout_Tag));
          Insert (Translation,
                  Assoc (Tag_Name & "_DESCRIPTION", CI.Description_Tag));
