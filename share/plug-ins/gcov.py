@@ -69,8 +69,7 @@ def run_gcov(menu):
       gcov_dir = GCOV_ROOT
 
    if not access (gcov_dir, R_OK and W_OK):
-      MDI.dialog ("""
-Could not access the directory:
+      MDI.dialog (""" Could not access the directory:
 
    """ + gcov_dir + """
 
@@ -125,8 +124,7 @@ on which you have permission to read and write.
 
    if not gcno_file_found:
       # No gcno file was found: display an appropriate message.
-      MDI.dialog ("""
-No ".gcno" file was found in any of the object directories.
+      MDI.dialog (""" No ".gcno" file was found in any of the object directories.
 
 Make sure you have compiled the sources of interest with
 the "Code coverage" flags.""")
@@ -134,8 +132,7 @@ the "Code coverage" flags.""")
    else:
       if not gcda_file_found:
          # Some gcno files were found, but no gcna files.
-         MDI.dialog ("""
-No ".gcda" file was found in any of the object directories.
+         MDI.dialog (""" No ".gcda" file was found in any of the object directories.
 
 Make sure you have run the executable(s) at least once.
 """)
