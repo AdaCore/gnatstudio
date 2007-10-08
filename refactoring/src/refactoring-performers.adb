@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2007, AdaCore              --
+--                 Copyright (C) 2003-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -79,7 +79,31 @@ package body Refactoring.Performers is
 
    procedure On_End_Of_Search (Data : in out Get_Locations_Data);
    --  Called when all the related files have been searched and the refactoring
-   --  should be performed
+   --  should be performed.
+
+   function Escape_Backslash (Pathname : String) return String;
+   --  Return Pathname with all backslashes escaped
+
+   ----------------------
+   -- Escape_Backslash --
+   ----------------------
+
+   function Escape_Backslash (Pathname : String) return String is
+      Escaped_Pathname : String (1 .. Pathname'Length * 2);
+      J                : Natural := 0;
+   begin
+      for K in Pathname'Range loop
+         J := J + 1;
+         if Pathname (K) = '\' then
+            Escaped_Pathname (J .. J + 1) := "\\";
+            J := J + 1;
+         else
+            Escaped_Pathname (J) := Pathname (K);
+         end if;
+      end loop;
+
+      return Escaped_Pathname (1 .. J);
+   end Escape_Backslash;
 
    ----------
    -- Free --
@@ -127,21 +151,21 @@ package body Refactoring.Performers is
    -----------------------
 
    procedure Get_All_Locations
-     (Kernel                : access Kernel_Handle_Record'Class;
-      Entity                : Entity_Information;
-      On_Completion         : access Refactor_Performer_Record'Class;
-      Auto_Compile          : Boolean := False;
-      Background_Mode       : Boolean := True)
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Entity          : Entity_Information;
+      On_Completion   : access Refactor_Performer_Record'Class;
+      Auto_Compile    : Boolean := False;
+      Background_Mode : Boolean := True)
    is
       pragma Unreferenced (Auto_Compile);
-      Data : Get_Locations_Data;
-      C    : Get_Locations_Commands.Generic_Asynchronous_Command_Access;
+      Data   : Get_Locations_Data;
+      C      : Get_Locations_Commands.Generic_Asynchronous_Command_Access;
       Result : Command_Return_Type;
    begin
-      Data.On_Completion     := Refactor_Performer (On_Completion);
-      Data.Kernel            := Kernel_Handle (Kernel);
-      Data.Iter              := new Entity_Reference_Iterator;
-      Data.Errors            := new Renaming_Error_Record;
+      Data.On_Completion := Refactor_Performer (On_Completion);
+      Data.Kernel        := Kernel_Handle (Kernel);
+      Data.Iter          := new Entity_Reference_Iterator;
+      Data.Errors        := new Renaming_Error_Record;
 
       Push_State (Data.Kernel, Busy);
       Data.Entity            := Entity;
@@ -157,6 +181,7 @@ package body Refactoring.Performers is
          (Running,
           Get_Current_Progress (Data.Iter.all),
           Get_Total_Progress   (Data.Iter.all)));
+
       if Background_Mode then
          Launch_Background_Command
            (Kernel, Command_Access (C), True, True, "Refactoring");
@@ -264,11 +289,11 @@ package body Refactoring.Performers is
    --------------
 
    function Get_Text
-     (Kernel     : access Kernel_Handle_Record'Class;
-      From_File  : VFS.Virtual_File;
-      Line       : Integer;
-      Column     : Visible_Column_Type;
-      Length     : Integer) return String
+     (Kernel    : access Kernel_Handle_Record'Class;
+      From_File : VFS.Virtual_File;
+      Line      : Integer;
+      Column    : Visible_Column_Type;
+      Length    : Integer) return String
    is
       Args : Argument_List_Access := new Argument_List'
         (new String'(Full_Name (From_File).all),
@@ -288,13 +313,13 @@ package body Refactoring.Performers is
    -----------------
 
    function Insert_Text
-     (Kernel     : access Kernel_Handle_Record'Class;
-      In_File    : VFS.Virtual_File;
-      Line       : Integer;
-      Column     : Visible_Column_Type := 1;
-      Text       : String;
-      Indent     : Boolean;
-      Replaced_Length : Integer := 0;
+     (Kernel            : access Kernel_Handle_Record'Class;
+      In_File           : VFS.Virtual_File;
+      Line              : Integer;
+      Column            : Visible_Column_Type := 1;
+      Text              : String;
+      Indent            : Boolean;
+      Replaced_Length   : Integer := 0;
       Only_If_Replacing : String := "") return Boolean
    is
       Args : Argument_List_Access := new Argument_List'
@@ -331,8 +356,8 @@ package body Refactoring.Performers is
 
       if Indent then
          Execute_GPS_Shell_Command (Kernel, "Editor.select_text", Args2.all);
-         Execute_GPS_Shell_Command (Kernel, "Editor.indent",
-                                    Argument_List'(1 .. 0 => null));
+         Execute_GPS_Shell_Command
+           (Kernel, "Editor.indent", Argument_List'(1 .. 0 => null));
       end if;
 
       Free (Args2);
@@ -373,8 +398,8 @@ package body Refactoring.Performers is
    begin
       Execute_GPS_Shell_Command
         (Kernel,
-         "File """ & Full_Name (File).all & """; "
-         & "EditorBuffer.get %1; EditorBuffer.start_undo_group %1");
+         "File """ & Escape_Backslash (Full_Name (File).all) & """; "
+         & "EditorBuffer.get ""%1""; EditorBuffer.start_undo_group ""%1""");
    end Start_Undo_Group;
 
    -----------------------
@@ -387,8 +412,8 @@ package body Refactoring.Performers is
    begin
       Execute_GPS_Shell_Command
         (Kernel,
-         "File """ & Full_Name (File).all & """; "
-         & "EditorBuffer.get %1; EditorBuffer.finish_undo_group %1");
+         "File """ & Escape_Backslash (Full_Name (File).all) & """; "
+         & "EditorBuffer.get ""%1""; EditorBuffer.finish_undo_group ""%1""");
    end Finish_Undo_Group;
 
    -----------------------
@@ -396,8 +421,8 @@ package body Refactoring.Performers is
    -----------------------
 
    function Get_Initial_Value
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Entity      : Entity_Information) return String is
+     (Kernel : access Kernel_Handle_Record'Class;
+      Entity : Entity_Information) return String is
    begin
       --  These cannot have an initial value, so we save time
       if Is_Container (Get_Kind (Entity).Kind)
