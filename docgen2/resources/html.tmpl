@@ -178,7 +178,10 @@
     <h1><a name='Classes' id='Classes'></a>Classes</h1>
     @@TABLE@@
     <div class="class">
-      <h3><a name='@_CLASS_LOC_@' id='@_CLASS_LOC_@'></a>@_CLASS_@</h3>
+      <h3>
+        <a name='@_CLASS_LOC_@' id='@_CLASS_LOC_@'></a>@_CLASS_@
+        (<a href="@_CLASS_SRC_@" title="see the source file">Source</a>)
+      </h3>
       <div class='details'>@_CLASS_PRINTOUT_@</div>
       @@IF@@ (@_EXIST:CLASS_PARENTS_@) or (@_EXIST:CLASS_PRIMITIVES_@)
       <div class='profile'>
@@ -234,6 +237,7 @@
           @@ELSE@@
            (@_TASK_TYPE_@)
           @@END_IF@@
+          (<a href="@_TASK_SRC_@" title="see the source file">Source</a>)
         </h3>
         @@IF@@ @_EXIST:TASK_ENTRY_@
         <div>Entries:</div>
@@ -264,7 +268,10 @@
       <h1><a name='Types' id='Types'></a>Types</h1>
       @@TABLE@@
       <div class="class">
-        <h3><a name='@_TYPE_LOC_@' id='@_TYPE_LOC_@'></a>@_TYPE_@</h3>
+        <h3>
+          <a name='@_TYPE_LOC_@' id='@_TYPE_LOC_@'></a>@_TYPE_@
+          (<a href="@_TYPE_SRC_@" title="see the source file">Source</a>)
+        </h3>
         <div class='details'>@_TYPE_PRINTOUT_@</div>
         @@IF@@ @_EXIST:TYPE_REFERENCES_@
         <div class='profile'>
@@ -293,6 +300,7 @@
           @@IF@@ @_CST_TYPE_@ /= ""
           <span class="type">(@_CST_TYPE_@)</span>
           @@END_IF@@
+          (<a href="@_CST_SRC_@" title="see the source file">Source</a>)
         </h3>
         <div class='details'>@_CST_PRINTOUT_@</div>
         @@IF@@ @_EXIST:CST_REFERENCES_@
@@ -327,6 +335,7 @@
                   <a href="#@_TASK_ENTRY_PARENT_LOC_@">@_TASK_ENTRY_PARENT_@</a>
                 </span>
                 .@_TASK_ENTRY_@
+                (<a href="@_TASK_ENTRY_SRC_@" title="see the source file">Source</a>)
               </h3>
               <div class='details'>@_REPLACE(span>[^>]*\(/span><table><tr><td>\(</td>):REPLACE(\)[ \n]*/\)</table><tr><td>):REPLACE_ALL(span\>\s*[:]/span></td><td>:):REPLACE_ALL(;/;</td></tr><tr><td>):TASK_ENTRY_PRINTOUT_@</div>
               @@IF@@ @_EXIST:TASK_ENTRY_REFERENCES_@
@@ -349,7 +358,10 @@
       @@END_TABLE@@
       @@TABLE@@
       <div class="class">
-        <h3><a name='@_SUBP_LOC_@' id='@_SUBP_LOC_@'></a>@_SUBP_@</h3>
+        <h3>
+          <a name='@_SUBP_LOC_@' id='@_SUBP_LOC_@'></a>@_SUBP_@
+          (<a href="@_SUBP_SRC_@" title="see the source file">Source</a>)
+        </h3>
         @@IF@@ @_EXIST:SUBP_GENERIC_PARAMETERS_@
         <div class='parameters'>
           Formal Generic Parameters:<br/>
