@@ -98,7 +98,7 @@ package body Code_Analysis_GUI is
         (Warning_Image, Stock_Dialog_Warning, Icon_Size_Dialog);
       Gtk_New
         (Error_Label,
-         -"This analysis report is empty. You can populate it with the "
+         -"This coverage report is empty. You can populate it with the "
          & '"' & (-"Load data..." & '"' &
            (-" entries of the /Tools/Coverage menu or the button below."
              )));
@@ -108,7 +108,7 @@ package body Code_Analysis_GUI is
       Pack_Start (View.Error_Box, Warning_Image, False, False, 7);
       Pack_Start (Label_And_Button, Error_Label, False, True, 7);
       Pack_Start (Button_Box, View.Load_Button, False, False, 0);
-      Pack_Start (Label_And_Button, Button_Box, False, True, 0);
+      Pack_Start (Label_And_Button, Button_Box, False, True, 7);
       Pack_Start (View.Error_Box, Label_And_Button, False, True, 0);
       Pack_Start (View, View.Error_Box, False, True, 0);
       Set_No_Show_All (View.Error_Box, True);
