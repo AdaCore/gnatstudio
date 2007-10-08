@@ -1076,10 +1076,9 @@ package body Language is
    begin
       if S1.Index > 0 and then S2.Index > 0 then
          return S1.Index = S2.Index;
-      elsif S1.Line = S2.Line then
-         return S1.Column = S2.Column;
       else
-         return False;
+         return S1.Line = S2.Line
+           and then S1.Column = S2.Column;
       end if;
    end "=";
 
@@ -1113,7 +1112,7 @@ package body Language is
 
    function ">" (S1, S2 : Source_Location) return Boolean is
    begin
-      return not (S1 <= S2);
+      return S2 < S1;
    end ">";
 
    ----------
@@ -1122,7 +1121,7 @@ package body Language is
 
    function ">=" (S1, S2 : Source_Location) return Boolean is
    begin
-      return S1 = S2 or else S1 > S2;
+      return not (S1 < S2);
    end ">=";
 
 end Language;
