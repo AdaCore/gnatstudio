@@ -2578,7 +2578,7 @@ package body Debugger.Gdb is
    is
       S         : constant String :=
                     Send (Debugger, "info sources", Mode => Internal);
-      Num_Files : Natural := 0;
+      Max_Files : Natural := 0;
 
    begin
       --  ??? Will fail on
@@ -2590,17 +2590,17 @@ package body Debugger.Gdb is
 
       for J in S'Range loop
          if S (J) = ',' then
-            Num_Files := Num_Files + 1;
+            Max_Files := Max_Files + 1;
          end if;
       end loop;
 
       --  Add two, since there are in fact two lists of files (already
       --  read, and to be read), that do not end with ','
 
-      Num_Files := Num_Files + 2;
+      Max_Files := Max_Files + 2;
 
       declare
-         Result : GNAT.Strings.String_List (1 .. Num_Files);
+         Result : GNAT.Strings.String_List (1 .. Max_Files);
          Num    : Natural := 1;
          Index  : Positive := S'First;
          Start  : Positive;
@@ -2617,6 +2617,8 @@ package body Debugger.Gdb is
                Skip_Blanks (S, Index);
             end loop;
 
+            exit when Index > S'Last;
+
             Start := Index;
             while Index <= S'Last
               and then S (Index) /= ','
@@ -2625,9 +2627,7 @@ package body Debugger.Gdb is
                Index := Index + 1;
             end loop;
 
-            if Index <= S'Last
-              and then S (Start .. Index - 1) /= "<bad string table offset>"
-            then
+            if S (Start .. Index - 1) /= "<bad string table offset>" then
                Result (Num) := new String'(S (Start .. Index - 1));
                Num := Num + 1;
                Index := Index + 1;
