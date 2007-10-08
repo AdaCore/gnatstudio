@@ -75,6 +75,7 @@ package Code_Analysis_Tree_Model is
    procedure Fill_Iter
      (Model     : in out Gtk_Tree_Store;
       Iter      : in out Gtk_Tree_Iter;
+      Sibling   : in out Gtk_Tree_Iter;
       Parent    : Gtk_Tree_Iter;
       Prj_Node  : Project_Access;
       File_Node : File_Access;
@@ -88,6 +89,7 @@ package Code_Analysis_Tree_Model is
    procedure Fill_Iter_With_Files
      (Model     : in out Gtk_Tree_Store;
       Iter      : in out Gtk_Tree_Iter;
+      Sibling   : in out Gtk_Tree_Iter;
       Prj_Node  : Project_Access;
       File_Node : File_Access;
       Bin_Mode  : Boolean := False;
@@ -110,6 +112,7 @@ package Code_Analysis_Tree_Model is
    procedure Fill_Iter
      (Model    : in out Gtk_Tree_Store;
       Iter     : in out Gtk_Tree_Iter;
+      Sibling  : in out Gtk_Tree_Iter;
       Prj_Node : Project_Access;
       Bin_Mode : Boolean := False;
       Icons    : Code_Analysis_Icons);
@@ -121,6 +124,7 @@ package Code_Analysis_Tree_Model is
    procedure Fill_Iter_With_Files
      (Model    : in out Gtk_Tree_Store;
       Iter     : in out Gtk_Tree_Iter;
+      Sibling  : in out Gtk_Tree_Iter;
       Prj_Node : Project_Access;
       Bin_Mode : Boolean := False;
       Icons    : Code_Analysis_Icons);
