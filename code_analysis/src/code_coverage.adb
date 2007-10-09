@@ -149,8 +149,8 @@ package body Code_Coverage is
                File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data.Coverage
                  := 0;
                File_Node.Lines (Line_Num).Contents := new String'
-                 (Strip_CR (File_Contents
-                  (Line_Matches (3).First .. Line_Matches (3).Last)));
+                 (File_Contents
+                    (Line_Matches (3).First .. Line_Matches (3).Last));
                Not_Cov_Count := Not_Cov_Count + 1;
             when others =>
                File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data
