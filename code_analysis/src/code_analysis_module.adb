@@ -1499,11 +1499,10 @@ package body Code_Analysis_Module is
 
       declare
          Prj_Name : Project_Type;
-         Prj_Node : Code_Analysis.Project_Access;
+         Prj_Node : Project_Access;
       begin
-         Prj_Node := Get_Or_Create
-           (Cont_N_Anal.Analysis.Projects,
-            Project_Information (Local_Context));
+         Prj_Node := Get_Or_Create (Cont_N_Anal.Analysis.Projects,
+                                    Project_Information (Local_Context));
 
          if Prj_Node.Analysis_Data.Coverage_Data = null then
             --  If the current context's project has no coverage data, it has
@@ -1523,6 +1522,17 @@ package body Code_Analysis_Module is
                end if;
 
                Show_All (Cont_N_Anal.Analysis.View.Error_Box);
+               --  Removes Prj_Node from its container as we just created it
+               Project_Maps.Delete
+                 (Cont_N_Anal.Analysis.Projects.all, Prj_Node.Name);
+               --  Free Prj_Node
+               Free_Project (Prj_Node);
+
+               if Raise_Report then
+                  Raise_Child (Cont_N_Anal.Analysis.Child);
+               end if;
+
+               return;
             end if;
          else
             if Cont_N_Anal.Analysis.View.Error_Box /= null then
@@ -2524,8 +2534,7 @@ package body Code_Analysis_Module is
       Free_Project (Prj_Node);
 
       if Project_Maps.Length (Cont_N_Anal.Analysis.Projects.all) = 0 then
-         Show_Analysis_Report
-           (Get_Kernel (Cont_N_Anal.Context), Cont_N_Anal);
+         Refresh_Analysis_Report (Cont_N_Anal);
       end if;
    exception
       when E : others => Trace (Exception_Handle, E);
