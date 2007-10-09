@@ -49,6 +49,7 @@ endif
 	$(RM) $(sharedir)/gps/python/GPS_old.py
 	$(RM) $(sharedir)/gps/plug-ins/emacs.xml
 	$(RM) $(sharedir)/gps/library/gnatpsta.py
+	$(RM) $(sharedir)/gps/library/methods.py
 	-$(RMDIR) $(sharedir)/gps/python/
 	(cd share; tar cf - icons/)  | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - *.*)  | (cd $(sharedir)/gps; tar xf -)
