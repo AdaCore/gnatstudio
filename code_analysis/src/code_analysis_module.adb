@@ -1020,9 +1020,18 @@ package body Code_Analysis_Module is
       else
          declare
             Contents : String_Access := Read_File (Cov_File);
+            Last     : Integer;
+            CR_Found : Boolean;
+
          begin
-            File_Contents := new String'(Strip_CR (Contents.all));
-            Free (Contents);
+            Strip_CR (Contents.all, Last, CR_Found);
+
+            if CR_Found then
+               File_Contents := new String'(Contents (Contents'First .. Last));
+               Free (Contents);
+            else
+               File_Contents := Contents;
+            end if;
          end;
 
          Add_File_Info (File_Node, File_Contents);
