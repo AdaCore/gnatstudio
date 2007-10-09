@@ -728,6 +728,7 @@ this document includes:
 @item Visual comparison of files
 @item Version control
 @item Flexible multiple document interface
+@item Code coverage
 @end itemize
 
 For more information, please look at the @i{User's Guide} (@url{gps.html}),
