@@ -30,7 +30,6 @@ with GNAT.Strings;              use GNAT.Strings;
 
 with Basic_Types;
 with Commands;                  use Commands;
-with Doc_Utils;                 use Doc_Utils;
 with Entities;                  use Entities;
 with Entities.Queries;          use Entities.Queries;
 with File_Utils;
@@ -1100,6 +1099,10 @@ package body Docgen2 is
          Loc : File_Location) return Entity_Info;
       --  Create a new Entity Info and update the Entity info list
 
+      function Find_Doc (Sloc_Start, Sloc_End : Source_Location) return String;
+      --  Retrieve documentation comments just before Sloc_Start or just
+      --  after Sloc_End
+
       -----------------
       -- Create_Xref --
       -----------------
@@ -1180,6 +1183,52 @@ package body Docgen2 is
          return E_Info;
       end Create_EInfo;
 
+      --------------
+      -- Find_Doc --
+      --------------
+
+      function Find_Doc (Sloc_Start, Sloc_End : Source_Location) return String
+      is
+         Index : Natural;
+      begin
+         Index := Context.Comments.First_Index;
+
+         while Index <= Context.Comments.Last_Index loop
+            if Sloc_Start.Line - 1 =
+              Context.Comments.Element (Index).End_Loc.Line
+            then
+               return Filter_Documentation
+                 (Comment_Block
+                    (Lang,
+                     Context.File_Buffer
+                       (Context.Comments.Element (Index).Start_Loc.Index ..
+                          Context.Comments.Element (Index).End_Loc.Index),
+                     Comment => False,
+                     Clean   => True),
+                  Options);
+
+            elsif Sloc_End.Line + 1 =
+              Context.Comments.Element (Index).Start_Loc.Line
+            then
+               return Filter_Documentation
+                 (Comment_Block
+                    (Lang,
+                     Context.File_Buffer
+                       (Context.Comments.Element (Index).Start_Loc.Index ..
+                          Context.Comments.Element (Index).End_Loc.Index),
+                     Comment => False,
+                     Clean   => True),
+                  Options);
+            end if;
+
+            exit when Context.Comments.Element (Index).Start_Loc > Sloc_End;
+
+            Index := Index + 1;
+         end loop;
+
+         return "";
+      end Find_Doc;
+
    begin
       --  Exit when no more construct is available
       if Context.Iter = Null_Construct_Tree_Iterator then
@@ -1242,45 +1291,12 @@ package body Docgen2 is
 
          --  Retrieve documentation comments
          declare
-            Index : Natural;
+            Doc : constant String :=
+                    Find_Doc (Construct.Sloc_Start, Construct.Sloc_End);
          begin
-            Index := Context.Comments.First_Index;
-
-            while Index <= Context.Comments.Last_Index loop
-               if Construct.Sloc_Start.Line - 1 =
-                 Context.Comments.Element (Index).End_Loc.Line
-               then
-                  E_Info.Description := new String'
-                    (Filter_Documentation
-                       (Comment_Block
-                       (Lang,
-                        Context.File_Buffer
-                          (Context.Comments.Element (Index).Start_Loc.Index ..
-                             Context.Comments.Element (Index).End_Loc.Index),
-                           Comment => False,
-                           Clean   => True),
-                        Options));
-
-               elsif Construct.Sloc_End.Line + 1 =
-                 Context.Comments.Element (Index).Start_Loc.Line
-               then
-                  E_Info.Description := new String'
-                    (Filter_Documentation
-                       (Comment_Block
-                       (Lang,
-                        Context.File_Buffer
-                          (Context.Comments.Element (Index).Start_Loc.Index ..
-                             Context.Comments.Element (Index).End_Loc.Index),
-                           Comment => False,
-                           Clean   => True),
-                        Options));
-               end if;
-
-               exit when Context.Comments.Element (Index).Start_Loc >
-                 Construct.Sloc_End;
-
-               Index := Index + 1;
-            end loop;
+            if Doc /= "" then
+               E_Info.Description := new String'(Doc);
+            end if;
          end;
 
          --  Retrieve printout
@@ -1344,12 +1360,9 @@ package body Docgen2 is
 
                   declare
                      Doc : constant String :=
-                             Filter_Documentation
-                               (Get_Documentation
-                                  (Context.Language,
-                                   Param_Entity,
-                                   Context.File_Buffer.all),
-                                Options);
+                             Find_Doc
+                               (Param_EInfo.Entity_Loc,
+                                Param_EInfo.Entity_Loc);
                   begin
                      if Doc /= "" then
                         Param_EInfo.Description := new String'(Doc);
@@ -1797,6 +1810,11 @@ package body Docgen2 is
       File          : Source_File;
       use type Ada.Containers.Count_Type;
    begin
+      --  Freeze the database to speed-up the processing of the cross
+      --  references. The database has just been updated before the command
+      --  has been launched.
+      Freeze (Database);
+
       if Command.Analysis_Ctxt.Iter /= Null_Construct_Tree_Iterator then
          --  Analysis of a new construct of the current file.
          Analyse_Construct
@@ -2124,14 +2142,18 @@ package body Docgen2 is
          Command.Src_Files.Clear;
          Command.Files.Clear;
 
+         Release (Database);
          return Success;
       end if;
+
+      Release (Database);
 
       return Execute_Again;
 
    exception
       when E : others =>
          Trace (Exception_Handle, E);
+         Release (Database);
          return Failure;
    end Execute;
 
