@@ -59,7 +59,7 @@ package body Code_Coverage is
    is
       Current           : Natural;
       Line_Regexp       : constant Pattern_Matcher := Compile
-        ("^ +(\d+|#####): *(\d+):([^\r]*)(\r)?$", Multiple_Lines);
+        ("^ +(\d+|#####): *(\d+):(.*$)", Multiple_Lines);
       Line_Matches      : Match_Array (0 .. 3);
       Last_Line_Regexp  : constant Pattern_Matcher := Compile
         ("^ +(\d+|#####|-): *(\d+):", Multiple_Lines);
@@ -148,8 +148,9 @@ package body Code_Coverage is
                  := new Coverage;
                File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data.Coverage
                  := 0;
-               File_Node.Lines (Line_Num).Contents := new String'(File_Contents
-                    (Line_Matches (3).First .. Line_Matches (3).Last));
+               File_Node.Lines (Line_Num).Contents := new String'
+                 (Strip_CR (File_Contents
+                  (Line_Matches (3).First .. Line_Matches (3).Last)));
                Not_Cov_Count := Not_Cov_Count + 1;
             when others =>
                File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data
