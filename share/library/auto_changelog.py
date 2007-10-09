@@ -28,6 +28,10 @@ def on_file_edited (hook, file):
 
    log    = EditorBuffer.get(file, False, False)
 
+   #  If the log is not empty, exit.
+   if log.get_chars() != '':
+      return
+
    #  Query the Locations View for a list of visual differences for the source
    locations = Locations.list_locations ("Visual differences", basename)
 
