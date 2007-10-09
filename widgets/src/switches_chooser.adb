@@ -119,7 +119,7 @@ package body Switches_Chooser is
       --  enabling and disabling options as in "+opt -opt", so these are
       --  check buttons, with no parameter anyway
 
-      if Separator /= ASCII.LF
+      if Separator = ASCII.LF
         or else Switch (Switch'First) /= Config.Switch_Char
       then
          Append (Config.Getopt_Switches,
