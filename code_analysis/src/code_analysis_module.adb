@@ -320,6 +320,10 @@ package body Code_Analysis_Module is
    --  Connect some signals to the widgets of the Cont_N_Anal.Analysis.View.
    --  Also create and put the report in an MDI child.
 
+   procedure Refresh_Analysis_Report (Cont_N_Anal : Context_And_Analysis);
+   --  Reload the Coverage Report contens from given Analysis instance if the
+   --  report is built
+
    procedure On_Destroy (Widget      : access Glib.Object.GObject_Record'Class;
                          Cont_N_Anal : Context_And_Analysis);
    --  Callback for the "destroy" signal that mark the report as destroyed
@@ -971,6 +975,7 @@ package body Code_Analysis_Module is
          Add_Gcov_File_Info
            (Get_Kernel (Cont_N_Anal.Context), Src_File, Cov_File, Prj_Node);
          Compute_Project_Coverage (Prj_Node);
+         Refresh_Analysis_Report (Cont_N_Anal);
       end if;
    end Add_Gcov_File_Info_In_Callback;
 
@@ -1122,6 +1127,7 @@ package body Code_Analysis_Module is
    begin
       Prj_Node := Get_Or_Create (Cont_N_Anal.Analysis.Projects, Prj_Name);
       Add_Gcov_Project_Info (Get_Kernel (Cont_N_Anal.Context), Prj_Node);
+      Refresh_Analysis_Report (Cont_N_Anal);
    end Add_Gcov_Project_Info_In_Callback;
 
    ---------------------------
@@ -1252,6 +1258,8 @@ package body Code_Analysis_Module is
          Add_Gcov_Project_Info (Get_Kernel (Cont_N_Anal.Context), Prj_Node);
          Next (Prj_Iter);
       end loop;
+
+      Refresh_Analysis_Report (Cont_N_Anal);
    end Add_All_Gcov_Project_Info_In_Callback;
 
    ----------------------------------------------
@@ -1459,7 +1467,7 @@ package body Code_Analysis_Module is
       Raise_Report : Boolean := True)
    is
       Local_Context : Selection_Context;
-      Iter          : Gtk_Tree_Iter;
+      Iter          : Gtk_Tree_Iter := Null_Iter;
       Path          : Gtk_Tree_Path;
    begin
 
@@ -1474,8 +1482,9 @@ package body Code_Analysis_Module is
             Cont_N_Anal.Analysis.Projects,
             Binary_Coverage_Mode);
          Connect_Report (Kernel, Cont_N_Anal);
-      elsif Cont_N_Anal.Analysis.View.Error_Box /= null then
-         Hide_All (Cont_N_Anal.Analysis.View.Error_Box);
+      else
+         --  If Report already existed, clear its Gtk_Tree_Store
+         Clear (Cont_N_Anal.Analysis.View.Model);
       end if;
 
       --------------------------------------
@@ -1515,6 +1524,10 @@ package body Code_Analysis_Module is
 
                Show_All (Cont_N_Anal.Analysis.View.Error_Box);
             end if;
+         else
+            if Cont_N_Anal.Analysis.View.Error_Box /= null then
+               Hide_All (Cont_N_Anal.Analysis.View.Error_Box);
+            end if;
          end if;
       end;
 
@@ -1525,8 +1538,6 @@ package body Code_Analysis_Module is
       --  Fill the report --
       ----------------------
 
-      Clear (Cont_N_Anal.Analysis.View.Model);
-      Iter := Get_Iter_First (Cont_N_Anal.Analysis.View.Model);
       Fill_Iter (Cont_N_Anal.Analysis.View.Model, Iter,
                  Cont_N_Anal.Analysis.Projects, Binary_Coverage_Mode,
                  Cont_N_Anal.Analysis.View.Icons);
@@ -1540,13 +1551,15 @@ package body Code_Analysis_Module is
 
       if Iter /= Null_Iter then
          Path := Get_Path (Cont_N_Anal.Analysis.View.Model, Iter);
-         Collapse_All (Cont_N_Anal.Analysis.View.Tree);
-         Expand_To_Path (Cont_N_Anal.Analysis.View.Tree, Path);
-         Select_Path (Get_Selection (Cont_N_Anal.Analysis.View.Tree), Path);
-         Path_Free (Path);
       else
-         Expand_All (Cont_N_Anal.Analysis.View.Tree);
+         Path := Get_Path (Cont_N_Anal.Analysis.View.Model,
+                           Get_Iter_First (Cont_N_Anal.Analysis.View.Model));
       end if;
+
+      Collapse_All (Cont_N_Anal.Analysis.View.Tree);
+      Expand_To_Path (Cont_N_Anal.Analysis.View.Tree, Path);
+      Select_Path (Get_Selection (Cont_N_Anal.Analysis.View.Tree), Path);
+      Path_Free (Path);
 
       if Raise_Report then
          Raise_Child (Cont_N_Anal.Analysis.Child);
@@ -1593,6 +1606,18 @@ package body Code_Analysis_Module is
          Cont_N_Anal);
       Put (Get_MDI (Kernel), Cont_N_Anal.Analysis.Child);
    end Connect_Report;
+
+   -----------------------------
+   -- Refresh_Analysis_Report --
+   -----------------------------
+
+   procedure Refresh_Analysis_Report (Cont_N_Anal : Context_And_Analysis) is
+   begin
+      if Cont_N_Anal.Analysis.View /= null then
+         Show_Analysis_Report
+           (Get_Kernel (Cont_N_Anal.Context), Cont_N_Anal, False);
+      end if;
+   end Refresh_Analysis_Report;
 
    ----------------
    -- On_Destroy --
