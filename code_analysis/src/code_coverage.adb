@@ -59,7 +59,7 @@ package body Code_Coverage is
    is
       Current           : Natural;
       Line_Regexp       : constant Pattern_Matcher := Compile
-        ("^ +(\d+|#####): *(\d+):(.*$)", Multiple_Lines);
+        ("^ +(\d+|#####): *(\d+):([^\r]*)(\r)?$", Multiple_Lines);
       Line_Matches      : Match_Array (0 .. 3);
       Last_Line_Regexp  : constant Pattern_Matcher := Compile
         ("^ +(\d+|#####|-): *(\d+):", Multiple_Lines);
