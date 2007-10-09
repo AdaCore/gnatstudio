@@ -1356,6 +1356,10 @@ package body ALI_Parser is
    begin
       Assert (Assert_Me, LI /= null, "No LI to update");
 
+      if Frozen (Handler.Db) then
+         return True;
+      end if;
+
       New_Timestamp := File_Time_Stamp (Get_LI_Filename (LI));
 
       if New_Timestamp /= Get_Timestamp (LI) then
