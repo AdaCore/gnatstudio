@@ -956,8 +956,36 @@ package body Entities is
    begin
       Db          := new Entities_Database_Record;
       Db.Registry := Registry;
+      Db.Frozen   := False;
       return Db;
    end Create;
+
+   ------------
+   -- Freeze --
+   ------------
+
+   procedure Freeze (Db : Entities_Database) is
+   begin
+      Db.Frozen := True;
+   end Freeze;
+
+   -------------
+   -- Release --
+   -------------
+
+   procedure Release (Db : Entities_Database) is
+   begin
+      Db.Frozen := False;
+   end Release;
+
+   ------------
+   -- Frozen --
+   ------------
+
+   function Frozen (Db : Entities_Database) return Boolean is
+   begin
+      return Db.Frozen;
+   end Frozen;
 
    -------------------------------
    -- Register_Language_Handler --
