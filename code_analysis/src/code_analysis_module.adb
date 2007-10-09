@@ -67,6 +67,8 @@ with Code_Coverage;                          use Code_Coverage;
 with Code_Analysis;                          use Code_Analysis;
 with Code_Analysis_GUI;                      use Code_Analysis_GUI;
 
+with String_Utils;                           use String_Utils;
+
 package body Code_Analysis_Module is
 
    Src_File_Cst : aliased   constant String := "src";
@@ -1016,7 +1018,13 @@ package body Code_Analysis_Module is
          --  Code_Analysis node
          File_Node.Lines := new Line_Array (1 .. 1);
       else
-         File_Contents := Read_File (Cov_File);
+         declare
+            Contents : String_Access := Read_File (Cov_File);
+         begin
+            File_Contents := new String'(Strip_CR (Contents.all));
+            Free (Contents);
+         end;
+
          Add_File_Info (File_Node, File_Contents);
 
          --  Check for project runs info
