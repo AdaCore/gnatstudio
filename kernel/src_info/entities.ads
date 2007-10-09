@@ -74,6 +74,16 @@ package Entities is
    procedure Destroy (Db : in out Entities_Database);
    --  Free the memory occupied by Db
 
+   procedure Freeze (Db : Entities_Database);
+   --  Set the Database as read-only: this won't check for updates, and thus
+   --  will speed-up processing of entities cross-ref.
+
+   procedure Release (Db : Entities_Database);
+   --  Unset the freeze state of the database.
+
+   function Frozen (Db : Entities_Database) return Boolean;
+   --  Return the frozen state of the database
+
    function Get_LI_Handler
      (Db              : Entities_Database;
       Source_Filename : VFS.Virtual_File) return LI_Handler;
@@ -1277,12 +1287,13 @@ private
    -----------------------
 
    type Entities_Database_Record is record
-      Files    : Files_HTable.HTable;
-      LIs      : LI_HTable.HTable;
+      Files           : Files_HTable.HTable;
+      LIs             : LI_HTable.HTable;
 
       Predefined_File : Source_File;
-      Lang     : Abstract_Language_Handler;
-      Registry : Projects.Registry.Project_Registry_Access;
+      Lang            : Abstract_Language_Handler;
+      Registry        : Projects.Registry.Project_Registry_Access;
+      Frozen          : Boolean := False;
    end record;
    type Entities_Database is access Entities_Database_Record;
 
