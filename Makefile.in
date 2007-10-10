@@ -30,6 +30,7 @@ install-common:
 	$(MKDIR) $(examplesdir)
 	$(MKDIR) $(sharedir)/gps
 	$(MKDIR) $(sharedir)/gps/docgen
+	$(MKDIR) $(sharedir)/gps/docgen2
 	$(MKDIR) $(sharedir)/gps/aunit
 ifeq ($(OS),Windows_NT)
 # On Windows we distribute two versions of subversion.xml, one that
@@ -53,6 +54,8 @@ endif
 	-$(RMDIR) $(sharedir)/gps/python/
 	(cd share; tar cf - icons/)  | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - *.*)  | (cd $(sharedir)/gps; tar xf -)
+	(cd docgen; tar cf - html/*.thtml) \
+		| (cd $(sharedir)/gps/docgen; tar xf -)
 	(cd docgen2/resources; tar cf - *.tmpl support/*.css support/*.js support/images/*.png) \
 		| (cd $(sharedir)/gps/docgen; tar xf -)
 	(cd aunit/templates; tar cf - *.tmpl) \

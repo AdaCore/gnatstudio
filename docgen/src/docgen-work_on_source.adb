@@ -1089,11 +1089,35 @@ package body Docgen.Work_On_Source is
       ----------------------
 
       procedure Process_Children (Info : Entity_Information) is
-         Children : constant Entity_Information_Array :=
-                      Get_Child_Types (Info);
+         Iter        : Children_Iterator := Get_Child_Types (Info);
+         Nb_Children : Natural := 0;
       begin
-         Process_Parents_Or_Children
-           (Children, Child_With_Link, Child_Without_Link, No_Child);
+         while not At_End (Iter) loop
+            if Get (Iter) /= null then
+               Nb_Children := Nb_Children + 1;
+            end if;
+
+            Next (Iter);
+         end loop;
+
+         declare
+            Children : Entity_Information_Array (1 .. Nb_Children);
+         begin
+            Nb_Children := 0;
+            Iter := Get_Child_Types (Info);
+
+            while not At_End (Iter) loop
+               if Get (Iter) /= null then
+                  Nb_Children := Nb_Children + 1;
+                  Children (Nb_Children) := Get (Iter);
+               end if;
+
+               Next (Iter);
+            end loop;
+
+            Process_Parents_Or_Children
+              (Children, Child_With_Link, Child_Without_Link, No_Child);
+         end;
       end Process_Children;
 
       ------------------

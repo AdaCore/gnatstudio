@@ -201,7 +201,8 @@ package body Docgen.Work_On_File is
                --  ??? Ada tagged types are of Class kind.
 
                return Get_Parent_Types (Info)'Length > 0
-                 or else Get_Child_Types (Info)'Length > 0;
+                 or else (not At_End (Get_Child_Types (Info))
+                          and then Get (Get_Child_Types (Info)) /= null);
 
             when others =>
                return False;

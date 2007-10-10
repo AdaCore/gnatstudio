@@ -31,19 +31,19 @@ package body Docgen2_Backend.HTML is
    begin
       case Kind is
          when Tmpl_Spec =>
-            return System_Dir & "share/gps/docgen/html.tmpl";
+            return System_Dir & "share/gps/docgen2/html.tmpl";
          when Tmpl_Class_Tree =>
-            return System_Dir & "share/gps/docgen/tree.tmpl";
+            return System_Dir & "share/gps/docgen2/tree.tmpl";
          when Tmpl_Class_Tree_Elem =>
-            return System_Dir & "share/gps/docgen/tree_elem.tmpl";
+            return System_Dir & "share/gps/docgen2/tree_elem.tmpl";
          when Tmpl_Index =>
-            return System_Dir & "share/gps/docgen/entities.tmpl";
+            return System_Dir & "share/gps/docgen2/entities.tmpl";
          when Tmpl_TOC =>
-            return System_Dir & "share/gps/docgen/index.tmpl";
+            return System_Dir & "share/gps/docgen2/index.tmpl";
          when Tmpl_Src =>
-            return System_Dir & "share/gps/docgen/src.tmpl";
+            return System_Dir & "share/gps/docgen2/src.tmpl";
          when Tmpl_Src_Index =>
-            return System_Dir & "share/gps/docgen/src_index.tmpl";
+            return System_Dir & "share/gps/docgen2/src_index.tmpl";
       end case;
    end Get_Template;
 
@@ -56,7 +56,7 @@ package body Docgen2_Backend.HTML is
    is
       pragma Unreferenced (Backend);
    begin
-      return System_Dir & "share/gps/docgen/support/";
+      return System_Dir & "share/gps/docgen2/support/";
    end Get_Support_Dir;
 
    -------------------------
