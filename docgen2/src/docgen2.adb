@@ -906,14 +906,13 @@ package body Docgen2 is
    is
       Sloc_Start, Sloc_End : Source_Location;
    begin
-      E_Info.Printout_Loc := Construct.Sloc_Start;
-
       Sloc_Start := Construct.Sloc_Start;
       Sloc_End   := Construct.Sloc_End;
 
       Ensure_Loc_Index (File_Buffer, Sloc_Start);
       Ensure_Loc_Index (File_Buffer, Sloc_End);
 
+      E_Info.Printout_Loc := Construct.Sloc_Start;
       E_Info.Printout := new String'
         (File_Buffer
            (Sloc_Start.Index .. Sloc_End.Index));
@@ -1267,27 +1266,39 @@ package body Docgen2 is
       then
          Entity := Get_Entity
            (Construct.Name.all, Construct.Sloc_Entity, Context.File, Db, Lang);
-      end if;
 
-      if Entity /= null then
-         Entity_Kind := Get_Kind (Entity);
+         if Entity /= null then
+            Entity_Kind := Get_Kind (Entity);
 
-         E_Info := Create_EInfo
-           (Construct.Category, Get_Declaration_Of (Entity));
+            E_Info := Create_EInfo
+              (Construct.Category, Get_Declaration_Of (Entity));
+         else
+            E_Info := Create_EInfo
+              (Construct.Category,
+               (File   => Context.File,
+                Line   => Construct.Sloc_Entity.Line,
+                Column => Basic_Types.Visible_Column_Type
+                            (Construct.Sloc_Entity.Column)));
+         end if;
+
          Context_Elem.Parent_Entity.Children.Append (E_Info);
          E_Info.Entity_Loc := Construct.Sloc_Entity;
 
          --  First set values common to all categories
 
          --  Set Name
-         if Construct.Category = Cat_Package then
-            --  Packages receive fully qualified names
-            E_Info.Name := new String'(Get_Full_Name (Entity));
+         if Entity /= null then
+            if Construct.Category = Cat_Package then
+               --  Packages receive fully qualified names
+               E_Info.Name := new String'(Get_Full_Name (Entity));
+            else
+               E_Info.Name := new String'(Get_Name (Entity).all);
+            end if;
+            E_Info.Short_Name := new String'(Get_Name (Entity).all);
          else
-            E_Info.Name := new String'(Get_Name (Entity).all);
+            E_Info.Name := new String'(Construct.Name.all);
+            E_Info.Short_Name := new String'(Construct.Name.all);
          end if;
-
-         E_Info.Short_Name := new String'(Get_Name (Entity).all);
 
          --  Retrieve documentation comments
          declare
@@ -1303,11 +1314,17 @@ package body Docgen2 is
 
          if Construct.Category not in Namespace_Category then
             Set_Printout (Construct.all, Context.File_Buffer, E_Info);
-         elsif Construct.Category = Cat_Package then
+
+         elsif Construct.Category = Cat_Package and then Entity /= null then
             Set_Pkg_Printout
               (Construct.all, Entity, Context.File_Buffer, E_Info);
          end if;
 
+         E_Info.Is_Private := Construct.Visibility = Visibility_Private;
+
+      end if;
+
+      if Entity /= null then
          --  Retrieve references
 
          declare
@@ -1332,7 +1349,6 @@ package body Docgen2 is
          end;
 
          E_Info.Is_Abstract := Entity_Kind.Is_Abstract;
-         E_Info.Is_Private := Construct.Visibility = Visibility_Private;
          E_Info.Is_Generic := Entity_Kind.Is_Generic;
          E_Info.Is_Renaming := Renaming_Of (Entity) /= null;
          E_Info.Is_Instantiation := Is_Instantiation_Of (Entity) /= null;
@@ -1924,8 +1940,12 @@ package body Docgen2 is
                   --  Try to retrieve the documentation before the first
                   --  construct.
 
-                  Comment_End :=
-                    Get_Construct (First (Construct_T)).Sloc_Start.Line - 1;
+                  if First (Construct_T) /= Null_Construct_Tree_Iterator then
+                     Comment_End :=
+                       Get_Construct (First (Construct_T)).Sloc_Start.Line - 1;
+                  else
+                     Comment_End := 0;
+                  end if;
 
                   for J in Comments.First_Index .. Comments.Last_Index loop
                      if Comments.Element (J).Start_Loc.Line > Comment_End then
@@ -2659,7 +2679,7 @@ package body Docgen2 is
             use Basic_Types;
          begin
             --  Print all text between previous call and current one
-            if Last_Idx /= 0 then
+            if Last_Idx < Sloc_Start.Index - 1 then
                Append (Printout, Extract (Last_Idx + 1, Sloc_Start.Index - 1));
             end if;
 
