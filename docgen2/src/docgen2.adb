@@ -2679,11 +2679,11 @@ package body Docgen2 is
             use Basic_Types;
          begin
             --  Print all text between previous call and current one
-            if Last_Idx < Sloc_Start.Index - 1 then
-               Append (Printout, Extract (Last_Idx + 1, Sloc_Start.Index - 1));
+            if Last_Idx < Sloc_Start.Index then
+               Append (Printout, Extract (Last_Idx, Sloc_Start.Index - 1));
             end if;
 
-            Last_Idx := Sloc_End.Index;
+            Last_Idx := Sloc_End.Index + 1;
 
             if Entity /= Identifier_Text
               and then Entity /= Partial_Identifier_Text
@@ -2780,6 +2780,7 @@ package body Docgen2 is
 
       begin
          if E_Info.Printout /= null then
+            Last_Idx := E_Info.Printout'First;
             Parse_Entities (Lang, E_Info.Printout.all, CB'Unrestricted_Access);
             Free (E_Info.Printout);
             E_Info.Printout := new String'(To_String (Printout));
