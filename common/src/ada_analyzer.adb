@@ -1356,7 +1356,7 @@ package body Ada_Analyzer is
          if Next > Buffer_Last then
             return Buffer_Last;
          else
-            return Tmp;
+            return Next - 1;
          end if;
       end End_Of_Word;
 
