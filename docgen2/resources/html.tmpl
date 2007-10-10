@@ -337,7 +337,7 @@
                 .@_TASK_ENTRY_@
                 (<a href="@_TASK_ENTRY_SRC_@" title="see the source file">Source</a>)
               </h3>
-              <div class='details'>@_REPLACE(span>[^>]*\(/span><table><tr><td>\(</td>):REPLACE(\)[ \n]*/\)</table><tr><td>):REPLACE_ALL(span\>\s*[:]/span></td><td>:):REPLACE_ALL(;/;</td></tr><tr><td>):TASK_ENTRY_PRINTOUT_@</div>
+              <div class='details'>@_REPLACE(\(/<table><tr><td>\(</td><td>):REPLACE(\)[ \n]*/\)</td></tr></table>):REPLACE_ALL(span\>\s*[:]/span></td><td>:):REPLACE_ALL(;\s*\<span/;</td></tr><tr><td></td><td><span):REPLACE_ALL(\n/):TASK_ENTRY_PRINTOUT_@</div>
               @@IF@@ @_EXIST:TASK_ENTRY_REFERENCES_@
               <div class='profile'>
                 <h4>References:</h4>
@@ -370,7 +370,7 @@
           @@END_TABLE@@
         </div>
         @@END_IF@@
-        <div class='details'>@_REPLACE(span>[^>]*\(/span><table><tr><td>\(</td><td>):REPLACE(\)[ \n]*/\)</table><tr><td>):REPLACE_ALL(span\>\s*[:]/span></td><td>:):REPLACE_ALL(;\n/;</td></tr><tr><td></td><td>):SUBP_PRINTOUT_@</div>
+        <div class='details'>@_REPLACE(\(/<table><tr><td>\(</td><td>):REPLACE(\)[ \n]*/\)</td></tr></table>):REPLACE_ALL(span\>\s*[:]/span></td><td>:):REPLACE_ALL(;\s*\<span/;</td></tr><tr><td></td><td><span):REPLACE_ALL(\n/):SUBP_PRINTOUT_@</div>
         @@IF@@ @_EXIST:SUBP_REFERENCES_@
         <div class='profile'>
           <h4>References:</h4>
