@@ -521,6 +521,7 @@ package body Language is
 
                Result.Last := Result.Current;
                Result.Current.Category := Categories (C).Category;
+               Result.Size := Result.Size + 1;
 
                if Categories (C).Make_Entry /= null then
                   Result.Current.Name := new String'
