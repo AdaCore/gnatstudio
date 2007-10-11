@@ -25,6 +25,8 @@ with Ada.Directories;               use Ada.Directories;
 
 with GNAT.OS_Lib;
 
+with Glib.Unicode;                    use Glib.Unicode;
+
 with Completion.Ada;                  use Completion.Ada;
 with Completion.History;              use Completion.History;
 
@@ -258,7 +260,7 @@ procedure Completion.Test is
    begin
       Result := Parse_Current_List
         (Ada_Semantic_Tree.Expression_Parser.UTF8_String_Access
-           (Buffer), Buffer'Last);
+           (Buffer), UTF8_Find_Prev_Char (Buffer.all, Buffer'Last));
       Display (Result.Tokens);
    end Parse_File;
 

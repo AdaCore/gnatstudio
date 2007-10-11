@@ -412,6 +412,8 @@ package body Ada_Semantic_Tree.Expression_Parser is
                end if;
 
             when ASCII.LF =>
+               Push (Token);
+               Blank_Here := True;
                Skip_Comment_Line (Offset);
 
             when others =>
