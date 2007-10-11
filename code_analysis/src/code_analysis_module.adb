@@ -88,19 +88,12 @@ package body Code_Analysis_Module is
 
    Binary_Coverage_Trace : constant Debug_Handle :=
                              Create ("BINARY_COVERAGE_MODE", GNAT.Traces.On);
-   Binary_Coverage_Mode  : Boolean;
-   --  Boolean that allows to determine wether we are in binary coverage mode
-   --  or not, if true no line execution coverage count will be displayed.
-
    Single_Analysis_Trace : constant Debug_Handle :=
                              Create ("SINGLE_ANALYSIS_MODE", GNAT.Traces.On);
    Single_Analysis_Mode  : Boolean;
    --  Boolean that allows to determine wether we should display only one
    --  analysis at a time or if we can display more, if true the user wont be
    --  able to create more than one analysis structure.
-
-   CodeAnalysis_Cst  : constant String := "CodeAnalysis";
-   Coverage_Category : constant Glib.UTF8_String := -"Uncovered lines";
 
    package Kernel_Return_Cb is new User_Return_Callback
      (Gtk.Widget.Gtk_Widget_Record, Boolean, Kernel_Handle);
@@ -476,16 +469,6 @@ package body Code_Analysis_Module is
    --  Remove informations from the given analysis.
    --  Destroy the associated Coverage Report if built.
 
-   procedure Add_File_Coverage_Annotations
-     (Kernel    : Kernel_Handle;
-      File_Node : Code_Analysis.File_Access);
-   --  Add the coverage annotation columns to the corresponding src_editor.
-
-   procedure Remove_File_Coverage_Annotations
-     (Kernel    : Kernel_Handle;
-      File_Node : Code_Analysis.File_Access);
-   --  Removes coverage annotations of src_editor of the given file.
-
    procedure Show_Subprogram_Coverage_Information_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
@@ -570,11 +553,6 @@ package body Code_Analysis_Module is
    procedure Remove_Project_Coverage_Annotations
      (Kernel : Kernel_Handle; Project_Node : Project_Access);
    --  Removes coverage annotations from the src_editors of the project files.
-
-   procedure List_File_Uncovered_Lines
-     (Kernel    : Kernel_Handle;
-      File_Node : Code_Analysis.File_Access);
-   --  Add to the Locations view the not covered lines of the given File_Node.
 
    procedure Clear_File_Locations
      (Kernel    : Kernel_Handle;
@@ -1013,7 +991,7 @@ package body Code_Analysis_Module is
          (-" has been modified since GCOV information were generated.") &
          (-" Skipped."),
             Mode => GPS.Kernel.Console.Error);
-         Set_Error (File_Node, File_Corrupted);
+         Set_Error (File_Node, File_Out_Of_Date);
          --  Set an empty line array in order to make File_Node a valid
          --  Code_Analysis node
          File_Node.Lines := new Line_Array (1 .. 1);
@@ -1946,51 +1924,6 @@ package body Code_Analysis_Module is
       Free_Code_Analysis (Analysis.Projects);
    end Clear_Analysis_Instance;
 
-   -----------------------------------
-   -- Add_File_Coverage_Annotations --
-   -----------------------------------
-
-   procedure Add_File_Coverage_Annotations
-     (Kernel    : Kernel_Handle;
-      File_Node : Code_Analysis.File_Access)
-   is
-      Line_Info  : Line_Information_Data;
-   begin
-      if File_Node.Analysis_Data.Coverage_Data.Status = Valid then
-         Line_Info  := new Line_Information_Array (File_Node.Lines'Range);
-
-         for J in File_Node.Lines'Range loop
-            if File_Node.Lines (J) /= Null_Line then
-               Line_Info (J).Text := Line_Coverage_Info
-                 (File_Node.Lines (J).Analysis_Data.Coverage_Data,
-                  Binary_Coverage_Mode);
-            else
-               Line_Info (J).Text := new String'(" ");
-            end if;
-         end loop;
-
-         Create_Line_Information_Column
-           (Kernel, File_Node.Name, CodeAnalysis_Cst);
-         Add_Line_Information
-           (Kernel, File_Node.Name, CodeAnalysis_Cst, Line_Info);
-         Unchecked_Free (Line_Info);
-      end if;
-   end Add_File_Coverage_Annotations;
-
-   --------------------------------------
-   -- Remove_File_Coverage_Annotations --
-   --------------------------------------
-
-   procedure Remove_File_Coverage_Annotations
-     (Kernel : Kernel_Handle;
-      File_Node : Code_Analysis.File_Access) is
-   begin
-      Remove_Line_Information_Column
-        (Kernel, File_Node.Name, CodeAnalysis_Cst);
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end Remove_File_Coverage_Annotations;
-
    -------------------------------------------------
    -- Show_Project_Coverage_Information_From_Menu --
    -------------------------------------------------
@@ -2190,48 +2123,6 @@ package body Code_Analysis_Module is
          Next (Map_Cur);
       end loop;
    end Remove_Project_Coverage_Annotations;
-
-   -------------------------------
-   -- List_File_Uncovered_Lines --
-   -------------------------------
-
-   procedure List_File_Uncovered_Lines
-     (Kernel    : Kernel_Handle;
-      File_Node : Code_Analysis.File_Access)
-   is
-      No_File_Added : Boolean := True;
-   begin
-      if File_Node.Analysis_Data.Coverage_Data.Status = Valid then
-         for J in File_Node.Lines'Range loop
-            if File_Node.Lines (J) /= Null_Line then
-               if File_Node.Lines (J).Analysis_Data.Coverage_Data.Coverage
-                 = 0 then
-                  No_File_Added := False;
-                  Insert_Location
-                    (Kernel             => Kernel,
-                     Category           => Coverage_Category,
-                     File               => File_Node.Name,
-                     Text               => File_Node.Lines (J).Contents.all,
-                     Line               => J,
-                     Column             => 1,
-                     Highlight          => True,
-                     Highlight_Category => Builder_Warnings_Style);
-               end if;
-            end if;
-         end loop;
-
-         if No_File_Added then
-            GPS.Kernel.Console.Insert
-              (Kernel, -"There is no uncovered line in " &
-               Base_Name (File_Node.Name));
-         end if;
-      else
-         GPS.Kernel.Console.Insert
-           (Kernel, -"There is no Gcov information associated with " &
-            Base_Name (File_Node.Name),
-            Mode => GPS.Kernel.Console.Info);
-      end if;
-   end List_File_Uncovered_Lines;
 
    --------------------------
    -- Clear_File_Locations --
