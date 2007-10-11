@@ -44,7 +44,7 @@ package body Code_Analysis_Tree_Model is
       if Analysis_Id.Coverage_Data /= null then
          Fill_Iter (Model, Iter, Analysis_Id.Coverage_Data, Bin_Mode);
       else
-         Set (Model, Iter, Cov_Col, -" Coverage information not available");
+         Set (Model, Iter, Cov_Col, -"n/a");
          Set (Model, Iter, Cov_Sort, Glib.Gint (0));
          Set (Model, Iter, Cov_Bar_Val, Glib.Gint (0));
          Set (Model, Iter, Cov_Bar_Txt, -"n/a");
