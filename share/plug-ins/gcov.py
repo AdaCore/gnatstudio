@@ -29,7 +29,6 @@ class Gcov_Process (GPS.Console, GPS.Process):
       analysis = CodeAnalysis.get ("Coverage")
       analysis.add_all_gcov_project_info()
       analysis.show_analysis_report()
-      analysis.show_coverage_information()
 
       self.kill()
 
@@ -55,6 +54,25 @@ class Gcov_Process (GPS.Console, GPS.Process):
 # Actual menu implementation
 
 def run_gcov(menu):
+   # Verify that the version of gcov is recent enough to support response
+   # files and reading of .gc?? data in multiple directories.
+
+   try:
+      p = Process ("gcov --version")
+      out = p.get_result()
+      paren = out.find ("(", out.find ("GNAT"))
+      date = int (out[paren+1:paren+9])
+
+      if date < 20071005:
+         MDI.dialog ("Your version of gcov is dated " + str (date) +
+         ".\nThis plug-in requires gcov for GNAT dated 20071005 or later.")
+         return;
+
+   except:
+      MDI.dialog ("""Could not read gcov version number.
+
+Make sure you are using gcov for GNAT dated 20071005 or later.""")
+
    # Determine the root project
    root_project = Project.root()
    previous_dir = pwd()
