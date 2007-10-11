@@ -617,29 +617,59 @@ package body Src_Contexts is
       end To_Positive;
 
    begin
-      if Interactive then
-         Open_File_Editor
-           (Kernel,
-            File_Name,
-            Natural (Match.Begin_Line),
-            Match.Visible_Begin_Column,
-            Match.Visible_Begin_Column
-            + Visible_Column_Type (Match.Pattern_Length),
-            Focus => Give_Focus);
-         Push_Current_Editor_Location_In_History (Kernel);
+      if Match.Begin_Line = Match.End_Line then
+         if Interactive then
+            Open_File_Editor
+              (Kernel,
+               File_Name,
+               Natural (Match.Begin_Line),
+               Match.Visible_Begin_Column,
+               Match.Visible_End_Column,
+               Focus => Give_Focus);
+            Push_Current_Editor_Location_In_History (Kernel);
 
+         else
+            Insert_Location
+              (Kernel,
+               Category  => Locations_Category_Name (Look_For),
+               File      => File_Name,
+               Text      => Match.Text,
+               Line      => To_Positive (Match.Begin_Line),
+               Column    => Match.Visible_Begin_Column,
+               Length    => Integer (Match.Visible_End_Column
+                 - Match.Visible_Begin_Column),
+               Highlight => True,
+               Highlight_Category => Search_Results_Style,
+               Has_Markups        => True);
+         end if;
       else
-         Insert_Location
-           (Kernel,
-            Category  => Locations_Category_Name (Look_For),
-            File      => File_Name,
-            Text      => Match.Text,
-            Line      => To_Positive (Match.Begin_Line),
-            Column    => Match.Visible_Begin_Column,
-            Length    => Match.Pattern_Length,
-            Highlight => True,
-            Highlight_Category => Search_Results_Style,
-            Has_Markups        => True);
+         --  When the location spans on multiple lines, we base the length
+         --  to highlight on the pattern length.
+         --  ??? This is not compatible with UTF-8
+         if Interactive then
+            Open_File_Editor
+              (Kernel,
+               File_Name,
+               Natural (Match.Begin_Line),
+               Match.Visible_Begin_Column,
+               Match.Visible_Begin_Column
+               + Visible_Column_Type (Match.Pattern_Length),
+               Focus => Give_Focus);
+            Push_Current_Editor_Location_In_History (Kernel);
+
+         else
+            Insert_Location
+              (Kernel,
+               Category  => Locations_Category_Name (Look_For),
+               File      => File_Name,
+               Text      => Match.Text,
+               Line      => To_Positive (Match.Begin_Line),
+               Column    => Match.Visible_Begin_Column,
+               Length    => Match.Pattern_Length,
+               Highlight => True,
+               Highlight_Category => Search_Results_Style,
+               Has_Markups        => True);
+         end if;
       end if;
    end Highlight_Result;
 
