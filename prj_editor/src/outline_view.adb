@@ -26,6 +26,7 @@ with Gdk.Rectangle;             use Gdk.Rectangle;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
+with Glib.Unicode;              use Glib.Unicode;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 
 with Gtk.Box;                   use Gtk.Box;
@@ -856,7 +857,9 @@ package body Outline_View is
                     (Constructs.Current.Sloc_Entity.Line'Img);
                   Args (3) := new String'
                     (Constructs.Current.Sloc_Entity.Column'Img);
-                  Args (4) := new String'(Constructs.Current.Name'Length'Img);
+                  Args (4) := new String'
+                    (Glong'Image (UTF8_Strlen (Constructs.Current.Name.all)));
+
                   Set (Model, Iter, Mark_Column,
                        Execute_GPS_Shell_Command
                          (Outline.Kernel, "Editor.create_mark", Args));
