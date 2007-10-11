@@ -46,9 +46,13 @@ package Code_Analysis is
       File_Not_Found,
       --  Error status obtained if no Gcov file was found associated to a
       --  source file when trying to load Gcov info
-      File_Corrupted
+      File_Out_Of_Date,
       --  Error status obtained when the Gcov file that is attempted to be
       --  parsed is older than the source file associated to
+      File_Empty,
+      --  gcov file found but empty.
+      File_Corrupted
+      --  The gcov file could not be parsed
      );
 
    type Coverage is tagged record
