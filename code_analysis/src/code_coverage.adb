@@ -91,7 +91,7 @@ package body Code_Coverage is
                return;
             end if;
          else
-            Set_Error (File_Node, File_Corrupted);
+            Set_Error (File_Node, File_Empty);
             --  the .gcov file is not a valid Gcov file.
             return;
          end if;
@@ -544,11 +544,18 @@ package body Code_Coverage is
       else
          case Coverage.Status is
          when File_Not_Found =>
-            Set (Tree_Store, Iter, Cov_Col, -" No Gcov file found");
+            Set (Tree_Store, Iter, Cov_Col, -" Gcov file not found");
+         when File_Out_Of_Date =>
+            Set (Tree_Store, Iter, Cov_Col, -" Gcov file out-of-date");
          when File_Corrupted =>
             Set (Tree_Store, Iter, Cov_Col, -" Gcov file corrupted");
-         when others =>
-            Set (Tree_Store, Iter, Cov_Col, -" Invalid coverage status");
+         when File_Empty =>
+            Set (Tree_Store, Iter, Cov_Col, -" Gcov file empty");
+         when Valid =>
+            --  Note that this should never be called.
+            --  Just adding this case to avoid adding "when others". This way
+            --  new file status will have new messages.
+            null;
          end case;
 
          Set (Tree_Store, Iter, Cov_Sort, Glib.Gint (0));
