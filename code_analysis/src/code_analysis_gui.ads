@@ -39,6 +39,8 @@ with Gtk.Widget;                 use Gtk.Widget;
 with GPS.Kernel;                 use GPS.Kernel;
 with Code_Analysis;              use Code_Analysis;
 
+with GPS.Intl;                   use GPS.Intl;
+
 package Code_Analysis_GUI is
 
    Prj_Pixbuf_Cst  : constant String := "gps-project-closed";
@@ -83,6 +85,14 @@ package Code_Analysis_GUI is
    Progress_Bar_Width_Cst : constant Gint   := 150;
    --  Constant used to set the width of the progress bars of the analysis
    --  report
+
+   CodeAnalysis_Cst  : constant String := "CodeAnalysis";
+
+   Binary_Coverage_Mode  : Boolean;
+   --  Boolean that allows to determine wether we are in binary coverage mode
+   --  or not, if true no line execution coverage count will be displayed.
+
+   Coverage_Category : constant Glib.UTF8_String := -"Uncovered lines";
 
    type Code_Analysis_Icons is record
       Prj_Pixbuf  : Gdk.Pixbuf.Gdk_Pixbuf;
@@ -157,5 +167,20 @@ package Code_Analysis_GUI is
    procedure Show_Flat_List_Of_Subprograms
      (Object : access Gtk_Widget_Record'Class);
    --  Fill the Gtk_Tree_Store with only on level of subprograms
+
+   procedure Add_File_Coverage_Annotations
+     (Kernel    : Kernel_Handle;
+      File_Node : Code_Analysis.File_Access);
+   --  Add the coverage annotation columns to the corresponding src_editor.
+
+   procedure Remove_File_Coverage_Annotations
+     (Kernel    : Kernel_Handle;
+      File_Node : Code_Analysis.File_Access);
+   --  Removes coverage annotations of src_editor of the given file.
+
+   procedure List_File_Uncovered_Lines
+     (Kernel    : Kernel_Handle;
+      File_Node : Code_Analysis.File_Access);
+   --  Add to the Locations view the not covered lines of the given File_Node.
 
 end Code_Analysis_GUI;
