@@ -1965,7 +1965,7 @@ package body Code_Analysis_Module is
                  (File_Node.Lines (J).Analysis_Data.Coverage_Data,
                   Binary_Coverage_Mode);
             else
-               Line_Info (J).Text := new String'("-");
+               Line_Info (J).Text := new String'(" ");
             end if;
          end loop;
 
@@ -2072,7 +2072,11 @@ package body Code_Analysis_Module is
          end if;
       end if;
 
-      Open_File_Editor (Get_Kernel (Cont_N_Anal.Context), File_Node.Name);
+      --  Call Open_File_Editor with Line = 0 so that, if the editor is already
+      --  open, we do not jump to line 1.
+      Open_File_Editor
+        (Get_Kernel (Cont_N_Anal.Context), File_Node.Name,
+         Line => 0);
       List_File_Uncovered_Lines
         (Get_Kernel (Cont_N_Anal.Context), File_Node);
       Add_File_Coverage_Annotations
