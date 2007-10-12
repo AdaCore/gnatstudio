@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.2 NEW FEATURES LIST Current as of Oct 03, 2007
+GPS 4.2 NEW FEATURES LIST Current as of Oct 12, 2007
 ====================================================
 
 Copyright (c) 2006-2007, AdaCore
@@ -177,6 +177,15 @@ NF-42-G502-004 Ignore leading spaces in <external> (2007-05-09)
   If you specify an external command to execute in an XML file, you can now
   have leading spaces if you wish. This allows you to split the contents of
   the <external> tag on several lines.
+
+NF-42-G413-016 Gnat Check integration with GPS (2007-04-25)
+
+  A new gnatcheck.py module allows gnatcheck integration with GPS. This module
+  offers the possibility to define the different rules to be checked by this
+  tool via a graphical page in the 'Switches' section of the Project Properties
+  dialog. Once those rules are defined, this module provides a new item in the
+  files and projects contextual menus, allowing to run gnatcheck automatically
+  with the defined rules.
 
 NF-42-G307-006 File & Dirs operations from file and project views (2007-03-14)
 
