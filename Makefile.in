@@ -57,7 +57,7 @@ endif
 	(cd docgen; tar cf - html/*.thtml) \
 		| (cd $(sharedir)/gps/docgen; tar xf -)
 	(cd docgen2/resources; tar cf - *.tmpl support/*.css support/*.js support/images/*.png) \
-		| (cd $(sharedir)/gps/docgen; tar xf -)
+		| (cd $(sharedir)/gps/docgen2; tar xf -)
 	(cd aunit/templates; tar cf - *.tmpl) \
 		| (cd $(sharedir)/gps/aunit; tar xf -)
 	$(MAKE) -C docs install
