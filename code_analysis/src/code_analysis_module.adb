@@ -309,6 +309,9 @@ package body Code_Analysis_Module is
    --  the appropriate item following given context information. Finally
    --  insert the new Report in the MDI. (via Connect_Report)
    --  If Raise_Report is True, the Coverage Report will be raised.
+   --  Cont_N_Anal.Context must be fulfilled with a context that contains at
+   --  least a valid project info, or a valid file info belonging to an
+   --  Ada project loaded in GPS.
 
    procedure Connect_Report
      (Kernel : Kernel_Handle; Cont_N_Anal : Context_And_Analysis);
@@ -318,6 +321,9 @@ package body Code_Analysis_Module is
    procedure Refresh_Analysis_Report (Cont_N_Anal : Context_And_Analysis);
    --  Reload the Coverage Report contens from given Analysis instance if the
    --  report is built
+   --  Cont_N_Anal.Context must be fulfilled with a context that contains at
+   --  least a valid project info, or a valid file info belonging to an
+   --  Ada project loaded in GPS.
 
    procedure On_Destroy (Widget      : access Glib.Object.GObject_Record'Class;
                          Cont_N_Anal : Context_And_Analysis);
@@ -1309,10 +1315,6 @@ package body Code_Analysis_Module is
 
       Hide_All_Coverage_Information
         (Get_Kernel (Data), Code_Analysis_Property (Property).Analysis);
-      --  Build/Refresh the Coverage Report
-      Show_Analysis_Report (Get_Kernel (Data),
-        Context_And_Analysis'(No_Context,
-          Code_Analysis_Property (Property).Analysis));
    exception
       when E : others => Trace (Exception_Handle, E);
    end Hide_All_Coverage_Information_From_Shell;
