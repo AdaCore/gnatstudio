@@ -32,7 +32,6 @@ with Gtk.Cell_Renderer_Text;     use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Progress; use Gtk.Cell_Renderer_Progress;
 with Gtk.Cell_Renderer_Pixbuf;   use Gtk.Cell_Renderer_Pixbuf;
 with Gtkada.Handlers;            use Gtkada.Handlers;
-with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Console;         use GPS.Kernel.Console;
