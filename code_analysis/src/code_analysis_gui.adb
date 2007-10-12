@@ -212,6 +212,8 @@ package body Code_Analysis_GUI is
       Fill_Iter
         (View.Model, Iter, View.Projects, View.Binary_Mode, View.Icons);
       Iter := Get_Iter_First (View.Model);
+      --  can't be null as the corresponding menu entry is not displayed when
+      --  there nothing in the Model
       Path := Get_Path (View.Model, Iter);
       Collapse_All (View.Tree);
       Expand_To_Path (View.Tree, Path);
@@ -309,9 +311,9 @@ package body Code_Analysis_GUI is
       File_Node : constant File_Access := File_Access
         (File_Set.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
    begin
-      Open_File_Editor (Kernel, File_Node.Name, Line => 0);
       List_File_Uncovered_Lines (Kernel, File_Node);
       Add_File_Coverage_Annotations (Kernel, File_Node);
+      Open_File_Editor (Kernel, File_Node.Name, Line => 0);
    end Open_File_Editor_On_File;
 
    ------------------------------------
@@ -326,11 +328,11 @@ package body Code_Analysis_GUI is
       Subp_Node : constant Subprogram_Access := Subprogram_Access
         (Subprogram_Set.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
    begin
+      List_File_Uncovered_Lines (Kernel, File_Node);
+      Add_File_Coverage_Annotations (Kernel, File_Node);
       Open_File_Editor
         (Kernel, File_Node.Name, Subp_Node.Line,
          Basic_Types.Visible_Column_Type (Subp_Node.Column));
-      List_File_Uncovered_Lines (Kernel, File_Node);
-      Add_File_Coverage_Annotations (Kernel, File_Node);
    end Open_File_Editor_On_Subprogram;
 
    ------------------
