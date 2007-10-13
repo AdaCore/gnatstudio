@@ -96,7 +96,7 @@ package body Code_Analysis_GUI is
       --  Create and append an error box in every cases
       --  Set its children visible or not after
       Gtk_New_Hbox (View.Error_Box, False, 7);
-            Gtk_New_Vbox (Label_And_Button, False, 7);
+      Gtk_New_Vbox (Label_And_Button, False, 7);
       Gtk_New_Hbox (Button_Box);
       Gtk_New_From_Icon_Name
         (Warning_Image, Stock_Dialog_Warning, Icon_Size_Dialog);
@@ -124,14 +124,11 @@ package body Code_Analysis_GUI is
       Gtk_New (View.Node_Column);
       Gtk_New (Pixbuf_Rend);
       Pack_Start (View.Node_Column, Pixbuf_Rend, False);
-      Add_Attribute
-        (View.Node_Column, Pixbuf_Rend, "pixbuf", Pix_Col);
+      Add_Attribute (View.Node_Column, Pixbuf_Rend, "pixbuf", Pix_Col);
       Gtk_New (Text_Render);
       Pack_Start (View.Node_Column, Text_Render, False);
-      Add_Attribute
-        (View.Node_Column, Text_Render, "text", Name_Col);
-      Dummy := Append_Column
-        (View.Tree, View.Node_Column);
+      Add_Attribute (View.Node_Column, Text_Render, "text", Name_Col);
+      Dummy := Append_Column (View.Tree, View.Node_Column);
       Set_Title (View.Node_Column, -"Entities");
       Set_Resizable (View.Node_Column, True);
       Set_Sort_Column_Id (View.Node_Column, Name_Col);
@@ -141,28 +138,25 @@ package body Code_Analysis_GUI is
       ----------------------
 
       Gtk_New (View.Cov_Column);
-      Dummy :=
-        Append_Column (View.Tree, View.Cov_Column);
+      Dummy := Append_Column (View.Tree, View.Cov_Column);
       Gtk_New (Text_Render);
       Pack_Start (View.Cov_Column, Text_Render, False);
-      Add_Attribute
-        (View.Cov_Column, Text_Render, "text", Cov_Col);
+      Add_Attribute (View.Cov_Column, Text_Render, "text", Cov_Col);
       Set_Title (View.Cov_Column, -"Coverage");
+      Set_Resizable (View.Cov_Column, True);
       Set_Sort_Column_Id (View.Cov_Column, Cov_Sort);
       Gtk_New (View.Cov_Percent);
-      Dummy :=
-        Append_Column (View.Tree, View.Cov_Percent);
+      Dummy := Append_Column (View.Tree, View.Cov_Percent);
       Gtk_New (Bar_Render);
       Glib.Properties.Set_Property
         (Bar_Render,
          Gtk.Cell_Renderer.Width_Property,
          Progress_Bar_Width_Cst);
       Pack_Start (View.Cov_Percent, Bar_Render, False);
-      Add_Attribute
-        (View.Cov_Percent, Bar_Render, "text", Cov_Bar_Txt);
-      Add_Attribute
-        (View.Cov_Percent, Bar_Render, "value", Cov_Bar_Val);
+      Add_Attribute (View.Cov_Percent, Bar_Render, "text", Cov_Bar_Txt);
+      Add_Attribute (View.Cov_Percent, Bar_Render, "value", Cov_Bar_Val);
       Set_Title (View.Cov_Percent, -"Percentage");
+      Set_Resizable (View.Cov_Percent, True);
       Set_Sort_Column_Id (View.Cov_Percent, Cov_Bar_Val);
       Gtk_New (Scrolled);
       Set_Policy
