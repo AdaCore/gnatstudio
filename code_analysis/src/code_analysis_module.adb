@@ -186,14 +186,6 @@ package body Code_Analysis_Module is
    type Code_Analysis_Contextual_Menu_Access is access all
      Code_Analysis_Contextual_Menu;
 
-   type Has_Coverage_Filter is new Action_Filter_Record with null record;
-
-   function Filter_Matches_Primitive
-     (Filter  : access Has_Coverage_Filter;
-      Context : Selection_Context) return Boolean;
-   --  True when the current context is associated with project, file or
-   --  subprogram information.
-
    procedure Append_To_Menu
      (Factory : access Code_Analysis_Contextual_Menu;
       Object  : access Glib.Object.GObject_Record'Class;
@@ -2454,33 +2446,6 @@ package body Code_Analysis_Module is
       when E : others => Trace (Exception_Handle, E);
    end Remove_Project_From_Menu;
 
-   ------------------------------
-   -- Filter_Matches_Primitive --
-   ------------------------------
-
-   function Filter_Matches_Primitive
-     (Filter  : access Has_Coverage_Filter;
-      Context : Selection_Context) return Boolean
-   is
-      pragma Unreferenced (Filter);
-      Entity : Entity_Information;
-   begin
-      if Has_Project_Information (Context)
-        or else Has_File_Information (Context)
-      then
-         return True;
-
-      elsif Has_Entity_Name_Information (Context) then
-         Entity := Get_Entity (Context);
-
-         return (Entity /= null and then
-                 Is_Subprogram (Entity)) or else
-         Get_Creator (Context) = Abstract_Module_ID (Code_Analysis_Module_ID);
-      end if;
-
-      return False;
-   end Filter_Matches_Primitive;
-
    --------------------
    -- Append_To_Menu --
    --------------------
@@ -3022,7 +2987,8 @@ package body Code_Analysis_Module is
       Register_Contextual_Submenu
         (Kernel      => Kernel,
          Name        => -"Coverage",
-         Filter      => new Has_Coverage_Filter,
+         Filter      => Action_Filter (Lookup_Filter (Kernel, "Project only")
+           or Lookup_Filter (Kernel, "In project")),
          Submenu     => Submenu_Factory (Contextual_Menu));
       Register_Dynamic_Menu
         (Kernel      => Kernel,
