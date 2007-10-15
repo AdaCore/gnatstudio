@@ -2208,12 +2208,12 @@ package body Docgen2 is
          C.Source_Files := new File_Array'(1 => File);
       end if;
 
-      C.Kernel         := Kernel_Handle (Kernel);
-      C.Backend        := Backend;
-      C.Project        := P;
-      C.File_Index     := Source_Files'First - 1;
-      C.Src_File_Index := Source_Files'First - 1;
-      C.Options        := Options;
+      C.Kernel             := Kernel_Handle (Kernel);
+      C.Backend            := Backend;
+      C.Project            := P;
+      C.File_Index         := C.Source_Files'First - 1;
+      C.Src_File_Index     := C.Source_Files'First - 1;
+      C.Options            := Options;
       C.Analysis_Ctxt.Iter := Null_Construct_Tree_Iterator;
 
       Launch_Background_Command
