@@ -691,6 +691,7 @@ package body C_Analyzer is
                Info.Next               := Constructs.Current;
             end if;
 
+            Constructs.Size := Constructs.Size + 1;
             Constructs.Last := Constructs.Current;
 
             case Value.Token is
