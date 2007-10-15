@@ -7838,11 +7838,11 @@ different layout as the proposed one, you can change directly those files.
 
 If you relied on the old docgen module, it is still possible to use it
 instead of the new one. There are two ways of doing this:
-@table @b
+@itemize @bullet
 @item run GPS with --traceon=MODULE.Docgen
 @item put in your .gps directory a 'files.cfg' file containing the line
 "MODULE.Docgen = TRUE"
-@end table
+@end itemize
 
 @c For a description of the
 @c documentation generator renderer @pxref{Defining a documentation format}.
