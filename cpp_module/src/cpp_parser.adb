@@ -3440,6 +3440,7 @@ package body CPP_Parser is
                end if;
 
                Constructs.Last := Constructs.Current;
+               Constructs.Size := Constructs.Size + 1;
 
                --  Set name and location, common to all categories
 
