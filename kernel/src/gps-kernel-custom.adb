@@ -446,6 +446,10 @@ package body GPS.Kernel.Custom is
 
          if Node = null then
             Trace (Me, "Error while loading startup.xml: " & Err.all);
+            Console.Insert
+              (Kernel,
+               "Could not parse startup.xml: " & Err.all,
+               Mode => Error);
             Free (Err);
 
          else
