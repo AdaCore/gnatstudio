@@ -9,6 +9,11 @@ Known Problems fixed in GPS 4.2.0
               (or copy the files manually after selecting the menu to compute
               the info)
 
+- GA09-029: Crashes when using the Outline View on international files
+  Problem:    GPS might crash when asked to display the Outline View on a source
+              file which contains international characters encoded in UTF-8.
+  Workaround: Do not display the Outline View when using extended characters.
+
 - G925-011: join_line fails when line ends with spaces
   Problem:    The join_line action defined in the text_utils.py plug-in does
               not work as expected when the current line ends with one or more
