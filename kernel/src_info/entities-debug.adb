@@ -331,16 +331,59 @@ package body Entities.Debug is
 
    procedure Dump (LIs : in out LI_HTable.HTable) is
       Iter : LI_HTable.Iterator;
-      LI   : LI_File_Item;
+      Count : Natural := 0;
    begin
-      Output_Line ("====== LI files =====");
       Get_First (LIs, Iter);
       loop
-         LI := Get_Element (Iter);
-         exit when LI = null;
-         Dump (LI.File);
+         exit when Get_Element (Iter) = null;
+         Count := Count + 1;
          Get_Next (LIs, Iter);
       end loop;
+
+      declare
+         Sorted : array (1 .. Count) of LI_File_Item;
+
+         procedure Xchg (Op1, Op2 : Natural);
+         function Lt (Op1, Op2 : Natural) return Boolean;
+
+         procedure Xchg (Op1, Op2 : Natural) is
+            T : constant LI_File_Item := Sorted (Op1);
+         begin
+            Sorted (Op1) := Sorted (Op2);
+            Sorted (Op2) := T;
+         end Xchg;
+
+         function Lt (Op1, Op2 : Natural) return Boolean is
+            OpF1 : constant Virtual_File :=
+              Get_LI_Filename (Sorted (Op1).File);
+            OpF2 : constant Virtual_File :=
+              Get_LI_Filename (Sorted (Op2).File);
+         begin
+            if OpF1 = VFS.No_File then
+               return OpF2 /= VFS.No_File;
+            elsif OpF2 = VFS.No_File then
+               return False;
+            elsif Dump_Full_File_Names then
+               --  We want <=, but it is more efficient to compute it this way
+               return OpF2 < OpF1;
+            else
+               return Base_Name (OpF1) <= Base_Name (OpF2);
+            end if;
+         end Lt;
+      begin
+         Output_Line ("====== LI files =====");
+         Get_First (LIs, Iter);
+         for F in Sorted'Range loop
+            Sorted (F) := Get_Element (Iter);
+            Get_Next (LIs, Iter);
+         end loop;
+
+         Sort (Sorted'Last, Xchg'Unrestricted_Access, Lt'Unrestricted_Access);
+
+         for F in Sorted'Range loop
+            Dump (Sorted (F).File);
+         end loop;
+      end;
    end Dump;
 
    ----------
