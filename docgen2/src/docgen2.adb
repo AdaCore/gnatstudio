@@ -2192,17 +2192,25 @@ package body Docgen2 is
                           (Registry          => Get_Registry (Kernel).all,
                            Source_Filename   => File,
                            Root_If_Not_Found => True);
-      Source_Files  : constant File_Array_Access :=
-                        new File_Array'(1 => File);
+      Other_File    : constant Virtual_File :=
+                        Create
+                          (Other_File_Base_Name (P, File), P);
+
       C             : Docgen_Command_Access;
    begin
       Parse_All_LI_Information (Kernel, P, False);
 
       C := new Docgen_Command;
+
+      if Is_Regular_File (Other_File) then
+         C.Source_Files := new File_Array'(1 => File, 2 => Other_File);
+      else
+         C.Source_Files := new File_Array'(1 => File);
+      end if;
+
       C.Kernel         := Kernel_Handle (Kernel);
       C.Backend        := Backend;
       C.Project        := P;
-      C.Source_Files   := Source_Files;
       C.File_Index     := Source_Files'First - 1;
       C.Src_File_Index := Source_Files'First - 1;
       C.Options        := Options;
