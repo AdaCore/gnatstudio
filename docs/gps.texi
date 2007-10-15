@@ -7840,8 +7840,8 @@ If you relied on the old docgen module, it is still possible to use it
 instead of the new one. There are two ways of doing this:
 @itemize @bullet
 @item run GPS with --traceon=MODULE.Docgen
-@item put in your .gps directory a 'files.cfg' file containing the line
-"MODULE.Docgen = TRUE"
+@item in your .gps directory, modify/create the 'traces.cfg' file to add the
+ line "MODULE.Docgen = TRUE"
 @end itemize
 
 @c For a description of the
