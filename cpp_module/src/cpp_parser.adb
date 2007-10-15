@@ -550,7 +550,8 @@ package body CPP_Parser is
    ----------------
 
    function Get_DB_Dir (Project : Projects.Project_Type) return String is
-      Obj_Dir : constant String := Object_Path (Project, False);
+      Obj_Dir : constant String := Object_Path
+        (Project, False, Including_Libraries => False);
    begin
       if Obj_Dir = "" then
          return "";
@@ -567,7 +568,8 @@ package body CPP_Parser is
    function Get_DB_Dirs
      (Project : Project_Type) return GNAT.Strings.String_List_Access
    is
-      Obj_Dir : constant String := Object_Path (Project, True);
+      Obj_Dir : constant String := Object_Path
+        (Project, True, Including_Libraries => False);
       Db_Dir  : constant String := Name_As_Directory (DB_Dir_Name);
       Iter    : Path_Iterator := Start (Obj_Dir);
       Length  : Natural := 0;
@@ -601,7 +603,8 @@ package body CPP_Parser is
      (Handler      : access CPP_Handler_Record'Class)
    is
       Obj_Dir : constant String := Object_Path
-        (Get_Root_Project (Handler.Registry), True);
+        (Get_Root_Project (Handler.Registry), True,
+         Including_Libraries => False);
       Db_Dir  : constant String := Name_As_Directory (SN.Browse.DB_Dir_Name);
       Iter    : Path_Iterator := Start (Obj_Dir);
       Length  : Natural := 0;
@@ -2858,7 +2861,6 @@ package body CPP_Parser is
       Project   : Projects.Project_Type;
       Recursive : Boolean := False) return Integer
    is
-      DB_Dir  : constant String := Name_As_Directory (SN.Browse.DB_Dir_Name);
       Iter    : Imported_Project_Iterator :=
                   Start (Project, Recursive => Recursive);
       P       : Project_Type;
@@ -2877,7 +2879,7 @@ package body CPP_Parser is
          exit when P = No_Project;
 
          Files (1) := New_String
-           (Name_As_Directory (Object_Path (P, Recursive => False)) & DB_Dir
+           (Get_DB_Dir (P)
             & SN.Browse.DB_File_Name & Table_Extension (F));
          DB_API.Open (Table, Files, Success);
          Free (Files (1));
