@@ -1876,7 +1876,7 @@ package body Custom_Module is
                end if;
             end loop;
 
-            if Path'Length > 0 and then Path (Path'First) = '-' then
+            if Path'Length > 0 and then Path (Last + 1) = '-' then
                Gtk_New (Item);
             else
                Menu := new Subprogram_Type_Menu_Record;
