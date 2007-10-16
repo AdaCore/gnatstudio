@@ -263,6 +263,7 @@ package body Code_Analysis_Module is
      (Kernel  : access Kernel_Handle_Record'Class;
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
+   pragma Unreferenced (Dynamic_Tools_Menu_Factory);
    --  Determine wether we add entries directly in the "Tools/Coverage" menu,
    --  or in a generated submenu. Submenus are created if many instances are
    --  loaded.
@@ -2847,7 +2848,7 @@ package body Code_Analysis_Module is
    is
       Cont_N_Anal : Context_And_Analysis;
       use Code_Analysis_Instances;
-      Cur         : Cursor := Code_Analysis_Module_ID.Analyzes.First;
+      Cur         : constant Cursor := Code_Analysis_Module_ID.Analyzes.First;
    begin
       if Cur = No_Element then
          return;
@@ -2856,7 +2857,7 @@ package body Code_Analysis_Module is
       Cont_N_Anal.Analysis := Element (Cur);
 
       Cont_N_Anal.Context :=
-        Check_Context (Kernel_Handle (Kernel), Get_Current_Context (Kernel));
+        Check_Context (Kernel, Get_Current_Context (Kernel));
 
       Set_File_Information
         (Cont_N_Anal.Context,
@@ -2878,7 +2879,7 @@ package body Code_Analysis_Module is
    is
       Cont_N_Anal : Context_And_Analysis;
       use Code_Analysis_Instances;
-      Cur         : Cursor := Code_Analysis_Module_ID.Analyzes.First;
+      Cur         : constant Cursor := Code_Analysis_Module_ID.Analyzes.First;
    begin
       if Cur = No_Element then
          return;
@@ -2886,7 +2887,7 @@ package body Code_Analysis_Module is
 
       Cont_N_Anal.Analysis := Element (Cur);
       Cont_N_Anal.Context := Check_Context
-        (Kernel_Handle (Kernel), Get_Current_Context (Kernel));
+        (Kernel, Get_Current_Context (Kernel));
 
       Add_Gcov_Project_Info_From_Menu
         (Widget      => Widget,
@@ -2905,7 +2906,7 @@ package body Code_Analysis_Module is
    is
       Cont_N_Anal : Context_And_Analysis;
       use Code_Analysis_Instances;
-      Cur         : Cursor := Code_Analysis_Module_ID.Analyzes.First;
+      Cur         : constant Cursor := Code_Analysis_Module_ID.Analyzes.First;
    begin
       if Cur = No_Element then
          return;
@@ -2913,7 +2914,7 @@ package body Code_Analysis_Module is
 
       Cont_N_Anal.Analysis := Element (Cur);
       Cont_N_Anal.Context := Check_Context
-        (Kernel_Handle (Kernel), Get_Current_Context (Kernel));
+        (Kernel, Get_Current_Context (Kernel));
 
       Add_Gcov_File_Info_From_Menu
         (Widget      => Widget,
@@ -2932,7 +2933,7 @@ package body Code_Analysis_Module is
    is
       Cont_N_Anal : Context_And_Analysis;
       use Code_Analysis_Instances;
-      Cur         : Cursor := Code_Analysis_Module_ID.Analyzes.First;
+      Cur         : constant Cursor := Code_Analysis_Module_ID.Analyzes.First;
    begin
       if Cur = No_Element then
          return;
@@ -2940,7 +2941,7 @@ package body Code_Analysis_Module is
 
       Cont_N_Anal.Analysis := Element (Cur);
       Cont_N_Anal.Context := Check_Context
-        (Kernel_Handle (Kernel), Get_Current_Context (Kernel));
+        (Kernel, Get_Current_Context (Kernel));
 
       Clear_Analysis_From_Menu
         (Widget      => Widget,
