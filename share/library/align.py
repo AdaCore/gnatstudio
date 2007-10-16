@@ -125,7 +125,10 @@ def range_align_on (top, bottom, sep, replace_with=None):
             sub = sep_re.sub (replace_with, matched.group())
          except:
             sub = matched.group()
-         replace_len = max (replace_len, len (sub))
+         if sub == " : out ":
+            replace_len = max (replace_len, len (sub) + 3)
+         else:
+            replace_len = max (replace_len, len (sub))
       prev = line
       line = line.forward_line ()
       if prev == line:
