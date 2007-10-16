@@ -280,6 +280,26 @@ package body Code_Analysis_Module is
       Kernel : Kernel_Handle);
    --  Show the coverage report when we are in single analysis mode.
 
+   procedure On_Load_All_Projects_Menu
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle);
+   --  Show the coverage report when we are in single analysis mode.
+
+   procedure On_Load_Current_Project_Menu
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle);
+   --  Show the coverage report when we are in single analysis mode.
+
+   procedure On_Load_Current_File_Menu
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle);
+   --  Show the coverage report when we are in single analysis mode.
+
+   procedure On_Clear_Coverage_Menu
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle);
+   --  Show the coverage report when we are in single analysis mode.
+
    procedure Show_Analysis_Report_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
@@ -1179,6 +1199,7 @@ package body Code_Analysis_Module is
       pragma Unreferenced (Widget);
    begin
       Add_All_Gcov_Project_Info_In_Callback (Cont_N_Anal);
+
       --  Build/Refresh Report of Analysis
       Show_Analysis_Report
         (Get_Kernel (Cont_N_Anal.Context),
@@ -2788,14 +2809,14 @@ package body Code_Analysis_Module is
    begin
       Cont_N_Anal.Context := Check_Context (Kernel_Handle (Kernel), Context);
 
-         loop
-            exit when Cur = No_Element;
-            Cont_N_Anal.Analysis := Element (Cur);
-            Append_Show_Analysis_Report_To_Menu
-              (Cont_N_Anal, Menu,
-               -(Cont_N_Anal.Analysis.Name.all & (-" Report")));
-            Next (Cur);
-         end loop;
+      loop
+         exit when Cur = No_Element;
+         Cont_N_Anal.Analysis := Element (Cur);
+         Append_Show_Analysis_Report_To_Menu
+           (Cont_N_Anal, Menu,
+            -(Cont_N_Anal.Analysis.Name.all & (-" Report")));
+         Next (Cur);
+      end loop;
    end Dynamic_Views_Menu_Factory;
 
    -------------------------
@@ -2815,6 +2836,118 @@ package body Code_Analysis_Module is
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Single_View_Menu;
+
+   -------------------------------
+   -- On_Load_All_Projects_Menu --
+   -------------------------------
+
+   procedure On_Load_All_Projects_Menu
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
+   is
+      Cont_N_Anal : Context_And_Analysis;
+      use Code_Analysis_Instances;
+      Cur         : Cursor := Code_Analysis_Module_ID.Analyzes.First;
+   begin
+      if Cur = No_Element then
+         return;
+      end if;
+
+      Cont_N_Anal.Analysis := Element (Cur);
+
+      Cont_N_Anal.Context :=
+        Check_Context (Kernel_Handle (Kernel), Get_Current_Context (Kernel));
+
+      Set_File_Information
+        (Cont_N_Anal.Context,
+         Project => Get_Project (Get_Kernel (Cont_N_Anal.Context)));
+      Add_All_Gcov_Project_Info_From_Menu
+        (Widget      => Widget,
+         Cont_N_Anal => Cont_N_Anal);
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end On_Load_All_Projects_Menu;
+
+   ----------------------------------
+   -- On_Load_Current_Project_Menu --
+   ----------------------------------
+
+   procedure On_Load_Current_Project_Menu
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
+   is
+      Cont_N_Anal : Context_And_Analysis;
+      use Code_Analysis_Instances;
+      Cur         : Cursor := Code_Analysis_Module_ID.Analyzes.First;
+   begin
+      if Cur = No_Element then
+         return;
+      end if;
+
+      Cont_N_Anal.Analysis := Element (Cur);
+      Cont_N_Anal.Context := Check_Context
+        (Kernel_Handle (Kernel), Get_Current_Context (Kernel));
+
+      Add_Gcov_Project_Info_From_Menu
+        (Widget      => Widget,
+         Cont_N_Anal => Cont_N_Anal);
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end On_Load_Current_Project_Menu;
+
+   -------------------------------
+   -- On_Load_Current_File_Menu --
+   -------------------------------
+
+   procedure On_Load_Current_File_Menu
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
+   is
+      Cont_N_Anal : Context_And_Analysis;
+      use Code_Analysis_Instances;
+      Cur         : Cursor := Code_Analysis_Module_ID.Analyzes.First;
+   begin
+      if Cur = No_Element then
+         return;
+      end if;
+
+      Cont_N_Anal.Analysis := Element (Cur);
+      Cont_N_Anal.Context := Check_Context
+        (Kernel_Handle (Kernel), Get_Current_Context (Kernel));
+
+      Add_Gcov_File_Info_From_Menu
+        (Widget      => Widget,
+         Cont_N_Anal => Cont_N_Anal);
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end On_Load_Current_File_Menu;
+
+   ----------------------------
+   -- On_Clear_Coverage_Menu --
+   ----------------------------
+
+   procedure On_Clear_Coverage_Menu
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
+   is
+      Cont_N_Anal : Context_And_Analysis;
+      use Code_Analysis_Instances;
+      Cur         : Cursor := Code_Analysis_Module_ID.Analyzes.First;
+   begin
+      if Cur = No_Element then
+         return;
+      end if;
+
+      Cont_N_Anal.Analysis := Element (Cur);
+      Cont_N_Anal.Context := Check_Context
+        (Kernel_Handle (Kernel), Get_Current_Context (Kernel));
+
+      Clear_Analysis_From_Menu
+        (Widget      => Widget,
+         Cont_N_Anal => Cont_N_Anal);
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end On_Clear_Coverage_Menu;
 
    -----------------------
    -- Append_To_Submenu --
@@ -2973,6 +3106,9 @@ package body Code_Analysis_Module is
       Code_Analysis_Class : constant Class_Type :=
                               New_Class (Kernel, CodeAnalysis_Cst);
       Analysis            : Code_Analysis_Instance;
+      Tools               : constant String := '/' & (-"Tools");
+      Coverage            : constant String := -"Coverage";
+      Mitem               : Gtk_Menu_Item;
    begin
       Binary_Coverage_Mode          := Active (Binary_Coverage_Trace);
       Single_Analysis_Mode          := Active (Single_Analysis_Trace);
@@ -2986,17 +3122,69 @@ package body Code_Analysis_Module is
          Module_Name => CodeAnalysis_Cst);
       Register_Contextual_Submenu
         (Kernel      => Kernel,
-         Name        => -"Coverage",
+         Name        => Coverage,
          Filter      => Action_Filter (Lookup_Filter (Kernel, "Project only")
            or Lookup_Filter (Kernel, "In project")),
          Submenu     => Submenu_Factory (Contextual_Menu));
-      Register_Dynamic_Menu
+
+      Register_Menu
         (Kernel      => Kernel,
-         Parent_Path => '/' & (-"Tools"),
-         Text        => -"Covera_ge",
+         Parent_Path => Tools & '/' & Coverage,
+         Text        => -"Show report",
+         Callback    => On_Single_View_Menu'Access,
          Ref_Item    => -"Documentation",
-         Add_Before  => False,
-         Factory     => Dynamic_Tools_Menu_Factory'Access);
+         Add_Before  => False);
+
+      --  Deactivate the dynamic menu for now.
+      --  Use a static menu, so that the "gcov.py" plug-in can add menus to
+      --  the menu "/Tools/Coverage/".
+
+      --  ??? The current static menus work only in "single analysis" mode.
+
+      --        Register_Dynamic_Menu
+      --          (Kernel      => Kernel,
+      --           Parent_Path => Tools & '/' & Coverage,
+      --           Text        => -"Data",
+      --           Add_Before  => False,
+      --           Factory     => Dynamic_Tools_Menu_Factory'Access);
+
+      Gtk_New (Mitem);
+      Register_Menu (Kernel, Tools & '/' & Coverage, Mitem);
+
+      Register_Menu
+        (Kernel      => Kernel,
+         Parent_Path => Tools & '/' & Coverage,
+         Text        => -"Load data for all projects",
+         Callback    => On_Load_All_Projects_Menu'Access,
+         Ref_Item    => -"Documentation",
+         Add_Before  => False);
+
+      Register_Menu
+        (Kernel      => Kernel,
+         Parent_Path => Tools & '/' & Coverage,
+         Text        => -"Load data for current project",
+         Callback    => On_Load_Current_Project_Menu'Access,
+         Ref_Item    => -"Documentation",
+         Add_Before  => False);
+
+      Register_Menu
+        (Kernel      => Kernel,
+         Parent_Path => Tools & '/' & Coverage,
+         Text        => -"Load data for current file",
+         Callback    => On_Load_Current_File_Menu'Access,
+         Ref_Item    => -"Documentation",
+         Add_Before  => False);
+
+      Gtk_New (Mitem);
+      Register_Menu (Kernel, Tools & '/' & Coverage, Mitem);
+
+      Register_Menu
+        (Kernel      => Kernel,
+         Parent_Path => Tools & '/' & Coverage,
+         Text        => -"Clear coverage",
+         Callback    => On_Clear_Coverage_Menu'Access,
+         Ref_Item    => -"Documentation",
+         Add_Before  => False);
 
       if not Single_Analysis_Mode then
          Register_Dynamic_Menu
