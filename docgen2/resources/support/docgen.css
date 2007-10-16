@@ -2,7 +2,7 @@ body
 {
    background: #F4F4F4;
    font-family: arial, verdana;
-   font-size: 12px;
+   font-size: 90%;
    margin: 0px 0px 0px 205px;
    height: 100%;
 }
@@ -13,7 +13,13 @@ h2
    padding: 0px 0px 0px 5px;
    margin: 0px;
    font-variant: small-caps;
-   font-size: 14px;
+   font-size: 1.1em;
+}
+
+h3,
+h4
+{
+   font-size: 1.0em;
 }
 
 a:link,
@@ -72,6 +78,7 @@ div#leftSide
    padding-bottom: 31px;
    background: transparent url(../support/images/sidebarframebottom.png) no-repeat bottom;
    z-index: 20;
+   font-size: 0.9em;
 }
 
 div#leftSide div#leftSideInside
@@ -148,6 +155,7 @@ div#leftSideInside a:hover .button2
    padding: 0px;
    padding-bottom: 31px;
    background: transparent url(../support/images/rightsidebottom.png) no-repeat bottom;
+   font-size: 0.8em;
 }
 div#rightSide div#rightSideInside
 {
@@ -216,7 +224,7 @@ div.titleTopBar
    padding: 0px 0px 0px 5px;
    font-weight: bold;
    font-variant: small-caps;
-   font-size: 16px;
+   font-size: 1.1em;
 }
 div.title
 {
@@ -229,6 +237,7 @@ div.titleTopBar
 
 div.subprograms
 {
+   font-size: 90%;
    margin: 10px 0px 0px 0px;
 }
 
@@ -245,28 +254,24 @@ div.subprograms .name
 }
 div.subprograms h3
 {
-   font-size: 1.0em;
    background: #dae3fe;
    padding: 0px 0px 0px 5px;
    margin: 0px 0px 0px 0px;
 }
 div.subprograms h4
 {
-   font-size: 1.0em;
    padding: 0px;
    margin: 0px;
 }
 div.subprograms div.profile
 {
-   font-family: courier, courier new;
-   font-size: 10px;
+   font-family: courier new, courier;
    padding: 5px 5px 5px 5px;
    background: white;
 }
 div.subprograms div.details
 {
-   font-family: courier, courier new;
-   font-size: 10px;
+   font-family: courier new, courier;
    padding-top: 0px;
    padding-left: 5px;
    padding-top: 3px;
@@ -296,7 +301,7 @@ div.subprograms div.details span.string
 }
 div.subprograms div.details span.comment
 {
-   color: #009000;
+   color: #209020;
 }
 div.subprograms div.comment
 {
@@ -322,8 +327,11 @@ div.subprograms div.entries
    border: 1px solid #c0c0c0;
 }
 div.subprograms div.parameters,
-div.subprograms div.parameters { font-family: "Courier New", Courier;
-                                 background: #eee; }
+div.subprograms div.parameters
+{
+   font-family: courier new, courier;
+   background: #eee;
+}
 
 div.subprograms div.parameters div,
 div.subprograms div.details div { padding: 0px 0px 0px 0px;
@@ -331,6 +339,7 @@ div.subprograms div.details div { padding: 0px 0px 0px 0px;
                                   border: 0px;}
 div.entity
 {
+   font-size: 0.9em;
    margin-left: 20px;
 }
 div.classroot,
@@ -369,7 +378,6 @@ div.classtree h3
    position: relative;
    height: 30px;
    font-weight: normal;
-   font-size: 12px;
    padding: 4px 0px 0px 15px;
    margin: 0px 0px -6px 0px;
    z-index: 5;
