@@ -161,14 +161,37 @@ Make sure you have run the executable(s) at least once.
 
    cd (previous_dir)
 
+def remove_gcov(menu):
+   if not MDI.yes_no_dialog (
+      "This will remove all .gcov and .gcda files, are you sure ?"):
+      return
+
+   # Look in all the projects
+
+   for p in Project.root().dependencies(True):
+      object_dir = p.object_dirs(False)[0]
+
+      # Browse in the object dirs
+      for f in listdir (object_dir):
+         #  if f is a .gcda or a .gcov, remove it
+         if f.find (".gcda") != -1 or f.find (".gcov") != -1:
+            remove (object_dir + sep + f)
+
+
+
 def on_gps_started (hook):
    Menu.create ("/Tools/Covera_ge/Compute coverage",
                 on_activate=run_gcov,
                 ref="Show report",
                 add_before=True)
 
+   Menu.create ("/Tools/Covera_ge/Remove coverage information",
+                on_activate=remove_gcov,
+                ref="Show report",
+                add_before=True)
+
    Menu.create ("/Tools/Covera_ge/-",
-                ref="Compute coverage",
+                ref="Remove coverage information",
                 add_before=False)
 
 
