@@ -162,9 +162,14 @@ Make sure you have run the executable(s) at least once.
    cd (previous_dir)
 
 def on_gps_started (hook):
-   Menu.create ("/Tools/Compute coverage",
+   Menu.create ("/Tools/Covera_ge/Compute coverage",
                 on_activate=run_gcov,
                 ref="Show report",
+                add_before=True)
+
+   Menu.create ("/Tools/Covera_ge/-",
+                ref="Compute coverage",
                 add_before=False)
+
 
 GPS.Hook ("gps_started").add (on_gps_started)
