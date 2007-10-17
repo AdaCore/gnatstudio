@@ -82,7 +82,7 @@ package Code_Analysis_GUI is
    --  Gtk_Tree_Model column number dedicated to the raw coverage percentage
    --  values, in order to be use in sorting operations
 
-   Progress_Bar_Width_Cst : constant Gint   := 150;
+   Progress_Bar_Width_Cst : constant Gint := 150;
    --  Constant used to set the width of the progress bars of the analysis
    --  report
 
@@ -106,10 +106,11 @@ package Code_Analysis_GUI is
       Node_Column : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       Cov_Column  : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       Cov_Percent : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
-      Error_Box   : Gtk_Hbox;
+      Error_Board : Gtk_Hbox; --  when there's no data
       Load_Button : Gtk_Button;
+      Empty_Board : Gtk_Hbox; --  when flat view doesn't allow to see data
       Icons       : Code_Analysis_Icons;
-      Projects    : Code_Analysis_Tree;  -- Used by Show_Flat_List_* callbacks
+      Projects    : Code_Analysis_Tree;  --  Used by Show_Flat_List_* callbacks
       Binary_Mode : Boolean := True;
    end record;
 
