@@ -1528,11 +1528,12 @@ package body Code_Analysis_Module is
                  (Local_Context, Project => Prj_Name);
             else
                --  Show the empty report warning board
-               if Get_No_Show_All (Cont_N_Anal.Analysis.View.Error_Box) then
-                  Set_No_Show_All (Cont_N_Anal.Analysis.View.Error_Box, False);
+               if Get_No_Show_All (Cont_N_Anal.Analysis.View.Error_Board) then
+                  Set_No_Show_All
+                    (Cont_N_Anal.Analysis.View.Error_Board, False);
                end if;
 
-               Show_All (Cont_N_Anal.Analysis.View.Error_Box);
+               Show_All (Cont_N_Anal.Analysis.View.Error_Board);
                --  Removes Prj_Node from its container as we just created it
                Project_Maps.Delete
                  (Cont_N_Anal.Analysis.Projects.all, Prj_Node.Name);
@@ -1546,9 +1547,7 @@ package body Code_Analysis_Module is
                return;
             end if;
          else
-            if Cont_N_Anal.Analysis.View.Error_Box /= null then
-               Hide_All (Cont_N_Anal.Analysis.View.Error_Box);
-            end if;
+            Hide_All (Cont_N_Anal.Analysis.View.Error_Board);
          end if;
       end;
 
