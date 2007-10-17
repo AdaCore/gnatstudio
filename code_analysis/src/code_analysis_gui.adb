@@ -65,9 +65,10 @@ package body Code_Analysis_GUI is
       Bar_Render  : Gtk_Cell_Renderer_Progress;
       Dummy       : Gint;
       pragma Unreferenced (Dummy);
-      --  Error box widgets
+      --  Warning boards widgets
       Warning_Image    : Gtk_Image;
-      Error_Label      : Gtk_Label;
+      Board_Label      : Gtk_Label;
+      Full_Tree_Button : Gtk_Button;
       Label_And_Button : Gtk_Vbox;
       Button_Box       : Gtk_Hbox;
    begin
@@ -93,33 +94,62 @@ package body Code_Analysis_GUI is
       Gtk_New (View.Tree, Gtk_Tree_Model (View.Model));
       Set_Name (View.Tree, Name.all); --  testsuite
 
-      --  Create and append an error box in every cases
-      --  Set its children visible or not after
-      Gtk_New_Hbox (View.Error_Box, False, 7);
+      ------------------
+      --  Error_Board --
+      ------------------
+
+      Gtk_New_Hbox (View.Error_Board, False, 7);
       Gtk_New_Vbox (Label_And_Button, False, 7);
       Gtk_New_Hbox (Button_Box);
       Gtk_New_From_Icon_Name
         (Warning_Image, Stock_Dialog_Warning, Icon_Size_Dialog);
       Gtk_New
-        (Error_Label,
+        (Board_Label,
          -"This coverage report is empty. You can populate it with the "
          & '"' & (-"Load data..." & '"' &
            (-" entries of the /Tools/Coverage menu or the button below."
              )));
-      Set_Line_Wrap (Error_Label, True);
-      Set_Justify (Error_Label, Justify_Left);
+      Set_Line_Wrap (Board_Label, True);
+      Set_Justify (Board_Label, Justify_Left);
       Gtk_New (View.Load_Button, -"Load data for all projects");
-      Pack_Start (View.Error_Box, Warning_Image, False, False, 7);
-      Pack_Start (Label_And_Button, Error_Label, False, True, 7);
+      Pack_Start (View.Error_Board, Warning_Image, False, False, 7);
+      Pack_Start (Label_And_Button, Board_Label, False, True, 7);
       Pack_Start (Button_Box, View.Load_Button, False, False, 0);
       Pack_Start (Label_And_Button, Button_Box, False, True, 7);
-      Pack_Start (View.Error_Box, Label_And_Button, False, True, 0);
-      Pack_Start (View, View.Error_Box, False, True, 0);
-      Set_No_Show_All (View.Error_Box, True);
+      Pack_Start (View.Error_Board, Label_And_Button, False, True, 0);
+      Pack_Start (View, View.Error_Board, False, True, 0);
+      Set_No_Show_All (View.Error_Board, True);
 
-      -----------------
-      -- Node column --
-      -----------------
+      ------------------
+      --  Empty_Board --
+      ------------------
+
+      Gtk_New_Hbox (View.Empty_Board, False, 7);
+      Gtk_New_Vbox (Label_And_Button, False, 7);
+      Gtk_New_Hbox (Button_Box);
+      Gtk_New_From_Icon_Name
+        (Warning_Image, Stock_Dialog_Warning, Icon_Size_Dialog);
+      Gtk_New
+        (Board_Label,
+         -"There is nothing in this flat view. You should try to display the "
+         & ("full tree."));
+      Set_Line_Wrap (Board_Label, True);
+      Set_Justify (Board_Label, Justify_Left);
+      Gtk_New (Full_Tree_Button, -"Show full tree");
+      Gtkada.Handlers.Widget_Callback.Object_Connect
+        (Full_Tree_Button, Gtk.Button.Signal_Clicked,
+         Show_Full_Tree'Access, View);
+      Pack_Start (View.Empty_Board, Warning_Image, False, False, 7);
+      Pack_Start (Label_And_Button, Board_Label, False, True, 7);
+      Pack_Start (Button_Box, Full_Tree_Button, False, False, 0);
+      Pack_Start (Label_And_Button, Button_Box, False, True, 7);
+      Pack_Start (View.Empty_Board, Label_And_Button, False, True, 0);
+      Pack_Start (View, View.Empty_Board, False, True, 0);
+      Set_No_Show_All (View.Empty_Board, True);
+
+      ------------------
+      --  Node column --
+      ------------------
 
       Gtk_New (View.Node_Column);
       Gtk_New (Pixbuf_Rend);
@@ -133,9 +163,9 @@ package body Code_Analysis_GUI is
       Set_Resizable (View.Node_Column, True);
       Set_Sort_Column_Id (View.Node_Column, Name_Col);
 
-      ----------------------
-      -- Coverage columns --
-      ----------------------
+      -----------------------
+      --  Coverage columns --
+      -----------------------
 
       Gtk_New (View.Cov_Column);
       Dummy := Append_Column (View.Tree, View.Cov_Column);
@@ -202,6 +232,7 @@ package body Code_Analysis_GUI is
       Iter : Gtk_Tree_Iter := Get_Iter_First (View.Model);
       Path : Gtk_Tree_Path;
    begin
+      Hide_All (View.Empty_Board);
       Clear (View.Model);
       Fill_Iter
         (View.Model, Iter, View.Projects, View.Binary_Mode, View.Icons);
@@ -229,6 +260,15 @@ package body Code_Analysis_GUI is
       Clear (View.Model);
       Fill_Iter_With_Files
         (View.Model, Iter, View.Projects, View.Binary_Mode, View.Icons);
+
+      if Get_Iter_First (View.Model) = Null_Iter then
+         --  Show the empty flat view warning board
+         if Get_No_Show_All (View.Empty_Board) then
+            Set_No_Show_All (View.Empty_Board, False);
+         end if;
+
+         Show_All (View.Empty_Board);
+      end if;
    exception
       when E : others => Trace (Exception_Handle, E);
    end Show_Flat_List_Of_Files;
@@ -246,6 +286,14 @@ package body Code_Analysis_GUI is
       Clear (View.Model);
       Fill_Iter_With_Subprograms
         (View.Model, Iter, View.Projects, View.Binary_Mode, View.Icons);
+      if Get_Iter_First (View.Model) = Null_Iter then
+         --  Show the empty flat view warning board
+         if Get_No_Show_All (View.Empty_Board) then
+            Set_No_Show_All (View.Empty_Board, False);
+         end if;
+
+         Show_All (View.Empty_Board);
+      end if;
    exception
       when E : others => Trace (Exception_Handle, E);
    end Show_Flat_List_Of_Subprograms;
