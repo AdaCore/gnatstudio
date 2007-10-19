@@ -103,7 +103,7 @@ package body GPS.Kernel.Modules is
          Label          : Contextual_Menu_Label_Creator;
          Pix            : GNAT.Strings.String_Access;
          Next           : Contextual_Menu_Access;
-         Group          : Natural;
+         Group          : Integer;
          Visible        : Boolean := True;
          Sensitive      : Boolean := True;
          Filter_Matched : Boolean;
@@ -773,17 +773,18 @@ package body GPS.Kernel.Modules is
          case C.Menu_Type is
             when Type_Separator =>
                --  A separator is visible only:
-               --     - Its own filter matches
+               --     - If its own filter matches.
                --     - Or if it has no own filter, then only if the reference
-               --       item is also visible
+               --       item is also visible in the case they are of the same
+               --       group.
                --     - Always visible if there is no reference item
-               --  and then only if it isn't the last entry the contextual
-               --  menu
-
+               --       and then only if it isn't the last entry the contextual
+               --       menu.
                if C.Separator_Filter /= null then
                   return Filter_Matches (C.Separator_Filter, Context);
                else
                   return C.Ref_Item = null
+                    or else C.Ref_Item.Group /= C.Group
                     or else C.Ref_Item.Filter_Matched;
                end if;
 
@@ -1697,11 +1698,16 @@ package body GPS.Kernel.Modules is
       else
          if Kernel.Contextual /= System.Null_Address then
             C := Convert (Kernel.Contextual);
+
             while C /= null
               and then (Ref_Item = "" or else C.Name.all /= Ref_Item)
             loop
                if C.Group > Menu.Group then
                   Last_Group := Previous;
+
+                  if Previous = null or else Previous.Group < Menu.Group then
+                     exit;
+                  end if;
                end if;
 
                Previous := C;
@@ -1737,10 +1743,12 @@ package body GPS.Kernel.Modules is
                   Menu.Next := Previous.Next;
                   Previous.Next := Menu;
                end if;
+
             else
                Menu.Next := C.Next;
                C.Next := Menu;
             end if;
+
          else
             Kernel.Contextual := Convert (Menu);
          end if;
@@ -1782,7 +1790,7 @@ package body GPS.Kernel.Modules is
       Stock_Image : String := "";
       Ref_Item    : String := "";
       Add_Before  : Boolean := True;
-      Group       : Natural := 0)
+      Group       : Integer := Default_Contextual_Group)
    is
       T    : Contextual_Label_Param;
       Pix  : GNAT.Strings.String_Access;
@@ -1842,7 +1850,7 @@ package body GPS.Kernel.Modules is
       Stock_Image : String := "";
       Ref_Item    : String := "";
       Add_Before  : Boolean := True;
-      Group       : Natural := 0)
+      Group       : Integer := Default_Contextual_Group)
    is
       Pix  : GNAT.Strings.String_Access;
       Menu : Contextual_Menu_Access;
@@ -1894,7 +1902,7 @@ package body GPS.Kernel.Modules is
       Stock_Image : String := "";
       Ref_Item    : String := "";
       Add_Before  : Boolean := True;
-      Group       : Natural := 0)
+      Group       : Integer := Default_Contextual_Group)
    is
       Pix  : GNAT.Strings.String_Access;
       Menu : Contextual_Menu_Access;
@@ -1948,7 +1956,7 @@ package body GPS.Kernel.Modules is
       Stock_Image : String := "";
       Ref_Item    : String := "";
       Add_Before  : Boolean := True;
-      Group       : Natural := 0)
+      Group       : Integer := Default_Contextual_Group)
    is
       T    : Contextual_Label_Param;
       Pix  : GNAT.Strings.String_Access;
@@ -2088,7 +2096,7 @@ package body GPS.Kernel.Modules is
       Submenu    : Submenu_Factory := null;
       Ref_Item   : String := "";
       Add_Before : Boolean := True;
-      Group      : Natural := 0)
+      Group      : Integer := Default_Contextual_Group)
    is
       T : Contextual_Label_Param;
    begin

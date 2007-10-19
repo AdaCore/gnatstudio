@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
---                              AdaCore                              --
+--                 Copyright (C) 2001-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -394,6 +393,7 @@ package GPS.Kernel.Modules is
    --  Provide the custom expansion for %C when expanding a label. If the
    --  empty string is returned, the contextual entry will not be displayed.
 
+   Default_Contextual_Group : constant := 0;
    procedure Register_Contextual_Menu
      (Kernel      : access Kernel_Handle_Record'Class;
       Name        : String;
@@ -403,7 +403,7 @@ package GPS.Kernel.Modules is
       Stock_Image : String := "";
       Ref_Item    : String := "";
       Add_Before  : Boolean := True;
-      Group       : Natural := 0);
+      Group       : Integer := Default_Contextual_Group);
    --  Register a new contextual menu entry to be displayed.
    --  This menu will only be shown when the filter associated with the Action
    --  matches. The name used in the menu will be Label (or Name if label isn't
@@ -446,7 +446,7 @@ package GPS.Kernel.Modules is
       Stock_Image : String := "";
       Ref_Item    : String := "";
       Add_Before  : Boolean := True;
-      Group       : Natural := 0);
+      Group       : Integer := Default_Contextual_Group);
    --  Same as above, except the label of the menu is computed dynamically
 
    procedure Register_Contextual_Menu
@@ -458,7 +458,7 @@ package GPS.Kernel.Modules is
       Stock_Image : String := "";
       Ref_Item    : String := "";
       Add_Before  : Boolean := True;
-      Group       : Natural := 0);
+      Group       : Integer := Default_Contextual_Group);
    --  Same as above, except the action to execute is defined internally
    --  When the command is executed, the Context.Context field will be set to
    --  the current selection context, and Context.Event to the event that
@@ -477,10 +477,10 @@ package GPS.Kernel.Modules is
       Stock_Image : String := "";
       Ref_Item    : String := "";
       Add_Before  : Boolean := True;
-      Group       : Natural := 0);
+      Group       : Integer := Default_Contextual_Group);
    --  Same as above, but the menu title is a string where %p, %f,... are
    --  substituted.
-   --  A separator is inserted if Action is null and the Filter matches
+   --  A separator is inserted if Action is null and the Filter matches.
 
    type Submenu_Factory_Record is abstract tagged null record;
    type Submenu_Factory is access all Submenu_Factory_Record'Class;
@@ -500,21 +500,21 @@ package GPS.Kernel.Modules is
       Submenu    : Submenu_Factory := null;
       Ref_Item   : String := "";
       Add_Before : Boolean := True;
-      Group      : Natural := 0);
+      Group      : Integer := Default_Contextual_Group);
    --  Register a new submenu. Its contents can be computed dynamically by
    --  providing a Submenu callback. This can be left to null if all entries
    --  are added through Register_Contextual_Menu (in which case the call to
    --  Register_Contextual_Submenu can be used to position the parent menu
    --  where appropriate.
    --  Submenu is passed the submenu created for the item, so it doesn't need
-   --  to create the submenu itself
+   --  to create the submenu itself.
 
    procedure Set_Contextual_Menu_Visible
      (Kernel  : access Kernel_Handle_Record'Class;
       Name    : String;
       Visible : Boolean);
    --  This procedure can be used to toggle the visibility of contextual menus.
-   --  When a contextual menu was set as invisible, it will no longer appear
+   --  When a contextual menu was set as invisible, it will no longer appear.
 
    procedure Set_Contextual_Menu_Sensitivity
      (Kernel    : access Kernel_Handle_Record'Class;

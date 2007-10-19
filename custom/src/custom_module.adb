@@ -82,6 +82,8 @@ package body Custom_Module is
    Label_Cst       : aliased constant String := "label";
    Filter_Cst      : aliased constant String := "filter";
    Factory_Cst     : aliased constant String := "factory";
+   Group_Cst       : aliased constant String := "group";
+
    Menu_Get_Params : constant Cst_Argument_List :=
      (1 => Path_Cst'Access);
    Menu_Rename_Params : constant Cst_Argument_List :=
@@ -99,14 +101,16 @@ package body Custom_Module is
       2 => Label_Cst'Access,
       3 => Filter_Cst'Access,
       4 => Ref_Cst'Access,
-      5 => Add_Before_Cst'Access);
+      5 => Add_Before_Cst'Access,
+      6 => Group_Cst'Access);
    Contextual_Create_Dynamic_Params : constant Cst_Argument_List :=
      (1 => Factory_Cst'Access,
       2 => On_Activate_Cst'Access,
       3 => Label_Cst'Access,
       4 => Filter_Cst'Access,
       5 => Ref_Cst'Access,
-      6 => Add_Before_Cst'Access);
+      6 => Add_Before_Cst'Access,
+      7 => Group_Cst'Access);
 
    type Subprogram_Type_Menu_Record is new Gtk_Menu_Item_Record with record
       On_Activate : Subprogram_Type;
@@ -1978,13 +1982,21 @@ package body Custom_Module is
          Name_Parameters (Data, Contextual_Create_Params);
          Inst := Nth_Arg (Data, 1, Contextual_Class);
 
-         Cmd := new Contextual_Shell_Cmd;
-         Cmd.Contextual := Inst;
-         Cmd.On_Activate := Nth_Arg (Data, 2);
+         declare
+            Tmp : Subprogram_Type;
+         begin
+            Tmp := Nth_Arg (Data, 2); --  May raise No_Such_Parameter
+            Cmd := new Contextual_Shell_Cmd;
+            Cmd.Contextual := Inst;
+            Cmd.On_Activate := Tmp;
+         exception
+            when No_Such_Parameter =>
+               Cmd := null;
+         end;
 
          Subp := Nth_Arg (Data, 4, null);
          if Subp /= null then
-            Filter  := new Contextual_Shell_Filters'
+            Filter := new Contextual_Shell_Filters'
               (Action_Filter_Record with Contextual => Inst, Filter => Subp);
          end if;
 
@@ -1999,7 +2011,8 @@ package body Custom_Module is
                Filter     => Action_Filter (Filter),
                Label      => Label,
                Ref_Item   => Nth_Arg (Data, 5, ""),
-               Add_Before => Nth_Arg (Data, 6, True));
+               Add_Before => Nth_Arg (Data, 6, True),
+               Group      => Nth_Arg (Data, 7, Default_Contextual_Group));
          else
             Register_Contextual_Menu
               (Kernel,
@@ -2007,7 +2020,8 @@ package body Custom_Module is
                Action     => Interactive_Command_Access (Cmd),
                Filter     => Action_Filter (Filter),
                Ref_Item   => Nth_Arg (Data, 5, ""),
-               Add_Before => Nth_Arg (Data, 6, True));
+               Add_Before => Nth_Arg (Data, 6, True),
+               Group      => Nth_Arg (Data, 7, Default_Contextual_Group));
          end if;
 
       elsif Command = "create_dynamic" then
@@ -2030,7 +2044,8 @@ package body Custom_Module is
                Factory     => Nth_Arg (Data, 2),
                On_Activate => Nth_Arg (Data, 3)),
             Ref_Item   => Nth_Arg (Data, 6, ""),
-            Add_Before => Nth_Arg (Data, 7, True));
+            Add_Before => Nth_Arg (Data, 7, True),
+            Group      => Nth_Arg (Data, 8, Default_Contextual_Group));
 
       elsif Command = "list" then
          Set_Return_Value_As_List (Data);
@@ -2125,13 +2140,13 @@ package body Custom_Module is
       Register_Command
         (Kernel, "create",
          Minimum_Args => 1,
-         Maximum_Args => 5,
+         Maximum_Args => 6,
          Class => Contextual_Class,
          Handler => Contextual_Handler'Access);
       Register_Command
         (Kernel, "create_dynamic",
          Minimum_Args => 2,
-         Maximum_Args => 6,
+         Maximum_Args => 7,
          Class => Contextual_Class,
          Handler => Contextual_Handler'Access);
       Register_Command

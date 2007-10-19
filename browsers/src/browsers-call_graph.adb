@@ -2159,7 +2159,7 @@ package body Browsers.Call_Graph is
         (Kernel, "Find all references",
          Label      => "References/Find all references to %e",
          Action     => Command,
-         Ref_Item   => "Entity called by",
+         Ref_Item   => "Entity called by in browser",
          Add_Before => False);
 
       Command := new Find_Specific_Refs_Command;

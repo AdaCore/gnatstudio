@@ -32,16 +32,17 @@ Note that line numbers will be aligned to the biggest one, e.g.
 # These variables can be changed in the initialization commands associated
 # with this script (see /Tools/Plug-ins)
 
-copy_with_line_numbers_contextual=True
-# If True a contextual menu to copy some text with the line numbers will be
-# created. Otherwise, the capability will only be accessible from the
-# /Edit/Copy with line numbers menu and eventualllly the associated key
-# shortcut.
-
 standard_contextual=True
 # If True, contextual menus will be created for copying, cutting and pasting
 # text. They will correspond to the /Edit/Copy, /Edit/Cut and /Edit/Paste
 # menus.
+
+copy_with_line_numbers_contextual=True
+# If True and standard_contextual is also True, a contextual menu to copy some
+# text with the line numbers will be created.
+#  Otherwise, the capability will only be accessible from the
+# /Edit/Copy with line numbers menu and eventualllly the associated key
+# shortcut.
 
 
 ###########################################################################
@@ -88,33 +89,19 @@ def on_copy (context):
    GPS.Editor.copy()
 def on_cut (context):
    GPS.Editor.cut()
+def on_paste (context):
+   GPS.Editor.paste()
 
 def on_gps_started (hook):
    if standard_contextual:
+      GPS.Contextual ("sep_group_1").create (on_activate=None, group=-1)
+      GPS.Contextual ("Paste").create (on_activate=on_paste, group=-1)
+      if copy_with_line_numbers_contextual:
+         GPS.Contextual ("Copy with line numbers").create \
+           (on_activate=copy_with_line_numbers, filter=on_area,  group=-1)
       GPS.Contextual ("Copy").create \
-        (on_activate=on_copy, filter=on_area, ref="Paste", add_before=True)
+        (on_activate=on_copy, filter=on_area, group=-1)
       GPS.Contextual ("Cut").create \
-        (on_activate=on_cut, filter=on_area, ref="Paste", add_before=True)
-   
-      GPS.parse_xml ("""
-         <contextual action="" before="Copy" />
-         <contextual action="" before="Paste" />
-   
-         <action name="Paste selection" >
-           <filter module="Source_Editor" />
-           <shell>Editor.paste</shell>
-         </action>
-         
-         <contextual action="Paste selection" after="Properties">
-           <Title>Paste</Title>
-         </contextual>
-   
-         <contextual action="" after="Paste" />
-      """)
-   
-   if copy_with_line_numbers_contextual:
-      GPS.Contextual ("Copy with line numbers").create \
-        (on_activate=copy_with_line_numbers, \
-         filter=on_area, ref="Copy", add_before=False)
-   
+        (on_activate=on_cut, filter=on_area, group=-1)
+ 
 GPS.Hook ("gps_started").add (on_gps_started)
