@@ -37,12 +37,16 @@ standard_contextual=True
 # text. They will correspond to the /Edit/Copy, /Edit/Cut and /Edit/Paste
 # menus.
 
-copy_with_line_numbers_contextual=True
+copy_with_line_numbers_contextual=False
 # If True and standard_contextual is also True, a contextual menu to copy some
 # text with the line numbers will be created.
 #  Otherwise, the capability will only be accessible from the
 # /Edit/Copy with line numbers menu and eventualllly the associated key
 # shortcut.
+
+grey_out_contextual=True
+# If left to False, each time the contextual menu filter is not matched, the 
+# contextual menu is hidden. Otherwise, it will be created by greyed out.
 
 
 ###########################################################################
@@ -94,14 +98,20 @@ def on_paste (context):
 
 def on_gps_started (hook):
    if standard_contextual:
-      GPS.Contextual ("sep_group_1").create (on_activate=None, group=-1)
-      GPS.Contextual ("Paste").create (on_activate=on_paste, group=-1)
+      GPS.Contextual ("sep_group_1").create \
+        (on_activate=None, group=-1, visibility_filter=not grey_out_contextual)
+      GPS.Contextual ("Paste").create \
+        (on_activate=on_paste, group=-1, \
+         visibility_filter=not grey_out_contextual)
       if copy_with_line_numbers_contextual:
          GPS.Contextual ("Copy with line numbers").create \
-           (on_activate=copy_with_line_numbers, filter=on_area,  group=-1)
+           (on_activate=copy_with_line_numbers, filter=on_area,  group=-1, \
+            visibility_filter=not grey_out_contextual)
       GPS.Contextual ("Copy").create \
-        (on_activate=on_copy, filter=on_area, group=-1)
+        (on_activate=on_copy, filter=on_area, group=-1, \
+         visibility_filter=not grey_out_contextual)
       GPS.Contextual ("Cut").create \
-        (on_activate=on_cut, filter=on_area, group=-1)
+        (on_activate=on_cut, filter=on_area, group=-1, \
+         visibility_filter=not grey_out_contextual)
  
 GPS.Hook ("gps_started").add (on_gps_started)

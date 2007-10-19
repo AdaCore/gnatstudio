@@ -450,34 +450,38 @@ package GPS.Kernel.Modules is
    --  Same as above, except the label of the menu is computed dynamically
 
    procedure Register_Contextual_Menu
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Name        : String;
-      Action      : Commands.Interactive.Interactive_Command_Access;
-      Filter      : GPS.Kernel.Action_Filter := null;
-      Label       : access Contextual_Menu_Label_Creator_Record'Class;
-      Stock_Image : String := "";
-      Ref_Item    : String := "";
-      Add_Before  : Boolean := True;
-      Group       : Integer := Default_Contextual_Group);
-   --  Same as above, except the action to execute is defined internally
+     (Kernel            : access Kernel_Handle_Record'Class;
+      Name              : String;
+      Action            : Commands.Interactive.Interactive_Command_Access;
+      Filter            : GPS.Kernel.Action_Filter := null;
+      Visibility_Filter : Boolean := True;
+      Label             : access Contextual_Menu_Label_Creator_Record'Class;
+      Stock_Image       : String := "";
+      Ref_Item          : String := "";
+      Add_Before        : Boolean := True;
+      Group             : Integer := Default_Contextual_Group);
+   --  Same as above, except the action to execute is defined internally.
    --  When the command is executed, the Context.Context field will be set to
    --  the current selection context, and Context.Event to the event that
    --  triggered the menu.
    --  Action doesn't need to Push_State/Pop_State, nor handle unexpected
    --  exceptions, since this is already done by its caller. This keeps the
    --  code shorter.
+   --  If Visibility_Filter is True, Filter will act on the menu's visibility.
+   --  Otherwise, it will act on its sensitivity.
 
    procedure Register_Contextual_Menu
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Name        : String;
-      Action      : Commands.Interactive.Interactive_Command_Access := null;
-      Filter      : GPS.Kernel.Action_Filter := null;
-      Label       : String := "";
-      Custom      : Custom_Expansion := null;
-      Stock_Image : String := "";
-      Ref_Item    : String := "";
-      Add_Before  : Boolean := True;
-      Group       : Integer := Default_Contextual_Group);
+     (Kernel            : access Kernel_Handle_Record'Class;
+      Name              : String;
+      Action         : Commands.Interactive.Interactive_Command_Access := null;
+      Filter            : GPS.Kernel.Action_Filter := null;
+      Visibility_Filter : Boolean := True;
+      Label             : String := "";
+      Custom            : Custom_Expansion := null;
+      Stock_Image       : String := "";
+      Ref_Item          : String := "";
+      Add_Before        : Boolean := True;
+      Group             : Integer := Default_Contextual_Group);
    --  Same as above, but the menu title is a string where %p, %f,... are
    --  substituted.
    --  A separator is inserted if Action is null and the Filter matches.
@@ -493,14 +497,15 @@ package GPS.Kernel.Modules is
    --  New entries should be appended to Menu.
 
    procedure Register_Contextual_Submenu
-     (Kernel     : access Kernel_Handle_Record'Class;
-      Name       : String;
-      Label      : String := "";
-      Filter     : GPS.Kernel.Action_Filter := null;
-      Submenu    : Submenu_Factory := null;
-      Ref_Item   : String := "";
-      Add_Before : Boolean := True;
-      Group      : Integer := Default_Contextual_Group);
+     (Kernel            : access Kernel_Handle_Record'Class;
+      Name              : String;
+      Label             : String := "";
+      Filter            : GPS.Kernel.Action_Filter := null;
+      Visibility_Filter : Boolean := True;
+      Submenu           : Submenu_Factory := null;
+      Ref_Item          : String := "";
+      Add_Before        : Boolean := True;
+      Group             : Integer := Default_Contextual_Group);
    --  Register a new submenu. Its contents can be computed dynamically by
    --  providing a Submenu callback. This can be left to null if all entries
    --  are added through Register_Contextual_Menu (in which case the call to

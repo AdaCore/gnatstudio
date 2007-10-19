@@ -1355,11 +1355,12 @@ package body GPS.Kernel.Scripts is
             GNAT.Scripts.Set_Data
               (Inst, Get_Or_Create_Virtual_Console (Console));
 
-            if Title /= "" and then Console /= null then
-               if On_Input /= null then
-                  Set_Command_Handler
-                    (Console, On_Console_Input'Access, On_Input.all'Address);
-               end if;
+            if Title /= ""
+              and then Console /= null
+              and then On_Input /= null
+            then
+               Set_Command_Handler
+                 (Console, On_Console_Input'Access, On_Input.all'Address);
             end if;
 
             if Console /= null and then On_Destroy /= null then
