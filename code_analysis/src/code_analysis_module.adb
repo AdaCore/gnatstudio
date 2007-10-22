@@ -3108,6 +3108,7 @@ package body Code_Analysis_Module is
       Analysis            : Code_Analysis_Instance;
       Tools               : constant String := '/' & (-"Tools");
       Coverage            : constant String := -"Coverage";
+      Views               : constant String := -"Views";
       Mitem               : Gtk_Menu_Item;
    begin
       Binary_Coverage_Mode          := Active (Binary_Coverage_Trace);
@@ -3181,7 +3182,7 @@ package body Code_Analysis_Module is
       Register_Menu
         (Kernel      => Kernel,
          Parent_Path => Tools & '/' & Coverage,
-         Text        => -"Clear coverage",
+         Text        => -"Clear coverage from memory",
          Callback    => On_Clear_Coverage_Menu'Access,
          Ref_Item    => -"Documentation",
          Add_Before  => False);
@@ -3189,15 +3190,17 @@ package body Code_Analysis_Module is
       if not Single_Analysis_Mode then
          Register_Dynamic_Menu
            (Kernel      => Kernel,
-            Parent_Path => '/' & (-"Tools" & ('/' & (-"Views"))),
+            Parent_Path => Tools & '/' & Views,
             Text        => -"Covera_ge",
             Ref_Item    => -"Clipboard",
             Add_Before  => False,
             Factory     => Dynamic_Views_Menu_Factory'Access);
       else
          Register_Menu
-           (Kernel, '/' & (-"Tools" & ('/' & (-"Views"))),
-            Analysis.Name.all & (-" Report"), "", On_Single_View_Menu'Access);
+           (Kernel      => Kernel,
+            Parent_Path => Tools & '/' & Views,
+            Text        => Analysis.Name.all & (-" Report"),
+            Callback    => On_Single_View_Menu'Access);
       end if;
 
       Add_Hook
