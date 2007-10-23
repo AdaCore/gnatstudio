@@ -14,6 +14,11 @@ Known Problems fixed in GPS 4.2.0
               file which contains international characters encoded in UTF-8.
   Workaround: Do not display the Outline View when using extended characters.
 
+- GA03-014: examine entity contextual menu in entity browser
+  Problem:    The "Examine entity" contextual menu was present in the entity
+              browser although it did not serve any purpose.
+  Workaround: This contextual menu can safely be ignored in this context.
+
 - G925-011: join_line fails when line ends with spaces
   Problem:    The join_line action defined in the text_utils.py plug-in does
               not work as expected when the current line ends with one or more

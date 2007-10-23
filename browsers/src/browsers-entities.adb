@@ -99,6 +99,13 @@ package body Browsers.Entities is
       Child   : Gtk.Widget.Gtk_Widget);
    --  See inherited documentation
 
+   type Entity_Browser_Action_Context is new GPS.Kernel.Action_Filter_Record
+     with null record;
+   function Filter_Matches_Primitive
+     (Context : access Entity_Browser_Action_Context;
+      Ctxt : GPS.Kernel.Selection_Context) return Boolean;
+   --  A context that matches if the current widget is an entity browser.
+
    ------------------
    -- Type browser --
    ------------------
@@ -475,6 +482,8 @@ package body Browsers.Entities is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Command : Interactive_Command_Access;
+      Entity_Browser_Context  : constant Action_Filter :=
+                                  new Entity_Browser_Action_Context;
    begin
       Entity_Browser_Module := new Entity_Browser_Module_Record;
 
@@ -493,7 +502,8 @@ package body Browsers.Entities is
          Label      => -"Browsers/Examine entity %e",
          Action     => Command,
          Ref_Item   => "Entity called by in browser",
-         Add_Before => False);
+         Add_Before => False,
+         Filter     => not Entity_Browser_Context);
       Register_Menu
         (Kernel      => Kernel,
          Parent_Path => '/' & (-"Tools") & '/' & (-"Browsers"),
@@ -2107,5 +2117,22 @@ package body Browsers.Entities is
 
       return "<text>" & ASCII.LF & To_String (Output) & "</text>";
    end Output_SVG_Item_Content;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   function Filter_Matches_Primitive
+     (Context : access Entity_Browser_Action_Context;
+      Ctxt    : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Context);
+   begin
+      --  Do not check the current focus widget ourselves. Instead, we know
+      --  it has been properly checked when the context was created, and we
+      --  just check the current module from there.
+      return GPS.Kernel.Modules.Module_ID (Get_Creator (Ctxt)) =
+        Entity_Browser_Module;
+   end Filter_Matches_Primitive;
 
 end Browsers.Entities;
