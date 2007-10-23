@@ -7982,6 +7982,12 @@ The @command{Tools->Coverage} menu have an incremental set of entries,
 depending on the context.
 
 @table @command
+
+@item Coverage->Compute coverage files
+@item Coverage->Remove coverage files
+
+@c \hline
+
 @item Coverage->Show report
 Open a new window summarizing the coverage information.
 
@@ -7998,8 +8004,8 @@ Try to reload the coverage data of the specified source file.
 
 @c \hline
 
-@item Coverage->Clear Coverage
-Drop the coverage information, and return to the first set of entries.
+@item Coverage->Clear coverage from memory
+Drop the coverage information loaded in GPS.
 
 @end table
 
@@ -8012,12 +8018,6 @@ These submenus contain the following entries, adapted to the elements in the
 context. For instance, if you click on a file, you will have:
 
 @table @command
-@item Coverage->Show report
-Open a new window summarizing the coverage information.
-
-@item Coverage->Load data for @file{xxx.adb} (@file{xxx.ads})
-Try to reload the coverage data of the specified source file.
-
 @item Coverage->Show coverage information
 Append an annotation column to the left side of the current source editor.
 This column indicates which lines are covered and which aren't.
@@ -8026,10 +8026,16 @@ This column indicates which lines are covered and which aren't.
 Withdraw from the current source editor a previously set coverage annotation
 column.
 
+@item Coverage->Load data for @file{xxx.adb} (@file{xxx.ads})
+Try to reload the coverage data of the specified source file.
+
 @item Coverage->Remove data of @file{xxx.adb} (@file{xxx.ads})
 Remove the coverage data of the specified source file.
 Try to reload the coverage data of the specified source file.
 
+@item Coverage->Show Coverage report
+Open a new window summarizing the coverage information. (This entry appears
+only if the contextual menu has been created outside of the Coverage Report.)
 @end table
 
 @item The Coverage Report
