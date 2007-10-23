@@ -9,9 +9,9 @@ Known Problems fixed in GPS 4.2.0
               (or copy the files manually after selecting the menu to compute
               the info)
 
-- GA10-014: splash screen always on top
+- GA10-014: Splash screen always on top
   Problem:    The GPS splash screen, when displayed, used to be always on top
-              of other windows which be annyoying.
+              of other windows which can be annyoying.
   Workaround: You can disable the splash screen in the General section of
               the preferences dialog (accessible by the /Edit/Preferences
               menu).
@@ -21,7 +21,7 @@ Known Problems fixed in GPS 4.2.0
               file which contains international characters encoded in UTF-8.
   Workaround: Do not display the Outline View when using extended characters.
 
-- GA03-014: examine entity contextual menu in entity browser
+- GA03-014: Examine entity contextual menu in entity browser
   Problem:    The "Examine entity" contextual menu was present in the entity
               browser although it did not serve any purpose.
   Workaround: This contextual menu can safely be ignored in this context.
