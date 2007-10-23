@@ -315,9 +315,10 @@ procedure GPS.Main is
          end if;
 
          Close (FD);
-         Gtk_New (Splash, Window_Popup);
+         Gtk_New (Splash, Window_Toplevel);
          Set_Property (Splash, Allow_Shrink_Property, False);
          Set_Property (Splash, Allow_Grow_Property, False);
+         Set_Property (Splash, Decorated_Property, False);
          Set_Position (Splash, Win_Pos_Center);
          Gdk_New_From_File (Pixbuf, File, Error);
          Gtk_New (Image, Pixbuf);

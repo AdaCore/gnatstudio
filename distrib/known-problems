@@ -9,6 +9,13 @@ Known Problems fixed in GPS 4.2.0
               (or copy the files manually after selecting the menu to compute
               the info)
 
+- GA10-014: splash screen always on top
+  Problem:    The GPS splash screen, when displayed, used to be always on top
+              of other windows which be annyoying.
+  Workaround: You can disable the splash screen in the General section of
+              the preferences dialog (accessible by the /Edit/Preferences
+              menu).
+
 - GA09-029: Crashes when using the Outline View on international files
   Problem:    GPS might crash when asked to display the Outline View on a source
               file which contains international characters encoded in UTF-8.
