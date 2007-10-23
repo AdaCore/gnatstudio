@@ -161,6 +161,7 @@ package body Code_Analysis_GUI is
       Dummy := Append_Column (View.Tree, View.Node_Column);
       Set_Title (View.Node_Column, -"Entities");
       Set_Resizable (View.Node_Column, True);
+      Set_Reorderable (View.Node_Column, True);
       Set_Sort_Column_Id (View.Node_Column, Name_Col);
 
       -----------------------
@@ -173,6 +174,7 @@ package body Code_Analysis_GUI is
       Pack_Start (View.Cov_Column, Text_Render, False);
       Add_Attribute (View.Cov_Column, Text_Render, "text", Cov_Col);
       Set_Title (View.Cov_Column, -"Coverage");
+      Set_Reorderable (View.Cov_Column, True);
       Set_Resizable (View.Cov_Column, True);
       Set_Sort_Column_Id (View.Cov_Column, Cov_Sort);
       Gtk_New (View.Cov_Percent);
@@ -187,6 +189,7 @@ package body Code_Analysis_GUI is
       Add_Attribute (View.Cov_Percent, Bar_Render, "value", Cov_Bar_Val);
       Set_Title (View.Cov_Percent, -"Percentage");
       Set_Resizable (View.Cov_Percent, True);
+      Set_Reorderable (View.Cov_Percent, True);
       Set_Sort_Column_Id (View.Cov_Percent, Cov_Bar_Val);
       Gtk_New (Scrolled);
       Set_Policy
