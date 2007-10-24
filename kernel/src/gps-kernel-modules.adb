@@ -31,6 +31,7 @@ with Glib.Convert;              use Glib.Convert;
 with Glib.Module;               use Glib.Module;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
+with Glib.XML_Int;
 
 with Gtk.Accel_Map;             use Gtk.Accel_Map;
 with Gtk.Dnd;                   use Gtk.Dnd;
@@ -42,6 +43,7 @@ with Gtk.Image;                 use Gtk.Image;
 with Gtk.Image_Menu_Item;       use Gtk.Image_Menu_Item;
 pragma Warnings (Off, Gtk.Image_Menu_Item);
 
+with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Bar;              use Gtk.Menu_Bar;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
@@ -74,7 +76,7 @@ with VFS;                       use VFS;
 package body GPS.Kernel.Modules is
 
    Me : constant Debug_Handle :=
-     Create ("GPS.Kernel.Modules", GNAT.Traces.Off);
+          Create ("GPS.Kernel.Modules", GNAT.Traces.Off);
 
    type Contextual_Menu_User_Data is record
       Object       : GObject;
@@ -228,6 +230,51 @@ package body GPS.Kernel.Modules is
      (Module_List_Access, System.Address);
    function Convert is new Ada.Unchecked_Conversion
      (System.Address, Module_List_Access);
+
+   function Base_Menu_Name (Path : String) return String;
+   --  Return the base name of a menu path. '/' is the menu separator. This
+   --  subprogram handles pango markup correctly.
+
+   function Dir_Menu_Name (Path : String) return String;
+   --  Return the directory name of a menu path. '/' is the menu separator.
+   --  This subprogram handles pango markup correctly.
+
+   --------------------
+   -- Base_Menu_Name --
+   --------------------
+
+   function Base_Menu_Name (Path : String) return String is
+   begin
+      for J in reverse Path'Range loop
+         if Path (J) = '/'
+           and then J > Path'First
+           and then Path (J - 1) /= '<'
+         then
+            return Path (J + 1 .. Path'Last);
+         end if;
+      end loop;
+
+      return Path;
+   end Base_Menu_Name;
+
+   -------------------
+   -- Dir_Menu_Name --
+   -------------------
+
+   function Dir_Menu_Name (Path : String) return String is
+   begin
+      for J in reverse Path'Range loop
+         if Path (J) = '/'
+           and then ((J > Path'First
+                      and then Path (J - 1) /= '<')
+                     or else J = Path'First)
+         then
+            return Path (Path'First .. J);
+         end if;
+      end loop;
+
+      return Path;
+   end Dir_Menu_Name;
 
    ------------------
    -- Menu_Handler --
@@ -506,7 +553,7 @@ package body GPS.Kernel.Modules is
                  (Param, Context, Quoted, Done'Access);
             begin
                Has_Error := not Done;
-               return Tmp;
+               return "<b>" & Tmp & "</b>";
             end;
          end if;
 
@@ -518,7 +565,7 @@ package body GPS.Kernel.Modules is
       if Filter_Matches (Action_Filter (Creator.Filter), Context) then
          declare
             Tmp : constant String := Substitute
-              (Creator.Label.all,
+              (Glib.Xml_Int.Protect (Creator.Label.all),
                Substitution_Char => GPS.Kernel.Macros.Special_Character,
                Callback          => Substitution'Unrestricted_Access,
                Recursive         => False);
@@ -838,7 +885,7 @@ package body GPS.Kernel.Modules is
                   C2 := Convert (Kernel.Contextual);
                   while C2 /= null loop
                      if C2.Filter_Matched then
-                        if Dir_Name ('/' & Label_Name (C2, Context)) =
+                        if Dir_Menu_Name ('/' & Label_Name (C2, Context)) =
                           '/' & Full_Name.all & '/'
                         then
                            Create_Item (C2, Context, Item, Full2);
@@ -854,7 +901,7 @@ package body GPS.Kernel.Modules is
                   Destroy (Menu);
                   Item := null;
                else
-                  Gtk_New (Item, Base_Name (Full_Name.all));
+                  Gtk_New (Item, Base_Menu_Name (Full_Name.all));
                   Set_Submenu (Item, Menu);
                end if;
 
@@ -864,9 +911,9 @@ package body GPS.Kernel.Modules is
             when Type_Action | Type_Command =>
                if Full_Name.all /= "" then
                   if C.Pix = null then
-                     Gtk_New (Item, Base_Name (Full_Name.all));
+                     Gtk_New (Item, Base_Menu_Name (Full_Name.all));
                   else
-                     Gtk_New (Image, Base_Name (Full_Name.all));
+                     Gtk_New (Image, Base_Menu_Name (Full_Name.all));
                      Gtk_New (Pix,
                               Stock_Id => C.Pix.all,
                               Size     => Icon_Size_Menu);
@@ -886,6 +933,15 @@ package body GPS.Kernel.Modules is
 
          if Item /= null then
             Set_Sensitive (Item, C.Sensitive);
+
+            declare
+               Label : constant Gtk_Label :=
+                         Gtk_Label (Get_Child (Item));
+            begin
+               if Label /= null then
+                  Set_Use_Markup (Label, True);
+               end if;
+            end;
          end if;
       end Create_Item;
 
@@ -913,7 +969,7 @@ package body GPS.Kernel.Modules is
          Context : Selection_Context) return Boolean
       is
          Label  : constant String := Label_Name (C, Context);
-         Parent : constant String := Dir_Name ('/' & Label);
+         Parent : constant String := Dir_Menu_Name ('/' & Label);
          C2     : Contextual_Menu_Access;
       begin
          if Parent /= "/" then
@@ -981,7 +1037,7 @@ package body GPS.Kernel.Modules is
                Parent_Item := Find_Or_Create_Menu_Tree
                  (Menu_Bar      => null,
                   Menu          => Menu,
-                  Path          => Dir_Name ('/' & Full_Name.all),
+                  Path          => Dir_Menu_Name ('/' & Full_Name.all),
                   Accelerators  => Get_Default_Accelerators (Kernel),
                   Allow_Create  => True,
                   Use_Mnemonics => False);

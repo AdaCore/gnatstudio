@@ -1397,10 +1397,11 @@ package body Src_Editor_Box is
       Entity := Get_Entity (Context);
       if Entity /= null then
          if Is_Container (Get_Kind (Entity).Kind) then
-            return -"Goto body of " & Entity_Name_Information (Context);
+            return -("Goto body of <b>"
+              & Entity_Name_Information (Context) & "</b>");
          else
-            return -"Goto full declaration of "
-              & Entity_Name_Information (Context);
+            return -("Goto full declaration of <b>"
+              & Entity_Name_Information (Context) & "</b>");
          end if;
       end if;
 

@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.2 NEW FEATURES LIST Current as of Oct 12, 2007
+GPS 4.2 NEW FEATURES LIST Current as of Oct 24, 2007
 ====================================================
 
 Copyright (c) 2006-2007, AdaCore
@@ -210,6 +210,11 @@ NF-42-G213-014 Add support for Project Explorer filters (2007-02-20)
   Explorer based on a given regular expression. This has been
   designed to filter out version control specific directories
   like CVS or .svn for example.
+
+NF-42-G213-008 Highlight context in contextual menu entries (2007-09-13)
+
+  In order to ease readability of contextual menus, the context (e.g the
+  current file name) part is now highlighted.
 
 NF-42-FC20-002 Copy text together with line numbers (2007-09-13)
 

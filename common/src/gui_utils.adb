@@ -917,10 +917,6 @@ package body GUI_Utils is
       Unref (GC);
    end Create_Pixmap_From_Text;
 
-   -------------------------
-   -- Full_Path_Menu_Item --
-   -------------------------
-
    -------------
    -- Gtk_New --
    -------------
@@ -1596,6 +1592,7 @@ package body GUI_Utils is
             Find_Menu_Item_By_Name
               (Menu_Bar, Parent, Ref_Item, Pred, Index,
                Use_Mnemonics => Use_Mnemonics);
+
             Add_Menu (Parent, Menu_Bar, Menu_Item, Index, Add_Before);
             Show_All (Menu_Item);
             Parent := M;
