@@ -973,10 +973,10 @@ package body Entities is
    -- Release --
    -------------
 
-   procedure Release (Db : Entities_Database) is
+   procedure Thaw (Db : Entities_Database) is
    begin
       Db.Frozen := False;
-   end Release;
+   end Thaw;
 
    ------------
    -- Frozen --

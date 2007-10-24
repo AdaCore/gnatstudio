@@ -2162,18 +2162,18 @@ package body Docgen2 is
          Command.Src_Files.Clear;
          Command.Files.Clear;
 
-         Release (Database);
+         Thaw (Database);
          return Success;
       end if;
 
-      Release (Database);
+      Thaw (Database);
 
       return Execute_Again;
 
    exception
       when E : others =>
          Trace (Exception_Handle, E);
-         Release (Database);
+         Thaw (Database);
          return Failure;
    end Execute;
 

@@ -78,7 +78,7 @@ package Entities is
    --  Set the Database as read-only: this won't check for updates, and thus
    --  will speed-up processing of entities cross-ref.
 
-   procedure Release (Db : Entities_Database);
+   procedure Thaw (Db : Entities_Database);
    --  Unset the freeze state of the database.
 
    function Frozen (Db : Entities_Database) return Boolean;
