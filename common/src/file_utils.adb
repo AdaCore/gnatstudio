@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
---                              AdaCore                              --
+--                   Copyright (C) 2001-2007, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -470,7 +469,7 @@ package body File_Utils is
       GM_Split (T, Year, Month, Day, Hour, Minute, Second);
 
       if T = Invalid_Time then
-         return No_Time;
+         return VFS.No_Time;
       end if;
 
       return GNAT.Calendar.Time_Of
