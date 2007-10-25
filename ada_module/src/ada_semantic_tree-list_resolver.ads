@@ -127,10 +127,10 @@ package Ada_Semantic_Tree.List_Resolver is
       return Formal_Parameter_Array;
    --  Return all the formal parameters that are not set with an actual yet.
 
-   function Any_Formal_Missing
+   function Any_Named_Formal_Missing
      (Params : Actual_Parameter_Resolver) return Boolean;
    --  Return true if there is at least one formal parameter waiting for its
-   --  actual.
+   --  actual. This formal has to have a name.
 
 private
 

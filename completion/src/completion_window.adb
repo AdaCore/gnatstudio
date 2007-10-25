@@ -320,6 +320,8 @@ package body Completion_Window is
          Set (Window.Model, Window.More_Iter, Markup_Column,
               "<span color=""grey""><i> (more...) </i></span>");
       end if;
+   exception
+      when E : others => Trace (Exception_Handle, E);
    end Expand_Selection;
 
    ---------------------

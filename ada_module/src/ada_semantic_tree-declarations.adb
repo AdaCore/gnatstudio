@@ -912,7 +912,9 @@ package body Ada_Semantic_Tree.Declarations is
                      --  We don't add anything if there's no remaining possible
                      --  parameter.
 
-                     if Any_Formal_Missing (Local_Declaration.Actuals.all) then
+                     if Any_Named_Formal_Missing
+                       (Local_Declaration.Actuals.all)
+                     then
                         Append
                           (Result.Contents,
                            Unique_Declaration_List'

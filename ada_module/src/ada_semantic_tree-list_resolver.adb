@@ -332,31 +332,35 @@ package body Ada_Semantic_Tree.List_Resolver is
       Result_Index : Integer := 1;
    begin
       for J in Params.Profile.Params'Range loop
-         if Params.Actual_Params (J) = Null_Actual_Parameter then
+         if Params.Actual_Params (J) = Null_Actual_Parameter
+           and then Params.Profile.Params (J) /= Null_Entity_Access
+         then
             Result (Result_Index) :=
               Formal_Parameter (Params.Profile.Params (J));
             Result_Index := Result_Index + 1;
          end if;
       end loop;
 
-      return Result;
+      return Result (1 .. Result_Index - 1);
    end Get_Missing_Formals;
 
-   -------------------------
-   -- Any_Formal_Missingg --
-   -------------------------
+   -------------------------------
+   -- Any_Named_Formal_Missingg --
+   -------------------------------
 
-   function Any_Formal_Missing
+   function Any_Named_Formal_Missing
      (Params : Actual_Parameter_Resolver) return Boolean
    is
    begin
       for J in Params.Profile.Params'Range loop
-         if Params.Actual_Params (J) = Null_Actual_Parameter then
+         if Params.Actual_Params (J) = Null_Actual_Parameter
+            and then Params.Profile.Params (J) /= Null_Entity_Access
+         then
             return True;
          end if;
       end loop;
 
       return False;
-   end Any_Formal_Missing;
+   end Any_Named_Formal_Missing;
 
 end Ada_Semantic_Tree.List_Resolver;
