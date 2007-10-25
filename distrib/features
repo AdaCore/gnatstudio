@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.2 NEW FEATURES LIST Current as of Oct 24, 2007
+GPS 4.2 NEW FEATURES LIST Current as of Oct 25, 2007
 ====================================================
 
 Copyright (c) 2006-2007, AdaCore
@@ -211,7 +211,7 @@ NF-42-G213-014 Add support for Project Explorer filters (2007-02-20)
   designed to filter out version control specific directories
   like CVS or .svn for example.
 
-NF-42-G213-008 Highlight context in contextual menu entries (2007-09-13)
+NF-42-G213-008 Highlight context in contextual menu entries (2007-10-24)
 
   In order to ease readability of contextual menus, the context (e.g the
   current file name) part is now highlighted.
@@ -299,8 +299,9 @@ NF-42-D914-005 Better feedback when build fails w/o src location (2007-04-19)
 
 NF-42-D825-009 New plug-in to list unused entities (2007-07-20)
 
-  A new plug-in can be activated through the /Tools/Plug-ins menu and provides
-  additional menus to list unused entities in a file or a project
+  A new plug-in (unused_entities.py) can be activated through the
+  /Tools/Plug-ins menu and provides additional menus to list unused entities
+  in a file or a project.
 
 NF-42-CC02-005 New plug-in to show dependency path between files (2007-07-23)
 
