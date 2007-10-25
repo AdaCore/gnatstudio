@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2001-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1566,7 +1565,6 @@ package body VCS.ClearCase is
 
       Diff_File_Command : External_Command_Access;
 
-      Fail_Message      : Console_Command_Access;
       Success_Message   : Console_Command_Access;
 
    begin
@@ -1575,14 +1573,6 @@ package body VCS.ClearCase is
                 & Full_Name (File).all & " ...", Mode => Info);
 
       --  Create the end of the message
-
-      Create (Fail_Message,
-              Kernel,
-              -("ClearCase error: comparison of ")
-              & Full_Name (File).all & (-" failed."),
-              False,
-              True,
-              Info);
 
       Create (Success_Message,
               Kernel,
