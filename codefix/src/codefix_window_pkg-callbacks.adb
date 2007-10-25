@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002-2007                    --
---                                AdaCore                            --
+--                        Copyright (C) 2002-2007, AdaCore           --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -122,6 +121,7 @@ package body Codefix_Window_Pkg.Callbacks is
       Graphic_Codefix : constant Graphic_Codefix_Access :=
         Graphic_Codefix_Access (Object);
       Success_Load    : Boolean;
+      pragma Unreferenced (Success_Load);
    begin
       Load_Error (Graphic_Codefix, Success_Load);
       --  ??? What may I do when the fix is no longer pertinent ?
