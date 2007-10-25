@@ -264,7 +264,7 @@ package body Entities.Debug is
       Seconds : Second_Number;
       Sub     : Second_Duration;
    begin
-      if Timestamp = No_Time then
+      if Timestamp = VFS.No_Time then
          Output ("@<no_time>");
       elsif not Show_Timestamps then
          Output ("@<hidden time>");
