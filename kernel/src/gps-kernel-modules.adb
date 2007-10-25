@@ -31,7 +31,7 @@ with Glib.Convert;              use Glib.Convert;
 with Glib.Module;               use Glib.Module;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
-with Glib.XML_Int;
+with Glib.Xml_Int;
 
 with Gtk.Accel_Map;             use Gtk.Accel_Map;
 with Gtk.Dnd;                   use Gtk.Dnd;
