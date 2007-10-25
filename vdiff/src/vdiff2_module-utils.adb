@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2003-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -37,7 +36,7 @@ with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
 with GPS.Location_View;                 use GPS.Location_View;
 with Pixmaps_Vdiff2;                    use Pixmaps_Vdiff2;
 with String_Utils;                      use String_Utils;
-with Vdiff2_Command_Block;              use Vdiff2_Command_Block;
+--  with Vdiff2_Command_Block;              use Vdiff2_Command_Block;
 with Vdiff2_Command_Line;               use Vdiff2_Command_Line;
 with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
 with Vdiff2_Module.Utils.Text;          use Vdiff2_Module.Utils.Text;
@@ -774,7 +773,6 @@ package body Vdiff2_Module.Utils is
       Res        : Diff_List;
       Curr_Node  : Diff_List_Node;
       Curr_Chunk : Diff_Chunk_Access;
-      Cmd        : Diff_Command_Access;
       Info       : T_VLine_Information;
 
    begin
@@ -827,12 +825,6 @@ package body Vdiff2_Module.Utils is
          Show_Diff_Chunk (Kernel, Item, Curr_Chunk, Info);
          Curr_Node := Next (Curr_Node);
       end loop;
-
-      Create
-        (Cmd,
-         Kernel_Handle (Kernel),
-         VDiff2_Module (Vdiff_Module_ID).List_Diff,
-         Unhighlight_Difference'Access);
 
       Add_Line_Information
         (Kernel, Item.Files (1), Id_Col_Vdiff,

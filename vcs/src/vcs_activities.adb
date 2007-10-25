@@ -384,6 +384,7 @@ package body VCS_Activities is
                     Logs_Dir & OS_Lib.Directory_Separator &
                     String (Activity) & "$log";
       Success   : Boolean;
+      pragma Unreferenced (Success);
    begin
       declare
          Item : Activity_Record := Get (Activity);

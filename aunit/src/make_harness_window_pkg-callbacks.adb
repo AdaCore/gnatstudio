@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
---                               AdaCore                             --
+--                      Copyright (C) 2001-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -214,6 +213,7 @@ package body Make_Harness_Window_Pkg.Callbacks is
       Procedure_Name : String := Get_Text (Win.Procedure_Entry);
       Translation    : Translate_Set;
       Success        : Boolean;
+      pragma Unreferenced (Success);
 
    begin
       if Win.Suite_Name = null then

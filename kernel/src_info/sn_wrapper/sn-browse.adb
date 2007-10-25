@@ -244,6 +244,7 @@ package body SN.Browse is
             F : String := Name_As_Directory (DB_Directory)
               & Dir_Entry (1 .. Last) & ASCII.NUL;
             Success : Boolean;
+            pragma Unreferenced (Success);
          begin
             Delete_File (F'Address, Success);
          end;

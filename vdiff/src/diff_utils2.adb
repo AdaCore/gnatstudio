@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2003-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -635,7 +634,7 @@ package body Diff_Utils2 is
       Diff1       : Diff_List;
       Success     : Boolean;
       N           : Integer;
-      pragma Unreferenced (N);
+      pragma Unreferenced (N, Success);
 
    begin
       if Line1 = "" or else Line2 = "" then
