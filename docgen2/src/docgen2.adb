@@ -3544,6 +3544,7 @@ package body Docgen2 is
       Dst_Dir : constant String :=
                   Get_Doc_Directory (Kernel);
       Dead    : Boolean;
+      pragma Unreferenced (Dead);
    begin
       Src_Dir.Copy (Dst_Dir & Base_Dir_Name (Src_Dir), Dead);
    end Generate_Support_Files;
