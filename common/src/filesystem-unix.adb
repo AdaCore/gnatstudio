@@ -523,6 +523,7 @@ package body Filesystem.Unix is
          2 => new String'("u+w"),
          3 => new String'(Local_Full_Name));
       Status : Boolean;
+      pragma Unreferenced (Status);
 
    begin
       if not Writable then
@@ -549,6 +550,7 @@ package body Filesystem.Unix is
          2 => new String'("u+r"),
          3 => new String'(Local_Full_Name));
       Status : Boolean;
+      pragma Unreferenced (Status);
 
    begin
       if not Readable then

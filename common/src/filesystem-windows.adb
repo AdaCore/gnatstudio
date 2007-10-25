@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2006-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -561,6 +560,7 @@ package body Filesystem.Windows is
                   new String'("""" & Local_Full_Name & """"),
                   new String'("2>&1"));
       Status : Boolean;
+      pragma Unreferenced (Status);
 
    begin
       if not Writable then
