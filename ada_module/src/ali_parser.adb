@@ -1802,6 +1802,11 @@ package body ALI_Parser is
          LI           => null,
          Handler      => LI_Handler (Handler),
          Allow_Create => False);
+
+      if Frozen (Handler.Db) then
+         return Source;
+      end if;
+
       if Source /= null
         and then Get_LI (Source) /= null
         and then Name_As_Directory (Object_Path
