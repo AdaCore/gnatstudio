@@ -585,6 +585,7 @@ package body VCS_View.Explorer is
       while Status_Temp /= File_Status_List.Null_Node loop
          declare
             Displayed : Boolean;
+            pragma Unreferenced (Displayed);
          begin
             Display_File_Status
               (Kernel, File_Status_List.Data (Status_Temp), Explorer.VCS,
