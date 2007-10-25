@@ -695,7 +695,7 @@ package body Completion_Window is
       declare
          Prefix : constant String := Window.Info (J).Text.all;
          Last   : Natural := Prefix'Last;
-         First  : constant Natural := Prefix'First;
+         First  : Natural := Prefix'First;
       begin
          while Iter /= Null_Iter
            and then Iter /= Window.More_Iter
@@ -728,17 +728,25 @@ package body Completion_Window is
          Get_Iter_At_Mark
            (Window.Buffer, Text_End, Get_Insert (Window.Buffer));
 
-         if Get_Text (Window.Buffer, Text_Begin, Text_End)
-           = Prefix (First .. Last)
-         then
-            return False;
-         end if;
+         declare
+            Text : constant String :=
+                     Get_Text (Window.Buffer, Text_Begin, Text_End);
+            Offset : constant Gint := Get_Line_Offset (Text_End)
+              - Get_Line_Offset (Text_Begin);
+            Dummy : Boolean;
+         begin
+            if Text = Prefix (First .. Last) then
+               return False;
+            else
+               First := First + Natural (Offset);
+            end if;
 
-         Window.In_Deletion := True;
-         Delete (Window.Buffer, Text_Begin, Text_End);
-         Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Mark);
-         Insert (Window.Buffer, Text_Begin, Prefix (First .. Last));
-         Window.In_Deletion := False;
+            Window.In_Deletion := True;
+            Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Mark);
+            Forward_Chars (Text_Begin, Offset, Dummy);
+            Insert (Window.Buffer, Text_Begin, Prefix (First .. Last));
+            Window.In_Deletion := False;
+         end;
       end;
 
       return True;
