@@ -213,6 +213,20 @@ package body Src_Editor_Box is
    --  The purpose of this procedure is to share some code between the public
    --  subprograms Set_Writable and Check_Writable.
 
+   procedure Append_To_Dispatching_Menu
+     (Menu          : access Gtk.Menu.Gtk_Menu_Record'Class;
+      Context       : GPS.Kernel.Selection_Context;
+      Force_Freeze  : Boolean;
+      Default_Title : String;
+      Filter        : Reference_Kind_Filter;
+      Show_Default  : Boolean;
+      Callback      : GPS.Kernel.Entity_Callback.Simple_Handler);
+   --  Create the submenus for dispatching calls
+
+   function Has_Body (Context : GPS.Kernel.Selection_Context) return Boolean;
+   --  Whether the Entity referenced in context has a body other than at the
+   --  location described in Context
+
    ----------------------------------
    -- The contextual menu handling --
    ----------------------------------
@@ -1447,30 +1461,41 @@ package body Src_Editor_Box is
          Entity   => Entity);
    end On_Goto_Body_Of;
 
-   --------------------
-   -- Append_To_Menu --
-   --------------------
+   --------------------------------
+   -- Append_To_Dispatching_Menu --
+   --------------------------------
 
-   procedure Append_To_Menu
-     (Factory : access Goto_Dispatch_Declaration_Submenu;
-      Object  : access Glib.Object.GObject_Record'Class;
-      Context : GPS.Kernel.Selection_Context;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
+   procedure Append_To_Dispatching_Menu
+     (Menu          : access Gtk.Menu.Gtk_Menu_Record'Class;
+      Context       : GPS.Kernel.Selection_Context;
+      Force_Freeze  : Boolean;
+      Default_Title : String;
+      Filter        : Reference_Kind_Filter;
+      Show_Default  : Boolean;
+      Callback      : GPS.Kernel.Entity_Callback.Simple_Handler)
    is
-      pragma Unreferenced (Factory, Object);
       Iter : Entity_Reference_Iterator;
       Item : Gtk_Menu_Item;
       E, E2 : Entity_Information;
       Label : Gtk_Label;
       Pref : constant Dispatching_Menu_Policy := Dispatching_Menu_Policy'Val
         (Get_Pref (Submenu_For_Dispatching_Calls));
+      Count : Natural := 0;
 
    begin
-      Trace (Me, "Computing Dispatch_Declaration_Submenu");
+      Trace (Me, "Computing Dispatch_Submenu: " & Default_Title);
       Push_State (Get_Kernel (Context), Busy);
 
-      if Pref = From_Memory then
+      --  The declaration_dispatch menu already made sure we have
+      --  correctly loaded all relevant .ALI files. So in the loop below we
+      --  freeze the xref database to make sure we do not waste time in useless
+      --  system calls
+
+      if Pref = From_Memory or else Force_Freeze then
          Freeze (Get_Database (Get_Kernel (Context)));
+      end if;
+
+      if Pref = From_Memory then
          Gtk_New (Label, -"<i>Partial information only</i>");
          Set_Use_Markup (Label, True);
          Set_Alignment (Label, 0.0, 0.5);
@@ -1485,7 +1510,7 @@ package body Src_Editor_Box is
          Entity                => Get_Entity (Context),
          File_Has_No_LI_Report => null,
          In_File               => null,
-         Filter                => (Declaration => True, others => False),
+         Filter                => Filter,
          Include_Overriding    => True,
          Include_Overridden    => False);
       while not At_End (Iter) loop
@@ -1502,8 +1527,9 @@ package body Src_Editor_Box is
 
                GPS.Kernel.Entity_Callback.Object_Connect
                  (Item, Gtk.Menu_Item.Signal_Activate,
-                  On_Goto_Declaration_Of'Access, Get_Kernel (Context), E);
+                  Callback, Get_Kernel (Context), E);
                Add (Menu, Item);
+               Count := Count + 1;
             end if;
          end if;
 
@@ -1511,7 +1537,26 @@ package body Src_Editor_Box is
       end loop;
       Destroy (Iter);
 
-      if Pref = From_Memory then
+      --  If we have not found any possible call, we must be missing some
+      --  .ALI file (for instance the one containing the declaration of the
+      --  tagged type). In that case we show the same info as we would have for
+      --  a non-dispatching call to be as helpful as possible
+
+      if Count = 0 and then Show_Default then
+         Gtk_New
+           (Label,
+            Default_Title & Emphasize (Get_Name (Get_Entity (Context)).all));
+         Set_Use_Markup (Label, True);
+         Set_Alignment (Label, 0.0, 0.5);
+         Gtk_New (Item);
+         Add (Item, Label);
+         GPS.Kernel.Entity_Callback.Object_Connect
+           (Item, Gtk.Menu_Item.Signal_Activate,
+            Callback, Get_Kernel (Context), Get_Entity (Context));
+         Add (Menu, Item);
+      end if;
+
+      if Pref = From_Memory or else Force_Freeze then
          Thaw (Get_Database (Get_Kernel (Context)));
       end if;
 
@@ -1523,6 +1568,28 @@ package body Src_Editor_Box is
          Trace (Me, E);
          Thaw (Get_Database (Get_Kernel (Context)));
          Pop_State (Get_Kernel (Context));
+   end Append_To_Dispatching_Menu;
+
+   --------------------
+   -- Append_To_Menu --
+   --------------------
+
+   procedure Append_To_Menu
+     (Factory : access Goto_Dispatch_Declaration_Submenu;
+      Object  : access Glib.Object.GObject_Record'Class;
+      Context : GPS.Kernel.Selection_Context;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      pragma Unreferenced (Factory, Object);
+   begin
+      Append_To_Dispatching_Menu
+        (Menu          => Menu,
+         Context       => Context,
+         Force_Freeze  => False,
+         Default_Title => -"Declaration of ",
+         Filter        => (Declaration => True, others => False),
+         Show_Default  => True,
+         Callback      => On_Goto_Declaration_Of'Access);
    end Append_To_Menu;
 
    --------------------
@@ -1536,72 +1603,15 @@ package body Src_Editor_Box is
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       pragma Unreferenced (Factory, Object);
-      Iter  : Entity_Reference_Iterator;
-      Item  : Gtk_Menu_Item;
-      E, E2 : Entity_Information;
-      Label : Gtk_Label;
-      Pref : constant Dispatching_Menu_Policy := Dispatching_Menu_Policy'Val
-        (Get_Pref (Submenu_For_Dispatching_Calls));
    begin
-      --  The declaration_dispatch menu already made sure we have
-      --  correctly loaded all relevant .ALI files. So in the loop below we
-      --  freeze the xref database to make sure we do not waste time in useless
-      --  system calls
-
-      if Pref = From_Memory then
-         Gtk_New (Label, -"<i>Partial information only</i>");
-         Set_Use_Markup (Label, True);
-         Set_Alignment (Label, 0.0, 0.5);
-         Gtk_New (Item);
-         Add (Item, Label);
-         Set_Sensitive (Item, False);
-         Add (Menu, Item);
-      end if;
-
-      Freeze (Get_Database (Get_Kernel (Context)));
-      Push_State (Get_Kernel (Context), Busy);
-      Trace (Me, "Computing Dispatch_Body_Submenu");
-
-      Find_All_References
-        (Iter                  => Iter,
-         Entity                => Get_Entity (Context),
-         File_Has_No_LI_Report => null,
-         In_File               => null,
-         Filter                => (Body_Entity => True, others => False),
-         Include_Overriding    => True,
-         Include_Overridden    => False);
-      while not At_End (Iter) loop
-         E := Get_Entity (Iter);
-         if E /= null then
-            E2 := Is_Primitive_Operation_Of (E);
-            if E2 /= null then
-               Gtk_New
-                 (Label, "Primitive of: " & Emphasize (Get_Name (E2).all));
-               Set_Use_Markup (Label, True);
-               Set_Alignment (Label, 0.0, 0.5);
-               Gtk_New (Item);
-               Add (Item, Label);
-
-               GPS.Kernel.Entity_Callback.Object_Connect
-                 (Item, Gtk.Menu_Item.Signal_Activate,
-                  On_Goto_Body_Of'Access, Get_Kernel (Context), E);
-               Add (Menu, Item);
-            end if;
-         end if;
-
-         Next (Iter);
-      end loop;
-      Destroy (Iter);
-
-      Thaw (Get_Database (Get_Kernel (Context)));
-      Pop_State (Get_Kernel (Context));
-      Trace (Me, "Done computing Dispatch_Body_Submenu");
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         Thaw (Get_Database (Get_Kernel (Context)));
-         Pop_State (Get_Kernel (Context));
+      Append_To_Dispatching_Menu
+        (Menu          => Menu,
+         Context       => Context,
+         Force_Freeze  => True,
+         Default_Title => -"Body of ",
+         Filter        => (Body_Entity => True, others => False),
+         Show_Default  => Has_Body (Context),
+         Callback      => On_Goto_Body_Of'Access);
    end Append_To_Menu;
 
    ------------------------------
@@ -1646,15 +1656,11 @@ package body Src_Editor_Box is
       return False;
    end Filter_Matches_Primitive;
 
-   ------------------------------
-   -- Filter_Matches_Primitive --
-   ------------------------------
+   --------------
+   -- Has_Body --
+   --------------
 
-   function Filter_Matches_Primitive
-     (Filter  : access Has_Body_Filter;
-      Context : GPS.Kernel.Selection_Context) return Boolean
-   is
-      pragma Unreferenced (Filter);
+   function Has_Body (Context : GPS.Kernel.Selection_Context) return Boolean is
       Entity           : Entity_Information;
       Location         : Entities.File_Location;
       Current_Location : Entities.File_Location;
@@ -1678,6 +1684,19 @@ package body Src_Editor_Box is
            and then Location /= Current_Location;
       end if;
       return False;
+   end Has_Body;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   function Filter_Matches_Primitive
+     (Filter  : access Has_Body_Filter;
+      Context : GPS.Kernel.Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+   begin
+      return Has_Body (Context);
    end Filter_Matches_Primitive;
 
    ------------------------------
