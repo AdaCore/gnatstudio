@@ -2008,11 +2008,10 @@ package body Docgen2 is
             else
                Insert
                  (Command.Kernel,
-                  -("Documentation generation warning: " &
-                    "The cross references for file ") &
+                  -("warning: cross references for file ") &
                   VFS.Base_Name (Command.Source_Files (Command.File_Index))
-                  & (-" are not up-to-date. Documentation is not generated."),
-                  Mode => Error);
+                  & (-" are not up-to-date. Documentation not generated."),
+                  Mode => Info);
             end if;
          end if;
 
@@ -2083,11 +2082,10 @@ package body Docgen2 is
             else
                Insert
                  (Command.Kernel,
-                  -("Documentation generation warning: " &
-                    "The cross references for file ") &
+                  -("warning: cross references for file ") &
                   VFS.Base_Name (Command.Source_Files (Command.Src_File_Index))
-                  & (-" are not up-to-date. Annotated file is not generated"),
-                  Mode => Error);
+                  & (-" are not up-to-date. Annotated file not generated"),
+                  Mode => Info);
             end if;
          end if;
 
@@ -2429,11 +2427,19 @@ package body Docgen2 is
         (Translation, Assoc ("SOURCE_FILE", Get_Filename (File).Base_Name));
       Insert
         (Translation, Assoc ("PRINTOUT", Printout));
-      Ada.Text_IO.Create
-        (File_Handle,
-         Name => Get_Doc_Directory (Kernel) & "src_" &
-         Backend.To_Destination_Name
-           (VFS.Base_Name (Get_Filename (File))));
+
+      declare
+         Name : constant String :=
+                  Get_Doc_Directory (Kernel) & "src_"
+                  & Backend.To_Destination_Name
+                      (VFS.Base_Name (Get_Filename (File)));
+      begin
+         Ada.Text_IO.Create (File_Handle, Name => Name);
+      exception
+         when Name_Error =>
+            Insert (Kernel, "Could not create " & Name, Mode => Error);
+            return;
+      end;
 
       Ada.Text_IO.Put
         (File_Handle, Parse (Tmpl, Translation, Cached => True));
@@ -3543,10 +3549,10 @@ package body Docgen2 is
                   Create (Backend.Get_Support_Dir (Get_System_Dir (Kernel)));
       Dst_Dir : constant String :=
                   Get_Doc_Directory (Kernel);
-      Dead    : Boolean;
-      pragma Unreferenced (Dead);
+      Success : Boolean;
    begin
-      Src_Dir.Copy (Dst_Dir & Base_Dir_Name (Src_Dir), Dead);
+      Src_Dir.Copy (Dst_Dir & Base_Dir_Name (Src_Dir), Success);
+      pragma Assert (Success);
    end Generate_Support_Files;
 
    -----------------------
