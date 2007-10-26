@@ -173,7 +173,8 @@ package body Refactoring.Performers is
         (Iter                  => Data.Iter.all,
          Entity                => Entity,
          File_Has_No_LI_Report => File_Error_Reporter (Data.Errors),
-         Include_Overriding    => True);
+         Include_Overriding    => True,
+         Include_Overridden    => True);
 
       Create (C, -"Refactoring", Data, Find_Next_Location'Access);
       Set_Progress

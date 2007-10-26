@@ -1155,7 +1155,8 @@ package body Browsers.Call_Graph is
            (Iter               => Data.Iter.all,
             Entity             => Data.Entity,
             Filter             => Data.Filter,
-            Include_Overriding => Data.Include_Overriding);
+            Include_Overriding => Data.Include_Overriding,
+            Include_Overridden => Data.Include_Overriding);
 
          Data.Iter_Started := True;
          Set_Progress
@@ -1809,7 +1810,8 @@ package body Browsers.Call_Graph is
                      Entity             => Entity2,
                      Filter             => Filter,
                      In_File            => Local,
-                     Include_Overriding => Include_Overriding);
+                     Include_Overriding => Include_Overriding,
+                     Include_Overridden => Include_Overriding);
 
                   while not At_End (Iter) loop
                      if Get (Iter) /= No_Entity_Reference
@@ -1859,6 +1861,7 @@ package body Browsers.Call_Graph is
             Entity        => Entity,
             Filter        => Filter,
             In_File       => Get_Or_Create (Get_Database (Kernel), Local_File),
+            Include_Overridden => Include_Overriding,
             Include_Overriding => Include_Overriding);
 
          while not At_End (Iter) loop
