@@ -1462,13 +1462,17 @@ package body Src_Editor_Box is
       Item : Gtk_Menu_Item;
       E, E2 : Entity_Information;
    begin
+      Trace (Me, "Computing Dispatch_Declaration_Submenu");
+      Push_State (Get_Kernel (Context), Busy);
+
       Find_All_References
         (Iter                  => Iter,
          Entity                => Get_Entity (Context),
          File_Has_No_LI_Report => null,
          In_File               => null,
          Filter                => (Declaration => True, others => False),
-         Include_Overriding    => True);
+         Include_Overriding    => True,
+         Include_Overridden    => False);
       while not At_End (Iter) loop
          E := Get_Entity (Iter);
          if E /= null then
@@ -1485,6 +1489,15 @@ package body Src_Editor_Box is
          Next (Iter);
       end loop;
       Destroy (Iter);
+
+      Pop_State (Get_Kernel (Context));
+      Trace (Me, "Done computing Dispatch_Declaration_Submenu");
+
+   exception
+      when E : others =>
+         Trace (Me, E);
+         Thaw (Get_Database (Get_Kernel (Context)));
+         Pop_State (Get_Kernel (Context));
    end Append_To_Menu;
 
    --------------------
@@ -1502,15 +1515,23 @@ package body Src_Editor_Box is
       Item  : Gtk_Menu_Item;
       E, E2 : Entity_Information;
    begin
-      --  ??? Should share the loop with the one for the specs, since it isn't
-      --  that fast to compute, even when all ALI files are in memory
+      --  The declaration_dispatch menu already made sure we have
+      --  correctly loaded all relevant .ALI files. So in the loop below we
+      --  freeze the xref database to make sure we do not waste time in useless
+      --  system calls
+
+      Freeze (Get_Database (Get_Kernel (Context)));
+      Push_State (Get_Kernel (Context), Busy);
+      Trace (Me, "Computing Dispatch_Body_Submenu");
+
       Find_All_References
         (Iter                  => Iter,
          Entity                => Get_Entity (Context),
          File_Has_No_LI_Report => null,
          In_File               => null,
          Filter                => (Body_Entity => True, others => False),
-         Include_Overriding    => True);
+         Include_Overriding    => True,
+         Include_Overridden    => False);
       while not At_End (Iter) loop
          E := Get_Entity (Iter);
          if E /= null then
@@ -1527,6 +1548,16 @@ package body Src_Editor_Box is
          Next (Iter);
       end loop;
       Destroy (Iter);
+
+      Thaw (Get_Database (Get_Kernel (Context)));
+      Pop_State (Get_Kernel (Context));
+      Trace (Me, "Done computing Dispatch_Body_Submenu");
+
+   exception
+      when E : others =>
+         Trace (Me, E);
+         Thaw (Get_Database (Get_Kernel (Context)));
+         Pop_State (Get_Kernel (Context));
    end Append_To_Menu;
 
    ------------------------------
