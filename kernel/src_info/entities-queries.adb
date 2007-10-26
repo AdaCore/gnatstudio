@@ -169,7 +169,9 @@ package body Entities.Queries is
    --  Setup Iter to search for references to Entity
 
    procedure Add_Overriding_Subprograms
-     (Iter : in out Entity_Reference_Iterator);
+     (Iter : in out Entity_Reference_Iterator;
+      Overriding_Subprograms : Boolean := True;
+      Overridden_Subprograms : Boolean := True);
    --  Setup Iter so that it will also return references to all entities
    --  overriden or overriding by Iter.Entity
 
@@ -733,7 +735,8 @@ package body Entities.Queries is
       In_File               : Source_File := null;
       In_Scope              : Entity_Information := null;
       Filter                : Reference_Kind_Filter := Real_References_Filter;
-      Include_Overriding    : Boolean := False)
+      Include_Overriding    : Boolean := False;
+      Include_Overridden    : Boolean := False)
    is
       F           : Source_File := In_File;
       Loc         : File_Location := No_File_Location;
@@ -780,8 +783,10 @@ package body Entities.Queries is
       Iter.Last_Line            := Last;
       Iter.Filter               := Filter;
       Iter.Include_Overriding   := Include_Overriding;
+      Iter.Include_Overridden   := Include_Overridden;
       Iter.Extra_Entities       := Entity_Information_Arrays.Empty_Instance;
       Iter.Extra_Entities_Index := Entity_Information_Arrays.First;
+
       Setup_For_Entity (Iter, Entity, File_Has_No_LI_Report, In_Scope);
    end Find_All_References;
 
@@ -813,6 +818,7 @@ package body Entities.Queries is
    begin
       return Iter.Decl_Returned
         and then not Iter.Include_Overriding
+        and then not Iter.Include_Overridden
         and then
           (Iter.Extra_Entities = Entity_Information_Arrays.Empty_Instance
            or else Iter.Extra_Entities_Index > Last (Iter.Extra_Entities))
@@ -841,12 +847,22 @@ package body Entities.Queries is
    --------------------------------
 
    procedure Add_Overriding_Subprograms
-     (Iter : in out Entity_Reference_Iterator)
+     (Iter : in out Entity_Reference_Iterator;
+      Overriding_Subprograms : Boolean := True;
+      Overridden_Subprograms : Boolean := True)
    is
       Toplevel_Entity : Entity_Information;
 
-      procedure Add_Prims_Of_Entity (Entity : Entity_Information);
-      --  Add the relevant primitive operations of Entity
+      procedure Add_Prims_Of_Entity
+        (Entity            : Entity_Information;
+         Processing_Parent : Boolean);
+      --  Add the relevant primitive operations of Entity.
+      --  Processing_Parent must be True if we are analyzing parents
+      --  of the initial type. In such a case, we need to do a slightly more
+      --  expensive search: for children, we only look for primitive operations
+      --  that are overriding (since otherwise there is no chance they do
+      --  override the current entity of Iter). For parent, however, we cannot
+      --  speed up the search this way.
 
       procedure Add_Children_Of (Entity : Entity_Information);
       --  Process recursively the children of Entity, and check whether they
@@ -862,12 +878,13 @@ package body Entities.Queries is
       --------------------
 
       function Is_Same_Entity (Entity : Entity_Information) return Boolean is
-         Top : Entity_Information;
+         Top : Entity_Information := Entity;
       begin
          if Use_Approximate_Overriding_Algorithm then
             return Get_Name (Entity).all = Get_Name (Iter.Entity).all;
          else
-            Top := Entity;
+            --  The test is smarter here: we make sure that it is correct even
+            --  when there are two primitive operations with the same name.
 
             while Overriden_Entity (Top) /= null loop
                Top := Overriden_Entity (Top);
@@ -880,33 +897,24 @@ package body Entities.Queries is
       -- Add_Prims_Of_Entity --
       -------------------------
 
-      procedure Add_Prims_Of_Entity (Entity : Entity_Information) is
-         Prim : Primitive_Operations_Iterator;
-         Found : Boolean;
+      procedure Add_Prims_Of_Entity
+        (Entity            : Entity_Information;
+         Processing_Parent : Boolean)
+      is
+         Prim      : Primitive_Operations_Iterator;
          Primitive : Entity_Information;
       begin
          if Entity /= null then
             Find_All_Primitive_Operations
-              (Prim, Entity, Include_Inherited => False);
+              (Prim, Entity,
+               Only_If_Overriding => not Processing_Parent,
+               Include_Inherited  => False);
 
             while not At_End (Prim) loop
                Primitive := Get (Prim);
 
                if Is_Same_Entity (Primitive) then
-                  Found := False;
-
-                  for E in Entity_Information_Arrays.First ..
-                    Last (Iter.Extra_Entities)
-                  loop
-                     if Iter.Extra_Entities.Table (E) = Primitive then
-                        Found := True;
-                        exit;
-                     end if;
-                  end loop;
-
-                  if not Found then
-                     Append (Iter.Extra_Entities, Primitive);
-                  end if;
+                  Append (Iter.Extra_Entities, Primitive);
                end if;
 
                Next (Prim);
@@ -921,16 +929,43 @@ package body Entities.Queries is
       ---------------------
 
       procedure Add_Children_Of (Entity : Entity_Information) is
-         Children : Children_Iterator :=
-                       Get_Child_Types (Entity, Recursive => True);
+         Children : Children_Iterator;
+         Deps : Dependency_Iterator;
       begin
-         --  ??? Could be done in background
+         --  Trick here: we first look for all the files that depend, even
+         --  indirectly, from the file declaring Entity. That gives us all the
+         --  files that might potentially contain child types of Entity. Once
+         --  they have been loaded in memory, we can freeze the entities
+         --  database to speed things up. This saves a lot of system calls, and
+         --  speeds up the search
+
+         if not Frozen (Iter.Deps.Db) then
+            --  ??? This should be done in the background, since it can freeze
+            --  the GPS API for a while.
+            Find_Ancestor_Dependencies
+              (Iter => Deps,
+               File => Get_Declaration_Of (Entity).File);
+            while not At_End (Deps) loop
+               Next (Deps);
+            end loop;
+         end if;
+
+         Freeze (Iter.Deps.Db);
+
+         Children := Get_Child_Types
+           (Entity,
+            Recursive   => True,
+            Update_Xref => False);
+
          while not At_End (Children) loop
             if Get (Children) /= null then
-               Add_Prims_Of_Entity (Get (Children));
+               Add_Prims_Of_Entity (Get (Children), False);
             end if;
             Next (Children);
          end loop;
+
+         Thaw (Iter.Deps.Db);
+
          Destroy (Children);
       end Add_Children_Of;
 
@@ -947,15 +982,20 @@ package body Entities.Queries is
       Prim_Of := Is_Primitive_Operation_Of (Iter.Entity);
 
       if Prim_Of /= null then
-         declare
-            Parents : constant Entity_Information_Array :=
-                        Get_Parent_Types (Prim_Of, Recursive => True);
-         begin
+         if Overriding_Subprograms then
             Add_Children_Of (Prim_Of);
-            for P in Parents'Range loop
-               Add_Prims_Of_Entity (Parents (P));
-            end loop;
-         end;
+         end if;
+
+         if Overridden_Subprograms then
+            declare
+               Parents : constant Entity_Information_Array :=
+                 Get_Parent_Types (Prim_Of, Recursive => True);
+            begin
+               for P in Parents'Range loop
+                  Add_Prims_Of_Entity (Parents (P), True);
+               end loop;
+            end;
+         end if;
       end if;
    end Add_Overriding_Subprograms;
 
@@ -1022,12 +1062,16 @@ package body Entities.Queries is
          --  Parse the current file on the list
 
          if At_End (Iter.Deps) then
-            if Iter.Include_Overriding
+            if (Iter.Include_Overriding or else Iter.Include_Overridden)
               and then
                 Iter.Extra_Entities = Entity_Information_Arrays.Empty_Instance
             then
-               Add_Overriding_Subprograms (Iter);
+               Add_Overriding_Subprograms
+                 (Iter,
+                  Overriding_Subprograms => Iter.Include_Overriding,
+                  Overridden_Subprograms => Iter.Include_Overridden);
                Iter.Include_Overriding := False;
+               Iter.Include_Overridden := False;
             end if;
 
             if Iter.Extra_Entities = Entity_Information_Arrays.Empty_Instance
@@ -1044,10 +1088,14 @@ package body Entities.Queries is
             Repeat := False;
          end if;
 
+         --  Move to the next file that might contain references to the entity,
+         --  but only if we are looking for actual references
+
          Next (Iter.Deps);
 
          --  The next time Next is called, Index will be incremented, so we
          --  have to make sure not to lose a reference here.
+
          if not At_End (Iter.Deps)
            and then Get (Iter.Deps) /= null
            and then Iter.Index <= Last (Iter.Entity.References)
@@ -2653,12 +2701,16 @@ package body Entities.Queries is
    -----------------------------------
 
    procedure Find_All_Primitive_Operations
-     (Iter              : out Primitive_Operations_Iterator;
-      Entity            : Entity_Information;
-      Include_Inherited : Boolean)
+     (Iter               : out Primitive_Operations_Iterator;
+      Entity             : Entity_Information;
+      Include_Inherited  : Boolean;
+      Only_If_Overriding : Boolean := False)
    is
    begin
-      if Include_Inherited then
+      --  If we only want the overriding primitives, the info is given directly
+      --  from the ALI files, so we do not need to analyze the parent types as
+      --  well.
+      if Include_Inherited and then not Only_If_Overriding then
          Iter.Parents := new Entity_Information_Array'
            (Entity & Get_Parent_Types (Entity, Recursive => True));
       else
@@ -2667,16 +2719,21 @@ package body Entities.Queries is
 
       Iter.Current_Parent    := Iter.Parents'First;
       Iter.Current_Primitive := Entity_Information_Arrays.First;
+      Iter.Overriding_Only   := Only_If_Overriding;
 
-      Find_All_References
-        (Iter.Refs,
-         Entity => Entity,
-         In_File => Get_File (Get_Declaration_Of (Entity)),
-         Filter => (Primitive_Operation => True,
-                    others              => False));
+      --  No primitive op for current parent ? Move to next parent
 
       if Iter.Current_Primitive >
         Last (Iter.Parents (Iter.Current_Parent).Primitive_Subprograms)
+      then
+         Next (Iter);
+      end if;
+
+      --  Current primitive is not good ? Move to next
+
+      if not At_End (Iter)
+        and then Iter.Overriding_Only
+        and then Overriden_Entity (Get (Iter)) = null
       then
          Next (Iter);
       end if;
@@ -2700,9 +2757,30 @@ package body Entities.Queries is
       if Iter.Current_Parent <= Iter.Parents'Last then
          Iter.Current_Primitive := Iter.Current_Primitive + 1;
 
-         while Iter.Current_Primitive >
-           Last (Iter.Parents (Iter.Current_Parent).Primitive_Subprograms)
          loop
+            --  Move to the next matching primitive op for current parent
+            declare
+               P : Entity_Information renames
+                 Iter.Parents (Iter.Current_Parent);
+            begin
+               if Iter.Overriding_Only then
+                  while Iter.Current_Primitive <=
+                    Last (P.Primitive_Subprograms)
+                    and then Overriden_Entity
+                      (P.Primitive_Subprograms.Table (Iter.Current_Primitive))
+                    = null
+                  loop
+                     Iter.Current_Primitive := Iter.Current_Primitive + 1;
+                  end loop;
+               end if;
+
+               --  Stop searching if we have found one
+               exit when Iter.Current_Primitive <=
+                 Last (P.Primitive_Subprograms);
+            end;
+
+            --  No more primitive op for the current parent, move to next
+
             Iter.Current_Parent := Iter.Current_Parent + 1;
             exit when Iter.Current_Parent > Iter.Parents'Last;
 
@@ -2730,7 +2808,6 @@ package body Entities.Queries is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Entity_Information_Array, Entity_Information_Array_Access);
    begin
-      Destroy (Iter.Refs);
       Unchecked_Free (Iter.Parents);
    end Destroy;
 
@@ -2842,6 +2919,8 @@ package body Entities.Queries is
    is
       Deps : Dependency_Iterator;
       Iter : Children_Iterator;
+      Update : constant Boolean := Update_Xref
+        and then not Frozen (Get_File (Get_Declaration_Of (Entity)).Db);
    begin
       --  Algorithm is the following:
       --  - Find all child types for Entity:
@@ -2850,7 +2929,7 @@ package body Entities.Queries is
       --      update Entity.Child_Types
       --  - Recurse if necessary
 
-      if Update_Xref then
+      if Update then
          Find_Ancestor_Dependencies
            (Deps,
             File         => Get_File (Get_Declaration_Of (Entity)),
@@ -2860,12 +2939,12 @@ package body Entities.Queries is
       Iter := Children_Iterator'
         (Entity      => Entity,
          Recursive   => Recursive,
-         Update_Xref => Update_Xref,
+         Update_Xref => Update,
          Deps        => Deps,
          Results     => Null_Entity_Information_List,
          Current     => Entity_Information_Arrays.First);
 
-      if not Update_Xref then
+      if not Update then
          Add_Child_Types (Iter, Iter.Entity);
       end if;
 

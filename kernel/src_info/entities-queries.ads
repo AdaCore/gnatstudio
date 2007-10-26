@@ -135,7 +135,8 @@ package Entities.Queries is
       In_File               : Source_File := null;
       In_Scope              : Entity_Information := null;
       Filter                : Reference_Kind_Filter := Real_References_Filter;
-      Include_Overriding    : Boolean := False);
+      Include_Overriding    : Boolean := False;
+      Include_Overridden    : Boolean := False);
    --  Find all the references to the entity. This also return the location
    --  for the declaration of the entity.
    --  If In_File is specified, then only the references in that file will be
@@ -147,8 +148,9 @@ package Entities.Queries is
    --  Source files with no LI file are reported through File_Has_No_LI_Report.
    --  You must destroy the iterator when you are done with it, to avoid
    --  memory leaks.
-   --  If Include_Overriding is True, then all references to an overriding or
-   --  Overriden subprogram will also be returned.
+   --  If Include_Overriding or Include_Overridden are True, then all
+   --  references to an overriding or Overriden subprogram will also be
+   --  returned.
 
    function At_End (Iter : Entity_Reference_Iterator) return Boolean;
    --  Whether there are no more reference to return
@@ -467,11 +469,14 @@ package Entities.Queries is
    type Primitive_Operations_Iterator is private;
 
    procedure Find_All_Primitive_Operations
-     (Iter              : out Primitive_Operations_Iterator;
-      Entity            : Entity_Information;
-      Include_Inherited : Boolean);
+     (Iter               : out Primitive_Operations_Iterator;
+      Entity             : Entity_Information;
+      Include_Inherited  : Boolean;
+      Only_If_Overriding : Boolean := False);
    --  Get all the primitive operations of the entity, including the ones
-   --  inherited from its various parents
+   --  inherited from its various parents.
+   --  If Only_If_Overriding is true, then only those primitives that override
+   --  one inherited from the parent are returned.
 
    function At_End (Iter : Primitive_Operations_Iterator) return Boolean;
    function Get
@@ -485,12 +490,11 @@ private
    type Entity_Information_Array_Access is access Entity_Information_Array;
 
    type Primitive_Operations_Iterator is record
-      Refs              : Entity_Reference_Iterator;
-
       Parents           : Entity_Information_Array_Access;
       Current_Parent    : Integer;
 
       Current_Primitive : Entity_Information_Arrays.Index_Type;
+      Overriding_Only   : Boolean;
    end record;
 
    type Entity_Iterator is record
@@ -570,6 +574,10 @@ private
       Filter  : Reference_Kind_Filter;
 
       Include_Overriding   : Boolean;
+      Include_Overridden   : Boolean;
+      --  Whether overridding and overridden entities should also be part of
+      --  the search. Their references are returned when they match the filter.
+
       Extra_Entities       : Entity_Information_Arrays.Instance :=
         Entity_Information_Arrays.Empty_Instance;
       Extra_Entities_Index : Entity_Information_Arrays.Index_Type :=
