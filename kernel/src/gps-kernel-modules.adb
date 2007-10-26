@@ -515,6 +515,17 @@ package body GPS.Kernel.Modules is
    end Create_Marker;
 
    ---------------
+   -- Emphasize --
+   ---------------
+
+   function Emphasize (Name : String) return String is
+   begin
+      --  Another example would be:
+      --    return "<span foreground=""blue"">" & Name & "</span>";
+      return "<b>" & Name & "</b>";
+   end Emphasize;
+
+   ---------------
    -- Get_Label --
    ---------------
 
@@ -553,7 +564,7 @@ package body GPS.Kernel.Modules is
                  (Param, Context, Quoted, Done'Access);
             begin
                Has_Error := not Done;
-               return "<b>" & Tmp & "</b>";
+               return Emphasize (Tmp);
             end;
          end if;
 

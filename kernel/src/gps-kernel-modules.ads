@@ -514,6 +514,11 @@ package GPS.Kernel.Modules is
    --  Submenu is passed the submenu created for the item, so it doesn't need
    --  to create the submenu itself.
 
+   function Emphasize (Name : String) return String;
+   --  Parts of a contextual menu entry can be emphasized (name of entities
+   --  for instance). This procedure should be used in this case, to provide
+   --  consistent font and color for all emphasized words
+
    procedure Set_Contextual_Menu_Visible
      (Kernel  : access Kernel_Handle_Record'Class;
       Name    : String;

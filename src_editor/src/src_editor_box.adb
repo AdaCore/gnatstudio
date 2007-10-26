@@ -1397,11 +1397,11 @@ package body Src_Editor_Box is
       Entity := Get_Entity (Context);
       if Entity /= null then
          if Is_Container (Get_Kind (Entity).Kind) then
-            return -("Goto body of <b>"
-              & Entity_Name_Information (Context) & "</b>");
+            return -"Goto body of "
+              & Emphasize (Entity_Name_Information (Context));
          else
-            return -("Goto full declaration of <b>"
-              & Entity_Name_Information (Context) & "</b>");
+            return -"Goto full declaration of "
+              & Emphasize (Entity_Name_Information (Context));
          end if;
       end if;
 
@@ -1461,6 +1461,7 @@ package body Src_Editor_Box is
       Iter : Entity_Reference_Iterator;
       Item : Gtk_Menu_Item;
       E, E2 : Entity_Information;
+      Label : Gtk_Label;
    begin
       Trace (Me, "Computing Dispatch_Declaration_Submenu");
       Push_State (Get_Kernel (Context), Busy);
@@ -1478,7 +1479,13 @@ package body Src_Editor_Box is
          if E /= null then
             E2 := Is_Primitive_Operation_Of (E);
             if E2 /= null then
-               Gtk_New (Item, "Primitive of: " & Get_Name (E2).all);
+               Gtk_New
+                 (Label, "Primitive of: " & Emphasize (Get_Name (E2).all));
+               Set_Use_Markup (Label, True);
+               Set_Alignment (Label, 0.0, 0.5);
+               Gtk_New (Item);
+               Add (Item, Label);
+
                GPS.Kernel.Entity_Callback.Object_Connect
                  (Item, Gtk.Menu_Item.Signal_Activate,
                   On_Goto_Declaration_Of'Access, Get_Kernel (Context), E);
@@ -1514,6 +1521,7 @@ package body Src_Editor_Box is
       Iter  : Entity_Reference_Iterator;
       Item  : Gtk_Menu_Item;
       E, E2 : Entity_Information;
+      Label : Gtk_Label;
    begin
       --  The declaration_dispatch menu already made sure we have
       --  correctly loaded all relevant .ALI files. So in the loop below we
@@ -1537,7 +1545,13 @@ package body Src_Editor_Box is
          if E /= null then
             E2 := Is_Primitive_Operation_Of (E);
             if E2 /= null then
-               Gtk_New (Item, "Primitive of: " & Get_Name (E2).all);
+               Gtk_New
+                 (Label, "Primitive of: " & Emphasize (Get_Name (E2).all));
+               Set_Use_Markup (Label, True);
+               Set_Alignment (Label, 0.0, 0.5);
+               Gtk_New (Item);
+               Add (Item, Label);
+
                GPS.Kernel.Entity_Callback.Object_Connect
                  (Item, Gtk.Menu_Item.Signal_Activate,
                   On_Goto_Body_Of'Access, Get_Kernel (Context), E);
