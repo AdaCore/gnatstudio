@@ -2660,7 +2660,7 @@ package body Src_Editor_Module is
            (Kernel, "Goto dispatching bodies of entity",
             Label      => "Goto bodies of %e",
             Submenu    => Submenu,
-            Filter     => Is_Dispatching and Filter);
+            Filter     => Is_Dispatching);
       else
          Command := new Goto_Declaration_Command;
          Register_Contextual_Menu
