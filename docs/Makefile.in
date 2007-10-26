@@ -47,10 +47,11 @@ gps.html: ${TEXI}
 	@sed -e 's,</head>,<base target="page"/></head>,' gps/index.html > gps/index.html.tmp
 	@mv gps/index.html.tmp gps/index.html
 
-gps.pdf gps.txt: ${TEXI}
+gps.pdf gps.txt: ${TEXI} stamp-pdf
 
-gps.pdf4print: ${TEXI}
+gps.pdf4print: ${TEXI} stamp-pdf
 	@-if [ -f gps.pdf ]; then mv gps.pdf gps.pdf.bck; fi
+	@-rm -f gps.dvi gps.aux gps.toc
 	pdftex '\let\forprinting=1\input gps.texi'
 	mv gps.pdf gps.pdf4print
 	@-if [ -f gps.pdf.bck ]; then mv gps.pdf.bck gps.pdf; fi
