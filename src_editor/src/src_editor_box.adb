@@ -1462,9 +1462,23 @@ package body Src_Editor_Box is
       Item : Gtk_Menu_Item;
       E, E2 : Entity_Information;
       Label : Gtk_Label;
+      Pref : constant Dispatching_Menu_Policy := Dispatching_Menu_Policy'Val
+        (Get_Pref (Submenu_For_Dispatching_Calls));
+
    begin
       Trace (Me, "Computing Dispatch_Declaration_Submenu");
       Push_State (Get_Kernel (Context), Busy);
+
+      if Pref = From_Memory then
+         Freeze (Get_Database (Get_Kernel (Context)));
+         Gtk_New (Label, -"<i>Partial information only</i>");
+         Set_Use_Markup (Label, True);
+         Set_Alignment (Label, 0.0, 0.5);
+         Gtk_New (Item);
+         Add (Item, Label);
+         Set_Sensitive (Item, False);
+         Add (Menu, Item);
+      end if;
 
       Find_All_References
         (Iter                  => Iter,
@@ -1497,6 +1511,10 @@ package body Src_Editor_Box is
       end loop;
       Destroy (Iter);
 
+      if Pref = From_Memory then
+         Thaw (Get_Database (Get_Kernel (Context)));
+      end if;
+
       Pop_State (Get_Kernel (Context));
       Trace (Me, "Done computing Dispatch_Declaration_Submenu");
 
@@ -1522,11 +1540,23 @@ package body Src_Editor_Box is
       Item  : Gtk_Menu_Item;
       E, E2 : Entity_Information;
       Label : Gtk_Label;
+      Pref : constant Dispatching_Menu_Policy := Dispatching_Menu_Policy'Val
+        (Get_Pref (Submenu_For_Dispatching_Calls));
    begin
       --  The declaration_dispatch menu already made sure we have
       --  correctly loaded all relevant .ALI files. So in the loop below we
       --  freeze the xref database to make sure we do not waste time in useless
       --  system calls
+
+      if Pref = From_Memory then
+         Gtk_New (Label, -"<i>Partial information only</i>");
+         Set_Use_Markup (Label, True);
+         Set_Alignment (Label, 0.0, 0.5);
+         Gtk_New (Item);
+         Add (Item, Label);
+         Set_Sensitive (Item, False);
+         Add (Menu, Item);
+      end if;
 
       Freeze (Get_Database (Get_Kernel (Context)));
       Push_State (Get_Kernel (Context), Busy);
@@ -1660,8 +1690,14 @@ package body Src_Editor_Box is
    is
       pragma Unreferenced (Filter);
       Ref : constant Entity_Reference := Get_Closest_Ref (Context);
+      Pref : constant Dispatching_Menu_Policy := Dispatching_Menu_Policy'Val
+        (Get_Pref (Submenu_For_Dispatching_Calls));
    begin
-      return Get_Kind (Ref) = Dispatching_Call;
+      if Pref = Never then
+         return False;
+      else
+         return Get_Kind (Ref) = Dispatching_Call;
+      end if;
    end Filter_Matches_Primitive;
 
    -------------

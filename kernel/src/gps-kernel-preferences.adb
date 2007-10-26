@@ -58,6 +58,10 @@ package body GPS.Kernel.Preferences is
    package Editor_Desktop_Policy_Properties is new Generic_Enumeration_Property
      ("Editor_Desktop_Policy", Editor_Desktop_Policy);
 
+   package Dispatching_Menu_Policy_Properties is new
+     Glib.Generic_Properties.Generic_Enumeration_Property
+     ("Dispatching_Menu_Policy", Dispatching_Menu_Policy);
+
    Preferences_Pages : Preferences_Page_Array_Access;
    --  ??? To be included in the kernel
 
@@ -360,17 +364,26 @@ package body GPS.Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Toolbar_Show_Text), -"General");
 
-      Submenu_For_Dispatching_Calls := Param_Spec_Boolean
-        (Gnew_Boolean
+      Submenu_For_Dispatching_Calls := Param_Spec_Enum
+        (Dispatching_Menu_Policy_Properties.Gnew_Enum
            (Name => "Submenu-For-Dispatching",
             Nick => -"Submenu for dispatching calls",
-            Blurb => -("If enabled, and if you are using a version of GNAT"
-              & " more recent than 2007-09-21, then cross-references on"
-              & " dispatching calls will also list all possible calls,"
-              & " not only the primitive operation of the parent type."
+            Blurb => -("If you are using a GNAT version more recent than"
+              & " 2007-09-21, cross-references on dispatching calls can"
+              & " list all the subprograms that might be called at run time."
+              & " However, computing this info might take some time, and the"
+              & " preference lets you chose how GPS should behave:"
               & ASCII.LF
-              & "Changing this preference requires a restart of GPS"),
-            Default => False));
+              & "Never: no special submenu is displayed for dispatching calls"
+              & ASCII.LF
+              & "From Memory: only the information already available in memory"
+              & " is used. Some possible subprograms will not be listed"
+              & ASCII.LF
+              & "Accurate: GPS will reload the cross-references information"
+              & " from the disk as needed. This might result in long delays"
+              & " (up to several seconds) if lots of information needs to be"
+              & " loaded."),
+            Default => Never));
       Register_Property
            (Kernel.Preferences,
             Param_Spec (Submenu_For_Dispatching_Calls), -"Editor");
