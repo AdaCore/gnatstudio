@@ -1083,20 +1083,28 @@ package body GPS.Location_View is
      (Model    : access Gtk_Tree_Store_Record'Class;
       Category : Gtk_Tree_Iter) return String
    is
-      Message : constant String :=
-                  Get_String (Model, Category, Base_Name_Column);
-      Matches : Match_Array (0 .. 1);
-      Cut     : Integer;
+      Cat : Gtk_Tree_Iter := Category;
    begin
-      Match (Items_Count_Matcher, Message, Matches);
+      while Parent (Model, Cat) /= Null_Iter loop
+         Cat := Parent (Model, Cat);
+      end loop;
 
-      if Matches (0) /= No_Match then
-         Cut := Matches (1).First - 1;
-      else
-         Cut := Message'Last;
-      end if;
+      declare
+         Message : constant String :=
+           Get_String (Model, Cat, Base_Name_Column);
+         Matches : Match_Array (0 .. 1);
+         Cut     : Integer;
+      begin
+         Match (Items_Count_Matcher, Message, Matches);
 
-      return Message (1 .. Cut);
+         if Matches (0) /= No_Match then
+            Cut := Matches (1).First - 1;
+         else
+            Cut := Message'Last;
+         end if;
+
+         return Message (1 .. Cut);
+      end;
    end Get_Category_Name;
 
    -----------------------
@@ -1724,23 +1732,57 @@ package body GPS.Location_View is
       Locations   : Location_View;
       D           : constant File_Location_Hooks_Args_Access :=
         File_Location_Hooks_Args_Access (Data);
-      Category_Iter, File_Iter, Loc_Iter : Gtk_Tree_Iter;
+      Category_Iter, File_Iter, Loc_Iter, Current : Gtk_Tree_Iter;
       Category_Created : Boolean;
+      Model            : Gtk_Tree_Model;
       Path             : Gtk_Tree_Path;
    begin
       Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Location_View_Record'Tag);
       Locations := Location_View (Get_Widget (Child));
 
-      Get_Category_File
-        (Locations,
-         Category           => "Builder results",
-         H_Category         => null,
-         File               => D.File,
-         Category_Iter      => Category_Iter,
-         File_Iter          => File_Iter,
-         New_Category       => Category_Created,
-         Create             => False);
+      --  Check current selection: if it is on the same line as the new
+      --  location, do not change the selection. Otherwise, there is no easy
+      --  way for a user to click on a secondary location found in the same
+      --  error message.
+
+      Get_Selected (Get_Selection (Locations.Tree), Model, Current);
+
+      if Current /= Null_Iter
+        and then Integer (Get_Int (Locations.Tree.Model, Current, Line_Column))
+        = D.Line
+      then
+         return;
+      end if;
+
+      --  Highlight the location. Use the same category as the current
+      --  selection, since otherwise the user that has both "Builder results"
+      --  and "search" would automatically be moved to the builder when
+      --  traversing all search results.
+
+      if Current = Null_Iter then
+         Get_Category_File
+           (Locations,
+            Category           => "Builder results",
+            H_Category         => null,
+            File               => D.File,
+            Category_Iter      => Category_Iter,
+            File_Iter          => File_Iter,
+            New_Category       => Category_Created,
+            Create             => False);
+      else
+         Get_Category_File
+           (Locations,
+            Category           =>
+              Get_Category_Name (Locations.Tree.Model, Current),
+            H_Category         => null,
+            File               => D.File,
+            Category_Iter      => Category_Iter,
+            File_Iter          => File_Iter,
+            New_Category       => Category_Created,
+            Create             => False);
+      end if;
+
       if File_Iter /= Null_Iter then
          Get_Line_Column_Iter
            (View      => Locations,
