@@ -24,6 +24,7 @@ with Basic_Types;             use Basic_Types;
 with Language_Handlers;   use Language_Handlers;
 with Projects;                use Projects;
 with Projects.Registry;       use Projects.Registry;
+with Traces;
 with VFS;                     use VFS;
 
 package body Entities.Queries is
@@ -967,6 +968,10 @@ package body Entities.Queries is
          Thaw (Iter.Deps.Db);
 
          Destroy (Children);
+      exception
+         when E : others =>
+            Trace (Traces.Exception_Handle, E);
+            Thaw (Iter.Deps.Db);
       end Add_Children_Of;
 
       Prim_Of : Entity_Information;
