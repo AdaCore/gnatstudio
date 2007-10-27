@@ -25,6 +25,7 @@ with GNAT.OS_Lib;            use GNAT.OS_Lib;
 with Gtk.Tree_Store;         use Gtk.Tree_Store;
 with Gtk.Tree_Model;         use Gtk.Tree_Model;
 with Language.Tree.Database; use Language.Tree.Database;
+with Projects;               use Projects;
 with Code_Analysis;          use Code_Analysis;
 
 package Code_Coverage is
@@ -74,6 +75,12 @@ package Code_Coverage is
    procedure Dump_Prj_Coverage (Coverage : Coverage_Access);
    --  Dump to the standard output coverage information stored in a
    --  Code_Analysis. Coverage of the Project nodes, ie with extra Runs if any.
+
+   function First_Project_With_Coverage_Data
+     (Projects : Code_Analysis_Tree) return Project_Type;
+   --  Return the 1st project that contains coverage data from the given
+   --  analysis.
+   --  Return No_Project if no project contains such data.
 
    function Line_Coverage_Info
      (Coverage : Coverage_Access;

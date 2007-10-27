@@ -17,17 +17,17 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Text_IO;              use Ada.Text_IO;
-with Ada.Strings;              use Ada.Strings;
-with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
-with GNAT.Regpat;              use GNAT.Regpat;
+with Ada.Text_IO;       use Ada.Text_IO;
+with Ada.Strings;       use Ada.Strings;
+with Ada.Strings.Fixed; use Ada.Strings.Fixed;
+with GNAT.Regpat;       use GNAT.Regpat;
 with Glib;
-with GPS.Intl;                 use GPS.Intl;
-with String_Utils;             use String_Utils;
-with VFS;                      use VFS;
-with Language;                 use Language;
-with Language.Tree;            use Language.Tree;
-with Code_Analysis_GUI;        use Code_Analysis_GUI;
+with GPS.Intl;          use GPS.Intl;
+with String_Utils;      use String_Utils;
+with VFS;               use VFS;
+with Language;          use Language;
+with Language.Tree;     use Language.Tree;
+with Code_Analysis_GUI; use Code_Analysis_GUI;
 
 package body Code_Coverage is
 
@@ -374,6 +374,37 @@ package body Code_Coverage is
               & " run(s)");
       end if;
    end Dump_Prj_Coverage;
+
+   --------------------------------------
+   -- First_Project_With_Coverage_Data --
+   --------------------------------------
+
+   function First_Project_With_Coverage_Data
+     (Projects : Code_Analysis_Tree) return Project_Type
+   is
+      use Project_Maps;
+      Prj_Node : Code_Analysis.Project_Access;
+      Prj_Cur  : Project_Maps.Cursor := Projects.First;
+   begin
+      if Prj_Cur /= No_Element then
+         Prj_Node := Element (Prj_Cur);
+      else
+         return No_Project;
+      end if;
+
+      loop
+         exit when Prj_Node.Analysis_Data.Coverage_Data /= null
+           or else Prj_Cur = No_Element;
+         Prj_Node := Element (Prj_Cur);
+         Next (Prj_Cur);
+      end loop;
+
+      if Prj_Cur /= No_Element then
+         return Prj_Node.Name;
+      else
+         return No_Project;
+      end if;
+   end First_Project_With_Coverage_Data;
 
    ------------------------
    -- Line_Coverage_Info --
