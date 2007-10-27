@@ -34,13 +34,16 @@ with Gtk.Cell_Renderer_Pixbuf;   use Gtk.Cell_Renderer_Pixbuf;
 with Gtkada.Handlers;            use Gtkada.Handlers;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
-with GPS.Intl;                   use GPS.Intl;
+with GPS.Kernel.Console;         use GPS.Kernel.Console;
+with GPS.Location_View;          use GPS.Location_View;
 with Projects;                   use Projects;
 with VFS;                        use VFS;
 with Traces;                     use Traces;
-with Basic_Types;                use Basic_Types;
 with Code_Analysis_Tree_Model;   use Code_Analysis_Tree_Model;
-with Coverage_GUI;               use Coverage_GUI;
+with Basic_Types;                use Basic_Types;
+
+with Code_Coverage;              use Code_Coverage;
+with GPS.Kernel.Styles; use GPS.Kernel.Styles;
 
 package body Code_Analysis_GUI is
 
@@ -490,5 +493,92 @@ package body Code_Analysis_GUI is
          end;
       end if;
    end Context_Func;
+
+   -----------------------------------
+   -- Add_File_Coverage_Annotations --
+   -----------------------------------
+
+   procedure Add_File_Coverage_Annotations
+     (Kernel    : Kernel_Handle;
+      File_Node : Code_Analysis.File_Access)
+   is
+      Line_Info  : Line_Information_Data;
+   begin
+      if File_Node.Analysis_Data.Coverage_Data.Status = Valid then
+         Line_Info  := new Line_Information_Array (File_Node.Lines'Range);
+
+         for J in File_Node.Lines'Range loop
+            if File_Node.Lines (J) /= Null_Line then
+               Line_Info (J).Text := Line_Coverage_Info
+                 (File_Node.Lines (J).Analysis_Data.Coverage_Data,
+                  Binary_Coverage_Mode);
+            else
+               Line_Info (J).Text := new String'(" ");
+            end if;
+         end loop;
+
+         Create_Line_Information_Column
+           (Kernel, File_Node.Name, CodeAnalysis_Cst);
+         Add_Line_Information
+           (Kernel, File_Node.Name, CodeAnalysis_Cst, Line_Info);
+         Unchecked_Free (Line_Info);
+      end if;
+   end Add_File_Coverage_Annotations;
+
+   --------------------------------------
+   -- Remove_File_Coverage_Annotations --
+   --------------------------------------
+
+   procedure Remove_File_Coverage_Annotations
+     (Kernel : Kernel_Handle;
+      File_Node : Code_Analysis.File_Access) is
+   begin
+      Remove_Line_Information_Column
+        (Kernel, File_Node.Name, CodeAnalysis_Cst);
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end Remove_File_Coverage_Annotations;
+
+   -------------------------------
+   -- List_File_Uncovered_Lines --
+   -------------------------------
+
+   procedure List_File_Uncovered_Lines
+     (Kernel    : Kernel_Handle;
+      File_Node : Code_Analysis.File_Access)
+   is
+      No_File_Added : Boolean := True;
+   begin
+      if File_Node.Analysis_Data.Coverage_Data.Status = Valid then
+         for J in File_Node.Lines'Range loop
+            if File_Node.Lines (J) /= Null_Line then
+               if File_Node.Lines (J).Analysis_Data.Coverage_Data.Coverage
+                 = 0 then
+                  No_File_Added := False;
+                  Insert_Location
+                    (Kernel             => Kernel,
+                     Category           => Coverage_Category,
+                     File               => File_Node.Name,
+                     Text               => File_Node.Lines (J).Contents.all,
+                     Line               => J,
+                     Column             => 1,
+                     Highlight          => True,
+                     Highlight_Category => Builder_Warnings_Style);
+               end if;
+            end if;
+         end loop;
+
+         if No_File_Added then
+            GPS.Kernel.Console.Insert
+              (Kernel, -"There is no uncovered line in " &
+               Base_Name (File_Node.Name));
+         end if;
+      else
+         GPS.Kernel.Console.Insert
+           (Kernel, -"There is no Gcov information associated with " &
+            Base_Name (File_Node.Name),
+            Mode => GPS.Kernel.Console.Info);
+      end if;
+   end List_File_Uncovered_Lines;
 
 end Code_Analysis_GUI;

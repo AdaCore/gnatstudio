@@ -21,6 +21,7 @@ with Ada.Calendar;                           use Ada.Calendar;
 with Ada.Containers.Indefinite_Ordered_Sets; use Ada.Containers;
 with GNAT.Strings;
 with GNAT.Scripts;                           use GNAT.Scripts;
+with GNAT.OS_Lib;                            use GNAT.OS_Lib;
 with GNAT.Traces;
 with Glib;                                   use Glib;
 with Glib.Object;                            use Glib.Object;
@@ -50,7 +51,12 @@ with GPS.Kernel.Modules;                     use GPS.Kernel.Modules;
 with GPS.Kernel.Project;                     use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;                     use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;              use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Styles;                      use GPS.Kernel.Styles;
 with GPS.Location_View;                      use GPS.Location_View;
+with Language.Tree.Database;
+with Language.Tree;                          use Language.Tree;
+with Language;                               use Language;
+with Language_Handlers;                      use Language_Handlers;
 with Projects.Registry;                      use Projects.Registry;
 with Projects;                               use Projects;
 with VFS;                                    use VFS;
@@ -60,7 +66,8 @@ with Code_Analysis_Tree_Model;               use Code_Analysis_Tree_Model;
 with Code_Coverage;                          use Code_Coverage;
 with Code_Analysis;                          use Code_Analysis;
 with Code_Analysis_GUI;                      use Code_Analysis_GUI;
-with Coverage_GUI;                           use Coverage_GUI;
+
+with String_Utils;                           use String_Utils;
 
 package body Code_Analysis_Module is
 
@@ -76,7 +83,11 @@ package body Code_Analysis_Module is
    Ana_Name_Cst : aliased   constant String := "name";
    --  Constant String that represents a name of Analysis_Instance in parameter
    --  of the GPS.CodeAnalysis.get_analysis command.
+   Gcov_Extension_Cst :     constant String := ".gcov";
+   --  Constant String that represents the extension of GCOV files.
 
+   Binary_Coverage_Trace : constant Debug_Handle :=
+                             Create ("BINARY_COVERAGE_MODE", GNAT.Traces.On);
    Single_Analysis_Trace : constant Debug_Handle :=
                              Create ("SINGLE_ANALYSIS_MODE", GNAT.Traces.On);
    Single_Analysis_Mode  : Boolean;
@@ -146,6 +157,18 @@ package body Code_Analysis_Module is
    package Context_And_Analysis_CB is new User_Callback
      (Glib.Object.GObject_Record, Context_And_Analysis);
    --  Used to connect handlers on the global Coverage contextual menu.
+
+   procedure Show_All_Coverage_Information
+     (Kernel   : Kernel_Handle;
+      Analysis : Code_Analysis_Instance);
+   --  List uncovered lines and add coverage annotations for every projects of
+   --  the given code analysis instance.
+
+   function First_Project_With_Coverage_Data
+     (Analysis : Code_Analysis_Instance) return Project_Type;
+   --  Return the 1st project that contains coverage data from the given
+   --  analysis.
+   --  Return No_Project if no project contains such data.
 
    function Get_Iter_From_Context
      (Context : Selection_Context;
@@ -339,6 +362,10 @@ package body Code_Analysis_Module is
    --  Create a new analysis instance.
    --  The instance is inserted in the Instances set of the Module_ID.
 
+   function Have_Gcov_Info (Cont_N_Anal : Context_And_Analysis) return Boolean;
+   --  Verify that contextual Project and/or file if any, have associated
+   --  coverage information in their corresponding node of the analysis tree.
+
    procedure Add_Gcov_File_Info_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
@@ -357,6 +384,14 @@ package body Code_Analysis_Module is
    --  Looks for Gcov files corresponding to the contextual file.
    --  Then call Add_Gcov_File_Info on it.
 
+   procedure Add_Gcov_File_Info
+     (Kernel       : Kernel_Handle;
+      Src_File     : VFS.Virtual_File;
+      Cov_File     : VFS.Virtual_File;
+      Project_Node : Project_Access);
+   --  Add into the corresponding code_analysis nodes the coverage info
+   --  provided by the given-gcov-file parsing.
+
    procedure Add_Gcov_Project_Info_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
@@ -373,6 +408,11 @@ package body Code_Analysis_Module is
    --  use gcov info.
    --  Looks for Gcov files corresponding to every files of the contextual
    --  project and call Add_Gcov_File_Info on it.
+
+   procedure Add_Gcov_Project_Info
+     (Kernel   : Kernel_Handle;
+      Prj_Node : Project_Access);
+   --  Try to load Gcov information for every files of the given project.
 
    procedure Add_All_Gcov_Project_Info_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
@@ -399,6 +439,14 @@ package body Code_Analysis_Module is
      (Data    : in out Callback_Data'Class;
       Command : String);
    --  Shell command callback
+   --  Remove from the Locations view the listed uncovered lines of each files
+   --  of each loaded projects.
+   --  Does nothing if the lines are not listed in.
+   --  Remove every coverage annotations of opened source file editors.
+
+   procedure Hide_All_Coverage_Information
+     (Kernel   : Kernel_Handle;
+      Analysis : Code_Analysis_Instance);
    --  Remove from the Locations view the listed uncovered lines of each files
    --  of each loaded projects.
    --  Does nothing if the lines are not listed in.
@@ -505,6 +553,47 @@ package body Code_Analysis_Module is
    --  but they are functional, and could be needed soon.
    --  ??? Should be totally removed after beta-testing campaign.
 
+   procedure List_Project_Uncovered_Lines
+     (Kernel       : Kernel_Handle;
+      Project_Node : Project_Access);
+   --  Add to the location view the not covered lines of the given Project.
+
+   procedure Clear_Project_Locations
+     (Kernel       : Kernel_Handle;
+      Project_Node : Project_Access);
+   --  Remove from the Locations view the uncovered lines of each files of the
+   --  given Project_Node.
+   --  Does nothing if the uncovered lines are not listed there.
+
+   procedure Add_Project_Coverage_Annotations
+     (Kernel : Kernel_Handle; Project_Node : Project_Access);
+   --  Add coverage annotations of the src_editors of the files of the project.
+
+   procedure Remove_Project_Coverage_Annotations
+     (Kernel : Kernel_Handle; Project_Node : Project_Access);
+   --  Removes coverage annotations from the src_editors of the project files.
+
+   procedure Clear_File_Locations
+     (Kernel    : Kernel_Handle;
+      File_Node : Code_Analysis.File_Access);
+   --  Remove from the Locations view the uncovered lines of the given
+   --  File_Node.
+   --  Does nothing if the uncovered lines aren't listed there.
+
+   procedure List_Subprogram_Uncovered_Lines
+     (Kernel    : Kernel_Handle;
+      File_Node : Code_Analysis.File_Access;
+      Subp_Node : Subprogram_Access);
+   --  Add to the Locations view the not covered lines of the given Subprogram.
+
+   procedure Clear_Subprogram_Locations
+     (Kernel    : Kernel_Handle;
+      File_Node : Code_Analysis.File_Access;
+      Subp_Node : Subprogram_Access);
+   --  Remove from the Locations view the uncovered lines of the given
+   --  subp_node.
+   --  Does nothing if the uncovered lines aren't listed there.
+
    procedure Remove_Subprogram_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
@@ -519,6 +608,11 @@ package body Code_Analysis_Module is
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
    --  Remove the selected project node from the related report and instance.
+
+   function Find_Gcov_File
+     (Kernel  : Kernel_Handle;
+      Source  : VFS.Virtual_File) return VFS.Virtual_File;
+   --  Return the gcov file associated with Source.
 
    --------------------------------------------
    -- CodeAnalysis_Default_Shell_Constructor --
@@ -665,6 +759,40 @@ package body Code_Analysis_Module is
       return Analysis;
    end Create_Analysis_Instance;
 
+   --------------------
+   -- Have_Gcov_Info --
+   --------------------
+
+   function Have_Gcov_Info (Cont_N_Anal : Context_And_Analysis) return Boolean
+   is
+      Prj_Node : Code_Analysis.Project_Access;
+   begin
+      Prj_Node := Get_Or_Create
+        (Cont_N_Anal.Analysis.Projects,
+         Project_Information (Cont_N_Anal.Context));
+
+      if Has_File_Information (Cont_N_Anal.Context) then
+         declare
+            File_Node : Code_Analysis.File_Access;
+         begin
+            File_Node := Get_Or_Create
+              (Prj_Node, File_Information (Cont_N_Anal.Context));
+
+            if File_Node.Analysis_Data.Coverage_Data /= null and then
+              File_Node.Analysis_Data.Coverage_Data.Status = Valid then
+               return True;
+            end if;
+         end;
+      else
+         if Prj_Node.Analysis_Data.Coverage_Data /= null and then
+           Prj_Node.Analysis_Data.Coverage_Data.Status = Valid then
+            return True;
+         end if;
+      end if;
+
+      return False;
+   end Have_Gcov_Info;
+
    ----------------------------------
    -- Add_Gcov_File_Info_From_Menu --
    ----------------------------------
@@ -770,6 +898,47 @@ package body Code_Analysis_Module is
       when E : others => Trace (Exception_Handle, E);
    end Add_Gcov_File_Info_From_Shell;
 
+   --------------------
+   -- Find_Gcov_File --
+   --------------------
+
+   function Find_Gcov_File
+     (Kernel  : Kernel_Handle;
+      Source  : VFS.Virtual_File) return VFS.Virtual_File
+   is
+      Gcov_Root : String_Access;
+      Result    : VFS.Virtual_File;
+   begin
+      Gcov_Root := Getenv ("GCOV_ROOT");
+
+      if Gcov_Root /= null
+        and then Gcov_Root.all = ""
+      then
+         --  If GCOV_ROOT is set but empty, look for files in the object
+         --  directory of the root project.
+         Free (Gcov_Root);
+      end if;
+
+      if Gcov_Root = null then
+         --  Look for the gcov file in the object directory of the root
+         --  project.
+         return Create
+           (Object_Path
+              (Get_Root_Project (Get_Registry (Kernel).all),
+               False, False)
+            & Directory_Separator & Base_Name (Source) & Gcov_Extension_Cst);
+
+      else
+         --  Look for the gcov file in the path pointed by GCOV_ROOT.
+
+         Result := Create
+           (Gcov_Root.all & Directory_Separator &
+            Base_Name (Source) & Gcov_Extension_Cst);
+         Free (Gcov_Root);
+         return Result;
+      end if;
+   end Find_Gcov_File;
+
    ------------------------------------
    -- Add_Gcov_File_Info_In_Callback --
    ------------------------------------
@@ -808,6 +977,82 @@ package body Code_Analysis_Module is
          Refresh_Analysis_Report (Cont_N_Anal);
       end if;
    end Add_Gcov_File_Info_In_Callback;
+
+   ------------------------
+   -- Add_Gcov_File_Info --
+   ------------------------
+
+   procedure Add_Gcov_File_Info
+     (Kernel       : Kernel_Handle;
+      Src_File     : VFS.Virtual_File;
+      Cov_File     : VFS.Virtual_File;
+      Project_Node : Project_Access)
+   is
+      use Language.Tree.Database;
+      File_Contents : GNAT.Strings.String_Access;
+      File_Node     : constant Code_Analysis.File_Access
+        := Get_Or_Create (Project_Node, Src_File);
+      Handler       : constant Language_Handler
+        := Get_Language_Handler (Kernel);
+      Database      : constant Construct_Database_Access
+        := Get_Construct_Database (Kernel);
+      Tree_Lang     : constant Tree_Language_Access
+        := Get_Tree_Language_From_File (Handler, Src_File, False);
+      Data_File     : constant Structured_File_Access
+        := Language.Tree.Database.Get_Or_Create
+          (Db   => Database,
+           File => Src_File,
+           Lang => Tree_Lang);
+   begin
+      if File_Time_Stamp (Src_File) > File_Time_Stamp (Cov_File) then
+         GPS.Kernel.Console.Insert
+           (Kernel, Base_Name (Src_File) &
+         (-" has been modified since GCOV information were generated.") &
+         (-" Skipped."),
+            Mode => GPS.Kernel.Console.Error);
+         Set_Error (File_Node, File_Out_Of_Date);
+         --  Set an empty line array in order to make File_Node a valid
+         --  Code_Analysis node
+         File_Node.Lines := new Line_Array (1 .. 1);
+      else
+         declare
+            Contents : String_Access := Read_File (Cov_File);
+            Last     : Integer;
+            CR_Found : Boolean;
+
+         begin
+            Strip_CR (Contents.all, Last, CR_Found);
+
+            if CR_Found then
+               File_Contents := new String'(Contents (Contents'First .. Last));
+               Free (Contents);
+            else
+               File_Contents := Contents;
+            end if;
+         end;
+
+         Add_File_Info (File_Node, File_Contents);
+
+         --  Check for project runs info
+         if File_Node.Analysis_Data.Coverage_Data.Status = Valid and then
+           Project_Node.Analysis_Data.Coverage_Data = null then
+
+            Project_Node.Analysis_Data.Coverage_Data := new Project_Coverage;
+            Get_Runs_Info_From_File
+              (File_Contents,
+               Project_Coverage
+                 (Project_Node.Analysis_Data.Coverage_Data.all).Runs,
+               Project_Coverage
+                 (Project_Node.Analysis_Data.Coverage_Data.all).Have_Runs);
+         end if;
+
+         if File_Node.Analysis_Data.Coverage_Data.Status = Valid then
+            Add_Subprogram_Info (File_Node, Data_File);
+         end if;
+
+         Free (File_Contents);
+      end if;
+   end Add_Gcov_File_Info;
 
    -------------------------------------
    -- Add_Gcov_Project_Info_From_Menu --
@@ -898,6 +1143,51 @@ package body Code_Analysis_Module is
       Add_Gcov_Project_Info (Get_Kernel (Cont_N_Anal.Context), Prj_Node);
       Refresh_Analysis_Report (Cont_N_Anal);
    end Add_Gcov_Project_Info_In_Callback;
+
+   ---------------------------
+   -- Add_Gcov_Project_Info --
+   ---------------------------
+
+   procedure Add_Gcov_Project_Info
+     (Kernel   : Kernel_Handle;
+      Prj_Node : Project_Access)
+   is
+      Src_Files : VFS.File_Array_Access;
+      Src_File  : VFS.Virtual_File;
+      Cov_File  : VFS.Virtual_File;
+   begin
+      --  get every source files of the project
+      --  check if they are associated with gcov info
+      --  load their info
+      Src_Files := Get_Source_Files (Prj_Node.Name, Recursive => False);
+
+      for J in Src_Files'First .. Src_Files'Last loop
+         Src_File := Src_Files (J);
+         Cov_File := Find_Gcov_File (Kernel, Src_File);
+
+         if Is_Regular_File (Cov_File) then
+            Add_Gcov_File_Info (Kernel, Src_File, Cov_File, Prj_Node);
+         else
+            GPS.Kernel.Console.Insert
+              (Kernel,
+               -"Could not find coverage file " & Full_Name (Cov_File).all);
+
+            declare
+               File_Node : constant Code_Analysis.File_Access
+                 := Get_Or_Create (Prj_Node, Src_File);
+            begin
+               Set_Error (File_Node, File_Not_Found);
+               --  Set an empty line array in order to make File_Node a valid
+               --  Code_Analysis node
+               File_Node.Lines := new Line_Array (1 .. 1);
+            end;
+         end if;
+      end loop;
+
+      Compute_Project_Coverage (Prj_Node);
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end Add_Gcov_Project_Info;
 
    -----------------------------------------
    -- Add_All_Gcov_Project_Info_From_Menu --
@@ -1008,8 +1298,7 @@ package body Code_Analysis_Module is
       end if;
 
       Show_All_Coverage_Information
-        (Get_Kernel (Data),
-         Code_Analysis_Property (Property).Analysis.Projects);
+        (Get_Kernel (Data), Code_Analysis_Property (Property).Analysis);
       --  Build/Refresh the Coverage Report
       Show_Analysis_Report (Get_Kernel (Data),
         Context_And_Analysis'(No_Context,
@@ -1039,8 +1328,7 @@ package body Code_Analysis_Module is
       end if;
 
       Hide_All_Coverage_Information
-        (Get_Kernel (Data),
-         Code_Analysis_Property (Property).Analysis.Projects);
+        (Get_Kernel (Data), Code_Analysis_Property (Property).Analysis);
    exception
       when E : others => Trace (Exception_Handle, E);
    end Hide_All_Coverage_Information_From_Shell;
@@ -1055,11 +1343,11 @@ package body Code_Analysis_Module is
    is
       pragma Unreferenced (Widget);
    begin
-      if First_Project_With_Coverage_Data (Cont_N_Anal.Analysis.Projects) =
+      if First_Project_With_Coverage_Data (Cont_N_Anal.Analysis) =
         No_Project then
          Add_All_Gcov_Project_Info_In_Callback (Cont_N_Anal);
 
-         if First_Project_With_Coverage_Data (Cont_N_Anal.Analysis.Projects) =
+         if First_Project_With_Coverage_Data (Cont_N_Anal.Analysis) =
            No_Project then
             GPS.Kernel.Console.Insert
               (Get_Kernel (Cont_N_Anal.Context),
@@ -1069,7 +1357,7 @@ package body Code_Analysis_Module is
       end if;
 
       Show_All_Coverage_Information
-        (Get_Kernel (Cont_N_Anal.Context), Cont_N_Anal.Analysis.Projects);
+        (Get_Kernel (Cont_N_Anal.Context), Cont_N_Anal.Analysis);
       --  Build/Refresh the Coverage Report
       Show_Analysis_Report (Get_Kernel (Cont_N_Anal.Context), Cont_N_Anal);
    exception
@@ -1087,10 +1375,55 @@ package body Code_Analysis_Module is
       pragma Unreferenced (Widget);
    begin
       Hide_All_Coverage_Information
-        (Get_Kernel (Cont_N_Anal.Context), Cont_N_Anal.Analysis.Projects);
+        (Get_Kernel (Cont_N_Anal.Context), Cont_N_Anal.Analysis);
    exception
       when E : others => Trace (Exception_Handle, E);
    end Hide_All_Coverage_Information_From_Menu;
+
+   -----------------------------------
+   -- Show_All_Coverage_Information --
+   -----------------------------------
+
+   procedure Show_All_Coverage_Information
+     (Kernel   : Kernel_Handle;
+      Analysis : Code_Analysis_Instance)
+   is
+      use Project_Maps;
+      Map_Cur  : Project_Maps.Cursor;
+      Sort_Arr : Project_Array (1 .. Integer (Analysis.Projects.Length));
+   begin
+      Map_Cur  := Analysis.Projects.First;
+
+      for J in Sort_Arr'Range loop
+         Sort_Arr (J) := Element (Map_Cur);
+         Next (Map_Cur);
+      end loop;
+
+      Sort_Projects (Sort_Arr);
+
+      for J in Sort_Arr'Range loop
+         List_Project_Uncovered_Lines (Kernel, Sort_Arr (J));
+         Add_Project_Coverage_Annotations (Kernel, Sort_Arr (J));
+      end loop;
+   end Show_All_Coverage_Information;
+
+   -----------------------------------
+   -- Hide_All_Coverage_Information --
+   -----------------------------------
+
+   procedure Hide_All_Coverage_Information
+   (Kernel   : Kernel_Handle;
+    Analysis : Code_Analysis_Instance)
+   is
+      use Project_Maps;
+      Map_Cur  : Project_Maps.Cursor := Analysis.Projects.First;
+   begin
+      for J in 1 .. Integer (Analysis.Projects.Length) loop
+         Clear_Project_Locations (Kernel, Element (Map_Cur));
+         Remove_Project_Coverage_Annotations (Kernel, Element (Map_Cur));
+         Next (Map_Cur);
+      end loop;
+   end Hide_All_Coverage_Information;
 
    -------------------------------------
    -- Show_Analysis_Report_From_Shell --
@@ -1186,7 +1519,7 @@ package body Code_Analysis_Module is
             --  If the current context's project has no coverage data, it has
             --  to be modified or an erro message is shown
             Prj_Name := First_Project_With_Coverage_Data
-              (Cont_N_Anal.Analysis.Projects);
+              (Cont_N_Anal.Analysis);
 
             if Prj_Name /= No_Project then
                --  Set in the context the 1st project that has analysis
@@ -1320,6 +1653,37 @@ package body Code_Analysis_Module is
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Destroy;
+
+   --------------------------------------
+   -- First_Project_With_Coverage_Data --
+   --------------------------------------
+
+   function First_Project_With_Coverage_Data
+     (Analysis : Code_Analysis_Instance) return Project_Type
+   is
+      use Project_Maps;
+      Prj_Node : Code_Analysis.Project_Access;
+      Prj_Cur  : Project_Maps.Cursor := Analysis.Projects.First;
+   begin
+      if Prj_Cur /= No_Element then
+         Prj_Node := Element (Prj_Cur);
+      else
+         return No_Project;
+      end if;
+
+      loop
+         exit when Prj_Node.Analysis_Data.Coverage_Data /= null
+           or else Prj_Cur = No_Element;
+         Prj_Node := Element (Prj_Cur);
+         Next (Prj_Cur);
+      end loop;
+
+      if Prj_Cur /= No_Element then
+         return Prj_Node.Name;
+      else
+         return No_Project;
+      end if;
+   end First_Project_With_Coverage_Data;
 
    ---------------------------
    -- Get_Iter_From_Context --
@@ -1588,12 +1952,10 @@ package body Code_Analysis_Module is
            (Cont_N_Anal.Analysis.Projects,
             Project_Information (Cont_N_Anal.Context));
    begin
-      if not Have_Gcov_Info
-        (Cont_N_Anal.Analysis.Projects, Cont_N_Anal.Context) then
+      if not Have_Gcov_Info (Cont_N_Anal) then
          Add_Gcov_Project_Info_In_Callback (Cont_N_Anal);
 
-         if not Have_Gcov_Info
-           (Cont_N_Anal.Analysis.Projects, Cont_N_Anal.Context) then
+         if not Have_Gcov_Info (Cont_N_Anal) then
             GPS.Kernel.Console.Insert
               (Get_Kernel (Cont_N_Anal.Context),
                -"No coverage information to display for "
@@ -1646,12 +2008,10 @@ package body Code_Analysis_Module is
       File_Node : constant Code_Analysis.File_Access := Get_Or_Create
         (Prj_Node, File_Information (Cont_N_Anal.Context));
    begin
-      if not Have_Gcov_Info
-        (Cont_N_Anal.Analysis.Projects, Cont_N_Anal.Context) then
+      if not Have_Gcov_Info (Cont_N_Anal) then
          Add_Gcov_File_Info_In_Callback (Cont_N_Anal);
 
-         if not Have_Gcov_Info
-           (Cont_N_Anal.Analysis.Projects, Cont_N_Anal.Context) then
+         if not Have_Gcov_Info (Cont_N_Anal) then
             GPS.Kernel.Console.Insert
               (Get_Kernel (Cont_N_Anal.Context),
                -"No coverage information to display for "
@@ -1695,6 +2055,101 @@ package body Code_Analysis_Module is
       when E : others => Trace (Exception_Handle, E);
    end Hide_File_Coverage_Information_From_Menu;
 
+   ----------------------------------
+   -- List_Project_Uncovered_Lines --
+   ----------------------------------
+
+   procedure List_Project_Uncovered_Lines
+     (Kernel : Kernel_Handle; Project_Node : Project_Access)
+   is
+      use File_Maps;
+      Map_Cur  : File_Maps.Cursor := Project_Node.Files.First;
+      Sort_Arr : Code_Analysis.File_Array
+        (1 .. Integer (Project_Node.Files.Length));
+   begin
+      for J in Sort_Arr'Range loop
+         Sort_Arr (J) := Element (Map_Cur);
+         Next (Map_Cur);
+      end loop;
+
+      Sort_Files (Sort_Arr);
+
+      for J in Sort_Arr'Range loop
+         if Sort_Arr (J).Analysis_Data.Coverage_Data /= null then
+            List_File_Uncovered_Lines (Kernel, Sort_Arr (J));
+         end if;
+      end loop;
+   end List_Project_Uncovered_Lines;
+
+   --------------------------------------
+   -- Add_Project_Coverage_Annotations --
+   --------------------------------------
+
+   procedure Add_Project_Coverage_Annotations
+     (Kernel : Kernel_Handle; Project_Node : Project_Access)
+   is
+      use File_Maps;
+      Map_Cur  : File_Maps.Cursor := Project_Node.Files.First;
+      Sort_Arr : Code_Analysis.File_Array
+        (1 .. Integer (Project_Node.Files.Length));
+   begin
+      for J in Sort_Arr'Range loop
+         Sort_Arr (J) := Element (Map_Cur);
+         Next (Map_Cur);
+      end loop;
+
+      Sort_Files (Sort_Arr);
+
+      for J in Sort_Arr'Range loop
+         if Sort_Arr (J).Analysis_Data.Coverage_Data /= null then
+            Add_File_Coverage_Annotations (Kernel, Sort_Arr (J));
+         end if;
+      end loop;
+   end Add_Project_Coverage_Annotations;
+
+   -----------------------------
+   -- Clear_Project_Locations --
+   -----------------------------
+
+   procedure Clear_Project_Locations
+     (Kernel : Kernel_Handle; Project_Node : Project_Access)
+   is
+      use File_Maps;
+      Map_Cur : File_Maps.Cursor := Project_Node.Files.First;
+   begin
+      for J in 1 .. Integer (Project_Node.Files.Length) loop
+         Clear_File_Locations (Kernel, Element (Map_Cur));
+         Next (Map_Cur);
+      end loop;
+   end Clear_Project_Locations;
+
+   -----------------------------------------
+   -- Remove_Project_Coverage_Annotations --
+   -----------------------------------------
+
+   procedure Remove_Project_Coverage_Annotations
+     (Kernel : Kernel_Handle; Project_Node : Project_Access)
+   is
+      use File_Maps;
+      Map_Cur : File_Maps.Cursor := Project_Node.Files.First;
+   begin
+      for J in 1 .. Integer (Project_Node.Files.Length) loop
+         Remove_File_Coverage_Annotations (Kernel, Element (Map_Cur));
+         Next (Map_Cur);
+      end loop;
+   end Remove_Project_Coverage_Annotations;
+
+   --------------------------
+   -- Clear_File_Locations --
+   --------------------------
+
+   procedure Clear_File_Locations
+     (Kernel    : Kernel_Handle;
+      File_Node : Code_Analysis.File_Access) is
+   begin
+      Remove_Location_Category (Kernel, Coverage_Category, File_Node.Name);
+   end Clear_File_Locations;
+
    ----------------------------------------------------
    -- Show_Subprogram_Coverage_Information_From_Menu --
    ----------------------------------------------------
@@ -1714,12 +2169,10 @@ package body Code_Analysis_Module is
         (File_Node, new String'(Entity_Name_Information
          (Cont_N_Anal.Context)));
    begin
-      if not Have_Gcov_Info
-        (Cont_N_Anal.Analysis.Projects, Cont_N_Anal.Context) then
+      if not Have_Gcov_Info (Cont_N_Anal) then
          Add_Gcov_File_Info_In_Callback (Cont_N_Anal);
 
-         if not Have_Gcov_Info
-           (Cont_N_Anal.Analysis.Projects, Cont_N_Anal.Context) then
+         if not Have_Gcov_Info (Cont_N_Anal) then
             GPS.Kernel.Console.Insert
               (Get_Kernel (Cont_N_Anal.Context),
                -"No coverage information to display for "
@@ -1733,6 +2186,38 @@ package body Code_Analysis_Module is
    exception
       when E : others => Trace (Exception_Handle, E);
    end Show_Subprogram_Coverage_Information_From_Menu;
+
+   -------------------------------------
+   -- List_Subprogram_Uncovered_Lines --
+   -------------------------------------
+
+   procedure List_Subprogram_Uncovered_Lines
+     (Kernel    : Kernel_Handle;
+      File_Node : Code_Analysis.File_Access;
+      Subp_Node : Subprogram_Access) is
+   begin
+      if File_Node.Analysis_Data.Coverage_Data.Status = Valid then
+         for J in Subp_Node.Start .. Subp_Node.Stop loop
+            if File_Node.Lines (J) /= Null_Line and then
+              File_Node.Lines (J).Analysis_Data.Coverage_Data.Coverage = 0 then
+               Insert_Location
+                 (Kernel             => Kernel,
+                  Category           => Coverage_Category,
+                  File               => File_Node.Name,
+                  Text               => File_Node.Lines (J).Contents.all,
+                  Line               => J,
+                  Column             => 1,
+                  Highlight          => True,
+                  Highlight_Category => Builder_Warnings_Style);
+            end if;
+         end loop;
+      else
+         GPS.Kernel.Console.Insert
+           (Kernel, -"There is no Gcov information associated with " &
+            Base_Name (File_Node.Name),
+            Mode => GPS.Kernel.Console.Error);
+      end if;
+   end List_Subprogram_Uncovered_Lines;
 
    ----------------------------------------------------
    -- Hide_Subprogram_Coverage_Information_From_Menu --
@@ -1758,6 +2243,29 @@ package body Code_Analysis_Module is
    exception
       when E : others => Trace (Exception_Handle, E);
    end Hide_Subprogram_Coverage_Information_From_Menu;
+
+   --------------------------------
+   -- Clear_Subprogram_Locations --
+   --------------------------------
+
+   procedure Clear_Subprogram_Locations
+     (Kernel    : Kernel_Handle;
+      File_Node : Code_Analysis.File_Access;
+      Subp_Node : Subprogram_Access) is
+   begin
+      if File_Node.Analysis_Data.Coverage_Data.Status = Valid then
+         for J in Subp_Node.Start .. Subp_Node.Stop loop
+            if File_Node.Lines (J) /= Null_Line and then
+              File_Node.Lines (J).Analysis_Data.Coverage_Data.Coverage = 0 then
+               Remove_Location_Category
+                 (Kernel,
+                  Coverage_Category,
+                  File_Node.Name,
+                  File_Node.Lines (J).Number);
+            end if;
+         end loop;
+      end if;
+   end Clear_Subprogram_Locations;
 
    ---------------------------------
    -- Remove_Subprogram_From_Menu --
@@ -1785,8 +2293,7 @@ package body Code_Analysis_Module is
            (Get_Kernel (Cont_N_Anal.Context), Cont_N_Anal, False);
       end if;
 
-      if Have_Gcov_Info
-        (Cont_N_Anal.Analysis.Projects, Cont_N_Anal.Context) then
+      if Have_Gcov_Info (Cont_N_Anal) then
          --  Remove potential listed locations
          Clear_Subprogram_Locations
            (Get_Kernel (Cont_N_Anal.Context), File_Node, Subp_Node);
@@ -1870,8 +2377,7 @@ package body Code_Analysis_Module is
            (Get_Kernel (Cont_N_Anal.Context), Cont_N_Anal, False);
       end if;
 
-      if Have_Gcov_Info
-        (Cont_N_Anal.Analysis.Projects, Cont_N_Anal.Context) then
+      if Have_Gcov_Info (Cont_N_Anal) then
          --  Update project coverage information
          Prj_Node.Analysis_Data.Coverage_Data.Coverage :=
            Prj_Node.Analysis_Data.Coverage_Data.Coverage -
@@ -2085,8 +2591,8 @@ package body Code_Analysis_Module is
          Context_And_Analysis_CB.To_Marshaller
            (Add_Gcov_File_Info_From_Menu'Access), Cont_N_Anal);
 
-      Gtk_New (Item, -"Remove data of " &
-               Entity_Name_Information (Cont_N_Anal.Context));
+      Gtk_New (Item, -"Remove data of " & Entity_Name_Information
+               (Cont_N_Anal.Context));
       Append (Submenu, Item);
       Context_And_Analysis_CB.Connect
         (Item, Gtk.Menu_Item.Signal_Activate,
@@ -2600,9 +3106,8 @@ package body Code_Analysis_Module is
       Code_Analysis_Class : constant Class_Type :=
                               New_Class (Kernel, CodeAnalysis_Cst);
       Analysis            : Code_Analysis_Instance;
-      pragma Unreferenced (Analysis);
       Tools               : constant String := '/' & (-"Tools");
-      Coverage            : constant String := -"Covera_ge";
+      Coverage            : constant String := -"Coverage";
       Views               : constant String := -"Views";
       Mitem               : Gtk_Menu_Item;
    begin
@@ -2618,7 +3123,7 @@ package body Code_Analysis_Module is
          Module_Name => CodeAnalysis_Cst);
       Register_Contextual_Submenu
         (Kernel      => Kernel,
-         Name        => -"Coverage",
+         Name        => Coverage,
          Filter      => Action_Filter (Lookup_Filter (Kernel, "Project only")
            or Lookup_Filter (Kernel, "In project")),
          Submenu     => Submenu_Factory (Contextual_Menu));
@@ -2626,7 +3131,7 @@ package body Code_Analysis_Module is
       Register_Menu
         (Kernel      => Kernel,
          Parent_Path => Tools & '/' & Coverage,
-         Text        => -"_Show report",
+         Text        => -"Show report",
          Callback    => On_Single_View_Menu'Access,
          Ref_Item    => -"Documentation",
          Add_Before  => False);
@@ -2650,7 +3155,7 @@ package body Code_Analysis_Module is
       Register_Menu
         (Kernel      => Kernel,
          Parent_Path => Tools & '/' & Coverage,
-         Text        => -"Load data for _all projects",
+         Text        => -"Load data for all projects",
          Callback    => On_Load_All_Projects_Menu'Access,
          Ref_Item    => -"Documentation",
          Add_Before  => False);
@@ -2658,7 +3163,7 @@ package body Code_Analysis_Module is
       Register_Menu
         (Kernel      => Kernel,
          Parent_Path => Tools & '/' & Coverage,
-         Text        => -"Load data for current _project",
+         Text        => -"Load data for current project",
          Callback    => On_Load_Current_Project_Menu'Access,
          Ref_Item    => -"Documentation",
          Add_Before  => False);
@@ -2666,7 +3171,7 @@ package body Code_Analysis_Module is
       Register_Menu
         (Kernel      => Kernel,
          Parent_Path => Tools & '/' & Coverage,
-         Text        => -"Load data for current _file",
+         Text        => -"Load data for current file",
          Callback    => On_Load_Current_File_Menu'Access,
          Ref_Item    => -"Documentation",
          Add_Before  => False);
@@ -2677,7 +3182,7 @@ package body Code_Analysis_Module is
       Register_Menu
         (Kernel      => Kernel,
          Parent_Path => Tools & '/' & Coverage,
-         Text        => -"C_lear coverage from memory",
+         Text        => -"Clear coverage from memory",
          Callback    => On_Clear_Coverage_Menu'Access,
          Ref_Item    => -"Documentation",
          Add_Before  => False);
@@ -2694,7 +3199,7 @@ package body Code_Analysis_Module is
          Register_Menu
            (Kernel      => Kernel,
             Parent_Path => Tools & '/' & Views,
-            Text        => -"Covera_ge Report",
+            Text        => Analysis.Name.all & (-" Report"),
             Callback    => On_Single_View_Menu'Access);
       end if;
 
