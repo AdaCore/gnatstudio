@@ -420,7 +420,6 @@
          <file_index>6</file_index>
          <status_index>2</status_index>
          <local_revision_index>3</local_revision_index>
-         <repository_revision_index>4</repository_revision_index>
 
          <status_matcher label="Up to date">(  .....[^\*])</status_matcher>
          <status_matcher label="Locally modified">M.......</status_matcher>
@@ -438,7 +437,6 @@
          <file_index>6</file_index>
          <status_index>2</status_index>
          <local_revision_index>3</local_revision_index>
-         <repository_revision_index>4</repository_revision_index>
 
          <status_matcher label="Up to date">(  .....[^\*])</status_matcher>
          <status_matcher label="Locally modified">M.......</status_matcher>
