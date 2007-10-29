@@ -7,7 +7,7 @@
 @syncodeindex fn cp
 
 @set GPS
-@set GPSVersion 4.2.0
+@set GPSVersion 4.3.0
 
 @titlepage
 

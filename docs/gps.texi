@@ -5,6 +5,7 @@
 @c   - Under Windows XP, using the default XP theme
 @c   - Using the standard Windows screen or window capture
 @c     (using e.g Ctrl-PrntScrn)
+@c
 @c   - Save the resultat image (if needed, truncated to show only relevant
 @c     items) in jpeg format, quality 95%
 
@@ -15,7 +16,7 @@
 @syncodeindex fn cp
 
 @set GPS
-@set GPSVersion 4.2.0
+@set GPSVersion 4.3.0
 
 @titlepage
 
