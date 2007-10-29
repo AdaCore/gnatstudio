@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2007, AdaCore             --
+--                 Copyright (C) 2005-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -2989,16 +2989,16 @@ package body Src_Editor_Module.Shell is
 
             if Success then
                declare
-                  M : Gtk_Text_Mark := Create_Mark
-                    (Get_Buffer (Box), "", Iter);
+                  M : constant Gtk_Text_Mark :=
+                        Create_Mark (Get_Buffer (Box), "", Iter);
                begin
                   Scroll_To_Mark
                     (Get_View (Box),
-                     Mark           => M,
-                     Within_Margin  => 0.2,
-                     Use_Align      => False,
-                     Xalign         => 0.5,
-                     Yalign         => 0.5);
+                     Mark          => M,
+                     Within_Margin => 0.2,
+                     Use_Align     => False,
+                     Xalign        => 0.5,
+                     Yalign        => 0.5);
                   Delete_Mark (Get_Buffer (Box), M);
                end;
             else
