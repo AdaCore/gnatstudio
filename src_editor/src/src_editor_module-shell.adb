@@ -2987,17 +2987,20 @@ package body Src_Editor_Module.Shell is
             Get_Cursor_Position (Get_View (Box), Iter);
             Get_Location (Iter, Data, 2, Iter, Success);
 
-            if not Success then
-               if not Scroll_To_Iter
-                 (Get_View (Box),
-                  Iter           => Iter,
-                  Within_Margin  => 0.1,
-                  Use_Align      => False,
-                  Xalign         => 0.5,
-                  Yalign         => 0.5)
-               then
-                  Set_Error_Msg (Data, -"Cannot scroll the view");
-               end if;
+            if Success then
+               declare
+                  M : Gtk_Text_Mark := Create_Mark
+                    (Get_Buffer (Box), "", Iter);
+               begin
+                  Scroll_To_Mark
+                    (Get_View (Box),
+                     Mark           => M,
+                     Within_Margin  => 0.2,
+                     Use_Align      => False,
+                     Xalign         => 0.5,
+                     Yalign         => 0.5);
+                  Delete_Mark (Get_Buffer (Box), M);
+               end;
             else
                Set_Error_Msg (Data, -"Invalid location");
             end if;

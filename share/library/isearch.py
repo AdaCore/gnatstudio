@@ -98,7 +98,7 @@ except:
 def on_gps_started (hook_name):
   parse_xml ("""
   <action name='""" + isearch_action_name + """' category="Editor" output="none">
-     <description>This action provides an incremental search facility: once activated, each character you type is added to the search pattern, and GPS jumps to the next occurrence of the pattern</description> 
+     <description>This action provides an incremental search facility: once activated, each character you type is added to the search pattern, and GPS jumps to the next occurrence of the pattern</description>
      <filter id="Source editor" />
      <shell lang="python">isearch.Isearch()</shell>
   </action>
@@ -209,7 +209,9 @@ class Isearch (CommandWindow):
 
    def highlight_match (self, save_in_stack=1):
      """Highlight the match at self.loc"""
+     self.editor.current_view ().center(self.loc)
      self.editor.select (self.loc, self.end_loc)
+
      if save_in_stack:
         self.stack.append ((self.loc, self.end_loc, self.read (), 1))
 
@@ -229,7 +231,7 @@ class Isearch (CommandWindow):
           end = (start + 1).forward_line () - 2  ## Go to end of next line
        else:
           end = start.forward_line () - 2  ## Go to end of this line
-    
+
        self.locked = True
        case_sensitive = self.case_sensitive
        self.write (input[:cursor_pos + 1] + \
@@ -261,7 +263,7 @@ class Isearch (CommandWindow):
        self.case_sensitive = not self.case_sensitive
        self.explicit_case_sensitive = True
        self.set_prompt (self.prompt())
-       self.on_changed (input, len (input), redo_overlays=1) 
+       self.on_changed (input, len (input), redo_overlays=1)
        return True
 
      # doing another isearch just searches for the next occurrence
@@ -324,7 +326,7 @@ class Isearch (CommandWindow):
          and not self.case_sensitive \
          and input.lower () != input:
            self.case_sensitive = True
-           self.set_prompt (self.prompt ())    
+           self.set_prompt (self.prompt ())
         Isearch.last_case_sensitive = self.case_sensitive
         self.search_next (input, cursor_pos, redo_overlays)
 
@@ -342,7 +344,7 @@ class Isearch (CommandWindow):
         result = self.loc.search \
            (input, regexp = self.regexp,
             case_sensitive = self.case_sensitive,
-            dialog_on_failure = False, 
+            dialog_on_failure = False,
             backward = False)
         if result and result[0] == self.loc:
            self.set_background (background_color)
@@ -350,12 +352,12 @@ class Isearch (CommandWindow):
            self.end_loc = match_to
            self.highlight_match ()
            self.insert_overlays ()
-           return 
-        
+           return
+
      result = self.loc.search \
          (input, regexp = self.regexp,
                  case_sensitive = self.case_sensitive,
-                 dialog_on_failure = False, 
+                 dialog_on_failure = False,
                  backward = self.backward)
      if result:
         self.set_background (background_color)
