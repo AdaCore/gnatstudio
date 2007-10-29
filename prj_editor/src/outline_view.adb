@@ -154,10 +154,9 @@ package body Outline_View is
      (Kernel : access Kernel_Handle_Record'Class);
    --  React to changes in the preferences
 
-   function Filter_Category
-     (Category : Language.Language_Category) return Language.Language_Category;
-   --  Return Cat_Unknown if the category should be filtered out, and the
-   --  name of the category to use otherwise.
+   function Category_Filter
+     (Category : Language.Language_Category) return Boolean;
+   --  Return False if the category should be filtered out
 
    procedure Outline_Context_Factory
      (Context      : in out Selection_Context;
@@ -529,29 +528,25 @@ package body Outline_View is
    end Outline_Context_Factory;
 
    ---------------------
-   -- Filter_Category --
+   -- Category_Filter --
    ---------------------
 
-   function Filter_Category
-     (Category : Language_Category) return Language_Category is
+   function Category_Filter
+     (Category : Language_Category) return Boolean is
    begin
       --  No "with", "use", "#include"
       --  No constructs ("loop", "if", ...)
 
       case Category is
-         when Subprogram_Explorer_Category =>
-            return Cat_Procedure;
-
-         when Cat_Package .. Cat_Task =>
-            return Cat_Package;
-
-         when Type_Category =>
-            return Cat_Type;
+         when Subprogram_Explorer_Category |
+              Cat_Package .. Cat_Task |
+              Type_Category =>
+            return True;
 
          when others =>
-            return Cat_Unknown;
+            return False;
       end case;
-   end Filter_Category;
+   end Category_Filter;
 
    ------------------
    -- Save_Desktop --
@@ -842,8 +837,7 @@ package body Outline_View is
             if Constructs.Current.Name /= null then
                Is_Type := Constructs.Current.Category in Data_Type_Category;
 
-               if Filter_Category (Constructs.Current.Category) /=
-                 Cat_Unknown
+               if Category_Filter (Constructs.Current.Category)
                  and then (Show_Specs or not Constructs.Current.Is_Declaration)
                  and then (Show_Types or not Is_Type)
                then
