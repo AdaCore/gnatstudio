@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2007                       --
---                             AdaCore                               --
+--                Copyright (C) 2000-2007, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -410,17 +409,17 @@ package body Tooltips is
       Area : out Gdk.Rectangle.Gdk_Rectangle;
       Iter : out Gtk.Tree_Model.Gtk_Tree_Iter)
    is
-      Window     : Gdk_Window;
-      New_Window : Gdk_Window;
-      X, Y       : Gint;
-      Mask       : Gdk_Modifier_Type;
+      Window         : Gdk_Window;
+      New_Window     : Gdk_Window;
+      X, Y           : Gint;
+      Mask           : Gdk_Modifier_Type;
       Cell_X, Cell_Y : Gint;
-      Path       : Gtk_Tree_Path;
-      Found      :  Boolean;
-      Column     : Gtk_Tree_View_Column;
+      Path           : Gtk_Tree_Path;
+      Found          :  Boolean;
+      Column         : Gtk_Tree_View_Column;
    begin
-      Area   := (0, 0, 0, 0);
-      Iter   := Null_Iter;
+      Area := (0, 0, 0, 0);
+      Iter := Null_Iter;
 
       Window := Get_Bin_Window (Tree);
       Get_Pointer (Window, X, Y, Mask, New_Window);

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                             AdaCore                               --
+--                Copyright (C) 2001-2007, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -87,6 +86,7 @@ package Project_Explorers_Common is
       Category_Node,
       Entity_Node,
       Modified_Project_Node);
+
    subtype Directory_Node_Types
      is Node_Types range Directory_Node .. Exec_Directory_Node;
    --  The kind of nodes one might find in the tree
@@ -101,7 +101,7 @@ package Project_Explorers_Common is
    Close_Pixbufs : Pixbuf_Array;
 
    procedure Init_Graphics (Widget : Gtk_Widget);
-   --  Initialize the pixbufs.
+   --  Initialize the pixbufs
 
    ---------------------------------
    -- Tree manipulation functions --
@@ -122,56 +122,56 @@ package Project_Explorers_Common is
    procedure Append_Dummy_Iter
      (Model : Gtk_Tree_Store;
       Base  : Gtk_Tree_Iter);
-   --  Append an empty iter to Base.
+   --  Append an empty iter to Base
 
    function Append_Category_Node
      (Model       : Gtk_Tree_Store;
       File        : VFS.Virtual_File;
       Category    : Language_Category;
       Parent_Iter : Gtk_Tree_Iter) return Gtk_Tree_Iter;
-   --  Add a category node in the model.
+   --  Add a category node in the model
 
    function Append_Entity_Node
      (Model       : Gtk_Tree_Store;
       File        : VFS.Virtual_File;
       Construct   : Construct_Information;
       Parent_Iter : Gtk_Tree_Iter) return Gtk_Tree_Iter;
-   --  Add an entity node in the model.
+   --  Add an entity node in the model
 
    procedure Append_File_Info
      (Kernel    : Kernel_Handle;
       Model     : Gtk_Tree_Store;
       Node      : Gtk_Tree_Iter;
       File_Name : VFS.Virtual_File);
-   --  Add info to a file node in the model.
+   --  Add info to a file node in the model
 
    function Get_Node_Type
      (Model : Gtk_Tree_Store;
       Node  : Gtk_Tree_Iter) return Node_Types;
-   --  Return the type of Node.
+   --  Return the type of Node
 
    procedure Set_Node_Type
      (Model    : Gtk_Tree_Store;
       Node     : Gtk_Tree_Iter;
       N_Type   : Node_Types;
       Expanded : Boolean);
-   --  Set the Node type and the pixmap accordingly.
+   --  Set the Node type and the pixmap accordingly
 
    function Get_Category_Type
      (Model : Gtk_Tree_Store;
       Node  : Gtk_Tree_Iter) return Language_Category;
-   --  Return the type of category.
+   --  Return the type of category
 
    function Is_Up_To_Date
      (Model : Gtk_Tree_Store;
       Node  : Gtk_Tree_Iter) return Boolean;
-   --  Return the state of the Up_To_Date flag for Node.
+   --  Return the state of the Up_To_Date flag for Node
 
    procedure Set_Up_To_Date
      (Model : Gtk_Tree_Store;
       Node  : Gtk_Tree_Iter;
       State : Boolean);
-   --  Set the state of the Up_To_Date flag for Node.
+   --  Set the state of the Up_To_Date flag for Node
 
    function Get_Base_Name
      (Model : Gtk_Tree_Store;
@@ -182,7 +182,7 @@ package Project_Explorers_Common is
    function Get_Absolute_Name
      (Model : Gtk_Tree_Store;
       Node  : Gtk_Tree_Iter) return String;
-   --  Return the absolute name for Node.
+   --  Return the absolute name for Node
 
    function Get_Directory_From_Node
      (Model : Gtk_Tree_Store;
@@ -218,7 +218,7 @@ package Project_Explorers_Common is
 
    function Entity_Icon_Of
      (Construct : Construct_Information) return Gdk.Pixbuf.Gdk_Pixbuf;
-   --  Return the icon associated with Construct.
+   --  Return the icon associated with Construct
 
    function Filter_Category
      (Category : Language.Language_Category) return Language.Language_Category;
@@ -242,7 +242,7 @@ package Project_Explorers_Common is
      (Kernel    : Kernel_Handle;
       Tree      : access Gtk_Tree_View_Record'Class;
       Event    : Gdk_Event) return Boolean;
-   --  React to key press event on the tree.
+   --  React to key press event on the tree
 
    procedure Context_Factory
      (Context : in out Selection_Context;
@@ -251,7 +251,7 @@ package Project_Explorers_Common is
       Model   : Gtk_Tree_Store;
       Event   : Gdk_Event;
       Menu    : Gtk_Menu);
-   --  Return the context to use for the contextual menu.
+   --  Return the context to use for the contextual menu
 
 private
    type MDI_Explorer_Child_Record is

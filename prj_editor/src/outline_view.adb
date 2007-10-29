@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005-2007, AdaCore              --
+--                 Copyright (C) 2005-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -74,6 +74,7 @@ with Tooltips;                  use Tooltips;
 with VFS;                       use VFS;
 
 package body Outline_View is
+
    type Outline_View_Module_Record is new Module_ID_Record with null record;
    Outline_View_Module : Module_ID;
    Outline_View_Module_Name : constant String := "Outline_View";
@@ -112,8 +113,8 @@ package body Outline_View is
    --  Raise the existing explorer, or open a new one.
 
    type Outline_View_Record is new Gtk.Box.Gtk_Box_Record with record
-      Tree      : Gtk_Tree_View;
       Kernel    : Kernel_Handle;
+      Tree      : Gtk_Tree_View;
       File      : VFS.Virtual_File;
       Icon      : Gdk_Pixbuf;
       File_Icon : Gdk_Pixbuf;
@@ -142,8 +143,7 @@ package body Outline_View is
 
    function Save_Desktop
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle)
-      return Node_Ptr;
+      User   : Kernel_Handle) return Node_Ptr;
    function Load_Desktop
      (MDI  : MDI_Window;
       Node : Node_Ptr;
@@ -226,7 +226,7 @@ package body Outline_View is
       Column  : out Visible_Column_Type)
    is
       Model     : constant Gtk_Tree_Store :=
-        Gtk_Tree_Store (Get_Model (Outline.Tree));
+                    Gtk_Tree_Store (Get_Model (Outline.Tree));
       Mark_Name : aliased String := Get_String (Model, Iter, Mark_Column);
       Args      : constant Argument_List := (1 => Mark_Name'Unchecked_Access);
    begin
@@ -247,17 +247,18 @@ package body Outline_View is
       Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
       Area    : out Gdk.Rectangle.Gdk_Rectangle)
    is
-      Status     : Find_Decl_Or_Body_Query_Status := Success;
-      Entity     : Entity_Information;
-      Iter       : Gtk_Tree_Iter;
-      Model      : constant Gtk_Tree_Store := Gtk_Tree_Store
-        (Get_Model (Tooltip.Outline.Tree));
-      Line       : Integer;
-      Column     : Visible_Column_Type;
-      Closest    : Entity_Reference;
+      Model   : constant Gtk_Tree_Store :=
+                  Gtk_Tree_Store (Get_Model (Tooltip.Outline.Tree));
+      Status  : Find_Decl_Or_Body_Query_Status := Success;
+      Entity  : Entity_Information;
+      Iter    : Gtk_Tree_Iter;
+      Line    : Integer;
+      Column  : Visible_Column_Type;
+      Closest : Entity_Reference;
    begin
       Pixmap := null;
       Initialize_Tooltips (Tooltip.Outline.Tree, Area, Iter);
+
       if Iter /= Null_Iter then
          Entity_At_Iter
            (Outline => Tooltip.Outline,
@@ -276,6 +277,7 @@ package body Outline_View is
             Entity            => Entity,
             Closest_Ref       => Closest,
             Status            => Status);
+
          if Entity /= null then
             Ref (Entity);
             Pixmap := Entities.Tooltips.Draw_Tooltip
@@ -298,13 +300,13 @@ package body Outline_View is
    is
       Child       : constant MDI_Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Outline_View_Record'Tag);
+      Editor_Line : constant Natural :=
+                      File_Location_Hooks_Args_Access (Data).Line;
       Outline     : Outline_View_Access;
       Iter        : Gtk_Tree_Iter;
       Model       : Gtk_Tree_Store;
       Path        : Gtk_Tree_Path;
       Subprogram  : Entity_Information;
-      Editor_Line : constant Natural :=
-                      File_Location_Hooks_Args_Access (Data).Line;
       Distance    : Gint := Gint'Last;
       Closest     : Gtk_Tree_Iter;
    begin
@@ -321,15 +323,17 @@ package body Outline_View is
          if Subprogram /= null then
             declare
                Subprogram_Name : constant String := Get_Name (Subprogram).all;
-               Handler : constant LI_Handler := Get_LI_Handler
+               Handler         : constant LI_Handler := Get_LI_Handler
                  (Get_Database (Kernel),
                   Source_Filename =>
                     File_Location_Hooks_Args_Access (Data).File);
 
-               --  If no LI handler is found, assume case sensitivity.
+               --  If no LI handler is found, assume case sensitivity
+
                Case_Insensitive : constant Boolean :=
-                 (Handler /= null
-                  and then Case_Insensitive_Identifiers (Handler));
+                                    (Handler /= null
+                                       and then
+                                     Case_Insensitive_Identifiers (Handler));
                Line : Gint := Gint'First;
                Loc  : File_Location;
             begin
@@ -401,8 +405,9 @@ package body Outline_View is
    procedure Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Child : constant MDI_Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Outline_View_Record'Tag);
+      Child   : constant MDI_Child :=
+                  Find_MDI_Child_By_Tag
+                    (Get_MDI (Kernel), Outline_View_Record'Tag);
       Outline : Outline_View_Access;
    begin
       if Child /= null then
@@ -533,15 +538,19 @@ package body Outline_View is
       --  No "with", "use", "#include"
       --  No constructs ("loop", "if", ...)
 
-      if Category in Subprogram_Explorer_Category then
-         return Cat_Procedure;
-      elsif Category in Cat_Package .. Cat_Task then
-         return Cat_Package;
-      elsif Category in Type_Category then
-         return Cat_Type;
-      else
-         return Cat_Unknown;
-      end if;
+      case Category is
+         when Subprogram_Explorer_Category =>
+            return Cat_Procedure;
+
+         when Cat_Package .. Cat_Task =>
+            return Cat_Package;
+
+         when Type_Category =>
+            return Cat_Type;
+
+         when others =>
+            return Cat_Unknown;
+      end case;
    end Filter_Category;
 
    ------------------
@@ -550,8 +559,7 @@ package body Outline_View is
 
    function Save_Desktop
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle)
-      return Node_Ptr
+      User   : Kernel_Handle) return Node_Ptr
    is
       pragma Unreferenced (User);
       N : Node_Ptr;
@@ -823,12 +831,13 @@ package body Outline_View is
       if Handler = null or else Lang = null then
          Append (Model, Iter, Root);
          Set (Model, Iter, Pixbuf_Column, C_Proxy (Outline.Icon));
-         Set (Model, Iter, Display_Name_Column,
-              "<i>No outline available</i>");
+         Set (Model, Iter, Display_Name_Column, "<i>No outline available</i>");
+
       else
          Parse_File_Constructs
            (Handler, Languages, Outline.File, Constructs);
          Constructs.Current := Constructs.First;
+
          while Constructs.Current /= null loop
             if Constructs.Current.Name /= null then
                Is_Type := Constructs.Current.Category in Data_Type_Category;
@@ -844,8 +853,9 @@ package body Outline_View is
                        C_Proxy (Entity_Icon_Of (Constructs.Current.all)));
 
                   Set (Model, Iter, Display_Name_Column,
-                       Entity_Name_Of (Constructs.Current.all,
-                      Show_Profiles => Show_Profiles));
+                       Entity_Name_Of
+                         (Constructs.Current.all,
+                          Show_Profiles => Show_Profiles));
 
                   Set (Model, Iter, Entity_Name_Column,
                        Constructs.Current.Name.all);
@@ -891,8 +901,8 @@ package body Outline_View is
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle)
    is
-      Outline : MDI_Child;
       pragma Unreferenced (Widget);
+      Outline : MDI_Child;
    begin
       Outline := Open_Outline (Kernel);
 
@@ -905,8 +915,7 @@ package body Outline_View is
    ------------------
 
    function Open_Outline
-     (Kernel : access Kernel_Handle_Record'Class)
-      return MDI_Child
+     (Kernel : access Kernel_Handle_Record'Class) return MDI_Child
    is
       Child   : GPS_MDI_Child;
       Outline : Outline_View_Access;
@@ -1044,10 +1053,10 @@ package body Outline_View is
       Data   : access Hooks_Data'Class)
    is
       D       : constant Context_Hooks_Args := Context_Hooks_Args (Data.all);
+      Module  : constant Module_ID := Module_ID (Get_Creator (D.Context));
       Outline : Outline_View_Access;
       File    : Virtual_File;
       Child   : MDI_Child;
-      Module  : constant Module_ID := Module_ID (Get_Creator (D.Context));
    begin
       Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Outline_View_Record'Tag);

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
---                              AdaCore                              --
+--                 Copyright (C) 2001-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,6 +24,7 @@ with GNAT.Strings;              use GNAT.Strings;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Glib.Convert;              use Glib.Convert;
 
 with Basic_Types;               use Basic_Types;
@@ -42,7 +42,6 @@ with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with Namet;                     use Namet;
 with VFS;                       use VFS;
-with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 
 package body Project_Explorers_Common is
 
@@ -74,8 +73,13 @@ package body Project_Explorers_Common is
    -------------------
 
    procedure Init_Graphics (Widget : Gtk_Widget) is
+
       function R (Id : String) return Gdk_Pixbuf;
       --  Convenience function: create the Gdk_Pixbuf from stock Id.
+
+      -------
+      -- R --
+      -------
 
       function R (Id : String) return Gdk_Pixbuf is
       begin
@@ -252,6 +256,10 @@ package body Project_Explorers_Common is
       --  contain '&', '<', '>', or '"'  and that if it does, one of these
       --  characters is necessarily in the first position, for the overloading
       --  of operators such as '<' or '&&', or for a quoted name.
+
+      ------------
+      -- Escape --
+      ------------
 
       function Escape return String is
          C : Character;
@@ -483,6 +491,7 @@ package body Project_Explorers_Common is
       if Child.Dnd_From_File = VFS.No_File then
          --  So that we can move the explorer itself
          return MDI_Child (Child);
+
       else
          if Copy then
             C := Find_MDI_Child_By_Name
@@ -629,15 +638,16 @@ package body Project_Explorers_Common is
    ------------------
 
    function On_Key_Press
-     (Kernel    : Kernel_Handle;
-      Tree      : access Gtk_Tree_View_Record'Class;
-      Event     : Gdk_Event) return Boolean
+     (Kernel : Kernel_Handle;
+      Tree   : access Gtk_Tree_View_Record'Class;
+      Event  : Gdk_Event) return Boolean
    is
+      use type Gdk.Types.Gdk_Key_Type;
+
       Iter         : Gtk_Tree_Iter;
       Line, Column : Gint;
       Model        : Gtk_Tree_Model;
 
-      use type Gdk.Types.Gdk_Key_Type;
    begin
       Get_Selected (Get_Selection (Tree), Model, Iter);
 
@@ -688,8 +698,7 @@ package body Project_Explorers_Common is
    begin
       return
         Node_Types'Val
-          (Integer
-               (Get_Int (Model, Node, Node_Type_Column)));
+          (Integer (Get_Int (Model, Node, Node_Type_Column)));
    end Get_Node_Type;
 
    -------------------
@@ -723,8 +732,7 @@ package body Project_Explorers_Common is
    begin
       return
         Language_Category'Val
-          (Integer
-               (Get_Int (Model, Node, Category_Column)));
+          (Integer (Get_Int (Model, Node, Category_Column)));
    end Get_Category_Type;
 
    -------------------
@@ -793,8 +801,7 @@ package body Project_Explorers_Common is
 
    function Get_File_From_Node
      (Model : Gtk_Tree_Store;
-      Node  : Gtk_Tree_Iter)
-      return VFS.Virtual_File
+      Node  : Gtk_Tree_Iter) return VFS.Virtual_File
    is
       Absolute : constant String := Get_Absolute_Name (Model, Node);
    begin
@@ -811,8 +818,7 @@ package body Project_Explorers_Common is
 
    function Get_Directory_From_Node
      (Model : Gtk_Tree_Store;
-      Node  : Gtk_Tree_Iter)
-      return String
+      Node  : Gtk_Tree_Iter) return String
    is
       S : constant String := Get_Absolute_Name (Model, Node);
    begin
@@ -887,11 +893,11 @@ package body Project_Explorers_Common is
 
    procedure Context_Factory
      (Context : in out Selection_Context;
-      Kernel : Kernel_Handle;
-      Tree   : access Gtk_Tree_View_Record'Class;
-      Model  : Gtk_Tree_Store;
-      Event  : Gdk_Event;
-      Menu   : Gtk_Menu)
+      Kernel  : Kernel_Handle;
+      Tree    : access Gtk_Tree_View_Record'Class;
+      Model   : Gtk_Tree_Store;
+      Event   : Gdk_Event;
+      Menu    : Gtk_Menu)
    is
       pragma Unreferenced (Menu);
 
@@ -915,8 +921,8 @@ package body Project_Explorers_Common is
          return Name;
       end Entity_Base;
 
-      Iter      : constant Gtk_Tree_Iter := Find_Iter_For_Event
-        (Tree, Model, Event);
+      Iter      : constant Gtk_Tree_Iter :=
+                    Find_Iter_For_Event (Tree, Model, Event);
       Node_Type : Node_Types;
       L         : Integer := 0;
 

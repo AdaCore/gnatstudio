@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007, AdaCore             --
+--                 Copyright (C) 2001-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -306,10 +306,6 @@ package body Codefix_Module is
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Fix;
-
-   ------------
-   -- On_Fix --
-   ------------
 
    procedure On_Fix (Widget : access Gtk_Widget_Record'Class) is
       Mitem : constant Codefix_Menu_Item := Codefix_Menu_Item (Widget);
