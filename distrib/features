@@ -116,12 +116,13 @@ NF-42-G713-003 Better alignment for routine parameters (2007-08-30)
   The GPS alignment support for routine parameters has been enhanced
   to better align the routine parameter mode.
 
-NF-42-G628-006 Improve line placement (2007-08-30)
+NF-42-G628-006 Improved line placement (2007-08-30)
 
   When GPS asks editors to show a particular line, for instance when clicking
   on a subprogram in the Project View, or when using "next" in a debugging
   session, the editor is scrolled so that a few lines of context are displayed
   above and below the cursor.
+  The same amount of context is displayed when showing search matches.
 
 NF-42-G611-029 Specifying "recursive" directory status for VCS (2007-06-18)
 
