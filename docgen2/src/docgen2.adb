@@ -2583,7 +2583,7 @@ package body Docgen2 is
                        (Backend,
                         Location_Image (E_Info.References.Element (J)),
                         Backend.To_Href
-                          (Natural'Image (E_Info.References.Element (J).Line),
+                          (Image (E_Info.References.Element (J).Line),
                            "src_" & Base_Name (Src_File),
                            1),
                         Location_Image (E_Info.References.Element (J))));
