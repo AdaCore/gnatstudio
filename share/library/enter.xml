@@ -19,6 +19,7 @@
       <shell>Editor.cursor_get_column %2</shell>
       <shell>Editor.replace_text %3 %2 %1 "
 " 0 0</shell>
+      <shell>Editor.indent</shell>
       <filter id="Source editor" />
    </action>
 
