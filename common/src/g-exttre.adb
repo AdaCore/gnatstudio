@@ -250,6 +250,10 @@ package body GNAT.Expect.TTY.Remote is
       renames TTY_Process_Descriptor (Descriptor);
    begin
       if Str /= "" then
+         if Active (Me) then
+            Log ("SND", Str);
+         end if;
+
          if Descriptor.Machine.Desc.Dbg /= null then
             Print (Descriptor.Machine.Desc.Dbg,
                    Str,
@@ -382,6 +386,12 @@ package body GNAT.Expect.TTY.Remote is
                  Matched,
                  Descriptor.Machine.Desc.Timeout,
                  False);
+
+         if Active (Me) then
+            Log
+              ("RCV",
+               Expect_Out (Descriptor.Machine.Sessions (Session_Nb).Pd));
+         end if;
 
          if Descriptor.Machine.Desc.Dbg /= null then
             Print (Descriptor.Machine.Desc.Dbg,
@@ -566,6 +576,10 @@ package body GNAT.Expect.TTY.Remote is
             else
                Print (Dbg, Str, Input);
             end if;
+         end if;
+
+         if Active (Me) then
+            Log ("SND", "<Sending password>");
          end if;
 
          if Remote_Desc.Use_Cr_Lf and then Add_LF then
@@ -758,6 +772,10 @@ package body GNAT.Expect.TTY.Remote is
 
          --  Determine if the machine echoes commands
          if Descriptor.Shell.No_Echo_Cmd.all /= "" then
+            if Active (Me) then
+               Log ("SND", Descriptor.Shell.No_Echo_Cmd.all);
+            end if;
+
             if Descriptor.Machine.Desc.Dbg /= null then
                Print
                  (Descriptor.Machine.Desc.Dbg,
@@ -919,6 +937,10 @@ package body GNAT.Expect.TTY.Remote is
                        Desc.Shell.Prompt.all,
                        Desc.Machine.Desc.Timeout,
                        False);
+
+               if Active (Me) then
+                  Log ("RCV", Expect_Out (Descriptor.all));
+               end if;
 
                if Desc.Machine.Desc.Dbg /= null then
                   Print (Desc.Machine.Desc.Dbg,
@@ -1089,6 +1111,10 @@ package body GNAT.Expect.TTY.Remote is
       Idx_First, Idx_Last : Natural;
 
    begin
+      if Active (Me) then
+         Log ("RCV", Str);
+      end if;
+
       Idx_First := Str'First;
       Idx_Last := Str'Last;
       --  The following buffer accesses suppose that the descriptor's buffer
@@ -1228,6 +1254,10 @@ package body GNAT.Expect.TTY.Remote is
 
                   Send (Desc, Descriptor.Shell.Get_Status_Cmd.all);
 
+                  if Active (Me) then
+                     Log ("SND", Descriptor.Shell.Get_Status_Cmd.all);
+                  end if;
+
                   if Descriptor.Machine.Desc.Dbg /= null then
                      Print (Descriptor.Machine.Desc.Dbg,
                             Descriptor.Shell.Get_Status_Cmd.all,
@@ -1304,6 +1334,10 @@ package body GNAT.Expect.TTY.Remote is
                      Print (Descriptor.Machine.Desc.Dbg,
                             Expect_Out (Desc),
                             Output);
+                  end if;
+
+                  if Active (Me) then
+                     Log ("RCV", Expect_Out (Desc));
                   end if;
                end if;
 
