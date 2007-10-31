@@ -2577,16 +2577,22 @@ package body Docgen2 is
                end loop;
 
                if Found then
-                  Append
-                    (Ref_Tag,
-                     Gen_Href
-                       (Backend,
-                        Location_Image (E_Info.References.Element (J)),
-                        Backend.To_Href
-                          (Image (E_Info.References.Element (J).Line),
-                           "src_" & Base_Name (Src_File),
-                           1),
-                        Location_Image (E_Info.References.Element (J))));
+                  declare
+                     Line : constant String :=
+                              Natural'Image
+                                (E_Info.References.Element (J).Line);
+                  begin
+                     Append
+                       (Ref_Tag,
+                        Gen_Href
+                          (Backend,
+                           Location_Image (E_Info.References.Element (J)),
+                           Backend.To_Href
+                             (Line (Line'First + 1 .. Line'Last),
+                              "src_" & Base_Name (Src_File),
+                              1),
+                           Location_Image (E_Info.References.Element (J))));
+                  end;
                else
                   Append
                     (Ref_Tag, Location_Image (E_Info.References.Element (J)));
