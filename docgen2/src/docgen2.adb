@@ -1732,16 +1732,18 @@ package body Docgen2 is
       if Command.File_Index < Command.Source_Files'Last then
          return (Activity => Running,
                  Current  => Command.File_Index,
-                 Total    => Command.Source_Files'Length * 2);
+                 Total    => Command.Source_Files'Length * 3);
       elsif Command.Src_File_Index < Command.Source_Files'Last then
          return (Activity => Running,
                  Current  => Command.Source_Files'Length +
                                Command.Src_File_Index,
-                 Total    => Command.Source_Files'Length * 2);
+                 Total    => Command.Source_Files'Length * 3);
       else
-         return (Activity => Stalled,
-                 Current  => Command.Source_Files'Length * 2,
-                 Total    => Command.Source_Files'Length * 2);
+         return (Activity => Running,
+                 Current  => Command.Source_Files'Length * 2 +
+                              Entity_Info_List.To_Index (Command.Cursor),
+                 Total    => Command.Source_Files'Length * 2 +
+                              Natural (Command.Documentation.Length));
       end if;
    end Progress;
 
