@@ -575,8 +575,15 @@ package body Projects is
         and then Projects_Table (Project)(View).Library
         and then Projects_Table (Project)(View).Library_ALI_Dir /= No_Path
       then
-         return Get_String (Projects_Table (Project)(View).Library_ALI_Dir);
-
+         if Projects_Table (Project)(View).Display_Object_Dir = No_Path then
+            return Get_String
+              (Projects_Table (Project)(View).Library_ALI_Dir);
+         else
+            return Get_String
+              (Projects_Table (Project)(View).Display_Object_Dir)
+              & Path_Separator & Get_String
+              (Projects_Table (Project)(View).Library_ALI_Dir);
+         end if;
       elsif Projects_Table (Project)(View).Display_Object_Dir /= No_Path then
          return Get_String
                   (Projects_Table (Project)(View).Display_Object_Dir);
