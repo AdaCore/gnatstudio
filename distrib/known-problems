@@ -45,11 +45,12 @@ Known Problems fixed in GPS 4.2.0
               fields of enumeration types are not listed.
   Workaround: No known workaround.
 
-- G917-002: Browsing impossible when building with an Library_ALI_Dir
+- G917-002: Browsing not working when building with a Library_ALI_Dir
   Problem:    When building a project with a Library_ALI_Dir project attribute, 
-              ali files are unreachable untill the library is installed, because
+              ali files are unreachable until the library is installed, because
               the object directory is not considered.
-  Workaround: Remove the Library_ALI_Dir attribute from the project.
+  Workaround: Remove the Library_ALI_Dir attribute from the project, or copy
+              manually the ali files from the object directory to the ali dir.
 
 - G914-001 "pango" warnings in the Messages window
   Problem:    Error messages beginning with:
