@@ -37,6 +37,7 @@ with Gtk.Tree_View_Column;                   use Gtk.Tree_View_Column;
 with Gtk.Widget;                             use Gtk.Widget;
 with Gtk.Box;                                use Gtk.Box;
 with Gtk.Object;                             use Gtk.Object;
+with Gtk.Label;                              use Gtk.Label;
 with Gtkada.Dialogs;                         use Gtkada.Dialogs;
 with Gtkada.Handlers;                        use Gtkada.Handlers;
 with Gtkada.MDI;                             use Gtkada.MDI;
@@ -519,6 +520,9 @@ package body Code_Analysis_Module is
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
    --  Remove the selected project node from the related report and instance.
+
+   procedure Activate_Pango_Markup (Item : Gtk_Menu_Item);
+   --  Allow to use pango markup when setting the item label
 
    --------------------------------------------
    -- CodeAnalysis_Default_Shell_Constructor --
@@ -2077,16 +2081,18 @@ package body Code_Analysis_Module is
       Gtk_New (Item);
       Append (Submenu, Item);
 
-      Gtk_New (Item, -"Load data for " &
-               Locale_Base_Name (File_Information (Cont_N_Anal.Context)));
+      Gtk_New (Item, -"Load data for " & Emphasize (Locale_Base_Name
+        (File_Information (Cont_N_Anal.Context))));
+      Activate_Pango_Markup (Item);
       Append (Submenu, Item);
       Context_And_Analysis_CB.Connect
         (Item, Gtk.Menu_Item.Signal_Activate,
          Context_And_Analysis_CB.To_Marshaller
            (Add_Gcov_File_Info_From_Menu'Access), Cont_N_Anal);
 
-      Gtk_New (Item, -"Remove data of " &
-               Entity_Name_Information (Cont_N_Anal.Context));
+      Gtk_New (Item, -"Remove data of " & Emphasize (Entity_Name_Information
+        (Cont_N_Anal.Context)));
+      Activate_Pango_Markup (Item);
       Append (Submenu, Item);
       Context_And_Analysis_CB.Connect
         (Item, Gtk.Menu_Item.Signal_Activate,
@@ -2140,8 +2146,9 @@ package body Code_Analysis_Module is
 
       Append_Load_File_Data (Cont_N_Anal, Submenu);
 
-      Gtk_New (Item, -"Remove data of " &
-               Base_Name (File_Information (Context)));
+      Gtk_New (Item, -"Remove data of " & Emphasize (Base_Name
+        (File_Information (Context))));
+      Activate_Pango_Markup (Item);
       Append (Submenu, Item);
       Context_And_Analysis_CB.Connect
         (Item, Gtk.Menu_Item.Signal_Activate,
@@ -2186,8 +2193,9 @@ package body Code_Analysis_Module is
 
       Append_Load_Project_Data (Cont_N_Anal, Submenu);
 
-      Gtk_New (Item, -"Remove data of project " &
-               Project_Name (Project_Information (Cont_N_Anal.Context)));
+      Gtk_New (Item, -"Remove data of project " & Emphasize (Project_Name
+        (Project_Information (Cont_N_Anal.Context))));
+      Activate_Pango_Markup (Item);
       Append (Submenu, Item);
       Context_And_Analysis_CB.Connect
         (Item, Gtk.Menu_Item.Signal_Activate,
@@ -2541,8 +2549,9 @@ package body Code_Analysis_Module is
    is
       Item : Gtk_Menu_Item;
    begin
-      Gtk_New (Item, -"Load data for project " &
-               Project_Name (Project_Information (Cont_N_Anal.Context)));
+      Gtk_New (Item, -"Load data for project " & Emphasize (Project_Name
+        (Project_Information (Cont_N_Anal.Context))));
+      Activate_Pango_Markup (Item);
       Append (Menu, Item);
       Context_And_Analysis_CB.Connect
         (Item, Gtk.Menu_Item.Signal_Activate,
@@ -2561,8 +2570,9 @@ package body Code_Analysis_Module is
    is
       Item : Gtk_Menu_Item;
    begin
-      Gtk_New (Item, -"Load data for " &
-               Locale_Base_Name (File_Information (Cont_N_Anal.Context)));
+      Gtk_New (Item, -"Load data for " & Emphasize (Locale_Base_Name
+        (File_Information (Cont_N_Anal.Context))));
+      Activate_Pango_Markup (Item);
       Append (Menu, Item);
       Context_And_Analysis_CB.Connect
         (Item, Gtk.Menu_Item.Signal_Activate,
@@ -2570,6 +2580,19 @@ package body Code_Analysis_Module is
            (Add_Gcov_File_Info_From_Menu'Access),
          Context_And_Analysis'(Cont_N_Anal.Context, Cont_N_Anal.Analysis));
    end Append_Load_File_Data;
+
+   ---------------------------
+   -- Activate_Pango_Markup --
+   ---------------------------
+
+   procedure Activate_Pango_Markup (Item : Gtk_Menu_Item) is
+      Label : constant Gtk_Label :=
+                Gtk_Label (Get_Child (Item));
+   begin
+      if Label /= null then
+         Set_Use_Markup (Label, True);
+      end if;
+   end Activate_Pango_Markup;
 
    ----------
    -- Less --
