@@ -2425,6 +2425,12 @@ package body Docgen2 is
       Trace (Me, "Parse entities");
       Parse_Entities (Lang, Buffer.all, CB'Unrestricted_Access);
 
+      if Last_Idx /= 0 then
+         Ada.Strings.Unbounded.Append
+           (Printout,
+            Buffer (Last_Idx + 1 .. Buffer'Last));
+      end if;
+
       Insert
         (Translation, Assoc ("SOURCE_FILE", Get_Filename (File).Base_Name));
       Insert
