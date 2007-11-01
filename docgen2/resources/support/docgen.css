@@ -382,3 +382,17 @@ div.classtree h3
    margin: 0px 0px -6px 0px;
    z-index: 5;
 }
+
+/* For printing we do not want the table of contents nor the index */
+
+@media print {
+
+body { margin: 10px; }
+
+#rightSide { display: none; }
+
+#leftSide { display: none; }
+
+#documentation { margin: 10px; }
+
+}
