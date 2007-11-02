@@ -69,7 +69,7 @@ package Language is
 
    subtype Standout_Language_Entity is Language_Entity
      range Keyword_Text .. String_Text;
-   --  All the entities that have a special significance. Used for syntax
+   --  All the entities that have a special meaning. Used for syntax
    --  highlighting for example.
 
    procedure Looking_At
