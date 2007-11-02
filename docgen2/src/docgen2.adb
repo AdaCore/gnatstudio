@@ -2382,6 +2382,19 @@ package body Docgen2 is
                  (Entity, Buffer (Sloc_Start.Index .. Sloc_End.Index)));
 
          else
+            --  Print line number for all identifiers (one per line only).
+            if Sloc_Start.Line > Line_Nb then
+               Line_Nb := Sloc_Start.Line;
+
+               declare
+                  Line : constant String := Natural'Image (Line_Nb);
+               begin
+                  Ada.Strings.Unbounded.Append
+                    (Printout,
+                     Backend.Gen_Ref (Line (Line'First + 1 .. Line'Last)));
+               end;
+            end if;
+
             --  If entity is an identifier or a partial identifier, then try
             --  to find its corresponding Entity_Info
 
@@ -2407,19 +2420,6 @@ package body Docgen2 is
             if EInfo /= null then
                --  The entity references an entity that we've analysed
                --  We generate a href to this entity declaration.
-
-               --  Print line number
-               if Sloc_Start.Line > Line_Nb then
-                  Line_Nb := Sloc_Start.Line;
-
-                  declare
-                     Line : constant String := Natural'Image (Line_Nb);
-                  begin
-                     Ada.Strings.Unbounded.Append
-                       (Printout,
-                        Backend.Gen_Ref (Line (Line'First + 1 .. Line'Last)));
-                  end;
-               end if;
 
                --  Print href to entity declaration
                Ada.Strings.Unbounded.Append
