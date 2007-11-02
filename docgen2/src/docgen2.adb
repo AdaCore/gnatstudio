@@ -1544,9 +1544,7 @@ package body Docgen2 is
                   while not At_End (Children) loop
                      if Get (Children) /= null then
                         E_Info.Class_Children.Append
-                          (Create_Xref
-                             (Get_Name (Get (Children)).all,
-                              Get_Declaration_Of (Get (Children))));
+                          (Create_Xref (Get (Children)));
                      end if;
 
                      Next (Children);
@@ -3000,6 +2998,7 @@ package body Docgen2 is
       Pkg_Gen_Params_Loc      : Vector_Tag;
       Class_CI                : Common_Info_Tags;
       Class_Parents           : Vector_Tag;
+      Class_Children          : Vector_Tag;
       Class_Primitives        : Vector_Tag;
       Task_CI                 : Common_Info_Tags;
       Task_Type               : Vector_Tag;
@@ -3148,7 +3147,7 @@ package body Docgen2 is
          elsif Child_EInfo.Category = Cat_Class then
 
             declare
-               Prim_Tag, Parent_Tag : Vector_Tag;
+               Prim_Tag, Parent_Tag, Children_Tag : Vector_Tag;
                Xref        : Cross_Ref;
                Prim_Op_Str : Ada.Strings.Unbounded.Unbounded_String;
             begin
@@ -3164,6 +3163,17 @@ package body Docgen2 is
                end loop;
 
                Append (Class_Parents, Parent_Tag);
+
+               Vector_Sort.Sort (Child_EInfo.Class_Children);
+
+               for J in Child_EInfo.Class_Children.First_Index ..
+                 Child_EInfo.Class_Children.Last_Index
+               loop
+                  Xref := Child_EInfo.Class_Children.Element (J);
+                  Append (Children_Tag, Gen_Href (Backend, Xref));
+               end loop;
+
+               Append (Class_Children, Children_Tag);
 
                --  Init primitive operations
                Vector_Sort.Sort (Child_EInfo.Primitive_Ops);
@@ -3396,6 +3406,7 @@ package body Docgen2 is
               Assoc ("PKG_GENERIC_PARAMETERS_LOC", Pkg_Gen_Params_Loc));
       Insert_Common_Informations ("CLASS", Class_CI);
       Insert (Translation, Assoc ("CLASS_PARENTS", Class_Parents));
+      Insert (Translation, Assoc ("CLASS_CHILDREN", Class_Children));
       Insert (Translation, Assoc ("CLASS_PRIMITIVES", Class_Primitives));
       Insert_Common_Informations ("TASK", Task_CI);
       Insert (Translation, Assoc ("TASK_TYPE", Task_Type));
