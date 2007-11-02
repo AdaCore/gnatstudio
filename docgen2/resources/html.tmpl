@@ -255,6 +255,26 @@
             @@END_TABLE@@
         </div>
         @@END_IF@@
+        @@IF@@ @_EXIST:TASK_CALLED_@
+        <div class='profile'>
+            <h4>Called by:</h4>
+            @@TABLE@@
+            @@IF@@ @_NO_SPACE:TASK_CALLED_@ /= ""
+            <div><i>@_TASK_CALLED_@</i></div>
+            @@END_IF@@
+            @@END_TABLE@@
+        </div>
+        @@END_IF@@
+        @@IF@@ @_EXIST:TASK_CALLS_@
+        <div class='profile'>
+            <h4>Calls:</h4>
+            @@TABLE@@
+            @@IF@@ @_NO_SPACE:TASK_CALLS_@ /= ""
+            <div><i>@_TASK_CALLS_@</i></div>
+            @@END_IF@@
+            @@END_TABLE@@
+        </div>
+        @@END_IF@@
         @@IF@@ @_NO_SPACE:TASK_DESCRIPTION_@ /= ""
         <div class='comment'><xmp>@_TASK_DESCRIPTION_@</xmp></div>
         @@END_IF@@
@@ -348,6 +368,16 @@
                 @@END_TABLE@@
               </div>
               @@END_IF@@
+              @@IF@@ @_EXIST:TASK_ENTRY_CALLED_@
+              <div class='profile'>
+                <h4>Called by:</h4>
+                @@TABLE@@
+                  @@IF@@ @_NO_SPACE:TASK_ENTRY_CALLED_@ /= ""
+                  <div><i>@_TASK_ENTRY_CALLED_@</i></div>
+                  @@END_IF@@
+                @@END_TABLE@@
+              </div>
+              @@END_IF@@
               @@IF@@ @_NO_SPACE:TASK_ENTRY_DESCRIPTION_@ /= ""
               <div class='comment'><xmp>@_TASK_ENTRY_DESCRIPTION_@</xmp></div>
               @@END_IF@@
@@ -377,6 +407,26 @@
           @@TABLE@@
             @@IF@@ @_NO_SPACE:SUBP_REFERENCES_@ /= ""
             <div><i>@_SUBP_REFERENCES_@</i></div>
+            @@END_IF@@
+          @@END_TABLE@@
+        </div>
+        @@END_IF@@
+        @@IF@@ @_EXIST:SUBP_CALLED_@
+        <div class='profile'>
+          <h4>Called by:</h4>
+          @@TABLE@@
+            @@IF@@ @_NO_SPACE:SUBP_CALLED_@ /= ""
+            <div><i>@_SUBP_CALLED_@</i></div>
+            @@END_IF@@
+          @@END_TABLE@@
+        </div>
+        @@END_IF@@
+        @@IF@@ @_EXIST:SUBP_CALLS_@
+        <div class='profile'>
+          <h4>Calls:</h4>
+          @@TABLE@@
+            @@IF@@ @_NO_SPACE:SUBP_CALLS_@ /= ""
+            <div><i>@_SUBP_CALLS_@</i></div>
             @@END_IF@@
           @@END_TABLE@@
         </div>
