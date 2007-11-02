@@ -244,6 +244,12 @@ NF-42-F925-002 Short titles for floating windows (2007-04-18)
   The preference can be changed in the Windows section of the Preferences
   dialog.
 
+NF-42-F803-016 Automatic Documentation Generation redesigned (2007-10-02)
+
+  The Documentation Generation feature of GPS has been completely redesigned
+  to create clearer and cleaner documentation. The engine is now also
+  much more efficient than the previous one.
+
 NF-42-F803-003 Config files saved after each change (2007-07-22)
 
   GPS will now save its various configuration files (preferences, bookmarks,
