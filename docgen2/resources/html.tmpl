@@ -180,7 +180,10 @@
     <div class="class">
       <h3>
         <a name='@_CLASS_LOC_@' id='@_CLASS_LOC_@'></a>@_CLASS_@
-        (<a href="@_CLASS_SRC_@" title="see the source file">Source</a>)
+        - <a href="@_CLASS_SRC_@" title="Goto spec">Spec</a>
+        @@IF@@  @_EXIST:CLASS_BODY_SRC_@
+         / <a href="@_CLASS_BODY_SRC_@" title="Goto body">Body</a>
+        @@END_IF@@
       </h3>
       <div class='details'>@_CLASS_PRINTOUT_@</div>
       @@IF@@ (@_EXIST:CLASS_PARENTS_@) or (@_EXIST:CLASS_PRIMITIVES_@)
@@ -237,7 +240,10 @@
           @@ELSE@@
            (@_TASK_TYPE_@)
           @@END_IF@@
-          (<a href="@_TASK_SRC_@" title="see the source file">Source</a>)
+          - <a href="@_CLASS_SRC_@" title="Goto spec">Spec</a>
+          @@IF@@  @_EXIST:TASK_BODY_SRC_@
+           / <a href="@_TASK_BODY_SRC_@" title="Goto body">Body</a>
+          @@END_IF@@
         </h3>
         @@IF@@ @_EXIST:TASK_ENTRY_@
         <div>Entries:</div>
@@ -290,7 +296,10 @@
       <div class="class">
         <h3>
           <a name='@_TYPE_LOC_@' id='@_TYPE_LOC_@'></a>@_TYPE_@
-          (<a href="@_TYPE_SRC_@" title="see the source file">Source</a>)
+          - <a href="@_TYPE_SRC_@" title="Goto spec">Spec</a>
+          @@IF@@  @_EXIST:TYPE_BODY_SRC_@
+           / <a href="@_TYPE_BODY_SRC_@" title="Goto body">Body</a>
+          @@END_IF@@
         </h3>
         <div class='details'>@_TYPE_PRINTOUT_@</div>
         @@IF@@ @_EXIST:TYPE_REFERENCES_@
@@ -320,7 +329,10 @@
           @@IF@@ @_CST_TYPE_@ /= ""
           <span class="type">(@_CST_TYPE_@)</span>
           @@END_IF@@
-          (<a href="@_CST_SRC_@" title="see the source file">Source</a>)
+          - <a href="@_CST_SRC_@" title="Goto spec">Spec</a>
+          @@IF@@  @_EXIST:CST_BODY_SRC_@
+           / <a href="@_CST_BODY_SRC_@" title="Goto body">Body</a>
+          @@END_IF@@
         </h3>
         <div class='details'>@_CST_PRINTOUT_@</div>
         @@IF@@ @_EXIST:CST_REFERENCES_@
@@ -355,7 +367,10 @@
                   <a href="#@_TASK_ENTRY_PARENT_LOC_@">@_TASK_ENTRY_PARENT_@</a>
                 </span>
                 .@_TASK_ENTRY_@
-                (<a href="@_TASK_ENTRY_SRC_@" title="see the source file">Source</a>)
+                 - <a href="@_TASK_ENTRY_SRC_@" title="Goto spec">Spec</a>
+                 @@IF@@  @_EXIST:TASK_ENTRY_BODY_SRC_@
+                  / <a href="@_TASK_ENTRY_BODY_SRC_@" title="Goto body">Body</a>
+                 @@END_IF@@
               </h3>
               <div class='details'>@_REPLACE(\(/<table><tr><td>\(</td><td>):REPLACE(\)[ \n]*/\)</td></tr></table>):REPLACE_ALL(span\>\s*[:]/span></td><td>:):REPLACE_ALL(;\s*\<span/;</td></tr><tr><td></td><td><span):REPLACE_ALL(\n/):TASK_ENTRY_PRINTOUT_@</div>
               @@IF@@ @_EXIST:TASK_ENTRY_REFERENCES_@
@@ -390,7 +405,10 @@
       <div class="class">
         <h3>
           <a name='@_SUBP_LOC_@' id='@_SUBP_LOC_@'></a>@_SUBP_@
-          (<a href="@_SUBP_SRC_@" title="see the source file">Source</a>)
+          - <a href="@_SUBP_SRC_@" title="Goto spec">Spec</a>
+          @@IF@@  @_EXIST:SUBP_BODY_SRC_@
+           / <a href="@_SUBP_BODY_SRC_@" title="Goto body">Body</a>
+          @@END_IF@@
         </h3>
         @@IF@@ @_EXIST:SUBP_GENERIC_PARAMETERS_@
         <div class='parameters'>
