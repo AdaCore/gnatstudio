@@ -190,7 +190,7 @@
         @@END_IF@@
       </h3>
       <div class='details'>@_CLASS_PRINTOUT_@</div>
-      @@IF@@ (@_EXIST:CLASS_PARENTS_@) or (@_EXIST:CLASS_PRIMITIVES_@)
+      @@IF@@ (@_EXIST:CLASS_PARENTS_@) or (@_EXIST:CLASS_CHILDREN_@) or (@_EXIST:CLASS_PRIMITIVES_@)
       <div class='profile'>
         @@IF@@ @_EXIST:CLASS_PARENTS_@
         <div>
@@ -198,6 +198,16 @@
           @@TABLE@@
             @@IF@@ @_NO_SPACE:CLASS_PARENTS_@ /= ""
             <div>@_CLASS_PARENTS_@</div>
+            @@END_IF@@
+          @@END_TABLE@@
+        </div>
+        @@END_IF@@
+        @@IF@@ @_EXIST:CLASS_CHILDREN_@
+        <div>
+          <h4>Immediate Children:</h4>
+          @@TABLE@@
+            @@IF@@ @_NO_SPACE:CLASS_CHILDREN_@ /= ""
+            <div>@_CLASS_CHILDREN_@</div>
             @@END_IF@@
           @@END_TABLE@@
         </div>
