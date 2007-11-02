@@ -29,7 +29,7 @@ function onloadDoc() {
     div=document.createElement('div');
     div.setAttribute ('class', 'button');
     div.setAttribute ('className', 'button'); /* for Internet Explorer */
-    text=document.createTextNode('Show all');
+    text=document.createTextNode('Unfold');
     div.appendChild (text);
     lnk=document.createElement ("a");
     lnk.setAttribute ('href', '#');
@@ -37,14 +37,28 @@ function onloadDoc() {
     lnk.appendChild (div);
     main.appendChild (lnk);
 
+    var h4s = document.getElementsByTagName ('h4');
+    if (h4s.length > 0) {
+      div=document.createElement('div');
+      div.setAttribute ('class', 'button');
+      div.setAttribute ('className', 'button'); /* for Internet Explorer */
+      text=document.createTextNode('Unfold all');
+      div.appendChild (text);
+      lnk=document.createElement ("a");
+      lnk.setAttribute ('href', '#');
+      lnk.onclick = function () {showAllTags ('h3'); showAllTags ('h4'); return false;}
+      lnk.appendChild (div);
+      main.appendChild (lnk);
+    }
+
     div=document.createElement('div');
     div.setAttribute ('class', 'button');
     div.setAttribute ('className', 'button'); /* for Internet Explorer */
-    text=document.createTextNode('Hide all');
+    text=document.createTextNode('Fold all');
     div.appendChild (text);
     lnk=document.createElement ("a");
     lnk.setAttribute ('href', '#');
-    lnk.onclick = function () {hideAllTags ('h3'); return false;}
+    lnk.onclick = function () {hideAllTags ('h4'); hideAllTags ('h3'); return false;}
     lnk.appendChild (div);
     main.appendChild (lnk);
   }
