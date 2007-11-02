@@ -3330,6 +3330,29 @@ package body Docgen2 is
                  (Get_Filename (E_Info.Location.File_Loc.File).Base_Name)));
       end if;
 
+      if E_Info.Body_Location /= No_File_Location then
+         declare
+            File : constant VFS.Virtual_File :=
+                     Get_Filename (E_Info.Body_Location.File);
+            Found : Boolean := False;
+         begin
+            for J in Prj_Files'Range loop
+               if Prj_Files (J) = File then
+                  Found := True;
+                  exit;
+               end if;
+            end loop;
+
+            if Found then
+               Insert
+                 (Translation,
+                  Assoc
+                    ("BODY_SOURCE",
+                     "src_" & Backend.To_Destination_Name (File.Base_Name)));
+            end if;
+         end;
+      end if;
+
       if E_Info.Category = Cat_File then
          Files.Append
            (new Cross_Ref_Record'
