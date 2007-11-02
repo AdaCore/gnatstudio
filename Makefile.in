@@ -35,13 +35,21 @@ install-common:
 ifeq ($(OS),Windows_NT)
 # On Windows we distribute two versions of subversion.xml, one that
 # supports Cygwin/Subversion and one for native Subversion.
+	mv share/plug-ins/subversion.xml share/plug-ins/_subversion_
 	sed -e "s/System_Default/CYGWIN/" \
-		-e "s/generic_svn/generic_cygwin_svn/g" \
-		-e "s/Subversion/Subversion Cygwin/g" \
-		share/plug-ins/subversion.xml \
-		> share/plug-ins/subversion_cygwin.xml
+		share/plug-ins/_subversion_ \
+		> share/plug-ins/subversion.xml
+	sed -e "s/generic_svn/generic_win_svn/g" \
+		-e "s/Subversion/Subversion Windows/g" \
+		share/plug-ins/_subversion_ \
+		> share/plug-ins/subversion_native_windows.xml
 endif
 	(cd share; tar cf - plug-ins/*.xml) | (cd $(sharedir)/gps; tar xf -)
+ifeq ($(OS),Windows_NT)
+# Clean-up changes made above for Windows.
+	mv share/plug-ins/_subversion_ share/plug-ins/subversion.xml
+	rm share/plug-ins/subversion_native_windows.xml
+endif
 	(cd share; tar cf - plug-ins/*.py) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - plug-ins/*.png) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - library/*.xml) | (cd $(sharedir)/gps; tar xf -)

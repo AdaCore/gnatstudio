@@ -6848,9 +6848,7 @@ ClearCase interface, which is built-in and uses a generic GPS
 terminology for VCS operations, and the Native ClearCase interface,
 which is fully customizable and uses by default the terminology
 specific to ClearCase. There are also two interfaces for Subversion on
-Windows, one for Cygwin/Subversion and one for native Subversion. Only
-one of the plug-in (@pxref{The Plug-ins Editor}) must be activated at the
-same time.
+Windows, one for Cygwin/Subversion and one for native Subversion.
 
 Note that, at the moment, only Snapshot Views are supported in the
 ClearCase integration; Dynamic Views are not supported.
