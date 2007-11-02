@@ -107,8 +107,8 @@ package body Docgen2 is
    package Entity_Info_List is new Ada.Containers.Vectors
      (Index_Type => Natural, Element_Type => Entity_Info);
 
-   package Locations_List is new Ada.Containers.Vectors
-     (Index_Type => Natural, Element_Type => File_Location);
+   package Entity_Ref_List is new Ada.Containers.Vectors
+     (Index_Type => Natural, Element_Type => Entity_Reference);
 
    package Files_List is new Ada.Containers.Vectors
      (Index_Type => Natural, Element_Type => VFS.Virtual_File);
@@ -153,7 +153,9 @@ package body Docgen2 is
          Full_Declaration     : Cross_Ref := null;
          Displayed            : Boolean := False;
          Children             : Entity_Info_List.Vector;
-         References           : Locations_List.Vector;
+         References           : Entity_Ref_List.Vector;
+         Calls                : Cross_Ref_List.Vector;
+         Called               : Cross_Ref_List.Vector;
 
          case Category is
             when Cat_Package | Cat_File =>
@@ -456,7 +458,9 @@ package body Docgen2 is
       Xref_Free (EInfo.Instantiated_Entity);
       Xref_Free (EInfo.Full_Declaration);
       Free (EInfo.Children);
-      Locations_List.Clear (EInfo.References);
+      Entity_Ref_List.Clear (EInfo.References);
+      Cross_Ref_List.Clear (EInfo.Calls);
+      Cross_Ref_List.Clear (EInfo.Called);
 
       case EInfo.Category is
          when Cat_Class =>
@@ -486,11 +490,7 @@ package body Docgen2 is
 
    function Less_Than (Left, Right : Cross_Ref) return Boolean is
    begin
-      if Left.Xref /= null and then Right.Xref /= null then
-         return To_Lower (Left.Xref.Name.all) < To_Lower (Right.Xref.Name.all);
-      else
-         return To_Lower (Left.Name.all) < To_Lower (Right.Name.all);
-      end if;
+      return To_Lower (Left.Name.all) < To_Lower (Right.Name.all);
    end Less_Than;
 
    ---------------
@@ -1327,8 +1327,11 @@ package body Docgen2 is
          --  Retrieve references
 
          declare
-            Iter : Entity_Reference_Iterator;
-            Ref  : Entity_Reference;
+            Iter       : Entity_Reference_Iterator;
+            Ref        : Entity_Reference;
+            Calls_Iter : Calls_Iterator;
+            Called_E   : Entity_Information;
+            Caller_E   : Entity_Information;
          begin
             if Options.References
               and then Construct.Category /= Cat_Package
@@ -1339,10 +1342,31 @@ package body Docgen2 is
                   Ref := Get (Iter);
 
                   if Ref /= No_Entity_Reference then
-                     E_Info.References.Append (Get_Location (Ref));
+                     E_Info.References.Append (Ref);
+                     Caller_E := Get_Caller (Ref);
+
+                     if Caller_E /= null
+                       and then Is_Subprogram (Caller_E)
+                     then
+                        E_Info.Called.Append (Create_Xref (Caller_E));
+                     end if;
                   end if;
 
                   Next (Iter);
+               end loop;
+
+               Calls_Iter := Get_All_Called_Entities (Entity);
+
+               while not At_End (Calls_Iter) loop
+                  Called_E := Get (Calls_Iter);
+
+                  if Called_E /= null
+                    and then Is_Subprogram (Called_E)
+                  then
+                     E_Info.Calls.Append (Create_Xref (Called_E));
+                  end if;
+
+                  Next (Calls_Iter);
                end loop;
             end if;
          end;
@@ -2489,6 +2513,8 @@ package body Docgen2 is
          Printout_Tag       : Vector_Tag;
          Description_Tag    : Vector_Tag;
          References_Tag     : Vector_Tag;
+         Called_Tag         : Vector_Tag;
+         Calls_Tag          : Vector_Tag;
          Loc_Tag            : Vector_Tag;
          Instantiation_Tag  : Vector_Tag;
          Renames_Tag        : Vector_Tag;
@@ -2544,7 +2570,9 @@ package body Docgen2 is
         (E_Info : Entity_Info;
          Tags   : in out Common_Info_Tags)
       is
-         Ref_Tag : Tag;
+         Ref_Tag    : Tag;
+         Calls_Tag  : Tag;
+         Called_Tag : Tag;
       begin
          Append
            (Tags.Name_Tag, Get_Name (E_Info));
@@ -2579,8 +2607,10 @@ package body Docgen2 is
          for J in E_Info.References.First_Index .. E_Info.References.Last_Index
          loop
             declare
+               Loc      : constant File_Location :=
+                            Get_Location (E_Info.References.Element (J));
                Src_File : constant VFS.Virtual_File :=
-                            Get_Filename (E_Info.References.Element (J).File);
+                            Get_Filename (Loc.File);
                Found    : Boolean := False;
             begin
 
@@ -2596,21 +2626,120 @@ package body Docgen2 is
                     (Ref_Tag,
                      Gen_Href
                        (Backend,
-                        Location_Image (E_Info.References.Element (J)),
+                        Location_Image (Loc),
                         Backend.To_Href
-                          (Image (E_Info.References.Element (J).Line),
+                          (Image (Loc.Line),
                            "src_" & Base_Name (Src_File),
                            1),
-                        Location_Image (E_Info.References.Element (J))));
+                        Location_Image (Loc)) &
+                     " (" &
+                     Kind_To_String
+                       (Get_Kind (E_Info.References.Element (J))) &
+                     ")");
 
                else
                   Append
-                    (Ref_Tag, Location_Image (E_Info.References.Element (J)));
+                    (Ref_Tag,
+                     Location_Image (Loc) &
+                     " (" &
+                     Kind_To_String
+                       (Get_Kind (E_Info.References.Element (J))) &
+                     ")");
                end if;
             end;
          end loop;
 
+         Vector_Sort.Sort (E_Info.Called);
+
+         for J in E_Info.Called.First_Index .. E_Info.Called.Last_Index loop
+            declare
+               Str      : Unbounded_String;
+               Loc      : constant File_Location :=
+                            E_Info.Called.Element (J).Location;
+               Src_File : constant VFS.Virtual_File :=
+                            Get_Filename (Loc.File);
+               Found    : Boolean := False;
+
+            begin
+               if E_Info.Called.Element (J).Xref /= null
+                 and then
+                   (E_Info.Called.Element (J).Xref.Category = Cat_Package
+                    or else E_Info.Called.Element (J).Xref.Category = Cat_File)
+               then
+                  --  Do not provide a href to a non subprogram element
+                  Str := To_Unbounded_String
+                    (E_Info.Called.Element (J).Xref.Name.all);
+               else
+                  Str := To_Unbounded_String
+                    (Gen_Href (Backend, E_Info.Called.Element (J)));
+               end if;
+
+               for J in Prj_Files'Range loop
+                  if Prj_Files (J) = Src_File then
+                     Found := True;
+                     exit;
+                  end if;
+               end loop;
+
+               if Found then
+                  Str := Str & " defined at " & Gen_Href
+                    (Backend,
+                     Location_Image (Loc),
+                     Backend.To_Href
+                       (Image (Loc.Line),
+                        "src_" & Base_Name (Src_File),
+                        1),
+                     Location_Image (Loc));
+               else
+                  Str := Str & " defined at " & Location_Image (Loc);
+               end if;
+
+               Append (Called_Tag, To_String (Str));
+            end;
+         end loop;
+
+         Vector_Sort.Sort (E_Info.Calls);
+
+         for J in E_Info.Calls.First_Index .. E_Info.Calls.Last_Index loop
+            declare
+               Str      : Unbounded_String;
+               Loc      : constant File_Location :=
+                            E_Info.Calls.Element (J).Location;
+               Src_File : constant VFS.Virtual_File :=
+                            Get_Filename (Loc.File);
+               Found    : Boolean := False;
+
+            begin
+               Str := To_Unbounded_String
+                 (Gen_Href (Backend, E_Info.Calls.Element (J)));
+
+               for J in Prj_Files'Range loop
+                  if Prj_Files (J) = Src_File then
+                     Found := True;
+                     exit;
+                  end if;
+               end loop;
+
+               if Found then
+                  Str := Str & " defined at " & Gen_Href
+                    (Backend,
+                     Location_Image (Loc),
+                     Backend.To_Href
+                       (Image (Loc.Line),
+                        "src_" & Base_Name (Src_File),
+                        1),
+                     Location_Image (Loc));
+               else
+                  Str := Str & " defined at " & Location_Image (Loc);
+               end if;
+
+               Append (Calls_Tag, To_String (Str));
+            end;
+         end loop;
+
          Append (Tags.References_Tag, Ref_Tag);
+         Append (Tags.Called_Tag, Called_Tag);
+         Append (Tags.Calls_Tag, Calls_Tag);
 
          Append (Tags.Loc_Tag,
                  Location_Image (E_Info.Location.File_Loc));
@@ -2636,6 +2765,10 @@ package body Docgen2 is
                  Assoc (Tag_Name & "_DESCRIPTION", CI.Description_Tag));
          Insert (Translation,
                  Assoc (Tag_Name & "_REFERENCES", CI.References_Tag));
+         Insert (Translation,
+                 Assoc (Tag_Name & "_CALLED", CI.Called_Tag));
+         Insert (Translation,
+                 Assoc (Tag_Name & "_CALLS", CI.Calls_Tag));
          Insert (Translation, Assoc (Tag_Name & "_LOC", CI.Loc_Tag));
          Insert (Translation,
                  Assoc (Tag_Name & "_INSTANTIATION", CI.Instantiation_Tag));
