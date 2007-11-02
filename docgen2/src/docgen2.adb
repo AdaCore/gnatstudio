@@ -42,8 +42,7 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with Language;                  use Language;
-with Language.C;
-with Language.Cpp;
+with Language.Ada;
 with Language.Tree;             use Language.Tree;
 with Language_Handlers;         use Language_Handlers;
 with Projects;                  use Projects;
@@ -1825,6 +1824,9 @@ package body Docgen2 is
       Comment_End   : Integer;
       Database      : constant Entities_Database :=
                         Get_Database (Command.Kernel);
+      Lang_Handler  : constant Language_Handler :=
+                        Get_Language_Handler (Command.Kernel);
+      Lang          : Language_Access;
       File          : Source_File;
       use type Ada.Containers.Count_Type;
    begin
@@ -1865,8 +1867,17 @@ package body Docgen2 is
               (Database,
                Command.Source_Files (Command.File_Index));
 
-            if not Command.Options.Process_Up_To_Date_Only
-              or else Is_Up_To_Date (File)
+            Lang := Get_Language_From_File
+              (Lang_Handler,
+               Command.Source_Files (Command.File_Index));
+
+            --  ??? We won't support other parsers than Ada here, as cross
+            --  references are for now only reliable with Ada. Change this
+            --  as soon as we have correct support for cross-refs in the
+            --  other languages.
+            if (not Command.Options.Process_Up_To_Date_Only
+                or else Is_Up_To_Date (File))
+              and then Lang.all in Language.Ada.Ada_Language'Class
             then
                --  Create the new entity info structure
                File_EInfo := new Entity_Info_Record
@@ -1877,61 +1888,57 @@ package body Docgen2 is
 
                Trace (Me, "Analysis of file " & File_EInfo.Name.all);
 
-               --  And add it to the global documentation list
-               Command.Documentation.Append (File_EInfo);
-
                declare
-                  Lang_Handler  : constant Language_Handler :=
-                                    Get_Language_Handler (Command.Kernel);
-                  Language      : constant Language_Access :=
-                                    Get_Language_From_File
-                                      (Lang_Handler,
-                                       Command.Source_Files
-                                         (Command.File_Index));
                   Construct_T   : Construct_Tree;
                   Constructs    : aliased Construct_List;
                   Ctxt_Elem     : Context_Stack_Element;
                   Comments      : Comments_List.Vector;
 
                begin
-                  File_EInfo.Language := Language;
+                  File_EInfo.Language := Lang;
                   File_EInfo.File := File;
                   Ref (File_EInfo.File);
                   File_Buffer := Read_File
                     (Command.Source_Files (Command.File_Index));
 
+                  --  ??? Commented out code, because for now only Ada will be
+                  --  supported
+
                   --  In case of C/C++, the LI_Handler's Parse_File_Construct
                   --  work much better than Language's Parse_Construct.
-                  if Language.all in Cpp.Cpp_Language'Class
-                    or else Language.all in C.C_Language'Class
-                  then
-                     declare
-                        Handler : LI_Handler;
-                     begin
-                        Handler := Get_LI_Handler_From_File
-                          (Lang_Handler,
-                           Command.Source_Files (Command.File_Index));
+--                    if Lang.all in Cpp.Cpp_Language'Class
+--                      or else Lang.all in C.C_Language'Class
+--                    then
+--                       declare
+--                          Handler : LI_Handler;
+--                       begin
+--                          Handler := Get_LI_Handler_From_File
+--                            (Lang_Handler,
+--                             Command.Source_Files (Command.File_Index));
+--
+--                          if Handler /= null then
+--                             Parse_File_Constructs
+--                               (Handler,
+--                                Lang_Handler,
+--                                Command.Source_Files (Command.File_Index),
+--                                Constructs);
+--                          else
+--                             Parse_Constructs
+--                               (Language, File_Buffer.all, Constructs);
+--                          end if;
+--                       end;
+--                    else
 
-                        if Handler /= null then
-                           Parse_File_Constructs
-                             (Handler,
-                              Lang_Handler,
-                              Command.Source_Files (Command.File_Index),
-                              Constructs);
-                        else
-                           Parse_Constructs
-                             (Language, File_Buffer.all, Constructs);
-                        end if;
-                     end;
-                  else
+                  Parse_Constructs
+                    (Lang, File_Buffer.all, Constructs);
+--                    end if;
 
-                     Parse_Constructs
-                       (Language, File_Buffer.all, Constructs);
-                  end if;
+                  --  And add it to the global documentation list
+                  Command.Documentation.Append (File_EInfo);
 
                   Construct_T := To_Construct_Tree (Constructs'Access, True);
 
-                  Comments := Get_All_Comments (Language, File_Buffer.all);
+                  Comments := Get_All_Comments (Lang, File_Buffer.all);
 
                   --  Retrieve the file's main unit comments, if any
 
@@ -1959,7 +1966,7 @@ package body Docgen2 is
                                 (File_EInfo.Description.all & ASCII.LF &
                                  Filter_Documentation
                                    (Comment_Block
-                                      (Language,
+                                      (Lang,
                                        File_Buffer
                                          (Comments.Element
                                             (K).Start_Loc.Index ..
@@ -1972,7 +1979,7 @@ package body Docgen2 is
                               File_EInfo.Description := new String'
                                 (Filter_Documentation
                                    (Comment_Block
-                                      (Language,
+                                      (Lang,
                                        File_Buffer
                                          (Comments.Element
                                             (K).Start_Loc.Index ..
