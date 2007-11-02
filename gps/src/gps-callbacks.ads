@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                             AdaCore                               --
+--                  Copyright (C) 2001-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -48,6 +47,7 @@ package GPS.Callbacks is
    --  Called when GPS is started and visible on the screen
 
    procedure Ctrl_C_Handler;
+   pragma Convention (C, Ctrl_C_Handler);
    --  Handler for Ctrl-C events
 
    procedure Set_Main_Title
