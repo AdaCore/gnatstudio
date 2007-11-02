@@ -141,6 +141,7 @@ package body Docgen2 is
          Entity_Loc           : Source_Location;
          Printout_Loc         : Source_Location;
          Location             : Location_Type;
+         Body_Location        : File_Location;
          Is_Abstract          : Boolean := False;
          Is_Private           : Boolean := False;
          Is_Generic           : Boolean := False;
@@ -1282,6 +1283,7 @@ package body Docgen2 is
 
          Context_Elem.Parent_Entity.Children.Append (E_Info);
          E_Info.Entity_Loc := Construct.Sloc_Entity;
+         E_Info.Body_Location := No_File_Location;
 
          --  First set values common to all categories
 
@@ -1293,7 +1295,15 @@ package body Docgen2 is
             else
                E_Info.Name := new String'(Get_Name (Entity).all);
             end if;
+
             E_Info.Short_Name := new String'(Get_Name (Entity).all);
+
+            if Is_Container (Get_Kind (Entity).Kind) then
+               Find_Next_Body
+                 (Entity   => Entity,
+                  Location => E_Info.Body_Location);
+            end if;
+
          else
             E_Info.Name := new String'(Construct.Name.all);
             E_Info.Short_Name := new String'(Construct.Name.all);
@@ -2510,6 +2520,7 @@ package body Docgen2 is
       type Common_Info_Tags is record
          Name_Tag           : Vector_Tag;
          Src_Tag            : Vector_Tag;
+         Body_Src_Tag       : Vector_Tag;
          Printout_Tag       : Vector_Tag;
          Description_Tag    : Vector_Tag;
          References_Tag     : Vector_Tag;
@@ -2573,22 +2584,50 @@ package body Docgen2 is
          Ref_Tag    : Tag;
          Calls_Tag  : Tag;
          Called_Tag : Tag;
+         Found      : Boolean;
+
       begin
          Append
            (Tags.Name_Tag, Get_Name (E_Info));
-         declare
-            Line : constant String :=
-                     Integer'Image (E_Info.Location.File_Loc.Line);
-         begin
+
+         Append
+           (Tags.Src_Tag,
+            Backend.To_Href
+              (Location => Image (E_Info.Location.File_Loc.Line),
+               Src_File => "src_" &
+               VFS.Base_Name
+                 (Get_Filename (E_Info.Location.File_Loc.File)),
+               Pkg_Nb   => 1));
+
+         Found := False;
+
+         if E_Info.Body_Location /= No_File_Location then
+            declare
+               File : constant VFS.Virtual_File :=
+                        Get_Filename (E_Info.Body_Location.File);
+            begin
+               for J in Prj_Files'Range loop
+                  if Prj_Files (J) = File then
+                     Found := True;
+                     exit;
+                  end if;
+               end loop;
+            end;
+         end if;
+
+         if Found then
             Append
-              (Tags.Src_Tag,
+              (Tags.Body_Src_Tag,
                Backend.To_Href
-                 (Location => Line (Line'First + 1 .. Line'Last),
+                 (Location => Image (E_Info.Body_Location.Line),
                   Src_File => "src_" &
-                    VFS.Base_Name
-                      (Get_Filename (E_Info.Location.File_Loc.File)),
+                  VFS.Base_Name
+                    (Get_Filename (E_Info.Body_Location.File)),
                   Pkg_Nb   => 1));
-         end;
+         else
+            Append
+              (Tags.Body_Src_Tag, "");
+         end if;
 
          Format_Printout (E_Info);
 
@@ -2611,8 +2650,8 @@ package body Docgen2 is
                             Get_Location (E_Info.References.Element (J));
                Src_File : constant VFS.Virtual_File :=
                             Get_Filename (Loc.File);
-               Found    : Boolean := False;
             begin
+               Found := False;
 
                for J in Prj_Files'Range loop
                   if Prj_Files (J) = Src_File then
@@ -2760,6 +2799,7 @@ package body Docgen2 is
       begin
          Insert (Translation, Assoc (Tag_Name, CI.Name_Tag));
          Insert (Translation, Assoc (Tag_Name & "_SRC", CI.Src_Tag));
+         Insert (Translation, Assoc (Tag_Name & "_BODY_SRC", CI.Body_Src_Tag));
          Insert (Translation, Assoc (Tag_Name & "_PRINTOUT", CI.Printout_Tag));
          Insert (Translation,
                  Assoc (Tag_Name & "_DESCRIPTION", CI.Description_Tag));
