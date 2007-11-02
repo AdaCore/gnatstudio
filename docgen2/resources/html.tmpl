@@ -119,7 +119,11 @@
     @@ELSE@@
     Package: <i>@_PACKAGE_NAME_@</i>
     @@END_IF@@
-    (<a href="@_SOURCE_@">Source File</a>)
+    @@IF@@ @_EXIST:BODY_SOURCE_@
+      (<a href="@_SOURCE_@">Spec</a> / <a href="@_BODY_SOURCE_@">Body</a>)
+    @@ELSE@@
+      (<a href="@_SOURCE_@">Source File</a>)
+    @@END_IF@@
   </div>
   <div class='subprograms'>
     <h1><a name='Description' id='Description'></a>Description</h1>
