@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007, AdaCore             --
+--                   Copyright (C) 2001-2007, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -50,6 +50,7 @@ package OS_Utils is
    --  Write an end-of-line sequence to File.
 
    type Ctrl_C_Handler is access procedure;
+   pragma Convention (C, Ctrl_C_Handler);
    --  Any parameterless library level procedure can be used as a handler.
    --  Ctrl_C_Handler should not propagate exceptions.
 
