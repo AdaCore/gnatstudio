@@ -5,6 +5,7 @@
 @c   - Under Windows XP, using the default XP theme
 @c   - Using the standard Windows screen or window capture
 @c     (using e.g Ctrl-PrntScrn)
+@c
 @c   - Save the resultat image (if needed, truncated to show only relevant
 @c     items) in jpeg format, quality 95%
 
@@ -3959,6 +3960,9 @@ icon:
 @cindex screen shot
 @image{project-modified}
 @end ifhtml
+
+Note that in all tree views in GPS, you can use the @key{+} and @key{-} keys
+to expand and collapse nodes (e.g. projects and directories).
 
 @c -------------------------------------------------------------------
 @node Disabling Project Edition Features
