@@ -2149,6 +2149,20 @@ package body Browsers.Call_Graph is
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
+      Command := new Entity_Calls_Command;
+      Register_Contextual_Menu
+        (Kernel, "Entity calls in browser",
+         Label  => "Browsers/%e calls",
+         Filter => Filter,
+         Action => Command);
+
+      Command := new Entity_Called_By_Command;
+      Register_Contextual_Menu
+        (Kernel, "Entity called by in browser",
+         Label  => "Browsers/%e is called by",
+         Filter => Filter,
+         Action => Command);
+
       Filter := new Container_Entity_Filter;
       Register_Filter (Kernel, Filter, "Entity is container");
 
@@ -2176,20 +2190,6 @@ package body Browsers.Call_Graph is
       Register_Contextual_Menu
         (Kernel, "Find all local references",
          Label  => "References/Find all local references to %e",
-         Action => Command);
-
-      Command := new Entity_Calls_Command;
-      Register_Contextual_Menu
-        (Kernel, "Entity calls in browser",
-         Label  => "Browsers/%e calls",
-         Filter => Filter,
-         Action => Command);
-
-      Command := new Entity_Called_By_Command;
-      Register_Contextual_Menu
-        (Kernel, "Entity called by in browser",
-         Label  => "Browsers/%e is called by",
-         Filter => Filter,
          Action => Command);
 
       Command := new Edit_Spec_Command;
