@@ -3961,6 +3961,9 @@ icon:
 @image{project-modified}
 @end ifhtml
 
+Note that in all tree views in GPS, you can use the @key{+} and @key{-} keys
+to expand and collapse nodes (e.g. projects and directories).
+
 @c -------------------------------------------------------------------
 @node Disabling Project Edition Features
 @section Disabling Project Edition Features
