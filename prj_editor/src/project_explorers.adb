@@ -421,8 +421,9 @@ package body Project_Explorers is
    --  Raise the existing explorer, or open a new one
 
    function Get_Or_Create_Project_View
-     (Kernel : access Kernel_Handle_Record'Class) return Project_Explorer;
-   --  Make sure a project view exists, and raise it
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Raise_Window : Boolean) return Project_Explorer;
+   --  Make sure a project view exists, and raise it if Raise_Window is True
 
    procedure Child_Selected
      (Explorer : access Gtk_Widget_Record'Class; Args : GValues);
@@ -825,7 +826,7 @@ package body Project_Explorers is
       Explorer : Project_Explorer;
    begin
       if Node.Tag.all = "Project_Explorer_Project" then
-         Explorer := Get_Or_Create_Project_View (User);
+         Explorer := Get_Or_Create_Project_View (User, Raise_Window => False);
          return Find_MDI_Child (Get_MDI (User), Explorer);
       end if;
 
@@ -896,7 +897,7 @@ package body Project_Explorers is
       --  "Object" is also the explorer, but this way we make sure the current
       --  context is that of the explorer (since it will have the MDI focus)
       T         : constant Project_Explorer :=
-                    Get_Or_Create_Project_View (Kernel);
+                    Get_Or_Create_Project_View (Kernel, Raise_Window => False);
       Iter      : constant Gtk_Tree_Iter :=
                     Find_Iter_For_Event (T.Tree, T.Tree.Model, Event);
       Item      : Gtk_Menu_Item;
@@ -2255,7 +2256,8 @@ package body Project_Explorers is
    --------------------------------
 
    function Get_Or_Create_Project_View
-     (Kernel : access Kernel_Handle_Record'Class) return Project_Explorer
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Raise_Window : Boolean) return Project_Explorer
    is
       Explorer : Project_Explorer;
       Child    : MDI_Child;
@@ -2282,7 +2284,10 @@ package body Project_Explorers is
          return Explorer;
 
       else
-         Raise_Child (Child);
+         if Raise_Window then
+            Raise_Child (Child);
+         end if;
+
          Set_Focus_Child (Get_MDI (Kernel), Child);
          return Project_Explorer (Get_Widget (Child));
       end if;
@@ -2299,7 +2304,7 @@ package body Project_Explorers is
       pragma Unreferenced (Widget, Explorer);
 
    begin
-      Explorer := Get_Or_Create_Project_View (Kernel);
+      Explorer := Get_Or_Create_Project_View (Kernel, Raise_Window => True);
 
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -2410,7 +2415,7 @@ package body Project_Explorers is
       C        : constant Explorer_Search_Context_Access :=
                    Explorer_Search_Context_Access (Context);
       Explorer : constant Project_Explorer :=
-                   Get_Or_Create_Project_View (Kernel);
+                   Get_Or_Create_Project_View (Kernel, Raise_Window => True);
 
       procedure Initialize_Parser;
       --  Compute all the matching files and mark them in the htable
