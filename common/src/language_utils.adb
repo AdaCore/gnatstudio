@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2007                      --
---                              AdaCore                              --
+--                 Copyright (C) 2000-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,6 +20,8 @@
 with GNAT.Strings;   use GNAT.Strings;
 with Traces;         use Traces;
 
+with Glib.Convert;
+
 package body Language_Utils is
 
    ---------------------------
@@ -37,7 +38,9 @@ package body Language_Utils is
       Buffer := VFS.Read_File (File_Name);
 
       if Buffer /= null then
-         Parse_Constructs (Lang, Buffer.all, Result);
+         --  ??? The call to Locale_To_UTF8 is not optimal
+         Parse_Constructs
+           (Lang, Glib.Convert.Locale_To_UTF8 (Buffer.all), Result);
          Free (Buffer);
       end if;
 
