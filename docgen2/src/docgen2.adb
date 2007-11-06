@@ -24,6 +24,8 @@ with Ada.Strings.Unbounded;                 use Ada.Strings.Unbounded;
 with Ada.Text_IO;                           use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 
+with Glib.Convert; use Glib.Convert;
+
 with GNAT.HTable;
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.Strings;              use GNAT.Strings;
@@ -1962,7 +1964,7 @@ package body Docgen2 is
 --                    else
 
                   Parse_Constructs
-                    (Lang, File_Buffer.all, Constructs);
+                    (Lang, Locale_To_UTF8 (File_Buffer.all), Constructs);
 --                    end if;
 
                   --  And add it to the global documentation list
