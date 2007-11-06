@@ -652,15 +652,26 @@ package body String_Utils is
    -- Reduce --
    ------------
 
-   function Reduce (S : String) return String is
+   function Reduce (S : UTF8_String) return UTF8_String is
       Result : String (S'Range);
       Len    : Positive := Result'First;
       Blank  : Boolean  := False;
 
+      Char   : Natural;
+      Next   : Natural;
    begin
-      for J in S'Range loop
-         if S (J) = ASCII.LF or else S (J) = ASCII.CR
-           or else S (J) = ASCII.HT or else S (J) = ' '
+      Char := S'First;
+      Next := Char;
+
+      while Next <= S'Last loop
+         Char := Next;
+         Next := UTF8_Next_Char (S, Char);
+         if Next > S'Last then
+            Next := S'Last + 1;
+         end if;
+
+         if S (Char) = ASCII.LF or else S (Char) = ASCII.CR
+           or else S (Char) = ASCII.HT or else S (Char) = ' '
          then
             if not Blank then
                Result (Len) := ' ';
@@ -670,8 +681,9 @@ package body String_Utils is
 
          else
             Blank := False;
-            Result (Len) := S (J);
-            Len := Len + 1;
+
+            Result (Len .. Len + Next - Char - 1) := S (Char .. Next - 1);
+            Len := Len + Next - Char;
          end if;
       end loop;
 
