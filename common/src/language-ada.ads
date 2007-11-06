@@ -86,7 +86,7 @@ package Language.Ada is
 
    procedure Parse_Constructs
      (Lang   : access Ada_Language;
-      Buffer : String;
+      Buffer : Glib.UTF8_String;
       Result : out Construct_List);
 
    procedure Format_Buffer
