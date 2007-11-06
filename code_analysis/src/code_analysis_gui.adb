@@ -174,6 +174,7 @@ package body Code_Analysis_GUI is
       Set_Reorderable (View.Cov_Column, True);
       Set_Resizable (View.Cov_Column, True);
       Set_Sort_Column_Id (View.Cov_Column, Cov_Sort);
+      Set_Resizable (View.Cov_Column, True);
       Gtk_New (View.Cov_Percent);
       Dummy := Append_Column (View.Tree, View.Cov_Percent);
       Gtk_New (Bar_Render);
