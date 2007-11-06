@@ -281,11 +281,10 @@ package body Project_Explorers_Common is
 
    begin
       if Show_Profiles and then Construct.Profile /= null then
-         return Locale_To_UTF8
-           (Name & " <span foreground=""#555555"">"
-            & Reduce (Construct.Profile.all) & "</span>");
+         return Name & " <span foreground=""#555555"">"
+            & Reduce (Construct.Profile.all) & "</span>";
       else
-         return Locale_To_UTF8 (Name);
+         return Name;
       end if;
    end Entity_Name_Of;
 
@@ -334,8 +333,7 @@ package body Project_Explorers_Common is
 
       Set (Model, N, Absolute_Name_Column, Locale_Full_Name (File));
       Set (Model, N, Base_Name_Column, Entity_Name_Of (Construct, True));
-      Set (Model, N, Entity_Base_Column,
-           Locale_To_UTF8 (Reduce (Construct.Name.all)));
+      Set (Model, N, Entity_Base_Column, Reduce (Construct.Name.all));
       Set (Model, N, Icon_Column, C_Proxy (Entity_Icon_Of (Construct)));
       Set (Model, N, Node_Type_Column, Gint (Node_Types'Pos (Entity_Node)));
       Set (Model, N, Line_Column, Gint (Construct.Sloc_Entity.Line));
