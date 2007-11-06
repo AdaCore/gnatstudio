@@ -630,7 +630,7 @@ package body Ada_Analyzer is
    ------------------------
 
    procedure Analyze_Ada_Source
-     (Buffer          : String;
+     (Buffer          : Glib.UTF8_String;
       Indent_Params   : Indent_Parameters;
       Format          : Boolean               := True;
       From, To        : Natural               := 0;
