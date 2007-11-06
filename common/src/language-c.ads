@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2006                       --
---                             AdaCore                               --
+--                 Copyright (C) 2000-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -86,7 +85,7 @@ package Language.C is
 
    procedure Parse_Constructs
      (Lang   : access C_Language;
-      Buffer : String;
+      Buffer : Glib.UTF8_String;
       Result : out Construct_List);
 
    procedure Parse_Entities
