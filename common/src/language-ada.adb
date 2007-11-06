@@ -488,7 +488,7 @@ package body Language.Ada is
 
    procedure Parse_Constructs
      (Lang   : access Ada_Language;
-      Buffer : String;
+      Buffer : Glib.UTF8_String;
       Result : out Construct_List)
    is
       pragma Unreferenced (Lang);
