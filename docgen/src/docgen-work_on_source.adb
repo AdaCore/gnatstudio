@@ -21,6 +21,8 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with GNAT.OS_Lib;
 with GNAT.Strings;
 
+with Glib.Convert;              use Glib.Convert;
+
 with Doc_Utils;                 use Doc_Utils;
 with Docgen.Backend;            use Docgen.Backend;
 with Entities.Queries;          use Entities.Queries;
@@ -464,7 +466,7 @@ package body Docgen.Work_On_Source is
             Parse_Constructs
               (Get_Language_From_File
                  (Get_Language_Handler (Kernel), Source_Filename),
-               File_Text.all,
+               Locale_To_UTF8 (File_Text.all),
                Parsed_List);
 
             --  Find the main unit
