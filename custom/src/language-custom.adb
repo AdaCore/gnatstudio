@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2007                      --
---                              AdaCore                              --
+--                  Copyright (C) 2000-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -852,7 +851,7 @@ package body Language.Custom is
 
    procedure Parse_Constructs
      (Lang   : access Custom_Language;
-      Buffer : String;
+      Buffer : Glib.UTF8_String;
       Result : out Construct_List) is
    begin
       if Lang.Parse_Constructs = null then
