@@ -535,11 +535,13 @@ package Language is
 
       Name           : Strings.String_Access;
       --  Name of the enclosing token. Null if not relevant for Token
+      --  This is encoded in UTF-8
 
       Profile        : Strings.String_Access;
       --  Subprogram profile, if Category is in Subprogram_Category.
       --  Note that even for Subprogram_Category, Profile can be null if the
       --  subprogram does not have any parameter.
+      --  This is encoded in UTF-8.
 
       Sloc_Start     : Source_Location;
       --  Location of beginning of the construct
@@ -614,7 +616,7 @@ package Language is
 
    procedure Parse_Constructs
      (Lang   : access Language_Root;
-      Buffer : String;
+      Buffer : Glib.UTF8_String;
       Result : out Construct_List);
    --  Parse the constructs contained in Buffer and store all the language
    --  constructs with their source location in Result.
