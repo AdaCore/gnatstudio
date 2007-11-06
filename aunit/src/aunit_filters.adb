@@ -72,7 +72,8 @@ package body Aunit_Filters is
       File_Buffer := GNAT.Mmap.Read_Whole_File
         (Locale_From_UTF8 (File_Name),
          Empty_If_Not_Found => True);
-      Parse_Constructs (Ada_Lang, File_Buffer.all, Constructs);
+      Parse_Constructs
+        (Ada_Lang, Locale_To_UTF8 (File_Buffer.all), Constructs);
       Current_Construct := Constructs.First;
 
       --  Find the name of the suite or test case.
