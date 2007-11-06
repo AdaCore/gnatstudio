@@ -51,6 +51,7 @@ package Language.Tree.Database is
    --  Return the buffer corresponding to this buffer provider. The returned
    --  access type is supposed to be a copy of the actual buffer - it will be
    --  freed by the completion engine when needed.
+   --  ??? What is the encoding of the returned data?
 
    procedure Free (This : in out Buffer_Provider_Access);
    --  Free the access type
@@ -62,6 +63,7 @@ package Language.Tree.Database is
       File     : VFS.Virtual_File) return String_Access;
    --  Return the buffer corresponding to the file given in parameter - by
    --  default just read the file.
+   --  ??? What is the encoding of the returned data?
 
    ---------------------
    -- Structured_File --
@@ -85,6 +87,7 @@ package Language.Tree.Database is
    --  done, the buffer is stored in a cache so that the same buffer can be
    --  returned if this function is queried twice. The returned value must
    --  not be freed by the user.
+   --  ??? What is the encoding of the returned data?
 
    function Get_File_Path (File : Structured_File_Access) return Virtual_File;
    --  Return the file path of the given file node.
