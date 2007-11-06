@@ -56,6 +56,9 @@ package body Ada_Semantic_Tree_Module is
    is
       Editor : Gtkada.MDI.MDI_Child;
    begin
+      --  ??? We have a potential inconsistency here.
+      --  In the "then" branch, we return a string encoded in UTF-8, and in
+      --  the "else" branch, we return a string encoded in the locale.
 
       if Is_Open (Provider.Kernel, File) then
          Editor := Find_Editor (Provider.Kernel, File);
