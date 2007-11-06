@@ -303,8 +303,10 @@ package body Language.Tree.Database is
    begin
       --  Phase 1 : analyze the new tree
 
+      --  ??? We are assuming that Buffer is encoded in UTF8, is this the case?
       Parse_Constructs (Get_Language (File.Lang), Buffer.all, Constructs);
       New_Tree := To_Construct_Tree (Constructs'Access, True);
+
       Analyze_Referenced_Identifiers
         (Buffer.all, Get_Language (File.Lang), File.Db, New_Tree);
       Analyze_Constructs_Identifiers (File.Db, New_Tree);
