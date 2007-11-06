@@ -441,7 +441,7 @@ package body Language is
 
    procedure Parse_Constructs
      (Lang          : access Language_Root;
-      Buffer        : String;
+      Buffer        : Glib.UTF8_String;
       Result        : out Construct_List)
    is
       Matches        : Match_Array (0 .. 10);
