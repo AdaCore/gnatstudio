@@ -5011,6 +5011,11 @@ not needed, @xref{Support for Cross-References}.
    application. This external utility can be configured in the preferences
    dialog (@i{External Commands->Execute command}).
 
+   The GPS execution windows have several limitations compared to external
+   terminals. In particular, they do not handle signals like @key{ctrl-z}
+   and @key{control-c}. In general, if you are running an interactive
+   application, we strongly encourage you to run in an external terminal.
+
    Similarly, the @code{Run} contextual menu accessible from a project
    entity contains the same entries.
 
