@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 4.2.0
 
+- GA30-025: Unwanted raise of Project View when it is floating
+  Problem:    When the Project View is floating and the Window Manager is
+              configured so that the input focus follows the mouse movement,
+              the Project View gets raised above other windows whenever
+              the mouse passes over it.
+  Workaround: Dock the Project View, or change the settings of the Window
+              Manager.
+
 - GA24-020: Wrong cursor location after using Smart Completion
   Problem:    When using Smart Completion, when removing characters after
               having performed a first completion, the cursor might jump at the
