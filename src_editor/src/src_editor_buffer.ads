@@ -820,7 +820,7 @@ package Src_Editor_Buffer is
 
    function Get_String
      (Buffer : Source_Buffer) return GNAT.Strings.String_Access;
-   --  Return the entire editable string.
+   --  Return the entire editable string, encoded in UTF-8
    --  The caller is responsible for freeing the returned value.
 
    function Get_Buffer_Lines
