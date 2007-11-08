@@ -24,11 +24,15 @@
 
 #ifdef _WIN32
 
+#define _UNICODE /* For C runtime */
+#define UNICODE  /* For Win32 API */
+
 #include <windows.h>
 #include <commdlg.h>
 #include <shlobj.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <tchar.h>
 
 /*
  * NativeFileSelection
@@ -43,7 +47,7 @@
 #define SAVE_FILE 1
 #define PATTERN_SEP ';'
 
-static int
+static int CALLBACK
 FileSelectionHook
   (HWND   hdlg,
    UINT   uiMsg,
@@ -83,17 +87,23 @@ NativeWin32FileSelection
    int          style,
    int          kind)
 {
-  static OPENFILENAME ofn;
-  static char         l_Filter [512];
-  static char         l_Result [MAX_PATH];
-  int                 l_index = 0;
-  char*               res;
-  BOOL                ret;
+  OPENFILENAME ofn;
+  WCHAR        wtitle [512];
+  WCHAR        wbasedir [MAX_PATH];
+  WCHAR        wl_Result [MAX_PATH];
+  WCHAR        wl_Filter [512];
+  char         l_Filter [512];
+  char         l_Result [MAX_PATH];
+  char         *res;
+  int          l_index = 0;
+  BOOL         ret;
+  POINT        position;
+  RECT         aw_rect;
+  unsigned int style_flag;
+  HWND         active_window = GetActiveWindow ();
 
-  static POINT        position;
-  RECT                aw_rect;
-  unsigned int        style_flag;
-  HWND                active_window = GetActiveWindow ();
+  MultiByteToWideChar (CP_UTF8, 0, basedir, -1, wbasedir, MAX_PATH);
+  MultiByteToWideChar (CP_UTF8, 0, title, -1, wtitle, MAX_PATH);
 
   position.x = 0;
   position.y = 0;
@@ -189,21 +199,24 @@ NativeWin32FileSelection
   else
     l_Result [0] = '\0';
 
-  ZeroMemory(&ofn, sizeof(ofn));
+  MultiByteToWideChar (CP_UTF8, 0, l_Result, -1, wl_Result, MAX_PATH);
+  MultiByteToWideChar (CP_UTF8, 0, l_Filter, l_index, wl_Filter, MAX_PATH);
+
+  ZeroMemory (&ofn, sizeof(ofn));
 
   ofn.lStructSize       = sizeof (OPENFILENAME);
   ofn.hwndOwner         = active_window;
   ofn.hInstance         = NULL;
-  ofn.lpstrFilter       = l_Filter;
+  ofn.lpstrFilter       = wl_Filter;
   ofn.lpstrCustomFilter = NULL;
   ofn.nMaxCustFilter    = 0;
   ofn.nFilterIndex      = 0;
-  ofn.lpstrFile         = l_Result;
+  ofn.lpstrFile         = wl_Result;
   ofn.nMaxFile          = MAX_PATH;
   ofn.lpstrFileTitle    = NULL;
   ofn.nMaxFileTitle     = 0;
-  ofn.lpstrInitialDir   = basedir;
-  ofn.lpstrTitle        = title;
+  ofn.lpstrInitialDir   = wbasedir;
+  ofn.lpstrTitle        = wtitle;
   ofn.nFileOffset       = 0;
   ofn.nFileExtension    = 0;
   ofn.lpstrDefExt       = NULL;
@@ -225,10 +238,11 @@ NativeWin32FileSelection
     }
 
   if (!ret)
-    l_Result [0] = '\0';
+    wl_Result [0] = '\0';
 
   /* copy the result into a well sized string */
 
+  WideCharToMultiByte (CP_UTF8,0,wl_Result,-1,l_Result,MAX_PATH,NULL,NULL);
   res = malloc (sizeof (char) * (strlen (l_Result) + 1));
   strcpy (res, l_Result);
   return res;
@@ -287,22 +301,27 @@ NativeDirSelection
   (const char* title,
    const char* basedir)
 {
-  TCHAR displayName [MAX_PATH];
-  TCHAR path [MAX_PATH];
-  static WCHAR wbasedir [MAX_PATH];
+  WCHAR wbasedir [MAX_PATH];
+  WCHAR wtitle [MAX_PATH];
+  WCHAR wpath [MAX_PATH];
   BROWSEINFO BI = { 0 };
   LPITEMIDLIST pIdList;
   IShellFolder *psf = NULL;
+  char path [MAX_PATH];
   char *res;
 
   MultiByteToWideChar (CP_UTF8, 0, basedir, -1, wbasedir, MAX_PATH);
+  MultiByteToWideChar (CP_UTF8, 0, title, -1, wtitle, MAX_PATH);
+
+  ZeroMemory (&BI, sizeof(BI));
 
   BI.hwndOwner = GetActiveWindow ();
-  BI.lpszTitle = title;
-  BI.pszDisplayName = displayName;
+  BI.lpszTitle = wtitle;
+  BI.pszDisplayName = 0;
   BI.ulFlags = BIF_USENEWUI;
   BI.lpfn = (BFFCALLBACK) BrowseHook;
   BI.lParam = (LPARAM) wbasedir;
+  BI.pidlRoot = 0;
 
   pIdList = SHBrowseForFolder (&BI);
 
@@ -310,8 +329,8 @@ NativeDirSelection
     {
       IMalloc *imalloc = 0;
 
-      if (! SHGetPathFromIDList (pIdList, path))
-        path [0] = '\0';
+      if (! SHGetPathFromIDList (pIdList, wpath))
+        wpath [0] = '\0';
 
 #if 0   /* ??? Does not compile with mingw */
       if (SUCCEEDED (SHGetMalloc (&imalloc)))
@@ -322,8 +341,9 @@ NativeDirSelection
 #endif
     }
   else
-    path [0] = '\0';
+    wpath [0] = '\0';
 
+  WideCharToMultiByte (CP_UTF8,0,wpath,-1,path,MAX_PATH,NULL,NULL);
   res = malloc (sizeof (char) * (strlen (path) + 1));
   strcpy (res, path);
   return res;
