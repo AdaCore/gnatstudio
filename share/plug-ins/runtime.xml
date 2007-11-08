@@ -13,6 +13,12 @@
    <title>/Help/GNAT Runtime</title>
 </submenu>
 <documentation_file>
+   <shell>Editor.edit "a-assert.ads"</shell>
+   <descr>Ada.Assertions</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Assertions</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "a-astaco.ads"</shell>
    <descr>Ada.Asynchronous_Task_Control</descr>
    <menu>/Help/GNAT Runtime/Ada/Asynchronous__Task__Control</menu>
@@ -1513,6 +1519,12 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "g-rannum.ads"</shell>
+   <descr>GNAT.Random_Numbers</descr>
+   <menu>/Help/GNAT Runtime/GNAT/Random__Numbers</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "g-regexp.ads"</shell>
    <descr>GNAT.Regexp</descr>
    <menu>/Help/GNAT Runtime/GNAT/Regexp</menu>
@@ -1570,6 +1582,12 @@
    <shell>Editor.edit "g-speche.ads"</shell>
    <descr>GNAT.Spell_Checker</descr>
    <menu>/Help/GNAT Runtime/GNAT/Spell__Checker</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "g-spchge.ads"</shell>
+   <descr>GNAT.Spell_Checker_Generic</descr>
+   <menu>/Help/GNAT Runtime/GNAT/Spell__Checker__Generic</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -1651,9 +1669,27 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "g-u3spch.ads"</shell>
+   <descr>GNAT.UTF_32_Spelling_Checker</descr>
+   <menu>/Help/GNAT Runtime/GNAT/UTF__32__Spelling__Checker</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "g-wispch.ads"</shell>
+   <descr>GNAT.Wide_Spelling_Checker</descr>
+   <menu>/Help/GNAT Runtime/GNAT/Wide__Spelling__Checker</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "g-wistsp.ads"</shell>
    <descr>GNAT.Wide_String_Split</descr>
    <menu>/Help/GNAT Runtime/GNAT/Wide__String__Split</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "g-zspche.ads"</shell>
+   <descr>GNAT.Wide_Wide_Spelling_Checker</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/GNAT/Wide__Wide__Spelling__Checker</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
