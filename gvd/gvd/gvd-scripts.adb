@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2007                      --
---                               AdaCore                             --
+--                  Copyright (C) 2005-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -296,6 +295,18 @@ package body GVD.Scripts is
                Output_Command => Nth_Arg (Data, 3, True),
                Mode           => GVD.Types.Hidden));
 
+      elsif Command = "non_blocking_send" then
+         Name_Parameters
+           (Data,
+            (1 => Arg_Cmd'Unchecked_Access,
+             2 => Arg_Output'Unchecked_Access));
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Process := Visual_Debugger (GObject'(Get_Data (Inst)));
+         Process_User_Command
+           (Process, Nth_Arg (Data, 2),
+            Output_Command => Nth_Arg (Data, 3, True),
+            Mode           => GVD.Types.User);
+
       elsif Command = "get_executable" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
@@ -382,6 +393,9 @@ package body GVD.Scripts is
         (Kernel, "list", 0, 0, Shell_Handler'Access, Class,
          Static_Method => True);
       Register_Command (Kernel, "send", 1, 2, Shell_Handler'Access, Class);
+      Register_Command
+        (Kernel, "non_blocking_send", 1, 1, Shell_Handler'Access, Class);
+
       Register_Command
         (Kernel, "get_executable", 0, 0, Shell_Handler'Access, Class);
       Register_Command (Kernel, "get_num", 0, 0, Shell_Handler'Access, Class);
