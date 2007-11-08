@@ -1056,8 +1056,7 @@ package body Gtkada.File_Selector is
          if Win.Moving_Through_History then
             Win.Moving_Through_History := False;
          else
-            Push (Win.Past_History,
-                  Get_Location (Win.Location_Combo));
+            Push (Win.Past_History, Get_Location (Win.Location_Combo));
             Clear (Win.Future_History);
             Set_Sensitive (Win.Back_Button);
             Set_Sensitive (Win.Forward_Button, False);
@@ -1074,8 +1073,7 @@ package body Gtkada.File_Selector is
          --  in the Explorer_Tree, then update the Explorer_Tree.
 
          if Dir /= Get_Selection (Win.Explorer_Tree) then
-            Show_Directory (Win.Explorer_Tree, Dir,
-                            Get_Window (Win));
+            Show_Directory (Win.Explorer_Tree, Dir, Get_Window (Win));
          end if;
 
          if Win.File_Tree = null then
