@@ -15,6 +15,12 @@ of the feature.
 New features in GPS 4.2.0
 -------------------------
 
+NF-42-GA18-007 New command for sending debugger commands (2007-11-09)
+
+  There is now a new command to send commands to the debugger in an asynchronous
+  manner. This helps writing of python/shell scripts which automate debugger
+  operations.
+
 NF-42-GA03-007 Plug-in to fill Revision Logs (2007-10-03)
 
   When GPS opens a new Version Control revision log for a source file, the
