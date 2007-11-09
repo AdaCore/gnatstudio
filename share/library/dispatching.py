@@ -109,13 +109,13 @@ def on_highlight_dispatching_calls (menu):
   highlight_dispatching_calls (EditorBuffer.get())
 
 def on_file_edited (hook, file):
-  highlight_dispatching_calls (EditorBuffer.get (file))  
+  highlight_dispatching_calls (EditorBuffer.get (file))
 
 def on_compilation_finished (hook, category):
   # Re-highlight all editors
   for l in EditorBuffer.list():
      highlight_dispatching_calls (l)
-  
+
 def on_gps_start (hook):
   if highlight_on_open:
      Hook ("file_edited").add (on_file_edited)
