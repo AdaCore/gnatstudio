@@ -24,6 +24,8 @@ with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with System;
 
+with Interfaces.C.Strings;      use Interfaces.C.Strings;
+
 with GNAT.Expect;               use GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
@@ -35,6 +37,9 @@ with GNAT.Strings;
 with GNAT.Case_Util;            use GNAT.Case_Util;
 
 with Glib;                      use Glib;
+with Glib.Error;                use Glib.Error;
+with Glib.Convert;              use Glib.Convert;
+with Glib.Unicode;              use Glib.Unicode;
 with Glib.Object;               use Glib.Object;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
@@ -540,6 +545,9 @@ package body Builder_Module is
 
    procedure Parse_Compiler_Output (Data : Process_Data; Output : String) is
       Last_EOL : Natural := 1;
+      Str      : GNAT.OS_Lib.String_Access;
+      Valid    : Boolean;
+      Invalid_Pos : Natural;
    begin
       if not Data.Process_Died then
          Last_EOL := Index (Output, (1 => ASCII.LF), Backward);
@@ -559,28 +567,79 @@ package body Builder_Module is
          end if;
       end if;
 
+      --  Collect the relevant portion of the output
+
       if Output'Length > 0 then
-         Process_Builder_Output
-           (Kernel  => Data.Kernel,
-            Command => Data.Command,
-            Output  => To_String
-              (Files_Callback_Data (Data.Callback_Data.all).Buffer)
-               & Output (Output'First .. Last_EOL - 1) & ASCII.LF,
-            Quiet   => False);
+         Str := new String'
+           (To_String (Files_Callback_Data (Data.Callback_Data.all).Buffer)
+            & Output (Output'First .. Last_EOL - 1) & ASCII.LF);
 
          Files_Callback_Data (Data.Callback_Data.all).Buffer :=
            To_Unbounded_String (Output (Last_EOL + 1 .. Output'Last));
 
       elsif Data.Process_Died then
+         Str := new String'
+           (To_String (Files_Callback_Data (Data.Callback_Data.all).Buffer)
+            & ASCII.LF);
+         Files_Callback_Data (Data.Callback_Data.all).Buffer :=
+           Null_Unbounded_String;
+      else
+         return;
+      end if;
+
+      --  If we reach this point, this means we have collected some output to
+      --  parse. In this case, verify that it is proper UTF-8 before
+      --  transmitting it to the rest of GPS.
+
+      --  It is hard to determine which encoding the compiler result is,
+      --  especially given that we are supporting third-party compilers, build
+      --  scripts, etc. Therefore, we run the output through UTF8_Validate. If
+      --  a string validates, there is a great chance that it is indeed UTF8.
+
+      UTF8_Validate (Str.all, Valid, Invalid_Pos);
+
+      if Valid then
          Process_Builder_Output
            (Kernel  => Data.Kernel,
             Command => Data.Command,
-            Output  => To_String
-              (Files_Callback_Data (Data.Callback_Data.all).Buffer) & ASCII.LF,
+            Output  => Str.all,
             Quiet   => False);
+         Free (Str);
+      else
+         --  If the compiler output is not valid UTF-8, the most likely option
+         --  is that it is encoded using the locale.
 
-         Files_Callback_Data (Data.Callback_Data.all).Buffer :=
-           Null_Unbounded_String;
+         declare
+            Tentative     : chars_ptr;
+            Read, Written : aliased Natural;
+            Error         : GError_Access := new GError'(null);
+            procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+              (GError, GError_Access);
+         begin
+            Tentative := Locale_To_UTF8
+              (Str.all, Read'Access, Written'Access, Error);
+            Free (Str);
+
+            if Error.all = null then
+               --  We could convert, transmit the message.
+               Process_Builder_Output
+                 (Kernel  => Data.Kernel,
+                  Command => Data.Command,
+                  Output  => Value (Tentative),
+                  Quiet   => False);
+            else
+               --  We could not convert, insert a message in the console and
+               --  skip.
+               Console.Insert
+                 (Data.Kernel,
+                  -"Could not convert compiler output to UTF8: " &
+                  Get_Message (Error.all), Mode => Console.Error);
+               Error_Free (Error.all);
+            end if;
+
+            Free (Tentative);
+            Unchecked_Free (Error);
+         end;
       end if;
    end Parse_Compiler_Output;
 
@@ -705,7 +764,8 @@ package body Builder_Module is
 
          else
             Console.Insert
-              (Kernel, -"No file selected, cannot build", Mode => Error);
+              (Kernel, -"No file selected, cannot build",
+               Mode => Console.Error);
             return;
          end if;
 
@@ -758,7 +818,7 @@ package body Builder_Module is
 
    exception
       when Invalid_Process =>
-         Console.Insert (Kernel, -"Invalid command", Mode => Error);
+         Console.Insert (Kernel, -"Invalid command", Mode => Console.Error);
          Change_Dir (Old_Dir);
          Free (Cmd);
          Free (Args);
@@ -817,7 +877,7 @@ package body Builder_Module is
       else
          Console.Insert
            (Kernel, -"No file selected, cannot check syntax",
-            Mode => Error);
+            Mode => Console.Error);
       end if;
 
    exception
@@ -859,7 +919,7 @@ package body Builder_Module is
          if not Quiet then
             Console.Insert
               (Kernel, -"No file name, cannot compile",
-               Mode => Error);
+               Mode => Console.Error);
          end if;
 
          return;
@@ -874,7 +934,7 @@ package body Builder_Module is
             Console.Insert
               (Kernel, -"Could not determine the project for file: "
                & Full_Name (File).all,
-               Mode => Error);
+               Mode => Console.Error);
          end if;
 
          return;
@@ -887,7 +947,7 @@ package body Builder_Module is
             Console.Insert
               (Kernel, -"Could not determine the language for file: "
                & Full_Name (File).all,
-               Mode => Error);
+               Mode => Console.Error);
          end if;
 
          return;
@@ -1013,7 +1073,7 @@ package body Builder_Module is
 
    exception
       when Invalid_Process =>
-         Console.Insert (Kernel, -"Invalid command", Mode => Error);
+         Console.Insert (Kernel, -"Invalid command", Mode => Console.Error);
          Change_Dir (Old_Dir);
          Free (Fd);
    end Compile_File;
@@ -1113,7 +1173,8 @@ package body Builder_Module is
          Compile_File (Kernel, File_Information (Context));
       else
          Console.Insert
-           (Kernel, -"No file selected, cannot compile", Mode => Error);
+           (Kernel, -"No file selected, cannot compile",
+            Mode => Console.Error);
       end if;
 
    exception
@@ -1231,7 +1292,7 @@ package body Builder_Module is
 
       procedure Errors (Msg : String) is
       begin
-         Insert (D.Kernel, Msg, Mode => Error);
+         Insert (D.Kernel, Msg, Mode => Console.Error);
       end Errors;
 
    begin
@@ -2152,7 +2213,7 @@ package body Builder_Module is
             From_File     => "builder module");
       begin
          if Result /= "" then
-            Insert (Kernel, Result, Mode => Error);
+            Insert (Kernel, Result, Mode => Console.Error);
          end if;
       end;
 
