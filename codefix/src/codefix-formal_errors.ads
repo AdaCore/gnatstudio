@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002-2007                    --
---                            AdaCore                                --
+--                    Copyright (C) 2002-2007, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -252,6 +251,7 @@ private
 
    type Error_Message is new File_Cursor with record
       Message : GNAT.Strings.String_Access;
+      --  Message should be encoded in UTF-8.
       Is_Style, Is_Warning : Boolean := False;
    end record;
 
