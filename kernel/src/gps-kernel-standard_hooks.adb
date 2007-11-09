@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2003-2007, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -259,7 +258,7 @@ package body GPS.Kernel.Standard_Hooks is
       File       : Virtual_File;
       Line       : Integer;
       Column     : Integer;
-      Message    : String;
+      Message    : UTF8_String;
       Action     : Action_Item)
    is
       Data : aliased Location_Hooks_Args :=
@@ -294,7 +293,7 @@ package body GPS.Kernel.Standard_Hooks is
       File       : Virtual_File;
       Line       : Integer;
       Column     : Integer;
-      Message    : String) is
+      Message    : UTF8_String) is
    begin
       Add_Location_Action
         (Kernel, Identifier,

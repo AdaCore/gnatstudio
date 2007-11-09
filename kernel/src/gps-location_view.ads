@@ -75,7 +75,7 @@ package GPS.Location_View is
      (Kernel             : access Kernel_Handle_Record'Class;
       Category           : Glib.UTF8_String;
       File               : VFS.Virtual_File;
-      Text               : String;
+      Text               : Glib.UTF8_String;
       Line               : Positive;
       Column             : Visible_Column_Type;
       Length             : Natural := 0;
@@ -188,7 +188,9 @@ private
       Length             : Integer;
       Highlight          : Boolean;
       Message            : GNAT.Strings.String_Access;
+      --  ??? This should be a UTF8_String_Access
       Highlight_Category : GNAT.Strings.String_Access;
+      --  ??? This should be a UTF8_String_Access
 
       Children           : List;
    end record;

@@ -367,7 +367,7 @@ package GPS.Kernel.Standard_Hooks is
          Action     : Action_Item;
          Identifier : String (1 .. Ident_Length);
          Category   : String (1 .. Cat_Length);
-         Message    : String (1 .. Mes_Length);
+         Message    : UTF8_String (1 .. Mes_Length);
       end record;
    --  Identifier is the identity of the emitted.
 
@@ -380,7 +380,7 @@ package GPS.Kernel.Standard_Hooks is
       File       : VFS.Virtual_File;
       Line       : Integer;
       Column     : Integer;
-      Message    : String;
+      Message    : UTF8_String;
       Action     : Action_Item);
    --  Add an action to the location specified. This will show up on the left
    --  side of the result view.
@@ -393,7 +393,7 @@ package GPS.Kernel.Standard_Hooks is
       File       : VFS.Virtual_File;
       Line       : Integer;
       Column     : Integer;
-      Message    : String);
+      Message    : UTF8_String);
    --  Remove action corresponding to Identifier at specified location.
    --  See Location_Action_Hook.
 

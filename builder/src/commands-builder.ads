@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2005                       --
---                              AdaCore                              --
+--                     Copyright (C) 2003-2007, AdaCore              --
 --                                                                   --
 -- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
@@ -21,6 +20,7 @@
 --  This package handles build commands.
 
 with GPS.Kernel;
+with Glib;
 
 package Commands.Builder is
 
@@ -36,7 +36,7 @@ package Commands.Builder is
    procedure Process_Builder_Output
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Command : Commands.Command_Access;
-      Output  : String;
+      Output  : Glib.UTF8_String;
       Quiet   : Boolean);
    --  Process the builder output: update the progress bar in Command as
    --  necessary, hide the progress output, and display the other outputs in

@@ -53,6 +53,7 @@ with Gtkada.MDI;               use Gtkada.MDI;
 with Commands.Interactive;     use Commands.Interactive;
 with Commands;                 use Commands;
 with GPS.Intl;                 use GPS.Intl;
+with GPS.Kernel.Console;
 with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
@@ -61,6 +62,7 @@ with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
 with String_List_Utils;        use String_List_Utils;
 with String_Utils;             use String_Utils;
+with UTF8_Utils;               use UTF8_Utils;
 with Traces;                   use Traces;
 with VFS;                      use VFS;
 with VFS.Values;               use VFS.Values;
@@ -259,7 +261,7 @@ package body GPS.Location_View is
       Iter               : Gtk_Tree_Iter;
       Base_Name          : String;
       Absolute_Name      : VFS.Virtual_File;
-      Message            : String;
+      Message            : UTF8_String;
       Mark               : Integer := -1;
       Line               : Integer;
       Column             : Visible_Column_Type;
@@ -280,7 +282,7 @@ package body GPS.Location_View is
       Column             : Visible_Column_Type;
       Length             : Natural;
       Highlight          : Boolean;
-      Message            : String;
+      Message            : UTF8_String;
       Highlight_Category : Style_Access;
       Quiet              : Boolean;
       Remove_Duplicates  : Boolean;
@@ -906,7 +908,7 @@ package body GPS.Location_View is
       Iter               : Gtk_Tree_Iter;
       Base_Name          : String;
       Absolute_Name      : VFS.Virtual_File;
-      Message            : String;
+      Message            : UTF8_String;
       Mark               : Integer := -1;
       Line               : Integer;
       Column             : Visible_Column_Type;
@@ -933,7 +935,7 @@ package body GPS.Location_View is
                Set (Model, Iter, Base_Name_Column,
                     "<b>" & Base_Name & "</b>"
                     & Padding (1 .. Messages_Padding - Base_Name'Length)
-                    & Glib.Convert.Locale_To_UTF8 (Message));
+                    & Message);
             end;
          end if;
       end if;
@@ -1213,7 +1215,7 @@ package body GPS.Location_View is
       Column             : Visible_Column_Type;
       Length             : Natural;
       Highlight          : Boolean;
-      Message            : String;
+      Message            : UTF8_String;
       Highlight_Category : Style_Access;
       Quiet              : Boolean;
       Remove_Duplicates  : Boolean;
@@ -1916,7 +1918,7 @@ package body GPS.Location_View is
      (Kernel             : access Kernel_Handle_Record'Class;
       Category           : Glib.UTF8_String;
       File               : VFS.Virtual_File;
-      Text               : String;
+      Text               : UTF8_String;
       Line               : Positive;
       Column             : Visible_Column_Type;
       Length             : Natural := 0;
@@ -2903,13 +2905,15 @@ package body GPS.Location_View is
               Nth_Arg (Data, 11, "Style errors");
             Warning_Category   : constant String :=
               Nth_Arg (Data, 12, "Builder warnings");
+            Valid : aliased Boolean;
          begin
             Parse_File_Locations
               (Get_Kernel (Data),
                Highlight               => Highlight_Category /= ""
                   or else Style_Category /= ""
                   or else Warning_Category /= "",
-               Text                    => Nth_Arg (Data, 1),
+               Text                    =>
+                 Unknown_To_UTF8 (Nth_Arg (Data, 1), Valid'Access),
                Category                => Nth_Arg (Data, 2),
                Highlight_Category      =>
                  Get_Or_Create_Style (Kernel, Highlight_Category, False),
@@ -2924,6 +2928,13 @@ package body GPS.Location_View is
                Msg_Index_In_Regexp     => Nth_Arg (Data, 7, -1),
                Style_Index_In_Regexp   => Nth_Arg (Data, 8, -1),
                Warning_Index_In_Regexp => Nth_Arg (Data, 9, -1));
+
+            if not Valid then
+               Console.Insert
+                 (Kernel,
+                  -"Locations.parse: could not convert input to UTF8",
+                  Mode => Console.Error);
+            end if;
          end;
 
       elsif Command = "remove_category" then
@@ -3081,7 +3092,7 @@ package body GPS.Location_View is
         (Pref : Param_Spec_Int; Value : Integer) return Integer;
       --  If Value is -1, return Pref, otherwise return Value
 
-      function Get_Message (Last : Natural) return String;
+      function Get_Message (Last : Natural) return UTF8_String;
       --  Return the error message. For backward compatibility with existing
       --  preferences file, we check that the message Index is still good.
       --  Otherwise, we return the last part of the regexp
