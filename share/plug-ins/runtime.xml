@@ -1315,6 +1315,18 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "g-byorma.ads"</shell>
+   <descr>GNAT.Byte_Order_Mark</descr>
+   <menu>/Help/GNAT Runtime/GNAT/Byte__Order__Mark</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "g-bytswa.ads"</shell>
+   <descr>GNAT.Byte_Swapping</descr>
+   <menu>/Help/GNAT Runtime/GNAT/Byte__Swapping</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "g-cgi.ads"</shell>
    <descr>GNAT.CGI</descr>
    <menu>/Help/GNAT Runtime/GNAT/CGI/&lt;CGI&gt;</menu>
@@ -1693,9 +1705,9 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
-   <shell>Editor.edit "g-bytswa.ads"</shell>
-   <descr>Gnat.Byte_Swapping</descr>
-   <menu>/Help/GNAT Runtime/Gnat/Byte__Swapping</menu>
+   <shell>Editor.edit "g-zstspl.ads"</shell>
+   <descr>GNAT.Wide_Wide_String_Split</descr>
+   <menu>/Help/GNAT Runtime/GNAT/Wide__Wide__String__Split</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
