@@ -2321,6 +2321,8 @@ package body Src_Editor_Box is
       Editable_Line : Editable_Line_Type renames Line;
 
    begin
+      End_Action (Editor.Source_Buffer);
+
       if Is_Valid_Position (Editor.Source_Buffer, Editable_Line, Column) then
          if Force_Focus then
             Grab_Focus (Editor.Source_View);
@@ -2447,7 +2449,7 @@ package body Src_Editor_Box is
 
    begin
       Get_Iter_At_Mark (Editor.Source_Buffer, Iter, Mark);
-
+      End_Action (Editor.Source_Buffer);
       Success := Scroll_To_Iter
         (Editor.Source_View, Iter, 0.0, True, 0.5, 0.5);
       Place_Cursor (Editor.Source_Buffer, Iter);
