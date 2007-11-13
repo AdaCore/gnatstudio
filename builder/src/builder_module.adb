@@ -87,6 +87,8 @@ with Traces;                    use Traces;
 with Commands;                  use Commands;
 with Commands.Builder;          use Commands.Builder;
 
+with UTF8_Utils;                use UTF8_Utils;
+
 with Commands.Generic_Asynchronous;
 
 package body Builder_Module is
@@ -546,8 +548,6 @@ package body Builder_Module is
    procedure Parse_Compiler_Output (Data : Process_Data; Output : String) is
       Last_EOL : Natural := 1;
       Str      : GNAT.OS_Lib.String_Access;
-      Valid    : Boolean;
-      Invalid_Pos : Natural;
    begin
       if not Data.Process_Died then
          Last_EOL := Index (Output, (1 => ASCII.LF), Backward);
@@ -593,54 +593,28 @@ package body Builder_Module is
 
       --  It is hard to determine which encoding the compiler result is,
       --  especially given that we are supporting third-party compilers, build
-      --  scripts, etc. Therefore, we run the output through UTF8_Validate. If
-      --  a string validates, there is a great chance that it is indeed UTF8.
+      --  scripts, etc. Therefore, we call Unknown_To_UTF8.
 
-      UTF8_Validate (Str.all, Valid, Invalid_Pos);
-
-      if Valid then
-         Process_Builder_Output
-           (Kernel  => Data.Kernel,
-            Command => Data.Command,
-            Output  => Str.all,
-            Quiet   => False);
+      declare
+         Valid  : aliased Boolean;
+         Output : UTF8_String := Unknown_To_UTF8 (Str.all, Valid'Access);
+      begin
          Free (Str);
-      else
-         --  If the compiler output is not valid UTF-8, the most likely option
-         --  is that it is encoded using the locale.
 
-         declare
-            Tentative     : chars_ptr;
-            Read, Written : aliased Natural;
-            Error         : GError_Access := new GError'(null);
-            procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-              (GError, GError_Access);
-         begin
-            Tentative := Locale_To_UTF8
-              (Str.all, Read'Access, Written'Access, Error);
-            Free (Str);
+         if Valid then
+            Process_Builder_Output
+              (Kernel  => Data.Kernel,
+               Command => Data.Command,
+               Output  => Output,
+               Quiet   => False);
 
-            if Error.all = null then
-               --  We could convert, transmit the message.
-               Process_Builder_Output
-                 (Kernel  => Data.Kernel,
-                  Command => Data.Command,
-                  Output  => Value (Tentative),
-                  Quiet   => False);
-            else
-               --  We could not convert, insert a message in the console and
-               --  skip.
-               Console.Insert
-                 (Data.Kernel,
-                  -"Could not convert compiler output to UTF8: " &
-                  Get_Message (Error.all), Mode => Console.Error);
-               Error_Free (Error.all);
-            end if;
-
-            Free (Tentative);
-            Unchecked_Free (Error);
-         end;
-      end if;
+         else
+            Console.Insert
+              (Data.Kernel,
+               -"Could not convert compiler output to UTF8",
+               Mode => Console.Error);
+         end if;
+      end;
    end Parse_Compiler_Output;
 
    --------------------------
