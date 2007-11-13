@@ -24,8 +24,6 @@ with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with System;
 
-with Interfaces.C.Strings;      use Interfaces.C.Strings;
-
 with GNAT.Expect;               use GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
@@ -37,9 +35,6 @@ with GNAT.Strings;
 with GNAT.Case_Util;            use GNAT.Case_Util;
 
 with Glib;                      use Glib;
-with Glib.Error;                use Glib.Error;
-with Glib.Convert;              use Glib.Convert;
-with Glib.Unicode;              use Glib.Unicode;
 with Glib.Object;               use Glib.Object;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
@@ -597,7 +592,8 @@ package body Builder_Module is
 
       declare
          Valid  : aliased Boolean;
-         Output : UTF8_String := Unknown_To_UTF8 (Str.all, Valid'Access);
+         Output : constant UTF8_String :=
+           Unknown_To_UTF8 (Str.all, Valid'Access);
       begin
          Free (Str);
 
