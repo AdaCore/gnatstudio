@@ -4107,6 +4107,7 @@ package body Src_Editor_Buffer is
       Start_Iter     : Gtk_Text_Iter;
       End_Iter       : Gtk_Text_Iter;
    begin
+      End_Action (Buffer);
       Get_Start_Iter (Buffer, Start_Iter);
       Get_End_Iter (Buffer, End_Iter);
       Select_Range (Buffer, Ins => End_Iter, Bound => Start_Iter);
@@ -4122,6 +4123,7 @@ package body Src_Editor_Buffer is
       Bound_Iter   : Gtk.Text_Iter.Gtk_Text_Iter)
    is
    begin
+      End_Action (Buffer);
       Buffer.Cursor_Set_Explicitely := True;
       Select_Range (Buffer, Ins => Cursor_Iter, Bound => Bound_Iter);
    end Select_Region;
@@ -4141,6 +4143,7 @@ package body Src_Editor_Buffer is
       End_Iter   : Gtk_Text_Iter;
    begin
       if Start_Line = End_Line and then Start_Column = End_Column then
+         End_Action (Buffer);
          Get_Iter_At_Mark (Buffer, Start_Iter, Get_Insert (Buffer));
          Place_Cursor (Buffer, Start_Iter);
 
@@ -4156,6 +4159,7 @@ package body Src_Editor_Buffer is
             return;
          end if;
 
+         End_Action (Buffer);
          Get_Iter_At_Line_Offset
            (Buffer, Start_Iter, Start_Line, Start_Column);
          Get_Iter_At_Line_Offset (Buffer, End_Iter, End_Line, End_Column);
