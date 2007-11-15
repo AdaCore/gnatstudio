@@ -159,7 +159,8 @@ package GPS.Location_View is
       Msg_Index_In_Regexp     : Integer := -1;
       Style_Index_In_Regexp   : Integer := -1;
       Warning_Index_In_Regexp : Integer := -1;
-      Quiet                   : Boolean := False);
+      Quiet                   : Boolean := False;
+      Remove_Duplicates       : Boolean := False);
    --  Perform a basic parsing on Text, and add any found file locations
    --  to the results view in Category.
    --  If Highlighting is True, attempt to highlight the corresponding
@@ -169,6 +170,8 @@ package GPS.Location_View is
    --  The default blank value will matches locations reported by gcc or GNAT,
    --  ie "file:line:column message". The various index parameters indicate the
    --  relevant parenthesis pair in the regexp.
+   --  Remove_Duplicates indicates whether duplicated entries should be
+   --  filtered out.
 
 private
    type Location_Record;
