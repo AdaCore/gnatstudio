@@ -2927,7 +2927,8 @@ package body GPS.Location_View is
                Col_Index_In_Regexp     => Nth_Arg (Data, 6, -1),
                Msg_Index_In_Regexp     => Nth_Arg (Data, 7, -1),
                Style_Index_In_Regexp   => Nth_Arg (Data, 8, -1),
-               Warning_Index_In_Regexp => Nth_Arg (Data, 9, -1));
+               Warning_Index_In_Regexp => Nth_Arg (Data, 9, -1),
+               Remove_Duplicates       => True);
 
             if not Valid then
                Console.Insert
@@ -3079,7 +3080,8 @@ package body GPS.Location_View is
       Msg_Index_In_Regexp     : Integer := -1;
       Style_Index_In_Regexp   : Integer := -1;
       Warning_Index_In_Regexp : Integer := -1;
-      Quiet                   : Boolean := False)
+      Quiet                   : Boolean := False;
+      Remove_Duplicates       : Boolean := False)
    is
       View   : Location_View := null;
       Expand : Boolean := Quiet;
@@ -3247,7 +3249,7 @@ package body GPS.Location_View is
                  (Get_Message (Last)),
                Highlight_Category => C,
                Quiet              => Expand,
-               Remove_Duplicates  => False,
+               Remove_Duplicates  => Remove_Duplicates,
                Enable_Counter     => False,
                Sort_In_File       => False,
                Parent_Iter        => Iter,

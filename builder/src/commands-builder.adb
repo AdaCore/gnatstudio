@@ -111,7 +111,8 @@ package body Commands.Builder is
          Highlight_Category => Error_Category,
          Style_Category     => Style_Category,
          Warning_Category   => Warning_Category,
-         Quiet              => Quiet);
+         Quiet              => Quiet,
+         Remove_Duplicates  => True);
 
    exception
       when E : others => Trace (Exception_Handle, E);
