@@ -39,6 +39,7 @@ package body Lazy_Vectors is
 
    procedure Insert  (Vector : Lazy_Vector; Data : Data_Type) is
       Dummy : Iterator;
+      pragma Unreferenced (Dummy);
    begin
       Insert (Vector, Data, Dummy);
    end Insert;
