@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.2 NEW FEATURES LIST Current as of Oct 25, 2007
+GPS 4.2 NEW FEATURES LIST Current as of Nov 16, 2007
 ====================================================
 
 Copyright (c) 2006-2007, AdaCore
@@ -15,18 +15,11 @@ of the feature.
 New features in GPS 4.2.0
 -------------------------
 
-NF-43-E524-009 Add link to gnattracker (2007-11-13)
+NF-42-GB13-004 "Move to Next/Previous" Tab are now cyclic (2007-11-16)
 
-  The online_support.py plug-in provides new entries under the
-  /Help/On-Line Support menu that allow easy access to the AdaCore on-line
-  support facilities:
-  - Viewing your support tickets
-  - Opening new tickets
-  - Browsing on-line documentation
-  - Downloading GNAT Pro and wavefronts
-  - Browsing various developer resources
-  - Viewing the Ada Gem of the Week
-  - Finding an intern
+  The two actions, which can be bound to key shortcuts through
+  /Edit/Key Shorcuts are now cyclic: upon reaching one end of the tab
+  bar, they will restart at the other end
 
 NF-42-GA18-007 New command for sending debugger commands (2007-11-09)
 
@@ -311,6 +304,19 @@ NF-42-E525-006 Disabling editing of projects with variables (2007-07-25)
   GPS will now prevent you from graphically editing a project that uses
   variables (of the form "a:=value"), since the graphical editor does not
   support those and would mess the project up.
+
+NF-43-E524-009 Add link to gnattracker (2007-11-13)
+
+  The online_support.py plug-in provides new entries under the
+  /Help/On-Line Support menu that allow easy access to the AdaCore on-line
+  support facilities:
+  - Viewing your support tickets
+  - Opening new tickets
+  - Browsing on-line documentation
+  - Downloading GNAT Pro and wavefronts
+  - Browsing various developer resources
+  - Viewing the Ada Gem of the Week
+  - Finding an intern
 
 NF-42-E519-015 Contextual menu for copy/cut/paste (2007-09-13)
 
