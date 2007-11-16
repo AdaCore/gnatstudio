@@ -485,6 +485,7 @@ package body Projects is
       Result  : GNAT.Strings.String_List_Access;
       Src     : String_List_Id;
       Index   : Natural := 1;
+      Current_Dir : constant String := Get_Current_Dir;
    begin
       loop
          P := Current (Iter);
@@ -511,8 +512,9 @@ package body Projects is
                Sources (Index) := new String'
                  (Name_As_Directory
                     (Normalize_Pathname
-                       (Get_String
-                          (String_Elements (P) (Src).Display_Value))));
+                       (Get_String (String_Elements (P) (Src).Display_Value),
+                        Current_Dir,
+                        Resolve_Links => False)));
                Index := Index + 1;
                Src   := String_Elements (P) (Src).Next;
             end loop;
