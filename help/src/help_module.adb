@@ -591,7 +591,8 @@ package body Help_Module is
    is
       Old  : GNAT.Strings.String_Access := Help_Module_ID.Doc_Path;
       Dir  : constant String :=
-               Normalize_Pathname (Directory, Get_System_Dir (Kernel));
+        Normalize_Pathname
+          (Directory, Get_System_Dir (Kernel), Resolve_Links => False);
       Iter : Path_Iterator;
    begin
       if Directory /= "" then

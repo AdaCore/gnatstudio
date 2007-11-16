@@ -1004,9 +1004,10 @@ procedure GPS.Main is
       -------------------
 
       function Setup_Project return Boolean is
+         Current : constant String := Get_Current_Dir;
       begin
          Auto_Load_Project := False;
-         Open (Directory, Get_Current_Dir);
+         Open (Directory, Current);
 
          loop
             Read (Directory, Str, Last);
@@ -1017,7 +1018,7 @@ procedure GPS.Main is
                if Project_Name = VFS.No_File then
                   Auto_Load_Project := True;
                   Project_Name := Create
-                    (Normalize_Pathname (Str (1 .. Last),
+                    (Normalize_Pathname (Str (1 .. Last), Current,
                      Resolve_Links => False));
                else
                   Auto_Load_Project := False;
