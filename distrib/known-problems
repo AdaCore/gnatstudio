@@ -48,6 +48,12 @@ Known Problems fixed in GPS 4.2.0
   Workaround: Join the lines manually, or take test_utils.py from a more recent
               GPS version.
 
+- G925-025: Memory leak in python interface
+  Problem:    The python interfacing code was leaking memory when the Ada
+              object was freed before the python object. This is particularly
+              visible on long-running instances of GPS.
+  Workaround: none
+
 - G919-023: Enumeration fields not listed in entity browser
   Problem:    When displaying a record type in the entity browser,
               fields of enumeration types are not listed.
