@@ -43,4 +43,4 @@ case $mode in
       exit -1;;
 esac  
 
-$valgrind $args "$@" $gps 2>&1 | tee gps_valgrind.$$
+$valgrind $args $gps "$@" 2>&1 | tee gps_valgrind.$$
