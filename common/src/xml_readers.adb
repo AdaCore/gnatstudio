@@ -267,8 +267,6 @@ package body XML_Readers is
       Input : File_Input;
    begin
       Open (File, Input);
-      Set_Public_Id (Input, File);
-      Set_System_Id (Input, File);
       Parse (1, Input, Tree, Error);
    end Parse;
 
