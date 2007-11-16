@@ -51,6 +51,10 @@ ENTITIES.FORCE_UNIQUE_REF         = yes
 ENTITIES.QUERIES_FILE_GRANULARITY = yes
 ENTITIES.ASSERT                   = no
 
+--  Projects. Unfortunately the traces from PROJECTS.GNAT go to stdout
+
+PROJECTS.GNAT = no
+
 --  Debug handles related to the cross-references database
 
 ALI=no
