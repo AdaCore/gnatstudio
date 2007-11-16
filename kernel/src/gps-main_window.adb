@@ -272,14 +272,24 @@ package body GPS.Main_Window is
             Iter := First_Child (Get_MDI (Command.Kernel));
             Child := Get (Iter);
             if Child /= null then
-               Next_Page (Get_Notebook (Iter));
+               Note := Get_Notebook (Iter);
+               if Get_Current_Page (Note) = Get_N_Pages (Note) - 1 then
+                  Set_Current_Page (Note, 0);
+               else
+                  Next_Page (Note);
+               end if;
             end if;
 
          when Move_To_Previous_Tab =>
             Iter := First_Child (Get_MDI (Command.Kernel));
             Child := Get (Iter);
             if Child /= null then
-               Prev_Page (Get_Notebook (Iter));
+               Note := Get_Notebook (Iter);
+               if Get_Current_Page (Note) = 0 then
+                  Set_Current_Page (Note, Get_N_Pages (Note) - 1);
+               else
+                  Prev_Page (Note);
+               end if;
             end if;
 
       end case;
