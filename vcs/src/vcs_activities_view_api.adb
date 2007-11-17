@@ -368,6 +368,43 @@ package body VCS_Activities_View_API is
       when E : others => Trace (Exception_Handle, E);
    end On_Menu_Add_To_Activity;
 
+   --------------------------------
+   -- On_Menu_Commit_As_Activity --
+   --------------------------------
+
+   procedure On_Menu_Commit_As_Activity
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context)
+   is
+      pragma Unreferenced (Widget);
+      use type String_List.List_Node;
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
+      Activity : constant Activity_Id := New_Activity (Kernel);
+      Files    : String_List.List :=
+                   VCS_View.Explorer.Get_Selected_Files (Kernel);
+      File     : Virtual_File;
+      Files_It : String_List.List_Node;
+   begin
+      Set_Name (Kernel, Activity, "*anonymous*");
+
+      Files_It := String_List.First (Files);
+
+      while Files_It /= String_List.Null_Node loop
+         File := Create (Full_Filename => String_List.Data (Files_It));
+         Add_File (Kernel, Activity, File);
+         Files_It := String_List.Next (Files_It);
+      end loop;
+
+      String_List.Free (Files);
+
+      Refresh (Get_Activities_Explorer (Kernel, False, False));
+      Refresh (Get_Explorer (Kernel, False, False));
+
+      Commit_Activity (Kernel, Activity);
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end On_Menu_Commit_As_Activity;
+
    ----------------------------------
    -- On_Menu_Remove_From_Activity --
    ----------------------------------

@@ -7367,6 +7367,18 @@ file changes made on this specific tag/branch.
 @item View revision
 Only available on a Revision View and over a revision. ???
 
+@item Commit as new Activity
+An action to prepare a group-commit in just one-click. This action will:
+
+@itemize @bullet
+@item create an anonymous activity,
+@item add all files selected into the VCS Explorer into the newly
+created anonymous activity,
+@item open the activity log,
+@end itemize
+
+Just fill the activity log and commit the anonymous activity.
+
 @item Add to Activity
 A menu containing all the current activities. Selecting one will add
 the current file to this activity.

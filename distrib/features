@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Oct 29, 2007
+GPS 4.3 NEW FEATURES LIST Current as of Nov 17, 2007
 ====================================================
 
 Copyright (c) 2007, AdaCore
@@ -15,3 +15,10 @@ of the feature.
 New features in GPS 4.3.0
 -------------------------
 
+GB14-004 New VCS action to prepare in one-click a group-commit  (2007-11-17)
+
+  The new VCS action "Commit as new Activity" has been implemented to
+  simplify simple group-commit activity. Calling this action will
+  create an anonymous activity, will populate it with all selected
+  files from the VCS Explorer and will open the activity log
+  file. Just fill it and commit the activity.

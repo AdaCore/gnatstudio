@@ -1024,6 +1024,21 @@ package body VCS_View_API is
 
       --  Fill the section for the activity
 
+      if (File_Section
+          and then not Has_Activity_Information (Context)
+          and then not Log_File)
+        or else Show_Everything
+      then
+         Items_Inserted := True;
+
+         Gtk_New (Menu_Item, Label => -"Commit as new Activity");
+         Append (Menu, Menu_Item);
+         Context_Callback.Connect
+           (Menu_Item, Gtk.Menu_Item.Signal_Activate,
+            On_Menu_Commit_As_Activity'Access, Context);
+         Set_Sensitive (Menu_Item, Section_Active);
+      end if;
+
       --  ??? removed this menu item when in the VCS Activities window.
       --  For now, moving from one activity to another is not possible.
       --  We shall however display this submenu once it is allowed.
