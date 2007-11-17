@@ -279,7 +279,7 @@ package body VFS is
             then
                declare
                   Normalized : constant String := Normalize_Pathname
-                    (File.Value.Full_Name.all,
+                    (File.Value.Full_Name.all, "/",
                      Resolve_Links => Active (Resolve_Links_Handle));
                begin
                   if Normalized (Normalized'Last) /= Dir_Separator then
@@ -292,9 +292,12 @@ package body VFS is
                end;
 
             else
+               --  Since Full_Name is supposed to be an absolute pathname, we
+               --  avoid an extra system call to getcwd by passing "/" as the
+               --  parent directory
                File.Value.Normalized_Full := new UTF8_String'
                  (Normalize_Pathname
-                    (File.Value.Full_Name.all,
+                    (File.Value.Full_Name.all, "/",
                      Resolve_Links => Active (Resolve_Links_Handle)));
             end if;
          end if;
