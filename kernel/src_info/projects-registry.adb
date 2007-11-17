@@ -43,6 +43,7 @@ with Basic_Types;               use Basic_Types;
 with Csets;
 with Errout;
 with File_Utils;                use File_Utils;
+with GNAT.Traces;
 with GPS.Intl;                  use GPS.Intl;
 with OS_Utils;                  use OS_Utils;
 with Prj.Com;                   use Prj.Com;
@@ -63,6 +64,8 @@ with VFS;                       use VFS;
 package body Projects.Registry is
 
    Me : constant Debug_Handle := Create ("Projects.Registry");
+   Me_Gnat : constant Debug_Handle :=
+     Create ("Projects.GNAT", GNAT.Traces.Off);
 
    Project_Backward_Compatibility : constant Boolean := True;
    --  Should be set to true if saved project should be compatible with GNAT
@@ -482,7 +485,9 @@ package body Projects.Registry is
       if P = No_Project then
          Prj.Part.Parse (Registry.Data.Tree,
                          Node, Normalize_Project_Path (Project_Path), True,
-                         Store_Comments => True);
+                         Store_Comments => True,
+                         Current_Directory => Get_Current_Dir,
+                         Follow_Links => not Registry.Data.Trusted_Mode);
          P := Get_Project_From_Name
            (Registry, Prj.Tree.Name_Of (Node, Registry.Data.Tree));
       end if;
@@ -611,7 +616,9 @@ package body Projects.Registry is
 
          Prj.Part.Parse
            (Registry.Data.Tree, Project, Full_Name (Root_Project_Path).all,
-            True, Store_Comments => True);
+            True, Store_Comments => True,
+            Current_Directory => Get_Current_Dir,
+            Follow_Links => not Registry.Data.Trusted_Mode);
          Prj.Com.Fail := null;
 
          Opt.Full_Path_Name_For_Brief_Errors := False;
@@ -661,6 +668,12 @@ package body Projects.Registry is
       end Internal_Load;
 
    begin
+      --  Activate GNAT Traces. They will unfortunately be output on stdout,
+      --  but this is a convenient way to at least get them.
+      if Active (Me_Gnat) then
+         Prj.Current_Verbosity := Prj.High;
+      end if;
+
       Status := True;
       Internal_Load (Registry, Root_Project_Path, Errors, New_Project_Loaded);
    end Load;
@@ -742,6 +755,7 @@ package body Projects.Registry is
       Language : constant Name_Id :=
                    Get_String (String (Languages_Attribute));
       Set_As_Incomplete_When_Errors : Boolean := True;
+      Current_Dir : constant String := Get_Current_Dir;
 
       procedure Report_Error
         (S : String; Project : Project_Id; Tree : Project_Tree_Ref);
@@ -849,6 +863,7 @@ package body Projects.Registry is
          Registry.Data.Tree,
          Report_Error'Unrestricted_Access,
          Follow_Links    => not Registry.Data.Trusted_Mode,
+         Current_Dir     => Current_Dir,
          When_No_Sources => Warning);
 
       --  Lower case the languages attribute

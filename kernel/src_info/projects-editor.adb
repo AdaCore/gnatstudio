@@ -3445,6 +3445,7 @@ package body Projects.Editor is
       else
          Prj.Part.Parse (Tree, Imported_Project,
                          Full_Name (Imported_Project_Location).all,
+                         Current_Directory => Get_Current_Dir,
                          Always_Errout_Finalize => True);
       end if;
 
