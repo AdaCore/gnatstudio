@@ -3445,7 +3445,7 @@ package body Projects.Editor is
       else
          Prj.Part.Parse (Tree, Imported_Project,
                          Full_Name (Imported_Project_Location).all,
-                         Current_Directory => Get_Current_Dir,
+                         Current_Directory      => Get_Current_Dir,
                          Always_Errout_Finalize => True);
       end if;
 
@@ -3458,13 +3458,13 @@ package body Projects.Editor is
       end if;
 
       return Add_Imported_Project
-        (Root_Project      => Root_Project,
-         Project           => Project,
-         Imported_Project  => Imported_Project,
+        (Root_Project              => Root_Project,
+         Project                   => Project,
+         Imported_Project          => Imported_Project,
          Imported_Project_Location => Imported_Project_Location,
-         Report_Errors     => Report_Errors,
-         Use_Relative_Path => Use_Relative_Path,
-         Limited_With      => Limited_With);
+         Report_Errors             => Report_Errors,
+         Use_Relative_Path         => Use_Relative_Path,
+         Limited_With              => Limited_With);
    end Add_Imported_Project;
 
    -----------------------------

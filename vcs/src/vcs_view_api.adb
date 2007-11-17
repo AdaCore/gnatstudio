@@ -779,7 +779,7 @@ package body VCS_View_API is
       if File_Section then
          declare
             File_S : constant String :=
-              Full_Name (File_Information (Context)).all;
+                       Full_Name (File_Information (Context)).all;
          begin
             if File_S'Length > 5
               and then File_S (File_S'Last - 3 .. File_S'Last) = "$log"
@@ -1097,7 +1097,7 @@ package body VCS_View_API is
             if not Has_Activity_Information (Context) then
                if Commit_Directory (Ref) then
                   --  Add Commit and Add to Activity menu entry only if
-                  --  directories as handled by the underlying VCS.
+                  --  directories are handled by the underlying VCS.
 
                   Gtk_New (Item, -"Commit");
                   Append (Submenu, Item);
