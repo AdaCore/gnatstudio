@@ -394,7 +394,7 @@ package body GPS.Kernel.Timeout is
 
                declare
                   Output : constant String :=
-                    Conditional_Strip_CR (Expect_Out (Fd.all));
+                             Conditional_Strip_CR (Expect_Out (Fd.all));
                begin
                   if Data.Console /= null
                     and then Data.Show_Output

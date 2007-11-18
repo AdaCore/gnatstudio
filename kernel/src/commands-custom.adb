@@ -528,8 +528,8 @@ package body Commands.Custom is
                else
                   declare
                      Outp : constant String :=
-                       Output (Index .. Matched (0).First - 1)
-                       & Output (Matched (0).Last + 1 .. EOL);
+                              Output (Index .. Matched (0).First - 1)
+                                & Output (Matched (0).Last + 1 .. EOL);
                   begin
                      if Command.Execution.Hide_Progress then
                         Insert (Outp);
@@ -648,8 +648,8 @@ package body Commands.Custom is
    -----------------------
 
    procedure Check_Save_Output
-     (Command          : access Custom_Command'Class;
-      Save_Output      : out Boolean_Array)
+     (Command     : access Custom_Command'Class;
+      Save_Output : out Boolean_Array)
    is
       Index : Natural;
 
@@ -2313,7 +2313,7 @@ package body Commands.Custom is
    ------------
 
    function To_XML
-     (Editor         : access Custom_Component_Editor_Record'Class)
+     (Editor : access Custom_Component_Editor_Record'Class)
       return Glib.Xml_Int.Node_Ptr
    is
       Output      : constant String := Get_Text (Editor.Output);

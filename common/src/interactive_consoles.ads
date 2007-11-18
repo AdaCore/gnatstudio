@@ -27,7 +27,6 @@ with Gtk.Main;
 with Gtk.Text_Buffer;
 with Gtk.Text_View;
 with Gtk.Text_Mark;
-
 with Gtk.Text_Tag;
 with Gtk.Scrolled_Window;
 
