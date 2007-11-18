@@ -116,8 +116,8 @@ package body Codefix_Module is
    type Codefix_Sessions is access Codefix_Sessions_Array;
 
    type Codefix_Module_ID_Record is new Module_ID_Record with record
-      Sessions      : Codefix_Sessions;
-      Codefix_Class : Class_Type;
+      Sessions            : Codefix_Sessions;
+      Codefix_Class       : Class_Type;
       Codefix_Error_Class : Class_Type;
    end record;
    type Codefix_Module_ID_Access is access all Codefix_Module_ID_Record'Class;
@@ -272,7 +272,7 @@ package body Codefix_Module is
      (Text : GPS_Navigator; File_Name : Virtual_File) return Virtual_File is
    begin
       return Create
-        (Name           => Other_File_Base_Name
+        (Name            => Other_File_Base_Name
            (Get_Project_From_File
               (Project_Registry (Get_Registry (Text).all), File_Name),
             File_Name),
@@ -296,13 +296,13 @@ package body Codefix_Module is
         (Session.Corrector.all, Session.Current_Text.all, Error, Command);
 
       Remove_Location_Action
-        (Kernel        => Kernel,
-         Identifier    => Location_Button_Name,
-         Category      => Session.Category.all,
-         File          => Get_File (Err),
-         Line          => Get_Line (Err),
-         Column        => Natural (Get_Column (Err)),
-         Message       => Get_Message (Err));
+        (Kernel     => Kernel,
+         Identifier => Location_Button_Name,
+         Category   => Session.Category.all,
+         File       => Get_File (Err),
+         Line       => Get_Line (Err),
+         Column     => Natural (Get_Column (Err)),
+         Message    => Get_Message (Err));
 
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -330,8 +330,8 @@ package body Codefix_Module is
       Style_Index          : Integer := -1;
       Warning_Index        : Integer := -1)
    is
-      Errors_Found : Compilation_Output;
-      Session      : Codefix_Session;
+      Errors_Found           : Compilation_Output;
+      Session                : Codefix_Session;
       Fi, Li, Ci, Mi, Si, Wi : Integer;
 
       Command : Command_Access;
@@ -511,8 +511,9 @@ package body Codefix_Module is
 
       Update_All (Session.Current_Text.all);
 
-      Child := GPS_MDI_Child (Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Graphic_Codefix_Record'Tag));
+      Child := GPS_MDI_Child
+        (Find_MDI_Child_By_Tag (Get_MDI (Kernel), Graphic_Codefix_Record'Tag));
+
       if Child = null then
          Gtk_New
            (Graphic_Codefix,
@@ -557,9 +558,9 @@ package body Codefix_Module is
    -------------------
 
    procedure Remove_Pixmap
-     (Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Session      : access Codefix_Session_Record;
-      Error        : Error_Id)
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Session : access Codefix_Session_Record;
+      Error   : Error_Id)
    is
       Err : constant Error_Message := Get_Error_Message (Error);
    begin
@@ -578,12 +579,12 @@ package body Codefix_Module is
    --------------------------------
 
    procedure Create_Pixmap_And_Category
-     (Kernel       : access Kernel_Handle_Record'Class;
-      Session      : access Codefix_Session_Record;
-      Error        : Error_Id)
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Session : access Codefix_Session_Record;
+      Error   : Error_Id)
    is
-      New_Action    : Action_Item;
-      Err : constant Error_Message := Get_Error_Message (Error);
+      New_Action : Action_Item;
+      Err        : constant Error_Message := Get_Error_Message (Error);
    begin
       New_Action := new Line_Information_Record;
       New_Action.Text := new String'(-"Fix error");
@@ -602,14 +603,14 @@ package body Codefix_Module is
         Kernel_Handle (Kernel);
 
       Add_Location_Action
-        (Kernel        => Kernel,
-         Identifier    => Location_Button_Name,
-         Category      => Session.Category.all,
-         File          => Get_File (Err),
-         Line          => Get_Line (Err),
-         Column        => Natural (Get_Column (Err)),
-         Message       => Get_Message (Err),
-         Action        => New_Action);
+        (Kernel     => Kernel,
+         Identifier => Location_Button_Name,
+         Category   => Session.Category.all,
+         File       => Get_File (Err),
+         Line       => Get_Line (Err),
+         Column     => Natural (Get_Column (Err)),
+         Message    => Get_Message (Err),
+         Action     => New_Action);
    end Create_Pixmap_And_Category;
 
    --------------------
@@ -623,8 +624,8 @@ package body Codefix_Module is
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       pragma Unreferenced (Factory, Object);
-      Session       : Codefix_Session;
-      Error         : Error_Id;
+      Session : Codefix_Session;
+      Error   : Error_Id;
 
    begin
       if Has_Message_Information (Context) then
@@ -672,10 +673,10 @@ package body Codefix_Module is
       Codefix_Module_ID := new Codefix_Module_ID_Record;
 
       Register_Module
-        (Module                  => Module_ID (Codefix_Module_ID),
-         Kernel                  => Kernel,
-         Module_Name             => Codefix_Module_Name,
-         Priority                => Default_Priority);
+        (Module      => Module_ID (Codefix_Module_ID),
+         Kernel      => Kernel,
+         Module_Name => Codefix_Module_Name,
+         Priority    => Default_Priority);
 
       Register_Contextual_Submenu
         (Kernel,
@@ -768,13 +769,13 @@ package body Codefix_Module is
          Instance := Nth_Arg (Data, 1, Codefix_Module_ID.Codefix_Error_Class);
 
          declare
-            Codefix : constant Class_Instance :=
-              Nth_Arg (Data, 2, Codefix_Module_ID.Codefix_Class);
-            Message : constant String  := Nth_Arg (Data, 4, "");
-            Session : constant Codefix_Session := Get_Data (Codefix);
+            Codefix  : constant Class_Instance :=
+                         Nth_Arg (Data, 2, Codefix_Module_ID.Codefix_Class);
+            Message  : constant String  := Nth_Arg (Data, 4, "");
+            Session  : constant Codefix_Session := Get_Data (Codefix);
             Location : constant File_Location_Info := Get_Data (Data, 3);
-            File    : constant Class_Instance := Get_File (Location);
-            Error   : constant Error_Id := Search_Error
+            File     : constant Class_Instance := Get_File (Location);
+            Error    : constant Error_Id := Search_Error
               (Session.Corrector.all,
                Get_Data (File),
                Get_Line (Location),
@@ -791,9 +792,9 @@ package body Codefix_Module is
          Instance := Nth_Arg (Data, 1, Codefix_Module_ID.Codefix_Error_Class);
 
          declare
-            Error : constant Codefix_Error_Data := Get_Data (Instance);
+            Error         : constant Codefix_Error_Data := Get_Data (Instance);
             Solution_Node : Command_List.List_Node :=
-              First (Get_Solutions (Error.Error));
+                              First (Get_Solutions (Error.Error));
          begin
             Set_Return_Value_As_List (Data);
 
@@ -809,10 +810,10 @@ package body Codefix_Module is
          Instance := Nth_Arg (Data, 1, Codefix_Module_ID.Codefix_Error_Class);
 
          declare
-            Error : constant Codefix_Error_Data := Get_Data (Instance);
-            Choice : Integer := Nth_Arg (Data, 2, 0);
+            Error         : constant Codefix_Error_Data := Get_Data (Instance);
+            Choice        : Integer := Nth_Arg (Data, 2, 0);
             Solution_Node : Command_List.List_Node :=
-              First (Get_Solutions (Error.Error));
+                              First (Get_Solutions (Error.Error));
          begin
             while Choice /= 0
               and then Solution_Node /= Command_List.Null_Node
@@ -912,7 +913,7 @@ package body Codefix_Module is
 
          declare
             Error : Error_Id := Get_First_Error (Session.Corrector.all);
-            Err : Class_Instance;
+            Err   : Class_Instance;
          begin
             Set_Return_Value_As_List (Data);
             while Error /= Null_Error_Id loop
@@ -932,11 +933,9 @@ package body Codefix_Module is
    --------------
 
    procedure Set_Data
-     (Instance : Class_Instance; Session  : Codefix_Session) is
+     (Instance : Class_Instance; Session : Codefix_Session) is
    begin
-      if not Is_Subclass
-        (Instance, Codefix_Module_ID.Codefix_Class)
-      then
+      if not Is_Subclass (Instance, Codefix_Module_ID.Codefix_Class) then
          raise Invalid_Data;
       end if;
 
@@ -949,7 +948,7 @@ package body Codefix_Module is
    -- Get_Data --
    --------------
 
-   function Get_Data (Instance :  Class_Instance) return Codefix_Session is
+   function Get_Data (Instance : Class_Instance) return Codefix_Session is
    begin
       if not Is_Subclass (Instance, Codefix_Module_ID.Codefix_Class) then
          raise Invalid_Data;
@@ -967,9 +966,7 @@ package body Codefix_Module is
    procedure Set_Data
      (Instance : Class_Instance; Error : Codefix_Error_Data) is
    begin
-      if not Is_Subclass
-        (Instance, Codefix_Module_ID.Codefix_Error_Class)
-      then
+      if not Is_Subclass (Instance, Codefix_Module_ID.Codefix_Error_Class) then
          raise Invalid_Data;
       end if;
 
@@ -983,8 +980,7 @@ package body Codefix_Module is
    -- Get_Data --
    --------------
 
-   function Get_Data
-     (Instance : Class_Instance) return Codefix_Error_Data is
+   function Get_Data (Instance : Class_Instance) return Codefix_Error_Data is
    begin
       if not Is_Subclass (Instance, Codefix_Module_ID.Codefix_Error_Class) then
          raise Invalid_Data;
@@ -1106,8 +1102,7 @@ package body Codefix_Module is
    --------------------------
 
    procedure Register_Preferences
-     (Kernel : access Kernel_Handle_Record'Class)
-   is
+     (Kernel : access Kernel_Handle_Record'Class) is
    begin
       Remove_Policy := Glib.Properties.Creation.Param_Spec_Enum
         (Codefix_Remove_Policy_Properties.Gnew_Enum
