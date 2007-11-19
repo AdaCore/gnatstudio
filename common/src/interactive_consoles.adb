@@ -49,6 +49,7 @@ with Gtk.Widget;          use Gtk.Widget;
 with Gtk.Selection;       use Gtk.Selection;
 with Gtk.Arguments;       use Gtk.Arguments;
 with Gtkada.Handlers;     use Gtkada.Handlers;
+with Gtkada.MDI;          use Gtkada.MDI;
 with Pango.Font;          use Pango.Font;
 with Pango.Enums;         use Pango.Enums;
 
@@ -76,6 +77,8 @@ package body Interactive_Consoles is
          Console   : Interactive_Console;
          Script    : Scripting_Language;
          Took_Grab : Boolean := False;
+         Child     : MDI_Child := null;
+         --  MDI_Child cached, used in Insert_Error
       end record;
    type Interactive_Virtual_Console
      is access all Interactive_Virtual_Console_Record'Class;
@@ -277,8 +280,15 @@ package body Interactive_Consoles is
    procedure Insert_Error
      (Console : access Interactive_Virtual_Console_Record; Txt : String) is
    begin
-      Insert (Console.Console, Txt, Add_LF => True, Highlight => True,
+      Insert (Console.Console, Txt,
+              Add_LF      => True,
+              Highlight   => True,
               Show_Prompt => False);
+
+      if Console.Child = null then
+         Console.Child := Find_MDI_Child_From_Widget (Console.Console.View);
+      end if;
+      Raise_Child (Console.Child);
    end Insert_Error;
 
    -----------------
@@ -1347,7 +1357,7 @@ package body Interactive_Consoles is
          After => False);
 
       Gtkada.Handlers.Return_Callback.Connect
-        (Console, Signal_Delete_Event,
+        (Console, Gtk.Widget.Signal_Delete_Event,
          Gtkada.Handlers.Return_Callback.To_Marshaller
            (Delete_Event_Handler'Access),
          After => False);

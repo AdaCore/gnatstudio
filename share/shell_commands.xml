@@ -881,6 +881,11 @@ GPS.parse_xml ("""
      <description>Display a line of text. This command is specific to the GPS shell.</description>
   </shell_doc>
 
+  <shell_doc name="GPS.echo_error">
+     <param name="...">Any number of parameters</param>
+     <description>Display a line of text. This command is specific to the GPS shell. It is designed to be used to output error messages. This command raises the shell windows.</description>
+  </shell_doc>
+
   <shell_doc name="GPS.load">
      <param name="filename">A string</param>
      <description>Load and execute a script file. This command is specific to the GPS shell.</description>

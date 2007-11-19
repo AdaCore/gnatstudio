@@ -16,8 +16,8 @@
       <shell output="">echo "Querying status for files in %1"</shell>
       <external check-password="true">cvs status "$2-"</external>
       <on-failure>
-         <shell output="">echo "CVS error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "CVS error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>VCS.status_parse "CVS" "%1" "$1" FALSE "%3"</shell>
    </action>
@@ -29,8 +29,8 @@
       <shell output="">echo "Querying status for %1"</shell>
       <external check-password="true">cvs status -l .</external>
       <on-failure>
-         <shell output="">echo "CVS error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "CVS error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>VCS.status_parse "CVS" "%1" "$1" FALSE "%3"</shell>
    </action>
@@ -41,8 +41,8 @@
       <shell>echo "Create tag $2 on $1"</shell>
       <external check-password="true" output="none">cvs tag -c "$2"</external>
       <on-failure>
-         <shell output="">echo "CVS error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "CVS error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
    </action>
 
@@ -50,8 +50,8 @@
       <shell>echo "Create branch $2 on $1"</shell>
       <external check-password="true" output="none">cvs tag -c -b "$2"</external>
       <on-failure>
-         <shell output="">echo "CVS error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "CVS error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
    </action>
 
@@ -61,8 +61,8 @@
       <shell>echo "Switch to $2"</shell>
       <external check-password="true" output="none">cvs update -r $2</external>
       <on-failure>
-         <shell output="">echo "CVS error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "CVS error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
    </action>
 
@@ -72,8 +72,8 @@
       <shell>echo "Querying annotations for $1"</shell>
       <external check-password="true" output="none">cvs annotate "$1"</external>
       <on-failure>
-         <shell output="">echo "CVS error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "CVS error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell output="none">VCS.annotations_parse "CVS" "$1" "%1"</shell>
    </action>
@@ -93,8 +93,8 @@
       <shell>dump "$1" TRUE</shell>
       <external check-password="true">cvs commit -F "%1" "$2-"</external>
       <on-failure>
-         <shell output="">echo "CVS error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "CVS error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>delete "%2"</shell>
       <shell>Hook "file_changed_on_disk"</shell>
@@ -107,14 +107,14 @@
       <shell output="">echo "adding file(s) $2-"</shell>
       <external check-password="true">cvs add "$2-"</external>
       <on-failure>
-         <shell output="">echo "CVS error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "CVS error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>dump "$1" TRUE</shell>
       <external check-password="true">cvs commit -F "%1" "$2-"</external>
       <on-failure>
-         <shell output="">echo "CVS error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "CVS error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>delete "%2"</shell>
    </action>
@@ -125,8 +125,8 @@
       <shell output="">echo "adding (no commit) file(s) $2-"</shell>
       <external check-password="true">cvs add "$2-"</external>
       <on-failure>
-         <shell output="">echo "CVS error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "CVS error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
    </action>
 
@@ -137,14 +137,14 @@
       <shell>delete "$2-"</shell>
       <external check-password="true">cvs remove "$2-"</external>
       <on-failure>
-         <shell output="">echo "CVS error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "CVS error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>dump "$1" TRUE</shell>
       <external check-password="true">cvs commit -F "%1" "$2-"</external>
       <on-failure>
-         <shell output="">echo "CVS error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "CVS error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>delete "%2"</shell>
    </action>
@@ -156,8 +156,8 @@
       <shell>delete "$2-"</shell>
       <external check-password="true">cvs remove "$2-"</external>
       <on-failure>
-         <shell output="">echo "CVS error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "CVS error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
    </action>
 
@@ -167,14 +167,14 @@
       <shell output="">echo "Querying history for $1"</shell>
       <external check-password="true">cvs status -v "$1"</external>
       <on-failure>
-         <shell output="">echo "CVS error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "CVS error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>VCS.revision_parse "CVS" "$1" "%1"</shell>
       <external check-password="true">cvs log -N "$1"</external>
       <on-failure>
-         <shell output="">echo "CVS error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "CVS error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>VCS.log_parse "CVS" "$1" "%1"</shell>
    </action>
@@ -183,8 +183,8 @@
       <shell output="">echo "Querying history for $1"</shell>
       <external check-password="true">cvs log -N "$1"</external>
       <on-failure>
-         <shell output="">echo "CVS error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "CVS error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
      <shell>dump "%1" TRUE</shell>
      <shell>Editor.edit "%1"</shell>
@@ -196,14 +196,14 @@
       <shell output="">echo "Querying history for $2"</shell>
       <external check-password="true">cvs status -v "$2"</external>
       <on-failure>
-         <shell output="">echo "CVS error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "CVS error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>VCS.revision_parse "CVS" "$2" "%1"</shell>
       <external check-password="true">cvs log -N -r$1 "$2"</external>
       <on-failure>
-         <shell output="">echo "CVS error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "CVS error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>VCS.log_parse "CVS" "$2" "%1"</shell>
    </action>
@@ -213,8 +213,8 @@
    <action name="generic_cvs_update" show-command="false" output="none" category="">
       <external check-password="true" output="">cvs update "$*"</external>
       <on-failure>
-         <shell output="">echo "CVS error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "CVS error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>Hook "file_changed_on_disk"</shell>
       <shell>Hook.run %1 null</shell>
@@ -225,8 +225,8 @@
    <action name="generic_cvs_merge" show-command="false" output="none" category="">
       <external check-password="true" output="">cvs update -j "$1" "$2"</external>
       <on-failure>
-         <shell output="">echo "CVS error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "CVS error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>Hook "file_changed_on_disk"</shell>
       <shell>Hook.run %1 null</shell>
@@ -292,8 +292,8 @@
       <shell output="">echo "Getting comparison between revisions $1 / $2 of $3 ..."</shell>
       <external check-password="true">cvs -q update -p -r$2 "$3"</external>
       <on-failure>
-         <shell output="">echo "CVS error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "CVS error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>dump "%1" TRUE</shell>
       <shell>File "%1"</shell>
@@ -315,8 +315,8 @@
       <shell output="">echo "Getting comparison between base and head of $1 ..."</shell>
       <external check-password="true">cvs -q update -p -rHEAD "$1"</external>
       <on-failure>
-         <shell output="">echo "CVS error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "CVS error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>dump "%1" TRUE</shell>
       <shell>File "%1"</shell>
@@ -340,8 +340,8 @@
       <shell output="">echo "Opening CVS file $*"</shell>
       <external check-password="true">cvs edit "$*"</external>
       <on-failure>
-         <shell output="">echo "CVS error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "CVS error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>Hook "file_changed_on_disk"</shell>
       <shell>Hook.run %1 null</shell>
@@ -353,8 +353,8 @@
    <action name="generic_cvs_revert" show-command="false" output="none" category="">
       <external check-password="true" output="">cvs update -C "$*"</external>
       <on-failure>
-         <shell output="">echo "CVS error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "CVS error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>Hook "file_changed_on_disk"</shell>
       <shell>Hook.run %1 null</shell>
@@ -366,8 +366,8 @@
       <shell output="">echo "Getting $2 at revision $1"</shell>
       <external check-password="true" output="none">cvs -q update -p -r "$1" "$2"</external>
       <on-failure>
-         <shell output="">echo "CVS error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "CVS error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>dump_file "%1" "revision $1 for $2"</shell>
       <shell>Editor.edit "%1"</shell>

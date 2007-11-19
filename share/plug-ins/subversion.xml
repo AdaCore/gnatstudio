@@ -16,8 +16,8 @@
       <shell output="">echo "Querying status for files in %1"</shell>
       <external check-password="true">svn --non-interactive status -N -u -v "$2-"</external>
       <on-failure>
-         <shell output="">echo "SVN error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "SVN error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>VCS.status_parse "Subversion" "%1" "$1" FALSE "%3"</shell>
    </action>
@@ -29,8 +29,8 @@
       <shell output="">echo "Querying status for %1"</shell>
       <external check-password="true">svn --non-interactive status --non-recursive -u -v .</external>
       <on-failure>
-         <shell output="">echo "SVN error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "SVN error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>VCS.status_parse "Subversion" "%1" "$1" FALSE "%3"</shell>
    </action>
@@ -42,8 +42,8 @@
       <shell output="">echo "Querying status for %1"</shell>
       <external check-password="true">svn --non-interactive status -u -v .</external>
       <on-failure>
-         <shell output="">echo "SVN error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "SVN error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>VCS.status_parse "Subversion" "%1" "$1" FALSE "%3"</shell>
    </action>
@@ -56,8 +56,8 @@
       <external check-password="true" output="none">svn mkdir -m "New tag directory" "%3"</external>
       <external check-password="true" output="none">svn copy -m "New tag" "../$1" "%3"</external>
       <on-failure>
-         <shell output="">echo "SVN error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "SVN error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
    </action>
 
@@ -68,8 +68,8 @@
       <external check-password="true" output="none">svn mkdir -m "New branch directory" "%3"</external>
       <external check-password="true" output="none">svn copy -m "New branch" "../$1" "%3"</external>
       <on-failure>
-         <shell output="">echo "SVN error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "SVN error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
    </action>
 
@@ -80,8 +80,8 @@
       <shell output="">echo "Switch to %1"</shell>
       <external check-password="true" output="none">svn switch %2</external>
       <on-failure>
-         <shell output="">echo "SVN error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "SVN error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
    </action>
 
@@ -91,8 +91,8 @@
       <shell>echo "Querying annotations for $1"</shell>
       <external check-password="true" output="none">svn --non-interactive annotate -v "$1"</external>
       <on-failure>
-         <shell output="">echo "SVN error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "SVN error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell output="none">VCS.annotations_parse "Subversion" "$1" "%1"</shell>
    </action>
@@ -103,8 +103,8 @@
       <shell>pwd</shell>
       <external check-password="true">svn --non-interactive status --non-recursive -v .</external>
       <on-failure>
-         <shell output="">echo "SVN error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "SVN error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>VCS.status_parse "Subversion" "%1" FALSE FALSE "%2"</shell>
    </action>
@@ -116,8 +116,8 @@
       <shell>dump "$1" TRUE</shell>
       <external check-password="true">svn --non-interactive --non-recursive commit -F "%1" "$2-"</external>
       <on-failure>
-         <shell output="">echo "SVN error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "SVN error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>delete "%2"</shell>
       <shell>Hook "file_changed_on_disk"</shell>
@@ -130,14 +130,14 @@
       <shell output="">echo "adding file(s) $2-"</shell>
       <external check-password="true">svn add "$2-"</external>
       <on-failure>
-         <shell output="">echo "SVN error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "SVN error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>dump "$1" TRUE</shell>
       <external check-password="true">svn commit -F "%1" "$2-"</external>
       <on-failure>
-         <shell output="">echo "SVN error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "SVN error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>delete "%2"</shell>
    </action>
@@ -148,8 +148,8 @@
       <shell output="">echo "adding (no commit) file(s) $2-"</shell>
       <external check-password="true">svn add --non-recursive "$2-"</external>
       <on-failure>
-         <shell output="">echo "SVN error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "SVN error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
    </action>
 
@@ -159,14 +159,14 @@
       <shell output="">echo "removing file(s) $2-"</shell>
       <external check-password="true">svn --non-interactive remove "$2-"</external>
       <on-failure>
-         <shell output="">echo "SVN error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "SVN error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>dump "$1" TRUE</shell>
       <external check-password="true">svn commit -F "%1" "$2-"</external>
       <on-failure>
-         <shell output="">echo "SVN error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "SVN error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>delete "%2"</shell>
    </action>
@@ -177,8 +177,8 @@
       <shell output="">echo "removing file(s) $2-"</shell>
       <external check-password="true">svn --non-interactive remove "$2-"</external>
       <on-failure>
-         <shell output="">echo "SVN error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "SVN error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
    </action>
 
@@ -188,8 +188,8 @@
       <shell output="">echo "Querying history for $1"</shell>
       <external check-password="true">svn --non-interactive -v log "$1"</external>
       <on-failure>
-         <shell output="">echo "SVN error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "SVN error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>VCS.revision_parse "Subversion" "$1" "%1"</shell>
       <shell>VCS.log_parse "Subversion" "$1" "%2"</shell>
@@ -199,8 +199,8 @@
       <shell output="">echo "Querying history for $1"</shell>
       <external check-password="true">svn --non-interactive log "$1"</external>
       <on-failure>
-         <shell output="">echo "SVN error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "SVN error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>dump "%1" TRUE</shell>
       <shell>Editor.edit "%1"</shell>
@@ -212,8 +212,8 @@
       <shell output="">echo "Querying history for $2"</shell>
       <external check-password="true">svn --non-interactive log -r$1 "$2"</external>
       <on-failure>
-         <shell output="">echo "SVN error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "SVN error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>VCS.revision_parse "Subversion" "$2" "%1"</shell>
       <shell>VCS.log_parse "Subversion" "$2" "%2"</shell>
@@ -224,8 +224,8 @@
    <action name="generic_svn_update" show-command="false" output="none" category="">
       <external check-password="true" output="">svn --non-interactive update "$*"</external>
       <on-failure>
-         <shell output="">echo "SVN error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "SVN error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>Hook "file_changed_on_disk"</shell>
       <shell>Hook.run %1 null</shell>
@@ -238,8 +238,8 @@
       <shell>VCS.repository_path "$2" "$1"</shell>
       <external check-password="true" output="">svn --non-interactive merge "%2" "%1"</external>
       <on-failure>
-         <shell output="">echo "SVN error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "SVN error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>Hook "file_changed_on_disk"</shell>
       <shell>Hook.run %1 null</shell>
@@ -250,8 +250,8 @@
    <action name="generic_svn_resolved" show-command="false" output="none" category="">
       <external check-password="true" output="">svn resolved "$*"</external>
       <on-failure>
-         <shell output="">echo "SVN error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "SVN error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
    </action>
 
@@ -267,8 +267,8 @@
       <shell output="">echo "Getting comparison for $1 ..."</shell>
       <external check-password="true">svn --non-interactive diff --diff-cmd diff -x --normal -rHEAD "$1"</external>
       <on-failure>
-         <shell output="">echo "SVN error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "SVN error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>dump "%1" TRUE</shell>
       <shell>File "%1"</shell>
@@ -282,8 +282,8 @@
       <shell output="">echo "Getting comparison for revision $1 of $2 ..."</shell>
       <external check-password="true">svn --non-interactive diff --diff-cmd diff -x --normal -r $1 "$2"</external>
       <on-failure>
-         <shell output="">echo "SVN error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "SVN error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>dump "%1" TRUE</shell>
       <shell>File "%1"</shell>
@@ -297,8 +297,8 @@
       <shell output="">echo "Getting comparison between revisions $1 / $2 of $3 ..."</shell>
       <external check-password="true">svn --non-interactive diff --diff-cmd diff -x --normal -r$1:$2 "$3"</external>
       <on-failure>
-         <shell output="">echo "SVN error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "SVN error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>dump "%1" TRUE</shell>
       <shell>File "%1"</shell>
@@ -312,8 +312,8 @@
       <shell output="">echo "Getting comparison between base and head of $1 ..."</shell>
       <external check-password="true">svn --non-interactive diff --diff-cmd diff -x --normal -rBASE:HEAD "$1"</external>
       <on-failure>
-         <shell output="">echo "SVN error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "SVN error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>dump "%1" TRUE</shell>
       <shell>File "%1"</shell>
@@ -330,8 +330,8 @@
       <external check-password="true">svn --non-interactive diff --diff-cmd diff -x --normal "%2" "%1"</external>
 
       <on-failure>
-         <shell output="">echo "SVN error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "SVN error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>dump "%1" TRUE</shell>
       <shell>File "%1"</shell>
@@ -346,8 +346,8 @@
    <action name="generic_svn_revert" show-command="false" output="none" category="">
       <external check-password="true" output="">svn revert "$*"</external>
       <on-failure>
-         <shell output="">echo "SVN error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "SVN error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>Hook "file_changed_on_disk"</shell>
       <shell>Hook.run %1 null</shell>
@@ -359,8 +359,8 @@
       <shell output="">echo "Getting $2 at revision $1"</shell>
       <external check-password="true" output="none">svn cat -r "$1" "$2"</external>
       <on-failure>
-         <shell output="">echo "SVN error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "SVN error:"</shell>
+         <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>dump_file "%1" "revision $1 for $2"</shell>
       <shell>Editor.edit "%1"</shell>

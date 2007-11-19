@@ -39,8 +39,8 @@
       <shell>dump "$1" TRUE</shell>
       <external>cleartool ci -cfile "%1" "$2-"</external>
       <on-failure>
-         <shell output="">echo "Clearcase error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "Clearcase error:"</shell>
+         <shell output="">echo_error "%2"</shell>
          <shell>MDI.dialog "Clearcase: could not check-in file(s)."</shell>
       </on-failure>
       <shell>delete "%2"</shell>
@@ -74,8 +74,8 @@
    <action name="clearcase_update" show-command="true" output="none" category="">
       <external>cleartool update $*</external>
       <on-failure>
-         <shell output="">echo "Clearcase error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "Clearcase error:"</shell>
+         <shell output="">echo_error "%2"</shell>
          <shell>MDI.dialog "Clearcase: could not update file(s)."</shell>
       </on-failure>
       <shell>Hook "file_changed_on_disk"</shell>
@@ -126,8 +126,8 @@
       <shell>MDI.input_dialog "Checking out file(s)" "Comment:=GPS check-out"</shell>
       <external>cleartool co -c "%1" "$*"</external>
       <on-failure>
-         <shell output="">echo "Clearcase error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "Clearcase error:"</shell>
+         <shell output="">echo_error "%2"</shell>
          <shell>MDI.dialog "Clearcase: could not checkout file(s)."</shell>
       </on-failure>
       <shell>Hook "file_changed_on_disk"</shell>
@@ -139,8 +139,8 @@
    <action name="clearcase_uncheckout" show-command="true" output="none" category="">
       <external>cleartool uncheckout -keep "$*"</external>
       <on-failure>
-         <shell output="">echo "Clearcase error:"</shell>
-         <shell output="">echo "%2"</shell>
+         <shell output="">echo_error "Clearcase error:"</shell>
+         <shell output="">echo_error "%2"</shell>
          <shell>MDI.dialog "Clearcase: could not uncheckout file(s)."</shell>
       </on-failure>
       <shell>Hook "file_changed_on_disk"</shell>
