@@ -135,15 +135,15 @@ package body GPS.Kernel.Project is
    begin
       Child := new Glib.Xml_Int.Node;
       Child.Tag := new String'("source_path");
-      Child.Value := Property.Source_Path;
+      Child.Value := new String'(Property.Source_Path.all);
       Add_Child (Node, Child);
       Child := new Glib.Xml_Int.Node;
       Child.Tag := new String'("object_path");
-      Child.Value := Property.Object_Path;
+      Child.Value := new String'(Property.Object_Path.all);
       Add_Child (Node, Child);
       Child := new Glib.Xml_Int.Node;
       Child.Tag := new String'("project_path");
-      Child.Value := Property.Project_Path;
+      Child.Value := new String'(Property.Project_Path.all);
       Add_Child (Node, Child);
 
    exception
@@ -235,23 +235,28 @@ package body GPS.Kernel.Project is
                Name => "gnatls", Found => Success);
 
             if Success then
-               Trace (Me, "set source path from cache to " &
-                      Property.Source_Path.all);
+               if Active (Me) then
+                  Trace (Me, "set source path from cache to " &
+                         Property.Source_Path.all);
+                  Trace (Me, "set object path from cache to " &
+                         Property.Object_Path.all);
+                  Trace (Me, "set project path from cache to " &
+                         Property.Project_Path.all);
+               end if;
+
                Set_Predefined_Source_Path
                  (Handle.Registry.all, Property.Source_Path.all);
-               Trace (Me, "set object path from cache to " &
-                      Property.Source_Path.all);
                Set_Predefined_Object_Path
                  (Handle.Registry.all, Property.Object_Path.all);
-               Trace (Me, "set project path from cache to " &
-                      Property.Source_Path.all);
                Set_Predefined_Project_Path
                  (Handle.Registry.all, Property.Project_Path.all);
                Add_Hook
                  (Handle, Build_Server_Connected_Hook,
                   Wrapper (On_Build_Server_Connection'Access),
                   "compute_predefined_path");
+
                return;
+
             end if;
          end if;
 
