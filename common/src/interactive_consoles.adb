@@ -763,8 +763,11 @@ package body Interactive_Consoles is
 
       Console : constant Interactive_Console := Interactive_Console (Object);
    begin
-      if Console.Idle_Registered then
+      if Console.Idle_Registered
+        and then Console.Idle_Id /= 0
+      then
          Idle_Remove (Console.Idle_Id);
+         Console.Idle_Id := 0;
       end if;
 
       --  When a Gtk_Text_View is deleted, a "mark_set" signal is sent
@@ -1193,8 +1196,11 @@ package body Interactive_Consoles is
       C     : constant Interactive_Console := Interactive_Console (Console);
       L, L2 : Hyper_Links;
    begin
-      if C.Idle_Registered then
+      if C.Idle_Registered
+        and then C.Idle_Id /= 0
+      then
          Idle_Remove (C.Idle_Id);
+         C.Idle_Id := 0;
       end if;
 
       L := C.Links;
