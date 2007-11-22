@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2007                       --
---                             AdaCore                               --
+--                     Copyright (C) 2000-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -932,13 +931,13 @@ package body Display_Items is
       if Item.Auto_Refresh then
          Process_User_Command
            (Item.Debugger,
-            "graph display " & New_Name & " dependent on"
+            "graph display """ & New_Name & """ dependent on"
             & Integer'Image (Item.Num) & " link_name " & Link_Name,
             Output_Command => True);
       else
          Process_User_Command
            (Item.Debugger,
-            "graph print " & New_Name & " dependent on"
+            "graph print """ & New_Name & """ dependent on"
             & Integer'Image (Item.Num) & " link_name " & Link_Name,
             Output_Command => True);
       end if;
