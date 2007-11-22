@@ -23,8 +23,6 @@ with Glib.Unicode;              use Glib.Unicode;
 
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 
-with Ada.Unchecked_Deallocation;
-
 package body UTF8_Utils is
 
    ---------------------
@@ -54,17 +52,15 @@ package body UTF8_Utils is
          declare
             Tentative     : chars_ptr;
             Read, Written : aliased Natural;
-            Error         : GError_Access := new GError'(null);
-            procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-              (GError, GError_Access);
+            Error         : aliased GError := null;
+
          begin
             Tentative := Locale_To_UTF8
-              (Input, Read'Access, Written'Access, Error);
+              (Input, Read'Access, Written'Access, Error'Unchecked_Access);
 
-            if Error.all = null then
+            if Error = null then
                --  There was no error in converting, return the converted
                --  string.
-               Unchecked_Free (Error);
 
                declare
                   Result : constant String := Value (Tentative);
@@ -73,7 +69,7 @@ package body UTF8_Utils is
                   return Result;
                end;
             else
-               Error_Free (Error.all);
+               Error_Free (Error);
                --  ??? We could make some use of the error message.
 
                --  Locale_To_UTF8 does not clarify whether Tentative is
@@ -83,8 +79,6 @@ package body UTF8_Utils is
                if Tentative /= Null_Ptr then
                   Free (Tentative);
                end if;
-
-               Unchecked_Free (Error);
 
                --  We could not convert everything; return an empty string.
                Success.all := False;
