@@ -1925,6 +1925,8 @@ package body Docgen2 is
                   Constructs    : aliased Construct_List;
                   Ctxt_Elem     : Context_Stack_Element;
                   Comments      : Comments_List.Vector;
+                  Last          : Natural;
+                  CR_Found      : Boolean;
 
                begin
                   File_EInfo.Language := Lang;
@@ -1932,6 +1934,19 @@ package body Docgen2 is
                   Ref (File_EInfo.File);
                   File_Buffer := Read_File
                     (Command.Source_Files (Command.File_Index));
+
+                  --  Strip CRs from file.
+                  Strip_CR (File_Buffer.all, Last, CR_Found);
+
+                  if CR_Found then
+                     declare
+                        Old_Buff : GNAT.Strings.String_Access := File_Buffer;
+                     begin
+                        File_Buffer :=
+                          new String'(Old_Buff (Old_Buff'First .. Last));
+                        Free (Old_Buff);
+                     end;
+                  end if;
 
                   --  ??? Commented out code, because for now only Ada will be
                   --  supported
@@ -3340,7 +3355,9 @@ package body Docgen2 is
                  (Get_Filename (E_Info.Location.File_Loc.File).Base_Name)));
       end if;
 
-      if E_Info.Body_Location /= No_File_Location then
+      if E_Info.Body_Location /= No_File_Location
+        and then E_Info.Body_Location.File /= null
+      then
          declare
             File : constant VFS.Virtual_File :=
                      Get_Filename (E_Info.Body_Location.File);
@@ -3694,6 +3711,7 @@ package body Docgen2 is
 
       File_Handle  : File_Type;
       Local_List   : array (1 .. 27) of Entity_Info_List.Vector;
+      First_List   : Boolean;
 
    begin
       Map_Cursor := EInfo_Map.First;
@@ -3715,6 +3733,20 @@ package body Docgen2 is
          end if;
 
          Entity_Info_Map.Next (Map_Cursor);
+      end loop;
+
+      for J in Local_List'Range loop
+         if J = 1 then
+            Letter := '*';
+         else
+            Letter := Character'Val (J - 2 + Character'Pos ('A'));
+         end if;
+
+         Insert
+           (Translation,
+            Assoc
+              ("ENTITY_EXISTS_" & Letter,
+               +(not Local_List (J).Is_Empty)));
       end loop;
 
       for J in Local_List'Range loop
@@ -3746,7 +3778,7 @@ package body Docgen2 is
             Ada.Text_IO.Create
               (File_Handle,
                Name => Get_Doc_Directory (Kernel) &
-                 Backend.To_Destination_Name ("entities"));
+                 Backend.To_Destination_Name ("entitiesother"));
          else
             Ada.Text_IO.Create
               (File_Handle,
@@ -3757,6 +3789,28 @@ package body Docgen2 is
          Ada.Text_IO.Put
            (File_Handle, Parse (Tmpl, Translation, Cached => True));
          Ada.Text_IO.Close (File_Handle);
+
+         --  Special handling for the first non empty lists: we need
+         --  this list to be named entities.html, so that other files
+         --  can easily reference it.
+         First_List := True;
+         for K in 1 .. J - 1 loop
+            if not Local_List (K).Is_Empty then
+               First_List := False;
+               exit;
+            end if;
+         end loop;
+
+         if First_List then
+            --  First non empty list... create entities.html
+            Ada.Text_IO.Create
+              (File_Handle,
+               Name => Get_Doc_Directory (Kernel) &
+                 Backend.To_Destination_Name ("entities"));
+            Ada.Text_IO.Put
+              (File_Handle, Parse (Tmpl, Translation, Cached => True));
+            Ada.Text_IO.Close (File_Handle);
+         end if;
       end loop;
    end Generate_Global_Index;
 
