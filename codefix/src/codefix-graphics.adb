@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002-2007                    --
---                              AdaCore                              --
+--                    Copyright (C) 2002-2007, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -249,7 +248,7 @@ package body Codefix.Graphics is
       procedure Add_Tab;
       --  Add a page in the Notebook and initialize its data.
 
-      Current_Sol      : Command_List.List_Node;
+      Current_Sol      : Solution_List_Iterator;
       Proposition      : Vdiff_Access;
       Label            : Gtk_Label;
       Current_Nb_Tabs  : Integer;
@@ -396,10 +395,10 @@ package body Codefix.Graphics is
 
       Current_Nb_Tabs := 0;
 
-      while Current_Sol /= Command_List.Null_Node loop
+      while not At_End (Current_Sol) loop
          begin
             Execute
-              (Data (Current_Sol),
+              (Get_Command (Current_Sol),
                Graphic_Codefix.Session.Current_Text.all,
                Extended_Extract);
          exception
@@ -433,7 +432,7 @@ package body Codefix.Graphics is
 
          Current_Nb_Tabs := Current_Nb_Tabs + 1;
          Gtk.Enums.String_List.Append
-           (New_Popdown_Str, Get_Caption (Data (Current_Sol)));
+           (New_Popdown_Str, Get_Caption (Get_Command (Current_Sol)));
 
          Free (Extended_Extract);
 
@@ -458,7 +457,7 @@ package body Codefix.Graphics is
    procedure Valid_Current_Solution
      (Graphic_Codefix : access Graphic_Codefix_Record'Class)
    is
-      Current_Command : Command_List.List_Node;
+      Current_Command : Solution_List_Iterator;
    begin
       if Graphic_Codefix.Current_Error = Null_Error_Id then
          return;
@@ -466,13 +465,13 @@ package body Codefix.Graphics is
 
       Current_Command := First (Get_Solutions (Graphic_Codefix.Current_Error));
 
-      while Get_Caption (Data (Current_Command)) /=
+      while Get_Caption (Get_Command (Current_Command)) /=
         Get_Text (Graphic_Codefix.Fix_Entry)
       loop
 
          Current_Command := Next (Current_Command);
 
-         if Current_Command = Command_List.Null_Node then
+         if At_End (Current_Command) then
             Raise_Exception
               (Codefix_Panic'Identity,
                "Text """ &
@@ -487,7 +486,7 @@ package body Codefix.Graphics is
         (Graphic_Codefix.Session.Corrector.all,
          Graphic_Codefix.Session.Current_Text.all,
          Graphic_Codefix.Current_Error,
-         Data (Current_Command));
+         Get_Command (Current_Command));
 
       Graphic_Codefix.Fixed_Cb
         (Graphic_Codefix.Kernel,
@@ -502,18 +501,18 @@ package body Codefix.Graphics is
    function Get_Nth_Solution
      (Graphic_Codefix : access Graphic_Codefix_Record'Class) return Gint
    is
-      Current_Command : Command_List.List_Node;
+      Current_Command : Solution_List_Iterator;
       Current_Number  : Gint := 1;
    begin
       Current_Command := First (Get_Solutions (Graphic_Codefix.Current_Error));
 
-      while Get_Caption (Data (Current_Command)) /=
+      while Get_Caption (Get_Command (Current_Command)) /=
         Get_Text (Graphic_Codefix.Fix_Entry)
       loop
          Current_Number := Current_Number + 1;
          Current_Command := Next (Current_Command);
 
-         if Current_Command = Command_List.Null_Node then
+         if At_End (Current_Command) then
             Raise_Exception
               (Codefix_Panic'Identity,
                "Text """ &

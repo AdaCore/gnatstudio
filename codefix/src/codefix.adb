@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002-2006                    --
---                                AdaCore                            --
+--                    Copyright (C) 2002-2007, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,8 +23,8 @@ package body Codefix is
    -- To_Char_Index --
    -------------------
 
-   function To_Char_Index (Index : Column_Index; Str : String)
-     return Char_Index
+   function To_Char_Index
+     (Index : Column_Index; Str : String) return Char_Index
    is
       Current_Index : Char_Index := Char_Index (Str'First);
       Current_Col   : Column_Index := 1;
@@ -52,8 +51,8 @@ package body Codefix is
    -- To_Column_Index --
    ---------------------
 
-   function To_Column_Index (Index : Char_Index; Str : String)
-     return Column_Index
+   function To_Column_Index
+     (Index : Char_Index; Str : String) return Column_Index
    is
       Current_Index : Char_Index := Char_Index (Str'First);
       Current_Col   : Column_Index := 1;
@@ -126,5 +125,65 @@ package body Codefix is
          return new String'(This.all);
       end if;
    end Clone;
+
+   ------------
+   -- Is_Set --
+   ------------
+
+   function Is_Set
+     (Mask : Useless_Entity_Operations;
+      Flag : Useless_Entity_Operations) return Boolean
+   is
+   begin
+      return (Mask and Flag) = Flag;
+   end Is_Set;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (This : in out State_Node) is
+   begin
+      Free (This.Error);
+   end Free;
+
+   ---------------------
+   -- Set_Error_State --
+   ---------------------
+
+   procedure Set_Error_State
+     (List : in out State_List; Error : String; State : Error_State)
+   is
+      Node : State_Lists.List_Node := First (List);
+   begin
+      while Node /= State_Lists.Null_Node loop
+         if Data (Node).Error.all = Error then
+            Set_Data (Node, (new String'(Error), State));
+            return;
+         end if;
+         Node := Next (Node);
+      end loop;
+
+      Append (List, (new String'(Error), State));
+   end Set_Error_State;
+
+   ---------------------
+   -- Get_Error_State --
+   ---------------------
+
+   function Get_Error_State
+     (List : State_List; Error : String) return Error_State
+   is
+      Node : State_Lists.List_Node := First (List);
+   begin
+      while Node /= State_Lists.Null_Node loop
+         if Data (Node).Error.all = Error then
+            return Data (Node).State;
+         end if;
+         Node := Next (Node);
+      end loop;
+
+      return Unknown;
+   end Get_Error_State;
 
 end Codefix;

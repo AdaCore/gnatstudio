@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2007                      --
---                            AdaCore                                --
+--                    Copyright (C) 2002-2007, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -164,6 +163,62 @@ package body Codefix.Formal_Errors is
       return New_Message;
    end Clone;
 
+   ------------
+   -- Concat --
+   ------------
+
+   procedure Concat (Dest : in out Solution_List; Source : Solution_List) is
+   begin
+      Concat (Command_List.List (Dest), Command_List.List (Source));
+   end Concat;
+
+   ------------
+   -- Length --
+   ------------
+
+   function Length (List : Solution_List) return Integer is
+   begin
+      return Length (Command_List.List (List));
+   end Length;
+
+   -----------
+   -- First --
+   -----------
+
+   function First (List : Solution_List) return Solution_List_Iterator is
+   begin
+      return Solution_List_Iterator
+        (Command_List.First (Command_List.List (List)));
+   end First;
+
+   ----------
+   -- Next --
+   ----------
+
+   function Next (It : Solution_List_Iterator) return Solution_List_Iterator is
+   begin
+      return Solution_List_Iterator (Next (Command_List.List_Node (It)));
+   end Next;
+
+   ------------
+   -- At_End --
+   ------------
+
+   function At_End (It : Solution_List_Iterator) return Boolean is
+   begin
+      return Command_List.List_Node (It) = Command_List.Null_Node;
+   end At_End;
+
+   -----------------
+   -- Get_Command --
+   -----------------
+
+   function Get_Command
+     (It : Solution_List_Iterator) return Text_Command'Class is
+   begin
+      return Data (It);
+   end Get_Command;
+
    -----------------
    -- Get_Command --
    -----------------
@@ -183,26 +238,14 @@ package body Codefix.Formal_Errors is
       return Data (Current_Node);
    end Get_Command;
 
-   ----------
-   -- Free --
-   ----------
+   ---------------
+   -- Free_List --
+   ---------------
 
-   procedure Free (This : in out Solution_List) is
+   procedure Free_List (This : in out Solution_List) is
    begin
       Free (This, True);
-   end Free;
-
-   ------------
-   -- Is_Set --
-   ------------
-
-   function Is_Set
-     (Mask : Useless_Entity_Operations;
-      Flag : Useless_Entity_Operations) return Boolean
-   is
-   begin
-      return (Mask and Flag) = Flag;
-   end Is_Set;
+   end Free_List;
 
    ---------------
    -- Should_Be --
@@ -946,9 +989,9 @@ package body Codefix.Formal_Errors is
                      Free (Str_Array (J));
                   end loop;
 
-                  Codefix.Formal_Errors.Free (Result);
+                  Codefix.Formal_Errors.Free_List (Result);
 
-                  return Command_List.Null_List;
+                  return Solution_List (Command_List.Null_List);
                end if;
             end loop;
 

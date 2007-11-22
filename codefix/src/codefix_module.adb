@@ -37,10 +37,11 @@ with Gtkada.MDI;                use Gtkada.MDI;
 with Basic_Types;               use Basic_Types;
 with UTF8_Utils;                use UTF8_Utils;
 with Codefix.Errors_Parser;     use Codefix.Errors_Parser;
+with Codefix.Error_Lists;       use Codefix.Error_Lists;
 with Codefix.GPS_Io;            use Codefix.GPS_Io;
 with Codefix.Graphics;          use Codefix.Graphics;
-with Codefix.Helpers;           use Codefix.Helpers;
 with Codefix.Text_Manager;      use Codefix.Text_Manager;
+with Codefix.GNAT_Parser;       use Codefix.GNAT_Parser;
 with Commands.Codefix;          use Commands.Codefix;
 with Commands;                  use Commands;
 with GPS.Intl;                  use GPS.Intl;
@@ -61,8 +62,6 @@ with VFS;                       use VFS;
 with Glib;                      use Glib;
 
 package body Codefix_Module is
-
-   use Codefix.Formal_Errors.Command_List;
 
    Codefix_Answer_Xpm : aliased Pixmap_Array;
    pragma Import (C, Codefix_Answer_Xpm, "codefix_answer_xpm");
@@ -119,6 +118,7 @@ package body Codefix_Module is
       Sessions            : Codefix_Sessions;
       Codefix_Class       : Class_Type;
       Codefix_Error_Class : Class_Type;
+      Codefix_Processor : Fix_Processor;
    end record;
    type Codefix_Module_ID_Access is access all Codefix_Module_ID_Record'Class;
 
@@ -330,13 +330,15 @@ package body Codefix_Module is
       Style_Index          : Integer := -1;
       Warning_Index        : Integer := -1)
    is
-      Errors_Found           : Compilation_Output;
-      Session                : Codefix_Session;
+      Errors_Found : Error_Message_List;
+      Session      : Codefix_Session;
       Fi, Li, Ci, Mi, Si, Wi : Integer;
 
       Command : Command_Access;
       Options : Fix_Options;
    begin
+      Initialize (Errors_Found);
+
       if Codefix_Module_ID.Sessions /= null then
          for S in Codefix_Module_ID.Sessions'Range loop
             if Codefix_Module_ID.Sessions (S).Category.all = Category then
@@ -435,14 +437,14 @@ package body Codefix_Module is
         (Session.Current_Text.all, Get_Construct_Database (Kernel));
       Set_Error_Cb
         (Session.Corrector.all, new GPS_Execute_Corrupted_Record);
-      Set_Last_Output (Errors_Found, Kernel, Output);
+      Add_Errors_From (Errors_Found, Get_Registry (Kernel), Output);
 
       Options.Remove_Policy := Policy_To_Operations
         (Codefix_Remove_Policy'Val (Get_Pref (Remove_Policy)));
 
       Analyze
-        (Session.Corrector.all, Session.Current_Text.all,
-         Errors_Found, Options, null);
+        (Session.Corrector.all, Codefix_Module_ID.Codefix_Processor,
+         Session.Current_Text.all, Errors_Found, Options, null);
 
       --  Update the location window to show which errors can be fixed
 
@@ -750,7 +752,10 @@ package body Codefix_Module is
 
       Register_Preferences (Kernel);
 
-      Create_Parsers;
+      Codefix.GNAT_Parser.Register_Parsers
+        (Codefix_Module_ID.Codefix_Processor);
+
+      Initialize_Parsers (Codefix_Module_ID.Codefix_Processor);
    exception
       when E : others => Trace (Exception_Handle, E);
    end Register_Module;
@@ -793,14 +798,14 @@ package body Codefix_Module is
 
          declare
             Error         : constant Codefix_Error_Data := Get_Data (Instance);
-            Solution_Node : Command_List.List_Node :=
+            Solution_Node : Solution_List_Iterator :=
                               First (Get_Solutions (Error.Error));
          begin
             Set_Return_Value_As_List (Data);
 
-            while Solution_Node /= Command_List.Null_Node loop
+            while not At_End (Solution_Node) loop
                Set_Return_Value
-                 (Data, Get_Caption (Command_List.Data (Solution_Node)));
+                 (Data, Get_Caption (Get_Command (Solution_Node)));
                Solution_Node := Next (Solution_Node);
             end loop;
          end;
@@ -812,19 +817,19 @@ package body Codefix_Module is
          declare
             Error         : constant Codefix_Error_Data := Get_Data (Instance);
             Choice        : Integer := Nth_Arg (Data, 2, 0);
-            Solution_Node : Command_List.List_Node :=
+            Solution_Node : Solution_List_Iterator :=
                               First (Get_Solutions (Error.Error));
          begin
             while Choice /= 0
-              and then Solution_Node /= Command_List.Null_Node
+              and then not At_End (Solution_Node)
             loop
                Solution_Node := Next (Solution_Node);
                Choice := Choice - 1;
             end loop;
 
-            if Solution_Node /= Command_List.Null_Node then
+            if not At_End (Solution_Node) then
                On_Fix (Get_Kernel (Data), Error.Session,
-                       Error.Error, Command_List.Data (Solution_Node));
+                       Error.Error, Get_Command (Solution_Node));
             end if;
          end;
 
@@ -1044,16 +1049,17 @@ package body Codefix_Module is
       Session : access Codefix_Session_Record;
       Error   : Error_Id)
    is
-      Solution_Node : Command_List.List_Node;
+      Solution_Node : Solution_List_Iterator;
       Mitem         : Codefix_Menu_Item;
    begin
       Solution_Node := First (Get_Solutions (Error));
 
-      while Solution_Node /= Command_List.Null_Node loop
-         Gtk_New (Mitem, Get_Caption (Data (Solution_Node)));
+      while not At_End (Solution_Node) loop
+         Gtk_New (Mitem, Get_Caption (Get_Command (Solution_Node)));
 
          --  ??? Where is this freed
-         Mitem.Fix_Command  := new Text_Command'Class'(Data (Solution_Node));
+         Mitem.Fix_Command  := new Text_Command'Class'
+           (Get_Command (Solution_Node));
          Mitem.Error        := Error;
          Mitem.Kernel       := Kernel_Handle (Kernel);
          Mitem.Session      := Codefix_Session (Session);
@@ -1077,7 +1083,7 @@ package body Codefix_Module is
          Unchecked_Free (Id.Sessions);
       end if;
 
-      Free_Parsers;
+      Free (Codefix_Module_ID.Codefix_Processor);
       Destroy (Module_ID_Record (Id));
    end Destroy;
 

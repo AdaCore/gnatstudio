@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2006                       --
---                             AdaCore                               --
+--                    Copyright (C) 2002-2007, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,60 +19,16 @@
 
 with Generic_List;
 
-with Codefix.Text_Manager; use Codefix.Text_Manager;
+with Codefix.Text_Manager;  use Codefix.Text_Manager;
 with Codefix.Formal_Errors; use Codefix.Formal_Errors;
-use Codefix.Formal_Errors.Command_List;
+with Codefix.Error_Lists;   use Codefix.Error_Lists;
+with Codefix.Errors_Parser; use Codefix.Errors_Parser;
 with GNAT.Strings;
 with VFS;
 
 with Ada.Unchecked_Deallocation;
 
 package Codefix.Errors_Manager is
-
-   type Fix_Options is record
-      Remove_Policy : Useless_Entity_Operations := Remove_Entity;
-   end record;
-   --  This record hold various options used to configure the fix.
-
-   ----------------------------------------------------------------------------
-   --  type Errors_Interface
-   ----------------------------------------------------------------------------
-
-   type Errors_Interface is abstract tagged private;
-   --  Type used to manage error messages send by the compilator.
-
-   type Ptr_Errors_Interface is access all Errors_Interface'Class;
-
-   procedure Free (This : in out Ptr_Errors_Interface);
-
-   procedure Free (This : in out Errors_Interface) is abstract;
-   --  Free the memory associated with This. This must call the inherited Free
-
-   procedure Get_Direct_Message
-     (This    : in out Errors_Interface;
-      Current : out Error_Message) is abstract;
-   --  Get a message without any modification of cols or lines numbers.
-
-   procedure Get_Message
-     (This         : in out Errors_Interface'Class;
-      Current_Text : Text_Navigator_Abstr'Class;
-      Current      : out Error_Message);
-   --  Returns the next message to be analyzed, with the correct modifications.
-   --  (change the cols to be conformant with tabs).
-
-   procedure Get_Preview
-     (This         : in out Errors_Interface'Class;
-      Current_Text : Text_Navigator_Abstr'Class;
-      Preview      : out Error_Message);
-   --  Return the next message, but without remove it from the message list.
-   --  The same message can still be got by Get_Message.
-
-   function No_More_Messages
-     (This : Errors_Interface) return Boolean is abstract;
-   --  Is true where all the messages are got fron Get_Message.
-
-   procedure Skip_Message (This : in out Errors_Interface'Class);
-   --  Skip the next message.
 
    ----------------------------------------------------------------------------
    --  type Error_Id
@@ -124,8 +79,9 @@ package Codefix.Errors_Manager is
 
    procedure Analyze
      (This        : in out Correction_Manager;
+      Processor   : Fix_Processor;
       Source_Text : Text_Navigator_Abstr'Class;
-      Errors_List : in out Errors_Interface'Class;
+      Errors_List : in out Error_Message_List;
       Options     : Fix_Options;
       Callback    : Error_Callback := null);
    --  Cover the whole list of errors, and add them into This. If Callback
@@ -176,35 +132,14 @@ package Codefix.Errors_Manager is
      (This : Correction_Manager; Error : Error_Id) return Error_Id;
    --  Return the error that have been recorded before Error in This.
 
-   ----------------------------------------------------------------------------
-   --  type Error_State
-   ----------------------------------------------------------------------------
-
-   type Error_State is (Enabled, Disabled, Unknown);
-   --  The two states possible for an error.
-
-   type State_List is private;
-
-   procedure Set_Error_State
-     (List : in out State_List; Error : String; State : Error_State);
-   --  Modify the current error state.
-
-   function Get_Error_State
-     (List : State_List; Error : String) return Error_State;
-   --  Return the current error state.
-
 private
-
-   type Errors_Interface is abstract tagged record
-      Preview : Error_Message := Invalid_Error_Message;
-   end record;
 
    type Ptr_Boolean is access all Boolean;
    procedure Free is new Ada.Unchecked_Deallocation (Boolean, Ptr_Boolean);
 
    type Error_Id_Record is record
       Message         : Error_Message := Invalid_Error_Message;
-      Solutions       : Solution_List := Command_List.Null_List;
+      Solutions       : Solution_List := Null_Solution_List;
       Category        : GNAT.Strings.String_Access;
       Fixed           : Ptr_Boolean := new Boolean'(False);
       Solution_Chosen : Ptr_Extract := new Extract;
@@ -232,17 +167,5 @@ private
       Solutions : Solution_List;
       Category  : String;
       New_Error : out Error_Id);
-
-   type State_Node is record
-      Error : GNAT.Strings.String_Access;
-      State : Error_State := Unknown;
-   end record;
-
-   procedure Free (This : in out State_Node);
-
-   package State_Lists is new Generic_List (State_Node);
-   use State_Lists;
-
-   type State_List is new State_Lists.List;
 
 end Codefix.Errors_Manager;

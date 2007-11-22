@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003-2006                    --
---                                 AdaCore                           --
+--                    Copyright (C) 2003-2007, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,8 +19,6 @@
 
 with GPS.Kernel;           use GPS.Kernel;
 with GNAT.Strings;
-with GNAT.Regpat;
-with GNAT.Expect;
 
 with Generic_List;
 with Ada.Unchecked_Deallocation;
@@ -127,28 +124,6 @@ package Codefix.GPS_Io is
    procedure Constrain_Update (This : in out Console_Interface);
    --  Set the text to modified state.
 
-   type Compilation_Output is new Errors_Interface with private;
-   --  This type is an interface to the list of compilation errors that the
-   --  compilator has found.
-
-   procedure Set_Regexp
-     (This                    : in out Compilation_Output;
-      File_Location_Regexp    : GNAT.Regpat.Pattern_Matcher;
-      File_Index_In_Regexp    : Integer;
-      Line_Index_In_Regexp    : Integer;
-      Col_Index_In_Regexp     : Integer;
-      Msg_Index_In_Regexp     : Integer;
-      Style_Index_In_Regexp   : Integer;
-      Warning_Index_In_Regexp : Integer);
-   --  Set the regular expression used to parse error messages
-
-   procedure Set_Last_Output
-     (This   : in out Compilation_Output;
-      Kernel : Kernel_Handle;
-      Output : String);
-   --  Initialize the list of error messages from the output of a previous
-   --  compilation.
-
 private
 
    package String_List is new Generic_List (GNAT.Strings.String_Access);
@@ -177,22 +152,6 @@ private
 
    type GPS_Mark is new Mark_Abstr with record
       Id : GNAT.Strings.String_Access;
-   end record;
-
-   procedure Free (This : in out Compilation_Output);
-   procedure Get_Direct_Message
-     (This    : in out Compilation_Output;
-      Current : out Error_Message);
-   function No_More_Messages (This : Compilation_Output) return Boolean;
-   --  See doc for inherited subprograms
-
-   type Compilation_Output is new Errors_Interface with record
-      Errors_Buffer : GNAT.Strings.String_Access := null;
-      Current_Index : Natural := 1;
-      Kernel        : Kernel_Handle;
-      File_Regexp : GNAT.Expect.Pattern_Matcher_Access;
-      File_Index, Line_Index, Col_Index, Msg_Index : Integer;
-      Style_Index, Warning_Index : Integer;
    end record;
 
 end Codefix.GPS_Io;

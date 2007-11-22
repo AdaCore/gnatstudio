@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002-2006                    --
---                                AdaCore                            --
+--                    Copyright (C) 2002-2007, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,6 +22,8 @@
 
 with Ada.Text_IO; use Ada.Text_IO;
 with GNAT.Strings; use GNAT.Strings;
+
+with Generic_List;
 
 package Codefix is
 
@@ -51,13 +52,13 @@ package Codefix is
    type Char_Index is new Natural;
    --  Type of an index in a string
 
-   function To_Char_Index (Index : Column_Index; Str : String)
-     return Char_Index;
+   function To_Char_Index
+     (Index : Column_Index; Str : String) return Char_Index;
    --  Return the char position corresponding to the column given in parameter
    --  This will handle tabulations
 
-   function To_Column_Index (Index : Char_Index; Str : String)
-     return Column_Index;
+   function To_Column_Index
+     (Index : Char_Index; Str : String) return Column_Index;
    --  Return the column index corresponding to the char index given in
    --  parameter. This will handle tablulations.
 
@@ -81,5 +82,62 @@ package Codefix is
 
    function Clone (This : String_Access) return String_Access;
    --  Duplicate all information contained in This, allocated in the pool.
+
+   ----------------------------------------------------------------------------
+   --  type Useless_Entity_Operation
+   ----------------------------------------------------------------------------
+
+   type Useless_Entity_Operations is mod 8;
+
+   Nothing                 : constant Useless_Entity_Operations;
+   Remove_Entity           : constant Useless_Entity_Operations;
+   Add_Pragma_Unreferenced : constant Useless_Entity_Operations;
+   Comment_Entity          : constant Useless_Entity_Operations;
+
+   function Is_Set
+     (Mask : Useless_Entity_Operations;
+      Flag : Useless_Entity_Operations) return Boolean;
+   --  Returns true if the Flag is contained in the Mask.
+
+   type Fix_Options is record
+      Remove_Policy : Useless_Entity_Operations := Remove_Entity;
+   end record;
+   --  This record hold various options used to configure the fix.
+
+   ----------------------------------------------------------------------------
+   --  type Error_State
+   ----------------------------------------------------------------------------
+
+   type Error_State is (Enabled, Disabled, Unknown);
+   --  The two states possible for an error.
+
+   type State_List is private;
+
+   procedure Set_Error_State
+     (List : in out State_List; Error : String; State : Error_State);
+   --  Modify the current error state.
+
+   function Get_Error_State
+     (List : State_List; Error : String) return Error_State;
+   --  Return the current error state.
+
+private
+
+   Nothing                 : constant Useless_Entity_Operations := 0;
+   Remove_Entity           : constant Useless_Entity_Operations := 1;
+   Add_Pragma_Unreferenced : constant Useless_Entity_Operations := 2;
+   Comment_Entity          : constant Useless_Entity_Operations := 4;
+
+   type State_Node is record
+      Error : GNAT.Strings.String_Access;
+      State : Error_State := Unknown;
+   end record;
+
+   procedure Free (This : in out State_Node);
+
+   package State_Lists is new Generic_List (State_Node);
+   use State_Lists;
+
+   type State_List is new State_Lists.List;
 
 end Codefix;

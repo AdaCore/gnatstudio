@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002-2006                    --
---                              AdaCore                              --
+--                    Copyright (C) 2002-2007, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,22 +17,16 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Regpat;        use GNAT.Regpat;
-
 with Basic_Types;        use Basic_Types;
 with GPS.Kernel.Console; use GPS.Kernel.Console;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 with String_Utils;       use String_Utils;
-with GPS.Kernel.Project; use GPS.Kernel.Project;
 with Traces;             use Traces;
 with VFS;                use VFS;
 
 package body Codefix.GPS_Io is
 
    Me : constant Debug_Handle := Create ("Codefix.GPS_IO");
-
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Pattern_Matcher, GNAT.Expect.Pattern_Matcher_Access);
 
    ------------
    -- Get_Id --
@@ -211,7 +204,7 @@ package body Codefix.GPS_Io is
       Node := First (This.Lines.all);
 
       for J in 1 .. Number - 1 loop
-         if Node = Null_Node then
+         if Node = String_List.Null_Node then
             return "";
          end if;
 
@@ -459,92 +452,5 @@ package body Codefix.GPS_Io is
    begin
       This.File_Modified.all := True;
    end Constrain_Update;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (This : in out Compilation_Output) is
-   begin
-      Free (This.Errors_Buffer);
-      Unchecked_Free (This.File_Regexp);
-   end Free;
-
-   ------------------------
-   -- Get_Direct_Message --
-   ------------------------
-
-   procedure Get_Direct_Message
-     (This    : in out Compilation_Output;
-      Current : out Error_Message)
-   is
-      Last_Index : constant Natural := This.Current_Index;
-   begin
-      Skip_To_Char (This.Errors_Buffer.all, This.Current_Index, ASCII.LF);
-      Initialize
-        (Current,
-         Registry      => Get_Registry (This.Kernel),
-         Error_Line    =>
-           This.Errors_Buffer (Last_Index .. This.Current_Index - 1),
-         Regexp        => This.File_Regexp.all,
-         File_Index    => This.File_Index,
-         Line_Index    => This.Line_Index,
-         Col_Index     => This.Col_Index,
-         Msg_Index     => This.Msg_Index,
-         Style_Index   => This.Style_Index,
-         Warning_Index => This.Warning_Index);
-
-      This.Current_Index := This.Current_Index + 1;
-   end Get_Direct_Message;
-
-   ----------------------
-   -- No_More_Messages --
-   ----------------------
-
-   function No_More_Messages (This : Compilation_Output) return Boolean is
-   begin
-      if This.Errors_Buffer /= null then
-         return This.Current_Index >= This.Errors_Buffer'Last;
-      else
-         return True;
-      end if;
-   end No_More_Messages;
-
-   ---------------------
-   -- Set_Last_Output --
-   ---------------------
-
-   procedure Set_Last_Output
-     (This   : in out Compilation_Output;
-      Kernel : Kernel_Handle;
-      Output : String) is
-   begin
-      Assign (This.Errors_Buffer, Output);
-      This.Kernel := Kernel;
-   end Set_Last_Output;
-
-   ----------------
-   -- Set_Regexp --
-   ----------------
-
-   procedure Set_Regexp
-     (This                    : in out Compilation_Output;
-      File_Location_Regexp    : GNAT.Regpat.Pattern_Matcher;
-      File_Index_In_Regexp    : Integer;
-      Line_Index_In_Regexp    : Integer;
-      Col_Index_In_Regexp     : Integer;
-      Msg_Index_In_Regexp     : Integer;
-      Style_Index_In_Regexp   : Integer;
-      Warning_Index_In_Regexp : Integer) is
-   begin
-      Unchecked_Free (This.File_Regexp);
-      This.File_Regexp   := new Pattern_Matcher'(File_Location_Regexp);
-      This.File_Index    := File_Index_In_Regexp;
-      This.Line_Index    := Line_Index_In_Regexp;
-      This.Col_Index     := Col_Index_In_Regexp;
-      This.Msg_Index     := Msg_Index_In_Regexp;
-      This.Style_Index   := Style_Index_In_Regexp;
-      This.Warning_Index := Warning_Index_In_Regexp;
-   end Set_Regexp;
 
 end Codefix.GPS_Io;

@@ -63,11 +63,31 @@ package Codefix.Formal_Errors is
    procedure Free (This : in out Error_Message);
    --  Frees the memory used by the object.
 
-   package Command_List is new Generic_List (Text_Command'Class, Free_Data);
-   use Command_List;
+   type Solution_List is private;
 
-   subtype Solution_List is Command_List.List;
-   --  This is a list of solutions proposed to solve an error.
+   Null_Solution_List : constant Solution_List;
+
+   procedure Concat (Dest : in out Solution_List; Source : Solution_List);
+   --  Adds the contents of Sources at the end of Dest. No deep copy is done by
+   --  this function.
+
+   function Length (List : Solution_List) return Integer;
+   --  Return the number of elements in the list.
+
+   type Solution_List_Iterator is private;
+
+   function First (List : Solution_List) return Solution_List_Iterator;
+   --  Return an iterator on the first element of the list.
+
+   function Next (It : Solution_List_Iterator) return Solution_List_Iterator;
+   --  Moves the iterator to the next element of the list.
+
+   function At_End (It : Solution_List_Iterator) return Boolean;
+   --  Return true if the iterator reached the end of the list.
+
+   function Get_Command
+     (It : Solution_List_Iterator) return Text_Command'Class;
+   --  Return the command currently pointed by this iterator.
 
    function Is_Style_Or_Warning (Error : Error_Message) return Boolean;
    --  Return true if the error message is either a style error or a warning.
@@ -80,24 +100,8 @@ package Codefix.Formal_Errors is
       Position : Positive) return Text_Command'Class;
    --  Get the extract recorded in a solution list at the given position.
 
-   procedure Free (This : in out Solution_List);
+   procedure Free_List (This : in out Solution_List);
    --  Free the memory associated to a Solution_List.
-
-   ----------------------------------------------------------------------------
-   --  type Useless_Entity_Operation
-   ----------------------------------------------------------------------------
-
-   type Useless_Entity_Operations is mod 8;
-
-   Nothing                 : constant Useless_Entity_Operations;
-   Remove_Entity           : constant Useless_Entity_Operations;
-   Add_Pragma_Unreferenced : constant Useless_Entity_Operations;
-   Comment_Entity          : constant Useless_Entity_Operations;
-
-   function Is_Set
-     (Mask : Useless_Entity_Operations;
-      Flag : Useless_Entity_Operations) return Boolean;
-   --  Returns true if the Flag is contained in the Mask.
 
    ----------------------------------------------------------------------------
    --  functions of formal errors
@@ -255,12 +259,18 @@ private
       Is_Style, Is_Warning : Boolean := False;
    end record;
 
-   Invalid_Error_Message : constant Error_Message :=
-      (Null_File_Cursor with null, False, False);
+   package Command_List is new Generic_List (Text_Command'Class, Free_Data);
+   use Command_List;
 
-   Nothing                 : constant Useless_Entity_Operations := 0;
-   Remove_Entity           : constant Useless_Entity_Operations := 1;
-   Add_Pragma_Unreferenced : constant Useless_Entity_Operations := 2;
-   Comment_Entity          : constant Useless_Entity_Operations := 4;
+   type Solution_List is new Command_List.List;
+   --  This is a list of solutions proposed to solve an error.
+
+   type Solution_List_Iterator is new Command_List.List_Node;
+
+   Invalid_Error_Message : constant Error_Message :=
+     (Null_File_Cursor with null, False, False);
+
+   Null_Solution_List : constant Solution_List := Solution_List
+     (Command_List.Null_List);
 
 end Codefix.Formal_Errors;

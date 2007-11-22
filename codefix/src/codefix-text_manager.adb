@@ -2974,7 +2974,8 @@ package body Codefix.Text_Manager is
             when ' ' =>
                Indent := Indent + 1;
             when ASCII.HT =>
-               Indent := Indent + Tab_Width - (Indent mod Tab_Width);
+               Indent := Indent + Tab_Width -
+                 (Indent mod Tab_Width);
             when others =>
                exit;
          end case;

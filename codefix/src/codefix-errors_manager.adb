@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2006                       --
---                             AdaCore                               --
+--                    Copyright (C) 2002-2007, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,79 +17,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Codefix.Errors_Parser; use Codefix.Errors_Parser;
 with VFS;                   use VFS;
 
 package body Codefix.Errors_Manager is
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (This : in out Ptr_Errors_Interface) is
-      procedure Free_Pool is new Ada.Unchecked_Deallocation
-        (Errors_Interface'Class, Ptr_Errors_Interface);
-   begin
-      if This /= null then
-         Free (This.all);
-         Free_Pool (This);
-      end if;
-   end Free;
-
-   -----------------
-   -- Get_Message --
-   -----------------
-
-   procedure Get_Message
-     (This         : in out Errors_Interface'Class;
-      Current_Text : Text_Navigator_Abstr'Class;
-      Current      : out Error_Message)
-   is
-      pragma Unreferenced (Current_Text);
-   begin
-      if This.Preview /= Invalid_Error_Message then
-         Current := This.Preview;
-         This.Preview := Invalid_Error_Message;
-         return;
-      end if;
-
-      Get_Direct_Message (This, Current);
-   end Get_Message;
-
-   -----------------
-   -- Get_Preview --
-   -----------------
-
-   procedure Get_Preview
-     (This         : in out Errors_Interface'Class;
-      Current_Text : Text_Navigator_Abstr'Class;
-      Preview      : out Error_Message) is
-   begin
-      if This.Preview = Invalid_Error_Message
-        and then not No_More_Messages (This)
-      then
-         Get_Message (This, Current_Text, This.Preview);
-      end if;
-
-      Free (Preview);
-      Preview := This.Preview;
-   end Get_Preview;
-
-   ------------------
-   -- Skip_Message --
-   ------------------
-
-   procedure Skip_Message (This : in out Errors_Interface'Class) is
-      Garbage : Error_Message;
-   begin
-      if This.Preview /= Invalid_Error_Message then
-         This.Preview := Invalid_Error_Message;
-         return;
-      end if;
-
-      Get_Direct_Message (This, Garbage);
-      Free (Garbage);
-   end Skip_Message;
 
    ----------------------------------------------------------------------------
    --  type Correction_Manager
@@ -153,7 +82,7 @@ package body Codefix.Errors_Manager is
    procedure Free (This : in out Error_Id_Record) is
    begin
       Free (This.Message);
-      Codefix.Formal_Errors.Free (This.Solutions);
+      Codefix.Formal_Errors.Free_List (This.Solutions);
       Free (This.Category);
       Free (This.Fixed);
       Free (This.Solution_Chosen);
@@ -195,8 +124,9 @@ package body Codefix.Errors_Manager is
 
    procedure Analyze
      (This        : in out Correction_Manager;
+      Processor   : Fix_Processor;
       Source_Text : Text_Navigator_Abstr'Class;
-      Errors_List : in out Errors_Interface'Class;
+      Errors_List : in out Error_Message_List;
       Options     : Fix_Options;
       Callback    : Error_Callback := null)
    is
@@ -205,9 +135,10 @@ package body Codefix.Errors_Manager is
       New_Error       : Error_Id;
       Category        : String_Access;
       Previous_Message : Error_Message := Invalid_Error_Message;
+      It               : Error_Message_Iterator := First (Errors_List);
    begin
-      while not No_More_Messages (Errors_List) loop
-         Get_Message (Errors_List, Source_Text, Current_Message);
+      while not At_End (It) loop
+         Current_Message := Get_Message (It);
 
          if Current_Message /= Invalid_Error_Message then
             --  Ignore style and warning errors if there are already standard
@@ -257,11 +188,11 @@ package body Codefix.Errors_Manager is
                null;
 
             else
-               Solutions := Solution_List (Command_List.Null_List);
+               Solutions := Null_Solution_List;
                Get_Solutions
-                 (Source_Text,
-                  Errors_List,
-                  Current_Message,
+                 (Processor,
+                  Source_Text,
+                  It,
                   Options,
                   Category,
                   Solutions);
@@ -283,6 +214,8 @@ package body Codefix.Errors_Manager is
          end if;
 
          Free (Current_Message);
+
+         It := Next (It);
       end loop;
    end Analyze;
 
@@ -427,53 +360,5 @@ package body Codefix.Errors_Manager is
    begin
       return Prev (This.Potential_Corrections, Error);
    end Get_Previous_Error;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (This : in out State_Node) is
-   begin
-      Free (This.Error);
-   end Free;
-
-   ---------------------
-   -- Set_Error_State --
-   ---------------------
-
-   procedure Set_Error_State
-     (List : in out State_List; Error : String; State : Error_State)
-   is
-      Node : State_Lists.List_Node := First (List);
-   begin
-      while Node /= State_Lists.Null_Node loop
-         if Data (Node).Error.all = Error then
-            Set_Data (Node, (new String'(Error), State));
-            return;
-         end if;
-         Node := Next (Node);
-      end loop;
-
-      Append (List, (new String'(Error), State));
-   end Set_Error_State;
-
-   ---------------------
-   -- Get_Error_State --
-   ---------------------
-
-   function Get_Error_State
-     (List : State_List; Error : String) return Error_State
-   is
-      Node : State_Lists.List_Node := First (List);
-   begin
-      while Node /= State_Lists.Null_Node loop
-         if Data (Node).Error.all = Error then
-            return Data (Node).State;
-         end if;
-         Node := Next (Node);
-      end loop;
-
-      return Unknown;
-   end Get_Error_State;
 
 end Codefix.Errors_Manager;

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
---                            ACT-Europe                             --
+--                    Copyright (C) 2002-2007, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -28,7 +27,6 @@ with Codefix;                use Codefix;
 with Codefix.Errors_Manager; use Codefix.Errors_Manager;
 with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
 with Codefix_Module;
-use Codefix.Formal_Errors.Command_List;
 
 with Codefix_Window_Pkg;     use Codefix_Window_Pkg;
 

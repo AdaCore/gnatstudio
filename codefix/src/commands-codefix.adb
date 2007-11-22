@@ -21,7 +21,6 @@ with GNAT.Traces;           use GNAT.Traces;
 with Gtk.Menu;              use Gtk.Menu;
 
 with Codefix.Formal_Errors; use Codefix.Formal_Errors;
-use Codefix.Formal_Errors.Command_List;
 
 with Codefix_Module;        use Codefix_Module;
 with GPS.Intl;              use GPS.Intl;
@@ -57,7 +56,7 @@ package body Commands.Codefix is
         (Command.Session.Corrector.all,
          Command.Session.Current_Text.all,
          Command.Error,
-         Data (First (Get_Solutions (Command.Error))));
+         Get_Command (First (Get_Solutions (Command.Error))));
 
       Remove_Pixmap
         (Command.Kernel,

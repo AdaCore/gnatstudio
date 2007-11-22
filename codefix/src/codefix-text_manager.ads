@@ -576,7 +576,7 @@ package Codefix.Text_Manager is
    ----------------------------------------------------------------------------
 
    type Extract_Line is private;
-   type Ptr_Extract_Line is access Extract_Line;
+   type Ptr_Extract_Line is access all Extract_Line;
 
    function "=" (Left, Right : Extract_Line) return Boolean;
    --  Return True if both Extract_Lines are containing similar lines.

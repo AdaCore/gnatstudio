@@ -21,7 +21,6 @@ with Glib;                  use Glib;
 
 with Codefix;               use Codefix;
 with Codefix.Formal_Errors; use Codefix.Formal_Errors;
-use Codefix.Formal_Errors.Command_List;
 with Codefix.Graphics;      use Codefix.Graphics;
 
 with Traces;                use Traces;
