@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.2 NEW FEATURES LIST Current as of Nov 16, 2007
+GPS 4.2 NEW FEATURES LIST Current as of Nov 22, 2007
 ====================================================
 
 Copyright (c) 2006-2007, AdaCore
@@ -305,7 +305,7 @@ NF-42-E525-006 Disabling editing of projects with variables (2007-07-25)
   variables (of the form "a:=value"), since the graphical editor does not
   support those and would mess the project up.
 
-NF-43-E524-009 Add link to gnattracker (2007-11-13)
+NF-42-E524-009 Add link to gnattracker (2007-11-13)
 
   The online_support.py plug-in provides new entries under the
   /Help/On-Line Support menu that allow easy access to the AdaCore on-line
