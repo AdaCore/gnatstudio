@@ -2121,7 +2121,7 @@ package body Project_Explorers is
       File_Cursor : File_Node_Hash.Cursor;
 
    begin
-      --  The goal here is to keep the files and subdirectories if their
+      --  The goal here is to keep the files and subdirectories in their
       --  current state (expanded or not), while doing the update.
 
       --  Find all existing files

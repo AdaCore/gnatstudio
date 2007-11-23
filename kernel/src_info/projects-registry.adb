@@ -2205,9 +2205,7 @@ package body Projects.Registry is
                     (Locale, Include_Path (Project2, False));
                end if;
 
-               if Path = null
-                 and then Use_Object_Path
-               then
+               if Path = null and then Use_Object_Path then
                   Path := Locate_Regular_File
                     (Locale, Object_Path (Project2, False));
                end if;
