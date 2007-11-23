@@ -475,7 +475,7 @@ package body Switches_Chooser.Gtkada is
                (Switches_Editor (Editor), To_Index (Switch)));
 
          when Switch_Radio =>
-            if S.Switch = Null_Unbounded_String then
+            if S.Label = Null_Unbounded_String then
                --  Find all buttons in that group
                Switch2 := Next (Switch);
                while Has_Element (Switch2) loop
@@ -574,7 +574,12 @@ package body Switches_Chooser.Gtkada is
                declare
                   S : constant Switch_Description := Element (Switch);
                begin
-                  if S.Popup = Popup
+                  --  Radio buttons are made of radio entries, which should not
+                  --  be displayed explicitely (they will be displayed as part
+                  --  of the radio button itself)
+                  if (S.Typ /= Switch_Radio
+                    or else S.Label = Null_Unbounded_String)
+                    and then S.Popup = Popup
                     and then S.Line = L
                     and then S.Column = C
                   then

@@ -328,7 +328,7 @@ package body Switches_Chooser is
       Popup  : Popup_Index := Main_Window) return Radio_Switch
    is
    begin
-      Config.Max_Radio := Config.Max_Radio;
+      Config.Max_Radio := Config.Max_Radio + 1;
       Append
         (Config.Switches,
          Switch_Description'
