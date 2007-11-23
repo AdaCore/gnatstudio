@@ -18,6 +18,8 @@
 -----------------------------------------------------------------------
 
 with Ada.Directories;           use Ada.Directories;
+with Ada.Containers.Indefinite_Hashed_Maps;
+with Ada.Strings.Hash;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Traces;
@@ -109,6 +111,18 @@ package body Project_Explorers is
    Projects_Before_Directories : constant Boolean := False;
    --  <preference> True if the projects should be displayed, when sorted,
    --  before the directories in the project view.
+
+   package File_Node_Hash is new Ada.Containers.Indefinite_Hashed_Maps
+     (Key_Type        => String,
+      Element_Type    => Gtk_Tree_Iter,
+      Hash            => Ada.Strings.Hash,
+      Equivalent_Keys => "=");
+   use File_Node_Hash;
+   --  Note: the hash is case sensitive: since we always display the file names
+   --  with the correct casing in the explorer (depending on the system), we do
+   --  not needed a case insensitive comparison here. It would be difficult
+   --  otherwise since the build server might change and we don't know until
+   --  late whether files names are case sensitive or not there.
 
    procedure Default_Context_Factory
      (Module  : access Explorer_Module_Record;
@@ -1969,84 +1983,67 @@ package body Project_Explorers is
       Files_In_Project : File_Array_Access;
       Node             : Gtk_Tree_Iter)
    is
-      Index : Natural;
-      N, N2 : Gtk_Tree_Iter;
+      N : Gtk_Tree_Iter;
       Dir   : constant String := Name_As_Directory
         (Normalize_Pathname
            (Get_Directory_From_Node (Explorer.Tree.Model, Node),
             Resolve_Links => False));
 
-      type Boolean_Array is array (Files_In_Project'Range) of Boolean;
-      New_File : Boolean_Array := (others => True);
-      Expanded : constant Boolean := Get_Expanded (Explorer.Tree, Node);
-      Path     : Gtk_Tree_Path;
-      Dummy    : Boolean;
-      pragma Unreferenced (Dummy);
+      Sort_Col    : constant Gint := Freeze_Sort (Explorer.Tree.Model);
+      Files       : File_Node_Hash.Map;
+      File_Cursor : File_Node_Hash.Cursor;
 
    begin
       --  The goal here is to keep the files and subdirectories if their
       --  current state (expanded or not), while doing the update.
 
-      --  Remove from the tree all the files that are no longer in the
-      --  project.
+      --  Find all existing files
 
       N := Children (Explorer.Tree.Model, Node);
 
       while N /= Null_Iter loop
-         N2 := N;
-         Next (Explorer.Tree.Model, N2);
-
-         declare
-            F : constant String := Get_Base_Name (Explorer.Tree.Model, N);
-         begin
-            if Get_Node_Type (Explorer.Tree.Model, N) = File_Node then
-               Index := Files_In_Project'First;
-
-               while Index <= Files_In_Project'Last loop
-                  if New_File (Index)
-                    and then Full_Name (Files_In_Project (Index)).all = Dir & F
-                  then
-                     New_File (Index) := False;
-                     exit;
-                  end if;
-                  Index := Index + 1;
-               end loop;
-
-               if Index > Files_In_Project'Last then
-                  Remove (Explorer.Tree.Model, N);
-               end if;
-            end if;
-         end;
-         N := N2;
+         Include (Files, Get_Base_Name (Explorer.Tree.Model, N), N);
+         Next (Explorer.Tree.Model, N);
       end loop;
 
-      --  Then add all the new files
+      --  For all current files, check whether it is a new file. We only take
+      --  those files from Dir into account
 
       for J in Files_In_Project'Range loop
-         if New_File (J)
-           and then File_Equal (Dir_Name (Files_In_Project (J)).all,
-                                Dir, Build_Server)
+         if File_Equal
+           (Dir_Name (Files_In_Project (J)).all, Dir, Build_Server)
          then
-            Append_File
-              (Explorer.Kernel,
-               Explorer.Tree.Model,
-               Node,
-               Files_In_Project (J),
-               Sorted => True);
+            File_Cursor := Find (Files, Base_Name (Files_In_Project (J)));
+            if File_Cursor /= No_Element then
+               Delete (Files, File_Cursor);
+            else
+               --  ??? Call to "Sorted" here might be expansive, it would be
+               --  better to sort afterward.
+               Append_File
+                 (Explorer.Kernel,
+                  Explorer.Tree.Model,
+                  Node,
+                  Files_In_Project (J),
+                  Sorted => True);
+            end if;
          end if;
       end loop;
 
-      --  In case we have first deleted all sources files before adding the
-      --  others, the expansion status might have changed, so we need to
-      --  restore it.
+      --  Those files still in the hash table are no longer valid files, so
+      --  we remove the corresponding nodes.
 
-      if Expanded then
-         Gtk.Handlers.Handler_Block (Explorer.Tree, Explorer.Expand_Id);
-         Path := Get_Path (Explorer.Tree.Model, Node);
-         Dummy := Expand_Row (Explorer.Tree, Path, False);
-         Path_Free (Path);
-         Gtk.Handlers.Handler_Unblock (Explorer.Tree, Explorer.Expand_Id);
-      end if;
+      File_Cursor := First (Files);
+      while Has_Element (File_Cursor) loop
+         N := Element (File_Cursor);
+         Remove (Explorer.Tree.Model, N);
+         Next (File_Cursor);
+      end loop;
+
+      Thaw_Sort (Explorer.Tree.Model, Sort_Col);
+
+      --  Since we removed the nodes only after potentially adding new ones,
+      --  the directory node never became empty unless there are no files left
+      --  in the end. Therefore its expansion status has not changed.
    end Update_Directory_Node;
 
    -----------------
