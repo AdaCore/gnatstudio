@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Directories;           use Ada.Directories;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash;
@@ -53,6 +54,7 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Tree_Sortable;         use Gtk.Tree_Sortable;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtkada.MDI;                use Gtkada.MDI;
@@ -209,6 +211,12 @@ package body Project_Explorers is
    procedure Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed
+
+   function Sort_Func
+     (Model     : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+      A         : Gtk.Tree_Model.Gtk_Tree_Iter;
+      B         : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint;
+   --  Used to sort nodes in the explorer
 
    --------------
    -- Tooltips --
@@ -773,12 +781,149 @@ package body Project_Explorers is
         (Explorer.Tree, Signal_Drag_Data_Received,
          Drag_Data_Received'Access, Kernel_Handle (Kernel));
 
+      --  Sorting is now alphabetic: directories come first, then files. Use
+      --  a custom sort function
+
+      Set_Sort_Func
+        (+Explorer.Tree.Model,
+         Base_Name_Column,
+         Sort_Func      => Sort_Func'Access);
+      Set_Sort_Column_Id
+        (+Explorer.Tree.Model, Base_Name_Column, Sort_Ascending);
+
       --  Initialize tooltips
 
       Tooltip := new Explorer_Tooltips;
       Tooltip.Explorer := Project_Explorer_Access (Explorer);
       Set_Tooltip (Tooltip, Explorer.Tree, 250);
    end Initialize;
+
+   ---------------
+   -- Sort_Func --
+   ---------------
+
+   function Sort_Func
+     (Model     : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+      A         : Gtk.Tree_Model.Gtk_Tree_Iter;
+      B         : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint
+   is
+      A_Before_B : Gint := -1;
+      B_Before_A : Gint := 1;
+      A_Type : constant Node_Types :=
+        Get_Node_Type (Gtk_Tree_Store (Model), A);
+      B_Type : constant Node_Types :=
+        Get_Node_Type (Gtk_Tree_Store (Model), B);
+      Order : Gtk_Sort_Type;
+      Column : Gint;
+
+      function Alphabetical return Gint;
+      --  Compare the two nodes alphabetically
+      --  ??? Should take into account the sorting order
+
+      function Alphabetical return Gint is
+         A_Name : constant String := Get_String (Model, A, Column);
+         B_Name : constant String := Get_String (Model, B, Column);
+      begin
+         if Is_Case_Sensitive (Build_Server) then
+            if A_Name < B_Name then
+               return A_Before_B;
+            else
+               return B_Before_A;
+            end if;
+         else
+            if To_Lower (A_Name) < To_Lower (B_Name) then
+               return A_Before_B;
+            else
+               return B_Before_A;
+            end if;
+         end if;
+      end Alphabetical;
+
+   begin
+      Get_Sort_Column_Id (+Gtk_Tree_Store (Model), Column, Order);
+      if Order = Sort_Descending then
+         A_Before_B := 1;
+         B_Before_A := -1;
+      end if;
+
+      --  Subprojects first
+
+      case A_Type is
+         when Project_Node | Extends_Project_Node =>
+            case B_Type is
+               when Project_Node | Extends_Project_Node =>
+                  return Alphabetical;
+
+               when others =>
+                  if Projects_Before_Directories then
+                     return A_Before_B;
+                  else
+                     return B_Before_A;
+                  end if;
+            end case;
+
+         when Directory_Node =>
+            case B_Type is
+               when Project_Node | Extends_Project_Node =>
+                  if Projects_Before_Directories then
+                     return B_Before_A;
+                  else
+                     return A_Before_B;
+                  end if;
+
+               when Directory_Node =>
+                  return Alphabetical;
+
+               when others =>
+                  return A_Before_B;
+            end case;
+
+         when Obj_Directory_Node =>
+            case B_Type is
+               when Project_Node | Extends_Project_Node =>
+                  if Projects_Before_Directories then
+                     return B_Before_A;
+                  else
+                     return A_Before_B;
+                  end if;
+
+               when Directory_Node =>
+                  return B_Before_A;
+
+               when Obj_Directory_Node =>
+                  return Alphabetical;
+
+               when others =>
+                  return B_Before_A;
+            end case;
+
+         when Exec_Directory_Node =>
+            case B_Type is
+               when Project_Node | Extends_Project_Node =>
+                  if Projects_Before_Directories then
+                     return B_Before_A;
+                  else
+                     return A_Before_B;
+                  end if;
+
+               when Directory_Node | Obj_Directory_Node =>
+                  return B_Before_A;
+
+               when Exec_Directory_Node =>
+                  return Alphabetical;
+
+               when others =>
+                  return B_Before_A;
+            end case;
+
+         when others =>
+            if B_Type = A_Type then
+               return Alphabetical;
+            else
+               return B_Before_A;
+            end if;
+      end case;
+   end Sort_Func;
 
    -------------------------
    -- Preferences_Changed --
@@ -1648,32 +1793,20 @@ package body Project_Explorers is
       Files_In_Project : File_Array_Access;
       Node             : Gtk_Tree_Iter)
    is
-      Sort_Col    : constant Gint := Freeze_Sort (Explorer.Tree.Model);
-      Files : File_Array (Files_In_Project'Range);
-      Index : Integer := Files'First;
    begin
       for S in Files_In_Project'Range loop
          if File_Equal (Dir_Name (Files_In_Project (S)).all,
                         Directory, Build_Server)
          then
-            Files (Index) := Files_In_Project (S);
-            Index := Index + 1;
+            Append_File
+              (Kernel => Explorer.Kernel,
+               Model  => Explorer.Tree.Model,
+               File   => Files_In_Project (S),
+               Base   => Node);
          end if;
       end loop;
 
-      Sort (Files (Files'First .. Index - 1));
-
-      for S in Files'First .. Index - 1 loop
-         Append_File
-           (Kernel => Explorer.Kernel,
-            Model  => Explorer.Tree.Model,
-            File   => Files (S),
-            Base   => Node);
-      end loop;
-
       Set (Explorer.Tree.Model, Node, Up_To_Date_Column, True);
-
-      Thaw_Sort (Explorer.Tree.Model, Sort_Col);
    end Add_Files_In_Directory;
 
    -------------------------
@@ -1859,12 +1992,6 @@ package body Project_Explorers is
 
       Reset (Sources);
 
-      if Is_Case_Sensitive (Build_Server) then
-         String_List_Utils.Sort (Dirs);
-      else
-         String_List_Utils.Sort_Case_Insensitive (Dirs);
-      end if;
-
       Dir_Node := First (Dirs);
       N        := Children (Explorer.Tree.Model, Node);
 
@@ -1972,13 +2099,8 @@ package body Project_Explorers is
       Add_Remaining_Source_Dirs;
       String_List_Utils.String_List.Free (Dirs);
 
-      if Projects_Before_Directories then
-         Add_Projects;
-         Add_Object_Directories (Explorer, Node, Project);
-      else
-         Add_Object_Directories (Explorer, Node, Project);
-         Add_Projects;
-      end if;
+      Add_Object_Directories (Explorer, Node, Project);
+      Add_Projects;
    end Update_Project_Node;
 
    ---------------------------
@@ -1995,14 +2117,10 @@ package body Project_Explorers is
         (Normalize_Pathname
            (Get_Directory_From_Node (Explorer.Tree.Model, Node),
             Resolve_Links => False));
-
-      Sort_Col    : constant Gint := Freeze_Sort (Explorer.Tree.Model);
       Files       : File_Node_Hash.Map;
       File_Cursor : File_Node_Hash.Cursor;
 
    begin
-      Trace (Me, "MANU Update_Directory_Node for " & Dir);
-
       --  The goal here is to keep the files and subdirectories if their
       --  current state (expanded or not), while doing the update.
 
@@ -2026,14 +2144,11 @@ package body Project_Explorers is
             if File_Cursor /= No_Element then
                Delete (Files, File_Cursor);
             else
-               --  ??? Call to "Sorted" here might be expansive, it would be
-               --  better to sort afterward.
                Append_File
                  (Explorer.Kernel,
                   Explorer.Tree.Model,
                   Node,
-                  Files_In_Project (J),
-                  Sorted => True);
+                  Files_In_Project (J));
             end if;
          end if;
       end loop;
@@ -2047,8 +2162,6 @@ package body Project_Explorers is
          Remove (Explorer.Tree.Model, N);
          Next (File_Cursor);
       end loop;
-
-      Thaw_Sort (Explorer.Tree.Model, Sort_Col);
 
       --  Since we removed the nodes only after potentially adding new ones,
       --  the directory node never became empty unless there are no files left
@@ -2065,6 +2178,8 @@ package body Project_Explorers is
       Files_In_Project : File_Array_Access;
       Force_Expanded   : Boolean := False)
    is
+      Sort_Col    : constant Gint := Freeze_Sort (Explorer.Tree.Model);
+
       N, N2     : Gtk_Tree_Iter;
       Node_Type : constant Node_Types :=
                     Get_Node_Type (Explorer.Tree.Model, Node);
@@ -2136,6 +2251,8 @@ package body Project_Explorers is
       if Files_In_Project = null then
          Unchecked_Free (Files);
       end if;
+
+      Thaw_Sort (Explorer.Tree.Model, Sort_Col);
    end Update_Node;
 
    ---------------------------------------
