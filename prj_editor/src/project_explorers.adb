@@ -1648,6 +1648,7 @@ package body Project_Explorers is
       Files_In_Project : File_Array_Access;
       Node             : Gtk_Tree_Iter)
    is
+      Sort_Col    : constant Gint := Freeze_Sort (Explorer.Tree.Model);
       Files : File_Array (Files_In_Project'Range);
       Index : Integer := Files'First;
    begin
@@ -1671,6 +1672,8 @@ package body Project_Explorers is
       end loop;
 
       Set (Explorer.Tree.Model, Node, Up_To_Date_Column, True);
+
+      Thaw_Sort (Explorer.Tree.Model, Sort_Col);
    end Add_Files_In_Directory;
 
    -------------------------
@@ -2238,7 +2241,13 @@ package body Project_Explorers is
          Path := Get_Path (T.Tree.Model, Iter);
          Dummy := Collapse_Row (T.Tree, Path);
          Compute_Children (T, Iter);
+
+         --  Expand, but we do not need to recompute the children, since this
+         --  was just done.
+         Gtk.Handlers.Handler_Block (T.Tree, T.Expand_Id);
          Dummy := Expand_Row (T.Tree, Path, False);
+         Gtk.Handlers.Handler_Unblock (T.Tree, T.Expand_Id);
+
          Path_Free (Path);
 
       --  If we are displaying a new view of the tree that was there before, we
