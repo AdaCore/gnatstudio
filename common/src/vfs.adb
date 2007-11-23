@@ -51,6 +51,12 @@ with String_Utils;              use String_Utils;
 
 package body VFS is
 
+   --  ??? The various calls in Locale_To_UTF8, which is in the Gtk library,
+   --  make it risky to use any function of this package before Gtk.Init has
+   --  been called.
+   --  This will be fixed when we stop relying on Gtk+ for the UTF8
+   --  conversions.
+
    Resolve_Links_Handle : constant Trace_Handle :=
       Create ("VFS.Resolve_Links", Off);
 
@@ -280,6 +286,7 @@ package body VFS is
                declare
                   Normalized : constant String := Normalize_Pathname
                     (File.Value.Full_Name.all, "/",
+                     Case_Sensitive => False,
                      Resolve_Links => Active (Resolve_Links_Handle));
                begin
                   if Normalized (Normalized'Last) /= Dir_Separator then
@@ -298,6 +305,7 @@ package body VFS is
                File.Value.Normalized_Full := new UTF8_String'
                  (Normalize_Pathname
                     (File.Value.Full_Name.all, "/",
+                     Case_Sensitive => False,
                      Resolve_Links => Active (Resolve_Links_Handle)));
             end if;
          end if;
