@@ -1316,6 +1316,7 @@ package body GPS.Main_Window is
    --------------
 
    function GPS_Name (Window : access GPS_Window_Record) return String is
+       pragma Unreferenced (Window);
    begin
       return "GPS";
    end GPS_Name;
