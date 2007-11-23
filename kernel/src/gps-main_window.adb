@@ -1316,9 +1316,12 @@ package body GPS.Main_Window is
    --------------
 
    function GPS_Name (Window : access GPS_Window_Record) return String is
-       pragma Unreferenced (Window);
    begin
-      return "GPS";
+      if Window.Public_Version then
+         return "GPS";
+      else
+         return "GPS Pro";
+      end if;
    end GPS_Name;
 
    ----------------
