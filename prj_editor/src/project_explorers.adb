@@ -1704,6 +1704,7 @@ package body Project_Explorers is
       Dirs     : String_List_Utils.String_List.List;
       Dir_Node : String_List_Utils.String_List.List_Node;
       Imported : Project_Type_Array := Get_Imported_Projects (Project);
+      Source_Dirs_Added : Boolean := False;
 
       procedure Do_Nothing (B : in out Boolean) is null;
       package Boolean_String_Hash is new String_Hash
@@ -1802,30 +1803,33 @@ package body Project_Explorers is
 
       procedure Add_Remaining_Source_Dirs is
       begin
-         while Dir_Node /= Null_Node loop
-            if Get_History
-              (Get_History (Explorer.Kernel).all, Show_Hidden_Dirs)
-              or else not Is_Hidden (Data (Dir_Node))
-            then
-               Insert_Before
-                 (Explorer.Tree.Model,
-                  Iter    => N2,
-                  Parent  => Node,
-                  Sibling => N);
-               Set_Directory_Node_Attributes
-                 (Explorer  => Explorer,
-                  Directory => Data (Dir_Node),
-                  Node      => N2,
-                  Project   => Project,
-                  Node_Type => Directory_Node);
-               Add_Files_In_Directory
-                 (Explorer         => Explorer,
-                  Directory        => Data (Dir_Node),
-                  Files_In_Project => Files,
-                  Node             => N2);
-            end if;
-            Dir_Node := Next (Dir_Node);
-         end loop;
+         if not Source_Dirs_Added then
+            while Dir_Node /= Null_Node loop
+               if Get_History
+                 (Get_History (Explorer.Kernel).all, Show_Hidden_Dirs)
+                 or else not Is_Hidden (Data (Dir_Node))
+               then
+                  Insert_Before
+                    (Explorer.Tree.Model,
+                     Iter    => N2,
+                     Parent  => Node,
+                     Sibling => N);
+                  Set_Directory_Node_Attributes
+                    (Explorer  => Explorer,
+                     Directory => Data (Dir_Node),
+                     Node      => N2,
+                     Project   => Project,
+                     Node_Type => Directory_Node);
+                  Add_Files_In_Directory
+                    (Explorer         => Explorer,
+                     Directory        => Data (Dir_Node),
+                     Files_In_Project => Files,
+                     Node             => N2);
+               end if;
+               Dir_Node := Next (Dir_Node);
+            end loop;
+            Source_Dirs_Added := True;
+         end if;
       end Add_Remaining_Source_Dirs;
 
    begin
@@ -1994,6 +1998,8 @@ package body Project_Explorers is
       File_Cursor : File_Node_Hash.Cursor;
 
    begin
+      Trace (Me, "MANU Update_Directory_Node for " & Dir);
+
       --  The goal here is to keep the files and subdirectories if their
       --  current state (expanded or not), while doing the update.
 
