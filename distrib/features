@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Nov 17, 2007
+GPS 4.3 NEW FEATURES LIST Current as of Nov 26, 2007
 ====================================================
 
 Copyright (c) 2007, AdaCore
@@ -22,3 +22,8 @@ GB14-004 New VCS action to prepare in one-click a group-commit  (2007-11-17)
   create an anonymous activity, will populate it with all selected
   files from the VCS Explorer and will open the activity log
   file. Just fill it and commit the activity.
+
+GB07-006 Major speed up in the project view (2007-11-26)
+
+  The computation time for the project view was greatly improved, and the
+  view displays much faster now on big projects
