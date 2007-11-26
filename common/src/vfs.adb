@@ -219,11 +219,11 @@ package body VFS is
       Ensure_Directory (Dir);
 
       if Is_Local (Dir) then
-         return Create (Dir.Full_Name (True).all & Base_Name);
+         return Create (Dir.Full_Name.all & Base_Name);
       else
          return Create
            (Get_Host (Dir),
-            Dir.Get_Filesystem.Concat (Dir.Full_Name (True).all, Base_Name));
+            Dir.Get_Filesystem.Concat (Dir.Full_Name.all, Base_Name));
       end if;
    end Create_From_Dir;
 

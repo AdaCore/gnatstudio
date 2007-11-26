@@ -1255,10 +1255,10 @@ package body Src_Editor_Module is
 
          if File /= VFS.No_File then
             if Is_Local (File) then
-               Set_Title (Child, Full_Name (File, True).all, Base_Name (File));
+               Set_Title (Child, Full_Name (File).all, Base_Name (File));
             else
                Set_Title (Child,
-                          Get_Host (File) & ":|" & Full_Name (File, True).all,
+                          Get_Host (File) & ":|" & Full_Name (File).all,
                           Base_Name (File));
             end if;
 
