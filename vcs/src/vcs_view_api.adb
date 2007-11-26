@@ -1337,6 +1337,16 @@ package body VCS_View_API is
             Project_Information (Context),
             False, False);
 
+      elsif Has_File_Information (Context) then
+         Query_Project_Files
+           (Explorer,
+            Get_Kernel (Context),
+            Get_Project_From_File
+              (Registry          => Get_Registry (Get_Kernel (Context)).all,
+               Source_Filename   => File_Information (Context),
+               Root_If_Not_Found => True),
+            False, False);
+
       else
          Query_Project_Files
            (Explorer,
@@ -1704,15 +1714,32 @@ package body VCS_View_API is
    ---------------------
 
    function Get_Current_Ref
-     (Context : Selection_Context) return VCS_Access is
+     (Context : Selection_Context) return VCS_Access
+   is
+      Prj : Project_Type;
    begin
       if Context = No_Context then
          return Get_VCS_From_Id ("");
 
       elsif Has_Project_Information (Context) then
+         --  If the context has project information, retrieve the VCS for that
+         --  project
          return Get_Current_Ref (Project_Information (Context));
+
+      elsif Has_File_Information (Context) then
+         --  If the context has a file information, try to find the project
+         --  for this file.
+
+         Prj := Get_Project_From_File
+           (Get_Registry (Get_Kernel (Context)).all,
+            File_Information (Context), False);
+
+         if Prj /= No_Project then
+            return Get_Current_Ref (Prj);
+         end if;
       end if;
 
+      --  If all else fails, fallback on the VCS for the root project.
       return Get_Current_Ref (Get_Project (Get_Kernel (Context)));
    end Get_Current_Ref;
 
