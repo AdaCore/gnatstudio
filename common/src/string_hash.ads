@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
---                              AdaCore                              --
+--                        Copyright (C) 2002-2007, AdaCore           --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -34,8 +33,11 @@ generic
 
 package String_Hash is
 
-   type Name_Htable_Num is new Natural range 0 .. 1000;
-   --  ??? This limitation should be raised.
+   type Name_Htable_Num is new Natural range 0 .. 6150;
+   --  ??? This limitation should be raised (could be through use of
+   --  Ada.Containers)
+   --  The value here has some impact when loading big projects, so should not
+   --  be made too small.
 
    function Hash (Key : String) return Name_Htable_Num;
    --  See HTables for documentation.
