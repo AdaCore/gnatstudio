@@ -3418,10 +3418,10 @@ package body VCS_View_API is
       end if;
 
       if File = "" then
-         Insert (Kernel, -"Command "
-                 & Command
-                 & " must have at least one parameter.",
-                 Mode => Error);
+         Insert
+           (Kernel,
+            -"Command " & Command & " must have at least one parameter.",
+            Mode => Error);
       end if;
 
       Full := Create (File, Kernel, Use_Object_Path => False);
@@ -3438,7 +3438,7 @@ package body VCS_View_API is
       if Prj = No_Project then
          Insert
            (Kernel,
-              -"Could not find project for file: " & File,
+            -"Could not find project for file: " & File,
             Mode => Error);
 
          return;
@@ -3449,7 +3449,7 @@ package body VCS_View_API is
       if Ref = null then
          Insert
            (Kernel,
-              -"Could not find VCS for project: " & Project_Name (Prj),
+            -"Could not find VCS for project: " & Project_Name (Prj),
             Mode => Error);
          return;
       end if;
@@ -3503,8 +3503,8 @@ package body VCS_View_API is
               (Ref,
                File_Status_List.Head (Status).File,
                "",
-               String_List.Head (File_Status_List.Head
-                                   (Status).Working_Revision));
+               String_List.Head
+                 (File_Status_List.Head (Status).Working_Revision));
             File_Status_List.Free (Status);
          end;
 

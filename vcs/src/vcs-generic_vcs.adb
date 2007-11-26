@@ -574,12 +574,12 @@ package body VCS.Generic_VCS is
 
       Custom := Create_Proxy
         (The_Action.Command,
-         (Event       => null,
-          Context     => Create_File_Context (Kernel, File),
-          Synchronous => False,
-          Dir         => Dir,
-          Args        => Args,
-          Label       => new String'(Describe_Action (Ref, Action)),
+         (Event            => null,
+          Context          => Create_File_Context (Kernel, File),
+          Synchronous      => False,
+          Dir              => Dir,
+          Args             => Args,
+          Label            => new String'(Describe_Action (Ref, Action)),
           Repeat_Count     => 1,
           Remaining_Repeat => 0));
 

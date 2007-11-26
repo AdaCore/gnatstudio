@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2007, AdaCore             --
+--                 Copyright (C) 2003-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1207,7 +1207,6 @@ package body Vdiff2_Module.Utils is
       end if;
 
       return Vdiff;
-
    end Get_Vdiff;
 
    --------------------

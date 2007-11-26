@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
---                                AdaCore                            --
+--                 Copyright (C) 2001-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -28,8 +27,8 @@ with GPS.Kernel;           use GPS.Kernel;
 package Vdiff2_Command is
 
    type Diff_Command is abstract new Interactive_Command with record
-      Kernel           : Kernel_Handle;
-      List_Diff        : Diff_Head_List_Access;
+      Kernel    : Kernel_Handle;
+      List_Diff : Diff_Head_List_Access;
    end record;
 
    type Diff_Command_Access is access all Diff_Command'Class;

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                             AdaCore                               --
+--                 Copyright (C) 2001-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -156,9 +155,7 @@ package body Vdiff2_Module is
                Set_Return_Value
                  (Data,
                   Instance_From_Vdiff
-                    (Vdiff,
-                     Vdiff_Class,
-                     Get_Script (Data)));
+                    (Vdiff, Vdiff_Class, Get_Script (Data)));
             end if;
          end;
 
@@ -182,10 +179,7 @@ package body Vdiff2_Module is
             if Vdiff /= null then
                Set_Return_Value
                  (Data,
-                  Instance_From_Vdiff
-                    (Vdiff,
-                     Vdiff_Class,
-                     Get_Script (Data)));
+                  Instance_From_Vdiff (Vdiff, Vdiff_Class, Get_Script (Data)));
             end if;
          end;
 

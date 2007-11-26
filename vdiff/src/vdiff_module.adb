@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001-2007                    --
---                                AdaCore                            --
+--                 Copyright (C) 2001-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -55,8 +54,8 @@ package body Vdiff_Module is
    --  See inherited documentation
 
    function Diff_Hook
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Data      : access Hooks_Data'Class) return Boolean;
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class) return Boolean;
    --  Process, if possible, the data sent by the kernel
 
    procedure On_Compare_Two_Files
@@ -64,10 +63,10 @@ package body Vdiff_Module is
    --  Callback for Tools->Compare->Two Files...
 
    function Compare_Two_Files
-     (Kernel : access Kernel_Handle_Record'Class;
-      File1, File2 : VFS.Virtual_File;
+     (Kernel         : access Kernel_Handle_Record'Class;
+      File1, File2   : VFS.Virtual_File;
       Title1, Title2 : String;
-      Result : Diff_Occurrence_Link) return MDI_Child;
+      Result         : Diff_Occurrence_Link) return MDI_Child;
    --  Compare two files.
    --  Return null if there are no differences
 
@@ -79,8 +78,7 @@ package body Vdiff_Module is
 
    function Save_Desktop
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle)
-      return Node_Ptr;
+      User   : Kernel_Handle) return Node_Ptr;
    --  Save the status of the project explorer to an XML tree
 
    -----------------------
@@ -88,10 +86,10 @@ package body Vdiff_Module is
    -----------------------
 
    function Compare_Two_Files
-     (Kernel : access Kernel_Handle_Record'Class;
-      File1, File2 : VFS.Virtual_File;
+     (Kernel         : access Kernel_Handle_Record'Class;
+      File1, File2   : VFS.Virtual_File;
       Title1, Title2 : String;
-      Result : Diff_Occurrence_Link) return MDI_Child
+      Result         : Diff_Occurrence_Link) return MDI_Child
    is
       R     : Diff_Occurrence_Link := Result;
       Vdiff : Vdiff_Access;
@@ -135,7 +133,7 @@ package body Vdiff_Module is
    is
       pragma Unreferenced (MDI);
       Title1, Title2 : Glib.String_Ptr;
-      File1, File2 : VFS.Virtual_File;
+      File1, File2   : VFS.Virtual_File;
    begin
       if Node.Tag.all = "Vdiff" then
          Title1 := Get_Field (Node, "Title1");
@@ -208,7 +206,7 @@ package body Vdiff_Module is
            File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
            Pattern_Name      => -"All files;Ada files;C/C++ files",
            History           => Get_History (Kernel));
-      File2 : Virtual_File;
+      File2  : Virtual_File;
       Child  : MDI_Child;
       pragma Unreferenced (Widget, Child);
 
@@ -244,8 +242,8 @@ package body Vdiff_Module is
    ---------------
 
    function Diff_Hook
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Data      : access Hooks_Data'Class) return Boolean
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class) return Boolean
    is
       D       : constant Diff_Hooks_Args := Diff_Hooks_Args (Data.all);
       Child   : MDI_Child;
@@ -351,7 +349,7 @@ package body Vdiff_Module is
                 Wrapper (Diff_Hook'Access), Name => "vidff.diff");
       Register_Menu
         (Kernel, '/' & (-"Tools") & '/', (-"C_ompare"),
-         Callback => null,
+         Callback   => null,
          Ref_Item   => -"Consoles",
          Add_Before => False);
       Register_Menu
