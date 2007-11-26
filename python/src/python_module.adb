@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2007, AdaCore             --
+--                Copyright (C) 2003-2007, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -453,8 +453,8 @@ package body Python_Module is
          declare
             Inst2 : constant Class_Instance := Nth_Arg
               (Data, 2, Get_File_Class (Kernel));
-            Name  : constant String := Full_Name (Info).all;
-            Name2 : constant String := Full_Name (Get_Data (Inst2)).all;
+            Name  : constant String := Full_Name (Info, True).all;
+            Name2 : constant String := Full_Name (Get_Data (Inst2), True).all;
          begin
             if Name < Name2 then
                Set_Return_Value (Data, -1);
