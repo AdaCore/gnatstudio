@@ -1,4 +1,4 @@
-# This example demaonstrates how to plug a callback on the "before_file_saved"
+# This example demonstrates how to plug a callback on the "before_file_saved"
 # hook so that a file gets automatically reformatted each time it is saved on
 # disk.
 
