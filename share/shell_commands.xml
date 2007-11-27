@@ -183,6 +183,12 @@ when the GPS window is fully visible to the user:
      <description>Hook called just before the last editor for a file is closed. You can still use EditorBuffer.get() and current_view() to access the last editor for file.</description>
   </shell_doc>
 
+  <shell_doc name="@hook@ before_file_saved">
+     <param name="hook">A string, the name of the hook</param>
+     <param name="file">An instance of GPS.File</param>
+     <description>Hook called right before a file is saved</description>
+  </shell_doc>
+
   <shell_doc name="@hook@ file_saved">
      <param name="hook">A string, the name of the hook</param>
      <param name="file">An instance of GPS.File</param>
