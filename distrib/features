@@ -27,6 +27,11 @@ NF-42-GB07-006 Speed improvements when loading a project (2007-11-26)
   which can result in significant speed improvements when loading big
   projects.
 
+NF-42-GA23-018 New hook called right before the file is saved (2007-11-27)
+
+  A new hook "before_file_saved" has been added to perform some actions on a
+  file right before it is saved such as reformating.
+
 NF-42-GA18-007 New command for sending debugger commands (2007-11-09)
 
   There is now a new command to send commands to the debugger in an asynchronous

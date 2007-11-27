@@ -1543,6 +1543,7 @@ package body GPS.Kernel.Hooks is
       Register_Hook_No_Return (Kernel, Project_Changing_Hook, File_Hook_Type);
       Register_Hook_No_Return (Kernel, File_Edited_Hook, File_Hook_Type);
       Register_Hook_No_Return (Kernel, File_Closed_Hook, File_Hook_Type);
+      Register_Hook_No_Return (Kernel, Before_File_Saved_Hook, File_Hook_Type);
       Register_Hook_No_Return (Kernel, File_Saved_Hook, File_Hook_Type);
       Register_Hook_No_Return (Kernel, File_Deleted_Hook, File_Hook_Type);
       Register_Hook_No_Return (Kernel, File_Renamed_Hook, Files_2_Hook_Type);

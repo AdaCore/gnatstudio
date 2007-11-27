@@ -628,6 +628,11 @@ package GPS.Kernel is
       File   : VFS.Virtual_File);
    --  Runs the "file_edited" hook
 
+   procedure Before_File_Saved
+     (Handle : access Kernel_Handle_Record;
+      File   : VFS.Virtual_File);
+   --  Runs the "before_file_saved" hook
+
    procedure File_Saved
      (Handle : access Kernel_Handle_Record;
       File   : VFS.Virtual_File);
@@ -687,6 +692,7 @@ package GPS.Kernel is
    --  Hooks with File_Hooks_Args argument
    Project_Changing_Hook         : constant String := "project_changing";
    File_Edited_Hook              : constant String := "file_edited";
+   Before_File_Saved_Hook        : constant String := "before_file_saved";
    File_Saved_Hook               : constant String := "file_saved";
    File_Closed_Hook              : constant String := "file_closed";
    File_Deleted_Hook             : constant String := "file_deleted";

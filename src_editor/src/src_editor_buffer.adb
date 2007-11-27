@@ -2943,6 +2943,11 @@ package body Src_Editor_Buffer is
    begin
       Success := True;
 
+      if not Internal then
+         --  Run the "before_file_saved" hook
+         Before_File_Saved (Buffer.Kernel, Filename);
+      end if;
+
       declare
          Terminator_Pref : constant Line_Terminators :=
            Line_Terminators'Val (Get_Pref (Line_Terminator));
@@ -3179,7 +3184,6 @@ package body Src_Editor_Buffer is
       Result            : Boolean;
       Original_Filename : constant VFS.Virtual_File := Buffer.Filename;
    begin
-
       Internal_Save_To_File
         (Source_Buffer (Buffer), Filename, Internal, Success);
 

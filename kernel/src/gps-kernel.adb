@@ -431,6 +431,19 @@ package body GPS.Kernel is
       end if;
    end File_Edited;
 
+   -----------------------
+   -- Before_File_Saved --
+   -----------------------
+
+   procedure Before_File_Saved
+     (Handle : access Kernel_Handle_Record;
+      File   : VFS.Virtual_File)
+   is
+      Data : aliased File_Hooks_Args := (Hooks_Data with File => File);
+   begin
+      Run_Hook (Handle, Before_File_Saved_Hook, Data'Unchecked_Access);
+   end Before_File_Saved;
+
    ----------------
    -- File_Saved --
    ----------------
