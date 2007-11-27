@@ -149,8 +149,8 @@ package VCS_Activities is
    function Get_Activity_Template_Tags
      (Kernel   : access Kernel_Handle_Record'Class;
       Activity : Activity_Id) return Translate_Set;
-   --  Return the translate set for the given acitvity, this set is to be used
-   --  with the group commit acitivity template returned by the routine above.
+   --  Return the translate set for the given activity, this set is to be used
+   --  with the group commit activity template returned by the routine above.
 
 private
 
