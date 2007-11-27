@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.2 NEW FEATURES LIST Current as of Nov 22, 2007
+GPS 4.2 NEW FEATURES LIST Current as of Nov 27, 2007
 ====================================================
 
 Copyright (c) 2006-2007, AdaCore
@@ -20,6 +20,12 @@ NF-42-GB13-004 "Move to Next/Previous" Tab are now cyclic (2007-11-16)
   The two actions, which can be bound to key shortcuts through
   /Edit/Key Shorcuts are now cyclic: upon reaching one end of the tab
   bar, they will restart at the other end
+
+NF-42-GB07-006 Speed improvements when loading a project (2007-11-26)
+
+  Many improvements have been made in the loading of a project in GPS
+  which can result in significant speed improvements when loading big
+  projects.
 
 NF-42-GA18-007 New command for sending debugger commands (2007-11-09)
 
