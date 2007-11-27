@@ -576,6 +576,8 @@ package body Entities is
 
       if not Active (Debug_Me) then
          Free (File.Depends_On);
+      else
+         File.Depends_On := Null_Dependency_List;
       end if;
 
       --  Reset the All_Entities list, since this file is no longer referencing
