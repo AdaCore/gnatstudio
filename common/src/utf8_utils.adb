@@ -29,22 +29,25 @@ package body UTF8_Utils is
    -- Unknown_To_UTF8 --
    ---------------------
 
-   function Unknown_To_UTF8
+   procedure Unknown_To_UTF8
      (Input   : String;
-      Success : access Boolean)
-      return Glib.UTF8_String
+      Output  : out Unchecked_String_Access;
+      Len     : out Natural;
+      Success : out Boolean)
    is
       Valid       : Boolean;
       Invalid_Pos : Natural;
    begin
-      Success.all := True;
+      Output := null;
+      Len := 0;
+      Success := True;
 
       --  First check if the string is already UTF-8
       UTF8_Validate (Input, Valid, Invalid_Pos);
 
       if Valid then
-         --  The string is UTF-8, return it.
-         return Input;
+         --  The string is UTF-8, nothing to do
+         return;
       else
          --  The string is not valid UTF-8, assume it is encoded using the
          --  locale.
@@ -62,12 +65,9 @@ package body UTF8_Utils is
                --  There was no error in converting, return the converted
                --  string.
 
-               declare
-                  Result : constant String := Value (Tentative);
-               begin
-                  Free (Tentative);
-                  return Result;
-               end;
+               Output := To_Unchecked_String (Tentative);
+               Len := Written;
+
             else
                Error_Free (Error);
                --  ??? We could make some use of the error message.
@@ -80,11 +80,32 @@ package body UTF8_Utils is
                   Free (Tentative);
                end if;
 
-               --  We could not convert everything; return an empty string.
-               Success.all := False;
-               return "";
+               --  We could not convert everything
+               Success := False;
+               return;
             end if;
          end;
+      end if;
+   end Unknown_To_UTF8;
+
+   function Unknown_To_UTF8
+     (Input   : String;
+      Success : access Boolean) return Glib.UTF8_String
+   is
+      Output : Unchecked_String_Access;
+      Len    : Natural;
+   begin
+      Unknown_To_UTF8 (Input, Output, Len, Success.all);
+
+      if Success.all then
+         declare
+            S : constant String := Output (1 .. Len);
+         begin
+            Free (Output);
+            return S;
+         end;
+      else
+         return "";
       end if;
    end Unknown_To_UTF8;
 
