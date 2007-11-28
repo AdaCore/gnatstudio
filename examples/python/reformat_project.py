@@ -7,7 +7,7 @@
 
 import GPS
 
-# You can update the following preference values your needs
+# You can update the following preference values to suit your needs:
 GPS.Preference ("Ada-Ident-Casing").set ("Automatic")
 GPS.Preference ("Ada-Casing-Policy").set ("On_The_Fly")
 GPS.Preference ("Ada-Align-On-Colons").set (True)
@@ -27,5 +27,6 @@ for f in GPS.Project.root().sources (recursive=True):
    buf.select()
    GPS.execute_action ("Format Selection")
    buf.save (interactive=False)
+   buf.close()
 
 GPS.exit()
