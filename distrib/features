@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Nov 27, 2007
+GPS 4.3 NEW FEATURES LIST Current as of Nov 28, 2007
 ====================================================
 
 Copyright (c) 2007, AdaCore
@@ -14,6 +14,14 @@ of the feature.
 
 New features in GPS 4.3.0
 -------------------------
+
+NF-43-GB27-021 Command line pretty printer using GPS reformating (2007-11-28)
+
+  An new python example demonstrates how to reformat all sources of a project
+  with a single command line. The result is the same as opening each source
+  file of the project, selecting the whole buffer and executing the
+  "Format Selection" action (bound to Control-Tab by default). This example
+  is named reformat_project.py and the usage is detailed in the file itself.
 
 NF-43-GB14-004 New VCS action to prepare group commit in one click (2007-11-17)
 
