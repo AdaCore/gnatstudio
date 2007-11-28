@@ -373,7 +373,7 @@ stop on an exception (@code{Constraint_Error} in the file @file{stack.adb}, at
 line 49).
 
 Go up in the call stack by clicking on the @code{tokens.process} line
-(frame number 6).
+(frame number 6 or 7, depending on your GNAT version).
 
 If you move the mouse over the parameter @code{T} at line 64, a tool tip is
 displayed showing the value of @code{T}. You have probably noticed that
@@ -401,7 +401,7 @@ red color for modified values;
 click on @code{Undo Changes} to cancel the modifications;
 click on @code{Close} to close the memory window.
 
-In the call stack, go back to @code{stack.push} frame (num 4).
+In the call stack, go back to @code{stack.push} frame (num 4 or 5).
 Move the mouse over @code{Last} and let the debugger display its value: 0.
 From the contextual menu, select @code{Goto declaration of Last}: this
 will jump to the line 16 of @file{stack.adb}, where you can see that
