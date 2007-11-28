@@ -2347,6 +2347,11 @@ Sort the selected lines alphabetically. This is particularly useful when
 editing non source code, or for specific parts of the code, like with clauses
 in Ada.
 
+@item Format Selection
+@cindex format selection
+Format the selection or the current line. @xref{The Preferences Dialog}, for
+preferences related to source formating.
+
 @item Fold all blocks
 @cindex fold
 Collapse all the blocks in the current file.

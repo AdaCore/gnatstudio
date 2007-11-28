@@ -23,6 +23,13 @@ NF-43-GB27-021 Command line pretty printer using GPS reformating (2007-11-28)
   "Format Selection" action (bound to Control-Tab by default). This example
   is named reformat_project.py and the usage is detailed in the file itself.
 
+NF-43-GB22-016 New menu to reformat a selection (2007-11-28)
+
+  An new menu /Edit/Format Selection has been added in order to be able to
+  reformat the current selection. This capability used to be accessible only
+  from a key binding (set through the key shortcut editor) which will remain
+  control-tab by default.
+
 NF-43-GB14-004 New VCS action to prepare group commit in one click (2007-11-17)
 
   The new VCS action "Commit as new Activity" has been implemented to simplify

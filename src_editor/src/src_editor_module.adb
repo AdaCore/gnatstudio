@@ -2481,10 +2481,6 @@ package body Src_Editor_Module is
          Command, -"Format the current line or selection",
          Category => "Editor",
          Filter => Src_Action_Context);
-      Bind_Default_Key
-        (Kernel      => Kernel,
-         Action      => "Format selection",
-         Default_Key => "control-Tab");
 
       Command := new Move_Command;
       Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -2916,13 +2912,22 @@ package body Src_Editor_Module is
                      Add_Before => False,
                      Filter     => Src_Action_Context);
 
+      Command := new Indentation_Command;
+      Indentation_Command (Command.all).Kernel := Kernel_Handle (Kernel);
+      Register_Menu
+        (Kernel, Edit, -"Format Selectio_n", "",
+         null, Command, GDK_Tab, Control_Mask,
+         Ref_Item   => "Refill",
+         Add_Before => False,
+         Filter     => Src_Action_Context);
+
       Register_Menu (Kernel, Edit, -"_Fold all blocks", "",
                      On_Fold_Blocks'Access, null,
-                     0, 0, Ref_Item => -"Refill",
+                     0, 0, Ref_Item => -"Format Selection",
                      Add_Before     => False,
                      Filter         => Src_Action_Context);
       Gtk_New (Mitem);
-      Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Refill",
+      Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Format Selection",
                      Add_Before => False);
 
       Register_Menu (Kernel, Edit, -"Unfold all _blocks", "",
