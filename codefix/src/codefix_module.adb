@@ -869,26 +869,50 @@ package body Codefix_Module is
    is
       Instance : Class_Instance;
       Session  : Codefix_Session;
-      Valid    : aliased Boolean;
+      Valid    : Boolean;
+      S        : String_Access;
+      Output   : Unchecked_String_Access;
+      Len      : Natural;
+
    begin
       if Command = "parse" then
          Name_Parameters (Data, Parse_Cmd_Parameters);
-         Activate_Codefix
-           (Get_Kernel (Data),
-            Output               => Unknown_To_UTF8
-              (Nth_Arg (Data, 2), Valid'Access),
-            Category             => Nth_Arg (Data, 1),
-            File_Location_Regexp => Nth_Arg (Data, 3, ""),
-            File_Index           => Nth_Arg (Data, 4, -1),
-            Line_Index           => Nth_Arg (Data, 5, -1),
-            Col_Index            => Nth_Arg (Data, 6, -1),
-            Msg_Index            => Nth_Arg (Data, 7, -1),
-            Style_Index          => Nth_Arg (Data, 8, -1),
-            Warning_Index        => Nth_Arg (Data, 9, -1));
+
+         S := new String'(Nth_Arg (Data, 2));
+         Unknown_To_UTF8 (S.all, Output, Len, Valid);
 
          if not Valid then
             Set_Error_Msg (Data, -"Could not convert input to UTF8");
+         else
+            if Output = null then
+               Activate_Codefix
+                 (Get_Kernel (Data),
+                  Output               => S.all,
+                  Category             => Nth_Arg (Data, 1),
+                  File_Location_Regexp => Nth_Arg (Data, 3, ""),
+                  File_Index           => Nth_Arg (Data, 4, -1),
+                  Line_Index           => Nth_Arg (Data, 5, -1),
+                  Col_Index            => Nth_Arg (Data, 6, -1),
+                  Msg_Index            => Nth_Arg (Data, 7, -1),
+                  Style_Index          => Nth_Arg (Data, 8, -1),
+                  Warning_Index        => Nth_Arg (Data, 9, -1));
+            else
+               Activate_Codefix
+                 (Get_Kernel (Data),
+                  Output               => Output (1 .. Len),
+                  Category             => Nth_Arg (Data, 1),
+                  File_Location_Regexp => Nth_Arg (Data, 3, ""),
+                  File_Index           => Nth_Arg (Data, 4, -1),
+                  Line_Index           => Nth_Arg (Data, 5, -1),
+                  Col_Index            => Nth_Arg (Data, 6, -1),
+                  Msg_Index            => Nth_Arg (Data, 7, -1),
+                  Style_Index          => Nth_Arg (Data, 8, -1),
+                  Warning_Index        => Nth_Arg (Data, 9, -1));
+               Free (Output);
+            end if;
          end if;
+
+         Free (S);
 
       elsif Command = Constructor_Method then
          Name_Parameters (Data, Codefix_Cmd_Parameters);
