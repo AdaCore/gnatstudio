@@ -591,25 +591,39 @@ package body Builder_Module is
       --  scripts, etc. Therefore, we call Unknown_To_UTF8.
 
       declare
-         Valid  : aliased Boolean;
-         Output : constant UTF8_String :=
-           Unknown_To_UTF8 (Str.all, Valid'Access);
+         Output : Basic_Types.Unchecked_String_Access;
+         Len    : Natural;
+         Valid  : Boolean;
+
+         use type Basic_Types.Unchecked_String_Access;
+
       begin
-         Free (Str);
+         Unknown_To_UTF8 (Str.all, Output, Len, Valid);
 
          if Valid then
-            Process_Builder_Output
-              (Kernel  => Data.Kernel,
-               Command => Data.Command,
-               Output  => Output,
-               Quiet   => False);
+            if Output = null then
+               Process_Builder_Output
+                 (Kernel  => Data.Kernel,
+                  Command => Data.Command,
+                  Output  => Str.all,
+                  Quiet   => False);
 
+            else
+               Process_Builder_Output
+                 (Kernel  => Data.Kernel,
+                  Command => Data.Command,
+                  Output  => Output (1 .. Len),
+                  Quiet   => False);
+            end if;
          else
             Console.Insert
               (Data.Kernel,
                -"Could not convert compiler output to UTF8",
                Mode => Console.Error);
          end if;
+
+         Free (Str);
+         Basic_Types.Free (Output);
       end;
    end Parse_Compiler_Output;
 
