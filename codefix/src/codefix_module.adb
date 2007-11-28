@@ -59,6 +59,8 @@ with Traces;                    use Traces;
 with VFS;                       use VFS;
 with Glib;                      use Glib;
 
+with UTF8_Utils;                use UTF8_Utils;
+
 package body Codefix_Module is
 
    use Codefix.Formal_Errors.Command_List;
@@ -867,12 +869,14 @@ package body Codefix_Module is
    is
       Instance : Class_Instance;
       Session  : Codefix_Session;
+      Valid    : aliased Boolean;
    begin
       if Command = "parse" then
          Name_Parameters (Data, Parse_Cmd_Parameters);
          Activate_Codefix
            (Get_Kernel (Data),
-            Output               => Nth_Arg (Data, 2),
+            Output               => Unknown_To_UTF8
+              (Nth_Arg (Data, 2), Valid'Access),
             Category             => Nth_Arg (Data, 1),
             File_Location_Regexp => Nth_Arg (Data, 3, ""),
             File_Index           => Nth_Arg (Data, 4, -1),
@@ -881,6 +885,10 @@ package body Codefix_Module is
             Msg_Index            => Nth_Arg (Data, 7, -1),
             Style_Index          => Nth_Arg (Data, 8, -1),
             Warning_Index        => Nth_Arg (Data, 9, -1));
+
+         if not Valid then
+            Set_Error_Msg (Data, -"Could not convert input to UTF8");
+         end if;
 
       elsif Command = Constructor_Method then
          Name_Parameters (Data, Codefix_Cmd_Parameters);

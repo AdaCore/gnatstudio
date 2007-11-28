@@ -53,6 +53,7 @@ with Gtkada.MDI;               use Gtkada.MDI;
 with Commands.Interactive;     use Commands.Interactive;
 with Commands;                 use Commands;
 with GPS.Intl;                 use GPS.Intl;
+with GPS.Kernel.Console;
 with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
@@ -61,6 +62,7 @@ with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
 with String_List_Utils;        use String_List_Utils;
 with String_Utils;             use String_Utils;
+with UTF8_Utils;               use UTF8_Utils;
 with Traces;                   use Traces;
 with VFS;                      use VFS;
 with VFS.Values;               use VFS.Values;
@@ -2903,13 +2905,15 @@ package body GPS.Location_View is
               Nth_Arg (Data, 11, "Style errors");
             Warning_Category   : constant String :=
               Nth_Arg (Data, 12, "Builder warnings");
+            Valid : aliased Boolean;
          begin
             Parse_File_Locations
               (Get_Kernel (Data),
                Highlight               => Highlight_Category /= ""
                   or else Style_Category /= ""
                   or else Warning_Category /= "",
-               Text                    => Nth_Arg (Data, 1),
+               Text                    =>
+                 Unknown_To_UTF8 (Nth_Arg (Data, 1), Valid'Access),
                Category                => Nth_Arg (Data, 2),
                Highlight_Category      =>
                  Get_Or_Create_Style (Kernel, Highlight_Category, False),
@@ -2925,6 +2929,13 @@ package body GPS.Location_View is
                Style_Index_In_Regexp   => Nth_Arg (Data, 8, -1),
                Warning_Index_In_Regexp => Nth_Arg (Data, 9, -1),
                Remove_Duplicates       => True);
+
+            if not Valid then
+               Console.Insert
+                 (Kernel,
+                  -"Locations.parse: could not convert input to UTF8",
+                  Mode => Console.Error);
+            end if;
          end;
 
       elsif Command = "remove_category" then
