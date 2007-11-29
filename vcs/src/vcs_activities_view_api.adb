@@ -115,6 +115,13 @@ package body VCS_Activities_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context);
 
+   procedure Populate_Activity
+     (Kernel   : Kernel_Handle;
+      Activity : Activity_Id;
+      Context  : Selection_Context);
+   --  Add file in context or files selected on the VCS explorer into the given
+   --  activity.
+
    --  Action to open a file
 
    type Edit_Action_Command_Type is new Root_Command with record
@@ -313,6 +320,48 @@ package body VCS_Activities_View_API is
       when E : others => Trace (Exception_Handle, E);
    end On_Menu_Delete_Activity;
 
+   -----------------------
+   -- Populate_Activity --
+   -----------------------
+
+   procedure Populate_Activity
+     (Kernel   : Kernel_Handle;
+      Activity : Activity_Id;
+      Context  : Selection_Context) is
+   begin
+      if Has_File_Information (Context)
+        or else Has_Directory_Information (Context)
+      then
+         --  If we have a file information, then there is a single file to
+         --  handle.
+         Add_File (Kernel, Activity, File_Information (Context));
+
+      else
+         --  We have no file information, use the selected file in the VCS
+         --  explorer.
+
+         declare
+            use type String_List.List_Node;
+            Files    : String_List.List :=
+                         VCS_View.Explorer.Get_Selected_Files (Kernel);
+            File     : Virtual_File;
+            Files_It : String_List.List_Node;
+         begin
+            Files_It := String_List.First (Files);
+
+            while Files_It /= String_List.Null_Node loop
+               File := Create
+                 (Full_Filename => String_List.Data (Files_It));
+               Add_File (Kernel, Activity, File);
+
+               Files_It := String_List.Next (Files_It);
+            end loop;
+
+            String_List.Free (Files);
+         end;
+      end if;
+   end Populate_Activity;
+
    -----------------------------
    -- On_Menu_Add_To_Activity --
    -----------------------------
@@ -328,37 +377,7 @@ package body VCS_Activities_View_API is
       if Has_Activity_Information (Context) then
          Activity := Value (Activity_Information (Context));
 
-         if Has_File_Information (Context)
-           or else Has_Directory_Information (Context)
-         then
-            --  If we have a file information, then there is a single file to
-            --  handle.
-            Add_File (Kernel, Activity, File_Information (Context));
-
-         else
-            --  We have no file information, use the selected file in the VCS
-            --  explorer.
-
-            declare
-               use type String_List.List_Node;
-               Files    : String_List.List :=
-                            VCS_View.Explorer.Get_Selected_Files (Kernel);
-               File     : Virtual_File;
-               Files_It : String_List.List_Node;
-            begin
-               Files_It := String_List.First (Files);
-
-               while Files_It /= String_List.Null_Node loop
-                  File := Create
-                    (Full_Filename => String_List.Data (Files_It));
-                  Add_File (Kernel, Activity, File);
-
-                  Files_It := String_List.Next (Files_It);
-               end loop;
-
-               String_List.Free (Files);
-            end;
-         end if;
+         Populate_Activity (Kernel, Activity, Context);
 
          Refresh (Get_Activities_Explorer (Kernel, False, False));
          Refresh (Get_Explorer (Kernel, False, False));
@@ -380,22 +399,12 @@ package body VCS_Activities_View_API is
       use type String_List.List_Node;
       Kernel   : constant Kernel_Handle := Get_Kernel (Context);
       Activity : constant Activity_Id := New_Activity (Kernel);
-      Files    : String_List.List :=
-                   VCS_View.Explorer.Get_Selected_Files (Kernel);
-      File     : Virtual_File;
-      Files_It : String_List.List_Node;
    begin
       Set_Name (Kernel, Activity, "*anonymous*");
 
-      Files_It := String_List.First (Files);
+      Populate_Activity (Kernel, Activity, Context);
 
-      while Files_It /= String_List.Null_Node loop
-         File := Create (Full_Filename => String_List.Data (Files_It));
-         Add_File (Kernel, Activity, File);
-         Files_It := String_List.Next (Files_It);
-      end loop;
-
-      String_List.Free (Files);
+      Open_Activities_Explorer (Kernel, Context);
 
       Refresh (Get_Activities_Explorer (Kernel, False, False));
       Refresh (Get_Explorer (Kernel, False, False));
