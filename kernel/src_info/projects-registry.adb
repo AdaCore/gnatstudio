@@ -981,8 +981,7 @@ package body Projects.Registry is
 
             declare
                Current_Source : constant Name_Id :=
-                                  String_Elements
-                                    (Registry) (Sources).Display_Value;
+                                  String_Elements (Registry) (Sources).Value;
                UTF8           : constant String :=
                                   Locale_To_UTF8 (Name_Buffer (1 .. Name_Len));
                Directory      : Name_Id := No_Name;
@@ -2213,6 +2212,8 @@ package body Projects.Registry is
 
             if Get_Root_Project (Registry) /= No_Project then
                if Path = null and then Use_Source_Path then
+                  --  ??? Should not search again in the directories from
+                  --  Project2
                   Path := Locate_Regular_File
                     (Locale,
                      Include_Path (Get_Root_Project (Registry), True)
