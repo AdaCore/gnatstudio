@@ -45,6 +45,6 @@ exception
       Msg ("Thank you for using sdc.");
 
    when others =>
-      Msg ("*** Internal Error *** : Please report it.");
+      Msg ("*** Internal Error ***.");
 
 end Sdc;
