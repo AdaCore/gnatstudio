@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 4.2.1
 
+- GC03-007: Memory leak when the outline view is used
+  Problem:    If the outline view is used, then switching between source
+              editors causes a memory leak.
+  Workaround: Closing the outline view prevents the memory leak.
+
 Known Problems fixed in GPS 4.2.0
 
 - GB21-025: Dereferencing items in the debugger canvas
@@ -70,7 +75,7 @@ Known Problems fixed in GPS 4.2.0
   Workaround: No known workaround.
 
 - G917-002: Browsing not working when building with a Library_ALI_Dir
-  Problem:    When building a project with a Library_ALI_Dir project attribute, 
+  Problem:    When building a project with a Library_ALI_Dir project attribute,
               ali files are unreachable until the library is installed, because
               the object directory is not considered.
   Workaround: Remove the Library_ALI_Dir attribute from the project, or copy
