@@ -841,11 +841,8 @@ package body Outline_View is
                 Gtk_Tree_Store (Get_Base_Model (Outline.Tree));
       Iter  : Gtk_Tree_Iter := Get_Iter_First (Model);
       Args  : Argument_List (1 .. 1);
-   begin
-      if Iter /= Null_Iter then
-         Iter := Children (Model, Iter);
-      end if;
 
+   begin
       while Iter /= Null_Iter loop
          declare
             Name : aliased String := Get_String (Model, Iter, Mark_Column);
