@@ -601,6 +601,8 @@ package body Projects is
 
    function Direct_Sources_Count (Project : Project_Type) return Natural is
    begin
+      --  ??? Should directly use the size of Source_Files, since this is now
+      --  precomputed when the project is loaded
       if Get_View (Project) = Prj.No_Project then
          return 0;
       else
