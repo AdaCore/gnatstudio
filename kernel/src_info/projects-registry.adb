@@ -486,8 +486,7 @@ package body Projects.Registry is
          Prj.Part.Parse (Registry.Data.Tree,
                          Node, Normalize_Project_Path (Project_Path), True,
                          Store_Comments => True,
-                         Current_Directory => Get_Current_Dir,
-                         Follow_Links => not Registry.Data.Trusted_Mode);
+                         Current_Directory => Get_Current_Dir);
          P := Get_Project_From_Name
            (Registry, Prj.Tree.Name_Of (Node, Registry.Data.Tree));
       end if;
@@ -614,11 +613,13 @@ package body Projects.Registry is
 
          Prj.Com.Fail := Fail'Unrestricted_Access;
 
+         Opt.Follow_Links := not Registry.Data.Trusted_Mode;
+         Opt.Follow_Links_For_Dirs := Opt.Follow_Links;
+
          Prj.Part.Parse
            (Registry.Data.Tree, Project, Full_Name (Root_Project_Path).all,
             True, Store_Comments => True,
-            Current_Directory => Get_Current_Dir,
-            Follow_Links => not Registry.Data.Trusted_Mode);
+            Current_Directory => Get_Current_Dir);
          Prj.Com.Fail := null;
 
          Opt.Full_Path_Name_For_Brief_Errors := False;
@@ -862,7 +863,6 @@ package body Projects.Registry is
          Registry.Data.Root.Node,
          Registry.Data.Tree,
          Report_Error'Unrestricted_Access,
-         Follow_Links    => not Registry.Data.Trusted_Mode,
          Current_Dir     => Current_Dir,
          When_No_Sources => Warning);
 
