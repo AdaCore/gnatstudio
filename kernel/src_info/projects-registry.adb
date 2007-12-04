@@ -483,11 +483,12 @@ package body Projects.Registry is
       Name_Buffer (1 .. Name_Len) := Path;
       P := Get_Project_From_Name (Registry, Name_Find);
       if P = No_Project then
+         --  The GNAT parser and opt.ads were already setup when the project
+         --  was loaded
          Prj.Part.Parse (Registry.Data.Tree,
                          Node, Normalize_Project_Path (Project_Path), True,
                          Store_Comments => True,
-                         Current_Directory => Get_Current_Dir,
-                         Follow_Links => not Registry.Data.Trusted_Mode);
+                         Current_Directory => Get_Current_Dir);
          P := Get_Project_From_Name
            (Registry, Prj.Tree.Name_Of (Node, Registry.Data.Tree));
       end if;
@@ -614,15 +615,16 @@ package body Projects.Registry is
 
          Prj.Com.Fail := Fail'Unrestricted_Access;
 
---           Prj.Set_Mode (Multi_Language);
---           Prj.Must_Check_Configuration := False;
---           Prj.Default_Language_Is_Ada  := True;
+         Prj.Set_Mode (Multi_Language);
+         Prj.Must_Check_Configuration := False;
+         Prj.Default_Language_Is_Ada  := True;
+         Opt.Follow_Links             := not Registry.Data.Trusted_Mode;
+         Opt.Follow_Links_For_Dirs    := not Registry.Data.Trusted_Mode;
 
          Prj.Part.Parse
            (Registry.Data.Tree, Project, Full_Name (Root_Project_Path).all,
             True, Store_Comments => True,
-            Current_Directory => Get_Current_Dir,
-            Follow_Links => not Registry.Data.Trusted_Mode);
+            Current_Directory => Get_Current_Dir);
          Prj.Com.Fail := null;
 
          Opt.Full_Path_Name_For_Brief_Errors := False;
@@ -866,7 +868,6 @@ package body Projects.Registry is
          Registry.Data.Root.Node,
          Registry.Data.Tree,
          Report_Error'Unrestricted_Access,
-         Follow_Links    => not Registry.Data.Trusted_Mode,
          Current_Dir     => Current_Dir,
          When_No_Sources => Warning);
 
@@ -1434,7 +1435,9 @@ package body Projects.Registry is
       Ada_Sources_Last :=
         Source_Data_Table.Last (Registry.Data.View_Tree.Sources);
 
-      Trace (Me, "MANU Add_Foreign_Source_Files: " & Ada_Sources_Last'Img);
+      Trace (Me, "MANU Add_Foreign_Source_Files: "
+             & Ada_Sources'First'Img
+             & Ada_Sources_Last'Img);
 
       for S in Ada_Sources'First .. Ada_Sources_Last loop
          declare
@@ -1451,6 +1454,7 @@ package body Projects.Registry is
                   --  units. Only add them once in the project sources.
 
                   if not Get (Seen, Base_Name) then
+                     Trace (Me, "MANU Found " & Base_Name);
                      Get_Name_String (Data.Display_Path);
 
                      Trace (Me, "MANU " & Base_Name
@@ -1467,10 +1471,6 @@ package body Projects.Registry is
                      Set (Seen, Base_Name, True);
                   end if;
                end;
-
-            else
-               Trace (Me, "MANU not from current project");
-
             end if;
          end;
       end loop;
