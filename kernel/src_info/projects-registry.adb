@@ -483,12 +483,11 @@ package body Projects.Registry is
       Name_Buffer (1 .. Name_Len) := Path;
       P := Get_Project_From_Name (Registry, Name_Find);
       if P = No_Project then
-         --  The GNAT parser and opt.ads were already setup when the project
-         --  was loaded
          Prj.Part.Parse (Registry.Data.Tree,
                          Node, Normalize_Project_Path (Project_Path), True,
                          Store_Comments => True,
-                         Current_Directory => Get_Current_Dir);
+                         Current_Directory => Get_Current_Dir,
+                         Follow_Links => not Registry.Data.Trusted_Mode);
          P := Get_Project_From_Name
            (Registry, Prj.Tree.Name_Of (Node, Registry.Data.Tree));
       end if;
@@ -615,16 +614,11 @@ package body Projects.Registry is
 
          Prj.Com.Fail := Fail'Unrestricted_Access;
 
-         Prj.Set_Mode (Multi_Language);
-         Prj.Must_Check_Configuration := False;
-         Prj.Default_Language_Is_Ada  := True;
-         Opt.Follow_Links             := not Registry.Data.Trusted_Mode;
-         Opt.Follow_Links_For_Dirs    := not Registry.Data.Trusted_Mode;
-
          Prj.Part.Parse
            (Registry.Data.Tree, Project, Full_Name (Root_Project_Path).all,
             True, Store_Comments => True,
-            Current_Directory => Get_Current_Dir);
+            Current_Directory => Get_Current_Dir,
+            Follow_Links => not Registry.Data.Trusted_Mode);
          Prj.Com.Fail := null;
 
          Opt.Full_Path_Name_For_Brief_Errors := False;
@@ -868,6 +862,7 @@ package body Projects.Registry is
          Registry.Data.Root.Node,
          Registry.Data.Tree,
          Report_Error'Unrestricted_Access,
+         Follow_Links    => not Registry.Data.Trusted_Mode,
          Current_Dir     => Current_Dir,
          When_No_Sources => Warning);
 
@@ -1292,8 +1287,7 @@ package body Projects.Registry is
             --  used to compile the run-time for example but are not part of
             --  the compiler distribution).
 
-            if F.Is_Regular_File then  --  ??? Should be done only when
-                                       --  generating from debugger
+            if F.Is_Regular_File then
                Append (Source_File_List, F);
                Set (Seen, File, True);
             end if;
@@ -1416,10 +1410,7 @@ package body Projects.Registry is
       Lang      : Name_Id;
       Has_File  : Boolean;
       Dirs_List : String_List_Id;
---        Src       : String_List_Id;
-
-      Ada_Sources : Source_Data_Table.Table_Ptr;
-      Ada_Sources_Last : Source_Id;
+      Src       : String_List_Id;
 
    begin
       for L in Languages'Range loop
@@ -1431,76 +1422,32 @@ package body Projects.Registry is
       --  We already know if the directories contain Ada files. Update the
       --  status accordingly, in case they don't contain any other file.
 
-      Ada_Sources := Registry.Data.View_Tree.Sources.Table;
-      Ada_Sources_Last :=
-        Source_Data_Table.Last (Registry.Data.View_Tree.Sources);
+      Src := Projects_Table (Registry) (Get_View (Project)).Sources;
 
-      Trace (Me, "MANU Add_Foreign_Source_Files: "
-             & Ada_Sources'First'Img
-             & Ada_Sources_Last'Img);
+      while Src /= Nil_String loop
+         Get_Name_String (String_Elements (Registry) (Src).Display_Value);
 
-      for S in Ada_Sources'First .. Ada_Sources_Last loop
          declare
-            Data : Source_Data renames Ada_Sources (S);
+            File : constant String :=
+                     Locale_To_UTF8 (Name_Buffer (1 .. Name_Len));
          begin
-            if Data.Project = Get_View (Project) then
-               Get_Name_String (Data.File); --  normalized base name
+            --  The project manager duplicates files that contain several
+            --  units. Only add them once in the project sources.
 
-               declare
-                  Base_Name : constant String :=
-                    Locale_To_UTF8 (Name_Buffer (1 .. Name_Len));
-               begin
-                  --  The project manager duplicates files that contain several
-                  --  units. Only add them once in the project sources.
+            if not Get (Seen, File) then
+               Append
+                 (Source_File_List,
+                  Create (File, Project, Use_Object_Path => False));
 
-                  if not Get (Seen, Base_Name) then
-                     Trace (Me, "MANU Found " & Base_Name);
-                     Get_Name_String (Data.Display_Path);
-
-                     Trace (Me, "MANU " & Base_Name
-                            & " " & Name_Buffer (1 .. Name_Len));
-
-                     Append
-                       (Source_File_List,
-                        Create (Full_Filename => Name_Buffer (1 .. Name_Len)));
-
-                     --  We must set the source has seen so that it does not
-                     --  appear twice in the project explorer which happens for
-                     --  project that uses both Source_Files and Source_Dirs
-                     --  attributes.
-                     Set (Seen, Base_Name, True);
-                  end if;
-               end;
+               --  We must set the source has seen so that it does not appear
+               --  twice in the project explorer which happens for project
+               --  that uses both Source_Files and Source_Dirs attributes.
+               Set (Seen, File, True);
             end if;
          end;
-      end loop;
 
---        Src := Projects_Table (Registry) (Get_View (Project)).Sources;
---
---        while Src /= Nil_String loop
---           Get_Name_String (String_Elements (Registry) (Src).Display_Value);
---
---           declare
---              File : constant String :=
---                       Locale_To_UTF8 (Name_Buffer (1 .. Name_Len));
---           begin
---              --  The project manager duplicates files that contain several
---              --  units. Only add them once in the project sources.
---
---              if not Get (Seen, File) then
---                 Append
---                   (Source_File_List,
---                    Create (File, Project, Use_Object_Path => False));
---
---               --  We must set the source has seen so that it does not appear
---                 --  twice in the project explorer which happens for project
---                 --  that uses both Source_Files and Source_Dirs attributes.
---                 Set (Seen, File, True);
---              end if;
---           end;
---
---           Src := String_Elements (Registry) (Src).Next;
---        end loop;
+         Src := String_Elements (Registry) (Src).Next;
+      end loop;
 
       Dirs_List := Projects_Table (Registry)(Get_View (Project)).Source_Dirs;
 
