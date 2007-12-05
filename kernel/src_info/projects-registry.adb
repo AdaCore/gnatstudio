@@ -613,8 +613,8 @@ package body Projects.Registry is
 
          Prj.Com.Fail := Fail'Unrestricted_Access;
 
-         Opt.Follow_Links := not Registry.Data.Trusted_Mode;
-         Opt.Follow_Links_For_Dirs := Opt.Follow_Links;
+         Opt.Follow_Links_For_Files := not Registry.Data.Trusted_Mode;
+         Opt.Follow_Links_For_Dirs := Opt.Follow_Links_For_Files;
 
          Prj.Part.Parse
            (Registry.Data.Tree, Project, Full_Name (Root_Project_Path).all,
