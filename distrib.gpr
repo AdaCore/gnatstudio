@@ -4,6 +4,7 @@ project Distrib is
    for Source_Dirs use ("distrib");
    for Object_Dir use "distrib";
 
+   for Languages use ("text");
    for Source_Files use ("features", "known-problems", "COPYING", "README", "doinstall");
 
    package IDE renames Shared.IDE;
