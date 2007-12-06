@@ -127,7 +127,6 @@ procedure Code_Analysis_Test is
       Loaded        : Boolean;
       Status        : Boolean;
       Data_File     : Structured_File_Access;
-      Project       : Project_Type;
       Project_Node  : Project_Access;
       File_Node     : Code_Analysis.File_Access;
    begin
@@ -143,8 +142,8 @@ procedure Code_Analysis_Test is
          Errors             => Project_Error'Unrestricted_Access,
          New_Project_Loaded => Loaded,
          Status             => Status);
-      Project       := Load_Or_Find (Registry, Project_File);
-      Project_Node  := Get_Or_Create (Projects, Project);
+      Project_Node  := Get_Or_Create
+        (Projects, Load_Or_Find (Registry, Project_File));
       File_Contents := Read_File (Cov_File_Name);
       File_Node     := Get_Or_Create (Project_Node, Src_File_Name);
       File_Node.Analysis_Data.Coverage_Data := new Node_Coverage;
