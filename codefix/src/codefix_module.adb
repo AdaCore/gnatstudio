@@ -22,7 +22,6 @@
 with Ada.Unchecked_Deallocation;
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.Scripts;              use GNAT.Scripts;
-with GNAT.Traces;
 
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 
@@ -32,14 +31,12 @@ with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.Handlers;           use Gtkada.Handlers;
-with Gtkada.MDI;                use Gtkada.MDI;
 
 with Basic_Types;               use Basic_Types;
 with UTF8_Utils;                use UTF8_Utils;
 with Codefix.Errors_Parser;     use Codefix.Errors_Parser;
 with Codefix.Error_Lists;       use Codefix.Error_Lists;
 with Codefix.GPS_Io;            use Codefix.GPS_Io;
-with Codefix.Graphics;          use Codefix.Graphics;
 with Codefix.Text_Manager;      use Codefix.Text_Manager;
 with Codefix.GNAT_Parser;       use Codefix.GNAT_Parser;
 with Commands.Codefix;          use Commands.Codefix;
@@ -48,7 +45,6 @@ with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
@@ -70,10 +66,6 @@ package body Codefix_Module is
    pragma Import (C, Codefix_Ambiguous_Xpm, "codefix_ambiguous_xpm");
 
    Me          : constant Debug_Handle := Create ("Codefix_Module");
-
-   Codefix_GUI : constant Debug_Handle :=
-     Create ("Codefix_GUI", GNAT.Traces.Off);
-   --  ??? Disabled by default, as the UI is not ready yet.
 
    Location_Button_Name     : constant String := "Codefix";
    Codefix_Class_Name       : constant String := "Codefix";
@@ -177,10 +169,6 @@ package body Codefix_Module is
       Command : Text_Command'Class);
    procedure On_Fix (Widget : access Gtk_Widget_Record'Class);
    --  Fixes the error that is proposed on a Menu_Item of Codefix.
-
-   procedure Codefix_Handler
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Creates and shows the Codefix window.
 
    procedure Compilation_Finished_Cb
      (Kernel : access Kernel_Handle_Record'Class;
@@ -489,56 +477,6 @@ package body Codefix_Module is
       when E : others => Trace (Exception_Handle, E);
    end Compilation_Finished_Cb;
 
-   ---------------------
-   -- Codefix_Handler --
-   ---------------------
-
-   procedure Codefix_Handler
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-
-      Graphic_Codefix : Graphic_Codefix_Access;
-      Child           : GPS_MDI_Child;
-      Session         : Codefix_Session;
-   begin
-      if Codefix_Module_ID.Sessions = null then
-         return;
-      end if;
-
-      --  ??? Should select session interactively
-
-      Session := Codefix_Module_ID.Sessions
-        (Codefix_Module_ID.Sessions'First);
-
-      Update_All (Session.Current_Text.all);
-
-      Child := GPS_MDI_Child
-        (Find_MDI_Child_By_Tag (Get_MDI (Kernel), Graphic_Codefix_Record'Tag));
-
-      if Child = null then
-         Gtk_New
-           (Graphic_Codefix,
-            Kernel,
-            Session,
-            Remove_Pixmap'Access,
-            Create_Pixmap_And_Category'Access);
-         Gtk_New (Child, Graphic_Codefix,
-                  Module => Codefix_Module_ID);
-         Set_Title (Child, -"Code fixing", -"Codefix");
-         Put (Get_MDI (Kernel), Child);
-      else
-         Graphic_Codefix := Graphic_Codefix_Access (Get_Widget (Child));
-         Load_Next_Error (Graphic_Codefix, True);
-         Raise_Child (Child);
-      end if;
-
-      Set_Focus_Child (Child);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end Codefix_Handler;
-
    -------------------------
    -- Get_Session_By_Name --
    -------------------------
@@ -685,14 +623,6 @@ package body Codefix_Module is
          Name    => "Code Fixing",
          Submenu => new Codefix_Contextual_Menu);
 
-      if Active (Codefix_GUI) then
-         Register_Menu
-           (Kernel      => Kernel,
-            Parent_Path => "/" & (-"Tools"),
-            Text        => -"_Code Fixing",
-            Callback    => Codefix_Handler'Access);
-      end if;
-
       Add_Hook
         (Kernel, Compilation_Finished_Hook,
          Wrapper (Compilation_Finished_Cb'Access),
@@ -731,6 +661,12 @@ package body Codefix_Module is
          Class         => Codefix_Module_ID.Codefix_Class,
          Static_Method => True,
          Handler       => Default_Command_Handler'Access);
+      Register_Command
+        (Kernel, "error_at",
+         Class         => Codefix_Module_ID.Codefix_Class,
+         Handler       => Default_Command_Handler'Access,
+         Minimum_Args  => 3,
+         Maximum_Args  => 4);
       Register_Command
         (Kernel, "possible_fixes",
          Class        => Codefix_Module_ID.Codefix_Error_Class,
@@ -952,6 +888,35 @@ package body Codefix_Module is
                Set_Return_Value (Data, Err);
                Error := Next (Error);
             end loop;
+         end;
+      elsif Command = "error_at" then
+         Instance := Nth_Arg (Data, 1, Codefix_Module_ID.Codefix_Class);
+         Session := Get_Data (Instance);
+
+         declare
+            File    : constant Virtual_File :=
+              Get_Data (Nth_Arg (Data, 2));
+            Line    : constant Integer := Nth_Arg (Data, 3);
+            Column  : constant Integer := Nth_Arg (Data, 4);
+            Message : constant String := Nth_Arg (Data, 5, "");
+
+            Error : constant Error_Id := Search_Error
+              (This    => Session.Corrector.all,
+               File    => File,
+               Line    => Line,
+               Column  => Column_Index (Column),
+               Message => Message);
+
+            Err : Class_Instance;
+         begin
+            if Error /= Null_Error_Id then
+               Err := New_Instance
+                 (Get_Script (Data), Codefix_Module_ID.Codefix_Error_Class);
+               Set_Data (Err, Codefix_Error_Data'(Error, Session));
+               Set_Return_Value (Data, Err);
+            else
+               Set_Return_Value (Data, No_Class_Instance);
+            end if;
          end;
 
       end if;
