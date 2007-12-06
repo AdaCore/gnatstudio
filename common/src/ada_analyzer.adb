@@ -3400,6 +3400,7 @@ package body Ada_Analyzer is
                   if Format_Operators
                     and then Char /= ' ' and then P /= End_Of_Line
                   then
+                     Do_Indent (P, Num_Spaces);
                      Comma (1) := Buffer (P);
                      Replace_Text (P, P + 1, Comma (1 .. 2));
                   end if;
