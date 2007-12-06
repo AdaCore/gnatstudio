@@ -43,10 +43,17 @@ package body Code_Coverage is
       Error_Code : Coverage_Status) is
    begin
       if File_Node.Analysis_Data.Coverage_Data = null then
-         File_Node.Analysis_Data.Coverage_Data := new Node_Coverage;
+         File_Node.Analysis_Data.Coverage_Data := new Coverage;
       end if;
 
       File_Node.Analysis_Data.Coverage_Data.Status := Error_Code;
+
+      if File_Node.Lines = null then
+         --  Set an empty line array in order to make File_Node a "finished"
+         --  Code_Analysis node
+         File_Node.Lines := new Line_Array (1 .. 1);
+         File_Node.Lines.all := (others => Null_Line);
+      end if;
    end Set_Error;
 
    -------------------
@@ -124,9 +131,8 @@ package body Code_Coverage is
       -- line coverage information --
       -------------------------------
 
-      File_Node.Lines := new Line_Array (1 .. Natural'Value
-        (File_Contents
-           (Last_Line_Matches (2).First .. Last_Line_Matches (2).Last)));
+      File_Node.Lines := new Line_Array (1 .. Natural'Value (File_Contents
+        (Last_Line_Matches (2).First .. Last_Line_Matches (2).Last)));
       --  Create a Line_Array with exactly the number of elements corresponding
       --  to the number of code lines in the original source code file.
 
@@ -142,10 +148,13 @@ package body Code_Coverage is
          Line_Num := Natural'Value
            (File_Contents (Line_Matches (2).First .. Line_Matches (2).Last));
          File_Node.Lines (Line_Num).Number := Line_Num;
+         File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data :=
+           new Coverage;
+         File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data.Status :=
+           Valid;
 
          case File_Contents (Line_Matches (1).First) is
-            when '#' => File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data
-                 := new Coverage;
+            when '#' =>
                File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data.Coverage
                  := 0;
                File_Node.Lines (Line_Num).Contents := new String'
@@ -153,8 +162,6 @@ package body Code_Coverage is
                     (Line_Matches (3).First .. Line_Matches (3).Last));
                Not_Cov_Count := Not_Cov_Count + 1;
             when others =>
-               File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data
-                 := new Coverage;
                File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data.Coverage
                  := Natural'Value
                  (File_Contents
@@ -297,9 +304,8 @@ package body Code_Coverage is
       end if;
 
       declare
-         Data : constant access Node_Coverage :=
-                  Node_Coverage
-                    (Project_Node.Analysis_Data.Coverage_Data.all)'Access;
+         Data : constant access Node_Coverage := Node_Coverage
+           (Project_Node.Analysis_Data.Coverage_Data.all)'Access;
       begin
          Data.Coverage := 0;
          Data.Children := 0;
@@ -311,9 +317,8 @@ package body Code_Coverage is
 
             if File_Node.Analysis_Data.Coverage_Data /= null and then
               File_Node.Analysis_Data.Coverage_Data.Status = Valid then
-               Data.Children := Data.Children +
-                 Node_Coverage
-                   (File_Node.Analysis_Data.Coverage_Data.all).Children;
+               Data.Children := Data.Children + Node_Coverage
+                 (File_Node.Analysis_Data.Coverage_Data.all).Children;
                Data.Coverage := Data.Coverage +
                  File_Node.Analysis_Data.Coverage_Data.Coverage;
             end if;
@@ -375,6 +380,95 @@ package body Code_Coverage is
       end if;
    end Dump_Prj_Coverage;
 
+   -----------------------
+   -- XML_Dump_Coverage --
+   -----------------------
+
+   procedure XML_Dump_Coverage (Coverage : Coverage_Access; Loc : Node_Ptr) is
+   begin
+      if Coverage /= null then
+         Set_Attribute (Loc, "status", Status_Message (Coverage.Status));
+
+         if Coverage.Status = Valid then
+            Set_Attribute (Loc, "coverage", Natural'Image (Coverage.Coverage));
+
+            if Coverage.all in Node_Coverage'Class then
+               Set_Attribute (Loc, "children", Natural'Image
+                              (Node_Coverage (Coverage.all).Children));
+               if Coverage.all in Subprogram_Coverage'Class then
+                  Set_Attribute (Loc, "called", Natural'Image
+                                 (Subprogram_Coverage (Coverage.all).Called));
+               elsif Coverage.all in Project_Coverage'Class then
+                  if Project_Coverage (Coverage.all).Have_Runs then
+                     Set_Attribute (Loc, "runs", Natural'Image
+                                    (Project_Coverage (Coverage.all).Runs));
+                  end if;
+               end if;
+            end if;
+         end if;
+      end if;
+   end XML_Dump_Coverage;
+
+   ------------------------
+   -- XML_Parse_Coverage --
+   ------------------------
+
+   procedure XML_Parse_Coverage
+     (Coverage : in out Coverage_Access;
+      Loc      : Node_Ptr)
+   is
+      Txt_Status : constant String := Get_Attribute (Loc, "status");
+      Status     : Coverage_Status;
+   begin
+      if Txt_Status /= "" then
+         Status := Status_Value (Txt_Status);
+
+         if Status = Valid then
+            if Loc.Tag.all = "Line" then
+               Coverage := new Code_Analysis.Coverage;
+            else
+               if Loc.Tag.all = "Subprogram" then
+                  declare
+                     Txt_Called : constant String :=
+                                    Get_Attribute (Loc, "called");
+                  begin
+                     Coverage := new Subprogram_Coverage;
+
+                     if Txt_Called /= "" then
+                        Subprogram_Coverage (Coverage.all).Called :=
+                          Natural'Value (Txt_Called);
+                     end if;
+                  end;
+               elsif Loc.Tag.all = "File" then
+                  Coverage := new Node_Coverage;
+               elsif Loc.Tag.all = "Project" then
+                  declare
+                     Txt_Runs : constant String := Get_Attribute (Loc, "runs");
+                  begin
+                     Coverage := new Project_Coverage;
+
+                     if Txt_Runs /= "" then
+                        Project_Coverage (Coverage.all).Have_Runs := True;
+                        Project_Coverage (Coverage.all).Runs :=
+                          Natural'Value (Txt_Runs);
+                     end if;
+                  end;
+               end if;
+
+               Node_Coverage (Coverage.all).Children :=
+                 Natural'Value (Get_Attribute (Loc, "children"));
+            end if;
+
+            Coverage.Coverage := Natural'Value
+              (Get_Attribute (Loc, "coverage"));
+         else
+            Coverage := new Code_Analysis.Coverage;
+         end if;
+
+         Coverage.Status := Status;
+      end if;
+   end XML_Parse_Coverage;
+
    --------------------------------------
    -- First_Project_With_Coverage_Data --
    --------------------------------------
@@ -414,10 +508,9 @@ package body Code_Coverage is
      (Coverage : Coverage_Access;
       Bin_Mode : Boolean := False) return String_Access
    is
-      Pango_Markup_To_Open_1 : constant String
-        := "<span foreground=""";
+      Pango_Markup_To_Open_1 : constant String := "<span foreground=""";
       Pango_Markup_To_Open_2 : constant String := """>";
-      Pango_Markup_To_Close : constant String := "</span>";
+      Pango_Markup_To_Close  : constant String := "</span>";
    begin
       if Bin_Mode then
          case Coverage.Coverage is
@@ -522,22 +615,21 @@ package body Code_Coverage is
 
          if Coverage.all in Subprogram_Coverage'Class then
             declare
-               Cal_Count : constant Natural
-                 := Subprogram_Coverage (Coverage.all).Called;
+               Cal_Count : constant Natural :=
+                             Subprogram_Coverage (Coverage.all).Called;
             begin
-               return
-                 String'(-", called" & Natural'Image (Cal_Count)
-                         & Txt_Cal (Cal_Count));
+               return String'(-", called" & Natural'Image (Cal_Count)
+                              & Txt_Cal (Cal_Count));
             end;
          elsif Coverage.all in Project_Coverage'Class and then
            Project_Coverage (Coverage.all).Have_Runs then
+
             declare
-               Run_Count : constant Natural
-                 := Project_Coverage (Coverage.all).Runs;
+               Run_Count : constant Natural :=
+                             Project_Coverage (Coverage.all).Runs;
             begin
-               return
-                 String'(-", ran" & Natural'Image (Run_Count)
-                         & Txt_Cal (Run_Count));
+               return String'(-", ran" & Natural'Image (Run_Count)
+                              & Txt_Cal (Run_Count));
             end;
          else
             return "";
@@ -547,10 +639,10 @@ package body Code_Coverage is
    begin
       if Coverage.Status = Valid then
          declare
-            Cov_Txt     : constant String
-              := Natural'Image (Coverage.Coverage);
-            Lig_Count   : constant Natural
-              := Node_Coverage (Coverage.all).Children;
+            Cov_Txt     : constant String :=
+                            Natural'Image (Coverage.Coverage);
+            Lig_Count   : constant Natural :=
+                            Node_Coverage (Coverage.all).Children;
             Cov_Percent : Natural;
          begin
             if Lig_Count = 0 then
@@ -573,26 +665,53 @@ package body Code_Coverage is
          end;
 
       else
-         case Coverage.Status is
-         when File_Not_Found =>
-            Set (Tree_Store, Iter, Cov_Col, -" Gcov file not found");
-         when File_Out_Of_Date =>
-            Set (Tree_Store, Iter, Cov_Col, -" Gcov file out-of-date");
-         when File_Corrupted =>
-            Set (Tree_Store, Iter, Cov_Col, -" Gcov file corrupted");
-         when File_Empty =>
-            Set (Tree_Store, Iter, Cov_Col, -" Gcov file empty");
-         when Valid =>
-            --  Note that this should never be called.
-            --  Just adding this case to avoid adding "when others". This way
-            --  new file status will have new messages.
-            null;
-         end case;
-
+         Set (Tree_Store, Iter, Cov_Col,
+              " " & Status_Message (Coverage.Status));
          Set (Tree_Store, Iter, Cov_Sort, Glib.Gint (0));
          Set (Tree_Store, Iter, Cov_Bar_Val, Glib.Gint (0));
          Set (Tree_Store, Iter, Cov_Bar_Txt, -"n/a");
       end if;
    end Fill_Iter;
+
+   --------------------
+   -- Status_Message --
+   --------------------
+
+   function Status_Message
+     (Status : Coverage_Status) return String is
+   begin
+      case Status is
+         when File_Not_Found   => return -"Gcov file not found";
+         when File_Out_Of_Date => return -"Gcov file out-of-date";
+         when File_Corrupted   => return -"Gcov file corrupted";
+         when File_Empty       => return -"Gcov file empty";
+         when Valid            => return -"Gcov file valid";
+         when Undeterminated   => return -"Status undeterminated";
+      end case;
+   end Status_Message;
+
+   ------------------
+   -- Status_Value --
+   ------------------
+
+   function Status_Value
+     (Status : String) return Coverage_Status is
+   begin
+      if    Status = -"Gcov file not found"   then
+         return File_Not_Found;
+      elsif Status = -"Gcov file out-of-date" then
+         return File_Out_Of_Date;
+      elsif Status = -"Gcov file corrupted"   then
+         return File_Corrupted;
+      elsif Status = -"Gcov file empty"       then
+         return File_Empty;
+      elsif Status = -"Gcov file valid"       then
+         return Valid;
+      elsif Status = -"Status undeterminated" then
+         return Undeterminated;
+      end if;
+
+      return Undeterminated;
+   end Status_Value;
 
 end Code_Coverage;

@@ -22,6 +22,7 @@
 --  </description>
 
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
+with Glib.Xml_Int;           use Glib.Xml_Int;
 with Gtk.Tree_Store;         use Gtk.Tree_Store;
 with Gtk.Tree_Model;         use Gtk.Tree_Model;
 with Language.Tree.Database; use Language.Tree.Database;
@@ -34,6 +35,16 @@ package Code_Coverage is
      (File_Node  : Code_Analysis.File_Access;
       Error_Code : Coverage_Status);
    --  Sets a coverage data with Error_Code for Status to the given File_Node
+
+   function Status_Message
+     (Status : Coverage_Status) return String;
+   --  Return the status associated error message
+   --  Return null if the status is valid
+
+   function Status_Value
+     (Status : String) return Coverage_Status;
+   --  Return the coverage status associated with an error message
+   --  Return null if no coverage status is corresponding
 
    procedure Add_File_Info
      (File_Node     : Code_Analysis.File_Access;
@@ -75,6 +86,16 @@ package Code_Coverage is
    procedure Dump_Prj_Coverage (Coverage : Coverage_Access);
    --  Dump to the standard output coverage information stored in a
    --  Code_Analysis. Coverage of the Project nodes, ie with extra Runs if any.
+
+   procedure XML_Dump_Coverage (Coverage : Coverage_Access; Loc : Node_Ptr);
+   --  Add to Loc the coverage attributes that Coverage may contain
+   --  This procedure handles all the Coverage_Access'Class
+
+   procedure XML_Parse_Coverage
+     (Coverage : in out Coverage_Access;
+      Loc      : Node_Ptr);
+   --  Get from Loc the coverage attributes that Coverage should contain
+   --  This procedure handles all the Coverage_Access'Class
 
    function First_Project_With_Coverage_Data
      (Projects : Code_Analysis_Tree) return Project_Type;

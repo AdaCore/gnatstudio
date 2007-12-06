@@ -24,6 +24,7 @@ with GNAT.Scripts;                           use GNAT.Scripts;
 with GNAT.Traces;
 with Glib;                                   use Glib;
 with Glib.Object;                            use Glib.Object;
+with Glib.Xml_Int;                           use Glib.Xml_Int;
 with Gtk.Button;
 with Gtk.Enums;                              use Gtk.Enums;
 with Gtk.Handlers;                           use Gtk.Handlers;
@@ -57,26 +58,30 @@ with Projects;                               use Projects;
 with VFS;                                    use VFS;
 with Entities;                               use Entities;
 with Traces;                                 use Traces;
-with Code_Analysis_Tree_Model;               use Code_Analysis_Tree_Model;
 with Code_Coverage;                          use Code_Coverage;
 with Code_Analysis;                          use Code_Analysis;
 with Code_Analysis_GUI;                      use Code_Analysis_GUI;
+with Code_Analysis_XML;                      use Code_Analysis_XML;
+with Code_Analysis_Tree_Model;               use Code_Analysis_Tree_Model;
 with Coverage_GUI;                           use Coverage_GUI;
 
 package body Code_Analysis_Module is
 
-   Src_File_Cst : aliased   constant String := "src";
+   Src_File_Cst : aliased constant String := "src";
    --  Constant String that represents the name of the source file parameter
    --  of the GPS.CodeAnalysis.add_gcov_file_info subprogram.
-   Cov_File_Cst : aliased   constant String := "cov";
+   Cov_File_Cst : aliased constant String := "cov";
    --  Constant String that represents the name of the .gcov file parameter
    --  of the GPS.CodeAnalysis.add_gcov_file_info subprogram.
-   Prj_File_Cst : aliased   constant String := "prj";
+   Prj_File_Cst : aliased constant String := "prj";
    --  Constant String that represents the name of the .gpr file parameter
    --  of the GPS.CodeAnalysis.add_gcov_project_info subprogram.
-   Ana_Name_Cst : aliased   constant String := "name";
+   Xml_File_Cst : aliased constant String := "xml";
+   --  Constant String that represents a name of the xml file to dump to in
+   --  parameters of the GPS.CodeAnalysis.dump_to_file command.
+   Ana_Name_Cst : aliased constant String := "name";
    --  Constant String that represents a name of Analysis_Instance in parameter
-   --  of the GPS.CodeAnalysis.get_analysis command.
+   --  of the GPS.CodeAnalysis.get command.
 
    Single_Analysis_Trace : constant Debug_Handle :=
                              Create ("SINGLE_ANALYSIS_MODE", GNAT.Traces.On);
@@ -331,6 +336,13 @@ package body Code_Analysis_Module is
       Command : String);
    --  Create a shell scripting instance of the module.
 
+   procedure Attach_Instance_And_Analysis
+     (Data     : in out Callback_Data'Class;
+      Instance : Class_Instance;
+      Analysis : Code_Analysis_Instance);
+   --  Set the Instance in the instance list of Analysis
+   --  Set Analysis in the created property for Instance
+
    procedure Create_Analysis_From_Menu
      (Widget : access Gtk_Widget_Record'Class);
    --  Create a new analysis instance from the "Tools/Coverage" menu.
@@ -418,6 +430,11 @@ package body Code_Analysis_Module is
    procedure Destroy_All_Analyzes_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
+   --  Call Destroy_All_Analyzes.
+
+   procedure Destroy_All_Analyzes_From_Shell
+     (Data    : in out Callback_Data'Class;
+      Command : String);
    --  Call Destroy_All_Analyzes.
 
    procedure On_Project_Changing_Hook
@@ -524,6 +541,34 @@ package body Code_Analysis_Module is
    procedure Activate_Pango_Markup (Item : Gtk_Menu_Item);
    --  Allow to use pango markup when setting the item label
 
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      User   : Kernel_Handle) return Node_Ptr;
+   --  Save the status of the code analysis view to an XML tree
+
+   function Load_Desktop
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child;
+   --  Restore the status of the code analysis view from a saved XML tree
+
+   procedure Dump_To_File
+     (Analysis : Code_Analysis_Instance;
+      File     : VFS.Virtual_File);
+   --  Dump the given analysis structure to File in XML format
+
+   procedure Dump_To_File_From_Shell
+     (Data    : in out Callback_Data'Class;
+      Command : String);
+   --  Dump the current analysis (the 1st of the set) to the shell given file:
+   --  in XML format
+
+   procedure Load_From_File_From_Shell
+     (Data    : in out Callback_Data'Class;
+      Command : String);
+   --  Replace the current coverage information in memory with the given
+   --  xml-formated file one
+
    --------------------------------------------
    -- CodeAnalysis_Default_Shell_Constructor --
    --------------------------------------------
@@ -545,28 +590,6 @@ package body Code_Analysis_Module is
    procedure Shell_Get_Command
      (Data : in out Callback_Data'Class; Command : String)
    is
-
-      procedure Attach_Instance_And_Analysis
-        (Data     : in out Callback_Data'Class;
-         Instance : Class_Instance;
-         Analysis : Code_Analysis_Instance);
-      --  Set the Instance in the instance list of Analysis
-      --  Set Analysis in the created property for Instance
-
-      procedure Attach_Instance_And_Analysis
-        (Data     : in out Callback_Data'Class;
-         Instance : Class_Instance;
-         Analysis : Code_Analysis_Instance)
-      is
-         Property : Code_Analysis_Property;
-      begin
-         Set (Analysis.Instances.all, Get_Script (Data), Instance);
-         Property := new Code_Analysis_Property_Record;
-         Property.Analysis := Analysis;
-         Set_Data (Instance, CodeAnalysis_Cst,
-                   Instance_Property_Record (Property.all));
-      end Attach_Instance_And_Analysis;
-
       pragma Unreferenced (Command);
       use Code_Analysis_Instances;
       Cur      : Cursor := Code_Analysis_Module_ID.Analyzes.First;
@@ -580,7 +603,7 @@ package body Code_Analysis_Module is
       begin
 
          --  If the given name correspond to an existing Analysis use it
-         --  Else create one using the givent instance
+         --  Else create one using the given instance
          loop
             exit when Analysis /= null or else Cur = No_Element;
             Analysis := Element (Cur);
@@ -620,6 +643,24 @@ package body Code_Analysis_Module is
    exception
       when E : others => Trace (Exception_Handle, E);
    end Shell_Get_Command;
+
+   ----------------------------------
+   -- Attach_Instance_And_Analysis --
+   ----------------------------------
+
+   procedure Attach_Instance_And_Analysis
+     (Data     : in out Callback_Data'Class;
+      Instance : Class_Instance;
+      Analysis : Code_Analysis_Instance)
+   is
+      Property : Code_Analysis_Property;
+   begin
+      Set (Analysis.Instances.all, Get_Script (Data), Instance);
+      Property := new Code_Analysis_Property_Record;
+      Property.Analysis := Analysis;
+      Set_Data (Instance, CodeAnalysis_Cst,
+                Instance_Property_Record (Property.all));
+   end Attach_Instance_And_Analysis;
 
    -------------------------------
    -- Create_Analysis_From_Menu --
@@ -753,9 +794,6 @@ package body Code_Analysis_Module is
               := Get_Or_Create (Prj_Node, Src_File);
          begin
             Set_Error (File_Node, File_Not_Found);
-            --  Set an empty line array in order to make File_Node a valid
-            --  Code_Analysis node
-            File_Node.Lines := new Line_Array (1 .. 1);
          end;
          return;
       end if;
@@ -801,9 +839,6 @@ package body Code_Analysis_Module is
               := Get_Or_Create (Prj_Node, Src_File);
          begin
             Set_Error (File_Node, File_Not_Found);
-            --  Set an empty line array in order to make File_Node a valid
-            --  Code_Analysis node
-            File_Node.Lines := new Line_Array (1 .. 1);
          end;
       else
          Add_Gcov_File_Info
@@ -895,10 +930,9 @@ package body Code_Analysis_Module is
      (Cont_N_Anal : Context_And_Analysis)
    is
       Prj_Node : Project_Access;
-      Prj_Name : constant Project_Type :=
-                   Project_Information (Cont_N_Anal.Context);
    begin
-      Prj_Node := Get_Or_Create (Cont_N_Anal.Analysis.Projects, Prj_Name);
+      Prj_Node := Get_Or_Create (Cont_N_Anal.Analysis.Projects,
+                                 Project_Information (Cont_N_Anal.Context));
       Add_Gcov_Project_Info (Get_Kernel (Cont_N_Anal.Context), Prj_Node);
       Refresh_Analysis_Report (Cont_N_Anal);
    end Add_Gcov_Project_Info_In_Callback;
@@ -1489,6 +1523,41 @@ package body Code_Analysis_Module is
    exception
       when E : others => Trace (Exception_Handle, E);
    end Destroy_All_Analyzes_From_Menu;
+
+   -------------------------------------
+   -- Destroy_All_Analyzes_From_Shell --
+   -------------------------------------
+
+   procedure Destroy_All_Analyzes_From_Shell
+     (Data    : in out Callback_Data'Class;
+      Command : String)
+   is
+      pragma Unreferenced (Command);
+      Instance : Class_Instance;
+      Analysis : Code_Analysis_Instance;
+   begin
+      Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
+
+      declare
+         Property : Instance_Property;
+         --  Limited lifetime for Property as it is no longer valid after
+         --  Destroy_All_Analyzes call
+      begin
+         Property := Get_Data (Instance, CodeAnalysis_Cst);
+
+         if Code_Analysis_Property (Property).Analysis = null then
+            Set_Error_Msg (Data, -"The analysis no longer exists");
+            return;
+         end if;
+      end;
+
+      Destroy_All_Analyzes (Get_Kernel (Data));
+      Code_Analysis_Module_ID.Count := 0;
+      Analysis := Create_Analysis_Instance;
+      Attach_Instance_And_Analysis (Data, Instance, Analysis);
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end Destroy_All_Analyzes_From_Shell;
 
    ------------------------------
    -- On_Project_Changing_Hook --
@@ -2594,6 +2663,183 @@ package body Code_Analysis_Module is
       end if;
    end Activate_Pango_Markup;
 
+   ------------------
+   -- Save_Desktop --
+   ------------------
+
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      User   : Kernel_Handle) return Node_Ptr
+   is
+      pragma Unreferenced (User);
+      Root : Node_Ptr;
+      View : Code_Analysis_View;
+   begin
+      if Widget.all in Code_Analysis_View_Record'Class then
+         View     := Code_Analysis_View (Widget);
+         Root     := new Glib.Xml_Int.Node;
+         Root.Tag := new String'("Code_Analysis_Tree");
+         Set_Attribute (Root, "name", Get_Name (View.Tree));
+         Dump_XML (View.Projects, Root);
+         return Root;
+      else
+         return null;
+      end if;
+   end Save_Desktop;
+
+   ------------------
+   -- Load_Desktop --
+   ------------------
+
+   function Load_Desktop
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child
+   is
+      pragma Unreferenced (MDI);
+      Cont_N_Anal : Context_And_Analysis;
+      Raised_View : Boolean;
+   begin
+      if Node.Tag.all = "Code_Analysis_Tree" then
+         if Code_Analysis_Module_ID.Count = 1 then
+            --  There's only one analysis created, we fill it
+            Code_Analysis_Module_ID.Count := 2;
+            Cont_N_Anal.Analysis :=
+              Code_Analysis_Module_ID.Analyzes.First_Element;
+            Cont_N_Anal.Analysis.Name :=
+              new String'(Get_Attribute (Node, "name"));
+         else
+            --  Count is more than one, so the first analysis has already been
+            --  filled, we create a new one
+            Cont_N_Anal.Analysis :=
+              Create_Analysis_Instance (Get_Attribute (Node, "name"));
+         end if;
+
+         Parse_XML
+           (Get_Project (User), Cont_N_Anal.Analysis.Projects, Node.Child);
+
+         if Get_Attribute (Node.Parent, "Raised") = "True" then
+            Raised_View := True;
+         end if;
+
+         Show_Analysis_Report (User, Cont_N_Anal, Raised_View);
+         return MDI_Child (Cont_N_Anal.Analysis.Child);
+      else
+         return null;
+      end if;
+   end Load_Desktop;
+
+   ------------------
+   -- Dump_To_File --
+   ------------------
+
+   procedure Dump_To_File
+     (Analysis : Code_Analysis_Instance;
+      File     : VFS.Virtual_File)
+   is
+      Root : Node_Ptr;
+   begin
+      Root     := new Glib.Xml_Int.Node;
+      Root.Tag := new String'("Code_Analysis_Tree");
+      Set_Attribute (Root, "name", Analysis.Name.all);
+      Dump_XML (Analysis.Projects, Root);
+      Print (Root, Full_Name (File).all);
+      Free (Root);
+   end Dump_To_File;
+
+   -----------------------------
+   -- Dump_To_File_From_Shell --
+   -----------------------------
+
+   procedure Dump_To_File_From_Shell
+     (Data    : in out Callback_Data'Class;
+      Command : String)
+   is
+      pragma Unreferenced (Command);
+      Property  : Instance_Property;
+      Instance  : Class_Instance;
+      File_Inst : Class_Instance;
+      File_Dump : VFS.Virtual_File;
+   begin
+      --  Check if the attached Analysis is still there
+      Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
+      Property := Get_Data (Instance, CodeAnalysis_Cst);
+
+      if Code_Analysis_Property (Property).Analysis = null then
+         Set_Error_Msg (Data, -"The analysis no longer exists");
+         return;
+      end if;
+
+      --  Check the parameters of the command
+      Name_Parameters (Data, (2 => Xml_File_Cst'Access));
+      File_Inst := Nth_Arg
+        (Data, 2, Get_File_Class (Get_Kernel (Data)),
+         Default => No_Class_Instance, Allow_Null => True);
+
+      if File_Inst = No_Class_Instance then
+         Set_Error_Msg
+           (Data, -"You must give a VFS.Virtual_File the for 'xml' argument");
+         return;
+      else
+         File_Dump := Get_Data (File_Inst);
+      end if;
+
+      Dump_To_File (Code_Analysis_Property (Property).Analysis, File_Dump);
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end Dump_To_File_From_Shell;
+
+   -------------------------------
+   -- Load_From_File_From_Shell --
+   -------------------------------
+
+   procedure Load_From_File_From_Shell
+     (Data    : in out Callback_Data'Class;
+      Command : String)
+   is
+      pragma Unreferenced (Command);
+      Property    : Instance_Property;
+      Instance    : Class_Instance;
+      File_Inst   : Class_Instance;
+      Loaded_File : VFS.Virtual_File;
+      Root_Node   : Node_Ptr;
+   begin
+      --  Check if the attached Analysis is still there
+      Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
+      Property := Get_Data (Instance, CodeAnalysis_Cst);
+
+      if Code_Analysis_Property (Property).Analysis = null then
+         Set_Error_Msg (Data, -"The analysis no longer exists");
+         return;
+      end if;
+
+      --  Check the parameters of the command
+      Name_Parameters (Data, (2 => Xml_File_Cst'Access));
+      File_Inst := Nth_Arg
+        (Data, 2, Get_File_Class (Get_Kernel (Data)),
+         Default => No_Class_Instance, Allow_Null => True);
+
+      if File_Inst = No_Class_Instance then
+         Set_Error_Msg
+           (Data, -"You must give a VFS.Virtual_File the for 'xml' argument");
+         return;
+      else
+         Loaded_File := Get_Data (File_Inst);
+      end if;
+
+      if not Is_Regular_File (Loaded_File) then
+         Set_Error_Msg (Data, -"The name given for 'xml' file is wrong");
+         return;
+      end if;
+
+      Root_Node := Parse (Full_Name (Loaded_File).all);
+      Parse_XML
+        (Get_Project (Get_Kernel (Data)),
+         Code_Analysis_Property (Property).Analysis.Projects, Root_Node.Child);
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end Load_From_File_From_Shell;
+
    ----------
    -- Less --
    ----------
@@ -2727,6 +2973,8 @@ package body Code_Analysis_Module is
          Func    =>
            Wrapper (On_Project_Changing_Hook'Access),
          Name    => "destroy_all_code_analysis");
+      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
+        (Save_Desktop'Access, Load_Desktop'Access);
       Register_Command
         (Kernel, Constructor_Method,
          Class   => Code_Analysis_Class,
@@ -2766,6 +3014,22 @@ package body Code_Analysis_Module is
         (Kernel, "show_analysis_report",
          Class   => Code_Analysis_Class,
          Handler => Show_Analysis_Report_From_Shell'Access);
+      Register_Command
+        (Kernel, "dump_to_file",
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Class   => Code_Analysis_Class,
+         Handler       => Dump_To_File_From_Shell'Access);
+      Register_Command
+        (Kernel, "load_from_file",
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Class         => Code_Analysis_Class,
+         Handler       => Load_From_File_From_Shell'Access);
+      Register_Command
+        (Kernel, "clear",
+         Class   => Code_Analysis_Class,
+         Handler => Destroy_All_Analyzes_From_Shell'Access);
    end Register_Module;
 
 end Code_Analysis_Module;

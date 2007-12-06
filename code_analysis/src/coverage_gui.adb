@@ -65,13 +65,10 @@ package body Coverage_GUI is
                -"Could not find coverage file " & Full_Name (Cov_File).all);
 
             declare
-               File_Node : constant Code_Analysis.File_Access
-                 := Get_Or_Create (Prj_Node, Src_File);
+               File_Node : constant Code_Analysis.File_Access :=
+                             Get_Or_Create (Prj_Node, Src_File);
             begin
                Set_Error (File_Node, File_Not_Found);
-               --  Set an empty line array in order to make File_Node a valid
-               --  Code_Analysis node
-               File_Node.Lines := new Line_Array (1 .. 1);
             end;
          end if;
       end loop;
@@ -114,15 +111,11 @@ package body Coverage_GUI is
          (-" Skipped."),
             Mode => GPS.Kernel.Console.Error);
          Set_Error (File_Node, File_Out_Of_Date);
-         --  Set an empty line array in order to make File_Node a valid
-         --  Code_Analysis node
-         File_Node.Lines := new Line_Array (1 .. 1);
       else
          declare
             Contents : String_Access := Read_File (Cov_File);
             Last     : Integer;
             CR_Found : Boolean;
-
          begin
             Strip_CR (Contents.all, Last, CR_Found);
 
@@ -141,6 +134,7 @@ package body Coverage_GUI is
            Project_Node.Analysis_Data.Coverage_Data = null then
 
             Project_Node.Analysis_Data.Coverage_Data := new Project_Coverage;
+            Project_Node.Analysis_Data.Coverage_Data.Status := Valid;
             Get_Runs_Info_From_File
               (File_Contents,
                Project_Coverage
@@ -464,8 +458,7 @@ package body Coverage_GUI is
          --  project.
          return Create
            (Object_Path
-              (Get_Root_Project (Get_Registry (Kernel).all),
-               False, False)
+              (Get_Root_Project (Get_Registry (Kernel).all), False, False)
             & Directory_Separator & Base_Name (Source) & Gcov_Extension_Cst);
 
       else

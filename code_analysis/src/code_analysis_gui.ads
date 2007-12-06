@@ -100,7 +100,8 @@ package Code_Analysis_GUI is
       Load_Button : Gtk_Button;
       Empty_Board : Gtk_Hbox; --  when flat view doesn't allow to see data
       Icons       : Code_Analysis_Icons;
-      Projects    : Code_Analysis_Tree;  --  Used by Show_Flat_List_* callbacks
+      Projects    : Code_Analysis_Tree;
+      --  Used by Show_Flat_List_* and Save_Desktop callbacks
       Binary_Mode : Boolean := True;
    end record;
 

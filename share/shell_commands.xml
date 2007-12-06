@@ -2795,10 +2795,15 @@ Access the various suggested fixes through the methods of the Codefix class</des
       <return>An instance of GPS.CodeAnalysis associated to a code analysis data structure in GPS.</return>
       <description>Creates an empty code analysis data structure. Data can be put in this structure by using one of the primitive operations.</description>
       <example lang="python">
-          a = GPS.CodeAnalysis.get ("Coverage Report")
+          a = GPS.CodeAnalysis.get ("Coverage")
           a.add_all_gcov_project_info ()
           a.show_coverage_information ()
       </example>
+  </shell_doc>
+
+  <shell_doc name="GPS.CodeAnalysis.clear">
+      <param name="self">An instance of GPS.CodeAnalysis</param>
+      <description>Removes all code analysis information from memory.</description>
   </shell_doc>
 
   <shell_doc name="GPS.CodeAnalysis.add_gcov_file_info">
@@ -2844,6 +2849,32 @@ Access the various suggested fixes through the methods of the Codefix class</des
       <param name="self">An instance of GPS.CodeAnalysis</param>
       <description>Removes from the Locations view any listed coverage locations, and remove from the source editors their annotation column if any.</description>
       <see_also name="GPS.CodeAnalysis.show_coverage_information" />
+  </shell_doc>
+
+  <shell_doc name="GPS.CodeAnalysis.dump_to_file">
+      <param name="self">An instance of GPS.CodeAnalysis</param>
+      <param name="xml">A GPS.File instance</param>
+      <description>Create an xml-formated file that contains a representation of the given code analysis.</description>
+      <see_also name="GPS.CodeAnalysis.load_from_file" />
+      <example lang="python">
+          a = GPS.CodeAnalysis.get ("Coverage")
+          a.add_all_gcov_project_info ()
+          a.dump_to_file (xml=GPS.File ("new_file.xml"))
+      </example>
+  </shell_doc>
+
+  <shell_doc name="GPS.CodeAnalysis.load_from_file">
+      <param name="self">An instance of GPS.CodeAnalysis</param>
+      <param name="xml">A GPS.File instance</param>
+      <description>Replace the current coverage information in memory with the given xml-formated file one.</description>
+      <see_also name="GPS.CodeAnalysis.dump_to_file" />
+      <example lang="python">
+          a = GPS.CodeAnalysis.get ("Coverage")
+          a.add_all_gcov_project_info ()
+          a.dump_to_file (xml=GPS.File ("new_file.xml"))
+          a.clear ()
+          a.load_from_file (xml=GPS.File ("new_file.xml"))
+      </example>
   </shell_doc>
 
   <!--#################################################################

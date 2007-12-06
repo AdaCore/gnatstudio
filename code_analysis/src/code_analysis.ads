@@ -45,24 +45,25 @@ package Code_Analysis is
      (Valid,
       File_Not_Found,
       --  Error status obtained if no Gcov file was found associated to a
-      --  source file when trying to load Gcov info
+      --  source file when trying to load Gcov info.
       File_Out_Of_Date,
       --  Error status obtained when the Gcov file that is attempted to be
-      --  parsed is older than the source file associated to
+      --  parsed is older than the source file associated to.
       File_Empty,
       --  gcov file found but empty.
-      File_Corrupted
-      --  The gcov file could not be parsed
+      File_Corrupted,
+      --  The gcov file could not be parsed.
+      Undeterminated
+      --  The status is undeterminated.
      );
 
    type Coverage is tagged record
-      Coverage : Integer;
-      Status   : Coverage_Status := Valid;
+      Coverage : Natural;
+      Status   : Coverage_Status := Undeterminated;
    end record;
    --  Basic code coverage information
    --  Record the Line's execution counts and the Subprogram, File and Project
    --  number of not covered lines
-   --  When negative, it stands for a Gcov_Error_Code (see Code_Coverage.ads)
 
    type Node_Coverage is new Coverage with record
       Children : Natural;
@@ -203,9 +204,9 @@ package Code_Analysis is
    --  allow to get an access pointing on an identified tree node
    --  if the node doesn't exists, it is created
 
-   ------------------------------------
-   -- Determinist Ordered Provisions --
-   ------------------------------------
+   --------------------------------------
+   -- Deterministic Ordered Provisions --
+   --------------------------------------
 
    type Subprogram_Array is array (Positive range <>) of Subprogram_Access;
    --  Used to sort Subprogram nodes in a determinist way before to process a
