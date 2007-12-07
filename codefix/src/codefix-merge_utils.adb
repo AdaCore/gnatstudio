@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2007                      --
---                              AdaCore                              --
+--                  Copyright (C) 2002-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -335,17 +334,12 @@ package body Codefix.Merge_Utils is
       Len   : Natural;
       Value : String) is
    begin
-      if Len > Value'Length then
-         Modify (This, Start, Value);
-         Delete (This, Start + Value'Length, Len - Value'Length);
-      elsif Len < Value'Length then
-         Modify (This, Start, Value (Value'First .. Value'First + Len - 1));
-         Insert
-           (This,
-            Start + Char_Index (Len),
-            Value (Value'First + Len .. Value'Last));
-      else
-         Modify (This, Start, Value);
+      if Value /= "" then
+         Insert (This, Start + Char_Index (Len), Value);
+      end if;
+
+      if Len > 0 then
+         Delete (This, Start, Len);
       end if;
    end Replace;
 
