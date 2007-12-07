@@ -158,7 +158,7 @@ private
    type Custom_Command_Execution_Record is record
       In_Process  : Boolean := False;
       --  True if we are processing the command, but there are some external
-      --  process to run before completion
+      --  process to run before completion.
 
       Cmd_Index   : Natural;
       --  The current command we are executing
@@ -180,10 +180,10 @@ private
       --  True if an external process is currently running
 
       Outputs : String_List_Access;
-      --  The output of the various commands, if it was saved.
+      --  The output of the various commands, if it was saved
 
       Current_Output : String_Access;
-      --  Output of the external currently executing, if we need to save it.
+      --  Output of the external currently executing, if we need to save it
 
       Save_Output : Boolean_Array_Access;
       --  Whether we should save the output of the nth-command
@@ -195,8 +195,7 @@ private
       --  Check for password/passphrase prompt
 
       Nb_Password    : Natural;
-      --  The count of user password asking.
-
+      --  The count of user password asking
    end record;
    type Custom_Command_Execution is access Custom_Command_Execution_Record;
    --  Stores information relevant only while a command is executing, to

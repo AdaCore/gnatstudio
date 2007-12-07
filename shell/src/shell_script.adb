@@ -141,11 +141,11 @@ package body Shell_Script is
    function Get_Or_Create_Console (Kernel : access Kernel_Handle_Record'Class)
       return MDI_Child
    is
-      Child  : GPS_MDI_Child;
-      Script : constant Shell_Scripting := Shell_Scripting
+      Script  : constant Shell_Scripting := Shell_Scripting
         (Lookup_Scripting_Language (Get_Scripts (Kernel), GPS_Shell_Name));
-      Console : Interactive_Console;
       Virtual : constant Virtual_Console := Get_Default_Console (Script);
+      Child   : GPS_MDI_Child;
+      Console : Interactive_Console;
    begin
       if Virtual = null then
          Console := new Shell_Console_Record;
@@ -158,11 +158,11 @@ package body Shell_Script is
             Key          => "shell",
             Wrap_Mode    => Wrap_Char);
          Gtk_New (Child, Console,
-                  Default_Width      => 400,
-                  Default_Height     => 120,
-                  Focus_Widget       => Gtk_Widget (Get_View (Console)),
-                  Group              => Group_Consoles,
-                  Module             => null,
+                  Default_Width       => 400,
+                  Default_Height      => 120,
+                  Focus_Widget        => Gtk_Widget (Get_View (Console)),
+                  Group               => Group_Consoles,
+                  Module              => null,
                   Desktop_Independent => True);
          Set_Title (Child, -"Shell");
          Put (Get_MDI (Kernel), Child, Initial_Position => Position_Bottom);

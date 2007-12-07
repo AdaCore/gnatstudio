@@ -155,12 +155,12 @@ package body Commands.Custom is
 
          case The_Type is
             when Component_Shell =>
-               Script       : Scripting_Language;
+               Script  : Scripting_Language;
             when Component_External =>
-               Regexp       : Gtk_Entry;
-               Current      : Gtk_Spin_Button;
-               Final        : Gtk_Spin_Button;
-               Hide         : Gtk_Check_Button;
+               Regexp  : Gtk_Entry;
+               Current : Gtk_Spin_Button;
+               Final   : Gtk_Spin_Button;
+               Hide    : Gtk_Check_Button;
          end case;
       end record;
    type Custom_Component_Editor is
@@ -168,8 +168,8 @@ package body Commands.Custom is
    --  This widget is used to edit a Custom_Component_Record
 
    function To_XML
-     (Editor         : access Custom_Component_Editor_Record'Class)
-     return Glib.Xml_Int.Node_Ptr;
+     (Editor : access Custom_Component_Editor_Record'Class)
+      return Glib.Xml_Int.Node_Ptr;
    --  Return the XML representation of the component edited in Editor
 
    procedure On_Command_Changed (Editor : access Gtk_Widget_Record'Class);
@@ -180,7 +180,7 @@ package body Commands.Custom is
    ----------------------------
 
    type Component_Or_Failure is record
-      Component : Custom_Component_Editor;
+      Component      : Custom_Component_Editor;
       On_Failure_For : Integer := -1;
    end record;
    --  List of widgets to edit the various components. When a component has
@@ -193,10 +193,10 @@ package body Commands.Custom is
    type Component_Array_Access is access all Component_Array;
    type Custom_Command_Editor_Record is new Command_Editor_Record with
       record
-         Kernel       : Kernel_Handle;
-         Components   : Component_Array_Access;
-         Tree         : Gtk_Tree_View;
-         Pane         : Gtk_Paned;
+         Kernel        : Kernel_Handle;
+         Components    : Component_Array_Access;
+         Tree          : Gtk_Tree_View;
+         Pane          : Gtk_Paned;
          Button_Remove : Gtk_Button;
       end record;
    type Custom_Command_Editor_Widget
@@ -494,7 +494,6 @@ package body Commands.Custom is
          if Output'Length > 0 and then Output /= "" & ASCII.LF then
             Command.Execution.Check_Password := False;
          end if;
-
       end if;
 
       if Command.Execution.Progress_Matcher /= null then
@@ -566,6 +565,7 @@ package body Commands.Custom is
       elsif Save_Output then
          Insert (Output);
          Append (Command.Execution.Current_Output, Output);
+
       else
          Insert (Output);
       end if;
@@ -655,19 +655,14 @@ package body Commands.Custom is
    is
       Index : Natural;
 
-      function Substitution
-        (Param  : String;
-         Quoted : Boolean) return String;
+      function Substitution (Param : String; Quoted : Boolean) return String;
       --  Check whether the command has a '%' + digit parameter
 
       ------------------
       -- Substitution --
       ------------------
 
-      function Substitution
-        (Param  : String;
-         Quoted : Boolean) return String
-      is
+      function Substitution (Param : String; Quoted : Boolean) return String is
          pragma Unreferenced (Quoted);
          Sub_Index, Ref_Index : Integer;
       begin
@@ -1352,6 +1347,7 @@ package body Commands.Custom is
                             Console      =>
                               Get_Or_Create_Virtual_Console (Console),
                             Errors       => Errors'Unchecked_Access));
+
                else
                   Execute_Command
                     (Component.Script, Subst_Cmd_Line,
@@ -1398,9 +1394,9 @@ package body Commands.Custom is
               Integer'Max (0, Component.Progress_Current);
             Command.Execution.Total_In_Regexp   :=
               Integer'Max (0, Component.Progress_Final);
-            Command.Execution.Hide_Progress := Component.Progress_Hide;
-            Command.Execution.Check_Password := Component.Check_Password;
-            Command.Execution.Nb_Password    := 0;
+            Command.Execution.Hide_Progress     := Component.Progress_Hide;
+            Command.Execution.Check_Password    := Component.Check_Password;
+            Command.Execution.Nb_Password       := 0;
 
             if Component.Progress_Regexp.all /= "" then
                Command.Execution.Progress_Matcher := new Pattern_Matcher'
@@ -1556,6 +1552,7 @@ package body Commands.Custom is
          Free (Command.Execution);
 
          Command_Finished (Command, Success);
+
          if Success then
             return Commands.Success;
          else
@@ -1563,7 +1560,7 @@ package body Commands.Custom is
          end if;
       end Terminate_Command;
 
-      Old_Dir        : GNAT.Strings.String_Access;
+      Old_Dir : GNAT.Strings.String_Access;
 
    begin  --  Execute
       --  If there was an external command executing:
@@ -1571,6 +1568,8 @@ package body Commands.Custom is
          if Command.Execution.External_Process_In_Progress then
             return Execute_Again;
          end if;
+
+         --  Save current output
 
          Command.Execution.Outputs (Command.Execution.Cmd_Index) :=
            Command.Execution.Current_Output;
@@ -1580,6 +1579,8 @@ package body Commands.Custom is
             Command.Execution.Current_Failure := Command.Execution.Cmd_Index;
             Command.Execution.Process_Exit_Status := 0;
          end if;
+
+         --  And pass to the next command
 
          Command.Execution.Cmd_Index := Command.Execution.Cmd_Index + 1;
 
