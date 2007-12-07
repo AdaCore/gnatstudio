@@ -270,11 +270,10 @@ package body Shell_Script is
             declare
                Usage  : constant String := Execute_GPS_Shell_Command
                  (Kernel  => Kernel,
-                  Command =>
-                    "Help; Help.getdoc %1 GPS." & Nth_Arg (Data, 1));
+                  Command => "Help; Help.getdoc %1 GPS." & Nth_Arg (Data, 1));
 
                --  Needs to be executed separately, or we wouldn't get output
-               --  in Usage
+               --  in Usage.
                Ignored : constant String := Execute_GPS_Shell_Command
                  (Kernel  => Kernel,
                   Command => "Help.reset %2");

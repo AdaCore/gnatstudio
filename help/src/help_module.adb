@@ -460,6 +460,7 @@ package body Help_Module is
             if HTML_Format then
                return To_String
                  (Obsolescent & Params & Returns & Descr & Example & See_Also);
+
             else
                declare
                   Result : Unbounded_String := Params & ASCII.LF;
@@ -586,19 +587,17 @@ package body Help_Module is
 
       elsif Command = "file" then
          Set_Return_Value
-           (Data, Get_System_Dir (Kernel)
-            & "share/gps/shell_commands.xml");
+           (Data, Get_System_Dir (Kernel) & "share/gps/shell_commands.xml");
 
       elsif Command = "reset" then
          Inst := Nth_Arg (Data, 1, Help_Module_ID.Help_Class);
-         Set_Data
-           (Inst, Help_Class_Name, XML_Property'(XML => null));
+         Set_Data (Inst, Help_Class_Name, XML_Property'(XML => null));
 
       elsif Command = "browse" then
          Name_Parameters (Data, Browse_Cmd_Parameters);
          declare
-            URL : constant String :=
-              Create_URL (Nth_Arg (Data, 1), Get_Kernel (Data));
+            URL    : constant String :=
+                       Create_URL (Nth_Arg (Data, 1), Get_Kernel (Data));
             Anchor : constant String := Nth_Arg (Data, 2, Default => "");
          begin
             Open_HTML_File
@@ -620,10 +619,10 @@ package body Help_Module is
      (Kernel    : access Kernel_Handle_Record'Class;
       Directory : String)
    is
-      Old  : GNAT.Strings.String_Access := Help_Module_ID.Doc_Path;
       Dir  : constant String :=
-        Normalize_Pathname
-          (Directory, Get_System_Dir (Kernel), Resolve_Links => False);
+               Normalize_Pathname
+                 (Directory, Get_System_Dir (Kernel), Resolve_Links => False);
+      Old  : GNAT.Strings.String_Access := Help_Module_ID.Doc_Path;
       Iter : Path_Iterator;
    begin
       if Directory /= "" then
