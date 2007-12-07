@@ -1528,6 +1528,16 @@ package body Commands.Custom is
                end if;
             end if;
 
+            if Context.Synchronous
+              and then
+                Custom_Component (Current.Component).The_Type =
+                Component_External
+            then
+               Command.Execution.Outputs (Command.Execution.Cmd_Index) :=
+                 Command.Execution.Current_Output;
+               Command.Execution.Current_Output := null;
+            end if;
+
             Command.Execution.Cmd_Index := Command.Execution.Cmd_Index + 1;
          end loop;
 
