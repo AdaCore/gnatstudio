@@ -580,28 +580,28 @@ package body Src_Editor_Box is
       case Get_Status (Box.Source_Buffer) is
          when Unmodified =>
             Set_Text (Box.Modified_Label, -"Unmodified");
-            if Child /= null then
+            if Child /= null and then File_Pixbuf /= null then
                Set_Icon (Child, File_Pixbuf);
                Ref (File_Pixbuf);
             end if;
 
          when Unsaved =>
             Set_Text (Box.Modified_Label, -"Unsaved");
-            if Child /= null then
+            if Child /= null and then File_Unsaved_Pixbuf /= null then
                Set_Icon (Child, File_Unsaved_Pixbuf);
                Ref (File_Unsaved_Pixbuf);
             end if;
 
          when Saved =>
             Set_Text (Box.Modified_Label, -"Saved");
-            if Child /= null then
+            if Child /= null and then File_Pixbuf /= null then
                Set_Icon (Child, File_Pixbuf);
                Ref (File_Pixbuf);
             end if;
 
          when Modified =>
             Set_Text (Box.Modified_Label, -"Modified");
-            if Child /= null then
+            if Child /= null and then File_Modified_Pixbuf /= null then
                Set_Icon (Child, File_Modified_Pixbuf);
                Ref (File_Modified_Pixbuf);
             end if;

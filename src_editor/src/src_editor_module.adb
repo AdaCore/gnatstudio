@@ -1226,14 +1226,22 @@ package body Src_Editor_Module is
          Set_Child (Get_View (Editor), Child);
 
          if Get_Status (Get_Buffer (Editor)) = Modified then
-            Set_Icon (Child, File_Modified_Pixbuf);
-            Ref (File_Modified_Pixbuf);
+            if File_Modified_Pixbuf /= null then
+               Set_Icon (Child, File_Modified_Pixbuf);
+               Ref (File_Modified_Pixbuf);
+            end if;
+
          elsif Get_Status (Get_Buffer (Editor)) = Unsaved then
-            Set_Icon (Child, File_Unsaved_Pixbuf);
-            Ref (File_Unsaved_Pixbuf);
+            if File_Unsaved_Pixbuf /= null then
+               Set_Icon (Child, File_Unsaved_Pixbuf);
+               Ref (File_Unsaved_Pixbuf);
+            end if;
+
          else
-            Set_Icon (Child, File_Pixbuf);
-            Ref (File_Pixbuf);
+            if File_Pixbuf /= null then
+               Set_Icon (Child, File_Pixbuf);
+               Ref (File_Pixbuf);
+            end if;
          end if;
 
          Widget_Callback.Connect
