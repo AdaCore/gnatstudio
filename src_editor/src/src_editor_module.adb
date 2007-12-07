@@ -1651,8 +1651,9 @@ package body Src_Editor_Module is
    procedure On_Save
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
+      pragma Unreferenced (Widget);
       Success : Boolean;
-      pragma Unreferenced (Widget, Success);
+      pragma Warnings (Off, Success);
    begin
       Save_To_File (Kernel, Success => Success);
 
