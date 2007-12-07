@@ -386,8 +386,11 @@ package body Help_Module is
                        & "<tr><td class=""name"">"
                        & Get_Attribute (Child, "name") & "</td>";
                   else
-                     Params := Params & ASCII.LF
-                        & Get_Attribute (Child, "name") & ASCII.HT;
+                     if Params /= Null_Unbounded_String then
+                        Params := Params & ASCII.LF;
+                     end if;
+                     Params := Params
+                       & Get_Attribute (Child, "name") & ASCII.HT;
                   end if;
 
                   declare
@@ -458,8 +461,35 @@ package body Help_Module is
                return To_String
                  (Obsolescent & Params & Returns & Descr & Example & See_Also);
             else
-               return To_String
-                 (Params & Returns & ASCII.LF & Descr & ASCII.LF & Example);
+               declare
+                  Result : Unbounded_String := Params & ASCII.LF;
+
+                  procedure Append
+                    (Value   : Unbounded_String;
+                     Spacing : Positive := 1);
+                  pragma Inline (Append);
+                  --  Append Value & (spacing * ASCII.LF) if Values not empty
+
+                  ------------
+                  -- Append --
+                  ------------
+
+                  procedure Append
+                    (Value   : Unbounded_String;
+                     Spacing : Positive := 1) is
+                  begin
+                     if Value /= Null_Unbounded_String then
+                        Result := Result & Value & (1 .. Spacing => ASCII.LF);
+                     end if;
+                  end Append;
+
+               begin
+                  Append (Returns, Spacing => 2);
+                  Append (Descr);
+                  Append (Example);
+
+                  return To_String (Result);
+               end;
             end if;
          end if;
 
@@ -545,7 +575,8 @@ package body Help_Module is
             else
                declare
                   Error : constant String :=
-                            "No documentation for " & Nth_Arg (Data, 2);
+                            "No documentation for "
+                              & Nth_Arg (Data, 2) & ASCII.LF;
                begin
                   Set_Error_Msg (Data, Error);
                   Trace (Shell_Doc, Error);
