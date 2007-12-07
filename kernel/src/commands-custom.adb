@@ -401,12 +401,14 @@ package body Commands.Custom is
       procedure Append (S : in out String_Access; Value : String) is
          Previous : GNAT.Strings.String_Access;
       begin
-         if S = null then
-            S := new String'(Value);
-         else
-            Previous := S;
-            S        := new String'(Previous.all & Value);
-            Free (Previous);
+         if Value /= "" then
+            if S = null then
+               S := new String'(Value);
+            else
+               Previous := S;
+               S        := new String'(Previous.all & Value);
+               Free (Previous);
+            end if;
          end if;
       end Append;
 
