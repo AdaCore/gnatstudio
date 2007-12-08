@@ -2769,8 +2769,8 @@ Access the various suggested fixes through the methods of the Codefix class</des
       <param name="line">The line where the error is</param>
       <param name="column">The column where the error is</param>
       <param name="message" default="">The message of the error</param>
-      <return>An instances of GPS.CodefixError</return>
-      <description>Return a specific error at a given location. If message is null, then the first matching error will be taken. None is return if no such fixable error exist.sh	 </description>
+      <return>An instance of GPS.CodefixError</return>
+      <description>Return a specific error at a given location. If message is null, then the first matching error will be taken. None is returned if no such fixable error exists.</description>
   </shell_doc>
 
   <shell_doc name="GPS.Codefix.sessions">
