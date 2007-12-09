@@ -559,7 +559,8 @@ package body Bookmark_Views is
       View   : Bookmark_View_Access;
       Model  : Gtk_Tree_Store;
       Iter   : Gtk_Tree_Iter;
-      Path   : Gtk_Tree_Path;
+      Id     : Idle_Handler_Id;
+      pragma Unreferenced (Id);
    begin
       if Mark /= null then
          Append (Bookmark_Views_Module.List,
@@ -567,36 +568,36 @@ package body Bookmark_Views is
                    (Marker => Mark,
                     Name   => new String'(To_String (Mark)),
                     Instances => Null_Instance_List));
-         if Child /= null then
-            View  := Bookmark_View_Access (Get_Widget (Child));
-            Model := Gtk_Tree_Store (Get_Model (View.Tree));
-            Refresh (View);
 
-            --  Start editing the name of the bookmark immediately
-            Iter := Get_Iter_First (Model);
-            while Iter /= Null_Iter loop
-               if Convert (Get_Address (Model, Iter, Data_Column)).Marker =
-                 Mark
-               then
-                  Path := Get_Path (Model, Iter);
-                  Set_Cursor
-                    (View.Tree,
-                     Path          => Path,
-                     Focus_Column  => Get_Column (View.Tree, 2),
-                     Start_Editing => True);
-                  Path_Free (Path);
-                  exit;
-               end if;
-               Next (Get_Model (View.Tree), Iter);
-            end loop;
+         if Child = null then
+            View := Generic_View.Get_Or_Create_View (Kernel);
+         else
+            View := Bookmark_View_Access (Get_Widget (Child));
          end if;
 
-         --  This results in save the bookmarks.xml twice when the bookmarks
-         --  view is also visible (becasue of Edited_Callback). But this is
-         --  needed when the view is not visible. Saving is fast, so that
-         --  doesn't really matter
-         Save_Bookmarks (Kernel);
+         Model := Gtk_Tree_Store (Get_Model (View.Tree));
+         Refresh (View);
          Run_String_Hook (Kernel, Bookmark_Added_Hook, To_String (Mark));
+
+         --  Start editing the name of the bookmark immediately
+
+         Iter := Get_Iter_First (Model);
+         while Iter /= Null_Iter loop
+            if Convert (Get_Address (Model, Iter, Data_Column)).Marker =
+              Mark
+            then
+               Unselect_All (Get_Selection (View.Tree));
+               Select_Iter (Get_Selection (View.Tree), Iter);
+
+               exit;
+            end if;
+            Next (Get_Model (View.Tree), Iter);
+         end loop;
+
+         --  Register a callback for editing the selected node
+
+         Id := Add
+           (Start_Editing_Idle'Access, View, Priority => Priority_Low_Idle);
          return Success;
       end if;
       return Failure;
