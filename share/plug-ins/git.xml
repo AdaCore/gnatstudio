@@ -6,22 +6,14 @@
       You can easily edit this file if you would like to customize
       the git commands that are sent for each of the menus.
 
+      This module needs also the git_support.py Python plug-in to be
+      activated.
+
       IMPORTANT NOTE1: Git is quite different from CVS and Subversion
-      for example. Note all GPS VCS commands are implemented at the
+      for example. Not all GPS VCS commands are implemented at the
       moment because they won't integrate nicely or most of the power
       will be lost. For example interactive add or rebase commands
       can't be integrated into GPS.
-
-      IMPORTANT NOTE2: Git diff command needs a normal formal.
-      GPS VCS expect a normal diff format which is not supported by
-      Git.  For this to work it is required to use an external script
-      for outputing a normal diff and set GIT_EXTERNAL_DIFF to point
-      to this script. As an example:
-
-      #! /bin/sh
-      # path old-file old-hex old-mode new-file new-hex new-mode
-      # $1   $2       $3      $4       $5       $6      $7
-      diff - - normal -p $2 $5
 -->
 
 <GPS>
@@ -30,10 +22,8 @@
 
    <action name="generic_git_local_status" show-command="false" output="none" category="">
       <shell>pwd</shell>
-      <external>git --no-pager ls-files -t $2-</external>
+      <external>git --no-pager ls-files --full-name -m -c -t $2-</external>
       <shell>VCS.status_parse "Git" "%1" FALSE FALSE "%2"</shell>
-      <external>git --no-pager diff --name-status $2-</external>
-      <shell>VCS.status_parse "Git" "%1" FALSE FALSE "%4"</shell>
       <external>git --no-pager diff --cached --name-status $2-</external>
       <shell>VCS.status_parse "Git" "%1" FALSE FALSE "%6"</shell>
    </action>
@@ -41,26 +31,28 @@
    <action name="generic_git_status" show-command="false" output="none" category="">
       <shell output="">echo "Querying status for $2-"</shell>
       <shell>pwd</shell>
-      <external>git --no-pager ls-files -t $2-</external>
+      <external>git --no-pager ls-files --full-name -m -c -t $2-</external>
       <shell>VCS.status_parse "Git" "%1" FALSE FALSE "%2"</shell>
-      <external>git --no-pager diff --name-status $2-</external>
-      <shell>VCS.status_parse "Git" "%1" FALSE FALSE "%4"</shell>
       <external>git --no-pager diff --cached --name-status $2-</external>
       <shell>VCS.status_parse "Git" "%1" FALSE FALSE "%6"</shell>
    </action>
 
-   <!-- Git comparison -->
-   <!-- See IMPORTANT NOTE2 in the header -->
- 
-   <action name="generic_git_diff_head" show-command="false" output="" category="">
+   <action name="generic_git_diff_head" show-command="false" output="none" category="">
       <shell output="">echo "Getting comparison for $1 ..."</shell>
-      <external>git --no-pager diff -p "$1"</external>
+      <shell lang="python">git_support.from_git_root ("$1")</shell>
+      <external>git --no-pager show HEAD:%1</external>
       <shell>dump "%1" TRUE</shell>
-      <shell>File "%1"</shell>
-      <shell>File "$1"</shell>
-      <shell>Hook "diff_action_hook"</shell>
-      <shell>Hook.run %1 null %2 %3</shell>
-      <shell>delete "%5"</shell>
+      <external>diff --normal -p %1 $1</external>
+      <on-failure>
+         <shell>dump "%1" TRUE</shell>
+         <shell>File "%1"</shell>
+         <shell>File "$1"</shell>
+         <shell>Hook "diff_action_hook"</shell>
+         <shell>Hook.run %1 null %2 %3</shell>
+         <shell>delete "%5"</shell>
+         <shell>delete "%8"</shell>
+      </on-failure>
+      <shell>delete "%2"</shell>
    </action>
 
    <!-- Git add (no commit) -->
@@ -166,7 +158,7 @@
          <file_index>5</file_index>
 
          <status_matcher label="Added">A</status_matcher>
-         <status_matcher label="Locally modified">M</status_matcher>
+         <status_matcher label="Locally modified">C</status_matcher>
          <status_matcher label="Up to date">H</status_matcher>
       </status_parser>
 
@@ -177,7 +169,7 @@
          <file_index>5</file_index>
 
          <status_matcher label="Added">A</status_matcher>
-         <status_matcher label="Locally modified">M</status_matcher>
+         <status_matcher label="Locally modified">C</status_matcher>
          <status_matcher label="Up to date">H</status_matcher>
       </local_status_parser>
 

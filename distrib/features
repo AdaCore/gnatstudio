@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Nov 28, 2007
+GPS 4.3 NEW FEATURES LIST Current as of Dec 09, 2007
 ====================================================
 
 Copyright (c) 2007, AdaCore
@@ -14,6 +14,13 @@ of the feature.
 
 New features in GPS 4.3.0
 -------------------------
+
+NF-43-GC06-020 Add minimal Git VCS support (2007-12-09)
+
+  Add Git support in GPS VCS. This is only a minimal support as Git is
+  very different VCS than CVS or Subversion for example. It is
+  possible to query status, ask for a difference with HEAD and
+  retrieve the log information.
 
 NF-43-GB27-021 Command line pretty printer using GPS reformating (2007-11-28)
 
