@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2007, AdaCore             --
+--               Copyright (C) 2005-2007, AdaCore                    --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -242,13 +242,12 @@ package body Bookmark_Views is
       Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
       Area    : out Gdk.Rectangle.Gdk_Rectangle)
    is
-      Window     : Gdk.Window.Gdk_Window;
-      New_Window : Gdk.Window.Gdk_Window;
-      Mask       : Gdk_Modifier_Type;
-
       Model      : constant Gtk_Tree_Model :=
                      Get_Model (Tooltip.Bookmark_View.Tree);
 
+      Window     : Gdk.Window.Gdk_Window;
+      New_Window : Gdk.Window.Gdk_Window;
+      Mask       : Gdk_Modifier_Type;
       X, Y       : Gint;
       Path       : Gtk_Tree_Path;
       Column     : Gtk_Tree_View_Column;
@@ -343,11 +342,10 @@ package body Bookmark_Views is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      View : constant Bookmark_View_Access :=
-               Generic_View.Get_Or_Create_View (Get_Kernel (Context.Context));
-      Data : Bookmark_Data_Access;
-
+      View  : constant Bookmark_View_Access :=
+                Generic_View.Get_Or_Create_View (Get_Kernel (Context.Context));
       Model : constant Gtk_Tree_Model := Get_Model (View.Tree);
+      Data  : Bookmark_Data_Access;
       Iter  : Gtk_Tree_Iter;
    begin
       Iter := Get_Iter_First (Model);
@@ -404,7 +402,6 @@ package body Bookmark_Views is
                Focus_Column  => Get_Column (View.Tree, 2),
                Start_Editing => True);
          end if;
-
       exception
          when E : others => Trace (Exception_Handle, E);
       end Edit_Selected;
@@ -413,10 +410,9 @@ package body Bookmark_Views is
       Selected_Foreach
         (Get_Selection (View.Tree), Edit_Selected'Unrestricted_Access,
          Data_Type_Access (View));
-
       return False;
 
-      exception
+   exception
       when E : others =>
          Trace (Exception_Handle, E);
          return False;
@@ -447,6 +443,7 @@ package body Bookmark_Views is
             --  Start the edition in idle mode, since otherwise the tree gains
             --  the focus when the menu is hidden, and stops the edition
             --  immediately.
+
             Id := Add (Start_Editing_Idle'Access, View,
                        Priority => Priority_High_Idle);
             return Success;
@@ -506,8 +503,8 @@ package body Bookmark_Views is
       View   : constant Bookmark_View_Access := Bookmark_View_Access (Clip);
       Path   : Gtk_Tree_Path;
       Model  : constant Gtk_Tree_Store :=
-        Gtk_Tree_Store (Get_Model (View.Tree));
-      Iter  : Gtk_Tree_Iter;
+                 Gtk_Tree_Store (Get_Model (View.Tree));
+      Iter   : Gtk_Tree_Iter;
       Marker : Bookmark_Data_Access;
       Result : Boolean;
       pragma Unreferenced (Result);
@@ -517,6 +514,7 @@ package body Bookmark_Views is
          --  on the tree so that ctrl-clicking and shift-clicking extend the
          --  multiple selection as expected.
          Grab_Focus (View.Tree);
+
       elsif Get_Button (Event) = 1 then
          Iter := Find_Iter_For_Event (View.Tree, Model, Event);
 
@@ -555,8 +553,9 @@ package body Bookmark_Views is
       pragma Unreferenced (Command);
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Mark   : constant Location_Marker := Create_Marker (Kernel);
-      Child  : constant MDI_Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Bookmark_View_Record'Tag);
+      Child  : constant MDI_Child :=
+                 Find_MDI_Child_By_Tag
+                   (Get_MDI (Kernel), Bookmark_View_Record'Tag);
       View   : Bookmark_View_Access;
       Model  : Gtk_Tree_Store;
       Iter   : Gtk_Tree_Iter;
@@ -640,9 +639,9 @@ package body Bookmark_Views is
       View        : constant Gtk_Tree_View := Gtk_Tree_View (V);
       M           : constant Gtk_Tree_Store :=
                       Gtk_Tree_Store (Get_Model (View));
-      Iter        : Gtk_Tree_Iter;
       Path_String : constant String := Get_String (Nth (Params, 1));
       Text_Value  : constant GValue := Nth (Params, 2);
+      Iter        : Gtk_Tree_Iter;
       Mark        : Bookmark_Data_Access;
    begin
       Iter := Get_Iter_From_String (M, Path_String);
@@ -916,9 +915,10 @@ package body Bookmark_Views is
    procedure Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Name_Cst       : aliased constant String := "name";
       Bookmark_Class : constant Class_Type :=
-        New_Class (Get_Scripts (Get_Kernel (Data)), "Bookmark");
+                         New_Class
+                           (Get_Scripts (Get_Kernel (Data)), "Bookmark");
+      Name_Cst       : aliased constant String := "name";
       Inst           : Class_Instance;
       Bookmark       : Bookmark_List.List_Node;
       Marker         : Location_Marker;
@@ -1025,11 +1025,11 @@ package body Bookmark_Views is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Command            : Interactive_Command_Access;
       Bookmark_Class     : constant Class_Type :=
                              New_Class (Get_Scripts (Kernel), "Bookmark");
       Src_Action_Context : constant Action_Filter :=
                              Lookup_Filter (Kernel, "Source editor");
+      Command            : Interactive_Command_Access;
 
    begin
       Bookmark_Views_Module := new Bookmark_Views_Module_Record;

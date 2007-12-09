@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2006                      --
---                              AdaCore                              --
+--                  Copyright (C) 2005-2007, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -131,7 +130,7 @@ package body Generic_Views is
         (Widget : access GObject_Record'Class;
          Kernel : Kernel_Handle)
       is
-         View  : View_Access;
+         View : View_Access;
          pragma Unreferenced (Widget, View);
       begin
          View := Get_Or_Create_View (Kernel);
@@ -148,8 +147,8 @@ package body Generic_Views is
          Group          : Gtkada.MDI.Child_Group := GPS.Kernel.MDI.Group_View)
          return View_Access
       is
-         Child  : GPS_MDI_Child;
-         View   : View_Access;
+         Child : GPS_MDI_Child;
+         View  : View_Access;
       begin
          if Reuse_If_Exist then
             Child := GPS_MDI_Child (Find_MDI_Child_By_Tag
