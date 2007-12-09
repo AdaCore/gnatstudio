@@ -1,8 +1,12 @@
 Known Problems fixed in GPS 4.3.0
 
+- GC07-025: Ouline View can't display large profile
+  Problem:    Routines with a large profile (more than 50 parameters)
+              won't be properly output in the outline view.
+  Workaround: Disable the output of the routine profile.
+
 - GB20-003: VCS not properly detected for subprojects
   Problem:    When using a hierarchy of projects, if a subproject has a VCS set
               but the root project does not have a VCS set, GPS is unable to
               call VCS operations on sources belonging to the subproject.
   Workaround: Set a VCS on the root project.
-

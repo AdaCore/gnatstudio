@@ -243,8 +243,9 @@ package body Project_Explorers_Common is
    --------------------
 
    function Entity_Name_Of
-     (Construct     : Construct_Information;
-      Show_Profiles : Boolean) return String
+     (Construct          : Construct_Information;
+      Show_Profiles      : Boolean;
+      Max_Profile_Length : Positive := Positive'Last) return String
    is
 
       function Escape return String;
@@ -282,7 +283,7 @@ package body Project_Explorers_Common is
    begin
       if Show_Profiles and then Construct.Profile /= null then
          return Name & " <span foreground=""#555555"">"
-            & Reduce (Construct.Profile.all) & "</span>";
+           & Reduce (Construct.Profile.all, Max_Profile_Length) & "</span>";
       else
          return Name;
       end if;

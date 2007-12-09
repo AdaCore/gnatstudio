@@ -175,11 +175,15 @@ package String_Utils is
    --  Repeat_Item_Start if the character that starts a repeat statements, as
    --  in "<repeats .. times>"
 
-   function Reduce (S : String) return String;
+   function Reduce
+     (S            : String;
+      Max_Length   : Positive := Positive'Last;
+      Continuation : String := "...") return String;
    --  Replace in string S all ASCII.LF and ASCII.HT characters with a space,
-   --  and replace multiple spaces with a single one.
-   --  Return the resulting string.
-   --  S should be encoded in UTF-8
+   --  and replace multiple spaces with a single one. Return the resulting
+   --  string with at most Max_Length character. Continuation is added at the
+   --  end of the string if cut.
+   --  S should be encoded in UTF-8.
 
    function Krunch
      (S                 : String;

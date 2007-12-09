@@ -737,6 +737,7 @@ package body Outline_View is
       --  Create the tree view using the sorting model
 
       Gtk_New (Outline.Tree, Sort_Model);
+      Set_Name (Outline.Tree, "Outline View Tree");  --  For testsuite
 
       --  Setup the sorting support
 
@@ -936,10 +937,15 @@ package body Outline_View is
                   Set (Model, Iter, Pixbuf_Column,
                        C_Proxy (Entity_Icon_Of (Constructs.Current.all)));
 
-                  Set (Model, Iter, Display_Name_Column,
-                       Entity_Name_Of
-                         (Constructs.Current.all,
-                          Show_Profiles => Show_Profiles));
+                  Display_Profile : declare
+                     Profile : constant String :=
+                                 Entity_Name_Of
+                                   (Constructs.Current.all,
+                                    Show_Profiles      => Show_Profiles,
+                                    Max_Profile_Length => 500);
+                  begin
+                     Set (Model, Iter, Display_Name_Column, Profile);
+                  end Display_Profile;
 
                   Set (Model, Iter, Entity_Name_Column,
                        Constructs.Current.Name.all);

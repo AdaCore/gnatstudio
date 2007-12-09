@@ -211,10 +211,14 @@ package Project_Explorers_Common is
    ----------
 
    function Entity_Name_Of
-     (Construct     : Construct_Information;
-      Show_Profiles : Boolean) return String;
+     (Construct          : Construct_Information;
+      Show_Profiles      : Boolean;
+      Max_Profile_Length : Positive := Positive'Last) return String;
    --  Return the string to use to display the entity.
-   --  This returns a string in Pango Markup format.
+   --  This returns a string in Pango Markup format. If Show_Profiles is true
+   --  the the entity profile is returned. As this can be large it is possible
+   --  to specify the maximum number of characters returned for the profile
+   --  using Max_Profile_Length.
 
    function Entity_Icon_Of
      (Construct : Construct_Information) return Gdk.Pixbuf.Gdk_Pixbuf;

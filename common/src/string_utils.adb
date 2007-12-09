@@ -652,16 +652,27 @@ package body String_Utils is
    -- Reduce --
    ------------
 
-   function Reduce (S : UTF8_String) return UTF8_String is
+   function Reduce
+     (S            : String;
+      Max_Length   : Positive := Positive'Last;
+      Continuation : String := "...") return String
+   is
       Result : String (S'Range);
       Len    : Positive := Result'First;
       Blank  : Boolean  := False;
 
-      Char   : Natural;
-      Next   : Natural;
+      Max    : Natural;
+      --  Max if the position of the last character to be returned
+      Cut    : Boolean := False;
+      --  Cut set to true if string was cut before the end at Max characters
+      Char   : Natural := S'First;
+      Next   : Natural := Char;
    begin
-      Char := S'First;
-      Next := Char;
+      if Max_Length = Positive'Last then
+         Max := Positive'Last;
+      else
+         Max := S'First + Max_Length - Continuation'Length - 1;
+      end if;
 
       while Next <= S'Last loop
          Char := Next;
@@ -685,9 +696,18 @@ package body String_Utils is
             Result (Len .. Len + Next - Char - 1) := S (Char .. Next - 1);
             Len := Len + Next - Char;
          end if;
+
+         if Len >= Max then
+            Cut := True;
+            exit;
+         end if;
       end loop;
 
-      return Result (Result'First .. Len - 1);
+      if Cut then
+         return Result (Result'First .. Len - 1) & Continuation;
+      else
+         return Result (Result'First .. Len - 1);
+      end if;
    end Reduce;
 
    ------------
