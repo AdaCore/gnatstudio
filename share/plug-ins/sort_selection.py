@@ -65,7 +65,7 @@ def sort_selection (revert):
 
    if selection == "" or context.__class__ == GPS.EntityContext:
       return;
-      
+
    lines = string.split (selection,"\n");
    # strip off extraneous trailing "" line
    lines = lines[:-1];
