@@ -790,7 +790,9 @@ package body Browsers.Call_Graph is
    -------------
 
    procedure Destroy
-     (Data : in out Examine_Ancestors_Data; Cancelled : Boolean) is
+     (Data : in out Examine_Ancestors_Data; Cancelled : Boolean)
+   is
+      pragma Unmodified (Data);
    begin
       if not Cancelled then
          --  Refresh the item, since we might have added links to it

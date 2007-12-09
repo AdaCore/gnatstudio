@@ -285,8 +285,8 @@ package body Outline_View is
          Find_Declaration_Or_Overloaded
            (Kernel            => Tooltip.Outline.Kernel,
             File              => Get_Or_Create
-              (Db     => Get_Database (Tooltip.Outline.Kernel),
-               File   => Tooltip.Outline.File),
+              (Db   => Get_Database (Tooltip.Outline.Kernel),
+               File => Tooltip.Outline.File),
             Entity_Name       => Get_String (Model, Iter, Entity_Name_Column),
             Line              => Line,
             Column            => Column,

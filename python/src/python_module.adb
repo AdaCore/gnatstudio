@@ -727,6 +727,7 @@ package body Python_Module is
    -------------
 
    procedure Destroy (Module : in out Python_Module_Record) is
+      pragma Unmodified (Module);
    begin
       Unregister_Python_Scripting (Get_Scripts (Get_Kernel (Module)));
    end Destroy;

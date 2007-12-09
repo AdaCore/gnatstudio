@@ -148,7 +148,7 @@ package body Expect_Interface is
    procedure Exit_Cb (D : in out Custom_Action_Record);
    --  Called when an external process has finished running
 
-   procedure Before_Kill_Cb (D : in out Custom_Action_Record);
+   procedure Before_Kill_Cb (D : in Custom_Action_Record);
    --  Called before killing the external process
 
    procedure Output_Cb (D : Custom_Action_Access; Output : String);
@@ -365,7 +365,7 @@ package body Expect_Interface is
    -- Before_Kill_Cb --
    --------------------
 
-   procedure Before_Kill_Cb (D : in out Custom_Action_Record) is
+   procedure Before_Kill_Cb (D : in Custom_Action_Record) is
       Tmp : Boolean;
       pragma Unreferenced (Tmp);
    begin

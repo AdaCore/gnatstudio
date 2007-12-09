@@ -904,6 +904,8 @@ package body Browsers.Entities is
    ----------
 
    procedure Sort (Arr : in out Entity_Information_Arrays.Instance) is
+      pragma Unmodified (Arr);
+
       use type Entity_Information_Arrays.Index_Type;
       First : constant Integer :=
                 Integer (Entity_Information_Arrays.First) - 1;

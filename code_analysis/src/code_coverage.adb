@@ -562,7 +562,7 @@ package body Code_Coverage is
       Coverage   : Coverage_Access;
       Bin_Mode   : Boolean := False)
    is
-      pragma Warnings (Off, Tree_Store);
+      pragma Unmodified (Tree_Store, Iter);
 
       function Txt_Lig (Lig_Count : Natural) return String;
       --  Returns in a String the children count coverage info used to

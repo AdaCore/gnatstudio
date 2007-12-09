@@ -77,7 +77,7 @@ package body Refactoring.Performers is
       Result  : out Command_Return_Type);
    --  Find the next location, and stores it in Data
 
-   procedure On_End_Of_Search (Data : in out Get_Locations_Data);
+   procedure On_End_Of_Search (Data : in Get_Locations_Data);
    --  Called when all the related files have been searched and the refactoring
    --  should be performed.
 
@@ -204,7 +204,7 @@ package body Refactoring.Performers is
    -- On_End_Of_Search --
    ----------------------
 
-   procedure On_End_Of_Search (Data : in out Get_Locations_Data) is
+   procedure On_End_Of_Search (Data : in Get_Locations_Data) is
    begin
       Pop_State (Data.Kernel);
 

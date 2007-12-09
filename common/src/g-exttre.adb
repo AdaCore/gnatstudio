@@ -1574,7 +1574,9 @@ package body GNAT.Expect.TTY.Remote is
 
    procedure Handle_Pre_Disconnect
      (Descriptor : in out Remote_Process_Descriptor;
-      Timeout    : in out Integer) is
+      Timeout    : in out Integer)
+   is
+      pragma Unmodified (Descriptor);
    begin
       if Descriptor.Terminated then
          --  We encountered the shell prompt. First let the caller retrieving
@@ -1599,7 +1601,9 @@ package body GNAT.Expect.TTY.Remote is
 
    procedure Handle_Post_Disconnect
      (Descriptor : in out Remote_Process_Descriptor;
-      Result : Expect_Match) is
+      Result     : Expect_Match)
+   is
+      pragma Unmodified (Descriptor);
    begin
       if not Descriptor.Terminated
         and then Descriptor.Machine.Desc.Dbg /= null

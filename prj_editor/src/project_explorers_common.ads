@@ -186,8 +186,7 @@ package Project_Explorers_Common is
 
    function Get_Directory_From_Node
      (Model : Gtk_Tree_Store;
-      Node  : Gtk_Tree_Iter)
-      return String;
+      Node  : Gtk_Tree_Iter) return String;
    --  Return the name of the directory to which Node belongs. This returns the
    --  full directory name, relative to the project.
    --  The return strings always ends with a directory separator.
@@ -243,9 +242,9 @@ package Project_Explorers_Common is
    --  by this call.
 
    function On_Key_Press
-     (Kernel    : Kernel_Handle;
-      Tree      : access Gtk_Tree_View_Record'Class;
-      Event    : Gdk_Event) return Boolean;
+     (Kernel : Kernel_Handle;
+      Tree   : access Gtk_Tree_View_Record'Class;
+      Event  : Gdk_Event) return Boolean;
    --  React to key press event on the tree
 
    procedure Context_Factory
@@ -258,6 +257,7 @@ package Project_Explorers_Common is
    --  Return the context to use for the contextual menu
 
 private
+
    type MDI_Explorer_Child_Record is
      new GPS.Kernel.MDI.GPS_MDI_Child_Record with
       record

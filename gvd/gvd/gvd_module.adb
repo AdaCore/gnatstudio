@@ -2732,6 +2732,7 @@ package body GVD_Module is
    -------------
 
    procedure Destroy (Id : in out GVD_Module_Record) is
+      pragma Unmodified (Id);
    begin
       Debug_Terminate (Get_Kernel (Id));
    end Destroy;

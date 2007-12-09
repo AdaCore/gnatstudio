@@ -4692,6 +4692,7 @@ package body Project_Properties is
       Changed            : in out Boolean)
    is
       pragma Unreferenced (Kernel);
+      pragma Unmodified (Project);
       Attr    : Attribute_Description_Access;
    begin
       for S in Page.Page.Sections'Range loop

@@ -128,7 +128,9 @@ package body Switches_Chooser.Gtkada is
 
    procedure Set_Graphical_Command_Line
      (Editor    : in out Switches_Editor_Record;
-      Cmd_Line  : String) is
+      Cmd_Line  : String)
+   is
+      pragma Unmodified (Editor);
    begin
       Set_Text (Editor.Ent, Cmd_Line);
    end Set_Graphical_Command_Line;
