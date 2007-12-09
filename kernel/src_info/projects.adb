@@ -2174,6 +2174,7 @@ package body Projects is
    -----------
 
    procedure Reset (Project : in out Project_Type) is
+      pragma Unmodified (Project);
    begin
       Project.Data.View := Prj.No_Project;
       --  No need to reset Project.Data.Imported_Projects, since this doesn't
