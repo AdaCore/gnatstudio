@@ -154,6 +154,11 @@ When this command is executed after a repeat_next command, the whole line is del
       <shell lang="python">text_utils.capitalize_case_word ()</shell>
    </action>
 
+   <action name="Center line" output="none" category="Editor">
+      <description>Center the current line</description>
+      <filter id="Source editor" />
+      <shell lang="python">text_utils.center_line()</shell>
+   </action>
 """)
 
 ## The blocks for which we want to display boxes
@@ -359,6 +364,49 @@ def lower_case_word (location=None):
 def capitalize_case_word (location=None):
    """Capitalize the current word (starting at the current character)"""
    apply_func_to_word (str.capitalize, location)
+
+def center_line ():
+   """Center the current line on the screen. If a comment line then the
+      text inside the comment is centered, the comment markers remain
+      unchanged.
+   """
+   buffer = GPS.EditorBuffer.get()
+   location = buffer.current_view ().cursor ()
+   initial = location.create_mark()
+
+   buffer.start_undo_group ()
+   start = location.beginning_of_line ()
+   end   = location.end_of_line ()
+   text  = buffer.get_chars (start, end)
+   if text[0:2] == "--" or text[0:2] == "//" or text[0:2] == "##":
+     start = start + 2
+
+   if text[-3:] == "--\n" or text[-3:] == "//\n" or text[-3:] == "##\n":
+     # Use right comment characters to center the text
+     end = end - 3
+     text = buffer.get_chars (start, end).strip()
+     spaces = end.column() - start.column() + 1 - len(text)
+     before = spaces / 2
+     after = spaces / 2
+     if before + after != spaces:
+       after = after + 1
+     buffer.delete (start, end)
+     buffer.insert (start, ' ' * before + text + ' ' * after)
+   else:
+     # No right comment characters, use the highlight column to center the text
+     col = GPS.Preference ("Src-Editor-Highlight-Column").get()
+     text = buffer.get_chars (start, end).strip()
+     spaces = int(col) - start.column() - len(text)
+     before = spaces / 2
+     buffer.delete (start, end - 1)
+     buffer.insert (start, ' ' * before + text)
+
+   # Move to next line
+   buffer.current_view().goto (GPS.EditorLocation \
+      (buffer,
+       line=initial.location().forward_line(1).line(),
+       column=location.column()))
+   buffer.finish_undo_group ()
 
 class BlockIterator:
    """An iterator for the various sections of an editor.
