@@ -189,7 +189,7 @@ def add_subprogram_box():
       box = dashes + "\n" + "-- " + name + " --\n" + dashes + "\n\n"
 
       # Start an undo group so that the whole process can be undone with a
-      # single click
+      # single click.
       buffer.start_undo_group()
       buffer.insert (loc, box)
       buffer.indent (loc, loc.forward_line (3))
