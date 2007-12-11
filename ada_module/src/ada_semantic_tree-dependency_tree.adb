@@ -404,27 +404,27 @@ package body Ada_Semantic_Tree.Dependency_Tree is
 
                if Get_Identifier (Found) = Get_Identifier (Entity) then
                   case Get_Visibility_Priority (Found, Entity) is
-                  when Left_Visible =>
-                     --  If we found a entity more visible than this one, we
-                     --  dismiss this one.
+                     when Left_Visible =>
+                        --  If we found a entity more visible than this one, we
+                        --  dismiss this one.
 
-                     Do_Addition := False;
-                     exit;
-                  when Right_Visible =>
-                     --  If this entity is more visible than an other one
-                     --  we remove that other one.
+                        Do_Addition := False;
+                        exit;
+                     when Right_Visible =>
+                        --  If this entity is more visible than an other one
+                        --  we remove that other one.
 
-                     Tmp := Found_It;
-                     Found_It := Next (Found_It);
-                     Delete (Tmp_List, Tmp);
+                        Tmp := Found_It;
+                        Found_It := Next (Found_It);
+                        Delete (Tmp_List, Tmp);
 
-                  when Both_Visible =>
-                     --  If both entities have the same visibility, then
-                     --  either they are two parts of the same one, and we
-                     --  keep only the relevant one, or we keep the two.
+                     when Both_Visible =>
+                        --  If both entities have the same visibility, then
+                        --  either they are two parts of the same one, and we
+                        --  keep only the relevant one, or we keep the two.
 
-                     if Are_Same_Entity (Found, Entity) then
-                        case Get_Construct (Entity).Category is
+                        if Are_Same_Entity (Found, Entity) then
+                           case Get_Construct (Entity).Category is
                            when Cat_Package =>
                               Do_Addition := False;
                               exit;
@@ -434,10 +434,10 @@ package body Ada_Semantic_Tree.Dependency_Tree is
                               Found_It := Next (Found_It);
                               Delete (Tmp_List, Tmp);
 
-                        end case;
-                     else
-                        Found_It := Next (Found_It);
-                     end if;
+                           end case;
+                        else
+                           Found_It := Next (Found_It);
+                        end if;
 
                   end case;
                else
@@ -561,7 +561,9 @@ package body Ada_Semantic_Tree.Dependency_Tree is
                --  If the offset is in this package, jump into
 
                It := Next (Current_Tree, It, Jump_Into);
-            elsif Get_Construct (It).Category = Cat_Package
+            elsif
+              (Get_Construct (It).Category = Cat_Package
+               or else Get_Construct (It).Category = Cat_Protected)
               and then Get_Construct (It).Is_Declaration
               and then
                 (Is_Compilation_Unit (It)

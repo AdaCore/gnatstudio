@@ -252,6 +252,9 @@ package body Ada_Analyzer is
       Package_Declaration : Boolean := False;
       --  Is it a package declaration ?
 
+      Protected_Declaration : Boolean := False;
+      --  Is this a protected declaration ?
+
       --  ??? It would be nice to merge the fields Declaration,
       --  Type_Declaration and Package_Declaration at some point.
 
@@ -1637,6 +1640,7 @@ package body Ada_Analyzer is
                         Constructs.Current.Category := Cat_Parameter;
                      elsif Value.Is_In_Type_Definition then
                         if Top (Stack).Type_Declaration
+                          or else Top (Stack).Protected_Declaration
                           or else Top (Stack).Attributes (Ada_Record_Attribute)
                         then
                            Constructs.Current.Category := Cat_Field;
@@ -1721,7 +1725,8 @@ package body Ada_Analyzer is
             Constructs.Current.Is_Declaration :=
               Subprogram_Decl
                 or else Value.Type_Declaration
-                or else Value.Package_Declaration;
+                or else Value.Package_Declaration
+                or else Value.Protected_Declaration;
          end if;
       end Pop;
 
@@ -1821,6 +1826,8 @@ package body Ada_Analyzer is
 
             if Top_Token.Token = Tok_Package then
                Top_Token.Package_Declaration := False;
+            elsif Top_Token.Token = Tok_Protected then
+               Top_Token.Protected_Declaration := False;
             end if;
 
          elsif Reserved = Tok_Tagged then
@@ -1954,13 +1961,15 @@ package body Ada_Analyzer is
             if Reserved = Tok_Package then
                Temp.Package_Declaration := True;
 
-            elsif Reserved /= Tok_Protected
-              and then ((Top_Token.Token = Tok_Type
-                         and then (Prev_Token /= Tok_Access
-                                   or else Prev_Prev_Token = Tok_Is))
-                        or else (Prev_Token /= Tok_Access
-                                 and then Prev_Token /= Tok_Protected
-                                 and then Prev_Token /= Tok_Constant))
+            elsif Reserved = Tok_Protected then
+               Temp.Protected_Declaration := True;
+
+            elsif (Top_Token.Token = Tok_Type
+                   and then (Prev_Token /= Tok_Access
+                             or else Prev_Prev_Token = Tok_Is))
+              or else (Prev_Token /= Tok_Access
+                       and then Prev_Token /= Tok_Protected
+                       and then Prev_Token /= Tok_Constant)
             then
                --  take into account the following:
                --  type P is access procedure;
