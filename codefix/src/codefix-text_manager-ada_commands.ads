@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002-2006                    --
---                              AdaCore                              --
+--                 Copyright (C) 2002-2007, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -352,6 +351,7 @@ private
       Destination_Begin, Destination_End : Ptr_Mark;
       Source_Begin, Source_End           : Ptr_Mark;
       Add_Spaces                         : Boolean := False;
+      Blank_Before, Blank_After          : Replace_Blanks_Policy := Keep;
    end record;
 
    type Get_Visible_Declaration_Cmd is new Text_Command with record

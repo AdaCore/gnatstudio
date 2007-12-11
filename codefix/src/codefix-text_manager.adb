@@ -21,13 +21,17 @@ with Ada.Exceptions; use Ada.Exceptions;
 with GNAT.Case_Util; use GNAT.Case_Util;
 with GNAT.Regpat;    use GNAT.Regpat;
 
-with Ada_Analyzer;   use Ada_Analyzer;
-with Basic_Types;    use Basic_Types;
-with String_Utils;   use String_Utils;
-with VFS;            use VFS;
+with Ada_Analyzer;      use Ada_Analyzer;
+with Basic_Types;       use Basic_Types;
+with Projects;          use Projects;
+with Projects.Registry; use Projects.Registry;
+with String_Utils;      use String_Utils;
+with VFS;               use VFS;
 
 with Ada_Semantic_Tree.Parts; use Ada_Semantic_Tree.Parts;
 with Language.Tree.Ada;       use Language.Tree.Ada;
+
+with Glib.Unicode;            use Glib.Unicode;
 
 package body Codefix.Text_Manager is
 
@@ -453,14 +457,28 @@ package body Codefix.Text_Manager is
    --------------
 
    procedure Add_Line
-     (This        : in out Text_Navigator_Abstr;
-      Cursor      : File_Cursor'Class;
-      New_Line    : String) is
+     (This     : in out Text_Navigator_Abstr;
+      Cursor   : File_Cursor'Class;
+      New_Line : String;
+      Indent   : Boolean := False)
+   is
    begin
       Add_Line
         (Get_File (This, Get_File (Cursor)).all,
          Text_Cursor (Cursor),
          New_Line);
+
+      if Indent then
+         declare
+            Line_Cursor : Text_Cursor := Text_Cursor (Cursor);
+         begin
+            Line_Cursor.Set_Line (Line_Cursor.Get_Line + 1);
+
+            Indent_Line
+              (Get_File (This, Get_File (Cursor)).all,
+               Line_Cursor);
+         end;
+      end if;
    end Add_Line;
 
    -----------------
@@ -524,19 +542,6 @@ package body Codefix.Text_Manager is
         (Get_File (This, Get_File (Cursor)).all,
          File_Cursor (Cursor));
    end Line_Length;
-
-   ------------
-   -- Commit --
-   ------------
-
-   procedure Commit (This : Text_Navigator_Abstr) is
-      Iterator : Text_List.List_Node := First (This.Files.all);
-   begin
-      while Iterator /= Text_List.Null_Node loop
-         Commit (Data (Iterator).all);
-         Iterator := Next (Iterator);
-      end loop;
-   end Commit;
 
    -------------------
    -- Search_String --
@@ -1596,6 +1601,15 @@ package body Codefix.Text_Manager is
       return This.Cursor;
    end Get_Cursor;
 
+   ---------------------
+   -- Set_Indentation --
+   ---------------------
+
+   procedure Set_Indentation (This : in out Extract_Line; Value : Boolean) is
+   begin
+      This.Do_Indentation := Value;
+   end Set_Indentation;
+
    ------------
    -- Length --
    ------------
@@ -1686,7 +1700,8 @@ package body Codefix.Text_Manager is
             Add_Line
               (Current_Text,
                Cursor,
-               To_String (This.Content));
+               To_String (This.Content),
+               This.Do_Indentation);
             Offset_Line := Offset_Line + 1;
          when Unit_Deleted =>
             Delete_Line
@@ -1695,6 +1710,12 @@ package body Codefix.Text_Manager is
             Offset_Line := Offset_Line - 1;
          when Unit_Modified =>
             Commit_Modified_Line;
+
+            if This.Do_Indentation then
+               Indent_Line
+                 (Get_File (Current_Text, Get_File (Cursor)).all,
+                  Text_Cursor (Cursor));
+            end if;
          when Original_Unit =>
             null;
       end case;
@@ -1817,7 +1838,7 @@ package body Codefix.Text_Manager is
 
       if Matches (0) = No_Match then
          Raise_Exception (Codefix_Panic'Identity, "pattern '" & Format &
-                          "' from col" & Char_Index'Image (Index) & " in '" &
+                          "' from col" & Column_Index'Image (Col) & " in '" &
                             Str_Parsed & "' can't be found");
 
       else
@@ -1947,7 +1968,8 @@ package body Codefix.Text_Manager is
          Original_Length => Len,
          Content         => To_Mergable_String (Get (This, Cursor, Len)),
          Next            => null,
-         Coloration      => True);
+         Coloration      => True,
+         others          => <>);
    end Get;
 
    --------------
@@ -1968,7 +1990,8 @@ package body Codefix.Text_Manager is
          Original_Length => Str.all'Last,
          Content         => To_Mergable_String (Str.all),
          Next            => null,
-         Coloration      => True);
+         Coloration      => True,
+         others          => <>);
       Free (Str);
    end Get_Line;
 
@@ -1991,7 +2014,8 @@ package body Codefix.Text_Manager is
          Original_Length => Str'Last,
          Content         => To_Mergable_String (Str.all),
          Next            => null,
-         Coloration      => True);
+         Coloration      => True,
+         others          => <>);
       Free (Str);
    end Get_Line;
 
@@ -2403,7 +2427,8 @@ package body Codefix.Text_Manager is
             Original_Length => Len,
             Content         => To_Mergable_String (Get (This, Cursor, Len)),
             Next            => null,
-            Coloration      => True));
+            Coloration      => True,
+            others          => <>));
    end Get;
 
    --------------
@@ -2425,7 +2450,8 @@ package body Codefix.Text_Manager is
             Original_Length => Str'Length,
             Content         => To_Mergable_String (Str),
             Next            => null,
-            Coloration      => True));
+            Coloration      => True,
+            others          => <>));
    end Get_Line;
 
    ----------------
@@ -2488,7 +2514,9 @@ package body Codefix.Text_Manager is
      (This                      : in out Extract;
       Dest_Start, Dest_Stop     : File_Cursor'Class;
       Source_Start, Source_Stop : File_Cursor'Class;
-      Current_Text              : Text_Navigator_Abstr'Class)
+      Current_Text              : Text_Navigator_Abstr'Class;
+      Blanks_Before             : Replace_Blanks_Policy := Keep;
+      Blanks_After              : Replace_Blanks_Policy := Keep)
    is
       function Get_Next_Source_Line return GNAT.Strings.String_Access;
       --  Retutn the next source line that have to be added to the extract,
@@ -2533,21 +2561,57 @@ package body Codefix.Text_Manager is
 
       Dest_String           : constant String :=
         Get_String (Get_Line (This, Dest_Start).all);
-      Dest_Start_Char_Index : constant Char_Index :=
+      Dest_Start_Char_Index : Char_Index :=
         To_Char_Index (Dest_Start.Col, Dest_String);
 
       Bottom_String        : constant String :=
         Get_String (Get_Line (This, Dest_Stop).all);
-      Dest_Stop_Char_Index : constant Char_Index :=
+      Dest_Stop_Char_Index : Char_Index :=
         To_Char_Index (Dest_Stop.Col, Bottom_String);
 
    begin
+      if Integer (Dest_Start_Char_Index) > Bottom_String'First then
+         Dest_Start_Char_Index :=
+           Char_Index
+             (UTF8_Find_Prev_Char
+                  (Dest_String, Natural (Dest_Start_Char_Index)));
+
+         if Blanks_Before /= Keep then
+            String_Utils.Skip_Blanks
+              (Dest_String, Natural (Dest_Start_Char_Index), -1);
+         end if;
+
+         Assign (Head, Dest_String (1 .. Natural (Dest_Start_Char_Index)));
+
+         if Blanks_Before = One then
+            Assign (Head, Head.all & " ");
+         end if;
+      else
+         Assign (Head, "");
+      end if;
+
+      if Integer (Dest_Stop_Char_Index) < Bottom_String'Last then
+         Dest_Stop_Char_Index :=
+           Char_Index
+             (UTF8_Next_Char
+                  (Bottom_String, Natural (Dest_Stop_Char_Index)));
+
+         if Blanks_After /= Keep then
+            String_Utils.Skip_Blanks
+              (Bottom_String, Natural (Dest_Stop_Char_Index), 1);
+         end if;
+
+         Assign (Bottom, Bottom_String
+                 (Natural (Dest_Stop_Char_Index) .. Bottom_String'Last));
+
+         if Blanks_After = One then
+            Assign (Bottom, " " & Bottom.all);
+         end if;
+      else
+         Assign (Bottom, "");
+      end if;
+
       Cursor_Source.Col := 1;
-
-      Assign (Head, Dest_String (1 .. Natural (Dest_Start_Char_Index) - 1));
-
-      Assign (Bottom, Bottom_String
-              (Natural (Dest_Stop_Char_Index) + 1 .. Bottom_String'Last));
 
       while Cursor_Source.Line <= Source_Stop.Line loop
          Free (Source_Line);
@@ -2921,7 +2985,8 @@ package body Codefix.Text_Manager is
           Original_Length => 0,
           Content         => To_Mergable_String (Text),
           Next            => null,
-          Coloration      => True));
+          Coloration      => True,
+          others          => <>));
    end Add_Line;
 
    -----------------------
@@ -2990,7 +3055,8 @@ package body Codefix.Text_Manager is
               To_Mergable_String ((1 .. Indent => ' ') &
                                    Text (First_Char .. Text'Last)),
            Next            => null,
-           Coloration      => True));
+           Coloration      => True,
+           others          => <>));
    end Add_Indented_Line;
 
    -----------------
@@ -3071,6 +3137,19 @@ package body Codefix.Text_Manager is
    begin
       Add_Element (This, new Extract_Line'(Element));
    end Add_Element;
+
+   ---------------------
+   -- Set_Indentation --
+   ---------------------
+
+   procedure Set_Indentation (This : in out Extract; Value : Boolean) is
+      Line : Ptr_Extract_Line := This.First;
+   begin
+      while Line /= null loop
+         Set_Indentation (Line.all, Value);
+         Line := Line.Next;
+      end loop;
+   end Set_Indentation;
 
    ---------------------
    -- Get_Word_Length --
@@ -4237,6 +4316,24 @@ package body Codefix.Text_Manager is
    begin
       return Text.Construct_Db;
    end Get_Construct_Database;
+
+   ----------------------
+   -- Get_Body_Or_Spec --
+   ----------------------
+
+   function Get_Body_Or_Spec
+     (Text : Text_Navigator_Abstr; File_Name : Virtual_File)
+      return Virtual_File
+   is
+   begin
+      return Create
+        (Name            => Other_File_Base_Name
+           (Get_Project_From_File
+              (Project_Registry (Get_Registry (Text).all), File_Name),
+            File_Name),
+         Registry        => Get_Registry (Text).all,
+         Use_Object_Path => False);
+   end Get_Body_Or_Spec;
 
    --------------
    -- Get_Line --

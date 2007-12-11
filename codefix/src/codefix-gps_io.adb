@@ -302,7 +302,7 @@ package body Codefix.GPS_Io is
    -----------------
 
    procedure Delete_Line
-     (This : in out Console_Interface;
+     (This   : in out Console_Interface;
       Cursor : Text_Cursor'Class)
    is
       Args : GNAT.Strings.String_List :=
@@ -322,6 +322,58 @@ package body Codefix.GPS_Io is
 
       Free (Args);
    end Delete_Line;
+
+   -----------------
+   -- Indent_Line --
+   -----------------
+
+   procedure Indent_Line
+     (This : in out Console_Interface;
+      Cursor : Text_Cursor'Class)
+   is
+      ArgsFile : GNAT.Strings.String_List :=
+        (1 => new String'(Full_Name (Get_File_Name (This)).all));
+
+      ArgsEditorBuffer : GNAT.Strings.String_List :=
+        (1 => new String'("%1"),
+         2 => new String'("False"),
+         3 => new String'("False"));
+
+      ArgsEditorLocation : GNAT.Strings.String_List :=
+        (1 => new String'("%1"),
+         2 => new String'(Integer'Image (Cursor.Get_Line)),
+         3 => new String'(Column_Index'Image (Cursor.Get_Column)));
+
+      ArgsIndent : GNAT.Strings.String_List :=
+        (1 => new String'("%2"),
+         2 => new String'("%1"),
+         3 => new String'("%1"));
+
+      ResultFile : constant String := Execute_GPS_Shell_Command
+        (This.Kernel, "File", ArgsFile);
+      pragma Unreferenced (ResultFile);
+
+      ResultEditorBuffer : constant String := Execute_GPS_Shell_Command
+        (This.Kernel, "EditorBuffer.get", ArgsEditorBuffer);
+      pragma Unreferenced (ResultEditorBuffer);
+
+      ResultEditorLocation : constant String := Execute_GPS_Shell_Command
+        (This.Kernel, "EditorLocation", ArgsEditorLocation);
+      pragma Unreferenced (ResultEditorLocation);
+
+      ResultIndent : constant String := Execute_GPS_Shell_Command
+        (This.Kernel, "EditorBuffer.indent", ArgsIndent);
+      pragma Unreferenced (ResultIndent);
+
+   begin
+      This.File_Modified.all := True;
+      Text_Has_Changed (This);
+
+      Free (ArgsFile);
+      Free (ArgsEditorBuffer);
+      Free (ArgsEditorLocation);
+      Free (ArgsIndent);
+   end Indent_Line;
 
    ----------------
    -- Initialize --
@@ -351,16 +403,6 @@ package body Codefix.GPS_Io is
       Free (Args);
       return S;
    end Read_File;
-
-   ------------
-   -- Commit --
-   ------------
-
-   procedure Commit (This : Console_Interface) is
-      pragma Unreferenced (This);
-   begin
-      null;
-   end Commit;
 
    --------------
    -- Line_Max --

@@ -814,16 +814,21 @@ package body Codefix.Text_Manager.Ada_Commands is
       procedure Initialize_Profile
         (Position_It              : Construct_Tree_Iterator;
          Position_File            : VFS.Virtual_File;
-         Begin_Cursor, End_Cursor : out File_Cursor);
+         Begin_Cursor, End_Cursor : out File_Cursor;
+         Is_Empty, Is_Spec        : out Boolean);
       --  Set Begin_Cursor and End_Cursor at the begining and at the end of the
       --  profile's function starting at position.
 
       procedure Initialize_Profile
         (Position_It              : Construct_Tree_Iterator;
          Position_File            : VFS.Virtual_File;
-         Begin_Cursor, End_Cursor : out File_Cursor)
+         Begin_Cursor, End_Cursor : out File_Cursor;
+         Is_Empty, Is_Spec        : out Boolean)
       is
          Paren_Depth : Integer := 0;
+         Last_Entity_Column : Integer;
+         Last_Entity_Line : Integer;
+         Profile_Started : Boolean := False;
 
          function Entity_Callback
            (Entity         : Language_Entity;
@@ -855,11 +860,14 @@ package body Codefix.Text_Manager.Ada_Commands is
 
             procedure Begin_Of_Profile is
             begin
-               Begin_Cursor.File := Position_File;
-               Begin_Cursor.Line := Sloc_Start.Line;
-               Begin_Cursor.Col := To_Column_Index
-                 (Char_Index (Sloc_Start.Column),
-                  Get_Line (Current_Text, Begin_Cursor, 1));
+               if not Profile_Started then
+                  Profile_Started := True;
+                  Begin_Cursor.File := Position_File;
+                  Begin_Cursor.Line := Sloc_Start.Line;
+                  Begin_Cursor.Col := To_Column_Index
+                    (Char_Index (Sloc_Start.Column),
+                     Get_Line (Current_Text, Begin_Cursor, 1));
+               end if;
             end Begin_Of_Profile;
 
             --------------------
@@ -869,12 +877,10 @@ package body Codefix.Text_Manager.Ada_Commands is
             procedure End_Of_Profile is
             begin
                End_Cursor.File := Position_File;
-               End_Cursor.Line := Sloc_Start.Line;
+               End_Cursor.Line := Last_Entity_Line;
                End_Cursor.Col := To_Column_Index
-                 (Char_Index (Sloc_Start.Column),
+                 (Char_Index (Last_Entity_Column),
                   Get_Line (Current_Text, End_Cursor, 1));
-               End_Cursor := File_Cursor
-                 (Previous_Char (Current_Text, End_Cursor));
 
                if Begin_Cursor = Null_File_Cursor then
                   End_Cursor.Col := End_Cursor.Col + 1;
@@ -888,18 +894,22 @@ package body Codefix.Text_Manager.Ada_Commands is
          begin
             if Paren_Depth = 0 then
                if Entity = Keyword_Text then
-                  if Name = "is" then
+                  if Equal (Name, "is", False) then
                      End_Of_Profile;
+                     Is_Spec := False;
                      return True;
-                  elsif Name = "return" then
+                  elsif Equal (Name, "return", False) then
                      Begin_Of_Profile;
+                     Is_Empty := False;
                   end if;
                elsif Entity = Operator_Text then
                   if Name = "(" then
                      Begin_Of_Profile;
                      Paren_Depth := Paren_Depth + 1;
+                     Is_Empty := False;
                   elsif Name = ";" then
                      End_Of_Profile;
+                     Is_Spec := True;
                      return True;
                   end if;
                end if;
@@ -912,6 +922,9 @@ package body Codefix.Text_Manager.Ada_Commands is
                   end if;
                end if;
             end if;
+
+            Last_Entity_Column := Sloc_End.Column;
+            Last_Entity_Line := Sloc_End.Line;
 
             return False;
          end Entity_Callback;
@@ -934,6 +947,12 @@ package body Codefix.Text_Manager.Ada_Commands is
               (Char_Index (Get_Construct (Position_It).Sloc_Start.Column),
                Get_Line (Current_Text, Begin_Analyze_Cursor, 1)));
 
+         Last_Entity_Column := Integer (Begin_Analyze_Cursor.Col);
+         Last_Entity_Line := Begin_Analyze_Cursor.Line;
+
+         Is_Empty := True;
+         Is_Spec := True;
+
          Parse_Entities
            (Ada_Lang,
             Current_Text,
@@ -944,18 +963,38 @@ package body Codefix.Text_Manager.Ada_Commands is
       Destination_Begin, Destination_End : File_Cursor;
       Source_Begin, Source_End           : File_Cursor;
 
-   begin
-      Initialize_Profile
-        (Destination_It,
-         Destination_File,
-         Destination_Begin,
-         Destination_End);
+      Is_Empty, Is_Spec : Boolean;
 
+   begin
       Initialize_Profile
         (Source_It,
          Source_File,
          Source_Begin,
-         Source_End);
+         Source_End,
+         Is_Empty,
+         Is_Spec);
+
+      if Is_Empty then
+         This.Blank_Before := None;
+      else
+         This.Blank_Before := One;
+      end if;
+
+      Initialize_Profile
+        (Destination_It,
+         Destination_File,
+         Destination_Begin,
+         Destination_End,
+         Is_Empty,
+         Is_Spec);
+
+      if Is_Spec then
+         --  We don't add any space before ";"
+         This.Blank_After := None;
+      else
+         --  We add a space before "is"
+         This.Blank_After := One;
+      end if;
 
       if Destination_Begin = Destination_End then
          This.Add_Spaces := True;
@@ -1009,11 +1048,15 @@ package body Codefix.Text_Manager.Ada_Commands is
          Destination_End,
          Source_Begin,
          Source_End,
-         Current_Text);
+         Current_Text,
+         This.Blank_Before,
+         This.Blank_After);
 
       if This.Add_Spaces then
          Replace (New_Extract, Destination_Begin, 0, " ");
       end if;
+
+      Set_Indentation (New_Extract, True);
 
       Free (Destination_Begin);
       Free (Destination_End);

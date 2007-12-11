@@ -238,6 +238,11 @@ package Codefix.Text_Manager is
       Cursor : Text_Cursor'Class) is abstract;
    --  Delete the line where the cursor is.
 
+   procedure Indent_Line
+     (This   : in out Text_Interface;
+      Cursor : Text_Cursor'Class) is abstract;
+   --  Indent the line pointed by the cursor.
+
    function Line_Length
      (This   : Text_Interface'Class;
       Cursor : Text_Cursor'Class) return Natural;
@@ -253,9 +258,6 @@ package Codefix.Text_Manager is
 
    function Get_File_Name (This : Text_Interface) return VFS.Virtual_File;
    --  Return the name of the file.
-
-   procedure Commit (This : Text_Interface) is abstract;
-   --  Update the changes previously made in the real text.
 
    function Search_String
      (This           : Text_Interface'Class;
@@ -374,7 +376,7 @@ package Codefix.Text_Manager is
 
    function Get_Body_Or_Spec
      (Text : Text_Navigator_Abstr; File_Name : VFS.Virtual_File)
-      return VFS.Virtual_File is abstract;
+      return VFS.Virtual_File;
    --  When File_Name is a spec file, this function returns the body
    --  corresponding, otherwise it returns the spec.
 
@@ -455,9 +457,10 @@ package Codefix.Text_Manager is
    --  New_Value.
 
    procedure Add_Line
-     (This        : in out Text_Navigator_Abstr;
-      Cursor      : File_Cursor'Class;
-      New_Line    : String);
+     (This     : in out Text_Navigator_Abstr;
+      Cursor   : File_Cursor'Class;
+      New_Line : String;
+      Indent   : Boolean := False);
    --  Add a line AFTER the line specified by the cursor. To add a line at the
    --  begining of the text, set cursor line = 0.
 
@@ -470,9 +473,6 @@ package Codefix.Text_Manager is
      (This   : Text_Navigator_Abstr;
       Cursor : File_Cursor'Class) return Natural;
    --  Return le length of a line from the position of the cursor.
-
-   procedure Commit (This : Text_Navigator_Abstr);
-   --  Update the changes previously made in the real text.
 
    function Search_String
      (This           : Text_Navigator_Abstr'Class;
@@ -606,6 +606,9 @@ package Codefix.Text_Manager is
 
    function Get_Cursor (This : Extract_Line) return File_Cursor'Class;
    --  Return the cursor memorized in an Extract_Line.
+
+   procedure Set_Indentation (This : in out Extract_Line; Value : Boolean);
+   --  Set wether we want to force identation on that line or not.
 
    procedure Commit
      (This         : in out Extract_Line;
@@ -770,6 +773,10 @@ package Codefix.Text_Manager is
    --  to preserve the internal order of the lines, not just at the end of the
    --  list.
 
+   procedure Set_Indentation (This : in out Extract; Value : Boolean);
+   --  Set wether we want to force identation on the modified lines of the
+   --  extract
+
    function Clone (This : Extract) return Extract;
    --  Duplicate all informations associated to an extract, specially
    --  information referenced in pools.
@@ -812,14 +819,19 @@ package Codefix.Text_Manager is
       Value  : String);
    --  Replace 'len' characters from 'start' column with 'Value'.
 
+   type Replace_Blanks_Policy is (Keep, One, None);
+
    procedure Replace
      (This                      : in out Extract;
       Dest_Start, Dest_Stop     : File_Cursor'Class;
       Source_Start, Source_Stop : File_Cursor'Class;
-      Current_Text              : Text_Navigator_Abstr'Class);
+      Current_Text              : Text_Navigator_Abstr'Class;
+      Blanks_Before             : Replace_Blanks_Policy := Keep;
+      Blanks_After              : Replace_Blanks_Policy := Keep);
    --  Replace in this the text from Start to Stop by the one from Source_Start
-   --  to Source_End. Please note that This must have been previously
-   --  initialised with lines from 'Dest_Start' to 'Dest_Stop'.
+   --  to Source_End. Note that This must have been previously initialised with
+   --  lines from 'Dest_Start' to 'Dest_Stop'. If Blank_pos is None, blanks
+   --  will be removed, if it's One, only one blank will be put.
 
    procedure Commit
      (This         : Extract;
@@ -1342,6 +1354,8 @@ private
       Content         : Mergable_String;
       Next            : Ptr_Extract_Line;
       Coloration      : Boolean := False;
+
+      Do_Indentation  : Boolean := False;
    end record;
 
    procedure Get

@@ -76,12 +76,6 @@ package Codefix.GPS_Io is
    --  Get all character from the column and the line specified by the cursor
    --  to the end of the line.
 
-   function Get_Recorded_Line
-     (This   : Console_Interface;
-      Number : Natural) return String;
-   --  Return a line that has been previously recorded into the
-   --  Console_Interface.
-
    procedure Replace
      (This      : in out Console_Interface;
       Cursor    : Text_Cursor'Class;
@@ -102,6 +96,11 @@ package Codefix.GPS_Io is
       Cursor : Text_Cursor'Class);
    --  Delete the line where the cursor is.
 
+   procedure Indent_Line
+     (This   : in out Console_Interface;
+      Cursor : Text_Cursor'Class);
+   --  Indent the line pointed by the cursor.
+
    procedure Initialize
      (This : in out Console_Interface;
       Path : VFS.Virtual_File);
@@ -110,9 +109,6 @@ package Codefix.GPS_Io is
    function Read_File (This : Console_Interface)
       return GNAT.Strings.String_Access;
    --  Get the entire file
-
-   procedure Commit (This : Console_Interface);
-   --  Save the file.
 
    function Line_Max (This : Console_Interface) return Natural;
    --  Return the last position of line in File_Interface.
@@ -149,6 +145,12 @@ private
    procedure Update (This : Console_Interface);
    --  Update the values of lines contained into the console_interface if
    --  changes appened.
+
+   function Get_Recorded_Line
+     (This   : Console_Interface;
+      Number : Natural) return String;
+   --  Return a line that has been previously recorded into the
+   --  Console_Interface.
 
    type GPS_Mark is new Mark_Abstr with record
       Id : GNAT.Strings.String_Access;

@@ -51,8 +51,6 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
-with Projects.Registry;         use Projects.Registry;
-with Projects;                  use Projects;
 with Traces;                    use Traces;
 with VFS;                       use VFS;
 with Glib;                      use Glib;
@@ -179,10 +177,6 @@ package body Codefix_Module is
       Kernel : Kernel_Handle;
    end record;
 
-   function Get_Body_Or_Spec
-     (Text : GPS_Navigator; File_Name : Virtual_File) return Virtual_File;
-   --  See inherited documentation
-
    function New_Text_Interface (This : GPS_Navigator) return Ptr_Text;
    --  Create and initialise a new Text_Interface used by the text navigator.
 
@@ -251,22 +245,6 @@ package body Codefix_Module is
       Free (Session.Category);
       Unchecked_Free (Session);
    end Destroy;
-
-   ----------------------
-   -- Get_Body_Or_Spec --
-   ----------------------
-
-   function Get_Body_Or_Spec
-     (Text : GPS_Navigator; File_Name : Virtual_File) return Virtual_File is
-   begin
-      return Create
-        (Name            => Other_File_Base_Name
-           (Get_Project_From_File
-              (Project_Registry (Get_Registry (Text).all), File_Name),
-            File_Name),
-         Registry        => Get_Registry (Text).all,
-         Use_Object_Path => False);
-   end Get_Body_Or_Spec;
 
    ------------
    -- On_Fix --
