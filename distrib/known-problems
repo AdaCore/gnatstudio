@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.2.1
 
+- GC10-024 Missing routine name when completing overriding procedures/functions
+  Problem:    When doing a "Complete Block" action on a routine
+              declared with the overriding keyword next to the
+              procedure one, the routine name is missing. The
+              completion action just insert the end keyword.
+  Workaround: Add the routine name manually.
+
 - GC03-012 Wrong indentation of Ada code
   Problem:    When using the 'Format operator' preference, and indenting a
               line starting with a comma and followed
