@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Dec 10, 2007
+GPS 4.3 NEW FEATURES LIST Current as of Dec 11, 2007
 ====================================================
 
 Copyright (c) 2007, AdaCore
@@ -28,7 +28,7 @@ NF-43-GC06-020 Add minimal Git VCS support (2007-12-09)
   possible to query status, ask for a difference with HEAD and
   retrieve the log information.
 
-NF-41-GB30-007 Completion for protected fields (2007-12-11)
+NF-43-GB30-007 Completion for protected fields (2007-12-11)
 
   Completion on protected objects fields are now proposed by the smart complete
   command.
