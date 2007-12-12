@@ -684,14 +684,14 @@ package body Codefix.Formal_Errors is
 
          Garbage := New_Position;
          New_Position := File_Cursor
-           (Search_String
-              (Current_Text, New_Position, ")", Std_Ada_Escape));
+           (Search_Token
+              (Current_Text, New_Position, Close_Paren_Tok));
          Free (Garbage);
 
          Garbage := New_Position;
          New_Position := File_Cursor
-           (Search_String
-              (Current_Text, New_Position, "is", Std_Ada_Escape));
+           (Search_Token
+              (Current_Text, New_Position, Is_Tok));
          Free (Garbage);
 
          Initialize

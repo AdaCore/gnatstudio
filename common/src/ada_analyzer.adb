@@ -871,7 +871,16 @@ package body Ada_Analyzer is
          end if;
 
          Paren_In_Middle := False;
-         Start := Line_Start (Buffer, Prec);
+
+         if Prec > Buffer_Last then
+            --  In this case, we've parsed the entire buffer, so just compute
+            --  from the last offset
+
+            Start := Line_Start (Buffer, Buffer'Last);
+         else
+            Start := Line_Start (Buffer, Prec);
+         end if;
+
          Index := Start;
 
          loop
@@ -1346,7 +1355,7 @@ package body Ada_Analyzer is
 
       function End_Of_Word (P : Natural) return Natural is
          Tmp  : Natural := P;
-         Next : Natural;
+         Next : Natural := Buffer_Last + 1;
       begin
          while Tmp <= Buffer_Last loop
             Next := Next_Char (Tmp);
@@ -2854,9 +2863,17 @@ package body Ada_Analyzer is
                      return;
                   end if;
                end if;
+
+               if P = Buffer_Last then
+                  --  In this case, the comment goes until the end of the
+                  --  buffer. There's nothing more to be analyzed, so
+                  --  put P beyond the last analyzed element.
+
+                  P := P + 1;
+               end if;
             end loop;
 
-            if P >= Buffer_Last then
+            if P > Buffer_Last then
                End_Reached := True;
             end if;
          end Skip_Comments;
@@ -2897,7 +2914,7 @@ package body Ada_Analyzer is
                return;
             end if;
 
-            exit when P >= Buffer_Last
+            exit when P > Buffer_Last
               or else Is_Entity_Letter
                 (UTF8_Get_Char (Buffer (P .. Buffer_Last)));
 
@@ -3429,14 +3446,14 @@ package body Ada_Analyzer is
                      end if;
                   end if;
 
-                  Char := Buffer (P + 1);
+                  if Format_Operators and then P /= End_Of_Line then
+                     Char := Buffer (P + 1);
 
-                  if Format_Operators
-                    and then Char /= ' ' and then P /= End_Of_Line
-                  then
-                     Do_Indent (P, Num_Spaces);
-                     Comma (1) := Buffer (P);
-                     Replace_Text (P, P + 1, Comma (1 .. 2));
+                     if Char /= ' ' then
+                        Do_Indent (P, Num_Spaces);
+                        Comma (1) := Buffer (P);
+                        Replace_Text (P, P + 1, Comma (1 .. 2));
+                     end if;
                   end if;
 
                when ''' =>

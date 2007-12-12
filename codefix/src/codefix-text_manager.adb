@@ -22,7 +22,7 @@ with GNAT.Case_Util; use GNAT.Case_Util;
 with GNAT.Regpat;    use GNAT.Regpat;
 
 with Ada_Analyzer;      use Ada_Analyzer;
-with Basic_Types;       use Basic_Types;
+with Language.Ada;      use Language.Ada;
 with Projects;          use Projects;
 with Projects.Registry; use Projects.Registry;
 with String_Utils;      use String_Utils;
@@ -547,41 +547,37 @@ package body Codefix.Text_Manager is
    -- Search_String --
    -------------------
 
-   function Search_String
-     (This           : Text_Navigator_Abstr'Class;
-      Cursor         : File_Cursor'Class;
-      Searched       : String;
-      Escape_Manager : Escape_Str_Manager'Class;
-      Step           : Step_Way := Normal_Step)
+   function Search_Token
+     (This     : Text_Navigator_Abstr'Class;
+      Cursor   : File_Cursor'Class;
+      Searched : Token_Record;
+      Step     : Step_Way := Normal_Step)
       return File_Cursor'Class is
    begin
-      return Search_String
+      return Search_Token
         (Get_File (This, Get_File (Cursor)).all,
          File_Cursor (Cursor),
          Searched,
-         Escape_Manager,
          Step);
-   end Search_String;
+   end Search_Token;
 
    --------------------
    -- Search_Strings --
    --------------------
 
-   function Search_Strings
-     (This           : Text_Navigator_Abstr'Class;
-      Cursor         : File_Cursor'Class;
-      Searched       : GNAT.Strings.String_List;
-      Escape_Manager : Escape_Str_Manager'Class;
-      Step           : Step_Way := Normal_Step)
+   function Search_Tokens
+     (This     : Text_Navigator_Abstr'Class;
+      Cursor   : File_Cursor'Class;
+      Searched : Token_List;
+      Step     : Step_Way := Normal_Step)
       return Word_Cursor'Class is
    begin
-      return Search_Strings
+      return Search_Tokens
         (Get_File (This, Get_File (Cursor)).all,
          File_Cursor (Cursor),
          Searched,
-         Escape_Manager,
          Step);
-   end Search_Strings;
+   end Search_Tokens;
 
    -----------------
    -- Search_Unit --
@@ -949,38 +945,31 @@ package body Codefix.Text_Manager is
    -- Search_String --
    -------------------
 
-   function Search_String
-     (This           : Text_Interface'Class;
-      Cursor         : Text_Cursor'Class;
-      Searched       : String;
-      Escape_Manager : Escape_Str_Manager'Class;
-      Step           : Step_Way := Normal_Step) return File_Cursor'Class
+   function Search_Token
+     (This     : Text_Interface'Class;
+      Cursor   : Text_Cursor'Class;
+      Searched : Token_Record;
+      Step     : Step_Way := Normal_Step) return File_Cursor'Class
    is
-      Str_Array : GNAT.Strings.String_List := (1 => new String'(Searched));
-      Result    : Word_Cursor'Class := Search_Strings
-        (This,
-         Cursor,
-         Str_Array,
-         Escape_Manager,
-         Step);
+      Tokens : constant Token_List := (1 => Searched);
+      Result : Word_Cursor'Class := Search_Tokens
+        (This, Cursor, Tokens, Step);
       Real_Result : constant File_Cursor := Clone (File_Cursor (Result));
    begin
-      Free (Str_Array);
       Free (Result);
 
       return Real_Result;
-   end Search_String;
+   end Search_Token;
 
    --------------------
    -- Search_Strings --
    --------------------
 
-   function Search_Strings
-     (This           : Text_Interface'Class;
-      Cursor         : Text_Cursor'Class;
-      Searched       : GNAT.Strings.String_List;
-      Escape_Manager : Escape_Str_Manager'Class;
-      Step           : Step_Way := Normal_Step) return Word_Cursor'Class
+   function Search_Tokens
+     (This     : Text_Interface'Class;
+      Cursor   : Text_Cursor'Class;
+      Searched : Token_List;
+      Step     : Step_Way := Normal_Step) return Word_Cursor'Class
    is
       Last, Increment    : Integer;
       Ext_Red            : Extract_Line;
@@ -1014,11 +1003,10 @@ package body Codefix.Text_Manager is
       loop
          Result :=
            Word_Cursor
-             (Search_Strings
+             (Search_Tokens
                   (Ext_Red,
                    New_Cursor,
                    Searched,
-                   Escape_Manager,
                    Step));
 
          if Result /= Null_Word_Cursor then
@@ -1042,7 +1030,7 @@ package body Codefix.Text_Manager is
 
       Free (Ext_Red);
       return Null_Word_Cursor;
-   end Search_Strings;
+   end Search_Tokens;
 
    -----------------
    -- Search_Unit --
@@ -1850,77 +1838,90 @@ package body Codefix.Text_Manager is
    -- Search_String --
    -------------------
 
-   function Search_String
-     (This           : Extract_Line;
-      Cursor         : File_Cursor'Class;
-      Searched       : String;
-      Escape_Manager : Escape_Str_Manager'Class;
-      Step           : Step_Way := Normal_Step) return File_Cursor'Class
+   function Search_Token
+     (This     : Extract_Line;
+      Cursor   : File_Cursor'Class;
+      Searched : Token_Record;
+      Step     : Step_Way := Normal_Step) return File_Cursor'Class
    is
-      Str_Array : GNAT.Strings.String_List := (1 => new String'(Searched));
-      Result    : File_Cursor'Class := Search_Strings
-        (This,
-         Cursor,
-         Str_Array,
-         Escape_Manager,
-         Step);
+      Tokens : constant Token_List := (1 => Searched);
+      Result : File_Cursor'Class := Search_Tokens
+        (This, Cursor, Tokens, Step);
       Real_Result : constant File_Cursor := Clone (File_Cursor (Result));
    begin
-      Free (Str_Array);
       Free (Result);
 
       return Real_Result;
-   end Search_String;
+   end Search_Token;
 
    --------------------
    -- Search_Strings --
    --------------------
 
-   function Search_Strings
-     (This           : Extract_Line;
-      Cursor         : File_Cursor'Class;
-      Searched       : GNAT.Strings.String_List;
-      Escape_Manager : Escape_Str_Manager'Class;
-      Step           : Step_Way := Normal_Step) return Word_Cursor'Class
+   function Search_Tokens
+     (This     : Extract_Line;
+      Cursor   : File_Cursor'Class;
+      Searched : Token_List;
+      Step     : Step_Way := Normal_Step) return Word_Cursor'Class
    is
-      Result        : Word_Cursor;
+      --  ??? This is a bit Ada-specific (casing, use of Ada_Lang).
+
+      Result        : Word_Cursor :=
+        (File_Cursor (Cursor) with null, Text_Ascii);
       Result_String : constant String := To_String (This.Content);
       Start_Index   : Char_Index;
+      Found         : Boolean := False;
 
-      function Test_Result
-        (Str : GNAT.Strings.String_Access; Index : Char_Index)
-        return Boolean;
-      --  Return true if the string given in parameter is on the Index position
-      --  of the content, and set the Result accordingly if needed.
+      function Callback
+        (Entity         : Language_Entity;
+         Sloc_Start     : Source_Location;
+         Sloc_End       : Source_Location;
+         Partial_Entity : Boolean) return Boolean;
 
-      function Test_Result
-        (Str   : GNAT.Strings.String_Access;
-         Index : Char_Index)
-        return Boolean
+      function Callback
+        (Entity         : Language_Entity;
+         Sloc_Start     : Source_Location;
+         Sloc_End       : Source_Location;
+         Partial_Entity : Boolean) return Boolean
       is
+         pragma Unreferenced (Partial_Entity);
       begin
-         if Natural (Index) + Str.all'Last - 1 <= Result_String'Last
-           and then Result_String
-             (Natural (Index) .. Natural (Index) + Str.all'Last - 1) = Str.all
-           and then not
-             Is_In_Escape_Part (Escape_Manager, Result_String, Index)
-         then
-            Result.Col := To_Column_Index (Index, Result_String);
-            Result.String_Match := new String'(Str.all);
+         for J in Searched'Range loop
+            if Entity = Searched (J).Kind
+              and then Equal
+                (Result_String (Sloc_Start.Index .. Sloc_End.Index),
+                 Searched (J).Name.all,
+                 False)
+            then
+               Found := True;
 
-            return True;
-         end if;
+               if Result.String_Match /= null then
+                  Free (Result.String_Match);
+               end if;
+
+               Result.Col := To_Column_Index
+                 (Char_Index (Sloc_Start.Index), Result_String);
+               Result.String_Match :=
+                 new String'
+                   (Result_String (Sloc_Start.Index .. Sloc_End.Index));
+
+               if Step = Normal_Step then
+                  --  If we are on the normal step, we stop as soon as we find
+                  --  something.
+
+                  return True;
+               else
+                  --  Otherwise we'll go until the last matching
+                  --  token.
+
+                  return False;
+               end if;
+            end if;
+         end loop;
 
          return False;
-      end Test_Result;
-
+      end Callback;
    begin
-      Result := (File_Cursor (Cursor) with null, Text_Ascii);
-      --  ??? If this assignment is done directly as an initialization in the
-      --  elaboration of the procedure, GPS will crash (see FA09-007). So this
-      --  assignment has to stay here as a workaround until the underlying
-      --  issue is fixed.
-
       if Result.Col = 0 then
          Start_Index := Char_Index (Result_String'Last);
       else
@@ -1929,28 +1930,27 @@ package body Codefix.Text_Manager is
 
       case Step is
          when Normal_Step =>
-            for J in Start_Index .. Char_Index (Result_String'Last) loop
-               for K in Searched'Range loop
-                  if Test_Result (Searched (K), J) then
-                     return Result;
-                  end if;
-               end loop;
-            end loop;
+            Parse_Entities
+              (Lang     => Ada_Lang,
+               Buffer   => Result_String
+                 (Integer (Start_Index) .. Result_String'Last),
+               Callback => Callback'Unrestricted_Access);
 
          when Reverse_Step =>
-            for J in reverse
-              Char_Index (Result_String'First) .. Start_Index
-            loop
-               for K in Searched'Range loop
-                  if Test_Result (Searched (K), J) then
-                     return Result;
-                  end if;
-               end loop;
-            end loop;
+            Parse_Entities
+              (Lang     => Ada_Lang,
+               Buffer   => Result_String
+                 (Result_String'First .. Integer (Start_Index)),
+               Callback => Callback'Unrestricted_Access);
+
       end case;
 
-      return Null_Word_Cursor;
-   end Search_Strings;
+      if Found then
+         return Result;
+      else
+         return Null_Word_Cursor;
+      end if;
+   end Search_Tokens;
 
    ---------
    -- Get --
@@ -3170,12 +3170,11 @@ package body Codefix.Text_Manager is
    -- Search_String --
    -------------------
 
-   function Search_String
-     (This           : Extract;
-      Searched       : String;
-      Escape_Manager : Escape_Str_Manager'Class;
-      Cursor         : File_Cursor'Class := Null_File_Cursor;
-      Step           : Step_Way := Normal_Step) return File_Cursor'Class
+   function Search_Token
+     (This     : Extract;
+      Searched : Token_Record;
+      Cursor   : File_Cursor'Class := Null_File_Cursor;
+      Step     : Step_Way := Normal_Step) return File_Cursor'Class
    is
       Current, Last_Line : Ptr_Extract_Line;
       Result             : File_Cursor := Null_File_Cursor;
@@ -3206,11 +3205,10 @@ package body Codefix.Text_Manager is
             return Null_File_Cursor;
          end if;
 
-         Result := File_Cursor (Search_String
+         Result := File_Cursor (Search_Token
            (Current.all,
             Current_Cursor,
             Searched,
-            Escape_Manager,
             Step));
 
          if Result /= Null_File_Cursor then
@@ -3236,7 +3234,7 @@ package body Codefix.Text_Manager is
       end loop;
 
       return Null_File_Cursor;
-   end Search_String;
+   end Search_Token;
 
    --------------
    -- Previous --

@@ -21,6 +21,8 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 with Language.Ada;            use Language.Ada;
 
+with String_Utils;            use String_Utils;
+
 with Codefix.Ada_Tools;       use Codefix.Ada_Tools;
 
 package body Codefix.Text_Manager.Ada_Extracts is
@@ -98,11 +100,10 @@ package body Codefix.Text_Manager.Ada_Extracts is
       Line_Cursor  : File_Cursor;
       Matched_Word : Word_Cursor;
    begin
-      Matched_Word := Word_Cursor (Search_Strings
+      Matched_Word := Word_Cursor (Search_Tokens
         (Current_Text,
            Position,
            Delimiters,
-           Std_Ada_Escape,
            Reverse_Step));
 
       if Matched_Word = Null_Word_Cursor then
@@ -124,8 +125,8 @@ package body Codefix.Text_Manager.Ada_Extracts is
       end loop;
 
       Destination.Stop := File_Cursor
-        (Search_Strings
-           (Current_Text, Destination.Start, Delimiters, Std_Ada_Escape));
+        (Search_Tokens
+           (Current_Text, Destination.Start, Delimiters));
 
       Set_File (Line_Cursor, Get_File (Destination.Start));
 
@@ -361,7 +362,7 @@ package body Codefix.Text_Manager.Ada_Extracts is
             end if;
 
             if Entity = Operator_Text
-              and then (Name = ":=" or else Name = "=>" or else Name = ";")
+              and then (Name = ":=" or else Name = "=>")
             then
                declare
                   New_Token   : Token_Record;
@@ -387,9 +388,10 @@ package body Codefix.Text_Manager.Ada_Extracts is
 
                   return True;
                end;
-            elsif To_Lower (Name) /= "use"
-              and then To_Lower (Name) /= "with"
-              and then To_Lower (Name) /= "type"
+            elsif not Equal (Name, "use", False)
+              and then not Equal (Name, "with", False)
+              and then not Equal (Name, "type", False)
+              and then Name /= ";"
             then
                declare
                   New_Token   : Token_Record;

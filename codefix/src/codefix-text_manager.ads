@@ -147,22 +147,6 @@ package Codefix.Text_Manager is
    --  Free the memory associated to a Word_Cursor.
 
    ----------------------------------------------------------------------------
-   --  type Escape_Str_Manager
-   ----------------------------------------------------------------------------
-
-   type Escape_Str_Manager is abstract tagged private;
-   --  This object is used by string seeking functions, in order to know if the
-   --  string found is in a compilable part, or in parts that should be ignored
-   --  (comments and quotes for example). As far as it depends of the language
-   --  each language should have his own Escape_Str_Manager.
-
-   function Is_In_Escape_Part
-     (This     : Escape_Str_Manager;
-      Text     : String;
-      Position : Char_Index) return Boolean is abstract;
-   --  Returns true if the position given from the string is in an escape part.
-
-   ----------------------------------------------------------------------------
    --  type Text_Interface
    ----------------------------------------------------------------------------
 
@@ -259,24 +243,38 @@ package Codefix.Text_Manager is
    function Get_File_Name (This : Text_Interface) return VFS.Virtual_File;
    --  Return the name of the file.
 
-   function Search_String
-     (This           : Text_Interface'Class;
-      Cursor         : Text_Cursor'Class;
-      Searched       : String;
-      Escape_Manager : Escape_Str_Manager'Class;
-      Step           : Step_Way := Normal_Step) return File_Cursor'Class;
-   --  Search a string in the text and returns a cursor at the beginning. If
+   type Token_Record is record
+      Name : String_Access;
+      Kind : Language_Entity;
+   end record;
+
+   type Token_List is array (Integer range <>) of Token_Record;
+
+   Open_Paren_Tok : constant Token_Record :=
+     (Kind => Operator_Text, Name => new String'("("));
+   Close_Paren_Tok : constant Token_Record :=
+     (Kind => Operator_Text, Name => new String'(")"));
+   Semicolon_Tok : constant Token_Record :=
+     (Kind => Operator_Text, Name => new String'(":"));
+   Is_Tok : constant Token_Record :=
+     (Kind => Keyword_Text, Name => new String'("is"));
+
+   function Search_Token
+     (This     : Text_Interface'Class;
+      Cursor   : Text_Cursor'Class;
+      Searched : Token_Record;
+      Step     : Step_Way := Normal_Step) return File_Cursor'Class;
+   --  Search a token in the text and returns a cursor at the beginning. If
    --  noting is found, then the cursor is Null_Cursor.
 
-   function Search_Strings
-     (This           : Text_Interface'Class;
-      Cursor         : Text_Cursor'Class;
-      Searched       : String_List;
-      Escape_Manager : Escape_Str_Manager'Class;
-      Step           : Step_Way := Normal_Step) return Word_Cursor'Class;
-   --  Search a string in the text, among serveal possibilities, and returns a
+   function Search_Tokens
+     (This     : Text_Interface'Class;
+      Cursor   : Text_Cursor'Class;
+      Searched : Token_List;
+      Step     : Step_Way := Normal_Step) return Word_Cursor'Class;
+   --  Search a token in the text, among serveal possibilities, and returns a
    --  cursor at the beginning. Cursor is returned on the first matching
-   --  string. If noting is found, then the cursor is Null_Cursor.
+   --  token If noting is found, then the cursor is Null_Cursor.
 
    function Line_Max (This : Text_Interface) return Natural is abstract;
    --  Return the number of the last line in the text loaded.
@@ -474,21 +472,19 @@ package Codefix.Text_Manager is
       Cursor : File_Cursor'Class) return Natural;
    --  Return le length of a line from the position of the cursor.
 
-   function Search_String
-     (This           : Text_Navigator_Abstr'Class;
-      Cursor         : File_Cursor'Class;
-      Searched       : String;
-      Escape_Manager : Escape_Str_Manager'Class;
-      Step           : Step_Way := Normal_Step) return File_Cursor'Class;
+   function Search_Token
+     (This     : Text_Navigator_Abstr'Class;
+      Cursor   : File_Cursor'Class;
+      Searched : Token_Record;
+      Step     : Step_Way := Normal_Step) return File_Cursor'Class;
    --  Search a string in the text and returns a cursor at the beginning. If
    --  noting is found, then the cursor is Null_Cursor.
 
-   function Search_Strings
-     (This           : Text_Navigator_Abstr'Class;
-      Cursor         : File_Cursor'Class;
-      Searched       : GNAT.Strings.String_List;
-      Escape_Manager : Escape_Str_Manager'Class;
-      Step           : Step_Way := Normal_Step) return Word_Cursor'Class;
+   function Search_Tokens
+     (This     : Text_Navigator_Abstr'Class;
+      Cursor   : File_Cursor'Class;
+      Searched : Token_List;
+      Step     : Step_Way := Normal_Step) return Word_Cursor'Class;
    --  Search a string in the text and returns a cursor at the beginning. The
    --  position of the first matching string is returned. If noting is found,
    --  then the cursor is Null_Cursor.
@@ -635,23 +631,21 @@ package Codefix.Text_Manager is
    function Clone (This : Extract_Line) return Extract_Line;
    --  Same one as the previous but Recursive is consider as True.
 
-   function Search_String
-     (This           : Extract_Line;
-      Cursor         : File_Cursor'Class;
-      Searched       : String;
-      Escape_Manager : Escape_Str_Manager'Class;
-      Step           : Step_Way := Normal_Step) return File_Cursor'Class;
-   --  Search a string in the text and returns a cursor at the beginning. If
+   function Search_Token
+     (This     : Extract_Line;
+      Cursor   : File_Cursor'Class;
+      Searched : Token_Record;
+      Step     : Step_Way := Normal_Step) return File_Cursor'Class;
+   --  Search a token in the text and returns a cursor at the beginning. If
    --  noting is found, then the cursor is Null_Cursor. If Cursor.Col = 0, then
    --  the scan in initialized from the end of the content.
 
-   function Search_Strings
-     (This           : Extract_Line;
-      Cursor         : File_Cursor'Class;
-      Searched       : GNAT.Strings.String_List;
-      Escape_Manager : Escape_Str_Manager'Class;
-      Step           : Step_Way := Normal_Step) return Word_Cursor'Class;
-   --  Search a string in the text and returns a cursor at the beginning. First
+   function Search_Tokens
+     (This     : Extract_Line;
+      Cursor   : File_Cursor'Class;
+      Searched : Token_List;
+      Step     : Step_Way := Normal_Step) return Word_Cursor'Class;
+   --  Search a token in the text and returns a cursor at the beginning. First
    --  match is returned. If noting is found, then the cursor is Null_Cursor.
    --  If Cursor.Col = 0, then the scan in initialized from the end of the
    --  content.
@@ -927,12 +921,11 @@ package Codefix.Text_Manager is
    --  Add in the Extract lines of the Entity witch begins at the position
    --  specified by the cursor (if it is a spec, the body is also got).
 
-   function Search_String
-     (This           : Extract;
-      Searched       : String;
-      Escape_Manager : Escape_Str_Manager'Class;
-      Cursor         : File_Cursor'Class := Null_File_Cursor;
-      Step           : Step_Way := Normal_Step) return File_Cursor'Class;
+   function Search_Token
+     (This     : Extract;
+      Searched : Token_Record;
+      Cursor   : File_Cursor'Class := Null_File_Cursor;
+      Step     : Step_Way := Normal_Step) return File_Cursor'Class;
    --  Search a string in the text and returns a cursor at the beginning. If
    --  noting is found, then the cursor is Null_Cursor. If Cursor is
    --  Null_File_Cursor,then the research will begin at the begenning of the

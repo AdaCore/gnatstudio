@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002-2006                    --
---                              AdaCore                              --
+--                     Copyright (C) 2002-2007, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -29,15 +28,15 @@ package Codefix.Text_Manager.Ada_Extracts is
    --  type Ada_Instruction
    ----------------------------------------------------------------------------
 
-   subtype Delimiters_Array is GNAT.Strings.String_List;
+   subtype Delimiters_Array is Token_List;
 
    Default_Delimiters : Delimiters_Array :=
-     (new String'("declare"),
-      new String'("begin"),
-      new String'("is"),
-      new String'(";"),
-      new String'("then"),
-      new String'("loop"));
+     ((Kind => Keyword_Text, Name => new String'("declare")),
+      (Kind => Keyword_Text, Name => new String'("begin")),
+      (Kind => Keyword_Text, Name => new String'("is")),
+      (Kind => Operator_Text, Name => new String'(";")),
+      (Kind => Keyword_Text, Name => new String'("then")),
+      (Kind => Keyword_Text, Name => new String'("loop")));
 
    type Ada_Instruction is new Extract with private;
    --  This type represents an Ada instruction, or a part of an

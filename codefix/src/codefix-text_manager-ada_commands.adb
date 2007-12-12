@@ -208,12 +208,10 @@ package body Codefix.Text_Manager.Ada_Commands is
             declare
                Extract_Temp : Ada_List;
                Test_Cursor  : constant File_Cursor :=
-                                File_Cursor (Current_Cursor);
+                 File_Cursor (Current_Cursor);
             begin
-               if Test_Cursor >=
-                 Get_Start (Data (Current_Extract))
-                 and then Test_Cursor <=
-                   Get_Stop (Data (Current_Extract))
+               if Test_Cursor >= Get_Start (Data (Current_Extract))
+                 and then Test_Cursor <= Get_Stop (Data (Current_Extract))
                then
                   Extract_Temp := Clone (Data (Current_Extract));
                   Remove_Elements
@@ -609,8 +607,8 @@ package body Codefix.Text_Manager.Ada_Commands is
 
          if To_Lower (Next_Str.all) = To_Lower (This.Name.all) then
             Pragma_Cursor := File_Cursor
-              (Search_String
-                 (Current_Text, Pragma_Cursor, ")", Std_Ada_Escape));
+              (Search_Token
+                 (Current_Text, Pragma_Cursor, Close_Paren_Tok));
             Line_Cursor := Pragma_Cursor;
             Line_Cursor.Col := 1;
             Get_Line (Current_Text, Line_Cursor, New_Extract);
@@ -672,7 +670,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       if Get_Number_Of_Declarations (Work_Extract) = 1 then
          Replace_Word
            (Work_Extract,
-            Search_String (Work_Extract, ":", Std_Ada_Escape),
+            Search_Token (Work_Extract, Semicolon_Tok),
             ": constant",
             ":");
       else
@@ -771,7 +769,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Erase
         (Work_Extract,
          Cursor,
-         Search_String (Work_Extract, "(", Std_Ada_Escape, Cursor));
+         Search_Token (Work_Extract, Open_Paren_Tok, Cursor));
 
       Current_Index := To_Char_Index
         (Cursor.Col, Get_String (Current_Line.all));
