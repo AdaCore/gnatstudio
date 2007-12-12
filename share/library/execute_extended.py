@@ -1,7 +1,7 @@
 """Provides an action that allows you to interactively execute another action
 
    This is similar to Emacs' mini-buffer behavior (along with the M-x shortcut)
-   
+
    If you press <tab> while in the command window, GPS will complete
    the command name with the longuest possible string. Completion is
    case insensitive
@@ -67,7 +67,6 @@ class Extended_Command (CommandWindow):
   def on_activate (self, input):
     if input != "":
        input = remove_completion (input)
-       Logger ("TESTSUITE").log ("executing " + input + " " + `self.repeat_count`)
        for r in range (1, self.repeat_count + 1):
           execute_action (input)
 
@@ -84,7 +83,7 @@ class Extended_Command (CommandWindow):
                 if completions != "": completions = completions + ","
                 completions = completions + m[len(prefix):]
              if completions != "": completions = "{" + completions + "}"
-             
+
           self.write (prefix + completions, cursor=len(prefix))
        return True
     else:
