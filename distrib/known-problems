@@ -10,3 +10,9 @@ Known Problems fixed in GPS 4.3.0
               but the root project does not have a VCS set, GPS is unable to
               call VCS operations on sources belonging to the subproject.
   Workaround: Set a VCS on the root project.
+
+- G621-018: Auto fixing cannot remove variables containing "is"
+  Problem:    When a variable type or initialization contains the string "is",
+              and is not referenced, the auto fix proposed by GPS doesn't 
+              manage to remove it properly.
+  Workaround: Remove manually the variable.
