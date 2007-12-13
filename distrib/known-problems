@@ -11,6 +11,11 @@ Known Problems fixed in GPS 4.3.0
               call VCS operations on sources belonging to the subproject.
   Workaround: Set a VCS on the root project.
 
+- G906-021: Auto fixing doesn't indent correctly "pragma Unreferenced" 
+  Problem:    When GPS insert a "pragma Unreferenced" to fix an unreferenced
+              entity warning, the indentation of the pragma may be incorrect.
+  Workaround: Manually fix the indentation.
+
 - G621-018: Auto fixing cannot remove variables containing "is"
   Problem:    When a variable type or initialization contains the string "is",
               and is not referenced, the auto fix proposed by GPS doesn't 
