@@ -40,6 +40,7 @@ package Entities is
 
    type Entity_Information_Record is tagged private;
    type Entity_Information is access all Entity_Information_Record'Class;
+   pragma No_Strict_Aliasing (Entity_Information);
 
    type LI_Handler_Record is abstract tagged limited private;
    type LI_Handler is access all LI_Handler_Record'Class;
