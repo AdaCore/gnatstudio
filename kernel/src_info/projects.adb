@@ -661,7 +661,11 @@ package body Projects is
 
    begin
       if not Recursive then
-         return new File_Array'(Project.Data.Files.all);
+         if Project.Data.Files = null then
+            return new File_Array (1 .. 0);
+         else
+            return new File_Array'(Project.Data.Files.all);
+         end if;
       end if;
 
       declare
@@ -675,7 +679,12 @@ package body Projects is
             P := Current (Iter);
             exit when P = No_Project;
 
-            Count := Count + P.Data.Files'Length;
+            --  Files may be null in case of a parse error
+
+            if P.Data.Files /= null then
+               Count := Count + P.Data.Files'Length;
+            end if;
+
             Next (Iter);
          end loop;
 
@@ -688,10 +697,12 @@ package body Projects is
             P := Current (Iter);
             exit when P = No_Project;
 
-            for S in P.Data.Files'Range loop
-               Sources (Index) := P.Data.Files (S);
-               Index := Index + 1;
-            end loop;
+            if P.Data.Files /= null then
+               for S in P.Data.Files'Range loop
+                  Sources (Index) := P.Data.Files (S);
+                  Index := Index + 1;
+               end loop;
+            end if;
 
             Next (Iter);
          end loop;
