@@ -618,11 +618,11 @@ package body Codefix.Text_Manager.Ada_Commands is
          end if;
 
       else
-         Add_Indented_Line
+         Add_Line
            (New_Extract,
             Position,
             "pragma " & This.Name.all & " (" & This.Argument.all & ");",
-            Current_Text);
+            True);
       end if;
 
       Free (Next_Str);
@@ -685,11 +685,8 @@ package body Codefix.Text_Manager.Ada_Commands is
             New_Instr (New_Instr'First .. Col_Decl) & " constant" &
               New_Instr (Col_Decl + 1 .. New_Instr'Last));
 
-         Add_Indented_Line
-           (Work_Extract,
-            Get_Stop (Work_Extract),
-            New_Instr.all,
-            Current_Text);
+         Add_Line
+           (Work_Extract, Get_Stop (Work_Extract), New_Instr.all, True);
 
          Free (New_Instr);
       end if;

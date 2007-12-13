@@ -881,29 +881,11 @@ package Codefix.Text_Manager is
    procedure Add_Line
      (This   : in out Extract;
       Cursor : File_Cursor'Class;
-      Text   : String);
+      Text   : String;
+      Indent : Boolean := False);
    --  Add a line AFTER the line specified by the cursor.
    --  Make a cursor with 0 for the line number to add a line at the beginning
    --  of the file.
-
-   procedure Add_Indented_Line
-     (This         : in out Extract;
-      Cursor       : File_Cursor'Class;
-      Text         : String;
-      Current_Text : Text_Navigator_Abstr'Class);
-   --  Add a line AFTER the line specified by the cursor.
-   --  Make a cursor with 0 for the line number to add a line at the beginning
-   --  of the file. This procedure also indents automatically the line.
-
-   procedure Add_Indented_Line
-     (This          : in out Extract;
-      Cursor        : File_Cursor'Class;
-      Text          : String;
-      Previous_Line : String);
-   --  Add a line AFTER the line specified by the cursor.
-   --  Make a cursor with 0 for the line number to add a line at the beginning
-   --  of the file. This procedure also indents automatically the line in
-   --  function of the previous one.
 
    procedure Delete_Line
      (This   : in out Extract;

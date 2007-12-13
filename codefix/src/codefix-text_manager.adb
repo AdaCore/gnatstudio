@@ -2634,17 +2634,17 @@ package body Codefix.Text_Manager is
             end if;
          else
             if Last_Line /= null then
-               Add_Indented_Line
+               Add_Line
                  (This,
                   Cursor_Dest,
                   Source_Line.all,
-                  Last_Line.all);
+                  True);
             else
-               Add_Indented_Line
+               Add_Line
                  (This,
                   Cursor_Dest,
                   Source_Line.all,
-                  Current_Text);
+                  True);
             end if;
          end if;
 
@@ -2973,7 +2973,8 @@ package body Codefix.Text_Manager is
    procedure Add_Line
      (This   : in out Extract;
       Cursor : File_Cursor'Class;
-      Text   : String)
+      Text   : String;
+      Indent : Boolean := False)
    is
       Line_Cursor : File_Cursor := File_Cursor (Clone (Cursor));
    begin
@@ -2986,78 +2987,8 @@ package body Codefix.Text_Manager is
           Content         => To_Mergable_String (Text),
           Next            => null,
           Coloration      => True,
-          others          => <>));
+          Do_Indentation  => Indent));
    end Add_Line;
-
-   -----------------------
-   -- Add_Indented_Line --
-   -----------------------
-
-   procedure Add_Indented_Line
-     (This         : in out Extract;
-      Cursor       : File_Cursor'Class;
-      Text         : String;
-      Current_Text : Text_Navigator_Abstr'Class)
-   is
-      Line_Cursor : File_Cursor := File_Cursor (Cursor);
-   begin
-      Line_Cursor.Col := 1;
-
-      Add_Indented_Line
-        (This,
-         Cursor,
-         Text,
-         Get_Line (Current_Text, Line_Cursor));
-   end Add_Indented_Line;
-
-   -----------------------
-   -- Add_Indented_Line --
-   -----------------------
-
-   procedure Add_Indented_Line
-     (This          : in out Extract;
-      Cursor        : File_Cursor'Class;
-      Text          : String;
-      Previous_Line : String)
-   is
-      Line_Cursor : File_Cursor := File_Cursor (Clone (Cursor));
-      Indent      : Natural;
-      First_Char  : Natural := Text'First;
-
-   begin
-      while First_Char <= Text'Last and then Is_Blank (Text (First_Char)) loop
-         First_Char := First_Char + 1;
-      end loop;
-
-      Line_Cursor.Col := 1;
-      Indent          := 0;
-
-      --  ??? Consider using the "Format selection" command instead.
-
-      for J in Previous_Line'Range loop
-         case Previous_Line (J) is
-            when ' ' =>
-               Indent := Indent + 1;
-            when ASCII.HT =>
-               Indent := Indent + Tab_Width -
-                 (Indent mod Tab_Width);
-            when others =>
-               exit;
-         end case;
-      end loop;
-
-      Add_Element
-        (This, new Extract_Line'
-          (Context         => Unit_Created,
-           Cursor          => Line_Cursor,
-           Original_Length => 0,
-           Content         =>
-              To_Mergable_String ((1 .. Indent => ' ') &
-                                   Text (First_Char .. Text'Last)),
-           Next            => null,
-           Coloration      => True,
-           others          => <>));
-   end Add_Indented_Line;
 
    -----------------
    -- Delete_Line --
@@ -3512,12 +3443,7 @@ package body Codefix.Text_Manager is
          end;
 
          if not Is_Blank (Back_Of_Line) then
-            Add_Indented_Line
-              (This,
-               Stop,
-               Back_Of_Line,
-               To_String (Current_Line.Content)
-               (1 .. Natural (Stop_Char_Index)));
+            Add_Line (This, Stop, Back_Of_Line, True);
             Replace
               (Current_Line.all,
                Stop.Col + 1,
@@ -3574,14 +3500,8 @@ package body Codefix.Text_Manager is
          end;
 
          if not Is_Blank (Back_Of_Line) then
-            Add_Indented_Line
-              (This,
-               Stop,
-               Back_Of_Line,
-               To_String
-                 (Current_Line.Content) (1 .. Natural (Stop_Char_Index)));
-            Replace
-              (Current_Line.all, Stop.Col + 1, Back_Of_Line'Length, "");
+            Add_Line (This, Stop, Back_Of_Line, True);
+            Replace (Current_Line.all, Stop.Col + 1, Back_Of_Line'Length, "");
          end if;
 
          Insert (Current_Line.Content, Char_Index (1), "--  ");
@@ -3991,11 +3911,11 @@ package body Codefix.Text_Manager is
                      New_Pos,
                      Line (Natural (Pos_Char_Index) .. Line'Last)'Length,
                      "");
-                  Add_Indented_Line
+                  Add_Line
                     (New_Extract,
                      New_Pos,
                      Line (Natural (Pos_Char_Index) .. Line'Last),
-                     Current_Text);
+                     True);
                end;
             end;
          end if;
@@ -4003,12 +3923,10 @@ package body Codefix.Text_Manager is
          Add_Word (New_Extract, New_Pos, New_Str.all);
 
       elsif This.Position = After then
-         Add_Indented_Line
-           (New_Extract, New_Pos, New_Str.all, Current_Text);
+         Add_Line (New_Extract, New_Pos, New_Str.all, True);
       elsif This.Position = Before then
          New_Pos.Line := New_Pos.Line - 1;
-         Add_Indented_Line
-           (New_Extract, New_Pos, New_Str.all, Current_Text);
+         Add_Line (New_Extract, New_Pos, New_Str.all, True);
       end if;
 
       Free (New_Str);
