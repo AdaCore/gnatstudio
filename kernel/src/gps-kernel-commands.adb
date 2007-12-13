@@ -23,6 +23,7 @@ with Commands;          use Commands;
 with Projects;          use Projects;
 with Projects.Registry; use Projects.Registry;
 with Task_Manager;      use Task_Manager;
+with Traces;            use Traces;
 with VFS;               use VFS;
 
 with Commands.Generic_Asynchronous;
@@ -257,6 +258,9 @@ package body GPS.Kernel.Commands is
             "",
             Block_Exit => False);
       end if;
+
+   exception
+      when E : others => Trace (Exception_Handle, E);
    end Do_On_Each_File;
 
    ----------

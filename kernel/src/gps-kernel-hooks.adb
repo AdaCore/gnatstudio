@@ -988,6 +988,8 @@ package body GPS.Kernel.Hooks is
             Pop_State (Kernel_Handle (Kernel));
          end if;
       end if;
+   exception
+      when E : others => Trace (Exception_Handle, E);
    end Run_Hook;
 
    --------------
@@ -1077,6 +1079,11 @@ package body GPS.Kernel.Hooks is
          end if;
       end if;
       return Tmp;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return False;
    end Run_Hook_Until_Success;
 
    ----------------------------
@@ -1124,6 +1131,11 @@ package body GPS.Kernel.Hooks is
       end if;
 
       return Tmp;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return False;
    end Run_Hook_Until_Failure;
 
    ------------------------------
@@ -1178,6 +1190,11 @@ package body GPS.Kernel.Hooks is
          end if;
       end if;
       return "";
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return "";
    end Run_Hook_Until_Not_Empty;
 
    --------------------
