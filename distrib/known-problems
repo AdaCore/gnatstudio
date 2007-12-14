@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.2.1
 
+- GC14-007 Search & Replace doesn't work on "Open Files"
+  Problem:    The Search & Replace button of the search dialog doesn't replace 
+              occurences outside the first file, when used interactively on 
+              "Open Files".
+  Workaround: Do a search, and replace the occurences manually.
+
 - GC12-026 Completion on object.method notation fails
   Problem:    When doing an object.method completion, GPS may do a segmentation
               fault on some cases.
