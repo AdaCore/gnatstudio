@@ -2027,7 +2027,7 @@ package body Src_Contexts is
          if Context.Begin_Line /= 0
            and then Is_Open (Kernel, Current_File (C))
          then
-            Child := Find_Current_Editor (Kernel);
+            Child := Find_Editor (Kernel, Current_File (C));
 
             if Child /= null then
                return Replace_From_Editor
