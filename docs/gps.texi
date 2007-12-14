@@ -8733,8 +8733,8 @@ a multi-language build tool (see below), will be called.
 The multi-language builder to be used in case multi-language build has been
 activated (see above).
 
-By default, @code{gprbuild} will be used. It's prototype, @code{gprmake} can
-still be selected although we do not recommended it at this stage.
+By default, @code{gprbuild} will be used. Alternatively, its prototype
+@code{gprmake} can be selected although we do not recommend it at this stage.
 
 @item Jump to first location
 @cindex location
