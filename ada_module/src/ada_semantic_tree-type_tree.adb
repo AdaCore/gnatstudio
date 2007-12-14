@@ -422,19 +422,21 @@ package body Ada_Semantic_Tree.Type_Tree is
                begin
                   Parent := To_Entity_Access (Type_Info.Parents (J).Entity);
 
-                  Perform_Type_Analyzis_If_Needed (Parent, Excluded);
+                  if not Is_Excluded (Excluded, Parent) then
+                     Perform_Type_Analyzis_If_Needed (Parent, Excluded);
 
-                  Parent_Info := Get_Type_Info (Ada_Type_Key, Parent);
+                     Parent_Info := Get_Type_Info (Ada_Type_Key, Parent);
 
-                  --  If there has been an analysis on this parent since last
-                  --  time, perhaps because of the last call to
-                  --  Perform_Type_Analysis, then we'll have to re-analyze this
-                  --  type as well.
+                     --  If there has been an analysis on this parent since
+                     --  last time, perhaps because of the last call to
+                     --  Perform_Type_Analysis, then we'll have to re-analyze
+                     --  this type as well.
 
-                  if Type_Info.Parents (J).Timestamp
-                    /= Parent_Info.Analysis_Timestamp
-                  then
-                     Do_Analysis := True;
+                     if Type_Info.Parents (J).Timestamp
+                       /= Parent_Info.Analysis_Timestamp
+                     then
+                        Do_Analysis := True;
+                     end if;
                   end if;
                end;
             end loop;
@@ -490,8 +492,9 @@ package body Ada_Semantic_Tree.Type_Tree is
               Find_Declarations
                 (Get_File (The_Type),
                  Get_Construct (The_Type).Sloc_End.Index,
-                 Expression => Parse_Current_List
-                   (UTF8_String_Access (Get_Identifier (Ref_Ids))));
+                 Expression        => Parse_Current_List
+                   (UTF8_String_Access (Get_Identifier (Ref_Ids))),
+                 Excluded_Entities => Excluded);
             It          : Declaration_Iterator := First (Decl_List);
             Parent_Type : Entity_Access;
             Parent_Info : Ada_Type_Access;
