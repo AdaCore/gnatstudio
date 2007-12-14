@@ -200,7 +200,7 @@ package body Builder_Module is
    procedure Free (Ar : in out String_List_Access);
    --  Free the memory associate with Ar
 
-   type Command_Syntax is (GNAT_Syntax, Make_Syntax);
+   type Command_Syntax is (GNAT_Syntax, GPRmake_Syntax, GPRbuild_Syntax);
    --  Type used in Scenario_Variables_Cmd_Line to determine the command line
    --  syntax used when setting variables.
    --  GNAT_Syntax means use the GNAT project file syntax (-XVAR=value)
@@ -211,6 +211,7 @@ package body Builder_Module is
       Project        : Project_Type;
       Path           : String;
       File           : Virtual_File;
+      Syntax         : Command_Syntax;
       Compile_Only   : Boolean := False;
       Unique_Project : Boolean := False;
       Extra_Args     : Argument_List_Access := null)
@@ -447,6 +448,7 @@ package body Builder_Module is
       Project        : Project_Type;
       Path           : String;
       File           : Virtual_File;
+      Syntax         : Command_Syntax;
       Compile_Only   : Boolean := False;
       Unique_Project : Boolean := False;
       Extra_Args     : Argument_List_Access := null)
@@ -471,6 +473,26 @@ package body Builder_Module is
 
       Vars := Argument_String_To_List
         (Scenario_Variables_Cmd_Line (Kernel, "-X"));
+
+      if Syntax = GPRbuild_Syntax then
+         declare
+            Gnatmake : constant String :=
+                         Get_Attribute_Value
+                           (Get_Project (Kernel), Compiler_Command_Attribute,
+                            Index => "Ada");
+         begin
+            if Gnatmake'Length > 9
+              and then Gnatmake
+                (Gnatmake'Last - 8 .. Gnatmake'Last) = "-gnatmake"
+            then
+               Vars := new Argument_List'
+                 (new String'
+                    ("--target=" &
+                     Gnatmake (Gnatmake'First .. Gnatmake'Last - 9)) &
+                  Vars.all);
+            end if;
+         end;
+      end if;
 
       declare
          R_Tmp : Argument_List (1 .. 5);
@@ -707,11 +729,20 @@ package body Builder_Module is
       if Langs'Length = 1 and then Langs (Langs'First).all = "ada" then
          Syntax := GNAT_Syntax;
 
-      elsif Get_Pref (Multi_Language_Build) then
-         Syntax := Make_Syntax;
+      elsif Get_Pref (Multi_Language_Build)
+        and then Get_Pref (Multi_Language_Builder) =
+          Multi_Language_Builder_Policy'Pos (Gprmake)
+      then
+         Syntax := GPRmake_Syntax;
+
+      elsif Get_Pref (Multi_Language_Build)
+        and then Get_Pref (Multi_Language_Builder) =
+          Multi_Language_Builder_Policy'Pos (Gprbuild)
+      then
+         Syntax := GPRbuild_Syntax;
 
       else
-         Syntax := Make_Syntax;
+         Syntax := GPRbuild_Syntax;
 
          for J in Langs'Range loop
             if Langs (J).all = "ada" then
@@ -741,7 +772,7 @@ package body Builder_Module is
                Prj := Extending_Project
                  (Get_Project_From_File (Get_Registry (Kernel).all, F),
                   Recurse => True);
-               Args := Compute_Arguments (Kernel, Prj, "", F);
+               Args := Compute_Arguments (Kernel, Prj, "", F, Syntax);
             end;
 
          --  There is no current file, so we can't compile anything
@@ -756,7 +787,7 @@ package body Builder_Module is
       else
          Prj := Extending_Project (Project, Recurse => True);
          Args := Compute_Arguments
-           (Kernel, Prj, "", File,
+           (Kernel, Prj, "", File, Syntax,
             Unique_Project => not Main_Units and not Library,
             Extra_Args     => Common_Args);
          Change_Dir (Dir_Name (Project_Path (Project)).all);
@@ -764,12 +795,16 @@ package body Builder_Module is
 
       case Syntax is
          when GNAT_Syntax =>
-            Cmd := new String'(Get_Attribute_Value
-              (Prj, Compiler_Command_Attribute,
-               Default => "gnatmake", Index => "ada"));
+            Cmd := new String'
+              (Get_Attribute_Value
+                 (Prj, Compiler_Command_Attribute,
+                  Default => "gnatmake", Index => "ada"));
 
-         when Make_Syntax =>
+         when GPRmake_Syntax =>
             Cmd := new String'("gprmake");
+
+         when GPRbuild_Syntax =>
+            Cmd := new String'("gprbuild");
       end case;
 
       if Compilation_Starting (Kernel, Error_Category, Quiet => False) then
@@ -895,6 +930,7 @@ package body Builder_Module is
       Compilable_File : Virtual_File := File;
       Success         : Boolean;
       Cb_Data         : Files_Callback_Data_Access;
+      Syntax          : Command_Syntax;
 
    begin
       --  Is there a file to compile ?
@@ -941,6 +977,7 @@ package body Builder_Module is
            (Get_Attribute_Value
               (Prj, Compiler_Command_Attribute,
                Default => "gnatmake", Index => "ada"));
+         Syntax := GNAT_Syntax;
 
          if Syntax_Only then
             Common_Args := new Argument_List'
@@ -950,7 +987,16 @@ package body Builder_Module is
          end if;
 
       else
-         Cmd         := new String'("gprmake");
+         if Get_Pref (Multi_Language_Builder) =
+           Multi_Language_Builder_Policy'Pos (Gprmake)
+         then
+            Cmd := new String'("gprmake");
+            Syntax := GPRmake_Syntax;
+         else
+            Cmd := new String'("gprbuild");
+            Syntax := GPRbuild_Syntax;
+         end if;
+
          Common_Args := new Argument_List'(1 .. 0 => null);
       end if;
 
@@ -1016,7 +1062,8 @@ package body Builder_Module is
       end if;
 
       Args := Compute_Arguments
-        (Kernel, Prj, Shadow_Path.all, Compilable_File, Compile_Only => True);
+        (Kernel, Prj, Shadow_Path.all, Compilable_File, Syntax,
+         Compile_Only => True);
 
       --  Remove the entry corresponding to file in the location view.
       --  This is needed otherwise the location view is not cleared in case

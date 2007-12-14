@@ -59,8 +59,12 @@ package body GPS.Kernel.Preferences is
      ("Editor_Desktop_Policy", Editor_Desktop_Policy);
 
    package Dispatching_Menu_Policy_Properties is new
-     Glib.Generic_Properties.Generic_Enumeration_Property
-     ("Dispatching_Menu_Policy", Dispatching_Menu_Policy);
+     Generic_Enumeration_Property
+       ("Dispatching_Menu_Policy", Dispatching_Menu_Policy);
+
+   package Multi_Language_Builder_Policy_Proterties is new
+     Generic_Enumeration_Property
+       ("Multi_Language_Builder_Policy", Multi_Language_Builder_Policy);
 
    Preferences_Pages : Preferences_Page_Array_Access;
    --  ??? To be included in the kernel
@@ -420,11 +424,22 @@ package body GPS.Kernel.Preferences is
         (Name    => "General-Multi-Language-Build",
          Nick    => -"Multi language build",
          Blurb   =>
-         -("Whether GPS should build (using gprmake) more than just Ada " &
+         -("Whether GPS should build more than just Ada " &
            "sources for projects containing Ada and other (e.g. C) languages"),
          Default => False));
       Register_Property
         (Kernel.Preferences, Param_Spec (Multi_Language_Build), -"General");
+
+      Multi_Language_Builder := Param_Spec_Enum
+        (Multi_Language_Builder_Policy_Proterties.Gnew_Enum
+           (Name    => "General-Multi-Language-Builder",
+            Nick    => -"Multi language builder",
+            Blurb   =>
+            -("Whether GPS should build multi-language projects using " &
+              "gprbuild (the new option) or gprmake (the old option)"),
+            Default => Gprbuild));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Multi_Language_Builder), -"General");
 
       Auto_Jump_To_First := Param_Spec_Boolean
         (Gnew_Boolean
