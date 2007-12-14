@@ -104,10 +104,6 @@ install_binaries() {
   echo "Installing the binaries ...."
   cd $basedir
 
-  if [ -f $basedir/bin/gprmake ]; then
-     rm -f $basedir/bin/gprmake
-  fi
-
   rm -rf $basedir/lib/gps $basedir/bin/gps*
   rm -f $basedir/share/gps/plug-ins/emacs.xml
   rm -f $basedir/share/gps/library/gnatpsta.py
@@ -117,7 +113,7 @@ install_binaries() {
   # We also explicitly work on specific directories to avoid
   # copying junk files
 
-  (cd $current_dir; tar cf - bin etc lib share) | tar xf -
+  (cd $current_dir; tar cf - bin etc lib libexec share) | tar xf -
 
   for d in etc/pango etc/gtk-2.0; do
     if [ -d $d ]; then
