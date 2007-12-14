@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 4.2.1
 
+- GC12-026 Completion on object.method notation fails
+  Problem:    When doing an object.method completion, GPS may do a segmentation
+              fault on some cases.
+  Workaround: Deactivate the completion, and write the code manually.
+
 - GC10-024 Missing routine name when completing overriding procedures/functions
   Problem:    When doing a "Complete Block" action on a routine
               declared with the overriding keyword next to the
