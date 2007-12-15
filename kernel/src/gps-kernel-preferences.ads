@@ -154,6 +154,11 @@ package GPS.Kernel.Preferences is
    --  The list of possible behaviours for the contextual menu on dispatching
    --  calls.
 
+   type Multi_Language_Builder_Policy is (Gprbuild, Gprmake);
+   for Multi_Language_Builder_Policy'Size use Glib.Gint'Size;
+   pragma Convention (C, Multi_Language_Builder_Policy);
+   --  The List of possible multi-language builders
+
    -----------------------
    -- List of constants --
    -----------------------
@@ -162,20 +167,21 @@ package GPS.Kernel.Preferences is
    --  preference.
 
    -- General --
-   Default_Font          : Param_Spec_Font;
-   View_Fixed_Font       : Param_Spec_Font;
-   Use_Native_Dialogs    : Param_Spec_Boolean;
-   Default_Widget_Width  : Param_Spec_Int;
-   Default_Widget_Height : Param_Spec_Int;
-   Splash_Screen         : Param_Spec_Boolean;
-   Display_Welcome       : Param_Spec_Boolean;
-   Toolbar_Show_Text     : Param_Spec_Boolean;
-   Auto_Save             : Param_Spec_Boolean;
-   Save_Desktop_On_Exit  : Param_Spec_Boolean;
-   Save_Editor_Desktop   : Param_Spec_Enum;
-   Multi_Language_Build  : Param_Spec_Boolean;
-   Auto_Jump_To_First    : Param_Spec_Boolean;
-   Tooltip_Color         : Param_Spec_Color;
+   Default_Font           : Param_Spec_Font;
+   View_Fixed_Font        : Param_Spec_Font;
+   Use_Native_Dialogs     : Param_Spec_Boolean;
+   Default_Widget_Width   : Param_Spec_Int;
+   Default_Widget_Height  : Param_Spec_Int;
+   Splash_Screen          : Param_Spec_Boolean;
+   Display_Welcome        : Param_Spec_Boolean;
+   Toolbar_Show_Text      : Param_Spec_Boolean;
+   Auto_Save              : Param_Spec_Boolean;
+   Save_Desktop_On_Exit   : Param_Spec_Boolean;
+   Save_Editor_Desktop    : Param_Spec_Enum;
+   Multi_Language_Build   : Param_Spec_Boolean;
+   Multi_Language_Builder : Param_Spec_Enum;
+   Auto_Jump_To_First     : Param_Spec_Boolean;
+   Tooltip_Color          : Param_Spec_Color;
 
    -- Messages --
    Message_Highlight      : Param_Spec_Color;

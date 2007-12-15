@@ -8700,14 +8700,19 @@ is navigated through the menu @code{Edit->Paste} and
 @code{Edit->Paste Previous}, as described earlier in this guide.
 
 @item Multi language build
-Whether GPS should build (using gprmake) more than just Ada
-sources for projects containing Ada and other (e.g. C) languages.
+Whether GPS should build more than just Ada sources for projects containing Ada
+and other languages (e.g. C).
 
 By default, GPS will call gnatmake to build projects containing Ada sources,
 meaning that non Ada sources won't be built. By enabling this preference,
-a multi-language build tool, called @command{gprmake} will be called.
-Note that this tool is still under development, so this option should
-only be activated with caution.
+a multi-language build tool (see below), will be called.
+
+@item Multi language builder
+The multi-language builder to be used in case multi-language build has been
+activated (see above).
+
+By default, @code{gprbuild} will be used. Alternatively, its prototype
+@code{gprmake} can be selected although we do not recommend it at this stage.
 
 @item Jump to first location
 @cindex location
