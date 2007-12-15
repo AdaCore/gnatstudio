@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.2 NEW FEATURES LIST Current as of Nov 27, 2007
+GPS 4.2 NEW FEATURES LIST Current as of Dec 15, 2007
 ====================================================
 
 Copyright (c) 2006-2007, AdaCore
@@ -11,6 +11,19 @@ documentation.
 An ISO date (YYYY-MM-DD) appears in parentheses after the
 description line. This date shows the implementation date
 of the feature.
+
+New features in GPS 4.2.1
+-------------------------
+
+NF-42-GC14-012 Support for gprbuild (2007-12-15)
+
+  GPS now supports by default gprbuild as its multi-language builder.
+  A new preference is introduced to choose between gprbuild and gprmake.
+
+NF-42-GC14-011 gprbuild packaged with GPS and replaces gprmake (2007-12-14)
+
+  The gprbuild multi-language builder is now packaged with GPS and replaces
+  its predecessor gprmake.
 
 New features in GPS 4.2.0
 -------------------------
