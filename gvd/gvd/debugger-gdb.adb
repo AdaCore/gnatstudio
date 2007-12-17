@@ -173,6 +173,9 @@ package body Debugger.Gdb is
    Undefined_Command         : constant String := "Undefined command";
    --  Another string used to detect undefined commands.
 
+   Undefined_Info_Command    : constant String := "Undefined info command";
+   --  Another string used to detect undefined info commands.
+
    List_Lines                : constant String := "^done,lines=[";
    --  Used to parse output of -symbol-list-lines command
 
@@ -3866,7 +3869,20 @@ package body Debugger.Gdb is
       then
          Debugger.WTX_List :=
             new String'
-              (Send (Debugger, "tcl activeTaskNameMap", Mode => Internal));
+              (Send (Debugger, "info wtx threads", Mode => Internal));
+
+         if Debugger.WTX_List'Length > Undefined_Info_Command'Length
+           and then
+             Debugger.WTX_List
+               (Debugger.WTX_List'First
+                 .. Debugger.WTX_List'First + Undefined_Command'Length - 1)
+              = Undefined_Command
+         then
+            Debugger.WTX_List :=
+               new String'
+                 (Send (Debugger, "tcl activeTaskNameMap", Mode => Internal));
+         end if;
+
          Debugger.WTX_Index := Debugger.WTX_List'First;
 
       else
