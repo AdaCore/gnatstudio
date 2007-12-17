@@ -3878,6 +3878,7 @@ package body Debugger.Gdb is
                  .. Debugger.WTX_List'First + Undefined_Command'Length - 1)
               = Undefined_Command
          then
+            Free (Debugger.WTX_List);
             Debugger.WTX_List :=
                new String'
                  (Send (Debugger, "tcl activeTaskNameMap", Mode => Internal));
