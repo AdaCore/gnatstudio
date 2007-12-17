@@ -18,6 +18,13 @@ Known Problems fixed in GPS 4.2.1
               completion action just insert the end keyword.
   Workaround: Add the routine name manually.
 
+- GC07-030 Crash when encountering same unknown package in 2 projects
+  Problem:    When parsing a project file hierarchy, if a package name is
+              unknown and the same package is declared in several project
+              files of the hierarchy, GPS will generate an error message
+              and terminate.
+  Workaround: Do not use unknown package names.
+
 - GC03-012 Wrong indentation of Ada code
   Problem:    When using the 'Format operator' preference, and indenting a
               line starting with a comma and followed
