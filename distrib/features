@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Dec 11, 2007
+GPS 4.3 NEW FEATURES LIST Current as of Dec 17, 2007
 ====================================================
 
 Copyright (c) 2007, AdaCore
@@ -59,3 +59,9 @@ NF-43-GB07-006 Major speed up in project view (2007-11-26)
 
   The computation time for the project view was greatly improved, and the
   view displays much faster now on big projects.
+
+NF-43-FC10-002 Code fixing uses the real indentation (2007-12-17)
+
+  When the compiler detects an intendation problem, and doesn't propose the
+  actual expected column, the auto fix proposed by GPS is now more accurate, 
+  using the same indentation engine & preferences as the editor.
