@@ -3990,13 +3990,15 @@ package body Codefix.Text_Manager is
    ----------------------
 
    procedure Initialize
-     (This         : in out Replace_Word_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      Word         : Word_Cursor'Class;
-      New_Word     : String) is
+     (This           : in out Replace_Word_Cmd;
+      Current_Text   : Text_Navigator_Abstr'Class;
+      Word           : Word_Cursor'Class;
+      New_Word       : String;
+      Do_Indentation : Boolean := False) is
    begin
       Make_Word_Mark (Word, Current_Text, This.Mark);
       Assign (This.Str_Expected, New_Word);
+      This.Do_Indentation := Do_Indentation;
    end Initialize;
 
    procedure Free (This : in out Replace_Word_Cmd) is
@@ -4026,6 +4028,10 @@ package body Codefix.Text_Manager is
          This.Str_Expected.all,
          Current_Word.String_Match.all,
          Current_Word.Mode);
+
+      if This.Do_Indentation then
+         Set_Indentation (New_Extract, True);
+      end if;
 
       Free (Current_Word);
    end Execute;

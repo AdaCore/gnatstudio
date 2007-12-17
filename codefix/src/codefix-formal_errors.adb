@@ -431,38 +431,26 @@ package body Codefix.Formal_Errors is
       Message         : File_Cursor'Class;
       Column_Expected : Column_Index := 0) return Solution_List
    is
-      function Closest (Size_Red : Column_Index) return Column_Index;
-      --  Return the closest indentation modulo Indentation_Width.
+      New_Command : Replace_Word_Cmd;
+      Result      : Solution_List;
+      Word        : Word_Cursor;
 
-      function Closest (Size_Red : Column_Index) return Column_Index is
-      begin
-         case (Size_Red - 1) mod Indentation_Width is
-            when 0 =>
-               return Size_Red + Indentation_Width;
-               --  not - Identation_Width because of the case where
-               --  Size_Red = 1
-            when 1 =>
-               return Size_Red - 1;
-            when 2 =>
-               return Size_Red + 1;
-            when others =>
-               Raise_Exception
-                 (Codefix_Panic'Identity,
-                  "Indentation_With changed, please update Wrong_Column.");
-         end case;
-      end Closest;
-
-      New_Command   : Replace_Word_Cmd;
-      Result        : Solution_List;
-      Column_Chosen : Column_Index;
-      Word          : Word_Cursor;
-
+      Indent_Size : Integer := -1;
+      Char_Ind : Char_Index;
    begin
-      --  ??? Should use "indent" shell command
       if Column_Expected = 0 then
-         Column_Chosen := Closest (Get_Column (Message));
+         --  Here, we force the creation of at least one space character, which
+         --  will do a modification on the line and activate the requested
+         --  auto-indentation.
+
+         Char_Ind := To_Char_Index
+           (Get_Column (Message), Get_Line (Current_Text, Word));
+
+         Indent_Size := Integer (Char_Ind) + 1;
       else
-         Column_Chosen := Column_Expected;
+         Char_Ind := To_Char_Index
+           (Column_Expected, Get_Line (Current_Text, Word));
+         Indent_Size := Natural (Char_Ind) - 1;
       end if;
 
       Set_File (Word, Get_File (Message));
@@ -470,22 +458,25 @@ package body Codefix.Formal_Errors is
       Set_Word (Word, "(^[\s]*)", Regular_Expression);
 
       declare
-         Char_Ind : constant Char_Index :=
-           To_Char_Index (Column_Chosen, Get_Line (Current_Text, Word));
-         White_String : constant String (1 .. Natural (Char_Ind) - 1) :=
-           (others => ' ');
+         White_String : constant String (1 .. Indent_Size) := (others => ' ');
       begin
          Initialize
            (New_Command,
             Current_Text,
             Word,
-            White_String);
+            White_String,
+            Column_Expected = 0);
       end;
 
-      Set_Caption
-        (New_Command,
-         "Move begin of instruction to column " &
-         Column_Index'Image (Column_Chosen));
+      if Column_Expected = 0 then
+         Set_Caption (New_Command, "Indent line");
+      else
+         Set_Caption
+           (New_Command,
+            "Move begin of instruction to column " &
+            Column_Index'Image (Column_Expected));
+      end if;
+
       Append (Result, New_Command);
       Free (Word);
 

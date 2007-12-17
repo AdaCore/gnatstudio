@@ -1158,10 +1158,11 @@ package Codefix.Text_Manager is
    type Replace_Word_Cmd is new Text_Command with private;
 
    procedure Initialize
-     (This         : in out Replace_Word_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      Word         : Word_Cursor'Class;
-      New_Word     : String);
+     (This           : in out Replace_Word_Cmd;
+      Current_Text   : Text_Navigator_Abstr'Class;
+      Word           : Word_Cursor'Class;
+      New_Word       : String;
+      Do_Indentation : Boolean := False);
    --  Set all the marks that will be needed to replace the word later.
 
    procedure Free (This : in out Replace_Word_Cmd);
@@ -1392,8 +1393,9 @@ private
    end record;
 
    type Replace_Word_Cmd is new Text_Command with record
-      Mark         : Word_Mark;
-      Str_Expected : GNAT.Strings.String_Access;
+      Mark           : Word_Mark;
+      Str_Expected   : GNAT.Strings.String_Access;
+      Do_Indentation : Boolean := False;
    end record;
 
    type Invert_Words_Cmd is new Text_Command with record
