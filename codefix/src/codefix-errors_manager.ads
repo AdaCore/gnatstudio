@@ -125,7 +125,7 @@ package Codefix.Errors_Manager is
    procedure Set_Error_Cb
      (This     : in out Correction_Manager;
       Error_Cb : Execute_Corrupted);
-   --  Set the function that will be called when the execution of a command \
+   --  Set the function that will be called when the execution of a command
    --  doesn't work.
 
    function Get_Previous_Error
