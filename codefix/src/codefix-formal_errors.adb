@@ -438,6 +438,10 @@ package body Codefix.Formal_Errors is
       Indent_Size : Integer := -1;
       Char_Ind : Char_Index;
    begin
+      Set_File (Word, Get_File (Message));
+      Set_Location (Word, Get_Line (Message), 1);
+      Set_Word (Word, "(^[\s]*)", Regular_Expression);
+
       if Column_Expected = 0 then
          --  Here, we force the creation of at least one space character, which
          --  will do a modification on the line and activate the requested
@@ -452,10 +456,6 @@ package body Codefix.Formal_Errors is
            (Column_Expected, Get_Line (Current_Text, Word));
          Indent_Size := Natural (Char_Ind) - 1;
       end if;
-
-      Set_File (Word, Get_File (Message));
-      Set_Location (Word, Get_Line (Message), 1);
-      Set_Word (Word, "(^[\s]*)", Regular_Expression);
 
       declare
          White_String : constant String (1 .. Indent_Size) := (others => ' ');
