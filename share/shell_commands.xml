@@ -3291,9 +3291,11 @@ The action takes a single argument, which is the instance of GPS.Timeout that ca
   <shell_doc name="GPS.Process">
       <description>Interface to expect-related commands. This class can be used to spawn new processes and communicate with them later on. It is similar to what GPS uses to communicate with gdb. This class is a subclass of GPS.Command.</description>
       <example lang="python">
-The following example launches a gdb process, let is print its welcome message, and kills it as soon as a prompt is seen in the output.
+The following example launches a gdb process, let it print its welcome message,
+and kills it as soon as a prompt is seen in the output.
 In addition, it displays debugging messages in a new GPS window.
-As you might note, some instance-specific data is stored in the instance of the process, and can be retrieve in each callback.
+As you might note, some instance-specific data is stored in the instance of the
+process, and can be retrieve in each callback.
 
 import GPS, sys
 
