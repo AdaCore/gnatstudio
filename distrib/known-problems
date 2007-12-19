@@ -11,6 +11,13 @@ Known Problems fixed in GPS 4.3.0
               call VCS operations on sources belonging to the subproject.
   Workaround: Set a VCS on the root project.
 
+- GA26-033: Start/Continue button restarts the program when in remote mode
+  Problem:    When using GPS to debug a program using the "remote" protocol,
+              the first push on the Start/Continue button causes the program
+              to be restarted, instead of continuing the execution.
+  Workaround: Type "cont" in the debugger console instead of pressing the
+              Start/Continue button.
+
 - G906-021: Auto fixing doesn't indent correctly "pragma Unreferenced" 
   Problem:    When GPS insert a "pragma Unreferenced" to fix an unreferenced
               entity warning, the indentation of the pragma may be incorrect.
