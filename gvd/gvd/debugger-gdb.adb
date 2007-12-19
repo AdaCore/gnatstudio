@@ -1155,7 +1155,15 @@ package body Debugger.Gdb is
          Display_Prompt (Debugger);
       end if;
 
-      Set_Is_Started (Debugger, False);
+      --  If we are in Cross mode (ie, with the "remote" protocol), the call
+      --  to "target" has the side effect of starting the executable.
+      --  In all other cases the executable is not started at this stage.
+
+      if Debugger.Mode = Cross then
+         Set_Is_Started (Debugger, True);
+      else
+         Set_Is_Started (Debugger, False);
+      end if;
 
       --  Report a change in the executable. This has to be done before we
       --  look for the current file and line, so that the explorer can be
