@@ -3327,7 +3327,7 @@ class My_Gdb (GPS.Process):
       self.kill()
 
    def exited (self, status, output):
-      my__print ("exited " + self.id)
+      my_print ("exited " + self.id)
 
    def __init__ (self):
        self.id = "from class"
