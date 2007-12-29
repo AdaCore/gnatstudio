@@ -153,10 +153,17 @@ def range_align_on (top, bottom, sep, replace_with=None):
               width2 = width2 - 3
 
            top.buffer().delete (line, line.end_of_line())
-           top.buffer().insert \
-              (line, chars[:matched.start()].rstrip() \
-               + (' ' * width) + sub + (' ' * width2) \
-               + chars[matched.end():].lstrip())
+           # do not left-strip if a single char as this will remove the \n
+           if len (chars[matched.end():]) == 1:
+              top.buffer().insert \
+                  (line, chars[:matched.start()].rstrip() \
+                      + (' ' * width) + sub + (' ' * width2) \
+                      + chars[matched.end():])
+           else:
+              top.buffer().insert \
+                  (line, chars[:matched.start()].rstrip() \
+                      + (' ' * width) + sub + (' ' * width2) \
+                      + chars[matched.end():].lstrip())
         prev = line
         line = line.forward_line ()
         if prev == line:
@@ -227,7 +234,11 @@ def align_arrows ():
                level = level + 1
             elif chars[k] == ')':
                level = level - 1
-            elif (level == lr) and (k < len(chars) + 2) and (chars[k:k+2] == "=>"):
+            elif (k + 4 < len(chars)) and (chars[k:k+4] == "case"):
+               level = level + 1
+            elif (k + 8 < len(chars)) and (chars[k:k+8] == "end case"):
+               level = level - 1
+            elif (level == lr) and (k + 2 < len(chars)) and (chars[k:k+2] == "=>"):
                chars = chars[:k] + "@>" + chars[k+2:]
          buffer.delete (top, bottom)
          buffer.insert (top, chars)
