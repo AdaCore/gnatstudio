@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Dec 17, 2007
+GPS 4.3 NEW FEATURES LIST Current as of Dec 29, 2007
 ====================================================
 
 Copyright (c) 2007, AdaCore
@@ -14,6 +14,11 @@ of the feature.
 
 New features in GPS 4.3.0
 -------------------------
+
+NF-43-GC12-017 Align on arrows working in case statement (2007-12-29)
+
+  The align plug-in has been enhanced to support arrows inside
+  case statement.
 
 NF-43-GC09-009 Add new action to center a line of text (2007-12-10)
 
