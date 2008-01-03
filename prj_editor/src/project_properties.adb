@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2002-2007, AdaCore              --
+--                     Copyright (C) 2002-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -4692,8 +4692,7 @@ package body Project_Properties is
       Changed            : in out Boolean)
    is
       pragma Unreferenced (Kernel);
-      pragma Unmodified (Project);
-      Attr    : Attribute_Description_Access;
+      Attr : Attribute_Description_Access;
    begin
       for S in Page.Page.Sections'Range loop
          for A in Page.Page.Sections (S).Attributes'Range loop
