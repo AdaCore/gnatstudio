@@ -197,9 +197,12 @@ class Builder:
 
       args = switches + " " + self.extra_switches + " " \
          + " -f " + basename (self.buildfile) + " " + target + " " \
-         + project.scenario_variables_cmd_line ("")
+         + self.get_scenario_variables(project)
       return Console_Process (make, args) 
 
+   def get_scenario_variables(self,project):
+       return ""
+       
    def destroy_menus (self):
       """Destroy all menus associated with the build file"""
 
@@ -271,7 +274,8 @@ class Makefile (Builder):
        self.menu_name = "/Build/Makefile/"
        self.edit_menu = "Edit Makefile"
        Builder.__init__ (self)
-
+    def get_scenario_variables(self,project):
+        return project.scenario_variables_cmd_line ("")
     def read_targets (self):
        data = []
        matcher=re.compile ("^([^#.=%][^#=\(\)%]*?):[^#=:]*(#(.+))?$")
@@ -303,6 +307,8 @@ class Antfile (Builder):
        self.menu_name = "/Build/Ant/"
        self.edit_menu = "Edit ant file"
        Builder.__init__ (self)
+    def get_scenario_variables(self,project):
+        return project.scenario_variables_cmd_line ("-D")
 
     def read_targets (self):
        data = []
