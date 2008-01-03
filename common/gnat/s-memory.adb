@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 B o d y                                  --
 --                                                                          --
---          Copyright (C) 2001-2005 Free Software Foundation, Inc.          --
+--          Copyright (C) 2001-2008, Free Software Foundation, Inc.         --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -39,8 +39,9 @@ package body System.Memory is
    function getenv (S : String) return System.Address;
    pragma Import (C, getenv);
 
-   Memory_Check : constant Boolean :=
+   Memory_Check : Boolean :=
      getenv ("GPS_MEMORY_CHECK" & ASCII.NUL) /= Null_Address;
+   pragma Export (Ada, Memory_Check, "__gps_memory_check");
 
    -----------
    -- Alloc --
