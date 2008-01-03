@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2007, AdaCore                  --
+--                   Copyright (C) 2007-2008, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -128,9 +128,7 @@ package body Switches_Chooser.Gtkada is
 
    procedure Set_Graphical_Command_Line
      (Editor    : in out Switches_Editor_Record;
-      Cmd_Line  : String)
-   is
-      pragma Unmodified (Editor);
+      Cmd_Line  : String) is
    begin
       Set_Text (Editor.Ent, Cmd_Line);
    end Set_Graphical_Command_Line;
