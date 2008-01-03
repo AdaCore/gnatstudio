@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---                     Copyright (C) 2006-2007, AdaCore                     --
+--                     Copyright (C) 2006-2008, AdaCore                     --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1565,18 +1565,16 @@ package body GNAT.Expect.TTY.Remote is
    ------------
 
    procedure Handle_Pre_Disconnect
-     (Descriptor : in out Remote_Process_Descriptor;
+     (Descriptor : Remote_Process_Descriptor;
       Timeout    : in out Integer);
    procedure Handle_Post_Disconnect
-     (Descriptor : in out Remote_Process_Descriptor;
+     (Descriptor : Remote_Process_Descriptor;
       Result : Expect_Match);
    --  Handle descriptor termination
 
    procedure Handle_Pre_Disconnect
-     (Descriptor : in out Remote_Process_Descriptor;
-      Timeout    : in out Integer)
-   is
-      pragma Unmodified (Descriptor);
+     (Descriptor : Remote_Process_Descriptor;
+      Timeout    : in out Integer) is
    begin
       if Descriptor.Terminated then
          --  We encountered the shell prompt. First let the caller retrieving
@@ -1600,10 +1598,8 @@ package body GNAT.Expect.TTY.Remote is
    end Handle_Pre_Disconnect;
 
    procedure Handle_Post_Disconnect
-     (Descriptor : in out Remote_Process_Descriptor;
-      Result     : Expect_Match)
-   is
-      pragma Unmodified (Descriptor);
+     (Descriptor : Remote_Process_Descriptor;
+      Result     : Expect_Match) is
    begin
       if not Descriptor.Terminated
         and then Descriptor.Machine.Desc.Dbg /= null
