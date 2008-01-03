@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2007, AdaCore                 --
+--                  Copyright (C) 2006-2008, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -557,13 +557,11 @@ package body Code_Coverage is
    ---------------
 
    procedure Fill_Iter
-     (Tree_Store : in out Gtk_Tree_Store;
-      Iter       : in out Gtk_Tree_Iter;
+     (Tree_Store : Gtk_Tree_Store;
+      Iter       : Gtk_Tree_Iter;
       Coverage   : Coverage_Access;
       Bin_Mode   : Boolean := False)
    is
-      pragma Unmodified (Tree_Store, Iter);
-
       function Txt_Lig (Lig_Count : Natural) return String;
       --  Returns in a String the children count coverage info used to
       --  fill the Gtk_Tree_Store of a coverage report
