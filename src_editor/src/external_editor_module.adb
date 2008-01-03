@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                             AdaCore                               --
+--                     Copyright (C) 2001-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,6 +25,7 @@ with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Strings;
+with GNAT.Templates;            use GNAT.Templates;
 
 with Glib;                      use Glib;
 with Glib.Properties.Creation;  use Glib.Properties.Creation;
@@ -404,7 +404,7 @@ package body External_Editor_Module is
          declare
             S : constant String := Substitute
               (Str               => Args (A).all,
-               Substitution_Char => '%',
+               Delimiter         => '%',
                Substrings        => Substrings,
                Recursive         => True);
          begin

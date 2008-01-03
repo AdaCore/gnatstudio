@@ -27,6 +27,7 @@ with GNAT.Expect;               use GNAT.Expect;
 with GNAT.OS_Lib;
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.Scripts;              use GNAT.Scripts;
+with GNAT.Templates;            use GNAT.Templates;
 with GNAT.Traces;               use GNAT.Traces;
 with System;
 
@@ -685,10 +686,10 @@ package body Commands.Custom is
       Index := Command.Components'First;
       while Index <= Command.Components'Last loop
          declare
-            S : constant String := String_Utils.Substitute
-              (Custom_Component
+            S : constant String := Substitute
+              (Str               => Custom_Component
                  (Command.Components (Index).Component).Command.all,
-               Substitution_Char => GPS.Kernel.Macros.Special_Character,
+               Delimiter         => GPS.Kernel.Macros.Special_Character,
                Callback          => Substitution'Unrestricted_Access,
                Recursive         => False);
             pragma Unreferenced (S);
@@ -1277,7 +1278,7 @@ package body Commands.Custom is
 
          Subst_Percent   : constant String := Substitute
            (Component.Command.all,
-            Substitution_Char => '$',
+            Delimiter         => '$',
             Callback          => Dollar_Substitution'Unrestricted_Access,
             Recursive         => False);
          Console         : Interactive_Console;
@@ -1320,7 +1321,7 @@ package body Commands.Custom is
             --  correctly set:
             Subst_Cmd_Line : constant String := Substitute
               (Subst_Percent,
-               Substitution_Char => GPS.Kernel.Macros.Special_Character,
+               Delimiter         => GPS.Kernel.Macros.Special_Character,
                Callback          => Substitution'Unrestricted_Access,
                Recursive         => False);
          begin
@@ -1376,7 +1377,7 @@ package body Commands.Custom is
             Subst_Cmd_Line  : constant String := Trim
               (Substitute
                  (Subst_Percent,
-                  Substitution_Char => GPS.Kernel.Macros.Special_Character,
+                  Delimiter         => GPS.Kernel.Macros.Special_Character,
                   Callback          => Substitution'Unrestricted_Access,
                   Recursive         => False),
                Left  => To_Set (' ' & ASCII.LF & ASCII.HT),

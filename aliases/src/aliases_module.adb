@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2007, AdaCore             --
+--                      Copyright (C) 2003-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,6 +23,7 @@ with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with GNAT.Calendar.Time_IO;    use GNAT.Calendar.Time_IO;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
+with GNAT.Templates;           use GNAT.Templates;
 with System.Assertions;
 
 with Gdk.Color;                use Gdk.Color;
@@ -723,7 +724,10 @@ package body Aliases_Module is
          end loop;
 
          declare
-            Val : constant String := Substitute (Text, Special, Substrings);
+            Val : constant String := Substitute
+              (Str        => Text,
+               Delimiter  => Special,
+               Substrings => Substrings);
          begin
             Free (Substrings);
             return Val;

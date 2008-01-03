@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007, AdaCore             --
+--                      Copyright (C) 2001-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,6 +22,7 @@ with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
+with GNAT.Templates;            use GNAT.Templates;
 with GNAT.Traces;
 
 with Gdk.Dnd;                   use Gdk.Dnd;
@@ -577,7 +578,7 @@ package body GPS.Kernel.Modules is
          declare
             Tmp : constant String := Substitute
               (Glib.Xml_Int.Protect (Creator.Label.all),
-               Substitution_Char => GPS.Kernel.Macros.Special_Character,
+               Delimiter         => GPS.Kernel.Macros.Special_Character,
                Callback          => Substitution'Unrestricted_Access,
                Recursive         => False);
          begin

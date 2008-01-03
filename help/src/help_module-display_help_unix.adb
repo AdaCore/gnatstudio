@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2007, AdaCore              --
+--                     Copyright (C) 2001-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GNAT.Templates;         use GNAT.Templates;
 
 separate (Help_Module)
 procedure Display_Help
@@ -74,8 +75,10 @@ is
          raise Invalid_Substitution;
       end Substitute_Parameters;
 
-      Result : constant String :=
-        Substitute (Browser, '%', Substitute_Parameters'Unrestricted_Access);
+      Result : constant String := Substitute
+        (Str       => Browser,
+         Delimiter => '%',
+         Callback  => Substitute_Parameters'Unrestricted_Access);
       Args : Argument_List_Access;
    begin
       if Found_URL then

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2007, AdaCore                  --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
@@ -25,6 +25,7 @@ with GNAT.OS_Lib;
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.Scripts;              use GNAT.Scripts;
 with GNAT.Strings;              use GNAT.Strings;
+with GNAT.Templates;            use GNAT.Templates;
 with GNAT.Traces;
 with System;                    use System;
 
@@ -2075,9 +2076,9 @@ package body GPS.Kernel is
                   end Substitution;
 
                   Cmd : constant String := Substitute
-                    (Str               => Filter.Shell.all,
-                     Substitution_Char => GPS.Kernel.Macros.Special_Character,
-                     Callback          => Substitution'Unrestricted_Access);
+                    (Str       => Filter.Shell.all,
+                     Delimiter => GPS.Kernel.Macros.Special_Character,
+                     Callback  => Substitution'Unrestricted_Access);
 
                begin
                   if Lang = null then

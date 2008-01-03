@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005-2007, AdaCore              --
+--                     Copyright (C) 2005-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -29,6 +29,7 @@ with Remote.Path.Translator;  use Remote.Path.Translator;
 with String_Utils;            use String_Utils;
 with VFS;                     use VFS;
 with GNAT.Strings;
+with GNAT.Templates;          use GNAT.Templates;
 
 package body GPS.Kernel.Macros is
 
@@ -112,7 +113,7 @@ package body GPS.Kernel.Macros is
       declare
          Tmp : constant String := Substitute
            (Command,
-            Substitution_Char => Special_Character,
+            Delimiter         => Special_Character,
             Callback          => Substitution'Unrestricted_Access,
             Recursive         => False);
          pragma Unreferenced (Tmp);
