@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2007, AdaCore                  --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -2386,7 +2386,6 @@ package body Commands.Custom is
    ---------------
 
    procedure Interrupt (Command : in out Custom_Command) is
-      pragma Unmodified (Command);
    begin
       if Command.Execution /= null then
          Command.Execution.Cmd_Index := Command.Components'First;
