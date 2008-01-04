@@ -1225,12 +1225,13 @@ package body GVD_Module is
       Key2         : GNAT.Strings.String_Access := No_Msg'Unchecked_Access;
       WTX_Version  : Natural;
 
-      function Strip_Last_CRLF (S : in String) return String;
+      function Strip_Ending_Linebreaks (S : in String) return String;
       --  Return S without any CR or LF at the end.
 
-      function Strip_Last_CRLF (S : in String) return String is
+      function Strip_Ending_Linebreaks (S : in String) return String is
       begin
-         for J in reverse S'First .. S'Last loop
+         --  Loop to make sure we have removed all of the ending CRs and LFs.
+         for J in reverse S'Range loop
             if S (J) /= ASCII.CR
               and then S (J) /= ASCII.LF
             then
@@ -1239,7 +1240,7 @@ package body GVD_Module is
          end loop;
 
          return "";
-      end Strip_Last_CRLF;
+      end Strip_Ending_Linebreaks;
 
    begin
       --  If the user has already requested to stop at the beginning (Start
@@ -1273,7 +1274,7 @@ package body GVD_Module is
 
       declare
          Arguments : constant String :=
-           Strip_Last_CRLF
+           Strip_Ending_Linebreaks
              (Display_Entry_Dialog
                 (Parent         => Process.Window,
                  Title          => -"Run/Start",
