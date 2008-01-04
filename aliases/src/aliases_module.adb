@@ -716,7 +716,7 @@ package body Aliases_Module is
 
          while P /= null loop
             Substrings (Count) :=
-              (Name  => new String'("(" & P.Param.Name.all & ')'),
+              (Name  => new String'(P.Param.Name.all),
                Value => new String'(Get_Text (P.Edition)));
             Count := Count + 1;
 
