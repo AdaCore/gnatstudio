@@ -2762,7 +2762,7 @@ Access the various suggested fixes through the methods of the Codefix class</des
       <return>A list of instances of GPS.CodefixError</return>
       <description>List the fixable errors in that session</description>
   </shell_doc>
-  
+
     <shell_doc name="GPS.Codefix.error_at">
       <param name="self">The instance of GPS.Codefix</param>
       <param name="file">The file where the error is</param>
@@ -3350,6 +3350,7 @@ My_Gdb()
       <param name="progress_current" default="1">An integer</param>
       <param name="progress_total" default="1">An integer</param>
       <param name="before_kill" default="None">A subprogram</param>
+      <param name="remote_server" default="">The remote server that will launch the process. The possible values are "GPS_Server", "Build_Server", "Debug_Server" and "Execution_Server". The empty string is equivalent to GPS_Server, which is always the local machine. See the section "Using GPS for Remote Development" in the GPS documentation for more information on this field</param>
       <description>Spawn specified command. Command can include triple-quoted strings, similar to python, which will always be preserved as one argument.
 
  If regexp is not-empty and on_match_action is specified, launch on_match_action when regexp is found in the process output. If on_exit_action is specified, execute it when the process terminates. Return the ID of the spawned process.

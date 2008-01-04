@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2004-2007, AdaCore             --
+--                      Copyright (C) 2004-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -35,8 +35,10 @@ with Gtk.Main;                use Gtk.Main;
 with Custom_Module;           use Custom_Module;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
+with GPS.Kernel.Remote;       use GPS.Kernel.Remote;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
+with Remote;                  use Remote;
 with String_Utils;            use String_Utils;
 with Traces;
 with Commands;                use Commands;
@@ -58,6 +60,7 @@ package body Expect_Interface is
    Progress_Current_Cst : aliased constant String := "progress_current";
    Progress_Total_Cst   : aliased constant String := "progress_total";
    Before_Kill_Cst      : aliased constant String := "before_kill";
+   Remote_Server_Cst    : aliased constant String := "remote_server";
 
    Constructor_Args : constant Cst_Argument_List :=
                         (2  => Command_Cst'Access,
@@ -68,7 +71,8 @@ package body Expect_Interface is
                          7  => Progress_Regexp_Cst'Access,
                          8  => Progress_Current_Cst'Access,
                          9  => Progress_Total_Cst'Access,
-                         10 => Before_Kill_Cst'Access);
+                         10 => Before_Kill_Cst'Access,
+                         11 => Remote_Server_Cst'Access);
 
    Send_Args : constant Cst_Argument_List :=
                  (Command_Cst'Access, Add_Lf_Cst'Access);
@@ -720,6 +724,8 @@ package body Expect_Interface is
             Regexp          : constant String := Nth_Arg (Data, 3, "");
             Show_Bar        : constant Boolean := Nth_Arg (Data, 6, True);
             Progress_Regexp : constant String := Nth_Arg (Data, 7, "");
+            Remote_Server   : constant String := Nth_Arg (Data, 11, "");
+            Server          : Server_Type;
             Success         : Boolean;
          begin
             if Command_Line = "" then
@@ -750,15 +756,22 @@ package body Expect_Interface is
                  new Pattern_Matcher'(Compile (Regexp, Multiple_Lines));
             end if;
 
-            --  All the parameters are correct: launch the process
-            D.Pd := new TTY_Process_Descriptor;
+            --  Get the Server_Type value
             begin
-               Non_Blocking_Spawn
-                 (D.Pd.all,
-                  Command => D.Command (D.Command'First).all,
-                  Args    => D.Command (D.Command'First + 1 .. D.Command'Last),
-                  Buffer_Size => 0);
-               Success := True;
+               Server := Server_Type'Value (Remote_Server);
+            exception
+               when Constraint_Error =>
+                  Server := GPS_Server;
+            end;
+
+            --  All the parameters are correct: launch the process
+            begin
+               Spawn
+                 (Kernel,
+                  D.Command.all,
+                  Server,
+                  D.Pd,
+                  Success);
             exception
                when Invalid_Process =>
                   Success := False;
@@ -886,7 +899,7 @@ package body Expect_Interface is
       Register_Command
         (Kernel, Constructor_Method,
          Minimum_Args => 1,
-         Maximum_Args => 10,
+         Maximum_Args => 11,
          Class        => Process_Class,
          Handler      => Custom_Spawn_Handler'Access);
       Register_Command
