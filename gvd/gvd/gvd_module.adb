@@ -1224,6 +1224,23 @@ package body GVD_Module is
       Key1         : GNAT.Strings.String_Access := No_Msg'Unchecked_Access;
       Key2         : GNAT.Strings.String_Access := No_Msg'Unchecked_Access;
       WTX_Version  : Natural;
+
+      function Strip_Last_CRLF (S : in String) return String;
+      --  Return S without any CR or LF at the end.
+
+      function Strip_Last_CRLF (S : in String) return String is
+      begin
+         for J in reverse S'First .. S'Last loop
+            if S (J) /= ASCII.CR
+              and then S (J) /= ASCII.LF
+            then
+               return S (S'First .. J);
+            end if;
+         end loop;
+
+         return "";
+      end Strip_Last_CRLF;
+
    begin
       --  If the user has already requested to stop at the beginning (Start
       --  command) do not ask the same question again. Otherwise, we enable
@@ -1255,18 +1272,22 @@ package body GVD_Module is
       end if;
 
       declare
-         Arguments : constant String := Display_Entry_Dialog
-           (Parent         => Process.Window,
-            Title          => -"Run/Start",
-            Message        => Cmd_Msg.all,
-            Key            => Cst_Run_Arguments_History,
-            History        => Get_History (GPS_Window (Process.Window).Kernel),
-            Check_Msg      => Msg1.all,
-            Check_Msg2     => Msg2.all,
-            Button_Active  => Button1,
-            Button2_Active => Button2,
-            Key_Check      => History_Key (Key1.all),
-            Key_Check2     => History_Key (Key2.all));
+         Arguments : constant String :=
+           Strip_Last_CRLF
+             (Display_Entry_Dialog
+                (Parent         => Process.Window,
+                 Title          => -"Run/Start",
+                 Message        => Cmd_Msg.all,
+                 Key            => Cst_Run_Arguments_History,
+                 History        => Get_History
+                   (GPS_Window (Process.Window).Kernel),
+                 Check_Msg      => Msg1.all,
+                 Check_Msg2     => Msg2.all,
+                 Button_Active  => Button1,
+                 Button2_Active => Button2,
+                 Key_Check      => History_Key (Key1.all),
+                 Key_Check2     => History_Key (Key2.all)));
+
       begin
          if Arguments = ""
            or else Arguments (Arguments'First) /= ASCII.NUL
