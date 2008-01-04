@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2007, AdaCore                    --
+--                      Copyright (C) 2007-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -96,6 +96,11 @@ package Ada_Semantic_Tree.List_Resolver is
 
    procedure Free (This : in out Actual_Parameter_Resolver_Access);
    --  Free the data associated to This.
+
+   function Deep_Copy
+     (This : Actual_Parameter_Resolver) return Actual_Parameter_Resolver;
+   --  Perform a deep copy of the resolver. The caller is responsible of
+   --  freeing the returned object.
 
    function Get_Actual_Parameter_Resolver
      (Profile : List_Profile) return Actual_Parameter_Resolver;

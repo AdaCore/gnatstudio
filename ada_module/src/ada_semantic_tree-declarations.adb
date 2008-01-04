@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2007, AdaCore                    --
+--                      Copyright (C) 2007-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -804,22 +804,23 @@ package body Ada_Semantic_Tree.Declarations is
 
                declare
                   Current_Token : Token_List.List_Node := Next (Token);
-                  Success : Boolean;
-                  Local_Declaration : Declaration_View := Previous_Declaration;
+                  Success : Boolean := False;
+                  Local_Declaration : Declaration_View :=
+                    Deep_Copy (Previous_Declaration);
 
                   Free_Local : Boolean := True;
                   --  if Local_Declarations has not been added to the list,
                   --  then it should be freed.
 
                   New_Param   : Actual_Parameter;
-                  Param_Added : Boolean;
+                  Param_Added : Boolean := False;
                begin
                   --  Perform the analysis of the actual parameters.
 
-                  --  Copy the profile, since the enclosing one will be freed.
+                  --  Reset any former value of the actual parameters.
 
-                  Local_Declaration.Profile := new List_Profile'
-                    (Local_Declaration.Profile.all);
+                  Free (Local_Declaration.Actuals);
+
                   Local_Declaration.Actuals := new Actual_Parameter_Resolver'
                     (Get_Actual_Parameter_Resolver
                        (Previous_Declaration.Profile.all));
@@ -862,7 +863,9 @@ package body Ada_Semantic_Tree.Declarations is
                         --  potential matches in a row, and then do semantics
                         --  on them.
                         if not Success then
-                           Free (Local_Declaration);
+                           if Free_Local then
+                              Free (Local_Declaration);
+                           end if;
 
                            return;
                         end if;
@@ -891,7 +894,9 @@ package body Ada_Semantic_Tree.Declarations is
                         --  If we find something else, it's a non-parsable
                         --  statement. We cancel the analysis.
 
-                        Free (Local_Declaration);
+                        if Free_Local then
+                           Free (Local_Declaration);
+                        end if;
 
                         return;
                      end if;
@@ -1080,21 +1085,6 @@ package body Ada_Semantic_Tree.Declarations is
          declare
             Tree : Construct_Tree;
          begin
-            --  Tree := To_Construct_Tree (Context.Buffer.all, Ada_Lang);
-            --  if Context.all in Ada_Construct_Extractor_Context then
-            --  if not Is_In_Parents
-            --  (Ada_Construct_Extractor_Context (Context.all).File,
-            --  Construct_Completion_Resolver (Resolver.all).Current_File)
-            --  then
-            --  Tree := Get_Public_Tree (Ada_Tree_Lang, Tree'Access, True);
-            --  end if;
-            --
-            --  File := Ada_Construct_Extractor_Context (Context.all).File;
-            --  else
-            --  File := Resolver.Current_File;
-            --  Tree := To_Construct_Tree (Context.Buffer.all, Ada_Lang);
-            --  end if;
-
             Tree := Get_Tree (File);
 
             Append
@@ -1337,6 +1327,28 @@ package body Ada_Semantic_Tree.Declarations is
       Free (This.Actuals);
    end Free;
 
+   ---------------
+   -- Deep_Copy --
+   ---------------
+
+   function Deep_Copy (This : Declaration_View) return Declaration_View is
+      Copy : Declaration_View;
+   begin
+      Copy := This;
+
+      if This.Profile /= null then
+         Copy.Profile := new List_Profile'
+           (This.Profile.all);
+      end if;
+
+      if This.Actuals /= null then
+         Copy.Actuals := new Actual_Parameter_Resolver'
+           (Deep_Copy (This.Actuals.all));
+      end if;
+
+      return Copy;
+   end Deep_Copy;
+
    ----------------
    -- Get_Entity --
    ----------------
@@ -1394,7 +1406,7 @@ package body Ada_Semantic_Tree.Declarations is
    function Get
      (It : Unique_Declaration_Iterator) return Declaration_View is
    begin
-      return It.Object;
+      return Deep_Copy (It.Object);
    end Get;
 
    ----------

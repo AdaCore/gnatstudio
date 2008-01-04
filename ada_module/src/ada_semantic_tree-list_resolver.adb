@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2007, AdaCore                    --
+--                      Copyright (C) 2007-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -180,6 +180,39 @@ package body Ada_Semantic_Tree.List_Resolver is
       Internal (This);
    end Free;
 
+   ---------------
+   -- Deep_Copy --
+   ---------------
+
+   function Deep_Copy
+     (This : Actual_Parameter_Resolver)
+      return Actual_Parameter_Resolver
+   is
+      Result : Actual_Parameter_Resolver (This.Length);
+      It     : Token_List.List_Node;
+   begin
+      Result.Profile := This.Profile;
+      Result.Params_Set := This.Params_Set;
+
+      for J in This.Actual_Params'Range loop
+         Result.Actual_Params (J) := This.Actual_Params (J);
+         Result.Actual_Params (J).Expression.Tokens := Token_List.Null_List;
+
+         It := Token_List.First
+           (This.Actual_Params (J).Expression.Tokens);
+
+         while It /= Token_List.Null_Node loop
+            Token_List.Append
+              (Result.Actual_Params (J).Expression.Tokens,
+               Token_List.Data (It));
+
+            It := Next (It);
+         end loop;
+      end loop;
+
+      return Result;
+   end Deep_Copy;
+
    -----------------------------------
    -- Get_Actual_Parameter_Resolver --
    -----------------------------------
@@ -211,7 +244,7 @@ package body Ada_Semantic_Tree.List_Resolver is
 
       Result.Expression := Parse_Current_List (Buffer, Param_End, Param_Start);
 
-      if Length (Result.Expression.Tokens) > 2 then
+      if Length (Result.Expression.Tokens) >= 2 then
          It := First (Result.Expression.Tokens);
          It := Next (It);
 
