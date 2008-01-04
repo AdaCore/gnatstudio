@@ -1,8 +1,8 @@
 Known Problems fixed in GPS 4.2.1
 
 - GC14-007 Search & Replace doesn't work on "Open Files"
-  Problem:    The Search & Replace button of the search dialog doesn't replace 
-              occurences outside the first file, when used interactively on 
+  Problem:    The Search & Replace button of the search dialog doesn't replace
+              occurences outside the first file, when used interactively on
               "Open Files".
   Workaround: Do a search, and replace the occurences manually.
 
@@ -35,6 +35,13 @@ Known Problems fixed in GPS 4.2.1
   Problem:    If the outline view is used, then switching between source
               editors causes a memory leak.
   Workaround: Closing the outline view prevents the memory leak.
+
+- GB16-006 Call Stack not updated after running the executable
+  Problem:    In a debugger session, when hitting a breakpoint after having
+              run the program from the Debug->Run dialog, the Call Stack might
+              not be updated with the new data. This happens when the arguments
+              passed in the Debug->Run dialog end with a line break.
+  Workaround: Remove the line break in the arguments in the Debug->Run dialog.
 
 Known Problems fixed in GPS 4.2.0
 
