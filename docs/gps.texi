@@ -8363,7 +8363,7 @@ GPS: ssh, rsh, telnet and plink (Windows tool) in ssh, rsh or telnet mode.
 @xref{Defining a remote connection tool}, if you need to add a
 specific tool.
 Note also that if one of those tools is not installed (e.g. is not in
-you path), then it won't appear in the tools list.
+your path), then it won't appear in the tools list.
 @item
 The shell tells GPS what shell runs on the remote server. The following unix
 shells are supported by GPS: sh, bash, csh and tcsh. Windows' shell is also
