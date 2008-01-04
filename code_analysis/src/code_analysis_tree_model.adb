@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2007, AdaCore                 --
+--                  Copyright (C) 2006-2008, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -36,7 +36,7 @@ package body Code_Analysis_Tree_Model is
    ---------------
 
    procedure Fill_Iter
-     (Model       : in out Gtk_Tree_Store;
+     (Model       : Gtk_Tree_Store;
       Iter        : in out Gtk_Tree_Iter;
       Analysis_Id : Analysis;
       Bin_Mode    : Boolean := False) is
@@ -56,7 +56,7 @@ package body Code_Analysis_Tree_Model is
    ---------------
 
    procedure Fill_Iter
-     (Model     : in out Gtk_Tree_Store;
+     (Model     : Gtk_Tree_Store;
       Iter      : in out Gtk_Tree_Iter;
       Parent    : Gtk_Tree_Iter;
       Prj_Node  : Project_Access;
@@ -79,7 +79,7 @@ package body Code_Analysis_Tree_Model is
    --------------------------------
 
    procedure Fill_Iter_With_Subprograms
-     (Model     : in out Gtk_Tree_Store;
+     (Model     : Gtk_Tree_Store;
       Iter      : in out Gtk_Tree_Iter;
       Prj_Node  : Project_Access;
       File_Node : File_Access;
@@ -101,7 +101,7 @@ package body Code_Analysis_Tree_Model is
    ---------------
 
    procedure Fill_Iter
-     (Model     : in out Gtk_Tree_Store;
+     (Model     : Gtk_Tree_Store;
       Iter      : in out Gtk_Tree_Iter;
       Sibling   : in out Gtk_Tree_Iter;
       Parent    : Gtk_Tree_Iter;
@@ -151,7 +151,7 @@ package body Code_Analysis_Tree_Model is
    --------------------------
 
    procedure Fill_Iter_With_Files
-     (Model     : in out Gtk_Tree_Store;
+     (Model     : Gtk_Tree_Store;
       Iter      : in out Gtk_Tree_Iter;
       Sibling   : in out Gtk_Tree_Iter;
       Prj_Node  : Project_Access;
@@ -181,7 +181,7 @@ package body Code_Analysis_Tree_Model is
    --------------------------------
 
    procedure Fill_Iter_With_Subprograms
-     (Model     : in out Gtk_Tree_Store;
+     (Model     : Gtk_Tree_Store;
       Iter      : in out Gtk_Tree_Iter;
       Prj_Node  : Project_Access;
       File_Node : File_Access;
@@ -211,7 +211,7 @@ package body Code_Analysis_Tree_Model is
    ---------------
 
    procedure Fill_Iter
-     (Model    : in out Gtk_Tree_Store;
+     (Model    : Gtk_Tree_Store;
       Iter     : in out Gtk_Tree_Iter;
       Sibling  : in out Gtk_Tree_Iter;
       Prj_Node : Project_Access;
@@ -258,7 +258,7 @@ package body Code_Analysis_Tree_Model is
    --------------------------
 
    procedure Fill_Iter_With_Files
-     (Model     : in out Gtk_Tree_Store;
+     (Model     : Gtk_Tree_Store;
       Iter      : in out Gtk_Tree_Iter;
       Sibling   : in out Gtk_Tree_Iter;
       Prj_Node  : Project_Access;
@@ -287,7 +287,7 @@ package body Code_Analysis_Tree_Model is
    --------------------------------
 
    procedure Fill_Iter_With_Subprograms
-     (Model    : in out Gtk_Tree_Store;
+     (Model    : Gtk_Tree_Store;
       Iter     : in out Gtk_Tree_Iter;
       Prj_Node : Project_Access;
       Bin_Mode : Boolean := False;
@@ -315,7 +315,7 @@ package body Code_Analysis_Tree_Model is
    ---------------
 
    procedure Fill_Iter
-     (Model    : in out Gtk_Tree_Store;
+     (Model    : Gtk_Tree_Store;
       Iter     : in out Gtk_Tree_Iter;
       Projects : Code_Analysis_Tree;
       Bin_Mode : Boolean := False;
@@ -343,7 +343,7 @@ package body Code_Analysis_Tree_Model is
    --------------------------
 
    procedure Fill_Iter_With_Files
-     (Model    : in out Gtk_Tree_Store;
+     (Model    : Gtk_Tree_Store;
       Iter     : in out Gtk_Tree_Iter;
       Projects : Code_Analysis_Tree;
       Bin_Mode : Boolean := False;
@@ -372,7 +372,7 @@ package body Code_Analysis_Tree_Model is
    --------------------------------
 
    procedure Fill_Iter_With_Subprograms
-     (Model    : in out Gtk_Tree_Store;
+     (Model    : Gtk_Tree_Store;
       Iter     : in out Gtk_Tree_Iter;
       Projects : Code_Analysis_Tree;
       Bin_Mode : Boolean := False;
