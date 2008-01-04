@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2007, AdaCore                    --
+--                      Copyright (C) 2007-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -64,6 +64,9 @@ package Ada_Semantic_Tree.Declarations is
 
    procedure Free (This : in out Declaration_View);
    --  Free the data created for this declaration view
+
+   function Deep_Copy (This : Declaration_View) return Declaration_View;
+   --  Perform a deep copy of the view and its contents.
 
    Null_Declaration_View : constant Declaration_View;
 

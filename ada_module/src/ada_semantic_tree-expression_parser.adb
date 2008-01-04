@@ -394,7 +394,8 @@ package body Ada_Semantic_Tree.Expression_Parser is
 
                   Push (Token);
                else
-                  exit;
+                  Offset := UTF8_Find_Prev_Char (Buffer.all, Offset);
+                  Skip_String (Offset);
                end if;
 
             when '>' =>
