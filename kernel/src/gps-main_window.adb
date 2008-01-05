@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2007, AdaCore              --
+--                  Copyright (C) 2001-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -849,25 +849,25 @@ package body GPS.Main_Window is
 
       Register_Command
         (Main_Window.Kernel, "dialog",
-         Minimum_Args => 1,
-         Maximum_Args => 1,
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
          Class         => MDI_Class,
          Static_Method => True,
-         Handler      => Default_Command_Handler'Access);
+         Handler       => Default_Command_Handler'Access);
       Register_Command
         (Main_Window.Kernel, "yes_no_dialog",
-         Minimum_Args => 1,
-         Maximum_Args => 1,
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
          Class         => MDI_Class,
          Static_Method => True,
-         Handler      => Default_Command_Handler'Access);
+         Handler       => Default_Command_Handler'Access);
       Register_Command
         (Main_Window.Kernel, "input_dialog",
-         Minimum_Args => 2,
-         Maximum_Args => 100,
+         Minimum_Args  => 2,
+         Maximum_Args  => 100,
          Class         => MDI_Class,
          Static_Method => True,
-         Handler      => Default_Command_Handler'Access);
+         Handler       => Default_Command_Handler'Access);
       Register_Command
         (Main_Window.Kernel, "save_all",
          Maximum_Args  => 1,
@@ -886,42 +886,42 @@ package body GPS.Main_Window is
          Handler       => Default_Window_Command_Handler'Access);
       Register_Command
         (Main_Window.Kernel, "split",
-         Class         => MDI_Window_Class,
-         Maximum_Args  => 2,
-         Handler       => Default_Window_Command_Handler'Access);
+         Class        => MDI_Window_Class,
+         Maximum_Args => 2,
+         Handler      => Default_Window_Command_Handler'Access);
       Register_Command
         (Main_Window.Kernel, "float",
-         Maximum_Args  => 1,
-         Class         => MDI_Window_Class,
-         Handler       => Default_Window_Command_Handler'Access);
+         Maximum_Args => 1,
+         Class        => MDI_Window_Class,
+         Handler      => Default_Window_Command_Handler'Access);
       Register_Command
         (Main_Window.Kernel, "is_floating",
-         Class         => MDI_Window_Class,
-         Handler       => Default_Window_Command_Handler'Access);
+         Class       => MDI_Window_Class,
+         Handler     => Default_Window_Command_Handler'Access);
       Register_Command
         (Main_Window.Kernel, "raise_window",
-         Class         => MDI_Window_Class,
-         Handler       => Default_Window_Command_Handler'Access);
+         Class       => MDI_Window_Class,
+         Handler     => Default_Window_Command_Handler'Access);
       Register_Command
         (Main_Window.Kernel, "get_child",
-         Class          => MDI_Window_Class,
-         Handler        => Default_Window_Command_Handler'Access);
+         Class        => MDI_Window_Class,
+         Handler      => Default_Window_Command_Handler'Access);
       Register_Command
         (Main_Window.Kernel, "next",
-         Class          => MDI_Window_Class,
-         Maximum_Args   => 1,
-         Handler        => Default_Window_Command_Handler'Access);
+         Class        => MDI_Window_Class,
+         Maximum_Args => 1,
+         Handler      => Default_Window_Command_Handler'Access);
       Register_Command
         (Main_Window.Kernel, "name",
-         Maximum_Args   => 1,
-         Class          => MDI_Window_Class,
-         Handler        => Default_Window_Command_Handler'Access);
+         Maximum_Args => 1,
+         Class        => MDI_Window_Class,
+         Handler      => Default_Window_Command_Handler'Access);
       Register_Command
         (Main_Window.Kernel, "rename",
-         Minimum_Args   => 1,
-         Maximum_Args   => 2,
-         Class          => MDI_Window_Class,
-         Handler        => Default_Window_Command_Handler'Access);
+         Minimum_Args => 1,
+         Maximum_Args => 2,
+         Class        => MDI_Window_Class,
+         Handler      => Default_Window_Command_Handler'Access);
 
       Register_Command
         (Main_Window.Kernel, "get",
@@ -1086,6 +1086,7 @@ package body GPS.Main_Window is
          Quit (GPS_Window (Get_Main_Window (Kernel)),
                Force => Nth_Arg (Data, 1, False),
                Status => Nth_Arg (Data, 2, 0));
+
       elsif Command = "save_all" then
          Name_Parameters (Data, Save_Windows_Parameters);
 

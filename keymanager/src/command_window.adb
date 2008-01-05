@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2006-2007                       --
---                             AdaCore                               --
+--                 Copyright (C) 2006-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -54,23 +53,23 @@ with Traces;                 use Traces;
 package body Command_Window is
 
    type Command_Window_Record is new Gtk_Window_Record with record
-      Kernel      : Kernel_Handle;
-      Box         : Gtk_Box;
-      Prompt      : Gtk_Label;
-      Line        : Gtk_Text_View;
-      Inst        : Class_Instance := No_Class_Instance;
-      On_Changed  : Subprogram_Type;
-      On_Key      : Subprogram_Type;
-      On_Activate : Subprogram_Type;
-      On_Cancel   : Subprogram_Type;
+      Kernel            : Kernel_Handle;
+      Box               : Gtk_Box;
+      Prompt            : Gtk_Label;
+      Line              : Gtk_Text_View;
+      Inst              : Class_Instance := No_Class_Instance;
+      On_Changed        : Subprogram_Type;
+      On_Key            : Subprogram_Type;
+      On_Activate       : Subprogram_Type;
+      On_Cancel         : Subprogram_Type;
       Close_On_Activate : Boolean;
    end record;
    type Command_Window is access all Command_Window_Record'Class;
 
    procedure Gtk_New
-     (Window : out Command_Window;
-      Kernel : access Kernel_Handle_Record'Class;
-      Prompt  : String := "";
+     (Window            : out Command_Window;
+      Kernel            : access Kernel_Handle_Record'Class;
+      Prompt            : String := "";
       Applies_To_Global : Boolean := True);
    --  Creates a new command window. The window is immediately displayed on
    --  the screen.
@@ -120,15 +119,15 @@ package body Command_Window is
    --  Called when any even is processed by GPS. This is used to cancel the
    --  command window when appropriate.
 
-   Prompt_Cst      : aliased constant String := "prompt";
-   Global_Cst      : aliased constant String := "global_window";
-   On_Changed_Cst  : aliased constant String := "on_changed";
-   On_Activate_Cst : aliased constant String := "on_activate";
-   On_Cancel_Cst   : aliased constant String := "on_cancel";
-   On_Key_Cst      : aliased constant String := "on_key";
-   Text_Cst        : aliased constant String := "text";
-   Cursor_Cst      : aliased constant String := "cursor";
-   Color_Cst       : aliased constant String := "color";
+   Prompt_Cst            : aliased constant String := "prompt";
+   Global_Cst            : aliased constant String := "global_window";
+   On_Changed_Cst        : aliased constant String := "on_changed";
+   On_Activate_Cst       : aliased constant String := "on_activate";
+   On_Cancel_Cst         : aliased constant String := "on_cancel";
+   On_Key_Cst            : aliased constant String := "on_key";
+   Text_Cst              : aliased constant String := "text";
+   Cursor_Cst            : aliased constant String := "cursor";
+   Color_Cst             : aliased constant String := "color";
    Close_On_Activate_Cst : aliased constant String := "close_on_activate";
 
    --------------
@@ -138,7 +137,7 @@ package body Command_Window is
    function Get_Text
      (Window : access Command_Window_Record'Class) return String
    is
-      Buffer : constant Gtk_Text_Buffer := Get_Buffer (Window.Line);
+      Buffer   : constant Gtk_Text_Buffer := Get_Buffer (Window.Line);
       From, To : Gtk_Text_Iter;
    begin
       Get_Start_Iter (Buffer, From);
@@ -156,8 +155,8 @@ package body Command_Window is
    is
       Win   : constant Command_Window := Command_Window (Window);
       Key   : constant Gdk_Key_Type := Get_Key_Val (Event);
-      Modif : constant Gdk_Modifier_Type := Get_State (Event)
-        and Get_Default_Mod_Mask;
+      Modif : constant Gdk_Modifier_Type :=
+                Get_State (Event) and Get_Default_Mod_Mask;
    begin
       --  Ignore when the key is just one of the modifier. No binding can
       --  be associated to them anyway, so this is slightly more efficient,
@@ -286,7 +285,7 @@ package body Command_Window is
    ----------------
 
    procedure On_Destroy (Window : access Gtk_Widget_Record'Class) is
-      Win  : constant Command_Window := Command_Window (Window);
+      Win : constant Command_Window := Command_Window (Window);
    begin
       --  A key that has not been handled by the Command_Window, nor by the
       --  keymanager in fact => this is a special key, destroy the window
@@ -350,16 +349,16 @@ package body Command_Window is
    -------------
 
    procedure Gtk_New
-     (Window : out Command_Window;
-      Kernel : access Kernel_Handle_Record'Class;
-      Prompt : String := "";
+     (Window            : out Command_Window;
+      Kernel            : access Kernel_Handle_Record'Class;
+      Prompt            : String := "";
       Applies_To_Global : Boolean := True)
    is
-      X, Y           : Gint;
-      Requisition    : Gtk_Requisition;
-      Frame          : Gtk_Frame;
-      Applies_To     : Gtk_Widget;
-      Success        : Boolean;
+      X, Y        : Gint;
+      Requisition : Gtk_Requisition;
+      Frame       : Gtk_Frame;
+      Applies_To  : Gtk_Widget;
+      Success     : Boolean;
    begin
       --  Do not make the window modal, although that is much more precise to
       --  be sure we always get all key events on the application. This has the
@@ -479,11 +478,11 @@ package body Command_Window is
    procedure Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Class : constant Class_Type :=
-        New_Class (Get_Kernel (Data), "CommandWindow");
-      Inst  : constant Class_Instance := Nth_Arg (Data, 1, Class);
-      Window : Command_Window;
-      Color  : Gdk_Color;
+      Class   : constant Class_Type :=
+                  New_Class (Get_Kernel (Data), "CommandWindow");
+      Inst    : constant Class_Instance := Nth_Arg (Data, 1, Class);
+      Window  : Command_Window;
+      Color   : Gdk_Color;
       Success : Boolean;
    begin
       if Command = Constructor_Method then

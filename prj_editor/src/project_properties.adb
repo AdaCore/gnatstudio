@@ -4822,12 +4822,12 @@ package body Project_Properties is
      (Editor : Properties_Editor) return GNAT.Strings.String_List
    is
       Attr : constant Attribute_Description_Access :=
-        Get_Attribute_Type_From_Name (Pkg => "", Name => "languages");
+               Get_Attribute_Type_From_Name (Pkg => "", Name => "languages");
    begin
       return Get_Current_Value
-        (Kernel     => Editor.Kernel,
-         Project    => Projects.No_Project,
-         Attr       => Attr);
+        (Kernel  => Editor.Kernel,
+         Project => Projects.No_Project,
+         Attr    => Attr);
    end Get_Languages;
 
    -----------------
@@ -4835,7 +4835,7 @@ package body Project_Properties is
    -----------------
 
    function Is_Complete (Editor : Properties_Editor) return Boolean is
-      Page  : constant Integer := Integer (Get_Current_Page (Editor.Note));
+      Page : constant Integer := Integer (Get_Current_Page (Editor.Note));
    begin
       for P in Editor.XML_Pages'Range loop
          if Get_Parent
@@ -4866,7 +4866,7 @@ package body Project_Properties is
      (Notebook : access GObject_Record'Class; Editor : GObject)
    is
       pragma Unreferenced (Notebook);
-      Ed    : constant Properties_Editor := Properties_Editor (Editor);
+      Ed : constant Properties_Editor := Properties_Editor (Editor);
    begin
       if not Is_Complete (Ed) then
          Emit_Stop_By_Name (Ed.Note, "switch_page");
@@ -4902,9 +4902,9 @@ package body Project_Properties is
             Languages : Argument_List := Get_Languages (Ed);
          begin
             Refresh
-              (Page     => P,
-               Widget   => Ed.Pages (Page - Pages_From_XML_Count + 1),
-               Project  => Ed.Project,
+              (Page      => P,
+               Widget    => Ed.Pages (Page - Pages_From_XML_Count + 1),
+               Project   => Ed.Project,
                Languages => Languages);
             Free (Languages);
          end;
@@ -4994,10 +4994,9 @@ package body Project_Properties is
       --  Report an error to the console
 
       function Process_General_Page
-        (Editor : Properties_Editor;
-         Project : Project_Type;
-         Project_Renamed_Or_Moved : Boolean)
-         return Boolean;
+        (Editor                   : Properties_Editor;
+         Project                  : Project_Type;
+         Project_Renamed_Or_Moved : Boolean) return Boolean;
       --  Modify the attributes set on the general page
 
       ------------------
@@ -5014,10 +5013,9 @@ package body Project_Properties is
       --------------------------
 
       function Process_General_Page
-        (Editor : Properties_Editor;
-         Project : Project_Type;
-         Project_Renamed_Or_Moved : Boolean)
-         return Boolean
+        (Editor                   : Properties_Editor;
+         Project                  : Project_Type;
+         Project_Renamed_Or_Moved : Boolean) return Boolean
       is
          Relative : Boolean := Get_Active (Editor.Use_Relative_Paths);
       begin
@@ -5057,13 +5055,13 @@ package body Project_Properties is
    begin
       if not Is_Editable (Project) then
          Response2 := Message_Dialog
-           (Msg     =>
+           (Msg         =>
             -("This project cannot be edited (most likely it uses variables"
               & " which GPS cannot edit graphically, such as ""Var := ..."""),
-            Buttons => Button_OK,
+            Buttons     => Button_OK,
             Dialog_Type => Error,
-            Title   => -"Error",
-            Parent  => Get_Current_Window (Kernel));
+            Title       => -"Error",
+            Parent      => Get_Current_Window (Kernel));
          return;
       end if;
 
@@ -5090,23 +5088,23 @@ package body Project_Properties is
 
          if not Is_Valid_Project_Name (Get_Text (Editor.Name)) then
             Response2 := Message_Dialog
-              (Msg     => (-"Invalid name for the project ") &
-                          (-"(only letters, digits and underscores)"),
-               Buttons => Button_OK,
+              (Msg         => (-"Invalid name for the project ") &
+               (-"(only letters, digits and underscores)"),
+               Buttons     => Button_OK,
                Dialog_Type => Error,
-               Title   => -"Error",
-               Parent  => Get_Current_Window (Kernel));
+               Title       => -"Error",
+               Parent      => Get_Current_Window (Kernel));
 
          elsif not Is_Directory
            (Name_As_Directory (Get_Text (Editor.Path)))
          then
             Response2 := Message_Dialog
-              (Msg     => Name_As_Directory (Get_Text (Editor.Path))
+              (Msg         => Name_As_Directory (Get_Text (Editor.Path))
                & (-" is not a valid directory"),
-               Buttons => Button_OK,
+               Buttons     => Button_OK,
                Dialog_Type => Error,
-               Title   => -"Error",
-               Parent  => Get_Current_Window (Kernel));
+               Title       => -"Error",
+               Parent      => Get_Current_Window (Kernel));
 
          elsif not Is_Complete (Editor) then
             null;
@@ -5126,11 +5124,11 @@ package body Project_Properties is
                then
                   Response2 := Message_Dialog
                     (New_Path & New_File & Projects.Project_File_Extension
-                     & (-" already exists. Do you want to overwrite ?"),
-                     Buttons => Button_Yes or Button_No,
+                       & (-" already exists. Do you want to overwrite ?"),
+                     Buttons     => Button_Yes or Button_No,
                      Dialog_Type => Error,
-                     Title   => -"Error",
-                     Parent  => Get_Current_Window (Kernel));
+                     Title       => -"Error",
+                     Parent      => Get_Current_Window (Kernel));
 
                   if Response2 = Button_Yes then
                      exit;
