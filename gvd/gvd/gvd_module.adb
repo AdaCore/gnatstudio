@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
---                              G P S                                --
+--                               G P S                               --
 --                                                                   --
---                Copyright (C) 2001-2008, AdaCore                   --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -130,14 +130,14 @@ package body GVD_Module is
      (Hook   : Lines_Revealed_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
-   --  Callback for the "source_lines_revealed_hook" hook.
+   --  Callback for the "source_lines_revealed_hook" hook
 
    type GVD_Module_Record is new Module_ID_Record with record
       Initialized                    : Boolean := False;
-      --  Whether the debugger is running;
+      --  Whether the debugger is running
 
       Show_Lines_With_Code           : Boolean;
-      --  Whether the lines with code should be explicitly queried.
+      --  Whether the lines with code should be explicitly queried
 
       Initialize_Menu                : Gtk_Menu;
 
@@ -163,7 +163,7 @@ package body GVD_Module is
    type GVD_Module is access all GVD_Module_Record'Class;
 
    procedure Destroy (Id : in out GVD_Module_Record);
-   --  Terminate the debugger module, and kill the underlying debugger.
+   --  Terminate the debugger module, and kill the underlying debugger
 
    function Tooltip_Handler
      (Module  : access GVD_Module_Record;
@@ -174,11 +174,11 @@ package body GVD_Module is
    GVD_Module_ID   : GVD_Module;
 
    procedure Add_Debug_Buttons (Kernel : access Kernel_Handle_Record'Class);
-   --  Add debugger related buttons to the main toolbar.
+   --  Add debugger related buttons to the main toolbar
 
    procedure Remove_Debug_Buttons
      (Kernel : access Kernel_Handle_Record'Class);
-   --  Remove debugger related buttons from the main toolbar.
+   --  Remove debugger related buttons from the main toolbar
 
    procedure On_View_Changed (Kernel : access Kernel_Handle_Record'Class);
    --  Called every time the project view changes, to recompute the dynamic
@@ -374,34 +374,34 @@ package body GVD_Module is
    --------------------
 
    Is_Printable_Entity : constant array (E_Kinds) of Boolean :=
-     (Overloaded_Entity     => True,
-      Unresolved_Entity     => True,
-      Access_Kind           => True,
-      Array_Kind            => True,
-      Boolean_Kind          => True,
-      Class_Wide            => True,
-      Class                 => True,
-      Decimal_Fixed_Point   => True,
-      Enumeration_Literal   => True,
-      Enumeration_Kind      => True,
-      Exception_Entity      => True,
-      Floating_Point        => True,
-      Modular_Integer       => True,
-      Named_Number          => True,
-      Ordinary_Fixed_Point  => True,
-      Record_Kind           => True,
-      Signed_Integer        => True,
-      String_Kind           => True,
-      others                => False);
+                           (Overloaded_Entity    => True,
+                            Unresolved_Entity    => True,
+                            Access_Kind          => True,
+                            Array_Kind           => True,
+                            Boolean_Kind         => True,
+                            Class_Wide           => True,
+                            Class                => True,
+                            Decimal_Fixed_Point  => True,
+                            Enumeration_Literal  => True,
+                            Enumeration_Kind     => True,
+                            Exception_Entity     => True,
+                            Floating_Point       => True,
+                            Modular_Integer      => True,
+                            Named_Number         => True,
+                            Ordinary_Fixed_Point => True,
+                            Record_Kind          => True,
+                            Signed_Integer       => True,
+                            String_Kind          => True,
+                            others               => False);
    --  Set of printable entities
 
    Is_Access_Entity : constant array (E_Kinds) of Boolean :=
-     (Overloaded_Entity => True,
-      Unresolved_Entity => True,
-      Access_Kind       => True,
-      Array_Kind        => True,
-      String_Kind       => True,
-      others            => False);
+                        (Overloaded_Entity => True,
+                         Unresolved_Entity => True,
+                         Access_Kind       => True,
+                         Array_Kind        => True,
+                         String_Kind       => True,
+                         others            => False);
    --  Set of potentially dereferenceable entities
 
    ----------------
@@ -534,8 +534,8 @@ package body GVD_Module is
    -----------------------
 
    procedure Add_Debug_Buttons (Kernel : access Kernel_Handle_Record'Class) is
-      Toolbar  : constant Gtk_Toolbar  := Get_Toolbar (Kernel);
-      Window   : constant Gtk_Window := Get_Main_Window (Kernel);
+      Toolbar : constant Gtk_Toolbar  := Get_Toolbar (Kernel);
+      Window  : constant Gtk_Window := Get_Main_Window (Kernel);
 
    begin
       if GVD_Module_ID.Cont_Button /= null then
@@ -677,24 +677,22 @@ package body GVD_Module is
    is
       pragma Unreferenced (Widget);
 
-      Top     : constant GPS_Window :=
-        GPS_Window (Get_Main_Window (Kernel));
-      Process : constant Visual_Debugger :=
-        Get_Current_Process (Top);
+      Top     : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
+      Process : constant Visual_Debugger := Get_Current_Process (Top);
 
       use GNAT.Strings;
 
    begin
       declare
          S : constant Virtual_File :=
-           Select_File
-             (Title             => -"Select Module",
-              Parent            => Gtk_Window (Top),
-              Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
-              Kind              => Open_File,
-              File_Pattern      => "*",
-              Pattern_Name      => -"All files",
-              History           => Get_History (Kernel));
+               Select_File
+                 (Title             => -"Select Module",
+                  Parent            => Gtk_Window (Top),
+                  Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
+                  Kind              => Open_File,
+                  File_Pattern      => "*",
+                  Pattern_Name      => -"All files",
+                  History           => Get_History (Kernel));
       begin
          if S = VFS.No_File then
             return;
@@ -726,13 +724,13 @@ package body GVD_Module is
    is
       pragma Unreferenced (Widget);
 
-      Top           : constant GPS_Window :=
-        GPS_Window (Get_Main_Window (Kernel));
-      Process       : constant Visual_Debugger := Get_Current_Process (Top);
-      Process_List  : List_Select_Access;
-      Success       : Boolean;
-      Info          : Process_Info;
-      Button        : Message_Dialog_Buttons;
+      Top          : constant GPS_Window :=
+                       GPS_Window (Get_Main_Window (Kernel));
+      Process      : constant Visual_Debugger := Get_Current_Process (Top);
+      Process_List : List_Select_Access;
+      Success      : Boolean;
+      Info         : Process_Info;
+      Button       : Message_Dialog_Buttons;
       pragma Unreferenced (Button);
 
    begin
@@ -787,9 +785,9 @@ package body GVD_Module is
       pragma Unreferenced (Widget);
 
       Top     : constant GPS_Window :=
-        GPS_Window (Get_Main_Window (Kernel));
+                  GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger := Get_Current_Process (Top);
-      Button : Message_Dialog_Buttons;
+      Button  : Message_Dialog_Buttons;
       pragma Unreferenced (Button);
 
    begin
@@ -823,7 +821,7 @@ package body GVD_Module is
       pragma Unreferenced (Widget);
 
       Top     : constant GPS_Window :=
-        GPS_Window (Get_Main_Window (Kernel));
+                  GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger := Get_Current_Process (Top);
 
    begin
@@ -847,7 +845,7 @@ package body GVD_Module is
       pragma Unreferenced (Widget);
 
       Top     : constant GPS_Window :=
-        GPS_Window (Get_Main_Window (Kernel));
+                  GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger := Get_Current_Process (Top);
 
    begin
@@ -871,7 +869,7 @@ package body GVD_Module is
       pragma Unreferenced (Widget);
 
       Top     : constant GPS_Window :=
-        GPS_Window (Get_Main_Window (Kernel));
+                  GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger := Get_Current_Process (Top);
 
    begin
@@ -895,7 +893,7 @@ package body GVD_Module is
       pragma Unreferenced (Widget);
 
       Top     : constant GPS_Window :=
-        GPS_Window (Get_Main_Window (Kernel));
+                  GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger := Get_Current_Process (Top);
 
    begin
@@ -919,7 +917,7 @@ package body GVD_Module is
       pragma Unreferenced (Widget);
 
       Top     : constant GPS_Window :=
-        GPS_Window (Get_Main_Window (Kernel));
+                  GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger := Get_Current_Process (Top);
 
    begin
@@ -943,7 +941,7 @@ package body GVD_Module is
       pragma Unreferenced (Widget);
 
       Top     : constant GPS_Window :=
-        GPS_Window (Get_Main_Window (Kernel));
+                  GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger := Get_Current_Process (Top);
 
    begin
@@ -967,7 +965,7 @@ package body GVD_Module is
       pragma Unreferenced (Widget);
 
       Top     : constant GPS_Window :=
-        GPS_Window (Get_Main_Window (Kernel));
+                  GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger := Get_Current_Process (Top);
 
    begin
@@ -991,7 +989,7 @@ package body GVD_Module is
       pragma Unreferenced (Widget);
 
       Top     : constant GPS_Window :=
-        GPS_Window (Get_Main_Window (Kernel));
+                  GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger := Get_Current_Process (Top);
 
    begin
@@ -1043,7 +1041,7 @@ package body GVD_Module is
       pragma Unreferenced (Widget);
 
       Top     : constant GPS_Window :=
-        GPS_Window (Get_Main_Window (Kernel));
+                  GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger := Get_Current_Process (Top);
       Button  : Message_Dialog_Buttons;
       pragma Unreferenced (Button);
@@ -1079,7 +1077,7 @@ package body GVD_Module is
       pragma Unreferenced (Widget);
 
       Top         : constant GPS_Window :=
-        GPS_Window (Get_Main_Window (Kernel));
+                      GPS_Window (Get_Main_Window (Kernel));
       Process     : constant Visual_Debugger := Get_Current_Process (Top);
       Memory_View : GVD_Memory_View;
 
@@ -1105,7 +1103,7 @@ package body GVD_Module is
       pragma Unreferenced (Widget);
 
       Top     : constant GPS_Window :=
-        GPS_Window (Get_Main_Window (Kernel));
+                  GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger := Get_Current_Process (Top);
 
    begin
@@ -1132,7 +1130,7 @@ package body GVD_Module is
       pragma Unreferenced (Widget);
 
       Top     : constant GPS_Window :=
-        GPS_Window (Get_Main_Window (Kernel));
+                  GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger := Get_Current_Process (Top);
 
    begin
@@ -1159,7 +1157,7 @@ package body GVD_Module is
       pragma Unreferenced (Widget);
 
       Top     : constant GPS_Window :=
-        GPS_Window (Get_Main_Window (Kernel));
+                  GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger := Get_Current_Process (Top);
 
    begin
@@ -1186,7 +1184,7 @@ package body GVD_Module is
       pragma Unreferenced (Widget);
 
       Top     : constant GPS_Window :=
-        GPS_Window (Get_Main_Window (Kernel));
+                  GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger := Get_Current_Process (Top);
 
    begin
@@ -1226,11 +1224,15 @@ package body GVD_Module is
       WTX_Version  : Natural;
 
       function Strip_Ending_Linebreaks (S : in String) return String;
-      --  Return S without any CR or LF at the end.
+      --  Return S without any CR or LF at the end
+
+      -----------------------------
+      -- Strip_Ending_Linebreaks --
+      -----------------------------
 
       function Strip_Ending_Linebreaks (S : in String) return String is
       begin
-         --  Loop to make sure we have removed all of the ending CRs and LFs.
+         --  Loop to make sure we have removed all of the ending CRs and LFs
          for J in reverse S'Range loop
             if S (J) /= ASCII.CR
               and then S (J) /= ASCII.LF
@@ -1329,7 +1331,7 @@ package body GVD_Module is
       pragma Unreferenced (Widget);
 
       Process : constant Visual_Debugger :=
-        Get_Current_Process (GPS_Window (Get_Main_Window (Kernel)));
+                  Get_Current_Process (GPS_Window (Get_Main_Window (Kernel)));
       Button  : Message_Dialog_Buttons;
       pragma Unreferenced (Button);
    begin
@@ -1389,7 +1391,7 @@ package body GVD_Module is
 
       Data_Sub : constant String := '/' & (-"Debug") & '/' & (-"Data") & '/';
       Top      : constant GPS_Window :=
-        GPS_Window (Get_Main_Window (Kernel));
+                   GPS_Window (Get_Main_Window (Kernel));
       Process  : constant Visual_Debugger := Get_Current_Process (Top);
       Editor   : constant Code_Editor  := Process.Editor_Text;
       Address  : constant Address_Type := Get_Asm_Address (Editor);
@@ -1541,14 +1543,14 @@ package body GVD_Module is
 
       declare
          S : Virtual_File :=
-           Select_File
-             (Title             => -"Select File to Debug",
-              File_Pattern      => "*" & Exec_Suffix & ";*",
-              Pattern_Name      => -"Executable files;All files",
-              Parent            => Get_Current_Window (Kernel),
-              Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
-              Kind              => Open_File,
-              History           => Get_History (Kernel));
+               Select_File
+                 (Title             => -"Select File to Debug",
+                  File_Pattern      => "*" & Exec_Suffix & ";*",
+                  Pattern_Name      => -"Executable files;All files",
+                  Parent            => Get_Current_Window (Kernel),
+                  Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
+                  Kind              => Open_File,
+                  History           => Get_History (Kernel));
       begin
          if S = VFS.No_File then
             return;
@@ -1598,25 +1600,22 @@ package body GVD_Module is
    is
       pragma Unreferenced (Widget);
 
-      Top     : constant GPS_Window :=
-        GPS_Window (Get_Main_Window (Kernel));
-      Process : constant Visual_Debugger :=
-        Get_Current_Process (Top);
+      Top     : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
+      Process : constant Visual_Debugger := Get_Current_Process (Top);
 
       use GNAT.Strings;
 
    begin
       declare
          S : constant Virtual_File :=
-           Select_File
-             (Title             => -"Select Core File",
-              File_Pattern      => "core*;*",
-              Pattern_Name      => -"Core files;All files",
-              Parent            => Get_Current_Window (Kernel),
-              Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
-              Kind              => Open_File,
-              History           => Get_History (Kernel));
-
+               Select_File
+                 (Title             => -"Select Core File",
+                  File_Pattern      => "core*;*",
+                  Pattern_Name      => -"Core files;All files",
+                  Parent            => Get_Current_Window (Kernel),
+                  Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
+                  Kind              => Open_File,
+                  History           => Get_History (Kernel));
       begin
          if S = VFS.No_File then
             return;
@@ -1679,11 +1678,12 @@ package body GVD_Module is
      (Command : access Print_Variable_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Process : constant Visual_Debugger :=
-        Get_Current_Process (Get_Main_Window (Get_Kernel (Context.Context)));
+      Process  : constant Visual_Debugger :=
+                   Get_Current_Process
+                     (Get_Main_Window (Get_Kernel (Context.Context)));
       Debugger : constant Debugger_Access := Process.Debugger;
       Name     : constant String :=
-        Get_Variable_Name (Context.Context, Command.Dereference);
+                   Get_Variable_Name (Context.Context, Command.Dereference);
    begin
       if Name /= "" then
          if Command.Display then
@@ -1706,16 +1706,17 @@ package body GVD_Module is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Process : constant Visual_Debugger :=
-        Get_Current_Process (Get_Main_Window (Get_Kernel (Context.Context)));
+      Process  : constant Visual_Debugger :=
+                   Get_Current_Process
+                     (Get_Main_Window (Get_Kernel (Context.Context)));
       Variable : constant String := Entity_Name_Information (Context.Context);
       S        : constant String :=
-        Simple_Entry_Dialog
-          (Parent   => Process.Window,
-           Title    => -"Setting value of " & Variable,
-           Message  => -"Setting value of " & Variable & ':',
-           Position => Win_Pos_Mouse,
-           Key      => "gvd_set_value_dialog");
+                   Simple_Entry_Dialog
+                     (Parent   => Process.Window,
+                      Title    => -"Setting value of " & Variable,
+                      Message  => -"Setting value of " & Variable & ':',
+                      Position => Win_Pos_Mouse,
+                      Key      => "gvd_set_value_dialog");
    begin
       if S /= "" and then S (S'First) /= ASCII.NUL then
          Set_Variable (Process.Debugger, Variable, S);
@@ -1786,8 +1787,8 @@ package body GVD_Module is
       Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
-      Process  : constant Visual_Debugger :=
-        Get_Current_Process (Get_Main_Window (Get_Kernel (Context)));
+      Process : constant Visual_Debugger :=
+                  Get_Current_Process (Get_Main_Window (Get_Kernel (Context)));
    begin
       return Process /= null
         and then Process.Debugger /= null
@@ -1871,18 +1872,18 @@ package body GVD_Module is
       Context : Selection_Context) return Gdk.Gdk_Pixmap
    is
       pragma Unreferenced (Module);
-      Pixmap    : Gdk.Gdk_Pixmap;
-      Debugger  : Visual_Debugger;
-      Kernel    : Kernel_Handle;
-      Value     : GNAT.Strings.String_Access;
+      Pixmap   : Gdk.Gdk_Pixmap;
+      Debugger : Visual_Debugger;
+      Kernel   : Kernel_Handle;
+      Value    : GNAT.Strings.String_Access;
 
    begin
       if not Has_Entity_Name_Information (Context) then
          return null;
       end if;
 
-      Kernel    := Get_Kernel (Context);
-      Debugger  := Get_Current_Process (Get_Main_Window (Kernel));
+      Kernel   := Get_Kernel (Context);
+      Debugger := Get_Current_Process (Get_Main_Window (Kernel));
 
       if Debugger = null
         or else Debugger.Debugger = null
@@ -1895,8 +1896,7 @@ package body GVD_Module is
       Push_State (Kernel, Busy);
 
       declare
-         Variable_Name : constant String :=
-           Entity_Name_Information (Context);
+         Variable_Name : constant String := Entity_Name_Information (Context);
       begin
          if Variable_Name = ""
            or else not Can_Tooltip_On_Entity
@@ -1912,8 +1912,7 @@ package body GVD_Module is
          if Value.all /= "" then
             Create_Pixmap_From_Text
               (Text       => Value.all,
-               Font       =>
-                 Get_Pref (GPS.Kernel.Preferences.Default_Font),
+               Font       => Get_Pref (GPS.Kernel.Preferences.Default_Font),
                Bg_Color   => White (Get_Default_Colormap),
                Widget     => Get_Main_Window (Kernel),
                Pixmap     => Pixmap,
@@ -2027,7 +2026,7 @@ package body GVD_Module is
       Top : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
    begin
       if GVD_Module_ID.Lines_Hook = null then
-         --  Add columns information for not currently opened files.
+         --  Add columns information for not currently opened files
 
          GVD_Module_ID.Lines_Hook := new Lines_Revealed_Hook_Record;
          Add_Hook
@@ -2132,7 +2131,7 @@ package body GVD_Module is
      (Context     : Selection_Context;
       Dereference : Boolean) return String
    is
-      Lang   : Language_Access;
+      Lang : Language_Access;
    begin
       if Context = No_Context then
          return "";
@@ -2263,8 +2262,8 @@ package body GVD_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Data   : access GPS.Kernel.Hooks.Hooks_Data'Class)
    is
-      Process  : constant Visual_Debugger :=
-        Get_Process (Debugger_Hooks_Data_Access (Data));
+      Process : constant Visual_Debugger :=
+                  Get_Process (Debugger_Hooks_Data_Access (Data));
    begin
       --  Change the project to match the executable
 
@@ -2308,10 +2307,11 @@ package body GVD_Module is
       Data   : access Hooks_Data'Class)
    is
       pragma Unreferenced (Hook);
-      D : constant Context_Hooks_Args := Context_Hooks_Args (Data.all);
+      D       : constant Context_Hooks_Args := Context_Hooks_Args (Data.all);
 
-      Process      : constant Visual_Debugger :=
-        Get_Current_Process (Get_Main_Window (Get_Kernel (D.Context)));
+      Process : constant Visual_Debugger :=
+                  Get_Current_Process
+                    (Get_Main_Window (Get_Kernel (D.Context)));
 
    begin
       if Process = null
@@ -2322,8 +2322,8 @@ package body GVD_Module is
       end if;
 
       declare
+         File         : constant Virtual_File := File_Information (D.Context);
          Line1, Line2 : Integer;
-         File : constant Virtual_File := File_Information (D.Context);
 
       begin
          Get_Area (D.Context, Line1, Line2);
@@ -2335,12 +2335,12 @@ package body GVD_Module is
          end if;
 
          declare
+            Tab         : constant Visual_Debugger :=
+                            Get_Current_Process (Get_Main_Window (Kernel));
             Lines       : Line_Array (Line1 .. Line2);
             A           : Line_Information_Array (Line1 .. Line2);
             C           : Set_Breakpoint_Command_Access;
             Mode        : Breakpoint_Command_Mode := Set;
-            Tab         : constant Visual_Debugger :=
-              Get_Current_Process (Get_Main_Window (Kernel));
             Bps         : Bp_Array (Line1 .. Line2) := (others => 0);
             Lines_Valid : Boolean := False;
 
@@ -2535,13 +2535,13 @@ package body GVD_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Debug          : constant String := '/' & (-"_Debug") & '/';
-      Debug_Sub      : constant String := Debug & (-"_Debug") & '/';
-      Data_Sub       : constant String := Debug & (-"D_ata") & '/';
-      Mitem          : Gtk_Menu_Item;
-      Menu           : Gtk_Menu;
-      Command        : Interactive_Command_Access;
-      Filter         : Action_Filter;
+      Debug             : constant String := '/' & (-"_Debug") & '/';
+      Debug_Sub         : constant String := Debug & (-"_Debug") & '/';
+      Data_Sub          : constant String := Debug & (-"D_ata") & '/';
+      Mitem             : Gtk_Menu_Item;
+      Menu              : Gtk_Menu;
+      Command           : Interactive_Command_Access;
+      Filter            : Action_Filter;
       Debugger_Filter   : Action_Filter;
       Printable_Filter  : Action_Filter;
       Access_Filter     : Action_Filter;

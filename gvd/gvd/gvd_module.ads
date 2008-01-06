@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2005                      --
---                              AdaCore                              --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,10 +17,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  This package defines the debugger module (called GVD).
+--  This package defines the debugger module (called GVD)
+
+with Ada.Unchecked_Deallocation;
 
 with Glib.Object;
-with Ada.Unchecked_Deallocation;
 with GPS.Kernel.Modules;
 with Gtk.Window;
 
@@ -52,7 +52,7 @@ package GVD_Module is
    procedure Initialize_Debugger
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Args   : String);
-   --  Initialize the debugger if needed.
+   --  Initialize the debugger if needed
 
    procedure Debug_Terminate (Kernel : GPS.Kernel.Kernel_Handle);
    --  Terminate the debugging session, and closes all remaining debuggers
