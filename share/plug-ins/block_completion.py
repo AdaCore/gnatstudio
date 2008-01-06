@@ -104,10 +104,17 @@ def block_complete_on_location (buffer, location):
             term = term.replace (r' \2', '');
             term = term.replace (r'\2', '');
 
-    buffer.start_undo_group();
-    buffer.insert (location, term);
-    buffer.indent (location, location);
-    buffer.finish_undo_group();
+   # Check if we need to insert a new-line character
+   start = GPS.EditorLocation (buffer, location.line(), 1)
+   end = GPS.EditorLocation (buffer, location.line(), location.column())
+
+   if buffer.get_chars (start, end).strip() != "":
+      term = '\n' + term
+
+   buffer.start_undo_group();
+   buffer.insert (location, term);
+   buffer.indent (location, location);
+   buffer.finish_undo_group();
 
 def block_complete (filename):
     file = GPS.File (filename);
