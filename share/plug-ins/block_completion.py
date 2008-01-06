@@ -78,31 +78,31 @@ def on_gps_started (hook_name):
    GPS.parse_xml (init)
 
 def block_complete_on_location (buffer, location):
-    block = location.block_type();
+   block = location.block_type();
 
-    if not BLOCKS_DEFS.has_key (block):
-        return;
+   if not BLOCKS_DEFS.has_key (block):
+      return;
 
-    (term, pattern) = BLOCKS_DEFS [block];
+   (term, pattern) = BLOCKS_DEFS [block];
 
-    if pattern != '':
-        # Retreive the line at the start of the block
+   if pattern != '':
+      # Retreive the line at the start of the block
 
-        start = GPS.EditorLocation (buffer, location.block_start_line(), 1);
-        end = GPS.EditorLocation (buffer, location.block_start_line() + 1, 1);
+      start = GPS.EditorLocation (buffer, location.block_start_line(), 1);
+      end = GPS.EditorLocation (buffer, location.block_start_line() + 1, 1);
 
-        bs_content = buffer.get_chars (start, end);
+      bs_content = buffer.get_chars (start, end);
 
-        re_pattern = re.compile (pattern, re.IGNORECASE | re.DOTALL);
+      re_pattern = re.compile (pattern, re.IGNORECASE | re.DOTALL);
 
-        if re_pattern.match (bs_content):
-            term = re_pattern.sub (term, bs_content);
-        else:
-            # The pattern does not macth the content, remove the tags
-            term = term.replace (r' \1', '');
-            term = term.replace (r'\1', '');
-            term = term.replace (r' \2', '');
-            term = term.replace (r'\2', '');
+      if re_pattern.match (bs_content):
+         term = re_pattern.sub (term, bs_content);
+      else:
+         # The pattern does not macth the content, remove the tags
+         term = term.replace (r' \1', '');
+         term = term.replace (r'\1', '');
+         term = term.replace (r' \2', '');
+         term = term.replace (r'\2', '');
 
    # Check if we need to insert a new-line character
    start = GPS.EditorLocation (buffer, location.line(), 1)
@@ -117,15 +117,15 @@ def block_complete_on_location (buffer, location):
    buffer.finish_undo_group();
 
 def block_complete (filename):
-    file = GPS.File (filename);
+   file = GPS.File (filename);
 
-    # Only Ada language supported
-    if file.language().lower() != "ada":
-        return;
+   # Only Ada language supported
+   if file.language().lower() != "ada":
+      return;
 
-    eb = GPS.EditorBuffer.get (file);
-    ev = eb.current_view();
-    el = ev.cursor();
-    block_complete_on_location (eb, el);
+   eb = GPS.EditorBuffer.get (file);
+   ev = eb.current_view();
+   el = ev.cursor();
+   block_complete_on_location (eb, el);
 
 GPS.Hook ("gps_started").add (on_gps_started)
