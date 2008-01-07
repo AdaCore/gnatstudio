@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2006-2007, AdaCore                --
+--                 Copyright (C) 2006-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -35,6 +35,7 @@ with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Object;                use Gtk.Object;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
+with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
@@ -398,10 +399,29 @@ package body Revision_Views is
             end;
          end if;
 
-      elsif View.Mode = Link then
-         --  We are in link mode and we reached an existing node. We found a
-         --  branch.
-         View.Mode := Branch;
+      else
+         --  We have an existing node that we want to highlight
+         declare
+            Path : Gtk_Tree_Path;
+            Tmp  : Boolean;
+            pragma Warnings (Off, Tmp);
+         begin
+            Path := Get_Path (Model, Iter);
+            Select_Path (Get_Selection (View.Tree), Path);
+            if Expand then
+               Tmp := Expand_Row (View.Tree, Path, Open_All => True);
+            end if;
+            Scroll_To_Cell
+              (View.Tree, Path, null,
+               Use_Align => True, Row_Align => 0.5, Col_Align => 0.0);
+            Path_Free (Path);
+         end;
+
+         if View.Mode = Link then
+            --  We are in link mode and we reached an existing node. We found a
+            --  branch.
+            View.Mode := Branch;
+         end if;
       end if;
    end Add_Log_If_Not_Present;
 
