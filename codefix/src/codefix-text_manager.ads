@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2002-2007, AdaCore                 --
+--                 Copyright (C) 2002-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -36,16 +36,16 @@ package Codefix.Text_Manager is
    type Case_Type is (Lower, Upper, Mixed);
 
    function Is_Blank (Str : String) return Boolean;
-   --  Return true if Str is only composed by white characters.
+   --  Return true if Str is only composed by white characters
 
    function Is_Blank (Char : Character) return Boolean;
-   --  Return true if Str is a white characters.
+   --  Return true if Str is a white characters
 
    function Without_Last_Blanks (Str : String) return String;
-   --  Return the string Str without the last blanks characters.
+   --  Return the string Str without the last blanks characters
 
    function Is_Separator (Char : Character) return Boolean;
-   --  Return True if the character can be considerate as a separator.
+   --  Return True if the character can be considerate as a separator
 
    ----------------------------------------------------------------------------
    --  type Text_Cursor
@@ -54,16 +54,16 @@ package Codefix.Text_Manager is
    type Text_Cursor is tagged private;
 
    function "<" (Left, Right : Text_Cursor) return Boolean;
-   --  Return True when Left is before Right.
+   --  Return True when Left is before Right
 
    function ">" (Left, Right : Text_Cursor'Class) return Boolean;
-   --  Return True when Left is after Right.
+   --  Return True when Left is after Right
 
    function "<=" (Left, Right : Text_Cursor'Class) return Boolean;
-   --  Return True when Left is before or in the same position than Right.
+   --  Return True when Left is before or in the same position than Right
 
    function ">=" (Left, Right : Text_Cursor'Class) return Boolean;
-   --  Return True when Left is after or in the same position than Right.
+   --  Return True when Left is after or in the same position than Right
 
    procedure Set_Location
      (This : in out Text_Cursor; Line : Natural; Column : Column_Index);
@@ -87,14 +87,14 @@ package Codefix.Text_Manager is
    --  Return the file associated with the cursor
 
    function "=" (Left, Right : File_Cursor) return Boolean;
-   --  Return true when Left is in the same position than rigth.
+   --  Return true when Left is in the same position than rigth
 
    function "<" (Left, Right : File_Cursor) return Boolean;
-   --  Return True when Left is before Right.
+   --  Return True when Left is before Right
 
    procedure Free (This : in out File_Cursor);
    --  Frees the memory used by fields of File_Cursor.
-   --  Does nothing, just needed for generic instantiation
+   --  Does nothing, just needed for generic instantiation.
 
    function Clone (This : File_Cursor) return File_Cursor;
    --  Duplicate all informations of a File_Cursor, specially informations
@@ -107,13 +107,13 @@ package Codefix.Text_Manager is
    type Ptr_Mark is access all Mark_Abstr'Class;
 
    procedure Free (This : in out Mark_Abstr);
-   --  Free the memory associated to a Mark_Abstr.
+   --  Free the memory associated to a Mark_Abstr
 
    procedure Free_Data (This : in out Mark_Abstr'Class);
-   --  Free the memory associated to a Mark_Abstr.
+   --  Free the memory associated to a Mark_Abstr
 
    procedure Free (This : in out Ptr_Mark);
-   --  Free the memory associated to a Ptr_Mark.
+   --  Free the memory associated to a Ptr_Mark
 
    type Word_Cursor is new File_Cursor with private;
    --  Word_cursor is an object that describes a specific word in the text. In
@@ -135,16 +135,16 @@ package Codefix.Text_Manager is
       String_Match : String;
       Mode         : String_Mode := Text_Ascii);
    --  Change the attributes of Word.
-   --  No String_Match is registered if an empty string is passed
+   --  No String_Match is registered if an empty string is passed.
 
    function Get_Word (Word : Word_Cursor) return String;
-   --  Return the word currently stored by the cursor, "" if none.
+   --  Return the word currently stored by the cursor, "" if none
 
    procedure Free (This : in out Word_Mark);
-   --  Free the memory associated to a Word_Mark.
+   --  Free the memory associated to a Word_Mark
 
    procedure Free (This : in out Word_Cursor);
-   --  Free the memory associated to a Word_Cursor.
+   --  Free the memory associated to a Word_Cursor
 
    ----------------------------------------------------------------------------
    --  type Text_Interface
@@ -159,23 +159,23 @@ package Codefix.Text_Manager is
    function Get_New_Mark
      (Current_Text : Text_Interface;
       Cursor       : File_Cursor'Class) return Mark_Abstr'Class is abstract;
-   --  Create a new mark at the position specified by the cursor.
+   --  Create a new mark at the position specified by the cursor
 
    function Get_Current_Cursor
      (Current_Text : Text_Interface;
       Mark         : Mark_Abstr'Class) return File_Cursor'Class is abstract;
-   --  Return the current position of the mark.
+   --  Return the current position of the mark
 
    procedure Free (This : in out Ptr_Text);
-   --  Free the memory associated to Ptr_Text and the object referenced.
+   --  Free the memory associated to Ptr_Text and the object referenced
 
    procedure Initialize
      (This      : in out Text_Interface;
       File_Name : VFS.Virtual_File) is abstract;
-   --  Initialize the structure of the Text_Interface.
+   --  Initialize the structure of the Text_Interface
 
    procedure Free (This : in out Text_Interface);
-   --  Free the memory associated to the Text_Interface.
+   --  Free the memory associated to the Text_Interface
 
    function Get
      (This   : Text_Interface;
@@ -187,12 +187,12 @@ package Codefix.Text_Manager is
    function Get
      (This        : Text_Interface;
       Start, Stop : Text_Cursor'Class) return String;
-   --  Return the text extracted between the two cursors.
+   --  Return the text extracted between the two cursors
 
    function Get
      (This   : Text_Interface;
       Cursor : Text_Cursor'Class) return Character is abstract;
-   --  Get the characters from the the position specified by the cursor.
+   --  Get the characters from the the position specified by the cursor
 
    function Get_Line
      (This      : Text_Interface;
@@ -220,28 +220,28 @@ package Codefix.Text_Manager is
    procedure Delete_Line
      (This : in out Text_Interface;
       Cursor : Text_Cursor'Class) is abstract;
-   --  Delete the line where the cursor is.
+   --  Delete the line where the cursor is
 
    procedure Indent_Line
      (This   : in out Text_Interface;
       Cursor : Text_Cursor'Class) is abstract;
-   --  Indent the line pointed by the cursor.
+   --  Indent the line pointed by the cursor
 
    function Line_Length
      (This   : Text_Interface'Class;
       Cursor : Text_Cursor'Class) return Natural;
-   --  Returns le length of a line from the position of the cursor.
+   --  Returns le length of a line from the position of the cursor
 
    function Read_File
      (This : Text_Interface) return GNAT.Strings.String_Access is abstract;
-   --  Get the entire file in a String_Access.
+   --  Get the entire file in a String_Access
 
    function Get_Buffer
      (This : access Text_Interface'Class) return GNAT.Strings.String_Access;
    --  Return the buffer stored in this text
 
    function Get_File_Name (This : Text_Interface) return VFS.Virtual_File;
-   --  Return the name of the file.
+   --  Return the name of the file
 
    type Token_Record is record
       Name : String_Access;
@@ -297,14 +297,14 @@ package Codefix.Text_Manager is
       Cursor   : Text_Cursor'Class;
       Category : Language_Category := Cat_Unknown)
       return String;
-   --  Return the entire prefix of the first unit of category after the cursor.
+   --  Return the entire prefix of the first unit of category after the cursor
 
    function Get_Right_Paren
      (This         : Text_Interface'Class;
       Cursor       : Text_Cursor'Class;
       Current_Line : String)
       return Text_Cursor'Class;
-   --  Return the right paren corresponding to the one in the cursor.
+   --  Return the right paren corresponding to the one in the cursor
 
    procedure Next_Word
      (This   : Text_Interface'Class;
@@ -319,7 +319,7 @@ package Codefix.Text_Manager is
 
    function Get_Structured_File
      (This : access Text_Interface'Class) return Structured_File_Access;
-   --  Return the tree associated to this text.
+   --  Return the tree associated to this text
 
    procedure Constrain_Update (This : in out Text_Interface) is abstract;
    --  This function should constrain the update of the information contained
@@ -380,7 +380,7 @@ package Codefix.Text_Manager is
 
    function New_Text_Interface (This : Text_Navigator_Abstr)
      return Ptr_Text is abstract;
-   --  Create and initialise a new Text_Interface used by the text navigator.
+   --  Create and initialise a new Text_Interface used by the text navigator
 
    procedure Initialize
      (This : Text_Navigator_Abstr;
@@ -399,10 +399,10 @@ package Codefix.Text_Manager is
    function Get_Current_Cursor
      (Current_Text : Text_Navigator_Abstr'Class;
       Mark         : Mark_Abstr'Class) return File_Cursor'Class;
-   --  Return the current position of the mark.
+   --  Return the current position of the mark
 
    procedure Free (This : in out Text_Navigator_Abstr);
-   --  Free the memory associated to a Text_Navigator.
+   --  Free the memory associated to a Text_Navigator
 
    function Get_Iterator_At
      (Current_Text      : Text_Navigator_Abstr;
@@ -425,7 +425,7 @@ package Codefix.Text_Manager is
    function Get
      (This   : Text_Navigator_Abstr;
       Cursor : File_Cursor'Class) return Character;
-   --  Get a caracter at the position specified by the cursor.
+   --  Get a caracter at the position specified by the cursor
 
    function Get
      (This        : Text_Navigator_Abstr;
@@ -444,7 +444,7 @@ package Codefix.Text_Manager is
    function Read_File
      (This      : Text_Navigator_Abstr;
       File_Name : VFS.Virtual_File) return GNAT.Strings.String_Access;
-   --  Get the entire file File_Name.
+   --  Get the entire file File_Name
 
    procedure Replace
      (This      : in out Text_Navigator_Abstr;
@@ -465,12 +465,12 @@ package Codefix.Text_Manager is
    procedure Delete_Line
      (This : in out Text_Navigator_Abstr;
       Cursor : File_Cursor'Class);
-   --  Delete the line where the cursor is.
+   --  Delete the line where the cursor is
 
    function Line_Length
      (This   : Text_Navigator_Abstr;
       Cursor : File_Cursor'Class) return Natural;
-   --  Return le length of a line from the position of the cursor.
+   --  Return le length of a line from the position of the cursor
 
    function Search_Token
      (This     : Text_Navigator_Abstr'Class;
@@ -502,20 +502,20 @@ package Codefix.Text_Manager is
    function Line_Max
      (This      : Text_Navigator_Abstr'Class;
       File_Name : VFS.Virtual_File) return Natural;
-   --  Return the number of the last line in the text loaded.
+   --  Return the number of the last line in the text loaded
 
    function Get_Full_Prefix
      (This     : Text_Navigator_Abstr'Class;
       Cursor   : File_Cursor'Class;
       Category : Language_Category := Cat_Unknown)
       return String;
-   --  Return the entire prefix of the first unit of category after the cursor.
+   --  Return the entire prefix of the first unit of category after the cursor
 
    function Get_Right_Paren
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class)
      return File_Cursor'Class;
-   --  Return the right paren corresponding to the one in the cursor.
+   --  Return the right paren corresponding to the one in the cursor
 
    procedure Get_Entity
      (Current_Text         : Text_Navigator_Abstr'Class;
@@ -536,21 +536,21 @@ package Codefix.Text_Manager is
    function Get_Structure
      (This      : Text_Navigator_Abstr'Class;
       File_Name : VFS.Virtual_File) return Construct_List_Access;
-   --  Return the parsed strucutre of the text_interface.
+   --  Return the parsed strucutre of the text_interface
 
    procedure Update_All
      (This : Text_Navigator_Abstr'Class);
-   --  This function update all the text contained in This.
+   --  This function update all the text contained in This
 
    function Previous_Char
      (This : Text_Navigator_Abstr'Class; Cursor : File_Cursor'Class)
      return File_Cursor'Class;
    --  Return a cursor positioned on the first non-blank character before the
-   --  position specified by the cursor
+   --  position specified by the cursor.
 
    procedure Undo
      (This : Text_Navigator_Abstr'Class; File_Name : VFS.Virtual_File);
-   --  Undo the last action from the File_Name.
+   --  Undo the last action from the File_Name
 
    function Get_Structured_File
      (This : Text_Navigator_Abstr'Class; Cursor : File_Cursor'Class)
@@ -575,19 +575,19 @@ package Codefix.Text_Manager is
    type Ptr_Extract_Line is access all Extract_Line;
 
    function "=" (Left, Right : Extract_Line) return Boolean;
-   --  Return True if both Extract_Lines are containing similar lines.
+   --  Return True if both Extract_Lines are containing similar lines
 
    function "<" (Left, Right : Ptr_Extract_Line) return Boolean;
-   --  Return True if Left is before Right.
+   --  Return True if Left is before Right
 
    procedure Assign (This : in out Extract_Line; Value : Extract_Line);
-   --  Initialize information of This with clones of Value.
+   --  Initialize information of This with clones of Value
 
    function Get_Context (This : Extract_Line) return Merge_Info;
-   --  Return the context associated to an Extract_Line.
+   --  Return the context associated to an Extract_Line
 
    procedure Set_Context (This : in out Extract_Line; Value : Merge_Info);
-   --  Set the context associated to an Extract_Line.
+   --  Set the context associated to an Extract_Line
 
    function Next (This : Ptr_Extract_Line) return Ptr_Extract_Line;
    --  If the Extract_Line is a component of a list (typically, a list
@@ -598,13 +598,13 @@ package Codefix.Text_Manager is
    --  contained in an extract), then Next returns the next entry of the list.
 
    function Get_String (This : Extract_Line) return String;
-   --  Returns the string memorized in an Extract_Line.
+   --  Returns the string memorized in an Extract_Line
 
    function Get_Cursor (This : Extract_Line) return File_Cursor'Class;
-   --  Return the cursor memorized in an Extract_Line.
+   --  Return the cursor memorized in an Extract_Line
 
    procedure Set_Indentation (This : in out Extract_Line; Value : Boolean);
-   --  Set wether we want to force identation on that line or not.
+   --  Set wether we want to force identation on that line or not
 
    procedure Commit
      (This         : in out Extract_Line;
@@ -629,7 +629,7 @@ package Codefix.Text_Manager is
    --  extract that record this line are cloned.
 
    function Clone (This : Extract_Line) return Extract_Line;
-   --  Same one as the previous but Recursive is consider as True.
+   --  Same one as the previous but Recursive is consider as True
 
    function Search_Token
      (This     : Extract_Line;
@@ -654,28 +654,28 @@ package Codefix.Text_Manager is
      (This        : Text_Navigator_Abstr'Class;
       Cursor      : File_Cursor'Class;
       Destination : in out Extract_Line);
-   --  Get a line from the position specified by the cursor.
+   --  Get a line from the position specified by the cursor
 
    function Get_Old_Text
      (This         : Extract_Line;
       Current_Text : Text_Navigator_Abstr'Class) return String;
-   --  Return the original content of the line.
+   --  Return the original content of the line
 
    function Get_New_Text
      (This : Extract_Line;
       Detail : Boolean := True) return String;
-   --  Return the current content of the line.
+   --  Return the current content of the line
 
    function Get_New_Text_Length
      (This      : Extract_Line;
       Recursive : Boolean := False) return Natural;
-   --  Return the length of the current text in the line.
+   --  Return the length of the current text in the line
 
    function Get_Old_Text_Length
      (This      : Extract_Line;
       Current_Text : Text_Navigator_Abstr'Class;
       Recursive : Boolean := False) return Natural;
-   --  Return the length of the current text before modifications.
+   --  Return the length of the current text before modifications
 
    procedure Extend_Before
      (This          : in out Ptr_Extract_Line;
@@ -697,13 +697,13 @@ package Codefix.Text_Manager is
       Start      : Column_Index;
       Len        : Natural;
       New_String : String);
-   --  Replace 'len' characters from 'start' column with 'New_String'.
+   --  Replace 'len' characters from 'start' column with 'New_String'
 
    procedure Replace_To_End
      (This  : in out Extract_Line;
       Start : Column_Index;
       Value : String);
-   --  Replace by Value the characters from Start to the end of the line.
+   --  Replace by Value the characters from Start to the end of the line
 
    procedure Set_Coloration (This : in out Extract_Line; Value : Boolean);
    --  Set the boolean used to know if the line has to be colored in the window
@@ -729,7 +729,7 @@ package Codefix.Text_Manager is
    --  Codefix.Merge_Utils for more details.
 
    function Get_Number_Actions (This : Extract_Line) return Natural;
-   --  Return the number of actions that will be needed to commit the lines.
+   --  Return the number of actions that will be needed to commit the lines
 
    ----------------------------------------------------------------------------
    --  type Extract
@@ -743,7 +743,7 @@ package Codefix.Text_Manager is
    type Ptr_Extract is access all Extract'Class;
 
    procedure Free (This : in out Ptr_Extract);
-   --  Free the pointer and the memory associated to it.
+   --  Free the pointer and the memory associated to it
 
    procedure Remove
      (This, Prev : Ptr_Extract_Line; Container : in out Extract);
@@ -776,7 +776,7 @@ package Codefix.Text_Manager is
    --  information referenced in pools.
 
    procedure Assign (This : in out Extract'Class; Source : Extract'Class);
-   --  Initiqlize all fields of This by clones from source.
+   --  Initiqlize all fields of This by clones from source
 
    procedure Get
      (This        : Text_Navigator_Abstr'Class;
@@ -830,7 +830,7 @@ package Codefix.Text_Manager is
    procedure Commit
      (This         : Extract;
       Current_Text : in out Text_Navigator_Abstr'Class);
-   --  Upate changes of the Extract_Line in the representation of the text.
+   --  Upate changes of the Extract_Line in the representation of the text
 
    procedure Replace_Word
      (This         : in out Extract;
@@ -838,14 +838,14 @@ package Codefix.Text_Manager is
       New_String   : String;
       Old_String   : String;
       Format_Old   : String_Mode := Text_Ascii);
-   --  Replace a word by another in the extract.
+   --  Replace a word by another in the extract
 
    procedure Replace_Word
      (This         : in out Extract;
       Cursor       : File_Cursor'Class;
       New_String   : String;
       Old_Length   : Natural);
-   --  Replace a word by another in the extract.
+   --  Replace a word by another in the extract
 
    procedure Add_Word
      (This   : in out Extract;
@@ -862,21 +862,21 @@ package Codefix.Text_Manager is
    --  cursor.
 
    procedure Free (This : in out Extract);
-   --  Free the memory associated to an Extract.
+   --  Free the memory associated to an Extract
 
    procedure Free_Data (This : in out Extract'Class);
-   --  Free the memory associated to an Extract.
+   --  Free the memory associated to an Extract
 
    function Get_Line
      (This : Extract; Position : File_Cursor'Class) return Ptr_Extract_Line;
-   --  Return the line with the number specified in the original text.
+   --  Return the line with the number specified in the original text
 
    function Get_Record
      (This : Extract; Number : Natural) return Ptr_Extract_Line;
-   --  Return the line recorded at the position Number in the extract.
+   --  Return the line recorded at the position Number in the extract
 
    function Get_Number_Lines (This : Extract) return Natural;
-   --  Return the number of the lines in the extract.
+   --  Return the number of the lines in the extract
 
    procedure Add_Line
      (This   : in out Extract;
@@ -894,7 +894,7 @@ package Codefix.Text_Manager is
    --  specified by the cursor.
 
    procedure Delete_All_Lines (This : in out Extract);
-   --  Delete all the lines from the extract.
+   --  Delete all the lines from the extract
 
    procedure Get_Entity
      (This         : in out Extract;
@@ -935,18 +935,18 @@ package Codefix.Text_Manager is
    --  is used to make a new line.
 
    function Get_New_Text_Length (This : Extract) return Natural;
-   --  Return the length of the current text in the extract.
+   --  Return the length of the current text in the extract
 
    function Get_Old_Text_Length
      (This : Extract;
       Current_Text : Text_Navigator_Abstr'Class) return Natural;
-   --  Return the length of the current text before modifications.
+   --  Return the length of the current text before modifications
 
    function Get_First_Line (This : Extract) return Ptr_Extract_Line;
    --  Return the first line recored in an extract.
 
    function Get_Last_Line (This : Extract) return Ptr_Extract_Line;
-   --  Return the last line recorded in an extract.
+   --  Return the last line recorded in an extract
 
    procedure Extend_Before
      (This         : in out Extract;
@@ -986,13 +986,13 @@ package Codefix.Text_Manager is
    --  Size_Max + 3.
 
    function Get_Nb_Files (This : Extract) return Natural;
-   --  Return the number of different files names contained in the extract.
+   --  Return the number of different files names contained in the extract
 
    function Data (This : Ptr_Extract_Line) return Extract_Line;
-   --  Return the object pointed by This.
+   --  Return the object pointed by This
 
    function Is_Null (This : Ptr_Extract_Line) return Boolean;
-   --  Return True if This doesn't references any object.
+   --  Return True if This doesn't references any object
 
    procedure Merge_Extracts
      (Result              : out Extract'Class;
@@ -1003,14 +1003,14 @@ package Codefix.Text_Manager is
    --  Codefix.Merge_Utils for more details.
 
    procedure Delete_Empty_Lines (This : in out Extract);
-   --  Delete all lines that are composed only by blanks characters.
+   --  Delete all lines that are composed only by blanks characters
 
    function Get_Number_Actions (This : Extract) return Natural;
    --  Returns the number of actions that have been made in the extract
    --  during his commit.
 
    procedure Undo (This : Extract; Current_Text : Text_Navigator_Abstr'Class);
-   --  Undo each changes that have been made into the extract.
+   --  Undo each changes that have been made into the extract
 
    ----------------------------------------------------------------------------
    --  type Text_Command
@@ -1020,13 +1020,13 @@ package Codefix.Text_Manager is
      (Word         : Word_Cursor;
       Current_Text : Text_Navigator_Abstr'Class;
       Mark         : out Word_Mark);
-   --  Create a Word_Mark from information given by the cursor.
+   --  Create a Word_Mark from information given by the cursor
 
    procedure Make_Word_Cursor
      (Word         : Word_Mark;
       Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : out Word_Cursor);
-   --  Create a Word_Cursor from information given by the mark.
+   --  Create a Word_Cursor from information given by the mark
 
    function Clone (This : Word_Cursor) return Word_Cursor;
    --  Duplicate all informations of a Word_Cursor, specially informations
@@ -1069,18 +1069,18 @@ package Codefix.Text_Manager is
    --  updates the current text, in order to be conformant with user's changes,
 
    procedure Free (This : in out Text_Command);
-   --  Free the memory associated to a Text_Command.
+   --  Free the memory associated to a Text_Command
 
    procedure Free_Data (This : in out Text_Command'Class);
-   --  Free the memory associated to a Text_Command.
+   --  Free the memory associated to a Text_Command
 
    procedure Set_Caption
      (This : in out Text_Command'Class;
       Caption : String);
-   --  Define the caption that describes the action of a Text_Command.
+   --  Define the caption that describes the action of a Text_Command
 
    function Get_Caption (This : Text_Command'Class) return String;
-   --  Return the caption associated to a Text_Command.
+   --  Return the caption associated to a Text_Command
 
    ---------------------
    -- Remove_Word_Cmd --
@@ -1092,16 +1092,16 @@ package Codefix.Text_Manager is
      (This         : in out Remove_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       Word         : Word_Cursor'Class);
-   --  Set all the marks that will be necessary later to remove the word.
+   --  Set all the marks that will be necessary later to remove the word
 
    procedure Free (This : in out Remove_Word_Cmd);
-   --  Free the memory associated to a Remove_Word_Cmd.
+   --  Free the memory associated to a Remove_Word_Cmd
 
    procedure Execute
      (This         : Remove_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : out Extract'Class);
-   --  Set an extract with the word removed.
+   --  Set an extract with the word removed
 
    ---------------------
    -- Insert_Word_Cmd --
@@ -1117,16 +1117,16 @@ package Codefix.Text_Manager is
       Add_Spaces      : Boolean := True;
       Position        : Relative_Position := Specified;
       Insert_New_Line : Boolean := False);
-   --  Set all the marks that will be necessary later to insert the word.
+   --  Set all the marks that will be necessary later to insert the word
 
    procedure Free (This : in out Insert_Word_Cmd);
-   --  Fre the memory associated to an Insert_Word_Cmd.
+   --  Fre the memory associated to an Insert_Word_Cmd
 
    procedure Execute
      (This         : Insert_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : out Extract'Class);
-   --  Set an extract with the word inserted.
+   --  Set an extract with the word inserted
 
    --------------------
    -- Move_Word_Cmd  --
@@ -1140,16 +1140,16 @@ package Codefix.Text_Manager is
       Word            : Word_Cursor'Class;
       New_Position    : File_Cursor'Class;
       Insert_New_Line : Boolean := False);
-   --  Set all the marks that will be needed to move the word later.
+   --  Set all the marks that will be needed to move the word later
 
    procedure Free (This : in out Move_Word_Cmd);
-   --  Free the memory associated to a Move_Word_Cmd.
+   --  Free the memory associated to a Move_Word_Cmd
 
    procedure Execute
      (This         : Move_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : out Extract'Class);
-   --  Set an extract with the word moved.
+   --  Set an extract with the word moved
 
    ----------------------
    -- Replace_Word_Cmd --
@@ -1163,16 +1163,16 @@ package Codefix.Text_Manager is
       Word           : Word_Cursor'Class;
       New_Word       : String;
       Do_Indentation : Boolean := False);
-   --  Set all the marks that will be needed to replace the word later.
+   --  Set all the marks that will be needed to replace the word later
 
    procedure Free (This : in out Replace_Word_Cmd);
-   --  Free the memory associated to a Replace_Word_Cmd.
+   --  Free the memory associated to a Replace_Word_Cmd
 
    procedure Execute
      (This         : Replace_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : out Extract'Class);
-   --  Set an extract with the word replaced.
+   --  Set an extract with the word replaced
 
    ----------------------
    -- Invert_Words_Cmd --
@@ -1184,16 +1184,16 @@ package Codefix.Text_Manager is
      (This         : in out Invert_Words_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       Word1, Word2 : Word_Cursor'Class);
-   --  Set all the marks that will be needed to invert the two words later,
+   --  Set all the marks that will be needed to invert the two words later
 
    procedure Free (This : in out Invert_Words_Cmd);
-   --  Free the memory associated to an Invert_Word_Cmd.
+   --  Free the memory associated to an Invert_Word_Cmd
 
    procedure Execute
      (This         : Invert_Words_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : out Extract'Class);
-   --  Set an extract with the invertion of the two word.
+   --  Set an extract with the invertion of the two word
 
    ------------------
    -- Add_Line_Cmd --
@@ -1206,16 +1206,16 @@ package Codefix.Text_Manager is
       Current_Text : Text_Navigator_Abstr'Class;
       Position     : File_Cursor'Class;
       Line         : String);
-   --  Set all the marks that will be needed to add the line later.
+   --  Set all the marks that will be needed to add the line later
 
    procedure Free (This : in out Add_Line_Cmd);
-   --  Free the memory associated to an Add_Line_Cmd.
+   --  Free the memory associated to an Add_Line_Cmd
 
    procedure Execute
      (This         : Add_Line_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : out Extract'Class);
-   --  Set an extract with the invertion add of the line.
+   --  Set an extract with the invertion add of the line
 
    -----------------------
    -- Replace_Slice_Cmd --
@@ -1228,16 +1228,16 @@ package Codefix.Text_Manager is
       Current_Text             : Text_Navigator_Abstr'Class;
       Start_Cursor, End_Cursor : File_Cursor'Class;
       New_Text                 : String);
-   --  Set all the marks that will be necessary later to remove the slice.
+   --  Set all the marks that will be necessary later to remove the slice
 
    procedure Free (This : in out Replace_Slice_Cmd);
-   --  Free the memory associated to a Remove_Sloce_Cmd.
+   --  Free the memory associated to a Remove_Sloce_Cmd
 
    procedure Execute
      (This         : Replace_Slice_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : out Extract'Class);
-   --  Set an extract with the slice removed.
+   --  Set an extract with the slice removed
 
 private
 
@@ -1324,7 +1324,7 @@ private
       Context         : Merge_Info := Original_Unit;
 
       Cursor          : File_Cursor;
-      --  This cursor specify the position where the line begins.
+      --  This cursor specify the position where the line begins
 
       Original_Length : Natural := 0;
       Content         : Mergable_String;

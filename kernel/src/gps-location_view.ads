@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2007, AdaCore                  --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -43,7 +43,7 @@ package GPS.Location_View is
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Register this module in GPS.
+   --  Register this module in GPS
 
    procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class);
    --  Register the shell commands for this module. This must be a separate
@@ -63,7 +63,7 @@ package GPS.Location_View is
      (View   : access Location_View_Record'Class;
       Kernel : Kernel_Handle;
       Module : Abstract_Module_ID);
-   --  Internal initialization procedure.
+   --  Internal initialization procedure
 
    function Get_Or_Create_Location_View
      (Kernel         : access Kernel_Handle_Record'Class;
@@ -131,15 +131,15 @@ package GPS.Location_View is
    --  to the first item in the category.
 
    procedure Add_Action_Item
-     (View          : access Location_View_Record'Class;
-      Identifier    : String;
-      Category      : String;
-      H_Category    : Style_Access;
-      File          : VFS.Virtual_File;
-      Line          : Natural;
-      Column        : Natural;
-      Message       : String;
-      Action        : Action_Item);
+     (View       : access Location_View_Record'Class;
+      Identifier : String;
+      Category   : String;
+      H_Category : Style_Access;
+      File       : VFS.Virtual_File;
+      Line       : Natural;
+      Column     : Natural;
+      Message    : String;
+      Action     : Action_Item);
    --  Add an action item to be associated to a specified location.
    --  If Action is null, the action item will be removed from that location.
    --  H_Category is the category to highlight the item with.
@@ -217,7 +217,7 @@ private
       Idle_Registered : Boolean := False;
 
       Sort_By_Category : Boolean := False;
-      --  Whether the view should be sorted by category.
+      --  Whether the view should be sorted by category
 
       Sorting_Column   : Gtk_Tree_View_Column;
 
@@ -225,7 +225,7 @@ private
 
       --  The following are used for detection of secondary file locations
       Secondary_File_Pattern : Pattern_Matcher_Access;
-      --  Regexp corresponding to a detection of the secondary file.
+      --  Regexp corresponding to a detection of the secondary file
       SFF : Natural;
       --  Index of the secondary file
       SFC : Natural;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2002-2007, AdaCore                 --
+--                 Copyright (C) 2002-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -29,9 +29,11 @@ with VFS;                               use VFS;
 
 package body Codefix.Text_Manager.Ada_Commands is
 
-   ---------------------
-   -- Recase_Word_Cmd --
-   ---------------------
+   --  Recase_Word_Cmd
+
+   ----------------
+   -- Initialize --
+   ----------------
 
    procedure Initialize
      (This         : in out Recase_Word_Cmd;
@@ -45,6 +47,10 @@ package body Codefix.Text_Manager.Ada_Commands is
       Assign (This.Correct_Word, Correct_Word);
       This.Word_Case := Word_Case;
    end Initialize;
+
+   -------------
+   -- Execute --
+   -------------
 
    procedure Execute
      (This         : Recase_Word_Cmd;
@@ -121,6 +127,10 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Cursor);
    end Execute;
 
+   ----------
+   -- Free --
+   ----------
+
    procedure Free (This : in out Recase_Word_Cmd) is
    begin
       Free (This.Cursor);
@@ -128,9 +138,11 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Text_Command (This));
    end Free;
 
-   ----------------------------
-   -- Remove_Instruction_Cmd --
-   ----------------------------
+   --  Remove_Instruction_Cmd
+
+   ----------------
+   -- Initialize --
+   ----------------
 
    procedure Initialize
      (This              : in out Remove_Instruction_Cmd;
@@ -140,6 +152,10 @@ package body Codefix.Text_Manager.Ada_Commands is
       This.Begin_Mark := new Mark_Abstr'Class'
         (Get_New_Mark (Current_Text, Start_Instruction));
    end Initialize;
+
+   -------------
+   -- Execute --
+   -------------
 
    procedure Execute
      (This         : Remove_Instruction_Cmd;
@@ -156,15 +172,21 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Instruction);
    end Execute;
 
+   ----------
+   -- Free --
+   ----------
+
    procedure Free (This : in out Remove_Instruction_Cmd) is
    begin
       Free (This.Begin_Mark);
       Free (Text_Command (This));
    end Free;
 
-   -------------------------
-   -- Remove_Elements_Cmd --
-   -------------------------
+   --  Remove_Elements_Cmd
+
+   ---------------------
+   -- Set_Remove_Mode --
+   ---------------------
 
    procedure Set_Remove_Mode
      (This : in out Remove_Elements_Cmd; Mode : Remove_Code_Mode)
@@ -172,6 +194,10 @@ package body Codefix.Text_Manager.Ada_Commands is
    begin
       This.Mode := Mode;
    end Set_Remove_Mode;
+
+   -------------------
+   -- Add_To_Remove --
+   -------------------
 
    procedure Add_To_Remove
      (This         : in out Remove_Elements_Cmd;
@@ -183,6 +209,10 @@ package body Codefix.Text_Manager.Ada_Commands is
       Make_Word_Mark (Word, Current_Text, New_Word);
       Append (This.Remove_List, New_Word);
    end Add_To_Remove;
+
+   -------------
+   -- Execute --
+   -------------
 
    procedure Execute
      (This         : Remove_Elements_Cmd;
@@ -273,15 +303,21 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Remove_Extracts);
    end Execute;
 
+   ----------
+   -- Free --
+   ----------
+
    procedure Free (This : in out Remove_Elements_Cmd) is
    begin
       Free (This.Remove_List);
       Free (Text_Command (This));
    end Free;
 
-   ----------------------------
-   -- Remove_Pkg_Clauses_Cmd --
-   ----------------------------
+   --  Remove_Pkg_Clauses_Cmd
+
+   ----------------
+   -- Initialize --
+   ----------------
 
    procedure Initialize
      (This         : in out Remove_Pkg_Clauses_Cmd;
@@ -384,6 +420,10 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Word_Used);
    end Initialize;
 
+   -------------
+   -- Execute --
+   -------------
+
    procedure Execute
      (This         : Remove_Pkg_Clauses_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
@@ -432,6 +472,10 @@ package body Codefix.Text_Manager.Ada_Commands is
       end if;
    end Execute;
 
+   ----------
+   -- Free --
+   ----------
+
    procedure Free (This : in out Remove_Pkg_Clauses_Cmd) is
    begin
       Free (This.Instantiation_Pkg);
@@ -441,9 +485,11 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Text_Command (This));
    end Free;
 
-   -----------------------
-   -- Remove_Entity_Cmd --
-   -----------------------
+   --  Remove_Entity_Cmd
+
+   ----------------
+   -- Initialize --
+   ----------------
 
    procedure Initialize
      (This         : in out Remove_Entity_Cmd;
@@ -480,6 +526,10 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Body_Begin);
       Free (Body_End);
    end Initialize;
+
+   -------------
+   -- Execute --
+   -------------
 
    procedure Execute
      (This         : Remove_Entity_Cmd;
@@ -557,6 +607,10 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Body_End);
    end Execute;
 
+   ----------
+   -- Free --
+   ----------
+
    procedure Free (This : in out Remove_Entity_Cmd) is
    begin
       Free (This.Spec_Begin);
@@ -566,9 +620,11 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Text_Command (This));
    end Free;
 
-   --------------------
-   -- Add_Pragma_Cmd --
-   --------------------
+   --  Add_Pragma_Cmd
+
+   ----------------
+   -- Initialize --
+   ----------------
 
    procedure Initialize
      (This           : in out Add_Pragma_Cmd;
@@ -581,6 +637,10 @@ package body Codefix.Text_Manager.Ada_Commands is
       This.Position := new Mark_Abstr'Class'
         (Get_New_Mark (Current_Text, Position));
    end Initialize;
+
+   -------------
+   -- Execute --
+   -------------
 
    procedure Execute
      (This         : Add_Pragma_Cmd;
@@ -629,6 +689,10 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Position);
    end Execute;
 
+   ----------
+   -- Free --
+   ----------
+
    procedure Free (This : in out Add_Pragma_Cmd) is
    begin
       Free (This.Position);
@@ -637,9 +701,11 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Text_Command (This));
    end Free;
 
-   -----------------------
-   -- Make_Constant_Cmd --
-   -----------------------
+   --  Make_Constant_Cmd
+
+   ----------------
+   -- Initialize --
+   ----------------
 
    procedure Initialize
      (This         : in out Make_Constant_Cmd;
@@ -651,6 +717,10 @@ package body Codefix.Text_Manager.Ada_Commands is
         (Get_New_Mark (Current_Text, Position));
       Assign (This.Name, Name);
    end Initialize;
+
+   -------------
+   -- Execute --
+   -------------
 
    procedure Execute
      (This         : Make_Constant_Cmd;
@@ -697,6 +767,10 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Cursor);
    end Execute;
 
+   ----------
+   -- Free --
+   ----------
+
    procedure Free (This : in out Make_Constant_Cmd) is
    begin
       Free (This.Position);
@@ -704,9 +778,11 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Text_Command (This));
    end Free;
 
-   ----------------------------
-   -- Remove_Parenthesis_Cmd --
-   ----------------------------
+   --  Remove_Parenthesis_Cmd
+
+   ----------------
+   -- Initialize --
+   ----------------
 
    procedure Initialize
      (This         : in out Remove_Parenthesis_Cmd;
@@ -716,6 +792,10 @@ package body Codefix.Text_Manager.Ada_Commands is
       This.Cursor := new Mark_Abstr'Class'
         (Get_New_Mark (Current_Text, Cursor));
    end Initialize;
+
+   -------------
+   -- Execute --
+   -------------
 
    procedure Execute
      (This         : Remove_Parenthesis_Cmd;
@@ -731,6 +811,10 @@ package body Codefix.Text_Manager.Ada_Commands is
       Cursor        : File_Cursor;
       Line_Cursor   : File_Cursor;
       Current_Index : Char_Index := 1;
+
+      -----------------
+      -- Right_Paren --
+      -----------------
 
       procedure Right_Paren (Current_Index : in out Char_Index) is
       begin
@@ -788,15 +872,21 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Cursor);
    end Execute;
 
+   ----------
+   -- Free --
+   ----------
+
    procedure Free (This : in out Remove_Parenthesis_Cmd) is
    begin
       Free (This.Cursor);
       Free (Text_Command (This));
    end Free;
 
-   -----------------------
-   -- Paste_Profile_Cmd --
-   -----------------------
+   --  Paste_Profile_Cmd
+
+   ----------------
+   -- Initialize --
+   ----------------
 
    procedure Initialize
      (This             : in out Paste_Profile_Cmd;
@@ -813,6 +903,10 @@ package body Codefix.Text_Manager.Ada_Commands is
          Is_Empty, Is_Spec        : out Boolean);
       --  Set Begin_Cursor and End_Cursor at the begining and at the end of the
       --  profile's function starting at position.
+
+      ------------------------
+      -- Initialize_Profile --
+      ------------------------
 
       procedure Initialize_Profile
         (Position_It              : Construct_Tree_Iterator;
@@ -927,7 +1021,6 @@ package body Codefix.Text_Manager.Ada_Commands is
          Begin_Analyze_Cursor : File_Cursor;
 
       begin
-
          Begin_Cursor := Null_File_Cursor;
          End_Cursor := Null_File_Cursor;
 
@@ -1010,6 +1103,10 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Source_End);
    end Initialize;
 
+   -------------
+   -- Execute --
+   -------------
+
    procedure Execute
      (This         : Paste_Profile_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
@@ -1072,18 +1169,18 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Text_Command (This));
    end Free;
 
-   --------------------------------
-   -- Get_Package_To_Be_Imported --
-   --------------------------------
+   ------------------------------
+   -- Get_Package_To_Be_Withed --
+   ------------------------------
 
    function Get_Package_To_Be_Withed
      (Current_Text    : Text_Navigator_Abstr'Class;
       Source_Position : File_Cursor'Class) return String
    is
       Tree : constant Construct_Tree :=
-        Get_Tree (Get_Structured_File (Current_Text, Source_Position));
+               Get_Tree (Get_Structured_File (Current_Text, Source_Position));
       It   : Construct_Tree_Iterator :=
-        Get_Iterator_At (Current_Text, Source_Position, After);
+               Get_Iterator_At (Current_Text, Source_Position, After);
    begin
       while Get_Parent_Scope (Tree, It)
         /= Null_Construct_Tree_Iterator
@@ -1105,11 +1202,11 @@ package body Codefix.Text_Manager.Ada_Commands is
       File_Destination : VFS.Virtual_File;
       With_Could_Miss  : Boolean)
    is
+      Pkg_Name    : constant String := Get_Package_To_Be_Withed
+        (Current_Text, Source_Position);
       Result      : Get_Visible_Declaration_Cmd;
       With_Cursor : File_Cursor;
       Clauses_Str : GNAT.Strings.String_Access := new String'("");
-      Pkg_Name    : constant String := Get_Package_To_Be_Withed
-        (Current_Text, Source_Position);
 
    begin
       if With_Could_Miss then
@@ -1146,11 +1243,12 @@ package body Codefix.Text_Manager.Ada_Commands is
       Object_Position : File_Cursor'Class;
       With_Could_Miss : Boolean)
    is
+      Pkg_Name    : constant String := Get_Package_To_Be_Withed
+        (Current_Text, Source_Position);
       Result      : Get_Visible_Declaration_Cmd;
       Word        : Word_Cursor;
       With_Cursor : File_Cursor;
-      Pkg_Name    : constant String := Get_Package_To_Be_Withed
-        (Current_Text, Source_Position);
+
    begin
       if With_Could_Miss then
          With_Cursor := File_Cursor
@@ -1195,6 +1293,10 @@ package body Codefix.Text_Manager.Ada_Commands is
       This := Result;
    end Prefix_Object;
 
+   -------------
+   -- Execute --
+   -------------
+
    procedure Execute
      (This         : Get_Visible_Declaration_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
@@ -1226,15 +1328,21 @@ package body Codefix.Text_Manager.Ada_Commands is
       end if;
    end Execute;
 
+   ----------
+   -- Free --
+   ----------
+
    procedure Free (This : in out Get_Visible_Declaration_Cmd) is
    begin
       Free (This.Insert_With);
       Free (This.Prefix_Obj);
    end Free;
 
-   -------------------------
-   -- Replace_Code_By_Cmd --
-   -------------------------
+   --  Replace_Code_By_Cmd
+
+   ----------------
+   -- Initialize --
+   ----------------
 
    procedure Initialize
      (This         : in out Replace_Code_By_Cmd;
@@ -1249,6 +1357,10 @@ package body Codefix.Text_Manager.Ada_Commands is
       This.Replaced_Exp := new String'(Replaced_Exp);
       This.New_String   := new String'(New_String);
    end Initialize;
+
+   -------------
+   -- Execute --
+   -------------
 
    procedure Execute
      (This         : Replace_Code_By_Cmd;
@@ -1287,6 +1399,10 @@ package body Codefix.Text_Manager.Ada_Commands is
             """" & Line & """.");
       end if;
    end Execute;
+
+   ----------
+   -- Free --
+   ----------
 
    procedure Free (This : in out Replace_Code_By_Cmd) is
    begin

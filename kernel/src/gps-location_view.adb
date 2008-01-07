@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007, AdaCore             --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1730,10 +1730,10 @@ package body GPS.Location_View is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
+      D           : constant File_Location_Hooks_Args_Access :=
+                      File_Location_Hooks_Args_Access (Data);
       Child       : MDI_Child;
       Locations   : Location_View;
-      D           : constant File_Location_Hooks_Args_Access :=
-        File_Location_Hooks_Args_Access (Data);
       Category_Iter, File_Iter, Loc_Iter, Current : Gtk_Tree_Iter;
       Category_Created : Boolean;
       Model            : Gtk_Tree_Model;
