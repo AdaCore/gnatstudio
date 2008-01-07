@@ -72,8 +72,10 @@ class DocGenerator:
    def setup_links (self, module_name, text):
       """Replace all links like module_name.<...> by hyperlinks"""
 
-      routines = inspect.getmembers (module_name, inspect.isroutine)
       pattern = re.compile (module_name + r'\.(\w+)(\.(\w+))?')
+      m = __import__ (module_name)
+      routines = inspect.getmembers (m, inspect.isroutine)
+
       here = 0
       result = []
       linked_module = "<a href='file://" + self.filename_for_module (module_name) + "'>" + module_name + "</a>."
@@ -91,7 +93,7 @@ class DocGenerator:
             if name1 == r[0]:
                is_routine = True
 
-         if foo:
+         if name2:
             result.append (linked_module + "<a href='file://" + self.filename_for_class (name1) + "'>" + name1 \
               + "</a>.<a href='file://" + self.filename_for_class (name1) + "#" + self.anchor_name (name2) + "'>" + name2 + "</a>")
          elif is_routine:

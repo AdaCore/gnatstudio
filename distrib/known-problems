@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.2.1
 
+- H104-010: Wrong hyper links in Python Extensions documentation
+  Problem:    When you select /Help/Python Extensions, an html page is
+              created on the fly to list of the functions exported by GPS to
+              python. But the hyper links to functions directly in the GPS
+              module are wrong.
+  Workaround: Click on the "Global routines" link at the top-left corner
+
 - H104-009 Wrong "Goto body" contextual menu for record types
   Problem:    There is a contextual menu named "Goto body of XXX" where XXX is
               a record type. This menu used to be "Goto full declaration of
