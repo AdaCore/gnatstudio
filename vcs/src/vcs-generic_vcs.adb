@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2007, AdaCore                  --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -2000,7 +2000,6 @@ package body VCS.Generic_VCS is
          exit when Matches (0) = No_Match;
 
          declare
-            Command : Custom_Command_Access;
             Rev     : constant String :=
                         S (Matches (Parser.Repository_Rev_Index).First
                            .. Matches (Parser.Repository_Rev_Index).Last);
@@ -2013,6 +2012,7 @@ package body VCS.Generic_VCS is
             Log     : constant String :=
                         S (Matches (Parser.Log_Index).First
                            .. Matches (Parser.Log_Index).Last);
+            Command : Custom_Command_Access;
          begin
             Create
               (Command, -"add log", Kernel,
@@ -2083,13 +2083,13 @@ package body VCS.Generic_VCS is
          exit when Matches (0) = No_Match;
 
          declare
-            Command : Custom_Command_Access;
             Rev     : constant String :=
                         S (Matches (Parser.Repository_Rev_Index).First
                            .. Matches (Parser.Repository_Rev_Index).Last);
             Sym     : constant String :=
                         S (Matches (Parser.Sym_Index).First
                            .. Matches (Parser.Sym_Index).Last);
+            Command : Custom_Command_Access;
          begin
             Create
               (Command, -"add revision", Kernel,
