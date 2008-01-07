@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007, AdaCore             --
+--                      Copyright (C) 2001-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -207,6 +207,10 @@ package String_Utils is
    --  Same as above, but works on Text, and more efficient
    --  Text (Text'First .. Last) contains the new result.
    --  CR_Found is set to True if a CR was found in Text.
+
+   function Strip_Ending_Linebreaks (Text : in String) return String;
+   --  Return a version of Text after stripping all ending CR and LF
+   --  characters.
 
    function Do_Tab_Expansion
      (Text : String; Tab_Size : Integer) return String;
