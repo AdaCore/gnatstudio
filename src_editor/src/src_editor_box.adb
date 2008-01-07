@@ -1407,10 +1407,13 @@ package body Src_Editor_Box is
    is
       pragma Unreferenced (Creator);
       Entity : Entity_Information;
+      Kind   : E_Kinds;
    begin
       Entity := Get_Entity (Context);
       if Entity /= null then
-         if Is_Container (Get_Kind (Entity).Kind) then
+         Kind := Get_Kind (Entity).Kind;
+
+         if Is_Container (Kind) and then Kind /= Record_Kind then
             return -"Goto body of "
               & Emphasize (Entity_Name_Information (Context));
          else

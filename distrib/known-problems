@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.2.1
 
+- H104-009 Wrong "Goto body" contextual menu for record types
+  Problem:    There is a contextual menu named "Goto body of XXX" where XXX is
+              a record type. This menu used to be "Goto full declaration of
+              XXX".
+  Workaround: You can still use this contextual menu. It works as the expected
+              one.
+
 - GC14-007 Search & Replace doesn't work on "Open Files"
   Problem:    The Search & Replace button of the search dialog doesn't replace
               occurences outside the first file, when used interactively on
