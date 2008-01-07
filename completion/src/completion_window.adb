@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006-2007, AdaCore             --
+--                 Copyright (C) 2006-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -131,8 +131,8 @@ package body Completion_Window is
    --  Delete the window if there is no item to show.
 
    procedure Expand_Selection
-     (Window      : access Completion_Window_Record'Class;
-      Number      : Natural);
+     (Window : access Completion_Window_Record'Class;
+      Number : Natural);
    --  Expand the current selection until Number entries have been added or
    --  the completion iter has reach the end.
 
@@ -151,6 +151,10 @@ package body Completion_Window is
    function To_Showable_String
      (P : Completion_Proposal'Class) return String;
    --  Return the string to display in the main window.
+
+   ------------------------
+   -- To_Showable_String --
+   ------------------------
 
    function To_Showable_String
      (P : Completion_Proposal'Class) return String is
@@ -217,8 +221,8 @@ package body Completion_Window is
    ----------------------
 
    procedure Expand_Selection
-     (Window      : access Completion_Window_Record'Class;
-      Number      : Natural)
+     (Window : access Completion_Window_Record'Class;
+      Number : Natural)
    is
       Added : Natural := 0;
       Info  : Information_Record;
@@ -270,8 +274,7 @@ package body Completion_Window is
       while not At_End (Window.Iter) loop
          declare
             Proposal : constant Completion_Proposal'Class :=
-              Get_Proposal (Window.Iter);
-
+                         Get_Proposal (Window.Iter);
          begin
             Info :=
               (new String'(To_Showable_String (Proposal)),
@@ -331,8 +334,8 @@ package body Completion_Window is
    procedure Adjust_Selected
      (Window : access Completion_Window_Record'Class)
    is
-      Prev   : Gtk_Tree_Iter;
-      Curr   : Gtk_Tree_Iter;
+      Prev      : Gtk_Tree_Iter;
+      Curr      : Gtk_Tree_Iter;
 
       Selection : Gtk_Tree_Selection;
       Model     : Gtk_Tree_Model;
@@ -343,6 +346,10 @@ package body Completion_Window is
 
       function Equals (A, B : String) return Boolean;
       --  Perform a case-conscious comparison.
+
+      ------------
+      -- Equals --
+      ------------
 
       function Equals (A, B : String) return Boolean is
       begin
@@ -427,8 +434,8 @@ package body Completion_Window is
      (Window : access Completion_Window_Record'Class;
       Params : Glib.Values.GValues)
    is
-      Mark : constant Gtk_Text_Mark :=
-        Get_Text_Mark (Glib.Values.Nth (Params, 2));
+      Mark   : constant Gtk_Text_Mark :=
+                 Get_Text_Mark (Glib.Values.Nth (Params, 2));
       Cursor : Gtk_Text_Iter;
    begin
       if Get_Name (Mark) = "insert" then
@@ -450,8 +457,8 @@ package body Completion_Window is
      (Window : access Completion_Window_Record'Class;
       Params : Glib.Values.GValues)
    is
-      Iter   : Gtk_Text_Iter;
-      Beg    : Gtk_Text_Iter;
+      Iter : Gtk_Text_Iter;
+      Beg  : Gtk_Text_Iter;
 
    begin
       if Window.In_Deletion or else Window.In_Destruction then
@@ -503,8 +510,8 @@ package body Completion_Window is
      (Window : access Completion_Window_Record'Class;
       Params : Glib.Values.GValues)
    is
-      Iter     : Gtk_Text_Iter;
-      Beg      : Gtk_Text_Iter;
+      Iter : Gtk_Text_Iter;
+      Beg  : Gtk_Text_Iter;
    begin
       if Window.In_Deletion or else Window.In_Destruction then
          return;
@@ -575,6 +582,10 @@ package body Completion_Window is
 
       function Location_To_Label (Loc : File_Location) return String;
       --  Return a pango markup label corresponding to Loc.
+
+      -----------------------
+      -- Location_To_Label --
+      -----------------------
 
       function Location_To_Label (Loc : File_Location) return String is
       begin
@@ -906,7 +917,7 @@ package body Completion_Window is
 
             if Iter /= Null_Iter then
                Select_Iter (Sel, Iter);
-               --  We have selected an iter: the window is no longer volatile.
+               --  We have selected an iter: the window is no longer volatile
                Window.Volatile := False;
             end if;
 
@@ -915,7 +926,7 @@ package body Completion_Window is
             Window.Volatile := False;
 
          when GDK_Up | GDK_KP_Up =>
-            --  If the window is volatile, the window should be destroyed.
+            --  If the window is volatile, the window should be destroyed
 
             if Window.Volatile then
                Delete (Window);
@@ -978,14 +989,14 @@ package body Completion_Window is
    ----------------
 
    procedure Initialize (Window : access Completion_Window_Record'Class) is
-      Col    : Gtk_Tree_View_Column;
-      Text   : Gtk_Cell_Renderer_Text;
-      Pix    : Gtk_Cell_Renderer_Pixbuf;
-      Dummy  : Gint;
-      Frame  : Gtk_Frame;
-      Scroll : Gtk_Scrolled_Window;
-      VBox   : Gtk_Vbox;
-      HBox   : Gtk_Hbox;
+      Col      : Gtk_Tree_View_Column;
+      Text     : Gtk_Cell_Renderer_Text;
+      Pix      : Gtk_Cell_Renderer_Pixbuf;
+      Dummy    : Gint;
+      Frame    : Gtk_Frame;
+      Scroll   : Gtk_Scrolled_Window;
+      VBox     : Gtk_Vbox;
+      HBox     : Gtk_Hbox;
       Viewport : Gtk_Viewport;
 
       pragma Unreferenced (Dummy);
@@ -1077,7 +1088,7 @@ package body Completion_Window is
       Case_Sensitive : Boolean;
       Complete       : Boolean)
    is
-      Iter_Coords : Gdk_Rectangle;
+      Iter_Coords        : Gdk_Rectangle;
       Window_X, Window_Y : Gint;
       Gdk_X, Gdk_Y       : Gint;
       Dummy              : Boolean;
