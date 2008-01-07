@@ -1223,27 +1223,6 @@ package body GVD_Module is
       Key2         : GNAT.Strings.String_Access := No_Msg'Unchecked_Access;
       WTX_Version  : Natural;
 
-      function Strip_Ending_Linebreaks (S : in String) return String;
-      --  Return S without any CR or LF at the end
-
-      -----------------------------
-      -- Strip_Ending_Linebreaks --
-      -----------------------------
-
-      function Strip_Ending_Linebreaks (S : in String) return String is
-      begin
-         --  Loop to make sure we have removed all of the ending CRs and LFs
-         for J in reverse S'Range loop
-            if S (J) /= ASCII.CR
-              and then S (J) /= ASCII.LF
-            then
-               return S (S'First .. J);
-            end if;
-         end loop;
-
-         return "";
-      end Strip_Ending_Linebreaks;
-
    begin
       --  If the user has already requested to stop at the beginning (Start
       --  command) do not ask the same question again. Otherwise, we enable
