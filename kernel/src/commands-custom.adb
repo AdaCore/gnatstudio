@@ -1235,7 +1235,13 @@ package body Commands.Custom is
             Output := Command.Execution.Outputs (Output_Index);
 
             if Output = null or else Output.all = "" then
-               return "";
+               --  Mark this as invalid, so that the default behavior applies:
+               --  depending on the parameters passed to Substitute, the
+               --  original substring will either be kept or replaced by an
+               --  empty string. This is also needed for proper handling of
+               --  "%%" in the substring (returning an empty string here would
+               --  not work).
+               raise Invalid_Substitution;
             end if;
 
             Last := Output'Last;
