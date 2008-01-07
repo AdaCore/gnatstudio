@@ -813,6 +813,24 @@ package body String_Utils is
       end loop;
    end Strip_CR;
 
+   -----------------------------
+   -- Strip_Ending_Linebreaks --
+   -----------------------------
+
+   function Strip_Ending_Linebreaks (Text : in String) return String is
+   begin
+      --  Loop to make sure we have removed all of the ending CRs and LFs
+      for J in reverse Text'Range loop
+         if Text (J) /= ASCII.CR
+           and then Text (J) /= ASCII.LF
+         then
+            return Text (Text'First .. J);
+         end if;
+      end loop;
+
+      return "";
+   end Strip_Ending_Linebreaks;
+
    ----------------------
    -- Do_Tab_Expansion --
    ----------------------
