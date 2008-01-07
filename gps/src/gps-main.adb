@@ -1595,6 +1595,9 @@ procedure GPS.Main is
       Project  : constant Project_Type := Get_Project (Kernel);
       Success  : Boolean;
 
+      Memory_Check : Boolean;
+      pragma Import (Ada, Memory_Check, "__gps_memory_check");
+
    begin
       if not Cleanup_Needed then
          return;
@@ -1618,6 +1621,11 @@ procedure GPS.Main is
       --  since they may need to access their consoles.
 
       Task_Manager.Interrupt_All_Tasks (Get_Task_Manager (Kernel));
+
+      --  ??? Temporary kludge to avoid crashing while exiting, until we've
+      --  identified the underlying issue (see GC12-016 and GC17-008):
+
+      Memory_Check := True;
 
       --  Destroy the GUI before the modules, otherwise if some package tries
       --  to access their local module_id, they will generate storage_error.
