@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                Copyright (C) 2000-2007, AdaCore                   --
+--                Copyright (C) 2000-2008, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -131,7 +131,8 @@ package body Debugger.Gdb is
    --  restriction is that the name can not contain newline characters.
 
    Exception_In_Breakpoint   : constant Pattern_Matcher := Compile
-     ("\bon (exception ([-\w_:]+)|all|unhandled)");
+     ("\b(on (exception ([-\w_:]+)|all|unhandled))" &
+      "|((`([-\w_:]+)'|all|unhandled) Ada exception)");
    --  How to detect exception names in the info given by "info breakpoint"
 
    Subprogram_In_Breakpoint  : constant Pattern_Matcher := Compile
@@ -3302,14 +3303,25 @@ package body Debugger.Gdb is
 
                Match (Exception_In_Breakpoint, S (Tmp .. Index - 2), Matched);
                if Matched (0) /= No_Match then
-                  if Matched (2) /= No_Match then
-                     Br (Num).Except := new String'
-                       (S (Matched (2).First .. Matched (2).Last));
+                  if Matched (1) /= No_Match then
+                     if Matched (3) /= No_Match then
+                        Br (Num).Except := new String'
+                          (S (Matched (3).First .. Matched (3).Last));
+                     else
+                        Br (Num).Except :=
+                          new String'
+                            (S (Matched (2).First .. Matched (2).Last));
+                     end if;
                   else
-                     Br (Num).Except :=
-                       new String'(S (Matched (1).First .. Matched (1).Last));
+                     if Matched (5) /= No_Match then
+                        Br (Num).Except := new String'
+                          (S (Matched (5).First .. Matched (5).Last));
+                     else
+                        Br (Num).Except :=
+                          new String'
+                            (S (Matched (4).First .. Matched (4).Last));
+                     end if;
                   end if;
-
                   M := True;
                end if;
 
