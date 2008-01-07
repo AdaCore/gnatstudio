@@ -1,12 +1,5 @@
 Known Problems fixed in GPS 4.3.0
 
-- H104-010: Wrong hyper links in Python Extensions documentation
-  Problem:    When you select /Help/Python Extensions, an html page is
-              created on the fly to list of the functions exported by GPS to
-              python. But the hyper links to functions directly in the GPS
-              module are wrong.
-  Workaround: Click on the "Global routines" link at the top-left corner
-
 - GC07-025: Ouline View can't display large profile
   Problem:    Routines with a large profile (more than 50 parameters)
               won't be properly output in the outline view.
