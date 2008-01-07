@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2007, AdaCore              --
+--                     Copyright (C) 2003-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -175,6 +175,11 @@ package Entities is
    pragma Inline (Is_Container);
    --  Return True if Kind may contain calls or declarations of other
    --  entities (packages, namespaces, subprograms,...)
+
+   function Body_Is_Full_Declaration (Kind : E_Kinds) return Boolean;
+   pragma Inline (Body_Is_Full_Declaration);
+   --  Return True is Kind is a container and its "body" is actually a full
+   --  declaration (e.g. for record types).
 
    function Kind_To_String (Kind : E_Kind) return String;
    --  Return a string suitable to describe the kind

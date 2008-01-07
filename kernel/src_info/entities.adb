@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2007, AdaCore                  --
+--                 Copyright (C) 2003-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -155,7 +155,7 @@ package body Entities is
       Task_Kind             => True,
       others                => False);
    --  This table should contain true if the corresponding element is
-   --  considered as a subprogram (see Is_Subprogram)
+   --  considered as a subprogram (see Is_Subprogram).
 
    Is_Container_Array : constant array (E_Kinds) of Boolean :=
      (Procedure_Kind        => True,
@@ -167,8 +167,15 @@ package body Entities is
       Record_Kind           => True,
       Overloaded_Entity     => True,
       --  ??? Should we check that at least one of the possible
-      --  completions is a subprogram
+      --  completions is a subprogram.
       others                => False);
+
+   Body_Is_Full_Declaration_Array : constant array (E_Kinds) of Boolean :=
+     (Record_Kind      => True,
+      Enumeration_Kind => True,
+      others           => False);
+   --  This table should contain true if the corresponding element is a
+   --  container and his body is actually a full declaration.
 
    Is_End_Reference_Array : constant Reference_Kind_Filter :=
      (End_Of_Spec           => True,
@@ -279,6 +286,15 @@ package body Entities is
    begin
       return Is_Container_Array (Kind);
    end Is_Container;
+
+   ------------------------------
+   -- Body_Is_Full_Declaration --
+   ------------------------------
+
+   function Body_Is_Full_Declaration (Kind : E_Kinds) return Boolean is
+   begin
+      return Body_Is_Full_Declaration_Array (Kind);
+   end Body_Is_Full_Declaration;
 
    --------------
    -- Get_Name --
