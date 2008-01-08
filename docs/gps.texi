@@ -10586,7 +10586,7 @@ the GNAT command line tools. The project name is quoted if it contains spaces.
 Python equivalent:
 @smallexample
 if GPS.current_context().project():
-   return "-P" & GPS.current_context().project().path()
+   return "-P" & GPS.current_context().project().file().name()
 @end smallexample
 
 @item %PPs
