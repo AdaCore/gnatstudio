@@ -45,7 +45,7 @@ def clean_project (recursively=False, root=None):
       cmd = cmd + " -r"
    cmd = cmd + " " + scenario_variables
    msg.write (cmd + "\n")
-   p = Process (cmd, on_exit=on_exit)
+   p = Process (cmd, on_exit=on_exit, remote_server="Build_Server")
 
 def clean_root_project (menu):
    clean_project()
