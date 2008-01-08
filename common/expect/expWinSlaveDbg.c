@@ -10,7 +10,7 @@
  *	and it writes data that is written directly to the console to
  *	the master pipe.
  *
- * Copyright (c) 2006 AdaCore
+ * Copyright (c) 2006-2008 AdaCore
  * Copyright (c) 1997 by Mitel Corporation
  * Copyright (c) 1997-1998 by Gordon Chaffee
  *
@@ -274,31 +274,19 @@ static void		OnXSingleStep(ExpProcess *, LPDEBUG_EVENT);
  */
 
 ExpBreakInfo BreakArrayKernel32[] = {
-  {"FillConsoleOutputCharacterA", 5, OnFillConsoleOutputCharacter, EXP_BREAK_OUT},
-  {"FillConsoleOutputCharacterW", 5, OnFillConsoleOutputCharacter, EXP_BREAK_OUT},
-#if 0
-    {"GetStdHandle", 1, OnGetStdHandle, EXP_BREAK_OUT},
-    {"OpenConsoleW", 4, OnOpenConsoleW, EXP_BREAK_OUT},
-    {"ReadConsoleInputA", 4, OnReadConsoleInput, EXP_BREAK_OUT},
-    {"ReadConsoleInputW", 4, OnReadConsoleInput, EXP_BREAK_OUT},
-#endif
+  {"FillConsoleOutputCharacterA", 5,
+   OnFillConsoleOutputCharacter, EXP_BREAK_OUT},
+  {"FillConsoleOutputCharacterW", 5,
+   OnFillConsoleOutputCharacter, EXP_BREAK_OUT},
   {"SetConsoleMode", 2, OnSetConsoleMode, EXP_BREAK_OUT},
-#if 0
-    {"SetConsoleActiveScreenBuffer", 1, OnSetConsoleActiveScreenBuffer, EXP_BREAK_OUT},
-    {"SetConsoleCursorPosition", 2, OnSetConsoleCursorPosition, EXP_BREAK_OUT},
-    {"SetConsoleWindowInfo", 2, OnSetConsoleWindowInfo, EXP_BREAK_OUT},
-    {"ScrollConsoleScreenBufferA", 5, OnScrollConsoleScreenBuffer, EXP_BREAK_OUT},
-    {"ScrollConsoleScreenBufferW", 5, OnScrollConsoleScreenBuffer, EXP_BREAK_OUT},
-#endif
   {"WriteConsoleA", 5, OnWriteConsoleA, EXP_BREAK_OUT},
   {"WriteConsoleW", 5, OnWriteConsoleW, EXP_BREAK_OUT},
   {"WriteConsoleOutputA", 5, OnWriteConsoleOutputA, EXP_BREAK_OUT},
   {"WriteConsoleOutputW", 5, OnWriteConsoleOutputW, EXP_BREAK_OUT},
-  {"WriteConsoleOutputCharacterA", 5, OnWriteConsoleOutputCharacterA, EXP_BREAK_OUT},
-  {"WriteConsoleOutputCharacterW", 5, OnWriteConsoleOutputCharacterW, EXP_BREAK_OUT|EXP_BREAK_IN},
-#if 0
-    {"Beep", 2, OnBeep, EXP_BREAK_OUT|EXP_BREAK_IN},
-#endif
+  {"WriteConsoleOutputCharacterA", 5,
+   OnWriteConsoleOutputCharacterA, EXP_BREAK_OUT},
+  {"WriteConsoleOutputCharacterW", 5,
+   OnWriteConsoleOutputCharacterW, EXP_BREAK_OUT|EXP_BREAK_IN},
   {NULL, 0, NULL}
 };
 
@@ -549,7 +537,6 @@ ExpSlaveDebugThread(LPVOID *lparg)
       arg->lastError = GetLastError();
       ExitThread(0);
     }
-    ExpAddToWaitQueue(proc->hProcess);
 
     ExpCommonDebugger();
 
@@ -713,15 +700,6 @@ ExpCommonDebugger()
 	    break;
 
 	case EXIT_PROCESS_DEBUG_EVENT:
-	    /*
-	     * XXX: This is really screwed up, but we get breakpoints
-	     * for processes that are already dead.  So we cannot remove
-	     * and cleanup a process until some later (How much later?)
-	     * point.  This really, really sucks....
-	     */
-#if 0 /* This gets closed in WaitQueueThread */
-	    CloseHandle(proc->hProcess);
-#endif
 	    err = debEvent.u.ExitProcess.dwExitCode;
 	    ExpProcessFree(proc);
 	    /*
@@ -804,7 +782,6 @@ LoadedModule(ExpProcess *proc, HANDLE hFile, LPVOID modname, int isUnicode,
 	    s = strdup(mbstr);
 
 	} else {
-	    PRINTF(("0x%08x: Loaded module, but couldn't read subprocess' memory, error=0x%08x\n", baseAddr, GetLastError()));
 	    known = 0;
 	}
 	if (debugOffset) {
@@ -854,6 +831,7 @@ OnXCreateProcess(ExpProcess *proc, LPDEBUG_EVENT pDebEvent)
     CREATE_PROCESS_DEBUG_INFO *info = &pDebEvent->u.CreateProcessInfo;
     int known;
 
+    /* Add the child process to the process list */
     if (proc == NULL) {
 	proc = ExpProcessNew();
 
@@ -865,7 +843,6 @@ OnXCreateProcess(ExpProcess *proc, LPDEBUG_EVENT pDebEvent)
             EXP_LOG ("Unable to duplicate handle", NULL);
 	}
 	proc->hPid = pDebEvent->dwProcessId;
-	ExpAddToWaitQueue(proc->hProcess);
     }
 
     known = LoadedModule(proc, info->hFile, info->lpImageName,
@@ -1049,14 +1026,19 @@ OnXFirstBreakpoint(ExpProcess *proc, LPDEBUG_EVENT pDebEvent)
 	code.instPush4     = 0x68;
 	code.argMemAddr    = 0;
 	code.instCall      = 0xe8;
-	code.argCallAddr   = addr - FirstContext.Eip - offsetof(InjectCode, instCall) - 5;
+	code.argCallAddr   = addr - FirstContext.Eip -
+                               offsetof(InjectCode, instCall) - 5;
 	code.instIntr      = 0xCC;
 
 	base = FirstContext.Eip;
-	if (!ReadSubprocessMemory(proc, (PVOID) base, FirstPage, sizeof(InjectCode))) {
+	if (!ReadSubprocessMemory
+               (proc, (PVOID) base, FirstPage, sizeof(InjectCode)))
+        {
 	    EXP_LOG("Error reading subprocess memory\n", NULL);
 	}
-	if (!WriteSubprocessMemory(proc, (PVOID) base, &code, sizeof(InjectCode))) {
+	if (!WriteSubprocessMemory
+               (proc, (PVOID) base, &code, sizeof(InjectCode)))
+        {
 	    EXP_LOG("Error reading subprocess memory\n", NULL);
 	}
     }
@@ -1101,7 +1083,9 @@ OnXSecondBreakpoint(ExpProcess *proc, LPDEBUG_EVENT pDebEvent)
 			  retbuf, sizeof(retbuf));
 
     base = FirstContext.Eip;
-    if (!WriteSubprocessMemory(proc, (PVOID) base, FirstPage, sizeof(InjectCode))) {
+    if (!WriteSubprocessMemory
+           (proc, (PVOID) base, FirstPage, sizeof(InjectCode)))
+    {
 	EXP_LOG("Error writing subprocess memory\n", NULL);
     }
     SetThreadContext(FirstThread, &FirstContext);
@@ -1149,9 +1133,6 @@ OnXBreakpoint(ExpProcess *proc, LPDEBUG_EVENT pDebEvent)
     assert(tinfo != NULL);
 
     exceptInfo = &pDebEvent->u.Exception;
-#if 0
-    fprintf(stderr, "OnXBreakpoint: proc=0x%x, count=%d, addr=0x%08x\n", proc, proc->nBreakCount, exceptInfo->ExceptionRecord.ExceptionAddress);
-#endif
 
     pbrkpt = NULL;
     for (brkpt = proc->brkptList; brkpt != NULL;
@@ -1165,12 +1146,6 @@ OnXBreakpoint(ExpProcess *proc, LPDEBUG_EVENT pDebEvent)
 	    }
 	}
     }
-#if 0 /* Allow user breakpoints to be hit when we are not debugging */
-    if (brkpt == NULL) {
-	fprintf(stderr, "OnXBreakpoint: proc=0x%x, count=%d, addr=0x%08x\n", proc, proc->nBreakCount, exceptInfo->ExceptionRecord.ExceptionAddress);
-    }
-    assert(brkpt != NULL);
-#endif
 
     context.ContextFlags = CONTEXT_FULL;
     GetThreadContext(tinfo->hThread, &context);
@@ -1189,7 +1164,8 @@ OnXBreakpoint(ExpProcess *proc, LPDEBUG_EVENT pDebEvent)
 	tinfo->context = &context;
 
 	if (brkpt->breakInfo->dwFlags & EXP_BREAK_IN) {
-	    brkpt->breakInfo->breakProc(proc, tinfo, brkpt, &context.Eax, EXP_BREAK_IN);
+	    brkpt->breakInfo->breakProc
+              (proc, tinfo, brkpt, &context.Eax, EXP_BREAK_IN);
 	}
 
 	/*
@@ -1230,7 +1206,8 @@ OnXBreakpoint(ExpProcess *proc, LPDEBUG_EVENT pDebEvent)
 	 * Make the callback with the params and the return value
 	 */
 	if (brkpt->breakInfo->dwFlags & EXP_BREAK_OUT) {
-	    brkpt->breakInfo->breakProc(proc, tinfo, brkpt, &context.Eax, EXP_BREAK_OUT);
+	    brkpt->breakInfo->breakProc
+             (proc, tinfo, brkpt, &context.Eax, EXP_BREAK_OUT);
 	}
 	context.Eip = brkpt->origRetAddr;
 
@@ -1386,13 +1363,10 @@ OnXSecondChanceException(ExpProcess *proc,  LPDEBUG_EVENT pDebEvent)
 	    } else {
 		s = "";
 	    }
-/*             fprintf(stderr, "%.20s %08x\t%s+%X\n", s, frame.AddrPC.Offset, */
-/* 		pSymbol->Name, displacement); */
 	    sprintf(buf, "%.20s %08x\t%s+%X", s, frame.AddrPC.Offset,
 		pSymbol->Name, displacement);
 	    EXP_LOG("%s\n", buf);
 	} else {
-/* 	    fprintf(stderr, "%08x\n", frame.AddrPC.Offset); */
 	    EXP_LOG("%08x\t\n", frame.AddrPC.Offset);
 	}
     }
@@ -1428,7 +1402,8 @@ OnXSingleStep(ExpProcess *proc, LPDEBUG_EVENT pDebEvent)
      * Now, we need to restore the breakpoint that we had removed.
      */
     code = 0xcc;
-    WriteSubprocessMemory(proc, proc->lastBrkpt->codePtr, &code, sizeof(UCHAR));
+    WriteSubprocessMemory
+      (proc, proc->lastBrkpt->codePtr, &code, sizeof(UCHAR));
 }
 
 /*
@@ -1529,7 +1504,8 @@ OnXLoadDll(ExpProcess *proc, LPDEBUG_EVENT pDebEvent)
      */
     ptr = (PVOID) (base + dataDir.VirtualAddress);
     ped = (PIMAGE_EXPORT_DIRECTORY) ptr;
-    ReadSubprocessMemory(proc, ptr, &exportDir, sizeof(IMAGE_EXPORT_DIRECTORY));
+    ReadSubprocessMemory
+      (proc, ptr, &exportDir, sizeof(IMAGE_EXPORT_DIRECTORY));
 
     /*
      * See if this is a DLL we are interested in
@@ -1705,7 +1681,8 @@ SetBreakpointAtAddr(ExpProcess *proc, ExpBreakInfo *info, PVOID funcPtr)
     bpt = (ExpBreakpoint *) malloc(sizeof(ExpBreakpoint));
     bpt->returning = FALSE;
     bpt->codePtr = funcPtr;
-    bpt->codeReturnPtr = (PVOID) (proc->offset + (DWORD) proc->pSubprocessMemory);
+    bpt->codeReturnPtr =
+      (PVOID) (proc->offset + (DWORD) proc->pSubprocessMemory);
     bpt->origRetAddr = 0;
     bpt->breakInfo = info;
     bpt->threadInfo = NULL;
@@ -2050,9 +2027,12 @@ OnFillConsoleOutputCharacter(ExpProcess *proc, ExpThreadInfo *threadInfo,
 	}
     }
     if (GetConsoleScreenBufferInfo(HConsole, &info) == FALSE) {
-	char errbuf[200];
-	wsprintfA(errbuf, "Call to GetConsoleScreenBufferInfo failed: handle=0x%08x, err=0x%08x", HConsole, GetLastError());
-	EXP_LOG("%s\n", errbuf);
+      char errbuf[200];
+      wsprintfA
+        (errbuf,
+        "Call to GetConsoleScreenBufferInfo failed: handle=0x%08x, err=0x%08x",
+         HConsole, GetLastError());
+      EXP_LOG("%s\n", errbuf);
     } else {
 	CursorPosition = info.dwCursorPosition;
 	wsprintfA(&buf[bufpos], "\033[%d;%dH",
@@ -3007,11 +2987,6 @@ OnWriteConsoleOutput(ExpProcess *proc, ExpThreadInfo *threadInfo,
 
     n = bufferSize.X * bufferSize.Y * sizeof(CHAR_INFO);
     charBuf = malloc(n);
-
-#if 0
-    wsprintfA((char *) charBuf, "writeRegion: (%d,%d) to (%d,%d)   bufferCoord: (%d,%d)   bufferSize: (%d,%d)", writeRegion.Left, writeRegion.Top, writeRegion.Right, writeRegion.Bottom, bufferCoord.X, bufferCoord.Y, bufferSize.X, bufferSize.Y);
-    ExpSyslog("Debug 0: %s", charBuf);
-#endif
 
     ReadSubprocessMemory(proc, ptr, charBuf, n);
 
