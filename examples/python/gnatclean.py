@@ -28,7 +28,10 @@ def get_cleaner (root):
    else:
       return root.get_attribute_as_string ("gnat", package="ide") + " clean"
 
-def clean_project (recursively=False, root=Project.root()):
+def clean_project (recursively=False, root=None):
+   if root == None:
+      root = Project.root()
+
    # Clear the Messages window
    msg = Console ("Messages", accept_input=False)
    msg.clear()
