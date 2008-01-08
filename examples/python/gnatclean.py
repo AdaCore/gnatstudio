@@ -29,8 +29,9 @@ def get_cleaner (root):
       return root.get_attribute_as_string ("gnat", package="ide") + " clean"
 
 def clean_project (recursively=False, root=None):
-   if root == None:
-      root = Project.root()
+   prj = root
+   if not prj:
+      prj = Project.root()
 
    # Clear the Messages window
    msg = Console ("Messages", accept_input=False)
@@ -38,8 +39,8 @@ def clean_project (recursively=False, root=None):
 
    # Get the cleaning tool
    scenario_variables = Project.scenario_variables_cmd_line (prefix="-X")
-   cleaner = get_cleaner (root)
-   cmd = cleaner + " -P" + root.file().name()
+   cleaner = get_cleaner (prj)
+   cmd = cleaner + " -P" + prj.file().name()
    if recursively:
       cmd = cmd + " -r"
    cmd = cmd + " " + scenario_variables
