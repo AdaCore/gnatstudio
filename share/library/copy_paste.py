@@ -87,7 +87,10 @@ GPS.Menu.create ("/Edit/Copy with line numbers",
                  add_before=False)
 
 def on_area (context):
-   buf = GPS.EditorBuffer.get()
+   buf = GPS.EditorBuffer.get(open=False)
+   if not buf:
+      return False
+
    start = buf.selection_start()
    end = buf.selection_end()
    return start != end
