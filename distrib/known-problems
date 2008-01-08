@@ -1,8 +1,9 @@
 Known Problems fixed in GPS 4.2.1
 
 - H106-002 Greyed out Cut/Copy contextual menus
-  Problem:    When the selection actually corresponds to an entity, the Copy
-              and Cut contextual menus are greyed out.
+  Problem:    When using the copy_paste.py plug-in, and the current selection
+              corresponds to an entity, the Copy and Cut contextual menus are
+              greyed out.
   Workaound:  Use the toolbar icons or the /Edit/Copy and /Edit/Cut menus.
 
 - H104-010: Wrong hyper links in Python Extensions documentation
