@@ -247,6 +247,15 @@
     <icon id="gps-icon-32"            file="../icons/32px/gps_32.png" />
     <icon id="gps-icon-48"            file="../icons/48px/gps_48.png" />
 
+    <!-- Code coverage icons -->
+
+    <icon id="gps-gcov-covered"       file="../icons/9px/executed_code.png">
+       <alternate                     file="../icons/9px/executed_code.png" size="1" />
+    </icon>
+
+    <icon id="gps-gcov-non-covered"   file="../icons/9px/non_executed_code.png">
+       <alternate                     file="../icons/9px/non_executed_code.png" size="1" />
+    </icon>
   </stock>
 
 </GPS>
