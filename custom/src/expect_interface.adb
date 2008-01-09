@@ -34,6 +34,7 @@ with Gtk.Main;                use Gtk.Main;
 
 with Custom_Module;           use Custom_Module;
 with GPS.Intl;                use GPS.Intl;
+with GPS.Kernel.Console;      use GPS.Kernel.Console;
 with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with GPS.Kernel.Remote;       use GPS.Kernel.Remote;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
@@ -61,6 +62,7 @@ package body Expect_Interface is
    Progress_Total_Cst   : aliased constant String := "progress_total";
    Before_Kill_Cst      : aliased constant String := "before_kill";
    Remote_Server_Cst    : aliased constant String := "remote_server";
+   Show_Command_Cst     : aliased constant String := "show_command";
 
    Constructor_Args : constant Cst_Argument_List :=
                         (2  => Command_Cst'Access,
@@ -72,7 +74,8 @@ package body Expect_Interface is
                          8  => Progress_Current_Cst'Access,
                          9  => Progress_Total_Cst'Access,
                          10 => Before_Kill_Cst'Access,
-                         11 => Remote_Server_Cst'Access);
+                         11 => Remote_Server_Cst'Access,
+                         12 => Show_Command_Cst'Access);
 
    Send_Args : constant Cst_Argument_List :=
                  (Command_Cst'Access, Add_Lf_Cst'Access);
@@ -86,12 +89,15 @@ package body Expect_Interface is
 
    type Custom_Action_Record is new Root_Command with record
       Pattern          : Pattern_Matcher_Access;
+      Server           : Server_Type;
       Command          : Argument_List_Access;
+      Show_Command     : Boolean;
       On_Match         : Subprogram_Type;
       On_Exit          : Subprogram_Type;
       Before_Kill      : Subprogram_Type;
       Pd               : Process_Descriptor_Access;
       Status           : Integer := 0;
+      Started          : Boolean;
       Terminated       : Boolean;
       Inst             : Class_Instance;
       Progress_Regexp  : Pattern_Matcher_Access;
@@ -242,10 +248,49 @@ package body Expect_Interface is
    function Execute
      (Command : access Custom_Action_Record) return Command_Return_Type
    is
+      Res       : Boolean;
       Result    : Expect_Match;
       All_Match : constant Pattern_Matcher := Compile (".+", Single_Line);
    begin
-      if Command.Pd /= null then
+      if not Command.Started then
+         Command.Started := True;
+
+         declare
+            Kernel : constant Kernel_Handle :=
+                       Get_Kernel (Custom_Module_ID.all);
+         begin
+            Spawn
+              (Kernel,
+               Command.Command.all,
+               Command.Server,
+               Command.Pd,
+               Res,
+               Console      => Get_Console (Kernel),
+               Show_Command => Command.Show_Command);
+         exception
+            when Invalid_Process =>
+               Res := False;
+         end;
+
+         if Res then
+            if Active (Me) then
+               Add_Filter (Command.Pd.all,
+                           Filter => In_Trace_Filter'Access,
+                           Filter_On => Input);
+               Add_Filter (Command.Pd.all,
+                           Filter => Out_Trace_Filter'Access,
+                           Filter_On => Output);
+               Add_Filter (Command.Pd.all,
+                           Filter => Died_Trace_Filter'Access,
+                           Filter_On => Died);
+            end if;
+
+            return Execute_Again;
+         else
+            return Failure;
+         end if;
+
+      elsif Command.Pd /= null then
          Expect (Command.Pd.all, Result, All_Match, Timeout => 1);
          if Result /= Expect_Timeout then
             Output_Cb (Custom_Action_Access (Command),
@@ -695,6 +740,21 @@ package body Expect_Interface is
       Trace (Me, "Died: " & Str);
    end Died_Trace_Filter;
 
+   Id : Natural := 0;
+   function Get_New_Queue_Id return String;
+   --  Returns a new unique queue id
+
+   ----------------------
+   -- Get_New_Queue_Id --
+   ----------------------
+
+   function Get_New_Queue_Id return String is
+      Str_Id : constant String := Natural'Image (Id);
+   begin
+      Id := Id + 1;
+      return "expect interface" & Str_Id;
+   end Get_New_Queue_Id;
+
    --------------------------
    -- Custom_Spawn_Handler --
    --------------------------
@@ -711,6 +771,7 @@ package body Expect_Interface is
       E               : Exit_Type;
       Created_Command : Scheduled_Command_Access;
       Dead            : Boolean;
+      Q_Id            : constant String := Get_New_Queue_Id;
       pragma Unreferenced (E, Dead);
 
    begin
@@ -725,8 +786,8 @@ package body Expect_Interface is
             Show_Bar        : constant Boolean := Nth_Arg (Data, 6, True);
             Progress_Regexp : constant String := Nth_Arg (Data, 7, "");
             Remote_Server   : constant String := Nth_Arg (Data, 11, "");
-            Server          : Server_Type;
             Success         : Boolean;
+
          begin
             if Command_Line = "" then
                Set_Error_Msg (Data, -"Argument for command cannot be empty");
@@ -736,13 +797,14 @@ package body Expect_Interface is
             Trace (Me, "Spawning Show_Bar=" & Boolean'Image (Show_Bar) &
                    ": "& Command_Line);
 
-            D             := new Custom_Action_Record;
-            D.Command     := Argument_String_To_List_With_Triple_Quotes
+            D              := new Custom_Action_Record;
+            D.Command      := Argument_String_To_List_With_Triple_Quotes
               (Command_Line);
-            D.On_Match    := Nth_Arg (Data, 4, null);
-            D.On_Exit     := Nth_Arg (Data, 5, null);
-            D.Before_Kill := Nth_Arg (Data, 10, null);
-            D.Inst        := Inst;
+            D.On_Match     := Nth_Arg (Data, 4, null);
+            D.On_Exit      := Nth_Arg (Data, 5, null);
+            D.Before_Kill  := Nth_Arg (Data, 10, null);
+            D.Show_Command := Nth_Arg (Data, 12, False);
+            D.Inst         := Inst;
 
             if Progress_Regexp /= "" then
                D.Progress_Regexp := new Pattern_Matcher'
@@ -758,52 +820,86 @@ package body Expect_Interface is
 
             --  Get the Server_Type value
             begin
-               Server := Server_Type'Value (Remote_Server);
+               D.Server := Server_Type'Value (Remote_Server);
             exception
                when Constraint_Error =>
-                  Server := GPS_Server;
+                  D.Server := GPS_Server;
             end;
 
-            --  All the parameters are correct: launch the process
-            begin
-               Spawn
-                 (Kernel,
-                  D.Command.all,
-                  Server,
-                  D.Pd,
-                  Success);
-            exception
-               when Invalid_Process =>
-                  Success := False;
-            end;
+            if not Is_Local (D.Server) then
+               --  In case of remote execution, we cannot spawn the process
+               --  here because we need to first synchronize the files between
+               --  the local host and the remote server. We will spawn it later
+               --  when the first execution of the D command will occur.
+               D.Started := False;
+               Synchronize (Kernel, GPS_Server, D.Server,
+                            Blocking       => False,
+                            Print_Command  => D.Show_Command,
+                            Print_Output   => False,
+                            Sync_Once_Dirs => False,
+                            Queue_Id       => Q_Id);
+            else
+               D.Started := True;
 
-            if Success then
-               if Active (Me) then
-                  Add_Filter (D.Pd.all,
-                              Filter => In_Trace_Filter'Access,
-                              Filter_On => Input);
-                  Add_Filter (D.Pd.all,
-                              Filter => Out_Trace_Filter'Access,
-                              Filter_On => Output);
-                  Add_Filter (D.Pd.all,
-                              Filter => Died_Trace_Filter'Access,
-                              Filter_On => Died);
+               begin
+                  Spawn
+                    (Kernel,
+                     D.Command.all,
+                     D.Server,
+                     D.Pd,
+                     Success,
+                     Console      => Get_Console (Kernel),
+                     Show_Command => D.Show_Command);
+               exception
+                  when Invalid_Process =>
+                     Success := False;
+               end;
+
+               if not Success then
+                  Free (D);
+                  Set_Error_Msg
+                    (Data,
+                     -"Could not launch command """ & Command_Line & """");
+
+                  return;
                end if;
 
-               Created_Command := Launch_Background_Command
-                 (Kernel   => Kernel,
-                  Command  => D,
-                  Active   => False,
-                  Show_Bar => Show_Bar);
-
-               Set_Instance (Created_Command, Get_Script (Data), Inst);
-               Set_Data
-                 (Inst, Process_Class_Name, Action_Property'(Action => D));
-            else
-               Free (D);
-               Set_Error_Msg
-                 (Data, -"Could not launch command """ & Command_Line & """");
+               if Active (Me) then
+                  Add_Filter
+                    (D.Pd.all,
+                     Filter => In_Trace_Filter'Access,
+                     Filter_On => Input);
+                  Add_Filter
+                    (D.Pd.all,
+                     Filter => Out_Trace_Filter'Access,
+                     Filter_On => Output);
+                  Add_Filter
+                    (D.Pd.all,
+                     Filter => Died_Trace_Filter'Access,
+                     Filter_On => Died);
+               end if;
             end if;
+
+            --  Now launch the command
+            Created_Command := Launch_Background_Command
+              (Kernel   => Kernel,
+               Command  => D,
+               Active   => False,
+               Show_Bar => Show_Bar,
+               Queue_Id => Q_Id);
+
+            if not Is_Local (D.Server) then
+               Synchronize (Kernel, D.Server, GPS_Server,
+                            Blocking       => False,
+                            Print_Command  => D.Show_Command,
+                            Print_Output   => False,
+                            Sync_Once_Dirs => False,
+                            Queue_Id       => Q_Id);
+            end if;
+
+            Set_Instance (Created_Command, Get_Script (Data), Inst);
+            Set_Data
+              (Inst, Process_Class_Name, Action_Property'(Action => D));
          end;
 
       elsif Command = "send" then
@@ -899,7 +995,7 @@ package body Expect_Interface is
       Register_Command
         (Kernel, Constructor_Method,
          Minimum_Args => 1,
-         Maximum_Args => 11,
+         Maximum_Args => 12,
          Class        => Process_Class,
          Handler      => Custom_Spawn_Handler'Access);
       Register_Command

@@ -40,12 +40,11 @@ def clean_project (recursively=False, root=None):
    # Get the cleaning tool
    scenario_variables = Project.scenario_variables_cmd_line (prefix="-X")
    cleaner = get_cleaner (prj)
-   cmd = cleaner + " -P" + prj.file().name()
+   cmd = cleaner + " -P" + prj.file().name("Build_Server")
    if recursively:
       cmd = cmd + " -r"
    cmd = cmd + " " + scenario_variables
-   msg.write (cmd + "\n")
-   p = Process (cmd, on_exit=on_exit, remote_server="Build_Server")
+   p = Process (cmd, on_exit=on_exit, remote_server="Build_Server", show_command=True)
 
 def clean_root_project (menu):
    clean_project()

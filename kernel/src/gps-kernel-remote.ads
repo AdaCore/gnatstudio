@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006-2007, AdaCore           --
+--                        Copyright (C) 2006-2008, AdaCore           --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -41,12 +41,15 @@ package GPS.Kernel.Remote is
       From           : Server_Type;
       To             : Server_Type;
       Blocking       : Boolean;
+      Print_Command  : Boolean;
       Print_Output   : Boolean;
       Sync_Once_Dirs : Boolean;
       Queue_Id       : String  := "");
    --  Perform a file system synchronisation between From and To.
    --  If Blocking is set, the call is synchronous. Else an asynchronous
    --  command is used.
+   --  If Print_Command is set, then asynchronous command will print the rsync
+   --  command line on the Messages console.
    --  If Print_Output is set, then asynchronous command will print rsync's
    --  output on the Messages console.
    --  If Sync_Once_Dirs is set, then mirror paths marked as 'sync once' will
@@ -59,6 +62,7 @@ package GPS.Kernel.Remote is
       From           : String;
       To             : String;
       Blocking       : Boolean;
+      Print_Command  : Boolean;
       Print_Output   : Boolean;
       Sync_Once_Dirs : Boolean;
       Queue_Id       : String  := "");
@@ -106,21 +110,23 @@ package GPS.Kernel.Remote is
      (Tool_Name_Length, Src_Name_Length, Dest_Name_Length, Queue_Id_Length,
       Src_Path_Length, Dest_Path_Length : Natural)
    is new Hooks_Data with record
-      Synchronous  : Boolean;
+      Synchronous   : Boolean;
       --  Tells if the synchronisation call shall be performed synchronously
-      Print_Output : Boolean;
+      Print_Output  : Boolean;
       --  Tells if rsync output is displayed on the Messages window.
-      Tool_Name    : String (1 .. Tool_Name_Length);
+      Print_Command : Boolean;
+      --  Tells if rsync command is displayed on thee Messages window.
+      Tool_Name     : String (1 .. Tool_Name_Length);
       --  What hook function shall perform the action
-      Src_Name     : String (1 .. Src_Name_Length);
+      Src_Name      : String (1 .. Src_Name_Length);
       --  Source server nickname
-      Dest_Name    : String (1 .. Dest_Name_Length);
+      Dest_Name     : String (1 .. Dest_Name_Length);
       --  Destination server nickname
-      Queue_Id     : String (1 .. Queue_Id_Length);
+      Queue_Id      : String (1 .. Queue_Id_Length);
       --  Queue_Id used to enqueue the sync command
-      Src_Path     : String (1 .. Src_Path_Length);
+      Src_Path      : String (1 .. Src_Path_Length);
       --  Source path
-      Dest_Path    : String (1 .. Dest_Path_Length);
+      Dest_Path     : String (1 .. Dest_Path_Length);
       --  Destination path
    end record;
 

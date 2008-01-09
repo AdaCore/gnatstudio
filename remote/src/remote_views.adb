@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006-2007                      --
---                              AdaCore                              --
+--                 Copyright (C) 2006-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1004,6 +1003,7 @@ package body Remote_Views is
          From           => Str_From_Server (User.From),
          To             => Str_From_Server (User.To),
          Blocking       => False,
+         Print_Command  => True,
          Print_Output   => True,
          Sync_Once_Dirs => True,
          Queue_Id       => "");
