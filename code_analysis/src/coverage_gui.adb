@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2007, AdaCore                 --
+--                  Copyright (C) 2006-2008, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -33,6 +33,7 @@ with Language.Tree;             use Language.Tree;
 with Language_Handlers;         use Language_Handlers;
 with String_Utils;              use String_Utils;
 with Code_Coverage;             use Code_Coverage;
+with Code_Analysis_GUI;
 
 package body Coverage_GUI is
 
@@ -211,12 +212,14 @@ package body Coverage_GUI is
    is
       Line_Info  : Line_Information_Data;
    begin
+      Code_Analysis_GUI.Initialize_Graphics (Kernel);
+
       if File_Node.Analysis_Data.Coverage_Data.Status = Valid then
          Line_Info  := new Line_Information_Array (File_Node.Lines'Range);
 
          for J in File_Node.Lines'Range loop
             if File_Node.Lines (J) /= Null_Line then
-               Line_Info (J).Text := Line_Coverage_Info
+               Line_Info (J) := Line_Coverage_Info
                  (File_Node.Lines (J).Analysis_Data.Coverage_Data,
                   Binary_Coverage_Mode);
             else

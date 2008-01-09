@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2007, AdaCore                 --
+--                  Copyright (C) 2006-2008, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -83,6 +83,14 @@ package Code_Analysis_GUI is
    Progress_Bar_Width_Cst : constant Gint := 150;
    --  Constant used to set the width of the progress bars of the analysis
    --  report
+
+   Covered_Line_Pixbuf   : Gdk_Pixbuf := null;
+   Uncovered_Line_Pixbuf : Gdk_Pixbuf := null;
+   --  Pixbufs containing the line information icons.
+   --  Call Initialize_Graphics before referencing these variables.
+
+   procedure Initialize_Graphics (Kernel : Kernel_Handle);
+   --  Initialize the code coverage icons.
 
    type Code_Analysis_Icons is record
       Prj_Pixbuf  : Gdk.Pixbuf.Gdk_Pixbuf;
