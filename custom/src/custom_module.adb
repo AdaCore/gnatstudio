@@ -1887,7 +1887,7 @@ package body Custom_Module is
                Gtk_New (Item);
             else
                Menu := new Subprogram_Type_Menu_Record;
-               Gtk.Menu_Item.Initialize
+               Gtk.Menu_Item.Initialize_With_Mnemonic
                  (Menu, Label => Unprotect (Path (Last + 1 .. Path'Last)));
                Menu.On_Activate := Nth_Arg (Data, 2, null);
                Widget_Callback.Connect
@@ -1921,7 +1921,7 @@ package body Custom_Module is
          declare
             Inst : constant Class_Instance := Nth_Arg (Data, 1, Menu_Class);
             W    : constant Gtk_Widget     :=
-              Gtk_Widget (GObject'(Get_Data (Inst)));
+                     Gtk_Widget (GObject'(Get_Data (Inst)));
             Menu : constant Gtk_Menu_Item  := Gtk_Menu_Item (W);
             Label : Gtk_Accel_Label;
          begin
