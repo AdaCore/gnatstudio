@@ -1,9 +1,6 @@
 # This is a plug-in that handles cleaning project trees. It drives the
 # appropriate tool depending on the user preferences and project properties to
 # configure the builder.
-#
-# Note that this plug-in is not fully functional yet: it won't work in a remote
-# context. See GC19-019.
 
 from GPS import *
 
