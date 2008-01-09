@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---                     Copyright (C) 2006-2007, AdaCore                     --
+--                     Copyright (C) 2006-2008, AdaCore                     --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -751,9 +751,12 @@ package body GNAT.Expect.TTY.Remote is
          --  Wait for connection confirmation
 
          Wait_For_Prompt (True);
-         Send (Descriptor.Machine.Sessions (Session_Nb).Pd, "");
          --  Send just a LF to force Windows console to scroll, and thus
          --  correctly init the expect interface... strange...
+         My_Send
+           (Descriptor.Machine.Sessions (Session_Nb).Pd,
+            Descriptor.Machine.Desc.Dbg,
+            "");
          Wait_For_Prompt (True);
 
          --  Determine if the machine echoes commands
@@ -764,8 +767,10 @@ package body GNAT.Expect.TTY.Remote is
                   Descriptor.Shell.No_Echo_Cmd.all,
                   Input);
             end if;
-            Send (Descriptor.Machine.Sessions (Session_Nb).Pd,
-                  Descriptor.Shell.No_Echo_Cmd.all);
+            My_Send
+              (Descriptor.Machine.Sessions (Session_Nb).Pd,
+               Descriptor.Machine.Desc.Dbg,
+               Descriptor.Shell.No_Echo_Cmd.all);
             Wait_For_Prompt (True);
          end if;
 
@@ -776,8 +781,10 @@ package body GNAT.Expect.TTY.Remote is
                       Input);
             end if;
 
-            Send (Descriptor.Machine.Sessions (Session_Nb).Pd,
-                  Test_Echo_Cmd);
+            My_Send
+              (Descriptor.Machine.Sessions (Session_Nb).Pd,
+               Descriptor.Machine.Desc.Dbg,
+               Test_Echo_Cmd);
             Expect (Descriptor.Machine.Sessions (Session_Nb).Pd, Res,
                     Echoing_Regexps,
                     Descriptor.Machine.Desc.Timeout, False);
@@ -816,8 +823,10 @@ package body GNAT.Expect.TTY.Remote is
                       Input);
             end if;
 
-            Send (Descriptor.Machine.Sessions (Session_Nb).Pd,
-                  Descriptor.Shell.Init_Cmds (J).all);
+            My_Send
+              (Descriptor.Machine.Sessions (Session_Nb).Pd,
+               Descriptor.Machine.Desc.Dbg,
+               Descriptor.Shell.Init_Cmds (J).all);
             Wait_For_Prompt (True);
          end loop;
 
@@ -831,8 +840,10 @@ package body GNAT.Expect.TTY.Remote is
                          Input);
                end if;
 
-               Send (Descriptor.Machine.Sessions (Session_Nb).Pd,
-                     Descriptor.Machine.Desc.Extra_Init_Commands (J).all);
+               My_Send
+                 (Descriptor.Machine.Sessions (Session_Nb).Pd,
+                  Descriptor.Machine.Desc.Dbg,
+                  Descriptor.Machine.Desc.Extra_Init_Commands (J).all);
                Wait_For_Prompt;
             end loop;
          end if;
@@ -1226,7 +1237,12 @@ package body GNAT.Expect.TTY.Remote is
                if Descriptor.Shell.Get_Status_Cmd /= null then
                   --  Try to retrieve the terminated program's status
 
-                  Send (Desc, Descriptor.Shell.Get_Status_Cmd.all);
+                  if Descriptor.Use_Cr_Lf then
+                     Send (Desc,
+                           Descriptor.Shell.Get_Status_Cmd.all & ASCII.CR);
+                  else
+                     Send (Desc, Descriptor.Shell.Get_Status_Cmd.all);
+                  end if;
 
                   if Descriptor.Machine.Desc.Dbg /= null then
                      Print (Descriptor.Machine.Desc.Dbg,
