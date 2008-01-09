@@ -27,6 +27,8 @@ with Gtk.Tree_Model;         use Gtk.Tree_Model;
 with Language.Tree.Database; use Language.Tree.Database;
 with Code_Analysis;          use Code_Analysis;
 
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+
 package Code_Coverage is
 
    procedure Set_Error
@@ -77,7 +79,7 @@ package Code_Coverage is
 
    function Line_Coverage_Info
      (Coverage : Coverage_Access;
-      Bin_Mode : Boolean := False) return String_Access;
+      Bin_Mode : Boolean := False) return Line_Information_Record;
    --  Return a String_Access pointing on a message describing the coverage
    --  state of the line from which the Coverage record had been extracted
    --  If Bin_Mode is True, then the returned messages can only be between

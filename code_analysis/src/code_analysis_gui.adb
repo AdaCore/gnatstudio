@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2007, AdaCore                 --
+--                  Copyright (C) 2006-2008, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -509,7 +509,7 @@ package body Code_Analysis_GUI is
 
          for J in File_Node.Lines'Range loop
             if File_Node.Lines (J) /= Null_Line then
-               Line_Info (J).Text := Line_Coverage_Info
+               Line_Info (J) := Line_Coverage_Info
                  (File_Node.Lines (J).Analysis_Data.Coverage_Data,
                   Binary_Coverage_Mode);
             else
@@ -580,5 +580,26 @@ package body Code_Analysis_GUI is
             Mode => GPS.Kernel.Console.Info);
       end if;
    end List_File_Uncovered_Lines;
+
+   -------------------------
+   -- Initialize_Graphics --
+   -------------------------
+
+   procedure Initialize_Graphics (Kernel : Kernel_Handle) is
+   begin
+      if Covered_Line_Pixbuf /= null then
+         return;
+      end if;
+
+      --  Constants here correspond to definitions in icons.xml.
+
+      Covered_Line_Pixbuf := Render_Icon
+        (Get_Main_Window (Kernel),
+         "gps-gcov-covered", Gtk.Enums.Icon_Size_Menu);
+
+      Uncovered_Line_Pixbuf := Render_Icon
+        (Get_Main_Window (Kernel),
+         "gps-gcov-non-covered", Gtk.Enums.Icon_Size_Menu);
+   end Initialize_Graphics;
 
 end Code_Analysis_GUI;

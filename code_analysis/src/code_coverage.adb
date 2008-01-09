@@ -381,43 +381,45 @@ package body Code_Coverage is
 
    function Line_Coverage_Info
      (Coverage : Coverage_Access;
-      Bin_Mode : Boolean := False) return String_Access
+      Bin_Mode : Boolean := False) return Line_Information_Record
    is
       Pango_Markup_To_Open_1 : constant String
         := "<span foreground=""";
       Pango_Markup_To_Open_2 : constant String := """>";
       Pango_Markup_To_Close : constant String := "</span>";
+
+      Result : Line_Information_Record;
+
    begin
       if Bin_Mode then
          case Coverage.Coverage is
-         when 0 => return new
-              String'(Pango_Markup_To_Open_1
-                      & "red"
-                      & Pango_Markup_To_Open_2
-                      & "#"
-                      & Pango_Markup_To_Close);
-         when others => return new
-              String'(Pango_Markup_To_Open_1
-                      & "blue"
-                      & Pango_Markup_To_Open_2
-                      & ("+")
-                      & Pango_Markup_To_Close);
+         when 0 =>
+            Result.Image := Uncovered_Line_Pixbuf;
+            Result.Tooltip_Text := new String'
+              (-"The code for this line has not been executed.");
+         when others =>
+            Result.Image := Covered_Line_Pixbuf;
+            Result.Tooltip_Text := new String'
+              (-"The code for this line has been executed.");
          end case;
       else
          case Coverage.Coverage is
-         when 0 => return new
+         when 0 =>
+            Result.Text := new
               String'(Pango_Markup_To_Open_1
                       & "red"
                       & Pango_Markup_To_Open_2
                       & "#"
                       & Pango_Markup_To_Close);
-         when 1 => return new
+         when 1 =>
+            Result.Text := new
               String'(Pango_Markup_To_Open_1
                       & "black"
                       & Pango_Markup_To_Open_2
                       & (-" 1 time ")
                       & Pango_Markup_To_Close);
-         when others => return new
+         when others =>
+            Result.Text := new
               String'(Pango_Markup_To_Open_1
                       & "black"
                       & Pango_Markup_To_Open_2
@@ -426,6 +428,8 @@ package body Code_Coverage is
                       & Pango_Markup_To_Close);
          end case;
       end if;
+
+      return Result;
    end Line_Coverage_Info;
 
    ---------------
