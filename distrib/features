@@ -15,6 +15,11 @@ of the feature.
 New features in GPS 4.2.1
 -------------------------
 
+NF-42-GC19-019 Support for remote operations from python (2008-01-10)
+
+  GPS.Process() and GPS.File.name() now support remote operations, allowing
+  a python script to spawn a process on a remote server.
+
 NF-42-GC14-012 Support for gprbuild (2007-12-15)
 
   GPS now supports by default gprbuild as its multi-language builder.
