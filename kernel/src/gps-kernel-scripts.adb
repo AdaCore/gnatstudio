@@ -1198,6 +1198,7 @@ package body GPS.Kernel.Scripts is
               (Data,
                Create_Project (Get_Script (Data),
                  Project_Information (Context)));
+
          elsif Has_File_Information (Context) then
             --  Since the editor doesn't provide the project, we emulate it
             --  here
@@ -1209,6 +1210,9 @@ package body GPS.Kernel.Scripts is
                     (Project_Registry (Get_Registry (Kernel).all),
                      File_Information (Context),
                      Root_If_Not_Found => False)));
+
+         else
+            Set_Error_Msg (Data, -"No project stored in the context");
          end if;
 
       elsif Command = "directory" then
