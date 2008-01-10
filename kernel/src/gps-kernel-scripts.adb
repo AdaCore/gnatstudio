@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2007, AdaCore                  --
+--                 Copyright (C) 2003-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -53,6 +53,8 @@ with Prj.Ext;                 use Prj.Ext;
 with Projects.Editor;         use Projects.Editor;
 with Projects.Registry;       use Projects.Registry;
 with Projects;                use Projects;
+with Remote;                  use Remote;
+with Remote.Path.Translator;  use Remote.Path.Translator;
 with String_List_Utils;
 with System;                  use System;
 with System.Address_Image;
@@ -210,6 +212,7 @@ package body GPS.Kernel.Scripts is
    Regexp_Cst     : aliased constant String := "regexp";
    On_Click_Cst   : aliased constant String := "on_click";
    Text_Cst       : aliased constant String := "text";
+   Server_Cst     : aliased constant String := "remote_server";
 
    Create_Link_Args         : constant Cst_Argument_List :=
      (1 => Regexp_Cst'Access, 2 => On_Click_Cst'Access);
@@ -228,6 +231,8 @@ package body GPS.Kernel.Scripts is
    File_Cmd_Parameters      : constant Cst_Argument_List :=
                                 (1 => Name_Cst'Access,
                                  2 => Local_Cst'Access);
+   File_Name_Parameters     : constant Cst_Argument_List :=
+                                (1 => Server_Cst'Access);
    File_Project_Parameters  : constant Cst_Argument_List :=
                                 (1 => Default_Cst'Access);
    File_Entities_Parameters  : constant Cst_Argument_List :=
@@ -867,8 +872,27 @@ package body GPS.Kernel.Scripts is
          end;
 
       elsif Command = "name" then
+         Name_Parameters (Data, File_Name_Parameters);
          Info := Get_Data (Data, 1);
-         Set_Return_Value (Data, Full_Name (Info).all);
+
+         declare
+            Server : Server_Type;
+         begin
+            --  Get the Server_Type value
+            begin
+               Server := Server_Type'Value (Nth_Arg (Data, 2, "GPS_Server"));
+            exception
+               when Constraint_Error =>
+                  Server := GPS_Server;
+            end;
+
+            if Is_Local (Server) then
+               Set_Return_Value (Data, Full_Name (Info).all);
+            else
+               Set_Return_Value
+                 (Data, To_Remote (Full_Name (Info).all, Server));
+            end if;
+         end;
 
       elsif Command = "project" then
          Name_Parameters (Data, File_Project_Parameters);
@@ -1673,6 +1697,8 @@ package body GPS.Kernel.Scripts is
          Handler      => Create_File_Command_Handler'Access);
       Register_Command
         (Kernel, "name",
+         Minimum_Args => 0,
+         Maximum_Args => 1,
          Class        => Get_File_Class (Kernel),
          Handler      => Create_File_Command_Handler'Access);
       Register_Command

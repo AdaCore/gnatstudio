@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006-2007, AdaCore           --
+--                        Copyright (C) 2006-2008, AdaCore           --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -41,12 +41,15 @@ package GPS.Kernel.Remote is
       From           : Server_Type;
       To             : Server_Type;
       Blocking       : Boolean;
+      Print_Command  : Boolean;
       Print_Output   : Boolean;
       Sync_Once_Dirs : Boolean;
       Queue_Id       : String  := "");
    --  Perform a file system synchronisation between From and To.
    --  If Blocking is set, the call is synchronous. Else an asynchronous
    --  command is used.
+   --  If Print_Command is set, then asynchronous command will print rsync's
+   --  command line on the Messages console.
    --  If Print_Output is set, then asynchronous command will print rsync's
    --  output on the Messages console.
    --  If Sync_Once_Dirs is set, then mirror paths marked as 'sync once' will
@@ -59,6 +62,7 @@ package GPS.Kernel.Remote is
       From           : String;
       To             : String;
       Blocking       : Boolean;
+      Print_Command  : Boolean;
       Print_Output   : Boolean;
       Sync_Once_Dirs : Boolean;
       Queue_Id       : String  := "");
@@ -110,6 +114,8 @@ package GPS.Kernel.Remote is
       --  Tells if the synchronisation call shall be performed synchronously
       Print_Output : Boolean;
       --  Tells if rsync output is displayed on the Messages window.
+      Print_Command : Boolean;
+      --  Tells if rsync command is displayed on the Messages window.
       Tool_Name    : String (1 .. Tool_Name_Length);
       --  What hook function shall perform the action
       Src_Name     : String (1 .. Src_Name_Length);

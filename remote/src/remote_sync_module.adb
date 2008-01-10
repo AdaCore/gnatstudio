@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006-2007                      --
+--                      Copyright (C) 2006-2008                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -400,7 +400,7 @@ package body Remote_Sync_Module is
          Command       => "rsync",
          Arguments     => Build_Arg,
          Console       => Get_Console (Kernel),
-         Show_Command  => True,
+         Show_Command  => Rsync_Data.Print_Command,
          Show_Output   => Real_Print_Output,
          Success       => Success,
          Line_By_Line  => False,

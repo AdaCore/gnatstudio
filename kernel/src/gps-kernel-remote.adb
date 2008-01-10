@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006-2007, AdaCore             --
+--                      Copyright (C) 2006-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -2566,15 +2566,15 @@ package body GPS.Kernel.Remote is
      (Data : Callback_Data'Class) return Hooks_Data'Class is
    begin
       declare
-         Tool_Name    : constant String  := Nth_Arg (Data, 2);
-         Src_Name     : constant String  := Nth_Arg (Data, 3);
-         Dest_Name    : constant String  := Nth_Arg (Data, 4);
-         Queue_Id     : constant String  := Nth_Arg (Data, 5);
-         Src_Path     : constant String  := Nth_Arg (Data, 6);
-         Dest_Path    : constant String  := Nth_Arg (Data, 7);
-         Synchronous  : constant Boolean := Nth_Arg (Data, 8);
-         Print_Output : constant Boolean := Nth_Arg (Data, 9);
-
+         Tool_Name     : constant String  := Nth_Arg (Data, 2);
+         Src_Name      : constant String  := Nth_Arg (Data, 3);
+         Dest_Name     : constant String  := Nth_Arg (Data, 4);
+         Queue_Id      : constant String  := Nth_Arg (Data, 5);
+         Src_Path      : constant String  := Nth_Arg (Data, 6);
+         Dest_Path     : constant String  := Nth_Arg (Data, 7);
+         Synchronous   : constant Boolean := Nth_Arg (Data, 8);
+         Print_Output  : constant Boolean := Nth_Arg (Data, 9);
+         Print_Command : constant Boolean := Nth_Arg (Data, 10);
       begin
          return Rsync_Hooks_Args'
            (Hooks_Data with
@@ -2591,7 +2591,8 @@ package body GPS.Kernel.Remote is
             Src_Path         => Src_Path,
             Dest_Path        => Dest_Path,
             Synchronous      => Synchronous,
-            Print_Output     => Print_Output);
+            Print_Output     => Print_Output,
+            Print_Command    => Print_Command);
       end;
    end From_Callback_Data_Sync_Hook;
 
@@ -2617,6 +2618,7 @@ package body GPS.Kernel.Remote is
       Set_Nth_Arg (D.all, 7, Data.Dest_Path);
       Set_Nth_Arg (D.all, 8, Data.Synchronous);
       Set_Nth_Arg (D.all, 9, Data.Print_Output);
+      Set_Nth_Arg (D.all, 10, Data.Print_Command);
       return D;
    end Create_Callback_Data;
 
@@ -2884,6 +2886,7 @@ package body GPS.Kernel.Remote is
          Synchronize
            (Kernel_Handle (Kernel), Build_Server, GPS_Server,
             Blocking       => True,
+            Print_Command  => False,
             Print_Output   => False,
             Sync_Once_Dirs => True);
       end if;
@@ -3456,6 +3459,7 @@ package body GPS.Kernel.Remote is
       From           : String;
       To             : String;
       Blocking       : Boolean;
+      Print_Command  : Boolean;
       Print_Output   : Boolean;
       Sync_Once_Dirs : Boolean;
       Queue_Id       : String  := "")
@@ -3487,13 +3491,14 @@ package body GPS.Kernel.Remote is
       --  Make sure that local nickname is empty string, not Local_Nickname
       if From = Local_Nickname then
          Synchronize
-           (Kernel, "", To, Blocking, Print_Output, Sync_Once_Dirs, Queue_Id);
+           (Kernel, "", To, Blocking,
+            Print_Command, Print_Output, Sync_Once_Dirs, Queue_Id);
          return;
 
       elsif To = Local_Nickname then
          Synchronize
-           (Kernel, From, "", Blocking, Print_Output, Sync_Once_Dirs,
-            Queue_Id);
+           (Kernel, From, "", Blocking,
+            Print_Command, Print_Output, Sync_Once_Dirs, Queue_Id);
          return;
       end if;
 
@@ -3569,7 +3574,8 @@ package body GPS.Kernel.Remote is
                   Dest_Path        =>
                     Ada.Strings.Unbounded.To_String (To_Path),
                   Synchronous      => Blocking,
-                  Print_Output     => Print_Output);
+                  Print_Output     => Print_Output,
+                  Print_Command    => Print_Command);
 
             begin
                Trace (Me, "run sync hook for " & Data.Src_Path);
@@ -3611,6 +3617,7 @@ package body GPS.Kernel.Remote is
       From           : Server_Type;
       To             : Server_Type;
       Blocking       : Boolean;
+      Print_Command  : Boolean;
       Print_Output   : Boolean;
       Sync_Once_Dirs : Boolean;
       Queue_Id       : String  := "") is
@@ -3620,6 +3627,7 @@ package body GPS.Kernel.Remote is
          From           => Get_Nickname (From),
          To             => Get_Nickname (To),
          Blocking       => Blocking,
+         Print_Command  => Print_Command,
          Print_Output   => Print_Output,
          Sync_Once_Dirs => Sync_Once_Dirs,
          Queue_Id       => Queue_Id);

@@ -945,8 +945,10 @@ local to the current directory.</description>
 
   <shell_doc name="GPS.File.name">
       <param name="self">The instance whose name you want to get</param>
+      <param name="remote_server" default="GPS_Server">A string. Possible values are "GPS_Server" (or empty string), "Build_Server", "Debug_Server" and "Execution_Server".</param>
       <return>A string, the name of the file</return>
-      <description>Return the name of the file associated with self. This is an absolute file name, including directories from the root of the filesystem</description>
+      <description>Return the name of the file associated with self. This is an absolute file name, including directories from the root of the filesystem.
+      If remote_server is set, then the function returns the equivalent path on the specified server. GPS_Server (default) is always the local machine.</description>
   </shell_doc>
 
   <shell_doc name="GPS.File.language">
@@ -3302,6 +3304,8 @@ My_Gdb()
       <param name="progress_current" default="1">An integer</param>
       <param name="progress_total" default="1">An integer</param>
       <param name="before_kill" default="None">A subprogram</param>
+      <param name="remote_server" default="">A string. Possible values are "GPS_Server", the empty string (equivalent to "GPS_Server"), "Build_Server", "Debug_Server", "Execution_Server".</param>
+      <param name="show_command" default="False">A boolean</param>
       <description>Spawn specified command. Command can include triple-quoted strings, similar to python, which will always be preserved as one argument.
 
  If regexp is not-empty and on_match_action is specified, launch on_match_action when regexp is found in the process output. If on_exit_action is specified, execute it when the process terminates. Return the ID of the spawned process.
@@ -3321,6 +3325,10 @@ on_exit is a subprogram called when the process has exited. You can no longer se
 
 If the parameter task_manager is set to True, the process will be visible in the GPS task manager, and can be interrupted or paused by users. Otherwise, it will simply be running in the background, and never visible to the user.
 If progress_regexp is specified, then the output of the process will be scanned for this regexp. The part that match will not be returned to on_match. Instead, they will be used to guess the current progress of the command. Two groups of parenthesis are parsed, the one at progress_current, and the one at progress_total. The number returned for each of these groups indicate the current progress of the command, and the total that must be reached for this command to complete. For instance, if your process outputs lines like "done 2 out of 5", you should create a regular expression that matches the 2 and the 5 to guess the current progress. As a result, a progress bar is displayed in the task manager of GPS, and will allow users to monitor commands.
+
+remote_server represents the server used to spawn the process. By default, the GPS_Server is used, which is always the local machine. See the section "Using GPS for Remote Development" in the GPS documentation for more information on this field.
+
+If show_command is set, then the command line used to spawn the new Process is displayed in the "Messages" console.
 
 An exception is raised if the process could not be spawned.</description>
       <see_also name="GPS.Process"/>
