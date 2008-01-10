@@ -2573,7 +2573,7 @@ If the line and column are not specified, then the current selection is returned
   <shell_doc name="GPS.FileContext.project">
       <param name="self">The instance of GPS.FileContext</param>
       <return>An instance of GPS.Project</return>
-      <description>Return the project in the context, or the root project if none was specified in the context</description>
+      <description>Return the project in the context, or the root project if none was specified in the context. Return an error if no project can be determined from the context</description>
   </shell_doc>
 
   <shell_doc name="GPS.FileContext.directory">

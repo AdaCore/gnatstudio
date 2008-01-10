@@ -53,11 +53,14 @@ def clean_context_project (context):
    clean_project (root=context.project())
 
 def on_filter (context):
-   if isinstance (context, FileContext) and context.project():
+   if isinstance (context, FileContext) and not isinstance (context, EntityContext) and not isinstance (context, AreaContext):
       try:
          context.directory()
       except:
-         return True
+         try:
+            context.file()
+         except:
+            return True
    return False
 
 def on_gps_started(h):
