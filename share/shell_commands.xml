@@ -3376,7 +3376,7 @@ If progress_regexp is specified, then the output of the process will be scanned 
 
 remote_server represents the server used to spawn the process. By default, the GPS_Server is used, which is always the local machine. See the section "Using GPS for Remote Development" in the GPS documentation for more information on this field.
 
-If show_command is set, then the command line used to spawn the new Process is displayed in the "Messages" console.</description>
+If show_command is set, then the command line used to spawn the new Process is displayed in the "Messages" console.
 
 An exception is raised if the process could not be spawned.</description>
       <see_also name="GPS.Process"/>
