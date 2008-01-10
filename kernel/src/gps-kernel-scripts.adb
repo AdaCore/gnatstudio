@@ -1209,6 +1209,8 @@ package body GPS.Kernel.Scripts is
                     (Project_Registry (Get_Registry (Kernel).all),
                      File_Information (Context),
                      Root_If_Not_Found => False)));
+         else
+            Set_Error_Msg (Data, -"No project stored in the context");
          end if;
 
       elsif Command = "directory" then
