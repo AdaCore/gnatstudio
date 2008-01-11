@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
+--                     Copyright (C) 2001-2008                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Config;
 with Commands.Interactive;      use Commands.Interactive;
 with Commands;                  use Commands;
 with GNAT.Scripts;              use GNAT.Scripts;
@@ -323,12 +324,12 @@ package body Vdiff2_Module is
          Filter => Filter_3_Files);
 
       Diff3_Cmd := Param_Spec_String
-      (Gnew_String
-       (Name  => "Diff-Utils-Diff3",
-        Nick  => -"Diff3 command",
-        Blurb => -("Command used to compute differences between three files."
-                         & " Arguments can also be specified"),
-            Default => "diff3"));
+        (Gnew_String
+           (Name  => "Diff-Utils-Diff3",
+            Nick  => -"Diff3 command",
+            Blurb => -("Command used to compute differences between three" &
+              "files. Arguments can also be specified"),
+            Default => Config.Default_Diff3_Cmd));
       Register_Property
         (Kernel, Param_Spec (Diff3_Cmd), -"Visual diff");
 
