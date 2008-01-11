@@ -21,6 +21,7 @@ OPAQUE_MDI=False
 HOST_TYPE=Unix
 PYTHON_LIBS=""
 DIFF_CMD="diff"
+DIFF3_CMD="diff3"
 PATCH_CMD="patch"
 EXECUTION_WINDOW=True
 
@@ -219,7 +220,8 @@ case "${host}" in
 	DEFAULT_FONT="tahoma 8"
 	PRINT_CMD=""
 	DIFF_CMD="gnudiff"
-	PATCH_CMD="patch"
+	DIFF3_CMD="gnudiff3"
+	PATCH_CMD="gnupatch --binary"
 	OPAQUE_MDI=True
 	HOST_TYPE=Windows
 	PATH_STYLE=CYGWIN
@@ -242,7 +244,7 @@ esac
 machfile="'\"machine/${machine}.h\"'"
 opsysfile="\\\"system/${opsys}.h\\\""
 
-# Set the version number of GPS/GVD
+# Set the version number of GPS
 AC_SUBST(GPS_VERSION)
 
 AC_SUBST(opsysfile)
@@ -260,6 +262,7 @@ AC_SUBST(DEFAULT_PS)
 AC_SUBST(DEFAULT_FONT)
 AC_SUBST(PRINT_CMD)
 AC_SUBST(DIFF_CMD)
+AC_SUBST(DIFF3_CMD)
 AC_SUBST(PATCH_CMD)
 AC_SUBST(OPAQUE_MDI)
 AC_SUBST(HOST_TYPE)

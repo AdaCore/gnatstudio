@@ -311,7 +311,7 @@ ac_includes_default="\
 ac_subdirs_all="$ac_subdirs_all kernel/src_info/sn"
 ac_subdirs_all="$ac_subdirs_all kernel/src_info/sn/snsrc"
 ac_subdirs_all="$ac_subdirs_all gnatlib"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os XMLADA_GPR CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP GNATMAKE SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB DVIPS MAKEINFO TEXI2DVI PKG_CONFIG GTK_GCC_FLAGS WITH_GTK GTK_CONFIG GTK_PREFIX GLIB_PREFIX ATK_PREFIX PANGO_PREFIX CAIRO_PREFIX GTKADA_SRC GTKADA_OBJ GTK_CFLAGS GTK_LIBS GTK_STATIC_LIBS GTKADA_PREFIX GPS_VERSION opsysfile TARGET EXEC_PREFIX STRIP_CR CAN_OUTPUT TARGET_CFLAGS TARGET_LFLAGS EXEC_COMMAND DEFAULT_PS DEFAULT_FONT PRINT_CMD DIFF_CMD PATCH_CMD OPAQUE_MDI HOST_TYPE EXECUTION_WINDOW SSH_ESCAPE subdirs LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os XMLADA_GPR CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP GNATMAKE SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB DVIPS MAKEINFO TEXI2DVI PKG_CONFIG GTK_GCC_FLAGS WITH_GTK GTK_CONFIG GTK_PREFIX GLIB_PREFIX ATK_PREFIX PANGO_PREFIX CAIRO_PREFIX GTKADA_SRC GTKADA_OBJ GTK_CFLAGS GTK_LIBS GTK_STATIC_LIBS GTKADA_PREFIX GPS_VERSION opsysfile TARGET EXEC_PREFIX STRIP_CR CAN_OUTPUT TARGET_CFLAGS TARGET_LFLAGS EXEC_COMMAND DEFAULT_PS DEFAULT_FONT PRINT_CMD DIFF_CMD DIFF3_CMD PATCH_CMD OPAQUE_MDI HOST_TYPE EXECUTION_WINDOW SSH_ESCAPE subdirs LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1391,6 +1391,7 @@ OPAQUE_MDI=False
 HOST_TYPE=Unix
 PYTHON_LIBS=""
 DIFF_CMD="diff"
+DIFF3_CMD="diff3"
 PATCH_CMD="patch"
 EXECUTION_WINDOW=True
 
@@ -4818,7 +4819,8 @@ case "${host}" in
 	DEFAULT_FONT="tahoma 8"
 	PRINT_CMD=""
 	DIFF_CMD="gnudiff"
-	PATCH_CMD="patch"
+	DIFF3_CMD="gnudiff3"
+	PATCH_CMD="gnupatch --binary"
 	OPAQUE_MDI=True
 	HOST_TYPE=Windows
 	PATH_STYLE=CYGWIN
@@ -4841,7 +4843,8 @@ esac
 machfile="'\"machine/${machine}.h\"'"
 opsysfile="\\\"system/${opsys}.h\\\""
 
-# Set the version number of GPS/GVD
+# Set the version number of GPS
+
 
 
 
@@ -5595,6 +5598,7 @@ s,@DEFAULT_PS@,$DEFAULT_PS,;t t
 s,@DEFAULT_FONT@,$DEFAULT_FONT,;t t
 s,@PRINT_CMD@,$PRINT_CMD,;t t
 s,@DIFF_CMD@,$DIFF_CMD,;t t
+s,@DIFF3_CMD@,$DIFF3_CMD,;t t
 s,@PATCH_CMD@,$PATCH_CMD,;t t
 s,@OPAQUE_MDI@,$OPAQUE_MDI,;t t
 s,@HOST_TYPE@,$HOST_TYPE,;t t

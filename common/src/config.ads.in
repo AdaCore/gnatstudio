@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2008                       --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -99,7 +99,10 @@ package Config is
    Default_Diff_Cmd : constant String := "@DIFF_CMD@";
    --  Command used to generate a diff between two files.
 
-   Default_Patch_Cmd : constant String := "patch";
+   Default_Diff3_Cmd : constant String := "@DIFF3_CMD@";
+   --  Command used to generate a diff between three files.
+
+   Default_Patch_Cmd : constant String := "@PATCH_CMD@";
    --  Command used to apply a patch file.
 
    Support_Execution_Window : constant Boolean := @EXECUTION_WINDOW@;
