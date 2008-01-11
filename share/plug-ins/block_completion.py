@@ -78,6 +78,16 @@ def on_gps_started (hook_name):
    GPS.parse_xml (init)
 
 def block_complete_on_location (buffer, location):
+   # Check if we need to insert a new-line character
+   start = GPS.EditorLocation (buffer, location.line(), 1)
+   end = GPS.EditorLocation (buffer, location.line(), location.column())
+
+   # A new-line character is inserted if there is some text on the left
+   # of the current cursor position.
+   if buffer.get_chars (start, end).strip() != "":
+      buffer.insert (location, '\n');
+      location = location.forward_line()
+
    block = location.block_type();
 
    if not BLOCKS_DEFS.has_key (block):
@@ -103,13 +113,6 @@ def block_complete_on_location (buffer, location):
          term = term.replace (r'\1', '');
          term = term.replace (r' \2', '');
          term = term.replace (r'\2', '');
-
-   # Check if we need to insert a new-line character
-   start = GPS.EditorLocation (buffer, location.line(), 1)
-   end = GPS.EditorLocation (buffer, location.line(), location.column())
-
-   if buffer.get_chars (start, end).strip() != "":
-      term = '\n' + term
 
    buffer.start_undo_group();
    buffer.insert (location, term);
