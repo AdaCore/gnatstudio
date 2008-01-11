@@ -11,10 +11,29 @@ def on_exit(process, status, output):
    msg.write (output)
 
 def get_cleaner (root):
-   if Preference ("General-Multi-Language-Build").get() == 1 \
-      and Preference ("General-Multi-Language-Builder").get() != "Gprmake":
-      # The builder is gprbuild. gprclean should therefore be used to clean the
-      # project
+   multi_lang_build = Preference ("General-Multi-Language-Build").get() == 1
+   multi_lang_builder = Preference ("General-Multi-Language-Builder").get().lower()
+   languages = root.languages (recursive=True)
+
+   gprbuild=0
+   gnatclean=1
+
+   builder=None
+
+   if (len (languages) == 1 and languages [0].lower() == "ada") \
+       or (multi_lang_build and multi_lang_builder == "gprmake"):
+      builder=gnatclean
+
+   elif multi_lang_build and multi_lang_builder == "gprbuild":
+      builder=gprbuild
+
+   else:
+      builder=gprbuild
+      for lang in languages:
+         if lang.lower() == "ada":
+            builder=gnatclean
+
+   if builder == gprbuild:
       gnatmake = root.get_attribute_as_string ("compiler_command",
                                                package="ide", index="ada")
       length = len (gnatmake)
