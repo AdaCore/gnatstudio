@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 4.3.0
 
+- H110-019: Cannot commit mixed-cased filenames on Windows
+  Problem:    On non case-sensitive file systems like Windows it is not
+              possible to commit or add a file from the VCS menu.
+  Workaround: Use a VCS Activity to commit the file.
+
 - H103-004: Revisions not properly highlighted
   Problem:    When clicking on the revision links on annotated files, the
               corresponding revision is not highlighted if the revision is
