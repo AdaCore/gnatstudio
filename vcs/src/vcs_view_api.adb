@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2001-2007, AdaCore                 --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -781,7 +781,7 @@ package body VCS_View_API is
             File_S : constant String :=
                        Full_Name (File_Information (Context)).all;
          begin
-            if File_S'Length > 5
+            if File_S'Length > 4
               and then File_S (File_S'Last - 3 .. File_S'Last) = "$log"
             then
                --  By default, the log is a "commit" log
