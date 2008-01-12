@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
---                              G P S                                --
+--                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2007, AdaCore              --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -209,10 +209,7 @@ package body VCS_Module is
         or else Has_Activity_Information (Context)
       then
          VCS_View_API.VCS_Contextual_Menu
-           (Get_Kernel (Context),
-            C,
-            Menu,
-            False);
+           (Get_Kernel (Context), C, Menu, False);
       end if;
    end Append_To_Menu;
 

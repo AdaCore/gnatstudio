@@ -853,7 +853,8 @@ package body VCS_View_API is
          if Log_File then
             declare
                Original : constant Virtual_File :=
-                 Get_File_From_Log (Kernel, File_Information (Context));
+                            Get_File_From_Log
+                              (Kernel, File_Information (Context));
             begin
                if Original /= VFS.No_File
                  and then Actions (Commit) /= null
@@ -1873,7 +1874,8 @@ package body VCS_View_API is
                --  This is a log file, add the corresponding file
                declare
                   L : constant Virtual_File :=
-                    Get_File_From_Log (Kernel, Create (Full_Filename => S));
+                        Get_File_From_Log
+                          (Kernel, Create (Full_Filename => S));
                begin
                   if L /= VFS.No_File then
                      Append (Real_Files, Full_Name (L).all);

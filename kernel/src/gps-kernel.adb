@@ -400,7 +400,7 @@ package body GPS.Kernel is
       Context : Selection_Context)
    is
       Data : aliased Context_Hooks_Args :=
-        (Hooks_Data with Context => Context);
+               (Hooks_Data with Context => Context);
    begin
       Run_Hook (Handle, Source_Lines_Revealed_Hook, Data'Unchecked_Access);
    end Source_Lines_Revealed;
@@ -513,9 +513,8 @@ package body GPS.Kernel is
       File     : VFS.Virtual_File;
       New_Path : VFS.Virtual_File)
    is
-      Data : aliased Files_2_Hooks_Args := (Hooks_Data with
-                                                 File    => File,
-                                                 Renamed => New_Path);
+      Data : aliased Files_2_Hooks_Args :=
+               (Hooks_Data with File => File, Renamed => New_Path);
    begin
       Run_Hook (Handle, File_Renamed_Hook, Data'Unchecked_Access);
    end File_Renamed;
@@ -542,9 +541,7 @@ package body GPS.Kernel is
       Category : String)
    is
       Data : aliased String_Hooks_Args :=
-        (Hooks_Data with
-         Length => Category'Length,
-         Value  => Category);
+               (Hooks_Data with Length => Category'Length, Value => Category);
    begin
       Run_Hook (Handle, Compilation_Finished_Hook, Data'Unchecked_Access);
    end Compilation_Finished;
@@ -559,10 +556,10 @@ package body GPS.Kernel is
       Quiet    : Boolean) return Boolean
    is
       Data : aliased String_Boolean_Hooks_Args :=
-        (Hooks_Data with
-         Length => Category'Length,
-         Value  => Category,
-         Bool   => Quiet);
+               (Hooks_Data with
+                Length => Category'Length,
+                Value  => Category,
+                Bool   => Quiet);
    begin
       return Run_Hook_Until_Failure
         (Handle, Compilation_Starting_Hook, Data'Unchecked_Access);
@@ -616,7 +613,7 @@ package body GPS.Kernel is
    -- Context_Changed --
    ---------------------
 
-   procedure Context_Changed (Handle  : access Kernel_Handle_Record) is
+   procedure Context_Changed (Handle : access Kernel_Handle_Record) is
       C    : constant Selection_Context := Get_Current_Context (Handle);
       Data : aliased Context_Hooks_Args := (Hooks_Data with Context => C);
    begin
@@ -655,7 +652,7 @@ package body GPS.Kernel is
    ---------------------------
 
    function Get_Context_For_Child
-     (Child  : Gtkada.MDI.MDI_Child) return Selection_Context
+     (Child : Gtkada.MDI.MDI_Child) return Selection_Context
    is
       Module  : Module_ID;
       Context : Selection_Context;
@@ -1036,8 +1033,8 @@ package body GPS.Kernel is
    -- Get_Creator --
    -----------------
 
-   function Get_Creator (Context : Selection_Context)
-      return Abstract_Module_ID is
+   function Get_Creator
+     (Context : Selection_Context) return Abstract_Module_ID is
    begin
       if Context.Data.Data = null then
          return null;
@@ -1278,7 +1275,7 @@ package body GPS.Kernel is
       Recursive : Boolean)
    is
       Handler : constant Language_Handler :=
-        Language_Handler (Get_Language_Handler (Kernel));
+                  Language_Handler (Get_Language_Handler (Kernel));
       Num     : constant Natural := LI_Handlers_Count (Handler);
       LI      : LI_Handler;
       Count   : Natural := 0;
@@ -1831,8 +1828,8 @@ package body GPS.Kernel is
    -------------------
 
    procedure Register_Tool
-     (Kernel    : access Kernel_Handle_Record;
-      Tool      : Tool_Properties_Record)
+     (Kernel : access Kernel_Handle_Record;
+      Tool   : Tool_Properties_Record)
    is
       Pkg  : Package_Node_Id;
       Attr : Attribute_Node_Id;
@@ -1840,6 +1837,7 @@ package body GPS.Kernel is
       Name_Len := Tool.Project_Package'Length;
       Name_Buffer (1 .. Name_Len) := To_Lower (Tool.Project_Package.all);
       Pkg := Package_Node_Id_Of (Name_Find);
+
       if Pkg = Empty_Package then
          Register_New_Package (Tool.Project_Package.all, Pkg);
       end if;
@@ -1873,8 +1871,7 @@ package body GPS.Kernel is
    -------------------
 
    function Get_All_Tools
-     (Kernel    : access Kernel_Handle_Record)
-      return Tool_Properties_Array
+     (Kernel : access Kernel_Handle_Record) return Tool_Properties_Array
    is
       use Tools_List;
       Iter   : Tools_List.Cursor := First (Kernel.Tools);
@@ -1898,7 +1895,7 @@ package body GPS.Kernel is
       Tool_Name : String) return Tool_Properties_Record
    is
       use Tools_List;
-      Iter   : Tools_List.Cursor := First (Kernel.Tools);
+      Iter : Tools_List.Cursor := First (Kernel.Tools);
    begin
       while Has_Element (Iter) loop
          if To_Lower (Element (Iter).Tool_Name.all) = To_Lower (Tool_Name) then
@@ -1920,7 +1917,7 @@ package body GPS.Kernel is
       Module     : String := "") return Action_Filter
    is
       F : constant Base_Action_Filter :=
-        new Base_Action_Filter_Record (Standard_Filter);
+            new Base_Action_Filter_Record (Standard_Filter);
    begin
       if Language /= "" then
          F.Language := new String'(Language);
@@ -1969,8 +1966,7 @@ package body GPS.Kernel is
    -----------
 
    function "not"
-     (Filter : access Action_Filter_Record'Class)
-      return Action_Filter is
+     (Filter : access Action_Filter_Record'Class) return Action_Filter is
    begin
       return new Base_Action_Filter_Record'
         (Kind => Filter_Not, Error_Msg => null, Name => null,
@@ -2059,17 +2055,21 @@ package body GPS.Kernel is
             if Result and then Filter.Shell /= null then
                declare
                   Lang : constant Scripting_Language :=
-                    Lookup_Scripting_Language
-                      (Kernel.Scripts, Filter.Shell_Lang.all);
+                           Lookup_Scripting_Language
+                             (Kernel.Scripts, Filter.Shell_Lang.all);
 
                   function Substitution
                     (Param  : String; Quoted : Boolean) return String;
                   --  Local substitution of special chars
 
+                  ------------------
+                  -- Substitution --
+                  ------------------
+
                   function Substitution
-                    (Param  : String; Quoted : Boolean) return String
+                    (Param : String; Quoted : Boolean) return String
                   is
-                     Done  : aliased Boolean := False;
+                     Done : aliased Boolean := False;
                   begin
                      return GPS.Kernel.Macros.Substitute
                        (Param, Context, Quoted, Done'Access);
@@ -2188,7 +2188,7 @@ package body GPS.Kernel is
       Marker : access Location_Marker_Record'Class)
    is
       Data : aliased Marker_Hooks_Args :=
-        (Hooks_Data with Marker => Location_Marker (Marker));
+               (Hooks_Data with Marker => Location_Marker (Marker));
    begin
       Run_Hook (Kernel,
                 Marker_Added_In_History_Hook,
