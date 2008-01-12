@@ -69,7 +69,7 @@ endif
 	(cd aunit/templates; tar cf - *.tmpl) \
 		| (cd $(sharedir)/gps/aunit; tar xf -)
 	$(MAKE) -C docs install
-	(cd examples; tar cf - --exclude CVS . ) | (cd $(examplesdir); tar xf -)
+	(cd examples; tar cf - --exclude .svn . ) | (cd $(examplesdir); tar xf -)
 
 install: install-common
 ifeq ($(OS),Windows_NT)
