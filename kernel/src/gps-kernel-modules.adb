@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2008, AdaCore             --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -152,12 +152,14 @@ package body GPS.Kernel.Modules is
    --  Called when a contextual menu is destroyed and its context can be
    --  unrefed
 
-   type Contextual_Label_Parameters is new Contextual_Menu_Label_Creator_Record
-      with record
+   type Contextual_Label_Parameters is
+     new Contextual_Menu_Label_Creator_Record
+   with record
       Label  : GNAT.Strings.String_Access;
       Custom : Custom_Expansion;
       Filter : Macro_Filter;
-      end record;
+   end record;
+
    type Contextual_Label_Param is access Contextual_Label_Parameters'Class;
    function Get_Label
      (Creator : access Contextual_Label_Parameters;
@@ -197,8 +199,8 @@ package body GPS.Kernel.Modules is
    --  Execute a single command.
 
    procedure Menu_Button_Press
-     (Widget  : access GObject_Record'Class;
-      Data    : Menu_Factory_User_Data);
+     (Widget : access GObject_Record'Class;
+      Data   : Menu_Factory_User_Data);
    --  Create a menu using the data in Factory.
 
    package Command_Callback is new Gtk.Handlers.User_Callback
@@ -227,7 +229,7 @@ package body GPS.Kernel.Modules is
    --  Find a contextual menu by name
 
    procedure Map_Menu
-     (Item : access GObject_Record'Class;
+     (Item    : access GObject_Record'Class;
       Command : Interactive_Action);
    --  Called when a registered menu is displayed, so that we can check whether
    --  it should be made sensitive or not
