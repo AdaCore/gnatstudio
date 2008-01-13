@@ -215,9 +215,15 @@ package body GPS.Kernel.Modules is
       Add_Before : Boolean := True);
    --  Add a new contextual menu in the list
 
+   type Contextual_Menu_Reference is record
+      Previous, Menu : Contextual_Menu_Access;
+   end record;
+
+   Null_Reference : constant Contextual_Menu_Reference := (null, null);
+
    function Find_Contextual_Menu_By_Name
      (Kernel : access Kernel_Handle_Record'Class;
-      Name   : String) return Contextual_Menu_Access;
+      Name   : String) return Contextual_Menu_Reference;
    --  Find a contextual menu by name
 
    procedure Map_Menu
@@ -1760,19 +1766,29 @@ package body GPS.Kernel.Modules is
       Add_Before : Boolean := True)
    is
       C, Previous, Last_Group : Contextual_Menu_Access;
+      Menu_Ref                : Contextual_Menu_Reference;
    begin
-      C := Find_Contextual_Menu_By_Name (Kernel, Menu.Name.all);
+      Menu_Ref := Find_Contextual_Menu_By_Name (Kernel, Menu.Name.all);
 
-      if Menu.Name.all /= "" and then C /= null then
+      if Menu.Name.all /= "" and then Menu_Ref /= Null_Reference then
+         --  Menu already exists for this name we want to replace the existing
+         --  one by the new one.
          Trace (Me, "Contextual menu already registered: " & Menu.Name.all);
-         GNAT.OS_Lib.Free (C.Name);
-         --  ??? Can't free label for now.
-         --  Unchecked_Free (C.Label);
-         GNAT.OS_Lib.Free (C.Pix);
-         Menu.Next := C.Next;
-         C.all := Menu.all;
-         Previous := Menu;
-         Unchecked_Free (Previous);
+
+         Menu.Next := Menu_Ref.Menu.Next;
+
+         if Menu_Ref.Previous = null then
+            Kernel.Contextual := Convert (Menu);
+         else
+            Menu_Ref.Previous.Next := Menu;
+         end if;
+
+         --  Now Menu_Ref.Menu is not pointed anymore, free associated memory
+
+         GNAT.OS_Lib.Free (Menu_Ref.Menu.Name);
+         GNAT.OS_Lib.Free (Menu_Ref.Menu.Pix);
+         Unchecked_Free (Menu_Ref.Menu);
+
       else
          if Kernel.Contextual /= System.Null_Address then
             C := Convert (Kernel.Contextual);
@@ -1839,20 +1855,22 @@ package body GPS.Kernel.Modules is
 
    function Find_Contextual_Menu_By_Name
      (Kernel : access Kernel_Handle_Record'Class;
-      Name   : String) return Contextual_Menu_Access
+      Name   : String) return Contextual_Menu_Reference
    is
-      C : Contextual_Menu_Access;
+      P, C : Contextual_Menu_Access;
    begin
       if Kernel.Contextual /= System.Null_Address then
+         P := null;
          C := Convert (Kernel.Contextual);
          while C /= null loop
             if C.Name.all = Name then
-               return C;
+               return (P, C);
             end if;
+            P := C;
             C := C.Next;
          end loop;
       end if;
-      return null;
+      return Null_Reference;
    end Find_Contextual_Menu_By_Name;
 
    ------------------------------
@@ -2101,10 +2119,10 @@ package body GPS.Kernel.Modules is
       Name    : String;
       Visible : Boolean)
    is
-      C : Contextual_Menu_Access :=
-            Find_Contextual_Menu_By_Name (Kernel, Name);
+      Menu_Ref : Contextual_Menu_Reference :=
+                   Find_Contextual_Menu_By_Name (Kernel, Name);
    begin
-      if C = null then
+      if Menu_Ref = Null_Reference then
          Register_Contextual_Menu
            (Kernel => Kernel,
             Name              => Name,
@@ -2112,9 +2130,9 @@ package body GPS.Kernel.Modules is
             Filter            => null,
             Visibility_Filter => True,
             Label             => "");
-         C := Find_Contextual_Menu_By_Name (Kernel, Name);
+         Menu_Ref := Find_Contextual_Menu_By_Name (Kernel, Name);
       end if;
-      C.Visible := Visible;
+      Menu_Ref.Menu.Visible := Visible;
    end Set_Contextual_Menu_Visible;
 
    -------------------------------------
@@ -2126,10 +2144,10 @@ package body GPS.Kernel.Modules is
       Name      : String;
       Sensitive : Boolean)
    is
-      C : Contextual_Menu_Access :=
-            Find_Contextual_Menu_By_Name (Kernel, Name);
+      Menu_Ref : Contextual_Menu_Reference :=
+                   Find_Contextual_Menu_By_Name (Kernel, Name);
    begin
-      if C = null then
+      if Menu_Ref = Null_Reference then
          Register_Contextual_Menu
            (Kernel            => Kernel,
             Name              => Name,
@@ -2137,9 +2155,9 @@ package body GPS.Kernel.Modules is
             Filter            => null,
             Visibility_Filter => True,
             Label             => "");
-         C := Find_Contextual_Menu_By_Name (Kernel, Name);
+         Menu_Ref := Find_Contextual_Menu_By_Name (Kernel, Name);
       end if;
-      C.Sensitive := Sensitive;
+      Menu_Ref.Menu.Sensitive := Sensitive;
    end Set_Contextual_Menu_Sensitivity;
 
    -------------------------------------
