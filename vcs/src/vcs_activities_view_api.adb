@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2005-2007, AdaCore                 --
+--                 Copyright (C) 2005-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -96,10 +96,6 @@ package body VCS_Activities_View_API is
       Context : Selection_Context);
 
    procedure On_Menu_Diff_Activity
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context);
-
-   procedure On_Menu_Remove_From_Activity
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context);
 
@@ -431,17 +427,27 @@ package body VCS_Activities_View_API is
       Files    : String_List.List;
       Files_It : String_List.List_Node;
    begin
-      Files := Get_Selected_Files
-        (VCS_View_Access (Get_Activities_Explorer (Kernel, False)));
-
-      Files_It := String_List.First (Files);
-
-      while Files_It /= String_List.Null_Node loop
-         File := Create (Full_Filename => String_List.Data (Files_It));
+      if Has_File_Information (Context)
+        or else Has_Directory_Information (Context)
+      then
+         --  If we have a file information, then there is a single file to
+         --  handle.
+         File := File_Information (Context);
          On_Remove_From_Activity (Kernel, Get_File_Activity (File), File);
 
-         Files_It := String_List.Next (Files_It);
-      end loop;
+      else
+         Files := Get_Selected_Files
+           (VCS_View_Access (Get_Activities_Explorer (Kernel, False)));
+
+         Files_It := String_List.First (Files);
+
+         while Files_It /= String_List.Null_Node loop
+            File := Create (Full_Filename => String_List.Data (Files_It));
+            On_Remove_From_Activity (Kernel, Get_File_Activity (File), File);
+
+            Files_It := String_List.Next (Files_It);
+         end loop;
+      end if;
 
    exception
       when E : others => Trace (Exception_Handle, E);

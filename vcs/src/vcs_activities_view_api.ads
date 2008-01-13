@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                Copyright (C) 2005-2007, AdaCore                   --
+--                 Copyright (C) 2005-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -60,6 +60,11 @@ package VCS_Activities_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context);
    --  Add a file to an activity menu callback
+
+   procedure On_Menu_Remove_From_Activity
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context);
+   --  Remove a file from an activity menu callback
 
    procedure On_Menu_Commit_As_Activity
      (Widget  : access GObject_Record'Class;

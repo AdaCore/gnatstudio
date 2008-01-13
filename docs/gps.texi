@@ -7386,7 +7386,12 @@ Just fill the activity log and commit the anonymous activity.
 
 @item Add to Activity
 A menu containing all the current activities. Selecting one will add
-the current file to this activity.
+the current file to this activity. This menu is present only if the
+file is not already part of an activity.
+
+@item Remove from Activity
+Remove file from the given activity. This menu is present only if the
+file is already part of an activity.
 
 @item Directory
 Only available when the current context contains directory information

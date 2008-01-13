@@ -721,7 +721,8 @@ package body VCS_View_API is
               and then not Is_Closed (Activity)
             then
                Found := True;
-               Gtk_New (Item, Label => Get_Name (Activity));
+               Gtk_New (Item, Label => Emphasize (Get_Name (Activity)));
+               Set_Use_Markup (Gtk_Label (Get_Child (Item)), True);
                Append (Menu, Item);
 
                A_Context := New_Context;
@@ -1040,25 +1041,45 @@ package body VCS_View_API is
          Set_Sensitive (Menu_Item, Section_Active);
       end if;
 
-      --  ??? removed this menu item when in the VCS Activities window.
-      --  For now, moving from one activity to another is not possible.
-      --  We shall however display this submenu once it is allowed.
       if (File_Section
           and then First /= No_Activity
           and then not Has_Activity_Information (Context))
         or else Show_Everything
       then
          Items_Inserted := True;
-         Gtk_New (Menu_Item, Label => -"Add to Activity");
-         Append (Menu, Menu_Item);
-         Gtk_New (Submenu);
-         Set_Submenu (Menu_Item, Gtk_Widget (Submenu));
 
          declare
-            Found : Boolean := False;
+            Activity : constant Activity_Id :=
+                         Get_File_Activity (File_Information (Context));
          begin
-            Found := Create_Activity_Menu (Submenu);
-            Set_Sensitive (Menu_Item, Found);
+            if Activity = No_Activity then
+               --  File not in an activity
+
+               Gtk_New (Menu_Item, Label => -"Add to Activity");
+               Append (Menu, Menu_Item);
+               Gtk_New (Submenu);
+               Set_Submenu (Menu_Item, Gtk_Widget (Submenu));
+
+               declare
+                  Found : Boolean := False;
+               begin
+                  Found := Create_Activity_Menu (Submenu);
+                  Set_Sensitive (Menu_Item, Found);
+               end;
+
+            else
+               --  File already into an activity, propose to remove it
+               Gtk_New
+                 (Menu_Item,
+                  Label => -"Remove from Activity " &
+                    Emphasize (Get_Name (Activity)));
+               Set_Use_Markup (Gtk_Label (Get_Child (Menu_Item)), True);
+               Append (Menu, Menu_Item);
+               Context_Callback.Connect
+                 (Menu_Item, Gtk.Menu_Item.Signal_Activate,
+                  On_Menu_Remove_From_Activity'Access, Context);
+               Set_Sensitive (Menu_Item, Section_Active);
+            end if;
          end;
       end if;
 
