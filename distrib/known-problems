@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 4.2.1
 
+- H110-019: Cannot commit mixed-cased filenames on Windows
+  Problem:    On non case-sensitive file systems like Windows it is not
+              possible to commit or add a file from the VCS menu.
+  Workaround: Use a VCS Activity to commit the file.
+
 - H106-002 Greyed out Cut/Copy contextual menus
   Problem:    When using the copy_paste.py plug-in, and the current selection
               corresponds to an entity, the Copy and Cut contextual menus are
