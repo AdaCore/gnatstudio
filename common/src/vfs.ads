@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2007, AdaCore                  --
+--                 Copyright (C) 2003-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -116,9 +116,9 @@ package VFS is
    function Full_Name
      (File : Virtual_File; Normalize : Boolean := False)
       return Cst_UTF8_String_Access;
-   --  Return the full path to File
-   --  If Normalize is True, the file name is first normalized, and links
-   --  are resolved on systems where it applies.
+   --  Return the full path to File.
+   --  If Normalize is True, the file name is first normalized, note that links
+   --  are not resolved there.
    --  The returned value can be used to recreate a Virtual_File instance.
    --  If file names are case insensitive, the normalized name will always
    --  be all lower cases.
