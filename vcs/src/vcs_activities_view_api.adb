@@ -275,8 +275,8 @@ package body VCS_Activities_View_API is
       Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
-      Kernel    : constant Kernel_Handle := Get_Kernel (Context);
-      Activity  : Activity_Id;
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
+      Activity : Activity_Id;
    begin
       Activity := Value (Activity_Information (Context));
       Toggle_Group_Commit (Kernel, Activity);
@@ -367,8 +367,8 @@ package body VCS_Activities_View_API is
       Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
-      Kernel    : constant Kernel_Handle := Get_Kernel (Context);
-      Activity  : Activity_Id;
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
+      Activity : Activity_Id;
    begin
       if Has_Activity_Information (Context) then
          Activity := Value (Activity_Information (Context));
@@ -483,9 +483,9 @@ package body VCS_Activities_View_API is
       Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
-      Kernel    : constant Kernel_Handle := Get_Kernel (Context);
-      Activity  : constant Activity_Id :=
-                    Value (Activity_Information (Context));
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
+      Activity : constant Activity_Id :=
+                   Value (Activity_Information (Context));
    begin
       Query_Status_Activity (Kernel, Activity);
    exception
@@ -523,9 +523,9 @@ package body VCS_Activities_View_API is
       Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
-      Kernel    : constant Kernel_Handle := Get_Kernel (Context);
-      Activity  : constant Activity_Id :=
-                    Value (Activity_Information (Context));
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
+      Activity : constant Activity_Id :=
+                   Value (Activity_Information (Context));
    begin
       Update_Activity (Kernel, Activity);
    exception
@@ -582,9 +582,9 @@ package body VCS_Activities_View_API is
       Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
-      Kernel         : constant Kernel_Handle := Get_Kernel (Context);
-      Activity       : constant Activity_Id :=
-                         Value (Activity_Information (Context));
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
+      Activity : constant Activity_Id :=
+                   Value (Activity_Information (Context));
    begin
       Commit_Activity (Kernel, Activity);
    exception
@@ -622,9 +622,9 @@ package body VCS_Activities_View_API is
       Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
-      Kernel    : constant Kernel_Handle := Get_Kernel (Context);
-      Activity  : constant Activity_Id :=
-                    Value (Activity_Information (Context));
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
+      Activity : constant Activity_Id :=
+                   Value (Activity_Information (Context));
    begin
       Diff_Activity (Kernel, Activity);
    exception
@@ -640,9 +640,9 @@ package body VCS_Activities_View_API is
       Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
-      Kernel    : constant Kernel_Handle := Get_Kernel (Context);
-      List      : String_List.List;
-      Activity  : Activity_Id;
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
+      List     : String_List.List;
+      Activity : Activity_Id;
 
    begin
       if Context /= No_Context then

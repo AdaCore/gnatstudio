@@ -683,7 +683,6 @@ inside a source editor. This will automatically search for the first entry for
 this file in the project view. This contextual menu is also available in other
 modules, e.g. when selecting a file in the @code{Dependency Browser}.
 
-
 @subsection The configuration variables
 @cindex configuration variable
 @cindex project variable
@@ -976,7 +975,6 @@ it in place. Press @key{enter} when you are done modifying the name.
 
 You can delete an existing bookmark by right clicking on the line, and
 select @code{Delete bookmark} in the contextual menu.
-
 
 @c --------------------------------------------------------------------
 @node The Messages Window
@@ -1474,7 +1472,6 @@ This special mode is activated through a preference (menu
 @code{Edit->Preferences}). This preference is entitled @b{All
 Floating}.
 
-
 @c --------------------------------------------------------------------
 @node Moving Windows
 @section Moving Windows
@@ -1524,7 +1521,6 @@ instance, on the background of your screen), the window will be floated.
 
 @end table
 
-
 If you maintain the @key{shift} key pressed while dropping the window,
 this might result in a copy operation instead of a simple move. For instance,
 if you are dropping an editor, a new view of the same editor will be created,
@@ -1535,7 +1531,6 @@ If you maintain the @key{control} key pressed while dropping the window,
 all the windows that were in the same notebook are moved, instead of the
 single one you selected. This is the fastest way to move a group of windows
 to a new location, instead of moving them one by one.
-
 
 @c --------------------------------------------------------------------
 @node Editing Files
@@ -1711,7 +1706,6 @@ C : Integer;
 
 --  Not a comment for C, there is a blank linke
 @end smallexample
-
 
 In debugging mode, the value of the variable under the mouse is displayed in
 the pop up window if the variable is known to the debugger.
@@ -2723,7 +2717,6 @@ This is a program that is always available if you have installed
 Emacs. As opposed to starting a new Emacs every time, it will reuse an
 existing Emacs session. It is then extremely fast to open a file.
 
-
 @item emacs
 @cindex emacs
 This client will start a new Emacs session every time a file needs to
@@ -2731,7 +2724,6 @@ be opened. You should use @code{emacsclient} instead, since it is much
 faster, and makes it easier to copy and paste between multiple
 files. Basically, the only reason to use this external editor is if
 your system doesn't support @code{emacsclient}.
-
 
 @item vim
 @cindex vim
@@ -2750,12 +2742,10 @@ To enable this capability, the xterm executable must be found in the PATH,
 and thus is not supported on Windows systems. Under Windows systems,
 you can use the @code{custom} editor instead.
 
-
 @item vi
 @cindex vi
 This editor works exactly like vim, but uses the standard @code{vi}
 command instead of @code{vim}.
-
 
 @item custom
 @cindex custom editor
@@ -2767,7 +2757,6 @@ preferences (see @ref{custom editor command}).
 No external editor is used, and the contextual menus simply won't
 appear.
 @end table
-
 
 In the cases that require an Emacs server, GPS will try several
 solutions if no already running server was found. It will first try to
@@ -2781,7 +2770,6 @@ by GPS with the appropriate project.
 @cindex menu
 Alternatively, you can reload explicitly the project from
 Emacs itself by using the menu @code{Project->Load}
-
 
 @cindex preferences
 In the preferences, there are three settings that allow you to select
@@ -3461,7 +3449,6 @@ The compiler itself defines a predefined project path, in which standard
 libraries can be installed, like XML/Ada for instance.
 @end itemize
 
-
 @subsection Contents of project files
 @cindex project file
 
@@ -3649,7 +3636,6 @@ your own languages as you need (either by editing the project files by hand,
 or by creating XML files to add GPS support for these languages, which will
 then show in the project properties editor graphically).
 
-
 @c -------------------------------------------------------------------
 @node Scenarios and Configuration Variables
 @section Scenarios and Configuration Variables
@@ -3686,7 +3672,6 @@ for the compilation switches. It would be more difficult to maintain a
 completely separate hierarchy of project, and it is much more efficient
 to create a new configuration variable and edit the switches for the
 appropriate scenario (@ref{The Project Properties Editor}).
-
 
 @subsection Creating new configuration variables
 @cindex creating configuration variable
@@ -3738,7 +3723,6 @@ did exist with this default value.
 The list of possible values can be edited through the @code{Remove},
 @code{Add} and @code{Rename} buttons, although you can also simply
 click on the value itself to change it.
-
 
 @subsection Editing existing configuration variables
 @cindex editing configuration variable
@@ -4169,7 +4153,6 @@ This specialized wizard allows you to easily create extending projects
 (@pxref{Extending Projects}).
 
 @end itemize
-
 
 @c ------------------------------------------------------------------
 @subsection Project Naming
@@ -4896,7 +4879,6 @@ either @code{Floating} or @code{Docked}.
 If you save the desktop (@code{File->Save More->Desktop}, GPS will
 automatically reopen the search dialog in its new place when it is
 started next time.
-
 
 @c --------------------------------------------------------------------
 @node Compilation/Build
@@ -6585,7 +6567,6 @@ and the underlying debugger.
 
 @end table
 
-
 @subsection Menu Items
 @noindent
 All the debugger-related menus in GVD can be found under the 'Debug'
@@ -7370,7 +7351,7 @@ Only available on a Revision View and over a tag/branch name. Merge
 file changes made on this specific tag/branch.
 
 @item View revision
-Only available on a Revision View and over a revision. ???
+Only available on a Revision View and over a revision.
 
 @item Commit as new Activity
 An action to prepare a group-commit in just one-click. This action will:
@@ -9051,7 +9032,6 @@ if (Condition1
 then
 @end smallexample
 
-
 @item Record indentation
 @cindex record indentation
 The number of extra spaces for record definitions, when the @code{record}
@@ -10422,7 +10402,6 @@ project browser.
 </current_file_uses>
 @end smallexample
 
-
 @item <description>
 @cindex description
 This tag contains a description for the command, which is used in the
@@ -11072,7 +11051,6 @@ followed by a File/Custom menu:
 </menus>
 @end smallexample
 
-
 @c ----------------------------------------------------------------------
 @node Adding contextual menus
 @subsection Adding contextual menus
@@ -11273,7 +11251,6 @@ empty action to @code{<key>}.
 Use an empty string to describe the key binding if you wish to deactivate a
 preexisting binding. The second example below deactivates the standard binding.
 
-
 @smallexample
 <?xml version="1.0" ?>
 <keys>
@@ -11441,7 +11418,6 @@ val2 = GPS.Preference ("my-int").get ()
 @end smallexample
 
 @end itemize
-
 
 @subsubsection Setting preferences values
 @cindex <pref>
@@ -12013,7 +11989,6 @@ display a dialog to ask for the value of the parameters. You can
 interactively enter this value, which replaces all the @i{%(name)}
 entities in the expansion text.
 
-
 @subsection Aliases files
 
 @noindent
@@ -12250,7 +12225,6 @@ This can be used to have mutually exclusive attributes present in the editor
 
 @end itemize
 
-
 @subsubsection Declaring the type of the new attributes
 
 The type of the project attribute is specified through one or several
@@ -12405,7 +12379,6 @@ C, and so on). This attribute accepts requires one XML attribute:
 This is the value of the attribute for which the type is overriden.
 @end itemize
 
-
 Note that almost all the standard project attributes are defined
 through an XML file, @file{projects.xml}, which is part of the GPS
 installation. Check this file to get advanced examples on how to
@@ -12547,7 +12520,6 @@ language). This is an indexed project attribute. It has two default
 values, one for Ada, one for C. All other languages have no default
 value.
 
-
 @smallexample
 <?xml version="1.0" ?>
 <custom>
@@ -12568,7 +12540,6 @@ value.
   </project_attribute>
 </custom>
 @end smallexample
-
 
 @subsubsection Accessing the project attributes
 
@@ -12650,7 +12621,6 @@ clicked by the user
 The first word after '%' is the name of the language, and the command to
 execute is found after the ':' character.
 
-
 The @code{<documentation_file>} accepts a number of child nodes:
 
 @table @b
@@ -12665,7 +12635,6 @@ file, using the standard HTML syntax.
 @smallexample
   <name>file#anchor</name>
 @end smallexample
-
 
 @item shell
 This child specifies the name of a shell command to execute to get the
@@ -12705,9 +12674,7 @@ order, you should create them first with a @code{<menu>} tag.
 The name of the menu after which the new entry should be inserted.
 @end table
 
-
 @end table
-
 
 The following example shows how to create a new entry "item" in the Help
 menu, that will display @file{file.html}. The latter is searched in the
@@ -12747,7 +12714,6 @@ Such a directory can also be added through Python, as in:
 @smallexample
 GPS.HTML.add_doc_directory ('doc/application')
 @end smallexample
-
 
 @c --------------------------------------------------------------------------
 @node Adding stock icons
@@ -13603,7 +13569,6 @@ then the frame is hidden from the user. See for instance the Ada or C
 switches editor.
     @end table
 
-
 @item <check>
 @cindex <check>
 This tag accepts the @code{line}, @code{column}, @code{label}, @code{switch}
@@ -13784,7 +13749,6 @@ item, or as a result of a key press.
 Both cases are described in an XML customization file, as described previously,
 and both are setup to execute what GPS calls an action, i.e. a set of commands
 defined by the @code{<action>} tag.
-
 
 @c --------------------------------------------------------------------------
 @node Chaining commands
@@ -14010,7 +13974,6 @@ will always be the empty string, i.e. output is sent to the GPS console.
   </action>
 </ls>
 @end smallexample
-
 
 @c --------------------------------------------------------------------------
 @node Processing the tool output
@@ -14376,7 +14339,6 @@ all such values from the memory. After this command is run, you can no
 longer use references obtained from previous commands, although of
 course you can run these commands again to get a new reference.
 
-
 The return value of the 9 previous commands can easily be recalled by
 passing @code{%1}, @code{%2}, @dots{} on the command line. For instance,
 the previous example could be rewritten as
@@ -14683,7 +14645,6 @@ GPS.Toolbar().append (combo)
 combo.data = "My own data"
 @end smallexample
 
-
 @item Unbound methods
 
 These are methods of a class. You do not specify, when you pass the
@@ -14980,7 +14941,6 @@ output, as in
 All the various shell commands in your action can be output in a different
 window, and this also applies for the output of external commands.
 
-
 @item Explicit redirection
 
 If, however, you want to control in your script where the output should be
@@ -15075,7 +15035,6 @@ the new definition is accessible through
 
 Thus, the key shortcut you had set, which still executes @code{mymod.myfunc()}
 will keep executing the old definition.
-
 
 By default, GPS provides a contextual menu when you are editing a Python
 file. This contextual menu (Python->Reload module) will take care of all
@@ -16196,7 +16155,6 @@ Set the search path for the documentation. @xref{Adding New Help Files}.
 @cindex GPS_CUSTOM_PATH
 Contains a list of directories to search for custom files. See
 @ref{Customizing through XML and Python files} for more details.
-
 
    @item GPS_CHANGELOG_USER
 @cindex GPS_CHANGELOG_USER
