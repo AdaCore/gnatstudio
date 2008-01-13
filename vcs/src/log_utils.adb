@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2002-2007, AdaCore                 --
+--                  Copyright (C) 2002-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -330,7 +330,7 @@ package body Log_Utils is
 
       Mapper      : File_Mapper_Access := Get_Logs_Mapper (Kernel);
       Real_Name   : constant String :=
-                      Full_Name (File_Name, Normalize => True).all;
+                      Full_Name (File_Name, Normalize => False).all;
       Return_Name : constant String := Get_Other_Text (Mapper, Real_Name);
    begin
       --  ??? Right now, we save the mapping every time that we add
@@ -343,10 +343,10 @@ package body Log_Utils is
          declare
             Logs_Dir : constant String := Get_Home_Dir (Kernel) & "log_files";
             File     : File_Descriptor;
-            S        : Virtual_File := VFS.Create
-              (Full_Filename =>
-                 Logs_Dir & Directory_Separator & Base_Name (Real_Name)
-                   & Suffix);
+            S        : Virtual_File :=
+                         VFS.Create
+                           (Full_Filename => Logs_Dir & Directory_Separator
+                            & Base_Name (File_Name) & Suffix);
             --  In case there are multiple files with the same base name, see
             --  the loop below to use an alternate name and store it in the
             --  mapping file.
@@ -357,7 +357,7 @@ package body Log_Utils is
                Close (File);
                Add_Entry (Mapper,
                           Real_Name,
-                          Full_Name (S, Normalize => True).all);
+                          Full_Name (S, Normalize => False).all);
                Save_Mapper
                  (Mapper, Normalize_Pathname (Logs_Dir & "/mapping"));
                return S;
@@ -367,7 +367,7 @@ package body Log_Utils is
                   S := VFS.Create
                     (Full_Filename =>
                        Logs_Dir & Directory_Separator
-                       & Base_Name (Real_Name) & "$" & Image (J) & Suffix);
+                       & Base_Name (File_Name) & "$" & Image (J) & Suffix);
 
                   if not Is_Regular_File (S) then
                      File := Create_New_File (Locale_Full_Name (S), Text);
@@ -375,7 +375,7 @@ package body Log_Utils is
                      Add_Entry
                        (Mapper,
                         Real_Name,
-                        Full_Name (S, Normalize => True).all);
+                        Full_Name (S, Normalize => False).all);
                      Save_Mapper
                        (Mapper, Normalize_Pathname (Logs_Dir & "/mapping"));
                      return S;
@@ -403,8 +403,9 @@ package body Log_Utils is
       Log_Name : Virtual_File) return Virtual_File
    is
       Mapper : constant File_Mapper_Access := Get_Logs_Mapper (Kernel);
-      F_Name : constant String := Get_Other_Text
-        (Mapper, Full_Name (Log_Name, Normalize => True).all);
+      F_Name : constant String :=
+                 Get_Other_Text
+                   (Mapper, Full_Name (Log_Name, Normalize => False).all);
    begin
       if F_Name = "" then
          return No_File;
@@ -613,7 +614,7 @@ package body Log_Utils is
                    Name_As_Directory (Get_Home_Dir (Kernel) & "log_files");
       Mapper   : constant File_Mapper_Access := Get_Logs_Mapper (Kernel);
    begin
-      Remove_Entry (Mapper, Full_Name (File_Name, Normalize => True).all);
+      Remove_Entry (Mapper, Full_Name (File_Name, Normalize => False).all);
       Save_Mapper (Mapper, Logs_Dir & "mapping");
    end Remove_File_From_Mapping;
 
