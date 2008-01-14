@@ -1164,7 +1164,7 @@ package body Help_Module is
            (Str, Buffer (Index + Contents_Marker'Length .. Buffer'Last));
 
          Output_Write := Write_File (Output);
-         Write (Output_Write, To_String (Str), As_UTF8 => False);
+         Write (Output_Write, To_String (Str));
          Close (Output_Write);
 
          Free (Buffer);

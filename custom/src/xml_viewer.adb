@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2005-2007, AdaCore                 --
+--                  Copyright (C) 2005-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -49,6 +49,7 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with Basic_Types;
 with Custom_Module;             use Custom_Module;
 with GUI_Utils;                 use GUI_Utils;
+with UTF8_Utils;                use UTF8_Utils;
 with Traces;                    use Traces;
 with XML_Parsers;               use XML_Parsers;
 with VFS;                       use VFS;
@@ -559,7 +560,8 @@ package body XML_Viewer is
                --  The beginning tag is missing, add it
 
                W := Write_File (V);
-               Write (W, "<?xml version=""1.0""?>" & ASCII.LF & S.all);
+               Write (W, "<?xml version=""1.0""?>" & ASCII.LF
+                      & UTF8_To_Locale (S.all));
                Close (W);
             end if;
 

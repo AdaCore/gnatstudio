@@ -45,6 +45,7 @@ with OS_Utils;                  use OS_Utils;
 with Projects;                  use Projects;
 with String_List_Utils;         use String_List_Utils;
 with Traces;                    use Traces;
+with UTF8_Utils;                use UTF8_Utils;
 with VCS;                       use VCS;
 with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
 with VCS_Activities;            use VCS_Activities;
@@ -259,7 +260,7 @@ package body VCS_Activities_View_API is
       declare
          W_File : Writable_File := Write_File (Command.Patch_File);
       begin
-         Write (W_File, To_String (Patch_Content), As_UTF8 => False);
+         Write (W_File, To_String (Patch_Content));
          Close (W_File);
       end;
 
@@ -739,7 +740,7 @@ package body VCS_Activities_View_API is
       Insert (T_Set, Assoc ("IS_PATCH", True));
       Content := Parse (Get_Activity_Log_Template (Kernel), T_Set);
 
-      Write (W_File, To_String (Content));
+      Write (W_File, UTF8_To_Locale (To_String (Content)));
       Close (W_File);
 
       --  For each file we get the diff

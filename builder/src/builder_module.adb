@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                 Copyright (C) 2001-2007, AdaCore                  --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1024,8 +1024,7 @@ package body Builder_Module is
                  (Writable,
                   "project ext extends """
                   & Full_Name (Project_Path (Prj)).all & """ is"
-                  & ASCII.LF & "end ext;",
-                  False);
+                  & ASCII.LF & "end ext;");
                Close (Writable);
             end if;
 

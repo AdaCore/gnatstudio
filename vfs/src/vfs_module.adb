@@ -1,8 +1,7 @@
----------------------------------------------------------------------
+-----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2007                      --
---                              AdaCore                              --
+--                    Copyright (C) 2002-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -44,6 +43,7 @@ with Remote;                    use Remote;
 with Traces;                    use Traces;
 with VFS;                       use VFS;
 with OS_Utils;
+with UTF8_Utils;                use UTF8_Utils;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 
 package body VFS_Module is
@@ -239,9 +239,9 @@ package body VFS_Module is
             Writable := Write_File (Create (Temp_File));
 
             if Nth_Arg (Data, 2, Default => False) then
-               Write (Writable, Nth_Arg (Data, 1) & ASCII.LF);
+               Write (Writable, UTF8_To_Locale (Nth_Arg (Data, 1)) & ASCII.LF);
             else
-               Write (Writable, Nth_Arg (Data, 1));
+               Write (Writable, UTF8_To_Locale (Nth_Arg (Data, 1)));
             end if;
 
             Close (Writable);
@@ -262,9 +262,9 @@ package body VFS_Module is
             Writable := Write_File (File, Append => True);
 
             if Nth_Arg (Data, 3, Default => False) then
-               Write (Writable, Nth_Arg (Data, 1) & ASCII.LF);
+               Write (Writable, UTF8_To_Locale (Nth_Arg (Data, 1)) & ASCII.LF);
             else
-               Write (Writable, Nth_Arg (Data, 1));
+               Write (Writable, UTF8_To_Locale (Nth_Arg (Data, 1)));
             end if;
 
             Close (Writable);

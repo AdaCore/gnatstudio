@@ -280,8 +280,7 @@ package VFS is
 
    procedure Write
      (File    : in out Writable_File;
-      Str     : UTF8_String;
-      As_UTF8 : Boolean := True);
+      Str     : UTF8_String);
    --  Write a string to File. The required encoding for the string depends
    --  on As_UTF8: if As_UTF8 is True, the file is converted to Locale before
    --  writing. If As_UTF8 is False, no conversion is performed.

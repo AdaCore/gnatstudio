@@ -51,6 +51,8 @@ with VCS_Status;                use VCS_Status;
 with VCS_Utils;                 use VCS_Utils;
 with VCS_View;                  use VCS_View;
 
+with UTF8_Utils;                use UTF8_Utils;
+
 package body Log_Utils is
 
    function Check_Handler
@@ -309,7 +311,7 @@ package body Log_Utils is
          end if;
       end if;
 
-      Write (W_File, CL.all);
+      Write (W_File, UTF8_To_Locale (CL.all));
       Close (W_File);
       Free (CL);
 
@@ -582,7 +584,7 @@ package body Log_Utils is
                               P2 := P2 + 1;
                            end loop;
 
-                           Write (W_File, CL (P1 .. P2));
+                           Write (W_File, UTF8_To_Locale (CL (P1 .. P2)));
                         end loop Write_RH;
 
                         exit Fill_Log;

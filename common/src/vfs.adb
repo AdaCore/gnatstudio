@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2007, AdaCore             --
+--                      Copyright (C) 2003-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,11 +24,9 @@
 with Ada.Calendar;              use Ada.Calendar;
 with Ada.Directories;
 with Ada.Exceptions;            use Ada.Exceptions;
-with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Hash;
 with Ada.Characters.Handling;
-with System;
 
 with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -37,9 +35,6 @@ with GNAT.Mmap;                 use GNAT.Mmap;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Traces;               use GNAT.Traces;
 
-with Interfaces.C.Strings;      use Interfaces.C.Strings;
-
-with Glib.Convert;              use Glib.Convert;
 with Glib.Unicode;              use Glib.Unicode;
 
 with Filesystem;                use Filesystem;
@@ -469,7 +464,7 @@ package body VFS is
          return "";
       else
          --  ??? This is not cached, should it ?
-         return Locale_From_UTF8 (File.Full_Name.all);
+         return File.Full_Name.all;
       end if;
    end Locale_Full_Name;
 
@@ -479,7 +474,7 @@ package body VFS is
 
    function Locale_Base_Name (File : Virtual_File) return String is
    begin
-      return Locale_From_UTF8 (File.Base_Name);
+      return File.Base_Name;
    end Locale_Base_Name;
 
    ---------------------
@@ -488,7 +483,7 @@ package body VFS is
 
    function Locale_Dir_Name (File : Virtual_File) return String is
    begin
-      return Locale_From_UTF8 (File.Dir_Name.all);
+      return File.Dir_Name.all;
    end Locale_Dir_Name;
 
    --------------------
@@ -725,8 +720,7 @@ package body VFS is
          return null;
 
       elsif File.Is_Local then
-         return GNAT.Mmap.Read_Whole_File
-           (Locale_From_UTF8 (File.Full_Name.all));
+         return GNAT.Mmap.Read_Whole_File (File.Full_Name.all);
 
       else
          return File.Get_Filesystem.Read_File
@@ -784,35 +778,12 @@ package body VFS is
 
    procedure Write
      (File    : in out Writable_File;
-      Str     : UTF8_String;
-      As_UTF8 : Boolean := True)
+      Str     : UTF8_String)
    is
-      function To_Address is new Ada.Unchecked_Conversion
-        (chars_ptr, System.Address);
-
-      procedure C_Free (S : Interfaces.C.Strings.chars_ptr);
-      pragma Import (C, C_Free, "free");
-
       Written : aliased Natural;
-      Read    : aliased Natural;
-      S       : chars_ptr;
 
    begin
-      if As_UTF8 then
-         S := Locale_From_UTF8 (Str, Read'Access, Written'Access);
-
-         if S = Null_Ptr then
-            --  Couldn't convert ? Just save the string as is, this is better
-            --  than nothing
-            Written := Write (File.FD, Str'Address, Str'Length);
-         else
-            Written := Write (File.FD, To_Address (S), Written);
-            C_Free (S);
-         end if;
-
-      else
-         Written := Write (File.FD, Str'Address, Str'Length);
-      end if;
+      Written := Write (File.FD, Str'Address, Str'Length);
 
       --  ??? Should raise an exception if we couldn't write all the bytes.
    end Write;
@@ -900,8 +871,7 @@ package body VFS is
    function Get_Current_Dir return Virtual_File is
       File : Virtual_File;
    begin
-      File := Create
-        (Locale_To_UTF8 (GNAT.Directory_Operations.Get_Current_Dir));
+      File := Create (GNAT.Directory_Operations.Get_Current_Dir);
       File.Value.Kind := Directory;
       return File;
    end Get_Current_Dir;
@@ -913,7 +883,7 @@ package body VFS is
    function Get_Home_Dir (Host : String) return Virtual_File is
    begin
       if Host = "" or else Host = Local_Nickname then
-         return Create (Locale_To_UTF8 (Getenv ("HOME").all));
+         return Create (Getenv ("HOME").all);
       else
          return Create (Host,
                         Home_Dir (Get_Filesystem (Host), Host));
@@ -1066,8 +1036,7 @@ package body VFS is
 
       --  Only available for local files
       if Is_Local (Dir) then
-         GNAT.Directory_Operations.Change_Dir
-           (Locale_From_UTF8 (Full_Name (Dir).all));
+         GNAT.Directory_Operations.Change_Dir (Full_Name (Dir).all);
       end if;
    exception
       when E : GNAT.Directory_Operations.Directory_Error =>
@@ -1096,8 +1065,7 @@ package body VFS is
             Make_Dir (Get_Parent (Dir));
          end if;
 
-         GNAT.Directory_Operations.Make_Dir
-           (Locale_From_UTF8 (Full_Name (Dir).all));
+         GNAT.Directory_Operations.Make_Dir (Full_Name (Dir).all);
       else
          Result := Dir.Get_Filesystem.Make_Dir
            (Dir.Value.Server.all,
@@ -1147,9 +1115,7 @@ package body VFS is
       end if;
 
       if Is_Local (Dir) then
-         GNAT.Directory_Operations.Open
-           (Local_Dir,
-            Locale_From_UTF8 (Full_Name (Dir).all));
+         GNAT.Directory_Operations.Open (Local_Dir, Full_Name (Dir).all);
          --  let's start with 128 items
          F_Array := new File_Array (1 .. 128);
 
