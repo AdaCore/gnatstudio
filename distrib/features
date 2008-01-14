@@ -17,7 +17,7 @@ New features in GPS 4.2.1
 
 NF-42-H110-013 patch and diff3 executable distributed under Windows (2008-01-11)
 
-  Under Windows, gnupatch.exe and diff3.exe are now distributing, easing the
+  Under Windows, gnupatch.exe and diff3.exe are now distributed, easing the
   use of visual comparison. It is still possible to specify alternate
   patch/diff commands via the preferences.
 
