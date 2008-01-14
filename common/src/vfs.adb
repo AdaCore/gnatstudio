@@ -778,7 +778,7 @@ package body VFS is
 
    procedure Write
      (File    : in out Writable_File;
-      Str     : UTF8_String)
+      Str     : String)
    is
       Written : aliased Natural;
 
