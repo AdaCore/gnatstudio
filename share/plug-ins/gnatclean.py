@@ -82,16 +82,13 @@ def on_filter (context):
             return True
    return False
 
-def on_gps_started(h):
-   Menu.create ("/Build/C_lean/_Root Project",
-                on_activate=clean_root_project,
-                ref="Make",
-                add_before=False)
-   Menu.create ("/Build/C_lean/_All",
-                on_activate=clean_all_root_project,
-                ref="Clean",
-                add_before=False)
-   Contextual ("Build/Clean").create (on_activate=clean_context_project,
-                                      filter=on_filter)
-
-Hook ("gps_started").add (on_gps_started)
+Menu.create ("/Build/C_lean/_Root Project",
+             on_activate=clean_root_project,
+             ref="Make",
+             add_before=False)
+Menu.create ("/Build/C_lean/_All",
+             on_activate=clean_all_root_project,
+             ref="Clean",
+             add_before=False)
+Contextual ("Build/Clean").create (on_activate=clean_context_project,
+                                   filter=on_filter)
