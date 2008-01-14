@@ -279,9 +279,9 @@ package VFS is
    --  Return Invalid_File is the file couldn't be open for writing
 
    procedure Write
-     (File    : in out Writable_File;
-      Str     : String);
-   --  Write a string to File. The contents of Str as written as-is.
+     (File : in out Writable_File;
+      Str  : String);
+   --  Write a string to File. The contents of Str are written as-is.
 
    procedure Close (File : in out Writable_File);
    --  Closes File, and write the file to disk.
