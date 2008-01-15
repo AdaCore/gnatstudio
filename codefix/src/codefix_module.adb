@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2007, AdaCore                  --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -340,6 +340,8 @@ package body Codefix_Module is
       Session.Current_Text := new GPS_Navigator;
       GPS_Navigator (Session.Current_Text.all).Kernel := Kernel;
 
+      Session.Timestamp := Session.Timestamp + 1;
+
       if File_Index = -1 then
          Fi := Integer (Get_Pref (File_Pattern_Index));
       else
@@ -415,6 +417,7 @@ package body Codefix_Module is
       --  Update the location window to show which errors can be fixed
 
       Command := new Codefix_Add_Command;
+      Codefix_Add_Command (Command.all).Session_Timestamp := Session.Timestamp;
       Codefix_Add_Command (Command.all).Kernel := Kernel;
       Codefix_Add_Command (Command.all).Session := Session;
       Codefix_Add_Command (Command.all).Current_Error :=
@@ -514,6 +517,8 @@ package body Codefix_Module is
       end if;
 
       New_Action.Associated_Command := new Codefix_Command;
+      Codefix_Command (New_Action.Associated_Command.all).Session_Timestamp :=
+        Session.Timestamp;
       Codefix_Command (New_Action.Associated_Command.all).Error   := Error;
       Codefix_Command (New_Action.Associated_Command.all).Session :=
         Codefix_Session (Session);
