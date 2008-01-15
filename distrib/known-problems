@@ -55,6 +55,11 @@ Known Problems fixed in GPS 4.2.1
               and terminate.
   Workaround: Do not use unknown package names.
 
+- GC07-022 the "Run" window did not accept input in remote mode using plink
+  Problem:    In remote mode using the plink tool, the Run window does not
+              accept user input.
+  Workaround: Use ssh tool instead.
+
 - GC03-012 Wrong indentation of Ada code
   Problem:    When using the 'Format operator' preference, and indenting a
               line starting with a comma and followed
