@@ -55,8 +55,8 @@ Known Problems fixed in GPS 4.2.1
               and terminate.
   Workaround: Do not use unknown package names.
 
-- GC07-022 the "Run" window did not accept input in remote mode using plink
-  Problem:    In remote mode using the plink tool, the Run window does not
+- GC07-022 The "Run" window does not accept input in remote mode using plink
+  Problem:    In remote mode using the plink tool, the "Run" window does not
               accept user input.
   Workaround: Use ssh tool instead.
 
