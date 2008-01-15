@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
---                            AdaCore                                --
+--                      Copyright (C) 2001-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -40,6 +39,7 @@ package Codefix_Module is
       Category     : GNAT.Strings.String_Access;
       Corrector    : Ptr_Correction_Manager;
       Current_Text : Codefix.Text_Manager.Ptr_Text_Navigator;
+      Timestamp    : Integer := 0;
    end record;
    type Codefix_Session is access all Codefix_Session_Record;
 

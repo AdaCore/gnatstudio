@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2007, AdaCore              --
+--                     Copyright (C) 2001-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -40,6 +40,10 @@ package body Commands.Codefix is
    is
       Menu : Gtk_Menu;
    begin
+      if Command.Session_Timestamp /= Command.Session.Timestamp then
+         return Success;
+      end if;
+
       if Is_Fixed (Command.Error) then
          return Success;
       end if;
@@ -99,6 +103,10 @@ package body Commands.Codefix is
    function Execute
      (Command : access Codefix_Add_Command) return Command_Return_Type is
    begin
+      if Command.Session_Timestamp /= Command.Session.Timestamp then
+         return Success;
+      end if;
+
       if Command.Current_Error /= Null_Error_Id then
          Trace
            (Me, "Activate_Codefix: Error found at "
