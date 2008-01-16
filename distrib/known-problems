@@ -5,6 +5,11 @@ Known Problems fixed in GPS 4.2.1
               possible to commit or add a file from the VCS menu.
   Workaround: Use a VCS Activity to commit the file.
 
+- H109-007: Cannot launch concurrent builds with auto fixable errors
+  Problem:    After having launched several builds at the same time, if these
+              builds contains errors that can be auto fixed, GPS may crash.
+  Workaround: Launch a new build when the previous one is finished.
+
 - H106-002 Greyed out Cut/Copy contextual menus
   Problem:    When using the copy_paste.py plug-in, and the current selection
               corresponds to an entity, the Copy and Cut contextual menus are
