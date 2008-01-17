@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2007, AdaCore             --
+--                      Copyright (C) 2005-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -34,7 +34,7 @@ with Language.Documentation; use Language.Documentation;
 
 package body Doc_Utils is
 
-   Me         : constant Trace_Handle := Create ("Doc_Utils");
+   Me         : constant Trace_Handle := Create ("Doc_Utils", Off);
    Extract_Me : constant Trace_Handle := Create ("COMMENT_EXTRACTION", On);
 
    -----------------------
