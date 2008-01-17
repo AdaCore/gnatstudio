@@ -13,8 +13,11 @@ examplesdir     = $(prefix)/share/examples/gps
 
 export TP_TASKING = No_Tasking
 
-default build compile link ada c c++:
+default build compile link ada c c++: setup-tp
 	$(MAKE) -s -C gps -f Makefile.gps $@
+
+setup-tp:
+	$(MAKE) -C templates_parser setup
 
 clean:
 	$(RM) gnat/*.ad*
