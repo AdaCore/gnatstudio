@@ -835,7 +835,6 @@ package body GPS.Location_View is
       Action_Val : GValue;
       Action     : Action_Item;
    begin
-      Init (Action_Val, GType_Pointer);
       Get_Value (View.Tree.Model, Loc_Iter, Action_Column, Action_Val);
 
       Action := To_Action_Item (Get_Address (Action_Val));
