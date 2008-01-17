@@ -48,7 +48,7 @@ package VFS is
    type Cst_UTF8_String_Access is access constant Glib.UTF8_String;
 
    type Virtual_File is tagged private;
-   No_File : constant Virtual_File;
+   No_File        : constant Virtual_File;
    Local_Root_Dir : constant Virtual_File;
 
    type Virtual_File_Access is access constant Virtual_File;

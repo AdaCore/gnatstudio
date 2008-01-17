@@ -1785,16 +1785,16 @@ package body Project_Explorers is
       --  Return true if Dir contains an hidden directory (a directory starting
       --  with a dot).
 
-      Project  : constant Project_Type :=
-                   Get_Project_From_Node
-                     (Explorer.Tree.Model, Explorer.Kernel, Node, False);
+      Project   : constant Project_Type :=
+                    Get_Project_From_Node
+                      (Explorer.Tree.Model, Explorer.Kernel, Node, False);
 
-      Dirs     : constant Name_Id_Array := Source_Dirs (Project);
+      Dirs      : constant Name_Id_Array := Source_Dirs (Project);
 
       N, N2, N3 : Gtk_Tree_Iter;
-      Index    : Natural;
-      Prj      : Project_Type;
-      Imported : Project_Type_Array := Get_Imported_Projects (Project);
+      Index     : Natural;
+      Prj       : Project_Type;
+      Imported  : Project_Type_Array := Get_Imported_Projects (Project);
 
       ---------------
       -- Is_Hidden --
@@ -1861,7 +1861,7 @@ package body Project_Explorers is
       S_Files  : File_Node_Hash.Map;
       S_Cursor : File_Node_Hash.Cursor;
    begin
-      --  Depending on whether we used trusted moe or not, some extra
+      --  Depending on whether we used trusted mode or not, some extra
       --  directories might be displayed in addition to the explicit ones
       --  mentioned in the project. This would be the case if some of them are
       --  links but the user chose the trusted mode anyway. This is acceptable,
@@ -1871,6 +1871,7 @@ package body Project_Explorers is
       --  the tree always end with a directory separator.
 
       N := Children (Explorer.Tree.Model, Node);
+
       while N /= Null_Iter loop
          Iter_Copy (Source => N, Dest => N2);
          Next (Explorer.Tree.Model, N2);
