@@ -832,19 +832,7 @@ package body GPS.Location_View is
       Args  : GNAT.Strings.String_List :=
                 (1 => new String'(Image (Integer (Mark))));
       Style : Style_Access;
-      Action_Val : GValue;
-      Action     : Action_Item;
    begin
-      Get_Value (View.Tree.Model, Loc_Iter, Action_Column, Action_Val);
-
-      Action := To_Action_Item (Get_Address (Action_Val));
-
-      Unset (Action_Val);
-
-      if Action /= null then
-         Free (Action);
-      end if;
-
       if Mark /= -1 then
          Execute_GPS_Shell_Command
            (View.Kernel, "Editor.delete_mark", Args);
@@ -2355,17 +2343,17 @@ package body GPS.Location_View is
               and then Escaped_Compare
                 (Get_Message (View, Line_Iter), Escaped_Message)
             then
-               Get_Value
-                 (View.Tree.Model, Line_Iter, Action_Column, Value);
-               Old_Action := To_Action_Item (Get_Address (Value));
-
-               if Old_Action /= null then
-                  Free (Old_Action);
-               end if;
-
                if Action = null then
                   Set (View.Tree.Model, Line_Iter,
                        Button_Column, C_Proxy (Null_Pixbuf));
+
+                  Get_Value
+                    (View.Tree.Model, Line_Iter, Action_Column, Value);
+                  Old_Action := To_Action_Item (Get_Address (Value));
+
+                  if Old_Action /= null then
+                     Free (Old_Action);
+                  end if;
 
                   Set_Address (Value, System.Null_Address);
                   Set_Value
