@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007, AdaCore             --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -2030,19 +2030,28 @@ package body Project_Explorers is
       --  Add those source directories that contain no file
 
       S_Cursor := First (S_Dirs);
-      while Has_Element (S_Cursor) loop
-         Append
-           (Explorer.Tree.Model,
-            Iter    => N,
-            Parent  => Node);
-         Set_Directory_Node_Attributes
-           (Explorer  => Explorer,
-            Directory => Key (S_Cursor),
-            Node      => N,
-            Project   => Project,
-            Node_Type => Directory_Node);
-         Set (Explorer.Tree.Model, N, Up_To_Date_Column, True);
 
+      while Has_Element (S_Cursor) loop
+         declare
+            Dir : constant String := Key (S_Cursor);
+         begin
+            if Get_History
+              (Get_History (Explorer.Kernel).all, Show_Hidden_Dirs)
+              or else not Is_Hidden (Dir)
+            then
+               Append
+                 (Explorer.Tree.Model,
+                  Iter    => N,
+                  Parent  => Node);
+               Set_Directory_Node_Attributes
+                 (Explorer  => Explorer,
+                  Directory => Dir,
+                  Node      => N,
+                  Project   => Project,
+                  Node_Type => Directory_Node);
+               Set (Explorer.Tree.Model, N, Up_To_Date_Column, True);
+            end if;
+         end;
          Next (S_Cursor);
       end loop;
 
