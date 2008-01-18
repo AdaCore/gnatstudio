@@ -4,7 +4,8 @@ Known Problems fixed in GPS 4.3.0
   Problem:    Directories containing no source file are not hidden in the
               Project Explorer even-though the hidden directory pattern
               would match.
-  Workaround: No workaround, a minor annoyance.
+  Workaround: Edit the project file to remove the directories you want to
+              hide.
 
 - H103-004: Revisions not properly highlighted
   Problem:    When clicking on the revision links on annotated files, the
