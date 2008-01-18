@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.2 NEW FEATURES LIST Current as of Jan 13, 2008
+GPS 4.2 NEW FEATURES LIST Current as of Jan 18, 2008
 ====================================================
 
 Copyright (c) 2006-2008, AdaCore
@@ -17,9 +17,9 @@ New features in GPS 4.2.1
 
 NF-42-H110-013 patch and diff3 executable distributed under Windows (2008-01-11)
 
-  Under Windows, gnupatch.exe and diff3.exe are now distributed, easing the
+  Under Windows, gnupatch.exe and gnudiff3.exe are now distributed, easing the
   use of visual comparison. It is still possible to specify alternate
-  patch/diff commands via the preferences.
+  patch/diff commands via the preferences if needed.
 
 NF-42-GC19-019 Support for remote operations from python (2008-01-10)
 
