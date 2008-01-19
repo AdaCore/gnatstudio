@@ -106,6 +106,7 @@ install_binaries() {
 
   rm -rf $basedir/lib/gps $basedir/bin/gps*
   rm -f $basedir/share/gps/plug-ins/emacs.xml
+  rm -f $basedir/share/gps/plug-ins/gnatclean.xml
   rm -f $basedir/share/gps/library/gnatpsta.py
   rm -f $basedir/share/gps/library/methods.py
 
