@@ -4654,7 +4654,7 @@ It is possible to close all editors at once using a command like
 
   <shell_doc name="GPS.EditorBuffer.select">
        <param name="self">An instance of GPS.EditorBuffer</param>
-       <param name="from" default="beginning of buffer">An instance of GPS.EditorLocation</param>
+       <param name="frm" default="beginning of buffer">An instance of GPS.EditorLocation</param>
        <param name="to" default="end of buffer">An instance of GPS.EditorLocation</param>
        <description>Selects an area in the buffer. The boundaries are included in the selection. The order of the boundaries is irrelevant, but the cursor will be left on to</description>
   </shell_doc>
@@ -4683,7 +4683,7 @@ It is possible to close all editors at once using a command like
 
   <shell_doc name="GPS.EditorBuffer.copy">
        <param name="self">An instance of GPS.EditorBuffer</param>
-       <param name="from" default="beginning of buffer">An instance of GPS.EditorLocation</param>
+       <param name="frm" default="beginning of buffer">An instance of GPS.EditorLocation</param>
        <param name="to" default="end of buffer">An instance of GPS.EditorLocation</param>
        <param name="append" default="False">A boolean</param>
        <description>Copy the given range of text into the clipboard, so that it can be further pasted into other applications or other parts of GPS. If append is True, the text is appended to the last clipboard entry instead of generating a new one</description>
@@ -4692,7 +4692,7 @@ It is possible to close all editors at once using a command like
 
   <shell_doc name="GPS.EditorBuffer.cut">
        <param name="self">An instance of GPS.EditorBuffer</param>
-       <param name="from" default="beginning of buffer">An instance of GPS.EditorLocation</param>
+       <param name="frm" default="beginning of buffer">An instance of GPS.EditorLocation</param>
        <param name="to" default="end of buffer">An instance of GPS.EditorLocation</param>
        <param name="append" default="False">A boolean</param>
        <description>Copy the given range of text into the clipboard, so that it can be further pasted into other applications or other parts of GPS. The text is removed from the edited buffer. If append is True, the text is appended to the last clipboard entry instead of generating a new one</description>
@@ -4726,7 +4726,7 @@ It is possible to close all editors at once using a command like
 
   <shell_doc name="GPS.EditorBuffer.get_chars">
        <param name="self">An instance of GPS.EditorBuffer</param>
-       <param name="from" default="beginning of buffer">An instance of GPS.EditorLocation</param>
+       <param name="frm" default="beginning of buffer">An instance of GPS.EditorLocation</param>
        <param name="to" default="end of buffer">An instance of GPS.EditorLocation</param>
        <return>A string</return>
        <description>Returns the contents of the buffer between the two locations given in parameter. Modifying the returned value has no effect on the buffer</description>
@@ -4742,21 +4742,21 @@ It is possible to close all editors at once using a command like
 
   <shell_doc name="GPS.EditorBuffer.delete">
     <param name="self">An instance of GPS.EditorBuffer</param>
-    <param name="from" default="beginning of buffer">An instance of GPS.EditorLocation</param>
+    <param name="frm" default="beginning of buffer">An instance of GPS.EditorLocation</param>
     <param name="to" default="end of buffer">An instance of GPS.EditorLocation</param>
     <description>Delete the given range of text from the buffer</description>
   </shell_doc>
 
   <shell_doc name="GPS.EditorBuffer.indent">
     <param name="self">An instance of GPS.EditorBuffer</param>
-    <param name="from" default="beginning of buffer">An instance of GPS.EditorLocation</param>
+    <param name="frm" default="beginning of buffer">An instance of GPS.EditorLocation</param>
     <param name="to" default="end of buffer">An instance of GPS.EditorLocation</param>
     <description>Recompute the indentation of the given range of text. This feature is language-dependent</description>
   </shell_doc>
 
   <shell_doc name="GPS.EditorBuffer.refill">
     <param name="self">An instance of GPS.EditorBuffer</param>
-    <param name="from" default="beginning of buffer">An instance of GPS.EditorLocation</param>
+    <param name="frm" default="beginning of buffer">An instance of GPS.EditorLocation</param>
     <param name="to" default="end of buffer">An instance of GPS.EditorLocation</param>
     <description>Refill the given range of text, ie cut long lines if necessary so that they fit in the limit specified in the GPS preferences</description>
   </shell_doc>
@@ -4809,7 +4809,7 @@ A number of predefined overlay exits. Among these are the ones used for syntax h
   <shell_doc name="GPS.EditorBuffer.apply_overlay">
       <param name="self">An instance of GPS.EditorBuffer</param>
       <param name="overlay">An instance of GPS.EditorOverlay</param>
-      <param name="from" default="begining of buffer">An instance of GPS.EditorLocation</param>
+      <param name="frm" default="begining of buffer">An instance of GPS.EditorLocation</param>
       <param name="to" default="end of buffer">An instance of GPS.EditorLocation</param>
       <description>Applies the overlay to the given range of text. This immediately changes the rendering of the text based on the properties of the overlay</description>
       <see_also name="GPS.EditorBuffer.remove_overlay" />
@@ -4818,7 +4818,7 @@ A number of predefined overlay exits. Among these are the ones used for syntax h
   <shell_doc name="GPS.EditorBuffer.remove_overlay">
       <param name="self">An instance of GPS.EditorBuffer</param>
       <param name="overlay">An instance of GPS.EditorOverlay</param>
-      <param name="from" default="begining of buffer">An instance of GPS.EditorLocation</param>
+      <param name="frm" default="begining of buffer">An instance of GPS.EditorLocation</param>
       <param name="to" default="end of buffer">An instance of GPS.EditorLocation</param>
       <description>Removes all instances of the overlay in the given range of text. It isn't an error if the overlay is not applied to any of the character in the range, it just has no effect in that case.</description>
       <see_also name="GPS.EditorBuffer.apply_overlay" />

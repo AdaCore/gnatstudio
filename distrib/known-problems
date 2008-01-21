@@ -31,13 +31,21 @@ Known Problems fixed in GPS 4.3.0
   Workaround: Type "cont" in the debugger console instead of pressing the
               Start/Continue button.
 
-- G906-021: Auto fixing doesn't indent correctly "pragma Unreferenced" 
+- G906-021: Auto fixing doesn't indent correctly "pragma Unreferenced"
   Problem:    When GPS insert a "pragma Unreferenced" to fix an unreferenced
               entity warning, the indentation of the pragma may be incorrect.
   Workaround: Manually fix the indentation.
 
 - G621-018: Auto fixing cannot remove variables containing "is"
   Problem:    When a variable type or initialization contains the string "is",
-              and is not referenced, the auto fix proposed by GPS doesn't 
+              and is not referenced, the auto fix proposed by GPS doesn't
               manage to remove it properly.
   Workaround: Remove manually the variable.
+
+- FA23-004: Mischosen "from" as parameter name in the python API
+  Problem:    "from" had been chosen as a parameter name of several methods of
+              the GPS.EditorBuffer class. As a result, it was not possible to
+              use named parameters for this methods as "from" is a python
+              keyword. It has been replaced with "frm".
+  Workaround: Do not use named parameters for methods that have a formal
+              parameter named "from".

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2005-2007, AdaCore                  --
+--                 Copyright (C) 2005-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -99,7 +99,7 @@ package body Src_Editor_Module.Shell is
    End_Cst               : aliased constant String := "end";
    Count_Cst             : aliased constant String := "count";
    Location_Cst          : aliased constant String := "location";
-   From_Cst              : aliased constant String := "from";
+   From_Cst              : aliased constant String := "frm";
    To_Cst                : aliased constant String := "to";
    Append_Cst            : aliased constant String := "append";
    Text_Cst              : aliased constant String := "text";
