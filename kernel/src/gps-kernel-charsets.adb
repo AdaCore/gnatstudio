@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2007, AdaCore             --
+--                      Copyright (C) 2005-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -61,7 +61,9 @@ package body GPS.Kernel.Charsets is
 
    Charsets : constant Charset_Description_Array :=
      ((Name        => new String'("ISO-8859-1"),
-       Description => new String'("Western European (ISO-8859-1)")),
+       Description => new String'("Western/Latin-1 (ISO-8859-1)")),
+      (Name        => new String'("ISO-8859-15"),
+       Description => new String'("Western/Latin-9 (ISO-8859-15)")),
       (Name        => new String'("ISO-8859-2"),
        Description => new String'("Central European (ISO-8859-2)")),
       (Name        => new String'("ISO-8859-5"),
