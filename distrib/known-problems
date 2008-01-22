@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.3.0
 
+- H117-021: Crash when expanding nodes in the Project Explorer
+  Problem:    After checking or unchecking items in the Project Explorer
+              contextual menu, GPS might crash or show unexpected
+              behavior after expanding or collapsing nodes.
+  Workaround: Restart GPS after having checked/unchecked items in the
+              contextual menu.
+
 - H115-022: Directories without source not hidden
   Problem:    Directories containing no source file are not hidden in the
               Project Explorer even-though the hidden directory pattern
