@@ -7,7 +7,7 @@ a prerequisite.
 You need to use a recent version of the GNAT compiler (e.g. GNAT 6.1.1
 or GNAT GPL 2007).
 
-You then need to install the Gtk+ 2.10 suite (e.g 2.10.14).
+You then need to install the Gtk+ 2.10.x suite (e.g 2.10.14).
 To download and build Gtk+, follow the instructions given at www.gtk.org.
 On most linux systems, gtk+ is installed by default and you do not need to
 reinstall it yourself.
