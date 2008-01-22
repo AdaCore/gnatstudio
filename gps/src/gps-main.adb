@@ -1669,7 +1669,7 @@ procedure GPS.Main is
    end Do_Cleanups;
 
 begin
-   Init_Settings;
+   Init_Settings; foo;
    Main_Processing;
    Do_Cleanups;
 
