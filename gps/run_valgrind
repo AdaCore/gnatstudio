@@ -29,6 +29,9 @@ shift
 gps=${1:-$dir/obj/gps}
 shift
 
+G_SLICE=always-malloc
+G_DEBUG=gc-friendly 
+export G_SLICE G_DEBUG
 
 case $mode in
    leaks2)   args="--tool=memcheck --leak-check=full --gen-suppressions=all" ;;
