@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007, AdaCore             --
+--                      Copyright (C) 2001-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -376,7 +376,7 @@ package body Switches_Editors is
                     Get_Switches
                       (Rename_Prj,
                        Tool => Tool,
-                       Use_Initial_Value => Is_Default_Value);
+                       Use_Initial_Value => True);
                begin
                   Is_Default_Value := Page = Default_Args;
                   if not Is_Default_Value and then Active (Me) then
