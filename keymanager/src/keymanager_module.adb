@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2007, AdaCore                  --
+--                 Copyright (C) 2003-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -69,6 +69,8 @@ with XML_Parsers;
 package body KeyManager_Module is
 
    Me : constant Trace_Handle := Create ("Keymanager", GNAT.Traces.Off);
+   Event_Debug_Trace : constant Trace_Handle := Create
+     ("Event_Debug", GNAT.Traces.Off);
 
    use Key_Htable;
 
@@ -124,6 +126,11 @@ package body KeyManager_Module is
 
    procedure General_Event_Handler
      (Event : Gdk_Event; Kernel : System.Address);
+   --  General event handler for GPS.
+
+   procedure Debug_Event_Handler
+     (Event : Gdk_Event; Kernel : System.Address);
+   --  General event handler used for event-level debugging.
 
    type Keymanager_Module_Record is new Module_ID_Record with record
       Handlers         : Event_Handler_Access;
@@ -444,6 +451,20 @@ package body KeyManager_Module is
       --  Dispatch the event in the standard gtk+ main loop
       Gtk.Main.Do_Event (Event);
    end General_Event_Handler;
+
+   -------------------------
+   -- Debug_Event_Handler --
+   -------------------------
+
+   procedure Debug_Event_Handler
+     (Event : Gdk_Event; Kernel : System.Address)
+   is
+      Event_Type : constant Gdk_Event_Type := Get_Event_Type (Event);
+   begin
+      Trace (Event_Debug_Trace, Event_Type'Img);
+
+      General_Event_Handler (Event, Kernel);
+   end Debug_Event_Handler;
 
    ----------
    -- Hash --
@@ -1766,9 +1787,15 @@ package body KeyManager_Module is
       Register_Module
         (Keymanager_Module, Kernel, "keymanager");
 
-      Event_Handler_Set
-        (General_Event_Handler'Access,
-         Convert (Kernel_Handle (Kernel)));
+      if Active (Event_Debug_Trace) then
+         Event_Handler_Set
+           (Debug_Event_Handler'Access,
+            Convert (Kernel_Handle (Kernel)));
+      else
+         Event_Handler_Set
+           (General_Event_Handler'Access,
+            Convert (Kernel_Handle (Kernel)));
+      end if;
 
       Keymanager_Module.Accel_Map_Id := Kernel_Callback.Connect
         (Gtk.Accel_Map.Get, Gtk.Accel_Map.Signal_Changed,
