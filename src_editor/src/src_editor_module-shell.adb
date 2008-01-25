@@ -1738,13 +1738,15 @@ package body Src_Editor_Module.Shell is
             Color    : constant String := Nth_Arg (Data, 2);
             Box      : Source_Editor_Box;
             Child    : MDI_Child;
+            Col      : Gdk_Color;
          begin
             Child := Find_Editor (Kernel, Filename);
 
             if Child /= null then
                Box := Source_Editor_Box (Get_Widget (Child));
-               Modify_Base
-                 (Get_View (Box), State_Normal, Parse (Color));
+               Col := Parse (Color);
+               Alloc (Gtk.Widget.Get_Default_Colormap, Col);
+               Modify_Base (Get_View (Box), State_Normal, Col);
             end if;
          end;
 
