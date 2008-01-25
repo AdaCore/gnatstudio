@@ -20,6 +20,11 @@ Known Problems fixed in GPS 4.3.0
   Workaround: Edit the project file to remove the directories you want to
               hide.
 
+- H108-001: Issues with floating windows.
+  Problem:    GPS might hang upon starting if there is more than one floating
+              window in the stored desktop.
+  Workaround: Remove the file "desktop.xml" in the .gps directory.
+
 - H103-004: Revisions not properly highlighted
   Problem:    When clicking on the revision links on annotated files, the
               corresponding revision is not highlighted if the revision is
