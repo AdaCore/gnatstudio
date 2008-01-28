@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2007                       --
---                              AdaCore                              --
+--                  Copyright (C) 2002-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -325,7 +324,7 @@ package body Diff_Utils is
    is
       Result : Diff_Pair;
    begin
-      Result.List21 := Diff (File2, File1);
+      Result.List21 := Diff (File1 => File2, File2 => File1);
       Result.List23 := Diff (File2, File3);
       return Result;
    end Diff3;

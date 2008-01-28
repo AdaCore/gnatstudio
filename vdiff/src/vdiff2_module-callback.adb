@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
---                              AdaCore                              --
+--                   Copyright (C) 2001-2008, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -229,7 +228,7 @@ package body Vdiff2_Module.Callback is
                return;
             end if;
 
-            Visual_Diff (File2, File1, File3);
+            Visual_Diff (File1 => File2, File2 => File1, File3 => File3);
 
             declare
                Merge : constant Virtual_File :=
