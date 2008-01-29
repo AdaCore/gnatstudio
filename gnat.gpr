@@ -16,7 +16,8 @@ project GNAT is
    end Compiler;
 
    package Naming is
-      for Implementation ("mlib.tgt.specific") use "mlib-tgt-linux.adb";
+      for Implementation ("mlib.tgt.specific")
+        use "mlib-tgt-specific-linux.adb";
    end Naming;
 
 end GNAT;
