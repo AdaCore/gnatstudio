@@ -49,9 +49,9 @@ Known Problems fixed in GPS 4.2.1
 - GC12-016: Storage_Error on exit
   Problem:    Under some circumstances, GPS might raise a Storage_Error when
               exiting.
-  Workaround: No known workaround in the general case although deactivating 
-              the gnatclean.py plug-in and removing all uses of the
-              GPS.Contextual class from your own plug-ins might be sufficient.
+  Workaround: This error will only occur on exit, so can be ignore. Disabling
+              the gnatclean.py plug-in should also be sufficient to avoid this
+              issue.
 
 - GC10-024 Missing routine name when completing overriding procedures/functions
   Problem:    When doing a "Complete Block" action on a routine
