@@ -1,8 +1,8 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Jan 13, 2008
+GPS 4.3 NEW FEATURES LIST Current as of Jan 30, 2008
 ====================================================
 
-Copyright (c) 2007, AdaCore
+Copyright (c) 2007-2008, AdaCore
 
 This file contains a list of new features introduced in GPS.
 A full description of all GPS features can be found in the GPS
@@ -19,6 +19,14 @@ NF-43-H111-019 Smarter activity menu for adding/removing files (2008-01-13)
 
   When a file is already into an activity GPS now proposes a menu to
   remove it from this activity on the VCS Contextual menu.
+
+NF-43-GC19-021 New plug-in to reset GPS Windows registry settings (2008-01-30)
+
+  A new plug-in has been added to reset the Windows registry settings for
+  GPS. Those settings are to associate some specific extensions like .ads,
+  .adb, .gpr to GPS. It can be the case that installing another application
+  breaks those default settings. By running this new plug-in (Help/Reset
+  Registry) all the values are restored to their GPS default values.
 
 NF-43-GC12-017 Align on arrows working in case statement (2007-12-29)
 
