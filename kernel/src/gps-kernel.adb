@@ -1076,7 +1076,15 @@ package body GPS.Kernel is
       Free (Data.Message);
       Free (Data.Text);
       Free (Data.Entity_Name);
-      Unref (Data.Entity);
+
+      --  Do not unref the entity stored in the context if the kernel is in
+      --  destruction or as already been destroyed since the entity has already
+      --  been freed as part of the kernel destruction.
+
+      if Data.Kernel /= null and then not Data.Kernel.Is_In_Destruction then
+         Unref (Data.Entity);
+      end if;
+
       Free (Data.Activity_Id);
       Free (Data.Revision);
       Free (Data.Instances);
