@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2002-2007, AdaCore                --
+--                   Copyright (C) 2002-2008, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -138,6 +138,11 @@ package Projects is
    function Parent_Project (Project : Project_Type) return Project_Type;
    --  Return the project that Project is extending, or No_Project if there are
    --  none.
+
+   function Extended_Project
+     (Project : Project_Type) return Project_Type;
+   --  Return the project extended by project, or No_Project is there is none.
+   --  ??? What happens with "extends all" projects ?x
 
    function Extending_Project
      (Project : Project_Type; Recurse : Boolean := False) return Project_Type;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2007, AdaCore              --
+--                     Copyright (C) 2003-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1678,6 +1678,7 @@ package body ALI_Parser is
       Project         : Project_Type) return Virtual_File
    is
       LI : Virtual_File;
+      Ext : Project_Type;
    begin
       case Get_Unit_Part_From_Filename (Project, Source_Filename) is
          when Unit_Body | Unit_Separate =>
@@ -1688,6 +1689,17 @@ package body ALI_Parser is
                Source_Filename, Project);
             if LI /= VFS.No_File then
                return LI;
+            end if;
+
+            --  If the source comes from an extended project, look for object
+            --  files there in addition
+
+            Ext := Extended_Project (Project);
+            if Ext /= No_Project then
+               LI := LI_Filename_From_Source (Handler, Source_Filename, Ext);
+               if LI /= VFS.No_File then
+                  return LI;
+               end if;
             end if;
 
             declare
@@ -1740,6 +1752,17 @@ package body ALI_Parser is
 
             if LI /= VFS.No_File then
                return LI;
+            end if;
+
+            --  If the source comes from an extended project, look for object
+            --  files there in addition
+
+            Ext := Extended_Project (Project);
+            if Ext /= No_Project then
+               LI := LI_Filename_From_Source (Handler, Source_Filename, Ext);
+               if LI /= VFS.No_File then
+                  return LI;
+               end if;
             end if;
 
             --  No ALI for the body ? Use the one for the spec as a fallback

@@ -2700,6 +2700,26 @@ package body Projects is
       Prj.Ext.Add (External_Reference_Of (Var), Value);
    end Set_Value;
 
+   ----------------------
+   -- Extended_Project --
+   ----------------------
+
+   function Extended_Project
+     (Project : Project_Type) return Project_Type
+   is
+      Extended : constant Project_Node_Id := Extended_Project_Of
+        (Project_Declaration_Of (Project.Node, Project.Tree),
+         Project.Tree);
+   begin
+      if Extended = Empty_Node then
+         return No_Project;
+      else
+         return Get_Project_From_Name
+           (Project.Data.Registry.all,
+            Prj.Tree.Name_Of (Extended, Project.Tree));
+      end if;
+   end Extended_Project;
+
    -----------------------
    -- Extending_Project --
    -----------------------
