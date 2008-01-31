@@ -27,13 +27,19 @@
 <documentation_file>
    <shell>Editor.edit "a-calend.ads"</shell>
    <descr>Ada.Calendar</descr>
-   <menu>/Help/GNAT Runtime/Ada/Calendar</menu>
+   <menu>/Help/GNAT Runtime/Ada/Calendar/&lt;Calendar&gt;</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
    <shell>Editor.edit "a-calari.ads"</shell>
    <descr>Ada.Calendar.Arithmetic</descr>
    <menu>/Help/GNAT Runtime/Ada 2005/Ada/Calendar/Arithmetic</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-calcon.ads"</shell>
+   <descr>Ada.Calendar.Conversions</descr>
+   <menu>/Help/GNAT Runtime/Ada/Calendar/Conversions</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -274,6 +280,12 @@
    <shell>Editor.edit "a-dispat.ads"</shell>
    <descr>Ada.Dispatching</descr>
    <menu>/Help/GNAT Runtime/Ada 2005/Ada/Dispatching/&lt;Dispatching&gt;</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-disedf.ads"</shell>
+   <descr>Ada.Dispatching.EDF</descr>
+   <menu>/Help/GNAT Runtime/Ada 2005/Ada/Dispatching/EDF</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -957,13 +969,7 @@
 <documentation_file>
    <shell>Editor.edit "a-taside.ads"</shell>
    <descr>Ada.Task_Identification</descr>
-   <menu>/Help/GNAT Runtime/Ada/Task__Identification/&lt;Task__Identification&gt;</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-taidim.ads"</shell>
-   <descr>Ada.Task_Identification.Image</descr>
-   <menu>/Help/GNAT Runtime/Ada/Task__Identification/Image</menu>
+   <menu>/Help/GNAT Runtime/Ada/Task__Identification</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -1405,6 +1411,18 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "g-decstr.ads"</shell>
+   <descr>GNAT.Decode_String</descr>
+   <menu>/Help/GNAT Runtime/GNAT/Decode__String</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "g-deutst.ads"</shell>
+   <descr>GNAT.Decode_UTF8_String</descr>
+   <menu>/Help/GNAT Runtime/GNAT/Decode__UTF8__String</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "g-dirope.ads"</shell>
    <descr>GNAT.Directory_Operations</descr>
    <menu>/Help/GNAT Runtime/GNAT/Directory__Operations/&lt;Directory__Operations&gt;</menu>
@@ -1426,6 +1444,18 @@
    <shell>Editor.edit "g-dyntab.ads"</shell>
    <descr>GNAT.Dynamic_Tables</descr>
    <menu>/Help/GNAT Runtime/GNAT/Dynamic__Tables</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "g-encstr.ads"</shell>
+   <descr>GNAT.Encode_String</descr>
+   <menu>/Help/GNAT Runtime/GNAT/Encode__String</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "g-enutst.ads"</shell>
+   <descr>GNAT.Encode_UTF8_String</descr>
+   <menu>/Help/GNAT Runtime/GNAT/Encode__UTF8__String</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -1573,6 +1603,12 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "g-sercom.ads"</shell>
+   <descr>GNAT.Serial_Communications</descr>
+   <menu>/Help/GNAT Runtime/GNAT/Serial__Communications</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "g-signal.ads"</shell>
    <descr>GNAT.Signals</descr>
    <menu>/Help/GNAT Runtime/GNAT/Signals</menu>
@@ -1663,6 +1699,12 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "g-timsta.ads"</shell>
+   <descr>GNAT.Time_Stamp</descr>
+   <menu>/Help/GNAT Runtime/GNAT/Time__Stamp</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "g-traceb.ads"</shell>
    <descr>GNAT.Traceback</descr>
    <menu>/Help/GNAT Runtime/GNAT/Traceback/&lt;Traceback&gt;</menu>
@@ -1702,12 +1744,6 @@
    <shell>Editor.edit "g-zspche.ads"</shell>
    <descr>GNAT.Wide_Wide_Spelling_Checker</descr>
    <menu>/Help/GNAT Runtime/Ada 2005/GNAT/Wide__Wide__Spelling__Checker</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "g-zstspl.ads"</shell>
-   <descr>GNAT.Wide_Wide_String_Split</descr>
-   <menu>/Help/GNAT Runtime/GNAT/Wide__Wide__String__Split</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
