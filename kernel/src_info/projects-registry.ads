@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2007                      --
---                              AdaCore                              --
+--                  Copyright (C) 2002-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -71,12 +70,12 @@ package Projects.Registry is
 
    procedure Report (Handler : access Error_Handler_Record;
                      Msg     : String) is abstract;
-   --  Used to report an error to the user.
+   --  Used to report an error to the user
 
    type Null_Error_Handler_Record is new Error_Handler_Record with null record;
    procedure Report (Handler : access Null_Error_Handler_Record;
                      Msg     : String);
-   --  Just does nothing. Use in stand-alone library.
+   --  Just does nothing. Use in stand-alone library
 
    Null_E_Handler : constant Error_Handler := new Null_Error_Handler_Record;
 
@@ -103,8 +102,7 @@ package Projects.Registry is
    --  project path has been set yet.
 
    function Get_Predefined_Source_Files
-     (Registry : Project_Registry)
-      return VFS.File_Array_Access;
+     (Registry : Project_Registry) return VFS.File_Array_Access;
    --  Return the list of sources found in the predefined project (e.g. the Ada
    --  runtime). Returned memory must be freed by the caller
 
@@ -244,7 +242,7 @@ package Projects.Registry is
      (Registry           : Project_Registry;
       Project            : Project_Type;
       Old_Name, New_Name : String);
-   --  Take into account a name change for a project.
+   --  Take into account a name change for a project
 
    function Directory_Belongs_To_Project
      (Registry    : Project_Registry;

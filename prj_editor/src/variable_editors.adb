@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
---                              AdaCore                              --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -60,7 +59,7 @@ package body Variable_Editors is
    Me : constant Debug_Handle := Create ("Variable_Editors");
 
    New_Value_Name : constant String := -"<Enter value name>";
-   --  Name used for the new variables.
+   --  Name used for the new variables
 
    function Get_Nth_Environment (Index : Natural) return chars_ptr;
    pragma Import (C, Get_Nth_Environment, "get_nth_environment");
@@ -73,7 +72,7 @@ package body Variable_Editors is
       Is_Default  : Boolean;
       Value       : String;
       Is_Editable : Boolean := False);
-   --  Convenient function to populate the tree.
+   --  Convenient function to populate the tree
 
    procedure New_Variable (Editor : access Gtk_Widget_Record'Class);
    procedure Rename_Variable (Editor : access Gtk_Widget_Record'Class);
@@ -84,6 +83,7 @@ package body Variable_Editors is
    Value_Column         : constant := 1;
    Editable_Column      : constant := 2;
    Initial_Value_Column : constant := 3;
+
    Column_Types : constant GType_Array :=
      (Default_Value_Column => GType_Boolean,
       Value_Column         => GType_String,
@@ -134,6 +134,9 @@ package body Variable_Editors is
       Var    : Scenario_Variable :=  No_Variable;
       Title  : String)
    is
+      Tree            : constant Project_Node_Tree_Ref :=
+                          Get_Tree
+                            (Project_Registry (Get_Registry (Kernel).all));
       Item            : Gtk_List_Item;
       Index           : Natural := 0;
       S               : chars_ptr;
@@ -147,8 +150,6 @@ package body Variable_Editors is
       Iter            : Gtk_Tree_Iter;
       E               : String_List_Iterator;
       Is_Default      : Boolean;
-      Tree : constant Project_Node_Tree_Ref :=
-        Get_Tree (Project_Registry (Get_Registry (Kernel).all));
 
    begin
       Editor := new New_Var_Edit_Record;
@@ -264,7 +265,7 @@ package body Variable_Editors is
    ------------------
 
    procedure New_Variable (Editor : access Gtk_Widget_Record'Class) is
-      E    : constant New_Var_Edit := New_Var_Edit (Editor);
+      E           : constant New_Var_Edit := New_Var_Edit (Editor);
       Iter, Iter2 : Gtk_Tree_Iter;
 
    begin
@@ -286,9 +287,9 @@ package body Variable_Editors is
 
    procedure Rename_Variable (Editor : access Gtk_Widget_Record'Class) is
       E         : constant New_Var_Edit := New_Var_Edit (Editor);
-      Iter      : Gtk_Tree_Iter;
       Selection : constant Gtk_Tree_Selection :=
-        Get_Selection (E.Values_List);
+                    Get_Selection (E.Values_List);
+      Iter      : Gtk_Tree_Iter;
 
    begin
       Get_Selected (Selection, Gtk_Tree_Model (E.Model), Iter);
@@ -308,9 +309,9 @@ package body Variable_Editors is
 
    procedure Delete_Variable (Editor : access Gtk_Widget_Record'Class) is
       E         : constant New_Var_Edit := New_Var_Edit (Editor);
-      Iter      : Gtk_Tree_Iter;
       Selection : constant Gtk_Tree_Selection :=
-        Get_Selection (E.Values_List);
+                    Get_Selection (E.Values_List);
+      Iter      : Gtk_Tree_Iter;
 
    begin
       Get_Selected (Selection, Gtk_Tree_Model (E.Model), Iter);
@@ -328,7 +329,10 @@ package body Variable_Editors is
      (Editor : access New_Var_Edit_Record) return Boolean
    is
       New_Name : constant String :=
-        Get_Text (Get_Entry (Editor.Variable_Name));
+                   Get_Text (Get_Entry (Editor.Variable_Name));
+      Tree     : constant Project_Node_Tree_Ref :=
+                   Get_Tree
+                     (Project_Registry (Get_Registry (Editor.Kernel).all));
       Ada_Name : String (New_Name'Range);
       Changed  : Boolean := False;
       Iter     : Gtk_Tree_Iter;
@@ -338,8 +342,6 @@ package body Variable_Editors is
       Num_Rows : Natural := 0;
       Message  : Message_Dialog_Buttons;
       pragma Unreferenced (Message);
-      Tree : constant Project_Node_Tree_Ref :=
-        Get_Tree (Project_Registry (Get_Registry (Editor.Kernel).all));
 
    begin
       if New_Name = "" then
@@ -438,9 +440,10 @@ package body Variable_Editors is
 
             declare
                Old_Val : constant String :=
-                 Get_String (Editor.Model, Iter, Initial_Value_Column);
+                           Get_String
+                             (Editor.Model, Iter, Initial_Value_Column);
                New_Val : constant String :=
-                 Get_String (Editor.Model, Iter, Value_Column);
+                           Get_String (Editor.Model, Iter, Value_Column);
             begin
                if Old_Val /= New_Val then
                   Trace (Me, "Renaming value for variable "
@@ -588,7 +591,7 @@ package body Variable_Editors is
       end if;
 
       if Changed then
-         --  Recompute the view so that the explorer is updated graphically.
+         --  Recompute the view so that the explorer is updated graphically
 
          Recompute_View (Editor.Kernel);
          Run_Hook (Editor.Kernel, Variable_Changed_Hook);

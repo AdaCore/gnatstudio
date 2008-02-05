@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2007, AdaCore              --
+--                 Copyright (C) 2002-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -30,11 +30,12 @@
 --  itself, or through a default naming scheme registered for custom languages
 --  in Projects.Registry.Register_Default_Language_Extension.
 
+with GNAT.OS_Lib;
+
+with Entities;
 with Language;
 with Language.Tree;
-with Entities;
 with Projects;
-with GNAT.OS_Lib;
 with VFS;
 
 package Language_Handlers is
@@ -53,7 +54,7 @@ package Language_Handlers is
    procedure Set_Registry
      (Handler  : access Language_Handler_Record;
       Registry : access Projects.Abstract_Registry'Class);
-   --  Set the top-level project for Handler.
+   --  Set the top-level project for Handler
 
    -----------------
    -- LI handlers --
@@ -71,8 +72,7 @@ package Language_Handlers is
 
    function Get_LI_Handler_From_File
      (Handler         : access Language_Handler_Record;
-      Source_Filename : VFS.Virtual_File)
-      return Entities.LI_Handler;
+      Source_Filename : VFS.Virtual_File) return Entities.LI_Handler;
    --  Return the LI handler to use for a specific file name.
    --  null is returned if the language is unknown.
    --  Project is the project that contains Source_Filename, or No_Project if
@@ -110,7 +110,7 @@ package Language_Handlers is
       Source_Filename   : VFS.Virtual_File;
       From_Project_Only : Boolean := False)
       return Language.Tree.Tree_Language_Access;
-   --  Same as above but returns the tree language.
+   --  Same as above but returns the tree language
 
    function Get_Language_From_File
      (Handler           : access Language_Handler_Record;

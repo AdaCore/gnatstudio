@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2007                      --
---                              AdaCore                              --
+--                 Copyright (C) 2002-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -60,7 +59,7 @@ package Projects.Editor is
 
    function Length
      (Tree : Prj.Project_Tree_Ref; List : Prj.String_List_Id) return Natural;
-   --  Return the number of elements in the list.
+   --  Return the number of elements in the list
 
    --------------
    -- Projects --
@@ -115,13 +114,12 @@ package Projects.Editor is
    --  statement, otherwise an absolute path is used.
 
    function Add_Imported_Project
-     (Root_Project              : Project_Type;
-      Project                   : Project_Type;
-      Imported_Project          : Project_Type;
-      Report_Errors             : Output.Output_Proc := null;
-      Use_Relative_Path         : Boolean;
-      Limited_With              : Boolean := False)
-      return Import_Project_Error;
+     (Root_Project      : Project_Type;
+      Project           : Project_Type;
+      Imported_Project  : Project_Type;
+      Report_Errors     : Output.Output_Proc := null;
+      Use_Relative_Path : Boolean;
+      Limited_With      : Boolean := False) return Import_Project_Error;
    --  Same as above, but the project is already in memory
 
    procedure Replace_Project_Occurrences
@@ -207,7 +205,7 @@ package Projects.Editor is
 
    function To_String
      (Tree : Prj.Project_Tree_Ref; Value : Variable_Value) return String;
-   --  Convert a variable value to a string suitable for insertion in the list.
+   --  Convert a variable value to a string suitable for insertion in the list
 
    function To_Argument_List
      (Tree  : Prj.Project_Tree_Ref;
@@ -240,9 +238,9 @@ package Projects.Editor is
    --  Ext_Variable_Name.
 
    procedure Delete_External_Variable
-     (Root_Project      : Project_Type;
-      Ext_Variable_Name : String;
-      Keep_Choice       : String;
+     (Root_Project             : Project_Type;
+      Ext_Variable_Name        : String;
+      Keep_Choice              : String;
       Delete_Direct_References : Boolean := True);
    --  Remove all scenario variables that reference External_Variable_Name.
    --  All the case constructions where this variable occur are replaced by
@@ -315,7 +313,7 @@ package Projects.Editor is
       Attribute          : Attribute_Pkg;
       Value              : String;
       Attribute_Index    : String := "");
-   --  Same as above, but for an attribute that contains a single value.
+   --  Same as above, but for an attribute that contains a single value
 
    type Associative_Array_Value is record
       Index : GNAT.Strings.String_Access;
@@ -379,7 +377,7 @@ package Projects.Editor is
    function Value_Of
      (Tree : Project_Node_Tree_Ref;
       Var  : Scenario_Variable) return String_List_Iterator;
-   --  Return an iterator over the possible values of the variable.
+   --  Return an iterator over the possible values of the variable
 
 private
    type String_List_Iterator is record
@@ -492,9 +490,8 @@ private
    function Find_Type_Declaration
      (Tree    : Project_Node_Tree_Ref;
       Project : Project_Node_Id;
-      Name    : Namet.Name_Id)
-      return Project_Node_Id;
-   --  Return the declaration of the type whose name is Name.
+      Name    : Namet.Name_Id) return Project_Node_Id;
+   --  Return the declaration of the type whose name is Name
 
    procedure Add_Possible_Value
      (Tree   : Project_Node_Tree_Ref;

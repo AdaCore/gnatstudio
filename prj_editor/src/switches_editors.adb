@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2008, AdaCore             --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -91,7 +91,7 @@ package body Switches_Editors is
      (Switches  : access Switches_Edit_Record'Class;
       Project   : Project_Type;
       Files     : File_Array);
-   --  Fill the editor.
+   --  Fill the editor
 
    procedure Page_Destroyed (Page : access Gtk_Widget_Record'Class);
    --  Called when a page is destroyed
@@ -327,7 +327,7 @@ package body Switches_Editors is
         (Page      : access Switches_Editor_Page_Record'Class;
          Tool      : Tool_Properties_Record;
          File_Name : Virtual_File);
-      --  Changes the switches for a specific package and tool.
+      --  Changes the switches for a specific package and tool
 
       procedure Process_File (File_Name : Virtual_File);
       --  Generate the switches for a specific file (or the default switches if
@@ -344,8 +344,8 @@ package body Switches_Editors is
          File_Name : Virtual_File)
       is
          Is_Default_Value : Boolean;
-         Rename_Prj : Project_Type;
-         To_Remove : Boolean := False;
+         Rename_Prj       : Project_Type;
+         To_Remove        : Boolean := False;
       begin
          Rename_Prj :=
            Find_Project_Of_Package (Project, Tool.Project_Package.all);
@@ -359,7 +359,7 @@ package body Switches_Editors is
             return;
          end if;
 
-         --  Check if we in fact have the initial value.
+         --  Check if we in fact have the initial value
 
          declare
             Args : String_List_Access :=
@@ -557,7 +557,7 @@ package body Switches_Editors is
       Set_Environment (Scenario_Variables (Switches.Kernel), Saved);
       Free (Saved);
 
-      --  ??? Need this to update the icon in the project explorer...
+      --  ??? Need this to update the icon in the project explorer
       if Modified then
          Recompute_View (Switches.Kernel);
       end if;

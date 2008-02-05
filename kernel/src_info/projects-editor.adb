@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2007, AdaCore             --
+--                 Copyright (C) 2002-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -91,8 +91,7 @@ package body Projects.Editor is
    function Find_Scenario_Variable
      (Tree          : Project_Node_Tree_Ref;
       Project       : Project_Type;
-      External_Name : Name_Id)
-      return Project_Node_Id;
+      External_Name : Name_Id) return Project_Node_Id;
    --  Return the declaration of the scenario variable associated with
    --  the external variable External_Name.
    --  In normalized projects, there should be only such variable.
@@ -223,8 +222,7 @@ package body Projects.Editor is
 
    function Find_Package_Declaration
      (Tree    : Project_Node_Tree_Ref;
-      Project : Project_Node_Id; Name : Namet.Name_Id)
-      return Project_Node_Id;
+      Project : Project_Node_Id; Name : Namet.Name_Id) return Project_Node_Id;
    --  Return the package whose name is Name, or Empty_Node if there is none
 
    -----------------
@@ -233,9 +231,8 @@ package body Projects.Editor is
 
    function Enclose_In_Expression
      (Node : Project_Node_Id;
-      Tree : Project_Node_Tree_Ref)
-      return Project_Node_Id;
-   --  Enclose the Node inside a N_Expression node, and return this expression.
+      Tree : Project_Node_Tree_Ref) return Project_Node_Id;
+   --  Enclose the Node inside a N_Expression node, and return this expression
 
    function String_As_Expression
      (Value : Name_Id; Tree : Project_Node_Tree_Ref) return Project_Node_Id;
@@ -264,7 +261,7 @@ package body Projects.Editor is
    function Create_Literal_String
      (Str : Namet.Name_Id; Tree : Project_Node_Tree_Ref)
       return Project_Node_Id;
-   --  Create a literal string whose value is Str.
+   --  Create a literal string whose value is Str
 
    function Find_Node_By_Name
      (Tree    : Project_Node_Tree_Ref;
@@ -364,8 +361,7 @@ package body Projects.Editor is
 
    function Enclose_In_Expression
      (Node : Project_Node_Id;
-      Tree : Project_Node_Tree_Ref)
-      return Project_Node_Id
+      Tree : Project_Node_Tree_Ref) return Project_Node_Id
    is
       Expr : constant Project_Node_Id :=
         Default_Project_Node (Tree, N_Expression, Single);
@@ -577,10 +573,10 @@ package body Projects.Editor is
       External_Name : Name_Id)
       return Project_Node_Id
    is
-      Decl : Project_Node_Id := First_Declarative_Item_Of
+      Name    : constant String := Get_String (External_Name);
+      Decl    : Project_Node_Id := First_Declarative_Item_Of
         (Project_Declaration_Of (Project.Node, Tree), Tree);
       Current : Project_Node_Id;
-      Name : constant String := Get_String (External_Name);
    begin
       while Decl /= Empty_Node loop
          Current := Current_Item_Node (Decl, Tree);
@@ -603,8 +599,7 @@ package body Projects.Editor is
    -------------------------------
 
    function Find_Project_In_Hierarchy
-     (Root_Project : Project_Type; Name : Namet.Name_Id)
-      return Project_Node_Id
+     (Root_Project : Project_Type; Name : Namet.Name_Id) return Project_Node_Id
    is
       Iter : Imported_Project_Iterator := Start (Root_Project);
    begin
@@ -1114,7 +1109,7 @@ package body Projects.Editor is
       if Pkg_Name /= "" then
          Pkg := Get_Or_Create_Package (Tree, Project, Pkg_Name);
 
-         --  If we have a renamed package, modify the target package.
+         --  If we have a renamed package, modify the target package
          Rename_Prj := Project_Of_Renamed_Package_Of (Pkg, Tree);
          if Rename_Prj /= Empty_Node then
             Pkg := Get_Or_Create_Package (Tree, Rename_Prj, Pkg_Name);
@@ -1282,6 +1277,7 @@ package body Projects.Editor is
       --  Nothing to do if there are no case items
       if Case_Items_Last > Case_Items'First then
          Node := First_Declarative_Item_Of (Parent, Tree);
+
          while Node /= Empty_Node loop
             if Attribute_Matches
               (Tree, Current_Item_Node (Node, Tree),
@@ -1532,8 +1528,7 @@ package body Projects.Editor is
    function Find_Type_Declaration
      (Tree    : Project_Node_Tree_Ref;
       Project : Project_Node_Id;
-      Name    : Namet.Name_Id)
-      return Project_Node_Id is
+      Name    : Namet.Name_Id) return Project_Node_Id is
    begin
       return Find_Node_By_Name
         (Tree, Project, N_String_Type_Declaration, Name);
@@ -1572,7 +1567,7 @@ package body Projects.Editor is
       V_Name          : constant Name_Id := Get_String (Value_Name);
 
       procedure Callback (Project, Parent, Node, Choice : Project_Node_Id);
-      --  Called for each matching node for the env. variable.
+      --  Called for each matching node for the env. variable
 
       --------------
       -- Callback --
@@ -1645,6 +1640,7 @@ package body Projects.Editor is
       end Callback;
 
       Ext_Var : constant Name_Id := Get_String (Ext_Variable_Name);
+
    begin
       if not Is_Editable (Root_Project) then
          Trace (Me, "Project is not editable");
@@ -1719,11 +1715,11 @@ package body Projects.Editor is
       Old_Value_Name    : String;
       New_Value_Name    : Namet.Name_Id)
    is
-      Tree : constant Project_Node_Tree_Ref := Root_Project.Tree;
+      Tree       : constant Project_Node_Tree_Ref := Root_Project.Tree;
       Old_V_Name : constant Name_Id := Get_String (Old_Value_Name);
 
       procedure Callback (Project, Parent, Node, Choice : Project_Node_Id);
-      --  Called for each mtching node for the env. variable.
+      --  Called for each mtching node for the env. variable
 
       --------------
       -- Callback --
@@ -1771,6 +1767,7 @@ package body Projects.Editor is
       end Callback;
 
       N : constant Name_Id := Get_String (Ext_Variable_Name);
+
    begin
       if not Is_Editable (Root_Project) then
          Trace (Me, "Project is not editable");
@@ -1801,9 +1798,10 @@ package body Projects.Editor is
       Specific_Choice   : Name_Id;
       Action            : Environment_Variable_Callback)
    is
-      Tree : constant Project_Node_Tree_Ref := Root_Project.Tree;
-      Variable_Nodes : Project_Node_Array_Access :=
-        new Project_Node_Array (1 .. 100);
+      Tree                : constant Project_Node_Tree_Ref :=
+                              Root_Project.Tree;
+      Variable_Nodes      : Project_Node_Array_Access :=
+                              new Project_Node_Array (1 .. 100);
       Variable_Nodes_Last : Natural := Variable_Nodes'First - 1;
       --  List of all the variables that reference Ext_Variable_Name
       --  in the current project.
@@ -2013,14 +2011,15 @@ package body Projects.Editor is
    ------------------------------
 
    procedure Delete_External_Variable
-     (Root_Project      : Project_Type;
-      Ext_Variable_Name : String;
-      Keep_Choice       : String;
+     (Root_Project             : Project_Type;
+      Ext_Variable_Name        : String;
+      Keep_Choice              : String;
       Delete_Direct_References : Boolean := True)
    is
       Tree : constant Project_Node_Tree_Ref := Root_Project.Tree;
+
       procedure Callback (Project, Parent, Node, Choice : Project_Node_Id);
-      --  Called for each mtching node for the env. variable.
+      --  Called for each mtching node for the env. variable
 
       --------------
       -- Callback --
@@ -2107,7 +2106,7 @@ package body Projects.Editor is
       Declaration        : Project_Node_Id)
    is
       Tmp, Next : Project_Node_Id;
-      Pkg : Project_Node_Id := Project_Or_Package;
+      Pkg       : Project_Node_Id := Project_Or_Package;
    begin
       while Pkg /= Empty_Node loop
          Tmp := First_Variable_Of (Pkg, Tree);
@@ -2148,8 +2147,9 @@ package body Projects.Editor is
       Default           : Name_Id)
    is
       Tree : constant Project_Node_Tree_Ref := Root_Project.Tree;
+
       procedure Callback (Project, Parent, Node, Choice : Project_Node_Id);
-      --  Called for each mtching node for the env. variable.
+      --  Called for each mtching node for the env. variable
 
       --------------
       -- Callback --
@@ -2190,8 +2190,9 @@ package body Projects.Editor is
       New_Name     : Namet.Name_Id)
    is
       Tree : constant Project_Node_Tree_Ref := Root_Project.Tree;
+
       procedure Callback (Project, Parent, Node, Choice : Project_Node_Id);
-      --  Called for each mtching node for the env. variable.
+      --  Called for each mtching node for the env. variable
 
       --------------
       -- Callback --
@@ -2237,10 +2238,10 @@ package body Projects.Editor is
       External_Var : Scenario_Variable;
       Values       : Name_Id_Array)
    is
-      Tree : constant Project_Node_Tree_Ref := Root_Project.Tree;
+      Tree           : constant Project_Node_Tree_Ref := Root_Project.Tree;
       Type_Node, Var : Project_Node_Id;
-      Iter : Imported_Project_Iterator := Start (Root_Project);
-      P    : Project_Type;
+      Iter           : Imported_Project_Iterator := Start (Root_Project);
+      P              : Project_Type;
    begin
       loop
          P := Current (Iter);
@@ -2554,8 +2555,8 @@ package body Projects.Editor is
          return P;
       end Path;
 
-      Old_P    : constant String := Path (Old_Path);
-      New_P    : constant String := Path (New_Path);
+      Old_P : constant String := Path (Old_Path);
+      New_P : constant String := Path (New_Path);
 
       --------------
       -- Rename_P --
@@ -2580,8 +2581,8 @@ package body Projects.Editor is
       end Rename_P;
 
    begin
-
       --  Replace all the paths
+
       For_Each_Directory_Node (Project, Rename_P'Unrestricted_Access);
 
       if Changed then
@@ -2600,12 +2601,12 @@ package body Projects.Editor is
       Use_Relative_Paths     : Boolean := False;
       Update_With_Statements : Boolean := False) return Boolean
    is
-      Tree     : constant Project_Node_Tree_Ref := Project.Tree;
+      Tree : constant Project_Node_Tree_Ref := Project.Tree;
 
       procedure Convert_Path (Node : Project_Node_Id);
       --  Convert the path to an absolute path
 
-      Base : constant String := Full_Name (Project_Directory (Project)).all;
+      Base    : constant String := Full_Name (Project_Directory (Project)).all;
       Changed : Boolean := False;
 
       ------------------
@@ -2638,9 +2639,11 @@ package body Projects.Editor is
       end Convert_Path;
 
       With_Clause : Project_Node_Id :=
-        First_With_Clause_Of (Project.Node, Tree);
+                      First_With_Clause_Of (Project.Node, Tree);
+
    begin
       --  First replace the with clauses
+
       if Update_With_Statements then
          while With_Clause /= Empty_Node loop
             Convert_Path (With_Clause);
@@ -2649,6 +2652,7 @@ package body Projects.Editor is
       end if;
 
       --  Converts the "extends ..." part
+
       declare
          Old : constant String := Get_String
            (Extended_Project_Path_Of (Project.Node, Tree));
@@ -2684,6 +2688,7 @@ package body Projects.Editor is
       end;
 
       --  Then replace all the paths
+
       For_Each_Directory_Node (Project, Convert_Path'Unrestricted_Access);
 
       if Changed then
@@ -2819,8 +2824,7 @@ package body Projects.Editor is
    function Clone_Node
      (Tree       : Project_Node_Tree_Ref;
       Node       : Project_Node_Id;
-      Deep_Clone : Boolean := False)
-      return Project_Node_Id
+      Deep_Clone : Boolean := False) return Project_Node_Id
    is
       New_Node : Project_Node_Id;
 
@@ -2844,7 +2848,7 @@ package body Projects.Editor is
          case Kind_Of (Node, Tree) is
             when N_Project =>
                --  Packages, Variables, First_String_Type_Of must be outside of
-               --  this subprogram
+               --  this subprogram.
                Set_First_With_Clause_Of
                  (New_Node, Tree,
                   Clone_Node (Tree, First_With_Clause_Of (Node, Tree), True));
@@ -2999,9 +3003,9 @@ package body Projects.Editor is
       Expr                         : Project_Node_Id;
       Add_Before_First_Case_Or_Pkg : Boolean := False)
    is
-      Real_Parent : Project_Node_Id;
+      Real_Parent          : Project_Node_Id;
       New_Decl, Decl, Next : Project_Node_Id;
-      Last, L : Project_Node_Id;
+      Last, L              : Project_Node_Id;
    begin
       if Kind_Of (Expr, Tree) /= N_Declarative_Item then
          New_Decl := Default_Project_Node (Tree, N_Declarative_Item);
@@ -3033,7 +3037,7 @@ package body Projects.Editor is
             Decl := Next;
          end loop;
 
-         --  In case Expr is in fact a range of declarative items...
+         --  In case Expr is in fact a range of declarative items
          Last := New_Decl;
          loop
             L := Next_Declarative_Item (Last, Tree);
@@ -3055,7 +3059,7 @@ package body Projects.Editor is
       Parent : Project_Node_Id;
       Node   : Project_Node_Id)
    is
-      Real_Parent : Project_Node_Id;
+      Real_Parent    : Project_Node_Id;
       New_Decl, Decl : Project_Node_Id;
    begin
       if Kind_Of (Node, Tree) /= N_Declarative_Item then
@@ -3090,8 +3094,8 @@ package body Projects.Editor is
       Pkg_Name : String) return Project_Type
    is
       Tree : constant Project_Node_Tree_Ref := Project.Tree;
-      Pkg : Project_Node_Id;
-      P   : Project_Type := No_Project;
+      Pkg  : Project_Node_Id;
+      P    : Project_Type := No_Project;
    begin
       Pkg := Find_Package_Declaration
         (Tree, Project.Node, Get_String (Pkg_Name));
@@ -3116,9 +3120,9 @@ package body Projects.Editor is
    ----------------------
 
    procedure Reset_All_Caches (Project : Project_Type) is
-      Root : constant Project_Type := Get_Root_Project
+      Root  : constant Project_Type := Get_Root_Project
         (Project_Registry (Get_Registry (Project)));
-      Iter : Imported_Project_Iterator := Start (Root, Recursive => True);
+      Iter  : Imported_Project_Iterator := Start (Root, Recursive => True);
       Count : Natural := 0;
    begin
       while Current (Iter) /= No_Project loop
@@ -3151,10 +3155,10 @@ package body Projects.Editor is
    procedure Remove_Imported_Project
      (Project : Project_Type; Imported_Project : Project_Type)
    is
-      Tree : constant Project_Node_Tree_Ref := Project.Tree;
+      Tree        : constant Project_Node_Tree_Ref := Project.Tree;
       With_Clause : Project_Node_Id :=
-        First_With_Clause_Of (Project.Node, Tree);
-      Next : Project_Node_Id;
+                      First_With_Clause_Of (Project.Node, Tree);
+      Next        : Project_Node_Id;
    begin
       --  ??? When the project is no longer found in the hierarchy, it should
       --  also be removed from the htable in Prj.Tree, so that another
@@ -3238,9 +3242,10 @@ package body Projects.Editor is
       Limited_With              : Boolean := False)
       return Import_Project_Error
    is
-      Tree : constant Project_Node_Tree_Ref := Root_Project.Tree;
       use Prj.Tree.Tree_Private_Part;
       use type Output.Output_Proc;
+
+      Tree : constant Project_Node_Tree_Ref := Root_Project.Tree;
 
       procedure Fail (S1 : String; S2 : String := ""; S3 : String := "");
       --  Replaces Osint.Fail
@@ -3259,12 +3264,13 @@ package body Projects.Editor is
       With_Clause : Project_Node_Id;
       Iter        : Imported_Project_Iterator;
       Tmp_Prj     : Project_Type;
+
    begin
       Output.Set_Special_Output (Report_Errors);
       Prj.Com.Fail := Fail'Unrestricted_Access;
 
       --  Make sure we are not trying to import ourselves, since otherwise it
-      --  would result in an infinite loop when manipulating the project
+      --  would result in an infinite loop when manipulating the project.
 
       if Prj.Tree.Name_Of (Project.Node, Tree) =
         Prj.Tree.Name_Of (Imported_Project, Tree)
@@ -3278,9 +3284,10 @@ package body Projects.Editor is
       end if;
 
       --  Check if it is already there. If we have the same name but not the
-      --  same path, we replace it anyway
+      --  same path, we replace it anyway.
 
       With_Clause := First_With_Clause_Of (Project.Node, Tree);
+
       while With_Clause /= Empty_Node loop
          if Prj.Tree.Name_Of (Project_Node_Of (With_Clause, Tree), Tree) =
            Prj.Tree.Name_Of (Imported_Project, Tree)
@@ -3330,6 +3337,7 @@ package body Projects.Editor is
       Set_Project_Modified (Project, True);
 
       --  Reset all importing caches, since they store the list recursively
+
       Iter := Start (Root_Project);
       loop
          Tmp_Prj := Current (Iter);
@@ -3359,13 +3367,12 @@ package body Projects.Editor is
    --------------------------
 
    function Add_Imported_Project
-     (Root_Project              : Project_Type;
-      Project                   : Project_Type;
-      Imported_Project          : Project_Type;
-      Report_Errors             : Output.Output_Proc := null;
-      Use_Relative_Path         : Boolean;
-      Limited_With              : Boolean := False)
-      return Import_Project_Error is
+     (Root_Project      : Project_Type;
+      Project           : Project_Type;
+      Imported_Project  : Project_Type;
+      Report_Errors     : Output.Output_Proc := null;
+      Use_Relative_Path : Boolean;
+      Limited_With      : Boolean := False) return Import_Project_Error is
    begin
       return Add_Imported_Project
         (Root_Project              => Root_Project,
@@ -3390,9 +3397,10 @@ package body Projects.Editor is
       Limited_With              : Boolean := False)
       return Import_Project_Error
    is
-      Tree : constant Project_Node_Tree_Ref := Root_Project.Tree;
       use Prj.Tree.Tree_Private_Part;
       use type Output.Output_Proc;
+
+      Tree : constant Project_Node_Tree_Ref := Root_Project.Tree;
 
       procedure Fail (S1 : String; S2 : String := ""; S3 : String := "");
       --  Replaces Osint.Fail
@@ -3408,11 +3416,11 @@ package body Projects.Editor is
          end if;
       end Fail;
 
-      Imported_Project : Project_Node_Id := Empty_Node;
-      Basename : constant String := Base_Name
+      Basename         : constant String := Base_Name
         (Imported_Project_Location, Project_File_Extension);
-      Dep_ID   : Name_Id;
-      Dep_Name : Prj.Tree.Tree_Private_Part.Project_Name_And_Node;
+      Imported_Project : Project_Node_Id := Empty_Node;
+      Dep_ID           : Name_Id;
+      Dep_Name         : Prj.Tree.Tree_Private_Part.Project_Name_And_Node;
 
    begin
       Output.Set_Special_Output (Report_Errors);
@@ -3443,10 +3451,11 @@ package body Projects.Editor is
          end if;
 
       else
-         Prj.Part.Parse (Tree, Imported_Project,
-                         Full_Name (Imported_Project_Location).all,
-                         Current_Directory      => Get_Current_Dir,
-                         Always_Errout_Finalize => True);
+         Prj.Part.Parse
+           (Tree, Imported_Project,
+            Full_Name (Imported_Project_Location).all,
+            Current_Directory      => Get_Current_Dir,
+            Always_Errout_Finalize => True);
       end if;
 
       if Imported_Project = Empty_Node then
@@ -3475,6 +3484,7 @@ package body Projects.Editor is
      (Project : Project_Type; Action  : Node_Callback)
    is
       Tree : constant Project_Node_Tree_Ref := Project.Tree;
+
       procedure Process_List (List : Project_Node_Id);
       --  Process a list of declarative items
 
@@ -3488,6 +3498,7 @@ package body Projects.Editor is
       begin
          while Node /= Empty_Node loop
             Current := Current_Item_Node (Node, Tree);
+
             case Kind_Of (Current, Tree) is
                when N_Attribute_Declaration =>
                   --  ??? Should avoid a hard-coded list of directory
@@ -3818,8 +3829,8 @@ package body Projects.Editor is
       Use_Relative_Path : Boolean)
    is
       Tree          : constant Project_Node_Tree_Ref := Root_Project.Tree;
-      Iterator      : Imported_Project_Iterator := Start
-        (Root_Project, Recursive => True);
+      Iterator      : Imported_Project_Iterator :=
+                        Start (Root_Project, Recursive => True);
       With_Clause   : Project_Node_Id;
       P             : Project_Type;
 
@@ -3858,7 +3869,7 @@ package body Projects.Editor is
       Type_Name : String;
       Env_Name  : String) return Scenario_Variable
    is
-      Tree : constant Project_Node_Tree_Ref := Project.Tree;
+      Tree     : constant Project_Node_Tree_Ref := Project.Tree;
       Typ, Var : Project_Node_Id;
    begin
       if not Is_Editable (Project) then
@@ -3939,6 +3950,7 @@ package body Projects.Editor is
    ---------------------
 
    procedure Normalize_Cases (Project : Projects.Project_Type) is
+
       Tree : constant Project_Node_Tree_Ref := Project.Tree;
 
       procedure Process_Declarative_List (Node : Project_Node_Id);

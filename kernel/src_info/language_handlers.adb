@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2007, AdaCore             --
+--                 Copyright (C) 2002-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,11 +19,14 @@
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
-with Case_Handling;             use Case_Handling;
-with Entities;                  use Entities;
+
 with GNAT.Bubble_Sort_G;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Strings;
+with Namet;                     use Namet;
+
+with Case_Handling;             use Case_Handling;
+with Entities;                  use Entities;
 with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
 with Language.Unknown;          use Language.Unknown;
 with Language;                  use Language;
@@ -31,7 +34,6 @@ with Language.Tree;             use Language.Tree;
 with Projects.Registry;         use Projects.Registry;
 with Projects;                  use Projects;
 with Traces;                    use Traces;
-with Namet;                     use Namet;
 with VFS;                       use VFS;
 
 package body Language_Handlers is
@@ -55,7 +57,7 @@ package body Language_Handlers is
 
    procedure Create_Handler (Handler : out Language_Handler) is
    begin
-      --  ??? Never freed, but the handler is never destroyed.
+      --  ??? Never freed, but the handler is never destroyed
       Handler := new Language_Handler_Record;
    end Create_Handler;
 
@@ -290,13 +292,16 @@ package body Language_Handlers is
    begin
       if Handler.Languages /= null then
          declare
-            Result : Argument_List (1 .. Handler.Languages'Last);
-
             procedure Move (From, To : Natural);
             function Lt (From, To : Natural) return Boolean;
             package Sort is new GNAT.Bubble_Sort_G (Move => Move, Lt => Lt);
 
-            Tmp : GNAT.Strings.String_Access;
+            Result : Argument_List (1 .. Handler.Languages'Last);
+            Tmp    : GNAT.Strings.String_Access;
+
+            ----------
+            -- Move --
+            ----------
 
             procedure Move (From, To : Natural) is
             begin
@@ -308,6 +313,10 @@ package body Language_Handlers is
                   Result (To) := Result (From);
                end if;
             end Move;
+
+            --------
+            -- Lt --
+            --------
 
             function Lt (From, To : Natural) return Boolean is
             begin
@@ -328,6 +337,7 @@ package body Language_Handlers is
 
             return Result;
          end;
+
       else
          declare
             Result : Argument_List (1 .. 0);
@@ -343,17 +353,17 @@ package body Language_Handlers is
 
    function Get_LI_Handler_From_File
      (Handler         : access Language_Handler_Record;
-      Source_Filename : VFS.Virtual_File)
-      return LI_Handler
+      Source_Filename : VFS.Virtual_File) return LI_Handler
    is
-      Lang : constant String :=
-        Get_Language_From_File (Handler, Source_Filename);
+      Lang  : constant String :=
+                Get_Language_From_File (Handler, Source_Filename);
       Index : constant Natural := Get_Index_From_Language (Handler, Lang);
    begin
       if Index /= 0
         and then Handler.Languages (Index).Handler /= null
       then
          return Handler.Languages (Index).Handler;
+
       else
          if Index /= 0 then
             Trace (Me, "No LI_Handler for language "
@@ -369,8 +379,8 @@ package body Language_Handlers is
    -- Languages_Count --
    ---------------------
 
-   function Languages_Count (Handler : access Language_Handler_Record)
-      return Natural is
+   function Languages_Count
+     (Handler : access Language_Handler_Record) return Natural is
    begin
       if Handler.Languages = null then
          return 0;
@@ -383,8 +393,8 @@ package body Language_Handlers is
    -- LI_Handlers_Count --
    -----------------------
 
-   function LI_Handlers_Count (Handler : access Language_Handler_Record)
-      return Natural is
+   function LI_Handlers_Count
+     (Handler : access Language_Handler_Record) return Natural is
    begin
       if Handler.Handlers = null then
          return 0;

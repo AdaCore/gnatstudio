@@ -182,7 +182,7 @@ package body Projects is
       Check_Predefined_Library : Boolean := False;
       File_Must_Exist          : Boolean := True;
       Language                 : Name_Id) return String;
-   --  Internal version of Get_Filename_From_Unit.
+   --  Internal version of Get_Filename_From_Unit
 
    ---------------------
    -- String_Elements --
@@ -1963,16 +1963,16 @@ package body Projects is
       function Count_Vars return Natural is
          Count : Natural := 0;
 
-         function Cb (Variable : Project_Node_Id; Prj : Project_Node_Id)
-            return Boolean;
+         function Cb
+           (Variable : Project_Node_Id; Prj : Project_Node_Id) return Boolean;
          --  Increment the total number of variables
 
          --------
          -- Cb --
          --------
 
-         function Cb (Variable : Project_Node_Id; Prj : Project_Node_Id)
-            return Boolean
+         function Cb
+           (Variable : Project_Node_Id; Prj : Project_Node_Id) return Boolean
          is
             pragma Unreferenced (Variable, Prj);
          begin
@@ -2239,7 +2239,7 @@ package body Projects is
    begin
       Project.Data.View := Prj.No_Project;
       --  No need to reset Project.Data.Imported_Projects, since this doesn't
-      --  change when the view changes
+      --  change when the view changes.
 
       Free (Project.Data.Non_Recursive_Include_Path);
 
@@ -2401,6 +2401,7 @@ package body Projects is
          --  For all the packages and the common section
          while Pkg /= Empty_Node loop
             Var := First_Variable_Of (Pkg, Project.Tree);
+
             while Var /= Empty_Node loop
                if Kind_Of (Var, Project.Tree) = N_Typed_Variable_Declaration
                  and then Is_External_Variable (Var, Project.Tree)
@@ -2606,8 +2607,8 @@ package body Projects is
    is
       use String_List_Utils.String_List;
 
-      List : String_List_Utils.String_List.List :=
-        Enum_Values_Of (Var, Reg);
+      List   : String_List_Utils.String_List.List :=
+                 Enum_Values_Of (Var, Reg);
       Result : GNAT.Strings.String_List (1 .. Length (List));
       It     : String_List_Utils.String_List.List_Node := First (List);
       Index  : Integer := 1;
@@ -2635,7 +2636,6 @@ package body Projects is
       end if;
 
       return Get_Name_String (Id);
-
    exception
       when E : others =>
          Trace (Traces.Exception_Handle, E);
@@ -2649,7 +2649,6 @@ package body Projects is
       end if;
 
       return Get_Name_String (Id);
-
    exception
       when E : others =>
          Trace (Traces.Exception_Handle, E);
@@ -2677,7 +2676,6 @@ package body Projects is
       end if;
 
       return Get_Name_String (Id);
-
    exception
       when E : others =>
          Trace (Traces.Exception_Handle, E);
