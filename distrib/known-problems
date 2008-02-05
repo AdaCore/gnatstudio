@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 4.3.0
 
+- H204-015: Project files variable references on external default not supported
+  Problem:    A project file using a variable reference to specify an
+              external default value was not loaded properly.
+  Workaround: Specify the default value as a literal string.
+
 - H122-026: Changing Ada switches for a file does not work
   Problem:    When using the switches editor to change the switches associated
               with a particular file, changes are not taken into account and

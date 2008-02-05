@@ -1951,12 +1951,10 @@ package body Projects is
       --  documentation for Find_Scenario_Variables for the exact rules used to
       --  detect aliases).
 
-      function External_Default (Var : Project_Node_Id)
-         return Name_Id;
+      function External_Default (Var : Project_Node_Id) return Name_Id;
       --  Return the default value for the variable. Var must be a variable
-      --  declaration.
-      --  ??? This doesn't support cases where the default value is defined as
-      --  an expression.
+      --  declaration or a variable reference. This routine supports only
+      --  single expressions (no composite values).
 
       ----------------
       -- Count_Vars --
@@ -1993,29 +1991,82 @@ package body Projects is
       ----------------------
 
       function External_Default (Var : Project_Node_Id) return Name_Id is
+         Proj : Project_Type    := Project;
          Expr : Project_Node_Id := Expression_Of (Var, Project.Tree);
       begin
-         Expr := First_Term   (Expr, Project.Tree);
-         Expr := Current_Term (Expr, Project.Tree);
+         Expr := First_Term   (Expr, Proj.Tree);
+         Expr := Current_Term (Expr, Proj.Tree);
 
-         if Kind_Of (Expr, Project.Tree) = N_External_Value then
+         if Kind_Of (Expr, Proj.Tree) = N_External_Value then
             Expr := External_Default_Of (Expr, Project.Tree);
 
             if Expr = Empty_Node then
                return No_Name;
             end if;
 
-            if Kind_Of (Expr, Project.Tree) /= N_Literal_String then
-               Expr := First_Term (Expr, Project.Tree);
-               Assert (Me, Next_Term (Expr, Project.Tree) = Empty_Node,
+            if Kind_Of (Expr, Proj.Tree) /= N_Literal_String then
+               Expr := First_Term (Expr, Proj.Tree);
+               Assert (Me, Next_Term (Expr, Proj.Tree) = Empty_Node,
                        "Default value cannot be a concatenation");
 
-               Expr := Current_Term (Expr, Project.Tree);
-               Assert (Me, Kind_Of (Expr, Project.Tree) = N_Literal_String,
+               Expr := Current_Term (Expr, Proj.Tree);
+
+               if Kind_Of (Expr, Proj.Tree) = N_Variable_Reference then
+                  --  A variable reference, look for the corresponding string
+                  --  literal.
+
+                  declare
+                     Var    : constant Name_Id :=
+                                Prj.Tree.Name_Of (Expr, Proj.Tree);
+                     In_Prj : constant Project_Node_Id :=
+                                Project_Node_Of (Expr, Proj.Tree);
+                     Decl   : Project_Node_Id;
+                  begin
+                     if In_Prj /= Empty_Node then
+                        --  This variable is defined in another project, get
+                        --  project reference.
+                        Proj := Get_Project_From_Name
+                          (Project_Registry (Get_Registry (Project)),
+                           Prj.Tree.Name_Of (In_Prj, Proj.Tree));
+                     end if;
+
+                     --  Look for Var declaration into the project
+
+                     Decl := First_Declarative_Item_Of
+                       (Project_Declaration_Of
+                          (Proj.Node, Proj.Tree), Proj.Tree);
+
+                     while Decl /= Empty_Node loop
+                        Expr := Current_Item_Node (Decl, Proj.Tree);
+
+                        if Prj.Tree.Name_Of (Expr, Proj.Tree) = Var then
+                           Expr := Expression_Of (Expr, Proj.Tree);
+                           Expr := First_Term (Expr, Proj.Tree);
+                           --  Get expression and corresponding term
+
+                           --  Check now that this is not a composite value
+
+                           Assert
+                             (Me,
+                              Next_Term (Expr, Proj.Tree) = Empty_Node,
+                              "Default value cannot be a concatenation");
+
+                           --  Get the string literal
+
+                           Expr := Current_Term (Expr, Proj.Tree);
+                           exit;
+                        end if;
+                        Decl := Next_Declarative_Item (Decl, Proj.Tree);
+                     end loop;
+                  end;
+               end if;
+
+               Assert (Me, Kind_Of (Expr, Proj.Tree) = N_Literal_String,
                        "Default value can only be literal string");
             end if;
 
-            return String_Value_Of (Expr, Project.Tree);
+            return String_Value_Of (Expr, Proj.Tree);
+
          else
             return No_Name;
          end if;
