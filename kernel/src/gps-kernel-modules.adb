@@ -745,6 +745,9 @@ package body GPS.Kernel.Modules is
    begin
       Push_State (Kernel_Handle (Kernel), Busy);
       Context.Context := Kernel_Handle (Kernel).Last_Context_For_Contextual;
+
+      Assert (Me, Context.Context.Data.Data /= null,
+              "Contextual_Action called on freed context");
       Context.Event   := Kernel_Handle (Kernel).Last_Event_For_Contextual;
       --   Event will be deep-copied in the call to Create_Proxy below
 
@@ -1156,8 +1159,6 @@ package body GPS.Kernel.Modules is
       --  Override the previous value. No Ref is taken explicitly, so we do not
       --  need to Unref either. This field is automatically reset to null when
       --  the last holder of a ref calls Unref.
-
-      Trace (Me, "Set Last_Context_For_Contextual");
 
       Create_Contextual_Menu (User.Kernel, User.Object, Context, Menu);
 

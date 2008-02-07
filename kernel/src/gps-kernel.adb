@@ -100,7 +100,9 @@ with XML_Parsers;
 package body GPS.Kernel is
 
    Me     : constant Debug_Handle := Create ("gps_kernel");
-   Ref_Me : constant Debug_Handle := Create ("Scripts.Ref", GNAT.Traces.Off);
+   Ref_Me : constant Debug_Handle := Create ("Contexts.Ref", GNAT.Traces.Off);
+   Create_Me : constant Debug_Handle :=
+     Create ("Contexts.Mem", GNAT.Traces.Off);
 
    History_Max_Length : constant Positive := 10;
    --  <preferences> Maximum number of entries to store in each history
@@ -958,9 +960,9 @@ package body GPS.Kernel is
          Context.Data.Ref_Count := Context.Data.Ref_Count - 1;
 
          if Context.Data.Ref_Count = 0 then
-            if Active (Ref_Me) then
+            if Active (Create_Me) then
                GNAT.Traces.Increase_Indent
-                 (Ref_Me, "Destroy selection context ("
+                 (Create_Me, "Destroy selection context ("
                   & System.Address_Image (To_Address (Context.Data)) & ")");
             end if;
 
@@ -974,9 +976,9 @@ package body GPS.Kernel is
             Free (Garbage.all);
             Unchecked_Free (Garbage);
 
-            if Active (Ref_Me) then
+            if Active (Create_Me) then
                GNAT.Traces.Decrease_Indent
-                 (Ref_Me, "Done destroying selection context");
+                 (Create_Me, "Done destroying selection context");
             end if;
 
          else
@@ -991,8 +993,8 @@ package body GPS.Kernel is
    exception
       when E : others =>
          Trace (Exception_Handle, E);
-         if Active (Ref_Me) then
-            GNAT.Traces.Decrease_Indent;
+         if Active (Create_Me) then
+            GNAT.Traces.Decrease_Indent (Create_Me);
          end if;
    end Finalize;
 
@@ -1048,9 +1050,15 @@ package body GPS.Kernel is
    -----------------
 
    function New_Context return Selection_Context is
+      Ctxt : constant Selection_Context :=
+        (Data => (Ada.Finalization.Controlled with
+                  Data => new Selection_Context_Data_Record));
    begin
-      return (Data => (Ada.Finalization.Controlled with
-                       Data => new Selection_Context_Data_Record));
+      if Active (Create_Me) then
+         Trace (Create_Me, "Creating new context: 0x"
+                & System.Address_Image (Ctxt.Data.Data.all'Address));
+      end if;
+      return Ctxt;
    end New_Context;
 
    -----------------------------
@@ -1072,6 +1080,10 @@ package body GPS.Kernel is
 
    procedure Free (Data : in out Selection_Context_Data_Record) is
    begin
+      if Active (Create_Me) then
+         Trace (Create_Me, "Freeing context: 0x"
+                & System.Address_Image (Data'Address));
+      end if;
       Free (Data.Category_Name);
       Free (Data.Message);
       Free (Data.Text);

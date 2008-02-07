@@ -64,6 +64,9 @@ ENTITIES.DEBUG=no
 ENTITIES.DUMP = no
 ENTITIES.REF  = no
 ENTITIES.QUERIES = no
+SCRIPTS.REF = no
+CONTEXTS.REF = no
+CONTEXTS.MEM = no
 
 --  Debug handles related to scripts
 
