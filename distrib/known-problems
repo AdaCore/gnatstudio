@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 4.3.0
 
+- H207-009: Infinite loop when computing the Dispatching Calls menu
+  Problem:    In some cases, GPS might end up in an infinite loop when
+              computing the list of entities that could possibly be called
+              from a dispatching call.
+  Workaround: The problem seems to appear mostly on simple projects. If that
+              is a frequent issue to you, you can disable the dispatching call
+              search by changing the preference "Submenu for dispatching calls"
+
 - H204-015: Project files variable references on external default not supported
   Problem:    A project file using a variable reference to specify an
               external default value was not loaded properly.
