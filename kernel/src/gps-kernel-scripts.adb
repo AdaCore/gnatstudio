@@ -2374,10 +2374,9 @@ package body GPS.Kernel.Scripts is
          end if;
       end if;
 
---        if Active (Ref_Me) then
---           Decrease_Indent (Ref_Me, "End of Get_Or_Create_Context "
---                            & Print_Refcount (Instance.Data.Data));
---        end if;
+      if Active (Ref_Me) then
+         Decrease_Indent (Ref_Me);
+      end if;
 
       return Instance;
    end Get_Or_Create_Context;
