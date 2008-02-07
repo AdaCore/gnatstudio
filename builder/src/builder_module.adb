@@ -810,7 +810,9 @@ package body Builder_Module is
       if Compilation_Starting (Kernel, Error_Category, Quiet => False) then
          String_List_Utils.String_List.Append
            (Builder_Module_ID.Output,
-            Cmd.all & " " & Argument_List_To_Quoted_String (Args.all));
+            Cmd.all & " "
+            & Argument_List_To_Quoted_String
+              (Args.all, Quote_Backslash => False));
          Launch_Process
            (Kernel,
             Command              => Cmd.all,
@@ -1074,7 +1076,7 @@ package body Builder_Module is
          String_List_Utils.String_List.Append
            (Builder_Module_ID.Output,
             Cmd.all & " " & Argument_List_To_Quoted_String
-              (Common_Args.all & Args.all));
+              (Common_Args.all & Args.all, Quote_Backslash => False));
 
          Launch_Process
            (Kernel,
