@@ -1053,7 +1053,13 @@ package body Entities.Queries is
                   --  Special case here: if the entity has no separate
                   --  declaration, then the location of the body and the spec
                   --  are the same. Avoid duplicates with the following test.
+                  --  This test is further complicated because Decl_Returned is
+                  --  set to true if the filters are such that the declaration
+                  --  will never be returned anyway. So if the user explicitly
+                  --  requested bodies, we show them.
+
                   if Iter.Decl_Returned
+                    and then not Iter.Filter (Body_Entity)
                     and then Iter.Entity.References.Table (Iter.Index).Kind =
                     Body_Entity
                     and then Iter.Entity.References.Table (Iter.Index).Location
