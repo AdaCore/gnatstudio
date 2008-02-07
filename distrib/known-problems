@@ -1,13 +1,5 @@
 Known Problems fixed in GPS 4.2.1
 
-- H207-009: Infinite loop when computing the Dispatching Calls menu
-  Problem:    In some cases, GPS might end up in an infinite loop when
-              computing the list of entities that could possibly be called
-              from a dispatching call.
-  Workaround: The problem seems to appear mostly on simple projects. If that
-              is a frequent issue to you, you can disable the dispatching call
-              search by changing the preference "Submenu for dispatching calls"
-
 - H110-019: Cannot commit mixed-cased filenames on Windows
   Problem:    On non case-sensitive file systems like Windows it is not
               possible to commit or add a file from the VCS menu.
