@@ -120,7 +120,7 @@ package body Builder_Module is
    Quiet_Opt      : aliased String := "-q";
    Unique_Compile : aliased constant String := "-u";
    Syntax_Check   : aliased String := "-gnats";
-   --  ??? Shouldn't have hard-coded options.
+   --  ??? Shouldn't have hard-coded options
 
    Sources_Load_Chunk : constant Integer := 1;
    --  The size of the chunk of files loaded by the xrefs loader.
@@ -343,7 +343,7 @@ package body Builder_Module is
    procedure On_Compilation_Finished
      (Kernel : access Kernel_Handle_Record'Class;
       Data : access Hooks_Data'Class);
-   --  Called when the compilation is finished.
+   --  Called when the compilation is finished
 
    function On_Compilation_Starting
      (Kernel : access Kernel_Handle_Record'Class;
@@ -351,7 +351,7 @@ package body Builder_Module is
    --  Called when the compilation is starting
 
    procedure Load_Xref_In_Memory (Kernel : access Kernel_Handle_Record'Class);
-   --  Load the Xref info in memory, in a background task.
+   --  Load the Xref info in memory, in a background task
 
    procedure On_Run
      (Kernel : access GObject_Record'Class; Data : File_Project_Record);
@@ -371,7 +371,7 @@ package body Builder_Module is
    procedure Compile_Command
      (Data    : in out Callback_Data'Class;
       Command : String);
-   --  Command handler for the "compile" command.
+   --  Command handler for the "compile" command
 
    procedure Compile_File
      (Kernel      : Kernel_Handle;
@@ -396,7 +396,7 @@ package body Builder_Module is
    procedure Clear_Compilation_Output
      (Kernel : Kernel_Handle;
       Shadow : Boolean);
-   --  Clear the compiler output, the console, and the result view.
+   --  Clear the compiler output, the console, and the result view
 
    -------------
    -- Destroy --
