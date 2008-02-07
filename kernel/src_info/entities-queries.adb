@@ -1059,7 +1059,7 @@ package body Entities.Queries is
                   --  requested bodies, we show them.
 
                   if Iter.Decl_Returned
-                    and then not Iter.Filter (Body_Entity)
+                    and then Iter.Filter (Declaration)
                     and then Iter.Entity.References.Table (Iter.Index).Kind =
                     Body_Entity
                     and then Iter.Entity.References.Table (Iter.Index).Location
