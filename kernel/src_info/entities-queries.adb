@@ -686,6 +686,13 @@ package body Entities.Queries is
    is
       Deps : Dependency_Iterator;
    begin
+      if Active (Me) then
+         Trace (Me, "Setup_For_Entity " & Get_Name (Entity).all
+                & " declared at "
+                & Base_Name (Get_Filename (Get_Declaration_Of (Entity).File))
+                & Get_Declaration_Of (Entity).Line'Img);
+      end if;
+
       if Iter.In_File = null then
          Find_Ancestor_Dependencies
            (Deps,
@@ -1085,9 +1092,11 @@ package body Entities.Queries is
                return;
             end if;
 
-            Setup_For_Entity
-              (Iter, Iter.Extra_Entities.Table (Iter.Extra_Entities_Index));
+            --  Increment counter first, to avoid infinite recursion
             Iter.Extra_Entities_Index := Iter.Extra_Entities_Index + 1;
+            Setup_For_Entity
+              (Iter,
+               Iter.Extra_Entities.Table (Iter.Extra_Entities_Index - 1));
 
          elsif Iter.Filter (Get_Kind (Get (Iter))) then
             Repeat := False;
