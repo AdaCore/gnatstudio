@@ -33,7 +33,7 @@ is
    type Browser_List is array (Natural range <>) of Cst_String_Access;
 
    Browsers : constant Browser_List :=
-     (new String'("firefox -new-tab %u"),
+     (new String'("firefox %u -new-tab"),
       new String'("mozilla"),
       new String'("galeon"),
       new String'("netscape"),

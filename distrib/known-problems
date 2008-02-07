@@ -49,6 +49,13 @@ Known Problems fixed in GPS 4.3.0
               won't be properly output in the outline view.
   Workaround: Disable the output of the routine profile.
 
+- GC04-018: GPS not compatible with firefox 1.5
+  Problem:    GPS is not compatible with firefox 1.5, which does not support
+              the -new-tab switch. When you select an entry in the /Help menu,
+              firefox is open but the file is not visible
+  Workaround: copy-paste the URL from the GPS Messages window into the location
+              bar in firefox
+
 - GB20-003: VCS not properly detected for subprojects
   Problem:    When using a hierarchy of projects, if a subproject has a VCS set
               but the root project does not have a VCS set, GPS is unable to
