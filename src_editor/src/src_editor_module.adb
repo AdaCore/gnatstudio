@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007, AdaCore             --
+--                      Copyright (C) 2001-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -931,8 +931,6 @@ package body Src_Editor_Module is
 
       Editors_Hash.Set
         (Id.Editors, Get_Filename (Box), (Child => MDI_Child (Child)));
-
-      Reset_Contextual_Menu (Get_Kernel (Box));
    end Update_Cache_On_Focus;
 
    --------------

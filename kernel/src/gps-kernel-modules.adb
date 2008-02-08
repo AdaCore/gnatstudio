@@ -55,6 +55,7 @@ with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Window;                use Gtk.Window;
 with Gtk.Widget;                use Gtk.Widget;
 
+with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 
 with File_Utils;                use File_Utils;
@@ -233,6 +234,13 @@ package body GPS.Kernel.Modules is
       Command : Interactive_Action);
    --  Called when a registered menu is displayed, so that we can check whether
    --  it should be made sensitive or not
+
+   procedure Unmap_Menu (Menu : access Gtk_Widget_Record'Class);
+   --  Called when a menu is unmapped, so that the associated context can be
+   --  destroyed
+
+   package Context_User_Data is new Glib.Object.User_Data (Selection_Context);
+   package Integer_User_Data is new Glib.Object.User_Data (Integer);
 
    type Module_List_Access is access Module_List.List;
    function Convert is new Ada.Unchecked_Conversion
@@ -1106,17 +1114,6 @@ package body GPS.Kernel.Modules is
          Destroy (Menu);
    end Create_Contextual_Menu;
 
-   ---------------------------
-   -- Reset_Contextual_Menu --
-   ---------------------------
-
-   procedure Reset_Contextual_Menu
-     (Kernel : Kernel_Handle) is
-   begin
-      Kernel.Last_Context_For_Contextual := No_Context;
-      Kernel.Last_Context_From_Contextual := False;
-   end Reset_Contextual_Menu;
-
    ----------------------------
    -- Create_Contextual_Menu --
    ----------------------------
@@ -1465,6 +1462,16 @@ package body GPS.Kernel.Modules is
       return Item;
    end Register_Menu;
 
+   ----------------
+   -- Unmap_Menu --
+   ----------------
+
+   procedure Unmap_Menu (Menu : access Gtk_Widget_Record'Class) is
+   begin
+      Trace (Me, "Unmap_Menu");
+      Context_User_Data.Remove (Menu, "gpscontext");
+   end Unmap_Menu;
+
    --------------
    -- Map_Menu --
    --------------
@@ -1473,19 +1480,32 @@ package body GPS.Kernel.Modules is
      (Item    : access GObject_Record'Class;
       Command : Interactive_Action)
    is
+      Menu : constant Gtk_Widget := Get_Toplevel (Gtk_Widget (Item));
+      Ctxt : Selection_Context;
    begin
-      if Command.Kernel.Last_Context_For_Contextual = No_Context
-        or else Command.Kernel.Last_Context_From_Contextual = False
-      then
-         Command.Kernel.Last_Context_For_Contextual :=
-           Get_Current_Context (Command.Kernel);
+      --  Do not use the contextual menu here. Instead, we compute our own
+      --  current context for the whole menu tree (not just the item), and
+      --  cache it there so that it is only computed once when the user clicks
+      --  on a menu.
+
+      Ctxt := Context_User_Data.Get (Menu, "gpscontext", No_Context);
+      if Ctxt = No_Context then
+         Trace (Me, "Map_Menu: context does not exist yet, creating it");
+         Ctxt := Get_Current_Context (Command.Kernel);
+         Context_User_Data.Set (Menu, Ctxt, "gpscontext");
+
+         --  Make sure the Unmap signal is set only once for this menu, for
+         --  efficiency
+         if Integer_User_Data.Get (Menu, "gpsunmapid", -1) = -1 then
+            Widget_Callback.Connect (Menu, Signal_Unmap, Unmap_Menu'Access);
+            Integer_User_Data.Set (Menu, 1, "gpsunmapid");
+         end if;
+
+      else
+         Trace (Me, "Map_Menu, reuse context menu");
       end if;
 
-      Set_Sensitive
-        (Gtk_Widget (Item),
-         Filter_Matches
-           (Command.Filter,
-            Command.Kernel.Last_Context_For_Contextual));
+      Set_Sensitive (Gtk_Widget (Item), Filter_Matches (Command.Filter, Ctxt));
    exception
       when E : others => Trace (Exception_Handle, E);
    end Map_Menu;

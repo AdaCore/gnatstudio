@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2007, AdaCore                  --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -545,12 +545,6 @@ package GPS.Kernel.Modules is
       Menu    : in out Gtk.Menu.Gtk_Menu);
    --  Creates a menu from context and object.
    --  The Gtk_Menu must be created before calling this procedure.
-
-   procedure Reset_Contextual_Menu
-     (Kernel : Kernel_Handle);
-   --  Reset cache associated with a contextual menu.
-   --  The contextual menu is saved in order to be useable from other views
-   --  than the editor view, and sometimes need to be reset explicitely.
 
    --------------
    -- Tooltips --
