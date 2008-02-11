@@ -1303,7 +1303,7 @@ package body String_Utils is
       end loop;
 
       if Last > S'First then
-         Result (Index .. Result'Last) := S (1 .. Last);
+         Result (Index .. Result'Last) := S (S'First .. Last);
       end if;
 
       return Result;
