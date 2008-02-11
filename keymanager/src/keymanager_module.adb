@@ -127,10 +127,12 @@ package body KeyManager_Module is
    procedure General_Event_Handler
      (Event : Gdk_Event; Kernel : System.Address);
    --  General event handler for GPS.
+   pragma Convention (C, General_Event_Handler);
 
    procedure Debug_Event_Handler
      (Event : Gdk_Event; Kernel : System.Address);
    --  General event handler used for event-level debugging.
+   pragma Convention (C, Debug_Event_Handler);
 
    type Keymanager_Module_Record is new Module_ID_Record with record
       Handlers         : Event_Handler_Access;
