@@ -13,6 +13,11 @@ Known Problems fixed in GPS 4.3.0
               external default value was not loaded properly.
   Workaround: Specify the default value as a literal string.
 
+- H129-003: Tooltip not properly displayed
+  Problem:    It sometimes appears that a tooltip does not contain the name
+              of the underlying entity and a GTK+ warning might be emitted.
+  Workaround: Close the tooltip and display it again.
+
 - H122-026: Changing Ada switches for a file does not work
   Problem:    When using the switches editor to change the switches associated
               with a particular file, changes are not taken into account and
