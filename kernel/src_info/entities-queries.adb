@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with GNAT.Traces;             use GNAT.Traces;
@@ -2355,13 +2356,17 @@ package body Entities.Queries is
    is
       E             : Entity_Information := Entity;
       Last_Not_Null : Entity_Information := Entity;
-      Length        : Natural := 0;
+      Result        : Unbounded_String;
    begin
       while E /= null loop
-         Length := Length + E.Name'Length + Separator'Length;
+         Result := E.Name.all & Result;
          Compute_Callers_And_Called (E.Declaration.File);
          Last_Not_Null := E;
          E := E.Caller_At_Declaration;
+
+         if E /= null then
+            Result := Separator & Result;
+         end if;
       end loop;
 
       --  If there is no more caller in the tree, we still need to
@@ -2371,35 +2376,10 @@ package body Entities.Queries is
       loop
          E := Get_Parent_Package (E);
          exit when E = null;
-         Length := Length + E.Name'Length + Separator'Length;
+         Result := E.Name.all & Separator & Result;
       end loop;
 
-      declare
-         Result : String (1 .. Length);
-         Index  : Natural := Result'Last;
-      begin
-         E := Entity;
-         while E /= null loop
-            Result (Index - Separator'Length + 1 .. Index) := Separator;
-            Index := Index - Separator'Length;
-            Result (Index - E.Name'Length + 1 .. Index) := E.Name.all;
-            Index := Index - E.Name'Length;
-
-            E := E.Caller_At_Declaration;
-         end loop;
-
-         E := Last_Not_Null;
-         loop
-            E := Get_Parent_Package (E);
-            exit when E = null;
-            Result (Index - Separator'Length + 1 .. Index) := Separator;
-            Index := Index - Separator'Length;
-            Result (Index - E.Name'Length + 1 .. Index) := E.Name.all;
-            Index := Index - E.Name'Length;
-         end loop;
-
-         return Result (Result'First .. Result'Last - 1);
-      end;
+      return To_String (Result);
    end Get_Full_Name;
 
    ----------------
