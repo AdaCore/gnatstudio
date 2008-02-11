@@ -17,16 +17,20 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+pragma Warnings (Off);
+with Ada.Strings.Unbounded.Aux; use Ada.Strings.Unbounded.Aux;
+pragma Warnings (On);
 with Ada.Unchecked_Deallocation;
-with GNAT.OS_Lib;             use GNAT.OS_Lib;
-with GNAT.Traces;             use GNAT.Traces;
-with Basic_Types;             use Basic_Types;
-with Language_Handlers;   use Language_Handlers;
-with Projects;                use Projects;
-with Projects.Registry;       use Projects.Registry;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Traces;               use GNAT.Traces;
+with Basic_Types;               use Basic_Types;
+with Language_Handlers;         use Language_Handlers;
+with Projects;                  use Projects;
+with Projects.Registry;         use Projects.Registry;
+with String_Utils;              use String_Utils;
 with Traces;
-with VFS;                     use VFS;
+with VFS;                       use VFS;
 
 package body Entities.Queries is
 
@@ -2357,15 +2361,30 @@ package body Entities.Queries is
       E             : Entity_Information := Entity;
       Last_Not_Null : Entity_Information := Entity;
       Result        : Unbounded_String;
+
+      function Revert (S : Unbounded_String) return String;
+      --  Same as String_Utils.Revert, taking an unbounded string.
+
+      function Revert (S : Unbounded_String) return String is
+         Str : Ada.Strings.Unbounded.String_Access;
+         L   : Natural;
+      begin
+         Get_String (S, Str, L);
+         return Revert (Str (1 .. L));
+      end Revert;
+
    begin
+      --  For efficiency, build the name in reverse order, to avoid freeing
+      --  and allocating many strings, and revert it before exit.
+
       while E /= null loop
-         Result := E.Name.all & Result;
+         Append (Result, E.Name.all);
          Compute_Callers_And_Called (E.Declaration.File);
          Last_Not_Null := E;
          E := E.Caller_At_Declaration;
 
          if E /= null then
-            Result := Separator & Result;
+            Append (Result, Separator);
          end if;
       end loop;
 
@@ -2376,10 +2395,11 @@ package body Entities.Queries is
       loop
          E := Get_Parent_Package (E);
          exit when E = null;
-         Result := E.Name.all & Separator & Result;
+         Append (Result, Separator);
+         Append (Result, E.Name.all);
       end loop;
 
-      return To_String (Result);
+      return Revert (Result);
    end Get_Full_Name;
 
    ----------------

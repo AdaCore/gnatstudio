@@ -1280,4 +1280,33 @@ package body String_Utils is
       return Res (1 .. K);
    end URL_Decode;
 
+   ------------
+   -- Revert --
+   ------------
+
+   function Revert (S : String) return String is
+      Result : String (S'Range);
+      Index  : Natural := S'First;
+      Last   : Natural := S'Last;
+      Len    : Natural;
+
+   begin
+      for J in reverse S'Range loop
+         if S (J) = '.' then
+            Len := Last - J;
+            Result (Index .. Index + Len - 1) := S (J + 1 .. Last);
+            Last := J - 1;
+            Index := Index + Len;
+            Result (Index) := '.';
+            Index := Index + 1;
+         end if;
+      end loop;
+
+      if Last > S'First then
+         Result (Index .. Result'Last) := S (1 .. Last);
+      end if;
+
+      return Result;
+   end Revert;
+
 end String_Utils;
