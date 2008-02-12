@@ -1180,7 +1180,13 @@ This is different than setting instance properties through Python's standard mec
       <description>Return the name of the entity. The casing of the name has been normalized to lower-cases for case-insensitive languages</description>
   </shell_doc>
 
-  <shell_doc name="GPS.Entity.declaration">
+  <shell_doc name="GPS.Entity.full_name">
+      <param name="self">The instance of GPS.Entity</param>
+      <return>A string, the full name of the entity</return>
+      <description>Return the full name of the entity that it to say the name of the entity prefixed with its callers and parent packages names. The casing of the name has been normalized to lower-cases for case-insensitive languages</description>
+  </shell_doc>
+
+<shell_doc name="GPS.Entity.declaration">
       <param name="self">The instance of GPS.Entity</param>
       <return>An instance of GPS.FileLocation, where the entity is declared</return>
       <description>Return the location of the declaration for the entity. The file's name is is "&lt;predefined&gt;" for predefined entities</description>

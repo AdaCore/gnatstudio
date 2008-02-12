@@ -752,6 +752,10 @@ package body GPS.Kernel.Scripts is
             end if;
          end;
 
+      elsif Command = "full_name" then
+         Entity := Get_Data (Data, 1);
+         Set_Return_Value (Data, Get_Full_Name (Entity));
+
       elsif Command = "name" then
          Entity := Get_Data (Data, 1);
          Set_Return_Value (Data, Get_Name (Entity).all);
@@ -1734,6 +1738,10 @@ package body GPS.Kernel.Scripts is
          Handler      => Create_Entity_Command_Handler'Access);
       Register_Command
         (Kernel, "name",
+         Class        => Get_Entity_Class (Kernel),
+         Handler      => Create_Entity_Command_Handler'Access);
+      Register_Command
+        (Kernel, "full_name",
          Class        => Get_Entity_Class (Kernel),
          Handler      => Create_Entity_Command_Handler'Access);
       Register_Command
