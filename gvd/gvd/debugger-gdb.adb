@@ -3682,40 +3682,86 @@ package body Debugger.Gdb is
       Endian       : constant Endian_Type := Get_Endian_Type (Debugger);
       Error_String : constant String := "Cannot access memory at";
       Image        : constant String := Integer'Image (Size / 8);
-      S            : constant String := Send
+      S            : String_Access := new String'(Send
         (Debugger,
          "x/" & Image (Image'First + 1 .. Image'Last)
-         & "gx " & Address, Mode => Internal);
+         & "gx " & Address, Mode => Internal));
       Result       : String (1 .. Size * 2);
       S_Index      : Integer := S'First + 2;
       Last_Index   : Integer := S'First + 2;
-      Result_Index : Integer := 1;
+      Result_Index : Integer := Result'First;
       Last         : Integer := S'Last;
-
+      Has_Error    : Boolean := False;
+      Bytes        : Boolean := False;
    begin
       --  Detect "Cannot access memory at ..."
 
-      Skip_To_String (S, Last_Index, Error_String);
+      Skip_To_String (S.all, Last_Index, Error_String);
 
       if Last_Index <= S'Last - Error_String'Length then
          --  The error string was detected...
-
+         Has_Error := True;
          Last := Last_Index;
       end if;
 
-      while S_Index <= Last loop
-         --  Detect actual data : 0xXX... right after an ASCII.HT.
+      if Has_Error then
+         --  We may have missed some bytes here due to the fact that we were
+         --  fetching gigantic works. Now try to fetch memory using byte units.
 
-         if S (S_Index) = '0' then
-            if S (S_Index - 1) = ASCII.HT then
-               Result (Result_Index .. Result_Index + 15) :=
-                 S (S_Index + 2 .. S_Index + 17);
-               Result_Index := Result_Index + 16;
+         Bytes := True;
+
+         S_Index := S'First + 2;
+         Last_Index := S'First + 2;
+         Last := S'Last;
+
+         Free (S);
+
+         declare
+            Image : constant String := Integer'Image (Size);
+         begin
+            S := new String'(Send
+              (Debugger,
+                 "x/" & Image (Image'First + 1 .. Image'Last)
+                 & "b " & Address, Mode => Internal));
+
+            --  Detect "Cannot access memory at ..."
+
+            Skip_To_String (S.all, Last_Index, Error_String);
+
+            if Last_Index <= S'Last - Error_String'Length then
+               --  The error string was detected...
+               Last := Last_Index;
             end if;
-         end if;
 
-         S_Index := S_Index + 1;
-      end loop;
+            while S_Index <= Last loop
+               --  Detect actual data : 0xXX... right after an ASCII.HT.
+
+               if S (S_Index) = '0' then
+                  if S (S_Index - 1) = ASCII.HT then
+                     Result (Result_Index .. Result_Index + 1) :=
+                       S (S_Index + 2 .. S_Index + 3);
+                     Result_Index := Result_Index + 2;
+                  end if;
+               end if;
+
+               S_Index := S_Index + 1;
+            end loop;
+         end;
+      else
+         while S_Index <= Last loop
+            --  Detect actual data : 0xXX... right after an ASCII.HT.
+
+            if S (S_Index) = '0' then
+               if S (S_Index - 1) = ASCII.HT then
+                  Result (Result_Index .. Result_Index + 15) :=
+                    S (S_Index + 2 .. S_Index + 17);
+                  Result_Index := Result_Index + 16;
+               end if;
+            end if;
+
+            S_Index := S_Index + 1;
+         end loop;
+      end if;
 
       --  Fill the values that could not be accessed with "-".
       while Result_Index <= Result'Last loop
@@ -3723,7 +3769,7 @@ package body Debugger.Gdb is
          Result_Index := Result_Index + 1;
       end loop;
 
-      if Endian = Little_Endian then
+      if Endian = Little_Endian and then not Bytes then
          --  We need to reverse the blocks.
 
          for J in 1 .. Result'Length / 16 loop
@@ -3741,6 +3787,7 @@ package body Debugger.Gdb is
          end loop;
       end if;
 
+      Free (S);
       return Result;
 
    exception
