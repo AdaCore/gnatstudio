@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                Copyright (C) 2001-2007, AdaCore                   --
+--                Copyright (C) 2001-2008, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -338,12 +338,16 @@ package body Default_Preferences is
    ---------------------
 
    function Get_Description  (P : Param_Spec) return Pref_Description_Access is
+      --  Kill warning about incompatible alignments between C_Dummy and
+      --  Pref_Description on some platforms
+      pragma Warnings (Off);
       function Convert is new Ada.Unchecked_Conversion
         (Glib.C_Proxy, Pref_Description_Access);
       Quark : constant GQuark := Quark_From_String (Pref_Description_Data);
 
    begin
       return Convert (Get_Qdata (P, Quark));
+      pragma Warnings (On);
    end Get_Description;
 
    ---------------------
@@ -370,6 +374,9 @@ package body Default_Preferences is
    ---------------------------
 
    procedure Free_Pref_Description (Data : Glib.C_Proxy) is
+      --  Kill warning about incompatible alignments between C_Dummy and
+      --  Pref_Description on some platforms
+      pragma Warnings (Off);
       function Convert is new Ada.Unchecked_Conversion
         (Glib.C_Proxy, Pref_Description_Access);
 
@@ -377,6 +384,7 @@ package body Default_Preferences is
         (Pref_Description, Pref_Description_Access);
 
       Descr : Pref_Description_Access := Convert (Data);
+      pragma Warnings (Off);
 
    begin
       GNAT.Strings.Free (Descr.Value);
