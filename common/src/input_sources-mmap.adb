@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2007, AdaCore            --
+--                       Copyright (C) 2001-2008, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -100,7 +100,7 @@ package body Input_Sources.Mmap is
 
    function Eof (From : Mmap_Input) return Boolean is
    begin
-      return Long_Integer (From.Index) > Length (From.File);
+      return File_Size (From.Index) > Length (From.File);
    end Eof;
 
    -------------------
