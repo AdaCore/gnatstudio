@@ -132,6 +132,12 @@ package body Input is
       R : out Float;
       K : out Number_Kind)
    is
+      --  GNAT may complain that I, R and K are not always set by this
+      --  procedure, so disable corresponding warnings.
+      pragma Warnings (Off, I);
+      pragma Warnings (Off, R);
+      pragma Warnings (Off, K);
+
       package Int_Io  is new Ada.Text_IO.Integer_IO (Integer);
       package Real_Io is new Ada.Text_IO.Float_IO   (Float);
 
