@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Jan 31, 2008
+GPS 4.3 NEW FEATURES LIST Current as of Feb 18, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -20,6 +20,11 @@ NF-43-H123-034 Cross-references and extending projects (2008-01-31)
   If a source file is overridden in an extending project, but has not been
   recompiled locally, GPS will try to use the xref information from the
   extended project to provide cross-referencing in the file.
+
+NF-43-H121-010 Menu Build->Check Semantic (2008-02-18)
+
+  A new menu Build->Check Semantic is provided, similar to Build->Check Syntax
+  to check for semantic errors in a given Ada source file.
 
 NF-43-H111-019 Smarter activity menu for adding/removing files (2008-01-13)
 
