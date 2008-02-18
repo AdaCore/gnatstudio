@@ -1044,12 +1044,32 @@ local to the current directory.</description>
       <param name="self">The instance of GPS.File</param>
       <description>Check the syntax for current file. This call will return only once the check is completed</description>
       <see_also name="GPS.File.shadow_check_syntax()"/>
+      <see_also name="GPS.File.shadow_check_semantic()"/>
+      <see_also name="GPS.File.check_semantic()"/>
   </shell_doc>
 
   <shell_doc name="GPS.File.shadow_check_syntax">
       <param name="self">The instance of GPS.File</param>
       <description>Check the syntax for current file. The current file will not be saved, but a temporary extending project will be created, and deleted when the compilation ends. This call will launch a background process and return immediately</description>
       <see_also name="GPS.File.check_syntax()"/>
+      <see_also name="GPS.File.check_semantic()"/>
+      <see_also name="GPS.File.shadow_check_semantic()"/>
+  </shell_doc>
+
+  <shell_doc name="GPS.File.check_semantic">
+      <param name="self">The instance of GPS.File</param>
+      <description>Check the semantic for current file. This call will return only once the check is completed</description>
+      <see_also name="GPS.File.shadow_check_semantic()"/>
+      <see_also name="GPS.File.check_syntax()"/>
+      <see_also name="GPS.File.shadow_check_syntax()"/>
+  </shell_doc>
+
+  <shell_doc name="GPS.File.shadow_check_semantic">
+      <param name="self">The instance of GPS.File</param>
+      <description>Check the semantic for current file. The current file will not be saved, but a temporary extending project will be created, and deleted when the compilation ends. This call will launch a background process and return immediately</description>
+      <see_also name="GPS.File.check_semantic()"/>
+      <see_also name="GPS.File.check_syntax()"/>
+      <see_also name="GPS.File.shadow_check_syntax()"/>
   </shell_doc>
 
   <shell_doc name="GPS.File.make">

@@ -120,6 +120,7 @@ package body Builder_Module is
    Quiet_Opt      : aliased String := "-q";
    Unique_Compile : aliased constant String := "-u";
    Syntax_Check   : aliased String := "-gnats";
+   Semantic_Check : aliased String := "-gnatc";
    --  ??? Shouldn't have hard-coded options
 
    Sources_Load_Chunk : constant Integer := 1;
@@ -293,6 +294,10 @@ package body Builder_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Build->Check Syntax menu
 
+   procedure On_Check_Semantic
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Build->Check Semantic menu
+
    procedure On_Compile
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Build->Compile menu
@@ -373,11 +378,13 @@ package body Builder_Module is
       Command : String);
    --  Command handler for the "compile" command
 
+   type Compile_Kind is (Compile, Check_Syntax, Check_Semantic);
+
    procedure Compile_File
      (Kernel      : Kernel_Handle;
       File        : Virtual_File;
       Synchronous : Boolean := False;
-      Syntax_Only : Boolean := False;
+      Kind        : Compile_Kind := Compile;
       Quiet       : Boolean := False;
       Shadow      : Boolean := False;
       Extra_Args  : Argument_List_Access := null);
@@ -894,7 +901,7 @@ package body Builder_Module is
          Compile_File
            (Kernel,
             File_Information (Context),
-            Syntax_Only => True);
+            Kind => Check_Syntax);
       else
          Console.Insert
            (Kernel, -"No file selected, cannot check syntax",
@@ -905,6 +912,31 @@ package body Builder_Module is
       when E : others => Trace (Exception_Handle, E);
    end On_Check_Syntax;
 
+   -----------------------
+   -- On_Check_Semantic --
+   -----------------------
+
+   procedure On_Check_Semantic
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Context : constant Selection_Context := Get_Current_Context (Kernel);
+   begin
+      if Has_File_Information (Context) then
+         Compile_File
+           (Kernel,
+            File_Information (Context),
+            Kind => Check_Semantic);
+      else
+         Console.Insert
+           (Kernel, -"No file selected, cannot check semantic",
+            Mode => Console.Error);
+      end if;
+
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end On_Check_Semantic;
+
    ------------------
    -- Compile_File --
    ------------------
@@ -913,7 +945,7 @@ package body Builder_Module is
      (Kernel      : Kernel_Handle;
       File        : Virtual_File;
       Synchronous : Boolean := False;
-      Syntax_Only : Boolean := False;
+      Kind        : Compile_Kind := Compile;
       Quiet       : Boolean := False;
       Shadow      : Boolean := False;
       Extra_Args  : Argument_List_Access := null)
@@ -981,12 +1013,16 @@ package body Builder_Module is
                Default => "gnatmake", Index => "ada"));
          Syntax := GNAT_Syntax;
 
-         if Syntax_Only then
-            Common_Args := new Argument_List'
-              (Quiet_Opt'Access, Syntax_Check'Access);
-         else
-            Common_Args := new Argument_List'(1 .. 0 => null);
-         end if;
+         case Kind is
+            when Check_Syntax =>
+               Common_Args := new Argument_List'
+                 (Quiet_Opt'Access, Syntax_Check'Access);
+            when Check_Semantic =>
+               Common_Args := new Argument_List'
+                 (Quiet_Opt'Access, Semantic_Check'Access);
+            when Compile =>
+               Common_Args := new Argument_List'(1 .. 0 => null);
+         end case;
 
       else
          if Get_Pref (Multi_Language_Builder) =
@@ -1138,13 +1174,27 @@ package body Builder_Module is
          Info := Get_Data (Nth_Arg (Data, 1, Get_File_Class (Kernel)));
          Compile_File (Get_Kernel (Data), Info,
                        Synchronous => True,
-                       Syntax_Only => True);
+                       Kind        => Check_Syntax);
+
+      elsif Command = "check_semantic" then
+         Info := Get_Data (Nth_Arg (Data, 1, Get_File_Class (Kernel)));
+         Compile_File (Get_Kernel (Data), Info,
+                       Synchronous => True,
+                       Kind        => Check_Semantic);
 
       elsif Command = "shadow_check_syntax" then
          Info := Get_Data (Nth_Arg (Data, 1, Get_File_Class (Kernel)));
          Compile_File (Get_Kernel (Data), Info,
                        Synchronous => False,
-                       Syntax_Only => True,
+                       Kind        => Check_Syntax,
+                       Quiet       => True,
+                       Shadow      => True);
+
+      elsif Command = "shadow_check_semantic" then
+         Info := Get_Data (Nth_Arg (Data, 1, Get_File_Class (Kernel)));
+         Compile_File (Get_Kernel (Data), Info,
+                       Synchronous => False,
+                       Kind        => Check_Semantic,
                        Quiet       => True,
                        Shadow      => True);
 
@@ -2207,6 +2257,8 @@ package body Builder_Module is
       Register_Menu (Kernel, "/_" & (-"Build"), Ref_Item => -"Tools");
       Register_Menu (Kernel, Build, -"Check _Syntax", "",
                      On_Check_Syntax'Access);
+      Register_Menu (Kernel, Build, -"Check S_emantic", "",
+                     On_Check_Semantic'Access);
       Register_Menu (Kernel, Build, -"_Compile File", "",
                      On_Compile'Access, null, GDK_F4, Shift_Mask);
 
