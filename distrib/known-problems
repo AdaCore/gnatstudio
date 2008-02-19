@@ -13,6 +13,14 @@ Known Problems fixed in GPS 4.3.0
               external default value was not loaded properly.
   Workaround: Specify the default value as a literal string.
 
+- H201-015: Crashes when launching an external command
+  Problem:    When GPS launches an external command defined through an
+              <external> XML tag, for instance in custom scripts or predefined
+              plugins such as the Metrics plugin, GPS might run out of memory
+              and crash if the command launched produces a very large amount of
+              output.
+  Workaround: Make sure that the commands launched do not produce huge output.
+
 - H129-003: Tooltip not properly displayed
   Problem:    It sometimes appears that a tooltip does not contain the name
               of the underlying entity and a GTK+ warning might be emitted.
