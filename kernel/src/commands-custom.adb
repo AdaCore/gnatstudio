@@ -66,6 +66,7 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Macros;         use GPS.Kernel.Macros;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
+with GPS.Kernel.Preferences;
 with GUI_Utils;                 use GUI_Utils;
 with Interactive_Consoles;      use Interactive_Consoles;
 with Password_Manager;          use Password_Manager;
@@ -395,6 +396,9 @@ package body Commands.Custom is
          end if;
       end Insert;
 
+      Save_Output : Boolean :=
+                      Command.Execution.Save_Output
+                        (Command.Execution.Cmd_Index);
       ------------
       -- Append --
       ------------
@@ -406,17 +410,29 @@ package body Commands.Custom is
             if S = null then
                S := new String'(Value);
             else
-               Previous := S;
-               S        := new String'(Previous.all & Value);
-               Free (Previous);
+               if S'Length > GPS.Kernel.Preferences.Get_Pref
+                 (GPS.Kernel.Preferences.Max_Output_Length)
+               then
+                  --  If we are collecting more output than we should, emit a
+                  --  warning and stop collecting.
+                  Save_Output := False;
+                  Insert (Kernel => Command.Kernel,
+                          Text   => (-"Output from command """)
+                          & Command.Name.all
+                          & (-""" exceeds the maximum length, truncating."),
+                          Mode   => Error);
+                  Command.Execution.Save_Output
+                    (Command.Execution.Cmd_Index) := False;
+               else
+                  Previous := S;
+                  S        := new String'(Previous.all & Value);
+                  Free (Previous);
+               end if;
             end if;
          end if;
       end Append;
 
       Current, Total : Integer := 0;
-      Save_Output    : constant Boolean :=
-                         Command.Execution.Save_Output
-                           (Command.Execution.Cmd_Index);
 
       Index, EOL     : Integer;
 

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007, AdaCore             --
+--                      Copyright (C) 2001-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -240,6 +240,7 @@ package GPS.Kernel.Preferences is
    Html_Browser                  : Param_Spec_String;
    Execute_Command               : Param_Spec_String;
    Print_Command                 : Param_Spec_String;
+   Max_Output_Length             : Param_Spec_Int;
 
    -- MDI --
    MDI_Opaque            : Param_Spec_Boolean;

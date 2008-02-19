@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007, AdaCore             --
+--                      Copyright (C) 2001-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1251,6 +1251,18 @@ package body GPS.Kernel.Preferences is
           Default => Config.Default_Print_Cmd));
       Register_Property
         (Kernel.Preferences, Param_Spec (Print_Command), -"External Command");
+
+      Max_Output_Length := Param_Spec_Int (Gnew_Int
+         (Name    => "Max-Output-Length",
+          Nick    => -"Maximum output length",
+          Blurb   => -("Maximum output length of output taken into account by"
+            & "GPS, in bytes."),
+          Minimum => 1_000,
+          Maximum => Gint'Last,
+          Default => 1_000_000,
+          Flags   => Param_Readable));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Max_Output_Length), "");
    end Register_Global_Preferences;
 
    ---------------
