@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2000-2007, AdaCore                 --
+--                  Copyright (C) 2000-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -588,7 +588,7 @@ package body Language is
 
          --  Looking_At goes always one character beyond characters and
          --  strings, otherwise next call to Looking_At would start on
-         --  a string or character delimiter. Keywors are also set one
+         --  a string or character delimiter. Keywords are also set one
          --  character beyond.
 
          if Column_Inc > 1
@@ -605,7 +605,9 @@ package body Language is
            (Entity,
             (Line, Column, Index),
             (Line + Line_Inc - 1, Col, End_Char),
-            Entity = Comment_Text and then Next_Char > Buffer'Last);
+            Get_Language_Context
+              (Language_Access (Lang)).Comment_Start_Length /= 0
+              and then Entity = Comment_Text and then Next_Char > Buffer'Last);
 
          Line := Line + Line_Inc - 1;
          Column := Column_Inc;
