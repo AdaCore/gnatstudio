@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Feb 18, 2008
+GPS 4.3 NEW FEATURES LIST Current as of Feb 19, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -89,8 +89,17 @@ NF-43-GB07-006 Major speed up in project view (2007-11-26)
   The computation time for the project view was greatly improved, and the
   view displays much faster now on big projects.
 
+NF-43-GA26-017 Improved handling of dispatching calls (2008-02-19)
+
+  GPS now handles by default dispatching calls in contextual menus, and if
+  there are several primitive operations corresponding to a dispatching call,
+  will display a submenu for "goto declaration/body" entries.
+  Previousely, this capability was disabled by default, and when enabled
+  manually, a submenu was always created for dispatching calls, even when only
+  one primitive operation existed.
+
 NF-43-FC10-002 Code fixing uses the real indentation (2007-12-17)
 
   When the compiler detects an intendation problem, and doesn't propose the
-  actual expected column, the auto fix proposed by GPS is now more accurate, 
+  actual expected column, the auto fix proposed by GPS is now more accurate,
   using the same indentation engine & preferences as the editor.

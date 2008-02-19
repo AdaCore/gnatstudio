@@ -387,7 +387,7 @@ package body GPS.Kernel.Preferences is
               & " from the disk as needed. This might result in long delays"
               & " (up to several seconds) if lots of information needs to be"
               & " loaded."),
-            Default => Never));
+            Default => From_Memory));
       Register_Property
            (Kernel.Preferences,
             Param_Spec (Submenu_For_Dispatching_Calls), -"Editor");

@@ -223,6 +223,14 @@ package body Src_Editor_Box is
       Callback      : GPS.Kernel.Entity_Callback.Simple_Handler);
    --  Create the submenus for dispatching calls
 
+   function Has_Overriding_Methods
+     (Context     : GPS.Kernel.Selection_Context;
+      From_Memory : Boolean) return Boolean;
+   --  Return true if a given context (e.g. function call) has possible
+   --  overriding Methods. if From_Memory is True, Only
+   --  compute from available information in memory, otherwise load
+   --  all xref information if needed.
+
    function Has_Body (Context : GPS.Kernel.Selection_Context) return Boolean;
    --  Whether the Entity referenced in context has a body other than at the
    --  location described in Context
@@ -1466,6 +1474,62 @@ package body Src_Editor_Box is
          Entity   => Entity);
    end On_Goto_Body_Of;
 
+   ---------------------------------
+   -- Number_Of_Dispatching_Calls --
+   ---------------------------------
+
+   function Has_Overriding_Methods
+     (Context     : GPS.Kernel.Selection_Context;
+      From_Memory : Boolean) return Boolean
+   is
+      Iter : Entity_Reference_Iterator;
+      E, E2 : Entity_Information;
+      Count : Natural := 0;
+
+   begin
+      Push_State (Get_Kernel (Context), Busy);
+
+      if From_Memory then
+         Freeze (Get_Database (Get_Kernel (Context)));
+      end if;
+
+      Find_All_References
+        (Iter                  => Iter,
+         Entity                => Get_Entity (Context),
+         File_Has_No_LI_Report => null,
+         In_File               => null,
+         Filter                => (Declaration => True, others => False),
+         Include_Overriding    => True,
+         Include_Overridden    => False);
+      while not At_End (Iter) loop
+         E := Get_Entity (Iter);
+         if E /= null then
+            E2 := Is_Primitive_Operation_Of (E);
+            if E2 /= null then
+               Count := Count + 1;
+               exit when Count > 1;
+            end if;
+         end if;
+
+         Next (Iter);
+      end loop;
+      Destroy (Iter);
+
+      if From_Memory then
+         Thaw (Get_Database (Get_Kernel (Context)));
+      end if;
+
+      Pop_State (Get_Kernel (Context));
+      return Count > 1;
+
+   exception
+      when E : others =>
+         Trace (Me, E);
+         Thaw (Get_Database (Get_Kernel (Context)));
+         Pop_State (Get_Kernel (Context));
+         return Count > 1;
+   end Has_Overriding_Methods;
+
    --------------------------------
    -- Append_To_Dispatching_Menu --
    --------------------------------
@@ -1713,15 +1777,20 @@ package body Src_Editor_Box is
       Context : GPS.Kernel.Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
-      Ref : constant Entity_Reference := Get_Closest_Ref (Context);
+      Ref  : constant Entity_Reference := Get_Closest_Ref (Context);
       Pref : constant Dispatching_Menu_Policy := Dispatching_Menu_Policy'Val
         (Get_Pref (Submenu_For_Dispatching_Calls));
    begin
-      if Pref = Never then
-         return False;
-      else
-         return Get_Kind (Ref) = Dispatching_Call;
-      end if;
+      case Pref is
+         when Never =>
+            return False;
+         when From_Memory =>
+            return Get_Kind (Ref) = Dispatching_Call
+              and then Has_Overriding_Methods (Context, True);
+         when Accurate =>
+            return Get_Kind (Ref) = Dispatching_Call
+              and then Has_Overriding_Methods (Context, False);
+      end case;
    end Filter_Matches_Primitive;
 
    -------------
