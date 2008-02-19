@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2001-2008, AdaCore                --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -108,7 +108,7 @@ package body Src_Editor_Box is
    function Delete_Callback
      (Widget : access Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues) return Boolean;
-   --  Callback for the "delete_event" signal.
+   --  Callback for the "delete_event" signal
 
    procedure Get_Contextual_Menu
      (Context      : in out Selection_Context;
@@ -117,7 +117,7 @@ package body Src_Editor_Box is
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu);
-   --  Same as the public Get_Contextual_Menu, Event_Widget is ignored.
+   --  Same as the public Get_Contextual_Menu, Event_Widget is ignored
 
    procedure Show_Cursor_Position
      (Box    : access Source_Editor_Box_Record'Class;
@@ -520,7 +520,7 @@ package body Src_Editor_Box is
    begin
       The_Line := Natural (Get_Editable_Line (B, Buffer_Line_Type (Line + 1)));
 
-      --  If the line is not an editable line, return 1.
+      --  If the line is not an editable line, return 1
 
       if The_Line = 0 then
          return 1;
@@ -880,7 +880,7 @@ package body Src_Editor_Box is
       Gtk_New_Hbox (Box.Label_Box, Homogeneous => False, Spacing => 2);
       Add (Frame, Box.Label_Box);
 
-      --  Avoid resizing the main window whenever a label is changed.
+      --  Avoid resizing the main window whenever a label is changed
       Set_Resize_Mode (Box.Label_Box, Resize_Queue);
 
       --  Line:Column number area...
@@ -1482,7 +1482,7 @@ package body Src_Editor_Box is
      (Context     : GPS.Kernel.Selection_Context;
       From_Memory : Boolean) return Boolean
    is
-      Iter : Entity_Reference_Iterator;
+      Iter  : Entity_Reference_Iterator;
       E, E2 : Entity_Information;
       Count : Natural := 0;
 
@@ -1501,6 +1501,7 @@ package body Src_Editor_Box is
          Filter                => (Declaration => True, others => False),
          Include_Overriding    => True,
          Include_Overridden    => False);
+
       while not At_End (Iter) loop
          E := Get_Entity (Iter);
          if E /= null then
@@ -1513,6 +1514,7 @@ package body Src_Editor_Box is
 
          Next (Iter);
       end loop;
+
       Destroy (Iter);
 
       if From_Memory then
@@ -1543,11 +1545,11 @@ package body Src_Editor_Box is
       Show_Default  : Boolean;
       Callback      : GPS.Kernel.Entity_Callback.Simple_Handler)
    is
-      Iter : Entity_Reference_Iterator;
-      Item : Gtk_Menu_Item;
+      Iter  : Entity_Reference_Iterator;
+      Item  : Gtk_Menu_Item;
       E, E2 : Entity_Information;
       Label : Gtk_Label;
-      Pref : constant Dispatching_Menu_Policy := Dispatching_Menu_Policy'Val
+      Pref  : constant Dispatching_Menu_Policy := Dispatching_Menu_Policy'Val
         (Get_Pref (Submenu_For_Dispatching_Calls));
       Count : Natural := 0;
 
@@ -1582,6 +1584,7 @@ package body Src_Editor_Box is
          Filter                => Filter,
          Include_Overriding    => True,
          Include_Overridden    => False);
+
       while not At_End (Iter) loop
          E := Get_Entity (Iter);
          if E /= null then
@@ -1604,6 +1607,7 @@ package body Src_Editor_Box is
 
          Next (Iter);
       end loop;
+
       Destroy (Iter);
 
       --  If we have not found any possible call, we must be missing some
@@ -2265,6 +2269,7 @@ package body Src_Editor_Box is
                   Save_To_File (Editor.Source_Buffer, Name, Success);
                end if;
             end;
+
          else
             if not Check_Timestamp (Editor.Source_Buffer)
               and then Message_Dialog
@@ -2326,6 +2331,7 @@ package body Src_Editor_Box is
          then
             if Always_Reload or else not Interactive then
                Response := Gtk_Response_No;
+
             else
                Data.File := Get_Filename (Editor.Source_Buffer);
 
@@ -2540,9 +2546,7 @@ package body Src_Editor_Box is
          --  line ends.
 
          if Success
-           and then not
-             (Length = 1
-              and then Get_Char (Mark_Iter) = ASCII.LF)
+           and then not (Length = 1 and then Get_Char (Mark_Iter) = ASCII.LF)
          then
             Select_Region
               (Editor.Source_Buffer,
@@ -2576,9 +2580,9 @@ package body Src_Editor_Box is
       Line   : Src_Editor_Buffer.Editable_Line_Type) return Natural
    is
       B_Line : constant Buffer_Line_Type :=
-        Get_Buffer_Line (Editor.Source_Buffer, Line);
+                 Get_Buffer_Line (Editor.Source_Buffer, Line);
       Block : constant Block_Record :=
-        Get_Block (Editor.Source_Buffer, B_Line);
+                 Get_Block (Editor.Source_Buffer, B_Line);
    begin
       return Natural (Block.First_Line);
    end Get_Block_Start;
@@ -2592,9 +2596,9 @@ package body Src_Editor_Box is
       Line   : Src_Editor_Buffer.Editable_Line_Type) return Natural
    is
       B_Line : constant Buffer_Line_Type :=
-        Get_Buffer_Line (Editor.Source_Buffer, Line);
+                 Get_Buffer_Line (Editor.Source_Buffer, Line);
       Block  : constant Block_Record :=
-        Get_Block (Editor.Source_Buffer, B_Line);
+                 Get_Block (Editor.Source_Buffer, B_Line);
    begin
       return Natural (Block.Last_Line);
    end Get_Block_End;
@@ -2608,10 +2612,9 @@ package body Src_Editor_Box is
       Line   : Src_Editor_Buffer.Editable_Line_Type) return String
    is
       B_Line : constant Buffer_Line_Type :=
-        Get_Buffer_Line (Editor.Source_Buffer, Line);
+                 Get_Buffer_Line (Editor.Source_Buffer, Line);
       Block  : constant Block_Record :=
-        Get_Block (Editor.Source_Buffer, B_Line);
-
+                 Get_Block (Editor.Source_Buffer, B_Line);
    begin
       if Block.Name = null then
          return "";
@@ -2629,10 +2632,9 @@ package body Src_Editor_Box is
       Line   : Src_Editor_Buffer.Editable_Line_Type) return String
    is
       B_Line : constant Buffer_Line_Type :=
-        Get_Buffer_Line (Editor.Source_Buffer, Line);
+                 Get_Buffer_Line (Editor.Source_Buffer, Line);
       Block  : constant Block_Record :=
-        Get_Block (Editor.Source_Buffer, B_Line);
-
+                 Get_Block (Editor.Source_Buffer, B_Line);
    begin
       return Language_Category'Image (Block.Block_Type);
    end Get_Block_Type;
@@ -2646,9 +2648,9 @@ package body Src_Editor_Box is
       Line   : Src_Editor_Buffer.Editable_Line_Type) return Natural
    is
       B_Line : constant Buffer_Line_Type :=
-        Get_Buffer_Line (Editor.Source_Buffer, Line);
+                 Get_Buffer_Line (Editor.Source_Buffer, Line);
       Block  : constant Block_Record :=
-        Get_Block (Editor.Source_Buffer, B_Line);
+                 Get_Block (Editor.Source_Buffer, B_Line);
    begin
       return Natural (Block.Indentation_Level);
    end Get_Block_Level;
@@ -2692,6 +2694,7 @@ package body Src_Editor_Box is
             Closest_Ref => Ref,
             Status      => Status);
          return Entity;
+
       else
          return null;
       end if;
@@ -2727,8 +2730,7 @@ package body Src_Editor_Box is
    ----------------
 
    function Get_Buffer
-     (Editor : access Source_Editor_Box_Record)
-      return String
+     (Editor : access Source_Editor_Box_Record) return String
    is
       Begin_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
@@ -2849,6 +2851,7 @@ package body Src_Editor_Box is
    begin
       if not Needs_To_Be_Saved (Box.Source_Buffer) then
          return False;
+
       else
          declare
             Views : constant Views_Array := Get_Views (Box.Source_Buffer);
