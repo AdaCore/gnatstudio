@@ -15,6 +15,13 @@ of the feature.
 New features in GPS 4.3.0
 -------------------------
 
+NF-43-H216-003 gprbuild no longer packaged with GPS (2008-02-19)
+
+  GPS binary distributions no longer come with gprbuild, to avoid
+  confusion with existing gprbuild versions, packaged with GNAT.
+  For users of older versions of GNAT, it is also possible/recommended
+  to install gprbuild from a standalone package.
+
 NF-43-H123-034 Cross-references and extending projects (2008-01-31)
 
   If a source file is overridden in an extending project, but has not been
