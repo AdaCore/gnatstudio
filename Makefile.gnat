@@ -138,11 +138,6 @@ GNAT_SOURCES= \
   urealp.adb \
   widechar.ads \
   widechar.adb \
-  gprmake.adb \
-  makegpr.ads \
-  makegpr.adb \
-  makeutl.ads \
-  makeutl.adb \
   impunit.adb \
   g-comlin.ads \
   g-comlin.adb \
