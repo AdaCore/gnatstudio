@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2001-2007, AdaCore                 --
+--                  Copyright (C) 2001-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1263,6 +1263,7 @@ package body Ada_Analyzer is
                                          (Top_Tok = Tok_Subtype
                                           and then Token /= Tok_Subtype)))
                     or else Token = Tok_Array
+                    or else Prev_Token = Tok_With
                     or else Prev_Token = Tok_Colon_Equal
                     or else Prev_Token = Tok_Access
                     or else Prev_Token = Tok_Of
