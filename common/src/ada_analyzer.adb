@@ -1263,7 +1263,8 @@ package body Ada_Analyzer is
                                          (Top_Tok = Tok_Subtype
                                           and then Token /= Tok_Subtype)))
                     or else Token = Tok_Array
-                    or else Prev_Token = Tok_With
+                    or else (Prev_Token = Tok_With
+                             and then Token = Tok_String_Literal)
                     or else Prev_Token = Tok_Colon_Equal
                     or else Prev_Token = Tok_Access
                     or else Prev_Token = Tok_Of
