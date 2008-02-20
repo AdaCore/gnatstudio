@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Feb 19, 2008
+GPS 4.3 NEW FEATURES LIST Current as of Feb 20, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -37,6 +37,11 @@ NF-43-H111-019 Smarter activity menu for adding/removing files (2008-01-13)
 
   When a file is already into an activity GPS now proposes a menu to
   remove it from this activity on the VCS Contextual menu.
+
+NF-43-H110-009 Improved indentation of "raise with" (2008-02-20)
+
+  The Ada 2005 construct "raise Exception with msg" is now better indented,
+  in particular when a line break is added as part of this construct.
 
 NF-43-GC19-021 New plug-in to reset GPS Windows registry settings (2008-01-30)
 
