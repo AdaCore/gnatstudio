@@ -633,15 +633,17 @@ package body Ada_Analyzer is
    ------------------------
 
    procedure Analyze_Ada_Source
-     (Buffer          : Glib.UTF8_String;
-      Indent_Params   : Indent_Parameters;
-      Format          : Boolean               := True;
-      From, To        : Natural               := 0;
-      Replace         : Replace_Text_Callback := null;
-      Constructs      : Construct_List_Access := null;
-      Callback        : Entity_Callback       := null;
-      Indent_Offset   : Natural               := 0;
-      Case_Exceptions : Casing_Exceptions     := No_Casing_Exception)
+     (Buffer              : Glib.UTF8_String;
+      Indent_Params       : Indent_Parameters;
+      Format              : Boolean               := True;
+      From, To            : Natural               := 0;
+      Replace             : Replace_Text_Callback := null;
+      Constructs          : Construct_List_Access := null;
+      Callback            : Entity_Callback       := null;
+      Indent_Offset       : Natural               := 0;
+      Case_Exceptions     : Casing_Exceptions     := No_Casing_Exception;
+      Is_Optional_Keyword : access function (S : String)
+                                             return Boolean := null)
    is
       ---------------
       -- Constants --
@@ -3685,23 +3687,35 @@ package body Ada_Analyzer is
                end;
             end if;
 
-            Casing := Ident_Casing;
+            declare
+               Entity : Language_Entity;
+            begin
+               Entity := Identifier_Text;
+               Casing := Ident_Casing;
 
-            if Prev_Token = Tok_Apostrophe
-              and then To_Upper (Str (1 .. Str_Len)) = "CLASS"
-            then
-               Top_Token.Attributes (Ada_Class_Attribute) := True;
-            end if;
+               if Is_Optional_Keyword /= null
+                 and then Is_Optional_Keyword (Str (1 .. Str_Len))
+               then
+                  Entity := Keyword_Text;
+                  Casing := Reserved_Casing;
+               end if;
 
-            if Callback /= null then
-               exit Main_Loop when Callback
-                 (Identifier_Text,
-                  (Prev_Line, Prec - Start_Of_Line + 1, Prec),
-                  (Line_Count,
-                   Current - Line_Start (Buffer, Current) + 1,
-                   Current),
-                  False);
-            end if;
+               if Prev_Token = Tok_Apostrophe
+                 and then To_Upper (Str (1 .. Str_Len)) = "CLASS"
+               then
+                  Top_Token.Attributes (Ada_Class_Attribute) := True;
+               end if;
+
+               if Callback /= null then
+                  exit Main_Loop when Callback
+                    (Entity,
+                     (Prev_Line, Prec - Start_Of_Line + 1, Prec),
+                     (Line_Count,
+                      Current - Line_Start (Buffer, Current) + 1,
+                      Current),
+                     False);
+               end if;
+            end;
 
          elsif Prev_Token = Tok_Apostrophe
            and then (Token = Tok_Delta or else Token = Tok_Digits

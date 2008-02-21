@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2000-2007, AdaCore                 --
+--                  Copyright (C) 2000-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -349,7 +349,7 @@ package body Language.Custom is
       end Parse_Shared_Lib;
 
    begin  -- Initialize
-      Lang.Next   := Custom_Root;
+      Lang.Next := Custom_Root;
       Custom_Root := Custom_Language_Access (Lang);
 
       Lang.Name := new String'(Get_String (Get_Field (Top, "Name")));
@@ -874,20 +874,27 @@ package body Language.Custom is
    -------------------
 
    procedure Format_Buffer
-     (Lang            : access Custom_Language;
-      Buffer          : String;
-      Replace         : Replace_Text_Callback;
-      From, To        : Natural := 0;
-      Indent_Params   : Indent_Parameters := Default_Indent_Parameters;
-      Indent_Offset   : Natural := 0;
-      Case_Exceptions : Case_Handling.Casing_Exceptions :=
-        Case_Handling.No_Casing_Exception)
+    (Lang                : access Custom_Language;
+     Buffer              : String;
+     Replace             : Replace_Text_Callback;
+     From, To            : Natural := 0;
+     Indent_Params       : Indent_Parameters := Default_Indent_Parameters;
+     Indent_Offset       : Natural := 0;
+     Case_Exceptions     : Case_Handling.Casing_Exceptions :=
+       Case_Handling.No_Casing_Exception;
+     Is_Optional_Keyword : access function (S : String)
+                                            return Boolean := null)
    is
+      pragma Unreferenced (Is_Optional_Keyword);
+
       procedure Replace_Cb
         (Line, First, Last : Integer;
          S                 : chars_ptr);
       pragma Convention (C, Replace_Cb);
       --  Convention C wrapper for Replace
+
+      function Is_Keyword (S : String) return Boolean;
+      --  Return True if S is a keyword of Lang
 
       ----------------
       -- Replace_Cb --
@@ -900,6 +907,17 @@ package body Language.Custom is
          Replace (Line, First, Last, Value (S));
       end Replace_Cb;
 
+      ----------------
+      -- Is_Keyword --
+      ----------------
+
+      function Is_Keyword (S : String) return Boolean is
+         Matched : Match_Array (0 .. 1);
+      begin
+         Match (Lang.Keywords.all, S, Matched);
+         return Matched (0) /= GNAT.Regpat.No_Match;
+      end Is_Keyword;
+
    begin
       if Lang.Format_Buffer = null then
          if Lang.Parent = null then
@@ -910,7 +928,8 @@ package body Language.Custom is
          else
             Format_Buffer
               (Lang.Parent, Buffer, Replace, From, To,
-               Indent_Params, Indent_Offset, Case_Exceptions);
+               Indent_Params, Indent_Offset, Case_Exceptions,
+               Is_Keyword'Access);
          end if;
 
       else

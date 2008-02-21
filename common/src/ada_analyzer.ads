@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2001-2007, AdaCore                 --
+--                  Copyright (C) 2001-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -33,15 +33,17 @@ package Ada_Analyzer is
    ----------------------
 
    procedure Analyze_Ada_Source
-     (Buffer          : Glib.UTF8_String;
-      Indent_Params   : Indent_Parameters;
-      Format          : Boolean               := True;
-      From, To        : Natural               := 0;
-      Replace         : Replace_Text_Callback := null;
-      Constructs      : Construct_List_Access := null;
-      Callback        : Entity_Callback       := null;
-      Indent_Offset   : Natural               := 0;
-      Case_Exceptions : Casing_Exceptions     := No_Casing_Exception);
+     (Buffer              : Glib.UTF8_String;
+      Indent_Params       : Indent_Parameters;
+      Format              : Boolean               := True;
+      From, To            : Natural               := 0;
+      Replace             : Replace_Text_Callback := null;
+      Constructs          : Construct_List_Access := null;
+      Callback            : Entity_Callback       := null;
+      Indent_Offset       : Natural               := 0;
+      Case_Exceptions     : Casing_Exceptions     := No_Casing_Exception;
+      Is_Optional_Keyword : access function (S : String)
+                                             return Boolean := null);
    --  Analyze a given Ada source in Buffer, and perform source reformatting
    --  between lines From .. To if Format is True.
    --  If Constructs is not null, store the list of constructs analyzed.

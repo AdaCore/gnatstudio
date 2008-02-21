@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2000-2007, AdaCore                 --
+--                  Copyright (C) 2000-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -90,7 +90,7 @@ package Language is
    function Keywords
      (Lang : access Language_Root) return Strings.String_Access is abstract;
    --  Returns the uncompiled keyword regular expression. This string is used
-   --  to create the pattern matcher as returned by the version above.
+   --  to create the pattern matcher as returned by the version below.
 
    function Keywords
      (Lang : access Language_Root) return Pattern_Matcher_Access is abstract;
@@ -632,20 +632,26 @@ package Language is
    --  character counts.
 
    procedure Format_Buffer
-     (Lang            : access Language_Root;
-      Buffer          : String;
-      Replace         : Replace_Text_Callback;
-      From, To        : Natural := 0;
-      Indent_Params   : Indent_Parameters := Default_Indent_Parameters;
-      Indent_Offset   : Natural := 0;
-      Case_Exceptions : Case_Handling.Casing_Exceptions :=
-        Case_Handling.No_Casing_Exception);
+     (Lang                : access Language_Root;
+      Buffer              : String;
+      Replace             : Replace_Text_Callback;
+      From, To            : Natural := 0;
+      Indent_Params       : Indent_Parameters := Default_Indent_Parameters;
+      Indent_Offset       : Natural := 0;
+      Case_Exceptions     : Case_Handling.Casing_Exceptions :=
+        Case_Handling.No_Casing_Exception;
+      Is_Optional_Keyword : access function (S : String)
+                                             return Boolean := null);
    --  Given a Buffer, reformat it, based on Indent_Params.
    --  Reformat only lines comprised between From and To.
    --  If Indent_Offset is > 0, it represents an additional level of
    --  indentation when e.g. formatting a substring within a bigger
    --  construct. Format_Buffer will take this value into account when
    --  calling the Replace callback.
+   --  Is_Keyword is an optional parameter, used to customize the behavior
+   --  of the parser, by providing a way to specify additional keywords.
+   --  This is useful in particular when defining custom languages that are
+   --  derived from existing languages, e.g. GPR which derives from Ada.
 
    type Entity_Callback is access function
      (Entity         : Language_Entity;
@@ -729,9 +735,8 @@ package Language is
 
 private
    type Language_Root is abstract tagged limited record
-      Indent_Params   : Indent_Parameters := Default_Indent_Parameters;
-      Indent_Style    : Indentation_Kind  := Extended;
-      Actual_Language : Language_Access   := Language_Root'Unchecked_Access;
+      Indent_Params : Indent_Parameters := Default_Indent_Parameters;
+      Indent_Style  : Indentation_Kind  := Extended;
    end record;
 
    function Comment_Line

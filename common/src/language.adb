@@ -640,16 +640,19 @@ package body Language is
    -------------------
 
    procedure Format_Buffer
-     (Lang            : access Language_Root;
-      Buffer          : String;
-      Replace         : Replace_Text_Callback;
-      From, To        : Natural := 0;
-      Indent_Params   : Indent_Parameters := Default_Indent_Parameters;
-      Indent_Offset   : Natural := 0;
-      Case_Exceptions : Case_Handling.Casing_Exceptions :=
-        Case_Handling.No_Casing_Exception)
+     (Lang                : access Language_Root;
+      Buffer              : String;
+      Replace             : Replace_Text_Callback;
+      From, To            : Natural := 0;
+      Indent_Params       : Indent_Parameters := Default_Indent_Parameters;
+      Indent_Offset       : Natural := 0;
+      Case_Exceptions     : Case_Handling.Casing_Exceptions :=
+        Case_Handling.No_Casing_Exception;
+      Is_Optional_Keyword : access function (S : String)
+                                             return Boolean := null)
    is
-      pragma Unreferenced (Lang, Indent_Offset, Case_Exceptions);
+      pragma Unreferenced
+        (Lang, Indent_Offset, Case_Exceptions, Is_Optional_Keyword);
 
       Tab_Width       : Natural renames Indent_Params.Tab_Width;
       Use_Tabs        : Boolean renames Indent_Params.Use_Tabs;

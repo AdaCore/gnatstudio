@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Feb 20, 2008
+GPS 4.3 NEW FEATURES LIST Current as of Feb 21, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -109,6 +109,11 @@ NF-43-GA26-017 Improved handling of dispatching calls (2008-02-19)
   Previousely, this capability was disabled by default, and when enabled
   manually, a submenu was always created for dispatching calls, even when only
   one primitive operation existed.
+
+NF-43-G417-014 Improved editing for gpr files (2008-02-21)
+
+  GPS now recognizes gpr specific keywords (e.g. project, external) when
+  editing, in particular when performing automatic casing.
 
 NF-43-FC10-002 Code fixing uses the real indentation (2007-12-17)
 

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                 Copyright (C) 2000-2007, AdaCore                  --
+--                 Copyright (C) 2000-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -83,16 +83,19 @@ package Language.C is
    -- Source Analyzing --
    ----------------------
 
+   overriding
    procedure Parse_Constructs
      (Lang   : access C_Language;
       Buffer : Glib.UTF8_String;
       Result : out Construct_List);
 
+   overriding
    procedure Parse_Entities
      (Lang     : access C_Language;
       Buffer   : String;
       Callback : Entity_Callback);
 
+   overriding
    procedure Format_Buffer
      (Lang            : access C_Language;
       Buffer          : String;
@@ -101,7 +104,9 @@ package Language.C is
       Indent_Params   : Indent_Parameters := Default_Indent_Parameters;
       Indent_Offset   : Natural := 0;
       Case_Exceptions : Case_Handling.Casing_Exceptions :=
-        Case_Handling.No_Casing_Exception);
+        Case_Handling.No_Casing_Exception;
+      Is_Optional_Keyword : access function (S : String)
+                                             return Boolean := null);
 
 private
    type C_Language is new Language_Root with null record;
