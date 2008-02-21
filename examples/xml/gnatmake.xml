@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<GPS>
+  <action name="build root project" category="Builder">
+    <shell output="none">Project.scenario_variables_cmd_line -X</shell>
+    <shell output="none">Project.root</shell>
+    <shell output="none">Project.get_attribute_as_string %1 "gnat" "ide"</shell>
+    <external server="build_server">%1 make -p "%PPs" %3</external>
+    <shell output="none">Console "Messages"</shell>
+    <shell output="none">MDI.get_by_child %1</shell>
+    <shell output="none">MDIWindow.raise_window %1</shell>
+  </action>
+  <menu action="build root project" after="Make">
+    <title>/Build/My Gnatmake/_Root Project</title>
+  </menu>
+</GPS>
