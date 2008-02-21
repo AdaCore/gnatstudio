@@ -100,6 +100,10 @@ package body Builder_Module is
    Run_External_Key : constant History_Key := "run_external_terminal";
    --  The key in the history for the check button "run in external terminal"
 
+   Run_Exec_Dir_Key : constant History_Key := "run_in_executable_directory";
+   --  The key in the history for the check button
+   --  "run in executable directory"
+
    Make_Menu_Prefix : constant String := "<gps>/Build/Make/";
    Run_Menu_Prefix : constant String := "<gps>/Build/Run/";
    --  Prefixes used in the accel path for the various menus
@@ -1567,21 +1571,24 @@ package body Builder_Module is
    procedure On_Run
      (Kernel : access GObject_Record'Class; Data : File_Project_Record)
    is
-      K       : constant Kernel_Handle := Kernel_Handle (Kernel);
-      Active  : aliased Boolean := False;
-      Args    : Argument_List_Access;
-      Success : Boolean;
+      K            : constant Kernel_Handle := Kernel_Handle (Kernel);
+      Active       : aliased Boolean := False;
+      Use_Exec_Dir : aliased Boolean := False;
+      Args         : Argument_List_Access;
+      Success      : Boolean;
 
       procedure Launch
         (Command      : String;
          Arguments    : GNAT.OS_Lib.Argument_List;
          Ext_Terminal : Boolean;
+         Directory    : String;
          Title        : String);
       --  Launch Command (with Args) locally, or remotely if necessary
 
       procedure Launch
         (Command      : String;
          Ext_Terminal : Boolean;
+         Directory    : String;
          Title        : String);
       --  Ditto, with command being a simple string (may contain parameters)
 
@@ -1593,6 +1600,7 @@ package body Builder_Module is
         (Command      : String;
          Arguments    : GNAT.OS_Lib.Argument_List;
          Ext_Terminal : Boolean;
+         Directory    : String;
          Title        : String)
       is
          Console : Interactive_Console;
@@ -1613,6 +1621,7 @@ package body Builder_Module is
             Server           => Execution_Server,
             Console          => Console,
             Success          => Success,
+            Directory        => Directory,
             Use_Ext_Terminal => Ext_Terminal,
             Show_Exit_Status => True);
       end Launch;
@@ -1620,6 +1629,7 @@ package body Builder_Module is
       procedure Launch
         (Command      : String;
          Ext_Terminal : Boolean;
+         Directory    : String;
          Title        : String)
       is
          Console    : Interactive_Console;
@@ -1651,6 +1661,7 @@ package body Builder_Module is
                Server               => Execution_Server,
                Console              => Console,
                Success              => Success,
+               Directory            => Directory,
                Use_Ext_Terminal     => Ext_Terminal,
                Show_Exit_Status     => True);
 
@@ -1664,6 +1675,7 @@ package body Builder_Module is
                Server           => Execution_Server,
                Console          => Console,
                Success          => Success,
+               Directory        => Directory,
                Use_Ext_Terminal => Ext_Terminal,
                Show_Exit_Status => True);
          end if;
@@ -1675,14 +1687,14 @@ package body Builder_Module is
       if Data.File = VFS.No_File then
          declare
             Command : constant String := Display_Entry_Dialog
-              (Parent        => Get_Current_Window (K),
-               Title         => -"Run Command",
-               Message       => -"Enter the command to run:",
-               Check_Msg     => -"Use external terminal",
-               Key           => Cst_Run_Arguments_History,
-               History       => Get_History (K),
-               Button_Active => Active'Unchecked_Access,
-               Key_Check     => Run_External_Key);
+              (Parent         => Get_Current_Window (K),
+               Title          => -"Run Command",
+               Message        => -"Enter the command to run:",
+               Check_Msg      => -"Use external terminal",
+               Key            => Cst_Run_Arguments_History,
+               History        => Get_History (K),
+               Button_Active  => Active'Unchecked_Access,
+               Key_Check      => Run_External_Key);
 
          begin
             if Command = ""
@@ -1691,10 +1703,10 @@ package body Builder_Module is
                return;
             else
                if Is_Local (Execution_Server) then
-                  Launch (Command, Active, -"Run: " & Command);
+                  Launch (Command, Active, "", -"Run: " & Command);
                else
                   Launch
-                    (Command, Active,
+                    (Command, Active, "",
                      -"Run on " & Get_Nickname (Execution_Server) & ": " &
                      Command);
                end if;
@@ -1704,14 +1716,18 @@ package body Builder_Module is
       else
          declare
             Arguments : constant String := Display_Entry_Dialog
-              (Parent        => Get_Current_Window (K),
-               Title         => -"Arguments Selection",
-               Message       => -"Enter the arguments to your application:",
-               Check_Msg     => -"Use external terminal",
-               Key           => Cst_Run_Arguments_History,
-               History       => Get_History (K),
-               Key_Check     => Run_External_Key,
-               Button_Active => Active'Unchecked_Access);
+              (Parent         => Get_Current_Window (K),
+               Title          => -"Arguments Selection",
+               Message        => -"Enter the arguments to your application:",
+               Key            => Cst_Run_Arguments_History,
+               History        => Get_History (K),
+               Check_Msg      => -"Use external terminal",
+               Key_Check      => Run_External_Key,
+               Button_Active  => Active'Unchecked_Access,
+               Check_Msg2     => -"Use exec dir instead of current dir",
+               Key_Check2     => Run_Exec_Dir_Key,
+               Button2_Active => Use_Exec_Dir'Unchecked_Access);
+            Directory : GNAT.Strings.String_Access;
 
          begin
             if Arguments = ""
@@ -1719,21 +1735,29 @@ package body Builder_Module is
             then
                Args := Argument_String_To_List (Arguments);
 
+               if Use_Exec_Dir then
+                  Directory := new String'
+                    (Executables_Directory (Data.Project));
+               else
+                  Directory := new String'("");
+               end if;
+
                if Is_Local (Execution_Server) then
                   Launch
                     (To_Remote (Full_Name (Data.File).all, Execution_Server),
-                     Args.all, Active,
+                     Args.all, Active, Directory.all,
                      -"Run: " &
                      Base_Name (Data.File) & ' ' & Krunch (Arguments, 12));
                else
                   Launch
                     (To_Remote (Full_Name (Data.File).all, Execution_Server),
-                     Args.all, Active,
+                     Args.all, Active, Directory.all,
                      -"Run on " & Get_Nickname (Execution_Server) & ": " &
                      Base_Name (Data.File) & ' ' & Krunch (Arguments, 12));
                end if;
 
                Free (Args);
+               Free (Directory);
             end if;
          end;
       end if;

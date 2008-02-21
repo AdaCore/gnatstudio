@@ -120,3 +120,8 @@ NF-43-FC10-002 Code fixing uses the real indentation (2007-12-17)
   When the compiler detects an intendation problem, and doesn't propose the
   actual expected column, the auto fix proposed by GPS is now more accurate,
   using the same indentation engine & preferences as the editor.
+
+NF-43-D630-005 Ability to select the run directory (2008-02-21)
+
+  GPS now provides the ability to choose between the executable directory
+  of a program and the current directory to run or debug an application.

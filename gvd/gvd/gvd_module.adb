@@ -237,6 +237,9 @@ package body GVD_Module is
    --  For VxWorks systems, the entry point to be executed must also be
    --  specified together with the arguments; in addition, the multi-task-mode
    --  can be set as desired.
+   --  For non VxWorks systems, a check box to allow the user to run under the
+   --  exec dir of the program is also provided, similar to the Build->Run
+   --  dialog.
 
    --------------------
    -- Menu Callbacks --
@@ -300,7 +303,7 @@ package body GVD_Module is
 
    procedure On_Start
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Start menu
+   --  Debug->Run... menu
 
    procedure On_Step
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -1207,11 +1210,14 @@ package body GVD_Module is
    is
       Is_Multitask : aliased Boolean := False;
       Is_Start     : aliased Boolean := False;
+      Use_Exec_Dir : aliased Boolean := False;
       Arg_Msg      : aliased String := -"Run arguments:";
       Entry_Msg    : aliased String := -"Entry point and arguments:";
       Start_Msg    : aliased String := -"Stop at beginning of main subprogram";
+      Dir_Msg      : aliased String := -"Use exec dir instead of current dir";
       Multi_Msg    : aliased String := -"Enable VxWorks multi-tasks mode";
       Start_Key    : aliased String := "stop_beginning_debugger";
+      Dir_Key      : aliased String := "run_in_executable_directory";
       Multi_Key    : aliased String := "multitask_mode_debugger";
       No_Msg       : aliased String := "";
       Button1      : Boolean_Access := null;
@@ -1251,6 +1257,11 @@ package body GVD_Module is
          Button2 := Is_Multitask'Unchecked_Access;
          Msg2    := Multi_Msg'Unchecked_Access;
          Key2    := Multi_Key'Unchecked_Access;
+
+      else
+         Button2 := Use_Exec_Dir'Unchecked_Access;
+         Msg2    := Dir_Msg'Unchecked_Access;
+         Key2    := Dir_Key'Unchecked_Access;
       end if;
 
       declare
@@ -1290,6 +1301,12 @@ package body GVD_Module is
                end if;
             end if;
 
+            if Use_Exec_Dir then
+               Change_Directory
+                 (Process.Debugger,
+                  Dir_Name (Process.Descriptor.Program).all);
+            end if;
+
             if Is_Start then
                Start (Process.Debugger, Arguments, Mode => GVD.Types.Visible);
             else
@@ -1297,7 +1314,6 @@ package body GVD_Module is
             end if;
          end if;
       end;
-
    end Start_Program;
 
    --------------
