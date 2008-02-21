@@ -36,6 +36,8 @@ GNAT_SOURCES= \
   lib.adb \
   lib-list.adb \
   lib-sort.adb \
+  makeutl.ads \
+  makeutl.adb \
   mlib.ads \
   mlib.adb \
   mlib-tgt.ads \
