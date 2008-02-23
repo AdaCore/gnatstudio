@@ -96,6 +96,7 @@
        <choice>erc32-elf-gnat</choice>
        <choice>leon-elf-gnat</choice>
        <choice>dotnet-gnat</choice>
+       <choice>gnaampcmd</choice>
        <choice>jgnatcmd</choice>
        <string />
    </project_attribute>
