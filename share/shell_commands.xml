@@ -5363,4 +5363,25 @@ also saved so that they can be pasted later on</description>
      <description>Recompute a visual diff. The content of each editor used in the visual diff is saved. The files are recompared and the display is redone (blank lines and color highlighting).</description>
   </shell_doc>
 
+  <!--#################################################################
+      ## Exceptions
+      #################################################################-->
+
+  <shell_doc name="GPS.Exception">
+     <description>One of the exceptions that can be raised by GPS. It is a general error message, and its semantic depends on what subprogram raised the exception.</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Invalid_Argument">
+     <description>An exception raised by GPS. Raised when calling a subprogram from the GPS module with an invalid argument type (passing an integer when a string is expected, for instance)</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Missing_Arguments">
+     <description>An exception raised by GPS. Raised when calling a subprogram from the GPS module with missing arguments</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Unexpected_Exception">
+     <description>An exception raised by GPS. It indicates an internal error in GPS, raised by the Ada code itself. This exception is unexpected and indicates a bug in GPS itself, not in the python script, although it might be possible to modify the latter to work around the issue</description>
+  </shell_doc>
+
+
 </docs>

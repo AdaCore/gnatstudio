@@ -28,6 +28,7 @@ highlight_color="#FFDC4F"
 ## No user customization below this line
 #############################################################################
 
+import GPS
 from GPS import *
 
 try:
@@ -76,6 +77,11 @@ def highlight_file_idle ():
      highlight_entity_references (buffer, e)
      return True
   except StopIteration:
+     to_highlight.pop (0)
+     current_entities=[]
+     return True
+  except GPS.Exception:
+     ## The buffer might have been destroyed. Give up
      to_highlight.pop (0)
      current_entities=[]
      return True
