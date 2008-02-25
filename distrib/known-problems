@@ -1,12 +1,20 @@
 Known Problems fixed in GPS 4.3.0
 
+- H222-027: Editing project properties changes casing in project name
+  Problem:    If you edit the properties of a project, the casing of its name
+              might be changed (words are capitalized, and any specific casing
+              you previously had is lost).
+  Workaround: Projects are really case insensitive, so this issue only affects
+              you if you are also editing projects manually. In such a case,
+              you will need to overwrite GPS change.
+
 - H218-005: Exception in dispatching.py plug-in when closing buffers
   Problem:    If you have activated the dispatching.py plug-in (which highlights
               dispatching calls in Ada code), and close a buffer just after you
               open it, an error message is displayed in the Messages window.
-  Workaround: Wait a while before closing the buffer (so that all highlighting is
-              done). You can also simply ignore the error message, which has no
-              side effect.
+  Workaround: Wait a while before closing the buffer (so that all highlighting
+              is done). You can also simply ignore the error message, which has
+              no side effect.
 
 - H207-009: Infinite loop when computing the Dispatching Calls menu
   Problem:    In some cases, GPS might end up in an infinite loop when

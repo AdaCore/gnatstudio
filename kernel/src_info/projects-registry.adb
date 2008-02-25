@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2002-2007, AdaCore                  --
+--                 Copyright (C) 2002-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1968,7 +1968,9 @@ package body Projects.Registry is
          False,
          Minimize_Empty_Lines,
          W_Char, W_Eol, W_Str,
-         Backward_Compatibility => Project_Backward_Compatibility);
+         Backward_Compatibility => Project_Backward_Compatibility,
+         Id                     => Get_View (Project),
+         Id_Tree                => Project.View_Tree);
    end Pretty_Print;
 
    ----------------
