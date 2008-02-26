@@ -3902,14 +3902,25 @@ package body Projects.Editor is
       Case_Node : Project_Node_Id;
       Choice    : Name_Id)
    is
-      Item, S : Project_Node_Id;
+      Item, S, In_List : Project_Node_Id;
    begin
+      --  Add the new case item at the end of the list, so that the order of
+      --  items is the same as in the type declaration (H222-027)
+
       Item := Default_Project_Node (Tree, N_Case_Item);
       S := Default_Project_Node (Tree, N_Literal_String);
       Set_String_Value_Of (S, Tree, Choice);
       Set_First_Choice_Of (Item, Tree, S);
-      Set_Next_Case_Item (Item, Tree, First_Case_Item_Of (Case_Node, Tree));
-      Set_First_Case_Item_Of (Case_Node, Tree, Item);
+
+      In_List := First_Case_Item_Of (Case_Node, Tree);
+      if In_List = Empty_Node then
+         Set_First_Case_Item_Of (Case_Node, Tree, Item);
+      else
+         while Next_Case_Item (In_List, Tree) /= Empty_Node loop
+            In_List := Next_Case_Item (In_List, Tree);
+         end loop;
+         Set_Next_Case_Item (In_List, Tree, Item);
+      end if;
    end Add_Case_Item;
 
    -----------------------------

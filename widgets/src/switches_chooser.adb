@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2007, AdaCore                  --
+--                      Copyright (C) 2007-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -681,6 +681,7 @@ package body Switches_Chooser is
       begin
          --  ??? Not efficient to go back to a string
 
+         Set_Configuration (Cmd2, Get_Configuration (Editor.Cmd_Line));
          Set_Command_Line
            (Cmd2,
             Argument_List_To_String (Args),
