@@ -43,6 +43,7 @@ with Gtk.Viewport;              use Gtk.Viewport;
 with Pango.Font;                use Pango.Font;
 with Pango.Layout;              use Pango.Layout;
 
+with Ada.Strings.Maps;          use Ada.Strings.Maps;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 
@@ -836,6 +837,10 @@ package body Completion_Window is
       procedure Move_Page (Where : Page_Direction);
       --  Move the selection up or down one page.
 
+      function Complete return Boolean;
+      --  Complete using the currently selected item and close the window.
+      --  Return type indicates whether we should let the event go through.
+
       ---------------
       -- Move_Page --
       ---------------
@@ -886,7 +891,42 @@ package body Completion_Window is
          end if;
       end Move_Page;
 
+      --------------
+      -- Complete --
+      --------------
+
+      function Complete return Boolean is
+      begin
+         Sel := Get_Selection (Window.View);
+         Get_Selected (Sel, Model, Iter);
+
+         if Iter = Null_Iter then
+            return False;
+         end if;
+
+         Complete_And_Exit (Window);
+         return True;
+      end Complete;
+
+      S     : constant String := Get_String (Event);
+      C     : Character;
+      Dummy : Boolean;
+      pragma Unreferenced (Dummy);
    begin
+
+      if S'Length = 1 then
+         C := S (S'First);
+
+         if Is_Graphic (C)
+           and then not Is_In (C, Word_Character_Set (Window.Lang))
+         then
+            --  If we reach this point, complete, and let the event through so
+            --  that the character gets inserted as expected.
+            Dummy := Complete;
+            return False;
+         end if;
+      end if;
+
       Key := Get_Key_Val (Event);
 
       --  Case by case basis
@@ -896,14 +936,7 @@ package body Completion_Window is
             Delete (Window);
 
          when GDK_Return =>
-            Sel := Get_Selection (Window.View);
-            Get_Selected (Sel, Model, Iter);
-
-            if Iter = Null_Iter then
-               return False;
-            end if;
-
-            Complete_And_Exit (Window);
+            return Complete;
 
          when GDK_Down | GDK_KP_Down =>
             Sel := Get_Selection (Window.View);
@@ -1085,7 +1118,7 @@ package body Completion_Window is
       Buffer         : Gtk_Text_Buffer;
       Iter           : Gtk_Text_Iter;
       Mark           : Gtk_Text_Mark;
-      Case_Sensitive : Boolean;
+      Lang           : Language_Access;
       Complete       : Boolean)
    is
       Iter_Coords        : Gdk_Rectangle;
@@ -1116,7 +1149,8 @@ package body Completion_Window is
       Window.Initial_Offset := Get_Offset (Cursor);
       Window.Initial_Line   := Get_Line (Cursor);
 
-      Window.Case_Sensitive := Case_Sensitive;
+      Window.Case_Sensitive := Get_Language_Context (Lang).Case_Sensitive;
+      Window.Lang := Lang;
 
       --  Set the position.
 

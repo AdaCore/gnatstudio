@@ -22,6 +22,12 @@ NF-43-H226-031 Support for -eL gnatmake/gprbuild switch (2008-02-27)
   -eL switch. Note that for gnatclean and gprclean, this requires a recent
   version of these tools.
 
+NF-43-H226-019 Improved interface for code completion (2008-02-27)
+
+  Smart completion now completes the currently highlighted word when receiving
+  a character which is does not belong to an identifier (for instance dot,
+  colon, semi-colon, etc).
+
 NF-43-H216-003 gprbuild no longer packaged with GPS (2008-02-19)
 
   GPS binary distributions no longer come with gprbuild, to avoid

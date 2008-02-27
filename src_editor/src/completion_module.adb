@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2007, AdaCore             --
+--                      Copyright (C) 2005-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -910,8 +910,7 @@ package body Completion_Module is
               (Win, Gtk_Text_View (View),
                Gtk_Text_Buffer (Buffer), It,
                Data.End_Mark,
-               Get_Language_Context
-                 (Get_Language (Buffer)).Case_Sensitive,
+               Get_Language (Buffer),
                Complete);
 
             Kernel.Pop_State;

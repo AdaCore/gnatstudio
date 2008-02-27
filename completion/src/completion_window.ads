@@ -51,6 +51,7 @@ with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
 with Completion;    use Completion;
 with GPS.Kernel;    use GPS.Kernel;
 with Basic_Types;   use Basic_Types;
+with Language;      use Language;
 
 with Completion.History; use Completion.History;
 
@@ -73,7 +74,7 @@ package Completion_Window is
       Buffer         : Gtk_Text_Buffer;
       Iter           : Gtk_Text_Iter;
       Mark           : Gtk_Text_Mark;
-      Case_Sensitive : Boolean;
+      Lang           : Language_Access;
       Complete       : Boolean);
    --  Attach the completion window to a text view, and set the completion
    --  to start on the given mark.
@@ -174,6 +175,9 @@ private
       --  Whether the completion window was created using an automated trigger.
 
       Completion_History : Completion_History_Access;
+
+      Lang : Language_Access;
+      --  The language on which the window is completing.
    end record;
 
 end Completion_Window;

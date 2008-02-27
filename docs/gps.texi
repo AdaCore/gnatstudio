@@ -2242,6 +2242,9 @@ Typing new letters will reduce the range of proposal, as long as there remain
 solutions. Once you've selected the expected completion, you can validate by
 pressing @key{Enter}.
 
+Typing control characters (ie, characters which cannot be used in indentifiers)
+will also validate the current selection.
+
 GPS is also able to complete automatically subprogram parameter or dotted
 notations. For example, if you type
 
