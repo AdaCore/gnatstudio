@@ -1117,8 +1117,7 @@ package body GPS.Kernel.Preferences is
             Default => False,
             Blurb   => -("Whether to load the Xref info in memory whenever a"
               & " new project is loaded into memory, or a new file is"
-              & " compiled. Enabling this greatly improves the efficiency of"
-              & " advanced auto-completion."),
+              & " compiled."),
             Nick    => -"Load Xref info automatically"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Automatic_Xrefs_Load), -"Project");
