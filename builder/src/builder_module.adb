@@ -121,8 +121,9 @@ package body Builder_Module is
    --      -"Compile all sources"
    --      -"All"
 
-   Quiet_Opt      : aliased String := "-q";
    Unique_Compile : aliased constant String := "-u";
+   Follow_Links   : aliased constant String := "-eL";
+   Quiet_Opt      : aliased String := "-q";
    Syntax_Check   : aliased String := "-gnats";
    Semantic_Check : aliased String := "-gnatc";
    --  ??? Shouldn't have hard-coded options
@@ -485,25 +486,46 @@ package body Builder_Module is
       Vars := Argument_String_To_List
         (Scenario_Variables_Cmd_Line (Kernel, "-X"));
 
-      if Syntax = GPRbuild_Syntax then
-         declare
-            Gnatmake : constant String :=
-                         Get_Attribute_Value
-                           (Get_Project (Kernel), Compiler_Command_Attribute,
-                            Index => "Ada");
-         begin
-            if Gnatmake'Length > 9
-              and then Gnatmake
-                (Gnatmake'Last - 8 .. Gnatmake'Last) = "-gnatmake"
-            then
-               Vars := new Argument_List'
-                 (new String'
-                    ("--target=" &
-                     Gnatmake (Gnatmake'First .. Gnatmake'Last - 9)) &
-                  Vars.all);
+      case Syntax is
+         when GPRbuild_Syntax | GNAT_Syntax =>
+            if not Get_Pref (Trusted_Mode) then
+               declare
+                  Old_Vars : Argument_List_Access := Vars;
+               begin
+                  Vars := new Argument_List'
+                    (new String'(Follow_Links) &
+                     Vars.all);
+                  Basic_Types.Unchecked_Free (Old_Vars);
+               end;
             end if;
-         end;
-      end if;
+
+            if Syntax = GPRbuild_Syntax then
+               declare
+                  Old_Vars : Argument_List_Access;
+                  Gnatmake : constant String :=
+                               Get_Attribute_Value
+                                 (Get_Project (Kernel),
+                                  Compiler_Command_Attribute,
+                                  Index => "Ada");
+               begin
+                  if Gnatmake'Length > 9
+                    and then Gnatmake
+                      (Gnatmake'Last - 8 .. Gnatmake'Last) = "-gnatmake"
+                  then
+                     Old_Vars := Vars;
+                     Vars := new Argument_List'
+                       (new String'
+                          ("--target=" &
+                           Gnatmake (Gnatmake'First .. Gnatmake'Last - 9)) &
+                        Vars.all);
+                     Basic_Types.Unchecked_Free (Old_Vars);
+                  end if;
+               end;
+            end if;
+
+         when GPRmake_Syntax =>
+            null;
+      end case;
 
       declare
          R_Tmp : Argument_List (1 .. 5);
