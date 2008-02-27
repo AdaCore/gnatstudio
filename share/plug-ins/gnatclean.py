@@ -18,6 +18,14 @@ def get_cleaner (root):
    gprbuild=0
    gnatclean=1
 
+   # -eL requires a recent version of gnatclean/gprclean, but this preference
+   # is not enabled by default, so that's a reasonable requirement.
+
+   if Preference ("Prj-Editor-Trusted-Mode").get() == 1:
+      symlink_opt=""
+   else:
+      symlink_opt=" -eL"
+
    builder=None
 
    if (len (languages) == 1 and languages [0].lower() == "ada") \
@@ -37,12 +45,13 @@ def get_cleaner (root):
       gnatmake = root.get_attribute_as_string ("compiler_command",
                                                package="ide", index="ada")
       length = len (gnatmake)
+
       if length > 9 and gnatmake [length - 9:] == "-gnatmake":
-         return "gprclean --target=" + gnatmake [:length - 9]
+         return "gprclean --target=" + gnatmake [:length - 9] + symlink_opt
       else:
-         return "gprclean"
+         return "gprclean" + symlink_opt
    else:
-      return root.get_attribute_as_string ("gnat", package="ide") + " clean"
+      return root.get_attribute_as_string ("gnat", package="ide") + " clean" + symlink_opt
 
 def clean_project (recursively=False, root=None):
    prj = root
