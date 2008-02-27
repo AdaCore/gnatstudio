@@ -4,8 +4,8 @@ Known Problems fixed in GPS 4.3.0
   Problem:    In some cases, in particular when you are using -gnaty<digit>,
               the resulting project file has duplicate entries for -gnaty
               switches. In addition, this results in extra case statements
-              generated in the project
-  Workaround: Edit the project manually
+              generated in the project.
+  Workaround: Edit the project manually.
 
 - H222-027: Editing project properties changes casing in project name
   Problem:    If you edit the properties of a project, the casing of its name
