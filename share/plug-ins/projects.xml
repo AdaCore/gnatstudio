@@ -58,7 +58,7 @@
        package="IDE"
        editor_page="Languages"
        editor_section="Tools"
-       description="The gnatls command used to find where the Ada run time files are installed"
+       description="The gnatls command used to find where the Ada run time files are installed (including optional arguments, e.g. gnatls --RTS=sjlj)"
        hide_in="wizard library_wizard"
        label="Gnatls">
        <choice default="true" >gnatls</choice>
@@ -106,7 +106,7 @@
        package="IDE"
        editor_page="Languages"
        editor_section="Tools"
-       description="The application to use when debugging applications. Only gdb and its variants are currently supported by GPS"
+       description="The command line to use when debugging applications (including optional arguments). Only gdb and its variants are currently supported"
        hide_in="wizard library_wizard"
        label="Debugger">
        <choice default="true" >gdb</choice>
