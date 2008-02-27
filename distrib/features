@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Feb 21, 2008
+GPS 4.3 NEW FEATURES LIST Current as of Feb 27, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -14,6 +14,13 @@ of the feature.
 
 New features in GPS 4.3.0
 -------------------------
+
+NF-43-H226-031 Support for -eL gnatmake/gprbuild switch (2008-02-27)
+
+  When the 'Fast Project Loading' preference is enabled, GPS will now
+  automatically call gnatmake, gnatclean, gprclean and gprbuild with the
+  -eL switch. Note that for gnatclean and gprclean, this requires a recent
+  version of these tools.
 
 NF-43-H216-003 gprbuild no longer packaged with GPS (2008-02-19)
 
