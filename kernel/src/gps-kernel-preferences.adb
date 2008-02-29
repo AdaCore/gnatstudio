@@ -699,6 +699,17 @@ package body GPS.Kernel.Preferences is
         (Kernel.Preferences, Param_Spec (Comments_Style),
          -"Editor:Fonts & Colors");
 
+      Annotated_Comments_Style := Gnew_Style
+        (Name    => "Src-Editor-Annotated-Comments-Style",
+         Nick    => -"Annotated Comments",
+         Blurb   => -"Style to use when displaying annotated comments",
+         Default_Font => "Courier Medium Oblique 10",
+         Default_Fg   => "#21A9DE",
+         Default_Bg   => "white");
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Annotated_Comments_Style),
+         -"Editor:Fonts & Colors");
+
       Strings_Style := Gnew_Style
         (Name    => "Src-Editor-Strings-Style",
          Nick    => -"Strings",

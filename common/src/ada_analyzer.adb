@@ -2766,6 +2766,8 @@ package body Ada_Analyzer is
             Last            : Natural;
             Ref_Indent      : Natural;
             Success         : Boolean;
+            Entity          : Language_Entity;
+
          begin
             Ref_Indent := Num_Spaces;
 
@@ -2857,8 +2859,17 @@ package body Ada_Analyzer is
                end if;
 
                if Callback /= null then
+                  if First + 2 <= Buffer_Last
+                    and then Buffer (First + 2) /= ' '
+                    and then Is_Special (Buffer (First + 2))
+                  then
+                     Entity := Annotated_Comment_Text;
+                  else
+                     Entity := Comment_Text;
+                  end if;
+
                   if Callback
-                    (Comment_Text,
+                    (Entity,
                        (Prev_Line, First - Prev_Start_Line + 1, First),
                        (Prev_Line, Last - Prev_Start_Line + 1, Last),
                      False)

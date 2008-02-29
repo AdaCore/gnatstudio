@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
---                            ACT-Europe                             --
+--                  Copyright (C) 2001-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -78,19 +77,23 @@ package body Src_Highlighting is
    ------------------------
 
    procedure Create_Syntax_Tags
-     (Result              : in out Highlighting_Tags;
-      Keyword_Color       : Gdk.Color.Gdk_Color;
-      Keyword_Color_Bg    : Gdk.Color.Gdk_Color;
-      Keyword_Font_Desc   : Pango.Font.Pango_Font_Description := null;
-      Comment_Color       : Gdk.Color.Gdk_Color;
-      Comment_Color_Bg    : Gdk.Color.Gdk_Color;
-      Comment_Font_Desc   : Pango.Font.Pango_Font_Description := null;
-      Character_Color     : Gdk.Color.Gdk_Color;
-      Character_Color_Bg  : Gdk.Color.Gdk_Color;
-      Character_Font_Desc : Pango.Font.Pango_Font_Description := null;
-      String_Color        : Gdk.Color.Gdk_Color;
-      String_Color_Bg     : Gdk.Color.Gdk_Color;
-      String_Font_Desc    : Pango.Font.Pango_Font_Description := null) is
+     (Result                      : in out Highlighting_Tags;
+      Keyword_Color               : Gdk.Color.Gdk_Color;
+      Keyword_Color_Bg            : Gdk.Color.Gdk_Color;
+      Keyword_Font_Desc           : Pango.Font.Pango_Font_Description := null;
+      Comment_Color               : Gdk.Color.Gdk_Color;
+      Comment_Color_Bg            : Gdk.Color.Gdk_Color;
+      Comment_Font_Desc           : Pango.Font.Pango_Font_Description := null;
+      Annotated_Comment_Color     : Gdk.Color.Gdk_Color;
+      Annotated_Comment_Color_Bg  : Gdk.Color.Gdk_Color;
+      Annotated_Comment_Font_Desc : Pango.Font.Pango_Font_Description := null;
+      Character_Color             : Gdk.Color.Gdk_Color;
+      Character_Color_Bg          : Gdk.Color.Gdk_Color;
+      Character_Font_Desc         : Pango.Font.Pango_Font_Description := null;
+      String_Color                : Gdk.Color.Gdk_Color;
+      String_Color_Bg             : Gdk.Color.Gdk_Color;
+      String_Font_Desc            : Pango.Font.Pango_Font_Description := null)
+   is
    begin
       New_Tag
         (Result (Keyword_Text),
@@ -104,6 +107,12 @@ package body Src_Highlighting is
          Fore_Color => Comment_Color,
          Back_Color => Comment_Color_Bg,
          Font_Desc  => Comment_Font_Desc);
+      New_Tag
+        (Result (Annotated_Comment_Text),
+         Annotated_Comment_Color_Tag_Name,
+         Fore_Color => Annotated_Comment_Color,
+         Back_Color => Annotated_Comment_Color_Bg,
+         Font_Desc  => Annotated_Comment_Font_Desc);
       New_Tag
         (Result (String_Text),
          String_Color_Tag_Name,

@@ -60,6 +60,7 @@ package Language is
       Identifier_Text,
       Keyword_Text,
       Comment_Text,
+      Annotated_Comment_Text,
       Character_Text,
       String_Text,
       Partial_Identifier_Text,

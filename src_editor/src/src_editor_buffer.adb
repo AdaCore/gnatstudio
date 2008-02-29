@@ -2601,18 +2601,21 @@ package body Src_Editor_Buffer is
 
       Create_Syntax_Tags
         (B.Syntax_Tags,
-         Keyword_Color       => Get_Pref_Fg   (Keywords_Style),
-         Keyword_Color_Bg    => Get_Pref_Bg   (Keywords_Style),
-         Keyword_Font_Desc   => Keyword_Font,
-         Comment_Color       => Get_Pref_Fg   (Comments_Style),
-         Comment_Color_Bg    => Get_Pref_Bg   (Comments_Style),
-         Comment_Font_Desc   => Comment_Font,
-         Character_Color     => Get_Pref_Fg   (Strings_Style),
-         Character_Color_Bg  => Get_Pref_Bg   (Strings_Style),
-         Character_Font_Desc => String_Font,
-         String_Color        => Get_Pref_Fg   (Strings_Style),
-         String_Color_Bg     => Get_Pref_Bg   (Strings_Style),
-         String_Font_Desc    => String_Font);
+         Keyword_Color               => Get_Pref_Fg (Keywords_Style),
+         Keyword_Color_Bg            => Get_Pref_Bg (Keywords_Style),
+         Keyword_Font_Desc           => Keyword_Font,
+         Comment_Color               => Get_Pref_Fg (Comments_Style),
+         Comment_Color_Bg            => Get_Pref_Bg (Comments_Style),
+         Comment_Font_Desc           => Comment_Font,
+         Annotated_Comment_Color     => Get_Pref_Fg (Annotated_Comments_Style),
+         Annotated_Comment_Color_Bg  => Get_Pref_Bg (Annotated_Comments_Style),
+         Annotated_Comment_Font_Desc => Comment_Font,
+         Character_Color             => Get_Pref_Fg (Strings_Style),
+         Character_Color_Bg          => Get_Pref_Bg (Strings_Style),
+         Character_Font_Desc         => String_Font,
+         String_Color                => Get_Pref_Fg (Strings_Style),
+         String_Color_Bg             => Get_Pref_Bg (Strings_Style),
+         String_Font_Desc            => String_Font);
 
       --  Connect timeout, to handle automatic saving of buffer
 

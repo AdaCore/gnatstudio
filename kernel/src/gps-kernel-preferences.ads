@@ -210,6 +210,7 @@ package GPS.Kernel.Preferences is
    Default_Style             : Param_Spec_Style;
    Keywords_Style            : Param_Spec_Style;
    Comments_Style            : Param_Spec_Style;
+   Annotated_Comments_Style  : Param_Spec_Style;
    Strings_Style             : Param_Spec_Style;
 
    Delimiter_Color           : Param_Spec_Color;

@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Feb 27, 2008
+GPS 4.3 NEW FEATURES LIST Current as of Feb 29, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -122,6 +122,11 @@ NF-43-GA26-017 Improved handling of dispatching calls (2008-02-19)
   Previousely, this capability was disabled by default, and when enabled
   manually, a submenu was always created for dispatching calls, even when only
   one primitive operation existed.
+
+NF-43-GA19-017 Support for annotated comments highlighting (2008-02-29)
+
+  The Ada source editor will now highlight with a different color annotated
+  comments (e.g. --#).
 
 NF-43-G417-014 Improved editing for gpr files (2008-02-21)
 

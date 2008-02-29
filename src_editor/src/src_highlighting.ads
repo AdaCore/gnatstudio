@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2002                      --
---                            ACT-Europe                             --
+--                   Copyright (C) 2001-2008, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -37,10 +36,11 @@ package Src_Highlighting is
    --  This array contains the tags associated to each Language Entity
    --  Kind that needs to be highlighted in the source editor.
 
-   Keyword_Color_Tag_Name   : constant String := "keyword";
-   Comment_Color_Tag_Name   : constant String := "comment";
-   String_Color_Tag_Name    : constant String := "string";
-   Character_Color_Tag_Name : constant String := "character";
+   Keyword_Color_Tag_Name           : constant String := "keyword";
+   Comment_Color_Tag_Name           : constant String := "comment";
+   Annotated_Comment_Color_Tag_Name : constant String := "annotated-comment";
+   String_Color_Tag_Name            : constant String := "string";
+   Character_Color_Tag_Name         : constant String := "character";
    --  Respectively, the name of the tags use to highlight keywords, comments,
    --  and strings. Declared as public so that one can retrieve them from
    --  the source buffer using their names.
@@ -56,19 +56,22 @@ package Src_Highlighting is
    --  Source Buffer using its name.
 
    procedure Create_Syntax_Tags
-     (Result              : in out Highlighting_Tags;
-      Keyword_Color       : Gdk.Color.Gdk_Color;
-      Keyword_Color_Bg    : Gdk.Color.Gdk_Color;
-      Keyword_Font_Desc   : Pango.Font.Pango_Font_Description := null;
-      Comment_Color       : Gdk.Color.Gdk_Color;
-      Comment_Color_Bg    : Gdk.Color.Gdk_Color;
-      Comment_Font_Desc   : Pango.Font.Pango_Font_Description := null;
-      Character_Color     : Gdk.Color.Gdk_Color;
-      Character_Color_Bg  : Gdk.Color.Gdk_Color;
-      Character_Font_Desc : Pango.Font.Pango_Font_Description := null;
-      String_Color        : Gdk.Color.Gdk_Color;
-      String_Color_Bg     : Gdk.Color.Gdk_Color;
-      String_Font_Desc    : Pango.Font.Pango_Font_Description := null);
+     (Result                      : in out Highlighting_Tags;
+      Keyword_Color               : Gdk.Color.Gdk_Color;
+      Keyword_Color_Bg            : Gdk.Color.Gdk_Color;
+      Keyword_Font_Desc           : Pango.Font.Pango_Font_Description := null;
+      Comment_Color               : Gdk.Color.Gdk_Color;
+      Comment_Color_Bg            : Gdk.Color.Gdk_Color;
+      Comment_Font_Desc           : Pango.Font.Pango_Font_Description := null;
+      Annotated_Comment_Color     : Gdk.Color.Gdk_Color;
+      Annotated_Comment_Color_Bg  : Gdk.Color.Gdk_Color;
+      Annotated_Comment_Font_Desc : Pango.Font.Pango_Font_Description := null;
+      Character_Color             : Gdk.Color.Gdk_Color;
+      Character_Color_Bg          : Gdk.Color.Gdk_Color;
+      Character_Font_Desc         : Pango.Font.Pango_Font_Description := null;
+      String_Color                : Gdk.Color.Gdk_Color;
+      String_Color_Bg             : Gdk.Color.Gdk_Color;
+      String_Font_Desc            : Pango.Font.Pango_Font_Description := null);
    --  Create or update a Highlighting_Tags object using the given color names.
    --  If some colors name can not be parsed, then no special color will be
    --  used to highlight the associated source parts.

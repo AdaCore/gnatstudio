@@ -8948,6 +8948,12 @@ Font and colors used to highlight keywords.
 Font and colors used to highlight comments.
 Setting the color to white will set a transparent color.
 
+@item Annotated  Comments
+Font and colors used to highlight annotated comments.
+Only relevant to Ada currently. Annotated comments are comments immediately
+followed by a special character, e.g. @code{#[]}.
+Setting the color to white will set a transparent color.
+
 @item Strings
 Font and colors used to highlight strings.
 Setting the color to white will set a transparent color.
