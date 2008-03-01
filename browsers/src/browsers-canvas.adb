@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007, AdaCore             --
+--                      Copyright (C) 2001-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -319,7 +319,7 @@ package body Browsers.Canvas is
                   Render_To_Drawable
                     (Pixbuf   => Canvas.Scaled_Background,
                      Drawable => Get_Window (Canvas),
-                     Gc       => Get_Black_GC (Get_Style (Canvas)),
+                     GC       => Get_Black_GC (Get_Style (Canvas)),
                      Src_X    => X,
                      Src_Y    => Y,
                      Dest_X   => Xs,
@@ -1323,7 +1323,7 @@ package body Browsers.Canvas is
          Layout   => Item.Title_Layout);
       Draw_Line
         (Pixmap (Item),
-         Gc     => Get_Black_GC (Get_Style (Item.Browser)),
+         GC     => Get_Black_GC (Get_Style (Item.Browser)),
          X1     => XThick + Item.Title_X,
          Y1     => H + YThick + Item.Title_Y,
          X2     => Item.Title_Width + Item.Title_X - XThick - 1,
