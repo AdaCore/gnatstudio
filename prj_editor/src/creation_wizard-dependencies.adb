@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2004-2007                       --
---                             AdaCore                               --
+--                  Copyright (C) 2004-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -731,7 +730,7 @@ package body Creation_Wizard.Dependencies is
                   Importing_Project     => Project,
                   Imported_Project_Path =>
                     Get_String (Model, Iter, Full_Path_Column),
-                  Limited_with          =>
+                  Limited_With          =>
                     Get_Boolean (Model, Iter, Is_Limited_Column));
                Changed := True;
             end if;
