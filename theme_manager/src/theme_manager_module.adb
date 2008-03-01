@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2007                      --
---                              AdaCore                              --
+--                   Copyright (C) 2003-2008, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -546,7 +545,7 @@ package body Theme_Manager_Module is
       while Themes /= null loop
          Iter := Add (Pane.Model,
                       Find_Category (Pane.Model, Themes.Category.all),
-                      name     => Themes.Name.all,
+                      Name     => Themes.Name.all,
                       Active   =>
                         Index (Active, '@' & Themes.Name.all & '@') /= 0,
                       Visible  => True);
