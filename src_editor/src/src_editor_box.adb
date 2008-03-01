@@ -897,7 +897,7 @@ package body Src_Editor_Box is
 
       declare
          Layout : constant Pango_Layout :=
-           Create_Pango_Layout (Box.Cursor_Loc_Label, "99999:999");
+                    Create_Pango_Layout (Box.Cursor_Loc_Label, "99999:999");
          Width, Height : Gint;
       begin
          Get_Pixel_Size (Layout, Width, Height);
