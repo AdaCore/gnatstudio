@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2007, AdaCore                  --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1702,7 +1702,8 @@ package body Interactive_Consoles is
       procedure Update_Pattern_Loc (L : Natural; Link : Hyper_Links) is
          Matches : Match_Array (0 .. 1);
       begin
-         Match (Link.Pattern.all, Text, Matches, Data_first => Index);
+         Match (Link.Pattern.all, Text, Matches, Data_First => Index);
+
          if Matches (0) = No_Match then
             Locs (L) := (Link  => Link,
                          First => Integer'Last,
