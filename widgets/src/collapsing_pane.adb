@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006-2007                      --
---                              AdaCore                              --
+--                   Copyright (C) 2006-2008, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -429,7 +428,7 @@ package body Collapsing_Pane is
       Gdk.Pixbuf.Render_To_Drawable
         (Pixbuf   => Pixbuf_Displayed,
          Drawable => Get_Window (Pane.Label_Image),
-         Gc       => Pane.GC,
+         GC       => Pane.GC,
          Src_X    => 0,
          Src_Y    => 0,
          Dest_X   => 0,
