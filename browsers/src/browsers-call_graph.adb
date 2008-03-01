@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007, AdaCore             --
+--                      Copyright (C) 2001-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1494,7 +1494,7 @@ package body Browsers.Call_Graph is
                Entity                => Entity,
                Filter                => Filter,
                In_File               => In_File,
-               File_Has_No_Li_Report => null);
+               File_Has_No_LI_Report => null);
 
             if Synchronous then
                --  Synchronous, return directly the result
