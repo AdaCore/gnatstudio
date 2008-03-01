@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2007, AdaCore              --
+--                     Copyright (C) 2001-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -533,7 +533,7 @@ package body GPS.Kernel.Project is
                   & Full_Name (Project).all & (-" at local place ")
                   & Full_Name (Local_Project).all &
                   (-". Please check your remote configuration."),
-                  Mode => Console.Error, Add_Lf => False);
+                  Mode => Console.Error, Add_LF => False);
 
                --  Need to run Project_Changing hook to reset build_server
                Data.File := Previous_Project;
@@ -674,7 +674,7 @@ package body GPS.Kernel.Project is
       elsif not Same_Project then
          Console.Insert (Kernel, (-"Cannot find project file ")
                          & Full_Name (Project).all,
-                         Mode => Console.Error, Add_Lf => False);
+                         Mode => Console.Error, Add_LF => False);
          Had_Project_Desktop := Load_Desktop (Kernel);
       end if;
    end Load_Project;
