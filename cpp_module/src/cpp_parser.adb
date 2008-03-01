@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2007, AdaCore                  --
+--                 Copyright (C) 2003-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -2762,7 +2762,7 @@ package body CPP_Parser is
          Source  : Source_File;
       begin
          Source := Get_Or_Create
-           (DB      => Handler.Db,
+           (Db      => Handler.Db,
             File    => File,
             Handler => LI_Handler (Handler),
             LI      => null);
