@@ -951,7 +951,7 @@ package body GPS.Main_Window is
         (Main_Window.Kernel, "hide",
          Class         => MDI_Class,
          Static_Method => True,
-         HanDler       => Default_Command_Handler'Access);
+         Handler       => Default_Command_Handler'Access);
       Register_Command
         (Main_Window.Kernel, "show",
          Class         => MDI_Class,
