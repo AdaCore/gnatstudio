@@ -1053,7 +1053,7 @@ package body ALI_Parser is
         (Handler               => Handler,
          Source_Filename       => Get_Filename (Sfiles (File_Num).File),
          File_Has_No_LI_Report => null,
-         Reset_ALi             => False);
+         Reset_ALI             => False);
       Find_Declaration
         (Db              => Get_Database (LI),
          File_Name       => Get_Filename (S),
