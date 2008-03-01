@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2001-2007, AdaCore                --
+--                   Copyright (C) 2001-2008, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -2199,7 +2199,7 @@ package body Src_Editor_View is
          Draw_Pixmap
            (Drawable => Left_Window,
             Src      => View.Side_Column_Buffer,
-            Gc       => View.Side_Column_GC,
+            GC       => View.Side_Column_GC,
             Xsrc     => 0,
             Ysrc     => 0,
             Xdest    => 0,
@@ -2235,7 +2235,7 @@ package body Src_Editor_View is
          Draw_Pixmap
            (Drawable => Left_Window,
             Src      => View.Side_Column_Buffer,
-            Gc       => View.Side_Column_GC,
+            GC       => View.Side_Column_GC,
             Xsrc     => 0,
             Ysrc     => 0,
             Xdest    => 0,
@@ -2345,7 +2345,7 @@ package body Src_Editor_View is
       Draw_Pixmap
         (Drawable => Right_Window,
          Src      => View.Speed_Column_Buffer,
-         Gc       => View.Side_Column_GC,
+         GC       => View.Side_Column_GC,
          Xsrc     => 0,
          Ysrc     => 0,
          Xdest    => 0,

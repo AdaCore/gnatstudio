@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                 Copyright (C) 2003-2007, AdaCore                  --
+--                 Copyright (C) 2003-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -639,7 +639,7 @@ package body Src_Editor_Buffer.Line_Information is
                Render_To_Drawable
                  (Pixbuf   => Line_Info.Info.Image,
                   Drawable => Drawable,
-                  Gc       => GC,
+                  GC       => GC,
                   Src_X    => 0,
                   Src_Y    => 0,
                   Dest_X   => Starting_X,
