@@ -2861,6 +2861,7 @@ package body Ada_Analyzer is
                if Callback /= null then
                   if First + 2 <= Buffer_Last
                     and then Buffer (First + 2) /= ' '
+                    and then Buffer (First + 2) /= '-'
                     and then Is_Special (Buffer (First + 2))
                   then
                      Entity := Annotated_Comment_Text;
