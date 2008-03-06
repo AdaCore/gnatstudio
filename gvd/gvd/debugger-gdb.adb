@@ -174,6 +174,10 @@ package body Debugger.Gdb is
    Undefined_Command         : constant String := "Undefined command";
    --  Another string used to detect undefined commands.
 
+   Unexpected_Arguments      : constant String :=
+                                "warning: Unexpected arguments";
+   --  Yet another string used to detect undefined commands.
+
    Undefined_Info_Command    : constant String := "Undefined info command";
    --  Another string used to detect undefined info commands.
 
@@ -3883,12 +3887,8 @@ package body Debugger.Gdb is
             new String'
               (Send (Debugger, "info wtx threads", Mode => Internal));
 
-         if Debugger.WTX_List'Length > Undefined_Info_Command'Length
-           and then
-             Debugger.WTX_List
-               (Debugger.WTX_List'First
-                 .. Debugger.WTX_List'First + Undefined_Command'Length - 1)
-              = Undefined_Command
+         if Index (Debugger.WTX_List.all, Undefined_Info_Command) /= 0
+           or else Index (Debugger.WTX_List.all, Unexpected_Arguments) /= 0
          then
             Free (Debugger.WTX_List);
             Debugger.WTX_List :=
