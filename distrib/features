@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Feb 29, 2008
+GPS 4.3 NEW FEATURES LIST Current as of Mar 07, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -14,6 +14,12 @@ of the feature.
 
 New features in GPS 4.3.0
 -------------------------
+
+NF-43-H306-005 Support for PPC assembly highlighting (2008-03-07)
+
+  An optional plug-in (ppc.xml) is provided in the GPS library which provides
+  the ability to highlight PPC assembly code (in particular branches and
+  labels) in the source editor and outline view.
 
 NF-43-H226-031 Support for -eL gnatmake/gprbuild switch (2008-02-27)
 
