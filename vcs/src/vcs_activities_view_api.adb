@@ -326,8 +326,10 @@ package body VCS_Activities_View_API is
       Activity : Activity_Id;
       Context  : Selection_Context) is
    begin
-      if Has_File_Information (Context)
-        or else Has_Directory_Information (Context)
+      if (Has_File_Information (Context)
+          or else Has_Directory_Information (Context))
+        and then
+          not (Get_Creator (Context) = Abstract_Module_ID (VCS_Module_ID))
       then
          --  If we have a file information, then there is a single file to
          --  handle.
