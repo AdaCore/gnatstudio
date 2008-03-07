@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.3.0
 
+- H307-006: Cannot add multiple files into an anonymous activity
+  Problem:    When multiple files are selected in the VCS Explorer only
+              the first selected file gets added into the anonymous
+              activity when using the "Commit as new Activity" action.
+  Workaround: Add each file individually.
+
 - H222-027: Duplicate -gnaty in project after editing properties
   Problem:    In some cases, in particular when you are using -gnaty<digit>,
               the resulting project file has duplicate entries for -gnaty
