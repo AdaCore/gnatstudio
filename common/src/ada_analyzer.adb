@@ -1454,8 +1454,6 @@ package body Ada_Analyzer is
             Prev := Tmp;
             Tmp  := Tmp + 1;
          end loop;
-
-         return Prev;
       end End_Of_Identifier;
 
       --------------------------------------
