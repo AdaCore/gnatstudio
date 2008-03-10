@@ -604,8 +604,6 @@ package body External_Editor_Module is
          Expect (Pd, Result, "@@@");
       end loop;
 
-      return -1;
-
    exception
       when Process_Died =>
          Close (Pd, Status);
