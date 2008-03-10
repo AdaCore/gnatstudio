@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2003-2007, AdaCore                 --
+--                  Copyright (C) 2003-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1112,7 +1112,7 @@ package body Codefix.Text_Manager is
 
       function Internal_Get_Right_Paren
         (Cursor : Text_Cursor'Class; Index : Char_Index; Current_Line : String)
-        return Text_Cursor
+         return Text_Cursor
       is
          Local_Cursor : Text_Cursor := Text_Cursor (Cursor);
          Local_Line   : GNAT.Strings.String_Access :=
@@ -1158,8 +1158,6 @@ package body Codefix.Text_Manager is
                   Local_Cursor_Char_Index := Local_Cursor_Char_Index + 1;
             end case;
          end loop;
-
-         raise Codefix_Panic;
       end Internal_Get_Right_Paren;
 
    begin
