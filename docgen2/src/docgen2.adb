@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2007, AdaCore                     --
+--                 Copyright (C) 2007-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -2087,8 +2087,11 @@ package body Docgen2 is
               (Database,
                Command.Source_Files (Command.Src_File_Index));
 
-            if not Command.Options.Process_Up_To_Date_Only
-              or else Is_Up_To_Date (File)
+            --  File might be null here if no LI_Handler corresponds to it.
+            if File /= null
+              and then
+                (not Command.Options.Process_Up_To_Date_Only
+                 or else Is_Up_To_Date (File))
             then
                if Command.Annotated_Files = null then
                   Command.Annotated_Files :=
@@ -2126,9 +2129,7 @@ package body Docgen2 is
                   Generate_Annotated_Source
                     (Kernel  => Command.Kernel,
                      Backend => Command.Backend,
-                     File    => Get_Or_Create
-                       (Database,
-                        Command.Source_Files (Command.Src_File_Index)),
+                     File    => File,
                      Buffer  => Command.Buffer,
                      Lang    => Language,
                      Db      => Database,
