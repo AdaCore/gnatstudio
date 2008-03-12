@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Mar 07, 2008
+GPS 4.3 NEW FEATURES LIST Current as of Mar 12, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -144,6 +144,11 @@ NF-43-FC10-002 Code fixing uses the real indentation (2007-12-17)
   When the compiler detects an intendation problem, and doesn't propose the
   actual expected column, the auto fix proposed by GPS is now more accurate,
   using the same indentation engine & preferences as the editor.
+
+NF-43-D811-007 Ability to define new language categories (2008-03-12)
+
+  It is now possible in XML files to define new language categories, visible
+  in the project and outline views.
 
 NF-43-D630-005 Ability to select the run directory (2008-02-21)
 
