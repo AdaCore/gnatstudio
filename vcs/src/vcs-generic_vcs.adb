@@ -1609,22 +1609,22 @@ package body VCS.Generic_VCS is
             end if;
 
             if Command.Parser.Local_Rev_Index /= 0 then
-               String_List_Utils.String_List.Append
+               String_List_Utils.String_List.Prepend
                  (St.Working_Revision,
                   S (Matches (Command.Parser.Local_Rev_Index).First
                       .. Matches (Command.Parser.Local_Rev_Index).Last));
             else
-               String_List_Utils.String_List.Append
+               String_List_Utils.String_List.Prepend
                  (St.Working_Revision, "n/a");
             end if;
 
             if Command.Parser.Repository_Rev_Index /= 0 then
-               String_List_Utils.String_List.Append
+               String_List_Utils.String_List.Prepend
                  (St.Repository_Revision,
                   S (Matches (Command.Parser.Repository_Rev_Index).First
                       .. Matches (Command.Parser.Repository_Rev_Index).Last));
             else
-               String_List_Utils.String_List.Append
+               String_List_Utils.String_List.Prepend
                  (St.Repository_Revision, "n/a");
             end if;
 
