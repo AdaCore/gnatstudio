@@ -450,8 +450,7 @@ package body VCS_View.Explorer is
            or else Override_Cache
            or else Line.Status.Status = Unknown
          then
-            Log := Get_Log_From_File
-              (Kernel, File, False) /= VFS.No_File;
+            Log := Get_Log_From_File (Kernel, File, False) /= VFS.No_File;
 
             Line := (Copy_File_Status (File_Status), Log);
             Set_Cache (Get_Status_Cache, File, Line);

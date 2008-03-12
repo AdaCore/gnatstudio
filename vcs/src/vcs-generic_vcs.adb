@@ -351,7 +351,7 @@ package body VCS.Generic_VCS is
             Dir  : GNAT.Strings.String_Access;
 
          begin
-            --  Args and Dir freed when the command proxy is destroyed.
+            --  Args and Dir freed when the command proxy is destroyed
 
             if First_Args = null then
                Args := new GNAT.Strings.String_List (1 .. 1);
@@ -1189,7 +1189,7 @@ package body VCS.Generic_VCS is
          --  Parse and return a status matcher record
 
          function To_Natural (X : String) return Natural;
-         --  Safe function to convert a string to a Natural.
+         --  Safe function to convert a string to a Natural
 
          function Parse_Regexp (N : Node_Ptr) return Pattern_Matcher_Access;
          --  Parse and return a Pattern_Matcher
@@ -1603,6 +1603,7 @@ package body VCS.Generic_VCS is
                   True, False);
 
                String_List.Next (Command.Rep.Current_Query_Files);
+
             else
                --  ??? There should be an error message here
                return Failure;
@@ -1630,11 +1631,10 @@ package body VCS.Generic_VCS is
 
             if Command.Parser.Status_Index /= 0 then
                declare
-                  Status_String : constant
-                    String :=
-                      S (Matches (Command.Parser.Status_Index).First
-                         .. Matches (Command.Parser.Status_Index).Last);
-                  Matches : Match_Array (0 .. 1);
+                  Status_String : constant String := S
+                    (Matches (Command.Parser.Status_Index).First
+                     .. Matches (Command.Parser.Status_Index).Last);
+                  Matches       : Match_Array (0 .. 1);
 
                   use Status_Parser;
 
