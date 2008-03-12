@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 4.3.0
 
+- H311-032: Cannot close debugger multiple choice dialog under Windows
+  Problem:    When debugging under Windows, and a multiple choice dialog is
+              displayed (when e.g. putting a breakpoint on an overloaded
+              function), the close button will not always work properly, and
+              the underlying debugger may crash.
+  Workaround: Use the 'cancel' choice and 'OK' button instead to close the
+              dialog.
+
 - H307-006: Cannot add multiple files into an anonymous activity
   Problem:    When multiple files are selected in the VCS Explorer only
               the first selected file gets added into the anonymous
