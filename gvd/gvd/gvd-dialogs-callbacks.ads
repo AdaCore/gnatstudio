@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2005                       --
---                             AdaCore                               --
+--                  Copyright (C) 2000-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -34,9 +33,6 @@ package GVD.Dialogs.Callbacks is
    procedure On_Question_OK_Clicked
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args);
-
-   procedure On_Close_Button_Clicked
-     (Object : access Gtk_Button_Record'Class);
 
    procedure On_Question_Close_Clicked
      (Object : access Gtk_Widget_Record'Class);

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2007                       --
---                             AdaCore                               --
+--                  Copyright (C) 2000-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -34,19 +33,6 @@ package body GVD.Dialogs.Callbacks is
 
    use GVD;
    use Gtk.Arguments;
-
-   -----------------------------
-   -- On_Close_Button_Clicked --
-   -----------------------------
-
-   procedure On_Close_Button_Clicked
-     (Object : access Gtk_Button_Record'Class) is
-   begin
-      Hide (Get_Toplevel (Object));
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end On_Close_Button_Clicked;
 
    -----------------------------
    -- On_Question_Yes_Clicked --
@@ -183,15 +169,37 @@ package body GVD.Dialogs.Callbacks is
    procedure On_Question_Close_Clicked
      (Object : access Gtk_Widget_Record'Class)
    is
-      Dialog : constant Question_Dialog_Access :=
+      Dialog   : constant Question_Dialog_Access :=
         Question_Dialog_Access (Get_Toplevel (Object));
+      Debugger : constant Debugger_Access := Dialog.Debugger;
+      Process  : constant Visual_Debugger :=
+        Convert (Dialog.Main_Window, Debugger);
+      Kind     : constant Dialog_Kind := Get_Dialog_Kind (Dialog);
+
    begin
-      --  Send the interrupt signal to the debugger, so that it does not keep
-      --  waiting for user input.
-      Interrupt (Dialog.Debugger);
+      --  We used to call Interrupt (Dialog.Debugger) here, but this proved to
+      --  be unreliable in some cases (e.g. gdb mingw under Windows, so instead
+      --  we send an answer to gdb, in order to cancel the question.
 
       --  Destroy the dialog, since we will have to recreate it anyway.
-      Unregister_Dialog (Convert (Dialog.Main_Window, Dialog.Debugger));
+      Unregister_Dialog (Process);
+      Set_Busy (Process, False);
+
+      case Kind is
+         when Yes_No_Dialog =>
+            Send (Debugger,
+                  "n",
+                  Mode            => GVD.Types.Visible,
+                  Empty_Buffer    => False,
+                  Wait_For_Prompt => False);
+
+         when Multiple_Choice_Dialog =>
+            Send (Debugger,
+                  "0",
+                  Mode            => GVD.Types.Visible,
+                  Empty_Buffer    => False,
+                  Wait_For_Prompt => False);
+      end case;
 
    exception
       when E : others => Trace (Exception_Handle, E);

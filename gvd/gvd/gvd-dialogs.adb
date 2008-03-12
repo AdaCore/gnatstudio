@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2007                       --
---                             AdaCore                               --
+--                  Copyright (C) 2000-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -681,6 +680,7 @@ package body GVD.Dialogs is
            (Questions (Questions'Last).Choice.all = "n"
             and then Questions (Questions'First).Choice.all = "y"))
       then
+         Dialog.Kind := Yes_No_Dialog;
          Set_Default_Size (Dialog, 100, 50);
          Gtk_New_From_Stock (OK_Button, Stock_Yes);
          Add (Dialog.Hbuttonbox1, OK_Button);
@@ -701,6 +701,7 @@ package body GVD.Dialogs is
          Remove (Dialog.Hbuttonbox1, Dialog.Close_Button);
 
       else
+         Dialog.Kind := Multiple_Choice_Dialog;
          Gtk_New (Dialog.Scrolledwindow1);
          Pack_Start (Dialog.Vbox1, Dialog.Scrolledwindow1, True, True, 0);
          Set_Policy
@@ -751,6 +752,17 @@ package body GVD.Dialogs is
       Register_Dialog (Convert (Main_Window, Debugger), Dialog);
    end Initialize;
 
+   ---------------------
+   -- Get_Dialog_Kind --
+   ---------------------
+
+   function Get_Dialog_Kind
+     (Question_Dialog : access Question_Dialog_Record'Class)
+      return Dialog_Kind is
+   begin
+      return Question_Dialog.Kind;
+   end Get_Dialog_Kind;
+
    ----------
    -- Free --
    ----------
@@ -770,8 +782,13 @@ package body GVD.Dialogs is
    function Delete_Dialog
      (Dialog : access Gtk_Widget_Record'Class) return Boolean is
    begin
-      Hide (Dialog);
+      On_Question_Close_Clicked (Dialog);
       return True;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return True;
    end Delete_Dialog;
 
 end GVD.Dialogs;
