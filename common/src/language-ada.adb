@@ -97,30 +97,37 @@ package body Language.Ada is
    --  distinguishes between the two cases.
 
    Ada_Explorer_Categories : constant Explorer_Categories :=
-     ((Category       => Cat_Procedure,
-       Regexp         => Subprogram_RE'Access,
-       Position_Index => 2,
-       Make_Entry     => Make_Entry_Subprogram'Access),
+                               ((Category       => Cat_Procedure,
+                                 Category_Name  => null,
+                                 Regexp         => Subprogram_RE'Access,
+                                 Position_Index => 2,
+                                 Make_Entry     =>
+                                   Make_Entry_Subprogram'Access),
 
-      (Category       => Cat_Package,
-       Regexp         => Package_RE'Access,
-       Position_Index => 3,
-       Make_Entry     => null),
+                                (Category       => Cat_Package,
+                                 Category_Name  => null,
+                                 Regexp         => Package_RE'Access,
+                                 Position_Index => 3,
+                                 Make_Entry     => null),
 
-      (Category       => Cat_Type,
-       Regexp         => Type_Def_RE'Access,
-       Position_Index => 2,
-       Make_Entry     => null),
+                                (Category       => Cat_Type,
+                                 Category_Name  => null,
+                                 Regexp         => Type_Def_RE'Access,
+                                 Position_Index => 2,
+                                 Make_Entry     => null),
 
-      (Category       => Cat_Task,
-       Regexp         => Task_RE'Access,
-       Position_Index => 3,
-       Make_Entry     => Make_Entry_Task'Access),
+                                (Category       => Cat_Task,
+                                 Category_Name  => null,
+                                 Regexp         => Task_RE'Access,
+                                 Position_Index => 3,
+                                 Make_Entry     => Make_Entry_Task'Access),
 
-      (Category       => Cat_Protected,
-       Regexp         => Protected_RE'Access,
-       Position_Index => 3,
-       Make_Entry     => Make_Entry_Protected'Access));
+                                (Category       => Cat_Protected,
+                                 Category_Name  => null,
+                                 Regexp         => Protected_RE'Access,
+                                 Position_Index => 3,
+                                 Make_Entry     =>
+                                   Make_Entry_Protected'Access));
 
    --  ??? Would be nice to specify the list of available cross compilers
    --  using a configuration file

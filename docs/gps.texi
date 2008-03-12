@@ -36,7 +36,7 @@
 @page
 @vskip 0pt plus 1filll
 
-Copyright @copyright{} 2001-2007, AdaCore.
+Copyright @copyright{} 2001-2008, AdaCore.
 
 This document may be copied, in whole or in part, in any form or by any
 means, as is or with alterations, provided that (1) alterations are clearly
@@ -59,7 +59,7 @@ Version @value{GPSVersion}
 
 Date: $Date$
 
-Copyright @copyright{} 2001-2007, AdaCore
+Copyright @copyright{} 2001-2008, AdaCore
 This document may be copied, in whole or in part, in any form or by any
 means, as is or with alterations, provided that (1) alterations are clearly
 marked as alterations and (2) this copyright notice is included
@@ -11747,14 +11747,16 @@ nodes:
 
    @table @code
    @item Name
-   Name of the category, which can be one of:
+   Name of the category, which can be either one of the following
+   predefined categories:
    package, namespace, procedure, function, task, method, constructor,
    destructor, protected, entry,
    class, structure, union, type, subtype, variable, local_variable,
    representation_clause,
    with, use, include,
    loop_statement, case_statement, if_statement, select_statement,
-   accept_statement, declare_block, simple_block, exception_handler.
+   accept_statement, declare_block, simple_block, exception_handler,
+   or any arbitrary name, which will create a new category.
 
    @item Pattern
    Regular expression used to detect a language category.
@@ -11766,7 +11768,8 @@ nodes:
    this category.
 
    @item Icon
-   Name of a stock icon that should be used for that category (@pxref{Adding stock icons}).
+   Name of a stock icon that should be used for that category (@pxref{Adding stock icons}). This attribute is currently ignored, and is reserved for future
+   uses.
    @end table
 
 @ifset extendedlanguage
@@ -11811,7 +11814,8 @@ editor when editing this project field.
 @end table
 
 @noindent
-Here is an example of a language definition for the GPS project files:
+Here is an example of a possible language definition for the GPS project
+files:
 
 @cindex example
 @smallexample
@@ -11826,8 +11830,8 @@ Here is an example of a language definition for the GPS project files:
 
     <Context>
       <New_Line_Comment_Start>--</New_Line_Comment_Start>
-      <String_Delimiter>"</String_Delimiter>
-      <Constant_Character>'</Constant_Character>
+      <String_Delimiter>&quot;</String_Delimiter>
+      <Constant_Character>&apos;</Constant_Character>
       <Can_Indent>True</Can_Indent>
       <Syntax_Highlighting>True</Syntax_Highlighting>
       <Case_Sensitive>False</Case_Sensitive>

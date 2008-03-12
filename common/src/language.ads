@@ -187,43 +187,43 @@ package Language is
 
    type Language_Context
      (Comment_Start_Length : Natural;
-      Comment_End_Length   : Natural) is
-   --  Set any of the length to 0 if there is no such comment
-   record
-         Comment_Start                 : String (1 .. Comment_Start_Length);
-         --  How comments start for this language. This is for comments that
-         --  do not end on Newline, but with Comment_End.
+      Comment_End_Length   : Natural) is record
+      --  Set any of the length to 0 if there is no such comment
 
-         Comment_End                   : String (1 .. Comment_End_Length);
-         --  How comments end for this language
+      Comment_Start                 : String (1 .. Comment_Start_Length);
+      --  How comments start for this language. This is for comments that
+      --  do not end on Newline, but with Comment_End.
 
-         New_Line_Comment_Start        : Strings.String_Access;
-         --  How comments start. These comments end on the next newline
-         --  character. If null, use New_Line_Comment_Start_Regexp instead.
+      Comment_End                   : String (1 .. Comment_End_Length);
+      --  How comments end for this language
 
-         New_Line_Comment_Start_Regexp : Pattern_Matcher_Access;
-         --  How comments start. These comments end on the next newline
-         --  character. If null, use New_Line_Comment_Start instead.
+      New_Line_Comment_Start        : Strings.String_Access;
+      --  How comments start. These comments end on the next newline
+      --  character. If null, use New_Line_Comment_Start_Regexp instead.
 
-         String_Delimiter              : Character;
-         --  How strings start and end
+      New_Line_Comment_Start_Regexp : Pattern_Matcher_Access;
+      --  How comments start. These comments end on the next newline
+      --  character. If null, use New_Line_Comment_Start instead.
 
-         Quote_Character               : Character;
-         --  The character used to quote (protect) the following one. If this
-         --  is set to ASCII.NUL, then there is no such character in the
-         --  language. For instance, it should be set to \ for C.
+      String_Delimiter              : Character;
+      --  How strings start and end
 
-         Constant_Character            : Character;
-         --  The character that starts and ends constant characters
+      Quote_Character               : Character;
+      --  The character used to quote (protect) the following one. If this
+      --  is set to ASCII.NUL, then there is no such character in the
+      --  language. For instance, it should be set to \ for C.
 
-         Can_Indent                    : Boolean;
-         --  Whether indentation is supported by this language
+      Constant_Character            : Character;
+      --  The character that starts and ends constant characters
 
-         Syntax_Highlighting           : Boolean;
-         --  Whether syntax highlighting is relevant to this language
+      Can_Indent                    : Boolean;
+      --  Whether indentation is supported by this language
 
-         Case_Sensitive                : Boolean;
-         --  Whether the language is case sensitive
+      Syntax_Highlighting           : Boolean;
+      --  Whether syntax highlighting is relevant to this language
+
+      Case_Sensitive                : Boolean;
+      --  Whether the language is case sensitive
    end record;
    --  This record describes the syntax of the language (for color
    --  highlighting purposes). All the fields in this record are language
@@ -462,7 +462,13 @@ package Language is
       -- Sub-constructs --
       --------------------
 
-      Cat_Exception_Handler);
+      Cat_Exception_Handler,
+
+      ----------------------
+      -- Custom construct --
+      ----------------------
+
+      Cat_Custom);
 
    subtype Enclosing_Entity_Category is Language_Category
      range Cat_Package .. Cat_Union;
@@ -493,8 +499,11 @@ package Language is
      range Cat_Loop_Statement .. Cat_Simple_Block;
 
    function Category_Name
-     (Category : Language.Language_Category) return String;
+     (Category : Language.Language_Category;
+      Name     : Strings.String_Access := null) return String;
    --  Return the external name to display in GUIs for a given category.
+   --  Name is an optional value, which is returned by this function if
+   --  not null.
 
    type Construct_Visibility is
      (Visibility_Private,
@@ -508,7 +517,7 @@ package Language is
    --  of them are language independent (up to Last_Gen_Att).
    --  Specific languages might want to implement they own keys, which have to
    --  start at Last_Gen_Att + 1.
-   --  We migh consider raising the limit if we have specific needs.
+   --  We might consider raising the limit if we have specific needs.
 
    type Construct_Attribute_Map is array (Construct_Att_Key) of Boolean;
    pragma Pack (Construct_Attribute_Map);
@@ -527,6 +536,9 @@ package Language is
    type Construct_Information is record
       Category       : Language_Category;
       --  Define the kind of construct
+
+      Category_Name  : Strings.String_Access;
+      --  Optional category name. Used if Category = Cat_Custom.
 
       Is_Declaration : Boolean;
       --  Is this a declaration (e.g function specification) ?
@@ -700,6 +712,7 @@ package Language is
 
    type Explorer_Category is record
       Category       : Language_Category;
+      Category_Name  : Strings.String_Access;
       Regexp         : Pattern_Matcher_Access;
       Position_Index : Natural;
       Make_Entry     : Make_Entry_Func;
@@ -751,26 +764,27 @@ private
    --  (e.g. leading spaces are removed).
 
    Null_Construct_Info : constant Construct_Information :=
-     (Category       => Cat_Unknown,
-      Is_Declaration => False,
-      Visibility     => Visibility_Public,
-      Name           => null,
-      Profile        => null,
-      Sloc_Start     => (0, 0, 0),
-      Sloc_Entity    => (0, 0, 0),
-      Sloc_End       => (0, 0, 0),
-      Prev           => null,
-      Next           => null,
-      Attributes     => (others => False));
+                           (Category       => Cat_Unknown,
+                            Category_Name  => null,
+                            Is_Declaration => False,
+                            Visibility     => Visibility_Public,
+                            Name           => null,
+                            Profile        => null,
+                            Sloc_Start     => (0, 0, 0),
+                            Sloc_Entity    => (0, 0, 0),
+                            Sloc_End       => (0, 0, 0),
+                            Prev           => null,
+                            Next           => null,
+                            Attributes     => (others => False));
 
    Null_Simple_Construct_Info : constant Simple_Construct_Information :=
-     (Category       => Cat_Unknown,
-      Is_Declaration => False,
-      Visibility     => Visibility_Public,
-      Name           => null,
-      Sloc_Start     => (0, 0, 0),
-      Sloc_Entity    => (0, 0, 0),
-      Sloc_End       => (0, 0, 0),
-      Attributes     => (others => False));
+                                  (Category       => Cat_Unknown,
+                                   Is_Declaration => False,
+                                   Visibility     => Visibility_Public,
+                                   Name           => null,
+                                   Sloc_Start     => (0, 0, 0),
+                                   Sloc_Entity    => (0, 0, 0),
+                                   Sloc_End       => (0, 0, 0),
+                                   Attributes     => (others => False));
 
 end Language;

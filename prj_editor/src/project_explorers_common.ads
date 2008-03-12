@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                Copyright (C) 2001-2007, AdaCore                   --
+--                Copyright (C) 2001-2008, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -27,6 +27,7 @@ with Gtk.Tree_View;  use Gtk.Tree_View;
 with Gtk.Widget;     use Gtk.Widget;
 with Gtkada.MDI;     use Gtkada.MDI;
 
+with GNAT.Strings;   use GNAT;
 with GPS.Kernel;     use GPS.Kernel;
 with GPS.Kernel.MDI; use GPS.Kernel.MDI;
 with Language;       use Language;
@@ -125,10 +126,11 @@ package Project_Explorers_Common is
    --  Append an empty iter to Base
 
    function Append_Category_Node
-     (Model       : Gtk_Tree_Store;
-      File        : VFS.Virtual_File;
-      Category    : Language_Category;
-      Parent_Iter : Gtk_Tree_Iter) return Gtk_Tree_Iter;
+     (Model         : Gtk_Tree_Store;
+      File          : VFS.Virtual_File;
+      Category      : Language_Category;
+      Category_Name : Strings.String_Access;
+      Parent_Iter   : Gtk_Tree_Iter) return Gtk_Tree_Iter;
    --  Add a category node in the model
 
    function Append_Entity_Node

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2007, AdaCore                  --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,6 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Containers;            use Ada.Containers;
+with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Calendar;              use Ada.Calendar;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Strings;              use GNAT.Strings;
@@ -34,6 +36,7 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                  use GPS.Intl;
 with GUI_Utils;                 use GUI_Utils;
+with HTables;
 with Language.Unknown;          use Language.Unknown;
 with Language.Icons;            use Language.Icons;
 with Language_Handlers;         use Language_Handlers;
@@ -200,12 +203,14 @@ package body Project_Explorers_Common is
    --------------------------
 
    function Append_Category_Node
-     (Model       : Gtk_Tree_Store;
-      File        : VFS.Virtual_File;
-      Category    : Language_Category;
-      Parent_Iter : Gtk_Tree_Iter) return Gtk_Tree_Iter
+     (Model         : Gtk_Tree_Store;
+      File          : VFS.Virtual_File;
+      Category      : Language_Category;
+      Category_Name : Strings.String_Access;
+      Parent_Iter   : Gtk_Tree_Iter) return Gtk_Tree_Iter
    is
-      Name    : constant String := Category_Name (Category);
+      Name    : constant String :=
+                  Language.Category_Name (Category, Category_Name);
       N       : Gtk_Tree_Iter;
       Sibling : Gtk_Tree_Iter;
    begin
@@ -363,9 +368,14 @@ package body Project_Explorers_Common is
       Constructs : Construct_List;
       Category   : Language_Category;
 
-      type Gtk_Tree_Iter_Array is array (Language_Category'Range)
-        of Gtk_Tree_Iter;
-      Categories : Gtk_Tree_Iter_Array := (others => Null_Iter);
+      package Iter_Map is new Ada.Containers.Indefinite_Hashed_Maps
+        (Key_Type        => String,
+         Element_Type    => Gtk_Tree_Iter,
+         Hash            => HTables.String_Hash,
+         Equivalent_Keys => "=");
+      use Iter_Map;
+
+      Categories : Iter_Map.Map;
       Handler    : LI_Handler;
 
       Node_Appended : Boolean := False;
@@ -405,21 +415,40 @@ package body Project_Explorers_Common is
          while Constructs.Current /= null loop
             if Constructs.Current.Name /= null then
                Category := Filter_Category (Constructs.Current.Category);
+
                if Category /= Cat_Unknown
                  and then Category /= Cat_Parameter
                  and then Category /= Cat_Field
                then
-                  if Categories (Category) = Null_Iter then
-                     Categories (Category) := Append_Category_Node
-                       (Model,
-                        File_Name,
-                        Category    => Category,
-                        Parent_Iter => Node);
-                  end if;
+                  declare
+                     Name     : constant String :=
+                                  Category_Name (Category,
+                                                 Constructs.Current.
+                                                   Category_Name);
+                     Cursor   : Iter_Map.Cursor;
+                     New_Iter : Gtk_Tree_Iter;
 
-                  N := Append_Entity_Node
-                    (Model, File_Name,
-                     Constructs.Current.all, Categories (Category));
+                  begin
+                     Cursor := Iter_Map.Find (Categories, Name);
+
+                     if Cursor = No_Element then
+                        New_Iter :=
+                           Append_Category_Node
+                             (Model,
+                              File_Name,
+                              Category      => Category,
+                              Category_Name =>
+                                Constructs.Current.Category_Name,
+                              Parent_Iter   => Node);
+                        Insert (Categories, Name, New_Iter);
+
+                     else
+                        New_Iter := Element (Cursor);
+                     end if;
+
+                     N := Append_Entity_Node
+                       (Model, File_Name, Constructs.Current.all, New_Iter);
+                  end;
 
                   Node_Appended := True;
                end if;

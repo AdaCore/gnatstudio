@@ -50,6 +50,7 @@ package body Language.C is
 
    C_Explorer_Categories : constant Explorer_Categories :=
      (1 => (Category       => Cat_Function,
+            Category_Name  => null,
             Regexp         => Subprogram_RE'Access,
             Position_Index => 5,
             Make_Entry     => null));

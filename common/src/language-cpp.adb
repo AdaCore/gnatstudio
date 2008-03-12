@@ -57,10 +57,12 @@ package body Language.Cpp is
 
    Cpp_Explorer_Categories : constant Explorer_Categories (1 .. 2) :=
      (1 => (Category       => Cat_Class,
+            Category_Name  => null,
             Regexp         => Classes_RE'Access,
             Position_Index => 2,
             Make_Entry     => Make_Entry_Class'Access),
       2 => (Category       => Cat_Method,
+            Category_Name  => null,
             Regexp         => Methods_RE'Access,
             Position_Index => 5,
             Make_Entry     => null));

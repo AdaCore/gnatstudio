@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2007, AdaCore             --
+--                      Copyright (C) 2002-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,6 +24,8 @@
 --  key value and takes care of all allocation automatically using the heap.
 --  The Static_Htable package provides a more complex interface that allows
 --  complete control over allocation.
+
+with Ada.Containers;
 
 package HTables is
 pragma Preelaborate (HTables);
@@ -249,14 +251,17 @@ pragma Preelaborate (HTables);
    -- Hash --
    ----------
 
-   --  A generic hashing function working on String keys
+   function String_Hash (Key : String) return Ada.Containers.Hash_Type;
+   --  hashing function working on Strings key and Hash_Type
 
    generic
       type Header_Num is range <>;
    function Hash (Key : String) return Header_Num;
+   --  A generic hashing function working on String keys
 
    generic
       type Header_Num is range <>;
    function Case_Insensitive_Hash (Key : String) return Header_Num;
+   --  A generic hashing function working on case insensitive String keys
 
 end HTables;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2007, AdaCore             --
+--                      Copyright (C) 2002-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -375,23 +375,34 @@ package body HTables is
 
    end Simple_HTable;
 
-   ----------
-   -- Hash --
-   ----------
+   -----------------
+   -- String_Hash --
+   -----------------
 
-   function Hash (Key : String) return Header_Num is
-      type Uns is mod 2 ** 32;
+   use Ada.Containers;
 
-      function Rotate_Left (Value : Uns; Amount : Natural) return Uns;
+   function String_Hash (Key : String) return Hash_Type is
+      function Rotate_Left
+         (Value : Hash_Type; Amount : Natural) return Hash_Type;
       pragma Import (Intrinsic, Rotate_Left);
 
-      Tmp : Uns := 0;
+      Tmp : Hash_Type := 0;
 
    begin
       for J in Key'Range loop
          Tmp := Rotate_Left (Tmp, 1) + Character'Pos (Key (J));
       end loop;
 
+      return Tmp;
+   end String_Hash;
+
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash (Key : String) return Header_Num is
+      Tmp : constant Hash_Type := String_Hash (Key);
+   begin
       return Header_Num'First +
                Header_Num'Base (Tmp mod Header_Num'Range_Length);
    end Hash;

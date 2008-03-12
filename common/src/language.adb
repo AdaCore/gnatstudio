@@ -521,6 +521,7 @@ package body Language is
 
                Result.Last := Result.Current;
                Result.Current.Category := Categories (C).Category;
+               Result.Current.Category_Name := Categories (C).Category_Name;
                Result.Size := Result.Size + 1;
 
                if Categories (C).Make_Entry /= null then
@@ -723,10 +724,19 @@ package body Language is
    -- Category_Name --
    -------------------
 
-   function Category_Name (Category : Language_Category) return String is
+   function Category_Name
+     (Category : Language.Language_Category;
+      Name     : Strings.String_Access := null) return String
+   is
+      use type Strings.String_Access;
    begin
+      if Name /= null then
+         return Name.all;
+      end if;
+
       case Category is
          when Cat_Unknown               => return "";
+         when Cat_Custom                => return "custom";
          when Cat_Package               => return "package";
          when Cat_Namespace             => return "namespace";
          when Cat_Task                  => return "task";
