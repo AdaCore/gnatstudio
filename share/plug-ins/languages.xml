@@ -12,7 +12,7 @@
 <GPS>
   <Language>
     <Name>Texinfo</Name>
-    <Spec_Suffix>.texi</Spec_Suffix>
+    <Body_Suffix>.texi</Body_Suffix>
     <Keywords>^@\w+</Keywords>
     <Wordchars>@</Wordchars>
     <Context>
@@ -24,17 +24,16 @@
     </Context>
     <Categories>
       <Category>
-        <Name>procedure</Name>
+        <Name>node</Name>
         <Pattern>^@node\s+([^\n,]+)</Pattern>
         <Index>1</Index>
-        <Icon>subprogram_xpm</Icon>
       </Category>
     </Categories>
   </Language>
 
   <Language>
     <Name>Autoconf</Name>
-    <Spec_Suffix>configure.in</Spec_Suffix>
+    <Body_Suffix>configure.in</Body_Suffix>
     <Keywords>^(AC_(SUBST|DEFINE(_UNQUOTED)?)\((\w+)|A[CM]_\w+)\b</Keywords>
     <Context>
       <New_Line_Comment_Start>dnl </New_Line_Comment_Start>
@@ -47,7 +46,7 @@
 
   <Language>
     <Name>AWK</Name>
-    <Spec_Suffix>.awk</Spec_Suffix>
+    <Body_Suffix>.awk</Body_Suffix>
     <Keywords>^(BEGIN|END|ARG(C|IND|V)|CONVFMT|E(NVIRON|RRNO)|FI(ELDWIDTHS|LENAME)|F(NR|S)|IGNORECASE|N(F|R)|O(F(MT|S)|RS)|R(LENGTH|S|START|UBSEP)|break|continue|delete|e(xit|lse)|f(or|unction)|getline|if|next|printf?|return|while|atan2|c(lose|os|time)|exp|gsub|in(dex|t)|l(ength|og)|match|rand|s(in|plit|printf|qrt|rand|ub(str)?|ystem)|t(ime|o(lower|upper)))\b</Keywords>
     <Context>
       <New_Line_Comment_Start>#</New_Line_Comment_Start>
@@ -60,7 +59,7 @@
 
   <Language>
     <Name>Perl</Name>
-    <Spec_Suffix>.pl</Spec_Suffix>
+    <Body_Suffix>.pl</Body_Suffix>
     <Keywords>^(if|until|while|els(if|e)|unless|d(o|ump)|for(each)?|exit|die|BEGIN|END|return|exec|eval|local|my|continue|goto|last|next|redo)\b</Keywords>
     <Context>
       <New_Line_Comment_Start>#</New_Line_Comment_Start>
@@ -95,7 +94,7 @@
 
   <Language>
     <Name>Pascal</Name>
-    <Spec_Suffix>.pas</Spec_Suffix>
+    <Body_Suffix>.pas</Body_Suffix>
     <Keywords>^(absolute|abstract|assembler|automated|cdecl|default|dispid|dynamic|export|external|far|forward|Index|inline|message|name|near|nodefault|overload|override|pascal|private|protected|public|published|read|readonly|register|reintroduce|resident|resourcestring|safecall|stdcall|stored|virtual|write|writeonly|and|array|as|asm|at|begin|case|class|const|constructor|contains|destructor|dispinterface|div|do|downto|else|end|except|exports|file|finalization|finally|for|function|goto|if|implementation|implements|in|inherited|initialization|interface|is|label|library|mod|nil|not|of|object|on|or|out|package|packed|procedure|program|property|raise|record|repeat|requires|result|self|set|shl|shr|then|threadvar|to|try|type|unit|uses|until|var|while|with|xor)\b</Keywords>
 
     <Context>
@@ -112,7 +111,7 @@
 
   <Language>
     <Name>Fortran 90</Name>
-    <Spec_Suffix>.f</Spec_Suffix>
+    <Body_Suffix>.f</Body_Suffix>
 
     <Context>
       <New_Line_Comment_Start>!</New_Line_Comment_Start>
@@ -147,7 +146,7 @@
 
   <Language>
     <Name>M4</Name>
-    <Spec_Suffix>.m4</Spec_Suffix>
+    <Body_Suffix>.m4</Body_Suffix>
     <Keywords>^(m4_)?(builtin|change(com|quote|word)|d(e(bug(file|mode)|cr|f(ine|n))|iv(ert|num)|nl|umpdef)|e(rrprint|syscmd|val)|f(ile|ormat)|gnu|i(f(def|else)|n(c(lude|r)|d(ex|ir)))|l(en|ine)|m(4(exit|wrap)|aketemp)|p(atsubst|opdef|ushdef)|regexp|s(hift|include|ubstr|ys(cmd|val))|tra(ceo(ff|n)|nslit)|un(d(efine|ivert)|ix))\b</Keywords>
     <Context>
       <New_Line_Comment_Start>dnl </New_Line_Comment_Start>
@@ -160,7 +159,7 @@
 
   <Language>
     <Name>Makefile</Name>
-    <Spec_Suffix>Makefile</Spec_Suffix>
+    <Body_Suffix>Makefile</Body_Suffix>
     <Keywords>^((s?include|if(n?(eq|def))?|e(lse|ndif))\b|\n[^#]+:)</Keywords>
     <Context>
       <New_Line_Comment_Start>#</New_Line_Comment_Start>
@@ -182,7 +181,7 @@
 
   <Language>
     <Name>Shell</Name>
-    <Spec_Suffix>.sh</Spec_Suffix>
+    <Body_Suffix>.sh</Body_Suffix>
     <Keywords>^(e(cho|xport|val)|getopts|newgrp|pwd|read(only)?|t(est|imes|ype|hen|rap)|ulimit|hash|cd|s(et|hift)|u(mask|nset)|wait|do|el(if|se)|if|until|while|function|done|esac|f(i|or)|in|return|CDPATH|IFS|OPT(ARG|IND)|PS(1|2)|COLUMNS|EDITOR|H(OME|USHLOGIN)|L(ANG|C_(COLLATE|CTYPE|MESSAGES|MONETARY|NUMERIC|TIME)|INES|OGNAME)|MAIL(CHECK|PATH)?|PA(GER|TH)|SHELL|TERM(CAP|INFO)?|VISUAL)\b</Keywords>
     <Context>
       <New_Line_Comment_Start>#</New_Line_Comment_Start>
@@ -204,7 +203,7 @@
 
   <Language>
     <Name>TCL</Name>
-    <Spec_Suffix>.tcl</Spec_Suffix>
+    <Body_Suffix>.tcl</Body_Suffix>
     <Keywords>^(global|upvar|inherit|p(ublic|r(otected|ivate))|common|itk_option|variable|if|then|else(if)?|for(each)?|break|continue|while|eval|case|switch|default|exit|error|p(roc|uts)|return|uplevel|constructor|destructor|itcl_class|loop|for_(array_keys|recursive_glob|file)|method|body|configbody|set)\b</Keywords>
 
     <Context>
@@ -218,7 +217,7 @@
 
   <Language>
     <Name>javascript</Name>
-    <Spec_Suffix>.js</Spec_Suffix>
+    <Body_Suffix>.js</Body_Suffix>
     <Keywords>^(break|case|catch|continue|default|delete|do|else|false|finally|for|function|if|in|instanceof|new|null|return|switch|this|throw|true|try|typeof|var|void|while|with)\b</Keywords>
     <Context>
       <New_Line_Comment_Start>//</New_Line_Comment_Start>
