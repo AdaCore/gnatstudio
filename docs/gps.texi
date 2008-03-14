@@ -3988,7 +3988,21 @@ command line:
 @end smallexample
 
 What these do it prevent the loading of the two GPS modules that are
-responsible for project edition.
+responsible for project edition. However, this also has an impact on the
+python functions that are exported by GPS, and thus could break some
+plug-ins. Another solution which might apply in your case is simply to
+hide the corresponding project-editing menus and contextual menus. This
+could be done by creating a small python plugin for GPS
+(@pxref{Customizing through XML and Python files}, which contains the
+following code:
+
+@smallexample
+import GPS
+GPS.Menu.get  ("/Project/Edit Project Properties").hide()
+GPS.Contextual ('Edit project properties').hide()
+GPS.Contextual ('Save project').hide()
+GPS.Contextual ('Add configuration variable').hide()
+@end smallexample
 
 @c -------------------------------------------------------------------
 @node The Project Menu
