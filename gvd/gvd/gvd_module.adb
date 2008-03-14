@@ -30,7 +30,6 @@ with Glib.Object;               use Glib.Object;
 
 with Gtk.Accel_Group;           use Gtk.Accel_Group;
 with Gtk.Box;                   use Gtk.Box;
-with Gtk.Container;             use Gtk.Container;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.GEntry;                use Gtk.GEntry;
@@ -49,7 +48,7 @@ with Gtk.Window;                use Gtk.Window;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Handlers;           use Gtkada.Handlers;
-with Gtkada.MDI;                use Gtkada.MDI;
+--  with Gtkada.MDI;                use Gtkada.MDI;
 
 with Basic_Types;               use Basic_Types;
 with Breakpoints_Editor;        use Breakpoints_Editor;
@@ -100,7 +99,7 @@ with VFS;                       use VFS;
 
 package body GVD_Module is
 
-   Me : constant Debug_Handle := Create ("Debugger");
+--     Flo : constant Debug_Handle := Create ("FLORIAN");
 
    Cst_Run_Arguments_History : constant History_Key := "gvd_run_arguments";
    --  The key in the history for the arguments to the run command.
@@ -201,11 +200,6 @@ package body GVD_Module is
    --  in the editors for file.
    --  If File is empty, create them for all files.
 
-   function Delete_Asm
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean;
-   --  Callback for the "delete_event" signal of the assembly view.
-   --  Widget is a Code_Editor.
-
    procedure Debug_Init
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Data   : File_Project_Record;
@@ -218,13 +212,6 @@ package body GVD_Module is
    --  If Context contains an entity, get the entity name.
    --  Dereference the entity if Dereference is True.
    --  Return "" if entity name could not be found in Context.
-
-   procedure On_Assembly
-     (Widget : access Glib.Object.GObject_Record'Class;
-      Kernel : GPS.Kernel.Kernel_Handle);
-   --  Display the assembly view.
-   --  Used e.g. for implementing menu Debug->Data->Assembly
-   --  Widget parameter is ignored.
 
    procedure Start_Program
      (Process : Visual_Debugger; Start_Cmd : Boolean := False);
@@ -1351,93 +1338,6 @@ package body GVD_Module is
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Start;
-
-   ----------------
-   -- Delete_Asm --
-   ----------------
-
-   function Delete_Asm
-     (Widget : access Gtk_Widget_Record'Class) return Boolean
-   is
-      Data_Sub : constant String := '/' & (-"Debug") & '/' & (-"Data") & '/';
-      Editor   : constant Code_Editor := Code_Editor (Widget);
-      Asm      : constant GVD_Assembly_View  := Get_Asm (Editor);
-
-   begin
-      Set_Sensitive
-        (Find_Menu_Item (Get_Kernel (GVD_Module_ID.all),
-         Data_Sub & (-"Assembly")), True);
-      Ref (Asm);
-      Remove (Gtk_Container (Get_Parent (Asm)), Asm);
-      Set_Mode (Editor, Source);
-      Disconnect (Asm, GVD_Module_ID.Delete_Id);
-
-      return False;
-   end Delete_Asm;
-
-   -----------------
-   -- On_Assembly --
-   -----------------
-
-   procedure On_Assembly
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-
-      Data_Sub : constant String := '/' & (-"Debug") & '/' & (-"Data") & '/';
-      Top      : constant GPS_Window :=
-                   GPS_Window (Get_Main_Window (Kernel));
-      Process  : constant Visual_Debugger := Get_Current_Process (Top);
-      Editor   : constant Code_Editor  := Process.Editor_Text;
-      Address  : constant Address_Type := Get_Asm_Address (Editor);
-      Assembly : constant GVD_Assembly_View := Get_Asm (Editor);
-      Child    : GPS_MDI_Child;
-
-   begin
-      Trace (Me, "*** [On_Assembly] *** Address = " &
-             Address_To_String (Address));
-      if Get_Mode (Editor) = Source_Asm then
-         return;
-      end if;
-
-      Set_Sensitive (Find_Menu_Item (Kernel, Data_Sub & (-"Assembly")), False);
-
-      GVD_Module_ID.Delete_Id :=
-        Gtkada.Handlers.Return_Callback.Object_Connect
-          (Assembly, "delete_event",
-           Gtkada.Handlers.Return_Callback.To_Marshaller (Delete_Asm'Access),
-           Editor);
-
-      Set_Mode (Editor, Source_Asm);
-      Gtk_New
-        (Child  => Child,
-         Widget => Assembly,
-         Module => GVD_Module_ID,
-         Group  => Group_Debugger_Stack);
-      Set_Title (Child, -"Assembly View");
-      Put (Get_MDI (Kernel), Child, Initial_Position => Position_Right);
-      Unref (Assembly);
-      Set_Focus_Child (Child);
-      Raise_Child (Child);
-
-      if not Command_In_Process (Get_Process (Process.Debugger)) then
-         Set_Source_Line (Assembly, Get_Line (Editor));
-
-         if Address /= Invalid_Address then
-            Set_Address (Assembly, Address);
-            Set_Address (Editor, Address);
-         end if;
-
-         Update_Display (Assembly);
-
-         if Process.Breakpoints /= null then
-            Update_Breakpoints (Assembly, Process.Breakpoints.all);
-         end if;
-      end if;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end On_Assembly;
 
    -------------------------
    -- On_Connect_To_Board --
@@ -2683,8 +2583,11 @@ package body GVD_Module is
       GVD.Call_Stack.Register_Module (Kernel);
       GVD.Consoles.Register_Module (Kernel);
       GVD.Dialogs.Register_Module (Kernel);
+      GVD.Assembly_View.Register_Module (Kernel);
 
-      Register_Menu (Kernel, Data_Sub, -"A_ssembly", "", On_Assembly'Access);
+--      Register_Menu (Kernel, Data_Sub, -"A_ssembly", "", On_Assembly'Access);
+      --  ??? FLORIAN Should be remove after refactoring
+
       Gtk_New (Mitem);
       Register_Menu (Kernel, Data_Sub, Mitem);
       Register_Menu (Kernel, Data_Sub, -"Edit _Breakpoints", "",

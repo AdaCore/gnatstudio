@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                 Copyright (C) 2000-2007, AdaCore                  --
+--                 Copyright (C) 2000-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -60,6 +60,7 @@ with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Main_Window;            use GPS.Main_Window;
 with GUI_Utils;                  use GUI_Utils;
+with GVD.Assembly_View;          use GVD.Assembly_View;
 with GVD.Call_Stack;             use GVD.Call_Stack;
 with GVD.Canvas;                 use GVD.Canvas;
 with GVD.Code_Editors;           use GVD.Code_Editors;
@@ -643,7 +644,6 @@ package body GVD.Process is
       First, Last : Natural := 0;
       Addr_First  : Natural := 0;
       Addr_Last   : Natural;
-      Pc          : Address_Type;
 
    begin
       if Process.Post_Processing or else Process.Current_Output = null then
@@ -665,7 +665,7 @@ package body GVD.Process is
          --  of the process, and thus make the address inaccessible afterwards.
 
          if Addr_First /= 0 then
-            Pc := String_To_Address
+            Process.Pc := String_To_Address
               (Process.Current_Output (Addr_First .. Addr_Last));
          end if;
       end if;
@@ -694,19 +694,17 @@ package body GVD.Process is
         and then Mode /= Internal
       then
          Set_Line (Process.Editor_Text, Line, GObject (Process));
+         Set_Source_Line
+           (GVD.Assembly_View.Assembly_View (Process.Assembly), Line);
       end if;
 
       --  Change the current assembly source displayed, before updating
       --  the breakpoints. Otherwise, they won't be correctly updated for the
       --  newly displayed frame.
 
-      if Addr_First /= 0 then
-         Set_Address (Process.Editor_Text, Pc);
-      end if;
-
-      if (Line /= 0 and then Mode /= Internal) or else Addr_First /= 0 then
-         Update_Assembly_View (Process.Editor_Text);
-      end if;
+--        if (Line /= 0 and then Mode /= Internal) or else Addr_First /= 0 then
+--           Update_Assembly_View (Process);
+--        end if;
 
       Highlight_Call_Stack_Frame (Process);
 
@@ -1075,6 +1073,7 @@ package body GVD.Process is
       Attach_To_Thread_Dialog (Process, Create_If_Necessary => False);
       Attach_To_Tasks_Dialog  (Process, Create_If_Necessary => False);
       Attach_To_PD_Dialog     (Process, Create_If_Necessary => False);
+      Attach_To_Assembly_View (Process, Create_If_Necessary => False);
 
       --  If we have a debuggee console in the desktop, always use it.
       --  Otherwise, we only create one when the user has asked for it
@@ -1186,7 +1185,6 @@ package body GVD.Process is
       Kernel        : constant Kernel_Handle := Process.Window.Kernel;
       Debugger_List : Debugger_List_Link := Get_Debugger_List (Kernel);
       Prev          : Debugger_List_Link;
-      Editor        : Code_Editor;
       Property      : Breakpoint_Property;
       Window        : MDI_Window;
    begin
@@ -1245,11 +1243,6 @@ package body GVD.Process is
 
       if Process.Breakpoints /= null then
          Free (Process.Breakpoints);
-      end if;
-
-      Editor := Process.Editor_Text;
-      if Window /= null and then Get_Mode (Editor) /= Source then
-         Gtkada.MDI.Close (Get_MDI (Kernel), Get_Asm (Editor));
       end if;
 
       Free_Debug_Info (GEdit (Get_Source (Process.Editor_Text)));
@@ -1617,6 +1610,9 @@ package body GVD.Process is
 
          --  Update the breakpoints in the editor
          Update_Breakpoints (Debugger.Editor_Text, Debugger.Breakpoints.all);
+
+         --  Update the breakpoints in the assembly view
+         GVD.Assembly_View.Update_Breakpoints (Debugger);
 
          --  Update the breakpoints dialog if necessary
          Bp_Editor := Breakpoint_Editor_Access

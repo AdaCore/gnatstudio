@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
---                              AdaCore                              --
+--              Copyright (C) 2000-2008, AdaCore                     --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -37,10 +36,8 @@
 
 with Glib;
 with Glib.Object;
-with Gtk.Widget;
 with Gtk.Box;
 with Gtkada.Types;
-with GVD.Assembly_View;
 with GVD.Source_Editor;
 with GVD.Types;
 with Pango.Font;
@@ -82,13 +79,6 @@ package GVD.Code_Editors is
    --  Set the current line (and draw the button on the side).
    --  Process is the Visual_Debugger which corresponds to the debugger
    --  that is stopped.
-
-   procedure Set_Address
-     (Editor : access Code_Editor_Record;
-      Pc     : GVD.Types.Address_Type);
-   --  Set the address the debugger is currently stopped at.
-
-   procedure Update_Assembly_View (Editor : access Code_Editor_Record);
 
    procedure Update_Breakpoints
      (Editor    : access Code_Editor_Record;
@@ -138,38 +128,21 @@ package GVD.Code_Editors is
       return GVD.Source_Editor.Source_Editor;
    --  Return the widget used to display the source code
 
-   function Get_Asm
-     (Editor : access Code_Editor_Record'Class)
-      return GVD.Assembly_View.GVD_Assembly_View;
-   --  Return the widget used to display the asm code
-
-   function Get_Asm_Address
-     (Editor : access Code_Editor_Record'Class) return GVD.Types.Address_Type;
-   --  Return the current address (program counter) associated with the
-   --  assembly window.
-
    function Get_Current_File
      (Editor : access Code_Editor_Record) return VFS.Virtual_File;
    --  Return the name of the currently edited file.
    --  "" is returned if there is no current file.
 
-   procedure Preferences_Changed
-     (Editor : access Gtk.Widget.Gtk_Widget_Record'Class);
-   --  Called when the preferences have changed, and the editor should be
-   --  redisplayed with the new setup.
-
 private
 
    type Code_Editor_Record is new Gtk.Box.Gtk_Hbox_Record with record
-      Source           : GVD.Source_Editor.Source_Editor;
-      Asm              : GVD.Assembly_View.GVD_Assembly_View;
+      Source      : GVD.Source_Editor.Source_Editor;
 
-      Mode             : View_Mode := GVD.Code_Editors.Source;
+      Mode        : View_Mode := GVD.Code_Editors.Source;
 
-      Source_Line      : Natural;
-      Asm_Address      : GVD.Types.Address_Type;
+      Source_Line : Natural;
 
-      Process          : Glib.Object.GObject;
+      Process     : Glib.Object.GObject;
       --  The visual debugger associated with the editor
    end record;
 

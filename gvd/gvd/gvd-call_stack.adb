@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2003-2007                      --
---                              AdaCore                              --
+--                 Copyright (C) 2003-2008, AdaCore                  --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -51,9 +50,9 @@ with GPS.Intl;               use GPS.Intl;
 with GUI_Utils;              use GUI_Utils;
 with GVD.Code_Editors;       use GVD.Code_Editors;
 with GVD.Views;              use GVD.Views;
-with GVD_Module;             use GVD_Module;
 with GVD.Process;            use GVD.Process;
 with GVD.Types;              use GVD.Types;
+with GVD_Module;             use GVD_Module;
 with Process_Proxies;        use Process_Proxies;
 with Traces;                 use Traces;
 
@@ -103,7 +102,7 @@ package body GVD.Call_Stack is
    procedure Initialize
      (Widget : access Call_Stack_Record'Class;
       Kernel : access Kernel_Handle_Record'Class);
-   --  Internal initialization function.
+   --  Internal initialization function
 
    function Get_View
      (Process : access Visual_Debugger_Record'Class)
@@ -157,8 +156,7 @@ package body GVD.Call_Stack is
 
    function Get_View
      (Process : access Visual_Debugger_Record'Class)
-      return Gtk_Scrolled_Window
-   is
+      return Gtk_Scrolled_Window is
    begin
       return Gtk_Scrolled_Window (Process.Stack);
    end Get_View;
@@ -403,8 +401,8 @@ package body GVD.Call_Stack is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Debug          : constant String := '/' & (-"_Debug") & '/';
-      Data_Sub       : constant String := Debug & (-"D_ata") & '/';
+      Debug    : constant String := '/' & (-"_Debug") & '/';
+      Data_Sub : constant String := Debug & (-"D_ata") & '/';
    begin
       Simple_Views.Register_Desktop_Functions (Kernel);
       Register_Menu (Kernel, Data_Sub, -"_Call Stack", "",

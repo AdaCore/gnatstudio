@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2007                      --
---                              AdaCore                              --
+--                 Copyright (C) 2000-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,7 +21,6 @@ with Glib;            use Glib;
 with Gtk.Box;         use Gtk.Box;
 with Gtk.Object;      use Gtk.Object;
 with Gtk.Widget;      use Gtk.Widget;
-with Gtkada.Handlers; use Gtkada.Handlers;
 
 with Pango.Font;      use Pango.Font;
 with GVD.Types;       use GVD.Types;
@@ -30,15 +28,7 @@ with VFS;             use VFS;
 
 package body GVD.Code_Editors is
 
-   use GVD.Assembly_View;
    use GVD.Source_Editor;
-
-   --------------------
-   -- Local packages --
-   --------------------
-
-   procedure On_Destroy (Editor : access Gtk_Widget_Record'Class);
-   --  Callback for the "destroy" signal
 
    ------------------
    -- Gtk_New_Hbox --
@@ -62,22 +52,7 @@ package body GVD.Code_Editors is
    begin
       Initialize_Hbox (Editor);
       Editor.Process := Glib.Object.GObject (Process);
-      Gtk_New (Editor.Asm, Process);
-      Ref (Editor.Asm);
-      Widget_Callback.Connect
-        (Editor, Signal_Destroy,
-         Widget_Callback.To_Marshaller (On_Destroy'Access));
    end Initialize;
-
-   ----------------
-   -- On_Destroy --
-   ----------------
-
-   procedure On_Destroy (Editor : access Gtk_Widget_Record'Class) is
-      Ed : constant Code_Editor := Code_Editor (Editor);
-   begin
-      Destroy (Ed.Asm);
-   end On_Destroy;
 
    --------------
    -- Set_Line --
@@ -93,13 +68,6 @@ package body GVD.Code_Editors is
 
       --  Highlight the background of the current source line
       Highlight_Current_Line (Editor.Source);
-
-      --  If the assembly code is displayed, highlight the code for the
-      --  current line
-
-      if Editor.Mode = Asm or else Editor.Mode = Source_Asm then
-         Set_Source_Line (Editor.Asm, Line);
-      end if;
    end Set_Line;
 
    --------------
@@ -150,28 +118,6 @@ package body GVD.Code_Editors is
       return Editor.Source;
    end Get_Source;
 
-   -------------
-   -- Get_Asm --
-   -------------
-
-   function Get_Asm
-     (Editor : access Code_Editor_Record'Class)
-      return GVD.Assembly_View.GVD_Assembly_View is
-   begin
-      return Editor.Asm;
-   end Get_Asm;
-
-   ---------------------
-   -- Get_Asm_Address --
-   ---------------------
-
-   function Get_Asm_Address
-     (Editor : access Code_Editor_Record'Class)
-      return GVD.Types.Address_Type is
-   begin
-      return Editor.Asm_Address;
-   end Get_Asm_Address;
-
    ------------------
    -- Show_Message --
    ------------------
@@ -194,17 +140,6 @@ package body GVD.Code_Editors is
       Load_File (Editor.Source, File_Name);
    end Load_File;
 
-   --------------------------
-   -- Update_Assembly_View --
-   --------------------------
-
-   procedure Update_Assembly_View (Editor : access Code_Editor_Record) is
-   begin
-      if Editor.Mode = Asm or else Editor.Mode = Source_Asm then
-         Update_Display (Editor.Asm);
-      end if;
-   end Update_Assembly_View;
-
    ------------------------
    -- Update_Breakpoints --
    ------------------------
@@ -215,10 +150,6 @@ package body GVD.Code_Editors is
    begin
       if Editor.Mode = Source or else Editor.Mode = Source_Asm then
          Update_Breakpoints (Editor.Source, Br, Editor.Process);
-      end if;
-
-      if Editor.Mode = Asm or else Editor.Mode = Source_Asm then
-         Update_Breakpoints (Editor.Asm, Br);
       end if;
    end Update_Breakpoints;
 
@@ -233,9 +164,8 @@ package body GVD.Code_Editors is
       Current_Line_Icon : Gtkada.Types.Chars_Ptr_Array;
       Stop_Icon         : Gtkada.Types.Chars_Ptr_Array)
    is
-      pragma Unreferenced (Current_Line_Icon, Stop_Icon);
+      pragma Unreferenced (Current_Line_Icon, Stop_Icon, Font);
    begin
-      Configure (Editor.Asm, Font);
       pragma Assert (Editor.Source = null);
       Editor.Source := Source;
    end Configure;
@@ -249,38 +179,5 @@ package body GVD.Code_Editors is
    begin
       return Get_Current_File (Editor.Source);
    end Get_Current_File;
-
-   -----------------
-   -- Set_Address --
-   -----------------
-
-   procedure Set_Address
-     (Editor : access Code_Editor_Record;
-      Pc     : GVD.Types.Address_Type) is
-   begin
-      Editor.Asm_Address := Pc;
-
-      if Editor.Mode = Asm or else Editor.Mode = Source_Asm then
-         Set_Address (Editor.Asm, Pc);
-      end if;
-   end Set_Address;
-
-   -------------------------
-   -- Preferences_Changed --
-   -------------------------
-
-   procedure Preferences_Changed
-     (Editor : access Gtk.Widget.Gtk_Widget_Record'Class)
-   is
-      Edit : constant Code_Editor := Code_Editor (Editor);
-   begin
-      if Edit.Mode = Source or else Edit.Mode = Source_Asm then
-         GVD.Source_Editor.Preferences_Changed (Edit.Source);
-      end if;
-
-      if Edit.Mode = Asm or else Edit.Mode = Source_Asm then
-         GVD.Assembly_View.Preferences_Changed (Edit.Asm);
-      end if;
-   end Preferences_Changed;
 
 end GVD.Code_Editors;

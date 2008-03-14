@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                         Copyright (C) 2003-2005                   --
---                             AdaCore                               --
+--                 Copyright (C) 2003-2008, AdaCore                  --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -32,13 +31,13 @@ package GVD.Call_Stack is
    procedure Attach_To_Call_Stack
      (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
       Create_If_Necessary : Boolean);
-   --  Attach debugger to a call stack.
+   --  Attach Debugger to a call stack.
    --  If an unattached call stack exists in the desktop, it is reused.
    --  If no call stack exists, one is created if Create_If_Necessary is true.
    --  Nothing is done when Debugger is already attached to a call stack.
    --
    --  The debugger console should be created already. When it is closed (ie
-   --  the debugger exits), the call stack will be destroyed
+   --  the debugger exits), the call stack will be destroyed.
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);

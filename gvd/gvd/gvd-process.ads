@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                                GPS                                --
 --                                                                   --
---                      Copyright (C) 2000-2006                      --
---                              AdaCore                              --
+--               Copyright (C) 2000-2008, AdaCore                    --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -89,7 +88,9 @@ package GVD.Process is
       Tasks                   : Gtk.Widget.Gtk_Widget;
       PDs                     : Gtk.Widget.Gtk_Widget;
       Data                    : Gtk.Widget.Gtk_Widget;
-      --  The call stack, threads, task, protection domains and data views
+      Assembly                : Gtk.Widget.Gtk_Widget;
+      --  The call stack, threads, task, protection domains, data and assembly
+      --  views.
 
       Breakpoints             : GVD.Types.Breakpoint_Array_Ptr;
       --  The list of breakpoints and watchpoints currently defined.
@@ -149,6 +150,8 @@ package GVD.Process is
       Current_Line            : Integer := 0;
       --  The current line in Current_File.
 
+      Pc                      : GVD.Types.Address_Type :=
+                                  GVD.Types.Invalid_Address;
    end record;
    type Visual_Debugger is access all Visual_Debugger_Record'Class;
 
