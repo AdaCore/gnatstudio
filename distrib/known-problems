@@ -160,3 +160,4 @@ Known Problems fixed in GPS 4.3.0
               sometimes very slow when inserting new characters.
   Workaround: Disable the synx higlighting by setting another language
               for the file.
+
