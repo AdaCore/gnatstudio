@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 4.3.0
 
+- H314-018: Cannot add a file into an activity
+  Problem:    It is not possible to add a file into an activity using the
+              Version Control contextual menu on the editor.
+  Workaround: Use the VCS Explorer to add files into the activity.
+
 - H311-032: Cannot close debugger multiple choice dialog under Windows
   Problem:    When debugging under Windows, and a multiple choice dialog is
               displayed (when e.g. putting a breakpoint on an overloaded

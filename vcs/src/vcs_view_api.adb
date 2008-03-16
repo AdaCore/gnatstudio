@@ -727,7 +727,7 @@ package body VCS_View_API is
 
                A_Context := New_Context;
                Set_Context_Information
-                 (A_Context, Kernel, Abstract_Module_ID (VCS_Module_ID));
+                 (A_Context, Kernel, Get_Creator (Context));
                Set_Activity_Information (A_Context, Image (Activity));
 
                if Get_Creator (Context) /=
