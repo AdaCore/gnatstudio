@@ -136,11 +136,11 @@ package body VCS_View_API is
    --  Return the source directories contained in Project
 
    function Get_Current_Ref (Kernel : Kernel_Handle) return VCS_Access;
-   --  Return the VCS reference corresponding to the current context in Kernel.
+   --  Return the VCS reference corresponding to the current context in Kernel
 
    function Get_Selected_Files
      (Context : Selection_Context) return String_List.List;
-   --  Return the list of files that are selected, according to Context.
+   --  Return the list of files that are selected, according to Context
 
    procedure Process_Dirs
      (Context    : Selection_Context;
@@ -156,7 +156,7 @@ package body VCS_View_API is
       Recursive  : Boolean;
       Update     : Boolean;
       Get_Status : Boolean);
-   --  Same as above, working directly on a directory.
+   --  Same as above, working directly on a directory
 
    procedure On_Log_Action
      (Context : Selection_Context;
@@ -734,8 +734,7 @@ package body VCS_View_API is
                  Abstract_Module_ID (VCS_Module_ID)
                then
                   --  In this case record the original file or directory
-                  Set_File_Information
-                    (A_Context, File_Information (Context));
+                  Set_File_Information (A_Context, File_Information (Context));
                end if;
 
                Context_Callback.Connect
@@ -1761,7 +1760,7 @@ package body VCS_View_API is
          end if;
       end if;
 
-      --  If all else fails, fallback on the VCS for the root project.
+      --  If all else fails, fallback on the VCS for the root project
       return Get_Current_Ref (Get_Project (Get_Kernel (Context)));
    end Get_Current_Ref;
 
@@ -2370,7 +2369,7 @@ package body VCS_View_API is
       Files        : String_List.List;
 
    begin
-      --  Do not process hidden directories.
+      --  Do not process hidden directories
       if Is_Hidden (Kernel, Simple_Name (Directory)) then
          return;
       end if;
