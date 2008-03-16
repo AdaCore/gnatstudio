@@ -27,6 +27,7 @@ with Templates_Parser;          use Templates_Parser;
 
 with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.MDI;                use Gtkada.MDI;
 
@@ -429,9 +430,12 @@ package body VCS_Activities_View_API is
       File     : Virtual_File;
       Files    : String_List.List;
       Files_It : String_List.List_Node;
+      View     : VCS_View_Access;
    begin
-      if Has_File_Information (Context)
-        or else Has_Directory_Information (Context)
+      if (Has_File_Information (Context)
+          or else Has_Directory_Information (Context))
+        and then
+          not (Get_Creator (Context) = Abstract_Module_ID (VCS_Module_ID))
       then
          --  If we have a file information, then there is a single file to
          --  handle.
@@ -439,8 +443,15 @@ package body VCS_Activities_View_API is
          On_Remove_From_Activity (Kernel, Get_File_Activity (File), File);
 
       else
-         Files := Get_Selected_Files
-           (VCS_View_Access (Get_Activities_Explorer (Kernel, False)));
+         if Get_Current_Focus_Widget (Kernel)
+           = Gtk_Widget (Get_Activities_Explorer (Kernel, False))
+         then
+            View := VCS_View_Access (Get_Activities_Explorer (Kernel, False));
+         else
+            View := VCS_View_Access (Get_Explorer (Kernel, False));
+         end if;
+
+         Files := Get_Selected_Files (View);
 
          Files_It := String_List.First (Files);
 

@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 4.3.0
 
+- H316-002: Cannot remove multiple files from an activity using VCS Explorer
+  Problem:    Files selected in the VCS Explorer cannot be removed from the
+              activity.
+  Workaround: Remove files using the VCS Activities explorer.
+
 - H314-018: Cannot add a file into an activity
   Problem:    It is not possible to add a file into an activity using the
               Version Control contextual menu on the editor.
