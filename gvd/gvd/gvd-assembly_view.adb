@@ -975,6 +975,10 @@ package body GVD.Assembly_View is
       Address_High : Address_Type;
 
    begin
+      if Process = null then
+         return;
+      end if;
+
       Set_Source_Line (Assembly_View (View), Get_Line (Process.Editor_Text));
 
       Address_Low := View.Source_Line_Start;
