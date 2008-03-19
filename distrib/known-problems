@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.3.0
 
+- H225-011: Closing a floating assembly view crashes GPS
+  Problem:    Closing the assembly view after the debug session has been
+              terminated may crash GPS if the assembly view was in floating
+              mode.
+  Workaround: Be sure to close the assembly view before terminating the debug
+              session or unfloat it before closing it.
+
 - H316-002: Cannot remove multiple files from an activity using VCS Explorer
   Problem:    Files selected in the VCS Explorer cannot be removed from the
               activity.
