@@ -29,8 +29,6 @@ with Glib.Object;             use Glib.Object;
 with Gtk.Enums;               use Gtk.Enums;
 with Gtk.Handlers;            use Gtk.Handlers;
 pragma Elaborate_All (Gtk.Handlers);
-with Gtk.Menu;                use Gtk.Menu;
-with Gtk.Menu_Item;           use Gtk.Menu_Item;
 with Gtk.Object;              use Gtk.Object;
 with Gtk.Scrolled_Window;     use Gtk.Scrolled_Window;
 with Gtk.Text_Buffer;         use Gtk.Text_Buffer;
@@ -62,10 +60,82 @@ with Traces;                  use Traces;
 
 package body GVD.Assembly_View is
 
+   type Cache_Data;
+   type Cache_Data_Access is access Cache_Data;
+   type Cache_Data is record
+      Low, High : GVD.Types.Address_Type;
+      --  The low and high ranges for this item
+
+      Data      : GNAT.Strings.String_Access;
+      --  The assembly code for that range
+
+      Next      : Cache_Data_Access;
+   end record;
+   --  This implements a cache for the assembly code, for specific ranges.
+   --  Some debuggers (gdb) might take a long time to output the assembly code
+   --  for a specific region, so it is better to keep it once we have it.
+
+   type Assembly_View_Record is
+     new GVD.Views.Scrolled_Views.Process_View_Record with
+      record
+         View                : Gtk.Text_View.Gtk_Text_View;
+
+         Cache               : Cache_Data_Access;
+         Current_Range       : Cache_Data_Access;
+         --  The range of assembly code being displayed.
+
+         Current_Line        : Natural := 0;
+         --  ??? Not sure we need to keep that.
+
+         Highlight_Tag       : Gtk.Text_Tag.Gtk_Text_Tag;
+         --  The way the assembly range corresponding to the current source
+         --  line should be displayed.
+
+         Pc_Tag              : Gtk.Text_Tag.Gtk_Text_Tag;
+         --  Tag used to materialized the PC.
+
+         Breakpoint_Tag      : Gtk.Text_Tag.Gtk_Text_Tag;
+         --  Tag used to materialized breakpoints.
+
+         Source_Line_Start   : GVD.Types.Address_Type :=
+                                 GVD.Types.Invalid_Address;
+         Source_Line_End     : GVD.Types.Address_Type :=
+                                 GVD.Types.Invalid_Address;
+      end record;
+   type Assembly_View is access all Assembly_View_Record'Class;
+
+   procedure Configure
+     (View : Assembly_View;
+      Font : Pango.Font.Pango_Font_Description);
+   --  Set the various settings of the assembly view.
+   --  Ps_Font_Name is the name of the postscript font that will be used to
+   --  display the text. It should be a fixed-width font, which is nice for
+   --  source code.
+
    procedure Initialize
      (Widget : access Assembly_View_Record'Class;
       Kernel : access Kernel_Handle_Record'Class);
    --  Internal initialization function
+
+   procedure Set_Source_Line
+     (View        : Assembly_View;
+      Source_Line : Natural);
+   --  Store in the assembly view the range of address that corresponds to the
+   --  current source line.
+
+   procedure Update (View : access Assembly_View_Record);
+   --  Update the assembly view
+
+   procedure Set_Font
+     (View : Assembly_View;
+      Font : Pango.Font.Pango_Font_Description);
+   --  Set the font used for the box.
+   --  This is called by Configure internally.
+
+   procedure Set_Text
+     (View : Assembly_View;
+      Text : String);
+   --  Set the text associated with the box. The Hightlighting is reset.
 
    function Get_View
      (Process : access Visual_Debugger_Record'Class)
@@ -85,7 +155,6 @@ package body GVD.Assembly_View is
       Position           => Position_Right,
       Initialize         => Initialize);
 
-   package Assembly_View_Cb is new Callback (Assembly_View_Record);
    package Assembly_View_Event_Cb is
      new Return_Callback (Assembly_View_Record, Boolean);
 
@@ -97,10 +166,6 @@ package body GVD.Assembly_View is
      (View  : access Assembly_View_Record'Class;
       Event : Gdk_Event) return Boolean;
    --  Called when a key is pressed in the child (handling of meta-scrolling)
-
-   procedure Show_Current_Line_Menu
-     (View : access Assembly_View_Record'Class);
-   --  Display the current line in the editor.
 
    procedure Iter_From_Address
      (View     : Assembly_View;
@@ -256,27 +321,6 @@ package body GVD.Assembly_View is
          View.Source_Line_End);
    end Set_Source_Line;
 
-   ---------------------
-   -- Index_From_Line --
-   ---------------------
-
-   function Index_From_Line
-     (View : Assembly_View;
-      Line : Natural)
-      return Natural
-   is
-      Buffer : Gtk_Text_Buffer;
-      Iter   : Gtk_Text_Iter;
-   begin
-      if View = null then
-         return Natural'Last;
-      end if;
-
-      Buffer := Get_Buffer (View.View);
-      Get_Iter_At_Line (Buffer, Iter, Gint (Line));
-      return Natural (Get_Offset (Iter));
-   end Index_From_Line;
-
    --------------
    -- Set_Text --
    --------------
@@ -296,45 +340,6 @@ package body GVD.Assembly_View is
       Set_Text (Buffer, Text);
       End_User_Action (Buffer);
    end Set_Text;
-
-   ---------------------------
-   -- Child_Contextual_Menu --
-   ---------------------------
-
-   function Child_Contextual_Menu
-     (View   : Assembly_View;
-      Line   : Natural;
-      Entity : String) return Gtk.Menu.Gtk_Menu
-   is
-      pragma Unreferenced (Line, Entity);
-
-      Menu      : Gtk_Menu;
-      Menu_Item : Gtk_Menu_Item;
-   begin
-      Gtk_New (Menu);
-
-      Gtk_New (Menu_Item, Label => -"Show Current Location");
-      Append (Menu, Menu_Item);
-      Assembly_View_Cb.Object_Connect
-        (Menu_Item, Signal_Activate,
-         Assembly_View_Cb.To_Marshaller (Show_Current_Line_Menu'Access),
-         View);
-
-      Gtk_New (Menu_Item, Label => -"Show Previous Page");
-      Append (Menu, Menu_Item);
-      Assembly_View_Cb.Object_Connect
-        (Menu_Item, Signal_Activate,
-         Assembly_View_Cb.To_Marshaller (Meta_Scroll_Up'Access), View);
-
-      Gtk_New (Menu_Item, Label => -"Show Next Page");
-      Append (Menu, Menu_Item);
-      Assembly_View_Cb.Object_Connect
-        (Menu_Item, Signal_Activate,
-         Assembly_View_Cb.To_Marshaller (Meta_Scroll_Down'Access), View);
-
-      Show_All (Menu);
-      return Menu;
-   end Child_Contextual_Menu;
 
    --------------
    -- Set_Font --
@@ -655,18 +660,6 @@ package body GVD.Assembly_View is
 
       return null;
    end Find_In_Cache;
-
-   ----------------------------
-   -- Show_Current_Line_Menu --
-   ----------------------------
-
-   procedure Show_Current_Line_Menu
-     (View : access Assembly_View_Record'Class)
-   is
-      pragma Unreferenced (View);
-   begin
-      null;
-   end Show_Current_Line_Menu;
 
    -----------------
    -- Meta_Scroll --
