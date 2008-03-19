@@ -694,17 +694,12 @@ package body GVD.Process is
         and then Mode /= Internal
       then
          Set_Line (Process.Editor_Text, Line, GObject (Process));
-         Set_Source_Line
-           (GVD.Assembly_View.Assembly_View (Process.Assembly), Line);
+         Assembly_View.Set_Source_Line (Process, Line);
       end if;
 
       --  Change the current assembly source displayed, before updating
       --  the breakpoints. Otherwise, they won't be correctly updated for the
       --  newly displayed frame.
-
---        if (Line /= 0 and then Mode /= Internal) or else Addr_First /= 0 then
---           Update_Assembly_View (Process);
---        end if;
 
       Highlight_Call_Stack_Frame (Process);
 

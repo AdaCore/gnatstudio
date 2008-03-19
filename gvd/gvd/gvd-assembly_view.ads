@@ -44,6 +44,10 @@ package GVD.Assembly_View is
      (Debugger : access GVD.Process.Visual_Debugger_Record'Class);
    --  Refresh the breakpoint information associated with the assembly view
 
+   procedure Set_Source_Line
+     (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
+      Line     : Natural);
+
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register menus and other functions to support the assembly view

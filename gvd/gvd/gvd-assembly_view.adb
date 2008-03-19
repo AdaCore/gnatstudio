@@ -321,6 +321,17 @@ package body GVD.Assembly_View is
          View.Source_Line_End);
    end Set_Source_Line;
 
+   ---------------------
+   -- Set_Source_Line --
+   ---------------------
+
+   procedure Set_Source_Line
+     (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
+      Line     : Natural) is
+   begin
+      Set_Source_Line (Assembly_View (Debugger.Assembly), Line);
+   end Set_Source_Line;
+
    --------------
    -- Set_Text --
    --------------
