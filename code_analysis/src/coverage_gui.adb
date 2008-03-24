@@ -95,15 +95,6 @@ package body Coverage_GUI is
         := Get_Or_Create (Project_Node, Src_File);
       Handler       : constant Language_Handler
         := Get_Language_Handler (Kernel);
-      Database      : constant Construct_Database_Access
-        := Get_Construct_Database (Kernel);
-      Tree_Lang     : constant Tree_Language_Access
-        := Get_Tree_Language_From_File (Handler, Src_File, False);
-      Data_File     : constant Structured_File_Access
-        := Language.Tree.Database.Get_Or_Create
-          (Db   => Database,
-           File => Src_File,
-           Lang => Tree_Lang);
    begin
       if File_Time_Stamp (Src_File) > File_Time_Stamp (Cov_File) then
          GPS.Kernel.Console.Insert
@@ -145,7 +136,21 @@ package body Coverage_GUI is
          end if;
 
          if File_Node.Analysis_Data.Coverage_Data.Status = Valid then
-            Add_Subprogram_Info (File_Node, Data_File);
+            declare
+               Database  : constant Construct_Database_Access
+                 := Get_Construct_Database (Kernel);
+               Tree_Lang : constant Tree_Language_Access
+                 := Get_Tree_Language_From_File (Handler, Src_File, False);
+               Data_File : constant Structured_File_Access
+                 := Language.Tree.Database.Get_Or_Create
+                   (Db   => Database,
+                    File => Src_File,
+                    Lang => Tree_Lang);
+            begin
+               if Data_File /= null then
+                  Add_Subprogram_Info (File_Node, Data_File);
+               end if;
+            end;
          end if;
 
          Free (File_Contents);
