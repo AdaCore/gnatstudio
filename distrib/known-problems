@@ -10,6 +10,14 @@ Known Problems fixed in GPS 4.3.0
               Version Control contextual menu on the editor.
   Workaround: Use the VCS Explorer to add files into the activity.
 
+- H312-026: Cannot load coverage information of C source files.
+  Problem:    It is not possible to generate the Construct_Tree for C files,
+              so we can't build code_analysis coverage informations for
+              subprograms.
+  Workaround: We made it a normal situation that don't crash anymore. It would
+              be better to have just enough info in the Construct_Tree for C
+              files.
+
 - H311-032: Cannot close debugger multiple choice dialog under Windows
   Problem:    When debugging under Windows, and a multiple choice dialog is
               displayed (when e.g. putting a breakpoint on an overloaded
