@@ -10,8 +10,12 @@ Known Problems fixed in GPS 4.3.0
               Version Control contextual menu on the editor.
   Workaround: Use the VCS Explorer to add files into the activity.
 
-- H312-026: Cannot load coverage information of C source files.
-  Problem:    Coverage information for subprogram of C source files are missing.
+- H312-026: Cannot display coverage information of C source files.
+  Problem:    When trying to display a coverage report for a project containing
+              C source files, the report does not contain all the source files
+              of the project, and only one C file.
+  Workaround: Load separately the coverage information of each Ada source file.
+              C source files will be supported soon.
 
 - H311-032: Cannot close debugger multiple choice dialog under Windows
   Problem:    When debugging under Windows, and a multiple choice dialog is
