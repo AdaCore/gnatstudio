@@ -14,8 +14,7 @@ Known Problems fixed in GPS 4.3.0
   Problem:    When trying to display a coverage report for a project containing
               C source files, the report does not contain all the source files
               of the project, and only one C file.
-  Workaround: Load separately the coverage information of each Ada source file.
-              C source files will be supported soon.
+  Workaround: Load separately the coverage information of each Ada source file
 
 - H311-032: Cannot close debugger multiple choice dialog under Windows
   Problem:    When debugging under Windows, and a multiple choice dialog is
