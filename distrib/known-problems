@@ -37,6 +37,12 @@ Known Problems fixed in GPS 4.3.0
               activity when using the "Commit as new Activity" action.
   Workaround: Add each file individually.
 
+- H227-011: ispell and isearch in floating windows
+  Problem:    When you try to use one of the two plugins in a floating editor,
+              the expected popup window is not displayed correctly. GPS might
+              even crash depending on your environment.
+  Workaround: Unfloat the editor before using these plugins
+
 - H225-011: Closing a floating assembly view crashes GPS
   Problem:    Closing the assembly view after the debug session has been
               terminated may crash GPS if the assembly view was in floating

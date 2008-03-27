@@ -51,7 +51,6 @@ with KeyManager_Module;      use KeyManager_Module;
 with Traces;                 use Traces;
 
 package body Command_Window is
-
    type Command_Window_Record is new Gtk_Window_Record with record
       Kernel            : Kernel_Handle;
       Box               : Gtk_Box;
@@ -372,7 +371,6 @@ package body Command_Window is
       --  Not Window_Popup, since otherwise it never gains the focus
       Gtk.Window.Initialize   (Window, Window_Toplevel);
       Set_Decorated           (Window, False);
-      Set_Transient_For       (Window, Get_Main_Window (Kernel));
       Set_Destroy_With_Parent (Window, True);
 
       Window.Kernel := Kernel_Handle (Kernel);
@@ -425,16 +423,22 @@ package body Command_Window is
         or else Get_Focus_Child (Get_MDI (Kernel)) = null
       then
          Applies_To := Gtk_Widget (Get_Main_Window (Kernel));
+         Set_Transient_For (Window, Gtk_Window (Applies_To));
       else
-         Applies_To := Gtk_Widget (Get_Focus_Child (Get_MDI (Kernel)));
+         Applies_To := Gtk_Widget
+           (Get_Widget (Get_Focus_Child (Get_MDI (Kernel))));
+         Set_Transient_For (Window, Gtk_Window (Get_Toplevel (Applies_To)));
       end if;
 
       Show_All (Frame);
+
       Get_Origin       (Get_Window (Applies_To), X, Y, Success);
       Set_Size_Request (Window, Get_Allocation_Width (Applies_To), -1);
       Size_Request     (Frame, Requisition);
-      Y := Y + Get_Allocation_Height (Applies_To) - Requisition.Height;
-      Set_UPosition (Window, X, Y);
+      if Success then
+         Y := Y + Get_Allocation_Height (Applies_To) - Requisition.Height;
+         Set_UPosition (Window, X, Y);
+      end if;
 
       Return_Callback.Object_Connect
         (Get_Toplevel (Applies_To), Signal_Configure_Event,
