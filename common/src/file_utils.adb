@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2001-2007, AdaCore                --
+--                   Copyright (C) 2001-2008, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -28,8 +28,10 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with String_Utils;              use String_Utils;
 with OS_Utils;                  use OS_Utils;
 with VFS;                       use VFS;
+with Traces; use Traces;
 
 package body File_Utils is
+   Me : constant Debug_Handle := Create ("File_Utils");
 
    ------------------------
    -- Get_Logical_Drives --
@@ -480,5 +482,29 @@ package body File_Utils is
          Minute => Minute,
          Second => Second);
    end File_Time_Stamp;
+
+   ------------------
+   -- Find_On_Path --
+   ------------------
+
+   function Find_On_Path
+     (Base_Name : String; Path : String) return VFS.Virtual_File
+   is
+      Iter : Path_Iterator := Start (Path);
+   begin
+      while not At_End (Path, Iter) loop
+         declare
+            S : constant String := Name_As_Directory (Current (Path, Iter))
+              & Base_Name;
+         begin
+            Trace (Me, "MANU Testing " & S);
+            if Is_Regular_File (S) then
+               return Create (Full_Filename => S);
+            end if;
+         end;
+         Iter := Next (Path, Iter);
+      end loop;
+      return VFS.No_File;
+   end Find_On_Path;
 
 end File_Utils;

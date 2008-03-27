@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
---                             AdaCore                               --
+--                     Copyright (C) 2001-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -119,6 +118,11 @@ package File_Utils is
    function Current (Path : String; Iter : Path_Iterator) return String;
    --  Return the current directory. The name might be empty if the Path
    --  contains something like "::" on Unix systems.
+
+   function Find_On_Path
+     (Base_Name : String; Path : String) return VFS.Virtual_File;
+   --  Search for a file called Base_Name in all the directories. The first
+   --  match is returned, or No_File if not found.
 
    procedure Ensure_Valid_Output;
    --  Ensure that the standard output/error file descriptors can be safely

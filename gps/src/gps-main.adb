@@ -761,12 +761,28 @@ procedure GPS.Main is
                   then
                      Project_Name := Create
                        (Full_Name (Project_Name).all & Project_File_Extension);
+                     Trace
+                       (Me, "Found project: " & Full_Name (Project_Name).all);
                   else
-                     Project_Name := VFS.No_File;
-                  end if;
-               end if;
+                     --  Keep Project_Name even if it is invalid, we will look
+                     --  for it later on the project path, but the latter is
+                     --  not known yet at this point
+                     if File_Extension (Parameter) =
+                       Project_File_Extension
+                     then
+                        Project_Name :=
+                          Create_From_Base (Base_Name => Parameter);
+                     else
+                        Project_Name :=
+                          Create_From_Base
+                            (Base_Name => Parameter & Project_File_Extension);
+                     end if;
 
-               if Project_Name /= VFS.No_File then
+                     Trace
+                       (Me, "Project not found in current dir: "
+                        & Full_Name (Project_Name).all);
+                  end if;
+               else
                   Trace (Me, "Found project: " & Full_Name (Project_Name).all);
                end if;
 
@@ -942,7 +958,7 @@ procedure GPS.Main is
          File_Opened := True;
          Auto_Load_Project := False;
 
-         if Is_Regular_File (Project_Name) then
+         if Project_Name /= No_File then
             --  Do not clear to keep the welcome message on kernel's console
             Load_Project (GPS_Main.Kernel, Project_Name, Clear => False);
             Project := Get_Project (GPS_Main.Kernel);
@@ -1468,16 +1484,27 @@ procedure GPS.Main is
          --  Load project, and set debugger-related project properties
 
          Setup_Debug;
+      else
+         if Project_Name /= VFS.No_File
+           and then not Is_Regular_File (Project_Name)
+         then
+            --  We can finally search on ADA_PROJECT_PATH, which is now known
+            Project_Name := File_Utils.Find_On_Path
+              (Base_Name (Project_Name),
+               Path => Projects.Registry.Get_Predefined_Project_Path
+                 (Get_Registry (GPS_Main.Kernel).all));
+         end if;
 
-      elsif Project_Name = VFS.No_File then
-         if Server_Mode then
-            Auto_Load_Project := True;
-            Load_Empty_Project (GPS_Main.Kernel);
-            Load_Sources;
+         if Project_Name = VFS.No_File then
+            if Server_Mode then
+               Auto_Load_Project := True;
+               Load_Empty_Project (GPS_Main.Kernel);
+               Load_Sources;
 
-         else
-            if not Setup_Project then
-               return False;
+            else
+               if not Setup_Project then
+                  return False;
+               end if;
             end if;
          end if;
       end if;
