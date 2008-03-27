@@ -426,12 +426,13 @@ private
      (Tree                         : Project_Node_Tree_Ref;
       Parent                       : Project_Node_Id;
       Expr                         : Project_Node_Id;
-      Add_Before_First_Case_Or_Pkg : Boolean := False);
+      Add_Before_First_Pkg         : Boolean := False;
+      Add_Before_First_Case        : Boolean := False);
    --  Add a new declarative item in the list in Parent.
    --  This new declarative item will contain Expr (unless Expr is already a
    --  declarative item, in which case it is added directly to the list).
    --  The new item is inserted at the end of the list, unless
-   --  Add_Before_First_Case_Or_Pkg is True. In the latter case, it is added
+   --  Add_Before_First_Pkg is True. In the latter case, it is added
    --  just before the first case construction is seen (in normalized project
    --  files, this corresponds to the end of the common section), or before the
    --  first package

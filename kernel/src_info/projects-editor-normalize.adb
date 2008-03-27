@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                             G P S                                 --
 --                                                                   --
---                    Copyright (C) 2001-2007                        --
---                            AdaCore                                --
+--                    Copyright (C) 2001-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -400,7 +399,8 @@ package body Projects.Editor.Normalize is
                      Set_Uniq_Type_Name (Tree, Project_Norm, Var_Type);
                      Set_String_Type_Of (Current, Tree, Var_Type);
                      Add_At_End (Tree, Project_Norm, Var_Type,
-                                 Add_Before_First_Case_Or_Pkg => True);
+                                 Add_Before_First_Pkg => True,
+                                 Add_Before_First_Case => True);
 
                      --  Scenario variables must be defined at the project
                      --  level
@@ -411,7 +411,8 @@ package body Projects.Editor.Normalize is
                           (Tree,
                            Project_Norm,
                            Clone_Node (Tree, Decl_Item, True),
-                           Add_Before_First_Case_Or_Pkg => True);
+                           Add_Before_First_Pkg => True,
+                           Add_Before_First_Case => True);
                      else
                         For_Each_Matching_Case_Item
                           (Tree, Project_Norm, Current_Pkg, Case_Construct,
@@ -504,7 +505,10 @@ package body Projects.Editor.Normalize is
                   -"Internal error while normalizing");
             end if;
 
-            --  All the subpackages
+            --  All the subpackages. Note that the project parser has at some
+            --  point reverted the order of the package nodes, so we need to
+            --  take that into account to preserve the order of packages in the
+            --  file.
 
             Current_Pkg := First_Package_Of (Project, Tree);
 
@@ -526,7 +530,9 @@ package body Projects.Editor.Normalize is
 
                Add_At_End
                  (Tree,
-                  Project_Declaration_Of (Project_Norm, Tree), Current_Pkg);
+                  Project_Declaration_Of (Project_Norm, Tree), Current_Pkg,
+                  Add_Before_First_Pkg => True,
+                  Add_Before_First_Case => False);
                Current_Pkg := Next_Package_In_Project (Current_Pkg, Tree);
             end loop;
 

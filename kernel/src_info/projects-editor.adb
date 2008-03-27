@@ -1485,7 +1485,9 @@ package body Projects.Editor is
       Set_Name_Of (Node, Tree, Get_String (Name));
       Set_String_Type_Of (Node, Tree, Typ);
 
-      Add_At_End (Tree, Prj_Or_Pkg, Node, Add_Before_First_Case_Or_Pkg);
+      Add_At_End (Tree, Prj_Or_Pkg, Node,
+                  Add_Before_First_Pkg  => Add_Before_First_Case_Or_Pkg,
+                  Add_Before_First_Case => Add_Before_First_Case_Or_Pkg);
 
       Set_Next_Variable (Node, Tree, First_Variable_Of (Prj_Or_Pkg, Tree));
       Set_First_Variable_Of (Prj_Or_Pkg, Tree, Node);
@@ -1547,7 +1549,7 @@ package body Projects.Editor is
    begin
       Node := Default_Project_Node (Tree, N_String_Type_Declaration);
       Set_Name_Of (Node, Tree, Get_String (Name));
-      Add_At_End (Tree, Prj_Or_Pkg, Node, True);
+      Add_At_End (Tree, Prj_Or_Pkg, Node, True, True);
 
       return Node;
    end Create_Type;
@@ -3001,7 +3003,8 @@ package body Projects.Editor is
      (Tree                         : Project_Node_Tree_Ref;
       Parent                       : Project_Node_Id;
       Expr                         : Project_Node_Id;
-      Add_Before_First_Case_Or_Pkg : Boolean := False)
+      Add_Before_First_Pkg         : Boolean := False;
+      Add_Before_First_Case        : Boolean := False)
    is
       Real_Parent          : Project_Node_Id;
       New_Decl, Decl, Next : Project_Node_Id;
@@ -3029,11 +3032,13 @@ package body Projects.Editor is
             Next := Next_Declarative_Item (Decl, Tree);
             exit when Next = Empty_Node
               or else
-              (Add_Before_First_Case_Or_Pkg
-               and then (Kind_Of (Current_Item_Node (Next, Tree), Tree)
-                         = N_Case_Construction
-                         or else Kind_Of (Current_Item_Node (Next, Tree), Tree)
-                         = N_Package_Declaration));
+              (Add_Before_First_Pkg
+               and then Kind_Of (Current_Item_Node (Next, Tree), Tree)
+                 = N_Package_Declaration)
+              or else
+              (Add_Before_First_Case
+               and then Kind_Of (Current_Item_Node (Next, Tree), Tree)
+                 = N_Case_Construction);
             Decl := Next;
          end loop;
 

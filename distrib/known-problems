@@ -134,6 +134,12 @@ Known Problems fixed in GPS 4.3.0
               already  present in the Revision View.
   Workaround: Close the Revision View before clicking on the version links.
 
+- GC17-004: Editing project reverses the order of packages
+  Problem:    When you edit a project that contains several packages, GPS
+              reverts the order of the packages in the resulting file,
+              instead of preserving it.
+  Workaround: Edit the project a second time
+
 - GC07-025: Ouline View can't display large profile
   Problem:    Routines with a large profile (more than 50 parameters)
               won't be properly output in the outline view.
