@@ -528,12 +528,18 @@ package body Projects.Editor.Normalize is
                      -"Internal error while normalizing");
                end if;
 
-               Add_At_End
-                 (Tree,
-                  Project_Declaration_Of (Project_Norm, Tree), Current_Pkg,
-                  Add_Before_First_Pkg => True,
-                  Add_Before_First_Case => False);
-               Current_Pkg := Next_Package_In_Project (Current_Pkg, Tree);
+               declare
+                  Next_Pkg : constant Project_Node_Id :=
+                    Next_Package_In_Project (Current_Pkg, Tree);
+               begin
+                  Set_Next_Package_In_Project (Current_Pkg, Tree, Empty_Node);
+                  Add_At_End
+                    (Tree,
+                     Project_Declaration_Of (Project_Norm, Tree), Current_Pkg,
+                     Add_Before_First_Pkg => True,
+                     Add_Before_First_Case => False);
+                  Current_Pkg := Next_Pkg;
+               end;
             end loop;
 
             Free (Values);
