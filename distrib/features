@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Mar 12, 2008
+GPS 4.3 NEW FEATURES LIST Current as of Mar 27, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -107,6 +107,11 @@ NF-43-GB22-016 New menu to reformat a selection (2007-11-28)
   reformat the current selection. This capability used to be accessible only
   from a key binding (set through the key shortcut editor) which will remain
   control-tab by default.
+
+NF-43-GB15-003 New plugin: create_missing_dirs.py (2008-03-27)
+
+  This plugin, contributed by a GPS user, creates missing directories when
+  a project is loaded.
 
 NF-43-GB14-004 New VCS action to prepare group commit in one click (2007-11-17)
 
