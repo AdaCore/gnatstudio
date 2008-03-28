@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Mar 27, 2008
+GPS 4.3 NEW FEATURES LIST Current as of Mar 28, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -20,6 +20,12 @@ NF-43-H306-005 Support for PPC assembly highlighting (2008-03-07)
   An optional plug-in (ppc.xml) is provided in the GPS library which provides
   the ability to highlight PPC assembly code (in particular branches and
   labels) in the source editor and outline view.
+
+NF-43-H306-004 Switch editor pages can hide command line (2008-03-28)
+
+  When you define a new tool in XML, along with its switches, you can now
+  indicate that the command line of the tool should not be displayed in the
+  project editor (only the buttons to edit the switches)
 
 NF-43-H226-031 Support for -eL gnatmake/gprbuild switch (2008-02-27)
 

@@ -680,14 +680,17 @@ package body Switches_Chooser.Gtkada is
          Columns   => Config.Columns);
 
       Gtk_New (Editor.Ent);
-      Attach (Editor, Editor.Ent,
-              0, Guint (Config.Columns),
-              Guint (Config.Lines), Guint (Config.Lines) + 1,
-              Yoptions => 0);
-      Widget_Callback.Object_Connect
-        (Editor.Ent, Gtk.Editable.Signal_Changed,
-         Widget_Callback.To_Marshaller (On_Command_Line_Changed'Access),
-         Editor);
+      if Config.Show_Command_Line then
+         Attach (Editor, Editor.Ent,
+                 0, Guint (Config.Columns),
+                 Guint (Config.Lines), Guint (Config.Lines) + 1,
+                 Yoptions => 0);
+         Widget_Callback.Object_Connect
+           (Editor.Ent, Gtk.Editable.Signal_Changed,
+            Widget_Callback.To_Marshaller (On_Command_Line_Changed'Access),
+            Editor);
+      end if;
+
       On_Command_Line_Changed (Editor.all, "");
    end Initialize;
 

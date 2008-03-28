@@ -44,7 +44,8 @@ package body Switches_Chooser is
       Switch_Char       : Character := '-';
       Scrolled_Window   : Boolean := False;
       Lines             : Positive := 1;
-      Columns           : Positive := 1) return Switches_Editor_Config
+      Columns           : Positive := 1;
+      Show_Command_Line : Boolean := True) return Switches_Editor_Config
    is
    begin
       return new Switches_Editor_Config_Record'
@@ -57,6 +58,7 @@ package body Switches_Chooser is
          Config            => <>,
          Max_Radio         => 0,
          Max_Popup         => Main_Window,
+         Show_Command_Line => Show_Command_Line,
          Switches          => <>,
          Frames            => <>,
          Dependencies      => null);

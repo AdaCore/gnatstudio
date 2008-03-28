@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007, AdaCore             --
+--                      Copyright (C) 2001-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -734,6 +734,8 @@ package body Custom_Module is
          Switch_Char     => Char (Char'First),
          Scrolled_Window => Boolean'Value
            (Get_Attribute (Node, "use_scrolled_window", "false")),
+         Show_Command_Line => Boolean'Value
+           (Get_Attribute (Node, "show_command_line", "true")),
          Lines           => Safe_Value (Get_Attribute (Node, "lines", "1")),
          Columns         => Safe_Value (Get_Attribute (Node, "columns", "1")));
 

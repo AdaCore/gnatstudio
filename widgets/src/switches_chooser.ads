@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2007, AdaCore                  --
+--                      Copyright (C) 2007-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -48,7 +48,8 @@ package Switches_Chooser is
       Switch_Char       : Character := '-';
       Scrolled_Window   : Boolean := False;
       Lines             : Positive := 1;
-      Columns           : Positive := 1) return Switches_Editor_Config;
+      Columns           : Positive := 1;
+      Show_Command_Line : Boolean := True) return Switches_Editor_Config;
    --  A switches editor can be split into several lines and columns. Each cell
    --  act as a group for some switches, to help make the interface clearer for
    --  the user.
@@ -392,6 +393,7 @@ private
       Lines             : Positive;
       Columns           : Positive;
       Config            : Command_Line_Configuration;
+      Show_Command_Line : Boolean := True;
       Default_Separator : Ada.Strings.Unbounded.Unbounded_String;
       Getopt_Switches   : Ada.Strings.Unbounded.Unbounded_String;
       Scrolled_Window   : Boolean := False;

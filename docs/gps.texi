@@ -13511,6 +13511,11 @@ This optional attribute specifies if the boxes of the project editor are placed
 into scrolled window. This is particularily useful if the number of displayed
 switches if important.
 
+@item show_command_line (Default value is true)
+If this attribute is set to "false", the command line will not be displayed
+in the project properties editor. This can be used for instance if you only
+want users to edit it through the buttons and other widgets, and not directly.
+
 @item switch_char (Default value is "-")
 This is the leading character of command line arguments that indicate they
 are considered as switches. Arguments not starting with this character will
