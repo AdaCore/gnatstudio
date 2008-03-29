@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
---                              AdaCore                              --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -193,8 +192,6 @@ package VCS is
 
       Users               : String_List.List := String_List.Null_List;
       --  A list of users currently working on the file
-
-      --  ???  We need to put additional info here: date, etc.
    end record;
 
    function Copy_File_Status
@@ -244,7 +241,7 @@ package VCS is
       Dirs       : String_List.List;
       Clear_Logs : Boolean := False;
       Local      : Boolean := False) is abstract;
-   --  Same as above, and works on all subdirectories recursively.
+   --  Same as above, and works on all subdirectories recursively
 
    function Local_Get_Status
      (Rep       : access VCS_Record;
@@ -439,7 +436,7 @@ package VCS is
 
    function Get_Identified_Actions
      (Rep : access VCS_Record) return Action_Array;
-   --  Return the labels of the defined actions. User must not free the result.
+   --  Return the labels of the defined actions. User must not free the result
 
    function Get_Registered_Status
      (Rep : access VCS_Record) return Status_Array;
@@ -491,19 +488,19 @@ private
    Needs_Merge_Stock : aliased String := "gps-vcs-needs-merge";
    Needs_Merge : File_Status :=
      (Needs_Merge_Label'Access, Needs_Merge_Stock'Access);
-   --  The file has been modified locally and on the repository.
+   --  The file has been modified locally and on the repository
 
    Needs_Update_Label : aliased String := "Needs update";
    Needs_Update_Stock : aliased String := "gps-vcs-needs-update";
    Needs_Update : File_Status :=
      (Needs_Update_Label'Access, Needs_Update_Stock'Access);
-   --  The file has been modified in the repository but not locally.
+   --  The file has been modified in the repository but not locally
 
    Not_Registered_Label : aliased String := "Not registered";
    Not_Registered_Stock : aliased String := "gps-vcs-not-registered";
    Not_Registered : File_Status :=
      (Not_Registered_Label'Access, Not_Registered_Stock'Access);
-   --  The file is unknown of the VCS repository.
+   --  The file is unknown of the VCS repository
 
    type VCS_Record is abstract tagged limited record
       Kernel              : GPS.Kernel.Kernel_Handle;

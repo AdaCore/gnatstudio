@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2007                      --
---                              AdaCore                              --
+--                 Copyright (C) 2005-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -54,7 +53,7 @@ package body VCS_Utils is
       Revision_Label : GNAT.Strings.String_Access;
 
       function Short_Revision (R : String) return String;
-      --  If R is too long, return only the last digits.
+      --  If R is too long, return only the last digits
 
       --------------------
       -- Short_Revision --
@@ -81,8 +80,7 @@ package body VCS_Utils is
       then
          Status_Label := new String'("");
       else
-         Status_Label := new String'
-           (" (" & Status.Status.Label.all & ")");
+         Status_Label := new String'(" (" & Status.Status.Label.all & ")");
       end if;
 
       if not Is_Empty (Status.Working_Revision) then

@@ -103,10 +103,10 @@ package String_Utils is
    --  (' ', HT, LF, CR).
 
    function Line_Start (Buffer : String; P : Natural) return Natural;
-   --  Return the start of the line pointed by P.
+   --  Return the start of the line pointed by P
 
    function Line_End (Buffer : String; P : Natural) return Natural;
-   --  Return the end of the line pointed by P.
+   --  Return the end of the line pointed by P
 
    function Next_Line (Buffer : String; P : Natural) return Natural;
    --  Return the start of the next line or Buffer'Last if the end of the
@@ -192,7 +192,7 @@ package String_Utils is
    --  otherwise return a krunched string no longer than Max_String_Length.
 
    function Strip_Character (Text : String; C : Character) return String;
-   --  Return a version of Text after stripping all C's from the string.
+   --  Return a version of Text after stripping all C's from the string
 
    function Strip_CR (Text : String) return String;
    pragma Inline (Strip_CR);
@@ -219,10 +219,10 @@ package String_Utils is
    --  This function works correctly with multiple-line strings.
 
    function Strip_Quotes (S : String) return String;
-   --  Remove the quotes and the spaces at the beginning and end of S.
+   --  Remove the quotes and the spaces at the beginning and end of S
 
    function Image (N : Integer) return String;
-   --  Create a string image of the given Integer.
+   --  Create a string image of the given Integer
 
    function Image (N : Integer; Length : Positive) return String;
    --  Create a string image of the given Integer.
@@ -242,7 +242,7 @@ package String_Utils is
    --  (ie if the letter is either alphanumeric or an '_').
 
    function Is_Operator_Letter (Char : Glib.Gunichar) return Boolean;
-   --  Return True if the given letter is a valid operator.
+   --  Return True if the given letter is a valid operator
 
    function Equal (S1, S2 : String; Case_Sensitive : Boolean) return Boolean;
    pragma Inline (Equal);
@@ -318,14 +318,14 @@ package String_Utils is
       Protect_Spaces : Boolean := False) return String;
    --  Escape special characters in S.
    --  Quotes are only escaped when Protect_Quotes is true.
-   --  Spaces are only escaped when Protect_Spaces is true
+   --  Spaces are only escaped when Protect_Spaces is true.
 
    function Unprotect (S : String) return String;
    --  Unprotect an argument: remove the leading and ending '"',
    --  and un-escape the "\" when necessary.
 
    function Unquote (S : String) return String;
-   --  Remove the leading and ending '"' if present.
+   --  Remove the leading and ending '"' if present
 
    function Revert (S : String) return String;
    --  Given a string S composed of dotted names

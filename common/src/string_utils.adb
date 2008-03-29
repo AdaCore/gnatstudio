@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2008, AdaCore             --
+--                 Copyright (C) 2000-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -343,7 +343,6 @@ package body String_Utils is
    is
       Tmp_Index : constant Natural := Index;
    begin
-
       --  Recognize negative numbers as well
 
       if Type_Str (Index) = '-' then
@@ -356,7 +355,7 @@ package body String_Utils is
          Index := Index + 1;
       end loop;
 
-      --  If at least one valid character was found, we have a number.
+      --  If at least one valid character was found, we have a number
 
       if Index > Tmp_Index then
          Result := Long_Integer'Value (Type_Str (Tmp_Index .. Index - 1));
@@ -446,7 +445,7 @@ package body String_Utils is
                Index := Index + 6;
             end if;
 
-         --  Else, a standard character.
+         --  Else, a standard character
 
          else
             Char := Type_Str (Index);

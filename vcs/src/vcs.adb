@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2007, AdaCore                  --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -16,8 +16,6 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
-
-with Unchecked_Deallocation;
 
 with Commands.VCS;            use Commands.VCS;
 with Commands;                use Commands;
@@ -156,7 +154,7 @@ package body VCS is
    ----------
 
    procedure Free (Ref : in out VCS_Access) is
-      procedure Unchecked_Free is new Unchecked_Deallocation
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (VCS_Record'Class, VCS_Access);
    begin
       Free (Ref.all);

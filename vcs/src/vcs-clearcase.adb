@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007, AdaCore             --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -57,7 +57,7 @@ package body VCS.ClearCase is
    ClearCase_Identifier      : constant String := "ClearCase";
 
    Actions : Action_Array;
-   --  The label for ClearCase actions.
+   --  The label for ClearCase actions
 
    -----------------------
    -- Local Subprograms --
@@ -67,12 +67,12 @@ package body VCS.ClearCase is
    --  Free the memory occupied by this module
 
    function Identify_VCS (S : String) return VCS_Access;
-   --  Return an access to VCS_Record if S describes a ClearCase system.
+   --  Return an access to VCS_Record if S describes a ClearCase system
 
    procedure Insert
      (L    : List;
       Mode : Message_Type := Info);
-   --  Display L in the console with mode Mode, with a small indentation.
+   --  Display L in the console with mode Mode, with a small indentation
 
    function Checkin_Handler
      (Kernel : Kernel_Handle;
@@ -94,7 +94,7 @@ package body VCS.ClearCase is
      (Kernel : Kernel_Handle;
       Head   : String_List.List;
       List   : String_List.List) return Boolean;
-   --  Check that List corresponds to the output of a ClearCase remove.
+   --  Check that List corresponds to the output of a ClearCase remove
 
    function Diff_Handler
      (Kernel : Kernel_Handle;
@@ -109,7 +109,7 @@ package body VCS.ClearCase is
      (Kernel : Kernel_Handle;
       Head   : String_List.List;
       List   : String_List.List) return Boolean;
-   --  Display Head and List, and return True.
+   --  Display Head and List, and return True
 
    function Status_Output_Handler
      (Kernel : Kernel_Handle;
@@ -133,7 +133,7 @@ package body VCS.ClearCase is
      (Kernel  : Kernel_Handle;
       Message : String;
       List    : String_List.List := Null_List);
-   --  Report a ClearCase error.
+   --  Report a ClearCase error
 
    function Text_Output_Handler
      (Kernel : Kernel_Handle;
@@ -147,7 +147,7 @@ package body VCS.ClearCase is
      (Kernel : Kernel_Handle;
       Head   : String_List.List;
       List   : String_List.List) return Boolean;
-   --  Display the annotations for the file.
+   --  Display the annotations for the file
 
    -------------------------------
    -- Annotation_Output_Handler --
@@ -183,7 +183,7 @@ package body VCS.ClearCase is
             else
                A (J).Text := new String'(S);
             end if;
-            --  The index is linked to the annotation format.
+            --  The index is linked to the annotation format
          end;
 
          L_Temp := Next (L_Temp);
@@ -492,7 +492,7 @@ package body VCS.ClearCase is
       Files_Node : List_Node;
       Result     : File_Status_List.List;
    begin
-      --  Browse the output for a line not beginning with a blank space.
+      --  Browse the output for a line not beginning with a blank space
 
       Node := First (List);
       Files_Node := First (Files);
@@ -623,7 +623,7 @@ package body VCS.ClearCase is
       List_Temp : List_Node := First (Filenames);
 
       function Status (File : in String) return File_Status_Record;
-      --  Return the local file status for File.
+      --  Return the local file status for File
 
       ------------
       -- Status --
@@ -719,7 +719,7 @@ package body VCS.ClearCase is
                     -"ClearCase: Checking out element: "
                     & Full_Name (File).all & " ...", Mode => Info);
 
-            --  Create the end of the message.
+            --  Create the end of the message
 
             Create (Fail_Message,
                     Kernel,
@@ -763,7 +763,7 @@ package body VCS.ClearCase is
 
             Create (Open_File_Command, Kernel, File);
 
-            --  Enqueue the actions.
+            --  Enqueue the actions
 
             Add_Consequence_Action
               (Checkout_File_Command,

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
---                              AdaCore                              --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -55,7 +54,7 @@ package Commands.VCS is
 
    procedure Create
      (Item      : out Log_Action_Command_Access;
-      Kernel    : in Kernel_Handle;
+      Kernel    : Kernel_Handle;
       Rep       : VCS_Access;
       Action    : VCS_Action;
       Filenames : String_List.List;
@@ -83,7 +82,7 @@ package Commands.VCS is
      (Item     : out Check_Activity_Command_Access;
       Kernel   : Kernel_Handle;
       Activity : Activity_Id);
-   --  Create a new Check_Activity_Command.
+   --  Create a new Check_Activity_Command
 
    function Execute
      (Command : access Log_Action_Command_Type) return Command_Return_Type;
