@@ -245,7 +245,7 @@ package body GPS.Kernel is
       Handle.Home_Dir := new String'(Name_As_Directory (Home_Dir));
       Handle.Prefix   := new String'(Name_As_Directory (Prefix_Directory));
 
-      --  Create the language handler.
+      --  Create the language handler
 
       Create_Handler (Handler);
       Handle.Lang_Handler := Handler;
@@ -257,7 +257,7 @@ package body GPS.Kernel is
         (Language_Handler (Handle.Lang_Handler), Handle.Registry);
 
       Handle.Gnatls_Cache := null;
-      --  by default, the local server.
+      --  by default, the local server
       Handle.Gnatls_Server := new String'("");
 
       --  Note: we do not compute the view of this project yet. This will be
