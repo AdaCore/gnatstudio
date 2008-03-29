@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2006                      --
---                              AdaCore                              --
+--                 Copyright (C) 2005-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -78,7 +77,8 @@ private
    end record;
 
    No_Data : constant Line_Record :=
-               ((VFS.No_File, Unknown, others => String_List.Null_List),
+               ((VFS.No_File, Unknown, null, null,
+                others => String_List.Null_List),
                 False);
 
    No_I_Data : constant Internal_Record := (No_Data, Time_Of (1970, 1, 1));

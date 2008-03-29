@@ -62,6 +62,38 @@ package body String_Utils is
       end if;
    end Blank_Slice;
 
+   -------------
+   -- Replace --
+   -------------
+
+   procedure Replace
+     (S     : in out GNAT.Strings.String_Access;
+      Value : String) is
+   begin
+      if S /= null then
+         if S'Length = Value'Length then
+            --  Let's try to avoid memory fragmentation
+            S.all := Value;
+            return;
+         else
+            GNAT.Strings.Free (S);
+         end if;
+      end if;
+
+      S := new String'(Value);
+   end Replace;
+
+   procedure Replace
+     (S     : in out GNAT.Strings.String_Access;
+      Value : GNAT.Strings.String_Access) is
+   begin
+      if Value = null then
+         GNAT.Strings.Free (S);
+      else
+         Replace (S, Value.all);
+      end if;
+   end Replace;
+
    -----------------
    -- Skip_Blanks --
    -----------------

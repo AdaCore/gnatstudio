@@ -342,18 +342,18 @@ package body VCS_View is
               Base_Name (Line_Info.Status.File));
       end if;
 
-      if not String_List.Is_Empty (Line_Info.Status.Working_Revision) then
-         Set (Explorer.Model, Iter, Local_Rev_Column,
-              String_List.Head (Line_Info.Status.Working_Revision));
-      else
+      if Line_Info.Status.Working_Revision = null then
          Set (Explorer.Model, Iter, Local_Rev_Column, -"n/a");
+      else
+         Set (Explorer.Model, Iter, Local_Rev_Column,
+              Line_Info.Status.Working_Revision.all);
       end if;
 
-      if not String_List.Is_Empty (Line_Info.Status.Repository_Revision) then
-         Set (Explorer.Model, Iter, Rep_Rev_Column,
-              String_List.Head (Line_Info.Status.Repository_Revision));
-      else
+      if Line_Info.Status.Repository_Revision = null then
          Set (Explorer.Model, Iter, Rep_Rev_Column, -"n/a");
+      else
+         Set (Explorer.Model, Iter, Rep_Rev_Column,
+              Line_Info.Status.Repository_Revision.all);
       end if;
 
       if Line_Info.Status.Status.Stock_Id /= null then

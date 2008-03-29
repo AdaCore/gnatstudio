@@ -83,12 +83,11 @@ package body VCS_Utils is
          Status_Label := new String'(" (" & Status.Status.Label.all & ")");
       end if;
 
-      if not Is_Empty (Status.Working_Revision) then
-         Revision_Label := new String'
-           (Name (Ref) & ":"
-            & Short_Revision (Head (Status.Working_Revision)));
-      else
+      if Status.Working_Revision = null then
          Revision_Label := new String'(Name (Ref));
+      else
+         Revision_Label := new String'
+           (Name (Ref) & ":" & Short_Revision (Status.Working_Revision.all));
       end if;
 
       Add_Editor_Label

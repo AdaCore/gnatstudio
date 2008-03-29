@@ -3037,17 +3037,15 @@ package body VCS_View_API is
       Status := Get_Cache
         (Get_Status_Cache, Create (String_List.Head (Files))).Status;
 
-      if String_List.Is_Empty (Status.Repository_Revision) then
-         if String_List.Is_Empty (Status.Working_Revision) then
+      if Status.Repository_Revision = null then
+         if Status.Working_Revision = null then
             Revision := new String'("");
          else
-            Revision := new String'
-              (Protect (String_List.Head (Status.Working_Revision)));
+            Revision := new String'(Protect (Status.Working_Revision.all));
          end if;
 
       else
-         Revision := new String'
-           (Protect (String_List.Head (Status.Repository_Revision)));
+         Revision := new String'(Protect (Status.Repository_Revision.all));
       end if;
 
       declare
@@ -3184,11 +3182,11 @@ package body VCS_View_API is
       Status := Get_Cache (Get_Status_Cache, Create (Head (Files))).Status;
 
       if not One_Rev then
-         if Is_Empty (Status.Repository_Revision) then
+         if Status.Repository_Revision = null then
             Revision_2 := new String'("");
          else
             Revision_2 := new String'
-              (Protect (Head (Status.Repository_Revision)));
+              (Protect (Status.Repository_Revision.all));
          end if;
       end if;
 
@@ -3197,29 +3195,28 @@ package body VCS_View_API is
          Confirm := False;
 
       else
-         if not Is_Empty (Status.Working_Revision)
-           and then not Is_Empty (Status.Repository_Revision)
+         if Status.Working_Revision /= null
+           and then Status.Repository_Revision /= null
          then
             if Revision_Lower
-              (Head (Status.Working_Revision),
-               Head (Status.Repository_Revision))
+              (Status.Working_Revision.all,
+               Status.Repository_Revision.all)
             then
                --  The repository revision is newer than the working copy, use
                --  this version by default.
                Revision_1 := new String'
-                 (Protect (Head (Status.Repository_Revision)));
+                 (Protect (Status.Repository_Revision.all));
             else
                Revision_1 := new String'
-                 (Protect (Head (Status.Working_Revision)));
+                 (Protect (Status.Working_Revision.all));
             end if;
 
-         elsif not Is_Empty (Status.Repository_Revision) then
+         elsif Status.Repository_Revision /= null then
             Revision_1 := new String'
-              (Protect (Head (Status.Repository_Revision)));
+              (Protect (Status.Repository_Revision.all));
 
-         elsif not Is_Empty (Status.Working_Revision) then
-            Revision_1 := new String'
-              (Protect (Head (Status.Working_Revision)));
+         elsif Status.Working_Revision /= null then
+            Revision_1 := new String'(Protect (Status.Working_Revision.all));
          else
             Revision_1 := new String'("");
          end if;
@@ -3525,8 +3522,7 @@ package body VCS_View_API is
               (Ref,
                File_Status_List.Head (Status).File,
                "",
-               String_List.Head
-                 (File_Status_List.Head (Status).Working_Revision));
+               File_Status_List.Head (Status).Working_Revision.all);
             File_Status_List.Free (Status);
          end;
 

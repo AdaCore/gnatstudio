@@ -248,6 +248,16 @@ package String_Utils is
    pragma Inline (Equal);
    --  Compare two strings
 
+   procedure Replace
+     (S     : in out GNAT.Strings.String_Access;
+      Value : String);
+   --  Set S to Value, free previous content if any
+
+   procedure Replace
+     (S     : in out GNAT.Strings.String_Access;
+      Value : GNAT.Strings.String_Access);
+   --  Idem, but does nothing if Value is null
+
    -------------------
    -- Argument_List --
    -------------------
@@ -348,4 +358,5 @@ private
    pragma Inline (Skip_Blanks);
    pragma Inline (Skip_To_Char);
    pragma Inline (Copy_String);
+   pragma Inline (Replace);
 end String_Utils;

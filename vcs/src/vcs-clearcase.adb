@@ -555,12 +555,12 @@ package body VCS.ClearCase is
 
             Rep_Version := new String'(Line (Begin_Index .. End_Index - 1));
 
-            Append (Current_Status.Working_Revision, Version.all);
+            Replace (Current_Status.Working_Revision, Version.all);
 
             if Rep_Version.all = "" then
-               Append (Current_Status.Repository_Revision, Version.all);
+               Replace (Current_Status.Repository_Revision, Version.all);
             else
-               Append (Current_Status.Repository_Revision, Rep_Version.all);
+               Replace (Current_Status.Repository_Revision, Rep_Version.all);
             end if;
 
             if Version'Length >= 10

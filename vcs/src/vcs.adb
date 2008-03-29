@@ -21,6 +21,7 @@ with Commands.VCS;            use Commands.VCS;
 with Commands;                use Commands;
 with GPS.Kernel.Console;      use GPS.Kernel.Console;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
+with String_Utils;            use String_Utils;
 with VCS.Unknown_VCS;         use VCS.Unknown_VCS;
 
 package body VCS is
@@ -52,8 +53,8 @@ package body VCS is
       Result : File_Status_Record;
    begin
       Result.File := F.File;
-      Result.Working_Revision := Copy_String_List (F.Working_Revision);
-      Result.Repository_Revision := Copy_String_List (F.Repository_Revision);
+      Replace (Result.Working_Revision, F.Working_Revision);
+      Replace (Result.Repository_Revision, F.Repository_Revision);
       Result.Tags := Copy_String_List (F.Tags);
       Result.Users := Copy_String_List (F.Users);
       Result.Status := F.Status;
@@ -169,8 +170,8 @@ package body VCS is
       use String_List;
       use File_Status_List;
    begin
-      Free (F.Working_Revision);
-      Free (F.Repository_Revision);
+      GNAT.Strings.Free (F.Working_Revision);
+      GNAT.Strings.Free (F.Repository_Revision);
       Free (F.Tags);
       Free (F.Users);
    end Free;

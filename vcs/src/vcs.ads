@@ -19,12 +19,13 @@
 
 with Ada.Unchecked_Deallocation;
 
+with GNAT.Strings;
+
 with GPS.Kernel;                use GPS.Kernel;
-with String_List_Utils;         use String_List_Utils;
 with Generic_List;
 with OS_Utils;                  use OS_Utils;
+with String_List_Utils;         use String_List_Utils;
 with VFS;
-with GNAT.Strings;
 
 package VCS is
 
@@ -181,10 +182,10 @@ package VCS is
       Status              : File_Status := Unknown;
       --  The status of the file
 
-      Working_Revision    : String_List.List := String_List.Null_List;
+      Working_Revision    : GNAT.Strings.String_Access := null;
       --  The current local version of the file
 
-      Repository_Revision : String_List.List := String_List.Null_List;
+      Repository_Revision : GNAT.Strings.String_Access := null;
       --  The latest version of the file in the repository
 
       Tags                : String_List.List := String_List.Null_List;

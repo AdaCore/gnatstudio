@@ -27,6 +27,7 @@ with Glib.Xml_Int;          use Glib.Xml_Int;
 with GPS.Kernel.Project;    use GPS.Kernel.Project;
 with Projects;              use Projects;
 with Projects.Registry;     use Projects.Registry;
+with String_Utils;          use String_Utils;
 with Traces;                use Traces;
 with VCS_View;              use VCS_View;
 with XML_Parsers;
@@ -170,6 +171,10 @@ package body VCS_Status is
                  (Name : String; List : String_List.List);
                --  Add attribute Name into Child with value read from List
 
+               procedure Add_Attribute
+                 (Name : String; Value : GNAT.Strings.String_Access);
+               --  Idem but for a string access
+
                File  : constant Virtual_File := Item.LR.Status.File;
                Child : Node_Ptr;
 
@@ -182,6 +187,16 @@ package body VCS_Status is
                begin
                   if not String_List.Is_Empty (List) then
                      Set_Attribute (Child, Name, String_List.Head (List));
+                  end if;
+               end Add_Attribute;
+
+               procedure Add_Attribute
+                 (Name : String; Value : GNAT.Strings.String_Access)
+               is
+                  use type GNAT.Strings.String_Access;
+               begin
+                  if Value /= null then
+                     Set_Attribute (Child, Name, Value.all);
                   end if;
                end Add_Attribute;
 
@@ -260,6 +275,10 @@ package body VCS_Status is
                  (Into : in out String_List.List; Name : String);
                --  Add attribute value for the given Name into Into
 
+               procedure Add_Attribute
+                 (Into : in out GNAT.Strings.String_Access; Name : String);
+               --  Idem but for a string access
+
                -------------------
                -- Add_Attribute --
                -------------------
@@ -271,6 +290,16 @@ package body VCS_Status is
                begin
                   if Value /= "" then
                      String_List.Append (Into, Value);
+                  end if;
+               end Add_Attribute;
+
+               procedure Add_Attribute
+                 (Into : in out GNAT.Strings.String_Access; Name : String)
+               is
+                  Value : constant String := Get_Attribute (Node, Name);
+               begin
+                  if Value /= "" then
+                     Replace (Into, Value);
                   end if;
                end Add_Attribute;
 
