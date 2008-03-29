@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.3.0
 
+- H327-025: No source directories displayed in the project explorer
+  Problem:    When the project explorer hidden directories is empty
+              all source directories are hidden in the project explorer.
+  Workaround: Set the pattern to its default "^((\..+)|CVS)$" or do not
+              filter the hidden directories (see option in project explorer
+              contextual menu).
+
 - H316-002: Cannot remove multiple files from an activity using VCS Explorer
   Problem:    Files selected in the VCS Explorer cannot be removed from the
               activity.

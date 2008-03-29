@@ -317,9 +317,16 @@ package body GPS.Kernel is
          Unchecked_Free (Kernel.Hidden_File_Matcher);
       end if;
 
-      Kernel.Hidden_File_Matcher := new Pattern_Matcher'
-        (Compile (GPS.Kernel.Preferences.Get_Pref
-         (Hidden_Directories_Pattern)));
+      declare
+         Pattern : constant String :=
+                     GPS.Kernel.Preferences.Get_Pref
+                       (Hidden_Directories_Pattern);
+      begin
+         if Pattern /= "" then
+            Kernel.Hidden_File_Matcher :=
+              new Pattern_Matcher'(Compile (Pattern));
+         end if;
+      end;
 
       Set_Trusted_Mode
         (Get_Registry (Kernel).all,
@@ -608,7 +615,8 @@ package body GPS.Kernel is
      (Kernel    : access Kernel_Handle_Record;
       Base_Name : String) return Boolean is
    begin
-      return Match (Kernel.Hidden_File_Matcher.all, Base_Name);
+      return Kernel.Hidden_File_Matcher /= null
+        and then Match (Kernel.Hidden_File_Matcher.all, Base_Name);
    end Is_Hidden;
 
    ---------------------
