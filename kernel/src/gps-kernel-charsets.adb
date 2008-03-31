@@ -238,8 +238,8 @@ package body GPS.Kernel.Charsets is
       Param : Param_Spec_Charset;
    begin
       Param := Internal
-        (Name & ASCII.Nul, Nick & ASCII.Nul, Blurb & ASCII.Nul,
-         Default => Default & ASCII.Nul,
+        (Name & ASCII.NUL, Nick & ASCII.NUL, Blurb & ASCII.NUL,
+         Default => Default & ASCII.NUL,
          Flags   => Flags);
       Set_Param_Spec_Editor (Param_Spec (Param), Edit_Charset'Access);
       return Param;
