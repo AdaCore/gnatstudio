@@ -367,7 +367,7 @@ package body Src_Editor_Buffer is
    --  The returned string is UTF8-encoded
 
    procedure Free_Column_Info
-     (Column_Info : in Columns_Config_Access);
+     (Column_Info : Columns_Config_Access);
    --  Free the info contained in Column_Info
 
    procedure C_Free (S : Interfaces.C.Strings.chars_ptr);
@@ -586,7 +586,7 @@ package body Src_Editor_Buffer is
    ----------------------
 
    procedure Free_Column_Info
-     (Column_Info : in Columns_Config_Access) is
+     (Column_Info : Columns_Config_Access) is
    begin
       if Column_Info /= null then
          if Column_Info.all /= null then
@@ -927,7 +927,7 @@ package body Src_Editor_Buffer is
          Counter    := 0;
          Stack      := 1;
          String_Tag := False;
-         C          := ASCII.Nul;
+         C          := ASCII.NUL;
 
          Backward_Char (Current, Success);
 
@@ -6113,27 +6113,27 @@ package body Src_Editor_Buffer is
    -- Convert --
    -------------
 
-   function Convert (C : in Natural) return Visible_Column_Type is
+   function Convert (C : Natural) return Visible_Column_Type is
    begin
       return Visible_Column_Type (C);
    end Convert;
 
-   function Convert (C : in Natural) return Character_Offset_Type is
+   function Convert (C : Natural) return Character_Offset_Type is
    begin
       return Character_Offset_Type (C);
    end Convert;
 
-   function Convert (L : in Natural) return Editable_Line_Type is
+   function Convert (L : Natural) return Editable_Line_Type is
    begin
       return Editable_Line_Type (L);
    end Convert;
 
-   function Convert (L : in Editable_Line_Type) return Natural is
+   function Convert (L : Editable_Line_Type) return Natural is
    begin
       return Natural (L);
    end Convert;
 
-   function Convert (C : in Character_Offset_Type) return Natural is
+   function Convert (C : Character_Offset_Type) return Natural is
    begin
       return Natural (C);
    end Convert;
