@@ -504,6 +504,8 @@ package body Code_Analysis_GUI is
    is
       Line_Info  : Line_Information_Data;
    begin
+      Initialize_Graphics (Kernel);
+
       if File_Node.Analysis_Data.Coverage_Data.Status = Valid then
          Line_Info  := new Line_Information_Array (File_Node.Lines'Range);
 
