@@ -1,3 +1,11 @@
+Known Problems fixed in GPS 4.2.2
+
+- H319-009 Coverage annotations missing in the editors
+  Problem:    When querying the code coverage annotation on a source editor,
+              no symbols appear in the margin to indicate which lines are
+              covered and which lines are not.
+  Workaround: The detailed information is present in the .gcov files.
+
 Known Problems fixed in GPS 4.2.1
 
 - H110-019: Cannot commit mixed-cased filenames on Windows
