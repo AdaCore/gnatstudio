@@ -7,6 +7,13 @@ Known Problems fixed in GPS 4.3.0
               filter the hidden directories (see option in project explorer
               contextual menu).
 
+- H319-009 Coverage annotations missing in the editors
+  Problem:    When querying the code coverage annotation on a source editor,
+              no symbols appear in the margin to indicate which lines are
+              covered and which lines are not.
+  Workaround: The detailed information is present in the .gcov files and via
+              tooltips.
+
 - H316-002: Cannot remove multiple files from an activity using VCS Explorer
   Problem:    Files selected in the VCS Explorer cannot be removed from the
               activity.
