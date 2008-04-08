@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Mar 28, 2008
+GPS 4.3 NEW FEATURES LIST Current as of Apr 08, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -14,6 +14,11 @@ of the feature.
 
 New features in GPS 4.3.0
 -------------------------
+
+NF-43-H401-006 Support for the arm-nucleus toolchain (2008-04-08)
+
+  Support for the GNAT arm-mentor-nucleus toolchain is now available by
+  default in the project properties.
 
 NF-43-H306-005 Support for PPC assembly highlighting (2008-03-07)
 
