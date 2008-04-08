@@ -42,6 +42,7 @@
           <choice>powerpc-xcoff-lynxos-gnatmake</choice>
           <choice>erc32-elf-gnatmake</choice>
           <choice>leon-elf-gnatmake</choice>
+          <choice>arm-mentor-nucleus-gnatmake</choice>
           <choice>dotnet-gnatmake</choice>
           <choice>gnaampmake</choice>
           <choice>jgnatmake</choice>
@@ -71,6 +72,7 @@
        <choice>powerpc-xcoff-lynxos-gnatls</choice>
        <choice>erc32-elf-gnatls</choice>
        <choice>leon-elf-gnatls</choice>
+       <choice>arm-mentor-nucleus-gnatls</choice>
        <choice>dotnet-gnatls</choice>
        <choice>gnaampls</choice>
        <choice>jgnatls</choice>
@@ -95,6 +97,7 @@
        <choice>powerpc-xcoff-lynxos-gnat</choice>
        <choice>erc32-elf-gnat</choice>
        <choice>leon-elf-gnat</choice>
+       <choice>arm-mentor-nucleus-gnat</choice>
        <choice>dotnet-gnat</choice>
        <choice>gnaampcmd</choice>
        <choice>jgnatcmd</choice>
@@ -122,6 +125,7 @@
        <choice>powerpc-xcoff-lynxos-gdb</choice>
        <choice>erc32-elf-gdb</choice>
        <choice>leon-elf-gdb</choice>
+       <choice>arm-mentor-nucleus-gdb</choice>
        <string />
    </project_attribute>
 
