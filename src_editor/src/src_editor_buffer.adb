@@ -4418,10 +4418,10 @@ package body Src_Editor_Buffer is
          Abstract_Module_ID (Src_Editor_Module_Id));
 
       if Buffer.Filename /= VFS.No_File then
-         Set_File_Information (Context, Buffer.Filename);
+         Set_File_Information (Context, (1 => Buffer.Filename));
 
       elsif Buffer.File_Identifier /= VFS.No_File then
-         Set_File_Information (Context, Buffer.File_Identifier);
+         Set_File_Information (Context, (1 => Buffer.File_Identifier));
       end if;
 
       --  Find the editable boundaries

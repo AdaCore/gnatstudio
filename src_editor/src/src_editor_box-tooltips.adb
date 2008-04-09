@@ -314,7 +314,7 @@ package body Src_Editor_Box.Tooltips is
             Abstract_Module_ID (Src_Editor_Module_Id));
          Set_File_Information
            (Context => Context,
-            File    => Filename,
+            Files   => (1 => Filename),
             Line    => Integer (Editable_Line),
             Column  => Column);
          --  ??? Should we use the cursor column here ?

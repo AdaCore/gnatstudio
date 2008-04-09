@@ -230,7 +230,7 @@ package body VCS.Generic_VCS is
          Kernel  => Kernel,
          Creator => Abstract_Module_ID (VCS_Generic_Module_ID));
 
-      Set_File_Information (Context, File => File);
+      Set_File_Information (Context, Files => (1 => File));
 
       return Context;
    end Create_File_Context;

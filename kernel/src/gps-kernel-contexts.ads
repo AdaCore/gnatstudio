@@ -38,7 +38,7 @@ package GPS.Kernel.Contexts is
 
    procedure Set_File_Information
      (Context           : in out Selection_Context;
-      File              : VFS.Virtual_File := VFS.No_File;
+      Files             : VFS.File_Array := VFS.Empty_File_Array;
       Project           : Projects.Project_Type := Projects.No_Project;
       Importing_Project : Projects.Project_Type := Projects.No_Project;
       Line              : Integer := 0;
@@ -62,6 +62,8 @@ package GPS.Kernel.Contexts is
    --  Return True if Context has file information
    function File_Information
      (Context : Selection_Context) return VFS.Virtual_File;
+   function File_Information
+     (Context : Selection_Context) return VFS.File_Array;
    --  Return the information about the selected file. This is only relevant
    --  if Has_File_Information is True.
    --  This is the base file name for the file. This name is UTF8-encoded.

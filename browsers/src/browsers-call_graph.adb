@@ -1290,8 +1290,9 @@ package body Browsers.Call_Graph is
       if not Is_Predefined_Entity (Item.Entity) then
          Set_File_Information
            (Context,
-            File => Get_Filename (Get_File (Get_Declaration_Of (Item.Entity))),
-            Line => Get_Line (Get_Declaration_Of (Item.Entity)));
+            Files => (1 => Get_Filename
+                      (Get_File (Get_Declaration_Of (Item.Entity)))),
+            Line  => Get_Line (Get_Declaration_Of (Item.Entity)));
       end if;
 
       Set_Entity_Information

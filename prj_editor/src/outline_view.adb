@@ -505,7 +505,7 @@ package body Outline_View is
       Set_File_Information
         (Context => Context,
          Project => Projects.No_Project,
-         File    => Outline.File,
+         Files   => (1 => Outline.File),
          Line    => Line);
 
       if Menu /= null then

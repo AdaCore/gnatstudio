@@ -1392,7 +1392,7 @@ package body Src_Editor_Box is
 
          Set_File_Information
            (Context,
-            File   => Filename,
+            Files  => (1 => Filename),
             Line   => Integer (To_Box_Line (Editor.Source_Buffer, Line)),
             Column => Expand_Tabs
               (Get_Buffer (Editor),

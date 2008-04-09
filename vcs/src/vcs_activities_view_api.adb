@@ -50,7 +50,6 @@ with VCS;                       use VCS;
 with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
 with VCS_Activities;            use VCS_Activities;
 with VCS_Module;                use VCS_Module;
-with VCS_View.Explorer;
 with VCS_View;                  use VCS_View;
 with VFS;                       use VFS;
 
@@ -350,37 +349,15 @@ package body VCS_Activities_View_API is
       Activity : Activity_Id;
       Context  : Selection_Context) is
    begin
-      if (Has_File_Information (Context)
-          or else Has_Directory_Information (Context))
-        and then
-          not (Get_Creator (Context) = Abstract_Module_ID (VCS_Module_ID))
+      if Has_File_Information (Context)
+        or else Has_Directory_Information (Context)
       then
-         --  If we have a file information, then there is a single file to
-         --  handle.
-         Add_File (Kernel, Activity, File_Information (Context));
-
-      else
-         --  We have no file information, use the selected file in the VCS
-         --  explorer.
-
          declare
-            use type String_List.List_Node;
-            Files    : String_List.List :=
-                         VCS_View.Explorer.Get_Selected_Files (Kernel);
-            File     : Virtual_File;
-            Files_It : String_List.List_Node;
+            Files : constant File_Array := File_Information (Context);
          begin
-            Files_It := String_List.First (Files);
-
-            while Files_It /= String_List.Null_Node loop
-               File := Create
-                 (Full_Filename => String_List.Data (Files_It));
-               Add_File (Kernel, Activity, File);
-
-               Files_It := String_List.Next (Files_It);
+            for K in Files'Range loop
+               Add_File (Kernel, Activity, Files (K));
             end loop;
-
-            String_List.Free (Files);
          end;
       end if;
    end Populate_Activity;
@@ -446,46 +423,20 @@ package body VCS_Activities_View_API is
       Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
-
-      use type String_List.List_Node;
-
-      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
-      File     : Virtual_File;
-      Files    : String_List.List;
-      Files_It : String_List.List_Node;
-      View     : VCS_View_Access;
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
    begin
-      if (Has_File_Information (Context)
-          or else Has_Directory_Information (Context))
-        and then
-          not (Get_Creator (Context) = Abstract_Module_ID (VCS_Module_ID))
+      if Has_File_Information (Context)
+        or else Has_Directory_Information (Context)
       then
-         --  If we have a file information, then there is a single file to
-         --  handle.
-         File := File_Information (Context);
-         On_Remove_From_Activity (Kernel, Get_File_Activity (File), File);
-
-      else
-         if Get_Current_Focus_Widget (Kernel)
-           = Gtk_Widget (Get_Activities_Explorer (Kernel, False))
-         then
-            View := VCS_View_Access (Get_Activities_Explorer (Kernel, False));
-         else
-            View := VCS_View_Access (Get_Explorer (Kernel, False));
-         end if;
-
-         Files := Get_Selected_Files (View);
-
-         Files_It := String_List.First (Files);
-
-         while Files_It /= String_List.Null_Node loop
-            File := Create (Full_Filename => String_List.Data (Files_It));
-            On_Remove_From_Activity (Kernel, Get_File_Activity (File), File);
-
-            Files_It := String_List.Next (Files_It);
-         end loop;
+         declare
+            Files : constant File_Array := File_Information (Context);
+         begin
+            for K in Files'Range loop
+               On_Remove_From_Activity
+                 (Kernel, Get_File_Activity (Files (K)), Files (K));
+            end loop;
+         end;
       end if;
-
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Menu_Remove_From_Activity;

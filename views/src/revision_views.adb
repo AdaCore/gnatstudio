@@ -524,7 +524,7 @@ package body Revision_Views is
 
       Set_File_Information
         (Context,
-         File     => V.File,
+         Files    => (1 => V.File),
          Revision => To_String (Rev),
          Tag      => To_String (Tag));
    end View_Context_Factory;

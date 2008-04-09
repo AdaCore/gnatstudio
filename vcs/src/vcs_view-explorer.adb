@@ -828,7 +828,7 @@ package body VCS_View.Explorer is
 
             Set_File_Information
               (Context,
-               File    => VFS.No_File,
+               Files   => VFS.Empty_File_Array,
                Project => Project);
 
             Root_Node := True;
@@ -836,25 +836,19 @@ package body VCS_View.Explorer is
          elsif Get_Depth (Path) > 1 then
             Files := Get_Selected_Files (VCS_View_Access (Explorer));
 
-            declare
-               First_File : constant Virtual_File := Create
-                 (Full_Filename => String_List.Head (Files));
-            begin
-               Iter :=
-                 Parent (Explorer.Model, Get_Iter (Explorer.Model, Path));
+            Iter := Parent (Explorer.Model, Get_Iter (Explorer.Model, Path));
 
-               Name_Len := 0;
-               Add_Str_To_Name_Buffer
-                 (Get_String (Explorer.Model, Iter, Name_Column));
+            Name_Len := 0;
+            Add_Str_To_Name_Buffer
+              (Get_String (Explorer.Model, Iter, Name_Column));
 
-               Project := Get_Project_From_Name
-                 (Get_Registry (Kernel).all, Name_Find);
+            Project := Get_Project_From_Name
+              (Get_Registry (Kernel).all, Name_Find);
 
-               Set_File_Information
-                 (Context,
-                  File    => First_File,
-                  Project => Project);
-            end;
+            Set_File_Information
+              (Context,
+               Files   => VFS.Create (Files),
+               Project => Project);
 
             String_List.Free (Files);
          end if;

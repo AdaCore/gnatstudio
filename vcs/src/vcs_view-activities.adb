@@ -744,18 +744,12 @@ package body VCS_View.Activities is
          elsif Get_Depth (Path) > 1 then
             Files := Get_Selected_Files (VCS_View_Access (Explorer));
 
-            declare
-               First_File : constant Virtual_File := Create
-                 (Full_Filename => String_List.Head (Files));
-            begin
-               Iter :=
-                 Parent (Explorer.Model, Get_Iter (Explorer.Model, Path));
+            Iter := Parent (Explorer.Model, Get_Iter (Explorer.Model, Path));
 
-               Set_Activity_Information
-                 (Context,
-                  Get_String (Explorer.Model, Iter, Activity_Column));
-               Set_File_Information (Context, File => First_File);
-            end;
+            Set_Activity_Information
+              (Context,
+               Get_String (Explorer.Model, Iter, Activity_Column));
+            Set_File_Information (Context, Files => VFS.Create (Files));
 
             String_List.Free (Files);
          end if;

@@ -240,7 +240,7 @@ package VCS_View_API is
 
    procedure VCS_Contextual_Menu
      (Kernel          : Kernel_Handle;
-      Context         : in out Selection_Context;
+      Context         : Selection_Context;
       Menu            : access Gtk.Menu.Gtk_Menu_Record'Class;
       Show_Everything : Boolean);
    --  Complete Menu with the commands related to the VCS module,

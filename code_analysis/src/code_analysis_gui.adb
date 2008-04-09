@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2008, AdaCore                 --
+--                 Copyright (C) 2006-2008, AdaCore                  --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -476,7 +476,7 @@ package body Code_Analysis_GUI is
                     (Gtk_Tree_Store (View.Model), Iter, Prj_Col));
                Set_File_Information
                  (Context,
-                  File    => Code_Analysis.File_Access (Node).Name,
+                  Files   => (1 => Code_Analysis.File_Access (Node).Name),
                   Project => Prj_Node.Name);
 
             elsif Node.all in Code_Analysis.Subprogram'Class then
@@ -489,7 +489,7 @@ package body Code_Analysis_GUI is
                  (Project_Set.Get (Gtk_Tree_Store (View.Model),
                   Iter, Prj_Col));
                Set_File_Information
-                 (Context, File_Node.Name, Prj_Node.Name);
+                 (Context, (1 => File_Node.Name), Prj_Node.Name);
                Set_Entity_Information
                  (Context, Subprogram_Access (Node).Name.all);
             end if;

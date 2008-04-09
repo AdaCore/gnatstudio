@@ -73,6 +73,12 @@ package body GPS.Kernel.Contexts is
       Context : Selection_Context) return Boolean;
    --  True if the current file belongs to an opened project
 
+   function Has_Directory_Information (File : Virtual_File) return Boolean;
+   --  Returns true if file has directory information
+
+   function Has_File_Information (File : Virtual_File) return Boolean;
+   --  Idem for file information
+
    ------------------------------
    -- Filter_Matches_Primitive --
    ------------------------------
@@ -191,7 +197,7 @@ package body GPS.Kernel.Contexts is
 
    procedure Set_File_Information
      (Context           : in out Selection_Context;
-      File              : VFS.Virtual_File := VFS.No_File;
+      Files             : VFS.File_Array := VFS.Empty_File_Array;
       Project           : Projects.Project_Type := Projects.No_Project;
       Importing_Project : Projects.Project_Type := Projects.No_Project;
       Line              : Integer := 0;
@@ -199,7 +205,12 @@ package body GPS.Kernel.Contexts is
       Revision          : String := "";
       Tag               : String := "") is
    begin
-      Context.Data.Data.File                     := File;
+      VFS.Unchecked_Free (Context.Data.Data.Files);
+
+      if Files'Length > 0 then
+         Context.Data.Data.Files := new VFS.File_Array'(Files);
+      end if;
+
       Context.Data.Data.File_Checked             := False;
       Context.Data.Data.Line                     := Line;
       Context.Data.Data.Column                   := Column;
@@ -244,14 +255,46 @@ package body GPS.Kernel.Contexts is
       return Context.Data.Data.Project;
    end Project_Information;
 
+   generic
+      with function Check (File : in Virtual_File) return Boolean;
+   function Check_All (Files : in File_Array) return Boolean;
+
+   ---------------
+   -- Check_All --
+   ---------------
+
+   function Check_All (Files : in File_Array) return Boolean is
+   begin
+      if Files'Length = 0 then
+         return False;
+
+      else
+         for K in Files'Range loop
+            if not Check (Files (K)) then
+               return False;
+            end if;
+         end loop;
+         return True;
+      end if;
+   end Check_All;
+
    -------------------------------
    -- Has_Directory_Information --
    -------------------------------
 
-   function Has_Directory_Information
-     (Context : Selection_Context) return Boolean is
+   function Has_Directory_Information (File : Virtual_File) return Boolean is
    begin
-      return Dir_Name (Context.Data.Data.File).all /= "";
+      return Dir_Name (File).all /= "";
+   end Has_Directory_Information;
+
+   function Has_Directory_Information
+     (Context : Selection_Context) return Boolean
+   is
+      function Check_All_Files is new Check_All (Has_Directory_Information);
+   begin
+      return Context.Data.Data /= null
+        and then Context.Data.Data.Files /= null
+        and then Check_All_Files (Context.Data.Data.Files.all);
    end Has_Directory_Information;
 
    ---------------------------
@@ -261,18 +304,27 @@ package body GPS.Kernel.Contexts is
    function Directory_Information
      (Context : Selection_Context) return String is
    begin
-      return Dir_Name (Context.Data.Data.File).all;
+      return Dir_Name
+        (Context.Data.Data.Files (Context.Data.Data.Files'First)).all;
    end Directory_Information;
 
    --------------------------
    -- Has_File_Information --
    --------------------------
 
+   function Has_File_Information (File : Virtual_File) return Boolean is
+   begin
+      return Base_Name (File) /= "";
+   end Has_File_Information;
+
    function Has_File_Information
-     (Context : Selection_Context) return Boolean is
+     (Context : Selection_Context) return Boolean
+   is
+      function Check_All_Files is new Check_All (Has_File_Information);
    begin
       return Context.Data.Data /= null
-        and then Base_Name (Context.Data.Data.File) /= "";
+        and then Context.Data.Data.Files /= null
+        and then Check_All_Files (Context.Data.Data.Files.all);
    end Has_File_Information;
 
    ----------------------
@@ -282,29 +334,51 @@ package body GPS.Kernel.Contexts is
    function File_Information
      (Context : Selection_Context) return Virtual_File is
    begin
-      if not Context.Data.Data.File_Checked then
-         declare
-            Name : constant String := Base_Name (Context.Data.Data.File);
-         begin
-            if Context.Data.Data.Kernel /= null
-              and then Name'Length > 4
-              and then Name (Name'First .. Name'First + 3) = "ref$"
-            then
-               --  This is a reference file, we have no need of it in the
-               --  context. We record then the corresponding file.
-               Context.Data.Data.File := Create
-                 (Get_Full_Path_From_File
-                    (Get_Registry (Context.Data.Data.Kernel).all,
-                     Name (Name'First + 4 .. Name'Last),
-                     Use_Source_Path => True,
-                     Use_Object_Path => False));
-            end if;
-         end;
+      if Context.Data.Data.Files'Length = 0 then
+         return No_File;
 
+      else
+         if not Context.Data.Data.File_Checked then
+            declare
+               Files : constant File_Array := File_Information (Context);
+            begin
+               return Files (Files'First);
+            end;
+         end if;
+
+         return Context.Data.Data.Files (Context.Data.Data.Files'First);
+      end if;
+   end File_Information;
+
+   function File_Information
+     (Context : Selection_Context) return File_Array is
+   begin
+      --  Check for $log should probably be done here!
+      if not Context.Data.Data.File_Checked then
+         for K in Context.Data.Data.Files'Range loop
+            declare
+               Name : constant String :=
+                        Base_Name (Context.Data.Data.Files (K));
+            begin
+               if Context.Data.Data.Kernel /= null
+                 and then Name'Length > 4
+                 and then Name (Name'First .. Name'First + 3) = "ref$"
+               then
+                  --  This is a reference file, we have no need of it in the
+                  --  context. We record then the corresponding file.
+                  Context.Data.Data.Files (K) := Create
+                    (Get_Full_Path_From_File
+                       (Get_Registry (Context.Data.Data.Kernel).all,
+                        Name (Name'First + 4 .. Name'Last),
+                        Use_Source_Path => True,
+                        Use_Object_Path => False));
+               end if;
+            end;
+         end loop;
          Context.Data.Data.File_Checked := True;
       end if;
 
-      return Context.Data.Data.File;
+      return Context.Data.Data.Files.all;
    end File_Information;
 
    ------------------------------

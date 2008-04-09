@@ -956,6 +956,43 @@ package body GPS.Kernel is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Selection_Context_Data_Record, Selection_Context_Data);
 
+      procedure Free (Data : in out Selection_Context_Data_Record);
+      --  Free memory used by Data
+
+      ----------
+      -- Free --
+      ----------
+
+      procedure Free (Data : in out Selection_Context_Data_Record) is
+      begin
+         if Active (Create_Me) then
+            Trace (Create_Me, "Freeing context: 0x"
+                   & System.Address_Image (Data'Address));
+         end if;
+
+         Free (Data.Category_Name);
+         Free (Data.Message);
+         Free (Data.Text);
+         Free (Data.Entity_Name);
+
+         --  Do not unref the entity stored in the context if the kernel is in
+         --  destruction or as already been destroyed since the entity has
+         --  already been freed as part of the kernel destruction.
+
+         if Data.Kernel /= null and then not Data.Kernel.Is_In_Destruction then
+            Unref (Data.Entity);
+
+            --   ??? problem of double deallocation at shutdown time, ideally
+            --   the following call should be outside of the conditional.
+            VFS.Unchecked_Free (Data.Files);
+         end if;
+
+         Free (Data.Activity_Id);
+         Free (Data.Revision);
+         Free (Data.Tag);
+         Free (Data.Instances);
+      end Free;
+
       Garbage : Selection_Context_Data;
    begin
       if Context.Data /= null then
@@ -1081,35 +1118,6 @@ package body GPS.Kernel is
       Context.Data.Data.Kernel := Kernel_Handle (Kernel);
       Context.Data.Data.Creator := Creator;
    end Set_Context_Information;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Data : in out Selection_Context_Data_Record) is
-   begin
-      if Active (Create_Me) then
-         Trace (Create_Me, "Freeing context: 0x"
-                & System.Address_Image (Data'Address));
-      end if;
-      Free (Data.Category_Name);
-      Free (Data.Message);
-      Free (Data.Text);
-      Free (Data.Entity_Name);
-
-      --  Do not unref the entity stored in the context if the kernel is in
-      --  destruction or as already been destroyed since the entity has already
-      --  been freed as part of the kernel destruction.
-
-      if Data.Kernel /= null and then not Data.Kernel.Is_In_Destruction then
-         Unref (Data.Entity);
-      end if;
-
-      Free (Data.Activity_Id);
-      Free (Data.Revision);
-      Free (Data.Tag);
-      Free (Data.Instances);
-   end Free;
 
    ---------------------
    -- Get_Main_Window --

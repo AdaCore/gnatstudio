@@ -198,18 +198,12 @@ package body VCS_Module is
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       pragma Unreferenced (Factory, Object);
-      C : Selection_Context := Context;
    begin
-      --  ??? C is a workaround for now. For some reason, VCS_Contextual_Menu
-      --  is trying to modify the context, where in fact it should really just
-      --  build the menu. It is too late to modify the context at this stage,
-      --  and this should be done in the context factory instead
-
       if Get_Creator (Context) /= Abstract_Module_ID (VCS_Module_ID)
         or else Has_Activity_Information (Context)
       then
          VCS_View_API.VCS_Contextual_Menu
-           (Get_Kernel (Context), C, Menu, False);
+           (Get_Kernel (Context), Context, Menu, False);
       end if;
    end Append_To_Menu;
 

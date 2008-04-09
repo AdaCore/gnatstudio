@@ -987,8 +987,9 @@ package body Project_Explorers_Common is
       else
          Set_File_Information
            (Context      => Context,
-            File         => Get_File_From_Node (Model, Iter),
-            Project      => Get_Project_From_Node (Model, Kernel, Iter, False),
+            Files        => (1 => Get_File_From_Node (Model, Iter)),
+            Project      =>
+              Get_Project_From_Node (Model, Kernel, Iter, False),
             Importing_Project =>
               Get_Project_From_Node (Model, Kernel, Iter, True),
             Line         => L);

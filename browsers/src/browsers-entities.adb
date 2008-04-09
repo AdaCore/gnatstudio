@@ -1804,8 +1804,8 @@ package body Browsers.Entities is
          Entity_Column => Get_Column (Get_Declaration_Of (Item.Entity)));
       Set_File_Information
         (Context     => Context,
-         File        =>
-           Get_Filename (Get_File (Get_Declaration_Of (Item.Entity))),
+         Files       =>
+           (1 => Get_Filename (Get_File (Get_Declaration_Of (Item.Entity)))),
          Line        => Get_Line (Get_Declaration_Of (Item.Entity)),
          Column      => Get_Column (Get_Declaration_Of (Item.Entity)));
       --  We need to set the file information, even though it will also display

@@ -798,7 +798,7 @@ package body Project_Explorers_Files is
                File := Create
                  (Full_Filename =>
                     (Get_String (T.File_Model, Iter, Absolute_Name_Column)));
-               Set_File_Information (Context, File);
+               Set_File_Information (Context, (1 => File));
 
             when Entity_Node =>
                --  ??? No entity information was set before, but isn't this

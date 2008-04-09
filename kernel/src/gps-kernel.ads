@@ -756,8 +756,8 @@ private
 
       Instances : GNAT.Scripts.Instance_List_Access;
 
-      File              : VFS.Virtual_File      := VFS.No_File;
-      --  The current file
+      Files             : VFS.File_Array_Access := null;
+      --  The current selected files
 
       Project           : Projects.Project_Type := Projects.No_Project;
       Importing_Project : Projects.Project_Type := Projects.No_Project;
@@ -803,9 +803,6 @@ private
       --  Set to True if the project_view was given by the creator, instead of
       --  being computed automatically
    end record;
-
-   procedure Free (Data : in out Selection_Context_Data_Record);
-   --  Free memory used by Data
 
    type Selection_Context_Data is access all Selection_Context_Data_Record;
    type Selection_Context_Controlled is new Ada.Finalization.Controlled

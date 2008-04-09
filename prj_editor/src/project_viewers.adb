@@ -911,7 +911,7 @@ package body Project_Viewers is
          begin
             Set_File_Information
               (Context,
-               File    => Create (File_Name),
+               Files   => (1 => Create (File_Name)),
                Project => V.Current_Project);
          end;
       end if;

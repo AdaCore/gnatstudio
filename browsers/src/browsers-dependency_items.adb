@@ -1294,8 +1294,8 @@ package body Browsers.Dependency_Items is
    begin
       Set_File_Information
         (Context,
-         File         => Filename,
-         Project      => Project_Of (Item));
+         Files   => (1 => Filename),
+         Project => Project_Of (Item));
    end Contextual_Factory;
 
    ------------------

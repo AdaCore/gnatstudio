@@ -1683,7 +1683,7 @@ package body GPS.Location_View is
             Created := True;
             Set_File_Information
               (Context,
-               Get_File (Explorer, Par),
+               Files  => (1 => Get_File (Explorer, Par)),
                Line   => Line,
                Column => Column);
             Set_Message_Information

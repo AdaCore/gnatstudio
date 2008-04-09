@@ -626,7 +626,7 @@ package body VCS_View_API is
 
    procedure VCS_Contextual_Menu
      (Kernel          : Kernel_Handle;
-      Context         : in out Selection_Context;
+      Context         : Selection_Context;
       Menu            : access Gtk.Menu.Gtk_Menu_Record'Class;
       Show_Everything : Boolean)
    is
@@ -726,16 +726,13 @@ package body VCS_View_API is
                Append (Menu, Item);
 
                A_Context := New_Context;
+
                Set_Context_Information
                  (A_Context, Kernel, Get_Creator (Context));
+
                Set_Activity_Information (A_Context, Image (Activity));
 
-               if Get_Creator (Context) /=
-                 Abstract_Module_ID (VCS_Module_ID)
-               then
-                  --  In this case record the original file or directory
-                  Set_File_Information (A_Context, File_Information (Context));
-               end if;
+               Set_File_Information (A_Context, File_Information (Context));
 
                Context_Callback.Connect
                  (Item, Gtk.Menu_Item.Signal_Activate,
@@ -852,19 +849,25 @@ package body VCS_View_API is
       if File_Section or else Show_Everything then
          if Log_File then
             declare
-               Original : constant Virtual_File :=
-                            Get_File_From_Log
-                              (Kernel, File_Information (Context));
+               Original  : constant Virtual_File :=
+                             Get_File_From_Log
+                               (Kernel, File_Information (Context));
+               L_Context : Selection_Context;
             begin
                if Original /= VFS.No_File
                  and then Actions (Commit) /= null
                then
                   Items_Inserted := True;
 
+                  L_Context := New_Context;
+
+                  Set_Context_Information
+                    (L_Context, Kernel, Get_Creator (Context));
+
                   Set_File_Information
-                    (Context,
-                     Original,
-                     Get_Project_From_File
+                    (L_Context,
+                     Files   => (1 => Original),
+                     Project => Get_Project_From_File
                        (Get_Registry (Kernel).all, Original));
 
                   Gtk_New (Item, Label => Actions (Log_Action).all & " ("
@@ -876,27 +879,27 @@ package body VCS_View_API is
                      when Add =>
                         Context_Callback.Connect
                           (Item, Gtk.Menu_Item.Signal_Activate,
-                           On_Menu_Add'Access, Context);
+                           On_Menu_Add'Access, L_Context);
 
                      when Add_No_Commit =>
                         Context_Callback.Connect
                           (Item, Gtk.Menu_Item.Signal_Activate,
-                           On_Menu_Add_No_Commit'Access, Context);
+                           On_Menu_Add_No_Commit'Access, L_Context);
 
                      when Remove =>
                         Context_Callback.Connect
                           (Item, Gtk.Menu_Item.Signal_Activate,
-                           On_Menu_Remove'Access, Context);
+                           On_Menu_Remove'Access, L_Context);
 
                      when Remove_No_Commit =>
                         Context_Callback.Connect
                           (Item, Gtk.Menu_Item.Signal_Activate,
-                           On_Menu_Remove_No_Commit'Access, Context);
+                           On_Menu_Remove_No_Commit'Access, L_Context);
 
                      when others =>
                         Context_Callback.Connect
                           (Item, Gtk.Menu_Item.Signal_Activate,
-                           On_Menu_Commit'Access, Context);
+                           On_Menu_Commit'Access, L_Context);
                   end case;
                end if;
             end;

@@ -804,7 +804,7 @@ package body Code_Analysis_Module is
       --  Build/Refresh Report of Analysis
       Context := Get_Current_Context (Get_Kernel (Data));
       Set_File_Information
-        (Context, Project => Prj_Name, File => Src_File);
+        (Context, Project => Prj_Name, Files => (1 => Src_File));
       Show_Analysis_Report
         (Get_Kernel (Data), Context_And_Analysis'(Context,
          Code_Analysis_Property (Property).Analysis));
@@ -2298,7 +2298,8 @@ package body Code_Analysis_Module is
                Prj_Info := Get_Project_From_File
                  (Get_Registry (Kernel).all,
                   File_Info);
-               Set_File_Information (Checked_Context, File_Info, Prj_Info);
+               Set_File_Information
+                 (Checked_Context, (1 => File_Info), Prj_Info);
             end;
 
          else

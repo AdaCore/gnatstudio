@@ -796,7 +796,7 @@ package body Call_Graph_Views is
          Unset (Value);
 
          if Entity /= null then
-            Set_File_Information   (Context, File => VFS.No_File);
+            Set_File_Information   (Context, Files => VFS.Empty_File_Array);
             Set_Entity_Information (Context, Entity => Entity);
          end if;
       else

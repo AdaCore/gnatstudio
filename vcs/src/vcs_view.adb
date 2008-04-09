@@ -593,34 +593,28 @@ package body VCS_View is
    -------------------------
 
    function Get_Current_Context
-     (Explorer : access VCS_View_Record)
-      return Selection_Context
+     (Explorer : access VCS_View_Record) return Selection_Context
    is
       Context : Selection_Context;
    begin
       if Explorer.Context = No_Context then
          declare
-            Files : String_List.List;
-            First : VFS.Virtual_File;
+            Files : String_List.List :=
+                      Get_Selected_Files (VCS_View_Access (Explorer));
          begin
-            Files := Get_Selected_Files (VCS_View_Access (Explorer));
+            Context := New_Context;
+
+            Set_Context_Information
+              (Context, Explorer.Kernel,
+               Abstract_Module_ID (VCS_Module_ID));
 
             if not String_List.Is_Empty (Files) then
-               Context := New_Context;
-               First := Create (String_List.Head (Files));
-
-               Set_Context_Information
-                 (Context, Explorer.Kernel,
-                  Abstract_Module_ID (VCS_Module_ID));
-               Set_File_Information (Context, File => First);
-
-               Set_Current_Context (Explorer, Context);
-
+               Set_File_Information (Context, Files => Create (Files));
                String_List.Free (Files);
-               return Context;
-            else
-               return No_Context;
             end if;
+
+            Set_Current_Context (Explorer, Context);
+            return Context;
          end;
 
       else

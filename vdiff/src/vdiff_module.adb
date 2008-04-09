@@ -322,9 +322,9 @@ package body Vdiff_Module is
                Creator => Abstract_Module_ID (Module));
 
             if Is_Regular_File (Label_1) then
-               Set_File_Information (Context, File => Label_1);
+               Set_File_Information (Context, Files => (1 => Label_1));
             elsif Is_Regular_File (Label_2) then
-               Set_File_Information (Context, File => Label_2);
+               Set_File_Information (Context, Files => (1 => Label_2));
             end if;
          end;
       end if;

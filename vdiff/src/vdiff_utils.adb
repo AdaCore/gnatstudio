@@ -141,7 +141,7 @@ package body Vdiff_Utils is
 
       Set_File_Information
         (Context,
-         Vdiff.File,
+         Files  => (1 => Vdiff.File),
          Line   => L,
          Column => C);
 
