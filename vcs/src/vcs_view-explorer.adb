@@ -694,6 +694,7 @@ package body VCS_View.Explorer is
    begin
       Explorer := new VCS_Explorer_View_Record;
       Initialize (Explorer, Kernel);
+      Set_Name (Explorer.Tree, "VCS Explorer Tree");
    end Gtk_New;
 
    ---------------------
