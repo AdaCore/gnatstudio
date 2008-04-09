@@ -46,6 +46,8 @@ with String_Utils;              use String_Utils;
 
 package body VFS is
 
+   package SLU renames String_List_Utils;
+
    --  ??? The various calls in Locale_To_UTF8, which is in the Gtk library,
    --  make it risky to use any function of this package before Gtk.Init has
    --  been called.
@@ -201,6 +203,20 @@ package body VFS is
       end if;
 
       return File;
+   end Create;
+
+   function Create (Files : SLU.String_List.List) return File_Array is
+      File_Array : VFS.File_Array (1 .. SLU.String_List.Length (Files));
+      Iter       : SLU.String_List.List_Node;
+   begin
+      Iter := SLU.String_List.First (Files);
+
+      for K in File_Array'Range loop
+         File_Array (K) := Create (SLU.String_List.Data (Iter));
+         Iter := SLU.String_List.Next (Iter);
+      end loop;
+
+      return File_Array;
    end Create;
 
    ---------------------

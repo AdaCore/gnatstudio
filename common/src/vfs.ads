@@ -32,6 +32,7 @@ with GNAT.Strings;
 with Glib;               use Glib;
 
 with Filesystem;
+with String_List_Utils;  use String_List_Utils;
 
 package VFS is
 
@@ -85,6 +86,9 @@ package VFS is
    --
    --  ??? Currently, this does the same thing as create, but it is
    --  preferable to distinguish both cases just in case.
+
+   function Create (Files : String_List.List) return File_Array;
+   --  Returns a File_Array out of a string list of file names
 
    function Is_Local (File : Virtual_File) return Boolean;
    --  Tell if the file is local
