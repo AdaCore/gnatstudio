@@ -654,8 +654,7 @@ package body VCS_View is
    ------------------
 
    function Copy_Context
-     (Context : Selection_Context)
-      return Selection_Context
+     (Context : Selection_Context) return Selection_Context
    is
       Result : Selection_Context;
    begin

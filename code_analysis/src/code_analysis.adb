@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                       Copyright (C) 2006-2007                     --
---                              AdaCore                              --
+--                 Copyright (C) 2006-2008, AdaCore                  --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -36,6 +35,10 @@ package body Code_Analysis is
 
       Tmp : Subprogram_Access;
 
+      --------
+      -- Lt --
+      --------
+
       function Lt (Op1, Op2 : Natural) return Boolean
       is begin
          if Op1 = 0 then
@@ -46,6 +49,10 @@ package body Code_Analysis is
             return Nodes (Op1).Name.all < Nodes (Op2).Name.all;
          end if;
       end Lt;
+
+      ----------
+      -- Move --
+      ----------
 
       procedure Move (From, To : Natural) is
       begin
@@ -78,6 +85,10 @@ package body Code_Analysis is
 
       Tmp : File_Access;
 
+      --------
+      -- Lt --
+      --------
+
       function Lt (Op1, Op2 : Natural) return Boolean
       is begin
          if Op1 = 0 then
@@ -88,6 +99,10 @@ package body Code_Analysis is
             return Base_Name (Nodes (Op1).Name) < Base_Name (Nodes (Op2).Name);
          end if;
       end Lt;
+
+      ----------
+      -- Move --
+      ----------
 
       procedure Move (From, To : Natural) is
       begin
@@ -120,6 +135,10 @@ package body Code_Analysis is
 
       Tmp : Project_Access;
 
+      --------
+      -- Lt --
+      --------
+
       function Lt (Op1, Op2 : Natural) return Boolean
       is begin
          if Op1 = 0 then
@@ -133,6 +152,10 @@ package body Code_Analysis is
               String'(Project_Name (Nodes (Op2).Name));
          end if;
       end Lt;
+
+      ----------
+      -- Move --
+      ----------
 
       procedure Move (From, To : Natural) is
       begin
@@ -321,4 +344,5 @@ package body Code_Analysis is
          Free_Project (Project_Node);
       end loop;
    end Free_Code_Analysis;
+
 end Code_Analysis;

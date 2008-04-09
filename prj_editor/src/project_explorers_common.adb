@@ -78,7 +78,7 @@ package body Project_Explorers_Common is
    procedure Init_Graphics (Widget : Gtk_Widget) is
 
       function R (Id : String) return Gdk_Pixbuf;
-      --  Convenience function: create the Gdk_Pixbuf from stock Id.
+      --  Convenience function: create the Gdk_Pixbuf from stock Id
 
       -------
       -- R --
@@ -90,7 +90,7 @@ package body Project_Explorers_Common is
       end R;
 
    begin
-      --  If initialization has already been done, exit.
+      --  If initialization has already been done, exit
       if Open_Pixbufs (Project_Node) /= null then
          return;
       end if;
@@ -104,7 +104,7 @@ package body Project_Explorers_Common is
       Close_Pixbufs (Modified_Project_Node) :=
         R ("gps-project-modified-closed");
 
-      --  ??? Would be nice to have different pixbufs for these.
+      --  ??? Would be nice to have different pixbufs for these
       Open_Pixbufs (Extends_Project_Node)  := R ("gps-project-open");
       Close_Pixbufs (Extends_Project_Node) := R ("gps-project-closed");
 
@@ -386,7 +386,7 @@ package body Project_Explorers_Common is
       Set (Model, Node, Timestamp_Column,
            Gint (File_Time_Stamp (File_Name) - VFS.No_Time));
 
-      --  Remove any previous information for this file.
+      --  Remove any previous information for this file
 
       N := Children (Model, Node);
 
@@ -457,7 +457,8 @@ package body Project_Explorers_Common is
             Constructs.Current := Constructs.Current.Next;
          end loop;
 
-         --  If no node was appended, add a "no entity" node.
+         --  If no node was appended, add a "no entity" node
+
          if not Node_Appended then
             Append (Model, Iter, Node);
             Set (Model, Iter, Base_Name_Column,
@@ -617,7 +618,7 @@ package body Project_Explorers_Common is
                      return True;
 
                   elsif Get_Event_Type (Event) = Button_Press then
-                     --  Drag-and-drop does not work on floating MDI children.
+                     --  Drag-and-drop does not work on floating MDI children
 
                      if Get_State (Child) /= Floating then
                         Child.Kernel        := Kernel;
@@ -882,6 +883,7 @@ package body Project_Explorers_Common is
          if Parent_Iter = Null_Iter then
             return Get_Project (Kernel);
          end if;
+
       else
          Parent_Iter := Node;
       end if;
@@ -976,10 +978,12 @@ package body Project_Explorers_Common is
         or else Node_Type = Modified_Project_Node
       then
          Set_File_Information
-           (Context      => Context,
-            Project      => Get_Project_From_Node (Model, Kernel, Iter, False),
+           (Context           => Context,
+            Project           =>
+              Get_Project_From_Node (Model, Kernel, Iter, False),
             Importing_Project =>
               Get_Project_From_Node (Model, Kernel, Iter, True));
+
       else
          Set_File_Information
            (Context      => Context,

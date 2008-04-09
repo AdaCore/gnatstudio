@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
---                              AdaCore                              --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -71,18 +70,18 @@ package body Vdiff_Utils is
      (Vdiff  : out Vdiff_Info_Access;
       Kernel : Kernel_Handle;
       File   : VFS.Virtual_File);
-   --  Create a new Vdiff_Info.
+   --  Create a new Vdiff_Info
 
    procedure Initialize
      (Vdiff  : access Vdiff_Info'Class;
       Kernel : Kernel_Handle;
       File   : VFS.Virtual_File);
-   --  Internal initialization function.
+   --  Internal initialization function
 
    procedure On_Destroy
      (Object : access GObject_Record'Class;
       Params : Glib.Values.GValues);
-   --  Callback for the "destroy" signal.
+   --  Callback for the "destroy" signal
 
    procedure Context_Factory
      (Context      : in out Selection_Context;
@@ -91,7 +90,7 @@ package body Vdiff_Utils is
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu);
-   --  Creates a new context relative to Object.
+   --  Creates a new context relative to Object
 
    ---------------------
    -- Context_Factory --
@@ -106,13 +105,13 @@ package body Vdiff_Utils is
       Menu         : Gtk.Menu.Gtk_Menu)
    is
       use Gdk.Event;
-      Vdiff   : constant Vdiff_Info_Access := Vdiff_Info_Access (Object);
-      List    : constant Gtk_Clist := Gtk_Clist (Event_Widget);
-      Row     : Gint;
-      Column  : Gint;
-      Valid   : Boolean := False;
-      L       : Integer := 0;
-      C       : Visible_Column_Type := 0;
+      Vdiff  : constant Vdiff_Info_Access := Vdiff_Info_Access (Object);
+      List   : constant Gtk_Clist := Gtk_Clist (Event_Widget);
+      Row    : Gint;
+      Column : Gint;
+      Valid  : Boolean := False;
+      L      : Integer := 0;
+      C      : Visible_Column_Type := 0;
 
       pragma Unreferenced (Menu);
 
@@ -236,7 +235,7 @@ package body Vdiff_Utils is
         (List  : access Gtk_Clist_Record'Class;
          Style : Gtk_Style;
          Line  : String := "");
-      --  Add a line constaining Line in List, using Style for font/color.
+      --  Add a line constaining Line in List, using Style for font/color
 
       procedure Read_Line
         (Infile  : File_Type;
@@ -456,7 +455,7 @@ package body Vdiff_Utils is
          Link := Link.Next;
       end loop;
 
-      --  Complete files with the remaining lines.
+      --  Complete files with the remaining lines
 
       Len := 0;
       while Len < Context_Len and then not End_Of_File (Infile1) loop
@@ -540,7 +539,11 @@ package body Vdiff_Utils is
          Style  : Gtk_Style;
          Number : Natural := 0;
          Line   : String := "");
-      --  Add a line constaining Line in List, using Style for font/color.
+      --  Add a line constaining Line in List, using Style for font/color
+
+      --------------
+      -- Add_Line --
+      --------------
 
       procedure Add_Line
         (List   : access Gtk_Clist_Record'Class;

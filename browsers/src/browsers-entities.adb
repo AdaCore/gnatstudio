@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2007, AdaCore              --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -104,7 +104,7 @@ package body Browsers.Entities is
    function Filter_Matches_Primitive
      (Context : access Entity_Browser_Action_Context;
       Ctxt : GPS.Kernel.Selection_Context) return Boolean;
-   --  A context that matches if the current widget is an entity browser.
+   --  A context that matches if the current widget is an entity browser
 
    ------------------
    -- Type browser --
@@ -749,7 +749,7 @@ package body Browsers.Entities is
          Parents_Pixmap  => Stock_Go_Up,
          Children_Pixmap => Stock_Go_Down);
 
-      --  ??? Should be freed when browser is destroyed.
+      --  ??? Should be freed when browser is destroyed
       Browser.Primitive_Button := Gdk_New_From_Xpm_Data (i_page_xpm);
 
       Register_Contextual_Menu
@@ -1107,7 +1107,7 @@ package body Browsers.Entities is
             "return " & Entity_As_Link (Returned),
             Length1  => 7,
             Callback => (1 => Build (Item, Returned)));
-         --  Do not free Returned, it is needed for callbacks.
+         --  Do not free Returned, it is needed for callbacks
       end if;
    end Add_Parameters;
 
@@ -1775,13 +1775,13 @@ package body Browsers.Entities is
       Add_Navigation_Location (Get_Kernel (B), -"Entity Browser");
 
       Open_File_Editor
-        (Kernel    => Get_Kernel (B),
-         Filename  => Get_Filename (Get_File (Get_Declaration_Of (It.Entity))),
-         Line      => Get_Line (Get_Declaration_Of (It.Entity)),
-         Column    => Get_Column (Get_Declaration_Of (It.Entity)),
-         Column_End => Get_Column (Get_Declaration_Of (It.Entity))
-         + Basic_Types.Visible_Column_Type
-           (Get_Name (It.Entity).all'Length));
+        (Kernel     => Get_Kernel (B),
+         Filename   => Get_Filename
+           (Get_File (Get_Declaration_Of (It.Entity))),
+         Line       => Get_Line (Get_Declaration_Of (It.Entity)),
+         Column     => Get_Column (Get_Declaration_Of (It.Entity)),
+         Column_End => Get_Column (Get_Declaration_Of (It.Entity)) +
+           Basic_Types.Visible_Column_Type (Get_Name (It.Entity).all'Length));
    end On_Show_Source;
 
    ------------------------

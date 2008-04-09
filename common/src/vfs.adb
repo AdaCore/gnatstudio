@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2008, AdaCore             --
+--                 Copyright (C) 2003-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -556,7 +556,7 @@ package body VFS is
                end if;
 
                for F in Files_Array'Range loop
-                  --  Make sure that we ignore . and ..
+                  --  Make sure that we ignore '.' and '..'
                   if Files_Array (F) /= File
                     and then not Is_Parent (Files_Array (F), File)
                   then
@@ -672,7 +672,7 @@ package body VFS is
 
       elsif not Is_Local (File) then
          --  ??? for now, no specific remote test for this,
-         --  assume the file is not a symbolic link
+         --  assume the file is not a symbolic link.
 
          return False;
 
@@ -777,15 +777,15 @@ package body VFS is
    -----------
 
    procedure Write
-     (File    : in out Writable_File;
-      Str     : String)
+     (File : in out Writable_File;
+      Str  : String)
    is
       Written : aliased Natural;
 
    begin
       Written := Write (File.FD, Str'Address, Str'Length);
 
-      --  ??? Should raise an exception if we couldn't write all the bytes.
+      --  ??? Should raise an exception if we couldn't write all the bytes
    end Write;
 
    -----------
@@ -885,8 +885,7 @@ package body VFS is
       if Host = "" or else Host = Local_Nickname then
          return Create (Getenv ("HOME").all);
       else
-         return Create (Host,
-                        Home_Dir (Get_Filesystem (Host), Host));
+         return Create (Host, Home_Dir (Get_Filesystem (Host), Host));
       end if;
    end Get_Home_Dir;
 
@@ -1055,7 +1054,7 @@ package body VFS is
          Raise_Exception (VFS_Directory_Error'Identity, "Dir is No_File");
       end if;
 
-      --  If Dir already exists and is a directory, then return.
+      --  If Dir already exists and is a directory, then return
       if Is_Directory (Dir) then
          return;
       end if;
@@ -1072,8 +1071,8 @@ package body VFS is
             Dir.Value.Full_Name.all);
 
          if not Result then
-            Raise_Exception (VFS_Directory_Error'Identity,
-                             "Dir cannot be created");
+            Raise_Exception
+              (VFS_Directory_Error'Identity, "Dir cannot be created");
          end if;
       end if;
 
@@ -1081,8 +1080,8 @@ package body VFS is
 
    exception
       when E : GNAT.Directory_Operations.Directory_Error =>
-         Raise_Exception (VFS_Directory_Error'Identity,
-                          Exception_Message (E));
+         Raise_Exception
+           (VFS_Directory_Error'Identity, Exception_Message (E));
    end Make_Dir;
 
    ----------
@@ -1110,8 +1109,8 @@ package body VFS is
       Ensure_Directory (Dir);
 
       if not Is_Directory (Dir) then
-         Raise_Exception (VFS_Directory_Error'Identity,
-                          "Dir is not a directory");
+         Raise_Exception
+           (VFS_Directory_Error'Identity, "Dir is not a directory");
       end if;
 
       if Is_Local (Dir) then
@@ -1138,7 +1137,7 @@ package body VFS is
             if Add_File then
                Nb_Files := Nb_Files + 1;
 
-                  --  array too small. let's double it.
+                  --  Array too small, let's double it
                if Nb_Files > F_Array'Last then
                   Tmp := F_Array;
                   F_Array := new File_Array (1 .. Tmp'Last * 2);

@@ -54,8 +54,8 @@ package body Code_Analysis_GUI is
       Projects : Code_Analysis_Tree;
       Binary   : Boolean) return Code_Analysis_View
    is
-      View        : constant Code_Analysis_View
-        := new Code_Analysis_View_Record;
+      View        : constant Code_Analysis_View :=
+                      new Code_Analysis_View_Record;
       Scrolled    : Gtk_Scrolled_Window;
       Text_Render : Gtk_Cell_Renderer_Text;
       Pixbuf_Rend : Gtk_Cell_Renderer_Pixbuf;
@@ -202,7 +202,8 @@ package body Code_Analysis_GUI is
    -- Expand_All_From_Report --
    ----------------------------
 
-   procedure Expand_All_From_Report (Object : access Gtk_Widget_Record'Class)
+   procedure Expand_All_From_Report
+     (Object : access Gtk_Widget_Record'Class)
    is
       View : constant Code_Analysis_View := Code_Analysis_View (Object);
    begin
@@ -215,7 +216,8 @@ package body Code_Analysis_GUI is
    -- Collapse_All_From_Report --
    ------------------------------
 
-   procedure Collapse_All_From_Report (Object : access Gtk_Widget_Record'Class)
+   procedure Collapse_All_From_Report
+     (Object : access Gtk_Widget_Record'Class)
    is
       View : constant Code_Analysis_View := Code_Analysis_View (Object);
    begin
@@ -239,7 +241,7 @@ package body Code_Analysis_GUI is
         (View.Model, Iter, View.Projects, View.Binary_Mode, View.Icons);
       Iter := Get_Iter_First (View.Model);
       --  can't be null as the corresponding menu entry is not displayed when
-      --  there nothing in the Model
+      --  there nothing in the Model.
       Path := Get_Path (View.Model, Iter);
       Collapse_All (View.Tree);
       Expand_To_Path (View.Tree, Path);
@@ -253,7 +255,8 @@ package body Code_Analysis_GUI is
    -- Show_Flat_List_Of_Files --
    -----------------------------
 
-   procedure Show_Flat_List_Of_Files (Object : access Gtk_Widget_Record'Class)
+   procedure Show_Flat_List_Of_Files
+     (Object : access Gtk_Widget_Record'Class)
    is
       View : constant Code_Analysis_View := Code_Analysis_View (Object);
       Iter : Gtk_Tree_Iter := Get_Iter_First (View.Model);
@@ -464,6 +467,7 @@ package body Code_Analysis_GUI is
                --  Context receive project information
                Set_File_Information
                  (Context, Project => Project_Access (Node).Name);
+
             elsif Node.all in Code_Analysis.File'Class then
                --  So we are on a file node
                --  Context receive project and file information
@@ -474,6 +478,7 @@ package body Code_Analysis_GUI is
                  (Context,
                   File    => Code_Analysis.File_Access (Node).Name,
                   Project => Prj_Node.Name);
+
             elsif Node.all in Code_Analysis.Subprogram'Class then
                --  So we are on a subprogram node
                --  Context receive project, file and entity information
@@ -502,7 +507,7 @@ package body Code_Analysis_GUI is
          return;
       end if;
 
-      --  Constants here correspond to definitions in icons.xml.
+      --  Constants here correspond to definitions in icons.xml
 
       Covered_Line_Pixbuf := Render_Icon
         (Get_Main_Window (Kernel),

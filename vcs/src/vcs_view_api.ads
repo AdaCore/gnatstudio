@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007, AdaCore             --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -273,10 +273,10 @@ package VCS_View_API is
    function Context_Factory
      (Kernel : access Kernel_Handle_Record'Class;
       Child  : Gtk.Widget.Gtk_Widget) return Selection_Context;
-   --  Return the current context relative to the VCS Explorer.
+   --  Return the current context relative to the VCS Explorer
 
    function Get_Current_Ref (Project : Project_Type) return VCS_Access;
-   --  Return the VCS reference registered in Project.
+   --  Return the VCS reference registered in Project
 
    procedure VCS_Command_Handler
      (Data    : in out GNAT.Scripts.Callback_Data'Class;

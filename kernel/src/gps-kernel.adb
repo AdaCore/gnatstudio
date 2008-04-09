@@ -1058,15 +1058,15 @@ package body GPS.Kernel is
    -----------------
 
    function New_Context return Selection_Context is
-      Ctxt : constant Selection_Context :=
-        (Data => (Ada.Finalization.Controlled with
-                  Data => new Selection_Context_Data_Record));
+      Context : constant Selection_Context :=
+                  (Data => (Ada.Finalization.Controlled with
+                            Data => new Selection_Context_Data_Record));
    begin
       if Active (Create_Me) then
          Trace (Create_Me, "Creating new context: 0x"
-                & System.Address_Image (Ctxt.Data.Data.all'Address));
+                & System.Address_Image (Context.Data.Data.all'Address));
       end if;
-      return Ctxt;
+      return Context;
    end New_Context;
 
    -----------------------------

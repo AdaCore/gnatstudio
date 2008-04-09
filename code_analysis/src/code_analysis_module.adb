@@ -114,7 +114,7 @@ package body Code_Analysis_Module is
 
    function Less (Left, Right : Code_Analysis_Instance) return Boolean;
    function Equal (Left, Right : Code_Analysis_Instance) return Boolean;
-   --  Use the Code_Analysis_Instance.Date to perform the test.
+   --  Use the Code_Analysis_Instance.Date to perform the test
 
    package Code_Analysis_Instances is new Indefinite_Ordered_Sets
      (Element_Type => Code_Analysis_Instance, "<" => Less, "=" => Equal);
@@ -151,7 +151,7 @@ package body Code_Analysis_Module is
 
    package Context_And_Analysis_CB is new User_Callback
      (Glib.Object.GObject_Record, Context_And_Analysis);
-   --  Used to connect handlers on the global Coverage contextual menu.
+   --  Used to connect handlers on the global Coverage contextual menu
 
    function Get_Iter_From_Context
      (Context : Selection_Context;
@@ -262,37 +262,37 @@ package body Code_Analysis_Module is
    procedure On_Single_View_Menu
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle);
-   --  Show the coverage report when we are in single analysis mode.
+   --  Show the coverage report when we are in single analysis mode
 
    procedure On_Load_All_Projects_Menu
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle);
-   --  Show the coverage report when we are in single analysis mode.
+   --  Show the coverage report when we are in single analysis mode
 
    procedure On_Load_Current_Project_Menu
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle);
-   --  Show the coverage report when we are in single analysis mode.
+   --  Show the coverage report when we are in single analysis mode
 
    procedure On_Load_Current_File_Menu
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle);
-   --  Show the coverage report when we are in single analysis mode.
+   --  Show the coverage report when we are in single analysis mode
 
    procedure On_Clear_Coverage_Menu
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle);
-   --  Show the coverage report when we are in single analysis mode.
+   --  Show the coverage report when we are in single analysis mode
 
    procedure Show_Analysis_Report_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
-   --  Menu callback that calls Show_Analysis_Report with no context info.
+   --  Menu callback that calls Show_Analysis_Report with no context info
 
    procedure Show_Analysis_Report_From_Shell
      (Data    : in out Callback_Data'Class;
       Command : String);
-   --  Create and display a Coverage Report.
+   --  Create and display a Coverage Report
 
    procedure Show_Analysis_Report
      (Kernel       : Kernel_Handle;
@@ -334,23 +334,23 @@ package body Code_Analysis_Module is
    procedure Shell_Get_Command
      (Data    : in out Callback_Data'Class;
       Command : String);
-   --  Create a shell scripting instance of the module.
+   --  Create a shell scripting instance of the module
 
    procedure Attach_Instance_And_Analysis
      (Data     : in out Callback_Data'Class;
       Instance : Class_Instance;
       Analysis : Code_Analysis_Instance);
    --  Set the Instance in the instance list of Analysis
-   --  Set Analysis in the created property for Instance
+   --  Set Analysis in the created property for Instance.
 
    procedure Create_Analysis_From_Menu
      (Widget : access Gtk_Widget_Record'Class);
-   --  Create a new analysis instance from the "Tools/Coverage" menu.
+   --  Create a new analysis instance from the "Tools/Coverage" menu
 
    function Create_Analysis_Instance
      (Name : String := "") return Code_Analysis_Instance;
    --  Create a new analysis instance.
-   --  The instance is inserted in the Instances set of the Module_ID.
+   --  The instance is inserted in the Instances set of the Module_ID
 
    procedure Add_Gcov_File_Info_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
@@ -361,7 +361,7 @@ package body Code_Analysis_Module is
    procedure Add_Gcov_File_Info_From_Shell
      (Data    : in out Callback_Data'Class;
       Command : String);
-   --  Add node and coverage info provided by a gcov file parsing.
+   --  Add node and coverage info provided by a gcov file parsing
 
    procedure Add_Gcov_File_Info_In_Callback
      (Cont_N_Anal : Context_And_Analysis);
@@ -373,12 +373,12 @@ package body Code_Analysis_Module is
    procedure Add_Gcov_Project_Info_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
-   --  Call Add_Gcov_File_Info on every files of the contextual project.
+   --  Call Add_Gcov_File_Info on every files of the contextual project
 
    procedure Add_Gcov_Project_Info_From_Shell
      (Data    : in out Callback_Data'Class;
       Command : String);
-   --  Call Add_Gcov_File_Info on every files of the given project.
+   --  Call Add_Gcov_File_Info on every files of the given project
 
    procedure Add_Gcov_Project_Info_In_Callback
      (Cont_N_Anal : Context_And_Analysis);
@@ -420,22 +420,22 @@ package body Code_Analysis_Module is
    procedure Destroy_Analysis_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
-   --  Call Destroy_Analysis_Instance.
+   --  Call Destroy_Analysis_Instance
 
    procedure Clear_Analysis_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
-   --  Call Clear_Analysis_Instance.
+   --  Call Clear_Analysis_Instance
 
    procedure Destroy_All_Analyzes_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
-   --  Call Destroy_All_Analyzes.
+   --  Call Destroy_All_Analyzes
 
    procedure Destroy_All_Analyzes_From_Shell
      (Data    : in out Callback_Data'Class;
       Command : String);
-   --  Call Destroy_All_Analyzes.
+   --  Call Destroy_All_Analyzes
 
    procedure On_Project_Changing_Hook
      (Kernel : access Kernel_Handle_Record'Class;
@@ -450,7 +450,7 @@ package body Code_Analysis_Module is
    procedure Destroy_Analysis_Instance
      (Kernel   : Kernel_Handle;
       Analysis : Code_Analysis_Instance);
-   --  Free the memory used by the given analysis instance.
+   --  Free the memory used by the given analysis instance
 
    procedure Clear_Analysis_Instance
      (Kernel   : Kernel_Handle;
@@ -531,12 +531,12 @@ package body Code_Analysis_Module is
    procedure Remove_File_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
-   --  Remove the selected file node from the related report and instance.
+   --  Remove the selected file node from the related report and instance
 
    procedure Remove_Project_From_Menu
      (Widget      : access Glib.Object.GObject_Record'Class;
       Cont_N_Anal : Context_And_Analysis);
-   --  Remove the selected project node from the related report and instance.
+   --  Remove the selected project node from the related report and instance
 
    procedure Activate_Pango_Markup (Item : Gtk_Menu_Item);
    --  Allow to use pango markup when setting the item label
@@ -1229,8 +1229,7 @@ package body Code_Analysis_Module is
             if Prj_Name /= No_Project then
                --  Set in the context the 1st project that has analysis
                --  data
-               Set_File_Information
-                 (Local_Context, Project => Prj_Name);
+               Set_File_Information (Local_Context, Project => Prj_Name);
             else
                --  Show the empty report warning board
                if Get_No_Show_All (Cont_N_Anal.Analysis.View.Error_Board) then
@@ -2231,15 +2230,15 @@ package body Code_Analysis_Module is
    ---------------------------------
 
    procedure Append_Project_Menu_Entries
-     (Cont_N_Anal  : Context_And_Analysis;
-      Submenu      : access Gtk_Menu_Record'Class)
+     (Cont_N_Anal : Context_And_Analysis;
+      Submenu     : access Gtk_Menu_Record'Class)
    is
       Item    : Gtk_Menu_Item;
       Context : Selection_Context :=
                   Get_Current_Context (Get_Kernel (Cont_N_Anal.Context));
    begin
       Set_File_Information
-        (Context, VFS.No_File, Project_Information (Cont_N_Anal.Context));
+        (Context, Project => Project_Information (Cont_N_Anal.Context));
 
       Gtk_New (Item, -"Show coverage information");
       Append (Submenu, Item);
@@ -2301,10 +2300,10 @@ package body Code_Analysis_Module is
                   File_Info);
                Set_File_Information (Checked_Context, File_Info, Prj_Info);
             end;
+
          else
             Set_File_Information
-              (Checked_Context,
-               Project => Get_Project (Kernel));
+              (Checked_Context, Project => Get_Project (Kernel));
          end if;
       end if;
 
@@ -2501,9 +2500,9 @@ package body Code_Analysis_Module is
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle)
    is
-      Cont_N_Anal : Context_And_Analysis;
       use Code_Analysis_Instances;
       Cur         : constant Cursor := Code_Analysis_Module_ID.Analyzes.First;
+      Cont_N_Anal : Context_And_Analysis;
    begin
       if Cur = No_Element then
          return;
@@ -2525,8 +2524,8 @@ package body Code_Analysis_Module is
    -----------------------
 
    procedure Append_To_Submenu
-     (Cont_N_Anal  : Context_And_Analysis;
-      Submenu      : access Gtk_Menu_Record'Class)
+     (Cont_N_Anal : Context_And_Analysis;
+      Submenu     : access Gtk_Menu_Record'Class)
    is
       use Code_Analysis_Instances;
       Item : Gtk_Menu_Item;
@@ -2571,7 +2570,7 @@ package body Code_Analysis_Module is
       Menu        : access Gtk_Menu_Record'Class;
       Label       : String)
    is
-      Item        : Gtk_Menu_Item;
+      Item : Gtk_Menu_Item;
    begin
       Gtk_New (Item, -Label);
       Append (Menu, Item);
@@ -2903,7 +2902,7 @@ package body Code_Analysis_Module is
       --  Use a static menu, so that the "gcov.py" plug-in can add menus to
       --  the menu "/Tools/Coverage/".
 
-      --  ??? The current static menus work only in "single analysis" mode.
+      --  ??? The current static menus work only in "single analysis" mode
 
       --        Register_Dynamic_Menu
       --          (Kernel      => Kernel,

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                            AdaCore                                --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -539,7 +538,7 @@ package body Project_Explorers_Files is
 
    exception
       when Directory_Error =>
-         --  The directory couldn't be open, probably because of permissions.
+         --  The directory couldn't be open, probably because of permissions
 
          New_D := D;
          Free (New_D);
@@ -1335,12 +1334,12 @@ package body Project_Explorers_Files is
            (Get_String (View.File_Model, Iter, Absolute_Name_Column),
             Dir.Full_Name.all)
          then
-            --  We found the file's directory.
+            --  We found the file's directory
 
             Path := Get_Path (View.File_Model, Iter);
             if not Row_Expanded (View.File_Tree, Path)
               and then Children (View.File_Model, Iter) /= Null_Iter then
-               --  File's directory is not expanded. Return now.
+               --  File's directory is not expanded. Return now
 
                --  Note that we need to test if dir node has children: in the
                --  normal case, a non expanded dir always has a dummy child.
@@ -1350,7 +1349,7 @@ package body Project_Explorers_Files is
                return;
             end if;
 
-            --  file's directory is expanded. Let's look at the children.
+            --  file's directory is expanded. Let's look at the children
             Next_Iter := Children (View.File_Model, Iter);
 
             while Next_Iter /= Null_Iter loop
@@ -1359,7 +1358,7 @@ package body Project_Explorers_Files is
                     (View.File_Model, Next_Iter, Absolute_Name_Column),
                   File.Full_Name.all)
                then
-                  --  File already present. Do nothing.
+                  --  File already present. Do nothing
                   return;
                end if;
 

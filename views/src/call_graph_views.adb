@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2007                      --
---                              AdaCore                              --
+--                 Copyright (C) 2005-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -122,7 +121,7 @@ package body Call_Graph_Views is
    end record;
 
    procedure Free (X : in out Reference_Record);
-   --  Free memory associated to X.
+   --  Free memory associated to X
 
    package Reference_List is new Generic_List (Reference_Record, Free);
    use Reference_List;
@@ -142,10 +141,10 @@ package body Call_Graph_Views is
      (View   : access Callgraph_View_Record'Class;
       Iter   : Gtk_Tree_Iter;
       Create : Boolean := False) return List_Access;
-   --  Get the locations list associated with Iter. Create it if necessary.
+   --  Get the locations list associated with Iter. Create it if necessary
 
    function To_Record (Ref : Entity_Reference) return Reference_Record;
-   --  Extract the relevant information from Ref.
+   --  Extract the relevant information from Ref
 
    function To_XML (R : Reference_Record) return Node_Ptr;
    function From_XML (N : Node_Ptr) return Reference_Record;
@@ -238,11 +237,11 @@ package body Call_Graph_Views is
 
    procedure Select_Current_Location
      (View : access Callgraph_View_Record'Class);
-   --  Open an editor to the current location.
+   --  Open an editor to the current location
 
    procedure Open_Selected_Value
      (View : access Callgraph_View_Record'Class);
-   --  Open the value currently selected in the main tree.
+   --  Open the value currently selected in the main tree
 
    ---------------
    -- To_Record --
@@ -331,7 +330,7 @@ package body Call_Graph_Views is
       Model : Gtk_Tree_Model;
 
       procedure Strong_Select (T : Gtk_Tree_View; I : Gtk_Tree_Iter);
-      --  Select and place the keyboard focus on I.
+      --  Select and place the keyboard focus on I
 
       procedure Select_In_Base_Tree (Going_Down : Boolean := True);
       --  Select the next iter in the base tree, with the given direction
@@ -756,7 +755,7 @@ package body Call_Graph_Views is
                Background_Mode => True);
       end case;
 
-      --  Remove the dummy node.
+      --  Remove the dummy node
 
       Child := Children (M, Iter);
       Remove (M, Child);
@@ -781,9 +780,10 @@ package body Call_Graph_Views is
       Menu         : Gtk_Menu)
    is
       pragma Unreferenced (Event_Widget, Kernel, Menu);
-      V     : constant Callgraph_View_Access := Callgraph_View_Access (Object);
-      Model : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (V.Tree));
-      Iter  : Gtk_Tree_Iter;
+      V       : constant Callgraph_View_Access :=
+                  Callgraph_View_Access (Object);
+      Model   : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (V.Tree));
+      Iter    : Gtk_Tree_Iter;
       Entity  : Entity_Information;
       Value   : GValue;
    begin

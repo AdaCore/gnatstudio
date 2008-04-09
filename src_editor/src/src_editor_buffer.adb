@@ -179,7 +179,7 @@ package body Src_Editor_Buffer is
 
    procedure Line_Highlights_Changed
      (Buffer : access Source_Buffer_Record'Class);
-   --  Emit the "Line_Highlights_Changed" signal.
+   --  Emit the "Line_Highlights_Changed" signal
 
    procedure Mark_Set_Handler
      (Buffer : access Source_Buffer_Record'Class;
@@ -252,7 +252,7 @@ package body Src_Editor_Buffer is
 
    procedure Buffer_Destroy (Data : System.Address; Buf : System.Address);
    pragma Convention (C, Buffer_Destroy);
-   --  Called when the buffer is being destroyed.
+   --  Called when the buffer is being destroyed
 
    function Automatic_Save (Buffer : Source_Buffer) return Boolean;
    --  Handle automatic save of the buffer, using a timeout
@@ -355,7 +355,7 @@ package body Src_Editor_Buffer is
    --  Never use Free (Contents) directly, use the Free procedure below.
 
    procedure Free (S : in out Src_String);
-   --  Free the memory associated with S.
+   --  Free the memory associated with S
 
    function Get_String
      (Buffer : Source_Buffer;
@@ -372,7 +372,7 @@ package body Src_Editor_Buffer is
 
    procedure C_Free (S : Interfaces.C.Strings.chars_ptr);
    pragma Import (C, C_Free, "free");
-   --  Binding to the C "free" function.
+   --  Binding to the C "free" function
 
    function Get_Slice
      (Buffer       : Source_Buffer;
@@ -460,14 +460,14 @@ package body Src_Editor_Buffer is
    procedure Update_Highlight_Region
      (Buffer : Source_Buffer;
       Iter   : Gtk_Text_Iter);
-   --  Update the region to be highlighted in the next highlighting timeout.
+   --  Update the region to be highlighted in the next highlighting timeout
 
    procedure Process_Highlight_Region
      (Buffer : Source_Buffer);
-   --  Highlight the region marked by the highlight marks in the editor.
+   --  Highlight the region marked by the highlight marks in the editor
 
    procedure Highlight_Parenthesis (Buffer : Source_Buffer);
-   --  Highlight the matching parenthesis that are next to the cursor, if any.
+   --  Highlight the matching parenthesis that are next to the cursor, if any
 
    function Conversion_Error_Message (Charset : String) return UTF8_String;
    --  Return the location category corresponding to errors when converting
@@ -631,7 +631,7 @@ package body Src_Editor_Buffer is
    -- Get_String --
    ----------------
 
-   --  ??? See whether these two functions could be optimized further.
+   --  ??? See whether these two functions could be optimized further
 
    function Get_String
      (Buffer : Source_Buffer;
@@ -896,7 +896,7 @@ package body Src_Editor_Buffer is
       end Check_Char;
 
    begin
-      --  Find a closing delimiter.
+      --  Find a closing delimiter
 
       Found := 0;
       Delimiter := -1;
@@ -950,7 +950,7 @@ package body Src_Editor_Buffer is
          end loop;
       end if;
 
-      --  Highlight next parenthesis, if necessary.
+      --  Highlight next parenthesis, if necessary
 
       Delimiter := -1;
       Copy (On_Cursor_Iter, Current);
@@ -1235,7 +1235,7 @@ package body Src_Editor_Buffer is
 
    procedure Cursor_Move_Hook (Buffer : access Source_Buffer_Record'Class) is
    begin
-      --  Clear the completion data if we are not already completing.
+      --  Clear the completion data if we are not already completing
 
       if not Buffer.Inserting then
          Reset_Completion_Data;
@@ -1250,7 +1250,7 @@ package body Src_Editor_Buffer is
 
    procedure Edit_Hook (Buffer : access Source_Buffer_Record'Class) is
    begin
-      --  Request re-parsing of the blocks.
+      --  Request re-parsing of the blocks
 
       if Buffer.Constructs_State > Approximate then
          Buffer.Constructs_State := Approximate;
@@ -1279,7 +1279,7 @@ package body Src_Editor_Buffer is
    begin
       --  ??? Must remove the line information column
 
-      --  Unregister the blocks timeout.
+      --  Unregister the blocks timeout
 
       if Buffer.Blocks_Timeout_Registered then
          Timeout_Remove (Buffer.Blocks_Timeout);
@@ -1304,7 +1304,7 @@ package body Src_Editor_Buffer is
         (Get_User_Data (Buf, Stub));
 
       procedure Free (X : in out Line_Info_Width_Array);
-      --  Free memory associated to X.
+      --  Free memory associated to X
 
       ----------
       -- Free --
@@ -1467,7 +1467,7 @@ package body Src_Editor_Buffer is
          Insert_Text_Cb (Buffer, Iter);
       end if;
 
-      --  Call Add_Lines, to compute added lines for the side column.
+      --  Call Add_Lines, to compute added lines for the side column
 
       Start := Buffer_Line_Type (Get_Line (Iter) + 1);
 
@@ -1541,7 +1541,7 @@ package body Src_Editor_Buffer is
             Last     : Integer := 1;
             CR_Found : Boolean := False;
          begin
-            --  Copy Text in T, replacing CRLF by LF and CR by LF.
+            --  Copy Text in T, replacing CRLF by LF and CR by LF
             for J in 1 .. Length loop
                if Text (J) = ASCII.CR then
                   CR_Found := True;
@@ -1741,7 +1741,7 @@ package body Src_Editor_Buffer is
          end if;
       end if;
 
-      --  Remove the lines in the side information column.
+      --  Remove the lines in the side information column
 
       if Line_Start /= Line_End then
          --  Unfold all lines, remove blank lines before deleting multiple
@@ -1931,7 +1931,7 @@ package body Src_Editor_Buffer is
          Line   => Gint (Get_Editable_Line (Buffer, Buffer_Line_Type (L + 1))),
          Column => C + 1);
 
-      --  Remove delimiters highlight.
+      --  Remove delimiters highlight
 
       if Buffer.Has_Delimiters_Highlight then
          declare
@@ -2310,7 +2310,7 @@ package body Src_Editor_Buffer is
       Buffer.First_Highlight_Mark := Create_Mark (Buffer, "", Iter);
       Buffer.Last_Highlight_Mark  := Create_Mark (Buffer, "", Iter, False);
 
-      --  Initialize the line info.
+      --  Initialize the line info
 
       Buffer.Editable_Lines := new Editable_Line_Array (1 .. 1);
       Buffer.Editable_Lines (1) :=
@@ -2324,7 +2324,7 @@ package body Src_Editor_Buffer is
       Buffer.Line_Data (1) := New_Line_Data;
       Buffer.Line_Data (1).Editable_Line := 1;
 
-      --  Compute the block information.
+      --  Compute the block information
 
       Register_Edit_Timeout (Buffer);
 
@@ -2389,7 +2389,7 @@ package body Src_Editor_Buffer is
          Text_Tag_Table.Add (Tags, Buffer.Syntax_Tags (Entity_Kind));
       end loop;
 
-      --  Create Delimiter_Tag and save it into the source buffer tag table.
+      --  Create Delimiter_Tag and save it into the source buffer tag table
 
       Create_Highlight_Line_Tag
         (Buffer.Delimiter_Tag, Get_Pref (Delimiter_Color));
@@ -2484,7 +2484,7 @@ package body Src_Editor_Buffer is
          S_Line : constant String :=
                     Get_Text (Buffer, Line, 1, Line, Column);
       begin
-         --  ??? The code below is inneficient.
+         --  ??? The code below is inneficient
 
          if Lang_Context.New_Line_Comment_Start /= null then
             Len := Lang_Context.New_Line_Comment_Start'Length;
@@ -2552,14 +2552,14 @@ package body Src_Editor_Buffer is
             Backward_Char (Pos, Result);
 
             if not Result then
-               --  The string delimiter is the first character.
+               --  The string delimiter is the first character
                Quoted := not Quoted;
                exit;
             end if;
 
             C2 := Get_Char (Pos);
 
-            --  Ignore string delimiters in Constant_Character quotes.
+            --  Ignore string delimiters in Constant_Character quotes
             if C2 /= Lang_Context.Constant_Character
               and then C2 /= Lang_Context.Quote_Character
             then
@@ -2809,7 +2809,7 @@ package body Src_Editor_Buffer is
          Reset_Buffer (Buffer);
       end if;
 
-      --  Insert the new text.
+      --  Insert the new text
 
       Buffer.Inserting := True;
 
@@ -2921,14 +2921,14 @@ package body Src_Editor_Buffer is
       Terminator  : Line_Terminator_Style := Buffer.Line_Terminator;
       Buffer_Line : Buffer_Line_Type;
       Force_Write : Boolean := False;
-      --  Whether the file mode has been forced to writable.
+      --  Whether the file mode has been forced to writable
       U_Buffer    : Unbounded_String;
       S           : Ada.Strings.Unbounded.String_Access;
       Length      : Natural;
       Has_Errors  : Boolean := False;
 
       procedure New_Line;
-      --  Append a new line on U_Buffer.
+      --  Append a new line on U_Buffer
 
       --------------
       -- New_Line --
@@ -3014,7 +3014,7 @@ package body Src_Editor_Buffer is
                      if Error.all = null then
                         Append (U_Buffer, Contents);
                      else
-                        --  An error has occurred on this line.
+                        --  An error has occurred on this line
                         Has_Errors := True;
 
                         Insert_Location
@@ -3041,7 +3041,7 @@ package body Src_Editor_Buffer is
          Unchecked_Free (Error);
       end;
 
-      --  If we observed UTF-8 conversion errors, warn the user.
+      --  If we observed UTF-8 conversion errors, warn the user
       if Has_Errors
         and then not Internal
       then
@@ -3070,7 +3070,7 @@ package body Src_Editor_Buffer is
 
       FD := Write_File (Filename);
 
-      --  The file could not be opened, check whether it is read-only.
+      --  The file could not be opened, check whether it is read-only
 
       if FD = Invalid_File
         and then Is_Regular_File (Filename)
@@ -3152,7 +3152,7 @@ package body Src_Editor_Buffer is
          Status_Changed (Buffer);
       end if;
 
-      --  If the file mode was forced to writable, reset it to read-only.
+      --  If the file mode was forced to writable, reset it to read-only
 
       if Force_Write then
          Set_Writable (Filename, False);
@@ -3419,7 +3419,7 @@ package body Src_Editor_Buffer is
          return;
       end if;
 
-      --  If the line is in a non-visible line, make the line visible.
+      --  If the line is in a non-visible line, make the line visible
 
       if Buffer_Line = 0 then
          Unfold_Line (Buffer, Line);
@@ -3582,7 +3582,7 @@ package body Src_Editor_Buffer is
       Line := Get_Editable_Line
         (Buffer, Buffer_Line_Type (Get_Line (Iter) + 1));
 
-      --  Default the Line to 1.
+      --  Default the Line to 1
 
       if Line = 0 then
          Line := 1;
@@ -4223,7 +4223,7 @@ package body Src_Editor_Buffer is
       --  numbers.
       Add_Lines (Buffer, Start, Number);
 
-      --  Parse the block information.
+      --  Parse the block information
       Register_Edit_Timeout (Buffer);
    end Lines_Add_Hook;
 
@@ -4260,7 +4260,7 @@ package body Src_Editor_Buffer is
    is
       pragma Unreferenced (Start_Line, End_Line);
    begin
-      --  Parse the block information.
+      --  Parse the block information
       Register_Edit_Timeout (Buffer);
    end Lines_Remove_Hook_After;
 
@@ -4424,7 +4424,7 @@ package body Src_Editor_Buffer is
          Set_File_Information (Context, Buffer.File_Identifier);
       end if;
 
-      --  Find the editable boundaries.
+      --  Find the editable boundaries
 
       for J in reverse 1 .. Start_Line loop
          First := Get_Editable_Line (Buffer, J);
@@ -4462,7 +4462,7 @@ package body Src_Editor_Buffer is
       if Buffer.Filename /= VFS.No_File then
          New_Timestamp := File_Time_Stamp (Buffer.Filename);
 
-         --  If the file does not exist, we assume the editor is up-to-date.
+         --  If the file does not exist, we assume the editor is up-to-date
 
          Result := New_Timestamp = No_Time
            or else New_Timestamp = Buffer.Timestamp;
@@ -4599,7 +4599,7 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record'Class)
       return Boolean is
    begin
-      --  Only modified and non-empty unsaved buffers need to be saved.
+      --  Only modified and non-empty unsaved buffers need to be saved
       return Get_Status (Buffer) = Modified
         or else (Get_Status (Buffer) = Unsaved
                    and then Get_Char_Count (Buffer) > 0);
@@ -4983,7 +4983,7 @@ package body Src_Editor_Buffer is
          First   : Natural;
          Last    : Natural;
          Replace : String);
-      --  Callback for Format_Buffer.
+      --  Callback for Format_Buffer
 
       procedure Skip_To_First_Non_Blank (Iter : in out Gtk_Text_Iter);
       --  Move Iter to the first non-blank character on the line
@@ -5994,7 +5994,7 @@ package body Src_Editor_Buffer is
       end loop Entity_Kind_Search_Loop;
 
       if Entity_Kind = Normal_Text then
-         --  We are inside a normal text region. Just re-highlight this region.
+         --  We are inside a normal text region. Just re-highlight this region
 
          Backward_To_Tag_Toggle (Start_Iter, Result => Ignored);
          Forward_To_Tag_Toggle (End_Iter, Result => Ignored);

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007, AdaCore             --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -119,7 +119,7 @@ package body Browsers.Dependency_Items is
    ----------------
    -- File items --
    ----------------
-   --  These items represent source files from the application.
+   --  These items represent source files from the application
 
    type File_Item_Record is new Browsers.Canvas.Arrow_Item_Record with
    record
@@ -131,7 +131,7 @@ package body Browsers.Dependency_Items is
      (Item    : out File_Item;
       Browser : access Browsers.Canvas.General_Browser_Record'Class;
       File    : Source_File);
-   --  Create a new dependency item that represents Dep.
+   --  Create a new dependency item that represents Dep
 
    procedure Gtk_New
      (Item            : out File_Item;
@@ -184,7 +184,7 @@ package body Browsers.Dependency_Items is
    procedure Gtk_New
      (Link     : out Dependency_Link;
       Explicit : Boolean);
-   --  Create a new link.
+   --  Create a new link
 
    ----------
    -- Misc --
@@ -220,7 +220,7 @@ package body Browsers.Dependency_Items is
    procedure Open_File
      (Browser : access Glib.Object.GObject_Record'Class;
       Context : GPS.Kernel.Selection_Context);
-   --  Open the file described in Context for analysis in the browser.
+   --  Open the file described in Context for analysis in the browser
 
    function Find_File
      (In_Browser : access General_Browser_Record'Class;
@@ -269,7 +269,7 @@ package body Browsers.Dependency_Items is
    --  Browser_Type, we re-use this one instead.
 
    procedure Destroy_Idle (Data : in out Examine_Dependencies_Idle_Data);
-   --  Called when the idle loop is destroyed.
+   --  Called when the idle loop is destroyed
 
    function Examine_Ancestors_Idle
      (Data : Examine_Dependencies_Idle_Data) return Boolean;
@@ -277,7 +277,7 @@ package body Browsers.Dependency_Items is
 
    function Project_Of
      (Item : access File_Item_Record'Class) return Project_Type;
-   --  Return the name of the project that contains Item.
+   --  Return the name of the project that contains Item
 
    function Load_Desktop
      (MDI  : MDI_Window;
@@ -309,7 +309,7 @@ package body Browsers.Dependency_Items is
    procedure Check_Dependencies
      (Browser  : access Dependency_Browser_Record'Class;
       Item     : File_Item);
-   --  Check that the dependencies from Item are still valid.
+   --  Check that the dependencies from Item are still valid
 
    ------------------------
    -- Check_Dependencies --
@@ -640,7 +640,7 @@ package body Browsers.Dependency_Items is
 
    procedure Destroy_Idle (Data : in out Examine_Dependencies_Idle_Data) is
       procedure Clean;
-      --  Clean up routine for Destroy_Idle.
+      --  Clean up routine for Destroy_Idle
 
       -----------
       -- Clean --

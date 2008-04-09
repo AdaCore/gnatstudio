@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2006                      --
---                              AdaCore                              --
+--                 Copyright (C) 2005-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -96,8 +95,7 @@ package VCS_View is
    --  Clear all the files in the model
 
    function Get_Current_Context
-     (Explorer : access VCS_View_Record)
-      return Selection_Context;
+     (Explorer : access VCS_View_Record) return Selection_Context;
 
    procedure Set_Current_Context
      (Explorer : access VCS_View_Record;

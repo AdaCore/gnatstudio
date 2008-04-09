@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2005-2007, AdaCore                  --
+--                 Copyright (C) 2005-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -108,12 +108,12 @@ package body Outline_View is
    function Open_Outline
      (Kernel : access Kernel_Handle_Record'Class)
       return MDI_Child;
-   --  Open the outline view, or return a handle to it if it already exists.
+   --  Open the outline view, or return a handle to it if it already exists
 
    procedure On_Open_Outline
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle);
-   --  Raise the existing explorer, or open a new one.
+   --  Raise the existing explorer, or open a new one
 
    type Outline_View_Record is new Gtk.Box.Gtk_Box_Record with record
       Kernel    : Kernel_Handle;

@@ -24,6 +24,7 @@
 with Ada.Calendar;
 with Ada.Finalization;
 with Ada.Containers;
+
 with GNAT.Calendar;
 with GNAT.OS_Lib;
 with GNAT.Strings;
@@ -72,7 +73,7 @@ package VFS is
    function Create_From_Dir
      (Dir       : Virtual_File;
       Base_Name : UTF8_String) return Virtual_File;
-   --  Creates a file from its directory and base name.
+   --  Creates a file from its directory and base name
 
    function Create_From_Base (Base_Name : UTF8_String) return Virtual_File;
    --  Return a file, given its base name.
@@ -281,7 +282,7 @@ package VFS is
    procedure Write
      (File : in out Writable_File;
       Str  : String);
-   --  Write a string to File. The contents of Str are written as-is.
+   --  Write a string to File. The contents of Str are written as-is
 
    procedure Close (File : in out Writable_File);
    --  Closes File, and write the file to disk.

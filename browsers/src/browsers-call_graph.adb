@@ -342,7 +342,7 @@ package body Browsers.Call_Graph is
    procedure Examine_Entity_Call_Graph
      (Kernel     : access Kernel_Handle_Record'Class;
       Entity     : Entity_Information);
-   --  Display the call graph for the node.
+   --  Display the call graph for the node
 
    procedure Examine_Ancestors_Call_Graph
      (Kernel : access Kernel_Handle_Record'Class;
@@ -358,11 +358,11 @@ package body Browsers.Call_Graph is
 
    function Open_Call_Graph_Browser
      (Kernel : access Kernel_Handle_Record'Class) return Gtkada.MDI.MDI_Child;
-   --  Find, or create a new, call graph editor.
+   --  Find, or create a new, call graph editor
 
    function Create_Call_Graph_Browser
      (Kernel : access Kernel_Handle_Record'Class) return MDI_Child;
-   --  Create a new call graph browser.
+   --  Create a new call graph browser
 
    procedure Parse_All_Refs
      (Kernel             : access Kernel_Handle_Record'Class;
@@ -393,12 +393,12 @@ package body Browsers.Call_Graph is
      (Data    : in out Entity_Idle_Data;
       Command : Command_Access;
       Result  : out Command_Return_Type);
-   --  Find the next reference to the entity in D.
+   --  Find the next reference to the entity in D
 
    function Add_Entity_If_Not_Present
      (Browser : access Call_Graph_Browser_Record'Class;
       Entity  : Entity_Information) return Entity_Item;
-   --  Add a new entity to the browser, if not already there.
+   --  Add a new entity to the browser, if not already there
 
    procedure Add_Entity_And_Link
      (Browser        : Call_Graph_Browser;
@@ -410,7 +410,7 @@ package body Browsers.Call_Graph is
    --  Add Entity, and possibly a link to Cb.Item to Cb.Browser
 
    procedure Destroy_Idle (Data : in out Entity_Idle_Data);
-   --  Called when the idle loop is destroyed.
+   --  Called when the idle loop is destroyed
 
    package Xref_Commands is new Commands.Generic_Asynchronous
      (Entity_Idle_Data, Destroy_Idle);
@@ -422,7 +422,7 @@ package body Browsers.Call_Graph is
 
    procedure On_Find_All_References
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Find all the references of the current entity.
+   --  Find all the references of the current entity
 
    function Load_Desktop
      (MDI  : MDI_Window;

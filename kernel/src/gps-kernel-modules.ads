@@ -533,7 +533,7 @@ package GPS.Kernel.Modules is
    --  Control whether the contextual menu entry is sensitive (ie "grayed-out")
 
    function Get_Registered_Contextual_Menus
-     (Kernel  : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class)
       return GNAT.Strings.String_List_Access;
    --  Return the list of registered contextual menus. The returned array must
    --  be freed by the caller.

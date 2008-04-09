@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2007, AdaCore              --
+--                 Copyright (C) 2003-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -134,7 +134,7 @@ package GPS.Kernel.Contexts is
    --  Set the area information in Context
 
    function Has_Area_Information (Context : Selection_Context) return Boolean;
-   --  Whether the context contains information about a selected area.
+   --  Whether the context contains information about a selected area
 
    procedure Get_Area
      (Context    : Selection_Context;
@@ -151,7 +151,7 @@ package GPS.Kernel.Contexts is
      (Filter  : access Is_Area_Context;
       Context : Selection_Context) return Boolean;
    --  Filter that checks that the user has clicked on a subprogram entity.
-   --  This can be used for contextual menus for instance
+   --  This can be used for contextual menus for instance.
 
    ---------------------
    -- Message_Context --
@@ -179,7 +179,7 @@ package GPS.Kernel.Contexts is
    --  Return True if Context has message information
    function Message_Information
      (Context : Selection_Context) return String;
-   --  Return the message information associated with Context.
+   --  Return the message information associated with Context
 
    ---------------------
    -- Entity Contexts --
@@ -209,7 +209,7 @@ package GPS.Kernel.Contexts is
    --  Return True if Context has entity name information
    function Entity_Name_Information
      (Context : Selection_Context) return String;
-   --  Return the entity name information. This is a UTF8-encoded string.
+   --  Return the entity name information. This is a UTF8-encoded string
 
    function Has_Entity_Column_Information
      (Context : Selection_Context) return Boolean;
@@ -222,8 +222,7 @@ package GPS.Kernel.Contexts is
 
    function Get_Entity
      (Context           : Selection_Context;
-      Ask_If_Overloaded : Boolean := False)
-      return Entities.Entity_Information;
+      Ask_If_Overloaded : Boolean := False) return Entities.Entity_Information;
    --  Return the location of the declaration for the entity in Context.
    --  This information is automatically cached in the context, in case several
    --  modules need to compute it; However, if you first do a call with
@@ -239,8 +238,7 @@ package GPS.Kernel.Contexts is
    --  closest matching entity is returned
 
    function Get_Closest_Ref
-     (Context           : Selection_Context)
-      return Entities.Entity_Reference;
+     (Context : Selection_Context) return Entities.Entity_Reference;
    --  Return the entity reference corresponding to the current context. You
    --  should call Get_Entity first if you want to check for overloading
    --  entities.
@@ -258,6 +256,7 @@ package GPS.Kernel.Contexts is
    function Has_Activity_Information
      (Context : Selection_Context) return Boolean;
    --  Return True if Context has activity information
+
    function Activity_Information
      (Context : Selection_Context) return String;
    --  Returns the name of the activity

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2007                      --
---                              AdaCore                              --
+--                 Copyright (C) 2005-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -35,19 +34,19 @@ with Gtk.Widget;                use Gtk.Widget;
 with Pango.Font;                use Pango.Font;
 with Pango.Layout;              use Pango.Layout;
 
-with Tooltips;                  use Tooltips;
-with GPS.Kernel.Contexts;       use GPS.Kernel, GPS.Kernel.Contexts;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with Entities;                  use Entities;
 with Entities.Queries;          use Entities.Queries;
 with Entities.Tooltips;         use Entities.Tooltips;
-with VFS;                       use VFS;
-with Traces;                    use Traces;
+with GPS.Kernel.Contexts;       use GPS.Kernel, GPS.Kernel.Contexts;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GUI_Utils;                 use GUI_Utils;
 with Src_Editor_Module;         use Src_Editor_Module;
 with Src_Editor_View;           use Src_Editor_View;
-with GUI_Utils;                 use GUI_Utils;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
+with Tooltips;                  use Tooltips;
+with Traces;                    use Traces;
+with VFS;                       use VFS;
 
 package body Src_Editor_Box.Tooltips is
    Me : constant Debug_Handle := Create ("Editor.Tooltips");
@@ -142,24 +141,23 @@ package body Src_Editor_Box.Tooltips is
    is
       use Ada.Strings.Unbounded;
       use type GNAT.Strings.String_Access;
-      Box                   : constant Source_Editor_Box := Tooltip.Box;
-      Widget                : constant Source_View := Get_View (Tooltip.Box);
-      Line, Col             : Gint;
-      --        Cursor_Col            : Gint;
-      Mouse_X, Mouse_Y      : Gint;
-      Win_X, Win_Y          : Gint;
-      Start_Iter            : Gtk_Text_Iter;
-      End_Iter              : Gtk_Text_Iter;
-      Mask                  : Gdk.Types.Gdk_Modifier_Type;
-      Win                   : Gdk.Gdk_Window;
-      Location              : Gdk_Rectangle;
-      Filename              : constant Virtual_File := Get_Filename (Box);
-      Out_Of_Bounds         : Boolean;
-      Window                : Gdk.Gdk_Window;
-      Window_Width          : Gint;
-      Window_Height         : Gint;
-      Window_Depth          : Gint;
-      Context               : Selection_Context;
+      Box              : constant Source_Editor_Box := Tooltip.Box;
+      Widget           : constant Source_View := Get_View (Tooltip.Box);
+      Line, Col        : Gint;
+      Mouse_X, Mouse_Y : Gint;
+      Win_X, Win_Y     : Gint;
+      Start_Iter       : Gtk_Text_Iter;
+      End_Iter         : Gtk_Text_Iter;
+      Mask             : Gdk.Types.Gdk_Modifier_Type;
+      Win              : Gdk.Gdk_Window;
+      Location         : Gdk_Rectangle;
+      Filename         : constant Virtual_File := Get_Filename (Box);
+      Out_Of_Bounds    : Boolean;
+      Window           : Gdk.Gdk_Window;
+      Window_Width     : Gint;
+      Window_Height    : Gint;
+      Window_Depth     : Gint;
+      Context          : Selection_Context;
 
    begin
       Pixmap := null;
@@ -293,16 +291,16 @@ package body Src_Editor_Box.Tooltips is
       end;
 
       declare
-         Entity_Name : constant String := Get_Text (Start_Iter, End_Iter);
-         Entity      : Entity_Information;
-         Entity_Ref  : Entity_Reference;
-         Status      : Find_Decl_Or_Body_Query_Status;
+         Entity_Name   : constant String := Get_Text (Start_Iter, End_Iter);
          Editable_Line : constant Editable_Line_Type :=
-           Get_Editable_Line (Box.Source_Buffer, Buffer_Line_Type (Line + 1));
-
-         Column      : constant Visible_Column_Type :=
-           Expand_Tabs (Box.Source_Buffer, Editable_Line,
-                        Character_Offset_Type (Col + 1));
+                           Get_Editable_Line
+                             (Box.Source_Buffer, Buffer_Line_Type (Line + 1));
+         Column        : constant Visible_Column_Type :=
+                           Expand_Tabs (Box.Source_Buffer, Editable_Line,
+                                        Character_Offset_Type (Col + 1));
+         Entity        : Entity_Information;
+         Entity_Ref    : Entity_Reference;
+         Status        : Find_Decl_Or_Body_Query_Status;
       begin
          if Entity_Name = "" then
             return;

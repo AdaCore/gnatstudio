@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007, AdaCore             --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,7 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  This package is the root of the GPS' kernel API.
+--  This package is the root of the GPS' kernel API
 
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Finalization;
@@ -59,7 +59,7 @@ package GPS.Kernel is
    type Kernel_Handle_Record is new Glib.Object.GObject_Record with private;
    type Kernel_Handle is access all Kernel_Handle_Record'Class;
    pragma No_Strict_Aliasing (Kernel_Handle);
-   --  A kernel handle used to share information throughout GPS.
+   --  A kernel handle used to share information throughout GPS
 
    package Kernel_Desktop is new Gtkada.MDI.Desktop (Kernel_Handle);
 
@@ -121,7 +121,7 @@ package GPS.Kernel is
 
    function Get_Main_Window
      (Handle : access Kernel_Handle_Record) return Gtk.Window.Gtk_Window;
-   --  Return the main window associated with the kernel.
+   --  Return the main window associated with the kernel
 
    function Get_Tooltips
      (Handle : access Kernel_Handle_Record) return Gtk.Tooltips.Gtk_Tooltips;
@@ -166,11 +166,11 @@ package GPS.Kernel is
    --  If Handle is null, do nothing.
 
    procedure Pop_State (Handle : access Kernel_Handle_Record'Class);
-   --  Undo previous state.
+   --  Undo previous state
 
    function Get_Busy
      (Handle : access Kernel_Handle_Record'Class) return Boolean;
-   --  Return whether the current state of the Kernel is a processing state.
+   --  Return whether the current state of the Kernel is a processing state
 
    function Get_Home_Dir (Handle : access Kernel_Handle_Record) return String;
    --  Return the Home directory. (eg ~/.gps/).
@@ -194,7 +194,7 @@ package GPS.Kernel is
    function Get_Language_Handler
      (Handle : access Kernel_Handle_Record)
       return Language_Handlers.Language_Handler;
-   --  Return the language handler used by this kernel.
+   --  Return the language handler used by this kernel
 
    function GNAT_Version
      (Handle : access Kernel_Handle_Record) return String;
@@ -209,11 +209,11 @@ package GPS.Kernel is
    procedure Set_Destruction_Flag
      (Handle : access Kernel_Handle_Record;
       Flag   : Boolean);
-   --  Set the destruction flag in the kernel.
+   --  Set the destruction flag in the kernel
 
    function Is_In_Destruction
      (Handle : access Kernel_Handle_Record) return Boolean;
-   --  When return True, the kernel is in the process of being destroyed.
+   --  When return True, the kernel is in the process of being destroyed
 
    procedure Report_Preference_File_Error
      (Handle : access Kernel_Handle_Record;
@@ -314,6 +314,7 @@ package GPS.Kernel is
    --------------
 
    type Selection_Context is private;
+
    No_Context : constant Selection_Context;
    --  This type contains all the information about the selection in any
    --  module. Note that this is a tagged type, so that it can easily be
@@ -537,8 +538,8 @@ package GPS.Kernel is
    No_Tool : constant Tool_Properties_Record;
 
    procedure Register_Tool
-     (Kernel    : access Kernel_Handle_Record;
-      Tool      : Tool_Properties_Record);
+     (Kernel : access Kernel_Handle_Record;
+      Tool   : Tool_Properties_Record);
    --  Register a new tool.
    --  No copy is made for Tool, which must therefore not be freed by the
    --  caller
@@ -550,8 +551,7 @@ package GPS.Kernel is
    --  The resulting record must not be freed by the caller.
 
    function Get_All_Tools
-     (Kernel    : access Kernel_Handle_Record)
-      return Tool_Properties_Array;
+     (Kernel : access Kernel_Handle_Record) return Tool_Properties_Array;
    --  Return all registered tools
 
    ------------------
@@ -578,11 +578,11 @@ package GPS.Kernel is
 
    package Object_User_Callback is new Gtk.Handlers.User_Callback_With_Setup
      (Glib.Object.GObject_Record, Glib.Object.GObject, Setup);
-   --  Generic callback that can be used to connect a signal to a kernel.
+   --  Generic callback that can be used to connect a signal to a kernel
 
    package Object_Return_Callback is new Gtk.Handlers.Return_Callback
      (Glib.Object.GObject_Record, Boolean);
-   --  Generic callback that can be used to connect a signal to a kernel.
+   --  Generic callback that can be used to connect a signal to a kernel
 
    package Object_User_Return_Callback
      is new Gtk.Handlers.User_Return_Callback_With_Setup
@@ -934,7 +934,7 @@ private
       --  path.
 
       Gnatls_Server : GNAT.Strings.String_Access;
-      --  The name of the server having executed the last gnatls command.
+      --  The name of the server having executed the last gnatls command
 
       Preferences : Default_Preferences.Preferences_Manager;
       --  The current setting for the preferences
@@ -993,7 +993,7 @@ private
       --  this field).
 
       Is_In_Destruction : Boolean := False;
-      --  Determies wether the kernel is being destroyed.
+      --  Determies wether the kernel is being destroyed
 
       Hidden_File_Matcher : Pattern_Matcher_Access;
    end record;

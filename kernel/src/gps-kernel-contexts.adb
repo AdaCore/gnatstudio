@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2007, AdaCore              --
+--                 Copyright (C) 2003-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -32,37 +32,37 @@ package body GPS.Kernel.Contexts is
 
    type Filter_File is new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
-     (Filter : access Filter_File; Ctxt : Selection_Context)
+     (Filter : access Filter_File; Context : Selection_Context)
       return Boolean;
    --  See inherited documentation
 
    type Filter_Directory is new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
-     (Filter : access Filter_Directory; Ctxt : Selection_Context)
+     (Filter : access Filter_Directory; Context : Selection_Context)
       return Boolean;
    --  See inherited documentation
 
    type Filter_Entity is new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
-     (Filter : access Filter_Entity; Ctxt : Selection_Context)
+     (Filter : access Filter_Entity; Context : Selection_Context)
       return Boolean;
    --  See inherited documentation
 
    type Filter_Project_Only is new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
-     (Filter : access Filter_Project_Only; Ctxt : Selection_Context)
+     (Filter : access Filter_Project_Only; Context : Selection_Context)
       return Boolean;
    --  See inherited documentation
 
    type Filter_Editable_Project is new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
-     (Filter : access Filter_Editable_Project; Ctxt : Selection_Context)
+     (Filter : access Filter_Editable_Project; Context : Selection_Context)
       return Boolean;
    --  See inherited documentation
 
    type Filter_Project_File is new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
-     (Filter  : access Filter_Project_File; Ctxt : Selection_Context)
+     (Filter  : access Filter_Project_File; Context : Selection_Context)
       return Boolean;
    --  See inherited documentation
 
@@ -92,13 +92,13 @@ package body GPS.Kernel.Contexts is
 
    function Filter_Matches_Primitive
      (Filter  : access Filter_Project_Only;
-      Ctxt    : Selection_Context) return Boolean
+      Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
    begin
-      return Has_Project_Information (Ctxt)
-        and then not Has_Directory_Information (Ctxt)
-        and then not Has_File_Information (Ctxt);
+      return Has_Project_Information (Context)
+        and then not Has_Directory_Information (Context)
+        and then not Has_File_Information (Context);
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -106,13 +106,13 @@ package body GPS.Kernel.Contexts is
    ------------------------------
 
    function Filter_Matches_Primitive
-     (Filter : access Filter_Editable_Project; Ctxt : Selection_Context)
+     (Filter : access Filter_Editable_Project; Context : Selection_Context)
       return Boolean
    is
       pragma Unreferenced (Filter);
    begin
-      return Has_Project_Information (Ctxt)
-        and then Is_Editable (Project_Information (Ctxt));
+      return Has_Project_Information (Context)
+        and then Is_Editable (Project_Information (Context));
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -121,12 +121,12 @@ package body GPS.Kernel.Contexts is
 
    function Filter_Matches_Primitive
      (Filter  : access Filter_Project_File;
-      Ctxt    : Selection_Context) return Boolean
+      Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
    begin
-      return Has_Project_Information (Ctxt)
-        and then Has_File_Information (Ctxt);
+      return Has_Project_Information (Context)
+        and then Has_File_Information (Context);
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -152,11 +152,11 @@ package body GPS.Kernel.Contexts is
 
    function Filter_Matches_Primitive
      (Filter  : access Filter_Entity;
-      Ctxt    : Selection_Context) return Boolean
+      Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
    begin
-      return Has_Entity_Name_Information (Ctxt);
+      return Has_Entity_Name_Information (Context);
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -165,11 +165,11 @@ package body GPS.Kernel.Contexts is
 
    function Filter_Matches_Primitive
      (Filter  : access Filter_File;
-      Ctxt    : Selection_Context) return Boolean
+      Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
    begin
-      return Has_File_Information (Ctxt);
+      return Has_File_Information (Context);
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -178,11 +178,11 @@ package body GPS.Kernel.Contexts is
 
    function Filter_Matches_Primitive
      (Filter  : access Filter_Directory;
-      Ctxt    : Selection_Context) return Boolean
+      Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
    begin
-      return Has_Directory_Information (Ctxt);
+      return Has_Directory_Information (Context);
    end Filter_Matches_Primitive;
 
    --------------------------
@@ -496,8 +496,8 @@ package body GPS.Kernel.Contexts is
    ----------------------------
 
    procedure Set_Entity_Information
-     (Context       : in out Selection_Context;
-      Entity        : access Entities.Entity_Information_Record'Class) is
+     (Context : in out Selection_Context;
+      Entity  : access Entities.Entity_Information_Record'Class) is
    begin
       Ref (Entity_Information (Entity));
       Free (Context.Data.Data.Entity_Name);
@@ -603,11 +603,11 @@ package body GPS.Kernel.Contexts is
      (Context           : Selection_Context;
       Ask_If_Overloaded : Boolean := False) return Entity_Information
    is
-      File   : Source_File;
       Never_Examined : constant Boolean :=
         Context.Data.Data.Entity_Resolved = Entity_Not_Found
         or else (Context.Data.Data.Entity_Resolved = Overloaded_Entity_Found
                  and then Ask_If_Overloaded);
+      File           : Source_File;
 
    begin
       if Context.Data.Data.Entity_Resolved = Overloaded_Entity_Found
@@ -720,8 +720,7 @@ package body GPS.Kernel.Contexts is
    -- Text_Information --
    ----------------------
 
-   function Text_Information
-     (Context : Selection_Context) return String is
+   function Text_Information (Context : Selection_Context) return String is
    begin
       if Context.Data.Data.Text /= null then
          return Context.Data.Data.Text.all;
@@ -743,7 +742,8 @@ package body GPS.Kernel.Contexts is
       Project_File_Filter : constant Action_Filter := new Filter_Project_File;
       Project_Only_Filter : constant Action_Filter := new Filter_Project_Only;
       In_Project_Filter   : constant Action_Filter := new Filter_In_Project;
-      Editable_Project : constant Action_Filter := new Filter_Editable_Project;
+      Editable_Project    : constant Action_Filter :=
+                              new Filter_Editable_Project;
    begin
       Register_Filter (Kernel, File_Filter, "File");
       Register_Filter (Kernel, Directory_Filter, "Directory");

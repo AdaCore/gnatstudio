@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2007, AdaCore              --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -218,7 +218,7 @@ package body Project_Viewers is
    procedure Explorer_Selection_Changed
      (Viewer  : access Project_Viewer_Record'Class;
       Context : Selection_Context);
-   --  Same as above, but work directly on a context.
+   --  Same as above, but work directly on a context
 
    procedure Project_Editor_Context_Factory
      (Context      : in out Selection_Context;
@@ -247,7 +247,7 @@ package body Project_Viewers is
 
    procedure Edit_Multiple_Switches
      (Viewer : access Gtk_Widget_Record'Class);
-   --  Edit the switches for all the files selected in Viewer.
+   --  Edit the switches for all the files selected in Viewer
 
    procedure Project_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
@@ -898,6 +898,7 @@ package body Project_Viewers is
       if Iter = Null_Iter then
          Set_File_Information
            (Context, Project => V.Current_Project);
+
       else
          if not Iter_Is_Selected (Get_Selection (V.Tree), Iter) then
             Unselect_All (Get_Selection (V.Tree));
@@ -905,7 +906,7 @@ package body Project_Viewers is
          end if;
 
          declare
-            File_Name   : constant String := Get_String
+            File_Name : constant String := Get_String
               (V.Model, Iter, Absolute_File_Name_Column);
          begin
             Set_File_Information
@@ -1487,8 +1488,8 @@ package body Project_Viewers is
    -- Get_Label --
    ---------------
 
-   function Get_Label (Page : access Project_Editor_Page_Record'Class)
-      return String is
+   function Get_Label
+     (Page : access Project_Editor_Page_Record'Class) return String is
    begin
       return Page.Label.all;
    end Get_Label;
@@ -1497,8 +1498,8 @@ package body Project_Viewers is
    -- Get_Toc --
    -------------
 
-   function Get_Toc (Page : access Project_Editor_Page_Record'Class)
-      return String is
+   function Get_Toc
+     (Page : access Project_Editor_Page_Record'Class) return String is
    begin
       return Page.Toc.all;
    end Get_Toc;
