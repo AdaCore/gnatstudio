@@ -58,6 +58,8 @@ package VFS is
    type File_Array_Access is access all File_Array;
    procedure Unchecked_Free (Arr : in out File_Array_Access);
 
+   Empty_File_Array : constant File_Array;
+
    function Create (Full_Filename : UTF8_String) return Virtual_File;
    --  Return a file, given its full filename.
    --  The latter can be found, for source files, through the functions in
@@ -361,6 +363,9 @@ private
 
    No_File : constant Virtual_File :=
      (Ada.Finalization.Controlled with Value => null);
+
+   Empty_File_Array : constant File_Array :=
+                        File_Array'(1 .. 0 => No_File);
 
    Local_Root_Dir : constant Virtual_File :=
      (Ada.Finalization.Controlled with Value => new Contents_Record'(
