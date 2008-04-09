@@ -1107,6 +1107,7 @@ package body GPS.Kernel is
 
       Free (Data.Activity_Id);
       Free (Data.Revision);
+      Free (Data.Tag);
       Free (Data.Instances);
    end Free;
 
