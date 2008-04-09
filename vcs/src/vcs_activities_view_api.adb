@@ -27,7 +27,6 @@ with Templates_Parser;          use Templates_Parser;
 
 with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
-with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.MDI;                use Gtkada.MDI;
 
@@ -146,6 +145,30 @@ package body VCS_Activities_View_API is
    function Execute
      (Command : access Adjust_Patch_Action_Command_Type)
       return Command_Return_Type;
+
+   ---------------------
+   -- Context_Factory --
+   ---------------------
+
+   function Context_Factory
+     (Kernel : access Kernel_Handle_Record'Class;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context
+   is
+      pragma Unreferenced (Child);
+      Explorer : VCS_Activities_View_Access;
+   begin
+      Explorer := Get_Activities_Explorer (Kernel_Handle (Kernel), False);
+
+      if Explorer /= null then
+         return Get_Current_Context (Explorer);
+      else
+         return No_Context;
+      end if;
+
+   exception
+      when E : others => Trace (Exception_Handle, E);
+         return No_Context;
+   end Context_Factory;
 
    -------------
    -- Execute --

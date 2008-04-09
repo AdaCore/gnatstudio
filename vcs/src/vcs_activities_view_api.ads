@@ -17,9 +17,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.Scripts;        use GNAT.Scripts;
+
 with Glib.Object;         use Glib.Object;
 with Gtk.Menu;            use Gtk.Menu;
-with GNAT.Scripts;        use GNAT.Scripts;
+with Gtk.Widget;          use Gtk.Widget;
+
 with GPS.Kernel;          use GPS.Kernel;
 with VCS_View.Activities; use VCS_View.Activities;
 
@@ -80,5 +83,10 @@ package VCS_Activities_View_API is
      (Data    : in out GNAT.Scripts.Callback_Data'Class;
       Command : String);
    --  VCS Activities class command handler
+
+   function Context_Factory
+     (Kernel : access Kernel_Handle_Record'Class;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context;
+   --  Return the current context relative to the VCS Activities Explorer
 
 end VCS_Activities_View_API;

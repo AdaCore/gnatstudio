@@ -341,9 +341,15 @@ package body VCS_Module is
    procedure Default_Context_Factory
      (Module  : access VCS_Module_ID_Record;
       Context : in out Selection_Context;
-      Child   : Gtk.Widget.Gtk_Widget) is
+      Child   : Gtk.Widget.Gtk_Widget)
+   is
+      Kernel : constant Kernel_Handle := Get_Kernel (Module.all);
    begin
-      Context := VCS_View_API.Context_Factory (Get_Kernel (Module.all), Child);
+      if Child = Gtk_Widget (Get_Explorer (Kernel, False)) then
+         Context := VCS_View_API.Context_Factory (Kernel, Child);
+      else
+         Context := VCS_Activities_View_API.Context_Factory (Kernel, Child);
+      end if;
    end Default_Context_Factory;
 
    ------------------------------------------
