@@ -338,11 +338,12 @@ package body VCS_Module is
    -- Default_Context_Factory --
    -----------------------------
 
-   function Default_Context_Factory
-     (Module : access VCS_Module_ID_Record;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context is
+   procedure Default_Context_Factory
+     (Module  : access VCS_Module_ID_Record;
+      Context : in out Selection_Context;
+      Child   : Gtk.Widget.Gtk_Widget) is
    begin
-      return VCS_View_API.Context_Factory (Get_Kernel (Module.all), Child);
+      Context := VCS_View_API.Context_Factory (Get_Kernel (Module.all), Child);
    end Default_Context_Factory;
 
    ------------------------------------------

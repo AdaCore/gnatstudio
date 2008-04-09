@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
---                              AdaCore                              --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -64,9 +63,10 @@ package VCS_Module is
    VCS_Module_ID : VCS_Module_ID_Access;
 
    procedure Destroy (Module : in out VCS_Module_ID_Record);
-   function Default_Context_Factory
-     (Module : access VCS_Module_ID_Record;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context;
+   procedure Default_Context_Factory
+     (Module  : access VCS_Module_ID_Record;
+      Context : in out Selection_Context;
+      Child   : Gtk.Widget.Gtk_Widget);
    --  See inherited documentation
 
    procedure Register_Module
