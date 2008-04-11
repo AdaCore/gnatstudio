@@ -1229,18 +1229,22 @@ package body Project_Properties is
                  Attribute_As_Directory
                  and then Get_Boolean (Editor.Model, Iter, 1)
                then
+                  --  Force UNIX paths so that those paths can be used on all
+                  --  platforms (remote mode safe)
                   if Relative then
                      Values (N) := new String'
                        (Name_As_Directory
                           (Relative_Path_Name
                              (Get_String (Editor.Model, Iter, 0),
                               Get_Text (Editor.Path_Widget),
-                              Build_Server))
-                        & "/**");
+                              Build_Server),
+                           UNIX)
+                        & "**");
                   else
                      Values (N) := new String'
-                       (Name_As_Directory (Get_String (Editor.Model, Iter, 0))
-                        & "/**");
+                       (Name_As_Directory
+                          (Get_String (Editor.Model, Iter, 0))
+                        & "**");
                   end if;
 
                elsif Editor.Attribute.Base_Name_Only then
