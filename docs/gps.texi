@@ -13396,6 +13396,10 @@ This optional attribute specifies what index is used in the project. This is
 mostly for internal use by GPS, and describes what index of the project
 attribute is used to store the switches for that tool.
 
+@item override (Default value is 'false')
+This optional attribute specifies wether the tool definition can be redefined.
+The accepted values are "true' or 'false'.
+
 @end table
 
 This tag accepts the following children, described in separate sections:
