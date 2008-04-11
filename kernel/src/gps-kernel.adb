@@ -1870,6 +1870,9 @@ package body GPS.Kernel is
    is
       Pkg  : Package_Node_Id;
       Attr : Attribute_Node_Id;
+      Elm  : Tool_Properties_Record;
+      Iter : Tools_List.Cursor;
+      use Tools_List;
    begin
       Name_Len := Tool.Project_Package'Length;
       Name_Buffer (1 .. Name_Len) := To_Lower (Tool.Project_Package.all);
@@ -1899,6 +1902,31 @@ package body GPS.Kernel is
                Var_Kind   => Prj.List);
          end if;
       end if;
+
+      Iter := First (Kernel.Tools);
+      while Has_Element (Iter) loop
+         Elm := Element (Iter);
+
+         if Elm.Project_Index.all = Tool.Project_Index.all
+           and then Elm.Project_Package.all = Tool.Project_Package.all
+           and then Elm.Project_Attribute.all = Tool.Project_Attribute.all
+         then
+            Tools_List.Replace_Element (Kernel.Tools, Iter, Tool);
+            Free (Elm);
+
+            if not Tool.Override then
+               Insert (Kernel,
+                       Text   =>  -"Warning: tool " & Tool.Tool_Name.all &
+                                 (-" is defined twice"),
+                       Add_LF => True,
+                       Mode   => Error);
+            end if;
+
+            return;
+         end if;
+
+         Next (Iter);
+      end loop;
 
       Tools_List.Append (Kernel.Tools, Tool);
    end Register_Tool;

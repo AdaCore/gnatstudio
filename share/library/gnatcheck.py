@@ -21,7 +21,7 @@ class gnatCheck:
    def initXml (self):
       self.get_supported_rules()
       xml = """
-  <tool name="GnatCheck" package="Ide" index="gnatcheck" >
+  <tool name="GnatCheck" package="Ide" index="gnatcheck" override="true">
      <language>Ada</language>
      <switches lines="1" use_scrolled_window="true">
         <title line="1" >Rules</title>
@@ -210,5 +210,5 @@ def on_project_change(p):
       gnatcheckproc.initXml();
 
 GPS.Hook ("gps_started").add (init)
-GPS.Hook("project_changed").add (on_project_change);
+GPS.Hook("project_view_changed").add (on_project_change);
 GPS.parse_xml ("""<tool name="GnatCheck" package="Ide" index="gnatcheck"/>""");

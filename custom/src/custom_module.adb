@@ -1007,6 +1007,9 @@ package body Custom_Module is
                        To_Lower (Get_Attribute (Node, "index", Name));
          Attribute : constant String :=
                        Get_Attribute (Node, "attribute", "default_switches");
+         Override  : constant Boolean :=
+                       (To_Lower (Get_Attribute (Node, "override", "false"))
+                        = "true");
          N         : Node_Ptr := Node.Child;
          Tool      : Tool_Properties_Record;
 
@@ -1022,6 +1025,7 @@ package body Custom_Module is
          Tool.Project_Package   := new String'(Pack);
          Tool.Project_Attribute := new String'(Attribute);
          Tool.Project_Index     := new String'(Index);
+         Tool.Override          := Override;
 
          while N /= null loop
             if N.Tag.all = "initial-cmd-line" then

@@ -522,6 +522,7 @@ package GPS.Kernel is
       Project_Attribute : GNAT.Strings.String_Access;
       Project_Index     : GNAT.Strings.String_Access;
       Initial_Cmd_Line  : GNAT.Strings.String_Access;
+      Override          : Boolean := False;
       Config            : Switches_Chooser.Switches_Editor_Config;
       Languages         : GNAT.Strings.String_List_Access;
    end record;
@@ -823,7 +824,7 @@ private
      (Data => (Ada.Finalization.Controlled with null));
 
    No_Tool : constant Tool_Properties_Record :=
-     (null, null, null, null, null, null, null);
+     (null, null, null, null, null, false, null, null);
 
    package Tools_List is new Ada.Containers.Doubly_Linked_Lists
      (Tool_Properties_Record);
