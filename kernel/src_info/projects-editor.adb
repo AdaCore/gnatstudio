@@ -3721,7 +3721,8 @@ package body Projects.Editor is
          (Name           => Old_Name,
           Node           => Empty_Node,
           Canonical_Path => Path_Name_Type (Old_Name),
-          Extended       => False));
+          Extended       => False,
+          Proj_Qualifier => Unspecified));
 
       --  Register the new name
       Prj.Tree.Tree_Private_Part.Projects_Htable.Set
@@ -3731,7 +3732,8 @@ package body Projects.Editor is
          (Name           => Name,
           Canonical_Path => Get_String (D),
           Node           => Project.Node,
-          Extended       => False));
+          Extended       => False,
+          Proj_Qualifier => Unspecified));
 
       Reset_Name_Table
         (Project_Registry (Get_Registry (Project)),
@@ -3791,7 +3793,8 @@ package body Projects.Editor is
          (Name           => Project_Name,
           Canonical_Path => Path_Name_Type (Project_Name),
           Node           => Project,
-          Extended       => False));
+          Extended       => False,
+          Proj_Qualifier => Unspecified));
       Reset_Project_Name_Hash (Registry, Prj.Tree.Name_Of (Project, Tree));
 
       P := Get_Project_From_Name (Registry, Prj.Tree.Name_Of (Project, Tree));
