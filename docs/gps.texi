@@ -13397,8 +13397,9 @@ mostly for internal use by GPS, and describes what index of the project
 attribute is used to store the switches for that tool.
 
 @item override (Default value is 'false')
-This optional attribute specifies wether the tool definition can be redefined.
-The accepted values are "true' or 'false'.
+This optional attribute specifies whether the tool definition can be redefined.
+The accepted values are 'true' or 'false'. If override is not set, and the tool
+is defined several times, then a Warning will be displayed.
 
 @end table
 
