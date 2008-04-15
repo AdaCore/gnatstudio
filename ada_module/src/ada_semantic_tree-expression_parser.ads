@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2007, AdaCore                    --
+--                  Copyright (C) 2007-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -57,7 +57,7 @@ package Ada_Semantic_Tree.Expression_Parser is
 
    type Parsed_Expression is record
       Original_Buffer : UTF8_String_Access;
-      Tokens : Token_List.List;
+      Tokens : Token_List.List := Token_List.Null_List;
    end record;
 
    Null_Parsed_Expression : constant Parsed_Expression :=

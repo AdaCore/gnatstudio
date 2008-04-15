@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2007, AdaCore                    --
+--                  Copyright (C) 2007-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -488,17 +488,21 @@ package body Ada_Semantic_Tree.Type_Tree is
          --  list. We'll see later if the primitive is overriden.
 
          declare
+            Expression : Parsed_Expression := Parse_Current_List
+              (UTF8_String_Access (Get_Identifier (Ref_Ids)));
+
             Decl_List   : Declaration_List :=
               Find_Declarations
                 (Get_File (The_Type),
                  Get_Construct (The_Type).Sloc_End.Index,
-                 Expression        => Parse_Current_List
-                   (UTF8_String_Access (Get_Identifier (Ref_Ids))),
+                 Expression        => Expression,
                  Excluded_Entities => Excluded);
             It          : Declaration_Iterator := First (Decl_List);
             Parent_Type : Entity_Access;
             Parent_Info : Ada_Type_Access;
          begin
+            Token_List.Free (Expression.Tokens);
+
             --  ??? We should have more visiblity constraints here, and do
             --  some additional work in case of multiple matches.
 

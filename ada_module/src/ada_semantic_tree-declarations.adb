@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2007-2008, AdaCore             --
+--                  Copyright (C) 2007-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -347,8 +347,15 @@ package body Ada_Semantic_Tree.Declarations is
    ----------------
 
    function Get_Entity (It : Declaration_Iterator) return Entity_Access is
+      View   : Declaration_View := Get (It.It);
+      Result : Entity_Access;
    begin
-      return Get (It.It).Entity;
+      Result := View.Entity;
+      Free (View);
+      --  ??? It's a bit annoying to have to create and free a temporary view,
+      --  would be better to somehow get the entity directly.
+
+      return Result;
    end Get_Entity;
 
    ----------------
@@ -433,6 +440,8 @@ package body Ada_Semantic_Tree.Declarations is
          Stack.Refs := Stack.Refs - 1;
 
          if Stack.Refs = 0 then
+            Clear (Stack.Entities);
+            Free (Stack.Entities);
             Free (Stack);
          end if;
       end if;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2007, AdaCore                    --
+--                  Copyright (C) 2007-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -189,6 +189,8 @@ package body Ada_Semantic_Tree.Entity_Iteration is
             end if;
          end Set_Sub_It;
 
+         Expression : Parsed_Expression;
+
       begin
          if It.Is_All then
             It.Is_All := False;
@@ -223,16 +225,20 @@ package body Ada_Semantic_Tree.Entity_Iteration is
                then
                   It.Step_Has_Started := False;
                elsif Ref_Id /= Null_Distinct_Identifier then
+                  Expression := Parse_Current_List
+                    (UTF8_String_Access (Ref_Id));
+
                   It.Decl_List := Find_Declarations
                     (File              => It.Current_File,
                      Offset            => Get_Construct
                        (It.Current_Construct).Sloc_End.Index,
-                     Expression        => Parse_Current_List
-                       (UTF8_String_Access (Ref_Id)),
+                     Expression        => Expression,
                      Categories        => Null_Category_Array,
                      Is_Partial        => False,
                      Excluded_Entities => It.Excluded_Entities,
                      From_Visibility   => It.From_Visibility);
+
+                  Token_List.Free (Expression.Tokens);
 
                   It.Decl_It := First (It.Decl_List);
 

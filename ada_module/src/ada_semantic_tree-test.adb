@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2007, AdaCore                   --
+--                  Copyright (C) 2007-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -384,6 +384,8 @@ procedure Ada_Semantic_Tree.Test is
 
             Files : constant VFS.File_Array_Access :=
               Get_Source_Files (Get_Root_Project (New_Registry), True);
+
+            Lang_Name : Namet.Name_Id;
          begin
             if Buffer (Word_Begin .. Word_End) = "ALL_N_DECLARATIONS" then
                Read_Next_Word (Buffer, Index, Word_Begin, Word_End);
@@ -408,10 +410,11 @@ procedure Ada_Semantic_Tree.Test is
 
                   Flush;
 
-                  if
-                    To_Lower
-                      (Get_Name_String (Get_Language_From_File_From_Project
-                       (New_Registry, Files.all (J)))) = "ada"
+                  Lang_Name := Get_Language_From_File_From_Project
+                    (New_Registry, Files.all (J));
+
+                  if Lang_Name /= No_Name
+                    and then To_Lower (Get_Name_String (Lang_Name)) = "ada"
                   then
                      Full_File := Get_Or_Create
                        (Construct_Db,
