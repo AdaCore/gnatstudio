@@ -24,7 +24,7 @@ with Convert.Adp;               use Convert.Adp;
 with Convert.Gpr;               use Convert.Gpr;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.Traces;               use GNAT.Traces;
+with GNATCOLL.Traces;               use GNATCOLL.Traces;
 
 procedure Convert_Prj is
 
