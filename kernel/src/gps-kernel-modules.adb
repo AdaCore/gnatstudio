@@ -1001,13 +1001,8 @@ package body GPS.Kernel.Modules is
              and then not Has_Explicit_Parent (C, Context))
            or else not C.Filter_For_Visibility
          then
-            if C.Filter_Matched
-              and then not Has_Explicit_Parent (C, Context)
-            then
-               C.Sensitive := True;
-            else
-               C.Sensitive := False;
-            end if;
+            C.Sensitive := C.Filter_Matched
+              and then not Has_Explicit_Parent (C, Context);
 
             Create_Item (C, Context, Item, Full_Name);
 
