@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2005-2007, AdaCore                --
+--                   Copyright (C) 2005-2008, AdaCore                --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -81,7 +81,7 @@ package GPS.Kernel.Clipboard is
    procedure Merge_Clipboard
      (Clipboard      : access Clipboard_Record;
       Index1, Index2 : Natural);
-   --  Merge the two entries in the clipboard, and remove the second one.
+   --  Merge the two entries in the clipboard, and remove the second one
 
    procedure Remove_Clipboard_Entry
      (Clipboard : access Clipboard_Record; Index : Natural);
@@ -95,7 +95,7 @@ package GPS.Kernel.Clipboard is
 
    function Get_Last_Paste
      (Clipboard : access Clipboard_Record) return Integer;
-   --  Return the index of the last paste text in the result of Get_Context.
+   --  Return the index of the last paste text in the result of Get_Context
 
    procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class);
    --  Register shell commands associated with the clipboard

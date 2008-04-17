@@ -113,9 +113,9 @@ package GPS.Kernel.Remote is
       Synchronous   : Boolean;
       --  Tells if the synchronisation call shall be performed synchronously
       Print_Output  : Boolean;
-      --  Tells if rsync output is displayed on the Messages window.
+      --  Tells if rsync output is displayed on the Messages window
       Print_Command : Boolean;
-      --  Tells if rsync command is displayed on thee Messages window.
+      --  Tells if rsync command is displayed on thee Messages window
       Tool_Name     : String (1 .. Tool_Name_Length);
       --  What hook function shall perform the action
       Src_Name      : String (1 .. Src_Name_Length);

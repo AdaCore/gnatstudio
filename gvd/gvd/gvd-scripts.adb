@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2005-2007, AdaCore                 --
+--                  Copyright (C) 2005-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -40,12 +40,12 @@ package body GVD.Scripts is
    procedure Shell_Handler
      (Data    : in out Callback_Data'Class;
       Command : String);
-   --  Interactive script handler for the debugger module.
+   --  Interactive script handler for the debugger module
 
    function Get_Or_Create_Instance
      (Script  : access Scripting_Language_Record'Class;
       Process : Visual_Debugger) return Class_Instance;
-   --  Get or create an existing instance associated with Process.
+   --  Get or create an existing instance associated with Process
 
    function From_Callback_Data_Debugger
      (Data : Callback_Data'Class)
@@ -66,9 +66,9 @@ package body GVD.Scripts is
       return Callback_Data_Access
    is
       D   : constant Callback_Data_Access :=
-        new Callback_Data'Class'(Create (Script, 2));
+              new Callback_Data'Class'(Create (Script, 2));
       Inst : constant Class_Instance :=
-        Get_Or_Create_Instance (Script, Data.Debugger);
+               Get_Or_Create_Instance (Script, Data.Debugger);
    begin
       Set_Nth_Arg (D.all, 1, Hook_Name);
       Set_Nth_Arg (D.all, 2, Inst);
@@ -80,8 +80,7 @@ package body GVD.Scripts is
    ---------------------------------
 
    function From_Callback_Data_Debugger
-     (Data : Callback_Data'Class)
-      return Hooks_Data'Class
+     (Data : Callback_Data'Class) return Hooks_Data'Class
    is
       Process : Visual_Debugger;
       Inst    : Class_Instance;
@@ -102,9 +101,9 @@ package body GVD.Scripts is
       return Callback_Data_Access
    is
       D   : constant Callback_Data_Access :=
-        new Callback_Data'Class'(Create (Script, 3));
+              new Callback_Data'Class'(Create (Script, 3));
       Inst : constant Class_Instance :=
-        Get_Or_Create_Instance (Script, Data.Process);
+               Get_Or_Create_Instance (Script, Data.Process);
    begin
       Set_Nth_Arg (D.all, 1, Hook_Name);
       Set_Nth_Arg (D.all, 2, Inst);
@@ -117,8 +116,7 @@ package body GVD.Scripts is
    ----------------------------------------
 
    function From_Callback_Data_Debugger_String
-     (Data : Callback_Data'Class)
-      return Hooks_Data'Class
+     (Data : Callback_Data'Class) return Hooks_Data'Class
    is
       Debugger_Cmd : constant String := Nth_Arg (Data, 3);
       Inst         : constant Class_Instance :=
@@ -141,7 +139,7 @@ package body GVD.Scripts is
       Name     : String)
    is
       Kernel : constant Kernel_Handle := Debugger.Window.Kernel;
-      Args : aliased Debugger_Hooks_Data;
+      Args   : aliased Debugger_Hooks_Data;
    begin
       Args := (Hooks_Data with Debugger => Visual_Debugger (Debugger));
       Run_Hook (Kernel, Name, Args'Unchecked_Access);
@@ -157,11 +155,11 @@ package body GVD.Scripts is
       Command   : String) return String
    is
       Kernel : constant Kernel_Handle := Debugger.Window.Kernel;
-      Args : aliased Debugger_String_Hooks_Data :=
-        (Hooks_Data with
-         Length   => Command'Length,
-         Command  => Command,
-         Process  => Visual_Debugger (Debugger));
+      Args   : aliased Debugger_String_Hooks_Data :=
+                 (Hooks_Data with
+                  Length   => Command'Length,
+                  Command  => Command,
+                  Process  => Visual_Debugger (Debugger));
    begin
       Set_Busy (Debugger);
       declare

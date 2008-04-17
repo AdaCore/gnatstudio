@@ -151,7 +151,7 @@ package body GPS.Kernel.Modules is
       Object : System.Address);
    pragma Convention (C, Contextual_Menu_Destroyed);
    --  Called when a contextual menu is destroyed and its context can be
-   --  unrefed
+   --  unrefed.
 
    type Contextual_Label_Parameters is
      new Contextual_Menu_Label_Creator_Record
@@ -166,7 +166,7 @@ package body GPS.Kernel.Modules is
      (Creator : access Contextual_Label_Parameters;
       Context : Selection_Context) return String;
    --  Substitute %p, %f,... in the title to create a suitable contextual menu
-   --  title
+   --  title.
 
    package Kernel_Contextuals is new GUI_Utils.User_Contextual_Menus
      (Contextual_Menu_User_Data);
@@ -197,12 +197,12 @@ package body GPS.Kernel.Modules is
    procedure Execute_Command
      (Widget  : access GObject_Record'Class;
       Command : Interactive_Action);
-   --  Execute a single command.
+   --  Execute a single command
 
    procedure Menu_Button_Press
      (Widget : access GObject_Record'Class;
       Data   : Menu_Factory_User_Data);
-   --  Create a menu using the data in Factory.
+   --  Create a menu using the data in Factory
 
    package Command_Callback is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Interactive_Action);
@@ -233,11 +233,11 @@ package body GPS.Kernel.Modules is
      (Item    : access GObject_Record'Class;
       Command : Interactive_Action);
    --  Called when a registered menu is displayed, so that we can check whether
-   --  it should be made sensitive or not
+   --  it should be made sensitive or not.
 
    procedure Unmap_Menu (Menu : access Gtk_Widget_Record'Class);
    --  Called when a menu is unmapped, so that the associated context can be
-   --  destroyed
+   --  destroyed.
 
    package Context_User_Data is new Glib.Object.User_Data (Selection_Context);
    package Integer_User_Data is new Glib.Object.User_Data (Integer);
@@ -574,6 +574,7 @@ package body GPS.Kernel.Modules is
                   end if;
                end;
             end if;
+
          else
             declare
                Done : aliased Boolean := False;
@@ -594,9 +595,9 @@ package body GPS.Kernel.Modules is
          declare
             Tmp : constant String := Substitute
               (Glib.Xml_Int.Protect (Creator.Label.all),
-               Delimiter         => GPS.Kernel.Macros.Special_Character,
-               Callback          => Substitution'Unrestricted_Access,
-               Recursive         => False);
+               Delimiter => GPS.Kernel.Macros.Special_Character,
+               Callback  => Substitution'Unrestricted_Access,
+               Recursive => False);
          begin
             if Has_Error then
                return "";
@@ -787,7 +788,7 @@ package body GPS.Kernel.Modules is
    -------------------------------
 
    procedure Contextual_Menu_Destroyed
-     (Data : System.Address;
+     (Data   : System.Address;
       Object : System.Address)
    is
       pragma Unreferenced (Object);
@@ -813,7 +814,7 @@ package body GPS.Kernel.Modules is
       use type Gtk.Widget.Widget_List.Glist;
 
       function Menu_Is_Visible
-        (C : Contextual_Menu_Access;
+        (C       : Contextual_Menu_Access;
          Context : Selection_Context) return Boolean;
       --  Whether the menu C should be made visible
 
@@ -842,7 +843,7 @@ package body GPS.Kernel.Modules is
       ---------------------
 
       function Menu_Is_Visible
-        (C : Contextual_Menu_Access;
+        (C       : Contextual_Menu_Access;
          Context : Selection_Context) return Boolean is
       begin
          if not C.Visible then
@@ -1072,12 +1073,14 @@ package body GPS.Kernel.Modules is
                   Accelerators  => Get_Default_Accelerators (Kernel),
                   Allow_Create  => True,
                   Use_Mnemonics => False);
+
                if Parent_Item /= null then
                   Parent_Menu := Gtk_Menu (Get_Submenu (Parent_Item));
                   if Parent_Menu = null then
                      Gtk_New (Parent_Menu);
                      Set_Submenu (Parent_Item, Parent_Menu);
                   end if;
+
                else
                   Parent_Menu := Menu;
                end if;
@@ -1092,11 +1095,11 @@ package body GPS.Kernel.Modules is
       end loop;
 
       --  Do not Unref context, it will be automatically freed the next
-      --  time a contextual menu is displayed
+      --  time a contextual menu is displayed.
 
       Pop_State (Kernel);
 
-      --  If the menu is empty, destroy it.
+      --  If the menu is empty, destroy it
 
       if Children (Menu) = Gtk.Widget.Widget_List.Null_List then
          Destroy (Menu);
@@ -1220,12 +1223,12 @@ package body GPS.Kernel.Modules is
          return null;
       else
          return Find_Or_Create_Menu_Tree
-           (Menu_Bar     => GPS_Window (Kernel.Main_Window).Menu_Bar,
-            Menu         => null,
-            Path         => Path,
-            Accelerators => Get_Default_Accelerators (Kernel),
+           (Menu_Bar      => GPS_Window (Kernel.Main_Window).Menu_Bar,
+            Menu          => null,
+            Path          => Path,
+            Accelerators  => Get_Default_Accelerators (Kernel),
             Use_Mnemonics => False,
-            Allow_Create => False);
+            Allow_Create  => False);
       end if;
    end Find_Menu_Item;
 
@@ -1495,7 +1498,7 @@ package body GPS.Kernel.Modules is
          Context_User_Data.Set (Menu, Ctxt, "gpscontext");
 
          --  Make sure the Unmap signal is set only once for this menu, for
-         --  efficiency
+         --  efficiency.
          if Integer_User_Data.Get (Menu, "gpsunmapid", -1) = -1 then
             Widget_Callback.Connect (Menu, Signal_Unmap, Unmap_Menu'Access);
             Integer_User_Data.Set (Menu, 1, "gpsunmapid");
@@ -1522,7 +1525,7 @@ package body GPS.Kernel.Modules is
 
       procedure Remove_Item
         (Item : access Gtk.Widget.Gtk_Widget_Record'Class);
-      --  Remove one item from Data.Menu.
+      --  Remove one item from Data.Menu
 
       -----------------
       -- Remove_Item --
@@ -1535,7 +1538,7 @@ package body GPS.Kernel.Modules is
       end Remove_Item;
 
    begin
-      --  Remove all items in the menu.
+      --  Remove all items in the menu
       Ref (Data.Menu);
       Forall (Data.Menu, Remove_Item'Unrestricted_Access);
 
@@ -1585,12 +1588,12 @@ package body GPS.Kernel.Modules is
       Set_Submenu (Item, Menu);
 
       Parent := Find_Or_Create_Menu_Tree
-        (Menu_Bar      => GPS_Window (Kernel.Main_Window).Menu_Bar,
-         Menu          => null,
-         Path          => Name_As_Directory (Parent_Path, UNIX),
-         Accelerators  => Get_Default_Accelerators (Kernel),
-         Add_Before    => Add_Before,
-         Ref_Item      => Ref_Item,
+        (Menu_Bar     => GPS_Window (Kernel.Main_Window).Menu_Bar,
+         Menu         => null,
+         Path         => Name_As_Directory (Parent_Path, UNIX),
+         Accelerators => Get_Default_Accelerators (Kernel),
+         Add_Before   => Add_Before,
+         Ref_Item     => Ref_Item,
          Allow_Create => True);
 
       if Parent = null then
@@ -1943,7 +1946,7 @@ package body GPS.Kernel.Modules is
             Label                 => Contextual_Menu_Label_Creator (T));
       else
          Menu := new Contextual_Menu_Record'
-           (Menu_Type      => Type_Action,
+           (Menu_Type             => Type_Action,
             Name                  => new String'(Name),
             Action                => Action,
             Pix                   => Pix,
@@ -2075,7 +2078,8 @@ package body GPS.Kernel.Modules is
    procedure Register_Contextual_Menu
      (Kernel            : access Kernel_Handle_Record'Class;
       Name              : String;
-      Action         : Commands.Interactive.Interactive_Command_Access := null;
+      Action            : Commands.Interactive.Interactive_Command_Access :=
+                            null;
       Filter            : GPS.Kernel.Action_Filter := null;
       Visibility_Filter : Boolean := True;
       Label             : String := "";
@@ -2188,7 +2192,7 @@ package body GPS.Kernel.Modules is
    -------------------------------------
 
    function Get_Registered_Contextual_Menus
-     (Kernel  : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class)
       return GNAT.Strings.String_List_Access
    is
       Count  : Natural := 0;

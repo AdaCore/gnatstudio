@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006-2008, AdaCore             --
+--                 Copyright (C) 2006-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -148,13 +148,19 @@ package body GPS.Kernel.Remote is
                     Title  : String) return Connection_Debugger;
    --  Create a Connection_Debug object
 
-   procedure Print (Dbg  : access Connection_Debug;
-                    Str  : String;
-                    Mode : Mode_Type);
+   procedure Print
+     (Dbg  : access Connection_Debug;
+      Str  : String;
+      Mode : Mode_Type);
    --  Display Str in the connection debugger
 
-   function Create (Kernel : Kernel_Handle;
-                    Title  : String) return Connection_Debugger is
+   ------------
+   -- Create --
+   ------------
+
+   function Create
+     (Kernel : Kernel_Handle;
+      Title  : String) return Connection_Debugger is
    begin
       return new Connection_Debug'
         (Kernel  => Kernel,
@@ -162,9 +168,15 @@ package body GPS.Kernel.Remote is
          Console => null);
    end Create;
 
-   procedure Print (Dbg  : access Connection_Debug;
-                    Str  : String;
-                    Mode : Mode_Type) is
+   -----------
+   -- Print --
+   -----------
+
+   procedure Print
+     (Dbg  : access Connection_Debug;
+      Str  : String;
+      Mode : Mode_Type)
+   is
       Console : Interactive_Console;
    begin
       Console :=
@@ -188,7 +200,7 @@ package body GPS.Kernel.Remote is
       Attribute  : Descriptor_Attribute;
       Rsync_Func : GNAT.Strings.String_Access;
       Applied    : Boolean;
-      --  tells if the machine configuration has been applied.
+      --  tells if the machine configuration has been applied
    end record;
 
    type Item_Record;
@@ -203,7 +215,7 @@ package body GPS.Kernel.Remote is
    --  ??? Global variable, should get rid of it
 
    procedure Free (Item : in out Item_Access);
-   --  Free memory associated with Item.
+   --  Free memory associated with Item
 
    procedure Parse_Remote_Machine_Descriptor_Node
      (Kernel    : Kernel_Handle;
@@ -225,12 +237,12 @@ package body GPS.Kernel.Remote is
    Enter_Local_Path_String  : constant String := -"<enter local path here>";
    Enter_Remote_Path_String : constant String := -"<enter remote path here>";
 
-   Synchronisation_String : constant array (Synchronisation_Type)
-   of String_Access
-     := (Never          => new String'("Never"),
-         Once_To_Local  => new String'("Once to local"),
-         Once_To_Remote => new String'("Once to remote"),
-         Always         => new String'("Always"));
+   Synchronisation_String : constant
+     array (Synchronisation_Type) of String_Access :=
+                              (Never          => new String'("Never"),
+                               Once_To_Local  => new String'("Once to local"),
+                               Once_To_Remote => new String'("Once to remote"),
+                               Always         => new String'("Always"));
 
    type Path_Row_Record is record
       Local_Entry          : Gtk_Entry;
@@ -246,7 +258,7 @@ package body GPS.Kernel.Remote is
       Cursor               : Mirror_List.Cursor;
    end record;
    type Path_Row is access all Path_Row_Record;
-   --  This widget is the graphical representation of a mirror path.
+   --  This widget is the graphical representation of a mirror path
 
    function Convert is new Ada.Unchecked_Conversion (System.Address, Path_Row);
    function Convert is new Ada.Unchecked_Conversion (Path_Row, System.Address);
@@ -275,7 +287,7 @@ package body GPS.Kernel.Remote is
    procedure Save_Tentative_Path_List
      (Widget : Paths_Widget;
       FS     : Filesystem_Record'Class);
-   --  Retrieve the mirror path list represented by the widget.
+   --  Retrieve the mirror path list represented by the widget
 
    procedure Add_Path_Row
      (Widget      : Paths_Widget;
@@ -298,7 +310,7 @@ package body GPS.Kernel.Remote is
    --  Called when a path with default string is clicked
 
    procedure On_Add_Path_Clicked (W : access Gtk_Widget_Record'Class);
-   --  Add_Path button is clicked.
+   --  Add_Path button is clicked
 
    type Path_Cb_Data is new Glib.Object.GObject_Record with record
       Widget : Paths_Widget;
@@ -310,7 +322,7 @@ package body GPS.Kernel.Remote is
      Gtk.Handlers.Callback (Path_Cb_Data);
 
    procedure On_Remove_Path_Clicked (W : access Path_Cb_Data'Class);
-   --  One of the Remove_Path button is clicked.
+   --  One of the Remove_Path button is clicked
 
    procedure On_Browse_Local (Widget : access Path_Cb_Data'Class);
    --  Select a local directory
@@ -376,16 +388,16 @@ package body GPS.Kernel.Remote is
    --  only unselected items are saved.
 
    procedure On_Selection_Changed (W : access Gtk_Widget_Record'Class);
-   --  Called when the selected machine has changed.
+   --  Called when the selected machine has changed
 
    procedure On_Add_Machine_Clicked (W : access Gtk_Widget_Record'Class);
-   --  Called when the add_machine button is clicked.
+   --  Called when the add_machine button is clicked
 
    procedure On_Restore_Clicked (W : access Gtk_Widget_Record'Class);
-   --  Called when the restore button is clicked.
+   --  Called when the restore button is clicked
 
    procedure On_Remove_Clicked (W : access Gtk_Widget_Record'Class);
-   --  Called when the remove button is clicked.
+   --  Called when the remove button is clicked
 
    -----------------------
    -- Server Assignment --
@@ -660,7 +672,7 @@ package body GPS.Kernel.Remote is
             Sync        : Synchronisation_Type;
          begin
 
-            --  Retrieve Sync value from string.
+            --  Retrieve Sync value from string
             begin
                Sync := Synchronisation_Type'Value (Sync_Str);
             exception
@@ -1533,8 +1545,8 @@ package body GPS.Kernel.Remote is
            "filesystems, if these are not shared filesystems."));
 
       declare
-         Rsync_List : constant GNAT.Strings.String_List :=
-           Get_Hook_Func_List (Kernel, Rsync_Action_Hook);
+         Rsync_List : constant Hook_List :=
+                        Get_Hook_Func_List (Kernel, Rsync_Action_Hook);
       begin
          for J in Rsync_List'Range loop
             Gtk_New (Item, Locale_To_UTF8 (Rsync_List (J).all));
@@ -2608,7 +2620,7 @@ package body GPS.Kernel.Remote is
       return Callback_Data_Access
    is
       D : constant Callback_Data_Access :=
-        new Callback_Data'Class'(Create (Script, 10));
+            new Callback_Data'Class'(Create (Script, 10));
    begin
       Set_Nth_Arg (D.all,  1, Hook_Name);
       Set_Nth_Arg (D.all,  2, Data.Tool_Name);
@@ -2656,7 +2668,7 @@ package body GPS.Kernel.Remote is
       return Callback_Data_Access
    is
       D : constant Callback_Data_Access :=
-        new Callback_Data'Class'(Create (Script, 3));
+            new Callback_Data'Class'(Create (Script, 3));
    begin
       Set_Nth_Arg (D.all, 1, Hook_Name);
       Set_Nth_Arg (D.all, 2, Server_Type'Image (Data.Server));
@@ -2699,12 +2711,12 @@ package body GPS.Kernel.Remote is
       Remote_Module := new Remote_Module_Record;
       Remote_Module.Kernel := Kernel_Handle (Kernel);
       Remote_Module.Project_Reloading := False;
-      Register_Module
-        (Remote_Module, Kernel, "remote");
+      Register_Module (Remote_Module, Kernel, "remote");
 
       --  Connect to project_changing hook
-      Add_Hook (Kernel, Project_Changing_Hook,
-                Wrapper (On_Project_Changing'Access), "gps.kernel.remote");
+      Add_Hook
+        (Kernel, Project_Changing_Hook,
+         Wrapper (On_Project_Changing'Access), "gps.kernel.remote");
    end Register_Module;
 
    ----------
@@ -2734,7 +2746,7 @@ package body GPS.Kernel.Remote is
    procedure Load
      (Property : in out Servers_Property; From : Glib.Xml_Int.Node_Ptr)
    is
-      Srv :  Node_Ptr;
+      Srv : Node_Ptr;
    begin
       Trace (Me, "Loading remote property");
 
@@ -3148,7 +3160,7 @@ package body GPS.Kernel.Remote is
          Start_Command_User_Args := Argument_String_To_List
            (Get_Field (Node, "start_command_user_args").all);
          Interrupt              := Get_Field (Node, "send_interrupt");
-         --  If null, the default value will be used in Add_Remote_Access_Desc.
+         --  If null, the default value will be used in Add_Remote_Access_Desc
          User_Prompt_Ptrn       := Get_Field (Node, "user_prompt_ptrn");
          Password_Prompt_Ptrn   := Get_Field (Node, "password_prompt_ptrn");
          Passphrase_Prompt_Ptrn := Get_Field (Node, "passphrase_prompt_ptrn");
@@ -3378,7 +3390,7 @@ package body GPS.Kernel.Remote is
 
    begin
       if Nickname = "" then
-         --  Force to local nickname so that hook's data is correct.
+         --  Force to local nickname so that hook's data is correct
          Assign (Kernel, Server, Local_Nickname, Prj_File, Reload_Prj);
          return;
       end if;
@@ -3660,7 +3672,7 @@ package body GPS.Kernel.Remote is
       --  found, return null otherwise.
 
       procedure On_New_Connection (Server_Name : String);
-      --  Executed when a new connection is performed.
+      --  Executed when a new connection is performed
 
       ----------------
       -- Check_Exec --

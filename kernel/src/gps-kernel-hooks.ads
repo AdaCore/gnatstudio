@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2007, AdaCore              --
+--                 Copyright (C) 2003-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -140,12 +140,12 @@ package GPS.Kernel.Hooks is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Hook   : String;
       Func   : access GPS.Kernel.Hook_Function_Record'Class);
-   --  Remove Func from the list of functions calle when the hook is run.
+   --  Remove Func from the list of functions calle when the hook is run
 
    function Get_Hook_Func_List
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Hook   : String) return GNAT.Strings.String_List;
-   --  Return the description of the functions attached to the specified hook.
+   --  Return the description of the functions attached to the specified hook
 
    --------------------------------------
    -- Hook functions with no arguments --
@@ -190,7 +190,7 @@ package GPS.Kernel.Hooks is
      (Func   : Function_With_Args;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class) is abstract;
-   --  Execute the action associated with the Hook Function.
+   --  Execute the action associated with the Hook Function
 
    type Function_With_Args_Callback is access procedure
      (Kernel : access Kernel_Handle_Record'Class;
@@ -198,7 +198,7 @@ package GPS.Kernel.Hooks is
    function Wrapper
      (Callback : Function_With_Args_Callback)
       return Function_With_Args_Access;
-   --  See doc above for Wrapper.
+   --  See doc above for Wrapper
 
    procedure Run_Hook
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -220,7 +220,7 @@ package GPS.Kernel.Hooks is
      (Func   : Function_With_Args_Return_Boolean;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class) return Boolean is abstract;
-   --  Execute the action associated with the Hook Function.
+   --  Execute the action associated with the Hook Function
 
    type Function_With_Args_Return_Boolean_Callback is access function
      (Kernel : access Kernel_Handle_Record'Class;
@@ -260,7 +260,7 @@ package GPS.Kernel.Hooks is
      (Func   : Function_With_Args_Return_String;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class) return String is abstract;
-   --  Execute the action associated with the Hook Function.
+   --  Execute the action associated with the Hook Function
 
    type Function_With_Args_Return_String_Callback is access function
      (Kernel : access Kernel_Handle_Record'Class;

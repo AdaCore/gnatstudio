@@ -254,7 +254,7 @@ procedure GPS.Main is
    --  exceptions).
 
    procedure Do_Cleanups;
-   --  Perform clean ups and automatic saving before exiting.
+   --  Perform clean ups and automatic saving before exiting
 
    procedure Parse_Switches;
    --  Parse command line switches
@@ -263,7 +263,7 @@ procedure GPS.Main is
    --  Display the GPS splash screen
 
    function Finish_Setup (Data : Process_Data) return Boolean;
-   --  Finish the set up of GPS, while the main loop is running.
+   --  Finish the set up of GPS, while the main loop is running
 
    procedure Help;
    --  Display help on the standard output
@@ -1167,7 +1167,7 @@ procedure GPS.Main is
 
          Change_Dir (New_Dir);
 
-         --  Load a dummy project, in case the wizard needs to be launched.
+         --  Load a dummy project, in case the wizard needs to be launched
 
          if not Auto_Load_Project and then not File_Opened then
             Load_Empty_Project (GPS_Main.Kernel);
@@ -1572,7 +1572,7 @@ procedure GPS.Main is
 
       Started := True;
 
-      --  Set the title of the GPS window.
+      --  Set the title of the GPS window
       Set_Main_Title
         (GPS_Main.Kernel, Get_Focus_Child (Get_MDI (GPS_Main.Kernel)));
 

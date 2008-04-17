@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2007, AdaCore              --
+--                 Copyright (C) 2003-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -95,7 +95,7 @@ package body GPS.Kernel.Hooks is
             Parameters_Type           : Hook_Description_Access;
       end case;
    end record;
-   --  Describes a hook or a hook type.
+   --  Describes a hook or a hook type
 
    procedure Free (Hook : in out Hook_Description);
    --  See inherited doc
@@ -107,7 +107,7 @@ package body GPS.Kernel.Hooks is
       Create_Subprogram_Wrapper : Subprogram_Wrapper_Creator := null;
       Command_Handler           : Module_Command_Function := null)
       return Hook_Description_Access;
-   --  Get or create a new hook.
+   --  Get or create a new hook
 
    procedure Command_Handler_No_Return
      (Data : in out Callback_Data'Class; Command : String);
@@ -266,7 +266,7 @@ package body GPS.Kernel.Hooks is
       Watch  : Glib.Object.GObject := null;
       Last   : Boolean := False);
    --  Same as Add_Hook, but directly with the hook description. This saves a
-   --  look up in a hash table
+   --  look up in a hash table.
 
    ------------------------
    -- Get_Or_Create_Hook --
@@ -606,7 +606,7 @@ package body GPS.Kernel.Hooks is
       Watch  : Glib.Object.GObject := null)
    is
       Info : constant Hook_Description_Access :=
-        Get_Or_Create_Hook (Kernel, Hook);
+               Get_Or_Create_Hook (Kernel, Hook);
       --  If the information about that hook (parameters or command handler)
       --  is not know yet, it will be set later when calling Register_Hook_*
    begin
@@ -704,8 +704,7 @@ package body GPS.Kernel.Hooks is
    -------------
 
    function Wrapper
-     (Callback : Function_No_Args_Callback)
-      return Function_No_Args_Access is
+     (Callback : Function_No_Args_Callback) return Function_No_Args_Access is
    begin
       return new Wrapper_No_Args'(Function_No_Args with Func => Callback);
    end Wrapper;
@@ -1342,8 +1341,8 @@ package body GPS.Kernel.Hooks is
                          Get_Hook_Class (Get_Kernel (Data));
             Instance : Class_Instance;
          begin
-            Info :=
-              Hook_Description_Access (Get (Get_Kernel (Data).Hooks, Name));
+            Info := Hook_Description_Access
+              (Get (Get_Kernel (Data).Hooks, Name));
             if Info = null then
                Set_Error_Msg (Data, -"No such hook: " & Name);
             else

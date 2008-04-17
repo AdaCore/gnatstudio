@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2008, AdaCore             --
+--                 Copyright (C) 2003-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -128,7 +128,7 @@ package GPS.Kernel.Standard_Hooks is
    end record;
    type File_Location_Hooks_Args_Access is access all
      File_Location_Hooks_Args'Class;
-   --  These hooks contains a location inside a source editor.
+   --  These hooks contains a location inside a source editor
 
    function Compute_Parent_Entity
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -356,7 +356,7 @@ package GPS.Kernel.Standard_Hooks is
      (Action_Item, System.Address);
 
    procedure Free (X : in out Action_Item);
-   --  Free memory associated to X.
+   --  Free memory associated to X
 
    type Location_Hooks_Args (Ident_Length, Cat_Length, Mes_Length : Natural) is
      new Hooks_Data with
@@ -369,7 +369,7 @@ package GPS.Kernel.Standard_Hooks is
          Category   : String (1 .. Cat_Length);
          Message    : UTF8_String (1 .. Mes_Length);
       end record;
-   --  Identifier is the identity of the emitted.
+   --  Identifier is the identity of the emitted
 
    Location_Action_Hook : constant String := "location_action_hook";
 

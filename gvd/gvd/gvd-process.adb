@@ -95,7 +95,7 @@ package body GVD.Process is
 
    procedure Set_Command_In_Process
      (Proxy : access GPS_Proxy; In_Process : Boolean := True);
-   --  Set the appropriate debugger menu items to the corresponding state.
+   --  Set the appropriate debugger menu items to the corresponding state
 
    pragma Warnings (Off);
    --  This UC is safe aliasing-wise, so kill warning
@@ -135,7 +135,7 @@ package body GVD.Process is
      (Process : access Visual_Debugger_Record'Class;
       Window  : access GPS.Main_Window.GPS_Window_Record'Class;
       Source  : GVD.Source_Editor.Source_Editor);
-   --  Internal initialize procedure.
+   --  Internal initialize procedure
 
    procedure Configure
      (Process         : access Visual_Debugger_Record'Class;
@@ -673,7 +673,7 @@ package body GVD.Process is
       --  Do we have a file name or line number indication?
 
       if File_First /= 0 then
-         --  Override the language currently defined in the editor.
+         --  Override the language currently defined in the editor
 
          declare
             File_Name : constant Virtual_File := Create
@@ -1024,7 +1024,7 @@ package body GVD.Process is
             raise Debugger_Not_Supported;
       end case;
 
-      --  Spawn the debugger.
+      --  Spawn the debugger
 
       Spawn
         (Process.Debugger,
@@ -1051,7 +1051,7 @@ package body GVD.Process is
       Initialize (Process.Debugger);
 
       --  Hide or show AE653 specific capabilities according to the debugger
-      --  we are using
+      --  we are using.
 
       Widget := Find_Menu_Item
         (Window.Kernel, -"/Debug/Data/Protection Domains");
@@ -1071,7 +1071,7 @@ package body GVD.Process is
       Attach_To_Assembly_View (Process, Create_If_Necessary => False);
 
       --  If we have a debuggee console in the desktop, always use it.
-      --  Otherwise, we only create one when the user has asked for it
+      --  Otherwise, we only create one when the user has asked for it.
 
       Attach_To_Debuggee_Console
         (Process,
@@ -1123,7 +1123,7 @@ package body GVD.Process is
       Count : Natural := 0;
    begin
       --  Filter breakpoints that are created automatically by GPS as a
-      --  result of preferences
+      --  result of preferences.
 
       if Get_Pref (Break_On_Exception) then
          for B in reverse Process.Breakpoints'Range loop
@@ -1210,7 +1210,7 @@ package body GVD.Process is
          if Process.Breakpoints /= null then
             Traces.Trace (Me, "Saving breakpoints in properties");
             --  Take into account breakpoints that have been set manually
-            --  through the console, when the breakpoints window is not shown
+            --  through the console, when the breakpoints window is not shown.
 
             Update_Breakpoints (Process, Force => True);
             Property             := new Breakpoint_Property_Record;
@@ -1224,7 +1224,7 @@ package body GVD.Process is
       end if;
 
       --  Memorize whether we should automatically start the call stack the
-      --  next time GVD is started or not
+      --  next time GVD is started or not.
 
       Set_Pref (Kernel, Show_Call_Stack, Process.Stack /= null);
 
@@ -1313,7 +1313,7 @@ package body GVD.Process is
       if Busy then
          --  Process graph disable|undisplay commands immediately since
          --  they do not require access to the underlying debugger, and
-         --  queue other graph commands
+         --  queue other graph commands.
 
          declare
             Lowered_Command : constant String := To_Lower (Command);
