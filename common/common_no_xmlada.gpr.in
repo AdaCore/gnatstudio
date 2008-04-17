@@ -1,7 +1,7 @@
 with "gtkada";
 with "../gnat";
 with "../shared";
-with "../gnatlib/src/gnatlib_gtk";
+with "../gnatlib/src/gnatcoll_gtk";
 
 project Common is
 
