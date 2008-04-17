@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.3.0
 
+- H407-006: Confusion when editing scenario variables
+  Problem:    The dialog used to edit a scenario variable appears
+              confusing to some users, who expect that changing the Name
+              will in fact select another existing variable. Documentation
+              was updated, and the label in the dialog changed to "Rename to"
+  Workaround: none needed
+
 - H327-025: No source directories displayed in the project explorer
   Problem:    When the project explorer hidden directories is empty
               all source directories are hidden in the project explorer.

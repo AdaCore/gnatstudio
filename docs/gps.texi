@@ -3705,7 +3705,14 @@ the name of the variable. This name is used for two purposes:
 @item This is the name of the environment variable from which the
 initial value is read. When GPS is started, all configuration
 variables are initialized from the host computer environment, although
-you can of course change its value later on inside GPS.
+you can of course change its value later on inside GPS. Note that
+selecting a new value for the scenario variable does not change the
+actual value of the environment variable, which is only used to get the
+default initial value of the scenario variable.
+
+When you spawn external tools like gnatmake for instance, you can
+also specify the value they will use for the scenario variable by
+using a command line switch, typically @code{-X}.
 
 @end itemize
 
@@ -3772,7 +3779,9 @@ to explicitly request an update.
 You can change the list of possible values for a configuration
 variable at any time by clicking on the button to the far left of the
 variable's name. This will pop up the same dialog that is used to create
-new variables
+new variables. This dialog also allows you to change the name of the
+scenario variable. This name is the same as the environment variable that
+is used to set the initial value of the scenario variable.
 
 @cindex removing variable
 Removing a variable is done by clicking on the button immediately to

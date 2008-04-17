@@ -26,6 +26,7 @@ with Gtk.Combo;                use Gtk.Combo;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.GEntry;               use Gtk.GEntry;
+with Gtk.Label;                use Gtk.Label;
 with Gtk.List;                 use Gtk.List;
 with Gtk.List_Item;            use Gtk.List_Item;
 with Gtk.Stock;                use Gtk.Stock;
@@ -156,6 +157,11 @@ package body Variable_Editors is
       Editor.Var := Var;
       Editor.Kernel := Kernel_Handle (Kernel);
       New_Variable_Editor_Pkg.Initialize (Editor);
+
+      if Var /= No_Variable then
+         Set_Text (Editor.Label58, -("Rename to:"));
+      end if;
+
       Set_Transient_For (Editor, Get_Main_Window (Kernel));
       Set_Title (Editor, Title);
 
