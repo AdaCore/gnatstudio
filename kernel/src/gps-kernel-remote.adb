@@ -1549,7 +1549,7 @@ package body GPS.Kernel.Remote is
                         Get_Hook_Func_List (Kernel, Rsync_Action_Hook);
       begin
          for J in Rsync_List'Range loop
-            Gtk_New (Item, Locale_To_UTF8 (Rsync_List (J).all));
+            Gtk_New (Item, Locale_To_UTF8 (String (Rsync_List (J).all)));
             Add (Get_List (Dialog.Remote_Sync_Combo), Item);
          end loop;
          Show_All (Get_List (Dialog.Remote_Sync_Combo));
@@ -2614,15 +2614,15 @@ package body GPS.Kernel.Remote is
    --------------------------
 
    function Create_Callback_Data
-     (Script    : access Scripting_Language_Record'Class;
-      Hook_Name : String;
-      Data      : access Rsync_Hooks_Args)
+     (Script : access Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
+      Data   : access Rsync_Hooks_Args)
       return Callback_Data_Access
    is
       D : constant Callback_Data_Access :=
             new Callback_Data'Class'(Create (Script, 10));
    begin
-      Set_Nth_Arg (D.all,  1, Hook_Name);
+      Set_Nth_Arg (D.all,  1, String (Hook));
       Set_Nth_Arg (D.all,  2, Data.Tool_Name);
       Set_Nth_Arg (D.all,  3, Data.Src_Name);
       Set_Nth_Arg (D.all,  4, Data.Dest_Name);
@@ -2662,15 +2662,15 @@ package body GPS.Kernel.Remote is
    ---------------------------
 
    function Create_Callback_Data
-     (Script    : access Scripting_Language_Record'Class;
-      Hook_Name : String;
-      Data      : access Server_Config_Changed_Hooks_Args)
+     (Script : access Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
+      Data   : access Server_Config_Changed_Hooks_Args)
       return Callback_Data_Access
    is
       D : constant Callback_Data_Access :=
             new Callback_Data'Class'(Create (Script, 3));
    begin
-      Set_Nth_Arg (D.all, 1, Hook_Name);
+      Set_Nth_Arg (D.all, 1, String (Hook));
       Set_Nth_Arg (D.all, 2, Server_Type'Image (Data.Server));
       Set_Nth_Arg (D.all, 3, Data.Nickname);
       return D;

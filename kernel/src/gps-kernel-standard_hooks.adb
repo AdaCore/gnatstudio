@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2007, AdaCore             --
+--                 Copyright (C) 2003-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -33,12 +33,17 @@ package body GPS.Kernel.Standard_Hooks is
 
    Me : constant Debug_Handle := Create ("Standard_Hooks");
 
-   Open_File_Hook_Type           : constant String := "open_file_action_hooks";
-   File_Line_Hook_Type           : constant String := "file_line_hooks";
-   Location_Hook_Type            : constant String := "location_action_hooks";
-   Html_Hook_Type                : constant String := "html_action_hooks";
-   Diff_Hook_Type                : constant String := "diff_hooks";
-   File_Status_Changed_Hook_Type : constant String :=
+   Open_File_Hook_Type           : constant Hook_Type :=
+                                     "open_file_action_hooks";
+   File_Line_Hook_Type           : constant Hook_Type :=
+                                     "file_line_hooks";
+   Location_Hook_Type            : constant Hook_Type :=
+                                     "location_action_hooks";
+   Html_Hook_Type                : constant Hook_Type :=
+                                     "html_action_hooks";
+   Diff_Hook_Type                : constant Hook_Type :=
+                                     "diff_hooks";
+   File_Status_Changed_Hook_Type : constant Hook_Type :=
                                      "file_status_changed_hooks";
 
    --  The various names to describe the hook types defined in this package
@@ -666,16 +671,15 @@ package body GPS.Kernel.Standard_Hooks is
    --------------------------
 
    function Create_Callback_Data
-     (Script    : access Scripting_Language_Record'Class;
-      Hook_Name : String;
-      Data      : access Context_Hooks_Args)
-      return Callback_Data_Access
+     (Script : access Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
+      Data   : access Context_Hooks_Args) return Callback_Data_Access
    is
       C : constant Class_Instance := Create_Context (Script, Data.Context);
       D : constant Callback_Data_Access :=
             new Callback_Data'Class'(Create (Script, 2));
    begin
-      Set_Nth_Arg (D.all, 1, Hook_Name);
+      Set_Nth_Arg (D.all, 1, String (Hook));
       Set_Nth_Arg (D.all, 2, C);
       return D;
    end Create_Callback_Data;
@@ -685,15 +689,14 @@ package body GPS.Kernel.Standard_Hooks is
    --------------------------
 
    function Create_Callback_Data
-     (Script    : access Scripting_Language_Record'Class;
-      Hook_Name : String;
-      Data      : access String_Hooks_Args)
-      return Callback_Data_Access
+     (Script : access Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
+      Data   : access String_Hooks_Args) return Callback_Data_Access
    is
       D : constant Callback_Data_Access :=
             new Callback_Data'Class'(Create (Script, 2));
    begin
-      Set_Nth_Arg (D.all, 1, Hook_Name);
+      Set_Nth_Arg (D.all, 1, String (Hook));
       Set_Nth_Arg (D.all, 2, Data.Value);
       return D;
    end Create_Callback_Data;
@@ -703,15 +706,14 @@ package body GPS.Kernel.Standard_Hooks is
    --------------------------
 
    function Create_Callback_Data
-     (Script    : access Scripting_Language_Record'Class;
-      Hook_Name : String;
-      Data      : access String_Boolean_Hooks_Args)
-      return Callback_Data_Access
+     (Script : access Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
+      Data   : access String_Boolean_Hooks_Args) return Callback_Data_Access
    is
       D : constant Callback_Data_Access :=
         new Callback_Data'Class'(Create (Script, 3));
    begin
-      Set_Nth_Arg (D.all, 1, Hook_Name);
+      Set_Nth_Arg (D.all, 1, String (Hook));
       Set_Nth_Arg (D.all, 2, Data.Value);
       Set_Nth_Arg (D.all, 3, Data.Bool);
       return D;
@@ -722,16 +724,15 @@ package body GPS.Kernel.Standard_Hooks is
    --------------------------
 
    function Create_Callback_Data
-     (Script    : access Scripting_Language_Record'Class;
-      Hook_Name : String;
-      Data      : access Project_Hooks_Args)
-      return Callback_Data_Access
+     (Script : access Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
+      Data   : access Project_Hooks_Args) return Callback_Data_Access
    is
       P : constant Class_Instance := Create_Project (Script, Data.Project);
       D : constant Callback_Data_Access :=
             new Callback_Data'Class'(Create (Script, 2));
    begin
-      Set_Nth_Arg (D.all, 1, Hook_Name);
+      Set_Nth_Arg (D.all, 1, String (Hook));
       Set_Nth_Arg (D.all, 2, P);
       return D;
    end Create_Callback_Data;
@@ -741,16 +742,15 @@ package body GPS.Kernel.Standard_Hooks is
    --------------------------
 
    function Create_Callback_Data
-     (Script    : access Scripting_Language_Record'Class;
-      Hook_Name : String;
-      Data      : access File_Hooks_Args)
-      return Callback_Data_Access
+     (Script : access Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
+      Data   : access File_Hooks_Args) return Callback_Data_Access
    is
       F : constant Class_Instance := Create_File (Script, Data.File);
       D : constant Callback_Data_Access :=
             new Callback_Data'Class'(Create (Script, 2));
    begin
-      Set_Nth_Arg (D.all, 1, Hook_Name);
+      Set_Nth_Arg (D.all, 1, String (Hook));
       Set_Nth_Arg (D.all, 2, F);
       return D;
    end Create_Callback_Data;
@@ -760,17 +760,16 @@ package body GPS.Kernel.Standard_Hooks is
    --------------------------
 
    function Create_Callback_Data
-     (Script    : access Scripting_Language_Record'Class;
-      Hook_Name : String;
-      Data      : access Files_2_Hooks_Args)
-      return Callback_Data_Access
+     (Script : access Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
+      Data   : access Files_2_Hooks_Args) return Callback_Data_Access
    is
       F  : constant Class_Instance := Create_File (Script, Data.File);
       F2 : constant Class_Instance := Create_File (Script, Data.Renamed);
       D  : constant Callback_Data_Access :=
              new Callback_Data'Class'(Create (Script, 3));
    begin
-      Set_Nth_Arg (D.all, 1, Hook_Name);
+      Set_Nth_Arg (D.all, 1, String (Hook));
       Set_Nth_Arg (D.all, 2, F);
       Set_Nth_Arg (D.all, 3, F2);
       return D;
@@ -781,16 +780,15 @@ package body GPS.Kernel.Standard_Hooks is
    --------------------------
 
    function Create_Callback_Data
-     (Script    : access Scripting_Language_Record'Class;
-      Hook_Name : String;
-      Data      : access Source_File_Hooks_Args)
-      return Callback_Data_Access
+     (Script : access Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
+      Data   : access Source_File_Hooks_Args) return Callback_Data_Access
    is
       F : constant Class_Instance := Create_File (Script, Data.File);
       D : constant Callback_Data_Access :=
             new Callback_Data'Class'(Create (Script, 8));
    begin
-      Set_Nth_Arg (D.all, 1, Hook_Name);
+      Set_Nth_Arg (D.all, 1, String (Hook));
       Set_Nth_Arg (D.all, 2, F);
       Set_Nth_Arg (D.all, 3, Data.Line);
       Set_Nth_Arg (D.all, 4, Natural (Data.Column));
@@ -835,16 +833,15 @@ package body GPS.Kernel.Standard_Hooks is
    --------------------------
 
    function Create_Callback_Data
-     (Script    : access Scripting_Language_Record'Class;
-      Hook_Name : String;
-      Data      : access File_Line_Hooks_Args)
-      return Callback_Data_Access
+     (Script : access Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
+      Data   : access File_Line_Hooks_Args) return Callback_Data_Access
    is
       F : constant Class_Instance := Create_File (Script, Data.File);
       D : constant Callback_Data_Access :=
             new Callback_Data'Class'(Create (Script, 5));
    begin
-      Set_Nth_Arg (D.all, 1, Hook_Name);
+      Set_Nth_Arg (D.all, 1, String (Hook));
       Set_Nth_Arg (D.all, 2, Data.Identifier);
       Set_Nth_Arg (D.all, 3, F);
       Set_Nth_Arg (D.all, 4, Data.Every_Line);
@@ -857,16 +854,15 @@ package body GPS.Kernel.Standard_Hooks is
    --------------------------
 
    function Create_Callback_Data
-     (Script    : access Scripting_Language_Record'Class;
-      Hook_Name : String;
-      Data      : access Location_Hooks_Args)
-      return Callback_Data_Access
+     (Script : access Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
+      Data   : access Location_Hooks_Args) return Callback_Data_Access
    is
       F : constant Class_Instance := Create_File (Script, Data.File);
       D : constant Callback_Data_Access :=
             new Callback_Data'Class'(Create (Script, 7));
    begin
-      Set_Nth_Arg (D.all, 1, Hook_Name);
+      Set_Nth_Arg (D.all, 1, String (Hook));
       Set_Nth_Arg (D.all, 2, Data.Identifier);
       Set_Nth_Arg (D.all, 3, Data.Category);
       Set_Nth_Arg (D.all, 4, F);
@@ -881,15 +877,14 @@ package body GPS.Kernel.Standard_Hooks is
    --------------------------
 
    function Create_Callback_Data
-     (Script    : access Scripting_Language_Record'Class;
-      Hook_Name : String;
-      Data      : access Html_Hooks_Args)
-      return Callback_Data_Access
+     (Script : access Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
+      Data   : access Html_Hooks_Args) return Callback_Data_Access
    is
       D : constant Callback_Data_Access :=
             new Callback_Data'Class'(Create (Script, 4));
    begin
-      Set_Nth_Arg (D.all, 1, Hook_Name);
+      Set_Nth_Arg (D.all, 1, String (Hook));
       Set_Nth_Arg (D.all, 2, Data.URL_Or_File);
       Set_Nth_Arg (D.all, 3, Data.Enable_Navigation);
       Set_Nth_Arg (D.all, 4, Data.Anchor);
@@ -901,16 +896,15 @@ package body GPS.Kernel.Standard_Hooks is
    --------------------------
 
    function Create_Callback_Data
-     (Script    : access Scripting_Language_Record'Class;
-      Hook_Name : String;
-      Data      : access File_Location_Hooks_Args)
-      return Callback_Data_Access
+     (Script : access Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
+      Data   : access File_Location_Hooks_Args) return Callback_Data_Access
    is
       F : constant Class_Instance := Create_File (Script, Data.File);
       D : constant Callback_Data_Access :=
             new Callback_Data'Class'(Create (Script, 4));
    begin
-      Set_Nth_Arg (D.all, 1, Hook_Name);
+      Set_Nth_Arg (D.all, 1, String (Hook));
       Set_Nth_Arg (D.all, 2, F);
       Set_Nth_Arg (D.all, 3, Data.Line);
       Set_Nth_Arg (D.all, 4, Data.Column);
@@ -922,10 +916,9 @@ package body GPS.Kernel.Standard_Hooks is
    --------------------------
 
    function Create_Callback_Data
-     (Script    : access Scripting_Language_Record'Class;
-      Hook_Name : String;
-      Data      : access Diff_Hooks_Args)
-      return Callback_Data_Access
+     (Script : access Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
+      Data   : access Diff_Hooks_Args) return Callback_Data_Access
    is
       F1 : constant Class_Instance := Create_File (Script, Data.Orig_File);
       F2 : constant Class_Instance := Create_File (Script, Data.New_File);
@@ -933,7 +926,7 @@ package body GPS.Kernel.Standard_Hooks is
       D  : constant Callback_Data_Access :=
              new Callback_Data'Class'(Create (Script, 4));
    begin
-      Set_Nth_Arg (D.all, 1, Hook_Name);
+      Set_Nth_Arg (D.all, 1, String (Hook));
       Set_Nth_Arg (D.all, 2, F1);
       Set_Nth_Arg (D.all, 3, F2);
       Set_Nth_Arg (D.all, 4, F3);
@@ -945,16 +938,16 @@ package body GPS.Kernel.Standard_Hooks is
    --------------------------
 
    function Create_Callback_Data
-     (Script    : access Scripting_Language_Record'Class;
-      Hook_Name : String;
-      Data      : access Exit_Before_Action_Hooks_Args)
+     (Script : access Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
+      Data   : access Exit_Before_Action_Hooks_Args)
       return Callback_Data_Access
    is
       pragma Unreferenced (Data);
       D : constant Callback_Data_Access :=
             new Callback_Data'Class'(Create (Script, 1));
    begin
-      Set_Nth_Arg (D.all, 1, Hook_Name);
+      Set_Nth_Arg (D.all, 1, String (Hook));
       return D;
    end Create_Callback_Data;
 
@@ -963,15 +956,14 @@ package body GPS.Kernel.Standard_Hooks is
    --------------------------
 
    function Create_Callback_Data
-     (Script    : access Scripting_Language_Record'Class;
-      Hook_Name : String;
-      Data      : access Marker_Hooks_Args)
-      return Callback_Data_Access
+     (Script : access Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
+      Data   : access Marker_Hooks_Args) return Callback_Data_Access
    is
       D : constant Callback_Data_Access :=
             new Callback_Data'Class'(Create (Script, 2));
    begin
-      Set_Nth_Arg (D.all, 1, Hook_Name);
+      Set_Nth_Arg (D.all, 1, String (Hook));
       Set_Nth_Arg (D.all, 2, To_String (Data.Marker));
       return D;
    end Create_Callback_Data;
@@ -981,16 +973,16 @@ package body GPS.Kernel.Standard_Hooks is
    --------------------------
 
    function Create_Callback_Data
-     (Script    : access Scripting_Language_Record'Class;
-      Hook_Name : String;
-      Data      : access File_Status_Changed_Hooks_Args)
+     (Script : access Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
+      Data   : access File_Status_Changed_Hooks_Args)
       return Callback_Data_Access
    is
       F : constant Class_Instance := Create_File (Script, Data.File);
       D : constant Callback_Data_Access :=
             new Callback_Data'Class'(Create (Script, 3));
    begin
-      Set_Nth_Arg (D.all, 1, Hook_Name);
+      Set_Nth_Arg (D.all, 1, String (Hook));
       Set_Nth_Arg (D.all, 2, F);
       Set_Nth_Arg (D.all, 3, File_Status'Image (Data.Status));
       return D;
@@ -1002,7 +994,7 @@ package body GPS.Kernel.Standard_Hooks is
 
    procedure Run_String_Hook
      (Kernel : access Kernel_Handle_Record'Class;
-      Hook   : String;
+      Hook   : Hook_Name;
       Data   : String)
    is
       Args : aliased String_Hooks_Args :=
@@ -1046,10 +1038,10 @@ package body GPS.Kernel.Standard_Hooks is
          Args_Creator => From_Callback_Data_Project'Access);
 
       Register_Hook_Data_Type
-        (Kernel, Before_Exit_Action_Hook,
+        (Kernel, Before_Exit_Action_Hook_Type,
          Args_Creator => From_Callback_Data_Before_Exit'Access);
       Register_Hook_Return_Boolean
-        (Kernel, Before_Exit_Action_Hook, Before_Exit_Action_Hook);
+        (Kernel, Before_Exit_Action_Hook, Before_Exit_Action_Hook_Type);
 
       Register_Hook_Data_Type
         (Kernel, File_Line_Hook_Type,

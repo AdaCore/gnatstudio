@@ -17,25 +17,25 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Debugger;           use Debugger;
-with Glib;               use Glib;
-with Glib.Object;        use Glib.Object;
-with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
+with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
-with GPS.Kernel;         use GPS.Kernel;
-with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
-with GPS.Kernel.Project; use GPS.Kernel.Project;
-with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
-with GPS.Intl;           use GPS.Intl;
-with GVD.Process;        use GVD.Process;
+
+with Debugger;                use Debugger;
+with Glib;                    use Glib;
+with Glib.Object;             use Glib.Object;
+with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
+with GPS.Kernel.Project;      use GPS.Kernel.Project;
+with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
+with GPS.Intl;                use GPS.Intl;
+with GVD.Process;             use GVD.Process;
 with GVD.Types;
-with GVD_Module;         use GVD_Module;
-with VFS;                use VFS;
+with GVD_Module;              use GVD_Module;
+with VFS;                     use VFS;
 
 package body GVD.Scripts is
 
-   Debugger_Hook_Data_Name        : constant String := "Debugger";
-   Debugger_String_Hook_Data_Name : constant String := "Debugger_String";
+   Debugger_Hook_Data_Type        : constant Hook_Type := "Debugger";
+   Debugger_String_Hook_Data_Type : constant Hook_Type := "Debugger_String";
 
    procedure Shell_Handler
      (Data    : in out Callback_Data'Class;
@@ -60,9 +60,9 @@ package body GVD.Scripts is
    --------------------------
 
    function Create_Callback_Data
-     (Script    : access Scripting_Language_Record'Class;
-      Hook_Name : String;
-      Data      : access Debugger_Hooks_Data)
+     (Script : access Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
+      Data   : access Debugger_Hooks_Data)
       return Callback_Data_Access
    is
       D   : constant Callback_Data_Access :=
@@ -70,7 +70,7 @@ package body GVD.Scripts is
       Inst : constant Class_Instance :=
                Get_Or_Create_Instance (Script, Data.Debugger);
    begin
-      Set_Nth_Arg (D.all, 1, Hook_Name);
+      Set_Nth_Arg (D.all, 1, String (Hook));
       Set_Nth_Arg (D.all, 2, Inst);
       return D;
    end Create_Callback_Data;
@@ -95,9 +95,9 @@ package body GVD.Scripts is
    --------------------------
 
    function Create_Callback_Data
-     (Script    : access Scripting_Language_Record'Class;
-      Hook_Name : String;
-      Data      : access Debugger_String_Hooks_Data)
+     (Script : access Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
+      Data   : access Debugger_String_Hooks_Data)
       return Callback_Data_Access
    is
       D   : constant Callback_Data_Access :=
@@ -105,7 +105,7 @@ package body GVD.Scripts is
       Inst : constant Class_Instance :=
                Get_Or_Create_Instance (Script, Data.Process);
    begin
-      Set_Nth_Arg (D.all, 1, Hook_Name);
+      Set_Nth_Arg (D.all, 1, String (Hook));
       Set_Nth_Arg (D.all, 2, Inst);
       Set_Nth_Arg (D.all, 3, Data.Command);
       return D;
@@ -136,13 +136,13 @@ package body GVD.Scripts is
 
    procedure Run_Debugger_Hook
      (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
-      Name     : String)
+      Hook     : Hook_Name)
    is
       Kernel : constant Kernel_Handle := Debugger.Window.Kernel;
       Args   : aliased Debugger_Hooks_Data;
    begin
       Args := (Hooks_Data with Debugger => Visual_Debugger (Debugger));
-      Run_Hook (Kernel, Name, Args'Unchecked_Access);
+      Run_Hook (Kernel, Hook, Args'Unchecked_Access);
    end Run_Debugger_Hook;
 
    ---------------------------------------
@@ -150,9 +150,9 @@ package body GVD.Scripts is
    ---------------------------------------
 
    function Run_Debugger_Hook_Until_Not_Empty
-     (Debugger  : access GVD.Process.Visual_Debugger_Record'Class;
-      Hook_Name : String;
-      Command   : String) return String
+     (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
+      Hook     : Hook_Name;
+      Command  : String) return String
    is
       Kernel : constant Kernel_Handle := Debugger.Window.Kernel;
       Args   : aliased Debugger_String_Hooks_Data :=
@@ -164,7 +164,7 @@ package body GVD.Scripts is
       Set_Busy (Debugger);
       declare
          Tmp : constant String := Run_Hook_Until_Not_Empty
-           (Kernel, Hook_Name, Args'Unchecked_Access, Set_Busy => True);
+           (Kernel, Hook, Args'Unchecked_Access, Set_Busy => True);
       begin
          Set_Busy (Debugger, False);
          return Tmp;
@@ -357,28 +357,28 @@ package body GVD.Scripts is
    begin
       Register_Hook_Data_Type
         (Kernel,
-         Data_Type_Name => Debugger_Hook_Data_Name,
+         Data_Type_Name => Debugger_Hook_Data_Type,
          Args_Creator   => From_Callback_Data_Debugger'Access);
       Register_Hook_Data_Type
         (Kernel,
-         Data_Type_Name => Debugger_String_Hook_Data_Name,
+         Data_Type_Name => Debugger_String_Hook_Data_Type,
          Args_Creator   => From_Callback_Data_Debugger_String'Access);
 
       Register_Hook_No_Return
-        (Kernel, Debugger_Process_Stopped_Hook, Debugger_Hook_Data_Name);
+        (Kernel, Debugger_Process_Stopped_Hook, Debugger_Hook_Data_Type);
       Register_Hook_No_Return
-        (Kernel, Debugger_Context_Changed_Hook, Debugger_Hook_Data_Name);
+        (Kernel, Debugger_Context_Changed_Hook, Debugger_Hook_Data_Type);
       Register_Hook_No_Return
-        (Kernel, Debugger_Executable_Changed_Hook, Debugger_Hook_Data_Name);
+        (Kernel, Debugger_Executable_Changed_Hook, Debugger_Hook_Data_Type);
       Register_Hook_No_Return
-        (Kernel, Debugger_Started_Hook, Debugger_Hook_Data_Name);
+        (Kernel, Debugger_Started_Hook, Debugger_Hook_Data_Type);
       Register_Hook_No_Return
-        (Kernel, Debugger_Terminated_Hook, Debugger_Hook_Data_Name);
+        (Kernel, Debugger_Terminated_Hook, Debugger_Hook_Data_Type);
       Register_Hook_Return_String
-        (Kernel, Debugger_Command_Action_Hook, Debugger_String_Hook_Data_Name);
+        (Kernel, Debugger_Command_Action_Hook, Debugger_String_Hook_Data_Type);
       Register_Hook_Return_String
         (Kernel, Debugger_Question_Action_Hook,
-         Debugger_String_Hook_Data_Name);
+         Debugger_String_Hook_Data_Type);
 
       --  Commands
 

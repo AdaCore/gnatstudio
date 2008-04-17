@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006-2008, AdaCore           --
+--                 Copyright (C) 2006-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,15 +19,16 @@
 
 with GNAT.Expect;
 pragma Warnings (Off);
-with GNAT.Expect.TTY.Remote;     use GNAT.Expect.TTY.Remote;
+with GNAT.Expect.TTY.Remote; use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 with GNAT.OS_Lib;
 
-with GPS.Kernel.Hooks;     use GPS.Kernel.Hooks;
 with GNATCOLL.Scripts;
-with Filesystem;           use Filesystem;
+
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with Filesystem;             use Filesystem;
 with Interactive_Consoles;
-with Remote;               use Remote;
+with Remote;                 use Remote;
 with VFS;
 
 package GPS.Kernel.Remote is
@@ -94,7 +95,7 @@ package GPS.Kernel.Remote is
    -- Connection Hook --
    ---------------------
 
-   Build_Server_Connected_Hook : constant String :=
+   Build_Server_Connected_Hook : constant Hook_Name :=
                                    "build_server_connected_hook";
    --  No data hook
 
@@ -102,9 +103,9 @@ package GPS.Kernel.Remote is
    -- Synchronization Hook --
    --------------------------
 
-   Rsync_Action_Hook : constant String := "rsync_action_hook";
+   Rsync_Action_Hook : constant Hook_Name := "rsync_action_hook";
 
-   Rsync_Hook_Type : constant String := "rsync_action_hook_t";
+   Rsync_Hook_Type : constant Hook_Type := "rsync_action_hook_t";
 
    type Rsync_Hooks_Args
      (Tool_Name_Length, Src_Name_Length, Dest_Name_Length, Queue_Id_Length,
@@ -131,9 +132,9 @@ package GPS.Kernel.Remote is
    end record;
 
    function Create_Callback_Data
-     (Script    : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
-      Hook_Name : String;
-      Data      : access Rsync_Hooks_Args)
+     (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
+      Data   : access Rsync_Hooks_Args)
       return GNATCOLL.Scripts.Callback_Data_Access;
    --  See inherited for documentation
 
@@ -141,9 +142,9 @@ package GPS.Kernel.Remote is
    -- Server Config Changed Hook --
    --------------------------------
 
-   Server_Config_Changed_Hook : constant String := "server_config_hook";
+   Server_Config_Changed_Hook : constant Hook_Name := "server_config_hook";
 
-   Server_Config_Changed_Hook_Type : constant String :=
+   Server_Config_Changed_Hook_Type : constant Hook_Type :=
                                        "server_config_hook_t";
 
    type Server_Config_Changed_Hooks_Args
@@ -156,9 +157,9 @@ package GPS.Kernel.Remote is
    end record;
 
    function Create_Callback_Data
-     (Script    : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
-      Hook_Name : String;
-      Data      : access Server_Config_Changed_Hooks_Args)
+     (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
+      Data   : access Server_Config_Changed_Hooks_Args)
       return GNATCOLL.Scripts.Callback_Data_Access;
    --  See inherited for documentation
 
@@ -166,7 +167,7 @@ package GPS.Kernel.Remote is
    -- Server List Changed Hook --
    ------------------------------
 
-   Server_List_Changed_Hook : constant String := "server_list_hook";
+   Server_List_Changed_Hook : constant Hook_Name := "server_list_hook";
    --  No data hook
 
    ----------------------------

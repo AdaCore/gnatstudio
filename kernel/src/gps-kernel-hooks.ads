@@ -21,7 +21,6 @@
 --  See the GPS documentation on how to use hooks from the scripting languages.
 
 with GNATCOLL.Scripts;
-with GNAT.Strings;
 with Glib.Object;
 
 package GPS.Kernel.Hooks is
@@ -32,7 +31,7 @@ package GPS.Kernel.Hooks is
 
    function Get_Hook_Name
      (Data : GNATCOLL.Scripts.Callback_Data'Class; Nth : Natural)
-      return String;
+      return Hook_Name;
    --  Return the name of the hook instance stored in Data
 
    ----------------
@@ -49,9 +48,9 @@ package GPS.Kernel.Hooks is
    --  Free the memory used by Data. By default, this does nothing
 
    function Create_Callback_Data
-     (Script    : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
-      Hook_Name : String;
-      Data      : access Hooks_Data)
+     (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
+      Data   : access Hooks_Data)
       return GNATCOLL.Scripts.Callback_Data_Access is abstract;
    --  Create the callback_data to be passed to a shell command. The data
    --  itself will be freed automatically later on. However, when you add a
@@ -85,7 +84,7 @@ package GPS.Kernel.Hooks is
 
    procedure Register_Hook_Data_Type
      (Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Data_Type_Name : String;
+      Data_Type_Name : Hook_Type;
       Args_Creator   : From_Callback_Data_Function);
    --  Register a new possible parameters profile for hooks. Calling this
    --  procedure is mandatory to make this type of hooks visible from the
@@ -97,8 +96,8 @@ package GPS.Kernel.Hooks is
 
    procedure Register_Hook_No_Return
      (Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Name           : String;
-      Data_Type_Name : String);
+      Name           : Hook_Name;
+      Data_Type_Name : Hook_Type);
    --  Create a new hook. Associated callbacks will take the parameters
    --  described by Parameters_Profile (which must be the same name given to
    --  Register_Hook_Data_Type). Such callbacks are not expected to return any
@@ -106,19 +105,19 @@ package GPS.Kernel.Hooks is
 
    procedure Register_Hook_Return_Boolean
      (Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Name           : String;
-      Data_Type_Name : String);
+      Name           : Hook_Name;
+      Data_Type_Name : Hook_Type);
    --  Same as above, except the callbacks are expected to return a boolean
 
    procedure Register_Hook_Return_String
      (Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Name           : String;
-      Data_Type_Name : String);
+      Name           : Hook_Name;
+      Data_Type_Name : Hook_Type);
    --  Same as above, except the callbacks are expected to return a string
 
    procedure Register_Hook_No_Args
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Name   : String);
+      Name   : Hook_Name);
    --  Same as above, except the callbacks take no arguments and return nothing
 
    ---------------------------------
@@ -127,7 +126,7 @@ package GPS.Kernel.Hooks is
 
    procedure Add_Hook
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Hook   : String;
+      Hook   : Hook_Name;
       Func   : access GPS.Kernel.Hook_Function_Record'Class;
       Name   : String;
       Watch  : Glib.Object.GObject := null);
@@ -138,13 +137,13 @@ package GPS.Kernel.Hooks is
 
    procedure Remove_Hook
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Hook   : String;
+      Hook   : Hook_Name;
       Func   : access GPS.Kernel.Hook_Function_Record'Class);
    --  Remove Func from the list of functions calle when the hook is run
 
    function Get_Hook_Func_List
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Hook   : String) return GNAT.Strings.String_List;
+      Hook   : Hook_Name) return Hook_List;
    --  Return the description of the functions attached to the specified hook
 
    --------------------------------------
@@ -171,7 +170,7 @@ package GPS.Kernel.Hooks is
 
    procedure Run_Hook
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Hook     : String;
+      Hook     : Hook_Name;
       Set_Busy : Boolean := True);
    --  Call all functions that were added to the hook.
    --  The functions are executed in the reverse order in which they were
@@ -202,7 +201,7 @@ package GPS.Kernel.Hooks is
 
    procedure Run_Hook
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Hook     : String;
+      Hook     : Hook_Name;
       Data     : access Hooks_Data'Class;
       Set_Busy : Boolean := True);
    --  See doc above for Run_Hook
@@ -232,7 +231,7 @@ package GPS.Kernel.Hooks is
 
    function Run_Hook_Until_Success
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Hook     : String;
+      Hook     : Hook_Name;
       Data     : access Hooks_Data'Class;
       Set_Busy : Boolean := True) return Boolean;
    --  Same as Run_Doc above, but stops executing the functions as soon
@@ -242,7 +241,7 @@ package GPS.Kernel.Hooks is
 
    function Run_Hook_Until_Failure
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Hook     : String;
+      Hook     : Hook_Name;
       Data     : access Hooks_Data'Class;
       Set_Busy : Boolean := True) return Boolean;
    --  Same as above except stops as soon as a function returns False.
@@ -272,7 +271,7 @@ package GPS.Kernel.Hooks is
 
    function Run_Hook_Until_Not_Empty
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Hook     : String;
+      Hook     : Hook_Name;
       Data     : access Hooks_Data'Class;
       Set_Busy : Boolean := True) return String;
    --  Same as Run_Doc above, but stops executing the functions as soon

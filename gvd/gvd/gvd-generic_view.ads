@@ -42,8 +42,8 @@ generic
    --  The visual debugger class. We cannot with GVD.Process in this package,
    --  since otherwise this creates elaboration circularities.
 
-   Debugger_Process_Stopped_Hook : String;
-   Debugger_Context_Changed_Hook : String;
+   Debugger_Process_Stopped_Hook : GPS.Kernel.Hook_Name;
+   Debugger_Context_Changed_Hook : GPS.Kernel.Hook_Name;
    --  The two hooks on which we want to refresh the view. These should be read
    --  from GVD.Scripts, but cannot for elaboration circularity issues.
 

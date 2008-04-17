@@ -100,7 +100,7 @@ package GPS.Kernel.Clipboard is
    procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class);
    --  Register shell commands associated with the clipboard
 
-   Clipboard_Changed_Hook : constant String := "clipboard_changed";
+   Clipboard_Changed_Hook : constant Hook_Name := "clipboard_changed";
    --  Hook called when the contents of the clipboard has changed (either
    --  because we added a new entry to it, or because the index of the last
    --  paste operation has changed).

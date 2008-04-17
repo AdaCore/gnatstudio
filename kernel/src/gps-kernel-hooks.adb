@@ -17,18 +17,21 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Traces;                    use Traces;
-with Glib.Object;               use Glib.Object;
-with System;                    use System;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with Generic_List;
-with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
+with System;                    use System;
+
+with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Traces;
+
+with Glib.Object;               use Glib.Object;
+
+with Generic_List;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with Traces;                    use Traces;
 
 package body GPS.Kernel.Hooks is
 
@@ -36,9 +39,9 @@ package body GPS.Kernel.Hooks is
       Create ("Hooks", Default => GNATCOLL.Traces.Off);
 
    use GNAT.Strings;
-   use GPS.Kernel.Hooks_Hash.String_Hash_Table;
+   use GPS.Kernel.Hooks_Hash;
 
-   No_Args_Data_Type_Name : constant String := "<no_args>";
+   No_Args_Data_Type_Name : constant Hook_Type := "<no_args>";
    --  Data type for hooks with no arguments
 
    Hook_Class_Name : constant String := "Hook";
@@ -55,13 +58,13 @@ package body GPS.Kernel.Hooks is
    Register_Hook_Args : constant Cst_Argument_List :=
      (1 => Name_Cst'Access, 2 => Descr_Cst'Access, 3 => Type_Cst'Access);
 
-   Type_Prefix : constant String := "__type__";
+   Type_Prefix : constant Hook_Type := "__type__";
    --  Prefix prepend to type names when stored in the hash table of hooks.
    --  This is used to avoid name conflicts between hooks and hook types.
 
    type Hook_Function_Description is record
       Func : Hook_Function;
-      Name : GNAT.Strings.String_Access;
+      Name : Hook_Name_Access;
    end record;
    procedure Free (F : in out Hook_Function_Description);
    package Hooks_List is new Generic_List (Hook_Function_Description, Free);
@@ -88,7 +91,7 @@ package body GPS.Kernel.Hooks is
          when True =>
             From_Data                 : From_Callback_Data_Function;
          when False =>
-            Name                      : GNAT.Strings.String_Access;
+            Name                      : Hook_Name_Access;
             Funcs                     : Hooks_List.List;
             Create_Subprogram_Wrapper : Subprogram_Wrapper_Creator;
             Command_Handler           : Module_Command_Function;
@@ -102,8 +105,8 @@ package body GPS.Kernel.Hooks is
 
    function Get_Or_Create_Hook
      (Kernel                    : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Name                      : String;
-      Data_Type_Name            : String := No_Args_Data_Type_Name;
+      Name                      : Hook_Name;
+      Data_Type_Name            : Hook_Type := No_Args_Data_Type_Name;
       Create_Subprogram_Wrapper : Subprogram_Wrapper_Creator := null;
       Command_Handler           : Module_Command_Function := null)
       return Hook_Description_Access;
@@ -122,7 +125,7 @@ package body GPS.Kernel.Hooks is
 
    type Hook_User_Data is record
       Kernel : Kernel_Handle;
-      Name   : String_Access;
+      Name   : Hook_Name_Access;
       Func   : Hook_Function;
    end record;
    type Hook_User_Data_Access is access Hook_User_Data;
@@ -235,9 +238,9 @@ package body GPS.Kernel.Hooks is
 
    type Shell_Hooks_Data is new Hooks_Data with null record;
    function Create_Callback_Data
-     (Script    : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
-      Hook_Name : String;
-      Data      : access Shell_Hooks_Data) return Callback_Data_Access;
+     (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
+      Data   : access Shell_Hooks_Data) return Callback_Data_Access;
    function General_From_Callback_Data
      (Data : Callback_Data'Class) return Hooks_Data'Class;
    --  A wrapper around a Callback_Data. This is used for hook types created in
@@ -262,7 +265,7 @@ package body GPS.Kernel.Hooks is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Info   : Hook_Description_Access;
       Func   : access GPS.Kernel.Hook_Function_Record'Class;
-      Name   : String;
+      Name   : Hook_Name;
       Watch  : Glib.Object.GObject := null;
       Last   : Boolean := False);
    --  Same as Add_Hook, but directly with the hook description. This saves a
@@ -274,19 +277,19 @@ package body GPS.Kernel.Hooks is
 
    function Get_Or_Create_Hook
      (Kernel                    : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Name                      : String;
-      Data_Type_Name            : String := No_Args_Data_Type_Name;
+      Name                      : Hook_Name;
+      Data_Type_Name            : Hook_Type := No_Args_Data_Type_Name;
       Create_Subprogram_Wrapper : Subprogram_Wrapper_Creator := null;
       Command_Handler           : Module_Command_Function := null)
-     return Hook_Description_Access
+      return Hook_Description_Access
   is
       Info : Hook_Description_Access := Hook_Description_Access
-        (Get (Kernel.Hooks, Type_Prefix & Data_Type_Name));
+        (Get (Kernel.Hooks, Hook_Name (Type_Prefix & Data_Type_Name)));
       Hook : Hook_Description_Access := Hook_Description_Access
         (Get (Kernel.Hooks, Name));
    begin
       Assert (Me, Info = null or else Info.Is_Hook_Type,
-              Data_Type_Name & " is not a hook type");
+              String (Data_Type_Name) & " is not a hook type");
 
       if Info = null then
          --  Create a dummy hook type for now. It will be overriden when
@@ -294,27 +297,27 @@ package body GPS.Kernel.Hooks is
          Info := new Hook_Description'
            (Is_Hook_Type => True,
             From_Data    => null);
-         Set (Kernel.Hooks, Type_Prefix & Data_Type_Name,
+         Set (Kernel.Hooks, Hook_Name (Type_Prefix & Data_Type_Name),
               Hook_Description_Base_Access (Info));
       end if;
 
       if Hook = null then
-         Trace (Me, "Creating hook description for " & Name);
+         Trace (Me, "Creating hook description for " & String (Name));
          Hook := new Hook_Description'
            (Is_Hook_Type              => False,
-            Name                      => new String'(Name),
+            Name                      => new Hook_Name'(Name),
             Funcs                     => Hooks_List.Null_List,
             Create_Subprogram_Wrapper => Create_Subprogram_Wrapper,
             Command_Handler           => Command_Handler,
             Parameters_Type           => Info);
          Set (Kernel.Hooks, Name, Hook_Description_Base_Access (Hook));
       elsif Hook.Command_Handler = null then
-         Trace (Me, "Updating hook description for " & Name);
+         Trace (Me, "Updating hook description for " & String (Name));
          Hook.Command_Handler           := Command_Handler;
          Hook.Create_Subprogram_Wrapper := Create_Subprogram_Wrapper;
          Hook.Parameters_Type           := Info;
       elsif Command_Handler /= null then
-         Insert (Kernel, -"Hook registered twice: " & Name);
+         Insert (Kernel, -"Hook registered twice: " & String (Name));
       end if;
       return Hook;
    end Get_Or_Create_Hook;
@@ -337,11 +340,11 @@ package body GPS.Kernel.Hooks is
 
    procedure Register_Hook_Data_Type
      (Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Data_Type_Name : String;
+      Data_Type_Name : Hook_Type;
       Args_Creator   : From_Callback_Data_Function)
    is
       Info : Hook_Description_Access := Hook_Description_Access
-        (Get (Kernel.Hooks, Type_Prefix & Data_Type_Name));
+        (Get (Kernel.Hooks, Hook_Name (Type_Prefix & Data_Type_Name)));
    begin
       if Info = null then
          Info := new Hook_Description'
@@ -354,17 +357,22 @@ package body GPS.Kernel.Hooks is
               .. Data_Type_Name'First + Type_Prefix'Length - 1) =
              Type_Prefix
          then
-            Insert (Kernel, -"Hook names cannot start with " & Type_Prefix);
+            Insert
+              (Kernel,
+               -"Hook names cannot start with " & String (Type_Prefix));
          end if;
 
-         Set (Kernel.Hooks, Type_Prefix & Data_Type_Name,
+         Set (Kernel.Hooks, Hook_Name (Type_Prefix & Data_Type_Name),
               Hook_Description_Base_Access (Info));
+
       elsif Info.From_Data = null then
          --  In case the hook was created automatically through a call to
          --  Add_Hook, but not registered before
          Info.From_Data := Args_Creator;
+
       else
-         Insert (Kernel, -"Hook type registered twice: " & Data_Type_Name);
+         Insert
+           (Kernel, -"Hook type registered twice: " & String (Data_Type_Name));
       end if;
    end Register_Hook_Data_Type;
 
@@ -375,7 +383,7 @@ package body GPS.Kernel.Hooks is
    procedure Command_Handler_No_Return
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Name   : constant String                  := Get_Hook_Name (Data, 1);
+      Name   : constant Hook_Name                := Get_Hook_Name (Data, 1);
       Kernel : constant Kernel_Handle           := Get_Kernel (Data);
       Info   : constant Hook_Description_Access :=
                  Get_Or_Create_Hook (Kernel, Name);
@@ -384,7 +392,7 @@ package body GPS.Kernel.Hooks is
       if Info.Parameters_Type = null
         or else Info.Parameters_Type.From_Data = null
       then
-         Set_Error_Msg (Data, -"Unknown hook: " & Name);
+         Set_Error_Msg (Data, -"Unknown hook: " & String (Name));
       else
          declare
             Args : aliased Hooks_Data'Class :=
@@ -402,8 +410,8 @@ package body GPS.Kernel.Hooks is
 
    procedure Register_Hook_No_Return
      (Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Name           : String;
-      Data_Type_Name : String)
+      Name           : Hook_Name;
+      Data_Type_Name : Hook_Type)
    is
       Info : Hook_Description_Access;
       pragma Unreferenced (Info);
@@ -423,7 +431,7 @@ package body GPS.Kernel.Hooks is
    procedure Command_Handler_Return_Boolean
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Name   : constant String                  := Get_Hook_Name (Data, 1);
+      Name   : constant Hook_Name               := Get_Hook_Name (Data, 1);
       Kernel : constant Kernel_Handle           := Get_Kernel (Data);
       Info   : constant Hook_Description_Access :=
         Get_Or_Create_Hook (Kernel, Name);
@@ -435,7 +443,7 @@ package body GPS.Kernel.Hooks is
       if Info.Parameters_Type = null
         or else Info.Parameters_Type.From_Data = null
       then
-         Set_Error_Msg (Data, -"Unknown hook: " & Name);
+         Set_Error_Msg (Data, -"Unknown hook: " & String (Name));
       else
          declare
             Args : aliased Hooks_Data'Class :=
@@ -461,8 +469,8 @@ package body GPS.Kernel.Hooks is
 
    procedure Register_Hook_Return_Boolean
      (Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Name           : String;
-      Data_Type_Name : String)
+      Name           : Hook_Name;
+      Data_Type_Name : Hook_Type)
    is
       Info : Hook_Description_Access;
       pragma Unreferenced (Info);
@@ -482,7 +490,7 @@ package body GPS.Kernel.Hooks is
    procedure Command_Handler_Return_String
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Name   : constant String                  := Get_Hook_Name (Data, 1);
+      Name   : constant Hook_Name               := Get_Hook_Name (Data, 1);
       Kernel : constant Kernel_Handle           := Get_Kernel (Data);
       Info   : constant Hook_Description_Access :=
                  Get_Or_Create_Hook (Kernel, Name);
@@ -491,7 +499,7 @@ package body GPS.Kernel.Hooks is
       if Info.Parameters_Type = null
         or else Info.Parameters_Type.From_Data = null
       then
-         Set_Error_Msg (Data, -"Unknown hook: " & Name);
+         Set_Error_Msg (Data, -"Unknown hook: " & String (Name));
       else
          declare
             Args : aliased Hooks_Data'Class :=
@@ -511,8 +519,8 @@ package body GPS.Kernel.Hooks is
 
    procedure Register_Hook_Return_String
      (Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Name           : String;
-      Data_Type_Name : String)
+      Name           : Hook_Name;
+      Data_Type_Name : Hook_Type)
    is
       Info : Hook_Description_Access;
       pragma Unreferenced (Info);
@@ -531,7 +539,7 @@ package body GPS.Kernel.Hooks is
    procedure Command_Handler_No_Args
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Name   : constant String        := Get_Hook_Name (Data, 1);
+      Name   : constant Hook_Name     := Get_Hook_Name (Data, 1);
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
    begin
       Assert (Me, Command = "run", "Invalid command: " & Command);
@@ -544,7 +552,7 @@ package body GPS.Kernel.Hooks is
 
    procedure Register_Hook_No_Args
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Name   : String)
+      Name   : Hook_Name)
    is
       Info : Hook_Description_Access;
       pragma Unreferenced (Info);
@@ -565,22 +573,26 @@ package body GPS.Kernel.Hooks is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Info   : Hook_Description_Access;
       Func   : access GPS.Kernel.Hook_Function_Record'Class;
-      Name   : String;
+      Name   : Hook_Name;
       Watch  : Glib.Object.GObject := null;
       Last   : Boolean := False)
    is
    begin
       if Active (Me) then
          Trace
-           (Me, "Adding function to hook " & Info.Name.all & ": " & Name);
+           (Me,
+            "Adding function to hook " & String (Info.Name.all)
+            & ": " & String (Name));
       end if;
 
       if Last then
-         Append (Info.Funcs,
-                 (Func => Hook_Function (Func), Name => new String'(Name)));
+         Append
+           (Info.Funcs,
+            (Func => Hook_Function (Func), Name => new Hook_Name'(Name)));
       else
-         Prepend (Info.Funcs,
-                  (Func => Hook_Function (Func), Name => new String'(Name)));
+         Prepend
+           (Info.Funcs,
+            (Func => Hook_Function (Func), Name => new Hook_Name'(Name)));
       end if;
       Func.Ref_Count := Func.Ref_Count + 1;
 
@@ -588,9 +600,10 @@ package body GPS.Kernel.Hooks is
          Func.Ref_Count := Func.Ref_Count + 1;
          Weak_Ref
            (Watch, Remove_Hook_Cb'Access,
-            Convert (new Hook_User_Data'(Kernel_Handle (Kernel),
-                     new String'(Info.Name.all),
-                     Hook_Function (Func))));
+            Convert
+              (new Hook_User_Data'(Kernel_Handle (Kernel),
+               new Hook_Name'(Info.Name.all),
+               Hook_Function (Func))));
       end if;
    end Add_Hook;
 
@@ -600,7 +613,7 @@ package body GPS.Kernel.Hooks is
 
    procedure Add_Hook
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Hook   : String;
+      Hook   : Hook_Name;
       Func   : access GPS.Kernel.Hook_Function_Record'Class;
       Name   : String;
       Watch  : Glib.Object.GObject := null)
@@ -611,7 +624,7 @@ package body GPS.Kernel.Hooks is
       --  is not know yet, it will be set later when calling Register_Hook_*
    begin
       if Info /= null then
-         Add_Hook (Kernel, Info, Func, Name, Watch);
+         Add_Hook (Kernel, Info, Func, Hook_Name (Name), Watch);
       end if;
    end Add_Hook;
 
@@ -621,7 +634,7 @@ package body GPS.Kernel.Hooks is
 
    procedure Remove_Hook
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Hook   : String;
+      Hook   : Hook_Name;
       Func   : access GPS.Kernel.Hook_Function_Record'Class)
    is
       Info    : constant Hook_Description_Access :=
@@ -632,8 +645,8 @@ package body GPS.Kernel.Hooks is
          N := Hooks_List.First (Info.Funcs);
          while N /= Null_Node loop
             if Hooks_List.Data (N).Func = Hook_Function (Func) then
-               Trace (Me, "Remove_Hook " & Hook
-                      & " function: " & Hooks_List.Data (N).Name.all);
+               Trace (Me, "Remove_Hook " & String (Hook)
+                      & " function: " & String (Hooks_List.Data (N).Name.all));
                Remove_Nodes (Info.Funcs, Prev, N);
                return;
             end if;
@@ -641,10 +654,12 @@ package body GPS.Kernel.Hooks is
             Prev := N;
             N := Next (N);
          end loop;
-         Trace (Me, "Remove_Hook " & Hook & " couldn't find function");
+         Trace
+           (Me, "Remove_Hook " & String (Hook) & " couldn't find function");
       else
-         Trace (Me, "Remove_Hook, no description available for hook "
-                & Hook);
+         Trace
+           (Me, "Remove_Hook, no description available for hook "
+            & String (Hook));
       end if;
    end Remove_Hook;
 
@@ -654,7 +669,7 @@ package body GPS.Kernel.Hooks is
 
    function Get_Hook_Func_List
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Hook   : String) return String_List
+      Hook   : Hook_Name) return Hook_List
    is
       Info    : constant Hook_Description_Access :=
                   Hook_Description_Access (Get (Kernel.Hooks, Hook));
@@ -671,7 +686,7 @@ package body GPS.Kernel.Hooks is
          end loop;
 
          declare
-            Ret : String_List (1 .. N_Funcs);
+            Ret : Hook_List (1 .. N_Funcs);
          begin
             F_Index := 1;
             N := Hooks_List.First (Info.Funcs);
@@ -814,7 +829,7 @@ package body GPS.Kernel.Hooks is
       Data : Callback_Data'Class :=
                Create (Get_Script (Func.Subprogram.all), 1);
    begin
-      Set_Nth_Arg (Data, 1, Func.Hook.Name.all);
+      Set_Nth_Arg (Data, 1, String (Func.Hook.Name.all));
       Tmp := Execute (Func.Subprogram, Data);
       Free (Data);
    end Execute;
@@ -856,9 +871,9 @@ package body GPS.Kernel.Hooks is
    begin
       if D = null then
          D := Create_Callback_Data
-           (Script    => Get_Script (Func.Subprogram.all),
-            Hook_Name => Func.Hook.Name.all,
-            Data      => Data);
+           (Script => Get_Script (Func.Subprogram.all),
+            Hook   => Func.Hook.Name.all,
+            Data   => Data);
          Set (Kernel, Data.Data, Get_Script (Func.Subprogram.all), D);
       end if;
       Tmp := Execute (Func.Subprogram, D.all);
@@ -900,9 +915,9 @@ package body GPS.Kernel.Hooks is
    begin
       if D = null then
          D := Create_Callback_Data
-           (Script    => Get_Script (Func.Subprogram.all),
-            Hook_Name => Func.Hook.Name.all,
-            Data      => Data);
+           (Script => Get_Script (Func.Subprogram.all),
+            Hook   => Func.Hook.Name.all,
+            Data   => Data);
          Set (Kernel, Data.Data, Get_Script (Func.Subprogram.all), D);
       end if;
       return Execute (Func.Subprogram, D.all);
@@ -944,9 +959,9 @@ package body GPS.Kernel.Hooks is
    begin
       if D = null then
          D := Create_Callback_Data
-           (Script    => Get_Script (Func.Subprogram.all),
-            Hook_Name => Func.Hook.Name.all,
-            Data      => Data);
+           (Script => Get_Script (Func.Subprogram.all),
+            Hook   => Func.Hook.Name.all,
+            Data   => Data);
          Set (Kernel, Data.Data, Get_Script (Func.Subprogram.all), D);
       end if;
       return Execute (Func.Subprogram, D.all);
@@ -958,7 +973,7 @@ package body GPS.Kernel.Hooks is
 
    procedure Run_Hook
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Hook     : String;
+      Hook     : Hook_Name;
       Set_Busy : Boolean := True)
    is
       Info : constant Hook_Description_Access :=
@@ -967,19 +982,19 @@ package body GPS.Kernel.Hooks is
       F    : Hook_Function_Description;
    begin
       if Info = null then
-         Insert (Kernel, -"No such hook: " & Hook);
+         Insert (Kernel, -"No such hook: " & String (Hook));
       else
          if Set_Busy then
             Push_State (Kernel_Handle (Kernel), Busy);
          end if;
 
-         Trace (Me, "Run_Hook: " & Hook);
+         Trace (Me, "Run_Hook: " & String (Hook));
          N := First (Info.Funcs);
          while N /= Null_Node loop
             F := Data (N);
             Assert (Me, F.Func.all in Function_No_Args'Class,
-                    "Hook expects no argument: " & Hook
-                    & " for function: " & F.Name.all);
+                    "Hook expects no argument: " & String (Hook)
+                    & " for function: " & String (F.Name.all));
             Execute (Function_No_Args_Access (F.Func).all, Kernel);
             N := Next (N);
          end loop;
@@ -998,7 +1013,7 @@ package body GPS.Kernel.Hooks is
 
    procedure Run_Hook
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Hook     : String;
+      Hook     : Hook_Name;
       Data     : access Hooks_Data'Class;
       Set_Busy : Boolean := True)
    is
@@ -1008,19 +1023,19 @@ package body GPS.Kernel.Hooks is
       F    : Hook_Function_Description;
    begin
       if Info = null then
-         Insert (Kernel, -"No such hook: " & Hook);
+         Insert (Kernel, -"No such hook: " & String (Hook));
       else
          if Set_Busy then
             Push_State (Kernel_Handle (Kernel), Busy);
          end if;
 
-         Trace (Me, "Run_Hook: " & Hook);
+         Trace (Me, "Run_Hook: " & String (Hook));
          N := First (Info.Funcs);
          while N /= Null_Node loop
             F := Hooks_List.Data (N);
             Assert (Me, F.Func.all in Function_With_Args'Class,
-                    "Hook expects arguments: " & Hook
-                    & " for function: " & F.Name.all);
+                    "Hook expects arguments: " & String (Hook)
+                    & " for function: " & String (F.Name.all));
             Execute (Function_With_Args_Access (F.Func).all, Kernel, Data);
             N := Next (N);
          end loop;
@@ -1041,7 +1056,7 @@ package body GPS.Kernel.Hooks is
 
    function Run_Hook_Until_Success
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Hook     : String;
+      Hook     : Hook_Name;
       Data     : access Hooks_Data'Class;
       Set_Busy : Boolean := True) return Boolean
    is
@@ -1052,19 +1067,19 @@ package body GPS.Kernel.Hooks is
       Tmp  : Boolean := False;
    begin
       if Info = null then
-         Insert (Kernel, -"No such hook: " & Hook);
+         Insert (Kernel, -"No such hook: " & String (Hook));
       else
          if Set_Busy then
             Push_State (Kernel_Handle (Kernel), Busy);
          end if;
 
-         Trace (Me, "Run_Hook: " & Hook);
+         Trace (Me, "Run_Hook: " & String (Hook));
          N := First (Info.Funcs);
          while N /= Null_Node loop
             F := Hooks_List.Data (N);
             Assert (Me, F.Func.all in Function_With_Args_Return_Boolean'Class,
-                    "Hook expects arguments and return boolean: " & Hook
-                    & " for function: " & F.Name.all);
+                    "Hook expects arguments and return boolean: "
+                    & String (Hook) & " for function: " & String (F.Name.all));
             Tmp := Execute
               (Function_With_Args_Return_Boolean_Access (F.Func).all,
                Kernel, Data);
@@ -1092,7 +1107,7 @@ package body GPS.Kernel.Hooks is
 
    function Run_Hook_Until_Failure
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Hook     : String;
+      Hook     : Hook_Name;
       Data     : access Hooks_Data'Class;
       Set_Busy : Boolean := True) return Boolean
    is
@@ -1103,19 +1118,19 @@ package body GPS.Kernel.Hooks is
       Tmp  : Boolean := True;
    begin
       if Info = null then
-         Insert (Kernel, -"No such hook: " & Hook);
+         Insert (Kernel, -"No such hook: " & String (Hook));
       else
          if Set_Busy then
             Push_State (Kernel_Handle (Kernel), Busy);
          end if;
 
-         Trace (Me, "Run_Hook: " & Hook);
+         Trace (Me, "Run_Hook: " & String (Hook));
          N := First (Info.Funcs);
          while N /= Null_Node loop
             F := Hooks_List.Data (N);
             Assert (Me, F.Func.all in Function_With_Args_Return_Boolean'Class,
-                    "Hook expects arguments and return boolean: " & Hook
-                    & " for function: " & F.Name.all);
+                    "Hook expects arguments and return boolean: "
+                    & String (Hook) & " for function: " & String (F.Name.all));
             Tmp := Execute
               (Function_With_Args_Return_Boolean_Access (F.Func).all,
                Kernel, Data);
@@ -1144,7 +1159,7 @@ package body GPS.Kernel.Hooks is
 
    function Run_Hook_Until_Not_Empty
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Hook     : String;
+      Hook     : Hook_Name;
       Data     : access Hooks_Data'Class;
       Set_Busy : Boolean := True) return String
    is
@@ -1154,19 +1169,19 @@ package body GPS.Kernel.Hooks is
       F    : Hook_Function_Description;
    begin
       if Info = null then
-         Insert (Kernel, -"No such hook: " & Hook);
+         Insert (Kernel, -"No such hook: " & String (Hook));
       else
          if Set_Busy then
             Push_State (Kernel_Handle (Kernel), Busy);
          end if;
 
-         Trace (Me, "Run_Hook: " & Hook);
+         Trace (Me, "Run_Hook: " & String (Hook));
          N := First (Info.Funcs);
          while N /= Null_Node loop
             F := Hooks_List.Data (N);
             Assert (Me, F.Func.all in Function_With_Args_Return_String'Class,
-                    "Hook expects arguments and return string: " & Hook
-                    & " for function: " & F.Name.all);
+                    "Hook expects arguments and return string: "
+                    & String (Hook) & " for function: " & String (F.Name.all));
             declare
                Tmp : constant String := Execute
                  (Function_With_Args_Return_String_Access (F.Func).all,
@@ -1238,9 +1253,9 @@ package body GPS.Kernel.Hooks is
    --------------------------
 
    function Create_Callback_Data
-     (Script    : access Scripting_Language_Record'Class;
-      Hook_Name : String;
-      Data      : access Shell_Hooks_Data) return Callback_Data_Access
+     (Script : access Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
+      Data   : access Shell_Hooks_Data) return Callback_Data_Access
    is
       D : Callback_Data_Access := Get (Get_Kernel (Script), Data.Data, Script);
    begin
@@ -1251,7 +1266,7 @@ package body GPS.Kernel.Hooks is
          --  Do not store the newly created callback data into Data yet, this
          --  will be done by the caller of Create_Callback_Data
          D := new Callback_Data'Class'(Create (Script, 1));
-         Set_Nth_Arg (D.all, 1, Hook_Name);
+         Set_Nth_Arg (D.all, 1, String (Hook));
       end if;
       return D;
    end Create_Callback_Data;
@@ -1268,7 +1283,7 @@ package body GPS.Kernel.Hooks is
       Args : Shell_Hooks_Data;
    begin
       --  The first parameter should not be a hook instance, but the hook name
-      Set_Nth_Arg (D.all, 1, Get_Hook_Name (Data, 1));
+      Set_Nth_Arg (D.all, 1, String (Get_Hook_Name (Data, 1)));
       Set (Get_Kernel (Data), Args.Data, Get_Script (Data), D);
       return Args;
    end General_From_Callback_Data;
@@ -1336,7 +1351,8 @@ package body GPS.Kernel.Hooks is
       if Command = Constructor_Method then
          Name_Parameters (Data, Constructor_Parameters);
          declare
-            Name     : constant String := Nth_Arg (Data, 2);
+            Name     : constant Hook_Name :=
+                         Hook_Name (String'(Nth_Arg (Data, 2)));
             Class    : constant Class_Type :=
                          Get_Hook_Class (Get_Kernel (Data));
             Instance : Class_Instance;
@@ -1344,7 +1360,7 @@ package body GPS.Kernel.Hooks is
             Info := Hook_Description_Access
               (Get (Get_Kernel (Data).Hooks, Name));
             if Info = null then
-               Set_Error_Msg (Data, -"No such hook: " & Name);
+               Set_Error_Msg (Data, -"No such hook: " & String (Name));
             else
                Instance := Nth_Arg (Data, 1, Class);
                Set_Data
@@ -1382,7 +1398,7 @@ package body GPS.Kernel.Hooks is
                Add_Hook (Kernel => Get_Kernel (Data),
                          Info   => Info,
                          Func   => Info.Create_Subprogram_Wrapper (Func, Info),
-                         Name   => Get_Name (Func),
+                         Name   => Hook_Name (Get_Name (Func)),
                          Last   => Last);
             end if;
          end;
@@ -1417,8 +1433,10 @@ package body GPS.Kernel.Hooks is
       elsif Command = "register" then
          Name_Parameters (Data, Register_Hook_Args);
          declare
-            Name : constant String := Nth_Arg (Data, 1);
-            Typ  : constant String := Nth_Arg (Data, 2, "");
+            Name : constant Hook_Name :=
+                     Hook_Name (String'(Nth_Arg (Data, 1)));
+            Typ  : constant Hook_Type :=
+                     Hook_Type (String'(Nth_Arg (Data, 2, "")));
          begin
             if Typ = "" then
                Register_Hook_No_Args (Get_Kernel (Data), Name);
@@ -1440,10 +1458,10 @@ package body GPS.Kernel.Hooks is
                exit when Info = null;
 
                declare
-                  Name : constant String := Get_Key (Iter);
+                  Name : constant String := String (Get_Key (Iter));
                begin
                   if Name'Length < Type_Prefix'Length
-                    or else Type_Prefix /=
+                    or else String (Type_Prefix) /=
                       Name (Name'First .. Name'First + Type_Prefix'Length - 1)
                   then
                      Set_Return_Value (Data, Name);
@@ -1465,7 +1483,8 @@ package body GPS.Kernel.Hooks is
             Iter := Hooks_List.First (Info.Funcs);
 
             while Iter /= Hooks_List.Null_Node loop
-               Set_Return_Value (Data, Hooks_List.Data (Iter).Name.all);
+               Set_Return_Value
+                 (Data, String (Hooks_List.Data (Iter).Name.all));
                Iter := Hooks_List.Next (Iter);
             end loop;
          end;
@@ -1482,10 +1501,10 @@ package body GPS.Kernel.Hooks is
                exit when Info = null;
 
                declare
-                  Name : constant String := Get_Key (Iter);
+                  Name : constant String := String (Get_Key (Iter));
                begin
                   if Name'Length > Type_Prefix'Length
-                    and then Type_Prefix =
+                    and then String (Type_Prefix) =
                       Name (Name'First .. Name'First + Type_Prefix'Length - 1)
                   then
                      Set_Return_Value
@@ -1513,7 +1532,7 @@ package body GPS.Kernel.Hooks is
    -------------------
 
    function Get_Hook_Name
-     (Data : Callback_Data'Class; Nth : Natural) return String
+     (Data : Callback_Data'Class; Nth : Natural) return Hook_Name
    is
       Info : constant Hook_Description_Access := Get_Data (Data, Nth);
    begin

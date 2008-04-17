@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2004-2006                       --
---                             AdaCore                               --
+--                 Copyright (C) 2004-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,7 +19,6 @@
 
 with Entities;                  use Entities;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel;                use GPS.Kernel;
 with Src_Editor_Box;            use Src_Editor_Box;
 with Src_Editor_Module;         use Src_Editor_Module;
 

@@ -174,6 +174,16 @@ package body GPS.Kernel is
       return Handle.Icon_Factory;
    end Get_Icon_Factory;
 
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash (Hook : Hook_Name) return Hook_Htable_Num is
+      function Internal is new HTables.Hash (Hook_Htable_Num);
+   begin
+      return Internal (String (Hook));
+   end Hash;
+
    --------------------------
    -- Set_Destruction_Flag --
    --------------------------
@@ -1568,7 +1578,7 @@ package body GPS.Kernel is
 
       Reset (Handle.Actions);
       Reset (Handle.Styles);
-      Hooks_Hash.String_Hash_Table.Reset (Handle.Hooks);
+      Hooks_Hash.Reset (Handle.Hooks);
       Free_Tools (Handle);
 
       --  We do not finalize the scripts module anymore in order to allow

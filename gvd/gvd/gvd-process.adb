@@ -1417,9 +1417,9 @@ package body GVD.Process is
 
       declare
          Tmp : constant String := Run_Debugger_Hook_Until_Not_Empty
-           (Debugger  => Debugger,
-            Hook_Name => Debugger_Command_Action_Hook,
-            Command   => Command);
+           (Debugger => Debugger,
+            Hook     => Debugger_Command_Action_Hook,
+            Command  => Command);
       begin
          if Tmp /= "" then
             if Output_Command then

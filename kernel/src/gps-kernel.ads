@@ -21,10 +21,12 @@
 
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Finalization;
+with Ada.Unchecked_Deallocation;
+with System;
+
 with GNATCOLL.Scripts;
 with GNAT.Strings;
 with GNAT.Regpat;
-with System;
 
 with Glib.Object;  use Glib;
 with Glib.Xml_Int;
@@ -43,6 +45,7 @@ with Basic_Types;
 with Basic_Mapper;
 with Entities;
 with Entities.Queries;
+with HTables;
 with Language_Handlers;
 with Language.Tree.Database;
 with String_Hash;
@@ -52,7 +55,6 @@ with Projects.Registry;
 with Switches_Chooser;
 with Task_Manager;
 with VFS;
-with Ada.Unchecked_Deallocation;
 
 package GPS.Kernel is
 
@@ -678,46 +680,68 @@ package GPS.Kernel is
    --  The Category corresponds to the location/highlighting category that
    --  contains the compilation output.
 
+   type Hook_Name is new String;
+   --  The name/key of the hook as registered into GPS
+
+   type Hook_Type is new String;
+   --  The hook data type
+
+   type Hook_Name_Access is access all Hook_Name;
+   type Hook_List is array (Positive range <>) of Hook_Name_Access;
+
+   procedure Free is
+     new Ada.Unchecked_Deallocation (Hook_Name, Hook_Name_Access);
+
    --  Hooks with no arguments
-   Preferences_Changed_Hook      : constant String := "preferences_changed";
-   Search_Reset_Hook             : constant String := "search_reset";
-   Search_Functions_Changed_Hook : constant String :=
-     "search_functions_changed";
-   Search_Regexps_Changed_Hook   : constant String := "search_regexps_changed";
-   Variable_Changed_Hook         : constant String := "variable_changed";
-   Project_View_Changed_Hook     : constant String := "project_view_changed";
-   Project_Changed_Hook          : constant String := "project_changed";
-   Contextual_Menu_Open_Hook     : constant String := "contextual_menu_open";
-   Contextual_Menu_Close_Hook    : constant String := "contextual_menu_close";
+   Preferences_Changed_Hook      : constant Hook_Name := "preferences_changed";
+   Search_Reset_Hook             : constant Hook_Name := "search_reset";
+   Search_Functions_Changed_Hook : constant Hook_Name :=
+                                     "search_functions_changed";
+   Search_Regexps_Changed_Hook   : constant Hook_Name :=
+                                     "search_regexps_changed";
+   Variable_Changed_Hook         : constant Hook_Name := "variable_changed";
+   Project_View_Changed_Hook     : constant Hook_Name :=
+                                     "project_view_changed";
+   Project_Changed_Hook          : constant Hook_Name := "project_changed";
+   Contextual_Menu_Open_Hook     : constant Hook_Name :=
+                                     "contextual_menu_open";
+   Contextual_Menu_Close_Hook    : constant Hook_Name :=
+                                     "contextual_menu_close";
 
    --  Hooks with File_Hooks_Args argument
-   Project_Changing_Hook         : constant String := "project_changing";
-   File_Edited_Hook              : constant String := "file_edited";
-   Before_File_Saved_Hook        : constant String := "before_file_saved";
-   File_Saved_Hook               : constant String := "file_saved";
-   File_Closed_Hook              : constant String := "file_closed";
-   File_Deleted_Hook             : constant String := "file_deleted";
-   File_Renamed_Hook             : constant String := "file_renamed";
-   File_Changed_Detected_Hook    : constant String := "file_changed_detected";
-   File_Changed_On_Disk_Hook     : constant String := "file_changed_on_disk";
-   Compilation_Finished_Hook     : constant String := "compilation_finished";
-   Compilation_Starting_Hook     : constant String := "compilation_starting";
+   Project_Changing_Hook         : constant Hook_Name := "project_changing";
+   File_Edited_Hook              : constant Hook_Name := "file_edited";
+   Before_File_Saved_Hook        : constant Hook_Name := "before_file_saved";
+   File_Saved_Hook               : constant Hook_Name := "file_saved";
+   File_Closed_Hook              : constant Hook_Name := "file_closed";
+   File_Deleted_Hook             : constant Hook_Name := "file_deleted";
+   File_Renamed_Hook             : constant Hook_Name := "file_renamed";
+   File_Changed_Detected_Hook    : constant Hook_Name :=
+                                     "file_changed_detected";
+   File_Changed_On_Disk_Hook     : constant Hook_Name :=
+                                     "file_changed_on_disk";
+   Compilation_Finished_Hook     : constant Hook_Name :=
+                                     "compilation_finished";
+   Compilation_Starting_Hook     : constant Hook_Name :=
+                                     "compilation_starting";
 
    --  Hooks with Context_Hooks_Args argument
-   Context_Changed_Hook          : constant String := "context_changed";
+   Context_Changed_Hook          : constant Hook_Name := "context_changed";
 
    --  Hooks with Context_Hooks_Args argument (a File_Area_Context_Access)
-   Source_Lines_Revealed_Hook    : constant String := "source_lines_revealed";
+   Source_Lines_Revealed_Hook    : constant Hook_Name :=
+                                     "source_lines_revealed";
 
    --  Hooks with Project_Hooks_Args argument
-   Project_Saved_Hook            : constant String := "project_saved";
+   Project_Saved_Hook            : constant Hook_Name := "project_saved";
 
    --  Hooks with Marker_Hooks_Args argument
-   Marker_Added_In_History_Hook : constant String := "marker_added_to_history";
+   Marker_Added_In_History_Hook : constant Hook_Name :=
+                                    "marker_added_to_history";
    --  Called when a new marker has been added in the history. For now, this
    --  marker isn't exported to the shell
 
-   File_Status_Changed_Hook      : constant String := "file_status_changed";
+   File_Status_Changed_Hook      : constant Hook_Name := "file_status_changed";
    --  Called when the status of a file is changed : Modified, Unmodified...
 
 private
@@ -853,6 +877,10 @@ private
       Iterator : Action_Filters_Htable.String_Hash_Table.Iterator;
    end record;
 
+   ----------
+   -- Hook --
+   ----------
+
    type Hook_Function_Record is abstract tagged record
       Ref_Count : Natural := 0;
    end record;
@@ -860,12 +888,17 @@ private
    type Hook_Description_Base is abstract tagged null record;
    type Hook_Description_Base_Access is access all Hook_Description_Base'Class;
 
+   type Hook_Htable_Num is new Natural range 0 .. 6150;
+
+   function Hash (Hook : Hook_Name) return Hook_Htable_Num;
+
    procedure Free (Hook : in out Hook_Description_Base);
    --  Free the memory occupied by Hook
 
    procedure Free (L : in out Hook_Description_Base_Access);
-   package Hooks_Hash is new String_Hash
-     (Hook_Description_Base_Access, Free, null);
+   package Hooks_Hash is new HTables.Simple_HTable
+     (Hook_Htable_Num, Hook_Description_Base_Access, Free, null,
+      Hook_Name, Hash, "=");
 
    type Location_Marker_Record is abstract tagged null record;
 
@@ -902,7 +935,7 @@ private
       Startup_Scripts : Root_Table_Access;
       --  The list of startup scripts and whether they should be loaded
 
-      Hooks : Hooks_Hash.String_Hash_Table.HTable;
+      Hooks : Hooks_Hash.HTable;
       --  The hooks registered in the kernel
 
       Action_Filters : Action_Filters_Htable.String_Hash_Table.HTable;

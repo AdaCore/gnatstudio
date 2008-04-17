@@ -33,7 +33,7 @@ package body GPS.Callbacks is
    Me        : constant Debug_Handle := Create ("GPS");
    Gtk_Trace : constant Debug_Handle := Create ("Gtk+");
 
-   GPS_Started_Hook : constant String := "gps_started";
+   GPS_Started_Hook : constant Hook_Name := "gps_started";
 
    -------------
    -- Gtk_Log --

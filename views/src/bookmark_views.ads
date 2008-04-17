@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005                            --
---                            AdaCore                                --
+--                 Copyright (C) 2005-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,8 +25,8 @@ package Bookmark_Views is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
 
-   Bookmark_Added_Hook   : constant String := "bookmark_added";
-   Bookmark_Removed_Hook : constant String := "bookmark_removed";
+   Bookmark_Added_Hook   : constant GPS.Kernel.Hook_Name := "bookmark_added";
+   Bookmark_Removed_Hook : constant GPS.Kernel.Hook_Name := "bookmark_removed";
    --  Hook called when a new bookmark has been added or removed
 
 end Bookmark_Views;

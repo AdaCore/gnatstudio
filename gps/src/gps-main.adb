@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2008, AdaCore              --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -209,7 +209,7 @@ procedure GPS.Main is
    Remote_View_Trace      : constant Debug_Handle :=
                       Create ("MODULE.Remote_View", GNATCOLL.Traces.On);
 
-   GPS_Started_Hook       : constant String := "gps_started";
+   GPS_Started_Hook       : constant Hook_Name := "gps_started";
 
    --  If any of these debug handles is active, the correponding module
    --  is loaded.
