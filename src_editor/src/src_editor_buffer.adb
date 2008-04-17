@@ -24,7 +24,7 @@ pragma Warnings (Off);
 with Ada.Strings.Unbounded.Aux;           use Ada.Strings.Unbounded.Aux;
 pragma Warnings (On);
 with GNAT.Regpat;
-with GNAT.Traces;                         use GNAT.Traces;
+with GNATCOLL.Traces;                         use GNATCOLL.Traces;
 with Interfaces.C.Strings;                use Interfaces.C.Strings;
 with System.Address_Image;
 

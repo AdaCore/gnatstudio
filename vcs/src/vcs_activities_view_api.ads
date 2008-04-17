@@ -17,7 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Scripts;        use GNAT.Scripts;
+with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
 
 with Glib.Object;         use Glib.Object;
 with Gtk.Menu;            use Gtk.Menu;
@@ -80,7 +80,7 @@ package VCS_Activities_View_API is
    --  Change Activity's status to/from closed/opened
 
    procedure VCS_Activities_Command_Handler
-     (Data    : in out GNAT.Scripts.Callback_Data'Class;
+     (Data    : in out GNATCOLL.Scripts.Callback_Data'Class;
       Command : String);
    --  VCS Activities class command handler
 

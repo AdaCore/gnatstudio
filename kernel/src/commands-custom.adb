@@ -26,9 +26,9 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Expect;               use GNAT.Expect;
 with GNAT.OS_Lib;
 with GNAT.Regpat;               use GNAT.Regpat;
-with GNAT.Scripts;              use GNAT.Scripts;
-with GNAT.Templates;            use GNAT.Templates;
-with GNAT.Traces;               use GNAT.Traces;
+with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
+with GNATCOLL.Templates;            use GNATCOLL.Templates;
+with GNATCOLL.Traces;               use GNATCOLL.Traces;
 with System;
 
 with Glib.Xml_Int;              use Glib.Xml_Int;

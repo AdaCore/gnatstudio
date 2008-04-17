@@ -18,8 +18,8 @@
 -----------------------------------------------------------------------
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNAT.Scripts;              use GNAT.Scripts;
-with GNAT.Scripts.Gtkada;       use GNAT.Scripts.Gtkada;
+with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
+with GNATCOLL.Scripts.Gtkada;       use GNATCOLL.Scripts.Gtkada;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 
 with Gdk.Dnd;                   use Gdk.Dnd;

@@ -33,7 +33,7 @@ with Gtk.Tool_Item;      use Gtk.Tool_Item;
 with Gtk.Label;          use Gtk.Label;
 with Gtk.Widget;         use Gtk.Widget;
 
-with GNAT.Scripts.Gtkada; use GNAT.Scripts, GNAT.Scripts.Gtkada;
+with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts, GNATCOLL.Scripts.Gtkada;
 with GPS.Kernel.Console; use GPS.Kernel.Console;
 with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;

@@ -20,7 +20,7 @@
 
 with Gtk.Main;                use Gtk.Main;
 with GNAT.Sockets;            use GNAT.Sockets;
-with GNAT.Scripts;            use GNAT.Scripts;
+with GNATCOLL.Scripts;            use GNATCOLL.Scripts;
 with Ada.IO_Exceptions;       use Ada.IO_Exceptions;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with GPS.Kernel;              use GPS.Kernel;

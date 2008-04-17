@@ -22,9 +22,9 @@ with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
-with GNAT.Mmap;                  use GNAT.Mmap;
+with GNATCOLL.Mmap;                  use GNATCOLL.Mmap;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
-with GNAT.Scripts;               use GNAT.Scripts;
+with GNATCOLL.Scripts;               use GNATCOLL.Scripts;
 with GNAT.Strings;
 
 with Glib;                       use Glib;
@@ -925,7 +925,7 @@ package body Help_Module is
       Contents   : GNAT.Strings.String_Access;
 
    begin
-      Contents := GNAT.Mmap.Read_Whole_File
+      Contents := GNATCOLL.Mmap.Read_Whole_File
         (About_File, Empty_If_Not_Found => True);
 
       Button := Message_Dialog

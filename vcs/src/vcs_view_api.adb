@@ -22,7 +22,7 @@ with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Maps;          use Ada.Strings.Maps;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
-with GNAT.Scripts;              use GNAT.Scripts;
+with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
 with GNAT.Strings;
 
 with Glib.Values;               use Glib.Values;

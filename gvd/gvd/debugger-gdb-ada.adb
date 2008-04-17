@@ -19,7 +19,7 @@
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Strings;   use Ada.Strings;
-with GNAT.Traces;   use GNAT.Traces;
+with GNATCOLL.Traces;   use GNATCOLL.Traces;
 with Items.Arrays;  use Items.Arrays;
 with Items.Classes; use Items.Classes;
 with Items.Records; use Items.Records;

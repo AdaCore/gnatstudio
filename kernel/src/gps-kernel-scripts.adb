@@ -21,9 +21,9 @@ with Ada.Unchecked_Conversion;
 
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with GNAT.Regpat;             use GNAT.Regpat;
-with GNAT.Scripts.Gtkada;     use GNAT.Scripts.Gtkada;
-with GNAT.Scripts.Utils;      use GNAT.Scripts.Utils;
-with GNAT.Traces;             use GNAT.Traces;
+with GNATCOLL.Scripts.Gtkada;     use GNATCOLL.Scripts.Gtkada;
+with GNATCOLL.Scripts.Utils;      use GNATCOLL.Scripts.Utils;
+with GNATCOLL.Traces;             use GNATCOLL.Traces;
 
 with Glib.Object;             use Glib.Object;
 with Gtk.Label;               use Gtk.Label;
@@ -66,7 +66,8 @@ with OS_Utils;                use OS_Utils;
 package body GPS.Kernel.Scripts is
 
    Me     : constant Trace_Handle := Create ("GPS.Kernel.Scripts");
-   Ref_Me : constant Trace_Handle := Create ("Scripts.Ref", GNAT.Traces.Off);
+   Ref_Me : constant Trace_Handle :=
+      Create ("Scripts.Ref", GNATCOLL.Traces.Off);
 
    Entity_Class_Name        : constant String := "Entity";
    File_Class_Name          : constant String := "File";
@@ -1382,7 +1383,7 @@ package body GPS.Kernel.Scripts is
                return;
             end if;
 
-            GNAT.Scripts.Set_Data
+            GNATCOLL.Scripts.Set_Data
               (Inst, Get_Or_Create_Virtual_Console (Console));
 
             if Title /= ""
@@ -1575,7 +1576,7 @@ package body GPS.Kernel.Scripts is
       Logger             : constant Class_Type :=
                              New_Class (Kernel.Scripts, Logger_Class_Name);
    begin
-      GNAT.Scripts.Register_Standard_Classes
+      GNATCOLL.Scripts.Register_Standard_Classes
         (Get_Scripts (Kernel),
          Console_Class_Name => Console_Class_Name);
 
@@ -1958,7 +1959,7 @@ package body GPS.Kernel.Scripts is
 
    function Get_Scripts
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return GNAT.Scripts.Scripts_Repository is
+      return GNATCOLL.Scripts.Scripts_Repository is
    begin
       return Kernel.Scripts;
    end Get_Scripts;
@@ -2051,7 +2052,7 @@ package body GPS.Kernel.Scripts is
    ----------------
 
    function Get_Kernel
-     (Script : access GNAT.Scripts.Scripting_Language_Record'Class)
+     (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class)
       return GPS.Kernel.Kernel_Handle is
    begin
       return Kernel_Scripts_Repository (Get_Repository (Script).all).Kernel;

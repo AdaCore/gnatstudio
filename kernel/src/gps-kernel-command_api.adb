@@ -18,7 +18,7 @@
 -----------------------------------------------------------------------
 
 with Commands;                use Commands;
-with GNAT.Scripts;            use GNAT.Scripts;
+with GNATCOLL.Scripts;            use GNATCOLL.Scripts;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with Task_Manager;            use Task_Manager;

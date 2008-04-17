@@ -25,7 +25,7 @@ with System;              use System;
 with GNAT.Expect;         use GNAT.Expect;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
 with GNAT.Regpat;         use GNAT.Regpat;
-with GNAT.Scripts.Gtkada; use GNAT.Scripts, GNAT.Scripts.Gtkada;
+with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts, GNATCOLL.Scripts.Gtkada;
 
 with Glib;                use Glib;
 with Glib.Convert;
@@ -99,7 +99,7 @@ package body Interactive_Consoles is
      (Console : access Interactive_Virtual_Console_Record; Grab : Boolean);
    overriding procedure Set_As_Default_Console
      (Console     : access Interactive_Virtual_Console_Record;
-      Script      : GNAT.Scripts.Scripting_Language);
+      Script      : GNATCOLL.Scripts.Scripting_Language);
    overriding procedure Set_Data_Primitive
      (Instance : Class_Instance;
       Console  : access Interactive_Virtual_Console_Record);
@@ -336,7 +336,7 @@ package body Interactive_Consoles is
 
    procedure Set_As_Default_Console
      (Console : access Interactive_Virtual_Console_Record;
-      Script  : GNAT.Scripts.Scripting_Language) is
+      Script  : GNATCOLL.Scripts.Scripting_Language) is
    begin
       Console.Script := Script;
    end Set_As_Default_Console;
@@ -349,7 +349,7 @@ package body Interactive_Consoles is
      (Instance : Class_Instance;
       Console  : access Interactive_Virtual_Console_Record) is
    begin
-      GNAT.Scripts.Gtkada.Set_Data (Instance, GObject (Console.Console));
+      GNATCOLL.Scripts.Gtkada.Set_Data (Instance, GObject (Console.Console));
    end Set_Data_Primitive;
 
    ------------------
@@ -361,7 +361,7 @@ package body Interactive_Consoles is
       Console : access Interactive_Virtual_Console_Record)
       return Class_Instance is
    begin
-      return GNAT.Scripts.Gtkada.Get_Instance
+      return GNATCOLL.Scripts.Gtkada.Get_Instance
         (Script, GObject (Console.Console));
    end Get_Instance;
 
@@ -424,7 +424,7 @@ package body Interactive_Consoles is
    -----------------
 
    function Get_Console
-     (Virtual : GNAT.Scripts.Virtual_Console) return Interactive_Console is
+     (Virtual : GNATCOLL.Scripts.Virtual_Console) return Interactive_Console is
    begin
       return Interactive_Virtual_Console (Virtual).Console;
    end Get_Console;

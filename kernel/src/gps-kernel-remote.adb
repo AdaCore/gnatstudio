@@ -29,7 +29,7 @@ with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Regpat;                use GNAT.Regpat;
-with GNAT.Scripts;               use GNAT.Scripts;
+with GNATCOLL.Scripts;               use GNATCOLL.Scripts;
 with GNAT.Strings;
 
 with Glib;                       use Glib;

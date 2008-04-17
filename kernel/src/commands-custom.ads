@@ -58,7 +58,7 @@
 --      %l, %c -> the current line and column in the current file.
 
 with GNAT.Expect;
-with GNAT.Scripts;
+with GNATCOLL.Scripts;
 with GNAT.Strings;            use GNAT.Strings;
 
 with Glib.Xml_Int;
@@ -87,7 +87,7 @@ package Commands.Custom is
       Name    : String;
       Kernel  : Kernel_Handle;
       Command : String;
-      Script  : GNAT.Scripts.Scripting_Language);
+      Script  : GNATCOLL.Scripts.Scripting_Language);
    --  Create a new custom command.
    --  If Script is null, the command is launched as a system
    --  command (Unix or Windows). Otherwise, it is interpreted as a GPS

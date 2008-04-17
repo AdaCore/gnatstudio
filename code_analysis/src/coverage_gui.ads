@@ -22,7 +22,7 @@
 --  subprograms for Code Analysis Module use
 --  </description>
 
-with GNAT.Traces;
+with GNATCOLL.Traces;
 with Glib;
 with GPS.Kernel;    use GPS.Kernel;
 with GPS.Intl;      use GPS.Intl;
@@ -40,7 +40,7 @@ package Coverage_GUI is
    Coverage_Category  : constant Glib.UTF8_String := -"Uncovered lines";
 
    Binary_Coverage_Trace : constant Debug_Handle :=
-                             Create ("BINARY_COVERAGE_MODE", GNAT.Traces.On);
+                          Create ("BINARY_COVERAGE_MODE", GNATCOLL.Traces.On);
    Binary_Coverage_Mode  : Boolean;
    --  Boolean that allows to determine wether we are in binary coverage mode
    --  or not, if true no line execution coverage count will be displayed.

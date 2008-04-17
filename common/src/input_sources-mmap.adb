@@ -30,7 +30,7 @@ with Unicode.CES;        use Unicode.CES;
 with Unicode.CES.Utf32;  use Unicode.CES.Utf32;
 with Unicode.CES.Utf16;  use Unicode.CES.Utf16;
 with Unicode.CES.Utf8;   use Unicode.CES.Utf8;
-with GNAT.Mmap;          use GNAT.Mmap;
+with GNATCOLL.Mmap;          use GNATCOLL.Mmap;
 with GNAT.OS_Lib;        use GNAT.OS_Lib;
 
 package body Input_Sources.Mmap is

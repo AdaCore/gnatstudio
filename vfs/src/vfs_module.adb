@@ -22,7 +22,7 @@ with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Regexp;               use GNAT.Regexp;
-with GNAT.Scripts;              use GNAT.Scripts;
+with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
 with GNAT.Strings;
 
 with Gtkada.Dialogs;            use Gtkada.Dialogs;

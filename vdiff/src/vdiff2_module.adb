@@ -20,7 +20,7 @@
 with Config;
 with Commands.Interactive;      use Commands.Interactive;
 with Commands;                  use Commands;
-with GNAT.Scripts;              use GNAT.Scripts;
+with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;

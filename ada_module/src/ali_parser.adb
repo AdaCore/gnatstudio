@@ -25,7 +25,7 @@ with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Strings;
-with GNAT.Traces;               use GNAT.Traces;
+with GNATCOLL.Traces;               use GNATCOLL.Traces;
 
 with Basic_Types;               use Basic_Types;
 with Entities.Queries;          use Entities.Queries;

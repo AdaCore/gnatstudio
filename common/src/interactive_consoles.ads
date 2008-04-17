@@ -32,7 +32,7 @@ with Gtk.Scrolled_Window;
 
 with GNAT.Expect;
 with GNAT.Regpat;
-with GNAT.Scripts;
+with GNATCOLL.Scripts;
 with GNAT.Strings;
 with Histories;
 with GUI_Utils;
@@ -247,19 +247,19 @@ package Interactive_Consoles is
    --  Clicking on these links will call On_Click on the matching Callback.
 
    ------------------------------
-   -- Adapter for GNAT.Scripts --
+   -- Adapter for GNATCOLL.Scripts --
    ------------------------------
    --  The following functions can be used to integrate an interactive
-   --  console with a GNAT.Scripts.Virtual_Console.
+   --  console with a GNATCOLL.Scripts.Virtual_Console.
 
    function Get_Or_Create_Virtual_Console
      (Console : Interactive_Console)
-      return GNAT.Scripts.Virtual_Console;
+      return GNATCOLL.Scripts.Virtual_Console;
    --  Return the virtual console attached to Console.
    --  Create one if necessary
 
    function Get_Console
-     (Virtual : GNAT.Scripts.Virtual_Console) return Interactive_Console;
+     (Virtual : GNATCOLL.Scripts.Virtual_Console) return Interactive_Console;
    --  Return the interactive console associated with Virtual. This only works
    --  for virtual consoles created by Get_Or_Create_Virtual_Console above
 
@@ -278,7 +278,7 @@ private
      Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record
    with record
       Handler    : Command_Handler;
-      Virtual    : GNAT.Scripts.Virtual_Console;
+      Virtual    : GNATCOLL.Scripts.Virtual_Console;
       Completion : GUI_Utils.Completion_Handler;
       Interrupt  : Interrupt_Handler;
       User_Data  : System.Address;

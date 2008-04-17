@@ -3,8 +3,8 @@ with "gtkada";
 with "../common/common";
 with "../widgets/widgets";
 with "../shared";
-with "../gnatlib/src/gnatlib";
-with "../gnatlib/src/gnatlib_gtk";
+with "../gnatlib/src/gnatcoll";
+with "../gnatlib/src/gnatcoll_gtk";
 
 project Kernel is
 

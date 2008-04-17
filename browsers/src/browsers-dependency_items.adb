@@ -41,7 +41,7 @@ with Commands.Interactive;   use Commands, Commands.Interactive;
 with Entities.Queries;       use Entities.Queries;
 with Entities;               use Entities;
 with Fname;                  use Fname;
-with GNAT.Scripts;           use GNAT.Scripts;
+with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;

@@ -23,7 +23,7 @@ with Dynamic_Arrays;
 with Entities.Queries;       use Entities, Entities.Queries;
 with Glib;                   use Glib;
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
-with GNAT.Scripts;           use GNAT.Scripts;
+with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.Console;     use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;

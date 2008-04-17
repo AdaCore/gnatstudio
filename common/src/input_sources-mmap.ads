@@ -26,7 +26,7 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with GNAT.Mmap;
+with GNATCOLL.Mmap;
 with Unicode;
 with Unicode.CES;
 
@@ -51,8 +51,8 @@ package Input_Sources.Mmap is
 private
    type Mmap_Input is new Input_Source with
       record
-         File   : GNAT.Mmap.Mapped_File;
-         Buffer : GNAT.Mmap.Str_Access;
+         File   : GNATCOLL.Mmap.Mapped_File;
+         Buffer : GNATCOLL.Mmap.Str_Access;
          Index  : Natural;
       end record;
 end Input_Sources.Mmap;

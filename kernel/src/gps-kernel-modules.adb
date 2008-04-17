@@ -22,8 +22,8 @@ with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
-with GNAT.Templates;            use GNAT.Templates;
-with GNAT.Traces;
+with GNATCOLL.Templates;            use GNATCOLL.Templates;
+with GNATCOLL.Traces;
 
 with Gdk.Dnd;                   use Gdk.Dnd;
 with Gdk.Types;                 use Gdk.Types;
@@ -78,7 +78,7 @@ with VFS;                       use VFS;
 package body GPS.Kernel.Modules is
 
    Me : constant Debug_Handle :=
-          Create ("GPS.Kernel.Modules", GNAT.Traces.Off);
+          Create ("GPS.Kernel.Modules", GNATCOLL.Traces.Off);
 
    type Contextual_Menu_User_Data is record
       Object       : GObject;

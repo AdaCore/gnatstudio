@@ -21,7 +21,7 @@ with Ada.Unchecked_Deallocation;
 
 with File_Utils;                 use File_Utils;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
-with GNAT.Scripts;               use GNAT.Scripts;
+with GNATCOLL.Scripts;               use GNATCOLL.Scripts;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with Glib.Xml_Int;               use Glib.Xml_Int;

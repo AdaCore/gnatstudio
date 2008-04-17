@@ -22,7 +22,7 @@ with Ada.Unchecked_Conversion;
 with Ada.Tags;                  use Ada.Tags;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNAT.Scripts.Gtkada;       use GNAT.Scripts, GNAT.Scripts.Gtkada;
+with GNATCOLL.Scripts.Gtkada;   use GNATCOLL.Scripts, GNATCOLL.Scripts.Gtkada;
 with GNAT.Strings;
 with System;
 

@@ -20,7 +20,7 @@
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
 with GNAT.Heap_Sort_G;
-with GNAT.Scripts;              use GNAT.Scripts;
+with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
 with GNAT.Strings;              use GNAT.Strings;
 
 with Gdk.GC;                    use Gdk.GC;

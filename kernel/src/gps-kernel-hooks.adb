@@ -23,8 +23,8 @@ with System;                    use System;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Generic_List;
-with GNAT.Scripts;              use GNAT.Scripts;
-with GNAT.Traces;
+with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
+with GNATCOLL.Traces;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
@@ -32,7 +32,8 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 
 package body GPS.Kernel.Hooks is
 
-   Me : constant Debug_Handle := Create ("Hooks", Default => GNAT.Traces.Off);
+   Me : constant Debug_Handle :=
+      Create ("Hooks", Default => GNATCOLL.Traces.Off);
 
    use GNAT.Strings;
    use GPS.Kernel.Hooks_Hash.String_Hash_Table;
@@ -234,7 +235,7 @@ package body GPS.Kernel.Hooks is
 
    type Shell_Hooks_Data is new Hooks_Data with null record;
    function Create_Callback_Data
-     (Script    : access GNAT.Scripts.Scripting_Language_Record'Class;
+     (Script    : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
       Hook_Name : String;
       Data      : access Shell_Hooks_Data) return Callback_Data_Access;
    function General_From_Callback_Data

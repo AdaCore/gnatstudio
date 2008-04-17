@@ -19,7 +19,7 @@
 
 --  This package defines the hooks used in the GVD module
 
-with GNAT.Scripts;
+with GNATCOLL.Scripts;
 with GPS.Kernel.Hooks;
 with GVD.Process;
 
@@ -116,17 +116,17 @@ private
    end record;
 
    function Create_Callback_Data
-     (Script    : access GNAT.Scripts.Scripting_Language_Record'Class;
+     (Script    : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
       Hook_Name : String;
       Data      : access Debugger_Hooks_Data)
-      return GNAT.Scripts.Callback_Data_Access;
+      return GNATCOLL.Scripts.Callback_Data_Access;
    --  See inherited documentation
 
    function Create_Callback_Data
-     (Script    : access GNAT.Scripts.Scripting_Language_Record'Class;
+     (Script    : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
       Hook_Name : String;
       Data      : access Debugger_String_Hooks_Data)
-      return GNAT.Scripts.Callback_Data_Access;
+      return GNATCOLL.Scripts.Callback_Data_Access;
    --  See inherited documentation
 
 end GVD.Scripts;

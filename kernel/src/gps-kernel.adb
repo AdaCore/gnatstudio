@@ -23,10 +23,10 @@ with Ada.Unchecked_Conversion;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
 with GNAT.Regpat;               use GNAT.Regpat;
-with GNAT.Scripts;              use GNAT.Scripts;
+with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
 with GNAT.Strings;              use GNAT.Strings;
-with GNAT.Templates;            use GNAT.Templates;
-with GNAT.Traces;
+with GNATCOLL.Templates;            use GNATCOLL.Templates;
+with GNATCOLL.Traces;
 with System;                    use System;
 
 with Gdk;                       use Gdk;
@@ -100,9 +100,10 @@ with XML_Parsers;
 package body GPS.Kernel is
 
    Me     : constant Debug_Handle := Create ("gps_kernel");
-   Ref_Me : constant Debug_Handle := Create ("Contexts.Ref", GNAT.Traces.Off);
+   Ref_Me : constant Debug_Handle :=
+     Create ("Contexts.Ref", GNATCOLL.Traces.Off);
    Create_Me : constant Debug_Handle :=
-     Create ("Contexts.Mem", GNAT.Traces.Off);
+     Create ("Contexts.Mem", GNATCOLL.Traces.Off);
 
    History_Max_Length : constant Positive := 10;
    --  <preferences> Maximum number of entries to store in each history
@@ -1006,7 +1007,7 @@ package body GPS.Kernel is
 
          if Context.Data.Ref_Count = 0 then
             if Active (Create_Me) then
-               GNAT.Traces.Increase_Indent
+               GNATCOLL.Traces.Increase_Indent
                  (Create_Me, "Destroy selection context ("
                   & System.Address_Image (To_Address (Context.Data)) & ")");
             end if;
@@ -1022,7 +1023,7 @@ package body GPS.Kernel is
             Unchecked_Free (Garbage);
 
             if Active (Create_Me) then
-               GNAT.Traces.Decrease_Indent
+               GNATCOLL.Traces.Decrease_Indent
                  (Create_Me, "Done destroying selection context");
             end if;
 
@@ -1039,7 +1040,7 @@ package body GPS.Kernel is
       when E : others =>
          Trace (Exception_Handle, E);
          if Active (Create_Me) then
-            GNAT.Traces.Decrease_Indent (Create_Me);
+            GNATCOLL.Traces.Decrease_Indent (Create_Me);
          end if;
    end Finalize;
 
@@ -2153,7 +2154,7 @@ package body GPS.Kernel is
                      declare
                         Errors : aliased Boolean;
                         R      : constant Boolean :=
-                         GNAT.Scripts.Execute_Command
+                         GNATCOLL.Scripts.Execute_Command
                             (Lang,
                              Cmd,
                              Hide_Output => True,

@@ -29,7 +29,7 @@ with Remote.Path.Translator;  use Remote.Path.Translator;
 with String_Utils;            use String_Utils;
 with VFS;                     use VFS;
 with GNAT.Strings;
-with GNAT.Templates;          use GNAT.Templates;
+with GNATCOLL.Templates;          use GNATCOLL.Templates;
 
 package body GPS.Kernel.Macros is
 

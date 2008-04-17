@@ -21,7 +21,7 @@
 
 with Ada.Unchecked_Deallocation;
 with GNAT.Regpat;               use GNAT.Regpat;
-with GNAT.Scripts;              use GNAT.Scripts;
+with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
 
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 

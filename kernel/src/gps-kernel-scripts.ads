@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2007, AdaCore             --
+--                      Copyright (C) 2003-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,7 +23,7 @@
 with Basic_Types;
 with Entities;
 with GNAT.OS_Lib;
-with GNAT.Scripts;       use GNAT.Scripts;
+with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
 with Projects;
 
 package GPS.Kernel.Scripts is
@@ -35,13 +35,13 @@ package GPS.Kernel.Scripts is
 
    function Get_Scripts
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return GNAT.Scripts.Scripts_Repository;
+      return GNATCOLL.Scripts.Scripts_Repository;
    --  Return the scripts repository
 
-   function Get_Kernel (Data : GNAT.Scripts.Callback_Data'Class)
+   function Get_Kernel (Data : GNATCOLL.Scripts.Callback_Data'Class)
       return GPS.Kernel.Kernel_Handle;
    function Get_Kernel
-     (Script : access GNAT.Scripts.Scripting_Language_Record'Class)
+     (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class)
       return GPS.Kernel.Kernel_Handle;
    --  Return the kernel associated with Data
 

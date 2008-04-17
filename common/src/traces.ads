@@ -17,41 +17,41 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  See documentation in GNAT.Traces.
+--  See documentation in GNATCOLL.Traces.
 --  This package is provided for backward compatibility only, and only exports
 --  the subprograms that were used historically by GPS, to limit the number
 --  of changes.
 
 with Ada.Exceptions;
 with GNAT.Source_Info;
-with GNAT.Traces;
+with GNATCOLL.Traces;
 
 package Traces is
 
-   subtype Debug_Handle is GNAT.Traces.Trace_Handle;
+   subtype Debug_Handle is GNATCOLL.Traces.Trace_Handle;
 
    function Create
      (Unit_Name : String;
-      Default   : GNAT.Traces.Default_Activation_Status :=
-        GNAT.Traces.From_Config;
+      Default   : GNATCOLL.Traces.Default_Activation_Status :=
+        GNATCOLL.Traces.From_Config;
       Stream    : String := "";
-      Factory   : GNAT.Traces.Handle_Factory := null;
+      Factory   : GNATCOLL.Traces.Handle_Factory := null;
       Finalize  : Boolean := True)
       return Debug_Handle
-     renames GNAT.Traces.Create;
+     renames GNATCOLL.Traces.Create;
 
    procedure Trace
      (Handle : Debug_Handle;
       E      : Ada.Exceptions.Exception_Occurrence;
       Msg    : String := "Unexpected exception: ")
-     renames GNAT.Traces.Trace;
+     renames GNATCOLL.Traces.Trace;
 
    procedure Trace
      (Handle   : Debug_Handle;
       Message  : String;
       Location : String := GNAT.Source_Info.Source_Location;
       Entity   : String := GNAT.Source_Info.Enclosing_Entity)
-     renames GNAT.Traces.Trace;
+     renames GNATCOLL.Traces.Trace;
 
    procedure Assert
      (Handle             : Debug_Handle;
@@ -61,14 +61,14 @@ package Traces is
       Raise_Exception    : Boolean := True;
       Location           : String := GNAT.Source_Info.Source_Location;
       Entity             : String := GNAT.Source_Info.Enclosing_Entity)
-     renames GNAT.Traces.Assert;
+     renames GNATCOLL.Traces.Assert;
 
    function Active (Handle : Debug_Handle) return Boolean
-     renames GNAT.Traces.Active;
+     renames GNATCOLL.Traces.Active;
 
    Exception_Handle : constant Debug_Handle :=
-     Create ("UNEXPECTED_EXCEPTION", Default => GNAT.Traces.On);
+     Create ("UNEXPECTED_EXCEPTION", Default => GNATCOLL.Traces.On);
    Testsuite_Handle : constant Debug_Handle :=
-     Create ("TESTSUITE", Default => GNAT.Traces.Off);
+     Create ("TESTSUITE", Default => GNATCOLL.Traces.Off);
 
 end Traces;

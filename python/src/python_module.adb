@@ -19,9 +19,9 @@
 
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
-with GNAT.Scripts;               use GNAT.Scripts;
-with GNAT.Scripts.Python;        use GNAT.Scripts.Python;
-with GNAT.Scripts.Python.Gtkada; use GNAT.Scripts.Python.Gtkada;
+with GNATCOLL.Scripts;               use GNATCOLL.Scripts;
+with GNATCOLL.Scripts.Python;        use GNATCOLL.Scripts.Python;
+with GNATCOLL.Scripts.Python.Gtkada; use GNATCOLL.Scripts.Python.Gtkada;
 
 with Basic_Types;
 

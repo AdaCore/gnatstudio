@@ -19,7 +19,7 @@
 
 with GNAT.Expect;                 use GNAT.Expect;
 with GNAT.Regpat;                 use GNAT.Regpat;
-with GNAT.Scripts;                use GNAT.Scripts;
+with GNATCOLL.Scripts;                use GNATCOLL.Scripts;
 
 with Glib;                        use Glib;
 with Glib.Object;                 use Glib.Object;

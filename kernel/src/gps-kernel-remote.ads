@@ -24,7 +24,7 @@ pragma Warnings (On);
 with GNAT.OS_Lib;
 
 with GPS.Kernel.Hooks;     use GPS.Kernel.Hooks;
-with GNAT.Scripts;
+with GNATCOLL.Scripts;
 with Filesystem;           use Filesystem;
 with Interactive_Consoles;
 with Remote;               use Remote;
@@ -131,10 +131,10 @@ package GPS.Kernel.Remote is
    end record;
 
    function Create_Callback_Data
-     (Script    : access GNAT.Scripts.Scripting_Language_Record'Class;
+     (Script    : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
       Hook_Name : String;
       Data      : access Rsync_Hooks_Args)
-      return GNAT.Scripts.Callback_Data_Access;
+      return GNATCOLL.Scripts.Callback_Data_Access;
    --  See inherited for documentation
 
    --------------------------------
@@ -156,10 +156,10 @@ package GPS.Kernel.Remote is
    end record;
 
    function Create_Callback_Data
-     (Script    : access GNAT.Scripts.Scripting_Language_Record'Class;
+     (Script    : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
       Hook_Name : String;
       Data      : access Server_Config_Changed_Hooks_Args)
-      return GNAT.Scripts.Callback_Data_Access;
+      return GNATCOLL.Scripts.Callback_Data_Access;
    --  See inherited for documentation
 
    ------------------------------

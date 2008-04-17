@@ -23,9 +23,9 @@
 with System;                    use System;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNAT.Scripts;              use GNAT.Scripts;
-with GNAT.Scripts.Impl;         use GNAT.Scripts.Impl;
-with GNAT.Scripts.Shell;        use GNAT.Scripts.Shell;
+with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
+with GNATCOLL.Scripts.Impl;         use GNATCOLL.Scripts.Impl;
+with GNATCOLL.Scripts.Shell;        use GNATCOLL.Scripts.Shell;
 
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with Glib.Object;               use Glib.Object;

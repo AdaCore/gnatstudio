@@ -30,7 +30,7 @@ gps=${1:-$dir/obj/gps}
 shift
 
 G_SLICE=always-malloc
-G_DEBUG=gc-friendly 
+G_DEBUG=gc-friendly,resident-modules
 export G_SLICE G_DEBUG
 
 case $mode in

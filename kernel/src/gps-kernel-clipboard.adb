@@ -22,7 +22,7 @@ with Ada.Unchecked_Deallocation;
 with System;                     use System;
 
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
-with GNAT.Scripts;               use GNAT.Scripts;
+with GNATCOLL.Scripts;               use GNATCOLL.Scripts;
 
 with Glib.Object;                use Glib.Object;
 with Glib.Properties.Creation;   use Glib.Properties.Creation;

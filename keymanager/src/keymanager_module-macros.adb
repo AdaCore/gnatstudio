@@ -24,9 +24,9 @@ with Gdk.Types.Keysyms;       use Gdk.Types, Gdk.Types.Keysyms;
 with Glib.Convert;            use Glib, Glib.Convert;
 with Glib.Main;               use Glib.Main;
 with Glib.Object;             use Glib.Object;
-with GNAT.Scripts;            use GNAT.Scripts;
+with GNATCOLL.Scripts;            use GNATCOLL.Scripts;
 with GNAT.Strings;            use GNAT.Strings;
-with GNAT.Traces;
+with GNATCOLL.Traces;
 with GPS.Kernel;              use GPS.Kernel;
 with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
 with GPS.Kernel.Console;      use GPS.Kernel.Console;
@@ -48,7 +48,7 @@ package body KeyManager_Module.Macros is
    Me        : constant Debug_Handle := Create ("Keymanager.Macros");
 
    Mouse_Macro_Support : constant Debug_Handle :=
-     Create ("Keymanager.Mouse_Macro", GNAT.Traces.Off);
+     Create ("Keymanager.Mouse_Macro", GNATCOLL.Traces.Off);
    --  ??? For now disable by default since this is a work in progress
 
    File_Cst                  : aliased constant String := "file";

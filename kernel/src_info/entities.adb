@@ -23,7 +23,7 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Calendar.Time_IO;      use GNAT.Calendar.Time_IO;
 with GNAT.Heap_Sort_G;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
-with GNAT.Traces;                use GNAT.Traces;
+with GNATCOLL.Traces;                use GNATCOLL.Traces;
 
 with Basic_Types;                use Basic_Types;
 with Entities.Debug;             use Entities.Debug;

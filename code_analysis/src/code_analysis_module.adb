@@ -20,8 +20,8 @@
 with Ada.Calendar;                           use Ada.Calendar;
 with Ada.Containers.Indefinite_Ordered_Sets; use Ada.Containers;
 with GNAT.Strings;
-with GNAT.Scripts;                           use GNAT.Scripts;
-with GNAT.Traces;
+with GNATCOLL.Scripts;                           use GNATCOLL.Scripts;
+with GNATCOLL.Traces;
 with Glib;                                   use Glib;
 with Glib.Object;                            use Glib.Object;
 with Glib.Xml_Int;                           use Glib.Xml_Int;
@@ -84,7 +84,7 @@ package body Code_Analysis_Module is
    --  of the GPS.CodeAnalysis.get command.
 
    Single_Analysis_Trace : constant Debug_Handle :=
-                             Create ("SINGLE_ANALYSIS_MODE", GNAT.Traces.On);
+                         Create ("SINGLE_ANALYSIS_MODE", GNATCOLL.Traces.On);
    Single_Analysis_Mode  : Boolean;
    --  Boolean that allows to determine wether we should display only one
    --  analysis at a time or if we can display more, if true the user wont be
@@ -98,7 +98,7 @@ package body Code_Analysis_Module is
    ------------------------
 
    type Code_Analysis_Instance_Record is record
-      Instances : GNAT.Scripts.Instance_List_Access;
+      Instances : GNATCOLL.Scripts.Instance_List_Access;
       Projects  : Code_Analysis_Tree;
       View      : Code_Analysis_View;
       Child     : GPS_MDI_Child;

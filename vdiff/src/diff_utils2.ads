@@ -24,7 +24,7 @@
 with Ada.Unchecked_Deallocation;
 
 with GNAT.OS_Lib;        use GNAT.OS_Lib;
-with GNAT.Scripts;       use GNAT.Scripts;
+with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
 
 with Generic_List;
 with GPS.Kernel;         use GPS.Kernel;

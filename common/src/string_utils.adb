@@ -22,7 +22,7 @@ with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 
 with GNAT.Strings;               use GNAT.Strings;
-with GNAT.Scripts.Utils;         use GNAT.Scripts.Utils;
+with GNATCOLL.Scripts.Utils;         use GNATCOLL.Scripts.Utils;
 
 with Glib.Unicode;               use Glib, Glib.Unicode;
 
@@ -1182,7 +1182,7 @@ package body String_Utils is
       Quote_Backslash : Boolean := True) return String
    is
    begin
-      return GNAT.Scripts.Utils.Argument_List_To_Quoted_String
+      return GNATCOLL.Scripts.Utils.Argument_List_To_Quoted_String
         (Args, Quote, Quote_Backslash);
    end Argument_List_To_Quoted_String;
 
@@ -1210,7 +1210,7 @@ package body String_Utils is
      (Arg_String : String) return String_List_Access
    is
    begin
-      return GNAT.Scripts.Utils.Argument_String_To_List_With_Triple_Quotes
+      return GNATCOLL.Scripts.Utils.Argument_String_To_List_With_Triple_Quotes
         (Arg_String);
    end Argument_String_To_List_With_Triple_Quotes;
 
@@ -1248,7 +1248,7 @@ package body String_Utils is
 
    function Unprotect (S : String) return String is
    begin
-      return GNAT.Scripts.Utils.Unprotect (S);
+      return GNATCOLL.Scripts.Utils.Unprotect (S);
    end Unprotect;
 
    -------------

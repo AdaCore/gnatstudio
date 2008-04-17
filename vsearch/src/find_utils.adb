@@ -22,7 +22,7 @@ with Ada.Unchecked_Deallocation;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Glib.Convert;              use Glib.Convert;
 with Glib.Unicode;              use Glib.Unicode;
-with GNAT.Boyer_Moore;          use GNAT.Boyer_Moore;
+with GNATCOLL.Boyer_Moore;          use GNATCOLL.Boyer_Moore;
 with GPS.Kernel;                use GPS.Kernel;
 with Traces;                    use Traces;
 with GNAT.Regpat;               use GNAT.Regpat;

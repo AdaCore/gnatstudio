@@ -23,7 +23,7 @@ with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNAT.Traces;
+with GNATCOLL.Traces;
 
 with Glib;                      use Glib;
 with Glib.Convert;              use Glib.Convert;
@@ -100,7 +100,7 @@ package body Project_Explorers is
    --  Id for the explorer module
 
    Explorers_Tooltips  : constant Debug_Handle :=
-                          Create ("Explorers.Tooltips", GNAT.Traces.Off);
+                          Create ("Explorers.Tooltips", GNATCOLL.Traces.Off);
 
    Show_Absolute_Paths : constant History_Key :=
                            "explorer-show-absolute-paths";

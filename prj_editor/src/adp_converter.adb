@@ -23,7 +23,7 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Ada.Unchecked_Deallocation;
 with Traces;                    use Traces;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.Mmap;                 use GNAT.Mmap;
+with GNATCOLL.Mmap;                 use GNATCOLL.Mmap;
 
 package body Adp_Converter is
 

@@ -22,8 +22,8 @@ with Ada.Strings.Unbounded;
 with Ada.Unchecked_Conversion;
 
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
-with GNAT.Scripts;            use GNAT.Scripts;
-with GNAT.Traces;             use GNAT.Traces;
+with GNATCOLL.Scripts;            use GNATCOLL.Scripts;
+with GNATCOLL.Traces;             use GNATCOLL.Traces;
 
 with System.Assertions;       use System.Assertions;
 
@@ -68,9 +68,9 @@ with XML_Parsers;
 
 package body KeyManager_Module is
 
-   Me : constant Trace_Handle := Create ("Keymanager", GNAT.Traces.Off);
+   Me : constant Trace_Handle := Create ("Keymanager", GNATCOLL.Traces.Off);
    Event_Debug_Trace : constant Trace_Handle := Create
-     ("Event_Debug", GNAT.Traces.Off);
+     ("Event_Debug", GNATCOLL.Traces.Off);
 
    use Key_Htable;
 

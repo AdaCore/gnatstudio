@@ -23,7 +23,7 @@ with Ada.Strings.Unbounded.Aux; use Ada.Strings.Unbounded.Aux;
 pragma Warnings (On);
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNAT.Traces;               use GNAT.Traces;
+with GNATCOLL.Traces;               use GNATCOLL.Traces;
 with Basic_Types;               use Basic_Types;
 with Language_Handlers;         use Language_Handlers;
 with Projects;                  use Projects;

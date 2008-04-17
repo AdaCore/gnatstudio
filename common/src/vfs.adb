@@ -31,9 +31,9 @@ with Ada.Characters.Handling;
 with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Heap_Sort;            use GNAT.Heap_Sort;
-with GNAT.Mmap;                 use GNAT.Mmap;
+with GNATCOLL.Mmap;                 use GNATCOLL.Mmap;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNAT.Traces;               use GNAT.Traces;
+with GNATCOLL.Traces;               use GNATCOLL.Traces;
 
 with Glib.Unicode;              use Glib.Unicode;
 
@@ -736,7 +736,7 @@ package body VFS is
          return null;
 
       elsif File.Is_Local then
-         return GNAT.Mmap.Read_Whole_File (File.Full_Name.all);
+         return GNATCOLL.Mmap.Read_Whole_File (File.Full_Name.all);
 
       else
          return File.Get_Filesystem.Read_File

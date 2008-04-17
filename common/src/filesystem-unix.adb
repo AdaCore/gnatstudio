@@ -21,7 +21,7 @@ with GNAT.Expect;            use GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote; use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
-with GNAT.Mmap;              use GNAT.Mmap;
+with GNATCOLL.Mmap;              use GNATCOLL.Mmap;
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
 with GNAT.Regpat;            use GNAT.Regpat;
 
@@ -485,7 +485,7 @@ package body Filesystem.Unix is
 
       declare
          Content : String_Access :=
-           GNAT.Mmap.Read_Whole_File
+           GNATCOLL.Mmap.Read_Whole_File
              (Locale_From_UTF8 (Temporary_File),
               Empty_If_Not_Found => True);
       begin

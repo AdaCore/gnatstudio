@@ -17,7 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Traces;           use GNAT.Traces;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with Gtk.Menu;              use Gtk.Menu;
 
 with Codefix.Formal_Errors; use Codefix.Formal_Errors;

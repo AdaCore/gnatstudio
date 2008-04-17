@@ -22,7 +22,7 @@ with GNAT.Calendar.Time_IO; use GNAT.Calendar.Time_IO;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.IO_Aux;               use GNAT.IO_Aux;
 with GNAT.Expect;               use GNAT.Expect;
-with GNAT.Mmap;                 use GNAT.Mmap;
+with GNATCOLL.Mmap;                 use GNATCOLL.Mmap;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 with Basic_Types;

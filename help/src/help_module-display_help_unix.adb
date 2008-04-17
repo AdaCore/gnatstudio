@@ -18,7 +18,7 @@
 -----------------------------------------------------------------------
 
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with GNAT.Templates;         use GNAT.Templates;
+with GNATCOLL.Templates;         use GNATCOLL.Templates;
 
 separate (Help_Module)
 procedure Display_Help

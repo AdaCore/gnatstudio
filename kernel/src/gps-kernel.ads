@@ -21,7 +21,7 @@
 
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Finalization;
-with GNAT.Scripts;
+with GNATCOLL.Scripts;
 with GNAT.Strings;
 with GNAT.Regpat;
 with System;
@@ -755,7 +755,7 @@ private
       Creator   : Abstract_Module_ID;
       Ref_Count : Natural := 1;
 
-      Instances : GNAT.Scripts.Instance_List_Access;
+      Instances : GNATCOLL.Scripts.Instance_List_Access;
 
       Files             : VFS.File_Array_Access := null;
       --  The current selected files
@@ -874,8 +874,8 @@ private
    --  System_Level : system custom files loaded
    --  User_Level   : system and user custom files loaded
 
-   type Kernel_Scripts_Repository is new GNAT.Scripts.Scripts_Repository_Record
-   with record
+   type Kernel_Scripts_Repository is
+      new GNATCOLL.Scripts.Scripts_Repository_Record with record
       Kernel : Kernel_Handle;
    end record;
 
@@ -921,7 +921,7 @@ private
       Registry : Projects.Registry.Project_Registry_Access;
       --  The project registry
 
-      Scripts : GNAT.Scripts.Scripts_Repository;
+      Scripts : GNATCOLL.Scripts.Scripts_Repository;
       --  Data used to store information for the scripting languages
 
       GNAT_Version : GNAT.Strings.String_Access;

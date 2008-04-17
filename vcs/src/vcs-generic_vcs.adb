@@ -23,7 +23,7 @@ with Ada.Strings.Unbounded;
 
 with GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.Scripts;              use GNAT.Scripts;
+with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
 
 with Glib;                      use Glib;
 with Glib.Convert;              use Glib.Convert;

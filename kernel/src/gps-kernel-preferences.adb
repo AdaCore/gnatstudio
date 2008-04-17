@@ -19,8 +19,8 @@
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Exceptions;          use Ada.Exceptions;
-with GNAT.Scripts;            use GNAT.Scripts;
-with GNAT.Traces;             use GNAT.Traces;
+with GNATCOLL.Scripts;            use GNATCOLL.Scripts;
+with GNATCOLL.Traces;             use GNATCOLL.Traces;
 with Interfaces.C.Strings;    use Interfaces.C, Interfaces.C.Strings;
 
 with Gdk.Color;               use Gdk.Color;

@@ -43,7 +43,7 @@ with Basic_Types;               use Basic_Types;
 with Csets;
 with Errout;
 with File_Utils;                use File_Utils;
-with GNAT.Traces;
+with GNATCOLL.Traces;
 with GPS.Intl;                  use GPS.Intl;
 with OS_Utils;                  use OS_Utils;
 with Prj.Com;                   use Prj.Com;
@@ -65,7 +65,7 @@ package body Projects.Registry is
 
    Me : constant Debug_Handle := Create ("Projects.Registry");
    Me_Gnat : constant Debug_Handle :=
-     Create ("Projects.GNAT", GNAT.Traces.Off);
+     Create ("Projects.GNAT", GNATCOLL.Traces.Off);
 
    Project_Backward_Compatibility : constant Boolean := True;
    --  Should be set to true if saved project should be compatible with GNAT
@@ -669,7 +669,7 @@ package body Projects.Registry is
       end Internal_Load;
 
    begin
-      --  Activate GNAT Traces. They will unfortunately be output on stdout,
+      --  Activate Traces. They will unfortunately be output on stdout,
       --  but this is a convenient way to at least get them.
       if Active (Me_Gnat) then
          Prj.Current_Verbosity := Prj.High;

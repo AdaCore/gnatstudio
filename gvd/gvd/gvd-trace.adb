@@ -19,7 +19,7 @@
 
 with Ada.Unchecked_Conversion;
 with Debugger;             use Debugger;
-with GNAT.Traces;          use GNAT.Traces;
+with GNATCOLL.Traces;          use GNATCOLL.Traces;
 with GPS.Kernel.Console;   use GPS.Kernel.Console;
 with GPS.Main_Window;      use GPS.Main_Window;
 with Process_Proxies;      use Process_Proxies;
@@ -31,10 +31,10 @@ package body GVD.Trace is
    --  much simpler to activate, and anyway we either want the minimal or all
    --  of it anyway
    Me : constant array (Command_Type) of Trace_Handle :=
-     (Internal => GNAT.Traces.Create ("GVD.Out", Off),  --  Could be "Internal"
-      Hidden   => GNAT.Traces.Create ("GVD.Out", Off),  --  Could be "Hidden"
-      Visible  => GNAT.Traces.Create ("GVD.Out", Off),  --  Could be "Visible"
-      User     => GNAT.Traces.Create ("GVD.Out", Off)); --  Could be "User"
+     (Internal => GNATCOLL.Traces.Create ("GVD.Out", Off),
+      Hidden   => GNATCOLL.Traces.Create ("GVD.Out", Off),
+      Visible  => GNATCOLL.Traces.Create ("GVD.Out", Off),
+      User     => GNATCOLL.Traces.Create ("GVD.Out", Off));
 
    Direction_String : constant array (IO_Kind) of String (1 .. 4) :=
      (Input_Kind  => "-> """,

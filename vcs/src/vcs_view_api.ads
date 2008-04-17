@@ -22,7 +22,7 @@
 with Glib.Object;        use Glib.Object;
 with Gtk.Widget;
 with Gtk.Menu;           use Gtk.Menu;
-with GNAT.Scripts;
+with GNATCOLL.Scripts;
 with GPS.Kernel;         use GPS.Kernel;
 with VCS;                use VCS;
 with Projects;           use Projects;
@@ -279,7 +279,7 @@ package VCS_View_API is
    --  Return the VCS reference registered in Project
 
    procedure VCS_Command_Handler
-     (Data    : in out GNAT.Scripts.Callback_Data'Class;
+     (Data    : in out GNATCOLL.Scripts.Callback_Data'Class;
       Command : String);
    --  Handler for VCS commands, that take a file name as their first parameter
 

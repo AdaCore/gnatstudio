@@ -23,7 +23,7 @@ with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with GNAT.Calendar.Time_IO;    use GNAT.Calendar.Time_IO;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
-with GNAT.Templates;           use GNAT.Templates;
+with GNATCOLL.Templates;           use GNATCOLL.Templates;
 with System.Assertions;
 
 with Gdk.Color;                use Gdk.Color;
