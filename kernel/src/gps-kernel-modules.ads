@@ -144,7 +144,7 @@ package GPS.Kernel.Modules is
    type Module_ID_Record is new Abstract_Module_ID_Record with private;
    type Module_ID is access all Module_ID_Record'Class;
 
-   procedure Destroy (Id : in out Module_ID_Record);
+   procedure Destroy (Id : in out Module_ID_Record) is null;
    --  Free the memory associated with the module. By default, this does
    --  nothing.
 
@@ -164,7 +164,7 @@ package GPS.Kernel.Modules is
      (Module  : access Module_ID_Record;
       Object  : access Glib.Object.GObject_Record'Class;
       Context : Selection_Context;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class) is null;
    --  Callback used every time some contextual menu event happens in GPS.
    --
    --  The object that is displaying the contextual menu is Object. Note that
@@ -182,7 +182,7 @@ package GPS.Kernel.Modules is
    procedure Default_Context_Factory
      (Module  : access Module_ID_Record;
       Context : in out Selection_Context;
-      Child   : Gtk.Widget.Gtk_Widget);
+      Child   : Gtk.Widget.Gtk_Widget) is null;
    --  A function called when the kernel needs to get the current context for
    --  an MDI child. This is used mostly when generating a context for the
    --  menubar menu items.
@@ -241,7 +241,7 @@ package GPS.Kernel.Modules is
      (Module : access Module_ID_Record;
       File   : VFS.Virtual_File;
       Node   : Glib.Xml_Int.Node_Ptr;
-      Level  : Customization_Level);
+      Level  : Customization_Level) is null;
    --  Subprogram called when a new customization has been parsed.
    --  It is initially called just after all modules have been registered,
    --  and gets passed a single XML node.

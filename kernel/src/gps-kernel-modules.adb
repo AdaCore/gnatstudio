@@ -293,35 +293,6 @@ package body GPS.Kernel.Modules is
       return Path;
    end Dir_Menu_Name;
 
-   ------------------
-   -- Menu_Handler --
-   ------------------
-
-   procedure Menu_Handler
-     (Module  : access Module_ID_Record;
-      Object  : access Glib.Object.GObject_Record'Class;
-      Context : Selection_Context;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
-   is
-      pragma Unreferenced (Module, Object, Context, Menu);
-   begin
-      null;
-   end Menu_Handler;
-
-   -----------------------------
-   -- Default_Context_Factory --
-   -----------------------------
-
-   procedure Default_Context_Factory
-     (Module  : access Module_ID_Record;
-      Context : in out Selection_Context;
-      Child   : Gtk.Widget.Gtk_Widget)
-   is
-      pragma Unreferenced (Module, Child, Context);
-   begin
-      null;
-   end Default_Context_Factory;
-
    -------------------
    -- Save_Function --
    -------------------
@@ -362,21 +333,6 @@ package body GPS.Kernel.Modules is
    begin
       return null;
    end Bookmark_Handler;
-
-   ---------------
-   -- Customize --
-   ---------------
-
-   procedure Customize
-     (Module : access Module_ID_Record;
-      File   : VFS.Virtual_File;
-      Node   : Glib.Xml_Int.Node_Ptr;
-      Level  : Customization_Level)
-   is
-      pragma Unreferenced (Module, File, Node, Level);
-   begin
-      null;
-   end Customize;
 
    ----------
    -- Free --
@@ -486,16 +442,6 @@ package body GPS.Kernel.Modules is
    begin
       return Module.Name.all;
    end Get_Name;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (Id : in out Module_ID_Record) is
-      pragma Unreferenced (Id);
-   begin
-      null;
-   end Destroy;
 
    -------------------
    -- Create_Marker --
