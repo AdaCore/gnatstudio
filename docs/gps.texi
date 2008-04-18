@@ -16587,11 +16587,6 @@ copy of the code on your local machine).
 
 @end itemize
 
-@item GPS does not start when using an X Server with 256 colors
-
-GPS requires at least 65535 colors to run properly, so you need to configure
-your X server to allow 65K colors or more.
-
 @item GPS is very slow compared to previous versions under unix (GPS < 4.0.0)
 
 GPS 4.0.0 and above need the X RENDER extension when running under unix
