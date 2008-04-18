@@ -22,8 +22,8 @@ endif
 export ADA_PROJECT_PATH:=${GTKADA_PREFIX}/lib/gnat${PATH_SEPARATOR}${ADA_PROJECT_PATH}
 
 # How to build gnatlib:
-export GNATLIB_LIBRARY_TYPE=static
-# export GNATLIB_LIBRARY_TYPE=relocatable
+export GNATCOLL_LIBRARY_TYPE=static
+# export GNATCOLL_LIBRARY_TYPE=relocatable
 
 export TP_TASKING=No_Tasking
 
