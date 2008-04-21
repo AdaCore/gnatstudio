@@ -1009,7 +1009,9 @@ package body Builder_Module is
 
       --  Determine the project for the file
 
-      if Prj = No_Project then
+      if Get_Project_From_File (Get_Registry (Kernel).all, File, False)
+        = No_Project
+      then
          if not Quiet then
             Console.Insert
               (Kernel, -"Could not determine the project for file: "
