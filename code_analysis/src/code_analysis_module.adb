@@ -1191,13 +1191,21 @@ package body Code_Analysis_Module is
       --  Build the report --
       -----------------------
 
+      if Cont_N_Anal.Context = No_Context then
+         Local_Context := Check_Context (Kernel, No_Context);
+      else
+         Local_Context := Cont_N_Anal.Context;
+      end if;
+
       if Cont_N_Anal.Analysis.View = null then
          Cont_N_Anal.Analysis.View := Build_Analysis_Report
            (Kernel,
             Cont_N_Anal.Analysis.Name,
             Cont_N_Anal.Analysis.Projects,
             Binary_Coverage_Mode);
-         Connect_Report (Kernel, Cont_N_Anal);
+         Connect_Report
+           (Kernel,
+            Context_And_Analysis'(Local_Context, Cont_N_Anal.Analysis));
       else
          --  If Report already existed, clear its Gtk_Tree_Store
          Clear (Cont_N_Anal.Analysis.View.Model);
@@ -1206,12 +1214,6 @@ package body Code_Analysis_Module is
       --------------------------------------
       --  Check for analysis information  --
       --------------------------------------
-
-      if Cont_N_Anal.Context = No_Context then
-         Local_Context := Check_Context (Kernel, No_Context);
-      else
-         Local_Context := Cont_N_Anal.Context;
-      end if;
 
       declare
          Prj_Name : Project_Type;
@@ -1222,7 +1224,7 @@ package body Code_Analysis_Module is
 
          if Prj_Node.Analysis_Data.Coverage_Data = null then
             --  If the current context's project has no coverage data, it has
-            --  to be modified or an erro message is shown
+            --  to be modified or an error message is shown
             Prj_Name := First_Project_With_Coverage_Data
               (Cont_N_Anal.Analysis.Projects);
 
@@ -2425,8 +2427,7 @@ package body Code_Analysis_Module is
       end if;
 
       Cont_N_Anal.Analysis := Element (Cur);
-
-      Cont_N_Anal.Context :=
+      Cont_N_Anal.Context  :=
         Check_Context (Kernel, Get_Current_Context (Kernel));
 
       Set_File_Information
