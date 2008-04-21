@@ -1,11 +1,18 @@
 Known Problems fixed in GPS 4.3.0
 
+- H415-015: Wrong file used when compiling a file with no project
+  Problem:    When compiling a file which does not belong to the current
+              project hierarchy and a file with the same basename exists
+              in one of the projects, this file is compiled instead of
+              generating an error message.
+  Workaround: Make sure your files always belong to a project.
+
 - H407-006: Confusion when editing scenario variables
   Problem:    The dialog used to edit a scenario variable appears
               confusing to some users, who expect that changing the Name
               will in fact select another existing variable. Documentation
-              was updated, and the label in the dialog changed to "Rename to"
-  Workaround: none needed
+              was updated, and the label in the dialog changed to "Rename to".
+  Workaround: None needed.
 
 - H327-025: No source directories displayed in the project explorer
   Problem:    When the project explorer hidden directories is empty
