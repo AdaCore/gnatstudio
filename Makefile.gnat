@@ -147,3 +147,13 @@ GNAT_SOURCES= \
 
 list-sources:
 	@echo $(GNAT_SOURCES)
+
+list-sources-regexp:
+	@echo -n "("
+	@for f in $(GNAT_SOURCES); do \
+	  if [ "$$f" = "gnat_style.css" ]; then \
+	    echo "$$f)"; \
+	  else \
+	    echo -n "$$f|"; \
+	  fi; \
+	done
