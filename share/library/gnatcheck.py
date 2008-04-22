@@ -14,15 +14,14 @@ def locate_exec_on_path (prog):
 class gnatCheck:
    def __init__ (self):
       self.rules_list = []
-      self.initXml()
       self.locations_string = "gnatcheck rules violations"
-      self.activeRules = []
 
    def initXml (self):
       self.get_supported_rules()
       xml = """
-  <tool name="GnatCheck" package="Ide" index="gnatcheck" override="true">
+  <tool name="GnatCheck" package="Check" index="Ada" override="true">
      <language>Ada</language>
+     <initial-cmd-line>-rules -ALL</initial-cmd-line>
      <switches lines="1" use_scrolled_window="true">
         <title line="1" >Rules</title>
       """
@@ -78,35 +77,18 @@ class gnatCheck:
       GPS.Codefix.parse (self.locations_string, matched)
       print (matched)
 
-   def internalSpawn (self, filestr):
+   def internalSpawn (self, filestr, project):
       self.init_gnatcheck_cmd ()
       if self.gnatcheckCmd == "":
          return
       # launch gnat check with current project
-      cmd = self.gnatcheckCmd + " -P" + GPS.Project.root().file().name()
+      cmd = self.gnatcheckCmd + " -P" + project.file().name()
       # define the scenario variables
       scenario = GPS.Project.scenario_variables()
       for i, j in scenario.iteritems():
          cmd += " -X" + i + "=" + j
       # use progress, specify the file name to check
       cmd +=  " -dd " + filestr
-      # retrieve the rules to check, from project
-      opts = GPS.Project.root().get_tool_switches_as_list ("GnatCheck")
-      if opts == []:
-         print "Gnat check: no rules to check"
-         return
-
-      if len(opts) > (len(self.rules_list)/2):
-         # opts is a long list: define by default all rules, and remove the
-         # ones not present in this list
-         cmd += " -rules +ALL"
-         for r in self.rules_list:
-            if opts.count("+R"+r[0]) == 0:
-               cmd += " -R"+r[0]
-      else:
-        cmd += " -rules -ALL"
-        for o in opts:
-           cmd += " "+o
 
       # clear the Checks category in the Locations view
       if GPS.Locations.list_categories().count (self.locations_string) > 0:
@@ -119,14 +101,14 @@ class gnatCheck:
                              progress_current = 1,
                              progress_total = 2)
 
-   def check_file (self, file):
-      self.internalSpawn (file.name())
+   def check_file (self, file, project):
+      self.internalSpawn (file.name(), project)
 
-   def check_files (self, files):
+   def check_files (self, files, project):
       filestr = ""
       for f in files:
          filestr += f.name() + " "
-      self.internalSpawn (filestr);
+      self.internalSpawn (filestr, project);
 
 # Contextual menu for checking files
 class contextualMenu (GPS.Contextual):
@@ -193,22 +175,21 @@ class contextualMenu (GPS.Contextual):
    def on_activate (self, context):
       global gnatcheckproc
       if self.desttype == "file":
-         gnatcheckproc.check_file(self.file)
+         gnatcheckproc.check_file(self.file, self.file.project())
       else:
-         gnatcheckproc.check_files(self.files)
+         gnatcheckproc.check_files(self.files, self.files[0].project())
 
 # create the gnatcheck and menus instances.
 gnatcheckproc = None;
-def init(p):
-   global gnatcheckproc;
-   gnatcheckproc = gnatCheck()
-   contextualMenu()
 
 def on_project_change(p):
    global gnatcheckproc;
-   if gnatcheckproc != None:
-      gnatcheckproc.initXml();
 
-GPS.Hook ("gps_started").add (init)
+   if gnatcheckproc == None:
+      gnatcheckproc = gnatCheck()
+      contextualMenu()
+
+   gnatcheckproc.initXml();
+
 GPS.Hook("project_view_changed").add (on_project_change);
-GPS.parse_xml ("""<tool name="GnatCheck" package="Ide" index="gnatcheck"/>""");
+GPS.parse_xml ("""<tool name="GnatCheck" package="Check" index="Ada" override="true"/>""");
