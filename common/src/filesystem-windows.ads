@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006-2007                      --
---                             AdaCore                               --
+--                      Copyright (C) 2006-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,152 +17,42 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  This package describes the Windows filesystem and shell commands
+--  This package describes the Windows filesystem for a local host.
+--  See the parent package for the documentation of the subprograms
 
 package Filesystem.Windows is
 
    type Windows_Filesystem_Record is new Filesystem_Record with null record;
 
-   --  See filesystem.ads for specs of the following routines
-
-   function To_Unix
+   overriding function To_Unix
      (FS         : Windows_Filesystem_Record;
       Path       : String;
       Use_Cygwin : Boolean := False) return String;
-
-   function From_Unix
+   overriding function From_Unix
      (FS   : Windows_Filesystem_Record;
       Path : String) return String;
-
-   function Is_Absolute_Path
+   overriding function Is_Absolute_Path
      (FS   : Windows_Filesystem_Record;
       Path : String) return Boolean;
-
-   function Base_Name
-     (FS     : Windows_Filesystem_Record;
-      Path   : String;
-      Suffix : String := "") return String;
-
-   function Base_Dir_Name
+   overriding function Get_Root
      (FS   : Windows_Filesystem_Record;
       Path : String) return String;
-
-   function Dir_Name
+   overriding function Device_Name
      (FS   : Windows_Filesystem_Record;
       Path : String) return String;
-
-   function Get_Root
-     (FS   : Windows_Filesystem_Record;
-      Path : String) return String;
-
-   function Get_Parent
-     (FS   : Windows_Filesystem_Record;
-      Path : String) return String;
-
-   function Ensure_Directory
-     (FS   : Windows_Filesystem_Record;
-      Path : String) return String;
-
-   function Device_Name
-     (FS   : Windows_Filesystem_Record;
-      Path : String) return String;
-
-   function Normalize
-     (FS   : Windows_Filesystem_Record;
-      Path : String) return String;
-
-   function Path
+   overriding function Path
      (FS : Windows_Filesystem_Record;
       Device : String;
       Dir    : String;
       File   : String) return String;
-
-   function Is_Case_Sensitive (FS : Windows_Filesystem_Record) return Boolean;
-
-   function Has_Devices (FS : Windows_Filesystem_Record) return Boolean;
-
-   -------------------------
-   -- Operations on files --
-   -------------------------
-
-   function Home_Dir
-     (FS   : Windows_Filesystem_Record;
-      Host : String) return String;
-
-   function Is_Regular_File
-     (FS              : Windows_Filesystem_Record;
-      Host            : String;
-      Local_Full_Name : String) return Boolean;
-
-   function Read_File
-     (FS              : Windows_Filesystem_Record;
-      Host            : String;
-      Local_Full_Name : String) return GNAT.Strings.String_Access;
-
-   function Delete
-     (FS              : Windows_Filesystem_Record;
-      Host            : String;
-      Local_Full_Name : String) return Boolean;
-
-   function Is_Writable
-     (FS              : Windows_Filesystem_Record;
-      Host            : String;
-      Local_Full_Name : String) return Boolean;
-
-   function Is_Directory
-     (FS              : Windows_Filesystem_Record;
-      Host            : String;
-      Local_Full_Name : String) return Boolean;
-
-   function File_Time_Stamp
-     (FS              : Windows_Filesystem_Record;
-      Host            : String;
-      Local_Full_Name : String) return Ada.Calendar.Time;
-
-   procedure Write
-     (FS              : Windows_Filesystem_Record;
-      Host            : String;
-      Local_Full_Name : String;
-      Temporary_File  : String);
-
-   procedure Set_Writable
-     (FS              : Windows_Filesystem_Record;
-      Host            : String;
-      Local_Full_Name : String;
-      Writable        : Boolean);
-
-   procedure Set_Readable
-     (FS              : Windows_Filesystem_Record;
-      Host            : String;
-      Local_Full_Name : String;
-      Readable        : Boolean);
-
-   --------------------------
-   -- Directory management --
-   --------------------------
-
-   procedure Get_Logical_Drives
+   overriding function Is_Case_Sensitive
+     (FS : Windows_Filesystem_Record) return Boolean;
+   overriding function Has_Devices
+     (FS : Windows_Filesystem_Record) return Boolean;
+   overriding procedure Get_Logical_Drives
      (FS     : Windows_Filesystem_Record;
       Host   : String;
       Buffer : in out String;
       Len    :    out Integer);
-
-   function Make_Dir
-     (FS             : Windows_Filesystem_Record;
-      Host           : String;
-      Local_Dir_Name : String) return Boolean;
-
-   function Remove_Dir
-     (FS             : Windows_Filesystem_Record;
-      Host           : String;
-      Local_Dir_Name : String;
-      Recursive      : Boolean) return Boolean;
-
-   function Read_Dir
-     (FS             : Windows_Filesystem_Record;
-      Host           : String;
-      Local_Dir_Name : String;
-      Dirs_Only      : Boolean := False;
-      Files_Only     : Boolean := False) return GNAT.Strings.String_List;
 
 end Filesystem.Windows;

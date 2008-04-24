@@ -18,7 +18,13 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  This package is used to describe a complete filesystem and how to use it
+--  This package is used to describe a complete filesystem and how to
+--  manipulate files and directories.
+--  A default implementation valid for both windows and unix local filesystems
+--  is provided, but this type still needs to be overridden to provide
+--  system-specific implementation in some cases. It is also possible to
+--  further derive this type to implement remote file systems, ie access to
+--  files on remote hosts.
 
 with Ada.Calendar;
 with GNAT.Strings;
@@ -69,17 +75,17 @@ package Filesystem is
    function Base_Name
      (FS     : Filesystem_Record;
       Path   : String;
-      Suffix : String := "") return String is abstract;
+      Suffix : String := "") return String;
    --  Return the base file name
 
    function Base_Dir_Name
      (FS   : Filesystem_Record;
-      Path : String) return String is abstract;
+      Path : String) return String;
    --  Return the directory base name
 
    function Dir_Name
      (FS   : Filesystem_Record;
-      Path : String) return String is abstract;
+      Path : String) return String;
    --  Return the directory path
 
    function Get_Root
@@ -89,12 +95,12 @@ package Filesystem is
 
    function Get_Parent
      (FS   : Filesystem_Record;
-      Path : String) return String is abstract;
+      Path : String) return String;
    --  Return the parent directory of the path
 
    function Ensure_Directory
      (FS   : Filesystem_Record;
-      Path : String) return String is abstract;
+      Path : String) return String;
    --  Return a directory path from furnished path.
    --  On Windows, for a path C:\path\to, this will return C:\path\to\
    --  On VMS, for a path disk:[path]to.dir, this will return disk:[path.to]
@@ -106,7 +112,7 @@ package Filesystem is
 
    function Normalize
      (FS   : Filesystem_Record;
-      Path : String) return String is abstract;
+      Path : String) return String;
    --  Replace every ./ or ../ items of the path.
 
    function Path
@@ -136,20 +142,20 @@ package Filesystem is
 
    function Home_Dir
      (FS   : Filesystem_Record;
-      Host : String) return String is abstract;
+      Host : String) return String;
    --  Return the home directory on the specified host.
    --  If home dir cannot be determined, return root directory
 
    function Is_Regular_File
      (FS              : Filesystem_Record;
       Host            : String;
-      Local_Full_Name : String) return Boolean is abstract;
+      Local_Full_Name : String) return Boolean;
    --  Return True if Local_Full_Name exists on the remote host.
 
    function Read_File
      (FS              : Filesystem_Record;
       Host            : String;
-      Local_Full_Name : String) return GNAT.Strings.String_Access is abstract;
+      Local_Full_Name : String) return GNAT.Strings.String_Access;
    --  Return the contents of an entire file.
    --  If the file cannot be found, return null.
    --  The caller is responsible for freeing the returned memory.
@@ -158,26 +164,26 @@ package Filesystem is
    function Delete
      (FS              : Filesystem_Record;
       Host            : String;
-      Local_Full_Name : String) return Boolean is abstract;
+      Local_Full_Name : String) return Boolean;
    --  Sends host a delete command for file.
 
    function Is_Writable
      (FS              : Filesystem_Record;
       Host            : String;
-      Local_Full_Name : String) return Boolean is abstract;
+      Local_Full_Name : String) return Boolean;
    --  Return True if File is writable.
    --  Some protocols are read-only (HTTP), and will always return False.
 
    function Is_Directory
      (FS              : Filesystem_Record;
       Host            : String;
-      Local_Full_Name : String) return Boolean is abstract;
+      Local_Full_Name : String) return Boolean;
    --  Return True if File is in fact a directory
 
    function File_Time_Stamp
      (FS              : Filesystem_Record;
       Host            : String;
-      Local_Full_Name : String) return Ada.Calendar.Time is abstract;
+      Local_Full_Name : String) return Ada.Calendar.Time;
    --  Return the timestamp for this file.
    --  If the Connection doesn't support this operation, or the file
    --  doesn't exists, it should return a date of No_Time, so as to force, when
@@ -187,15 +193,16 @@ package Filesystem is
      (FS              : Filesystem_Record;
       Host            : String;
       Local_Full_Name : String;
-      Temporary_File  : String) is abstract;
-   --  Overwrite the contents of Local_Full_Name with Contents.
+      Temporary_File  : String);
+   --  Overwrite the contents of Local_Full_Name with the contents of the
+   --  Temporary_File.
    --  Raise Use_Error if the file could not be written
 
    procedure Set_Writable
      (FS              : Filesystem_Record;
       Host            : String;
       Local_Full_Name : String;
-      Writable        : Boolean) is abstract;
+      Writable        : Boolean);
    --  If Writable is True, make the file writable, otherwise make the file
    --  unwritable.
 
@@ -203,7 +210,7 @@ package Filesystem is
      (FS              : Filesystem_Record;
       Host            : String;
       Local_Full_Name : String;
-      Readable        : Boolean) is abstract;
+      Readable        : Boolean);
    --  If Readable is True, make the file readable, otherwise make the file
    --  unreadable.
 
@@ -221,7 +228,7 @@ package Filesystem is
    function Make_Dir
      (FS             : Filesystem_Record;
       Host           : String;
-      Local_Dir_Name : String) return Boolean is abstract;
+      Local_Dir_Name : String) return Boolean;
    --  Create a new directory on remote named Local_Dir_Name.
    --  Return the creation status
 
@@ -229,7 +236,7 @@ package Filesystem is
      (FS             : Filesystem_Record;
       Host           : String;
       Local_Dir_Name : String;
-      Recursive      : Boolean) return Boolean is abstract;
+      Recursive      : Boolean) return Boolean;
    --  Delete an empty directory on remote named Local_Dir_Name.
    --  Return the deletion status
 
@@ -239,7 +246,7 @@ package Filesystem is
       Local_Dir_Name : String;
       Dirs_Only      : Boolean := False;
       Files_Only     : Boolean := False)
-      return GNAT.Strings.String_List is abstract;
+      return GNAT.Strings.String_List;
    --  Read the specified directory and returns a list of filenames
    --  (base names). If Dirs_Only is set, then the files returned are directory
    --  only. Same for Files_Only, concerning regular files.
