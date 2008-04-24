@@ -62,7 +62,7 @@ package body Code_Analysis_GUI is
       Bar_Render  : Gtk_Cell_Renderer_Progress;
       Dummy       : Gint;
       pragma Unreferenced (Dummy);
-      --  Warning boards widgets
+      --  Warning board widgets
       Warning_Image    : Gtk_Image;
       Board_Label      : Gtk_Label;
       Full_Tree_Button : Gtk_Button;
@@ -96,6 +96,7 @@ package body Code_Analysis_GUI is
       ------------------
 
       Gtk_New_Hbox (View.Error_Board, False, 7);
+      Set_Name (View.Error_Board, Name.all & "_Error_Board"); --  testsuite
       Gtk_New_Vbox (Label_And_Button, False, 7);
       Gtk_New_Hbox (Button_Box);
       Gtk_New_From_Icon_Name
@@ -109,6 +110,7 @@ package body Code_Analysis_GUI is
       Set_Line_Wrap (Board_Label, True);
       Set_Justify (Board_Label, Justify_Left);
       Gtk_New (View.Load_Button, -"Load data for all projects");
+      Set_Name (View.Load_Button, Name.all & "_Load_Button"); --  testsuite
       Pack_Start (View.Error_Board, Warning_Image, False, False, 7);
       Pack_Start (Label_And_Button, Board_Label, False, True, 7);
       Pack_Start (Button_Box, View.Load_Button, False, False, 0);
