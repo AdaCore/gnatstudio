@@ -211,10 +211,6 @@ package VFS is
 
    function Get_Current_Dir return Virtual_File;
 
-   function Get_Home_Dir (Host : String) return Virtual_File;
-   --  Returns the home directory of specified host.
-   --  If home dir cannot be determined, return root dir.
-
    procedure Ensure_Directory (Dir : Virtual_File);
    --  Ensures that the file is a directory: add directory separator if
    --  needed.

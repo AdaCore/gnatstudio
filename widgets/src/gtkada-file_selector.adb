@@ -66,6 +66,7 @@ with Gtkada.Types;              use Gtkada.Types;
 
 with Shell_Descriptors;         use Shell_Descriptors;
 with File_Utils;                use File_Utils;
+with Filesystem;                use Filesystem;
 with GUI_Utils;                 use GUI_Utils;
 with Histories;                 use Histories;
 with Remote;                    use Remote;
@@ -1129,8 +1130,13 @@ package body Gtkada.File_Selector is
      (Object : access Gtk_Widget_Record'Class)
    is
       Win : constant File_Selector_Window_Access :=
-              File_Selector_Window_Access (Get_Toplevel (Object));
-      H   : Virtual_File := Get_Home_Dir (Get_Host (Win.Current_Directory));
+        File_Selector_Window_Access (Get_Toplevel (Object));
+      Host : constant String := Get_Host (Win.Current_Directory);
+      H   : Virtual_File := Create
+        (Host => Host,
+         Full_Filename =>
+           Home_Dir (FS   => Get_Filesystem (Win.Current_Directory),
+                     Host => Host));
 
    begin
       if H /= No_File then
