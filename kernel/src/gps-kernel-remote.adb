@@ -81,8 +81,8 @@ with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 
-with Filesystem.Unix;            use Filesystem.Unix;
-with Filesystem.Windows;         use Filesystem.Windows;
+with Filesystem.Unix.Remote;     use Filesystem.Unix.Remote;
+with Filesystem.Windows.Remote;  use Filesystem.Windows.Remote;
 with Filesystem.Queries;         use Filesystem.Queries;
 with GUI_Utils;                  use GUI_Utils;
 with Interactive_Consoles;       use Interactive_Consoles;
@@ -2956,8 +2956,8 @@ package body GPS.Kernel.Remote is
             GPS_Prompt             : Glib.String_Ptr;
             FS_Str                 : Glib.String_Ptr;
             No_Echo_Cmd            : Glib.String_Ptr;
-            Windows_FS             : aliased Windows_Filesystem_Record;
-            Unix_FS                : aliased Unix_Filesystem_Record;
+            Windows_FS             : aliased Remote_Windows_Filesystem_Record;
+            Unix_FS                : aliased Remote_Unix_Filesystem_Record;
             FS                     : Filesystem_Access;
             Init_Cmds_Child        : Node_Ptr;
             Exit_Cmds_Child        : Node_Ptr;
