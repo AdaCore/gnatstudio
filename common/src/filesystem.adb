@@ -540,9 +540,11 @@ package body Filesystem is
       To_Local_Name   : String) return Boolean
    is
       pragma Unreferenced (FS, Host);
+      Success : Boolean;
    begin
-      Ada.Directories.Copy_File (From_Local_Name, To_Local_Name);
-      return True;
+      GNAT.OS_Lib.Copy_File (From_Local_Name, To_Local_Name, Success,
+                             Mode => Overwrite, Preserve => Full);
+      return Success;
    exception
       when others =>
          return False;
@@ -574,14 +576,27 @@ package body Filesystem is
       end if;
 
       for F in Files_Array'Range loop
-         if not Copy
-           (Filesystem_Record'Class (FS),
-            Host,
-            From & Files_Array (F).all,
-            Target)
-         then
-            Basic_Types.Free (Files_Array);
-            return False;
+         if Is_Directory (From & Files_Array (F).all) then
+            if not Copy_Dir
+              (Filesystem_Record'Class (FS),
+               Host,
+               From & Files_Array (F).all,
+               Target)
+            then
+               Basic_Types.Free (Files_Array);
+               return False;
+            end if;
+
+         else
+            if not Copy
+              (Filesystem_Record'Class (FS),
+               Host,
+               From & Files_Array (F).all,
+               Target)
+            then
+               Basic_Types.Free (Files_Array);
+               return False;
+            end if;
          end if;
       end loop;
 

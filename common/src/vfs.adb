@@ -459,10 +459,18 @@ package body VFS is
       Target_Name : String;
       Success     : out Boolean) is
    begin
-      Success := File.Get_Filesystem.Copy
-        (File.Value.Server.all,
-         File.Locale_Full_Name,
-         Target_Name);
+      if Is_Directory (File) then
+         Success := File.Get_Filesystem.Copy_Dir
+           (File.Value.Server.all,
+            File.Locale_Full_Name,
+            Target_Name);
+
+      else
+         Success := File.Get_Filesystem.Copy
+           (File.Value.Server.all,
+            File.Locale_Full_Name,
+            Target_Name);
+      end if;
    end Copy;
 
    ------------
