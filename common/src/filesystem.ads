@@ -63,7 +63,8 @@ package Filesystem is
      (FS   : Filesystem_Record;
       Path : String) return String;
    --  Return the file extension
-   --  By default, return the characters after the last dot
+   --  By default, return the characters from the last dot (included) to the
+   --  end of the Path.
 
    function Concat
      (FS   : Filesystem_Record;

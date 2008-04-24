@@ -62,7 +62,7 @@ package body Filesystem is
    begin
       for J in reverse Path'Range loop
          if Path (J) = '.' then
-            return Path (J + 1 .. Path'Last);
+            return Path (J .. Path'Last);
          end if;
       end loop;
       return "";
