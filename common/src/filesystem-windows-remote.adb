@@ -156,6 +156,21 @@ package body Filesystem.Windows.Remote is
       return False;
    end Is_Writable;
 
+   ----------------------
+   -- Is_Symbolic_Link --
+   ----------------------
+
+   function Is_Symbolic_Link
+     (FS              : Remote_Windows_Filesystem_Record;
+      Host            : String;
+      Local_Full_Name : String) return Boolean
+   is
+      pragma Unreferenced (FS, Host, Local_Full_Name);
+   begin
+      --  No symbolic link on windows
+      return False;
+   end Is_Symbolic_Link;
+
    ------------------
    -- Is_Directory --
    ------------------
@@ -497,5 +512,71 @@ package body Filesystem.Windows.Remote is
 
       return (1 .. 0 => null);
    end Read_Dir;
+
+   ------------
+   -- Rename --
+   ------------
+
+   function Rename
+     (FS              : Remote_Windows_Filesystem_Record;
+      Host            : String;
+      From_Local_Name : String;
+      To_Local_Name   : String) return Boolean
+   is
+      pragma Unreferenced (FS);
+      Args  : GNAT.OS_Lib.Argument_List :=
+                (new String'("ren"),
+                 new String'("""" & From_Local_Name & """"),
+                 new String'("""" & To_Local_Name & """"),
+                 new String'("2>&1"));
+      Status : Boolean;
+   begin
+      Sync_Execute (Host, Args, Status);
+      Basic_Types.Free (Args);
+      return Status;
+   end Rename;
+
+   ----------
+   -- Copy --
+   ----------
+
+   function Copy
+     (FS              : Remote_Windows_Filesystem_Record;
+      Host            : String;
+      From_Local_Name : String;
+      To_Local_Name   : String) return Boolean
+   is
+      pragma Unreferenced (FS);
+      Args  : GNAT.OS_Lib.Argument_List :=
+                (new String'("copy"),
+                 new String'("""" & From_Local_Name & """"),
+                 new String'("""" & To_Local_Name & """"),
+                 new String'("2>&1"));
+      Status : Boolean;
+   begin
+      Sync_Execute (Host, Args, Status);
+      Basic_Types.Free (Args);
+      return Status;
+   end Copy;
+
+   ----------------
+   -- Change_Dir --
+   ----------------
+
+   function Change_Dir
+     (FS             : Remote_Windows_Filesystem_Record;
+      Host           : String;
+      Local_Dir_Name : String) return Boolean
+   is
+      Args  : GNAT.OS_Lib.Argument_List :=
+                (new String'("cd"),
+                 new String'("""" & Local_Dir_Name & """"));
+      Status : Boolean;
+      pragma Unreferenced (FS);
+   begin
+      Sync_Execute (Host, Args, Status);
+      Basic_Types.Free (Args);
+      return Status;
+   end Change_Dir;
 
 end Filesystem.Windows.Remote;

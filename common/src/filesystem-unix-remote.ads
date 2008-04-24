@@ -44,6 +44,10 @@ package Filesystem.Unix.Remote is
      (FS              : Remote_Unix_Filesystem_Record;
       Host            : String;
       Local_Full_Name : String) return Boolean;
+   overriding function Is_Symbolic_Link
+     (FS              : Remote_Unix_Filesystem_Record;
+      Host            : String;
+      Local_Full_Name : String) return Boolean;
    overriding function Is_Directory
      (FS              : Remote_Unix_Filesystem_Record;
       Host            : String;
@@ -84,6 +88,25 @@ package Filesystem.Unix.Remote is
       Local_Dir_Name : String;
       Dirs_Only      : Boolean := False;
       Files_Only     : Boolean := False) return GNAT.Strings.String_List;
+   overriding function Rename
+     (FS              : Remote_Unix_Filesystem_Record;
+      Host            : String;
+      From_Local_Name : String;
+      To_Local_Name   : String) return Boolean;
+   overriding function Copy
+     (FS              : Remote_Unix_Filesystem_Record;
+      Host            : String;
+      From_Local_Name : String;
+      To_Local_Name   : String) return Boolean;
+   overriding function Copy_Dir
+     (FS              : Remote_Unix_Filesystem_Record;
+      Host            : String;
+      From_Local_Name : String;
+      To_Local_Name   : String) return Boolean;
+   overriding function Change_Dir
+     (FS             : Remote_Unix_Filesystem_Record;
+      Host           : String;
+      Local_Dir_Name : String) return Boolean;
    --  See inherited documentation in parent package
 
 end Filesystem.Unix.Remote;

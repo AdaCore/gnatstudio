@@ -19,6 +19,7 @@
 
 with Ada.Directories;           use Ada.Directories;
 with Ada.Unchecked_Deallocation;
+with Basic_Types;               use Basic_Types;
 with GNATCOLL.Mmap;             use GNATCOLL.Mmap;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -453,17 +454,26 @@ package body Filesystem is
 
       while More_Entries (Search) loop
          Get_Next_Entry (Search, Ent);
-         Nb_Files := Nb_Files + 1;
 
-         --  Array too small, let's double it
-         if Nb_Files > F_Array'Last then
-            Tmp := F_Array;
-            F_Array := new GNAT.Strings.String_List (1 .. Tmp'Last * 2);
-            F_Array (1 .. Tmp'Last) := Tmp.all;
-            Unchecked_Free (Tmp);
-         end if;
+         declare
+            Simple : constant String := Simple_Name (Ent);
+         begin
+            if Simple /= "."
+              and then Simple /= ".."
+            then
+               Nb_Files := Nb_Files + 1;
 
-         F_Array (Nb_Files) := new String'(Simple_Name (Ent));
+               --  Array too small, let's double it
+               if Nb_Files > F_Array'Last then
+                  Tmp := F_Array;
+                  F_Array := new GNAT.Strings.String_List (1 .. Tmp'Last * 2);
+                  F_Array (1 .. Tmp'Last) := Tmp.all;
+                  Unchecked_Free (Tmp);
+               end if;
+
+               F_Array (Nb_Files) := new String'(Simple);
+            end if;
+         end;
       end loop;
 
       End_Search (Search);
@@ -501,5 +511,120 @@ package body Filesystem is
       when others =>
          return False;
    end Make_Dir;
+
+   ------------
+   -- Rename --
+   ------------
+
+   function Rename
+     (FS              : Filesystem_Record;
+      Host            : String;
+      From_Local_Name : String;
+      To_Local_Name   : String) return Boolean
+   is
+      pragma Unreferenced (FS, Host);
+      Success : Boolean;
+   begin
+      Rename_File (From_Local_Name, To_Local_Name, Success);
+      return Success;
+   end Rename;
+
+   ----------
+   -- Copy --
+   ----------
+
+   function Copy
+     (FS              : Filesystem_Record;
+      Host            : String;
+      From_Local_Name : String;
+      To_Local_Name   : String) return Boolean
+   is
+      pragma Unreferenced (FS, Host);
+   begin
+      Ada.Directories.Copy_File (From_Local_Name, To_Local_Name);
+      return True;
+   exception
+      when others =>
+         return False;
+   end Copy;
+
+   --------------
+   -- Copy_Dir --
+   --------------
+
+   function Copy_Dir
+     (FS              : Filesystem_Record;
+      Host            : String;
+      From_Local_Name : String;
+      To_Local_Name   : String) return Boolean
+   is
+      From   : constant String :=
+        Ensure_Directory (Filesystem_Record'Class (FS), From_Local_Name);
+      Files_Array : String_List  :=
+        Read_Dir (Filesystem_Record'Class (FS), Host, From);
+      Target : constant String :=
+        Ensure_Directory (Filesystem_Record'Class (FS), To_Local_Name);
+   begin
+      if not Is_Directory (Filesystem_Record'Class (FS), Host, Target)
+        and then
+          not Make_Dir (Filesystem_Record'Class (FS), Host, Target)
+      then
+         Basic_Types.Free (Files_Array);
+         return False;
+      end if;
+
+      for F in Files_Array'Range loop
+         if not Copy
+           (Filesystem_Record'Class (FS),
+            Host,
+            From & Files_Array (F).all,
+            Target)
+         then
+            Basic_Types.Free (Files_Array);
+            return False;
+         end if;
+      end loop;
+
+      Basic_Types.Free (Files_Array);
+
+      return True;
+
+   exception
+      when others =>
+         Basic_Types.Free (Files_Array);
+         return False;
+   end Copy_Dir;
+
+   ----------------------
+   -- Is_Symbolic_Link --
+   ----------------------
+
+   function Is_Symbolic_Link
+     (FS              : Filesystem_Record;
+      Host            : String;
+      Local_Full_Name : String) return Boolean
+   is
+      pragma Unreferenced (FS, Host);
+   begin
+      return Is_Symbolic_Link (Local_Full_Name);
+   end Is_Symbolic_Link;
+
+   ----------------
+   -- Change_Dir --
+   ----------------
+
+   function Change_Dir
+     (FS             : Filesystem_Record;
+      Host           : String;
+      Local_Dir_Name : String) return Boolean
+   is
+      pragma Unreferenced (FS, Host);
+   begin
+      GNAT.Directory_Operations.Change_Dir (Local_Dir_Name);
+      return True;
+   exception
+      when others =>
+         return False;
+   end Change_Dir;
 
 end Filesystem;

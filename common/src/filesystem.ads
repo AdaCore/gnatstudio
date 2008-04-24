@@ -152,6 +152,12 @@ package Filesystem is
       Local_Full_Name : String) return Boolean;
    --  Return True if Local_Full_Name exists on the remote host.
 
+   function Is_Symbolic_Link
+     (FS              : Filesystem_Record;
+      Host            : String;
+      Local_Full_Name : String) return Boolean;
+   --  Whether the file is a symbolic link
+
    function Read_File
      (FS              : Filesystem_Record;
       Host            : String;
@@ -166,6 +172,32 @@ package Filesystem is
       Host            : String;
       Local_Full_Name : String) return Boolean;
    --  Sends host a delete command for file.
+
+   function Rename
+     (FS              : Filesystem_Record;
+      Host            : String;
+      From_Local_Name : String;
+      To_Local_Name   : String) return Boolean;
+   --  Rename From_Local_Name on the host to To_Local_Name on the same host.
+   --  Return False if the renaming could not be performed
+
+   function Copy
+     (FS              : Filesystem_Record;
+      Host            : String;
+      From_Local_Name : String;
+      To_Local_Name   : String) return Boolean;
+   --  Copy a file into another one.
+   --  To_Local_Name can be the name of the directory in which to copy the
+   --  file, or the name of a file to be created
+
+   function Copy_Dir
+     (FS              : Filesystem_Record;
+      Host            : String;
+      From_Local_Name : String;
+      To_Local_Name   : String) return Boolean;
+   --  From_Local_Name is the name of a directory. All its files are copied
+   --  into the directory To_Local_Name. The target directory is created if
+   --  needed.
 
    function Is_Writable
      (FS              : Filesystem_Record;
@@ -233,6 +265,15 @@ package Filesystem is
    --  Create a new directory on remote named Local_Dir_Name.
    --  Return the creation status
 
+   function Change_Dir
+     (FS             : Filesystem_Record;
+      Host           : String;
+      Local_Dir_Name : String) return Boolean;
+   --  Change the current directory.
+   --  This operation might not make sense for some remote file systems if a
+   --  new connection is opened for every operation, since the context would
+   --  be lost. However, it does make sense when the connection is permanent.
+
    function Remove_Dir
      (FS             : Filesystem_Record;
       Host           : String;
@@ -251,5 +292,6 @@ package Filesystem is
    --  Read the specified directory and returns a list of filenames
    --  (base names). If Dirs_Only is set, then the files returned are directory
    --  only. Same for Files_Only, concerning regular files.
+   --  This does not return the two special directories "." and ".."
 
 end Filesystem;

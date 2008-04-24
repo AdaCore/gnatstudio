@@ -150,6 +150,28 @@ package body Filesystem.Unix.Remote is
       return Status;
    end Is_Writable;
 
+   ----------------------
+   -- Is_Symbolic_Link --
+   ----------------------
+
+   function Is_Symbolic_Link
+     (FS              : Remote_Unix_Filesystem_Record;
+      Host            : String;
+      Local_Full_Name : String) return Boolean
+   is
+      pragma Unreferenced (FS);
+      Args : GNAT.OS_Lib.Argument_List :=
+        (new String'("test"),
+         new String'("-L"),
+         new String'(Local_Full_Name));
+      Status : Boolean;
+
+   begin
+      Sync_Execute (Host, Args, Status);
+      Basic_Types.Free (Args);
+      return Status;
+   end Is_Symbolic_Link;
+
    ------------------
    -- Is_Directory --
    ------------------
@@ -246,7 +268,7 @@ package body Filesystem.Unix.Remote is
    is
       pragma Unreferenced (FS);
       Pd : Process_Descriptor_Access;
-      Args : constant GNAT.OS_Lib.Argument_List :=
+      Args : GNAT.OS_Lib.Argument_List :=
         (1 => new String'("cat"),
          2 => new String'(">"),
          3 => new String'(Local_Full_Name),
@@ -284,9 +306,12 @@ package body Filesystem.Unix.Remote is
             exit;
          end if;
       end loop;
+
+      Basic_Types.Free (Args);
    exception
       when Process_Died =>
          Close (Pd.all);
+         Basic_Types.Free (Args);
    end Write;
 
    ------------------
@@ -498,5 +523,94 @@ package body Filesystem.Unix.Remote is
 
       return (1 .. 0 => null);
    end Read_Dir;
+
+   ------------
+   -- Rename --
+   ------------
+
+   function Rename
+     (FS              : Remote_Unix_Filesystem_Record;
+      Host            : String;
+      From_Local_Name : String;
+      To_Local_Name   : String) return Boolean
+   is
+      pragma Unreferenced (FS);
+      Args : GNAT.OS_Lib.Argument_List :=
+        (new String'("mv"),
+         new String'(From_Local_Name),
+         new String'(To_Local_Name));
+      Status : Boolean;
+
+   begin
+      Sync_Execute (Host, Args, Status);
+      Basic_Types.Free (Args);
+      return Status;
+   end Rename;
+
+   ----------
+   -- Copy --
+   ----------
+
+   function Copy
+     (FS              : Remote_Unix_Filesystem_Record;
+      Host            : String;
+      From_Local_Name : String;
+      To_Local_Name   : String) return Boolean
+   is
+      pragma Unreferenced (FS);
+      Args : GNAT.OS_Lib.Argument_List :=
+        (new String'("cp"),
+         new String'("-f"),
+         new String'(From_Local_Name),
+         new String'(To_Local_Name));
+      Status : Boolean;
+   begin
+      Sync_Execute (Host, Args, Status);
+      Basic_Types.Free (Args);
+      return Status;
+   end Copy;
+
+   --------------
+   -- Copy_Dir --
+   --------------
+
+   function Copy_Dir
+     (FS              : Remote_Unix_Filesystem_Record;
+      Host            : String;
+      From_Local_Name : String;
+      To_Local_Name   : String) return Boolean
+   is
+      pragma Unreferenced (FS);
+      Args : GNAT.OS_Lib.Argument_List :=
+        (new String'("cp"),
+         new String'("-rf"),
+         new String'(From_Local_Name),
+         new String'(To_Local_Name));
+      Status : Boolean;
+   begin
+      Sync_Execute (Host, Args, Status);
+      Basic_Types.Free (Args);
+      return Status;
+   end Copy_Dir;
+
+   ----------------
+   -- Change_Dir --
+   ----------------
+
+   function Change_Dir
+     (FS             : Remote_Unix_Filesystem_Record;
+      Host           : String;
+      Local_Dir_Name : String) return Boolean
+   is
+      pragma Unreferenced (FS);
+      Args : GNAT.OS_Lib.Argument_List :=
+        (new String'("cd"),
+         new String'(Local_Dir_Name));
+      Status : Boolean;
+   begin
+      Sync_Execute (Host, Args, Status);
+      Basic_Types.Free (Args);
+      return Status;
+   end Change_Dir;
 
 end Filesystem.Unix.Remote;

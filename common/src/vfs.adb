@@ -22,7 +22,6 @@
 --  features (case sensitivity),...
 
 with Ada.Calendar;              use Ada.Calendar;
-with Ada.Directories;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Hash;
@@ -114,7 +113,6 @@ package body VFS is
    ---------
 
    function "=" (File1, File2 : Virtual_File) return Boolean is
-      Case_Sensitive : Boolean;
    begin
       if File1.Value = null then
          return File2.Value = null;
@@ -131,17 +129,10 @@ package body VFS is
       else
          Ensure_Normalized (File1);
          Ensure_Normalized (File2);
-
-         if File1.Value.Server.all = "" then
-            Case_Sensitive := Is_Case_Sensitive (GPS_Server);
-         else
-            Case_Sensitive := File1.Get_Filesystem.Is_Case_Sensitive;
-         end if;
-
          return Equal
            (File2.Value.Normalized_Full.all,
             File1.Value.Normalized_Full.all,
-            Case_Sensitive);
+            File1.Get_Filesystem.Is_Case_Sensitive);
       end if;
    end "=";
 
@@ -454,11 +445,10 @@ package body VFS is
       Full_Name : String;
       Success   : out Boolean) is
    begin
-      if Is_Local (File) then
-         Rename_File (Locale_Full_Name (File), Full_Name, Success);
-      else
-         Success := False;
-      end if;
+      Success := File.Get_Filesystem.Rename
+        (File.Value.Server.all,
+         File.Locale_Full_Name,
+         Full_Name);
    end Rename;
 
    ----------
@@ -470,49 +460,10 @@ package body VFS is
       Target_Name : String;
       Success     : out Boolean) is
    begin
-      if Is_Local (File) then
-         if not Is_Directory (File) then
-            Ada.Directories.Copy_File (Locale_Full_Name (File), Target_Name);
-
-         else
-            declare
-               Files_Array : File_Array_Access     := Read_Dir (File);
-               Target      : constant Virtual_File := Create (Target_Name);
-            begin
-               Ensure_Directory (Target);
-               if not Is_Directory (Target) then
-                  Make_Dir (Target);
-               end if;
-
-               for F in Files_Array'Range loop
-                  --  Make sure that we ignore '.' and '..'
-                  if Files_Array (F) /= File
-                    and then not Is_Parent (Files_Array (F), File)
-                  then
-                     Copy
-                       (Files_Array (F),
-                        Full_Name
-                          (Create_From_Dir
-                             (Target, Base_Name (Files_Array (F)))).all,
-                        Success);
-
-                     exit when not Success;
-
-                  end if;
-               end loop;
-
-               Unchecked_Free (Files_Array);
-            end;
-         end if;
-
-         Success := True;
-      else
-         Success := False;
-      end if;
-
-   exception
-      when others =>
-         Success := False;
+      Success := File.Get_Filesystem.Copy
+        (File.Value.Server.all,
+         File.Locale_Full_Name,
+         Target_Name);
    end Copy;
 
    ------------
@@ -581,18 +532,9 @@ package body VFS is
 
    function Is_Symbolic_Link (File : Virtual_File) return Boolean is
    begin
-      if File.Value = null then
-         return False;
-
-      elsif not Is_Local (File) then
-         --  ??? for now, no specific remote test for this,
-         --  assume the file is not a symbolic link.
-
-         return False;
-
-      else
-         return Is_Symbolic_Link (File.Locale_Full_Name);
-      end if;
+      return File.Value /= null
+        and then File.Get_Filesystem.Is_Symbolic_Link
+          (File.Value.Server.all, File.Locale_Full_Name);
    end Is_Symbolic_Link;
 
    ----------------------
@@ -862,19 +804,15 @@ package body VFS is
    ----------------
 
    procedure Change_Dir (Dir : Virtual_File) is
+      Success : Boolean;
+      pragma Unreferenced (Success);
    begin
       if Dir.Value = null then
          Raise_Exception (VFS_Directory_Error'Identity, "Dir is No_File");
       end if;
 
-      --  Only available for local files
-      if Is_Local (Dir) then
-         GNAT.Directory_Operations.Change_Dir (Full_Name (Dir).all);
-      end if;
-   exception
-      when E : GNAT.Directory_Operations.Directory_Error =>
-         Raise_Exception (VFS_Directory_Error'Identity,
-                          Exception_Message (E));
+      Success := Dir.Get_Filesystem.Change_Dir
+        (Dir.Value.Server.all, Full_Name (Dir).all);
    end Change_Dir;
 
    --------------
@@ -1133,11 +1071,7 @@ package body VFS is
    function Get_Filesystem
      (File : Virtual_File) return Filesystem_Record'Class is
    begin
-      if Is_Local (File) then
-         return Get_Local_Filesystem;
-      else
-         return Get_Filesystem (File.Value.Server.all);
-      end if;
+      return Get_Filesystem (File.Value.Server.all);
    end Get_Filesystem;
 
    ---------------

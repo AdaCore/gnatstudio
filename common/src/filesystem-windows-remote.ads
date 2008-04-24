@@ -43,6 +43,10 @@ package Filesystem.Windows.Remote is
      (FS              : Remote_Windows_Filesystem_Record;
       Host            : String;
       Local_Full_Name : String) return Boolean;
+   overriding function Is_Symbolic_Link
+     (FS              : Remote_Windows_Filesystem_Record;
+      Host            : String;
+      Local_Full_Name : String) return Boolean;
    overriding function Is_Directory
      (FS              : Remote_Windows_Filesystem_Record;
       Host            : String;
@@ -87,5 +91,23 @@ package Filesystem.Windows.Remote is
       Local_Dir_Name : String;
       Dirs_Only      : Boolean := False;
       Files_Only     : Boolean := False) return GNAT.Strings.String_List;
+   overriding function Rename
+     (FS              : Remote_Windows_Filesystem_Record;
+      Host            : String;
+      From_Local_Name : String;
+      To_Local_Name   : String) return Boolean;
+   overriding function Copy
+     (FS              : Remote_Windows_Filesystem_Record;
+      Host            : String;
+      From_Local_Name : String;
+      To_Local_Name   : String) return Boolean;
+   overriding function Change_Dir
+     (FS             : Remote_Windows_Filesystem_Record;
+      Host           : String;
+      Local_Dir_Name : String) return Boolean;
+   --  See inherited documentation
+
+   --  Copy_Dir is inherited from the local version: we have to read the list
+   --  of files in the directory and then copy them one by one.
 
 end Filesystem.Windows.Remote;

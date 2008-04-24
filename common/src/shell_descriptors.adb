@@ -163,10 +163,8 @@ package body Shell_Descriptors is
    function Get_Filesystem_From_Shell
      (Shell : String) return Filesystem_Record'Class
    is
-      Desc : Shell_Descriptor_Access;
+      Desc : Shell_Descriptor_Access := Shell_Descriptor_List;
    begin
-      Desc := Shell_Descriptor_List;
-
       while Desc /= null loop
          if Desc.Name.all = Shell then
             return Desc.Filesystem.all;
