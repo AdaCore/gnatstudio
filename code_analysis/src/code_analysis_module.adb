@@ -2184,16 +2184,10 @@ package body Code_Analysis_Module is
    begin
       --  Remove entity information
       Set_Entity_Information (Context);
-
-      if Get_Creator (Cont_N_Anal.Context) =
-        Abstract_Module_ID (Code_Analysis_Module_ID) then
-         --  If context has been filled by Coverage Report, then fill it again
-         --  because the new gotten context from kernel will be empty too
-         Set_File_Information
-           (Context,
-            File_Information (Cont_N_Anal.Context),
-            Project_Information (Cont_N_Anal.Context));
-      end if;
+      Set_File_Information
+        (Context,
+         File_Information (Cont_N_Anal.Context),
+         Project_Information (Cont_N_Anal.Context));
 
       Gtk_New (Item, -"Show coverage information");
       Append (Submenu, Item);
