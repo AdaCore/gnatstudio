@@ -241,7 +241,8 @@ package body Filesystem.Unix.Remote is
      (FS              : Remote_Unix_Filesystem_Record;
       Host            : String;
       Local_Full_Name : String;
-      Temporary_File  : String)
+      Temporary_File  : String;
+      Append          : Boolean := False)
    is
       pragma Unreferenced (FS);
       Pd : Process_Descriptor_Access;
@@ -255,6 +256,11 @@ package body Filesystem.Unix.Remote is
         := Compile ("[>] ", Single_Line or Multiple_Lines);
       Res          : Expect_Match;
    begin
+      if Append then
+         Free (Args (2));
+         Args (2) := new String'(">>");
+      end if;
+
       Remote_Spawn (Pd,
                     Target_Nickname       => Host,
                     Args                  => Args);

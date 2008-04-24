@@ -353,11 +353,12 @@ private
       File     : Virtual_File;
       FD       : GNAT.OS_Lib.File_Descriptor := GNAT.OS_Lib.Invalid_FD;
       Filename : GNAT.Strings.String_Access;
+      Append   : Boolean;
    end record;
 
    Invalid_File : constant Writable_File :=
      ((Ada.Finalization.Controlled with Value => null),
-      GNAT.OS_Lib.Invalid_FD, null);
+      GNAT.OS_Lib.Invalid_FD, null, False);
 
    type Virtual_Dir is record
       File       : Virtual_File;

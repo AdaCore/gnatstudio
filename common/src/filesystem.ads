@@ -193,7 +193,8 @@ package Filesystem is
      (FS              : Filesystem_Record;
       Host            : String;
       Local_Full_Name : String;
-      Temporary_File  : String);
+      Temporary_File  : String;
+      Append          : Boolean := False);
    --  Overwrite the contents of Local_Full_Name with the contents of the
    --  Temporary_File.
    --  Raise Use_Error if the file could not be written

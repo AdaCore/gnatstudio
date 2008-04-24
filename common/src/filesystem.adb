@@ -336,14 +336,21 @@ package body Filesystem is
      (FS              : Filesystem_Record;
       Host            : String;
       Local_Full_Name : String;
-      Temporary_File  : String)
+      Temporary_File  : String;
+      Append          : Boolean := False)
    is
       Success : Boolean;
       pragma Unreferenced (FS, Host, Success);
    begin
-      Copy_File (Temporary_File, Pathname => Local_Full_Name,
-                 Success => Success,
-                 Mode => Overwrite);
+      if Append then
+         Copy_File (Temporary_File, Pathname => Local_Full_Name,
+                    Success => Success,
+                    Mode => GNAT.OS_Lib.Append);
+      else
+         Copy_File (Temporary_File, Pathname => Local_Full_Name,
+                    Success => Success,
+                    Mode => Overwrite);
+      end if;
    end Write;
 
    ------------------
@@ -488,10 +495,10 @@ package body Filesystem is
    is
       pragma Unreferenced (FS, Host);
    begin
-      Make_Dir (Local_Dir_Name);
+      Create_Path (Local_Dir_Name);
       return True;
    exception
-      when Directory_Error =>
+      when others =>
          return False;
    end Make_Dir;
 

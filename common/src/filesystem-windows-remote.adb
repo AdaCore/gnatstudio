@@ -263,9 +263,10 @@ package body Filesystem.Windows.Remote is
      (FS              : Remote_Windows_Filesystem_Record;
       Host            : String;
       Local_Full_Name : String;
-      Temporary_File  : String)
+      Temporary_File  : String;
+      Append          : Boolean := False)
    is
-      pragma Unreferenced (FS, Host, Local_Full_Name, Temporary_File);
+      pragma Unreferenced (FS, Host, Local_Full_Name, Temporary_File, Append);
    begin
       null;
       --  ??? TODO !!!!!!!!!!!!!!!!!!!!!!!!!!

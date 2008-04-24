@@ -55,7 +55,8 @@ package Filesystem.Windows.Remote is
      (FS              : Remote_Windows_Filesystem_Record;
       Host            : String;
       Local_Full_Name : String;
-      Temporary_File  : String);
+      Temporary_File  : String;
+      Append          : Boolean := False);
    overriding procedure Set_Writable
      (FS              : Remote_Windows_Filesystem_Record;
       Host            : String;
