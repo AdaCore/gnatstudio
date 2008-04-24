@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with File_Utils;             use File_Utils;
 with GNAT.Case_Util;         use GNAT.Case_Util;
 
 package body Filesystem.Windows is
@@ -184,9 +185,7 @@ package body Filesystem.Windows is
    is
       pragma Unreferenced (FS, Host);
    begin
-      --  ??? Fix implementation
-      Len := Buffer'First + 2;
-      Buffer (Buffer'First .. Len) := "C:" & ASCII.NUL;
+      File_Utils.Get_Logical_Drive_Strings (Buffer, Len);
    end Get_Logical_Drives;
 
 end Filesystem.Windows;
