@@ -487,9 +487,9 @@ package body Code_Coverage is
       end if;
 
       loop
-         exit when Prj_Node.Analysis_Data.Coverage_Data /= null
-           or else Prj_Cur = No_Element;
+         exit when Prj_Cur = No_Element;
          Prj_Node := Element (Prj_Cur);
+         exit when Prj_Node.Analysis_Data.Coverage_Data /= null;
          Next (Prj_Cur);
       end loop;
 
