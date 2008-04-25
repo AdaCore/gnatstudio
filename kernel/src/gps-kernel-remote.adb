@@ -29,7 +29,8 @@ with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Regpat;                use GNAT.Regpat;
-with GNATCOLL.Scripts;               use GNATCOLL.Scripts;
+with GNATCOLL.Filesystem;        use GNATCOLL.Filesystem;
+with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GNAT.Strings;
 
 with Glib;                       use Glib;
@@ -81,9 +82,7 @@ with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 
-with Filesystem.Unix.Remote;     use Filesystem.Unix.Remote;
-with Filesystem.Windows.Remote;  use Filesystem.Windows.Remote;
-with Filesystem.Queries;         use Filesystem.Queries;
+with Filesystems;                use Filesystems;
 with GUI_Utils;                  use GUI_Utils;
 with Interactive_Consoles;       use Interactive_Consoles;
 with Projects;                   use Projects;
@@ -133,6 +132,10 @@ package body GPS.Kernel.Remote is
    type Descriptor_Attribute is (System_Defined, User_Defined);
    --  Tell where the descriptor comes from: system wide setup of user defined
    --  setup
+
+   Id : Natural := 0;
+   function Get_New_Queue_Id return String;
+   --  Returns a new unique queue id
 
    --------------------------
    -- Connection debugging --
@@ -625,6 +628,7 @@ package body GPS.Kernel.Remote is
          Attribute           => Attribute,
          Applied             => True,
          Ref                 => 0,
+         FS                  => null,
          Dbg                 => Dbg);
 
       --  Add this machine at GNAT.Expect.TTY.Remote level
@@ -2014,6 +2018,7 @@ package body GPS.Kernel.Remote is
                  (Get_Text (Get_Entry (Dialog.Remote_Access_Combo))),
                Shell_Name          => new String'
                  (Get_Text (Get_Entry (Dialog.Remote_Shell_Combo))),
+               FS                  => null,
                Rsync_Func          => new String'
                  (Get_Text (Get_Entry (Dialog.Remote_Sync_Combo))),
                User_Name           => new String'
@@ -2037,8 +2042,7 @@ package body GPS.Kernel.Remote is
          begin
             Save_Tentative_Path_List
               (Dialog.Paths_List_Widget,
-               Get_Filesystem_From_Shell
-                 (Get_Text (Get_Entry (Dialog.Remote_Shell_Combo))));
+               Machine_Descriptors.Get_Filesystem (Item.Desc).all);
          exception
             when Invalid_Path =>
                Trace (Me, "Invalid path detected, selecting back " & Nickname);
@@ -2221,6 +2225,7 @@ package body GPS.Kernel.Remote is
                   Network_Name        => new String'(""),
                   Access_Name         => new String'(""),
                   Shell_Name          => new String'(""),
+                  FS                  => null,
                   Rsync_Func          => new String'("rsync"),
                   User_Name           => new String'(""),
                   Extra_Init_Commands => null,
@@ -2956,9 +2961,7 @@ package body GPS.Kernel.Remote is
             GPS_Prompt             : Glib.String_Ptr;
             FS_Str                 : Glib.String_Ptr;
             No_Echo_Cmd            : Glib.String_Ptr;
-            Windows_FS             : aliased Remote_Windows_Filesystem_Record;
-            Unix_FS                : aliased Remote_Unix_Filesystem_Record;
-            FS                     : Filesystem_Access;
+            FS                     : Filesystem_Type;
             Init_Cmds_Child        : Node_Ptr;
             Exit_Cmds_Child        : Node_Ptr;
             Nb_Init_Cmds           : Natural;
@@ -3009,9 +3012,9 @@ package body GPS.Kernel.Remote is
             end if;
 
             if FS_Str.all = "windows" then
-               FS := Windows_FS'Unchecked_Access;
+               FS := Filesystems.Windows;
             elsif FS_Str.all = "unix" then
-               FS := Unix_FS'Unchecked_Access;
+               FS := Filesystems.Unix;
             else
                Console.Insert
                  (Module.Kernel, "XML Error in " & Full_Name (File).all &
@@ -3112,7 +3115,7 @@ package body GPS.Kernel.Remote is
                   Shell_Cmd.all,
                   Generic_Prompt.all,
                   GPS_Prompt.all,
-                  FS.all,
+                  FS,
                   No_Echo_Cmd.all,
                   Init_Cmds,
                   Exit_Cmds,
@@ -3438,19 +3441,15 @@ package body GPS.Kernel.Remote is
    -- Get_Filesystem --
    --------------------
 
-   function Get_Filesystem
-     (Server : Server_Type) return Filesystem_Record'Class is
-   begin
-      if Is_Local (Server) then
-         return Get_Local_Filesystem;
-      else
-         return Get_Filesystem (Get_Nickname (Server));
-      end if;
-   end Get_Filesystem;
-
-   Id : Natural := 0;
-   function Get_New_Queue_Id return String;
-   --  Returns a new unique queue id
+--     function Get_Filesystem
+--       (Server : Server_Type) return Filesystem_Record'Class is
+--     begin
+--        if Is_Local (Server) then
+--           return Get_Local_Filesystem;
+--        else
+--           return Get_Filesystem (Get_Nickname (Server));
+--        end if;
+--     end Get_Filesystem;
 
    ----------------------
    -- Get_New_Queue_Id --

@@ -23,8 +23,8 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
-
+with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with Gdk.Event;                 use Gdk.Event;
 
 with Glib;                      use Glib;
@@ -88,7 +88,6 @@ with Projects.Editor;           use Projects, Projects.Editor;
 with Projects.Registry;         use Projects.Registry;
 with Remote;                    use Remote;
 with Scenario_Selectors;        use Scenario_Selectors;
-with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with Namet;
 with VFS;                       use VFS;
@@ -1496,7 +1495,7 @@ package body Project_Properties is
             end loop;
             Set_Return_Value (Data, To_String (Result));
          end if;
-         Basic_Types.Free (List);
+         Free (List);
       end Set_Return_Attribute;
 
       --------------------------

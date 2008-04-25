@@ -34,11 +34,11 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 with Glib.Unicode;              use Glib.Unicode;
 
-with Filesystem;                use Filesystem;
-with Filesystem.Queries;        use Filesystem.Queries;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
+with Filesystems;               use Filesystems;
 with File_Utils;                use File_Utils;
 with OS_Utils;                  use OS_Utils;
-with String_Utils;              use String_Utils;
 
 package body VFS is
 
@@ -72,6 +72,11 @@ package body VFS is
    --  Routine that will translate a "foreign" filename convention to the
    --  proper native one. This is currently used only for the standard Cygwin
    --  convention.
+
+   function Get_Filesystem
+     (File : Virtual_File'Class) return Filesystem_Record'Class;
+   pragma Inline (Get_Filesystem);
+   --  Return the filesystem to use for that file
 
    ---------------------
    -- Native_Filename --
@@ -431,8 +436,7 @@ package body VFS is
    function Is_Regular_File (File : Virtual_File) return Boolean is
    begin
       return File.Value /= null
-        and then File.Get_Filesystem.Is_Regular_File
-          (File.Value.Server.all, File.Locale_Full_Name);
+        and then File.Get_Filesystem.Is_Regular_File (File.Locale_Full_Name);
    end Is_Regular_File;
 
    ------------
@@ -445,8 +449,7 @@ package body VFS is
       Success   : out Boolean) is
    begin
       Success := File.Get_Filesystem.Rename
-        (File.Value.Server.all,
-         File.Locale_Full_Name,
+        (File.Locale_Full_Name,
          Full_Name);
    end Rename;
 
@@ -461,14 +464,12 @@ package body VFS is
    begin
       if Is_Directory (File) then
          Success := File.Get_Filesystem.Copy_Dir
-           (File.Value.Server.all,
-            File.Locale_Full_Name,
+           (File.Locale_Full_Name,
             Target_Name);
 
       else
          Success := File.Get_Filesystem.Copy
-           (File.Value.Server.all,
-            File.Locale_Full_Name,
+           (File.Locale_Full_Name,
             Target_Name);
       end if;
    end Copy;
@@ -481,9 +482,7 @@ package body VFS is
      (File    : Virtual_File;
       Success : out Boolean) is
    begin
-      Success := File.Get_Filesystem.Delete
-        (File.Value.Server.all,
-         File.Locale_Full_Name);
+      Success := File.Get_Filesystem.Delete (File.Locale_Full_Name);
 
       if Success then
          File.Value.Kind := Unknown;
@@ -497,8 +496,7 @@ package body VFS is
    function Is_Writable (File : Virtual_File) return Boolean is
    begin
       return File.Value /= null
-        and then File.Get_Filesystem.Is_Writable
-          (File.Value.Server.all, File.Locale_Full_Name);
+        and then File.Get_Filesystem.Is_Writable (File.Locale_Full_Name);
    end Is_Writable;
 
    ------------------
@@ -518,9 +516,7 @@ package body VFS is
          return False;
 
       else
-         Ret := VF.Get_Filesystem.Is_Directory
-           (VF.Value.Server.all,
-            VF.Locale_Full_Name);
+         Ret := VF.Get_Filesystem.Is_Directory (VF.Locale_Full_Name);
       end if;
 
       if Ret then
@@ -540,8 +536,7 @@ package body VFS is
    function Is_Symbolic_Link (File : Virtual_File) return Boolean is
    begin
       return File.Value /= null
-        and then File.Get_Filesystem.Is_Symbolic_Link
-          (File.Value.Server.all, File.Locale_Full_Name);
+        and then File.Get_Filesystem.Is_Symbolic_Link (File.Locale_Full_Name);
    end Is_Symbolic_Link;
 
    ----------------------
@@ -575,9 +570,7 @@ package body VFS is
          return null;
 
       else
-         return File.Get_Filesystem.Read_File
-           (File.Value.Server.all,
-            File.Locale_Full_Name);
+         return File.Get_Filesystem.Read_File (File.Locale_Full_Name);
       end if;
    end Read_File;
 
@@ -651,8 +644,7 @@ package body VFS is
       pragma Unreferenced (Success);
    begin
       File.File.Get_Filesystem.Write
-        (File.File.Value.Server.all,
-         File.File.Value.Full_Name.all,
+        (File.File.Value.Full_Name.all,
          File.Filename.all,
          Append => File.Append);
       Delete_File (File.Filename.all, Success);
@@ -667,10 +659,7 @@ package body VFS is
 
    procedure Set_Writable (File : VFS.Virtual_File; Writable : Boolean) is
    begin
-      File.Get_Filesystem.Set_Writable
-        (File.Value.Server.all,
-         File.Locale_Full_Name,
-         Writable);
+      File.Get_Filesystem.Set_Writable (File.Locale_Full_Name, Writable);
    end Set_Writable;
 
    ------------------
@@ -679,10 +668,7 @@ package body VFS is
 
    procedure Set_Readable (File : VFS.Virtual_File; Readable : Boolean) is
    begin
-      File.Get_Filesystem.Set_Readable
-        (File.Value.Server.all,
-         File.Locale_Full_Name,
-         Readable);
+      File.Get_Filesystem.Set_Readable (File.Locale_Full_Name, Readable);
    end Set_Readable;
 
    ---------------------
@@ -692,9 +678,7 @@ package body VFS is
    function File_Time_Stamp
      (File : Virtual_File) return Ada.Calendar.Time is
    begin
-      return File.Get_Filesystem.File_Time_Stamp
-        (File.Value.Server.all,
-         File.Locale_Full_Name);
+      return File.Get_Filesystem.File_Time_Stamp (File.Locale_Full_Name);
    end File_Time_Stamp;
 
    ---------------------
@@ -805,8 +789,7 @@ package body VFS is
          Raise_Exception (VFS_Directory_Error'Identity, "Dir is No_File");
       end if;
 
-      Success := Dir.Get_Filesystem.Change_Dir
-        (Dir.Value.Server.all, Full_Name (Dir).all);
+      Success := Dir.Get_Filesystem.Change_Dir (Full_Name (Dir).all);
    end Change_Dir;
 
    --------------
@@ -825,9 +808,7 @@ package body VFS is
          return;
       end if;
 
-      Result := Dir.Get_Filesystem.Make_Dir
-        (Dir.Value.Server.all,
-         Dir.Value.Full_Name.all);
+      Result := Dir.Get_Filesystem.Make_Dir (Dir.Value.Full_Name.all);
 
       if not Result then
          Raise_Exception
@@ -868,8 +849,7 @@ package body VFS is
       declare
          List : GNAT.Strings.String_List :=
            Dir.Get_Filesystem.Read_Dir
-             (Dir.Value.Server.all,
-              Dir.Value.Full_Name.all,
+             (Dir.Value.Full_Name.all,
               Dirs_Only  => Filter = Dirs_Only,
               Files_Only => Filter = Files_Only);
       begin
@@ -1063,7 +1043,7 @@ package body VFS is
    --------------------
 
    function Get_Filesystem
-     (File : Virtual_File) return Filesystem_Record'Class is
+     (File : Virtual_File'Class) return Filesystem_Record'Class is
    begin
       return Get_Filesystem (File.Value.Server.all);
    end Get_Filesystem;

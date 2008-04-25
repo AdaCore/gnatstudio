@@ -21,9 +21,10 @@ with Ada.Unchecked_Conversion;
 
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with GNAT.Regpat;             use GNAT.Regpat;
-with GNATCOLL.Scripts.Gtkada;     use GNATCOLL.Scripts.Gtkada;
-with GNATCOLL.Scripts.Utils;      use GNATCOLL.Scripts.Utils;
-with GNATCOLL.Traces;             use GNATCOLL.Traces;
+with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
+with GNATCOLL.Scripts.Utils;  use GNATCOLL.Scripts.Utils;
+with GNATCOLL.Traces;         use GNATCOLL.Traces;
+with GNATCOLL.Utils;          use GNATCOLL.Utils;
 
 with Glib.Object;             use Glib.Object;
 with Gtk.Label;               use Gtk.Label;

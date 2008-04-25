@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2006-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,43 +17,26 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Config; use Config;
+--  This package contains the GPS layer for GNATCOLL.Filesystem
 
-with Shell_Descriptors; use Shell_Descriptors;
+with GNATCOLL.Filesystem;  use GNATCOLL.Filesystem;
 
-with Filesystem.Windows;
-with Filesystem.Unix;
+package Filesystems is
 
-package body Filesystem.Queries is
+   type Filesystem_Type is (Windows, Unix);
+   --  The filesystems supported by GPS
 
-   --------------------
-   -- Get_Filesystem --
-   --------------------
+   function Get_Filesystem (Nickname : String) return Filesystem_Record'Class;
+   --  Retrieve the filesystem of the specified server
+   --  Raise Invalid_Nickname if Nickname does not correspond to a server
 
-   function Get_Filesystem
-     (Nickname : String) return Filesystem_Record'Class is
-   begin
-      if Nickname = "" then
-         return Get_Local_Filesystem;
-      else
-         return Get_Shell_Descriptor (Nickname).Filesystem.all;
-      end if;
-   end Get_Filesystem;
+   function Get_Local_Filesystem return Filesystem_Record'Class;
+   --  Retrieve the local filesystem type
 
-   --------------------------
-   -- Get_Local_Filesystem --
-   --------------------------
-
-   function Get_Local_Filesystem return Filesystem_Record'Class is
-      Windows_FS : Filesystem.Windows.Windows_Filesystem_Record;
-      Unix_FS    : Filesystem.Unix.Unix_Filesystem_Record;
-   begin
-      if Host = Config.Windows then
-         return Windows_FS;
-      else
-         --  Unix and windows support only
-         return Unix_FS;
-      end if;
-   end Get_Local_Filesystem;
-
-end Filesystem.Queries;
+   function Filesystem_Factory
+     (Typ      : Filesystem_Type;
+      Nickname : String) return GNATCOLL.Filesystem.Filesystem_Access;
+   --  Create a new instance that applies to a specific network host.
+   --  If the Nickname is the empty string is Remote.Lock_Nickname, then a
+   --  local filesystem is created. Otherwise, a remote filesytem is created.
+end Filesystems;

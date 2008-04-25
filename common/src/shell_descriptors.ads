@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2007, AdaCore                 --
+--                  Copyright (C) 2006-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,9 +19,8 @@
 
 --  This package contains remote shell descriptors.
 
+with Filesystems;
 with GNAT.Strings;       use GNAT.Strings;
-with Filesystem;         use Filesystem;
-
 with GNAT.Expect;        use GNAT.Expect;
 
 package Shell_Descriptors is
@@ -33,7 +32,7 @@ package Shell_Descriptors is
 
    type Shell_Descriptor_Record is record
       Name             : String_Access                := null;
-      Filesystem       : Filesystem_Access            := null;
+      Filesystem       : Filesystems.Filesystem_Type  := Filesystems.Unix;
       Start_Cmd        : String_Access                := null;
       No_Echo_Cmd      : String_Access                := null;
       Init_Cmds        : String_List_Access           := null;
@@ -54,7 +53,7 @@ package Shell_Descriptors is
       Start_Command       : String             := "";
       Generic_Prompt      : String             := "";
       Configured_Prompt   : String             := "";
-      FS                  : Filesystem_Record'Class;
+      FS                  : Filesystems.Filesystem_Type;
       No_Echo_Command     : String             := "";
       Init_Commands       : String_List        := Null_String_List;
       Exit_Commands       : String_List        := Null_String_List;
@@ -92,8 +91,8 @@ package Shell_Descriptors is
    --  Return null if no matching descriptor was found.
    --  User must not free the result.
 
-   function Get_Filesystem_From_Shell
-     (Shell : String) return Filesystem_Record'Class;
+--     function Get_Filesystem_From_Shell
+--       (Shell : String) return Filesystem_Record'Class;
    --  Get the filesystem corresponding to shell
 
    function Get_Shell_Descriptor

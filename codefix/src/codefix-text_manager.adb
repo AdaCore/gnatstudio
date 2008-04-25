@@ -17,9 +17,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions; use Ada.Exceptions;
-with GNAT.Case_Util; use GNAT.Case_Util;
-with GNAT.Regpat;    use GNAT.Regpat;
+with Ada.Exceptions;    use Ada.Exceptions;
+with GNAT.Case_Util;    use GNAT.Case_Util;
+with GNAT.Regpat;       use GNAT.Regpat;
+with GNATCOLL.Utils;    use GNATCOLL.Utils;
 
 with Ada_Analyzer;      use Ada_Analyzer;
 with Language.Ada;      use Language.Ada;

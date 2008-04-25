@@ -30,9 +30,6 @@ package Basic_Types is
    subtype Pixmap_Array is Interfaces.C.Strings.chars_ptr_array (0 .. 0);
    type Pixmap_Access is access all Pixmap_Array;
 
-   procedure Free (Ar : in out GNAT.Strings.String_List);
-   --  Free all the strings in the array.
-
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (GNAT.Strings.String_List, GNAT.Strings.String_List_Access);
    --  Free the array, but not the strings it contains.

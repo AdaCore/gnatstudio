@@ -25,7 +25,8 @@ with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Strings;
-with GNATCOLL.Templates;            use GNATCOLL.Templates;
+with GNATCOLL.Templates;        use GNATCOLL.Templates;
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
 
 with Glib;                      use Glib;
 with Glib.Properties.Creation;  use Glib.Properties.Creation;

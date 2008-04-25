@@ -23,7 +23,8 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Calendar.Time_IO;      use GNAT.Calendar.Time_IO;
 with GNAT.Heap_Sort_G;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
-with GNATCOLL.Traces;                use GNATCOLL.Traces;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
+with GNATCOLL.Utils;             use GNATCOLL.Utils;
 
 with Basic_Types;                use Basic_Types;
 with Entities.Debug;             use Entities.Debug;
@@ -36,7 +37,6 @@ with Namet;                      use Namet;
 with Projects.Registry;          use Projects.Registry;
 with Projects;                   use Projects;
 with Remote;                     use Remote;
-with String_Utils;               use String_Utils;
 with VFS;                        use VFS;
 
 package body Entities is

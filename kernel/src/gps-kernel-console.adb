@@ -23,6 +23,7 @@ with GNAT.Calendar;          use GNAT.Calendar;
 with GNAT.Calendar.Time_IO;  use GNAT.Calendar.Time_IO;
 with GNAT.IO;                use GNAT.IO;
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
+with GNATCOLL.Utils;         use GNATCOLL.Utils;
 
 with Glib.Object;            use Glib.Object;
 with Glib.Xml_Int;           use Glib.Xml_Int;
@@ -36,7 +37,6 @@ with Gtkada.File_Selector;   use Gtkada.File_Selector;
 with Gtkada.Handlers;        use Gtkada.Handlers;
 with Gtkada.MDI;             use Gtkada.MDI;
 
-with Basic_Types;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
@@ -284,7 +284,7 @@ package body GPS.Kernel.Console is
       Insert (Console, Args (1).all);
       Highlight_Child (Find_MDI_Child (Get_MDI (Kernel), Console));
       Execute_GPS_Shell_Command (Kernel, "Locations.parse", Args);
-      Basic_Types.Free (Args);
+      Free (Args);
       Free (Contents);
 
    exception

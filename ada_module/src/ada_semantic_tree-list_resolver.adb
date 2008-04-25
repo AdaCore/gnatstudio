@@ -18,12 +18,9 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-
-with Language.Ada; use Language.Ada;
-
-with String_Utils; use String_Utils;
-
-with GNAT.Strings; use GNAT.Strings;
+with GNATCOLL.Utils;              use GNATCOLL.Utils;
+with Language.Ada;                use Language.Ada;
+with GNAT.Strings;                use GNAT.Strings;
 
 package body Ada_Semantic_Tree.List_Resolver is
 

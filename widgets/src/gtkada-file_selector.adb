@@ -66,7 +66,7 @@ with Gtkada.Types;              use Gtkada.Types;
 
 with Shell_Descriptors;         use Shell_Descriptors;
 with File_Utils;                use File_Utils;
-with Filesystem;                use Filesystem;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 with GUI_Utils;                 use GUI_Utils;
 with Histories;                 use Histories;
 with Remote;                    use Remote;
@@ -1135,8 +1135,7 @@ package body Gtkada.File_Selector is
       H   : Virtual_File := Create
         (Host => Host,
          Full_Filename =>
-           Home_Dir (FS   => Get_Filesystem (Win.Current_Directory),
-                     Host => Host));
+           Home_Dir (Get_Filesystem (Get_Machine_Descriptor (Host)).all));
 
    begin
       if H /= No_File then

@@ -19,7 +19,8 @@
 
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with GNATCOLL.Scripts;             use GNATCOLL.Scripts;
+with GNATCOLL.Scripts;         use GNATCOLL.Scripts;
+with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with System;
 
 with Gdk.Event;                use Gdk.Event;

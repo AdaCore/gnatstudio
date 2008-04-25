@@ -244,10 +244,6 @@ package String_Utils is
    function Is_Operator_Letter (Char : Glib.Gunichar) return Boolean;
    --  Return True if the given letter is a valid operator
 
-   function Equal (S1, S2 : String; Case_Sensitive : Boolean) return Boolean;
-   pragma Inline (Equal);
-   --  Compare two strings
-
    procedure Replace
      (S     : in out GNAT.Strings.String_Access;
       Value : String);

@@ -20,7 +20,6 @@
 --  This package should eventually be merged with GNAT.OS_Lib
 
 with VFS;
-with Ada.Calendar;
 with GNAT.Directory_Operations;
 with Remote;                    use Remote;
 
@@ -29,13 +28,6 @@ package File_Utils is
    function Subdirectories_Count (Directory : String) return Integer;
    --  Return the number of subdirectories for Directory (not counting . and
    --  ..). If Directory is not a directory, then -1 is returned.
-
-   procedure Get_Logical_Drive_Strings
-     (Buffer : out String;
-      Len    : out Natural);
-   --  Store in Buffer (Buffer'First .. Buffer'First + Len) a ASCII.NUL
-   --  separated string containing the names of the drives, e.g
-   --  "a:\" & NUL & "c:\", or a null string if not relevant on the target.
 
    function Read_Files_From_Dirs
      (Dirs : String) return VFS.File_Array_Access;
@@ -98,11 +90,6 @@ package File_Utils is
    --  directories with "[...]".
    --  For example, "directory_1/directory_2/directory_3/filename"
    --  is shortened as "[...]/directory_3/filename"
-
-   function File_Time_Stamp (File : String) return Ada.Calendar.Time;
-   --  Similar to GNAT.OS_Lib.File_Time_Stamp, but with a return value that can
-   --  be easily compared to other time stamps.
-   --  Return VFS.No_Time if File does not exist or timestamp cannot be read.
 
    type Path_Iterator is private;
 

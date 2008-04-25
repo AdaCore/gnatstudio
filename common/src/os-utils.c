@@ -58,16 +58,6 @@ __gps_subdirectories_count (name)
 #endif
 }
 
-int
-__gps_get_logical_drive_strings (char *buffer, int len)
-{
-#ifdef _WIN32
-  return GetLogicalDriveStringsA ((DWORD)len, (LPSTR)buffer);
-#else
-  return 0;
-#endif
-}
-
 void
 __gps_set_writable (char *file, int set)
 {

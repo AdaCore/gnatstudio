@@ -1056,38 +1056,6 @@ package body String_Utils is
       Strncpy (Str, Item, Interfaces.C.size_t (Len));
    end Copy_String;
 
-   -----------
-   -- Equal --
-   -----------
-
-   function Equal (S1, S2 : String; Case_Sensitive : Boolean) return Boolean is
-      J1 : Natural;
-      J2 : Natural;
-   begin
-      if Case_Sensitive then
-         return S1 = S2;
-
-      else
-         if S1'Length /= S2'Length then
-            return False;
-         end if;
-
-         J1 := S1'First;
-         J2 := S2'First;
-
-         while J1 <= S1'Last loop
-            if To_Lower (S1 (J1)) /= To_Lower (S2 (J2)) then
-               return False;
-            end if;
-
-            J1 := J1 + 1;
-            J2 := J2 + 1;
-         end loop;
-
-         return True;
-      end if;
-   end Equal;
-
    -----------------------------
    -- Argument_List_To_String --
    -----------------------------

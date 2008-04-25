@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2006-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,8 +18,9 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-
-with Shell_Descriptors; use Shell_Descriptors;
+with Filesystems;                 use Filesystems;
+with GNATCOLL.Filesystem;         use GNATCOLL.Filesystem;
+with Shell_Descriptors;           use Shell_Descriptors;
 
 package body Machine_Descriptors is
 
@@ -188,7 +188,7 @@ package body Machine_Descriptors is
          Desc := Desc.Next;
       end loop;
 
-      raise Invalid_Nickname;
+      raise Invalid_Nickname with Nickname;
    end Get_Machine_Descriptor_Access;
 
    ----------------------------
@@ -228,6 +228,7 @@ package body Machine_Descriptors is
          Free (Desc.Shell_Name);
          Free (Desc.Extra_Init_Commands);
          Free (Desc.User_Name);
+         Free (Desc.FS);
          --  ??? Free Desc.Dbg if any.
          Unchecked_Free (Desc);
       else
@@ -250,5 +251,31 @@ package body Machine_Descriptors is
          Machine := Machine.Next;
       end loop;
    end Close_All;
+
+   --------------------
+   -- Get_Filesystem --
+   --------------------
+
+   function Get_Filesystem
+     (Machine : access Machine_Descriptor_Record'Class)
+      return Filesystem_Access
+   is
+      Shell : Shell_Descriptor_Access;
+   begin
+      if Machine.FS = null then
+         Shell := Get_Descriptor_From_Name (Machine.Shell_Name.all);
+         if Shell = null then
+            --  Configuration problem, assume we have Unix. That should never
+            --  happen anyway
+            Machine.FS := Filesystem_Factory (Filesystems.Unix, "");
+
+         else
+            Machine.FS := Filesystem_Factory
+              (Shell.Filesystem, Machine.Nickname.all);
+         end if;
+
+      end if;
+      return Machine.FS;
+   end Get_Filesystem;
 
 end Machine_Descriptors;

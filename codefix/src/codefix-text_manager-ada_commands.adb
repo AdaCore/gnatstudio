@@ -20,7 +20,7 @@
 with Ada.Exceptions;                    use Ada.Exceptions;
 with Ada.Characters.Handling;           use Ada.Characters.Handling;
 with GNAT.Regpat;                       use GNAT.Regpat;
-
+with GNATCOLL.Utils;                    use GNATCOLL.Utils;
 with Case_Handling;                     use Case_Handling;
 with Codefix.Ada_Tools;                 use Codefix.Ada_Tools;
 with String_Utils;                      use String_Utils;

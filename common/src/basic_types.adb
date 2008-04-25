@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2006                      --
---                              AdaCore                              --
+--                      Copyright (C) 2000-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,17 +21,6 @@ with GNAT.Strings; use GNAT.Strings;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 package body Basic_Types is
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Ar : in out GNAT.Strings.String_List) is
-   begin
-      for A in Ar'Range loop
-         Free (Ar (A));
-      end loop;
-   end Free;
 
    --------------
    -- Is_Equal --

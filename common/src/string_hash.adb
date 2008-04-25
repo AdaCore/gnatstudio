@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
---                            ACT-Europe                             --
+--                        Copyright (C) 2002-2008, AdaCore           --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,8 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with String_Utils;   use String_Utils;
 with GNAT.Case_Util; use GNAT.Case_Util;
+with GNATCOLL.Utils; use GNATCOLL.Utils;
 
 package body String_Hash is
 

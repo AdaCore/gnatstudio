@@ -18,7 +18,8 @@
 -----------------------------------------------------------------------
 
 with GNAT.Strings;              use GNAT.Strings;
-with GNATCOLL.Traces;               use GNATCOLL.Traces;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with Basic_Types;               use Basic_Types;
 
 with Gdk.Types.Keysyms;         use Gdk.Types, Gdk.Types.Keysyms;

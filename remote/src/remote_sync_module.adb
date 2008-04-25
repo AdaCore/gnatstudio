@@ -43,9 +43,9 @@ with GPS.Kernel.Remote;   use GPS.Kernel.Remote;
 with GPS.Kernel.Timeout;  use GPS.Kernel.Timeout;
 
 with Commands;            use Commands;
-with Filesystem;          use Filesystem;
-with Filesystem.Queries;  use Filesystem.Queries;
-with Filesystem.Windows;  use Filesystem.Windows;
+with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
+with GNATCOLL.Filesystem.Windows; use GNATCOLL.Filesystem.Windows;
+with Filesystems;         use Filesystems;
 with Password_Manager;    use Password_Manager;
 with String_Utils;        use String_Utils;
 with Traces;              use Traces;

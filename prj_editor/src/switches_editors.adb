@@ -19,6 +19,7 @@
 
 with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Strings;              use GNAT.Strings;
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
@@ -37,7 +38,6 @@ with Gtk.Window;                use Gtk.Window;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
-with Basic_Types;               use Basic_Types;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;

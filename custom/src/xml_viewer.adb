@@ -20,6 +20,7 @@
 with Ada.Unchecked_Conversion;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNATCOLL.Scripts.Gtkada;   use GNATCOLL.Scripts, GNATCOLL.Scripts.Gtkada;
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNAT.Strings;
 with System;
 
@@ -46,7 +47,6 @@ with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 
-with Basic_Types;
 with Custom_Module;             use Custom_Module;
 with GUI_Utils;                 use GUI_Utils;
 with UTF8_Utils;                use UTF8_Utils;
@@ -246,7 +246,7 @@ package body XML_Viewer is
                     Tmp (Tmp'First).all);
             end if;
 
-            Basic_Types.Free (Tmp);
+            Free (Tmp);
             Free (C);
          end;
 

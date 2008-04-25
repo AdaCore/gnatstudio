@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005-2007                       --
---                             AdaCore                               --
+--                     Copyright (C) 2005-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -41,6 +40,7 @@ with GNAT.Expect;            use GNAT.Expect;
 with GNAT.Regpat;            use GNAT.Regpat;
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
 with GNAT.Strings;
+with GNATCOLL.Utils;         use GNATCOLL.Utils;
 
 with Debugger;               use Debugger;
 with GPS.Kernel;             use GPS.Kernel;
@@ -60,7 +60,6 @@ with Pango.Font;             use Pango.Font;
 with Process_Proxies;        use Process_Proxies;
 with String_List_Utils;      use String_List_Utils;
 with Traces;                 use Traces;
-with Basic_Types;
 
 package body GVD.Consoles is
 
@@ -366,7 +365,7 @@ package body GVD.Consoles is
                   Append (Result, S (J).all);
                end loop;
 
-               Basic_Types.Free (S);
+               Free (S);
             end;
          end if;
       end if;

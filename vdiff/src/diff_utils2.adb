@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2007, AdaCore             --
+--                      Copyright (C) 2003-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,9 +17,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  This package provides low-level utilities to handle differences between
---  files.
-
 with Ada.Text_IO;            use Ada.Text_IO;
 
 with GNAT.Expect;            use GNAT.Expect;
@@ -27,8 +24,8 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY;        use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.Regpat;            use GNAT.Regpat;
+with GNATCOLL.Utils;         use GNATCOLL.Utils;
 
-with Basic_Types;
 with GPS.Kernel.Console;     use GPS.Kernel.Console;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with String_Utils;           use String_Utils;
@@ -277,7 +274,7 @@ package body Diff_Utils2 is
             Cmd_Args (Cmd_Args'First + 1 .. Cmd_Args'Last) & Args);
          Free (Cmd);
          Free (Cmd_Args);
-         Basic_Types.Free (Args);
+         Free (Args);
 
          loop
             Expect (Descriptor, Result, Pattern, Matches, Timeout => -1);
@@ -366,7 +363,7 @@ package body Diff_Utils2 is
             Args (1 .. Num_Args));
          Free (Cmd);
          Free (Cmd_Args);
-         Basic_Types.Free (Args);
+         Free (Args);
 
          loop
             Expect (Descriptor, Result, Pattern_Any, Matches, Timeout => -1);
@@ -490,7 +487,7 @@ package body Diff_Utils2 is
          Cmd_Args (Cmd_Args'First + 1 .. Cmd_Args'Last) & Args);
       Free (Cmd);
       Free (Cmd_Args);
-      Basic_Types.Free (Args);
+      Free (Args);
 
       loop
          Expect (Descriptor, Result, Pattern_Bloc,  Matches_Block,

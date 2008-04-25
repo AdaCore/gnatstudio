@@ -29,6 +29,7 @@ with Glib.Convert; use Glib.Convert;
 with GNAT.HTable;
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.Strings;              use GNAT.Strings;
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
 
 with Basic_Types;
 with Commands;                  use Commands;

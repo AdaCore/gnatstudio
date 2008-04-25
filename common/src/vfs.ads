@@ -31,7 +31,6 @@ with GNAT.Strings;
 
 with Glib;               use Glib;
 
-with Filesystem;
 with String_List_Utils;  use String_List_Utils;
 
 package VFS is
@@ -103,10 +102,6 @@ package VFS is
    function "<" (File1, File2 : Virtual_File) return Boolean;
    --  Compare two files, possibly case insensitively on file systems that
    --  require this.
-
-   function Get_Filesystem
-     (File : Virtual_File) return Filesystem.Filesystem_Record'Class;
-   --  Return the filesystem of the file
 
    function Is_Parent (Parent, Child : Virtual_File) return Boolean;
    --  Compare Parent and Child directory and determines if Parent contains

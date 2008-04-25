@@ -23,10 +23,11 @@ with Ada.Unchecked_Conversion;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
 with GNAT.Regpat;               use GNAT.Regpat;
-with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
+with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNAT.Strings;              use GNAT.Strings;
-with GNATCOLL.Templates;            use GNATCOLL.Templates;
+with GNATCOLL.Templates;        use GNATCOLL.Templates;
 with GNATCOLL.Traces;
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with System;                    use System;
 
 with Gdk;                       use Gdk;
@@ -91,7 +92,6 @@ with Namet;                     use Namet;
 with Prj.Attr;                  use Prj.Attr;
 with Projects.Registry;         use Projects, Projects.Registry;
 with Switches_Chooser;          use Switches_Chooser;
-with String_Utils;              use String_Utils;
 with System.Address_Image;
 with Traces;                    use Traces;
 with VFS;                       use VFS;
@@ -1483,7 +1483,7 @@ package body GPS.Kernel is
          Destroy (Dialog);
       end if;
 
-      Basic_Types.Free (Column_Names);
+      Free (Column_Names);
 
    exception
       when E : others => Trace (Exception_Handle, E);

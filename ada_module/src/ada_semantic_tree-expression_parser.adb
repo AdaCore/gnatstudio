@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2007, AdaCore                    --
+--                    Copyright (C) 2007-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,12 +19,9 @@
 
 with Language.Tree;              use Language.Tree;
 with Language.Tree.Database;     use Language.Tree.Database;
-
+with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with Ada.Characters.Handling;    use Ada.Characters.Handling;
-
-with String_Utils; use String_Utils;
-
-with Glib.Unicode;            use Glib.Unicode;
+with Glib.Unicode;               use Glib.Unicode;
 
 package body Ada_Semantic_Tree.Expression_Parser is
 

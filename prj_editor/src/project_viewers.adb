@@ -21,7 +21,8 @@ with Ada.Characters.Handling;      use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;                 use GNAT.Strings;
 with GNAT.OS_Lib;
-with GNATCOLL.Scripts;                 use GNATCOLL.Scripts;
+with GNATCOLL.Scripts;             use GNATCOLL.Scripts;
+with GNATCOLL.Utils;               use GNATCOLL.Utils;
 
 with Gdk.Color;                    use Gdk.Color;
 with Gdk.Event;                    use Gdk.Event;
@@ -46,7 +47,6 @@ with Gtk.Widget;                   use Gtk.Widget;
 with Gtkada.Handlers;              use Gtkada.Handlers;
 with Gtkada.MDI;                   use Gtkada.MDI;
 
-with Basic_Types;
 with Commands.Interactive;         use Commands, Commands.Interactive;
 with Creation_Wizard.Dependencies; use Creation_Wizard.Dependencies;
 with Creation_Wizard.Extending;    use Creation_Wizard.Extending;
@@ -1266,7 +1266,7 @@ package body Project_Viewers is
                   Values             => Args,
                   Prepend            => True);
                Recompute_View (Kernel);
-               Basic_Types.Free (Args);
+               Free (Args);
             end if;
          end;
 
@@ -1352,7 +1352,7 @@ package body Project_Viewers is
             for L in Langs'Range loop
                Set_Return_Value (Data, Langs (L).all);
             end loop;
-            Basic_Types.Free (Langs);
+            Free (Langs);
          end;
 
       elsif Command = "source_dirs" then
@@ -1421,7 +1421,7 @@ package body Project_Viewers is
                      Prepend            => True);
                end if;
 
-               Basic_Types.Free (Dirs);
+               Free (Dirs);
                Free (Sources);
             end if;
          end;
@@ -1451,7 +1451,7 @@ package body Project_Viewers is
                   Attribute          => Source_Dirs_Attribute,
                   Values             => Dirs (Dirs'First .. Index),
                   Attribute_Index    => "");
-               Basic_Types.Free (Dirs);
+               Free (Dirs);
             end if;
          end;
 

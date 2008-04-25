@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2007, AdaCore             --
+--                      Copyright (C) 2000-2008, AdaCore             --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,6 +21,7 @@ with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 with Ada.Text_IO;              use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
+with GNATCOLL.Utils;           use GNATCOLL.Utils;
 
 with Glib.Convert;             use Glib.Convert;
 with Glib.Object;              use Glib.Object;

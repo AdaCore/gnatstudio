@@ -24,9 +24,7 @@ pragma Warnings (On);
 with GNAT.OS_Lib;
 
 with GNATCOLL.Scripts;
-
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
-with Filesystem;             use Filesystem;
 with Interactive_Consoles;
 with Remote;                 use Remote;
 with VFS;
@@ -190,8 +188,8 @@ package GPS.Kernel.Remote is
    --   assigned to. If No_File, it is assigned to the current project.
    --  Reload_Prj, if set, recomputes the view if the build_server changed.
 
-   function Get_Filesystem
-     (Server : Server_Type) return Filesystem_Record'Class;
+--     function Get_Filesystem
+--       (Server : Server_Type) return Filesystem_Record'Class;
    --  Get the filesystem of the specified server
 
    function Is_Default_Remote_Setting return Boolean;

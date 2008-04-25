@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2002-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,6 +21,7 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 
 with GNAT.Strings;            use GNAT.Strings;
+with GNATCOLL.Utils;          use GNATCOLL.Utils;
 
 with Glib; use Glib;
 with Gtk.Label;               use Gtk.Label;
@@ -29,11 +29,9 @@ with Gtk.Notebook;            use Gtk.Notebook;
 with Gtk.Object;              use Gtk.Object;
 with Gtk.Widget;              use Gtk.Widget;
 with Gtkada.Handlers;         use Gtkada.Handlers;
-with Basic_Types;
 with GPS.Kernel;              use GPS.Kernel;
 with Language_Handlers;       use Language_Handlers;
 with Projects;                use Projects;
-with String_Utils;            use String_Utils;
 with Project_Viewers;         use Project_Viewers;
 with Case_Handling;           use Case_Handling;
 
@@ -124,7 +122,7 @@ package body Naming_Editors is
 
       Widget_Callback.Connect (Editor, Signal_Destroy, On_Destroy'Access);
 
-      Basic_Types.Free (Supported);
+      Free (Supported);
    end Gtk_New;
 
    -------------
@@ -140,7 +138,7 @@ package body Naming_Editors is
    begin
       Gtk_New (Editor, Kernel, Languages);
       Set_Visible_Pages (Editor, Kernel, Languages, Project);
-      Basic_Types.Free (Languages);
+      Free (Languages);
    end Gtk_New;
 
    -----------------------
@@ -241,7 +239,7 @@ package body Naming_Editors is
          end loop;
       end if;
 
-      Basic_Types.Free (Languages);
+      Free (Languages);
    end Show_Project_Settings;
 
 end Naming_Editors;

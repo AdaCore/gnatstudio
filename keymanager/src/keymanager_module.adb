@@ -22,8 +22,9 @@ with Ada.Strings.Unbounded;
 with Ada.Unchecked_Conversion;
 
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
-with GNATCOLL.Scripts;            use GNATCOLL.Scripts;
-with GNATCOLL.Traces;             use GNATCOLL.Traces;
+with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
+with GNATCOLL.Traces;         use GNATCOLL.Traces;
+with GNATCOLL.Utils;          use GNATCOLL.Utils;
 
 with System.Assertions;       use System.Assertions;
 
@@ -61,7 +62,6 @@ with GPS.Kernel;              use GPS.Kernel;
 with GUI_Utils;               use GUI_Utils;
 with HTables;                 use HTables;
 with KeyManager_Module.GUI;
-with String_Utils;            use String_Utils;
 with Traces;
 with VFS;                     use VFS;
 with XML_Parsers;

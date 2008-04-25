@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2003-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
+with GNATCOLL.Utils;         use GNATCOLL.Utils;
 
 with Glib;                   use Glib;
 with Gdk.Event;              use Gdk.Event;
@@ -272,7 +272,7 @@ package body Naming_Exceptions is
                Index     => Editor.Language.all);
          begin
             Changed := not Basic_Types.Is_Equal (Bodies, Old_Exceptions);
-            Basic_Types.Free (Old_Exceptions);
+            Free (Old_Exceptions);
          end;
       end if;
 
@@ -326,7 +326,7 @@ package body Naming_Exceptions is
             end loop;
 
             Thaw_Sort (Editor.Exceptions, Freeze);
-            Basic_Types.Free (Bodies);
+            Free (Bodies);
          end;
       end if;
    end Show_Project_Settings;

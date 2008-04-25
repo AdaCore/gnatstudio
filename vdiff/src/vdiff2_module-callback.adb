@@ -18,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
+with GNATCOLL.Utils;                    use GNATCOLL.Utils;
 
 with Gtk.Window;                        use Gtk.Window;
 
@@ -25,7 +26,6 @@ with Gtkada.Dialogs;                    use Gtkada.Dialogs;
 with Gtkada.File_Selector;              use Gtkada.File_Selector;
 with Gtkada.MDI;                        use Gtkada.MDI;
 
-with Basic_Types;
 with GPS.Intl;                          use GPS.Intl;
 with GPS.Kernel.Contexts;               use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
@@ -351,7 +351,7 @@ package body Vdiff2_Module.Callback is
                begin
                   Execute_GPS_Shell_Command
                     (Kernel, "Editor.set_writable", Args);
-                  Basic_Types.Free (Args);
+                  Free (Args);
                end;
             end if;
 
@@ -380,7 +380,7 @@ package body Vdiff2_Module.Callback is
                begin
                   Execute_GPS_Shell_Command
                     (Kernel, "Editor.set_writable", Args);
-                  Basic_Types.Free (Args);
+                  Free (Args);
                end;
             end if;
 

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2007, AdaCore                 --
+--                  Copyright (C) 2006-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,7 +18,6 @@
 -----------------------------------------------------------------------
 
 with GNAT.Regpat;        use GNAT.Regpat;
-with Filesystem.Queries; use Filesystem.Queries;
 
 with Machine_Descriptors; use Machine_Descriptors;
 
@@ -58,7 +57,7 @@ package body Shell_Descriptors is
       Start_Command       : String             := "";
       Generic_Prompt      : String             := "";
       Configured_Prompt   : String             := "";
-      FS                  : Filesystem_Record'Class;
+      FS                  : Filesystems.Filesystem_Type;
       No_Echo_Command     : String             := "";
       Init_Commands       : String_List        := Null_String_List;
       Exit_Commands       : String_List        := Null_String_List;
@@ -71,7 +70,7 @@ package body Shell_Descriptors is
    begin
       Shell.all :=
         (Name             => new String'(Name),
-         Filesystem       => new Filesystem_Record'Class'(FS),
+         Filesystem       => FS,
          Start_Cmd        => new String'(Start_Command),
          No_Echo_Cmd      => new String'(No_Echo_Command),
          Init_Cmds        => new String_List'(Init_Commands),
@@ -160,20 +159,20 @@ package body Shell_Descriptors is
    -- Get_Filesystem_From_Shell --
    -------------------------------
 
-   function Get_Filesystem_From_Shell
-     (Shell : String) return Filesystem_Record'Class
-   is
-      Desc : Shell_Descriptor_Access := Shell_Descriptor_List;
-   begin
-      while Desc /= null loop
-         if Desc.Name.all = Shell then
-            return Desc.Filesystem.all;
-         end if;
-
-         Desc := Desc.Next;
-      end loop;
-
-      return Get_Local_Filesystem;
-   end Get_Filesystem_From_Shell;
+--     function Get_Filesystem_From_Shell
+--       (Shell : String) return Filesystem_Record'Class
+--     is
+--        Desc : Shell_Descriptor_Access := Shell_Descriptor_List;
+--     begin
+--        while Desc /= null loop
+--           if Desc.Name.all = Shell then
+--              return Desc.Filesystem.all;
+--           end if;
+--
+--           Desc := Desc.Next;
+--        end loop;
+--
+--        return Get_Local_Filesystem;
+--     end Get_Filesystem_From_Shell;
 
 end Shell_Descriptors;

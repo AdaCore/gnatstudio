@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2003-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,8 +18,7 @@
 -----------------------------------------------------------------------
 
 with Gdk.Color;              use Gdk.Color;
-
-with Basic_Types;
+with GNATCOLL.Utils;         use GNATCOLL.Utils;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
 with String_Utils;           use String_Utils;
@@ -47,7 +45,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
         (Kernel, "Editor.add_blank_lines", Args_Line);
 
    begin
-      Basic_Types.Free (Args_Line);
+      Free (Args_Line);
       return Natural'Value (Res);
    end Add_Line;
 
@@ -78,7 +76,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
                      3 => new String'("0"));
    begin
       Execute_GPS_Shell_Command (Kernel, "Editor.edit", Args_Edit);
-      Basic_Types.Free (Args_Edit);
+      Free (Args_Edit);
    end Edit;
 
    ---------------------------
@@ -106,7 +104,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
 
       Execute_GPS_Shell_Command
         (Kernel, "Editor.set_synchronized_scrolling", Args.all);
-      Basic_Types.Free (Args.all);
+      Free (Args.all);
       Free (Args);
    end Synchronize_Scrolling;
 
@@ -132,7 +130,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
         (Kernel, "Editor.get_chars", Args_Replace_Text);
 
    begin
-      Basic_Types.Free (Args_Replace_Text);
+      Free (Args_Replace_Text);
       return Res;
    end Get_Chars;
 
@@ -150,7 +148,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
         (Kernel, "Editor.get_last_line", Args_Line);
 
    begin
-      Basic_Types.Free (Args_Line);
+      Free (Args_Line);
       return Natural'Value (Res);
    end Get_File_Last_Line;
 
@@ -168,7 +166,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
         (Kernel, "Editor.get_line", Args_Line);
 
    begin
-      Basic_Types.Free (Args_Line);
+      Free (Args_Line);
       return Natural'Value (Res);
    end Get_Line_Number;
 
@@ -196,7 +194,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
          Free (Args_Highlight (3));
       end loop;
 
-      Basic_Types.Free (Args_Highlight);
+      Free (Args_Highlight);
    end Highlight_Line;
 
    ---------------------
@@ -233,7 +231,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
 
       Execute_GPS_Shell_Command
         (Kernel, "Editor.highlight_range", Args_Highlight_Range);
-      Basic_Types.Free (Args_Highlight_Range);
+      Free (Args_Highlight_Range);
    end Highlight_Range;
 
    ---------------------------
@@ -263,27 +261,27 @@ package body Vdiff2_Module.Utils.Shell_Command is
       --  <preferences>
 
       Execute_GPS_Shell_Command (Kernel, "Editor.register_highlighting", Args);
-      Basic_Types.Free (Args);
+      Free (Args);
       Args := (1 => new String'(Append_Style),
                2 => new String'(Append_Color));
       Execute_GPS_Shell_Command (Kernel, "Editor.register_highlighting", Args);
-      Basic_Types.Free (Args);
+      Free (Args);
       Args := (1 => new String'(Old_Style),
                2 => new String'(Old_Color));
       Execute_GPS_Shell_Command (Kernel, "Editor.register_highlighting", Args);
-      Basic_Types.Free (Args);
+      Free (Args);
       Args := (1 => new String'(Remove_Style),
                2 => new String'(Remove_Color));
       Execute_GPS_Shell_Command (Kernel, "Editor.register_highlighting", Args);
-      Basic_Types.Free (Args);
+      Free (Args);
       Args := (1 => new String'(Change_Style),
                2 => new String'(Change_Color));
       Execute_GPS_Shell_Command (Kernel, "Editor.register_highlighting", Args);
-      Basic_Types.Free (Args);
+      Free (Args);
       Args := (1 => new String'(Fine_Change_Style),
                2 => new String'(Change_Fine_Color));
       Execute_GPS_Shell_Command (Kernel, "Editor.register_highlighting", Args);
-      Basic_Types.Free (Args);
+      Free (Args);
 
       VDiff2_Module (Vdiff_Module_ID).Enable_Fine_Diff
         := (Change_Fine_Color /= Change_Color);
@@ -330,7 +328,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
    begin
       Execute_GPS_Shell_Command
         (Kernel, "Editor.replace_text", Args_Replace_Text);
-      Basic_Types.Free (Args_Replace_Text);
+      Free (Args_Replace_Text);
    end Replace_Text;
 
    -----------------
@@ -349,7 +347,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
                           3 => new String'(Image (Pos)));
    begin
       Execute_GPS_Shell_Command (Kernel, "Editor.unhighlight", Args_Highlight);
-      Basic_Types.Free (Args_Highlight);
+      Free (Args_Highlight);
    end Unhighlight;
 
    ----------------------
@@ -399,7 +397,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
 
       Execute_GPS_Shell_Command
         (Kernel, "Editor.unhighlight_range", Args_Highlight_Range);
-      Basic_Types.Free (Args_Highlight_Range);
+      Free (Args_Highlight_Range);
    end Unhighlight_Range;
 
 end Vdiff2_Module.Utils.Shell_Command;

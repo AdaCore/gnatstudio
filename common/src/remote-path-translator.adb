@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2007, AdaCore                  --
+--                 Copyright (C) 2006-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,9 +19,9 @@
 
 with GNAT.Strings; use GNAT.Strings;
 
-with Filesystem;         use Filesystem;
-with Filesystem.Queries; use Filesystem.Queries;
-with Traces;             use Traces;
+with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
+with Filesystems;         use Filesystems;
+with Traces;              use Traces;
 
 package body Remote.Path.Translator is
 

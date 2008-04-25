@@ -17,10 +17,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Basic_Types;           use Basic_Types;
 with Config;                use Config;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with GNAT.Regpat;           use GNAT.Regpat;
+with GNATCOLL.Utils;        use GNATCOLL.Utils;
 with GPS.Kernel;            use GPS.Kernel;
 with GPS.Kernel.MDI;        use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;    use GPS.Kernel.Modules;

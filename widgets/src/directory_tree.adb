@@ -55,9 +55,8 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 
 with VFS;                       use VFS;
 with VFS.Values;                use VFS.Values;
-with File_Utils;                use File_Utils;
-with Filesystem;                use Filesystem;
-with Filesystem.Queries;        use Filesystem.Queries;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
+with Filesystems;               use Filesystems;
 
 with GUI_Utils;                 use GUI_Utils;
 with OS_Utils;                  use OS_Utils;
@@ -1708,14 +1707,7 @@ package body Directory_Tree is
    begin
       Clear (Explorer.File_Model);
       File_Remove_Idle_Calls (Explorer);
-
-      if Is_Local (Dir) then
-         Get_Logical_Drive_Strings (Buffer, Len);
-      else
-         Get_Logical_Drives (Get_Filesystem (Get_Host (Dir)),
-                             Get_Host (Dir),
-                             Buffer, Len);
-      end if;
+      Get_Logical_Drives (Get_Filesystem (Get_Host (Dir)), Buffer, Len);
 
       if Len = 0 then
          File_Append_Directory

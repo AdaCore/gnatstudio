@@ -56,6 +56,7 @@ with Commands.Interactive;      use Commands, Commands.Interactive;
 with Entities;                  use Entities;
 with Entities.Queries;          use Entities.Queries;
 with Entities.Tooltips;         use Entities.Tooltips;
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;

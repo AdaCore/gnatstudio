@@ -18,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with GNAT.Strings;                use GNAT.Strings;
+with GNATCOLL.Utils;              use GNATCOLL.Utils;
 
 with Glib;                        use Glib;
 with Glib.Object;                 use Glib.Object;

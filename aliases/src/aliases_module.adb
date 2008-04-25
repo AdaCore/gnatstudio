@@ -23,7 +23,8 @@ with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with GNAT.Calendar.Time_IO;    use GNAT.Calendar.Time_IO;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
-with GNATCOLL.Templates;           use GNATCOLL.Templates;
+with GNATCOLL.Templates;       use GNATCOLL.Templates;
+with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with System.Assertions;
 
 with Gdk.Color;                use Gdk.Color;
@@ -73,7 +74,6 @@ with Gtk.Window;               use Gtk.Window;
 with Gtkada.Dialogs;           use Gtkada.Dialogs;
 with Gtkada.Handlers;          use Gtkada.Handlers;
 
-with Basic_Types;
 with Commands.Interactive;     use Commands, Commands.Interactive;
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
@@ -1081,7 +1081,7 @@ package body Aliases_Module is
                           (Command.Kernel,
                            Command => "Editor.select_text",
                            Args    => Args);
-                        Basic_Types.Free (Args);
+                        Free (Args);
 
                         Execute_GPS_Shell_Command
                           (Command.Kernel, Command => "Editor.indent");

@@ -27,7 +27,8 @@ with Ada.Unchecked_Deallocation;
 
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
-with GNATCOLL.Traces;                use GNATCOLL.Traces;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
+with GNATCOLL.Utils;             use GNATCOLL.Utils;
 
 with Basic_Types;                use Basic_Types;
 with Casing;                     use Casing;

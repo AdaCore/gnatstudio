@@ -24,8 +24,8 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY;        use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.Regpat;            use GNAT.Regpat;
+with GNATCOLL.Utils;         use GNATCOLL.Utils;
 
-with Basic_Types;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.Console;     use GPS.Kernel.Console;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
@@ -247,7 +247,7 @@ package body Diff_Utils is
             Args (1 .. Num_Args));
          Free (Cmd);
          Free (Cmd_Args);
-         Basic_Types.Free (Args);
+         Free (Args);
 
          loop
             Expect (Descriptor, Result, Pattern_Any, Matches, Timeout => -1);

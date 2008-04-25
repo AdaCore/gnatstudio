@@ -20,6 +20,7 @@
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Strings;
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
 
 with Gdk;                       use Gdk;
 with Gdk.Event;                 use Gdk.Event;

@@ -3006,8 +3006,8 @@ package body CPP_Parser is
                                Iterator.Current_Files (F);
             Lang           : constant String := Get_Language_From_File
               (Iterator.Lang_Handler, File);
-            Xref_File_Name : constant String :=
-                               DB_Dir & Base_Name (File) & Xref_Suffix;
+            Xref_File_Name : constant Virtual_File :=
+              Create (DB_Dir & Base_Name (File) & Xref_Suffix);
          begin
             if Lang = C_String or else Lang = Cpp_String then
 
@@ -3019,11 +3019,11 @@ package body CPP_Parser is
                   --  Remove the current xref file if it exists, since
                   --  cbrowser opens it in append mode.
 
-                  if GNAT.OS_Lib.Is_Regular_File (Xref_File_Name) then
-                     GNAT.OS_Lib.Delete_File (Xref_File_Name, Success);
+                  if Is_Regular_File (Xref_File_Name) then
+                     Delete (Xref_File_Name, Success);
                   end if;
 
-                  Put_Line (Tmp_File, "@" & Xref_File_Name);
+                  Put_Line (Tmp_File, "@" & Full_Name (Xref_File_Name).all);
                   Put_Line (Tmp_File, Full_Name (File, True).all);
                   Recompute_TO := True;
 

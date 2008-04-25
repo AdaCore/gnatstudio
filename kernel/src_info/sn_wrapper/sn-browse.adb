@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2007, AdaCore             --
+--                      Copyright (C) 2002-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,18 +18,18 @@
 -----------------------------------------------------------------------
 
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
-with GNAT.Calendar.Time_IO; use GNAT.Calendar.Time_IO;
+with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.IO_Aux;               use GNAT.IO_Aux;
 with GNAT.Expect;               use GNAT.Expect;
-with GNATCOLL.Mmap;                 use GNATCOLL.Mmap;
+with GNATCOLL.Mmap;             use GNATCOLL.Mmap;
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-
-with Basic_Types;
-with SN.Xref_Pools; use SN.Xref_Pools;
-with File_Utils;    use File_Utils;
-with String_Utils;  use String_Utils;
-with Traces;        use Traces;
+with SN.Xref_Pools;             use SN.Xref_Pools;
+with File_Utils;                use File_Utils;
+with String_Utils;              use String_Utils;
+with Traces;                    use Traces;
+with VFS;                       use VFS;
 
 package body SN.Browse is
 
@@ -61,7 +61,7 @@ package body SN.Browse is
              & " " & Argument_List_To_String (Args));
       GNAT.Expect.Non_Blocking_Spawn
         (PD, Cbrowser_Path, Args, Err_To_Out => True);
-      Basic_Types.Free (Args);
+      Free (Args);
    end Browse;
 
    --------------------
@@ -95,14 +95,16 @@ package body SN.Browse is
          if File_Exists (F_File_Name) then
             Trace
               (Me, ".f timestamp: "
-               & Image (File_Time_Stamp (F_File_Name), "%Y-%m-%d %H:%M:%S"));
+               & Image (File_Time_Stamp (Create (F_File_Name)),
+                        "%Y-%m-%d %H:%M:%S"));
          else
             Trace (Me, "No .f file");
          end if;
          if File_Exists (TO_File_Name) then
             Trace
               (Me, ".to timestamp: "
-               & Image (File_Time_Stamp (TO_File_Name), "%Y-%m-%d %H:%M:%S"));
+               & Image (File_Time_Stamp (Create (TO_File_Name)),
+                        "%Y-%m-%d %H:%M:%S"));
          else
             Trace (Me, "No .to file");
          end if;

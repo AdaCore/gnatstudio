@@ -17,12 +17,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Strings; use GNAT.Strings;
-
-with Language; use Language;
-
-with Language.Ada; use Language.Ada;
-with String_Utils; use String_Utils;
+with GNAT.Strings;     use GNAT.Strings;
+with GNATCOLL.Utils;   use GNATCOLL.Utils;
+with Language;         use Language;
+with Language.Ada;     use Language.Ada;
 
 package body Ada_Semantic_Tree.Visibility is
 

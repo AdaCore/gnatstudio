@@ -27,8 +27,6 @@ with Ada.Exceptions;       use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with Ada.Strings.Fixed;    use Ada.Strings.Fixed;
 
-with Filesystem.Unix;
-with Filesystem.Windows;
 with Password_Manager;     use Password_Manager;
 with String_Utils;         use String_Utils;
 with Traces;               use Traces;

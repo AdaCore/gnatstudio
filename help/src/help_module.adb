@@ -22,9 +22,10 @@ with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
-with GNATCOLL.Mmap;                  use GNATCOLL.Mmap;
+with GNATCOLL.Mmap;              use GNATCOLL.Mmap;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
-with GNATCOLL.Scripts;               use GNATCOLL.Scripts;
+with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
+with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNAT.Strings;
 
 with Glib;                       use Glib;
@@ -33,7 +34,7 @@ with Glib.Object;                use Glib.Object;
 with Glib.Xml_Int;               use Glib.Xml_Int;
 
 with Gtk.Menu_Item;              use Gtk.Menu_Item;
-with Gtk.Object; use             Gtk.Object;
+with Gtk.Object;                 use Gtk.Object;
 with Gtk.Widget;                 use Gtk.Widget;
 
 with Gtkada.Dialogs;             use Gtkada.Dialogs;

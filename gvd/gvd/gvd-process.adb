@@ -26,6 +26,7 @@ with GNAT.TTY;                   use GNAT.TTY;
 with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.Strings;
+with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with System;                     use System;
 
 with Glib;                       use Glib;
@@ -45,7 +46,6 @@ with Gtkada.Dialogs;             use Gtkada.Dialogs;
 with Gtkada.Handlers;            use Gtkada.Handlers;
 with Gtkada.MDI;                 use Gtkada.MDI;
 
-with Basic_Types;                use Basic_Types;
 with Breakpoints_Editor;         use Breakpoints_Editor;
 with Config;                     use Config;
 with Debugger.Gdb;               use Debugger.Gdb;

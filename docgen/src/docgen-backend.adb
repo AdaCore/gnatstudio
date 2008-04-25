@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2001-2007, AdaCore                 --
+--                  Copyright (C) 2001-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,9 +18,8 @@
 -----------------------------------------------------------------------
 
 with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
-
-with Language_Handlers;   use Language_Handlers;
-with String_Utils;            use String_Utils;
+with GNATCOLL.Utils;          use GNATCOLL.Utils;
+with Language_Handlers;       use Language_Handlers;
 with Traces;                  use Traces;
 
 package body Docgen.Backend is

@@ -26,6 +26,7 @@ with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Case_Util;            use GNAT.Case_Util;
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
 
 with ALI;
 with Atree;
@@ -39,7 +40,6 @@ with Stringt;
 
 with Glib.Convert;              use Glib.Convert;
 
-with Basic_Types;               use Basic_Types;
 with Csets;
 with Errout;
 with File_Utils;                use File_Utils;

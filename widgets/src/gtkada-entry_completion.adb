@@ -20,6 +20,7 @@
 
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;               use GNAT.Strings;
+with GNATCOLL.Utils;             use GNATCOLL.Utils;
 
 with Gdk.Event;                  use Gdk.Event;
 with Gdk.Types;                  use Gdk.Types;
@@ -43,7 +44,6 @@ with Gtk.Window;                 use Gtk.Window;
 with Gtkada.Handlers;            use Gtkada.Handlers;
 
 with Generic_List;
-with String_Utils;               use String_Utils;
 with Traces;                     use Traces;
 
 package body Gtkada.Entry_Completion is

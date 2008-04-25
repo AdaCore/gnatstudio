@@ -19,6 +19,7 @@
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with GNAT.Strings;
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
@@ -214,7 +215,7 @@ package body GPS.Kernel.Project is
            and then Handle.Gnatls_Cache.all = Gnatls
            and then Handle.Gnatls_Server.all = Get_Nickname (Build_Server)
          then
-            Basic_Types.Free (Langs);
+            Free (Langs);
             Free (Gnatls_Args);
             return;
          end if;
@@ -288,7 +289,7 @@ package body GPS.Kernel.Project is
       end if;
 
       Free (Gnatls_Args);
-      Basic_Types.Free (Langs);
+      Free (Langs);
    end Compute_Predefined_Paths;
 
    --------------------------------

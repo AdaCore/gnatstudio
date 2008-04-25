@@ -20,6 +20,7 @@
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
 with GNAT.Strings;
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
 
 with Gdk.Color;                 use Gdk.Color;
 with Gdk.Types;                 use Gdk.Types;
@@ -50,7 +51,6 @@ with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 --  with Gtkada.MDI;                use Gtkada.MDI;
 
-with Basic_Types;               use Basic_Types;
 with Breakpoints_Editor;        use Breakpoints_Editor;
 with Commands.Debugger;         use Commands.Debugger;
 with Commands.Interactive;      use Commands.Interactive;

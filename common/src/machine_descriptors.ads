@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2006-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,6 +19,7 @@
 
 --  This package contains remote machine descriptions.
 
+with GNATCOLL.Filesystem;
 with GNAT.OS_Lib;
 with GNAT.Strings;    use GNAT.Strings;
 
@@ -48,6 +48,11 @@ package Machine_Descriptors is
       --  Ref counter
       Dbg                 : Connection_Debugger := null;
       --  Connection debug console.
+      FS                  : GNATCOLL.Filesystem.Filesystem_Access;
+      --  The filesystem to use for this machine. It is instantiated
+      --  specifically for this host, based on whether it is for Unix or
+      --  Windows. Do not access this field directly, but use Get_Filesystem
+      --  below, which ensures that the field has been properly initialized.
    end record;
    type Machine_Descriptor is access all Machine_Descriptor_Record'Class;
 
@@ -61,6 +66,12 @@ package Machine_Descriptors is
 
    procedure Close (Desc : access Machine_Descriptor_Item) is abstract;
    --  Close the connections associated with Desc.
+
+   function Get_Filesystem
+     (Machine : access Machine_Descriptor_Record'Class)
+     return GNATCOLL.Filesystem.Filesystem_Access;
+   --  Return the filesystem to use for this machine.
+   --  This is based on the shell used for the machine and the host name.
 
    procedure Register_Machine_Descriptor
      (Machine    : Machine_Descriptor;

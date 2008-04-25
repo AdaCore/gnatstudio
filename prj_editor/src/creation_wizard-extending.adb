@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2006                      --
---                              AdaCore                              --
+--                      Copyright (C) 2005-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,7 +17,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Basic_Types;              use Basic_Types;
 with Commands.Interactive;     use Commands, Commands.Interactive;
 with Glib;                     use Glib;
 with Gtk.Box;                  use Gtk.Box;
@@ -33,6 +31,7 @@ with Gtk.Tree_View;            use Gtk.Tree_View;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.Dialogs;           use Gtkada.Dialogs;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
+with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with GPS.Kernel;               use GPS.Kernel;
 with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;

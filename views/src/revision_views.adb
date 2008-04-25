@@ -21,7 +21,8 @@ with Ada.Strings.Unbounded;     use Ada.Strings; use Ada.Strings.Unbounded;
 with Ada.Unchecked_Conversion;
 with System;
 
-with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
+with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNAT.Strings;              use GNAT.Strings;
 
 with Glib;                      use Glib;
@@ -43,7 +44,6 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 
-with Basic_Types;               use Basic_Types;
 with Generic_Views;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel;                use GPS.Kernel;

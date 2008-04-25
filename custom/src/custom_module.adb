@@ -23,6 +23,7 @@ with GComLin;                   use GComLin;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Scripts.Gtkada;   use GNATCOLL.Scripts, GNATCOLL.Scripts.Gtkada;
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with System.Assertions;         use System.Assertions;
 
 with Glib.Object;               use Glib.Object;
@@ -44,7 +45,6 @@ with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
-with Basic_Types;
 with Commands.Custom;           use Commands.Custom;
 with Commands.Interactive;      use Commands.Interactive;
 with Commands;                  use Commands;
@@ -818,7 +818,7 @@ package body Custom_Module is
             end if;
          end loop;
 
-         Basic_Types.Free (List);
+         Free (List);
       end;
 
       Show_All (Menu);

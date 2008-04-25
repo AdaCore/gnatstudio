@@ -23,6 +23,7 @@ with GNAT.Case_Util;             use GNAT.Case_Util;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Strings;
+with GNATCOLL.Filesystem;        use GNATCOLL.Filesystem;
 
 with Glib;                       use Glib;
 with Glib.Convert;               use Glib.Convert;
@@ -63,6 +64,7 @@ with Projects;                   use Projects;
 with Projects.Registry;          use Projects.Registry;
 with Remote;                     use Remote;
 with String_List_Utils;          use String_List_Utils;
+with Filesystems;                use Filesystems;
 with File_Utils;                 use File_Utils;
 with GUI_Utils;                  use GUI_Utils;
 with OS_Utils;                   use OS_Utils;
@@ -1081,7 +1083,7 @@ package body Project_Explorers_Files is
             String_List_Utils.String_List.Free (Inc);
          end;
       else
-         Get_Logical_Drive_Strings (Buffer, Len);
+         Get_Logical_Drives (Get_Local_Filesystem, Buffer, Len);
 
          if Len = 0 then
             File_Append_Directory
