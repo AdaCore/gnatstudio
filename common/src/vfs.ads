@@ -25,7 +25,6 @@ with Ada.Calendar;
 with Ada.Finalization;
 with Ada.Containers;
 
-with GNAT.Calendar;
 with GNAT.OS_Lib;
 with GNAT.Strings;
 
@@ -37,13 +36,12 @@ package VFS is
 
    VFS_Directory_Error : exception;
 
-   No_Time : constant Ada.Calendar.Time := GNAT.Calendar.Time_Of
-     (GNAT.OS_Lib.GM_Year (GNAT.OS_Lib.Invalid_Time),
-      GNAT.OS_Lib.GM_Month (GNAT.OS_Lib.Invalid_Time),
-      GNAT.OS_Lib.GM_Day (GNAT.OS_Lib.Invalid_Time),
-      GNAT.OS_Lib.GM_Hour (GNAT.OS_Lib.Invalid_Time),
-      GNAT.OS_Lib.GM_Minute (GNAT.OS_Lib.Invalid_Time),
-      GNAT.OS_Lib.GM_Second (GNAT.OS_Lib.Invalid_Time));
+   No_Time : constant Ada.Calendar.Time := Ada.Calendar.Time_Of
+     (Ada.Calendar.Year_Number'First,
+      Ada.Calendar.Month_Number'First,
+      Ada.Calendar.Day_Number'First);
+   --  We must use the same definition as GNAT.Calendar.No_Time, which is
+   --  used by GNATCOLL
 
    subtype UTF8_String_Access is GNAT.Strings.String_Access;
    type Cst_UTF8_String_Access is access constant Glib.UTF8_String;
