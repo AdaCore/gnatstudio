@@ -64,13 +64,7 @@ package body Coverage_GUI is
             GPS.Kernel.Console.Insert
               (Kernel,
                -"Could not find coverage file " & Full_Name (Cov_File).all);
-
-            declare
-               File_Node : constant Code_Analysis.File_Access :=
-                             Get_Or_Create (Prj_Node, Src_File);
-            begin
-               Set_Error (File_Node, File_Not_Found);
-            end;
+            Set_Error (Get_Or_Create (Prj_Node, Src_File), File_Not_Found);
          end if;
       end loop;
 
@@ -468,10 +462,8 @@ package body Coverage_GUI is
            (Object_Path
               (Get_Root_Project (Get_Registry (Kernel).all), False, False)
             & Directory_Separator & Base_Name (Source) & Gcov_Extension_Cst);
-
       else
          --  Look for the gcov file in the path pointed by GCOV_ROOT.
-
          Result := Create
            (Gcov_Root.all & Directory_Separator &
             Base_Name (Source) & Gcov_Extension_Cst);
