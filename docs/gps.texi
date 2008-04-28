@@ -7995,20 +7995,33 @@ metrics computation will be displayed in the Locations Window.
 @noindent
 @c --------------------------------------------------------------------
 
-GPS is fitted with a strong integration of @command{Gcov}, the GNU code coverage
+GPS is fitted with a strong integration of Gcov, the GNU code coverage
 utility.
 
-Code coverage information can be loaded into GPS for an entire project
-(including recursive projects), a single project or a single file belonging
-to a loaded project into a tree-structure with the following nodes: Project,
-File, Subprogram, Line.
+Code coverage information can be computed from, loaded and visualized in GPS.
+This can be done file by file, for each files of the current project,
+project by project (in case of dependencies) or for the entire project hierarchy
+currently used in GPS.
 
-Once loaded, the coverage information is taken into account to generate
-coverage reporting or line highlighting for each levels, through the
+Once computed then loaded, the coverage information is summarized in a
+graphical report (shaped as a tree-view with percentage bars for each item)
+and used to decorate source code through mechanisms such as line highlighting or
+coverage annotations.
+
+All the coverage related operations are reachable via the
 @command{Tools->Coverage} menu.
 
-If you ask for a coverage feature before trying to load any @command{Gcov}
-information, GPS will automatically try to load the corresponding information.
+In order to be loaded in GPS, the coverage information need to be computed
+before, using the @command{Tools->Coverage->Compute coverage files} menu for
+instance.
+
+At each attempt, GPS automatically tries to load the needed information and
+reports errors for missing or corrupted @command{.gcov} files.
+
+To be able to produce coverage information from Gcov, your project must have
+been compiled with the @command{-fprofile-arcs} and @command{-ftest-coverage}"
+switches, respectively "Instrument arcs" and "Code coverage" entries in
+@ref{The Project Properties Editor}, and run once.
 
 @table @b
 @item @ref{The Tools Menu}
@@ -8019,67 +8032,73 @@ depending on the context.
 @table @command
 
 @item Coverage->Compute coverage files
+Generates the @command{.gcov} files of current and properly compiled and run
+projects.
+
 @item Coverage->Remove coverage files
+Deletes all the @command{.gcov} of current projects.
 
 @c \hline
 
 @item Coverage->Show report
-Open a new window summarizing the coverage information.
+Open a new window summarizing the coverage information currently loaded in GPS.
 
 @c \hline
 
 @item Coverage->Load data for all projects
-Load or re-load the data of every projects and subprojects.
+Load or re-load the coverage information of every projects and subprojects.
 
 @item Coverage->Load data for project @code{XXX}
-Try to load again the coverage data of the project @code{XXX}.
+Load or re-load the coverage information of the project @code{XXX}.
 
-@item Coverage->Load data for @file{xxx.adb} (@file{xxx.ads})
-Try to reload the coverage data of the specified source file.
+@item Coverage->Load data for @file{xxxxxxxx.xxx}
+Load or re-load the coverage information of the specified source file.
 
 @c \hline
 
 @item Coverage->Clear coverage from memory
-Drop the coverage information loaded in GPS.
+Drop every coverage information loaded in GPS.
 
 @end table
 
 @item The Contextual Menu
 
 When clicking on a project, file or subprogram entity (including the entities
-of the coverage report), you have access to a @command{Coverage} submenu.
+listed in the coverage report), you have access to a @command{Coverage} submenu.
 
-These submenus contain the following entries, adapted to the elements in the
-context. For instance, if you click on a file, you will have:
+These submenus contain the following entries, adapted to the context related
+element. For instance, if you click on a file, you will have:
 
 @table @command
 @item Coverage->Show coverage information
 Append an annotation column to the left side of the current source editor.
-This column indicates which lines are covered and which aren't.
+This column indicates which lines are covered and which aren't. Unexecuted lines
+are also listed in the @ref{The Locations Tree}.
 
 @item Coverage->Hide coverage information
 Withdraw from the current source editor a previously set coverage annotation
-column.
+column and clear @ref{The Locations Tree} from the eventually listed uncovered
+lines.
 
-@item Coverage->Load data for @file{xxx.adb} (@file{xxx.ads})
-Try to reload the coverage data of the specified source file.
+@item Coverage->Load data for @file{xxxxxxxx.xxx}
+Load or re-load the coverage information of the specified source file.
 
-@item Coverage->Remove data of @file{xxx.adb} (@file{xxx.ads})
-Remove the coverage data of the specified source file.
-Try to reload the coverage data of the specified source file.
+@item Coverage->Remove data of @file{xxxxxxxx.xxx}
+Remove the coverage information of the specified source file from GPS memory.
 
 @item Coverage->Show Coverage report
 Open a new window summarizing the coverage information. (This entry appears
-only if the contextual menu has been created outside of the Coverage Report.)
+only if the contextual menu has been created from outside of the Coverage
+Report.)
 @end table
 
 @item The Coverage Report
 
-When asked from the @command{Tools->Coverage} menu or the contextual menu, or
-when coverage information are loaded, a report of coverage is displayed.
-This report contains a tree view of the analysis elements
-and the corresponding coverage information are displayed for each node in sided
-columns.
+When coverage information are loaded into GPS, a graphical report of coverage
+is displayed.
+
+This report contains a tree of Projects, Files and Subprograms with
+corresponding coverage information for each node in sided columns.
 
 @iftex
 @cindex screen shot
@@ -8092,9 +8111,10 @@ columns.
 @end ifhtml
 
 The contextual menus generated on this widget contain, in addition to the
-regular entries, some specific coverage report entries.
-These entries allow to expand or fold the tree view, and also to display flat
-lists (of files or subprograms) instead of a tree. A flat list of file will
+regular entries, some specific Coverage Report entries.
+
+These entries allow you to expand or fold the tree, and also to display flat
+lists of files or subprograms instead of the tree. A flat list of file will
 look like:
 
 @iftex
@@ -8109,16 +8129,13 @@ look like:
 
 @end table
 
-Note that, in order to be loaded in GPS, the coverage
-information need to be computed before, using Gcov. To be able to produce
-coverage information from Gcov, your project must have been compiled with
-the @command{-fprofile-arcs} and @command{-ftest-coverage}" switches,
-respectively "Instrument arcs" and "Code coverage" entries in @ref{The
-Project Properties Editor}.
+GPS and Gcov both support many different programming languages, and so code
+coverage features are available in GPS for many languages. But, note that
+subprogram coverage details are not available for every supported languages.
 
-Also note that if you change the current main project in GPS, using the
-@command{Project->Open} menu entry for instance, you will also drop every
-loaded coverage information as they are related with the working project.
+To finish, note that if you change the current main project in GPS, using the
+@command{Project->Open} menu for instance, you will also drop every loaded
+coverage information as they are related to the working project.
 
 @c --------------------------------------------------------------------
 @node Working in a Cross Environment
