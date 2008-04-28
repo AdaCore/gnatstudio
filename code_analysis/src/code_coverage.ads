@@ -21,13 +21,13 @@
 --  This package provides a user level code coverage API
 --  </description>
 
-with GNAT.OS_Lib;            use GNAT.OS_Lib;
-with Glib.Xml_Int;           use Glib.Xml_Int;
-with Gtk.Tree_Store;         use Gtk.Tree_Store;
-with Gtk.Tree_Model;         use Gtk.Tree_Model;
-with Language.Tree.Database; use Language.Tree.Database;
-with Projects;               use Projects;
-with Code_Analysis;          use Code_Analysis;
+with GNAT.OS_Lib;    use GNAT.OS_Lib;
+with Glib.Xml_Int;   use Glib.Xml_Int;
+with Gtk.Tree_Store; use Gtk.Tree_Store;
+with Gtk.Tree_Model; use Gtk.Tree_Model;
+with Language.Tree;  use Language.Tree;
+with Projects;       use Projects;
+with Code_Analysis;  use Code_Analysis;
 
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 
@@ -65,7 +65,7 @@ package Code_Coverage is
 
    procedure Add_Subprogram_Info
      (File_Node : Code_Analysis.File_Access;
-      Data_File : Structured_File_Access);
+      Tree      : Construct_Tree);
    --  Add the subprogram nodes of the given file node, and compute it coverage
    --  information
 

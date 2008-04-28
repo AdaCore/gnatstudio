@@ -30,6 +30,7 @@ with Projects;                  use Projects;
 with Projects.Registry;         use Projects.Registry;
 with Language.Tree.Database;
 with Language.Tree;             use Language.Tree;
+with Language.Unknown;          use Language.Unknown;
 with Language_Handlers;         use Language_Handlers;
 with String_Utils;              use String_Utils;
 with Code_Coverage;             use Code_Coverage;
@@ -117,8 +118,8 @@ package body Coverage_GUI is
 
          --  Check for project runs info
          if File_Node.Analysis_Data.Coverage_Data.Status = Valid and then
-           Project_Node.Analysis_Data.Coverage_Data = null then
-
+           Project_Node.Analysis_Data.Coverage_Data = null
+         then
             Project_Node.Analysis_Data.Coverage_Data := new Project_Coverage;
             Project_Node.Analysis_Data.Coverage_Data.Status := Valid;
             Get_Runs_Info_From_File
@@ -131,18 +132,13 @@ package body Coverage_GUI is
 
          if File_Node.Analysis_Data.Coverage_Data.Status = Valid then
             declare
-               Database  : constant Construct_Database_Access
-                 := Get_Construct_Database (Kernel);
-               Tree_Lang : constant Tree_Language_Access
-                 := Get_Tree_Language_From_File (Handler, Src_File, False);
-               Data_File : constant Structured_File_Access
-                 := Language.Tree.Database.Get_Or_Create
-                   (Db   => Database,
-                    File => Src_File,
-                    Lang => Tree_Lang);
+               Lang : constant Language_Access :=
+                        Get_Language_From_File (Handler, Src_File);
             begin
-               if Data_File /= null then
-                  Add_Subprogram_Info (File_Node, Data_File);
+               if Lang /= Unknown_Lang then
+                  Add_Subprogram_Info
+                    (File_Node, To_Construct_Tree
+                       (Read_File (Src_File).all, Lang));
                end if;
             end;
          end if;

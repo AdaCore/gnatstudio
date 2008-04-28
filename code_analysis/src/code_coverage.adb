@@ -26,7 +26,6 @@ with GPS.Intl;          use GPS.Intl;
 with String_Utils;      use String_Utils;
 with VFS;               use VFS;
 with Language;          use Language;
-with Language.Tree;     use Language.Tree;
 with Code_Analysis_GUI; use Code_Analysis_GUI;
 
 package body Code_Coverage is
@@ -218,9 +217,8 @@ package body Code_Coverage is
 
    procedure Add_Subprogram_Info
      (File_Node : Code_Analysis.File_Access;
-      Data_File : Structured_File_Access)
+      Tree      : Construct_Tree)
    is
-      Tree       : constant Construct_Tree := Get_Tree (Data_File);
       Node       : Construct_Tree_Iterator := First (Tree);
       Node_Info  : access Simple_Construct_Information;
       Subp_Node  : Subprogram_Access;

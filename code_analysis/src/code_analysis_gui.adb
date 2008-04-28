@@ -379,7 +379,7 @@ package body Code_Analysis_GUI is
       List_File_Uncovered_Lines (Kernel, File_Node);
       Add_File_Coverage_Annotations (Kernel, File_Node);
       Open_File_Editor
-        (Kernel, File_Node.Name, Subp_Node.Line,
+        (Kernel, File_Node.Name, Subp_Node.Start,
          Basic_Types.Visible_Column_Type (Subp_Node.Column));
    end Open_File_Editor_On_Subprogram;
 

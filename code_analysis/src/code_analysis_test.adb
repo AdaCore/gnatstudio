@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2007, AdaCore                 --
+--                  Copyright (C) 2006-2008, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -29,8 +29,7 @@ with Projects;                 use Projects;
 with Projects.Registry;        use Projects.Registry;
 with Language;                 use Language;
 with Language.Tree;            use Language.Tree;
-with Language.Tree.Ada;        use Language.Tree.Ada;
-with Language.Tree.Database;   use Language.Tree.Database;
+with Language.Ada;             use Language.Ada;
 with GNAT.Strings;             use GNAT.Strings;
 with VFS;                      use VFS;
 with Glib;                     use Glib;
@@ -49,14 +48,12 @@ procedure Code_Analysis_Test is
    --  Print the correct usage of the program to the standard output
 
    function Build_Structure (Projects     : Code_Analysis_Tree;
-                             Database     : Construct_Database_Access;
                              File_Name    : String;
                              Project_File : String)
                              return Project_Access;
    --  Build a code_analysis structure from a gcov file
 
    procedure Build_Display_Destroy (Projects     : Code_Analysis_Tree;
-                                    Database     : Construct_Database_Access;
                                     File_Name    : String;
                                     Project_File : String);
    --  reads a gcov output file, built from a given source file name, builds a
@@ -83,7 +80,6 @@ procedure Code_Analysis_Test is
    --  build, perform one request, and destroy the structure
 
    procedure Treeview (Projects     : Code_Analysis_Tree;
-                       Database     : Construct_Database_Access;
                        File_Name    : String;
                        Project_File : String);
    --  builds a code_analysis structure and display it in a Gtk_Tree_View
@@ -108,7 +104,6 @@ procedure Code_Analysis_Test is
    ---------------------
 
    function Build_Structure (Projects     : Code_Analysis_Tree;
-                             Database     : Construct_Database_Access;
                              File_Name    : String;
                              Project_File : String)
                              return Project_Access
@@ -123,10 +118,9 @@ procedure Code_Analysis_Test is
       Src_File_Name : VFS.Virtual_File;
       Cov_File_Name : VFS.Virtual_File;
       File_Contents : GNAT.Strings.String_Access;
-      Registry      : Project_Registry;
+      Registry      : constant Project_Registry_Access := new Project_Registry;
       Loaded        : Boolean;
       Status        : Boolean;
-      Data_File     : Structured_File_Access;
       Project_Node  : Project_Access;
       File_Node     : Code_Analysis.File_Access;
    begin
@@ -136,14 +130,14 @@ procedure Code_Analysis_Test is
 
       Initialize; --  From Projects.Registry
       Load
-        (Registry           => Registry,
+        (Registry           => Registry.all,
          Root_Project_Path  => Create_From_Dir
            (Get_Current_Dir, Project_File),
          Errors             => Project_Error'Unrestricted_Access,
          New_Project_Loaded => Loaded,
          Status             => Status);
       Project_Node  := Get_Or_Create
-        (Projects, Load_Or_Find (Registry, Project_File));
+        (Projects, Load_Or_Find (Registry.all, Project_File));
       File_Contents := Read_File (Cov_File_Name);
       File_Node     := Get_Or_Create (Project_Node, Src_File_Name);
       File_Node.Analysis_Data.Coverage_Data := new Node_Coverage;
@@ -163,9 +157,9 @@ procedure Code_Analysis_Test is
                  (Project_Node.Analysis_Data.Coverage_Data.all).Have_Runs);
 
          if File_Node.Analysis_Data.Coverage_Data.Status = Valid then
-            Data_File := Get_Or_Create
-              (Database, File_Node.Name, Ada_Tree_Lang);
-            Add_Subprogram_Info (File_Node, Data_File);
+            Add_Subprogram_Info
+              (File_Node, To_Construct_Tree
+                 (Read_File (Src_File_Name).all, Ada_Lang));
          end if;
 
          Compute_Project_Coverage (Project_Node);
@@ -180,7 +174,6 @@ procedure Code_Analysis_Test is
    ---------------------------
 
    procedure Build_Display_Destroy (Projects     : Code_Analysis_Tree;
-                                    Database     : Construct_Database_Access;
                                     File_Name    : String;
                                     Project_File : String)
    is
@@ -188,7 +181,7 @@ procedure Code_Analysis_Test is
       pragma Unreferenced (Project_Node);
    begin
       Project_Node  := Build_Structure
-        (Projects, Database, File_Name, Project_File);
+        (Projects, File_Name, Project_File);
       Dump_Text (Projects);
    end Build_Display_Destroy;
 
@@ -314,7 +307,6 @@ procedure Code_Analysis_Test is
    --  Gtk_Tree_Model
 
    procedure Treeview (Projects     : Code_Analysis_Tree;
-                       Database     : Construct_Database_Access;
                        File_Name    : String;
                        Project_File : String) is
       Project_Node  : Project_Access;
@@ -332,7 +324,7 @@ procedure Code_Analysis_Test is
       pragma Unreferenced (Num_Col, Project_Node);
    begin
       Project_Node  := Build_Structure
-        (Projects, Database, File_Name, Project_File);
+        (Projects, File_Name, Project_File);
       Init;
       Gtk_New (Window);
       Set_Title (Window, "Analysis report");
@@ -383,9 +375,7 @@ procedure Code_Analysis_Test is
    end Treeview;
 
    Projects  : constant Code_Analysis_Tree := new Project_Maps.Map;
-   Database  : Construct_Database_Access := new Construct_Database;
    Arg_Count : constant Natural := 3;
-
 begin
    if Argument_Count < Arg_Count then
       Put_Line ("error: missing arguments");
@@ -393,10 +383,8 @@ begin
       return;
    end if;
 
-   Language.Tree.Database.Initialize (Database.all, new File_Buffer_Provider);
-
    if Argument (Arg_Count) = "build_display_destroy" then
-      Build_Display_Destroy (Projects, Database, Argument (1), Argument (2));
+      Build_Display_Destroy (Projects, Argument (1), Argument (2));
    elsif Argument (Arg_Count) = "benchmark" then
       Benchmark (Projects,
                  Argument (1),
@@ -404,13 +392,11 @@ begin
                  Argument (4),
                  Argument (5));
    elsif Argument (Arg_Count) = "treeview" then
-      Treeview (Projects, Database, Argument (1), Argument (2));
+      Treeview (Projects, Argument (1), Argument (2));
    else
       Print_Usage;
       return;
    end if;
-
-   Free (Database);
 
    if Projects /= null then
       Free_Code_Analysis (Projects);
