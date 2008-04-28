@@ -53,7 +53,6 @@ with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Custom;          use GPS.Kernel.Custom;
 with Traces;                     use Traces;
 with File_Utils;                 use File_Utils;
-with String_Utils;               use String_Utils;
 with Generic_List;
 with VFS;                        use VFS;
 with Welcome_Page;               use Welcome_Page;
@@ -165,7 +164,7 @@ package body Help_Module is
    procedure Display_Help
      (Kernel : access Kernel_Handle_Record'Class;
       URL    : String);
-   --  Display HTML Help file.
+   --  Display HTML Help file
 
    procedure Display_Help
      (Kernel : access Kernel_Handle_Record'Class;
