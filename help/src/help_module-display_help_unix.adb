@@ -18,7 +18,8 @@
 -----------------------------------------------------------------------
 
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with GNATCOLL.Templates;         use GNATCOLL.Templates;
+with GNATCOLL.Templates;     use GNATCOLL.Templates;
+with String_Utils;           use String_Utils;
 
 separate (Help_Module)
 procedure Display_Help
