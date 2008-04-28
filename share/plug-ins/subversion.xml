@@ -186,7 +186,7 @@
 
    <action name="generic_svn_history" show-command="false" output="none" category="">
       <shell output="">echo "Querying history for $1"</shell>
-      <external check-password="true">svn --non-interactive -v log "$1"</external>
+      <external check-password="true">svn --non-interactive -v log --revision HEAD:0 "$1"</external>
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
@@ -197,7 +197,7 @@
 
    <action name="generic_svn_history_text" show-command="false" output="none" category="">
       <shell output="">echo "Querying history for $1"</shell>
-      <external check-password="true">svn --non-interactive log "$1"</external>
+      <external check-password="true">svn --non-interactive log --revision HEAD:0 "$1"</external>
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>

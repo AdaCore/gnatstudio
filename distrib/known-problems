@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.3.0
 
+- H427-004: Subversion head revisions log not displayed
+  Problem:    In the VCS Subversion log output, the head revisions are not
+              displayed if they correspond to changes not yet updated
+              locally.
+  Workaround: Do an update of the file before displaying the log
+
 - H415-015: Wrong file used when compiling a file with no project
   Problem:    When compiling a file which does not belong to the current
               project hierarchy and a file with the same basename exists
