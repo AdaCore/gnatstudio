@@ -301,7 +301,7 @@ package body VCS_View.Activities is
                     (Msg     =>
                        (-"Activity") & ''' & Get_Name (Activity) & ''' &
                      (-"can't be re-opened") & ASCII.LF &
-                     (-"file ") & Base_Name (File) &
+                     (-"file ") & Display_Base_Name (File) &
                      (-" is part of activity '") & Get_Name (F_Activity) &
                      ''' & ASCII.LF,
                      Dialog_Type => Warning,

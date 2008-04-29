@@ -140,7 +140,7 @@ package body Entities is
 
    function Internal_Get_Or_Create
      (Db            : Entities_Database;
-      Full_Filename : VFS.Cst_UTF8_String_Access;
+      Full_Filename : VFS.Cst_String_Access;
       File          : VFS.Virtual_File;
       Handler       : access LI_Handler_Record'Class;
       LI            : LI_File := null;
@@ -1020,7 +1020,7 @@ package body Entities is
    -- Hash --
    ----------
 
-   function Hash (Key : VFS.Cst_UTF8_String_Access) return HTable_Header is
+   function Hash (Key : VFS.Cst_String_Access) return HTable_Header is
    begin
       if Is_Case_Sensitive (Build_Server) then
          return String_Hash (Key.all);
@@ -1070,7 +1070,7 @@ package body Entities is
    -- Get_Key --
    -------------
 
-   function Get_Key (E : Source_File_Item) return VFS.Cst_UTF8_String_Access is
+   function Get_Key (E : Source_File_Item) return VFS.Cst_String_Access is
    begin
       return Full_Name (E.File.Name);
    end Get_Key;
@@ -1079,7 +1079,7 @@ package body Entities is
    -- Equal --
    -----------
 
-   function Equal (K1, K2 : VFS.Cst_UTF8_String_Access) return Boolean is
+   function Equal (K1, K2 : VFS.Cst_String_Access) return Boolean is
    begin
       if Is_Case_Sensitive (Build_Server) then
          return K1 = K2 or else K1.all = K2.all;
@@ -1126,7 +1126,7 @@ package body Entities is
    -- Get_Key --
    -------------
 
-   function Get_Key (E : LI_File_Item) return VFS.Cst_UTF8_String_Access is
+   function Get_Key (E : LI_File_Item) return VFS.Cst_String_Access is
    begin
       return Full_Name (E.File.Name);
    end Get_Key;
@@ -1247,7 +1247,7 @@ package body Entities is
 
    function Internal_Get_Or_Create
      (Db            : Entities_Database;
-      Full_Filename : VFS.Cst_UTF8_String_Access;
+      Full_Filename : VFS.Cst_String_Access;
       File          : VFS.Virtual_File;
       Handler       : access LI_Handler_Record'Class;
       LI            : LI_File := null;

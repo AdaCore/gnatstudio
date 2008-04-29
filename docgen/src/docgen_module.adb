@@ -682,7 +682,7 @@ package body Docgen_Module is
       then
          Insert
            (Kernel,
-            Base_Name (File) &
+            Display_Base_Name (File) &
             (-" is not an Ada file, cannot generate documentation"),
             Add_LF => True,
             Mode   => Error);

@@ -233,7 +233,7 @@ package body GPS.Kernel.Console is
          declare
             Contents : constant String := Get_Chars (Console);
          begin
-            FD := Create_File (Locale_Full_Name (File), Binary);
+            FD := Create_File (Full_Name (File).all, Binary);
             Len := Write (FD, Contents'Address, Contents'Length);
             Close (FD);
          end;

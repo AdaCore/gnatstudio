@@ -170,7 +170,7 @@ package body Make_Harness_Window_Pkg.Callbacks is
          Set_Text
            (Win.Label,
             (-"The file ") &
-            Response.Base_Name &
+            Response.Display_Base_Name &
             (-" does not contain a test suite."));
          Free (Suite_Name);
          Free (Package_Name);

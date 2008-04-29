@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007, AdaCore             --
+--                      Copyright (C) 2001-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,7 +20,7 @@
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Interfaces.C;              use Interfaces.C;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
-
+with Filesystems;
 with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Directory_Operations; use GNAT, GNAT.Directory_Operations;
 
@@ -28,34 +28,14 @@ package body OS_Utils is
 
    OpenVMS_Host : Boolean := False;
 
-   -----------------
-   -- Get_Tmp_Dir --
-   -----------------
-
-   function Get_Tmp_Dir return String is
-      function Internal return chars_ptr;
-      pragma Import (C, Internal, "__gps_get_tmp_dir");
-
-      C_Str : chars_ptr := Internal;
-      Str   : constant String :=
-                Directory_Operations.Format_Pathname (To_Ada (Value (C_Str)));
-   begin
-      Free (C_Str);
-
-      if Str (Str'Last) = Dir_Separator then
-         return Str;
-      else
-         return Str & Dir_Separator;
-      end if;
-   end Get_Tmp_Dir;
-
    ---------------------
    -- Create_Tmp_File --
    ---------------------
 
    function Create_Tmp_File return String is
       Current_Dir : constant String := Get_Current_Dir;
-      Temp_Dir    : constant String := Get_Tmp_Dir;
+      Temp_Dir    : constant String :=
+        Filesystems.Get_Local_Filesystem.Get_Tmp_Directory;
       Fd          : File_Descriptor;
       Base        : String_Access;
 

@@ -114,7 +114,7 @@ package body Log_Utils is
          declare
             File : File_Descriptor;
          begin
-            File := Create_New_File (Locale_Full_Name (Mapping), Text);
+            File := Create_New_File (Full_Name (Mapping).all, Text);
             Close (File);
          end;
       end if;
@@ -138,7 +138,7 @@ package body Log_Utils is
             declare
                File : File_Descriptor;
             begin
-               File := Create_New_File (Locale_Full_Name (Mapping), Text);
+               File := Create_New_File (Full_Name (Mapping).all, Text);
                Close (File);
             end;
 
@@ -355,7 +355,7 @@ package body Log_Utils is
 
          begin
             if not Is_Regular_File (S) then
-               File := Create_New_File (Locale_Full_Name (S), Text);
+               File := Create_New_File (Full_Name (S).all, Text);
                Close (File);
                Add_Entry (Mapper,
                           Real_Name,
@@ -372,7 +372,7 @@ package body Log_Utils is
                        & Base_Name (File_Name) & "$" & Image (J) & Suffix);
 
                   if not Is_Regular_File (S) then
-                     File := Create_New_File (Locale_Full_Name (S), Text);
+                     File := Create_New_File (Full_Name (S).all, Text);
                      Close (File);
                      Add_Entry
                        (Mapper,

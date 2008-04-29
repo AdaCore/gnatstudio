@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2007                         --
---                              AdaCore                              --
+--                        Copyright (C) 2007-2008, AdaCore           --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,7 +19,7 @@
 
 with Ada.Unchecked_Conversion;
 
-with Glib.Values;               use Glib.Values;
+with Glib.Values;               use Glib, Glib.Values;
 with System;
 
 package body VFS.Values is
@@ -79,8 +78,8 @@ package body VFS.Values is
 
    function Get_Virtual_File_Type return Glib.GType is
    begin
-      if Virtual_File_Type = GType_None then
-         Virtual_File_Type := Boxed_Type_Register_Static
+      if Virtual_File_Type = Glib.GType_None then
+         Virtual_File_Type := Glib.Boxed_Type_Register_Static
            ("Virtual_File", Virtual_File_Boxed_Copy'Access,
             Virtual_File_Boxed_Free'Access);
       end if;

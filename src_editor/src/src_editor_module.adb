@@ -966,7 +966,8 @@ package body Src_Editor_Module is
          --  Find the first free view number
          Num := 2;
          while Find_MDI_Child_By_Name
-           (Get_MDI (Kernel), Base_Name (Title) & " <" & Image (Num) & ">") /=
+           (Get_MDI (Kernel),
+            Display_Base_Name (Title) & " <" & Image (Num) & ">") /=
            null
          loop
             Num := Num + 1;
@@ -977,8 +978,8 @@ package body Src_Editor_Module is
          begin
             Set_Title
               (Child,
-               Full_Name (Title).all & " <" & Im & ">",
-               Base_Name (Title) & " <" & Im & ">");
+               Display_Full_Name (Title) & " <" & Im & ">",
+               Display_Base_Name (Title) & " <" & Im & ">");
          end;
 
          Put (Get_MDI (Kernel), Child, Initial_Position => Position_Automatic);
@@ -1261,11 +1262,13 @@ package body Src_Editor_Module is
 
          if File /= VFS.No_File then
             if Is_Local (File) then
-               Set_Title (Child, Full_Name (File).all, Base_Name (File));
+               Set_Title
+                 (Child, Full_Name (File).all, Display_Base_Name (File));
             else
-               Set_Title (Child,
-                          Get_Host (File) & ":|" & Full_Name (File).all,
-                          Base_Name (File));
+               Set_Title
+                 (Child,
+                  Get_Host (File) & ":|" & Display_Full_Name (File),
+                  Display_Base_Name (File));
             end if;
 
             File_Edited (Kernel, Get_Filename (MDI_Child (Child)));
@@ -1688,7 +1691,7 @@ package body Src_Editor_Module is
                 (Title             => -"Save File As",
                  Parent            => Get_Current_Window (Kernel),
                  Base_Directory    => Dir (Old_Name),
-                 Default_Name      => Base_Name (Old_Name),
+                 Default_Name      => Display_Base_Name (Old_Name),
                  Remote_Browsing   => not Is_Local (Old_Name),
                  Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
                  Kind              => Save_File,
@@ -2277,7 +2280,7 @@ package body Src_Editor_Module is
       Set_Alignment (Label, 0.0, 0.5);
       Add_Widget (Size, Label);
       Pack_Start (Box, Label, Expand => False);
-      Gtk_New (Label, Base_Name (File));
+      Gtk_New (Label, Display_Base_Name (File));
       Set_Alignment (Label, 0.0, 0.5);
       Pack_Start (Box, Label, Expand => False);
 

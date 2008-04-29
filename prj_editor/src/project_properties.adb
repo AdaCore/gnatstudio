@@ -2884,8 +2884,8 @@ package body Project_Properties is
 
                   Append (Model, Iter, Null_Iter);
                   Set (Model, Iter, 0, False);
-                  Set (Model, Iter, 1, Base_Name (File));
-                  Set (Model, Iter, 2, Full_Name (File).all);
+                  Set (Model, Iter, 1, Display_Base_Name (File));
+                  Set (Model, Iter, 2, Display_Full_Name (File));
                   Source := Source + 1;
                end loop;
 

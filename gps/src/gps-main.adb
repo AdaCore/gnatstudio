@@ -54,6 +54,7 @@ with Gtkada.MDI;                use Gtkada.MDI;
 with Config;                    use Config;
 with DDE;
 with File_Utils;
+with Filesystems;
 with GPS.Callbacks;             use GPS.Callbacks;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
@@ -552,12 +553,17 @@ procedure GPS.Main is
             OS_Exit (1);
       end;
 
-      if not Is_Directory (Get_Tmp_Dir) then
-         Button := Message_Dialog
-           ((-"Cannot access temporary directory ") & Get_Tmp_Dir,
-            Error, Button_OK, Justification => Justify_Left);
-         OS_Exit (1);
-      end if;
+      declare
+         Tmp : constant String :=
+           Filesystems.Get_Local_Filesystem.Get_Tmp_Directory;
+      begin
+         if not Is_Directory (Tmp) then
+            Button := Message_Dialog
+              ((-"Cannot access temporary directory ") & Tmp,
+               Error, Button_OK, Justification => Justify_Left);
+            OS_Exit (1);
+         end if;
+      end;
 
       --  Initialize the traces
 

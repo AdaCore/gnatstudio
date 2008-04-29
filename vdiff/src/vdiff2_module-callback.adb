@@ -26,6 +26,7 @@ with Gtkada.Dialogs;                    use Gtkada.Dialogs;
 with Gtkada.File_Selector;              use Gtkada.File_Selector;
 with Gtkada.MDI;                        use Gtkada.MDI;
 
+with Filesystems;                       use Filesystems;
 with GPS.Intl;                          use GPS.Intl;
 with GPS.Kernel.Contexts;               use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
@@ -33,7 +34,6 @@ with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;                use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
-with OS_Utils;                          use OS_Utils;
 with Traces;                            use Traces;
 with VFS;                               use VFS;
 with Vdiff2_Command_Block;              use Vdiff2_Command_Block;
@@ -54,7 +54,8 @@ package body Vdiff2_Module.Callback is
 
    function Get_Ref_Filename (File : Virtual_File) return String is
    begin
-      return Get_Tmp_Dir & "ref$" & Base_Name (File);
+      return Filesystems.Get_Local_Filesystem.Get_Tmp_Directory
+        & "ref$" & Base_Name (File);
    end Get_Ref_Filename;
 
    ---------------------------

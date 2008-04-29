@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2006                      --
---                              AdaCore                              --
+--                      Copyright (C) 2002-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -139,7 +138,7 @@ package body SN.Xref_Pools is
          --  ??? Should use GNAT.OS_Lib Open/Read instead, would be more
          --  efficient
 
-         Open (FD, In_File, Locale_Full_Name (Filename));
+         Open (FD, In_File, Full_Name (Filename).all);
 
          if Is_Open (FD) then
             loop
@@ -197,7 +196,7 @@ package body SN.Xref_Pools is
          return;
       end if;
 
-      Create (FD, Out_File, Locale_Full_Name (Filename));
+      Create (FD, Out_File, Full_Name (Filename).all);
       STable.Get_First (Pool.HTable, Iter);
 
       loop
@@ -306,7 +305,7 @@ package body SN.Xref_Pools is
                Data.Xref_Filename := Full_Name;
 
                --  touch this file
-               FD := Create_New_File (Locale_Full_Name (Full_Name), Binary);
+               FD := Create_New_File (Full_Name.Full_Name.all, Binary);
 
                if FD = Invalid_FD then -- unable to create a new file
                   --  raise an exception if unable to create new xref file

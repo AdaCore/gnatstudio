@@ -1933,7 +1933,7 @@ package body Project_Explorers is
 
       for F in Files'Range loop
          declare
-            Dir : constant Cst_UTF8_String_Access := Dir_Name (Files (F));
+            Dir : constant Cst_String_Access := Dir_Name (Files (F));
          begin
             S_Cursor := Find (S_Dirs, Dir.all);
             if S_Cursor = No_Element then
@@ -2956,7 +2956,7 @@ package body Project_Explorers is
       if not Found then
          Insert (Kernel,
                  -"File not found in the explorer: "
-                 & Base_Name (File_Information (Context.Context)),
+                 & Display_Base_Name (File_Information (Context.Context)),
                  Mode => GPS.Kernel.Console.Error);
       end if;
 

@@ -30,6 +30,7 @@ with Commands.Console;          use Commands.Console;
 with Commands.External;         use Commands.External;
 with Commands.Locations;        use Commands.Locations;
 with Commands;                  use Commands;
+with Filesystems;
 with File_Utils;                use File_Utils;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
@@ -209,7 +210,9 @@ package body VCS.ClearCase is
    is
       Current_File : constant String := String_List.Head (Head);
       Text_File    : constant Virtual_File := Create
-        (Full_Filename => Get_Tmp_Dir & Base_Name (Current_File));
+        (Full_Filename =>
+           Filesystems.Get_Local_Filesystem.Get_Tmp_Directory
+           & Base_Name (Current_File));
       L_Temp       : List_Node := First (List);
       File         : File_Type;
       Success      : Boolean;
@@ -263,7 +266,8 @@ package body VCS.ClearCase is
                        Create (Full_Filename => String_List.Head (Head));
       Patch_File   : constant Virtual_File := Create
         (Full_Filename =>
-           Get_Tmp_Dir & Base_Name (Current_File) & "$difs");
+           Filesystems.Get_Local_Filesystem.Get_Tmp_Directory
+           & Base_Name (Current_File) & "$difs");
       File         : File_Type;
       Success      : Boolean;
 

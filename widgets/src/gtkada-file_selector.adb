@@ -505,7 +505,7 @@ package body Gtkada.File_Selector is
 
             S := NativeFileSelection
               (Title & ASCII.NUL,
-               Locale_Full_Name (Last_Directory) & ASCII.NUL,
+               Display_Full_Name (Last_Directory) & ASCII.NUL,
                File_Pattern & ASCII.NUL,
                Pattern_Name & ASCII.NUL,
                Default_Name & ASCII.NUL,
@@ -515,7 +515,7 @@ package body Gtkada.File_Selector is
          else
             S := NativeFileSelection
               (Title & ASCII.NUL,
-               Locale_Full_Name (Base_Directory) & ASCII.NUL,
+               Display_Full_Name (Base_Directory) & ASCII.NUL,
                File_Pattern & ASCII.NUL,
                Pattern_Name & ASCII.NUL,
                Default_Name & ASCII.NUL,
@@ -690,12 +690,12 @@ package body Gtkada.File_Selector is
 
             S := NativeDirSelection
               (Title & ASCII.NUL,
-               Locale_Full_Name (Last_Directory) & ASCII.NUL);
+               Display_Full_Name (Last_Directory) & ASCII.NUL);
 
          else
             S := NativeDirSelection
               (Title & ASCII.NUL,
-               Locale_Full_Name (Base_Directory) & ASCII.NUL);
+               Display_Full_Name (Base_Directory) & ASCII.NUL);
          end if;
 
          --  Change back to working directory
@@ -827,7 +827,7 @@ package body Gtkada.File_Selector is
 
          if Iter /= Null_Iter then
             Set (Win.File_Model, Iter, Base_Name_Column,
-                 Locale_Base_Name (Data (Win.Remaining_Files)));
+                 Display_Base_Name (Data (Win.Remaining_Files)));
 
             if Text /= null then
                Set (Win.File_Model, Iter, Comment_Column,

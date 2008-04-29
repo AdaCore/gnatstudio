@@ -925,7 +925,8 @@ package body GPS.Location_View is
       Value : GValue;
    begin
       if Base_Name = "" then
-         Set (Model, Iter, Base_Name_Column, VFS.Base_Name (Absolute_Name));
+         Set (Model, Iter, Base_Name_Column,
+              VFS.Display_Base_Name (Absolute_Name));
       else
          if Message = "" then
             Set (Model, Iter, Base_Name_Column, Base_Name);

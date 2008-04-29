@@ -907,7 +907,7 @@ package body Code_Analysis_Module is
       end if;
 
       Prj_Name  := Load_Or_Find (Get_Registry (Get_Kernel (Data)).all,
-                                 Locale_Full_Name (Prj_File));
+                                 Full_Name (Prj_File).all);
       Prj_Node  := Get_Or_Create
         (Code_Analysis_Property (Property).Analysis.Projects, Prj_Name);
       Add_Gcov_Project_Info (Get_Kernel (Data), Prj_Node);
@@ -1398,7 +1398,7 @@ package body Code_Analysis_Module is
                loop
                   exit when Iter = Null_Iter or else
                   Get_String (Model, Iter, Num_Col) =
-                    Base_Name (File_Information (Context));
+                    Display_Base_Name (File_Information (Context));
                   Next (Model, Iter);
                end loop;
             else
@@ -1427,7 +1427,7 @@ package body Code_Analysis_Module is
                loop
                   exit when Iter = Null_Iter or else
                   Get_String (Model, Iter, Num_Col) =
-                    Base_Name (File_Information (Context));
+                    Display_Base_Name (File_Information (Context));
                   Next (Model, Iter);
                end loop;
             end if;
@@ -1729,7 +1729,7 @@ package body Code_Analysis_Module is
             GPS.Kernel.Console.Insert
               (Get_Kernel (Cont_N_Anal.Context),
                -"No coverage information to display for "
-               & Base_Name (File_Node.Name));
+               & Display_Base_Name (File_Node.Name));
             return;
          end if;
       end if;
@@ -2151,7 +2151,7 @@ package body Code_Analysis_Module is
       Gtk_New (Item);
       Append (Submenu, Item);
 
-      Gtk_New (Item, -"Load data for " & Emphasize (Locale_Base_Name
+      Gtk_New (Item, -"Load data for " & Emphasize (Base_Name
         (File_Information (Cont_N_Anal.Context))));
       Activate_Pango_Markup (Item);
       Append (Submenu, Item);
@@ -2210,7 +2210,7 @@ package body Code_Analysis_Module is
 
       Append_Load_File_Data (Cont_N_Anal, Submenu);
 
-      Gtk_New (Item, -"Remove data of " & Emphasize (Base_Name
+      Gtk_New (Item, -"Remove data of " & Emphasize (Display_Base_Name
         (File_Information (Context))));
       Activate_Pango_Markup (Item);
       Append (Submenu, Item);
@@ -2634,7 +2634,7 @@ package body Code_Analysis_Module is
    is
       Item : Gtk_Menu_Item;
    begin
-      Gtk_New (Item, -"Load data for " & Emphasize (Locale_Base_Name
+      Gtk_New (Item, -"Load data for " & Emphasize (Display_Base_Name
         (File_Information (Cont_N_Anal.Context))));
       Activate_Pango_Markup (Item);
       Append (Menu, Item);

@@ -604,10 +604,10 @@ package body Creation_Wizard.Dependencies is
       Name := Creation_Wizard.Run (Wiz);
       if Name /= VFS.No_File then
          Append (Model, Iter, Null_Iter);
-         Set (Model, Iter, Project_Name_Column, Base_Name (Name));
+         Set (Model, Iter, Project_Name_Column, Display_Base_Name (Name));
          Set (Model, Iter, Is_Limited_Column, False);
          Set (Model, Iter, Can_Change_Limited_Column, True);
-         Set (Model, Iter, Full_Path_Column, Full_Name (Name).all);
+         Set (Model, Iter, Full_Path_Column, Display_Full_Name (Name));
       end if;
    end Add_New_Project_From_Wizard;
 

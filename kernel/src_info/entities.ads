@@ -1222,9 +1222,9 @@ private
 
    procedure Set_Next (E : Source_File_Item; Next : Source_File_Item);
    function  Next     (E : Source_File_Item) return Source_File_Item;
-   function  Get_Key  (E : Source_File_Item) return VFS.Cst_UTF8_String_Access;
-   function  Hash     (Key : VFS.Cst_UTF8_String_Access) return HTable_Header;
-   function  Equal    (K1, K2 : VFS.Cst_UTF8_String_Access) return Boolean;
+   function  Get_Key  (E : Source_File_Item) return VFS.Cst_String_Access;
+   function  Hash     (Key : VFS.Cst_String_Access) return HTable_Header;
+   function  Equal    (K1, K2 : VFS.Cst_String_Access) return Boolean;
    procedure Free     (E : in out Source_File_Item);
    pragma Inline (Set_Next, Next, Get_Key, Hash, Equal, Free);
 
@@ -1234,7 +1234,7 @@ private
       Null_Ptr      => null,
       Set_Next      => Set_Next,
       Next          => Next,
-      Key           => VFS.Cst_UTF8_String_Access,
+      Key           => VFS.Cst_String_Access,
       Get_Key       => Get_Key,
       Hash          => Hash,
       Equal         => Equal,
@@ -1272,7 +1272,7 @@ private
 
    procedure Set_Next (E : LI_File_Item; Next : LI_File_Item);
    function  Next     (E : LI_File_Item) return LI_File_Item;
-   function  Get_Key  (E : LI_File_Item) return VFS.Cst_UTF8_String_Access;
+   function  Get_Key  (E : LI_File_Item) return VFS.Cst_String_Access;
    procedure Free     (E : in out LI_File_Item);
    pragma Inline (Set_Next, Next, Get_Key, Free);
 
@@ -1282,7 +1282,7 @@ private
       Null_Ptr      => null,
       Set_Next      => Set_Next,
       Next          => Next,
-      Key           => VFS.Cst_UTF8_String_Access,
+      Key           => VFS.Cst_String_Access,
       Get_Key       => Get_Key,
       Hash          => Hash,
       Equal         => Equal,

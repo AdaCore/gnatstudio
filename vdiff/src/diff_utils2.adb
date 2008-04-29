@@ -261,8 +261,8 @@ package body Diff_Utils2 is
          return Ret;
       end if;
 
-      Args (1) := new String'(Locale_Full_Name (Ref_File));
-      Args (2) := new String'(Locale_Full_Name (New_File));
+      Args (1) := new String'(Full_Name (Ref_File).all);
+      Args (2) := new String'(Full_Name (New_File).all);
 
       Trace (Me, "spawn: " & Diff_Command
              & " " & Full_Name (New_File).all
@@ -342,17 +342,17 @@ package body Diff_Utils2 is
       Args (2) := new String'("-o");
 
       if Revert then
-         Args (3) := new String'(Locale_Full_Name (Orig_File));
+         Args (3) := new String'(Full_Name (Orig_File).all);
          Args (4) := new String'("-R");
-         Args (5) := new String'(Locale_Full_Name (New_File));
+         Args (5) := new String'(Full_Name (New_File).all);
          Num_Args := 6;
       else
-         Args (3) := new String'(Locale_Full_Name (New_File));
-         Args (4) := new String'(Locale_Full_Name (Orig_File));
+         Args (3) := new String'(Full_Name (New_File).all);
+         Args (4) := new String'(Full_Name (Orig_File).all);
          Num_Args := 5;
       end if;
 
-      Args (Num_Args) := new String'(Locale_Full_Name (Diff_File));
+      Args (Num_Args) := new String'(Full_Name (Diff_File).all);
       Trace (Me, "spawn: " &
              Argument_List_To_String (Cmd_Args.all & Args (1 .. Num_Args)));
 
@@ -375,7 +375,7 @@ package body Diff_Utils2 is
       end;
 
       --  ??? Should use VFS.Read_File instead, more efficient
-      Open (File, In_File, Locale_Full_Name (Diff_File));
+      Open (File, In_File, Full_Name (Diff_File).all);
 
       while not End_Of_File (File) loop
          Get_Line (File, Buffer, Last);
@@ -473,9 +473,9 @@ package body Diff_Utils2 is
          return Ret;
       end if;
 
-      Args (1) := new String'(Locale_Full_Name (My_Change));
-      Args (2) := new String'(Locale_Full_Name (Old_File));
-      Args (3) := new String'(Locale_Full_Name (Your_Change));
+      Args (1) := new String'(Full_Name (My_Change).all);
+      Args (2) := new String'(Full_Name (Old_File).all);
+      Args (3) := new String'(Full_Name (Your_Change).all);
 
       Trace (Me, "spawn: " & Diff3_Command & " " &
              Full_Name (My_Change).all

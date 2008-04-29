@@ -24,11 +24,8 @@
 with Ada.Calendar;
 with Ada.Finalization;
 with Ada.Containers;
-
 with GNAT.OS_Lib;
 with GNAT.Strings;
-
-with Glib;               use Glib;
 
 with String_List_Utils;  use String_List_Utils;
 
@@ -43,9 +40,6 @@ package VFS is
    --  We must use the same definition as GNAT.Calendar.No_Time, which is
    --  used by GNATCOLL
 
-   subtype UTF8_String_Access is GNAT.Strings.String_Access;
-   type Cst_UTF8_String_Access is access constant Glib.UTF8_String;
-
    type Virtual_File is tagged private;
    No_File        : constant Virtual_File;
    Local_Root_Dir : constant Virtual_File;
@@ -58,34 +52,112 @@ package VFS is
 
    Empty_File_Array : constant File_Array;
 
-   function Create (Full_Filename : UTF8_String) return Virtual_File;
+   ----------------------------
+   --  Creating Virtual_File --
+   ----------------------------
+   --  The following subprograms are used to create instances of Virtual_File.
+   --  On the disk, a filename is typically just a series of bytes, with no
+   --  special interpretation in utf8, iso-8859-1 or other pagesets (on most
+   --  systems, windows always uses utf8 these days but has other
+   --  specificities).
+   --  As a result, a filename passed to these Create subprograms will not be
+   --  interpreted through an encoding or another, but will just be stored as
+   --  is. However, when comes the time to display the file on the disk, the
+   --  filename needs to be converted to a known encoding, generally utf8.
+   --  See the "Retrieving names" section below.
+
+   function Create (Full_Filename : String) return Virtual_File;
    --  Return a file, given its full filename.
    --  The latter can be found, for source files, through the functions in
    --  projects-registry.ads.
 
    function Create
-     (Host          : UTF8_String;
-      Full_Filename : UTF8_String) return Virtual_File;
+     (Host          : String;
+      Full_Filename : String) return Virtual_File;
    --  Return a file, given its full filename and host name.
    --  The latter can be found, for source files, through the functions in
    --  projects-registry.ads.
 
    function Create_From_Dir
      (Dir       : Virtual_File;
-      Base_Name : UTF8_String) return Virtual_File;
+      Base_Name : String) return Virtual_File;
    --  Creates a file from its directory and base name
 
-   function Create_From_Base (Base_Name : UTF8_String) return Virtual_File;
+   function Create_From_Base (Base_Name : String) return Virtual_File;
    --  Return a file, given its base name.
    --  The full name will never be computable. Consider using Projects.Create
    --  if you know to which project the file belongs. Also consider using
    --  GPS.Kernel.Create
-   --
    --  ??? Currently, this does the same thing as create, but it is
    --  preferable to distinguish both cases just in case.
 
    function Create (Files : String_List.List) return File_Array;
    --  Returns a File_Array out of a string list of file names
+
+   ----------------------
+   -- Retrieving names --
+   ----------------------
+   --  As mentioned above, a filename is stored internally as a series of bytes
+   --  and not interpreted in anyway for an encoding. However, when you
+   --  retrieve the name of a file for display, you will have to convert it to
+   --  a known encoding.
+   --  There are two sets of functions for retrieving names: Display_* will
+   --  return the name converted through the Locale_To_Display function of the
+   --  filesystem.
+   --  All other functions will return the name as passed to the Create
+   --  functions above, and therefore make no guarantee on the encoding of the
+   --  file name.
+
+   type Cst_String_Access is access constant String;
+
+   function Base_Name
+     (File : Virtual_File; Suffix : String := "") return String;
+   --  Return the base name of the file
+
+   function Base_Dir_Name (File : Virtual_File) return String;
+   --  Return the base name of the directory or the file
+
+   function Full_Name
+     (File : Virtual_File; Normalize : Boolean := False)
+      return Cst_String_Access;
+   --  Return the full path to File.
+   --  If Normalize is True, the file name is first normalized, note that links
+   --  are not resolved there.
+   --  The returned value can be used to recreate a Virtual_File instance.
+   --  If file names are case insensitive, the normalized name will always
+   --  be all lower cases.
+
+   function Full_Name_Hash
+     (Key : Virtual_File) return Ada.Containers.Hash_Type;
+   --  Return a Hash_Type computed from the full name of the given VFS.
+   --  Could be used to instantiate an Ada 2005 container that uses a VFS as
+   --  key and requires a hash function.
+
+   function File_Extension (File : Virtual_File) return String;
+   --  Return the extension of the file, or the empty string if there is no
+   --  extension. This extension includes the last dot and all the following
+   --  characters.
+
+   function Dir_Name (File : Virtual_File) return Cst_String_Access;
+   --  Return the directory name for File. This includes any available
+   --  on the protocol, so that relative files names are properly found.
+
+   function Display_Full_Name (File : Virtual_File) return String;
+   --  Same as Full_Name
+
+   function Display_Base_Name (File : Virtual_File) return String;
+   --  Same as Base_Name
+
+   function Display_Dir_Name (File : Virtual_File) return String;
+   --  Same as Dir_Name
+
+   function Get_Host (File : Virtual_File) return String;
+   --  Returns the host containing the file. If the host is the localhost,
+   --  the empty string is returned.
+
+   ------------------------
+   -- Getting attributes --
+   ------------------------
 
    function Is_Local (File : Virtual_File) return Boolean;
    --  Tell if the file is local
@@ -104,43 +176,6 @@ package VFS is
    function Is_Parent (Parent, Child : Virtual_File) return Boolean;
    --  Compare Parent and Child directory and determines if Parent contains
    --  Child directory
-
-   function Base_Name
-     (File : Virtual_File; Suffix : String := "") return Glib.UTF8_String;
-   --  Return the base name of the file
-
-   function Base_Dir_Name
-     (File : Virtual_File) return Glib.UTF8_String;
-   --  Return the base name of the directory or the file
-
-   function Full_Name
-     (File : Virtual_File; Normalize : Boolean := False)
-      return Cst_UTF8_String_Access;
-   --  Return the full path to File.
-   --  If Normalize is True, the file name is first normalized, note that links
-   --  are not resolved there.
-   --  The returned value can be used to recreate a Virtual_File instance.
-   --  If file names are case insensitive, the normalized name will always
-   --  be all lower cases.
-
-   function Full_Name_Hash
-     (Key : Virtual_File) return Ada.Containers.Hash_Type;
-   --  Return a Hash_Type computed from the full name of the given VFS.
-   --  Could be used to instantiate an Ada 2005 container that uses a VFS as
-   --  key and requires a hash function.
-
-   function File_Extension (File : Virtual_File) return UTF8_String;
-   --  Return the extension of the file, or the empty string if there is no
-   --  extension. This extension includes the last dot and all the following
-   --  characters.
-
-   function Get_Host (File : Virtual_File) return UTF8_String;
-   --  Returns the host containing the file. If the host is the localhost,
-   --  the empty string is returned.
-
-   function Dir_Name (File : Virtual_File) return Cst_UTF8_String_Access;
-   --  Return the directory name for File. This includes any available
-   --  on the protocol, so that relative files names are properly found.
 
    function Dir (File : Virtual_File) return Virtual_File;
    --  Return the virtual file corresponding to the directory of the file
@@ -214,8 +249,7 @@ package VFS is
    function Get_Parent (Dir : Virtual_File) return Virtual_File;
    --  return the parent directory if it exists, else No_File is returned
 
-   function Sub_Dir
-     (Dir : Virtual_File; Name : UTF8_String) return Virtual_File;
+   function Sub_Dir (Dir : Virtual_File; Name : String) return Virtual_File;
    --  returns sub directory Name if it exists, else No_File is returned
 
    procedure Change_Dir (Dir : Virtual_File);
@@ -282,22 +316,6 @@ package VFS is
    procedure Close (File : in out Writable_File);
    --  Closes File, and write the file to disk.
    --  Use_Error is raised if the file could not be saved.
-
-   ---------------------
-   -- Locale encoding --
-   ---------------------
-   --  The following functions return their result encoded in the locale
-   --  charset, suitable for calls to the C library and low-level manipulations
-   --  of files.
-
-   function Locale_Full_Name (File : Virtual_File) return String;
-   --  Same as Full_Name
-
-   function Locale_Base_Name (File : Virtual_File) return String;
-   --  Same as Base_Name
-
-   function Locale_Dir_Name (File : Virtual_File) return String;
-   --  Same as Dir_Name
 
 private
    --  This type is implemented as a controlled type, to ease the memory

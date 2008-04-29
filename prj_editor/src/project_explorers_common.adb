@@ -232,7 +232,7 @@ package body Project_Explorers_Common is
          end if;
       end if;
 
-      Set (Model, N, Absolute_Name_Column, Locale_Full_Name (File));
+      Set (Model, N, Absolute_Name_Column, Display_Full_Name (File));
       Set (Model, N, Base_Name_Column, Locale_To_UTF8 (Name));
       Set (Model, N, Icon_Column,
            C_Proxy (Entity_Icons (False, Visibility_Public) (Category)));
@@ -337,7 +337,7 @@ package body Project_Explorers_Common is
          end if;
       end if;
 
-      Set (Model, N, Absolute_Name_Column, Locale_Full_Name (File));
+      Set (Model, N, Absolute_Name_Column, Display_Full_Name (File));
       Set (Model, N, Base_Name_Column, Entity_Name_Of (Construct, True));
       Set (Model, N, Entity_Base_Column, Reduce (Construct.Name.all));
       Set (Model, N, Icon_Column, C_Proxy (Entity_Icon_Of (Construct)));

@@ -32,13 +32,9 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Heap_Sort;            use GNAT.Heap_Sort;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
-with Glib.Unicode;              use Glib.Unicode;
-
 with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with Filesystems;               use Filesystems;
-with File_Utils;                use File_Utils;
-with OS_Utils;                  use OS_Utils;
 
 package body VFS is
 
@@ -50,10 +46,7 @@ package body VFS is
    --  This will be fixed when we stop relying on Gtk+ for the UTF8
    --  conversions.
 
-   Temporary_Dir : constant String := Get_Tmp_Dir;
-   --  Cache the name of the temporary directory
-
-   Empty_String : constant Cst_UTF8_String_Access := new String'("");
+   Empty_String : constant Cst_String_Access := new String'("");
 
    procedure Ensure_Normalized (File : Virtual_File);
    --  Ensure that the information for the normalized file have been correctly
@@ -62,42 +55,10 @@ package body VFS is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Contents_Record, Contents_Access);
 
-   Cygdrive : constant String := "/cygdrive/";
-   --  This package supports the standard Cygwin naming convention. A filename
-   --  starting with /cygdrive/ will be properly converted to the DOS
-   --  equivalent.
-
-   function Native_Filename (Filename : String) return String;
-   pragma Inline (Native_Filename);
-   --  Routine that will translate a "foreign" filename convention to the
-   --  proper native one. This is currently used only for the standard Cygwin
-   --  convention.
-
    function Get_Filesystem
      (File : Virtual_File'Class) return Filesystem_Record'Class;
    pragma Inline (Get_Filesystem);
    --  Return the filesystem to use for that file
-
-   ---------------------
-   -- Native_Filename --
-   ---------------------
-
-   function Native_Filename (Filename : String) return String is
-   begin
-      if Filename'Length > Cygdrive'Length + 2
-        and then
-          Filename (Filename'First .. Filename'First + Cygdrive'Length - 1)
-          = Cygdrive
-        and then
-          (Filename (Filename'First + Cygdrive'Length) in 'a' .. 'z'
-           or else Filename (Filename'First + Cygdrive'Length) in 'A' .. 'Z')
-      then
-         return OS_Utils.Format_Pathname (Filename, Style => DOS);
-
-      else
-         return Filename;
-      end if;
-   end Native_Filename;
 
    --------------
    -- Is_Local --
@@ -144,7 +105,7 @@ package body VFS is
    -- Create --
    ------------
 
-   function Create (Full_Filename : UTF8_String) return Virtual_File is
+   function Create (Full_Filename : String) return Virtual_File is
 
    begin
       return Create (Host => "", Full_Filename => Full_Filename);
@@ -155,22 +116,12 @@ package body VFS is
    ------------
 
    function Create
-     (Host          : UTF8_String;
-      Full_Filename : UTF8_String) return Virtual_File
+     (Host          : String;
+      Full_Filename : String) return Virtual_File
    is
-      Valid       : Boolean;
-      Invalid_Pos : Natural;
-      Last        : Natural;
+      Last        : Natural := Full_Filename'Last;
       File        : Virtual_File;
    begin
-      UTF8_Validate (Full_Filename, Valid, Invalid_Pos);
-
-      if not Valid then
-         Last := Invalid_Pos - 1;
-      else
-         Last := Full_Filename'Last;
-      end if;
-
       while Last >= Full_Filename'First loop
          exit when Full_Filename (Last) /= ASCII.LF
            and then Full_Filename (Last) /= ASCII.CR;
@@ -183,7 +134,8 @@ package body VFS is
            (Server          => new String'(Host),
             Ref_Count       => 1,
             Full_Name       => new String'
-              (Native_Filename (Full_Filename (Full_Filename'First .. Last))),
+              (Get_Filesystem (Host).From_Unix
+               (Full_Filename (Full_Filename'First .. Last))),
             Normalized_Full => null,
             Dir_Name        => null,
             Kind            => Unknown));
@@ -215,7 +167,7 @@ package body VFS is
 
    function Create_From_Dir
      (Dir       : Virtual_File;
-      Base_Name : UTF8_String) return Virtual_File is
+      Base_Name : String) return Virtual_File is
    begin
       Ensure_Directory (Dir);
       return Create
@@ -227,7 +179,7 @@ package body VFS is
    -- Create_From_Base --
    ----------------------
 
-   function Create_From_Base (Base_Name : UTF8_String) return Virtual_File is
+   function Create_From_Base (Base_Name : String) return Virtual_File is
    begin
       if Base_Name /= "" then
          return (Ada.Finalization.Controlled with
@@ -257,7 +209,7 @@ package body VFS is
            (File.Value.Full_Name.all)
          then
             File.Value.Normalized_Full :=
-              new UTF8_String'(File.Value.Full_Name.all);
+              new String'(File.Value.Full_Name.all);
 
          else
             --  Normalize_Pathname with link resolution is not needed, since
@@ -265,7 +217,7 @@ package body VFS is
             --     the application's source files, and do not matter for other
             --     files on the system).
 
-            File.Value.Normalized_Full := new UTF8_String'
+            File.Value.Normalized_Full := new String'
               (File.Get_Filesystem.Normalize (File.Value.Full_Name.all));
          end if;
       end if;
@@ -276,7 +228,7 @@ package body VFS is
    ---------------
 
    function Base_Name
-     (File : Virtual_File; Suffix : String := "") return Glib.UTF8_String is
+     (File : Virtual_File; Suffix : String := "") return String is
    begin
       if File.Value = null
         or else File.Value.Full_Name = null
@@ -292,7 +244,7 @@ package body VFS is
    -- Base_Dir_Name --
    -------------------
 
-   function Base_Dir_Name (File : Virtual_File) return Glib.UTF8_String is
+   function Base_Dir_Name (File : Virtual_File) return String is
    begin
       if File.Value = null
         or else File.Value.Full_Name = null
@@ -309,17 +261,17 @@ package body VFS is
 
    function Full_Name
      (File : Virtual_File; Normalize : Boolean := False)
-      return Cst_UTF8_String_Access is
+      return Cst_String_Access is
    begin
       if File.Value = null then
          return Empty_String;
 
       elsif Normalize then
          Ensure_Normalized (File);
-         return Cst_UTF8_String_Access (File.Value.Normalized_Full);
+         return Cst_String_Access (File.Value.Normalized_Full);
 
       else
-         return Cst_UTF8_String_Access (File.Value.Full_Name);
+         return Cst_String_Access (File.Value.Full_Name);
       end if;
    end Full_Name;
 
@@ -342,7 +294,7 @@ package body VFS is
    -- Host_Name --
    ---------------
 
-   function Get_Host (File : Virtual_File) return UTF8_String is
+   function Get_Host (File : Virtual_File) return String is
    begin
       if File.Value = null then
          return "";
@@ -355,7 +307,7 @@ package body VFS is
    -- Dir_Name --
    --------------
 
-   function Dir_Name (File : Virtual_File) return Cst_UTF8_String_Access is
+   function Dir_Name (File : Virtual_File) return Cst_String_Access is
    begin
       if File.Value = null then
          return Empty_String;
@@ -363,10 +315,9 @@ package body VFS is
       else
          if File.Value.Dir_Name = null then
             File.Value.Dir_Name :=
-              new UTF8_String'
-                (File.Get_Filesystem.Dir_Name (File.Full_Name.all));
+              new String'(File.Get_Filesystem.Dir_Name (File.Full_Name.all));
          end if;
-         return Cst_UTF8_String_Access (File.Value.Dir_Name);
+         return Cst_String_Access (File.Value.Dir_Name);
       end if;
    end Dir_Name;
 
@@ -386,11 +337,11 @@ package body VFS is
       end if;
    end Dir;
 
-   ----------------------
-   -- Locale_Full_Name --
-   ----------------------
+   -----------------------
+   -- Display_Full_Name --
+   -----------------------
 
-   function Locale_Full_Name (File : Virtual_File) return String is
+   function Display_Full_Name (File : Virtual_File) return String is
    begin
       if File.Value = null then
          return "";
@@ -398,25 +349,25 @@ package body VFS is
          --  ??? This is not cached, should it ?
          return File.Full_Name.all;
       end if;
-   end Locale_Full_Name;
+   end Display_Full_Name;
 
-   ----------------------
-   -- Locale_Base_Name --
-   ----------------------
+   -----------------------
+   -- Display_Base_Name --
+   -----------------------
 
-   function Locale_Base_Name (File : Virtual_File) return String is
+   function Display_Base_Name (File : Virtual_File) return String is
    begin
       return File.Base_Name;
-   end Locale_Base_Name;
+   end Display_Base_Name;
 
    ---------------------
    -- Locale_Dir_Name --
    ---------------------
 
-   function Locale_Dir_Name (File : Virtual_File) return String is
+   function Display_Dir_Name (File : Virtual_File) return String is
    begin
       return File.Dir_Name.all;
-   end Locale_Dir_Name;
+   end Display_Dir_Name;
 
    --------------------
    -- Unchecked_Free --
@@ -436,7 +387,7 @@ package body VFS is
    function Is_Regular_File (File : Virtual_File) return Boolean is
    begin
       return File.Value /= null
-        and then File.Get_Filesystem.Is_Regular_File (File.Locale_Full_Name);
+        and then File.Get_Filesystem.Is_Regular_File (File.Full_Name.all);
    end Is_Regular_File;
 
    ------------
@@ -448,9 +399,7 @@ package body VFS is
       Full_Name : String;
       Success   : out Boolean) is
    begin
-      Success := File.Get_Filesystem.Rename
-        (File.Locale_Full_Name,
-         Full_Name);
+      Success := File.Get_Filesystem.Rename (File.Full_Name.all, Full_Name);
    end Rename;
 
    ----------
@@ -464,13 +413,11 @@ package body VFS is
    begin
       if Is_Directory (File) then
          Success := File.Get_Filesystem.Copy_Dir
-           (File.Locale_Full_Name,
-            Target_Name);
+           (File.Full_Name.all, Target_Name);
 
       else
          Success := File.Get_Filesystem.Copy
-           (File.Locale_Full_Name,
-            Target_Name);
+           (File.Full_Name.all, Target_Name);
       end if;
    end Copy;
 
@@ -482,7 +429,7 @@ package body VFS is
      (File    : Virtual_File;
       Success : out Boolean) is
    begin
-      Success := File.Get_Filesystem.Delete (File.Locale_Full_Name);
+      Success := File.Get_Filesystem.Delete (File.Full_Name.all);
 
       if Success then
          File.Value.Kind := Unknown;
@@ -496,7 +443,7 @@ package body VFS is
    function Is_Writable (File : Virtual_File) return Boolean is
    begin
       return File.Value /= null
-        and then File.Get_Filesystem.Is_Writable (File.Locale_Full_Name);
+        and then File.Get_Filesystem.Is_Writable (File.Full_Name.all);
    end Is_Writable;
 
    ------------------
@@ -516,7 +463,7 @@ package body VFS is
          return False;
 
       else
-         Ret := VF.Get_Filesystem.Is_Directory (VF.Locale_Full_Name);
+         Ret := VF.Get_Filesystem.Is_Directory (VF.Full_Name.all);
       end if;
 
       if Ret then
@@ -536,7 +483,7 @@ package body VFS is
    function Is_Symbolic_Link (File : Virtual_File) return Boolean is
    begin
       return File.Value /= null
-        and then File.Get_Filesystem.Is_Symbolic_Link (File.Locale_Full_Name);
+        and then File.Get_Filesystem.Is_Symbolic_Link (File.Full_Name.all);
    end Is_Symbolic_Link;
 
    ----------------------
@@ -545,14 +492,14 @@ package body VFS is
 
    function Is_Absolute_Path (File : Virtual_File) return Boolean is
    begin
-      return File.Get_Filesystem.Is_Absolute_Path (File.Locale_Full_Name);
+      return File.Get_Filesystem.Is_Absolute_Path (File.Full_Name.all);
    end Is_Absolute_Path;
 
    --------------------
    -- File_Extension --
    --------------------
 
-   function File_Extension (File : Virtual_File) return UTF8_String is
+   function File_Extension (File : Virtual_File) return String is
    begin
       return File.Get_Filesystem.File_Extension (File.Full_Name.all);
    end File_Extension;
@@ -570,7 +517,7 @@ package body VFS is
          return null;
 
       else
-         return File.Get_Filesystem.Read_File (File.Locale_Full_Name);
+         return File.Get_Filesystem.Read_File (File.Full_Name.all);
       end if;
    end Read_File;
 
@@ -590,6 +537,8 @@ package body VFS is
 
       else
          declare
+            Temporary_Dir : constant String :=
+              File.Get_Filesystem.Get_Tmp_Directory;
             Current_Dir : constant String := Get_Current_Dir;
             Base        : String_Access;
          begin
@@ -597,18 +546,11 @@ package body VFS is
 
             Change_Dir (Temporary_Dir);
             Create_Temp_File (Fd, Base);
-            Tmp := new String'(Name_As_Directory (Temporary_Dir) & Base.all);
+            Tmp := new String'
+              (File.Get_Filesystem.Concat (Temporary_Dir, Base.all));
             Free (Base);
             Change_Dir (Current_Dir);
          end;
-
---        else
---           if Append and then Is_Regular_File (File.Locale_Full_Name) then
---              Fd := Open_Read_Write (Locale_Full_Name (File), Binary);
---              Lseek (Fd, 0, Seek_End);
---           else
---              Fd := Create_File (Locale_Full_Name (File), Binary);
---           end if;
       end if;
 
       if Fd = Invalid_FD then
@@ -659,7 +601,7 @@ package body VFS is
 
    procedure Set_Writable (File : VFS.Virtual_File; Writable : Boolean) is
    begin
-      File.Get_Filesystem.Set_Writable (File.Locale_Full_Name, Writable);
+      File.Get_Filesystem.Set_Writable (File.Full_Name.all, Writable);
    end Set_Writable;
 
    ------------------
@@ -668,7 +610,7 @@ package body VFS is
 
    procedure Set_Readable (File : VFS.Virtual_File; Readable : Boolean) is
    begin
-      File.Get_Filesystem.Set_Readable (File.Locale_Full_Name, Readable);
+      File.Get_Filesystem.Set_Readable (File.Full_Name.all, Readable);
    end Set_Readable;
 
    ---------------------
@@ -678,7 +620,7 @@ package body VFS is
    function File_Time_Stamp
      (File : Virtual_File) return Ada.Calendar.Time is
    begin
-      return File.Get_Filesystem.File_Time_Stamp (File.Locale_Full_Name);
+      return File.Get_Filesystem.File_Time_Stamp (File.Full_Name.all);
    end File_Time_Stamp;
 
    ---------------------
@@ -760,7 +702,7 @@ package body VFS is
    -------------
 
    function Sub_Dir
-     (Dir : Virtual_File; Name : UTF8_String) return Virtual_File
+     (Dir : Virtual_File; Name : String) return Virtual_File
    is
       New_Dir : Virtual_File;
    begin

@@ -336,7 +336,7 @@ package body Switches_Chooser.Gtkada is
       VF   : constant Virtual_File := Create (Get_Text (F));
       File : constant Virtual_File := Select_File
         (Base_Directory    => Dir (VF),
-         Default_Name      => Base_Name (VF),
+         Default_Name      => Display_Base_Name (VF),
          Parent            => Gtk_Window (Get_Toplevel (F)),
          Kind              => Open_File,
          File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",

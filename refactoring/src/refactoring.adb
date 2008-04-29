@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2007, AdaCore              --
+--                     Copyright (C) 2003-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -166,8 +166,10 @@ package body Refactoring is
 
       for F in File_Arrays.First .. Last (List) loop
          Append (Model, Iter, Null_Iter);
-         Set (Model, Iter, 0, Base_Name (Get_Filename (List.Table (F))));
-         Set (Model, Iter, 1, Dir_Name (Get_Filename (List.Table (F))).all);
+         Set (Model, Iter, 0,
+              Display_Base_Name (Get_Filename (List.Table (F))));
+         Set (Model, Iter, 1,
+              Display_Dir_Name (Get_Filename (List.Table (F))));
       end loop;
 
       return Scrolled;

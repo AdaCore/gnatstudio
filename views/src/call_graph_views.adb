@@ -662,9 +662,9 @@ package body Call_Graph_Views is
                     Gint (R.Column));
                Set (V.Locations_Model, T, Location_Character_Column, ":");
                Set (V.Locations_Model, T, Location_String_Column,
-                    "    " & Base_Name (R.File));
+                    "    " & Display_Base_Name (R.File));
                Set (V.Locations_Model, T, Location_File_Column,
-                    Full_Name (R.File).all);
+                    Display_Full_Name (R.File));
 
                N := Next (N);
             end loop;
@@ -1262,7 +1262,7 @@ package body Call_Graph_Views is
          Append (Model, Iter, Parent_Iter);
          Set (Model, Iter, Name_Column, Get_Name (Entity).all & Suffix);
          Set (Model, Iter, Decl_Column,
-              Base_Name (Get_Filename (Get_File (Decl)))
+              Display_Base_Name (Get_Filename (Get_File (Decl)))
               & ':' & Image (Get_Line (Decl))
               & ':' & Image (Integer (Get_Column (Decl))));
          Set_Value (Model, Iter, Entity_Column, To_GValue (Entity));

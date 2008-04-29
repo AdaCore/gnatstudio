@@ -336,14 +336,14 @@ package body Vdiff_Utils is
       Set_Base (Change_Style, State_Normal, Color);
 
       begin
-         Open (Infile1, In_File, Locale_Full_Name (File1));
+         Open (Infile1, In_File, Full_Name (File1).all);
       exception
          when Name_Error =>
             return;
       end;
 
       begin
-         Open (Infile2, In_File, Locale_Full_Name (File2));
+         Open (Infile2, In_File, Full_Name (File2).all);
       exception
          when Name_Error =>
             Close (Infile1);

@@ -61,11 +61,6 @@ package OS_Utils is
    --  Reinstall the standard Control-C handler.
    --  If Install_Handler has never been called, this procedure has no effect.
 
-   function Get_Tmp_Dir return String;
-   --  Return a string representing a valid directory that can be used to
-   --  create temporary files. If needed, a trailing directory separator will
-   --  be added.
-
    function Create_Tmp_File return String;
    --  Create a temporary file in the temporary directoy.
    --  Return the full name of the file.

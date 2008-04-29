@@ -64,6 +64,7 @@ with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Location_View;         use GPS.Location_View;
 
+with Filesystems;
 with VFS;                       use VFS;
 with Projects;                  use Projects;
 with Interactive_Consoles;      use Interactive_Consoles;
@@ -77,7 +78,6 @@ with Basic_Types;
 with Std_Dialogs;               use Std_Dialogs;
 with String_Utils;              use String_Utils;
 with GUI_Utils;                 use GUI_Utils;
-with OS_Utils;                  use OS_Utils;
 with Traces;                    use Traces;
 with Commands;                  use Commands;
 with Commands.Builder;          use Commands.Builder;
@@ -1074,11 +1074,12 @@ package body Builder_Module is
          --  the buffer to disk.
 
          declare
-            Tmp_Dir      : constant String := Get_Tmp_Dir;
+            Tmp_Dir      : constant String :=
+              Filesystems.Get_Local_Filesystem.Get_Tmp_Directory;
             Temp_Project : constant Virtual_File :=
                              Create (Tmp_Dir & "ext.gpr");
             Temp_File    : constant Virtual_File :=
-                             Create (Get_Tmp_Dir & Base_Name (File));
+                             Create (Tmp_Dir & Base_Name (File));
             Writable     : Writable_File;
          begin
             --  Do nothing if one of the files already exists
@@ -1101,7 +1102,7 @@ package body Builder_Module is
                   Full_Name (Temp_File).all);
             end if;
 
-            Local_File := new String'(Locale_Full_Name (Temp_File));
+            Local_File := new String'(Full_Name (Temp_File).all);
             Shadow_Path := new String'(Full_Name (Temp_Project).all);
             Compilable_File := Temp_File;
             Change_Dir (Tmp_Dir);
@@ -1111,7 +1112,7 @@ package body Builder_Module is
          end;
 
       else
-         Local_File := new String'(Locale_Full_Name (File));
+         Local_File := new String'(Full_Name (File).all);
          Change_Dir (Dir_Name (Project_Path (Prj)).all);
          Shadow_Path := new String'("");
       end if;

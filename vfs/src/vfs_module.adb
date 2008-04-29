@@ -27,6 +27,7 @@ with GNAT.Strings;
 
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 
+with Filesystems;
 with File_Utils;                use File_Utils;
 with GUI_Utils;                 use GUI_Utils;
 with GPS.Kernel;                use GPS.Kernel;
@@ -253,9 +254,11 @@ package body VFS_Module is
             Filename : constant String := Nth_Arg (Data, 2);
             File     : Virtual_File;
             Writable : Writable_File;
+            Tmp_Dir  : constant String :=
+              Filesystems.Get_Local_Filesystem.Get_Tmp_Directory;
          begin
             if not Is_Absolute_Path (Filename) then
-               File := Create (OS_Utils.Get_Tmp_Dir & Filename);
+               File := Create (Tmp_Dir & Filename);
             else
                File := Create (Filename);
             end if;

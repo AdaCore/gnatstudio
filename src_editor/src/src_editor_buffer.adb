@@ -2772,13 +2772,13 @@ package body Src_Editor_Buffer is
          if Is_Regular_File (Autosaved_File (Filename)) then
             Buttons := Message_Dialog
               (Msg            => -"Found an auto-saved file named "
-                 & Base_Name (Autosaved_File (Filename)) & ASCII.LF
+                 & Display_Base_Name (Autosaved_File (Filename)) & ASCII.LF
                  & (-"This usually means that your previous GPS session ")
                  & ASCII.LF
                  & (-"terminated unexpectedly with unsaved changes.")
                  & ASCII.LF & ASCII.LF
                  & (-"Do you want to recover the contents of ")
-                 & Base_Name (Filename) & ASCII.LF
+                 & Display_Base_Name (Filename) & ASCII.LF
                  & (-"from this auto-saved file ?"),
                Dialog_Type    => Warning,
                Buttons        => Button_Yes or Button_No,
@@ -3081,7 +3081,7 @@ package body Src_Editor_Buffer is
          begin
             Buttons := Message_Dialog
               (Msg            => -"The file "
-               & Base_Name (Filename) & ASCII.LF
+               & Display_Base_Name (Filename) & ASCII.LF
                & (-"is read-only. Do you want to overwrite it ?"),
                Dialog_Type    => Confirmation,
                Buttons        => Button_Yes or Button_No,

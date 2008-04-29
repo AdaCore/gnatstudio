@@ -36,6 +36,7 @@ with Gtk.Widget;              use Gtk.Widget;
 with Basic_Types;             use Basic_Types;
 with Commands.Interactive;    use Commands, Commands.Interactive;
 with Entities.Queries;        use Entities, Entities.Queries;
+with Filesystems;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
 with GPS.Kernel.Console;      use GPS.Kernel.Console;
@@ -447,7 +448,8 @@ package body GPS.Kernel.Scripts is
          Set_Return_Value (Data, Get_System_Dir (Kernel));
 
       elsif Command = "get_tmp_dir" then
-         Set_Return_Value (Data, OS_Utils.Get_Tmp_Dir);
+         Set_Return_Value
+           (Data, Filesystems.Get_Local_Filesystem.Get_Tmp_Directory);
 
       elsif Command = "get_home_dir" then
          Set_Return_Value (Data, Get_Home_Dir (Kernel));

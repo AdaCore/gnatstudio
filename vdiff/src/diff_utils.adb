@@ -258,7 +258,7 @@ package body Diff_Utils is
             Close (Descriptor);
       end;
 
-      Open (File, In_File, Locale_Full_Name (Diff_File));
+      Open (File, In_File, Full_Name (Diff_File).all);
 
       while not End_Of_File (File) loop
          Get_Line (File, Buffer, Last);

@@ -1712,8 +1712,7 @@ package body Src_Contexts is
 
                if Buffer /= null then
                   --  ???  Should use VFS.Write_File
-                  FD := Create_File
-                    (Locale_Full_Name (File), Binary);
+                  FD := Create_File (Full_Name (File).all, Binary);
                   Len := Write (FD, Buffer (1)'Address,
                                 Matches (Matches'First).Index - 1);
                   Len := Write (FD, Replace_String'Address,

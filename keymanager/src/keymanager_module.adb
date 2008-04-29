@@ -165,7 +165,7 @@ package body KeyManager_Module is
       --  user has finished entering the argument. Both callbacks are set to
       --  null when we are not reading an argument.
 
-      Last_Command  : Cst_String_Access;
+      Last_Command  : GNATCOLL.Scripts.Cst_String_Access;
       --  The last action that was executed by the user. It can either be a
       --  precise action name when executed through a key binding, or null if
       --  the command is not known precisely.
@@ -1142,12 +1142,12 @@ package body KeyManager_Module is
                         end if;
 
                         if Keymanager_Module.Last_Command /=
-                          Cst_String_Access (Binding.Action)
+                          GNATCOLL.Scripts.Cst_String_Access (Binding.Action)
                         then
                            Free (Keymanager_Module.Last_User_Command);
                         end if;
                         Keymanager_Module.Last_Command :=
-                          Cst_String_Access (Binding.Action);
+                          GNATCOLL.Scripts.Cst_String_Access (Binding.Action);
 
                         Undo_Group (Start => True);
                         for R in 1 .. Keymanager_Module.Repeat_Count loop

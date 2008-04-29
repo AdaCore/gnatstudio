@@ -413,7 +413,7 @@ package body Src_Editor_Box is
    begin
       if Dir_Name (Filename).all = "" then
          Insert (Kernel, -"File not found: "
-                 & Base_Name (Filename), Mode => Error);
+                 & Display_Base_Name (Filename), Mode => Error);
          return;
       end if;
 
@@ -639,8 +639,8 @@ package body Src_Editor_Box is
       --  Update the title
       Set_Title
         (Child,
-         Box.Source_Buffer.Get_Filename.Full_Name.all,
-         Box.Source_Buffer.Get_Filename.Base_Name);
+         Box.Source_Buffer.Get_Filename.Display_Full_Name,
+         Box.Source_Buffer.Get_Filename.Display_Base_Name);
    exception
       when E : others => Trace (Exception_Handle, E);
    end Filename_Changed_Handler;
@@ -2255,7 +2255,7 @@ package body Src_Editor_Box is
 
                if Is_Regular_File (Name) then
                   if Message_Dialog
-                    (Msg => Base_Name (Name)
+                    (Msg => Display_Base_Name (Name)
                        & (-" already exists. Do you want to overwrite ?"),
                      Dialog_Type => Confirmation,
                      Buttons => Button_OK or Button_Cancel,
@@ -2274,7 +2274,7 @@ package body Src_Editor_Box is
          else
             if not Check_Timestamp (Editor.Source_Buffer)
               and then Message_Dialog
-                (Msg => Base_Name (File)
+                (Msg => Display_Base_Name (File)
                         & (-" changed on disk. Do you want to overwrite ?"),
                  Dialog_Type => Confirmation,
                  Buttons => Button_OK or Button_Cancel,
@@ -2290,7 +2290,7 @@ package body Src_Editor_Box is
       else
          if Is_Regular_File (Filename) then
             if Message_Dialog
-              (Msg => Base_Name (Filename)
+              (Msg => Display_Base_Name (Filename)
                & (-" already exists. Do you want to overwrite ?"),
                Dialog_Type => Confirmation,
                Buttons => Button_OK or Button_Cancel,
@@ -2342,7 +2342,7 @@ package body Src_Editor_Box is
                then
 
                   Dialog := Create_Gtk_Dialog
-                    (Base_Name (Get_Filename (Editor.Source_Buffer))
+                    (Display_Base_Name (Get_Filename (Editor.Source_Buffer))
                      & (-" changed on disk.")
                      & ASCII.LF & ASCII.LF
                      & (-"Click on Ignore to keep this editing session.")

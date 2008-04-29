@@ -26,6 +26,7 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 
+with Filesystems;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
@@ -38,7 +39,6 @@ with GPS.Intl;                  use GPS.Intl;
 with Diff_Utils;                use Diff_Utils;
 with Vdiff_Pkg;                 use Vdiff_Pkg;
 with Vdiff_Utils;               use Vdiff_Utils;
-with OS_Utils;                  use OS_Utils;
 
 with Traces;                    use Traces;
 with VFS;                       use VFS;
@@ -249,6 +249,8 @@ package body Vdiff_Module is
       Child   : MDI_Child;
       pragma Unreferenced (Child);
       Success : Boolean;
+      Tmp_Dir : constant String :=
+        Filesystems.Get_Local_Filesystem.Get_Tmp_Directory;
    begin
       if D.Orig_File = VFS.No_File then
          if D.New_File = VFS.No_File then
@@ -258,7 +260,7 @@ package body Vdiff_Module is
          declare
             Base     : constant String := Base_Name (D.New_File);
             Ref_File : constant Virtual_File :=
-              Create (Full_Filename => Get_Tmp_Dir & Base & "$ref");
+              Create (Full_Filename => Tmp_Dir & Base & "$ref");
          begin
             Child := Compare_Two_Files
               (Kernel, Ref_File, D.New_File,
@@ -276,7 +278,7 @@ package body Vdiff_Module is
          declare
             Base     : constant String := Base_Name (D.Orig_File);
             Ref_File : constant Virtual_File :=
-              Create (Full_Filename => Get_Tmp_Dir & Base & "$ref");
+              Create (Full_Filename => Tmp_Dir & Base & "$ref");
          begin
             Child := Compare_Two_Files
               (Kernel, D.Orig_File, Ref_File,
