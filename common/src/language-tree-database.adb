@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2007, AdaCore                 --
+--                  Copyright (C) 2006-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -169,8 +169,8 @@ package body Language.Tree.Database is
    procedure Internal_Update_Contents
      (File : Structured_File_Access; Is_New_File : Boolean)
    is
-      Buffer     : GNAT.Strings.String_Access := Get_Buffer
-        (File.Db.Provider, File.File);
+      Buffer     : GNAT.Strings.String_Access :=
+                     Get_Buffer (File.Db.Provider, File.File);
       Constructs : aliased Construct_List;
 
       Current_Update_Kind : Update_Kind;
@@ -187,11 +187,10 @@ package body Language.Tree.Database is
       -- Add_New_Construct_If_Needed --
       ---------------------------------
 
-      procedure Add_New_Construct_If_Needed (It : Construct_Tree_Iterator)
-      is
+      procedure Add_New_Construct_If_Needed (It : Construct_Tree_Iterator) is
          Data      : Trie_Additional_Data;
          Construct : constant access Simple_Construct_Information :=
-           Get_Construct (It);
+                       Get_Construct (It);
       begin
          --  We add only named constructs in the database, and we dismiss some
          --  categories.
@@ -274,7 +273,7 @@ package body Language.Tree.Database is
                         (File => File));
                   end if;
 
-                  --  Update the persistent annotation if any.
+                  --  Update the persistent annotation if any
 
                   declare
                      use Construct_Annotations_Pckg;
@@ -714,7 +713,7 @@ package body Language.Tree.Database is
 
    function "<" (Left, Right : Entity_Access) return Boolean is
    begin
-      --  Since file comparison is very expensive, it has to be tried first.
+      --  Since file comparison is very expensive, it has to be tried first
 
       return Left.It < Right.It
         or else (Left.It = Right.It
@@ -727,7 +726,7 @@ package body Language.Tree.Database is
 
    function "=" (Left, Right : Entity_Access) return Boolean is
    begin
-      --  Since file comparison is very expensive, it has to be tried first.
+      --  Since file comparison is very expensive, it has to be tried first
 
       return Left.It = Right.It and then Left.File = Right.File;
    end "=";
