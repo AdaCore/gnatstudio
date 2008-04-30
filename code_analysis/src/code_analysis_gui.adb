@@ -349,6 +349,23 @@ package body Code_Analysis_GUI is
          return False;
    end On_Double_Click;
 
+   ----------------------
+   -- Open_File_Editor --
+   ----------------------
+
+   procedure Open_File_Editor
+     (Kernel    : Kernel_Handle;
+      File_Node : Code_Analysis.File_Access;
+      Line      : Natural := 1;
+      Column    : Natural := 1) is
+   begin
+      List_File_Uncovered_Lines (Kernel, File_Node);
+      Open_File_Editor
+        (Kernel, File_Node.Name, Line,
+         Basic_Types.Visible_Column_Type (Column));
+      Add_File_Coverage_Annotations (Kernel, File_Node);
+   end Open_File_Editor;
+
    ------------------------------
    -- Open_File_Editor_On_File --
    ------------------------------
@@ -359,9 +376,7 @@ package body Code_Analysis_GUI is
       File_Node : constant File_Access := File_Access
         (File_Set.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
    begin
-      List_File_Uncovered_Lines (Kernel, File_Node);
-      Add_File_Coverage_Annotations (Kernel, File_Node);
-      Open_File_Editor (Kernel, File_Node.Name, Line => 0);
+      Open_File_Editor (Kernel, File_Node);
    end Open_File_Editor_On_File;
 
    ------------------------------------
@@ -376,11 +391,7 @@ package body Code_Analysis_GUI is
       Subp_Node : constant Subprogram_Access := Subprogram_Access
         (Subprogram_Set.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
    begin
-      List_File_Uncovered_Lines (Kernel, File_Node);
-      Add_File_Coverage_Annotations (Kernel, File_Node);
-      Open_File_Editor
-        (Kernel, File_Node.Name, Subp_Node.Start,
-         Basic_Types.Visible_Column_Type (Subp_Node.Column));
+      Open_File_Editor (Kernel, File_Node, Subp_Node.Start, Subp_Node.Column);
    end Open_File_Editor_On_Subprogram;
 
    ------------------

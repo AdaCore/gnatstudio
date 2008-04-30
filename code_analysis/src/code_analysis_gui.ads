@@ -151,6 +151,13 @@ package Code_Analysis_GUI is
    --  Opens a file editor on the source file containing the Subprogram
    --  pointed out by Iter in Model
 
+   procedure Open_File_Editor
+     (Kernel    : Kernel_Handle;
+      File_Node : Code_Analysis.File_Access;
+      Line      : Natural := 1;
+      Column    : Natural := 1);
+   --  Factorizes the code of Open_File_Editor_On_File and _On_Subprogram
+
    procedure Expand_All_From_Report (Object : access Gtk_Widget_Record'Class);
    --  Expand the whole tree vien in a code_analysis report
 
