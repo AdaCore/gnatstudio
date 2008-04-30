@@ -216,7 +216,8 @@ package body Filesystems is
 
    function Is_Local (File : Virtual_File) return Boolean is
    begin
-      return Is_Local_Filesystem (File.Get_Filesystem);
+      return File = No_File
+        or else Is_Local_Filesystem (File.Get_Filesystem);
    end Is_Local;
 
    ------------
