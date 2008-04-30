@@ -18,7 +18,9 @@
 -----------------------------------------------------------------------
 
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
+with GNATCOLL.Filesystem;               use GNATCOLL.Filesystem;
 with GNATCOLL.Utils;                    use GNATCOLL.Utils;
+with GNATCOLL.VFS;                      use GNATCOLL.VFS;
 
 with Gtk.Window;                        use Gtk.Window;
 
@@ -26,7 +28,6 @@ with Gtkada.Dialogs;                    use Gtkada.Dialogs;
 with Gtkada.File_Selector;              use Gtkada.File_Selector;
 with Gtkada.MDI;                        use Gtkada.MDI;
 
-with Filesystems;                       use Filesystems;
 with GPS.Intl;                          use GPS.Intl;
 with GPS.Kernel.Contexts;               use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
@@ -35,7 +36,6 @@ with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;                use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
 with Traces;                            use Traces;
-with VFS;                               use VFS;
 with Vdiff2_Command_Block;              use Vdiff2_Command_Block;
 with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
 with Vdiff2_Module.Utils;               use Vdiff2_Module.Utils;
@@ -54,7 +54,7 @@ package body Vdiff2_Module.Callback is
 
    function Get_Ref_Filename (File : Virtual_File) return String is
    begin
-      return Filesystems.Get_Local_Filesystem.Get_Tmp_Directory
+      return Get_Local_Filesystem.Get_Tmp_Directory
         & "ref$" & Base_Name (File);
    end Get_Ref_Filename;
 
@@ -78,7 +78,7 @@ package body Vdiff2_Module.Callback is
       pragma Unreferenced (Widget, Button);
 
    begin
-      if File1 = VFS.No_File then
+      if File1 = GNATCOLL.VFS.No_File then
          return;
       end if;
 
@@ -86,7 +86,7 @@ package body Vdiff2_Module.Callback is
          File2 : constant Virtual_File :=
                    Select_File
                      (Title             => -"Select First Changes",
-                      Base_Directory    => VFS.Get_Current_Dir,
+                      Base_Directory    => GNATCOLL.VFS.Get_Current_Dir,
                       Parent            => Get_Current_Window (Kernel),
                       Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
                       Kind              => Open_File,
@@ -97,7 +97,7 @@ package body Vdiff2_Module.Callback is
          pragma Unreferenced (Dummy);
 
       begin
-         if File2 = VFS.No_File then
+         if File2 = GNATCOLL.VFS.No_File then
             return;
          end if;
 
@@ -105,7 +105,7 @@ package body Vdiff2_Module.Callback is
             File3 : constant Virtual_File :=
               Select_File
                 (Title             => -"Select Second Changes",
-                 Base_Directory    => VFS.Get_Current_Dir,
+                 Base_Directory    => GNATCOLL.VFS.Get_Current_Dir,
                  Parent            => Get_Current_Window (Kernel),
                  Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
                  Kind              => Open_File,
@@ -130,7 +130,7 @@ package body Vdiff2_Module.Callback is
       File1  : constant Virtual_File :=
                  Select_File
                    (Title             => -"Select First File",
-                    Base_Directory    => VFS.Get_Current_Dir,
+                    Base_Directory    => GNATCOLL.VFS.Get_Current_Dir,
                     Parent            => Get_Current_Window (Kernel),
                     Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
                     Kind              => Open_File,
@@ -141,7 +141,7 @@ package body Vdiff2_Module.Callback is
       pragma Unreferenced (Widget, Button);
 
    begin
-      if File1 = VFS.No_File then
+      if File1 = GNATCOLL.VFS.No_File then
          return;
       end if;
 
@@ -149,7 +149,7 @@ package body Vdiff2_Module.Callback is
          File2 : constant Virtual_File :=
                    Select_File
                      (Title             => -"Select Second File",
-                      Base_Directory    => VFS.Get_Current_Dir,
+                      Base_Directory    => GNATCOLL.VFS.Get_Current_Dir,
                       Parent            => Get_Current_Window (Kernel),
                       Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
                       Kind              => Open_File,
@@ -158,7 +158,7 @@ package body Vdiff2_Module.Callback is
                       History           => Get_History (Kernel));
 
       begin
-         if File2 = VFS.No_File then
+         if File2 = GNATCOLL.VFS.No_File then
             return;
          end if;
 
@@ -179,7 +179,7 @@ package body Vdiff2_Module.Callback is
       File1  : constant Virtual_File :=
                  Select_File
                    (Title             => -"Select Common Ancestor",
-                    Base_Directory    => VFS.No_File,
+                    Base_Directory    => GNATCOLL.VFS.No_File,
                     Parent            => Get_Current_Window (Kernel),
                     Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
                     Kind              => Open_File,
@@ -190,7 +190,7 @@ package body Vdiff2_Module.Callback is
       pragma Unreferenced (Widget, Button);
 
    begin
-      if File1 = VFS.No_File then
+      if File1 = GNATCOLL.VFS.No_File then
          return;
       end if;
 
@@ -198,7 +198,7 @@ package body Vdiff2_Module.Callback is
          File2 : constant Virtual_File :=
                    Select_File
                      (Title             => -"Select First Changes",
-                      Base_Directory    => VFS.No_File,
+                      Base_Directory    => GNATCOLL.VFS.No_File,
                       Parent            => Get_Current_Window (Kernel),
                       Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
                       Kind              => Open_File,
@@ -207,7 +207,7 @@ package body Vdiff2_Module.Callback is
                       History           => Get_History (Kernel));
 
       begin
-         if File2 = VFS.No_File then
+         if File2 = GNATCOLL.VFS.No_File then
             return;
          end if;
 
@@ -215,7 +215,7 @@ package body Vdiff2_Module.Callback is
             File3 : constant Virtual_File :=
               Select_File
                 (Title             => -"Select Second Changes",
-                 Base_Directory    => VFS.No_File,
+                 Base_Directory    => GNATCOLL.VFS.No_File,
                  Parent            => Get_Current_Window (Kernel),
                  Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
                  Kind              => Open_File,
@@ -224,7 +224,7 @@ package body Vdiff2_Module.Callback is
                  History           => Get_History (Kernel));
 
          begin
-            if File3 = VFS.No_File then
+            if File3 = GNATCOLL.VFS.No_File then
                Visual_Diff (File1, File2);
                return;
             end if;
@@ -235,7 +235,7 @@ package body Vdiff2_Module.Callback is
                Merge : constant Virtual_File :=
                  Select_File
                    (Title             => -"Select Merge File",
-                    Base_Directory    => VFS.No_File,
+                    Base_Directory    => GNATCOLL.VFS.No_File,
                     Parent            => Get_Current_Window (Kernel),
                     Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
                     Kind              => Open_File,
@@ -244,7 +244,7 @@ package body Vdiff2_Module.Callback is
                     History           => Get_History (Kernel));
 
             begin
-               if Merge /= VFS.No_File then
+               if Merge /= GNATCOLL.VFS.No_File then
                   Show_Merge (Kernel, Full_Name (Merge).all);
                end if;
             end;
@@ -275,7 +275,7 @@ package body Vdiff2_Module.Callback is
       pragma Unreferenced (Widget, Button);
 
    begin
-      if File1 = VFS.No_File then
+      if File1 = GNATCOLL.VFS.No_File then
          return;
       end if;
 
@@ -283,7 +283,7 @@ package body Vdiff2_Module.Callback is
          File2 : constant Virtual_File :=
                    Select_File
                      (Title             => -"Select Second File",
-                      Base_Directory    => VFS.No_File,
+                      Base_Directory    => GNATCOLL.VFS.No_File,
                       Parent            => Get_Current_Window (Kernel),
                       Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
                       Kind              => Open_File,
@@ -292,7 +292,7 @@ package body Vdiff2_Module.Callback is
                       History           => Get_History (Kernel));
 
       begin
-         if File2 = VFS.No_File then
+         if File2 = GNATCOLL.VFS.No_File then
             return;
          end if;
 
@@ -302,7 +302,7 @@ package body Vdiff2_Module.Callback is
             Merge : constant Virtual_File :=
               Select_File
                 (Title             => -"Select Merge File",
-                 Base_Directory    => VFS.No_File,
+                 Base_Directory    => GNATCOLL.VFS.No_File,
                  Parent            => Get_Current_Window (Kernel),
                  Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
                  Kind              => Open_File,
@@ -311,7 +311,7 @@ package body Vdiff2_Module.Callback is
                  History           => Get_History (Kernel));
 
          begin
-            if Merge /= VFS.No_File then
+            if Merge /= GNATCOLL.VFS.No_File then
                Show_Merge (Kernel, Full_Name (Merge).all);
             end if;
          end;
@@ -332,8 +332,8 @@ package body Vdiff2_Module.Callback is
       D       : constant Diff_Hooks_Args := Diff_Hooks_Args (Data.all);
       Success : Boolean;
    begin
-      if D.Orig_File = VFS.No_File then
-         if D.New_File = VFS.No_File then
+      if D.Orig_File = GNATCOLL.VFS.No_File then
+         if D.New_File = GNATCOLL.VFS.No_File then
             return False;
          end if;
 
@@ -361,8 +361,8 @@ package body Vdiff2_Module.Callback is
             return Res /= null;
          end;
 
-      elsif D.New_File = VFS.No_File then
-         if D.Orig_File = VFS.No_File then
+      elsif D.New_File = GNATCOLL.VFS.No_File then
+         if D.Orig_File = GNATCOLL.VFS.No_File then
             return False;
          end if;
 
@@ -585,7 +585,7 @@ package body Vdiff2_Module.Callback is
          VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
 
       for J in Data (Node).Files'Range loop
-         if Data (Node).Files (J) /= VFS.No_File then
+         if Data (Node).Files (J) /= GNATCOLL.VFS.No_File then
             declare
                Filename : constant String :=
                             Full_Name (Data (Node).Files (J)).all;
@@ -607,7 +607,7 @@ package body Vdiff2_Module.Callback is
 
       for J in To_Delete'Range loop
          if To_Delete (J) then
-            VFS.Delete (Data (Node).Files (J), Success);
+            GNATCOLL.VFS.Delete (Data (Node).Files (J), Success);
          end if;
       end loop;
 

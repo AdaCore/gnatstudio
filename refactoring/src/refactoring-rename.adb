@@ -27,7 +27,7 @@ with GPS.Intl;               use GPS.Intl;
 with Entities;               use Entities;
 with Entities.Queries;       use Entities.Queries;
 with Traces;                 use Traces;
-with VFS;                    use VFS;
+with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 with Refactoring.Performers; use Refactoring.Performers;
 with Histories;              use Histories;
 with Commands.Interactive;   use Commands, Commands.Interactive;

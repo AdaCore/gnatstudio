@@ -24,7 +24,7 @@ with Codefix.Formal_Errors; use Codefix.Formal_Errors;
 with Codefix.Error_Lists;   use Codefix.Error_Lists;
 with Codefix.Errors_Parser; use Codefix.Errors_Parser;
 with GNAT.Strings;
-with VFS;
+with GNATCOLL.VFS;
 
 with Ada.Unchecked_Deallocation;
 
@@ -112,7 +112,7 @@ package Codefix.Errors_Manager is
 
    function Search_Error
      (This         : Correction_Manager;
-      File         : VFS.Virtual_File;
+      File         : GNATCOLL.VFS.Virtual_File;
       Line         : Integer;
       Column       : Column_Index;
       Message      : String := "")

@@ -33,7 +33,7 @@ with Gtk.Label;                 use Gtk.Label;
 with GPS.Intl;                  use GPS.Intl;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Handlers;           use Gtkada.Handlers;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 with Wizards;                   use Wizards;
 
 package body Creation_Wizard.Adp is
@@ -165,14 +165,14 @@ package body Creation_Wizard.Adp is
    is
       P    : constant Adp_Selection_Page_Access :=
         Adp_Selection_Page_Access (Page);
-      Name : constant VFS.Virtual_File := Select_File
+      Name : constant GNATCOLL.VFS.Virtual_File := Select_File
         (Use_Native_Dialog  => Get_Pref (Use_Native_Dialogs),
          File_Pattern       => "*.adp",
          Pattern_Name       => -"Glide project files",
          Parent             => Gtk_Window (Get_Toplevel (Widget)),
          Kind               => Open_File);
    begin
-      if Name /= VFS.No_File then
+      if Name /= GNATCOLL.VFS.No_File then
          Set_Text (P.Adp_File_Name, Full_Name (Name).all);
       end if;
    end On_Browse;

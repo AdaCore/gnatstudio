@@ -57,7 +57,7 @@ package VCS.ClearCase is
 
    procedure Create_Tag
      (Rep       : access ClearCase_Record;
-      Dir       : VFS.Virtual_File;
+      Dir       : GNATCOLL.VFS.Virtual_File;
       Tag       : String;
       As_Branch : Boolean);
 
@@ -77,7 +77,7 @@ package VCS.ClearCase is
 
    procedure Switch
      (Rep : access ClearCase_Record;
-      Dir : VFS.Virtual_File;
+      Dir : GNATCOLL.VFS.Virtual_File;
       Tag : String);
 
    procedure Resolved
@@ -107,42 +107,42 @@ package VCS.ClearCase is
 
    procedure File_Revision
      (Rep      : access ClearCase_Record;
-      File     : VFS.Virtual_File;
+      File     : GNATCOLL.VFS.Virtual_File;
       Revision : String);
 
    procedure Diff
      (Rep       : access ClearCase_Record;
-      File      : VFS.Virtual_File;
+      File      : GNATCOLL.VFS.Virtual_File;
       Version_1 : String := "";
       Version_2 : String := "");
 
    procedure Diff_Patch
      (Rep    : access ClearCase_Record;
-      File   : VFS.Virtual_File;
-      Output : VFS.Virtual_File);
+      File   : GNATCOLL.VFS.Virtual_File;
+      Output : GNATCOLL.VFS.Virtual_File);
 
    procedure Diff_Base_Head
      (Rep  : access ClearCase_Record;
-      File : VFS.Virtual_File);
+      File : GNATCOLL.VFS.Virtual_File);
 
    procedure Diff_Working
      (Rep  : access ClearCase_Record;
-      File : VFS.Virtual_File);
+      File : GNATCOLL.VFS.Virtual_File);
 
    procedure Diff_Tag
      (Rep      : access ClearCase_Record;
-      File     : VFS.Virtual_File;
+      File     : GNATCOLL.VFS.Virtual_File;
       Tag_Name : String);
 
    procedure Log
      (Rep     : access ClearCase_Record;
-      File    : VFS.Virtual_File;
+      File    : GNATCOLL.VFS.Virtual_File;
       Rev     : String;
       As_Text : Boolean := True);
 
    procedure Annotate
      (Rep  : access ClearCase_Record;
-      File : VFS.Virtual_File);
+      File : GNATCOLL.VFS.Virtual_File);
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);

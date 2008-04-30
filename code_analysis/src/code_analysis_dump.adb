@@ -20,7 +20,7 @@
 with Ada.Text_IO;   use Ada.Text_IO;
 
 with Code_Coverage; use Code_Coverage;
-with VFS;           use VFS;
+with GNATCOLL.VFS;           use GNATCOLL.VFS;
 with Projects;      use Projects;
 
 package body Code_Analysis_Dump is
@@ -59,7 +59,7 @@ package body Code_Analysis_Dump is
       File_Node : constant Code_Analysis.File_Access :=
                     File_Maps.Element (Cursor);
    begin
-      Put ("  File " & VFS.Base_Name (File_Node.Name));
+      Put ("  File " & GNATCOLL.VFS.Base_Name (File_Node.Name));
 
       if File_Node.Analysis_Data.Coverage_Data /= null then
          Dump_Node_Coverage (File_Node.Analysis_Data.Coverage_Data);

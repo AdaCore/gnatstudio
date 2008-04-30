@@ -25,7 +25,7 @@ with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 with GPS.Kernel;
 with Traces;      use Traces;
-with VFS;         use VFS;
+with GNATCOLL.VFS;         use GNATCOLL.VFS;
 
 package Vdiff2_Module.Utils is
 
@@ -61,17 +61,17 @@ package Vdiff2_Module.Utils is
    procedure Visual_Diff
      (File1 : Virtual_File;
       File2 : Virtual_File;
-      File3 : Virtual_File := VFS.No_File);
+      File3 : Virtual_File := GNATCOLL.VFS.No_File);
    function Visual_Diff
      (File1 : Virtual_File;
       File2 : Virtual_File;
-      File3 : Virtual_File := VFS.No_File) return Diff_Head_Access;
+      File3 : Virtual_File := GNATCOLL.VFS.No_File) return Diff_Head_Access;
    --  Create a new visual diff
 
    function Get_Vdiff
      (File1 : Virtual_File;
-      File2 : Virtual_File := VFS.No_File;
-      File3 : Virtual_File := VFS.No_File) return Diff_Head_Access;
+      File2 : Virtual_File := GNATCOLL.VFS.No_File;
+      File3 : Virtual_File := GNATCOLL.VFS.No_File) return Diff_Head_Access;
    --  Return the visual diff that contains all the specified files. If no
    --  visual diff is found null is returned.
 
@@ -79,9 +79,9 @@ package Vdiff2_Module.Utils is
    --  Get the list of visual diff associated with the module
 
    function Visual_Patch
-     (Orig_File : VFS.Virtual_File;
-      New_File  : VFS.Virtual_File;
-      Diff_File : VFS.Virtual_File;
+     (Orig_File : GNATCOLL.VFS.Virtual_File;
+      New_File  : GNATCOLL.VFS.Virtual_File;
+      Diff_File : GNATCOLL.VFS.Virtual_File;
       Revert    : Boolean := False) return Diff_Head_Access;
    --  Compute the differences from Diff_File.
    --  If Revert is False, create New_File from Orig_File and Diff_File.
@@ -89,13 +89,13 @@ package Vdiff2_Module.Utils is
    --  Display the result in the editor
 
    function Get_Diff_Node
-     (Selected_File : VFS.Virtual_File;
+     (Selected_File : GNATCOLL.VFS.Virtual_File;
       List          : Diff_Head_List.List)
       return Diff_Head_List.List_Node;
    --  Return the first Diff that contains Selected_File.
 
    function Is_In_3Diff_List
-     (Selected_File : VFS.Virtual_File;
+     (Selected_File : GNATCOLL.VFS.Virtual_File;
       List          : Diff_Head_List.List)
       return Boolean;
    --  Return true if Selected_File is used in a 3 files visual diff.

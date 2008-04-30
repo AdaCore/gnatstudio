@@ -22,7 +22,7 @@ with String_List_Utils; use String_List_Utils;
 with GPS.Kernel;        use GPS.Kernel;
 with VCS;               use VCS;
 with VCS_Activities;    use VCS_Activities;
-with VFS;               use VFS;
+with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 package VCS_Utils is
 
@@ -46,7 +46,7 @@ package VCS_Utils is
    --  Convenience function to get the current directory
 
    function Get_Current_File
-     (Context : Selection_Context) return VFS.Virtual_File;
+     (Context : Selection_Context) return GNATCOLL.VFS.Virtual_File;
    --  Convenience function to get the current file
 
    procedure Update_Files_Status

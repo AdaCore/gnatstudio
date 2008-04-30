@@ -73,7 +73,7 @@ with Projects;                  use Projects;
 with String_Utils;              use String_Utils;
 with System;                    use System;
 with Traces;                    use Traces;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 package body GPS.Kernel.Modules is
 

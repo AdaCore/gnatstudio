@@ -20,7 +20,7 @@
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with GNAT.Strings;            use GNAT.Strings;
 with Code_Coverage;           use Code_Coverage;
-with VFS;                     use VFS;
+with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 with Projects.Registry;       use Projects.Registry;
 with Language.Tree.Database;  use Language.Tree.Database;
 
@@ -155,7 +155,7 @@ package body Code_Analysis_XML is
    begin
       Loc.Tag := new String'("File");
       Add_Child (Parent, Loc, True);
-      Set_Attribute (Loc, "name", VFS.Full_Name (File_Node.Name).all);
+      Set_Attribute (Loc, "name", GNATCOLL.VFS.Full_Name (File_Node.Name).all);
       Set_Attribute
         (Loc, "line_count", Positive'Image (File_Node.Lines'Length));
       XML_Dump_Coverage (File_Node.Analysis_Data.Coverage_Data, Loc);

@@ -25,7 +25,7 @@ with Gtkada.File_Selector; use Gtkada.File_Selector;
 
 with GPS.Kernel;
 
-with VFS; use VFS;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 package Aunit_Filters is
 
@@ -74,7 +74,7 @@ package Aunit_Filters is
    procedure Use_File_Filter
      (Filter : access Filter_Show_Ada;
       Win    : access File_Selector_Window_Record'Class;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       State  : out File_State;
       Pixbuf : out Gdk_Pixbuf;
       Text   : out GNAT.Strings.String_Access);
@@ -84,7 +84,7 @@ package Aunit_Filters is
    procedure Use_File_Filter
      (Filter : access Filter_Show_Suites;
       Win    : access File_Selector_Window_Record'Class;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       State  : out File_State;
       Pixbuf : out Gdk_Pixbuf;
       Text   : out GNAT.Strings.String_Access);
@@ -94,7 +94,7 @@ package Aunit_Filters is
    procedure Use_File_Filter
      (Filter : access Filter_Show_Tests;
       Win    : access File_Selector_Window_Record'Class;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       State  : out File_State;
       Pixbuf : out Gdk_Pixbuf;
       Text   : out GNAT.Strings.String_Access);

@@ -19,7 +19,7 @@
 
 --  This package should eventually be merged with GNAT.OS_Lib
 
-with VFS;
+with GNATCOLL.VFS;
 with GNAT.Directory_Operations;
 with Remote;                    use Remote;
 
@@ -30,7 +30,7 @@ package File_Utils is
    --  ..). If Directory is not a directory, then -1 is returned.
 
    function Read_Files_From_Dirs
-     (Dirs : String) return VFS.File_Array_Access;
+     (Dirs : String) return GNATCOLL.VFS.File_Array_Access;
    --  Return all the files found in Dirs. Each directory in Dirs should be
    --  separated with Path_Separator
 
@@ -107,7 +107,7 @@ package File_Utils is
    --  contains something like "::" on Unix systems.
 
    function Find_On_Path
-     (Base_Name : String; Path : String) return VFS.Virtual_File;
+     (Base_Name : String; Path : String) return GNATCOLL.VFS.Virtual_File;
    --  Search for a file called Base_Name in all the directories. The first
    --  match is returned, or No_File if not found.
 

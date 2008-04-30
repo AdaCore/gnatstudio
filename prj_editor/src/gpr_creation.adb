@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2004-2006                       --
---                              AdaCore                              --
+--                     Copyright (C) 2004-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,7 +25,7 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Projects.Editor;           use Projects, Projects.Editor;
 with Projects.Registry;         use Projects.Registry;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 package body GPR_Creation is
 
@@ -783,8 +782,8 @@ package body GPR_Creation is
    procedure Create_Gpr_Files
      (Registry          : Projects.Registry.Project_Registry'Class;
       Root_Project      : Projects.Project_Type;
-      Source_Dirs       : VFS.File_Array;
-      Object_Dirs       : VFS.File_Array;
+      Source_Dirs       : GNATCOLL.VFS.File_Array;
+      Object_Dirs       : GNATCOLL.VFS.File_Array;
       Spec_Extension    : String;
       Body_Extension    : String;
       Main_Units        : GNAT.Strings.String_List_Access := null;
@@ -799,11 +798,11 @@ package body GPR_Creation is
    begin
 
       for J in Source_Dirs'Range loop
-         S_Source_Dirs (J) := new String'(VFS.Full_Name (Source_Dirs (J)).all);
+         S_Source_Dirs (J) := new String'(Full_Name (Source_Dirs (J)).all);
       end loop;
 
       for J in Object_Dirs'Range loop
-         S_Object_Dirs (J) := new String'(VFS.Full_Name (Object_Dirs (J)).all);
+         S_Object_Dirs (J) := new String'(Full_Name (Object_Dirs (J)).all);
       end loop;
 
       Create_Gpr_Files

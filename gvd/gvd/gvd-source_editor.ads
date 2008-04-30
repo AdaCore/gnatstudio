@@ -21,7 +21,7 @@
 with Glib.Object;
 with Gtk.Widget;
 with GVD.Types;
-with VFS;
+with GNATCOLL.VFS;
 
 package GVD.Source_Editor is
 
@@ -40,7 +40,7 @@ package GVD.Source_Editor is
    --  that emitted the request.
 
    function Get_Current_File
-     (Editor : access Source_Editor_Record) return VFS.Virtual_File;
+     (Editor : access Source_Editor_Record) return GNATCOLL.VFS.Virtual_File;
    --  Return the name of the file at which the debugger is stopped.
    --  "" is returned if there is no current debugger file.
 
@@ -52,7 +52,7 @@ package GVD.Source_Editor is
 
    procedure Load_File
      (Editor    : access Source_Editor_Record;
-      File_Name : VFS.Virtual_File) is abstract;
+      File_Name : GNATCOLL.VFS.Virtual_File) is abstract;
    --  Load and append a file in the editor.
    --  The contents is highlighted based on the current language.
    --  Debugger is used to calculate which lines should get icons on the side.
@@ -97,7 +97,7 @@ package GVD.Source_Editor is
 private
    type Source_Editor_Record is abstract tagged record
       Widget       : Gtk.Widget.Gtk_Widget;
-      Current_File : VFS.Virtual_File;
+      Current_File : GNATCOLL.VFS.Virtual_File;
       --  The file/line on which the debugger is stopped (ie these were set
       --  when the Set_Current parameter is True for Set_line and Load_File)
    end record;

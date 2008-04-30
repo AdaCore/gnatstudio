@@ -29,7 +29,7 @@ with SN.Xref_Pools;             use SN.Xref_Pools;
 with File_Utils;                use File_Utils;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 package body SN.Browse is
 

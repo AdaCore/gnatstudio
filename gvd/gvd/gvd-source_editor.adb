@@ -25,7 +25,7 @@ package body GVD.Source_Editor is
    ----------------------
 
    function Get_Current_File
-     (Editor : access Source_Editor_Record) return VFS.Virtual_File is
+     (Editor : access Source_Editor_Record) return GNATCOLL.VFS.Virtual_File is
    begin
       return Editor.Current_File;
    end Get_Current_File;

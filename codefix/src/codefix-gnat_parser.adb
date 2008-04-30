@@ -19,7 +19,7 @@
 
 with Language; use Language;
 with Language.Tree; use Language.Tree;
-with VFS; use VFS;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 with Projects.Registry; use Projects.Registry;
 with GNAT.Regpat; use GNAT.Regpat;
 

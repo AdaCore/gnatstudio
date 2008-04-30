@@ -26,7 +26,6 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 
-with Filesystems;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
@@ -41,7 +40,8 @@ with Vdiff_Pkg;                 use Vdiff_Pkg;
 with Vdiff_Utils;               use Vdiff_Utils;
 
 with Traces;                    use Traces;
-with VFS;                       use VFS;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 package body Vdiff_Module is
 
@@ -64,7 +64,7 @@ package body Vdiff_Module is
 
    function Compare_Two_Files
      (Kernel         : access Kernel_Handle_Record'Class;
-      File1, File2   : VFS.Virtual_File;
+      File1, File2   : GNATCOLL.VFS.Virtual_File;
       Title1, Title2 : String;
       Result         : Diff_Occurrence_Link) return MDI_Child;
    --  Compare two files.
@@ -87,7 +87,7 @@ package body Vdiff_Module is
 
    function Compare_Two_Files
      (Kernel         : access Kernel_Handle_Record'Class;
-      File1, File2   : VFS.Virtual_File;
+      File1, File2   : GNATCOLL.VFS.Virtual_File;
       Title1, Title2 : String;
       Result         : Diff_Occurrence_Link) return MDI_Child
    is
@@ -133,7 +133,7 @@ package body Vdiff_Module is
    is
       pragma Unreferenced (MDI);
       Title1, Title2 : Glib.String_Ptr;
-      File1, File2   : VFS.Virtual_File;
+      File1, File2   : GNATCOLL.VFS.Virtual_File;
    begin
       if Node.Tag.all = "Vdiff" then
          Title1 := Get_Field (Node, "Title1");
@@ -211,7 +211,7 @@ package body Vdiff_Module is
       pragma Unreferenced (Widget, Child);
 
    begin
-      if File1 = VFS.No_File then
+      if File1 = GNATCOLL.VFS.No_File then
          return;
       end if;
 
@@ -224,7 +224,7 @@ package body Vdiff_Module is
          Pattern_Name      => -"All files;Ada files;C/C++ files",
          History           => Get_History (Kernel));
 
-      if File2 = VFS.No_File then
+      if File2 = GNATCOLL.VFS.No_File then
          return;
       end if;
 
@@ -249,11 +249,10 @@ package body Vdiff_Module is
       Child   : MDI_Child;
       pragma Unreferenced (Child);
       Success : Boolean;
-      Tmp_Dir : constant String :=
-        Filesystems.Get_Local_Filesystem.Get_Tmp_Directory;
+      Tmp_Dir : constant String := Get_Local_Filesystem.Get_Tmp_Directory;
    begin
-      if D.Orig_File = VFS.No_File then
-         if D.New_File = VFS.No_File then
+      if D.Orig_File = GNATCOLL.VFS.No_File then
+         if D.New_File = GNATCOLL.VFS.No_File then
             return False;
          end if;
 
@@ -270,8 +269,8 @@ package body Vdiff_Module is
             Delete (Ref_File, Success);
          end;
 
-      elsif D.New_File = VFS.No_File then
-         if D.Orig_File = VFS.No_File then
+      elsif D.New_File = GNATCOLL.VFS.No_File then
+         if D.Orig_File = GNATCOLL.VFS.No_File then
             return False;
          end if;
 

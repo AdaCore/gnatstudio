@@ -65,7 +65,7 @@ package body Codefix.Ada_Tools is
 
    function Get_Use_Clauses
      (Clause_Name  : String;
-      File_Name    : VFS.Virtual_File;
+      File_Name    : GNATCOLL.VFS.Virtual_File;
       Current_Text : Text_Navigator_Abstr'Class;
       Exclusive    : Boolean := False) return Words_Lists.List
    is
@@ -205,7 +205,7 @@ package body Codefix.Ada_Tools is
 
    function List_All_With
      (Current_Text : Text_Navigator_Abstr'Class;
-      File_Name    : VFS.Virtual_File) return With_Lists.List
+      File_Name    : GNATCOLL.VFS.Virtual_File) return With_Lists.List
    is
       Structure  : constant Construct_List_Access :=
         Get_Structure (Current_Text, File_Name);
@@ -236,7 +236,7 @@ package body Codefix.Ada_Tools is
 
    function List_All_Use
      (Current_Text : Text_Navigator_Abstr'Class;
-      File_Name    : VFS.Virtual_File) return Use_Lists.List
+      File_Name    : GNATCOLL.VFS.Virtual_File) return Use_Lists.List
    is
       Structure  : constant Construct_List_Access :=
         Get_Structure (Current_Text, File_Name);
@@ -306,7 +306,7 @@ package body Codefix.Ada_Tools is
 
    function Get_Next_With_Position
      (Current_Text : Text_Navigator_Abstr'Class;
-      File_Name    : VFS.Virtual_File) return File_Cursor'Class
+      File_Name    : GNATCOLL.VFS.Virtual_File) return File_Cursor'Class
    is
       Current_Cursor : File_Cursor;
       Current_Info   : Construct_Tree_Iterator;
@@ -355,7 +355,7 @@ package body Codefix.Ada_Tools is
 
    function Search_With
      (Current_Text : Text_Navigator_Abstr'Class;
-      File_Name    : VFS.Virtual_File;
+      File_Name    : GNATCOLL.VFS.Virtual_File;
       Pkg_Name     : String) return File_Cursor'Class
    is
       Iterator   : Construct_Access :=

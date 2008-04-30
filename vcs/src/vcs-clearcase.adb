@@ -25,12 +25,14 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.OS_Lib;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNAT.Strings;
 
 with Commands.Console;          use Commands.Console;
 with Commands.External;         use Commands.External;
 with Commands.Locations;        use Commands.Locations;
 with Commands;                  use Commands;
-with Filesystems;
 with File_Utils;                use File_Utils;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
@@ -41,8 +43,6 @@ with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with String_Utils;              use String_Utils;
 with VCS_Module;                use VCS_Module;
 with VCS_View.Explorer;         use VCS_View.Explorer;
-with VFS;                       use VFS;
-with GNAT.Strings;
 
 package body VCS.ClearCase is
 
@@ -211,7 +211,7 @@ package body VCS.ClearCase is
       Current_File : constant String := String_List.Head (Head);
       Text_File    : constant Virtual_File := Create
         (Full_Filename =>
-           Filesystems.Get_Local_Filesystem.Get_Tmp_Directory
+           Get_Local_Filesystem.Get_Tmp_Directory
            & Base_Name (Current_File));
       L_Temp       : List_Node := First (List);
       File         : File_Type;
@@ -266,7 +266,7 @@ package body VCS.ClearCase is
                        Create (Full_Filename => String_List.Head (Head));
       Patch_File   : constant Virtual_File := Create
         (Full_Filename =>
-           Filesystems.Get_Local_Filesystem.Get_Tmp_Directory
+           Get_Local_Filesystem.Get_Tmp_Directory
            & Base_Name (Current_File) & "$difs");
       File         : File_Type;
       Success      : Boolean;
@@ -676,7 +676,7 @@ package body VCS.ClearCase is
 
    procedure Create_Tag
      (Rep       : access ClearCase_Record;
-      Dir       : VFS.Virtual_File;
+      Dir       : GNATCOLL.VFS.Virtual_File;
       Tag       : String;
       As_Branch : Boolean)
    is
@@ -983,7 +983,7 @@ package body VCS.ClearCase is
 
    procedure Switch
      (Rep : access ClearCase_Record;
-      Dir : VFS.Virtual_File;
+      Dir : GNATCOLL.VFS.Virtual_File;
       Tag : String)
    is
       pragma Unreferenced (Rep, Dir, Tag);
@@ -1543,7 +1543,7 @@ package body VCS.ClearCase is
 
    procedure File_Revision
      (Rep      : access ClearCase_Record;
-      File     : VFS.Virtual_File;
+      File     : GNATCOLL.VFS.Virtual_File;
       Revision : String)
    is
       pragma Unreferenced (Rep, File, Revision);
@@ -1557,7 +1557,7 @@ package body VCS.ClearCase is
 
    procedure Diff
      (Rep       : access ClearCase_Record;
-      File      : VFS.Virtual_File;
+      File      : GNATCOLL.VFS.Virtual_File;
       Version_1 : String := "";
       Version_2 : String := "")
    is
@@ -1648,8 +1648,8 @@ package body VCS.ClearCase is
 
    procedure Diff_Patch
      (Rep    : access ClearCase_Record;
-      File   : VFS.Virtual_File;
-      Output : VFS.Virtual_File)
+      File   : GNATCOLL.VFS.Virtual_File;
+      Output : GNATCOLL.VFS.Virtual_File)
    is
       Kernel : Kernel_Handle
         renames VCS_ClearCase_Module_ID.ClearCase_Reference.Kernel;
@@ -1665,7 +1665,7 @@ package body VCS.ClearCase is
 
    procedure Diff_Base_Head
      (Rep  : access ClearCase_Record;
-      File : VFS.Virtual_File)
+      File : GNATCOLL.VFS.Virtual_File)
    is
       Kernel : Kernel_Handle
         renames VCS_ClearCase_Module_ID.ClearCase_Reference.Kernel;
@@ -1681,7 +1681,7 @@ package body VCS.ClearCase is
 
    procedure Diff_Working
      (Rep  : access ClearCase_Record;
-      File : VFS.Virtual_File)
+      File : GNATCOLL.VFS.Virtual_File)
    is
       Kernel : Kernel_Handle
         renames VCS_ClearCase_Module_ID.ClearCase_Reference.Kernel;
@@ -1697,7 +1697,7 @@ package body VCS.ClearCase is
 
    procedure Diff_Tag
      (Rep      : access ClearCase_Record;
-      File     : VFS.Virtual_File;
+      File     : GNATCOLL.VFS.Virtual_File;
       Tag_Name : String)
    is
       pragma Unreferenced (Rep, File, Tag_Name);

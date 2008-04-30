@@ -31,7 +31,7 @@ with GPS.Kernel.Console;     use GPS.Kernel.Console;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with String_Utils;           use String_Utils;
 with Traces;                 use Traces;
-with VFS;                    use VFS;
+with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 
 package body Diff_Utils is
    use Diff_Occurrence_List;
@@ -115,7 +115,7 @@ package body Diff_Utils is
    ----------
 
    function Diff
-     (File1, File2 : VFS.Virtual_File) return Diff_Occurrence_Link
+     (File1, File2 : GNATCOLL.VFS.Virtual_File) return Diff_Occurrence_Link
    is
       Descriptor   : TTY_Process_Descriptor;
       Pattern      : constant Pattern_Matcher :=
@@ -182,9 +182,9 @@ package body Diff_Utils is
 
    function Diff
      (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Orig_File : VFS.Virtual_File;
-      New_File  : VFS.Virtual_File;
-      Diff_File : VFS.Virtual_File;
+      Orig_File : GNATCOLL.VFS.Virtual_File;
+      New_File  : GNATCOLL.VFS.Virtual_File;
+      Diff_File : GNATCOLL.VFS.Virtual_File;
       Revert    : Boolean := False) return Diff_Occurrence_Link
    is
       Patch_Command : constant String := Get_Pref (Patch_Cmd);
@@ -320,7 +320,7 @@ package body Diff_Utils is
    -----------
 
    function Diff3
-     (File1, File2, File3 : VFS.Virtual_File) return Diff_Pair
+     (File1, File2, File3 : GNATCOLL.VFS.Virtual_File) return Diff_Pair
    is
       Result : Diff_Pair;
    begin

@@ -37,7 +37,7 @@ with Generic_List;
 with Virtual_Lists;
 with Virtual_Lists.Extensive;
 
-with VFS; use VFS;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 package Completion is
 
@@ -83,7 +83,8 @@ package Completion is
      (Context : Completion_Context) return Natural;
    --  Return the offset associated to this context.
 
-   function Get_File (Context : Completion_Context) return VFS.Virtual_File;
+   function Get_File
+     (Context : Completion_Context) return GNATCOLL.VFS.Virtual_File;
    --  Return the file associated with this context
 
    -------------------
@@ -175,7 +176,7 @@ package Completion is
 
    function Create_Context
      (Manager : access Completion_Manager;
-      File    : VFS.Virtual_File;
+      File    : GNATCOLL.VFS.Virtual_File;
       Buffer  : String_Access;
       Offset  : Natural) return Completion_Context;
    --  Creates a new context for this manager, with the offset and the buffer
@@ -315,7 +316,7 @@ private
    type Completion_Context_Record is tagged record
       Buffer : String_Access;
       Offset : Integer;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
    end record;
 
    type Completion_Context is access all Completion_Context_Record'Class;

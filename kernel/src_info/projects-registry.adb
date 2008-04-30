@@ -59,7 +59,7 @@ with Remote;                    use Remote;
 with String_Hash;
 with Traces;                    use Traces;
 with Types;                     use Types;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 package body Projects.Registry is
 
@@ -178,7 +178,7 @@ package body Projects.Registry is
       Predefined_Source_Path : GNAT.Strings.String_Access;
       --  Predefined source paths for the runtime library
 
-      Predefined_Source_Files : VFS.File_Array_Access;
+      Predefined_Source_Files : GNATCOLL.VFS.File_Array_Access;
       --  The list of source files in Predefined_Source_Path
 
       Extensions : Languages_Htable.String_Hash_Table.HTable;
@@ -527,7 +527,7 @@ package body Projects.Registry is
 
    procedure Load
      (Registry           : in out Project_Registry;
-      Root_Project_Path  : VFS.Virtual_File;
+      Root_Project_Path  : GNATCOLL.VFS.Virtual_File;
       Errors             : Projects.Error_Report;
       New_Project_Loaded : out Boolean;
       Status             : out Boolean)
@@ -537,7 +537,7 @@ package body Projects.Registry is
 
       procedure Internal_Load
         (Registry           : in out Project_Registry;
-         Root_Project_Path  : VFS.Virtual_File;
+         Root_Project_Path  : GNATCOLL.VFS.Virtual_File;
          Errors             : Projects.Error_Report;
          New_Project_Loaded : out Boolean);
       --  Actual implementation. Reload_If_Errors is used to decide whether
@@ -560,7 +560,7 @@ package body Projects.Registry is
 
       procedure Internal_Load
         (Registry           : in out Project_Registry;
-         Root_Project_Path  : VFS.Virtual_File;
+         Root_Project_Path  : GNATCOLL.VFS.Virtual_File;
          Errors             : Projects.Error_Report;
          New_Project_Loaded : out Boolean)
       is
@@ -579,7 +579,7 @@ package body Projects.Registry is
             Previous_Default := Projects.Status (Registry.Data.Root) = Default;
 
          else
-            Previous_Project := VFS.No_File;
+            Previous_Project := GNATCOLL.VFS.No_File;
             Previous_Default := False;
          end if;
 
@@ -641,7 +641,7 @@ package body Projects.Registry is
          --  and the file timestamps will be returned in GMT, therefore we
          --  won't be able to compare.
 
-         Registry.Data.Timestamp := VFS.No_Time;
+         Registry.Data.Timestamp := GNATCOLL.Utils.No_Time;
          Iter := Start (Registry.Data.Root);
 
          while Current (Iter) /= No_Project loop
@@ -1347,7 +1347,7 @@ package body Projects.Registry is
       is
          Full_Path : constant Name_Id := Get_String (Dir & Display_File);
       begin
-         Append (Source_File_List, VFS.Create (Dir & Display_File));
+         Append (Source_File_List, GNATCOLL.VFS.Create (Dir & Display_File));
 
          String_Element_Table.Increment_Last
            (Registry.Data.View_Tree.String_Elements);
@@ -1782,7 +1782,7 @@ package body Projects.Registry is
      (Registry : Project_Registry; Source_Filename : Virtual_File)
       return Namet.Name_Id
    is
-      Base_Name : constant String := VFS.Base_Name (Source_Filename);
+      Base_Name : constant String := GNATCOLL.VFS.Base_Name (Source_Filename);
       S         : constant Source_File_Data :=
                     Get (Registry.Data.Sources, Base_Name);
 
@@ -2054,7 +2054,7 @@ package body Projects.Registry is
    ---------------------------------
 
    function Get_Predefined_Source_Files
-     (Registry : Project_Registry) return VFS.File_Array_Access is
+     (Registry : Project_Registry) return GNATCOLL.VFS.File_Array_Access is
    begin
       --  ??? A nicer way would be to implement this with a predefined project,
       --  and rely on the project parser to return the source
@@ -2320,7 +2320,7 @@ package body Projects.Registry is
      (Name            : Glib.UTF8_String;
       Registry        : Project_Registry'Class;
       Use_Source_Path : Boolean := True;
-      Use_Object_Path : Boolean := True) return VFS.Virtual_File is
+      Use_Object_Path : Boolean := True) return GNATCOLL.VFS.Virtual_File is
    begin
       if Is_Absolute_Path_Or_URL (Name) then
          return Create (Full_Filename => Name);

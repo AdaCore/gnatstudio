@@ -77,7 +77,7 @@ package body VCS_Status is
 
    function Get_Cache
      (Cache : Status_Cache;
-      File  : VFS.Virtual_File) return Line_Record is
+      File  : GNATCOLL.VFS.Virtual_File) return Line_Record is
    begin
       return Status_Hash.Get (Cache.T.all, File).LR;
    end Get_Cache;
@@ -98,7 +98,7 @@ package body VCS_Status is
 
    procedure Set_Cache
      (Cache  : Status_Cache;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Status : in out Line_Record) is
    begin
       Status := Copy (Status);
@@ -111,7 +111,7 @@ package body VCS_Status is
 
    function Has_Status
      (Cache  : Status_Cache;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Ref    : VCS_Access;
       Status : Status_Id) return Boolean
    is

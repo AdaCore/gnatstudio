@@ -77,7 +77,7 @@ with Layouts;                           use Layouts;
 with OS_Utils;                          use OS_Utils;
 with String_Utils;
 with Traces;                            use Traces;
-with VFS;                               use VFS;
+with GNATCOLL.VFS;                               use GNATCOLL.VFS;
 
 package body Browsers.Canvas is
 
@@ -898,7 +898,7 @@ package body Browsers.Canvas is
          Error  : GError;
 
       begin
-         if Name /= VFS.No_File then
+         if Name /= GNATCOLL.VFS.No_File then
             Push_State (Get_Kernel (B), Busy);
             State_Pushed := True;
             Pixbuf := Get_Pixbuf (B);
@@ -947,7 +947,7 @@ package body Browsers.Canvas is
                      Kind              => Save_File,
                      History           => Get_History (Kernel));
       begin
-         if Name /= VFS.No_File then
+         if Name /= GNATCOLL.VFS.No_File then
             Push_State (Get_Kernel (B), Busy);
             State_Pushed := True;
 

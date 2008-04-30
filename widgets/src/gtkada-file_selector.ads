@@ -83,7 +83,7 @@ with Directory_Tree;      use Directory_Tree;
 with Generic_List;
 with Generic_Stack;
 with Histories;
-with VFS;
+with GNATCOLL.VFS;
 
 package Gtkada.File_Selector is
 
@@ -91,7 +91,7 @@ package Gtkada.File_Selector is
 
    function Select_File
      (Title             : String  := "Select a file";
-      Base_Directory    : VFS.Virtual_File := VFS.No_File;
+      Base_Directory    : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       File_Pattern      : String  := "";
       Pattern_Name      : String  := "";
       Default_Name      : String  := "";
@@ -99,7 +99,8 @@ package Gtkada.File_Selector is
       Remote_Browsing   : Boolean := False;
       Use_Native_Dialog : Boolean := False;
       Kind              : File_Selector_Kind := Unspecified;
-      History           : Histories.History  := null) return VFS.Virtual_File;
+      History           : Histories.History  := null)
+      return GNATCOLL.VFS.Virtual_File;
    --  Create a file selection dialog, display it, and return the selected file
    --  if any, or return a VFS.No_File if the user cancelled the dialog.
    --  Base_Directory is the directory on which the dialog starts. If the
@@ -120,10 +121,11 @@ package Gtkada.File_Selector is
 
    function Select_Directory
      (Title             : String  := "Select a directory";
-      Base_Directory    : VFS.Virtual_File := VFS.No_File;
+      Base_Directory    : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Parent            : Gtk_Window := null;
       Use_Native_Dialog : Boolean := False;
-      History           : Histories.History := null) return VFS.Virtual_File;
+      History           : Histories.History := null)
+      return GNATCOLL.VFS.Virtual_File;
    --  Create a directory selection dialog, display it, and return the absolute
    --  name of the selected directory, if any, or return an empty string.
    --  Base_Directory is the directory on which the dialog starts. If the
@@ -147,7 +149,7 @@ package Gtkada.File_Selector is
 
    function Select_File
      (File_Selector : File_Selector_Window_Access;
-      Parent        : Gtk_Window := null) return VFS.Virtual_File;
+      Parent        : Gtk_Window := null) return GNATCOLL.VFS.Virtual_File;
    --  Display File_Selector on the screen, and wait until the user selects a
    --  file. VFS.No_File is returned if the user cancelled the dialog.
    --  As opposed to the first version of Select_File above, this one gives
@@ -155,7 +157,7 @@ package Gtkada.File_Selector is
 
    function Select_Directory
      (File_Selector : File_Selector_Window_Access;
-      Parent        : Gtk_Window := null) return VFS.Virtual_File;
+      Parent        : Gtk_Window := null) return GNATCOLL.VFS.Virtual_File;
    --  Display File_Selector on the screen, and wait until the user selects a
    --  file. The absolute dir name is returned, or the empty string if the
    --  user cancelled the dialog.
@@ -171,7 +173,8 @@ package Gtkada.File_Selector is
    --  ??? Add a Host parameter ?
 
    function Get_Selection
-     (Dialog : access File_Selector_Window_Record) return VFS.Virtual_File;
+     (Dialog : access File_Selector_Window_Record)
+      return GNATCOLL.VFS.Virtual_File;
    --  Return the selected file.
    --  Return VFS.No_File if the entry does not exist.
 
@@ -208,7 +211,7 @@ package Gtkada.File_Selector is
    procedure Use_File_Filter
      (Filter : access File_Filter_Record;
       Win    : access File_Selector_Window_Record'Class;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       State  : out File_State;
       Pixbuf : out Gdk_Pixbuf;
       Text   : out String_Access) is abstract;
@@ -242,8 +245,8 @@ package Gtkada.File_Selector is
 
    procedure Gtk_New
      (File_Selector_Window : out File_Selector_Window_Access;
-      Root                 : VFS.Virtual_File;
-      Initial_Directory    : VFS.Virtual_File;
+      Root                 : GNATCOLL.VFS.Virtual_File;
+      Initial_Directory    : GNATCOLL.VFS.Virtual_File;
       Dialog_Title         : String;
       Show_Files           : Boolean := True;
       History              : Histories.History;
@@ -259,8 +262,8 @@ package Gtkada.File_Selector is
 
    procedure Initialize
      (File_Selector_Window : access File_Selector_Window_Record'Class;
-      Root                 : VFS.Virtual_File;
-      Initial_Directory    : VFS.Virtual_File;
+      Root                 : GNATCOLL.VFS.Virtual_File;
+      Initial_Directory    : GNATCOLL.VFS.Virtual_File;
       Dialog_Title         : String;
       Show_Files           : Boolean := True;
       History              : Histories.History;
@@ -269,8 +272,8 @@ package Gtkada.File_Selector is
 
 private
 
-   procedure Free (F : in out VFS.Virtual_File);
-   package File_List is new Generic_List (VFS.Virtual_File);
+   procedure Free (F : in out GNATCOLL.VFS.Virtual_File);
+   package File_List is new Generic_List (GNATCOLL.VFS.Virtual_File);
    use File_List;
 
    procedure Free (Filter : in out File_Filter);
@@ -281,13 +284,13 @@ private
    package File_Selector_Idle is new Idle (File_Selector_Window_Access);
    use File_Selector_Idle;
 
-   package Dir_Stack is new Generic_Stack (VFS.Virtual_File);
+   package Dir_Stack is new Generic_Stack (GNATCOLL.VFS.Virtual_File);
    use Dir_Stack;
 
    procedure Use_File_Filter
      (Filter : access Filter_Show_All;
       Win    : access File_Selector_Window_Record'Class;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       State  : out File_State;
       Pixbuf : out Gdk_Pixbuf;
       Text   : out String_Access);
@@ -295,14 +298,15 @@ private
    --  the Filter_Show_All filter.
 
    --  ??? Ada2005: no need for this new type
-   type VF_Access is access all VFS.Virtual_File;
+   type VF_Access is access all GNATCOLL.VFS.Virtual_File;
 
    type File_Selector_Window_Record is new Gtk_Dialog_Record with record
       Selected_File          : VF_Access;
       --  Contains the selected file upon close
       --  If the file is not furnished at initialize call, it is created.
 
-      Current_Directory      : VFS.Virtual_File := VFS.Create_From_Base ("");
+      Current_Directory      : GNATCOLL.VFS.Virtual_File :=
+        GNATCOLL.VFS.Create_From_Base ("");
       --  The directory that is currently being explored.
       --  Current_Directory must always be a Normalized path, ending with
       --  a directory separator.
@@ -339,7 +343,8 @@ private
       Display_Idle_Handler   : Idle_Handler_Id := 0;
       --  Identifier for display idle loops
 
-      Home_Directory         : VFS.Virtual_File := VFS.Get_Current_Dir;
+      Home_Directory         : GNATCOLL.VFS.Virtual_File :=
+        GNATCOLL.VFS.Get_Current_Dir;
 
       Past_History           : Simple_Stack;
       Future_History         : Simple_Stack;

@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with VFS;
+with GNATCOLL.VFS;
 with GNAT.Strings;
 
 package GVD.Types is
@@ -164,7 +164,7 @@ package GVD.Types is
       --  The name of the variable to watch for watchpoints. This is left to
       --  null for breakpoints.
 
-      File        : VFS.Virtual_File := VFS.No_File;
+      File        : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       --  The file name that contains the breakpoint.
       --  Must be stored as an absolute file name.
 
@@ -241,7 +241,7 @@ package GVD.Types is
    --  Beware that some debuggers might not be available.
 
    type Program_Descriptor is record
-      Program       : VFS.Virtual_File;
+      Program       : GNATCOLL.VFS.Virtual_File;
       Debugger      : Debugger_Type;
       Debugger_Name : GNAT.Strings.String_Access;
       Remote_Host   : GNAT.Strings.String_Access;

@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with VFS;                  use VFS;
+with GNATCOLL.VFS;                  use GNATCOLL.VFS;
 
 package body Commands.Locations is
 
@@ -41,7 +41,7 @@ package body Commands.Locations is
    --------------
 
    function Get_File
-     (Item : access Source_Location_Command_Type) return VFS.Virtual_File is
+     (Item : access Source_Location_Command_Type) return Virtual_File is
    begin
       return Item.Filename;
    end Get_File;
@@ -73,7 +73,7 @@ package body Commands.Locations is
    procedure Create
      (Item       : out Source_Location_Command;
       Kernel     : Kernel_Handle;
-      Filename   : VFS.Virtual_File;
+      Filename   : GNATCOLL.VFS.Virtual_File;
       Line       : Natural := 0;
       Column     : Visible_Column_Type := 0;
       Column_End : Visible_Column_Type := 0) is

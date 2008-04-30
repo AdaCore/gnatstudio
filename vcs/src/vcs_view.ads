@@ -37,7 +37,7 @@ with Gtk.Widget;           use Gtk.Widget;
 with GPS.Kernel;           use GPS.Kernel;
 with String_List_Utils;    use String_List_Utils;
 with VCS_Status;           use VCS_Status;
-with VFS;                  use VFS;
+with GNATCOLL.VFS;                  use GNATCOLL.VFS;
 with Tooltips;
 
 package VCS_View is
@@ -103,13 +103,13 @@ package VCS_View is
 
    function Get_Iter_From_File
      (Explorer : access VCS_View_Record'Class;
-      File     : VFS.Virtual_File) return Gtk_Tree_Iter;
+      File     : GNATCOLL.VFS.Virtual_File) return Gtk_Tree_Iter;
    --  Return the Iter associated with the given File.
    --  Return Null_Iter if no such iter was found.
 
    function Get_Iter_From_File
      (Explorer : access VCS_View_Record'Class;
-      File     : VFS.Virtual_File;
+      File     : GNATCOLL.VFS.Virtual_File;
       Parent   : Gtk_Tree_Iter) return Gtk_Tree_Iter;
    --  Return the Iter associated with the given File under Parent.
    --  Return Null_Iter if no such iter was found.
@@ -123,7 +123,7 @@ package VCS_View is
 
    procedure Remove_File
      (Explorer : access VCS_View_Record'Class;
-      File     : VFS.Virtual_File);
+      File     : GNATCOLL.VFS.Virtual_File);
    --  Remove the given file from the explorer
 
    procedure Refresh (Explorer : access VCS_View_Record'Class);
@@ -131,7 +131,7 @@ package VCS_View is
 
    procedure Refresh_Log
      (Explorer : access VCS_View_Record'Class;
-      File     : VFS.Virtual_File);
+      File     : GNATCOLL.VFS.Virtual_File);
    --  Refresh the "Log" column for File
 
    procedure Initialize
@@ -191,7 +191,7 @@ package VCS_View is
       Context : Selection_Context);
    --  Select all files having the same status as the current selection
 
-   function File_Key (File : VFS.Virtual_File) return String;
+   function File_Key (File : GNATCOLL.VFS.Virtual_File) return String;
    --  Returns the key used for the file or directory in the view
 
 private

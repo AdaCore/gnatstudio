@@ -91,7 +91,7 @@ package GPS.Kernel.Custom is
 
    procedure Execute_Customization_String
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Node   : Glib.Xml_Int.Node_Ptr;
       Level  : GPS.Kernel.Customization_Level);
    --  Send a signal to all registered modules to indicate a new customization
@@ -149,7 +149,7 @@ package GPS.Kernel.Custom is
 
    function Load_File_At_Startup
      (Kernel  : access Kernel_Handle_Record'Class;
-      File    : VFS.Virtual_File;
+      File    : GNATCOLL.VFS.Virtual_File;
       Default : Boolean) return Boolean;
    --  Whether File should be loaded at startup, based on the contents of
    --  the file ~/.gps/startup.xml
@@ -158,7 +158,7 @@ package GPS.Kernel.Custom is
 
    function Initialization_Command
      (Kernel : access Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File)
+      File   : GNATCOLL.VFS.Virtual_File)
       return Commands.Custom.Custom_Command_Access;
    --  Return the command to execute to initialize this module. This is
    --  null if no initialization command was provided. These are read from
@@ -177,7 +177,8 @@ package GPS.Kernel.Custom is
    function Get_Script (Iter : Script_Iterator) return String;
    --  Iterate over all known startup
 
-   function Get_Full_File (Desc : Script_Description) return VFS.Virtual_File;
+   function Get_Full_File
+     (Desc : Script_Description) return GNATCOLL.VFS.Virtual_File;
    --  Return the full file name of the startup script. This is different from
    --  Get_Script above.
    --  The latter returns the base name of the script, as found in startup.xml.
@@ -204,7 +205,8 @@ private
       Initialization : Glib.Xml_Int.Node_Ptr; --  from startup.xml
       Load           : Boolean;               --  from startup.xml
       Explicit       : Boolean;               --  whether it was in startup.xml
-      File           : VFS.Virtual_File;      --  from reading the directories
+      File           : GNATCOLL.VFS.Virtual_File;
+      --  from reading the directories
    end record;
    type Script_Description_Access is access all Script_Description;
 

@@ -27,7 +27,7 @@ with Language.Ada;      use Language.Ada;
 with Projects;          use Projects;
 with Projects.Registry; use Projects.Registry;
 with String_Utils;      use String_Utils;
-with VFS;               use VFS;
+with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 with Ada_Semantic_Tree.Parts; use Ada_Semantic_Tree.Parts;
 with Language.Tree.Ada;       use Language.Tree.Ada;
@@ -400,7 +400,7 @@ package body Codefix.Text_Manager is
 
    function Read_File
      (This : Text_Navigator_Abstr;
-      File_Name : VFS.Virtual_File) return GNAT.Strings.String_Access is
+      File_Name : Virtual_File) return GNAT.Strings.String_Access is
    begin
       return Read_File (Get_File (This, File_Name).all);
    end Read_File;
@@ -411,7 +411,7 @@ package body Codefix.Text_Manager is
 
    function Get_File
      (This : Text_Navigator_Abstr'Class;
-      Name : VFS.Virtual_File) return Ptr_Text
+      Name : GNATCOLL.VFS.Virtual_File) return Ptr_Text
    is
       Iterator    : Text_List.List_Node := First (This.Files.all);
       New_Text    : Ptr_Text;
@@ -586,7 +586,7 @@ package body Codefix.Text_Manager is
 
    function Search_Unit
      (This      : Text_Navigator_Abstr'Class;
-      File_Name : VFS.Virtual_File;
+      File_Name : GNATCOLL.VFS.Virtual_File;
       Category  : Language_Category;
       Name      : String := "") return Simple_Construct_Information is
    begin
@@ -599,7 +599,7 @@ package body Codefix.Text_Manager is
 
    function Line_Max
      (This      : Text_Navigator_Abstr'Class;
-      File_Name : VFS.Virtual_File) return Natural is
+      File_Name : GNATCOLL.VFS.Virtual_File) return Natural is
    begin
       return Line_Max (Get_File (This, File_Name).all);
    end Line_Max;
@@ -737,7 +737,7 @@ package body Codefix.Text_Manager is
 
    function Get_Structure
      (This      : Text_Navigator_Abstr'Class;
-      File_Name : VFS.Virtual_File) return Construct_List_Access is
+      File_Name : GNATCOLL.VFS.Virtual_File) return Construct_List_Access is
    begin
       return Get_Structure (Get_File (This, File_Name));
    end Get_Structure;
@@ -779,7 +779,7 @@ package body Codefix.Text_Manager is
    ----------
 
    procedure Undo
-     (This : Text_Navigator_Abstr'Class; File_Name : VFS.Virtual_File) is
+     (This : Text_Navigator_Abstr'Class; File_Name : Virtual_File) is
    begin
       Undo (Get_File (This, File_Name).all);
    end Undo;
@@ -874,7 +874,7 @@ package body Codefix.Text_Manager is
    -- Get_File_Name --
    -------------------
 
-   function Get_File_Name (This : Text_Interface) return VFS.Virtual_File is
+   function Get_File_Name (This : Text_Interface) return Virtual_File is
    begin
       return This.File_Name;
    end Get_File_Name;
@@ -2675,7 +2675,7 @@ package body Codefix.Text_Manager is
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
       Current_Extract : Ptr_Extract_Line := This.First;
-      Last_File_Name  : VFS.Virtual_File := VFS.No_File;
+      Last_File_Name  : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Offset_Line     : Integer := 0;
    begin
       while Current_Extract /= null loop
@@ -3515,7 +3515,7 @@ package body Codefix.Text_Manager is
    function Get_Files_Names
      (This : Extract; Size_Max : Natural := 0) return String
    is
-      Previous     : VFS.Virtual_File;
+      Previous     : GNATCOLL.VFS.Virtual_File;
       Current_Line : Ptr_Extract_Line := Get_First_Line (This);
       Result       : GNAT.Strings.String_Access;
 
@@ -3556,7 +3556,7 @@ package body Codefix.Text_Manager is
    ------------------
 
    function Get_Nb_Files (This : Extract) return Natural is
-      Previous     : VFS.Virtual_File;
+      Previous     : GNATCOLL.VFS.Virtual_File;
       Current_Line : Ptr_Extract_Line := Get_First_Line (This);
       Total        : Natural := 1;
 
@@ -4278,7 +4278,7 @@ package body Codefix.Text_Manager is
    -- Get_File --
    --------------
 
-   function Get_File (This : File_Cursor) return VFS.Virtual_File is
+   function Get_File (This : File_Cursor) return GNATCOLL.VFS.Virtual_File is
    begin
       return This.File;
    end Get_File;
@@ -4327,7 +4327,7 @@ package body Codefix.Text_Manager is
    -- Set_File --
    --------------
 
-   procedure Set_File (This : in out File_Cursor; File : VFS.Virtual_File) is
+   procedure Set_File (This : in out File_Cursor; File : Virtual_File) is
    begin
       This.File := File;
    end Set_File;

@@ -43,7 +43,7 @@ with Language;               use Language;
 with Language_Handlers;  use Language_Handlers;
 with Refactoring.Performers; use Refactoring.Performers;
 with Traces;                 use Traces;
-with VFS;                    use VFS;
+with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 
 package body Refactoring.Subprograms is
 
@@ -76,7 +76,7 @@ package body Refactoring.Subprograms is
       Name       : String;
       Params     : Parameter_Arrays.Instance;
       Local_Vars : Entity_Information_Arrays.Instance;
-      File       : VFS.Virtual_File;
+      File       : GNATCOLL.VFS.Virtual_File;
       Line_Start : Natural;
       Line_End   : Natural;
       Options    : Extract_Method_Options;
@@ -87,7 +87,7 @@ package body Refactoring.Subprograms is
 
    function Extract_Method
      (Kernel              : access Kernel_Handle_Record'Class;
-      File                : VFS.Virtual_File;
+      File                : GNATCOLL.VFS.Virtual_File;
       Line_Start, Line_End : Integer;
       Method_Name         : String;
       Options             : Extract_Method_Options) return Command_Return_Type;
@@ -99,7 +99,7 @@ package body Refactoring.Subprograms is
 
    procedure Insert_New_Method
      (Kernel      : access Kernel_Handle_Record'Class;
-      In_File     : VFS.Virtual_File;
+      In_File     : GNATCOLL.VFS.Virtual_File;
       Before_Line : Integer;
       Options     : Extract_Method_Options;
       Method_Decl : String;
@@ -116,7 +116,7 @@ package body Refactoring.Subprograms is
       Name       : String;
       Params     : Parameter_Arrays.Instance;
       Local_Vars : Entity_Information_Arrays.Instance;
-      File       : VFS.Virtual_File;
+      File       : GNATCOLL.VFS.Virtual_File;
       Line_Start : Natural;
       Line_End   : Natural;
       Options    : Extract_Method_Options;
@@ -296,7 +296,7 @@ package body Refactoring.Subprograms is
 
    procedure Insert_New_Method
      (Kernel      : access Kernel_Handle_Record'Class;
-      In_File     : VFS.Virtual_File;
+      In_File     : GNATCOLL.VFS.Virtual_File;
       Before_Line : Integer;
       Options     : Extract_Method_Options;
       Method_Decl : String;
@@ -348,7 +348,7 @@ package body Refactoring.Subprograms is
 
    function Extract_Method
      (Kernel               : access Kernel_Handle_Record'Class;
-      File                 : VFS.Virtual_File;
+      File                 : GNATCOLL.VFS.Virtual_File;
       Line_Start, Line_End : Integer;
       Method_Name          : String;
       Options              : Extract_Method_Options) return Command_Return_Type

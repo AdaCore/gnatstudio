@@ -24,6 +24,7 @@ with GNAT.Expect;            use GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote; use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
+with GNATCOLL.VFS;           use GNATCOLL.VFS;
 
 with Glib;                   use Glib;
 with Glib.Convert;           use Glib.Convert;
@@ -59,10 +60,10 @@ with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Project;     use GPS.Kernel.Project;
 with GPS.Kernel.Remote;
 
+with Filesystems;            use Filesystems;
 with Projects;               use Projects;
 with Remote.Path.Translator; use Remote, Remote.Path.Translator;
 with Traces;                 use Traces;
-with VFS;                    use VFS;
 
 with Machine_Descriptors;    use Machine_Descriptors;
 
@@ -808,9 +809,11 @@ package body Remote_Views is
    ----------------
 
    function Check_Host (Nickname : String) return String is
-      Dir : VFS.Virtual_File;
+      Dir : GNATCOLL.VFS.Virtual_File;
    begin
-      Dir := Get_Root (Create (Nickname, ""));
+      Dir := Get_Root
+        (Create (FS            => Get_Filesystem (Nickname),
+                 Full_Filename => ""));
 
       if Is_Directory (Dir) then
          return "";
@@ -836,7 +839,7 @@ package body Remote_Views is
       --  ??? We used to have a single assignment for Prj and Project below,
       --  but this caused a memory corruption (codegen bug ?), so work around
       --  it for now
-      Prj              : constant VFS.Virtual_File :=
+      Prj              : constant GNATCOLL.VFS.Virtual_File :=
                            Project_Path (Get_Project (User.View.Kernel));
       Project          : constant String := Full_Name (Prj).all;
       Reasons          : Ada.Strings.Unbounded.Unbounded_String;
@@ -889,7 +892,9 @@ package body Remote_Views is
          --  equivalent path on the remote server, or the paths are identical.
          if New_Build_Server /= Local_Nickname
            and then not To_Remote_Possible (Project, New_Build_Server)
-           and then not Is_Regular_File (Create (New_Build_Server, Project))
+           and then not Is_Regular_File
+             (Create (FS            => Get_Filesystem (New_Build_Server),
+                      Full_Filename => Project))
          then
             Failure := True;
             Reasons := Reasons & "Project " & Project &

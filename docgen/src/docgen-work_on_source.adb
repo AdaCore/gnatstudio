@@ -34,7 +34,7 @@ with Projects;                  use Projects;
 with Projects.Registry;         use Projects.Registry;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 package body Docgen.Work_On_Source is
 
@@ -47,7 +47,7 @@ package body Docgen.Work_On_Source is
       Kernel                    : access Kernel_Handle_Record'Class;
       Result                    : in out Unbounded_String;
       Source_File_List          : in out Type_Source_File_Table.HTable;
-      Source_Filename           : VFS.Virtual_File;
+      Source_Filename           : GNATCOLL.VFS.Virtual_File;
       Unit_Name                 : String;
       Unit_Info                 : Entity_Information;
       Main_Unit                 : Boolean;
@@ -122,7 +122,7 @@ package body Docgen.Work_On_Source is
       Result           : in out Unbounded_String;
       Parsed_List      : in out Construct_List;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Source_Filename  : VFS.Virtual_File;
+      Source_Filename  : GNATCOLL.VFS.Virtual_File;
       File_Text        : GNAT.Strings.String_Access;
       Source_File_List : in out Type_Source_File_Table.HTable;
       Options          : All_Options;
@@ -148,7 +148,7 @@ package body Docgen.Work_On_Source is
       List_Ref_In_File          : in out List_Reference_In_File.List;
       Tagged_Types_List         : in out List_Entity_Information.List;
       Private_Tagged_Types_List : in out List_Entity_Information.List;
-      Source_Filename           : VFS.Virtual_File;
+      Source_Filename           : GNATCOLL.VFS.Virtual_File;
       Package_Name              : String;
       Package_Information       : Entity_Information;
       Main_Unit                 : Boolean;
@@ -172,7 +172,7 @@ package body Docgen.Work_On_Source is
       Parsed_List      : in out Construct_List;
       Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Source_Filename  : VFS.Virtual_File;
+      Source_Filename  : GNATCOLL.VFS.Virtual_File;
       Package_Info     : Entity_Information;
       File_Text        : GNAT.Strings.String_Access;
       Source_File_List : in out Type_Source_File_Table.HTable;
@@ -193,7 +193,7 @@ package body Docgen.Work_On_Source is
       Parsed_List      : in out Construct_List;
       Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Source_Filename  : VFS.Virtual_File;
+      Source_Filename  : GNATCOLL.VFS.Virtual_File;
       Package_Info     : Entity_Information;
       File_Text        : GNAT.Strings.String_Access;
       Source_File_List : in out Type_Source_File_Table.HTable;
@@ -214,7 +214,7 @@ package body Docgen.Work_On_Source is
       Parsed_List      : in out Construct_List;
       Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Source_Filename  : VFS.Virtual_File;
+      Source_Filename  : GNATCOLL.VFS.Virtual_File;
       Package_Info     : Entity_Information;
       File_Text        : GNAT.Strings.String_Access;
       Source_File_List : in out Type_Source_File_Table.HTable;
@@ -254,7 +254,7 @@ package body Docgen.Work_On_Source is
       Parsed_List      : in out Construct_List;
       Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Source_Filename  : VFS.Virtual_File;
+      Source_Filename  : GNATCOLL.VFS.Virtual_File;
       Unit_Info        : Entity_Information;
       File_Text        : GNAT.Strings.String_Access;
       Source_File_List : in out Type_Source_File_Table.HTable;
@@ -287,7 +287,7 @@ package body Docgen.Work_On_Source is
       List_Ref_In_File          : in out List_Reference_In_File.List;
       Tagged_Types_List         : in out List_Entity_Information.List;
       Private_Tagged_Types_List : in out List_Entity_Information.List;
-      Source_Filename           : VFS.Virtual_File;
+      Source_Filename           : GNATCOLL.VFS.Virtual_File;
       Package_Info              : Entity_Information;
       File_Text                 : GNAT.Strings.String_Access;
       Source_File_List          : in out Type_Source_File_Table.HTable;
@@ -306,9 +306,9 @@ package body Docgen.Work_On_Source is
       Kernel          : access Kernel_Handle_Record'Class;
       Result          : in out Unbounded_String;
       Entity_List     : Type_Entity_List.List;
-      Source_Filename : VFS.Virtual_File;
+      Source_Filename : GNATCOLL.VFS.Virtual_File;
       Package_Name    : String;
-      Package_File    : VFS.Virtual_File;
+      Package_File    : GNATCOLL.VFS.Virtual_File;
       Options         : All_Options);
    --  Will call the output subprogram to create the header of
    --  the package. This is NOT the same as Process_Open_File,
@@ -420,7 +420,7 @@ package body Docgen.Work_On_Source is
       Kernel                    : access Kernel_Handle_Record'Class;
       Result                    : in out Unbounded_String;
       Source_File_List          : in out Type_Source_File_Table.HTable;
-      Source_Filename           : VFS.Virtual_File;
+      Source_Filename           : GNATCOLL.VFS.Virtual_File;
       Source_Is_Spec            : Boolean;
       Unit_Name                 : String;
       Entity_List               : in out Type_Entity_List.List;
@@ -555,7 +555,7 @@ package body Docgen.Work_On_Source is
       Kernel                    : access Kernel_Handle_Record'Class;
       Result                    : in out Unbounded_String;
       Source_File_List          : in out Type_Source_File_Table.HTable;
-      Source_Filename           : VFS.Virtual_File;
+      Source_Filename           : GNATCOLL.VFS.Virtual_File;
       Unit_Name                 : String;
       Unit_Info                 : Entity_Information;
       Main_Unit                 : Boolean;
@@ -1195,7 +1195,7 @@ package body Docgen.Work_On_Source is
       Kernel          : access Kernel_Handle_Record'Class;
       Result          : in out Unbounded_String;
       Entity_List     : Type_Entity_List.List;
-      Source_Filename : VFS.Virtual_File;
+      Source_Filename : GNATCOLL.VFS.Virtual_File;
       Package_Name    : String;
       Package_File    : Virtual_File;
       Options         : All_Options)
@@ -1325,7 +1325,7 @@ package body Docgen.Work_On_Source is
       Result           : in out Unbounded_String;
       Parsed_List      : in out Construct_List;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Source_Filename  : VFS.Virtual_File;
+      Source_Filename  : GNATCOLL.VFS.Virtual_File;
       File_Text        : GNAT.Strings.String_Access;
       Source_File_List : in out Type_Source_File_Table.HTable;
       Options          : All_Options;
@@ -1401,7 +1401,7 @@ package body Docgen.Work_On_Source is
       List_Ref_In_File          : in out List_Reference_In_File.List;
       Tagged_Types_List         : in out List_Entity_Information.List;
       Private_Tagged_Types_List : in out List_Entity_Information.List;
-      Source_Filename           : VFS.Virtual_File;
+      Source_Filename           : GNATCOLL.VFS.Virtual_File;
       Package_Name              : String;
       Package_Information       : Entity_Information;
       Main_Unit                 : Boolean;
@@ -1615,7 +1615,7 @@ package body Docgen.Work_On_Source is
       Parsed_List      : in out Construct_List;
       Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Source_Filename  : VFS.Virtual_File;
+      Source_Filename  : GNATCOLL.VFS.Virtual_File;
       Package_Info     : Entity_Information;
       File_Text        : GNAT.Strings.String_Access;
       Source_File_List : in out Type_Source_File_Table.HTable;
@@ -1736,7 +1736,7 @@ package body Docgen.Work_On_Source is
       Parsed_List      : in out Construct_List;
       Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Source_Filename  : VFS.Virtual_File;
+      Source_Filename  : GNATCOLL.VFS.Virtual_File;
       Package_Info     : Entity_Information;
       File_Text        : GNAT.Strings.String_Access;
       Source_File_List : in out Type_Source_File_Table.HTable;
@@ -1893,7 +1893,7 @@ package body Docgen.Work_On_Source is
       List_Ref_In_File          : in out List_Reference_In_File.List;
       Tagged_Types_List         : in out List_Entity_Information.List;
       Private_Tagged_Types_List : in out List_Entity_Information.List;
-      Source_Filename           : VFS.Virtual_File;
+      Source_Filename           : GNATCOLL.VFS.Virtual_File;
       Package_Info              : Entity_Information;
       File_Text                 : GNAT.Strings.String_Access;
       Source_File_List          : in out Type_Source_File_Table.HTable;
@@ -2067,7 +2067,7 @@ package body Docgen.Work_On_Source is
       Parsed_List      : in out Construct_List;
       Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Source_Filename  : VFS.Virtual_File;
+      Source_Filename  : GNATCOLL.VFS.Virtual_File;
       Package_Info     : Entity_Information;
       File_Text        : GNAT.Strings.String_Access;
       Source_File_List : in out Type_Source_File_Table.HTable;
@@ -2261,7 +2261,7 @@ package body Docgen.Work_On_Source is
       Parsed_List      : in out Construct_List;
       Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Source_Filename  : VFS.Virtual_File;
+      Source_Filename  : GNATCOLL.VFS.Virtual_File;
       Unit_Info        : Entity_Information;
       File_Text        : GNAT.Strings.String_Access;
       Source_File_List : in out Type_Source_File_Table.HTable;

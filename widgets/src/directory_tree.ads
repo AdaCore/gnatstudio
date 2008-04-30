@@ -43,7 +43,7 @@ with Gtk.Scrolled_Window;
 with Generic_List;
 with Gtk.Tree_Selection;
 
-with VFS;
+with GNATCOLL.VFS;
 
 package Directory_Tree is
 
@@ -63,15 +63,15 @@ package Directory_Tree is
 
    procedure Gtk_New
      (Tree    : out Dir_Tree;
-      Root    : VFS.Virtual_File;
-      Initial : VFS.Virtual_File := VFS.No_File);
+      Root    : GNATCOLL.VFS.Virtual_File;
+      Initial : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File);
    --  Create a new tree, whose root node points to the directory Root,
    --  pointing at the Initial directory, if it is a subdirectory of Root.
 
    procedure Initialize
      (Tree    : access Dir_Tree_Record'Class;
-      Root    : VFS.Virtual_File;
-      Initial : VFS.Virtual_File);
+      Root    : GNATCOLL.VFS.Virtual_File;
+      Initial : GNATCOLL.VFS.Virtual_File);
    --  Internal function used to create the tree.
 
    procedure Show_Parent (Tree : access Dir_Tree_Record);
@@ -79,7 +79,7 @@ package Directory_Tree is
 
    procedure Show_Directory
      (Tree           : access Dir_Tree_Record;
-      Dir            : VFS.Virtual_File;
+      Dir            : GNATCOLL.VFS.Virtual_File;
       Busy_Cursor_On : Gdk.Window.Gdk_Window := null);
    --  Expand the tree so that the directory Dir is visible.
    --  If Busy_Cursor_On is not null, then the cursor is that window is set to
@@ -90,7 +90,7 @@ package Directory_Tree is
    --  If the directory doesn't exist, the closest possible parent is selected.
 
    function Get_Selection
-     (Tree : access Dir_Tree_Record) return VFS.Virtual_File;
+     (Tree : access Dir_Tree_Record) return GNATCOLL.VFS.Virtual_File;
    --  Return the absolute directory for the selected node.
    --  An empty string "" is returned if there is no selection currently.
 
@@ -112,8 +112,9 @@ package Directory_Tree is
 
    procedure Gtk_New
      (Selector             : out Directory_Selector;
-      Initial_Directory    : VFS.Virtual_File;
-      Root_Directory       : VFS.Virtual_File := VFS.Local_Root_Dir;
+      Initial_Directory    : GNATCOLL.VFS.Virtual_File;
+      Root_Directory       : GNATCOLL.VFS.Virtual_File :=
+        GNATCOLL.VFS.Local_Root_Dir;
       Multiple_Directories : Boolean := False;
       Busy_Cursor_On       : Gdk.Window.Gdk_Window := null;
       Initial_Selection    : GNAT.OS_Lib.Argument_List := No_Selection);
@@ -126,8 +127,9 @@ package Directory_Tree is
 
    procedure Initialize
      (Selector             : access Directory_Selector_Record'Class;
-      Initial_Directory    : VFS.Virtual_File;
-      Root_Directory       : VFS.Virtual_File := VFS.Local_Root_Dir;
+      Initial_Directory    : GNATCOLL.VFS.Virtual_File;
+      Root_Directory       : GNATCOLL.VFS.Virtual_File :=
+        GNATCOLL.VFS.Local_Root_Dir;
       Multiple_Directories : Boolean := False;
       Busy_Cursor_On       : Gdk.Window.Gdk_Window := null;
       Initial_Selection    : GNAT.OS_Lib.Argument_List := No_Selection);
@@ -135,14 +137,15 @@ package Directory_Tree is
 
    function Get_Single_Selection
      (Selector  : access Directory_Selector_Record'Class)
-      return VFS.Virtual_File;
+      return GNATCOLL.VFS.Virtual_File;
    --  Return the directory selected by the user.
    --  If Selector allowed multiple directories, only the first one is
    --  returned.
    --  The empty string is returned if there is no selection.
 
    function Get_Multiple_Selection
-     (Selector : access Directory_Selector_Record'Class) return VFS.File_Array;
+     (Selector : access Directory_Selector_Record'Class)
+      return GNATCOLL.VFS.File_Array;
    --  Return the list of all selected directories in Selector.
    --  If Selector only allowed the selection of a single directory, then an
    --  array of size 1 is returned.
@@ -172,7 +175,7 @@ private
       Path                : Gtk.Tree_Model.Gtk_Tree_Path;
       Realize_Cb_Id       : Gtk.Handlers.Handler_Id;
 
-      Current_Dir         : VFS.Virtual_File;
+      Current_Dir         : GNATCOLL.VFS.Virtual_File;
 
       Fill_Timeout_Ids : Timeout_Id_List.List;
    end record;

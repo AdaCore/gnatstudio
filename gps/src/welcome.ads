@@ -26,7 +26,7 @@ with Gtk.GEntry;
 
 with GPS.Kernel;
 with Logo_Boxes;
-with VFS;
+with GNATCOLL.VFS;
 
 package Welcome is
 
@@ -36,7 +36,7 @@ package Welcome is
    procedure Gtk_New
      (Screen       : out Welcome_Screen;
       Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Project_Name : VFS.Virtual_File := VFS.No_File);
+      Project_Name : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File);
    --  Create a new welcome dialog. Project_Name is the project that should be
    --  suggested by default (empty string for the default project).
    --  If Default_Is_Tutorial is true, then the choice initially activated is

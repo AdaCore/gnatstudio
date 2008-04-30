@@ -55,7 +55,7 @@ with Gtk.Widget;               use Gtk.Widget;
 with GUI_Utils;                use GUI_Utils;
 with Pango.Enums;              use Pango.Enums;
 with System;                   use System;
-with VFS;                      use VFS;
+with GNATCOLL.VFS;                      use GNATCOLL.VFS;
 
 package body Startup_Module is
 
@@ -175,7 +175,7 @@ package body Startup_Module is
       Text_Iter  : Gtk_Text_Iter;
       End_Of_Descr : Integer;
       Contents   : String_Access;
-      File       : VFS.Virtual_File := VFS.No_File;
+      File       : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Init       : Glib.Xml_Int.Node_Ptr;
       Command    : Custom_Command_Access;
    begin

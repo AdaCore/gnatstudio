@@ -19,6 +19,8 @@
 
 with GNAT.Strings;                use GNAT.Strings;
 with GNATCOLL.Utils;              use GNATCOLL.Utils;
+with GNATCOLL.VFS;                use GNATCOLL.VFS;
+with GNATCOLL.VFS.GtkAda;         use GNATCOLL.VFS.GtkAda;
 
 with Glib;                        use Glib;
 with Glib.Object;                 use Glib.Object;
@@ -57,8 +59,6 @@ with GUI_Utils;                   use GUI_Utils;
 with Histories;                   use Histories;
 with String_Utils;                use String_Utils;
 with Traces;                      use Traces;
-with VFS;                         use VFS;
-with VFS.Values;                  use VFS.Values;
 with Glib.Xml_Int;                use Glib.Xml_Int;
 
 with Generic_List;
@@ -118,7 +118,7 @@ package body Call_Graph_Views is
    type Reference_Record is record
       Line   : Integer;
       Column : Visible_Column_Type;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
    end record;
 
    procedure Free (X : in out Reference_Record);
@@ -274,7 +274,7 @@ package body Call_Graph_Views is
    is
       Iter   : Gtk_Tree_Iter;
       Model  : Gtk_Tree_Model;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Value  : GValue;
       Entity : Entity_Information;
    begin
@@ -797,7 +797,7 @@ package body Call_Graph_Views is
          Unset (Value);
 
          if Entity /= null then
-            Set_File_Information   (Context, Files => VFS.Empty_File_Array);
+            Set_File_Information   (Context, Files  => Empty_File_Array);
             Set_Entity_Information (Context, Entity => Entity);
          end if;
       else

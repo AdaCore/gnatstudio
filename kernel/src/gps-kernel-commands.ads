@@ -24,7 +24,7 @@ package GPS.Kernel.Commands is
 
    type File_Callback is access procedure
      (Kernel : access Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File);
+      File   : GNATCOLL.VFS.Virtual_File);
 
    procedure Do_On_Each_File
      (Handle              : access Kernel_Handle_Record'Class;

@@ -34,7 +34,7 @@ with Language.Tree;             use Language.Tree;
 with Projects.Registry;         use Projects.Registry;
 with Projects;                  use Projects;
 with Traces;                    use Traces;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 package body Language_Handlers is
 
@@ -98,7 +98,7 @@ package body Language_Handlers is
 
    function Language_Is_Overriden
      (Handler  : access Language_Handler_Record;
-      Filename : VFS.Virtual_File) return Boolean
+      Filename : GNATCOLL.VFS.Virtual_File) return Boolean
    is
       pragma Unreferenced (Handler);
       Prop  : String_Property;
@@ -114,7 +114,7 @@ package body Language_Handlers is
 
    function Get_Language_From_File
      (Handler           : access Language_Handler_Record;
-      Source_Filename   : VFS.Virtual_File;
+      Source_Filename   : GNATCOLL.VFS.Virtual_File;
       From_Project_Only : Boolean := False) return Language.Language_Access
    is
       Index : Natural;
@@ -135,7 +135,7 @@ package body Language_Handlers is
 
    function Get_Tree_Language_From_File
      (Handler           : access Language_Handler_Record;
-      Source_Filename   : VFS.Virtual_File;
+      Source_Filename   : GNATCOLL.VFS.Virtual_File;
       From_Project_Only : Boolean := False)
       return Language.Tree.Tree_Language_Access
    is
@@ -158,7 +158,7 @@ package body Language_Handlers is
 
    function Get_Language_From_File
      (Handler           : access Language_Handler_Record;
-      Source_Filename   : VFS.Virtual_File;
+      Source_Filename   : GNATCOLL.VFS.Virtual_File;
       From_Project_Only : Boolean := False) return String
    is
       Lang  : Name_Id;
@@ -353,7 +353,7 @@ package body Language_Handlers is
 
    function Get_LI_Handler_From_File
      (Handler         : access Language_Handler_Record;
-      Source_Filename : VFS.Virtual_File) return LI_Handler
+      Source_Filename : GNATCOLL.VFS.Virtual_File) return LI_Handler
    is
       Lang  : constant String :=
                 Get_Language_From_File (Handler, Source_Filename);

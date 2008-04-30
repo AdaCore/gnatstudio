@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2006                      --
---                              AdaCore                              --
+--                      Copyright (C) 2002-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,7 +22,7 @@
 
 with HTables;
 with GNAT.Strings;
-with VFS;
+with GNATCOLL.VFS;
 
 package SN.Xref_Pools is
 
@@ -43,11 +42,12 @@ package SN.Xref_Pools is
    procedure Init (Pool : out Xref_Pool);
    --  Creates new empty pool.
 
-   procedure Load (Pool : in out Xref_Pool; Filename : VFS.Virtual_File);
+   procedure Load
+     (Pool : in out Xref_Pool; Filename : GNATCOLL.VFS.Virtual_File);
    --  Loads pool from specified file. Does the same as Init if specified
    --  file does not exist.
 
-   procedure Save (Pool : Xref_Pool; Filename : VFS.Virtual_File);
+   procedure Save (Pool : Xref_Pool; Filename : GNATCOLL.VFS.Virtual_File);
    --  Saves pool to specified file if needed. Overwrite existing file.
    --  Raises Xref_File_Error if writing failed.
 
@@ -56,9 +56,9 @@ package SN.Xref_Pools is
    --  persistent storage.
 
    function Xref_Filename_For
-     (Source_Filename : VFS.Virtual_File;
+     (Source_Filename : GNATCOLL.VFS.Virtual_File;
       Directory       : String;
-      Pool            : Xref_Pool) return VFS.Virtual_File;
+      Pool            : Xref_Pool) return GNATCOLL.VFS.Virtual_File;
    --  Return unique xref file name associated with specified source file
    --  name. It does the following steps:
    --
@@ -77,13 +77,13 @@ package SN.Xref_Pools is
    --  The returned string must not be freed by the user.
 
    function Is_Xref_Valid
-     (Source_Filename : VFS.Virtual_File;
+     (Source_Filename : GNATCOLL.VFS.Virtual_File;
       Pool            : Xref_Pool) return Boolean;
    --  Return valig flag for xref file associated with given source file name.
    --  Returns False if no xref file for given file was generated yet.
 
    procedure Set_Valid
-     (Source_Filename : VFS.Virtual_File;
+     (Source_Filename : GNATCOLL.VFS.Virtual_File;
       Valid           : Boolean;
       Pool            : Xref_Pool);
    --  Set valid flag for given source file name.
@@ -98,7 +98,7 @@ private
 
    type Xref_Elmt_Record is record
       Source_Filename   : GNAT.Strings.String_Access;
-      Xref_Filename     : VFS.Virtual_File;
+      Xref_Filename     : GNATCOLL.VFS.Virtual_File;
       Valid             : Boolean := False;
       Next              : Xref_Elmt_Ptr;
    end record;

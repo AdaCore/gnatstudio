@@ -228,7 +228,13 @@ package body Machine_Descriptors is
          Free (Desc.Shell_Name);
          Free (Desc.Extra_Init_Commands);
          Free (Desc.User_Name);
-         Free (Desc.FS);
+
+         --  Never free Desc.FS, since there could be some instances of
+         --  Virtual_File that still rely on it. That's a minor memory leak,
+         --  that only happens when new hosts are created. We can live with
+         --  these.
+         --  Free (Desc.FS);
+
          --  ??? Free Desc.Dbg if any.
          Unchecked_Free (Desc);
       else

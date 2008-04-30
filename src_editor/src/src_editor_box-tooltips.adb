@@ -46,7 +46,7 @@ with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 with Tooltips;                  use Tooltips;
 with Traces;                    use Traces;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 package body Src_Editor_Box.Tooltips is
    Me : constant Debug_Handle := Create ("Editor.Tooltips");
@@ -101,7 +101,7 @@ package body Src_Editor_Box.Tooltips is
    begin
       Ref := No_Entity_Reference;
 
-      if Filename = VFS.No_File then
+      if Filename = GNATCOLL.VFS.No_File then
          Entity := null;
          Status := Entity_Not_Found;
          return;

@@ -24,7 +24,9 @@ pragma Warnings (Off);
 with Ada.Strings.Unbounded.Aux;           use Ada.Strings.Unbounded.Aux;
 pragma Warnings (On);
 with GNAT.Regpat;
-with GNATCOLL.Traces;                         use GNATCOLL.Traces;
+with GNATCOLL.Traces;                     use GNATCOLL.Traces;
+with GNATCOLL.Utils;                      use GNATCOLL.Utils;
+with GNATCOLL.VFS;                        use GNATCOLL.VFS;
 with Interfaces.C.Strings;                use Interfaces.C.Strings;
 with System.Address_Image;
 
@@ -82,7 +84,6 @@ with Src_Editor_Module.Line_Highlighting;
 with Src_Highlighting;                    use Src_Highlighting;
 with String_Utils;                        use String_Utils;
 with Traces;
-with VFS;                                 use VFS;
 
 package body Src_Editor_Buffer is
 
@@ -259,7 +260,7 @@ package body Src_Editor_Buffer is
 
    procedure Internal_Save_To_File
      (Buffer   : Source_Buffer;
-      Filename : VFS.Virtual_File;
+      Filename : GNATCOLL.VFS.Virtual_File;
       Internal : Boolean;
       Success  : out Boolean);
    --  Low level save function. Only writes the buffer contents on disk,
@@ -509,13 +510,13 @@ package body Src_Editor_Buffer is
       Data   : access Hooks_Data'Class)
    is
       pragma Unreferenced (Kernel);
-      File        : constant VFS.Virtual_File :=
+      File        : constant GNATCOLL.VFS.Virtual_File :=
                       File_Hooks_Args (Data.all).File;
-      Edited      : constant VFS.Virtual_File := Hook.Buffer.Filename;
+      Edited      : constant GNATCOLL.VFS.Virtual_File := Hook.Buffer.Filename;
       Need_Action : Boolean := False;
    begin
 
-      if Edited /= VFS.No_File then
+      if Edited /= GNATCOLL.VFS.No_File then
          if Is_Directory (File)
            and then Edited.Full_Name'Length > File.Full_Name'Length
            and then Create (Edited.Full_Name.all
@@ -548,12 +549,12 @@ package body Src_Editor_Buffer is
       Data   : access Hooks_Data'Class)
    is
       pragma Unreferenced (Kernel);
-      File   : constant VFS.Virtual_File := Files_2_Hooks_Args (Data.all).File;
-      Edited : constant VFS.Virtual_File := Hook.Buffer.Filename;
-      Dest   : VFS.Virtual_File;
+      File   : constant Virtual_File := Files_2_Hooks_Args (Data.all).File;
+      Edited : constant Virtual_File := Hook.Buffer.Filename;
+      Dest   : GNATCOLL.VFS.Virtual_File;
    begin
 
-      if Edited /= VFS.No_File then
+      if Edited /= GNATCOLL.VFS.No_File then
          if Is_Directory (File)
            and then Edited.Full_Name'Length > File.Full_Name'Length
            and then Create (Edited.Full_Name.all
@@ -1215,7 +1216,7 @@ package body Src_Editor_Buffer is
    function Automatic_Save (Buffer : Source_Buffer) return Boolean is
       Success : Boolean;
    begin
-      if not Buffer.Modified_Auto or else Buffer.Filename = VFS.No_File then
+      if not Buffer.Modified_Auto or else Buffer.Filename = No_File then
          return True;
       end if;
 
@@ -1337,7 +1338,7 @@ package body Src_Editor_Buffer is
          Timeout_Remove (Buffer.Timeout_Id);
          Buffer.Timeout_Registered := False;
 
-         if Buffer.Filename /= VFS.No_File then
+         if Buffer.Filename /= GNATCOLL.VFS.No_File then
             Delete (Autosaved_File (Buffer.Filename), Success);
          end if;
       end if;
@@ -2674,7 +2675,7 @@ package body Src_Editor_Buffer is
 
    procedure Load_File
      (Buffer          : access Source_Buffer_Record;
-      Filename        : VFS.Virtual_File;
+      Filename        : GNATCOLL.VFS.Virtual_File;
       Lang_Autodetect : Boolean := True;
       Success         : out Boolean)
    is
@@ -2913,7 +2914,7 @@ package body Src_Editor_Buffer is
 
    procedure Internal_Save_To_File
      (Buffer   : Source_Buffer;
-      Filename : VFS.Virtual_File;
+      Filename : GNATCOLL.VFS.Virtual_File;
       Internal : Boolean;
       Success  : out Boolean)
    is
@@ -3128,7 +3129,7 @@ package body Src_Editor_Buffer is
          if Buffer.Filename /= Filename then
             --  If we "save as" the buffer, we emit a closed for the previous
             --  name
-            if Buffer.Filename = VFS.No_File then
+            if Buffer.Filename = GNATCOLL.VFS.No_File then
                File_Closed (Buffer.Kernel, Buffer.File_Identifier);
             end if;
 
@@ -3176,13 +3177,13 @@ package body Src_Editor_Buffer is
 
    procedure Save_To_File
      (Buffer   : access Source_Buffer_Record;
-      Filename : VFS.Virtual_File;
+      Filename : GNATCOLL.VFS.Virtual_File;
       Success  : out Boolean;
       Internal : Boolean := False)
    is
       Name_Changed      : constant Boolean := Buffer.Filename /= Filename;
       Result            : Boolean;
-      Original_Filename : constant VFS.Virtual_File := Buffer.Filename;
+      Original_Filename : constant Virtual_File := Buffer.Filename;
    begin
       Internal_Save_To_File
         (Source_Buffer (Buffer), Filename, Internal, Success);
@@ -3212,7 +3213,7 @@ package body Src_Editor_Buffer is
             Buffer.Filename_Changed;
          end if;
 
-         if Original_Filename /= VFS.No_File then
+         if Original_Filename /= GNATCOLL.VFS.No_File then
             Delete (Autosaved_File (Original_Filename), Result);
          end if;
 
@@ -3253,7 +3254,7 @@ package body Src_Editor_Buffer is
          Buffer_Information_Changed (Buffer);
       end if;
 
-      if Buffer.Filename /= VFS.No_File then
+      if Buffer.Filename /= GNATCOLL.VFS.No_File then
          if Lang /= Get_Language_From_File
            (Get_Language_Handler (Buffer.Kernel), Buffer.Filename)
          then
@@ -3287,9 +3288,9 @@ package body Src_Editor_Buffer is
       pragma Unreferenced (Buttons);
 
    begin
-      if Buffer.Filename /= VFS.No_File then
+      if Buffer.Filename /= GNATCOLL.VFS.No_File then
          if Charset /= Get_File_Charset (Buffer.Filename) then
-            if Charset = Get_File_Charset (VFS.No_File) then
+            if Charset = Get_File_Charset (GNATCOLL.VFS.No_File) then
                --  Since we are using the default charset, do not save in the
                --  properties
                Set_File_Charset (Buffer.Kernel, Buffer.Filename, "");
@@ -3350,7 +3351,7 @@ package body Src_Editor_Buffer is
    function Get_Charset (Buffer : access Source_Buffer_Record) return String is
    begin
       if Buffer.Charset = null then
-         return Get_File_Charset (VFS.No_File);
+         return Get_File_Charset (GNATCOLL.VFS.No_File);
       else
          return Buffer.Charset.all;
       end if;
@@ -4361,7 +4362,7 @@ package body Src_Editor_Buffer is
    ------------------
 
    function Get_Filename
-     (Buffer : access Source_Buffer_Record) return VFS.Virtual_File is
+     (Buffer : access Source_Buffer_Record) return GNATCOLL.VFS.Virtual_File is
    begin
       return Buffer.Filename;
    end Get_Filename;
@@ -4371,7 +4372,7 @@ package body Src_Editor_Buffer is
    ------------------
 
    procedure Set_Filename
-     (Buffer : access Source_Buffer_Record; Name : VFS.Virtual_File) is
+     (Buffer : access Source_Buffer_Record; Name : Virtual_File) is
    begin
       Buffer.Filename := Name;
 
@@ -4385,7 +4386,7 @@ package body Src_Editor_Buffer is
    -------------------------
 
    function Get_File_Identifier
-     (Buffer : access Source_Buffer_Record) return VFS.Virtual_File is
+     (Buffer : access Source_Buffer_Record) return GNATCOLL.VFS.Virtual_File is
    begin
       return Buffer.File_Identifier;
    end Get_File_Identifier;
@@ -4395,7 +4396,7 @@ package body Src_Editor_Buffer is
    -------------------------
 
    procedure Set_File_Identifier
-     (Buffer : access Source_Buffer_Record; Name : VFS.Virtual_File) is
+     (Buffer : access Source_Buffer_Record; Name : Virtual_File) is
    begin
       Buffer.File_Identifier := Name;
    end Set_File_Identifier;
@@ -4417,10 +4418,10 @@ package body Src_Editor_Buffer is
          Buffer.Kernel,
          Abstract_Module_ID (Src_Editor_Module_Id));
 
-      if Buffer.Filename /= VFS.No_File then
+      if Buffer.Filename /= GNATCOLL.VFS.No_File then
          Set_File_Information (Context, (1 => Buffer.Filename));
 
-      elsif Buffer.File_Identifier /= VFS.No_File then
+      elsif Buffer.File_Identifier /= GNATCOLL.VFS.No_File then
          Set_File_Information (Context, (1 => Buffer.File_Identifier));
       end if;
 
@@ -4459,7 +4460,7 @@ package body Src_Editor_Buffer is
       New_Timestamp : Ada.Calendar.Time;
       Result : Boolean := True;
    begin
-      if Buffer.Filename /= VFS.No_File then
+      if Buffer.Filename /= GNATCOLL.VFS.No_File then
          New_Timestamp := File_Time_Stamp (Buffer.Filename);
 
          --  If the file does not exist, we assume the editor is up-to-date
@@ -4489,10 +4490,10 @@ package body Src_Editor_Buffer is
       end if;
 
       if Buffer.Number_Of_Views = 0 then
-         if Buffer.Filename /= VFS.No_File then
+         if Buffer.Filename /= GNATCOLL.VFS.No_File then
             File_Closed (Buffer.Kernel, Buffer.Filename);
 
-         elsif Buffer.File_Identifier /= VFS.No_File then
+         elsif Buffer.File_Identifier /= GNATCOLL.VFS.No_File then
             File_Closed (Buffer.Kernel, Buffer.File_Identifier);
          end if;
 

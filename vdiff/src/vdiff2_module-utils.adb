@@ -341,7 +341,7 @@ package body Vdiff2_Module.Utils is
       end loop;
 
       for J in T_VFile'Range loop
-         if Item.Files (J) /= VFS.No_File then
+         if Item.Files (J) /= GNATCOLL.VFS.No_File then
             Unhighlight_Line (Kernel, Item.Files (J), 0, Default_Style);
             Unhighlight_Line (Kernel, Item.Files (J), 0, Old_Style);
             Unhighlight_Line (Kernel, Item.Files (J), 0, Append_Style);
@@ -362,7 +362,7 @@ package body Vdiff2_Module.Utils is
    ----------------------
 
    function Is_In_3Diff_List
-     (Selected_File : VFS.Virtual_File;
+     (Selected_File : GNATCOLL.VFS.Virtual_File;
       List          : Diff_Head_List.List) return Boolean
    is
       Node : constant Diff_Head_List.List_Node :=
@@ -456,7 +456,7 @@ package body Vdiff2_Module.Utils is
         and then Get_Diff_Node
           (Item.Files (2), Diff_List.all) = Diff_Head_List.Null_Node
       then
-         if Item.Files (3) = VFS.No_File
+         if Item.Files (3) = GNATCOLL.VFS.No_File
            or else Get_Diff_Node
              (Item.Files (3), Diff_List.all) = Diff_Head_List.Null_Node
          then
@@ -778,7 +778,7 @@ package body Vdiff2_Module.Utils is
    begin
       Register_Highlighting (Kernel);
 
-      if Item.Files (3) = VFS.No_File then
+      if Item.Files (3) = GNATCOLL.VFS.No_File then
          Show_Differences (Kernel, Item);
          return;
       end if;
@@ -1090,7 +1090,7 @@ package body Vdiff2_Module.Utils is
    function Visual_Diff
      (File1 : Virtual_File;
       File2 : Virtual_File;
-      File3 : Virtual_File := VFS.No_File) return Diff_Head_Access
+      File3 : Virtual_File := GNATCOLL.VFS.No_File) return Diff_Head_Access
    is
       Id     : constant VDiff2_Module := VDiff2_Module (Vdiff_Module_ID);
       Kernel : constant Kernel_Handle := Get_Kernel (Id.all);
@@ -1098,7 +1098,7 @@ package body Vdiff2_Module.Utils is
       Item   : Diff_Head;
 
    begin
-      if File3 /= VFS.No_File then
+      if File3 /= GNATCOLL.VFS.No_File then
          Result := Diff3 (Kernel, File1, File2, File3);
       else
          Result := Diff (Kernel, File1, File2);
@@ -1127,7 +1127,7 @@ package body Vdiff2_Module.Utils is
    procedure Visual_Diff
      (File1 : Virtual_File;
       File2 : Virtual_File;
-      File3 : Virtual_File := VFS.No_File)
+      File3 : Virtual_File := GNATCOLL.VFS.No_File)
    is
       Dummy : constant Diff_Head_Access := Visual_Diff (File1, File2, File3);
       pragma Unreferenced (Dummy);
@@ -1140,9 +1140,9 @@ package body Vdiff2_Module.Utils is
    ------------------
 
    function Visual_Patch
-     (Orig_File : VFS.Virtual_File;
-      New_File  : VFS.Virtual_File;
-      Diff_File : VFS.Virtual_File;
+     (Orig_File : GNATCOLL.VFS.Virtual_File;
+      New_File  : GNATCOLL.VFS.Virtual_File;
+      Diff_File : GNATCOLL.VFS.Virtual_File;
       Revert    : Boolean := False) return Diff_Head_Access
    is
       Id     : constant VDiff2_Module := VDiff2_Module (Vdiff_Module_ID);
@@ -1175,8 +1175,8 @@ package body Vdiff2_Module.Utils is
 
    function Get_Vdiff
      (File1 : Virtual_File;
-      File2 : Virtual_File := VFS.No_File;
-      File3 : Virtual_File := VFS.No_File) return Diff_Head_Access
+      File2 : Virtual_File := GNATCOLL.VFS.No_File;
+      File3 : Virtual_File := GNATCOLL.VFS.No_File) return Diff_Head_Access
    is
       Vdiff_List : constant Diff_Head_List_Access := Get_Vdiff_List;
       Vdiff_Node : Diff_Head_List.List_Node;
@@ -1194,11 +1194,11 @@ package body Vdiff2_Module.Utils is
 
       Vdiff := Data (Vdiff_Node);
 
-      if (File2 /= VFS.No_File
+      if (File2 /= GNATCOLL.VFS.No_File
           and then File2 /= Vdiff.Files (1)
           and then File2 /= Vdiff.Files (2)
           and then File2 /= Vdiff.Files (3))
-        or else (File3 /= VFS.No_File
+        or else (File3 /= GNATCOLL.VFS.No_File
           and then File3 /= Vdiff.Files (1)
           and then File3 /= Vdiff.Files (2)
           and then File3 /= Vdiff.Files (3))

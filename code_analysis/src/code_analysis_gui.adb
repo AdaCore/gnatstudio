@@ -36,7 +36,7 @@ with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                   use GPS.Intl;
 with Projects;                   use Projects;
-with VFS;                        use VFS;
+with GNATCOLL.VFS;                        use GNATCOLL.VFS;
 with Traces;                     use Traces;
 with Basic_Types;                use Basic_Types;
 with Code_Analysis_Tree_Model;   use Code_Analysis_Tree_Model;

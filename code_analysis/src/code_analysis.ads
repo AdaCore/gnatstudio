@@ -33,7 +33,7 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Strings;                          use GNAT.Strings;
 
 with Projects;                              use Projects;
-with VFS;                                   use VFS;
+with GNATCOLL.VFS;                                   use GNATCOLL.VFS;
 
 package Code_Analysis is
 
@@ -128,10 +128,10 @@ package Code_Analysis is
 
    package File_Maps is
      new Hashed_Maps
-       (Key_Type        => VFS.Virtual_File,
+       (Key_Type        => GNATCOLL.VFS.Virtual_File,
         Element_Type    => File_Access,
-        Hash            => VFS.Full_Name_Hash,
-        Equivalent_Keys => VFS."=");
+        Hash            => GNATCOLL.VFS.Full_Name_Hash,
+        Equivalent_Keys => GNATCOLL.VFS."=");
    --  Used to stored the File nodes of every Projects
 
    package Project_Maps is
@@ -176,7 +176,7 @@ package Code_Analysis is
    --  Stop is the ending line of the definition of the subprogram
 
    type File is new Node with record
-      Name        : VFS.Virtual_File;
+      Name        : GNATCOLL.VFS.Virtual_File;
       Subprograms : Subprogram_Maps.Map;
       Lines       : Line_Array_Access;
    end record;
@@ -196,7 +196,7 @@ package Code_Analysis is
 
    function Get_Or_Create
      (Project_Node : Project_Access;
-      File_Name    : VFS.Virtual_File) return File_Access;
+      File_Name    : GNATCOLL.VFS.Virtual_File) return File_Access;
 
    function Get_Or_Create
      (Projects     : Code_Analysis_Tree;

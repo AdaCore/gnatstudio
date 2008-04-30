@@ -24,7 +24,7 @@ with GPS.Kernel.Console;  use GPS.Kernel.Console;
 with GPS.Kernel.Contexts; use GPS.Kernel.Contexts;
 with GPS.Kernel.Scripts;  use GPS.Kernel.Scripts;
 with Traces;              use Traces;
-with VFS;                 use VFS;
+with GNATCOLL.VFS;                 use GNATCOLL.VFS;
 with Vdiff2_Module.Utils; use Vdiff2_Module.Utils;
 with Vdiff2_Module;       use Vdiff2_Module;
 
@@ -142,7 +142,7 @@ package body Vdiff2_Command_Block is
    begin
       Unhighlight_Difference (Kernel, Item);
 
-      if Item.Files (3) = VFS.No_File then
+      if Item.Files (3) = GNATCOLL.VFS.No_File then
          Tmp := Diff (Kernel, Item.Files (1), Item.Files (2));
       else
          Tmp := Diff3 (Kernel, Item.Files (1), Item.Files (2), Item.Files (3));
@@ -174,15 +174,15 @@ package body Vdiff2_Command_Block is
       Args3 : Argument_List (1 .. 1);
 
    begin
-      if Files (1) /= VFS.No_File then
+      if Files (1) /= GNATCOLL.VFS.No_File then
          Execute_GPS_Shell_Command (Kernel, "Editor.close", Args1);
       end if;
 
-      if Files (2) /= VFS.No_File then
+      if Files (2) /= GNATCOLL.VFS.No_File then
          Execute_GPS_Shell_Command (Kernel, "Editor.close", Args2);
       end if;
 
-      if Files (3) /= VFS.No_File then
+      if Files (3) /= GNATCOLL.VFS.No_File then
          Args3 := (1 => new String'(Full_Name (Files (3)).all));
          Execute_GPS_Shell_Command (Kernel, "Editor.close", Args3);
          --  At this point all the memory associated with Diff is freed

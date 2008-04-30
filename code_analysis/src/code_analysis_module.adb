@@ -55,7 +55,7 @@ with GPS.Kernel.Standard_Hooks;              use GPS.Kernel.Standard_Hooks;
 with GPS.Location_View;                      use GPS.Location_View;
 with Projects.Registry;                      use Projects.Registry;
 with Projects;                               use Projects;
-with VFS;                                    use VFS;
+with GNATCOLL.VFS;                                    use GNATCOLL.VFS;
 with Entities;                               use Entities;
 with Traces;                                 use Traces;
 with Code_Coverage;                          use Code_Coverage;
@@ -554,7 +554,7 @@ package body Code_Analysis_Module is
 
    procedure Dump_To_File
      (Analysis : Code_Analysis_Instance;
-      File     : VFS.Virtual_File);
+      File     : GNATCOLL.VFS.Virtual_File);
    --  Dump the given analysis structure to File in XML format
 
    procedure Dump_To_File_From_Shell
@@ -741,8 +741,8 @@ package body Code_Analysis_Module is
       Context  : Selection_Context;
       Src_Inst : Class_Instance;
       Cov_Inst : Class_Instance;
-      Src_File : VFS.Virtual_File;
-      Cov_File : VFS.Virtual_File;
+      Src_File : GNATCOLL.VFS.Virtual_File;
+      Cov_File : GNATCOLL.VFS.Virtual_File;
       Prj_Name : Project_Type;
       Prj_Node : Project_Access;
    begin
@@ -761,7 +761,7 @@ package body Code_Analysis_Module is
          Default => No_Class_Instance, Allow_Null => True);
 
       if Src_Inst = No_Class_Instance then
-         Src_File := VFS.No_File;
+         Src_File := GNATCOLL.VFS.No_File;
       else
          Src_File := Get_Data (Src_Inst);
       end if;
@@ -776,7 +776,7 @@ package body Code_Analysis_Module is
          Default => No_Class_Instance, Allow_Null => True);
 
       if Cov_Inst = No_Class_Instance then
-         Cov_File := VFS.No_File;
+         Cov_File := GNATCOLL.VFS.No_File;
       else
          Cov_File := Get_Data (Cov_Inst);
       end if;
@@ -822,9 +822,9 @@ package body Code_Analysis_Module is
       Prj_Name : constant Project_Type :=
                    Project_Information (Cont_N_Anal.Context);
       Prj_Node : Project_Access;
-      Src_File : constant VFS.Virtual_File :=
+      Src_File : constant GNATCOLL.VFS.Virtual_File :=
                    File_Information (Cont_N_Anal.Context);
-      Cov_File : VFS.Virtual_File;
+      Cov_File : GNATCOLL.VFS.Virtual_File;
    begin
       Prj_Node := Get_Or_Create (Cont_N_Anal.Analysis.Projects, Prj_Name);
       Cov_File := Find_Gcov_File (Get_Kernel (Cont_N_Anal.Context), Src_File);
@@ -878,7 +878,7 @@ package body Code_Analysis_Module is
       Instance : Class_Instance;
       Context  : Selection_Context;
       Prj_Inst : Class_Instance;
-      Prj_File : VFS.Virtual_File;
+      Prj_File : GNATCOLL.VFS.Virtual_File;
       Prj_Name : Project_Type;
       Prj_Node : Project_Access;
    begin
@@ -896,7 +896,7 @@ package body Code_Analysis_Module is
             Default => No_Class_Instance, Allow_Null => True);
 
       if Prj_Inst = No_Class_Instance then
-         Prj_File := VFS.No_File;
+         Prj_File := GNATCOLL.VFS.No_File;
       else
          Prj_File := Get_Data (Prj_Inst);
       end if;
@@ -2288,7 +2288,7 @@ package body Code_Analysis_Module is
          if Has_File_Information (Checked_Context) then
             declare
                Prj_Info  : Project_Type;
-               File_Info : constant VFS.Virtual_File :=
+               File_Info : constant GNATCOLL.VFS.Virtual_File :=
                              File_Information (Checked_Context);
             begin
                Prj_Info := Get_Project_From_File
@@ -2729,7 +2729,7 @@ package body Code_Analysis_Module is
 
    procedure Dump_To_File
      (Analysis : Code_Analysis_Instance;
-      File     : VFS.Virtual_File)
+      File     : GNATCOLL.VFS.Virtual_File)
    is
       Root : Node_Ptr;
    begin
@@ -2753,7 +2753,7 @@ package body Code_Analysis_Module is
       Property  : Instance_Property;
       Instance  : Class_Instance;
       File_Inst : Class_Instance;
-      File_Dump : VFS.Virtual_File;
+      File_Dump : GNATCOLL.VFS.Virtual_File;
    begin
       --  Check if the attached Analysis is still there
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
@@ -2795,7 +2795,7 @@ package body Code_Analysis_Module is
       Property    : Instance_Property;
       Instance    : Class_Instance;
       File_Inst   : Class_Instance;
-      Loaded_File : VFS.Virtual_File;
+      Loaded_File : GNATCOLL.VFS.Virtual_File;
       Root_Node   : Node_Ptr;
    begin
       --  Check if the attached Analysis is still there

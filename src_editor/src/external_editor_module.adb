@@ -48,7 +48,7 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Traces;                    use Traces;
 with Projects;                  use Projects;
 with String_Utils;              use String_Utils;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 package body External_Editor_Module is
 

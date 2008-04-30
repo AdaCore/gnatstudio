@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2001-2007, AdaCore                --
+--                   Copyright (C) 2001-2008, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -49,7 +49,7 @@ with GPS.Kernel.Modules;
 with GPS.Kernel.Standard_Hooks;
 with Src_Editor_Buffer;     use Src_Editor_Buffer;
 with Src_Editor_View;
-with VFS;
+with GNATCOLL.VFS;
 with Entities;
 with Commands.Interactive;  use Commands, Commands.Interactive;
 
@@ -122,13 +122,14 @@ package Src_Editor_Box is
    ------------------------------------
 
    function Get_Filename
-     (Editor : access Source_Editor_Box_Record) return VFS.Virtual_File;
+     (Editor : access Source_Editor_Box_Record)
+      return GNATCOLL.VFS.Virtual_File;
    --  Return the filename associated the given Editor. Return the empty
    --  string if Editor does not have any filename.
 
    procedure Load_File
      (Editor          : access Source_Editor_Box_Record;
-      Filename        : VFS.Virtual_File;
+      Filename        : GNATCOLL.VFS.Virtual_File;
       Lang_Autodetect : Boolean := True;
       Force_Focus     : Boolean := True;
       Success         : out Boolean);
@@ -144,7 +145,7 @@ package Src_Editor_Box is
 
    procedure Load_Empty_File
      (Editor          : access Source_Editor_Box_Record;
-      Filename        : VFS.Virtual_File;
+      Filename        : GNATCOLL.VFS.Virtual_File;
       Lang_Handler    : Language_Handlers.Language_Handler;
       Lang_Autodetect : Boolean := True);
    --  Similar to Load_File, but assume that Filename is a new file that
@@ -152,7 +153,7 @@ package Src_Editor_Box is
 
    procedure Save_To_File
      (Editor   : access Source_Editor_Box_Record;
-      Filename : VFS.Virtual_File := VFS.No_File;
+      Filename : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Success  : out Boolean);
    --  Save the buffer to the given file.
    --  Success is set to false if the buffer could not be saved.

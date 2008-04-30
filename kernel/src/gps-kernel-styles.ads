@@ -27,7 +27,7 @@
 with Gdk.GC;     use Gdk.GC;
 with Gdk.Color; use Gdk.Color;
 
-with VFS; use VFS;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 with String_Hash;
 
 with GNAT.Strings;

@@ -45,7 +45,7 @@ with GPS.Location_View;         use GPS.Location_View;
 with Projects;                  use Projects;
 with Projects.Registry;         use Projects.Registry;
 with Traces;                    use Traces;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 with VCS_Module;                use VCS_Module;
 with VCS_Status;                use VCS_Status;
 with VCS_Utils;                 use VCS_Utils;
@@ -154,7 +154,7 @@ package body Log_Utils is
 
    function Get_ChangeLog_From_File
      (Kernel    : access Kernel_Handle_Record'Class;
-      File_Name : VFS.Virtual_File) return VFS.Virtual_File
+      File_Name : GNATCOLL.VFS.Virtual_File) return GNATCOLL.VFS.Virtual_File
    is
       use GNAT.OS_Lib;
 
@@ -169,7 +169,7 @@ package body Log_Utils is
 
       ChangeLog   : aliased String  := Dir_Name (File_Name).all & "ChangeLog";
       Date_Tag    : constant String := Image (Clock, ISO_Date);
-      Base_Name   : constant String := VFS.Base_Name (File_Name);
+      Base_Name   : constant String := GNATCOLL.VFS.Base_Name (File_Name);
       CL_File     : Virtual_File;   -- ChangeLog file
       CL          : String_Access;  -- ChangeLog content
       W_File      : Writable_File;  -- ChangeLog write access
@@ -324,9 +324,9 @@ package body Log_Utils is
 
    function Get_Log_From_File
      (Kernel    : access Kernel_Handle_Record'Class;
-      File_Name : VFS.Virtual_File;
+      File_Name : GNATCOLL.VFS.Virtual_File;
       Create    : Boolean;
-      Suffix    : String := "$log") return VFS.Virtual_File
+      Suffix    : String := "$log") return GNATCOLL.VFS.Virtual_File
    is
       use GNAT.OS_Lib;
 
@@ -346,7 +346,7 @@ package body Log_Utils is
             Logs_Dir : constant String := Get_Home_Dir (Kernel) & "log_files";
             File     : File_Descriptor;
             S        : Virtual_File :=
-                         VFS.Create
+                         GNATCOLL.VFS.Create
                            (Full_Filename => Logs_Dir & Directory_Separator
                             & Base_Name (File_Name) & Suffix);
             --  In case there are multiple files with the same base name, see
@@ -366,7 +366,7 @@ package body Log_Utils is
 
             else
                for J in Natural loop
-                  S := VFS.Create
+                  S := GNATCOLL.VFS.Create
                     (Full_Filename =>
                        Logs_Dir & Directory_Separator
                        & Base_Name (File_Name) & "$" & Image (J) & Suffix);
@@ -384,15 +384,15 @@ package body Log_Utils is
                   end if;
                end loop;
 
-               return VFS.No_File;
+               return GNATCOLL.VFS.No_File;
             end if;
          end;
 
       elsif Return_Name = "" then
-         return VFS.No_File;
+         return GNATCOLL.VFS.No_File;
 
       else
-         return VFS.Create (Full_Filename => Return_Name);
+         return GNATCOLL.VFS.Create (Full_Filename => Return_Name);
       end if;
    end Get_Log_From_File;
 
@@ -422,7 +422,7 @@ package body Log_Utils is
 
    function Get_Log
      (Kernel    : access Kernel_Handle_Record'Class;
-      File_Name : VFS.Virtual_File) return String
+      File_Name : GNATCOLL.VFS.Virtual_File) return String
    is
       use GNAT.OS_Lib;
 
@@ -449,7 +449,7 @@ package body Log_Utils is
 
    procedure Get_Log_From_ChangeLog
      (Kernel    : access Kernel_Handle_Record'Class;
-      File_Name : VFS.Virtual_File;
+      File_Name : GNATCOLL.VFS.Virtual_File;
       Suffix    : String := "$log")
    is
       use GNAT.OS_Lib;
@@ -458,14 +458,15 @@ package body Log_Utils is
       Log_File  : constant Virtual_File :=
                     Get_Log_From_File (Kernel, File_Name, False);
    begin
-      if Log_File = VFS.No_File then
+      if Log_File = GNATCOLL.VFS.No_File then
          declare
             Log_File     : constant Virtual_File :=
                              Get_Log_From_File
                                (Kernel, File_Name, True, Suffix);
             CL_File      : constant Virtual_File := Create (ChangeLog);
             Date_Tag     : constant String := Image (Clock, ISO_Date);
-            Base_Name    : constant String := VFS.Base_Name (File_Name);
+            Base_Name    : constant String :=
+              GNATCOLL.VFS.Base_Name (File_Name);
             CL           : String_Access := Read_File (CL_File);
             W_File       : Writable_File := Write_File (Log_File);
             First, Last  : Natural;
@@ -773,7 +774,7 @@ package body Log_Utils is
 
                File := Create (Full_Filename => Data (Files_Temp));
 
-               if Get_Log_From_File (Kernel, File, False) = VFS.No_File then
+               if Get_Log_From_File (Kernel, File, False) = No_File then
                   --  No individual logs
                   Append (Logs, Get_Log (Kernel, Activity));
 

@@ -37,7 +37,7 @@ with Remote;                    use Remote;
 with Snames;                    use Snames;
 with Traces;                    use Traces;
 with Types;                     use Types;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 package body Projects.Editor is
 
@@ -77,7 +77,7 @@ package body Projects.Editor is
      (Root_Project              : Project_Type;
       Project                   : Project_Type;
       Imported_Project          : Project_Node_Id;
-      Imported_Project_Location : VFS.Virtual_File;
+      Imported_Project_Location : GNATCOLL.VFS.Virtual_File;
       Report_Errors             : Output.Output_Proc := null;
       Use_Relative_Path         : Boolean;
       Limited_With              : Boolean := False)
@@ -3241,7 +3241,7 @@ package body Projects.Editor is
      (Root_Project              : Project_Type;
       Project                   : Project_Type;
       Imported_Project          : Project_Node_Id;
-      Imported_Project_Location : VFS.Virtual_File;
+      Imported_Project_Location : GNATCOLL.VFS.Virtual_File;
       Report_Errors             : Output.Output_Proc := null;
       Use_Relative_Path         : Boolean;
       Limited_With              : Boolean := False)
@@ -3396,7 +3396,7 @@ package body Projects.Editor is
    function Add_Imported_Project
      (Root_Project              : Project_Type;
       Project                   : Project_Type;
-      Imported_Project_Location : VFS.Virtual_File;
+      Imported_Project_Location : GNATCOLL.VFS.Virtual_File;
       Report_Errors             : Output.Output_Proc := null;
       Use_Relative_Path         : Boolean;
       Limited_With              : Boolean := False)
@@ -3759,7 +3759,7 @@ package body Projects.Editor is
    function Create_Project
      (Registry : Projects.Registry.Project_Registry'Class;
       Name     : String;
-      Path     : VFS.Virtual_File) return Project_Type
+      Path     : GNATCOLL.VFS.Virtual_File) return Project_Type
    is
       Tree         : constant Project_Node_Tree_Ref := Get_Tree (Registry);
       D            : constant String :=

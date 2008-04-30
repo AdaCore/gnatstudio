@@ -23,7 +23,7 @@ with GPS.Kernel;        use GPS.Kernel;
 with HTables;
 with String_List_Utils; use String_List_Utils;
 with VCS;               use VCS;
-with VFS;               use VFS;
+with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 package VCS_Status is
 
@@ -41,13 +41,13 @@ package VCS_Status is
 
    function Get_Cache
      (Cache : Status_Cache;
-      File  : VFS.Virtual_File) return Line_Record;
+      File  : GNATCOLL.VFS.Virtual_File) return Line_Record;
    --  Return the cached status for the given file. The result must not be
    --  freed.
 
    procedure Set_Cache
      (Cache  : Status_Cache;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Status : in out Line_Record);
    --  Record the Status for the given file
 
@@ -56,7 +56,7 @@ package VCS_Status is
 
    function Has_Status
      (Cache  : Status_Cache;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Ref    : VCS_Access;
       Status : Status_Id) return Boolean;
    --  Returns True if the File status correspond to Status
@@ -77,7 +77,7 @@ private
    end record;
 
    No_Data : constant Line_Record :=
-               ((VFS.No_File, Unknown, null, null,
+               ((GNATCOLL.VFS.No_File, Unknown, null, null,
                 others => String_List.Null_List),
                 False);
 

@@ -18,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with GNAT.OS_Lib;        use GNAT.OS_Lib;
+with GNATCOLL.VFS;       use GNATCOLL.VFS;
 
 with Basic_Types;        use Basic_Types;
 with GPS.Kernel.Project; use GPS.Kernel.Project;
@@ -26,7 +27,6 @@ with Entities.Queries;   use Entities.Queries;
 with Language_Handlers;  use Language_Handlers;
 with Projects;           use Projects;
 with Projects.Registry;  use Projects.Registry;
-with VFS;                use VFS;
 
 package body GPS.Kernel.Contexts is
 
@@ -197,7 +197,7 @@ package body GPS.Kernel.Contexts is
 
    procedure Set_File_Information
      (Context           : in out Selection_Context;
-      Files             : VFS.File_Array := VFS.Empty_File_Array;
+      Files             : GNATCOLL.VFS.File_Array := Empty_File_Array;
       Project           : Projects.Project_Type := Projects.No_Project;
       Importing_Project : Projects.Project_Type := Projects.No_Project;
       Line              : Integer := 0;
@@ -205,10 +205,10 @@ package body GPS.Kernel.Contexts is
       Revision          : String := "";
       Tag               : String := "") is
    begin
-      VFS.Unchecked_Free (Context.Data.Data.Files);
+      GNATCOLL.VFS.Unchecked_Free (Context.Data.Data.Files);
 
       if Files'Length > 0 then
-         Context.Data.Data.Files := new VFS.File_Array'(Files);
+         Context.Data.Data.Files := new GNATCOLL.VFS.File_Array'(Files);
       end if;
 
       Context.Data.Data.File_Checked             := False;

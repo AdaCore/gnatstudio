@@ -25,7 +25,7 @@ with Filesystems;               use Filesystems;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with OS_Utils;                  use OS_Utils;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 package body File_Utils is
 
@@ -122,7 +122,7 @@ package body File_Utils is
       if Is_Local (Server) then
          return Boolean'Val (Internal);
       else
-         return Is_Case_Sensitive (Get_Filesystem (Get_Nickname (Server)));
+         return Is_Case_Sensitive (Get_Filesystem (Get_Nickname (Server)).all);
       end if;
    end Is_Case_Sensitive;
 
@@ -438,7 +438,7 @@ package body File_Utils is
    ------------------
 
    function Find_On_Path
-     (Base_Name : String; Path : String) return VFS.Virtual_File
+     (Base_Name : String; Path : String) return GNATCOLL.VFS.Virtual_File
    is
       Iter : Path_Iterator := Start (Path);
    begin
@@ -455,7 +455,7 @@ package body File_Utils is
          Iter := Next (Path, Iter);
       end loop;
 
-      return VFS.No_File;
+      return GNATCOLL.VFS.No_File;
    end Find_On_Path;
 
 end File_Utils;

@@ -48,7 +48,7 @@ with GPS.Intl;               use GPS.Intl;
 with Histories;              use Histories;
 with GUI_Utils;              use GUI_Utils;
 with Src_Editor_Module;      use Src_Editor_Module;
-with VFS;                    use VFS;
+with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 with Traces;                 use Traces;
 with Commands.Interactive;   use Commands, Commands.Interactive;
 

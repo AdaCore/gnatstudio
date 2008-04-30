@@ -68,7 +68,7 @@ with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 
 with Traces; use Traces;
-with VFS;
+with GNATCOLL.VFS;
 
 with Commands;                use Commands;
 with Commands.Generic_Asynchronous;
@@ -131,7 +131,7 @@ package body Vsearch is
 
    procedure Customize
      (Module : access Vsearch_Module_Record;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level);
    procedure Destroy (Module : in out Vsearch_Module_Record);
@@ -2302,7 +2302,7 @@ package body Vsearch is
 
    procedure Customize
      (Module : access Vsearch_Module_Record;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level)
    is

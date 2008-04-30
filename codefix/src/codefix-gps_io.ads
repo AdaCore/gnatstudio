@@ -26,7 +26,7 @@ with Ada.Unchecked_Deallocation;
 with Codefix.Text_Manager;   use Codefix.Text_Manager;
 with Codefix.Errors_Manager; use Codefix.Errors_Manager;
 with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
-with VFS;
+with GNATCOLL.VFS;
 
 package Codefix.GPS_Io is
 
@@ -103,7 +103,7 @@ package Codefix.GPS_Io is
 
    procedure Initialize
      (This : in out Console_Interface;
-      Path : VFS.Virtual_File);
+      Path : GNATCOLL.VFS.Virtual_File);
    --  Initialize the structure of the Console_Interface. Actually do noting.
 
    function Read_File (This : Console_Interface)

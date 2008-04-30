@@ -34,7 +34,7 @@ package body Language.Tree.Database is
 
    function Get_Buffer
      (Provider : access File_Buffer_Provider;
-      File     : VFS.Virtual_File) return String_Access
+      File     : GNATCOLL.VFS.Virtual_File) return String_Access
    is
       pragma Unreferenced (Provider);
    begin

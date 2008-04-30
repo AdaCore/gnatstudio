@@ -26,7 +26,7 @@ with GNAT.Strings;
 with Basic_Types;
 
 with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
-with VFS;                use VFS;
+with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with Gdk.Pixbuf;
 with Commands;
 with Entities;
@@ -40,7 +40,7 @@ package GPS.Kernel.Standard_Hooks is
 
    File_Hook_Type : constant Hook_Type := "file_hooks";
    type File_Hooks_Args is new Hooks_Data with record
-      File : VFS.Virtual_File := VFS.No_File;
+      File : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
    end record;
    function Create_Callback_Data
      (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
@@ -150,7 +150,7 @@ package GPS.Kernel.Standard_Hooks is
 
    Files_2_Hook_Type : constant Hook_Type := "file_renamed_hooks";
    type Files_2_Hooks_Args is new File_Hooks_Args with record
-      Renamed : VFS.Virtual_File;
+      Renamed : GNATCOLL.VFS.Virtual_File;
    end record;
    function Create_Callback_Data
      (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
@@ -199,7 +199,7 @@ package GPS.Kernel.Standard_Hooks is
    -----------------------------
 
    type Source_File_Hooks_Args is new Hooks_Data with record
-      File              : VFS.Virtual_File := VFS.No_File;
+      File              : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Line              : Integer := 1;
       Column            : Basic_Types.Visible_Column_Type := 1;
       Column_End        : Basic_Types.Visible_Column_Type := 0;
@@ -231,7 +231,7 @@ package GPS.Kernel.Standard_Hooks is
 
    procedure Open_File_Editor
      (Kernel            : access Kernel_Handle_Record'Class;
-      Filename          : VFS.Virtual_File;
+      Filename          : GNATCOLL.VFS.Virtual_File;
       Line              : Natural := 1;
       Column            : Basic_Types.Visible_Column_Type := 1;
       Column_End        : Basic_Types.Visible_Column_Type := 0;
@@ -246,14 +246,14 @@ package GPS.Kernel.Standard_Hooks is
 
    procedure Clear_Highlighting
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Filename : VFS.Virtual_File);
+      Filename : GNATCOLL.VFS.Virtual_File);
    --  If Filename is currently open, clear all highlighting currently
    --  associated to it.
    --  See Open_File_Action_Hook
 
    procedure Close_File_Editors
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Filename : VFS.Virtual_File);
+      Filename : GNATCOLL.VFS.Virtual_File);
    --  Close all file editors that edit Filename.
    --  Filename must be an absolute file name.
    --  See Open_File_Action_Hook
@@ -283,7 +283,7 @@ package GPS.Kernel.Standard_Hooks is
    type File_Line_Hooks_Args (Identifier_Length : Natural)
      is new Hooks_Data with
    record
-      File       : VFS.Virtual_File := VFS.No_File;
+      File       : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Info       : Line_Information_Data;
       Every_Line : Boolean := True;
       Normalize  : Boolean := True;
@@ -300,7 +300,7 @@ package GPS.Kernel.Standard_Hooks is
 
    procedure Create_Line_Information_Column
      (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File       : VFS.Virtual_File;
+      File       : GNATCOLL.VFS.Virtual_File;
       Identifier : String;
       Every_Line : Boolean := True;
       Normalize  : Boolean := True);
@@ -309,7 +309,7 @@ package GPS.Kernel.Standard_Hooks is
 
    procedure Remove_Line_Information_Column
      (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File       : VFS.Virtual_File;
+      File       : GNATCOLL.VFS.Virtual_File;
       Identifier : String);
    --  Remove the column identified by Identifier for the editors of File.
    --  If File is empty, then the column will be removed for all open files.
@@ -317,7 +317,7 @@ package GPS.Kernel.Standard_Hooks is
 
    procedure Add_Line_Information
      (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File       : VFS.Virtual_File;
+      File       : GNATCOLL.VFS.Virtual_File;
       Identifier : String;
       Info       : Line_Information_Data;
       Normalize  : Boolean := True);
@@ -331,7 +331,7 @@ package GPS.Kernel.Standard_Hooks is
 
    procedure Add_Editor_Label
      (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File       : VFS.Virtual_File;
+      File       : GNATCOLL.VFS.Virtual_File;
       Identifier : String;
       Label      : String);
    --  Add a label in the editors for File.
@@ -365,7 +365,7 @@ package GPS.Kernel.Standard_Hooks is
    type Location_Hooks_Args (Ident_Length, Cat_Length, Mes_Length : Natural) is
      new Hooks_Data with
       record
-         File       : VFS.Virtual_File;
+         File       : GNATCOLL.VFS.Virtual_File;
          Line       : Integer;
          Column     : Integer;
          Action     : Action_Item;
@@ -381,7 +381,7 @@ package GPS.Kernel.Standard_Hooks is
      (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
       Identifier : String;
       Category   : String;
-      File       : VFS.Virtual_File;
+      File       : GNATCOLL.VFS.Virtual_File;
       Line       : Integer;
       Column     : Integer;
       Message    : UTF8_String;
@@ -394,7 +394,7 @@ package GPS.Kernel.Standard_Hooks is
      (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
       Identifier : String;
       Category   : String;
-      File       : VFS.Virtual_File;
+      File       : GNATCOLL.VFS.Virtual_File;
       Line       : Integer;
       Column     : Integer;
       Message    : UTF8_String);
@@ -430,18 +430,18 @@ package GPS.Kernel.Standard_Hooks is
    ----------------------
 
    type Diff_Hooks_Args is new Hooks_Data with record
-      Orig_File : VFS.Virtual_File;
-      New_File  : VFS.Virtual_File;
-      Diff_File : VFS.Virtual_File;
+      Orig_File : GNATCOLL.VFS.Virtual_File;
+      New_File  : GNATCOLL.VFS.Virtual_File;
+      Diff_File : GNATCOLL.VFS.Virtual_File;
    end record;
 
    Diff_Action_Hook : constant Hook_Name := "diff_action_hook";
 
    procedure Display_Differences
      (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Orig_File : VFS.Virtual_File := VFS.No_File;
-      New_File  : VFS.Virtual_File := VFS.No_File;
-      Diff_File : VFS.Virtual_File);
+      Orig_File : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      New_File  : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Diff_File : GNATCOLL.VFS.Virtual_File);
    --  Display differences between Orig_File and New_File (Mime_Diff_File type)
    --  Either Orig_File or New_File can be null (but not both), in which
    --  case, the contents of the file is computed from the other file and the
@@ -462,7 +462,7 @@ package GPS.Kernel.Standard_Hooks is
 
    procedure File_Status_Changed
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Status : File_Status);
    --  Call the file_status_changed hook
 

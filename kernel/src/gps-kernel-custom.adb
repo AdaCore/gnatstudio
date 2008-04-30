@@ -34,7 +34,7 @@ with GPS.Intl;                  use GPS.Intl;
 with File_Utils;                use File_Utils;
 with Remote;                    use Remote;
 with String_Hash;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 with XML_Parsers;
 
 package body GPS.Kernel.Custom is
@@ -118,7 +118,7 @@ package body GPS.Kernel.Custom is
 
    procedure Execute_Customization_String
      (Kernel : access Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level)
    is
@@ -465,7 +465,7 @@ package body GPS.Kernel.Custom is
                           (Initialization => Deep_Copy (N.Child),
                            Explicit => True,
                            Load => Boolean'Value (Get_Attribute (N, "load")),
-                           File => VFS.No_File));
+                           File => GNATCOLL.VFS.No_File));
                   exception
                      when Constraint_Error =>
                         null;
@@ -639,7 +639,7 @@ package body GPS.Kernel.Custom is
          Startup.Explicit       := True;
       else
          Startup := new Script_Description'
-           (File           => VFS.No_File,
+           (File           => GNATCOLL.VFS.No_File,
             Load           => Load,
             Explicit       => True,
             Initialization => Initialization);
@@ -655,7 +655,7 @@ package body GPS.Kernel.Custom is
 
    function Load_File_At_Startup
      (Kernel  : access Kernel_Handle_Record'Class;
-      File    : VFS.Virtual_File;
+      File    : GNATCOLL.VFS.Virtual_File;
       Default : Boolean) return Boolean
    is
       Startup : Script_Description_Access :=
@@ -663,7 +663,7 @@ package body GPS.Kernel.Custom is
                        K => Base_Name (File));
    begin
       if Startup /= null then
-         if Startup.File /= VFS.No_File then
+         if Startup.File /= GNATCOLL.VFS.No_File then
             Insert (Kernel,
                     -"There are several startup scripts with the same name: "
                     & Base_Name (File)
@@ -695,7 +695,7 @@ package body GPS.Kernel.Custom is
 
    function Initialization_Command
      (Kernel : access Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File)
+      File   : GNATCOLL.VFS.Virtual_File)
       return Commands.Custom.Custom_Command_Access
    is
       Startup : constant Script_Description_Access :=

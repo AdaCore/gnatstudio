@@ -28,7 +28,7 @@ with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
 
 with Generic_List;
 with GPS.Kernel;         use GPS.Kernel;
-with VFS;                use VFS;
+with GNATCOLL.VFS;                use GNATCOLL.VFS;
 
 package Diff_Utils2 is
 
@@ -101,7 +101,7 @@ package Diff_Utils2 is
 
    Null_Head : constant Diff_Head :=
                  (List           => Diff_Chunk_List.Null_List,
-                  Files          => (others => VFS.No_File),
+                  Files          => (others => GNATCOLL.VFS.No_File),
                   Current_Node   => Diff_Chunk_List.Null_Node,
                   Ref_File       => 2,
                   In_Destruction => False,
@@ -131,14 +131,14 @@ package Diff_Utils2 is
 
    function Diff
      (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Ref_File, New_File : VFS.Virtual_File) return Diff_List;
+      Ref_File, New_File : GNATCOLL.VFS.Virtual_File) return Diff_List;
    --  Execute diff on File1 and File2 and return a list of differences
 
    function Diff
      (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Orig_File : VFS.Virtual_File;
-      New_File  : VFS.Virtual_File;
-      Diff_File : VFS.Virtual_File;
+      Orig_File : GNATCOLL.VFS.Virtual_File;
+      New_File  : GNATCOLL.VFS.Virtual_File;
+      Diff_File : GNATCOLL.VFS.Virtual_File;
       Revert    : Boolean := False) return Diff_List;
    --  Compute the differences from Diff_File.
    --  If Revert is False, create New_File from Orig_File and Diff_File.
@@ -146,7 +146,7 @@ package Diff_Utils2 is
 
    function Diff3
      (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
-      My_Change, Old_File, Your_Change : VFS.Virtual_File) return Diff_List;
+      My_Change, Old_File, Your_Change : Virtual_File) return Diff_List;
    --  Execute diff on File1,File2 and File3 and return a list of differences.
 
    function Simplify
@@ -165,14 +165,14 @@ private
    function Diff3
      (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
       Diff3_Command : String;
-      My_Change, Old_File, Your_Change : VFS.Virtual_File)
+      My_Change, Old_File, Your_Change : GNATCOLL.VFS.Virtual_File)
       return Diff_List;
    --  Execute diff3 on File1, File2, File3 and return list of Chunk
 
    function Diff
      (Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
       Diff_Command : String;
-      Ref_File, New_File : VFS.Virtual_File) return Diff_List;
+      Ref_File, New_File : GNATCOLL.VFS.Virtual_File) return Diff_List;
    --  Execute diff on File1 and File2 and return a list of differences
 
 end Diff_Utils2;

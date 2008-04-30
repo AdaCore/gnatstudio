@@ -48,7 +48,7 @@ with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Intl;                  use GPS.Intl;
 with File_Utils;                use File_Utils;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 package body Creation_Wizard is
 
@@ -250,17 +250,17 @@ package body Creation_Wizard is
    is
       P : constant Name_And_Location_Page_Access :=
             Name_And_Location_Page_Access (Page);
-      Name : constant VFS.Virtual_File := Select_Directory
+      Name : constant GNATCOLL.VFS.Virtual_File := Select_Directory
         (Title             => -"Select project file location",
          Parent            => Gtk_Window (Get_Toplevel (Widget)),
-         Base_Directory    => VFS.Create (Get_Text (P.Project_Location)),
+         Base_Directory    => Create (Get_Text (P.Project_Location)),
          Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
          History           => Get_History (P.Kernel));
 
    begin
-      if Name /= VFS.No_File then
-         VFS.Ensure_Directory (Name);
-         Set_Text (P.Project_Location, VFS.Full_Name (Name).all);
+      if Name /= GNATCOLL.VFS.No_File then
+         GNATCOLL.VFS.Ensure_Directory (Name);
+         Set_Text (P.Project_Location, GNATCOLL.VFS.Full_Name (Name).all);
       end if;
    end Advanced_Prj_Location;
 
@@ -427,16 +427,16 @@ package body Creation_Wizard is
    ---------
 
    function Run
-     (Wiz : access Project_Wizard_Record) return VFS.Virtual_File
+     (Wiz : access Project_Wizard_Record) return GNATCOLL.VFS.Virtual_File
    is
-      Name : VFS.Virtual_File;
+      Name : GNATCOLL.VFS.Virtual_File;
    begin
       Show_All (Wiz);
 
       if Run (Wiz) = Gtk_Response_Apply then
          if Wiz.Project = No_Project then
             Destroy (Wiz);
-            return VFS.No_File;
+            return GNATCOLL.VFS.No_File;
          else
             Name := Project_Path (Wiz.Project);
             Destroy (Wiz);
@@ -444,14 +444,14 @@ package body Creation_Wizard is
          end if;
       else
          Destroy (Wiz);
-         return VFS.No_File;
+         return GNATCOLL.VFS.No_File;
       end if;
 
    exception
       when E : others =>
          Trace (Exception_Handle, E);
          Destroy (Wiz);
-         return VFS.No_File;
+         return GNATCOLL.VFS.No_File;
    end Run;
 
    ---------------------

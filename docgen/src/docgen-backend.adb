@@ -79,7 +79,7 @@ package body Docgen.Backend is
       Result           : in out Unbounded_String;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Text             : String;
-      File_Name        : VFS.Virtual_File;
+      File_Name        : GNATCOLL.VFS.Virtual_File;
       Entity_Line      : Natural;
       Line_In_Body     : Natural;
       Is_Body          : Boolean;
@@ -193,7 +193,7 @@ package body Docgen.Backend is
       Text             : String;
       Sloc_Start       : Source_Location;
       Sloc_End         : Source_Location;
-      File_Name        : VFS.Virtual_File;
+      File_Name        : GNATCOLL.VFS.Virtual_File;
       Entity_Line      : Natural;
       Line_In_Body     : Natural;
       Source_File_List : Type_Source_File_Table.HTable;

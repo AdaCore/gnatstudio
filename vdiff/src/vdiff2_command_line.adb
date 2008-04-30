@@ -124,7 +124,7 @@ package body Vdiff2_Command_Line is
             exit when Diff.Range2.First <= Line
               and then Diff.Range2.Last >= Line;
 
-         elsif Item.Files (3) /= VFS.No_File
+         elsif Item.Files (3) /= GNATCOLL.VFS.No_File
            and then Selected_File = Item.Files (3)
          then
             exit when Diff.Range3.First <= Line
@@ -145,7 +145,7 @@ package body Vdiff2_Command_Line is
      (Kernel : Kernel_Handle;
       Diff   : Diff_Head_Access;
       Line   : Natural := 0;
-      File   : Virtual_File := VFS.No_File)
+      File   : Virtual_File := GNATCOLL.VFS.No_File)
    is
       Diff1     : Diff_Chunk_Access;
       VFile    : T_VFile;
@@ -205,7 +205,7 @@ package body Vdiff2_Command_Line is
      (Kernel : Kernel_Handle;
       Diff   : Diff_Head_Access;
       Line   : Natural := 0;
-      File   : Virtual_File := VFS.No_File)
+      File   : Virtual_File := GNATCOLL.VFS.No_File)
    is
       Diff1     : Diff_Chunk_Access;
       VFile    : T_VFile;

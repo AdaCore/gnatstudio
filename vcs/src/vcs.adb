@@ -247,7 +247,7 @@ package body VCS is
 
    procedure Parse_Annotations
      (Rep  : access VCS_Record;
-      File : VFS.Virtual_File;
+      File : GNATCOLL.VFS.Virtual_File;
       Text : String)
    is
       pragma Unreferenced (Rep, File, Text);
@@ -261,7 +261,7 @@ package body VCS is
 
    procedure Parse_Log
      (Rep  : access VCS_Record;
-      File : VFS.Virtual_File;
+      File : GNATCOLL.VFS.Virtual_File;
       Text : String)
    is
       pragma Unreferenced (Rep, File, Text);
@@ -275,7 +275,7 @@ package body VCS is
 
    procedure Parse_Revision
      (Rep  : access VCS_Record;
-      File : VFS.Virtual_File;
+      File : GNATCOLL.VFS.Virtual_File;
       Text : String)
    is
       pragma Unreferenced (Rep, File, Text);

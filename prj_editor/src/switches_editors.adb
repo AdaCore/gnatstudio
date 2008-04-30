@@ -53,7 +53,7 @@ with Snames;                    use Snames;
 with String_Utils;              use String_Utils;
 with Switches_Chooser.Gtkada;   use Switches_Chooser, Switches_Chooser.Gtkada;
 with Traces;                    use Traces;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 package body Switches_Editors is
 
@@ -269,7 +269,7 @@ package body Switches_Editors is
                List : GNAT.Strings.String_List := Get_Switches
                  (S,
                   Tool,
-                  Files => (1 .. 0 => VFS.No_File),
+                  Files => (1 .. 0 => GNATCOLL.VFS.No_File),
                   Use_Initial_Value => True);
             begin
                Set_Command_Line (S.Pages (P), List);
@@ -387,7 +387,7 @@ package body Switches_Editors is
                end;
 
                if Is_Default_Value then
-                  To_Remove := File_Name /= VFS.No_File;
+                  To_Remove := File_Name /= GNATCOLL.VFS.No_File;
 
                else
                   --  If the switches are the ones already set for the file,
@@ -411,7 +411,7 @@ package body Switches_Editors is
             end if;
 
             if To_Remove then
-               if File_Name /= VFS.No_File then
+               if File_Name /= GNATCOLL.VFS.No_File then
                   Trace (Me, "Removing file-specific switches for "
                          & Base_Name (File_Name));
                   Delete_Attribute
@@ -424,7 +424,7 @@ package body Switches_Editors is
                end if;
 
             elsif not Is_Default_Value then
-               if File_Name /= VFS.No_File then
+               if File_Name /= GNATCOLL.VFS.No_File then
                   if Args'Length /= 0 then
                      Trace (Me, "Changing switches for "
                             & Base_Name (File_Name));
@@ -507,7 +507,7 @@ package body Switches_Editors is
       pragma Assert (Project /= No_Project);
 
       if Files'Length = 0 then
-         Process_File (VFS.No_File);
+         Process_File (GNATCOLL.VFS.No_File);
       else
          for F in Files'Range loop
             Process_File (Files (F));
@@ -524,7 +524,7 @@ package body Switches_Editors is
    function Close_Switch_Editor
      (Switches     : access Switches_Edit_Record'Class;
       Project      : Project_Type;
-      Files        : VFS.File_Array;
+      Files        : GNATCOLL.VFS.File_Array;
       Scenario     : access Scenario_Selector_Record'Class) return Boolean
    is
       Saved     : GNAT.Strings.String_List := Get_Current_Scenario
@@ -572,7 +572,7 @@ package body Switches_Editors is
    procedure Set_Switches
      (Editor : access Switches_Edit_Record; Project : Project_Type) is
    begin
-      Fill_Editor (Editor, Project, Files => (1 .. 0 => VFS.No_File));
+      Fill_Editor (Editor, Project, Files => (1 .. 0 => GNATCOLL.VFS.No_File));
    end Set_Switches;
 
    ------------------
@@ -587,7 +587,7 @@ package body Switches_Editors is
    begin
       if Files'Length = 0 then
          return Get_Switches
-           (Switches.Project, Tool, VFS.No_File,
+           (Switches.Project, Tool, GNATCOLL.VFS.No_File,
             Use_Initial_Value => Use_Initial_Value);
       else
          --  ??? Should we merge all the switches ?
@@ -686,7 +686,7 @@ package body Switches_Editors is
          Modified := Edit_Switches_For_Files
            (Get_Kernel (Context.Context),
             Project_Information (Context.Context),
-            (1 .. 0 => VFS.No_File));
+            (1 .. 0 => GNATCOLL.VFS.No_File));
       end if;
       return Success;
    end Execute;

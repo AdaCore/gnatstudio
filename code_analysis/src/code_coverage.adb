@@ -24,7 +24,7 @@ with GNAT.Regpat;       use GNAT.Regpat;
 with Glib;
 with GPS.Intl;          use GPS.Intl;
 with String_Utils;      use String_Utils;
-with VFS;               use VFS;
+with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with Language;          use Language;
 with Code_Analysis_GUI; use Code_Analysis_GUI;
 

@@ -150,7 +150,7 @@ package body Src_Editor_Module.Markers is
 
    procedure Reset_Markers_For_File
      (Kernel : access Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File)
+      File   : GNATCOLL.VFS.Virtual_File)
    is
       use Marker_List;
       Module : constant Source_Editor_Module :=
@@ -302,7 +302,7 @@ package body Src_Editor_Module.Markers is
    --------------
 
    function Get_File
-     (Marker : access File_Marker_Record'Class) return VFS.Virtual_File is
+     (Marker : access File_Marker_Record'Class) return Virtual_File is
    begin
       return Marker.File;
    end Get_File;
@@ -334,7 +334,7 @@ package body Src_Editor_Module.Markers is
 
    function Create_File_Marker
      (Kernel : access Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Line   : Editable_Line_Type;
       Column : Visible_Column_Type;
       Length : Natural := 0) return File_Marker
@@ -362,7 +362,7 @@ package body Src_Editor_Module.Markers is
 
    function Create_File_Marker
      (Kernel : access Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Mark   : Gtk.Text_Mark.Gtk_Text_Mark) return File_Marker
    is
       Marker : File_Marker;

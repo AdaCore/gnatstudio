@@ -239,7 +239,7 @@ package GPS.Kernel.Modules is
 
    procedure Customize
      (Module : access Module_ID_Record;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Node   : Glib.Xml_Int.Node_Ptr;
       Level  : Customization_Level) is null;
    --  Subprogram called when a new customization has been parsed.

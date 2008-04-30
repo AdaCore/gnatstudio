@@ -54,7 +54,7 @@ with Histories;
 with Projects.Registry;
 with Switches_Chooser;
 with Task_Manager;
-with VFS;
+with GNATCOLL.VFS;
 
 package GPS.Kernel is
 
@@ -242,7 +242,7 @@ package GPS.Kernel is
      (Name            : Glib.UTF8_String;
       Kernel          : access Kernel_Handle_Record;
       Use_Source_Path : Boolean := True;
-      Use_Object_Path : Boolean := True) return VFS.Virtual_File;
+      Use_Object_Path : Boolean := True) return GNATCOLL.VFS.Virtual_File;
    --  Create a new file. This will automatically try to solve Name to an
    --  absolute path if it currently is a base name.
    --
@@ -253,18 +253,18 @@ package GPS.Kernel is
 
    function Create_From_Base
      (Name   : Glib.UTF8_String;
-      Kernel : access Kernel_Handle_Record) return VFS.Virtual_File;
+      Kernel : access Kernel_Handle_Record) return GNATCOLL.VFS.Virtual_File;
    --  Create a new file. First try to resolve Base_Name (Name) to an absolute
    --  path based on the source and object paths. If no file is found,
    --  use Name instead.
 
    function Is_Open
      (Kernel   : access Kernel_Handle_Record;
-      Filename : VFS.Virtual_File) return Boolean;
+      Filename : GNATCOLL.VFS.Virtual_File) return Boolean;
    --  Whether Filename is currently opened in an editor
 
    function Open_Files
-     (Kernel : access Kernel_Handle_Record) return VFS.File_Array;
+     (Kernel : access Kernel_Handle_Record) return GNATCOLL.VFS.File_Array;
    --  Return a list of currently open files
 
    function Is_Hidden
@@ -604,7 +604,7 @@ package GPS.Kernel is
 
    type File_Project_Record is record
       Project : Projects.Project_Type;
-      File    : aliased VFS.Virtual_File;
+      File    : aliased GNATCOLL.VFS.Virtual_File;
    end record;
 
    package File_Project_Cb is new Gtk.Handlers.User_Callback
@@ -628,38 +628,38 @@ package GPS.Kernel is
 
    procedure File_Edited
      (Handle : access Kernel_Handle_Record;
-      File   : VFS.Virtual_File);
+      File   : GNATCOLL.VFS.Virtual_File);
    --  Runs the "file_edited" hook
 
    procedure Before_File_Saved
      (Handle : access Kernel_Handle_Record;
-      File   : VFS.Virtual_File);
+      File   : GNATCOLL.VFS.Virtual_File);
    --  Runs the "before_file_saved" hook
 
    procedure File_Saved
      (Handle : access Kernel_Handle_Record;
-      File   : VFS.Virtual_File);
+      File   : GNATCOLL.VFS.Virtual_File);
    --  Runs the "file_saved" hook
 
    procedure File_Closed
      (Handle : access Kernel_Handle_Record;
-      File   : VFS.Virtual_File);
+      File   : GNATCOLL.VFS.Virtual_File);
    --  Runs the "file_closed" hook
 
    procedure File_Deleted
      (Handle : access Kernel_Handle_Record;
-      File   : VFS.Virtual_File);
+      File   : GNATCOLL.VFS.Virtual_File);
    --  Runs the "file_deleted" hook
 
    procedure File_Renamed
      (Handle   : access Kernel_Handle_Record;
-      File     : VFS.Virtual_File;
-      New_Path : VFS.Virtual_File);
+      File     : GNATCOLL.VFS.Virtual_File;
+      New_Path : GNATCOLL.VFS.Virtual_File);
    --  Runs the "file_renamed" hook
 
    procedure File_Changed_On_Disk
      (Handle : access Kernel_Handle_Record;
-      File   : VFS.Virtual_File);
+      File   : GNATCOLL.VFS.Virtual_File);
    --  Runs the "file_changed_on_disk" hook
 
    function Compilation_Starting
@@ -781,7 +781,7 @@ private
 
       Instances : GNATCOLL.Scripts.Instance_List_Access;
 
-      Files             : VFS.File_Array_Access := null;
+      Files             : GNATCOLL.VFS.File_Array_Access := null;
       --  The current selected files
 
       Project           : Projects.Project_Type := Projects.No_Project;
@@ -995,7 +995,7 @@ private
       Lang_Handler : Language_Handlers.Language_Handler;
       --  The type used to convert from file names to languages
 
-      Open_Files : VFS.File_Array_Access;
+      Open_Files : GNATCOLL.VFS.File_Array_Access;
       --  The list of currently open files
 
       History : Histories.History;

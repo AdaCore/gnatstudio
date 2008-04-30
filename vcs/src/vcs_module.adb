@@ -53,7 +53,7 @@ with VCS_Activities_View_API;   use VCS_Activities_View_API;
 with VCS_Utils;                 use VCS_Utils;
 with VCS_View;                  use VCS_View;
 with VCS_View_API;              use VCS_View_API;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 package body VCS_Module is
 
@@ -1068,7 +1068,7 @@ package body VCS_Module is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       Ref    : VCS_Access;
       VCS_Identifier : constant String := Nth_Arg (Data, 1);
-      File           : constant VFS.Virtual_File :=
+      File           : constant GNATCOLL.VFS.Virtual_File :=
                          Create (Nth_Arg (Data, 2), Kernel);
       S              : constant String := Nth_Arg (Data, 3);
    begin
@@ -1098,7 +1098,7 @@ package body VCS_Module is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       Ref    : VCS_Access;
       VCS_Identifier : constant String := Nth_Arg (Data, 1);
-      File           : constant VFS.Virtual_File :=
+      File           : constant GNATCOLL.VFS.Virtual_File :=
                          Create (Nth_Arg (Data, 2), Kernel);
       S              : constant String := Nth_Arg (Data, 3);
       Escaped        : String (S'First .. S'First + S'Length * 2);
@@ -1140,7 +1140,7 @@ package body VCS_Module is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       Ref    : VCS_Access;
       VCS_Identifier : constant String := Nth_Arg (Data, 1);
-      File           : constant VFS.Virtual_File :=
+      File           : constant GNATCOLL.VFS.Virtual_File :=
                          Create (Nth_Arg (Data, 2), Kernel);
       S              : constant String := Nth_Arg (Data, 3);
    begin
@@ -1181,7 +1181,7 @@ package body VCS_Module is
 
       Status := Get_Cache (Get_Status_Cache, D.File).Status;
 
-      if Status.File = VFS.No_File
+      if Status.File = GNATCOLL.VFS.No_File
         or else Status.Status.Stock_Id.all = "gps-vcs-unknown"
       then
          --  If file not found in the cache or the status is not yet known

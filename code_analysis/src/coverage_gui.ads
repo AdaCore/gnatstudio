@@ -26,7 +26,7 @@ with GNATCOLL.Traces;
 with Glib;
 with GPS.Kernel;    use GPS.Kernel;
 with GPS.Intl;      use GPS.Intl;
-with VFS;           use VFS;
+with GNATCOLL.VFS;           use GNATCOLL.VFS;
 with Language;      use Language;
 with Traces;        use Traces;
 with Code_Analysis; use Code_Analysis;
@@ -52,8 +52,8 @@ package Coverage_GUI is
 
    procedure Add_Gcov_File_Info
      (Kernel       : Kernel_Handle;
-      Src_File     : VFS.Virtual_File;
-      Cov_File     : VFS.Virtual_File;
+      Src_File     : GNATCOLL.VFS.Virtual_File;
+      Cov_File     : GNATCOLL.VFS.Virtual_File;
       Project_Node : Project_Access);
    --  Add into the corresponding code_analysis nodes the coverage info
    --  provided by the given-gcov-file parsing.
@@ -130,7 +130,7 @@ package Coverage_GUI is
 
    function Find_Gcov_File
      (Kernel  : Kernel_Handle;
-      Source  : VFS.Virtual_File) return VFS.Virtual_File;
+      Source  : GNATCOLL.VFS.Virtual_File) return GNATCOLL.VFS.Virtual_File;
    --  Return the gcov file associated with Source.
 
    function Have_Gcov_Info

@@ -25,7 +25,7 @@ with Generic_List;
 with Language;             use Language;
 with Language.Tree;        use Language.Tree;
 with Projects.Registry;
-with VFS;
+with GNATCOLL.VFS;
 
 package Codefix.Formal_Errors is
 
@@ -51,7 +51,7 @@ package Codefix.Formal_Errors is
 
    procedure Initialize
      (This    : in out Error_Message;
-      File    : VFS.Virtual_File;
+      File    : GNATCOLL.VFS.Virtual_File;
       Line    : Positive;
       Col     : Column_Index;
       Message : String);

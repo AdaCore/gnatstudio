@@ -65,7 +65,7 @@ with Projects;                  use Projects;
 with String_Utils;              use String_Utils;
 with Switches_Chooser;          use Switches_Chooser;
 with Traces;                    use Traces;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 with XML_Viewer;
 
 package body Custom_Module is
@@ -133,7 +133,7 @@ package body Custom_Module is
 
    procedure Customize
      (Module : access Custom_Module_ID_Record;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Node   : Glib.Xml_Int.Node_Ptr;
       Level  : Customization_Level);
    --  See inherited documentation
@@ -214,7 +214,7 @@ package body Custom_Module is
 
    procedure Parse_Switches_Node
      (Kernel       : access Kernel_Handle_Record'Class;
-      File         : VFS.Virtual_File;
+      File         : GNATCOLL.VFS.Virtual_File;
       Current_Tool : in out Tool_Properties_Record;
       Node         : Node_Ptr);
    --  Parse a <switches> node, and returns the corresponding configuration
@@ -225,7 +225,7 @@ package body Custom_Module is
 
    procedure Parse_Switches_Node
      (Kernel       : access Kernel_Handle_Record'Class;
-      File         : VFS.Virtual_File;
+      File         : GNATCOLL.VFS.Virtual_File;
       Current_Tool : in out Tool_Properties_Record;
       Node         : Node_Ptr)
    is
@@ -893,7 +893,7 @@ package body Custom_Module is
 
    procedure Customize
      (Module : access Custom_Module_ID_Record;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Node   : Glib.Xml_Int.Node_Ptr;
       Level  : Customization_Level)
    is
@@ -1573,7 +1573,7 @@ package body Custom_Module is
 
          procedure Add_Alternate_Sources is
             Files    : Node_Ptr := Child.Child;
-            Pic_File : VFS.Virtual_File;
+            Pic_File : GNATCOLL.VFS.Virtual_File;
          begin
             while Files /= null loop
                if To_Lower (Files.Tag.all) = "alternate" then
@@ -1590,7 +1590,7 @@ package body Custom_Module is
                         if Is_Absolute_Path (Filename) then
                            Pic_File := Create (Filename);
                         else
-                           if File = VFS.No_File then
+                           if File = GNATCOLL.VFS.No_File then
                               Pic_File := Create (Get_Current_Dir & Filename);
                            else
                               Pic_File := Create
@@ -1649,7 +1649,7 @@ package body Custom_Module is
                declare
                   Id       : constant String := Get_Attribute (Child, "id");
                   Filename : constant String := Get_Attribute (Child, "file");
-                  Pic_File : VFS.Virtual_File;
+                  Pic_File : GNATCOLL.VFS.Virtual_File;
                begin
                   if Id = "" then
                      Insert
@@ -1667,7 +1667,7 @@ package body Custom_Module is
                      if Is_Absolute_Path (Filename) then
                         Pic_File := Create (Filename);
                      else
-                        if File = VFS.No_File then
+                        if File = GNATCOLL.VFS.No_File then
                            Pic_File := Create (Get_Current_Dir & Filename);
                         else
                            Pic_File := Create (Dir_Name (File).all & Filename);

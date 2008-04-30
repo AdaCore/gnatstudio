@@ -70,7 +70,7 @@ with VCS_Status;                use VCS_Status;
 with VCS_Utils;                 use VCS_Utils;
 with VCS_View;                  use VCS_View;
 with VCS_View.Explorer;         use VCS_View.Explorer;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 package body VCS_View_API is
 
@@ -544,14 +544,14 @@ package body VCS_View_API is
       Dialog : Switch_Tag_Dialog)
    is
       pragma Unreferenced (Params);
-      Name : constant VFS.Virtual_File := Select_Directory
+      Name : constant GNATCOLL.VFS.Virtual_File := Select_Directory
         (Title             => -"Select root directory",
          Parent            => Gtk_Window (Get_Toplevel (Widget)),
          Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
-         Base_Directory    => VFS.Create (Get_Text (Dialog.Dir)));
+         Base_Directory    => GNATCOLL.VFS.Create (Get_Text (Dialog.Dir)));
 
    begin
-      if Name /= VFS.No_File then
+      if Name /= GNATCOLL.VFS.No_File then
          Set_Text (Dialog.Dir, Full_Name (Name).all);
       end if;
    end On_Select_Dir;
@@ -854,7 +854,7 @@ package body VCS_View_API is
                                (Kernel, File_Information (Context));
                L_Context : Selection_Context;
             begin
-               if Original /= VFS.No_File
+               if Original /= GNATCOLL.VFS.No_File
                  and then Actions (Commit) /= null
                then
                   Items_Inserted := True;
@@ -907,7 +907,7 @@ package body VCS_View_API is
          else
             Log_Exists := Has_File_Information (Context) and then
               Get_Log_From_File
-                (Kernel, File_Information (Context), False) /= VFS.No_File;
+                (Kernel, File_Information (Context), False) /= No_File;
 
             Add_Action (Status_Files, On_Menu_Get_Status'Access);
             Add_Action (Update, On_Menu_Update'Access);
@@ -1900,7 +1900,7 @@ package body VCS_View_API is
                         Get_File_From_Log
                           (Kernel, Create (Full_Filename => S));
                begin
-                  if L /= VFS.No_File then
+                  if L /= GNATCOLL.VFS.No_File then
                      Append (Real_Files, Full_Name (L).all);
                   end if;
                end;
@@ -1921,7 +1921,7 @@ package body VCS_View_API is
       while Files_Temp /= String_List.Null_Node loop
          File := Create (Full_Filename => String_List.Data (Files_Temp));
 
-         if Get_Log_From_File (Kernel, File, False) = VFS.No_File then
+         if Get_Log_From_File (Kernel, File, False) = GNATCOLL.VFS.No_File then
             Get_Log_From_ChangeLog (Kernel, File, Suffix);
             All_Logs_Exist := False;
 

@@ -95,7 +95,7 @@ with Projects;                  use Projects;
 with Std_Dialogs;               use Std_Dialogs;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 package body GVD_Module is
 
@@ -195,7 +195,7 @@ package body GVD_Module is
 
    procedure Create_Debugger_Columns
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File);
+      File   : GNATCOLL.VFS.Virtual_File);
    --  Create the side information columns corresponding to the debugger
    --  in the editors for file.
    --  If File is empty, create them for all files.
@@ -618,7 +618,7 @@ package body GVD_Module is
    begin
       Debug_Init
         (Kernel,
-         File_Project_Record'(Get_Project (Kernel), VFS.No_File), Args);
+         File_Project_Record'(Get_Project (Kernel), No_File), Args);
    end Initialize_Debugger;
 
    -----------------------------
@@ -684,7 +684,7 @@ package body GVD_Module is
                   Pattern_Name      => -"All files",
                   History           => Get_History (Kernel));
       begin
-         if S = VFS.No_File then
+         if S = GNATCOLL.VFS.No_File then
             return;
          end if;
 
@@ -1447,7 +1447,7 @@ package body GVD_Module is
                   Kind              => Open_File,
                   History           => Get_History (Kernel));
       begin
-         if S = VFS.No_File then
+         if S = GNATCOLL.VFS.No_File then
             return;
          end if;
 
@@ -1466,7 +1466,7 @@ package body GVD_Module is
                Console.Insert
                  (Kernel, (-"Could not find file: ") & Base_Name (S),
                   Mode => Error);
-               S := VFS.No_File;
+               S := GNATCOLL.VFS.No_File;
             end if;
          end if;
 
@@ -1512,7 +1512,7 @@ package body GVD_Module is
                   Kind              => Open_File,
                   History           => Get_History (Kernel));
       begin
-         if S = VFS.No_File then
+         if S = GNATCOLL.VFS.No_File then
             return;
          end if;
 
@@ -1559,7 +1559,7 @@ package body GVD_Module is
                     (Visual_Debugger (Get_Current_Process (Top)).Editor_Text));
       Name : constant Virtual_File := Get_Current_File (Edit);
    begin
-      if Name /= VFS.No_File then
+      if Name /= GNATCOLL.VFS.No_File then
          Highlight_Current_Line (Edit);
       end if;
       return Commands.Success;
@@ -1939,7 +1939,7 @@ package body GVD_Module is
          --  Add columns for debugging information to all the files that
          --  are currently open.
 
-         Create_Debugger_Columns (Kernel, VFS.No_File);
+         Create_Debugger_Columns (Kernel, GNATCOLL.VFS.No_File);
       end if;
       GVD_Module_ID.Initialized := True;
    end Setup_Side_Columns;
@@ -1974,7 +1974,7 @@ package body GVD_Module is
          GVD_Module_ID.File_Hook := null;
       end if;
 
-      Remove_Debugger_Columns (Kernel, VFS.No_File);
+      Remove_Debugger_Columns (Kernel, GNATCOLL.VFS.No_File);
 
       if GVD_Module_ID.Breakpoints_Editor /= null then
          Hide (GVD_Module_ID.Breakpoints_Editor);
@@ -2170,8 +2170,8 @@ package body GVD_Module is
 
       --  Re-create all debugger columns.
 
-      Remove_Debugger_Columns (Kernel_Handle (Kernel), VFS.No_File);
-      Create_Debugger_Columns (Kernel_Handle (Kernel), VFS.No_File);
+      Remove_Debugger_Columns (Kernel_Handle (Kernel), GNATCOLL.VFS.No_File);
+      Create_Debugger_Columns (Kernel_Handle (Kernel), GNATCOLL.VFS.No_File);
    end On_Executable_Changed;
 
    -------------
@@ -2251,7 +2251,7 @@ package body GVD_Module is
             if Tab.Breakpoints /= null then
                for J in Tab.Breakpoints'Range loop
                   if Tab.Breakpoints (J).Line in Bps'Range
-                    and then Tab.Breakpoints (J).File /= VFS.No_File
+                    and then Tab.Breakpoints (J).File /= GNATCOLL.VFS.No_File
                     and then Tab.Breakpoints (J).File = File
                   then
                      Bps (Tab.Breakpoints (J).Line) :=
@@ -2386,7 +2386,7 @@ package body GVD_Module is
          Slot_Object => Kernel,
          User_Data   => File_Project_Record'
            (Project => Get_Project (Kernel),
-            File    => VFS.No_File));
+            File    => GNATCOLL.VFS.No_File));
       Set_Accel_Path (Mitem, Debug_Menu_Prefix & "<no main>", Group);
       Show_All (Menu);
 
@@ -2416,8 +2416,8 @@ package body GVD_Module is
       if GVD_Module_ID.Initialized
         and then Prev /= GVD_Module_ID.Show_Lines_With_Code
       then
-         Remove_Debugger_Columns (Kernel_Handle (Kernel), VFS.No_File);
-         Create_Debugger_Columns (Kernel_Handle (Kernel), VFS.No_File);
+         Remove_Debugger_Columns (Kernel_Handle (Kernel), No_File);
+         Create_Debugger_Columns (Kernel_Handle (Kernel), No_File);
       end if;
 
       Init_Graphics (Gtk_Widget (Get_Main_Window (Kernel)));

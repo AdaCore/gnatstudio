@@ -62,7 +62,7 @@ with Src_Editor_Module.Markers; use Src_Editor_Module.Markers;
 with Src_Editor_Module;         use Src_Editor_Module;
 with Src_Editor_View;           use Src_Editor_View;
 with Traces;                    use Traces;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 package body Src_Contexts is
 
@@ -98,7 +98,7 @@ package body Src_Contexts is
      (Context       : access Search_Context'Class;
       Handler       : access Language_Handler_Record'Class;
       Kernel        : Kernel_Handle := null;
-      Name          : VFS.Virtual_File;
+      Name          : GNATCOLL.VFS.Virtual_File;
       Callback      : Scan_Callback;
       Scope         : Search_Scope;
       Lexical_State : in out Recognized_Lexical_States;
@@ -123,7 +123,7 @@ package body Src_Contexts is
       Handler  : access Language_Handler_Record'Class;
       Kernel   : Kernel_Handle;
       Str      : String := "";
-      File     : Virtual_File := VFS.No_File;
+      File     : Virtual_File := GNATCOLL.VFS.No_File;
       Scope    : Search_Scope;
       Lang     : Language_Access := null) return Match_Result_Array_Access;
    --  Same as above, but behaves as if there was a default callback that
@@ -162,7 +162,7 @@ package body Src_Contexts is
      (Context       : access Search_Context'Class;
       Handler       : access Language_Handler_Record'Class;
       Kernel        : Kernel_Handle;
-      Name          : VFS.Virtual_File;
+      Name          : GNATCOLL.VFS.Virtual_File;
       Scope         : Search_Scope;
       Lexical_State : in out Recognized_Lexical_States;
       Start_Line    : Editable_Line_Type := 1;
@@ -178,7 +178,7 @@ package body Src_Contexts is
 
    procedure Highlight_Result
      (Kernel      : access Kernel_Handle_Record'Class;
-      File_Name   : VFS.Virtual_File;
+      File_Name   : GNATCOLL.VFS.Virtual_File;
       Look_For    : String;
       Match       : Match_Result;
       Give_Focus  : Boolean;
@@ -211,7 +211,7 @@ package body Src_Contexts is
       Handler       : access Language_Handler_Record'Class;
       Kernel        : Kernel_Handle;
       Callback      : Scan_Callback;
-      File          : VFS.Virtual_File;
+      File          : GNATCOLL.VFS.Virtual_File;
       More_Matches  : out Boolean;
       Matches_Found : out Boolean);
    --  Call Callback on matches found in the file given in parmeter.
@@ -233,7 +233,7 @@ package body Src_Contexts is
       Replace_String  : String;
       Search_Backward : Boolean;
       Give_Focus      : Boolean;
-      File            : VFS.Virtual_File) return Boolean;
+      File            : GNATCOLL.VFS.Virtual_File) return Boolean;
    --  Replace the matches by the string given in parameter, from the file
    --  given in parameter. If there's an editor opened on this file, this
    --  editor will be taken instead. Return True if there is matches still to
@@ -498,7 +498,7 @@ package body Src_Contexts is
      (Context       : access Search_Context'Class;
       Handler       : access Language_Handler_Record'Class;
       Kernel        : GPS.Kernel.Kernel_Handle := null;
-      Name          : VFS.Virtual_File;
+      Name          : GNATCOLL.VFS.Virtual_File;
       Callback      : Scan_Callback;
       Scope         : Search_Scope;
       Lexical_State : in out Recognized_Lexical_States;
@@ -840,7 +840,7 @@ package body Src_Contexts is
       Handler  : access Language_Handler_Record'Class;
       Kernel   : Kernel_Handle;
       Str      : String := "";
-      File     : Virtual_File := VFS.No_File;
+      File     : Virtual_File := GNATCOLL.VFS.No_File;
       Scope    : Search_Scope;
       Lang     : Language_Access := null) return Match_Result_Array_Access
    is
@@ -881,7 +881,7 @@ package body Src_Contexts is
                       Lexical_State => State,
                       Lang          => Lang,
                       Was_Partial   => Was_Partial);
-      elsif File /= VFS.No_File then
+      elsif File /= GNATCOLL.VFS.No_File then
          Scan_File (Context,
                     Handler, Kernel,
                     File, Callback'Unrestricted_Access, Scope,
@@ -901,7 +901,7 @@ package body Src_Contexts is
      (Context       : access Search_Context'Class;
       Handler       : access Language_Handler_Record'Class;
       Kernel        : Kernel_Handle;
-      Name          : VFS.Virtual_File;
+      Name          : GNATCOLL.VFS.Virtual_File;
       Scope         : Search_Scope;
       Lexical_State : in out Recognized_Lexical_States;
       Start_Line    : Editable_Line_Type := 1;
@@ -1185,14 +1185,14 @@ package body Src_Contexts is
    is
       Scope : constant Scope_Selector := Scope_Selector (Extra_Information);
       Context : constant Open_Files_Context_Access := new Open_Files_Context;
-      Open_File_List : VFS.File_Array_Access;
+      Open_File_List : GNATCOLL.VFS.File_Array_Access;
 
    begin
       --  GPS.Kernel.Open_Files returns a File_Array, but Set_File_List
       --  takes a File_Array_Access. Memory will be properly freed in
       --  Set_File_List
 
-      Open_File_List          := new VFS.File_Array'(Open_Files (Kernel));
+      Open_File_List          := new File_Array'(Open_Files (Kernel));
       Context.Scope           :=
         Search_Scope'Val (Get_Index_In_List (Scope.Combo));
       Context.All_Occurrences := All_Occurrences;
@@ -1558,7 +1558,7 @@ package body Src_Contexts is
             Handler => Get_Language_Handler (Kernel),
             Kernel  => Kernel_Handle (Kernel),
             Str     => Get_Buffer (Editor),
-            File    => VFS.No_File,
+            File    => GNATCOLL.VFS.No_File,
             Scope   => Context.Scope,
             Lang    => Get_Language (Get_Buffer (Editor)));
 
@@ -1667,7 +1667,7 @@ package body Src_Contexts is
       Replace_String  : String;
       Search_Backward : Boolean;
       Give_Focus      : Boolean;
-      File            : VFS.Virtual_File) return Boolean
+      File            : GNATCOLL.VFS.Virtual_File) return Boolean
    is
       Matches : Match_Result_Array_Access;
       Child   : MDI_Child;
@@ -1781,7 +1781,7 @@ package body Src_Contexts is
       Handler       : access Language_Handler_Record'Class;
       Kernel        : Kernel_Handle;
       Callback      : Scan_Callback;
-      File          : VFS.Virtual_File;
+      File          : GNATCOLL.VFS.Virtual_File;
       More_Matches  : out Boolean;
       Matches_Found : out Boolean)
    is
@@ -1790,7 +1790,7 @@ package body Src_Contexts is
       More_Matches := False;
       Matches_Found := False;
 
-      if File = VFS.No_File then
+      if File = GNATCOLL.VFS.No_File then
          return;
       end if;
 
@@ -1882,7 +1882,7 @@ package body Src_Contexts is
                Context.Begin_Line := 1;
                Context.Begin_Column := 0;
 
-               if Current_File (C) = VFS.No_File then
+               if Current_File (C) = GNATCOLL.VFS.No_File then
                   if not Already_Looped then
                      Button := Message_Dialog
                        (Msg           => (-"No more occurrences of '")
@@ -1917,7 +1917,7 @@ package body Src_Contexts is
       else
          Move_To_Next_File (C);
 
-         if Current_File (C) = VFS.No_File then
+         if Current_File (C) = GNATCOLL.VFS.No_File then
             return False;
 
          else
@@ -2043,7 +2043,7 @@ package body Src_Contexts is
       else
          Move_To_Next_File (C);
 
-         if Current_File (C) = VFS.No_File then
+         if Current_File (C) = GNATCOLL.VFS.No_File then
             return False;
          end if;
 
@@ -2064,7 +2064,7 @@ package body Src_Contexts is
    ------------------
 
    function Current_File
-     (Context : access Files_Project_Context) return VFS.Virtual_File
+     (Context : access Files_Project_Context) return GNATCOLL.VFS.Virtual_File
    is
    begin
       if Context.Files /= null
@@ -2072,7 +2072,7 @@ package body Src_Contexts is
       then
          return Context.Files (Context.Current_File);
       else
-         return VFS.No_File;
+         return GNATCOLL.VFS.No_File;
       end if;
    end Current_File;
 
@@ -2101,7 +2101,7 @@ package body Src_Contexts is
    ------------------
 
    function Current_File
-     (Context : access Open_Files_Context) return VFS.Virtual_File
+     (Context : access Open_Files_Context) return GNATCOLL.VFS.Virtual_File
    is
    begin
       if Context.Files /= null
@@ -2109,7 +2109,7 @@ package body Src_Contexts is
       then
          return Context.Files (Context.Current_File);
       else
-         return VFS.No_File;
+         return GNATCOLL.VFS.No_File;
       end if;
    end Current_File;
 
@@ -2167,7 +2167,7 @@ package body Src_Contexts is
       Last      : Natural;
 
    begin
-      Context.Current_File := VFS.No_File;
+      Context.Current_File := GNATCOLL.VFS.No_File;
       Context.Current_Lexical := Statements;
 
       --  If not at the end
@@ -2181,7 +2181,7 @@ package body Src_Contexts is
          Open (Head (Context.Dirs).Dir, Context.Directory.all);
       end if;
 
-      while Context.Current_File = VFS.No_File loop
+      while Context.Current_File = GNATCOLL.VFS.No_File loop
          Read (Head (Context.Dirs).Dir, File_Name, Last);
 
          if Last = 0 then
@@ -2226,7 +2226,7 @@ package body Src_Contexts is
    exception
       when Directory_Error =>
          Trace (Me, "Move_To_Next_File: Directory error");
-         Context.Current_File := VFS.No_File;
+         Context.Current_File := GNATCOLL.VFS.No_File;
    end Move_To_Next_File;
 
    ----------

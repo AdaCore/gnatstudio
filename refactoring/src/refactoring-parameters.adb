@@ -25,7 +25,7 @@ with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
 with Commands.Interactive;  use Commands, Commands.Interactive;
 with Entities;              use Entities;
 with Entities.Queries;      use Entities.Queries;
-with VFS;                   use VFS;
+with GNATCOLL.VFS;                   use GNATCOLL.VFS;
 with String_Utils;          use String_Utils;
 with Traces;                use Traces;
 with GPS.Intl;              use GPS.Intl;
@@ -58,7 +58,7 @@ package body Refactoring.Parameters is
    function Name_Parameters
      (Kernel : access Kernel_Handle_Record'Class;
       Entity : Entity_Information;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Line   : Integer;
       Column : Visible_Column_Type) return Command_Return_Type;
    --  Name the parameters for the call to Entity at the given location
@@ -85,7 +85,7 @@ package body Refactoring.Parameters is
    function Name_Parameters
      (Kernel : access Kernel_Handle_Record'Class;
       Entity : Entity_Information;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Line   : Integer;
       Column : Visible_Column_Type) return Command_Return_Type
    is

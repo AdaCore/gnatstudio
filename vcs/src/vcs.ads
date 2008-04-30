@@ -25,7 +25,7 @@ with GPS.Kernel;                use GPS.Kernel;
 with Generic_List;
 with OS_Utils;                  use OS_Utils;
 with String_List_Utils;         use String_List_Utils;
-with VFS;
+with GNATCOLL.VFS;
 
 package VCS is
 
@@ -176,7 +176,7 @@ package VCS is
    type File_Status_Record is record
       --  Contains all the repository information concerning one file
 
-      File                : VFS.Virtual_File := VFS.No_File;
+      File                : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       --  The corresponding file
 
       Status              : File_Status := Unknown;
@@ -258,7 +258,7 @@ package VCS is
 
    procedure Create_Tag
      (Rep       : access VCS_Record;
-      Dir       : VFS.Virtual_File;
+      Dir       : GNATCOLL.VFS.Virtual_File;
       Tag       : String;
       As_Branch : Boolean) is abstract;
    --  Create a new tag/branch starting from dir as root. If As_Branch is set
@@ -290,7 +290,7 @@ package VCS is
 
    procedure Switch
      (Rep : access VCS_Record;
-      Dir : VFS.Virtual_File;
+      Dir : GNATCOLL.VFS.Virtual_File;
       Tag : String) is abstract;
    --  Swicth to the specified tag/branch starting from dir as root
 
@@ -334,13 +334,13 @@ package VCS is
 
    procedure File_Revision
      (Rep      : access VCS_Record;
-      File     : VFS.Virtual_File;
+      File     : GNATCOLL.VFS.Virtual_File;
       Revision : String) is abstract;
    --  Retreive a specific revision of a given file
 
    procedure Diff
      (Rep       : access VCS_Record;
-      File      : VFS.Virtual_File;
+      File      : GNATCOLL.VFS.Virtual_File;
       Version_1 : String := "";
       Version_2 : String := "") is abstract;
    --  Return a diff between two versions of one file
@@ -349,28 +349,28 @@ package VCS is
 
    procedure Diff_Patch
      (Rep    : access VCS_Record;
-      File   : VFS.Virtual_File;
-      Output : VFS.Virtual_File) is abstract;
+      File   : GNATCOLL.VFS.Virtual_File;
+      Output : GNATCOLL.VFS.Virtual_File) is abstract;
 
    procedure Diff_Working
      (Rep  : access VCS_Record;
-      File : VFS.Virtual_File) is abstract;
+      File : GNATCOLL.VFS.Virtual_File) is abstract;
    --  Compare local against working revison of File
 
    procedure Diff_Base_Head
      (Rep  : access VCS_Record;
-      File : VFS.Virtual_File) is abstract;
+      File : GNATCOLL.VFS.Virtual_File) is abstract;
    --  Compare base against head revision of File
 
    procedure Diff_Tag
      (Rep      : access VCS_Record;
-      File     : VFS.Virtual_File;
+      File     : GNATCOLL.VFS.Virtual_File;
       Tag_Name : String) is abstract;
    --  Compare local against the specified tag/branch
 
    procedure Log
      (Rep     : access VCS_Record;
-      File    : VFS.Virtual_File;
+      File    : GNATCOLL.VFS.Virtual_File;
       Rev     : String;
       As_Text : Boolean := True) is abstract;
    --  Display the changelog for the corresponding file.
@@ -380,7 +380,7 @@ package VCS is
    Annotation_Id : constant String := "Annotate";
    procedure Annotate
      (Rep  : access VCS_Record;
-      File : VFS.Virtual_File) is abstract;
+      File : GNATCOLL.VFS.Virtual_File) is abstract;
    --  Return annotations for the corresponding file.
    --  The result String_List.List with one element for each line.
    --
@@ -418,19 +418,19 @@ package VCS is
 
    procedure Parse_Annotations
      (Rep  : access VCS_Record;
-      File : VFS.Virtual_File;
+      File : GNATCOLL.VFS.Virtual_File;
       Text : String);
    --  Parse the annotations and fill the editor if needed
 
    procedure Parse_Log
      (Rep  : access VCS_Record;
-      File : VFS.Virtual_File;
+      File : GNATCOLL.VFS.Virtual_File;
       Text : String);
    --  Parse the log and fill the Revision Browser if needed
 
    procedure Parse_Revision
      (Rep  : access VCS_Record;
-      File : VFS.Virtual_File;
+      File : GNATCOLL.VFS.Virtual_File;
       Text : String);
    --  Parse the log to retreive the revision tag and branches information and
    --  fill the Revision Browser if needed.

@@ -49,7 +49,7 @@ with Ada.Unchecked_Deallocation;
 
 with Traces;                    use Traces;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 with Language.Icons;            use Language.Icons;
 
 package body Completion_Window is

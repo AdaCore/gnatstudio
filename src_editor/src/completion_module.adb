@@ -55,7 +55,7 @@ with Src_Editor_View;           use Src_Editor_View;
 with String_List_Utils;         use String_List_Utils;
 with String_Utils;              use String_Utils;
 with Traces;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 with Completion_Window;         use Completion_Window;
 with Completion;                use Completion;

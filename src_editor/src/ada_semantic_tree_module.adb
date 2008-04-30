@@ -21,7 +21,7 @@ with GNAT.Strings; use GNAT.Strings;
 
 with Language.Tree.Database;  use Language.Tree.Database;
 with Ada_Semantic_Tree.Assistants; use Ada_Semantic_Tree.Assistants;
-with VFS;                    use VFS;
+with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 with Gtkada.MDI; use Gtkada.MDI;
 with Gtkada; use Gtkada;
 with Src_Editor_Module; use Src_Editor_Module;

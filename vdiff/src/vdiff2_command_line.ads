@@ -25,7 +25,7 @@ with Commands.Interactive; use Commands.Interactive;
 with Diff_Utils2;          use Diff_Utils2;
 with GPS.Kernel;           use GPS.Kernel;
 with Vdiff2_Command;       use Vdiff2_Command;
-with VFS;                  use VFS;
+with GNATCOLL.VFS;                  use GNATCOLL.VFS;
 
 package Vdiff2_Command_Line is
 
@@ -33,7 +33,7 @@ package Vdiff2_Command_Line is
      (Kernel : Kernel_Handle;
       Diff   : Diff_Head_Access;
       Line   : Natural := 0;
-      File   : Virtual_File := VFS.No_File);
+      File   : Virtual_File := GNATCOLL.VFS.No_File);
       --  Is an access for the action executed by an Diff_Command
 
    type Diff_Command_Line is new Diff_Command with record
@@ -77,13 +77,13 @@ package Vdiff2_Command_Line is
      (Kernel : Kernel_Handle;
       Diff   : Diff_Head_Access;
       Line   : Natural := 0;
-      File   : Virtual_File := VFS.No_File);
+      File   : Virtual_File := GNATCOLL.VFS.No_File);
    --  Move a diff block to the Ref_File
 
    procedure Delete_From_Ref_File
      (Kernel : Kernel_Handle;
       Diff   : Diff_Head_Access;
       Line   : Natural := 0;
-      File   : Virtual_File := VFS.No_File);
+      File   : Virtual_File := GNATCOLL.VFS.No_File);
 
 end Vdiff2_Command_Line;

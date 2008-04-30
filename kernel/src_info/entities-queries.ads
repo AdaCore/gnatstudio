@@ -17,7 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with VFS;
+with GNATCOLL.VFS;
 with GNAT.Strings;
 
 package Entities.Queries is
@@ -42,7 +42,7 @@ package Entities.Queries is
 
    procedure Find_Declaration
      (Db              : Entities_Database;
-      File_Name       : VFS.Virtual_File;
+      File_Name       : GNATCOLL.VFS.Virtual_File;
       Entity_Name     : String := "";
       Line            : Natural;
       Column          : Basic_Types.Visible_Column_Type;
@@ -51,7 +51,7 @@ package Entities.Queries is
       Check_Decl_Only : Boolean := False);
    procedure Find_Declaration
      (Db              : Entities_Database;
-      File_Name       : VFS.Virtual_File;
+      File_Name       : GNATCOLL.VFS.Virtual_File;
       Entity_Name     : String := "";
       Line            : Natural;
       Column          : Basic_Types.Visible_Column_Type;

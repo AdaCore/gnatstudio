@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2001-2007, AdaCore                 --
+--                  Copyright (C) 2001-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -47,7 +47,8 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
 with Language;
 with Src_Highlighting;
-with VFS;
+with GNATCOLL.Utils;
+with GNATCOLL.VFS;
 
 package Src_Editor_Buffer is
 
@@ -115,7 +116,7 @@ package Src_Editor_Buffer is
 
    procedure Load_File
      (Buffer          : access Source_Buffer_Record;
-      Filename        : VFS.Virtual_File;
+      Filename        : GNATCOLL.VFS.Virtual_File;
       Lang_Autodetect : Boolean := True;
       Success         : out Boolean);
    --  Load the file into the buffer. If Lang_Autodetect is set to True, then
@@ -129,7 +130,7 @@ package Src_Editor_Buffer is
 
    procedure Save_To_File
      (Buffer   : access Source_Buffer_Record;
-      Filename : VFS.Virtual_File;
+      Filename : GNATCOLL.VFS.Virtual_File;
       Success  : out Boolean;
       Internal : Boolean := False);
    --  Save the current buffer into a file. Success is set to False if this
@@ -474,7 +475,7 @@ package Src_Editor_Buffer is
    --  Return the kernel associated to Buffer
 
    function Get_Filename
-     (Buffer : access Source_Buffer_Record) return VFS.Virtual_File;
+     (Buffer : access Source_Buffer_Record) return GNATCOLL.VFS.Virtual_File;
    --  Return the name of the file associated with Buffer.
    --  WARNING: For buffer corresponding to unnamed files VFS.No_File is
    --  returned. Use Get_File_Identifier in that case if you need to retrieve
@@ -482,7 +483,7 @@ package Src_Editor_Buffer is
 
    procedure Set_Filename
      (Buffer : access Source_Buffer_Record;
-      Name   : VFS.Virtual_File);
+      Name   : GNATCOLL.VFS.Virtual_File);
    --  Set the name of the file associated with Buffer to Name
 
    procedure Filename_Changed
@@ -490,12 +491,12 @@ package Src_Editor_Buffer is
    --  Emit the "filename_changed" signal
 
    function Get_File_Identifier
-     (Buffer : access Source_Buffer_Record) return VFS.Virtual_File;
+     (Buffer : access Source_Buffer_Record) return GNATCOLL.VFS.Virtual_File;
    --  Return the identifier of the file associated with Buffer
 
    procedure Set_File_Identifier
      (Buffer : access Source_Buffer_Record;
-      Name   : VFS.Virtual_File);
+      Name   : GNATCOLL.VFS.Virtual_File);
    --  Set the file identifier for Buffer. This identifier is used for
    --  unnamed files, so that they can be uniquely identified.
    --
@@ -1060,8 +1061,8 @@ private
 
    type Source_Buffer_Record is new Gtkada_Text_Buffer_Record with record
       Kernel          : GPS.Kernel.Kernel_Handle;
-      Filename        : VFS.Virtual_File;
-      File_Identifier : VFS.Virtual_File;
+      Filename        : GNATCOLL.VFS.Virtual_File;
+      File_Identifier : GNATCOLL.VFS.Virtual_File;
       --  This identifier is used to identify buffers for untitled files
 
       Lang          : Language.Language_Access;
@@ -1098,7 +1099,7 @@ private
       Current_Status  : Status_Type := Unmodified;
       --  The current buffer status
 
-      Timestamp : Ada.Calendar.Time := VFS.No_Time;
+      Timestamp : Ada.Calendar.Time := GNATCOLL.Utils.No_Time;
       --  Timestamp of the file the last time it was checked. It it used to
       --  detect cases where the file was edited by an external editor.
 

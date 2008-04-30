@@ -28,7 +28,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Gtk.Widget;                use Gtk.Widget;
 with Wizards;                   use Wizards;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 package body Creation_Wizard.Simple is
 
@@ -97,7 +97,7 @@ package body Creation_Wizard.Simple is
       Initial_Dirs : constant String_List := (1 => Current'Unchecked_Access);
    begin
       Gtk_New (Page.Dirs,
-               Initial_Directory    => VFS.Get_Current_Dir,
+               Initial_Directory    => GNATCOLL.VFS.Get_Current_Dir,
                Multiple_Directories => True,
                Initial_Selection    => Initial_Dirs);
       return Gtk_Widget (Page.Dirs);

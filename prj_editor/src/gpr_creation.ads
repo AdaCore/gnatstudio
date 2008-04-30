@@ -23,7 +23,7 @@
 
 with GNAT.Strings;
 with Projects.Registry;
-with VFS;
+with GNATCOLL.VFS;
 
 package GPR_Creation is
 
@@ -57,8 +57,8 @@ package GPR_Creation is
    procedure Create_Gpr_Files
      (Registry          : Projects.Registry.Project_Registry'Class;
       Root_Project      : Projects.Project_Type;
-      Source_Dirs       : VFS.File_Array;
-      Object_Dirs       : VFS.File_Array;
+      Source_Dirs       : GNATCOLL.VFS.File_Array;
+      Object_Dirs       : GNATCOLL.VFS.File_Array;
       Spec_Extension    : String;
       Body_Extension    : String;
       Main_Units        : GNAT.Strings.String_List_Access := null;

@@ -25,6 +25,7 @@ with GNAT.Heap_Sort_G;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
+with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 with Basic_Types;                use Basic_Types;
 with Entities.Debug;             use Entities.Debug;
@@ -37,7 +38,6 @@ with Namet;                      use Namet;
 with Projects.Registry;          use Projects.Registry;
 with Projects;                   use Projects;
 with Remote;                     use Remote;
-with VFS;                        use VFS;
 
 package body Entities is
    Assert_Me : constant Trace_Handle := Create ("Entities.Assert", Off);
@@ -140,11 +140,11 @@ package body Entities is
 
    function Internal_Get_Or_Create
      (Db            : Entities_Database;
-      Full_Filename : VFS.Cst_String_Access;
-      File          : VFS.Virtual_File;
+      Full_Filename : GNATCOLL.VFS.Cst_String_Access;
+      File          : GNATCOLL.VFS.Virtual_File;
       Handler       : access LI_Handler_Record'Class;
       LI            : LI_File := null;
-      Timestamp     : Ada.Calendar.Time := VFS.No_Time;
+      Timestamp     : Ada.Calendar.Time := GNATCOLL.Utils.No_Time;
       Allow_Create  : Boolean := True) return Source_File;
    --  Internal version for Get_Or_Create
 
@@ -946,7 +946,7 @@ package body Entities is
    -- Get_Filename --
    ------------------
 
-   function Get_Filename (File : Source_File) return VFS.Virtual_File is
+   function Get_Filename (File : Source_File) return Virtual_File is
    begin
       Assert (Assert_Me, File /= null, "Null source file in Get_Filename");
       return File.Name;
@@ -956,7 +956,7 @@ package body Entities is
    -- Get_LI_Filename --
    ---------------------
 
-   function Get_LI_Filename (LI : LI_File) return VFS.Virtual_File is
+   function Get_LI_Filename (LI : LI_File) return GNATCOLL.VFS.Virtual_File is
    begin
       Assert (Assert_Me, LI /= null, "Null LI in Get_LI_Filename");
       return LI.Name;
@@ -1020,7 +1020,7 @@ package body Entities is
    -- Hash --
    ----------
 
-   function Hash (Key : VFS.Cst_String_Access) return HTable_Header is
+   function Hash (Key : GNATCOLL.VFS.Cst_String_Access) return HTable_Header is
    begin
       if Is_Case_Sensitive (Build_Server) then
          return String_Hash (Key.all);
@@ -1070,7 +1070,7 @@ package body Entities is
    -- Get_Key --
    -------------
 
-   function Get_Key (E : Source_File_Item) return VFS.Cst_String_Access is
+   function Get_Key (E : Source_File_Item) return Cst_String_Access is
    begin
       return Full_Name (E.File.Name);
    end Get_Key;
@@ -1079,7 +1079,7 @@ package body Entities is
    -- Equal --
    -----------
 
-   function Equal (K1, K2 : VFS.Cst_String_Access) return Boolean is
+   function Equal (K1, K2 : GNATCOLL.VFS.Cst_String_Access) return Boolean is
    begin
       if Is_Case_Sensitive (Build_Server) then
          return K1 = K2 or else K1.all = K2.all;
@@ -1126,7 +1126,7 @@ package body Entities is
    -- Get_Key --
    -------------
 
-   function Get_Key (E : LI_File_Item) return VFS.Cst_String_Access is
+   function Get_Key (E : LI_File_Item) return GNATCOLL.VFS.Cst_String_Access is
    begin
       return Full_Name (E.File.Name);
    end Get_Key;
@@ -1247,11 +1247,11 @@ package body Entities is
 
    function Internal_Get_Or_Create
      (Db            : Entities_Database;
-      Full_Filename : VFS.Cst_String_Access;
-      File          : VFS.Virtual_File;
+      Full_Filename : GNATCOLL.VFS.Cst_String_Access;
+      File          : GNATCOLL.VFS.Virtual_File;
       Handler       : access LI_Handler_Record'Class;
       LI            : LI_File := null;
-      Timestamp     : Ada.Calendar.Time := VFS.No_Time;
+      Timestamp     : Ada.Calendar.Time := GNATCOLL.Utils.No_Time;
       Allow_Create  : Boolean := True) return Source_File
    is
       S : Source_File_Item := Get (Db.Files, Full_Filename);
@@ -1271,7 +1271,7 @@ package body Entities is
          F.LI           := LI;
          F.Ref_Count    := 1;
 
-         if File = VFS.No_File then
+         if File = GNATCOLL.VFS.No_File then
             F.Name := Create (Full_Filename => Full_Filename.all);
          else
             F.Name := File;
@@ -1316,10 +1316,10 @@ package body Entities is
 
    function Get_Or_Create
      (Db           : Entities_Database;
-      File         : VFS.Virtual_File;
+      File         : GNATCOLL.VFS.Virtual_File;
       Handler      : LI_Handler := null;
       LI           : LI_File := null;
-      Timestamp    : Ada.Calendar.Time := VFS.No_Time;
+      Timestamp    : Ada.Calendar.Time := GNATCOLL.Utils.No_Time;
       Allow_Create : Boolean := True) return Source_File
    is
       H : LI_Handler := Handler;
@@ -1345,14 +1345,14 @@ package body Entities is
       Full_Filename : String;
       Handler       : access LI_Handler_Record'Class;
       LI            : LI_File := null;
-      Timestamp     : Ada.Calendar.Time := VFS.No_Time;
+      Timestamp     : Ada.Calendar.Time := GNATCOLL.Utils.No_Time;
       Allow_Create  : Boolean := True) return Source_File
    is
    begin
       if Is_Absolute_Path (Full_Filename) then
          return Internal_Get_Or_Create
            (Db, Full_Filename'Unrestricted_Access,
-            VFS.No_File, Handler, LI, Timestamp, Allow_Create);
+            GNATCOLL.VFS.No_File, Handler, LI, Timestamp, Allow_Create);
 
       else
          Get_Full_Path_From_File
@@ -1364,7 +1364,7 @@ package body Entities is
          if Name_Len /= 0 then
             return Internal_Get_Or_Create
               (Db, Name_Buffer (1 .. Name_Len)'Unrestricted_Access,
-               VFS.No_File, Handler, LI, Timestamp, Allow_Create);
+               GNATCOLL.VFS.No_File, Handler, LI, Timestamp, Allow_Create);
          else
             declare
                Str : aliased constant String := Normalize_Pathname
@@ -1372,7 +1372,7 @@ package body Entities is
             begin
                return Internal_Get_Or_Create
                  (Db, Str'Unrestricted_Access,
-                  VFS.No_File, Handler, LI, Timestamp, Allow_Create);
+                  GNATCOLL.VFS.No_File, Handler, LI, Timestamp, Allow_Create);
             end;
          end if;
       end if;
@@ -1475,7 +1475,7 @@ package body Entities is
    --------------------
 
    procedure Set_Time_Stamp
-     (LI : LI_File; Timestamp : Ada.Calendar.Time := VFS.No_Time) is
+     (LI : LI_File; Timestamp : Ada.Calendar.Time := No_Time) is
    begin
       LI.Timestamp := Timestamp;
    end Set_Time_Stamp;
@@ -1486,12 +1486,12 @@ package body Entities is
 
    function Get_Or_Create
      (Db      : Entities_Database;
-      File    : VFS.Virtual_File;
+      File    : GNATCOLL.VFS.Virtual_File;
       Project : Projects.Project_Type) return LI_File
    is
       L : LI_File_Item := Get (Db.LIs, Full_Name (File));
    begin
-      Assert (Assert_Me, File /= VFS.No_File, "No LI filename");
+      Assert (Assert_Me, File /= GNATCOLL.VFS.No_File, "No LI filename");
       Assert (Assert_Me, Project /= No_Project, "No project specified");
       if L = null then
          L := new LI_File_Item_Record'
@@ -1975,7 +1975,7 @@ package body Entities is
 
    function Get_LI_Handler
      (Db              : Entities_Database;
-      Source_Filename : VFS.Virtual_File) return LI_Handler is
+      Source_Filename : GNATCOLL.VFS.Virtual_File) return LI_Handler is
    begin
       return Get_LI_Handler_From_File
         (Language_Handler (Db.Lang), Source_Filename);
@@ -2110,7 +2110,7 @@ package body Entities is
    procedure Set_Time_Stamp
      (File : Source_File; Timestamp : Ada.Calendar.Time) is
    begin
-      if Timestamp = VFS.No_Time then
+      if Timestamp = No_Time then
          File.Timestamp := File_Time_Stamp (File.Name);
       else
          File.Timestamp := Timestamp;
@@ -2428,7 +2428,7 @@ package body Entities is
    procedure Parse_File_Constructs
      (Handler   : access LI_Handler_Record;
       Languages : access Abstract_Language_Handler_Record'Class;
-      File_Name : VFS.Virtual_File;
+      File_Name : GNATCOLL.VFS.Virtual_File;
       Result    : out Language.Construct_List)
    is
       pragma Unreferenced (Handler);

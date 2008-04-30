@@ -53,7 +53,7 @@ with Projects.Registry;         use Projects.Registry;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with Templates_Parser;          use Templates_Parser;
-with VFS; use VFS;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 with Docgen2_Backend;           use Docgen2_Backend;
 
@@ -114,11 +114,11 @@ package body Docgen2 is
      (Index_Type => Natural, Element_Type => Entity_Reference);
 
    package Files_List is new Ada.Containers.Vectors
-     (Index_Type => Natural, Element_Type => VFS.Virtual_File);
+     (Index_Type => Natural, Element_Type => GNATCOLL.VFS.Virtual_File);
 
    function Less_Than (Left, Right : Cross_Ref) return Boolean;
    function Less_Than (Left, Right : Entity_Info) return Boolean;
-   function Less_Than (Left, Right : VFS.Virtual_File) return Boolean;
+   function Less_Than (Left, Right : GNATCOLL.VFS.Virtual_File) return Boolean;
    --  Used to sort the children lists
 
    package Vector_Sort is new Cross_Ref_List.Generic_Sorting
@@ -198,7 +198,7 @@ package body Docgen2 is
 
    function Is_Spec_File
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File) return Boolean;
+      File   : GNATCOLL.VFS.Virtual_File) return Boolean;
    --  Whether File is a spec file
 
    function Get_Entity
@@ -510,7 +510,7 @@ package body Docgen2 is
    -- Less_Than --
    ---------------
 
-   function Less_Than (Left, Right : VFS.Virtual_File) return Boolean is
+   function Less_Than (Left, Right : Virtual_File) return Boolean is
    begin
       return To_Lower (Base_Name (Left)) < To_Lower (Base_Name (Right));
    end Less_Than;
@@ -606,7 +606,7 @@ package body Docgen2 is
       Ref : constant String :=
               Backend.To_Href
                 (Location_Image (EInfo.Location.File_Loc),
-                 VFS.Base_Name
+                 GNATCOLL.VFS.Base_Name
                    (Get_Filename (EInfo.Location.File_Loc.File)),
                  EInfo.Location.Pkg_Nb);
    begin
@@ -697,7 +697,7 @@ package body Docgen2 is
 
    function Is_Spec_File
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File) return Boolean is
+      File   : GNATCOLL.VFS.Virtual_File) return Boolean is
    begin
       return Get_Unit_Part_From_Filename
         (Get_Project_From_File (Get_Registry (Kernel).all, File), File) =
@@ -1728,7 +1728,7 @@ package body Docgen2 is
    begin
       return Ada.Containers.Hash_Type
         (Internal
-           (VFS.Full_Name (Get_Filename (Key.File)).all &
+           (GNATCOLL.VFS.Full_Name (Get_Filename (Key.File)).all &
             Natural'Image (Key.Line) &
             Basic_Types.Visible_Column_Type'Image (Key.Column)));
    end Hash;
@@ -2068,7 +2068,7 @@ package body Docgen2 is
                Insert
                  (Command.Kernel,
                   -("warning: cross references for file ") &
-                  VFS.Base_Name (Command.Source_Files (Command.File_Index))
+                  Base_Name (Command.Source_Files (Command.File_Index))
                   & (-" are not up-to-date. Documentation not generated."),
                   Mode => Info);
             end if;
@@ -2116,7 +2116,7 @@ package body Docgen2 is
                end if;
 
                Command.Buffer :=
-                 VFS.Read_File (Command.Source_Files (Command.Src_File_Index));
+                 Read_File (Command.Source_Files (Command.Src_File_Index));
 
                declare
                   Lang_Handler  : constant Language_Handler :=
@@ -2143,7 +2143,7 @@ package body Docgen2 is
                Insert
                  (Command.Kernel,
                   -("warning: cross references for file ") &
-                  VFS.Base_Name (Command.Source_Files (Command.Src_File_Index))
+                  Base_Name (Command.Source_Files (Command.Src_File_Index))
                   & (-" are not up-to-date. Annotated file not generated"),
                   Mode => Info);
             end if;
@@ -2242,7 +2242,7 @@ package body Docgen2 is
    procedure Generate
      (Kernel  : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Backend : Docgen2_Backend.Backend_Handle;
-      File    : VFS.Virtual_File;
+      File    : GNATCOLL.VFS.Virtual_File;
       Options : Docgen_Options)
    is
       P             : constant Project_Type :=
@@ -2498,7 +2498,7 @@ package body Docgen2 is
          Name : constant String :=
                   Get_Doc_Directory (Kernel) & "src_"
                   & Backend.To_Destination_Name
-                      (VFS.Base_Name (Get_Filename (File)));
+                      (GNATCOLL.VFS.Base_Name (Get_Filename (File)));
       begin
          Ada.Text_IO.Create (File_Handle, Name => Name);
       exception
@@ -2612,7 +2612,7 @@ package body Docgen2 is
             Backend.To_Href
               (Location => Image (E_Info.Location.File_Loc.Line),
                Src_File => "src_" &
-               VFS.Base_Name
+               GNATCOLL.VFS.Base_Name
                  (Get_Filename (E_Info.Location.File_Loc.File)),
                Pkg_Nb   => 1));
 
@@ -2620,7 +2620,7 @@ package body Docgen2 is
 
          if E_Info.Body_Location /= No_File_Location then
             declare
-               File : constant VFS.Virtual_File :=
+               File : constant GNATCOLL.VFS.Virtual_File :=
                         Get_Filename (E_Info.Body_Location.File);
             begin
                for J in Prj_Files'Range loop
@@ -2638,7 +2638,7 @@ package body Docgen2 is
                Backend.To_Href
                  (Location => Image (E_Info.Body_Location.Line),
                   Src_File => "src_" &
-                  VFS.Base_Name
+                  GNATCOLL.VFS.Base_Name
                     (Get_Filename (E_Info.Body_Location.File)),
                   Pkg_Nb   => 1));
          else
@@ -2665,7 +2665,7 @@ package body Docgen2 is
             declare
                Loc      : constant File_Location :=
                             Get_Location (E_Info.References.Element (J));
-               Src_File : constant VFS.Virtual_File :=
+               Src_File : constant GNATCOLL.VFS.Virtual_File :=
                             Get_Filename (Loc.File);
             begin
                Found := False;
@@ -2712,7 +2712,7 @@ package body Docgen2 is
                Str      : Unbounded_String;
                Loc      : constant File_Location :=
                             E_Info.Called.Element (J).Location;
-               Src_File : constant VFS.Virtual_File :=
+               Src_File : constant GNATCOLL.VFS.Virtual_File :=
                             Get_Filename (Loc.File);
                Found    : Boolean := False;
 
@@ -2761,7 +2761,7 @@ package body Docgen2 is
                Str      : Unbounded_String;
                Loc      : constant File_Location :=
                             E_Info.Calls.Element (J).Location;
-               Src_File : constant VFS.Virtual_File :=
+               Src_File : constant GNATCOLL.VFS.Virtual_File :=
                             Get_Filename (Loc.File);
                Found    : Boolean := False;
 
@@ -3363,7 +3363,7 @@ package body Docgen2 is
         and then E_Info.Body_Location.File /= null
       then
          declare
-            File : constant VFS.Virtual_File :=
+            File : constant GNATCOLL.VFS.Virtual_File :=
                      Get_Filename (E_Info.Body_Location.File);
             Found : Boolean := False;
          begin
@@ -3416,7 +3416,7 @@ package body Docgen2 is
            (File_Handle,
             Name => Get_Doc_Directory (Kernel) &
               Backend.To_Destination_Name
-                (VFS.Base_Name (Get_Filename (E_Info.Location.File_Loc.File)),
+                (Base_Name (Get_Filename (E_Info.Location.File_Loc.File)),
                  E_Info.Location.Pkg_Nb));
       end if;
 
@@ -3826,7 +3826,7 @@ package body Docgen2 is
      (Kernel  : access Kernel_Handle_Record'Class;
       Backend : Backend_Handle)
    is
-      Src_Dir : constant VFS.Virtual_File :=
+      Src_Dir : constant GNATCOLL.VFS.Virtual_File :=
                   Create (Backend.Get_Support_Dir (Get_System_Dir (Kernel)));
       Dst_Dir : constant String :=
                   Get_Doc_Directory (Kernel);

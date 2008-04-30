@@ -28,7 +28,7 @@ with Ada.Unchecked_Deallocation;
 with Commands.Interactive;      use Commands.Interactive;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Traces;                    use Traces;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 package body GPS.Kernel.Actions is
 
@@ -95,7 +95,7 @@ package body GPS.Kernel.Actions is
       Description : String := "";
       Filter      : Action_Filter := null;
       Category    : String := "General";
-      Defined_In  : VFS.Virtual_File := VFS.No_File)
+      Defined_In  : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File)
    is
       Action : Action_Record_Access;
       pragma Unreferenced (Action);
@@ -115,7 +115,7 @@ package body GPS.Kernel.Actions is
       Description : String := "";
       Filter      : Action_Filter := null;
       Category    : String := "General";
-      Defined_In  : VFS.Virtual_File := VFS.No_File)
+      Defined_In  : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File)
       return Action_Record_Access
    is
       Old : constant Action_Record_Access := Lookup_Action (Kernel, Name);
@@ -138,8 +138,8 @@ package body GPS.Kernel.Actions is
       end if;
 
       if Old /= null then
-         if Old.Defined_In /= VFS.No_File then
-            if Defined_In /= VFS.No_File then
+         if Old.Defined_In /= GNATCOLL.VFS.No_File then
+            if Defined_In /= GNATCOLL.VFS.No_File then
                Insert
                  (Kernel,
                   '"' & Name & """: " & Overrides_Old
@@ -155,7 +155,7 @@ package body GPS.Kernel.Actions is
                   Mode => Error);
             end if;
          else
-            if Defined_In /= VFS.No_File then
+            if Defined_In /= GNATCOLL.VFS.No_File then
                Insert
                  (Kernel,
                   '"' & Name & """: " & Overrides_Builtin
@@ -259,7 +259,7 @@ package body GPS.Kernel.Actions is
                Filter      => null,
                Description => null,
                Category    => null,
-               Defined_In  => VFS.No_File,
+               Defined_In  => GNATCOLL.VFS.No_File,
                Modified    => False,
                Overriden   => False);
             Set (Actions_Htable_Access (Kernel.Actions).Table, Name, Action);

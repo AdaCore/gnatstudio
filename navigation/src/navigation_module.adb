@@ -48,7 +48,7 @@ with XML_Parsers;                use XML_Parsers;
 
 with Traces;                     use Traces;
 with String_Utils;               use String_Utils;
-with VFS;                        use VFS;
+with GNATCOLL.VFS;                        use GNATCOLL.VFS;
 with Language;                   use Language;
 
 package body Navigation_Module is

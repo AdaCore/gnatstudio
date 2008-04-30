@@ -45,7 +45,7 @@ with Gtk.Window;             use Gtk.Window;
 with Gtkada.File_Selector;   use Gtkada.File_Selector;
 with Gtkada.Handlers;        use Gtkada.Handlers;
 with Gtkada.Intl;            use Gtkada.Intl;
-with VFS;                    use VFS;
+with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 
 package body Switches_Chooser.Gtkada is
 
@@ -319,7 +319,7 @@ package body Switches_Chooser.Gtkada is
          Parent            => Gtk_Window (Get_Toplevel (F)),
          Use_Native_Dialog => Data.Editor.Native_Dialogs);
    begin
-      if Dir /= VFS.No_File then
+      if Dir /= GNATCOLL.VFS.No_File then
          Set_Text (F, Full_Name (Dir).all);
       end if;
    end Browse_Directory;
@@ -343,7 +343,7 @@ package body Switches_Chooser.Gtkada is
          Pattern_Name      => -"All files;Ada files;C/C++ files",
          Use_Native_Dialog => Data.Editor.Native_Dialogs);
    begin
-      if File /= VFS.No_File then
+      if File /= GNATCOLL.VFS.No_File then
          Set_Text (F, Full_Name (File).all);
       end if;
    end Browse_File;

@@ -36,8 +36,9 @@ with Glib.Xml_Int;              use Glib.Xml_Int;
 with Prj;
 with Remote.Path.Translator;    use Remote, Remote.Path.Translator;
 with Traces;                    use Traces;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
+with Filesystems;               use Filesystems;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Location_View;         use GPS.Location_View;
@@ -312,7 +313,7 @@ package body GPS.Kernel.Project is
 
    procedure Load_Default_Project
      (Kernel               : access Kernel_Handle_Record'Class;
-      Directory            : VFS.Virtual_File;
+      Directory            : GNATCOLL.VFS.Virtual_File;
       Load_Default_Desktop : Boolean := True;
       Clear                : Boolean := True)
    is
@@ -344,7 +345,7 @@ package body GPS.Kernel.Project is
          Copy_File (Default, Full_Name (Project).all, Found);
          Is_Default := True;
       elsif Is_Regular_File (Readonly) then
-         Project := VFS.Create (Readonly);
+         Project := GNATCOLL.VFS.Create (Readonly);
          Found := True;
       else
          Found := False;
@@ -430,7 +431,7 @@ package body GPS.Kernel.Project is
 
    procedure Load_Project
      (Kernel                   : access Kernel_Handle_Record'class;
-      Project                  : VFS.Virtual_File;
+      Project                  : GNATCOLL.VFS.Virtual_File;
       No_Save                  : Boolean := False;
       Clear                    : Boolean := True;
       Is_Default               : Boolean := False;
@@ -463,7 +464,7 @@ package body GPS.Kernel.Project is
       Data                : aliased File_Hooks_Args;
 
       Same_Project     : Boolean;
-      Local_Project    : VFS.Virtual_File;
+      Local_Project    : GNATCOLL.VFS.Virtual_File;
       Load_Status      : Boolean;
       Previous_Project : Virtual_File;
 
@@ -482,7 +483,7 @@ package body GPS.Kernel.Project is
       then
          Previous_Project := Project_Path (Get_Project (Kernel));
       else
-         Previous_Project := VFS.No_File;
+         Previous_Project := GNATCOLL.VFS.No_File;
       end if;
 
       --  Unless we are reloading the same project
@@ -615,7 +616,7 @@ package body GPS.Kernel.Project is
                      New_Project_Loaded => New_Project_Loaded,
                      Status             => Load_Status);
 
-            elsif Previous_Project /= VFS.No_File then
+            elsif Previous_Project /= GNATCOLL.VFS.No_File then
                Report_Error (-"Couldn't parse the project "
                              & Full_Name (Local_Project).all
                              & ASCII.LF & (-"Reverting to previous project ")
@@ -853,7 +854,7 @@ package body GPS.Kernel.Project is
    function Get_Switches
      (Project           : Project_Type;
       Tool              : Tool_Properties_Record;
-      File              : VFS.Virtual_File := VFS.No_File;
+      File              : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Use_Initial_Value : Boolean := False) return GNAT.OS_Lib.Argument_List
    is
       use type Prj.Variable_Value;

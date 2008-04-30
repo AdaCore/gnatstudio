@@ -38,7 +38,7 @@
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with Docgen.Backend;
-with VFS;
+with GNATCOLL.VFS;
 
 package Docgen.Work_On_Source is
 
@@ -47,7 +47,7 @@ package Docgen.Work_On_Source is
       Kernel                    : access Kernel_Handle_Record'Class;
       Result                    : in out Unbounded_String;
       Source_File_List          : in out Type_Source_File_Table.HTable;
-      Source_Filename           : VFS.Virtual_File;
+      Source_Filename           : GNATCOLL.VFS.Virtual_File;
       Source_Is_Spec            : Boolean;
       Unit_Name                 : String;
       Entity_List               : in out Type_Entity_List.List;

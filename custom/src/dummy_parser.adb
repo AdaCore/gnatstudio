@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with Entities; use Entities;
-with VFS;
+with GNATCOLL.VFS;
 with Projects;
 
 package body Dummy_Parser is
@@ -31,7 +31,7 @@ package body Dummy_Parser is
      (Handler : access Dummy_LI_Handler_Record) return Boolean;
    function Get_Source_Info
      (Handler               : access Dummy_LI_Handler_Record;
-      Source_Filename       : VFS.Virtual_File;
+      Source_Filename       : GNATCOLL.VFS.Virtual_File;
       File_Has_No_LI_Report : File_Error_Reporter := null)
       return Source_File;
    function Parse_All_LI_Information
@@ -97,7 +97,7 @@ package body Dummy_Parser is
 
    function Get_Source_Info
      (Handler               : access Dummy_LI_Handler_Record;
-      Source_Filename       : VFS.Virtual_File;
+      Source_Filename       : GNATCOLL.VFS.Virtual_File;
       File_Has_No_LI_Report : File_Error_Reporter := null)
       return Source_File
    is

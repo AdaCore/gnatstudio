@@ -25,7 +25,7 @@ with Case_Handling;                     use Case_Handling;
 with Codefix.Ada_Tools;                 use Codefix.Ada_Tools;
 with String_Utils;                      use String_Utils;
 with Language.Ada;                      use Language.Ada;
-with VFS;                               use VFS;
+with GNATCOLL.VFS;                               use GNATCOLL.VFS;
 
 package body Codefix.Text_Manager.Ada_Commands is
 
@@ -324,7 +324,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Current_Text : Text_Navigator_Abstr'Class;
       Word         : Word_Cursor;
       Position     : Relative_Position := Specified;
-      Destination  : VFS.Virtual_File := VFS.No_File;
+      Destination  : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Category     : Dependency_Category := Cat_With)
    is
       use Codefix.Ada_Tools.Words_Lists;
@@ -368,7 +368,7 @@ package body Codefix.Text_Manager.Ada_Commands is
             Current_Text,
             Word_Used);
 
-         if Destination /= VFS.No_File then
+         if Destination /= GNATCOLL.VFS.No_File then
             Append
               (This.Obj_List,
                new String'("with " & Pkg_Info.Name.all & ";"));
@@ -386,7 +386,7 @@ package body Codefix.Text_Manager.Ada_Commands is
 
          Clause_Node := First (Clauses_List);
 
-         if Destination /= VFS.No_File then
+         if Destination /= GNATCOLL.VFS.No_File then
             while Clause_Node /= Words_Lists.Null_Node loop
                Add_To_Remove
                  (This.Clauses_Pkg, Current_Text, Data (Clause_Node));
@@ -407,7 +407,7 @@ package body Codefix.Text_Manager.Ada_Commands is
          Free (Clauses_List);
       end if;
 
-      if Destination /= VFS.No_File then
+      if Destination /= GNATCOLL.VFS.No_File then
          Last_With := File_Cursor
            (Get_Next_With_Position (Current_Text, Destination));
 
@@ -893,12 +893,12 @@ package body Codefix.Text_Manager.Ada_Commands is
       Current_Text     : Text_Navigator_Abstr'Class;
       Destination_It   : Construct_Tree_Iterator;
       Source_It        : Construct_Tree_Iterator;
-      Destination_File : VFS.Virtual_File;
-      Source_File      : VFS.Virtual_File)
+      Destination_File : GNATCOLL.VFS.Virtual_File;
+      Source_File      : GNATCOLL.VFS.Virtual_File)
    is
       procedure Initialize_Profile
         (Position_It              : Construct_Tree_Iterator;
-         Position_File            : VFS.Virtual_File;
+         Position_File            : GNATCOLL.VFS.Virtual_File;
          Begin_Cursor, End_Cursor : out File_Cursor;
          Is_Empty, Is_Spec        : out Boolean);
       --  Set Begin_Cursor and End_Cursor at the begining and at the end of the
@@ -910,7 +910,7 @@ package body Codefix.Text_Manager.Ada_Commands is
 
       procedure Initialize_Profile
         (Position_It              : Construct_Tree_Iterator;
-         Position_File            : VFS.Virtual_File;
+         Position_File            : GNATCOLL.VFS.Virtual_File;
          Begin_Cursor, End_Cursor : out File_Cursor;
          Is_Empty, Is_Spec        : out Boolean)
       is
@@ -1199,7 +1199,7 @@ package body Codefix.Text_Manager.Ada_Commands is
      (This             : out Get_Visible_Declaration_Cmd;
       Current_Text     : Text_Navigator_Abstr'Class;
       Source_Position  : File_Cursor'Class;
-      File_Destination : VFS.Virtual_File;
+      File_Destination : GNATCOLL.VFS.Virtual_File;
       With_Could_Miss  : Boolean)
    is
       Pkg_Name    : constant String := Get_Package_To_Be_Withed

@@ -42,7 +42,7 @@ with Generic_List;
 with HTables;
 with Src_Contexts;
 with Src_Editor_Box;
-with VFS;                use VFS;
+with GNATCOLL.VFS;                use GNATCOLL.VFS;
 
 with Basic_Types;        use Basic_Types;
 with Src_Editor_Buffer;  use Src_Editor_Buffer;
@@ -90,7 +90,7 @@ package Src_Editor_Module is
 
    function Find_Editor
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File) return Gtkada.MDI.MDI_Child;
+      File   : GNATCOLL.VFS.Virtual_File) return Gtkada.MDI.MDI_Child;
    --  Return the first child that contains an editor that edits file. This is
    --  the view that last had the focus, in case multiple views exist for this
    --  file.
@@ -131,10 +131,11 @@ package Src_Editor_Module is
    -- Automatic saves --
    ---------------------
 
-   function Autosaved_File (File : VFS.Virtual_File) return VFS.Virtual_File;
+   function Autosaved_File
+     (File : GNATCOLL.VFS.Virtual_File) return GNATCOLL.VFS.Virtual_File;
    --  Return the autosaved file corresponding to File.
 
-   function Is_Auto_Save (File : VFS.Virtual_File) return Boolean;
+   function Is_Auto_Save (File : GNATCOLL.VFS.Virtual_File) return Boolean;
    --  Return True if File is an autosave file.
 
    --------------------------------
@@ -245,7 +246,7 @@ private
       --  The following fields are related to the current search.
 
       Search_Context        : Src_Contexts.Files_Project_Context_Access;
-      Search_File           : VFS.Virtual_File;
+      Search_File           : GNATCOLL.VFS.Virtual_File;
       Search_Pattern        : GNAT.Strings.String_Access;
    end record;
    type Source_Editor_Module is access all Source_Editor_Module_Record'Class;
@@ -262,7 +263,7 @@ private
       Single_Child : Boolean) return Boolean;
    procedure Customize
      (Module : access Source_Editor_Module_Record;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Node   : Glib.Xml_Int.Node_Ptr;
       Level  : Customization_Level);
    function Bookmark_Handler
@@ -277,7 +278,7 @@ private
 
    function Open_File
      (Kernel     : access Kernel_Handle_Record'Class;
-      File       : VFS.Virtual_File := VFS.No_File;
+      File       : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Create_New : Boolean := True;
       Focus      : Boolean := True;
       Force      : Boolean := False;

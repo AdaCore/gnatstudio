@@ -53,8 +53,8 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
-with VFS;                       use VFS;
-with VFS.Values;                use VFS.Values;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
 with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 with Filesystems;               use Filesystems;
 
@@ -337,7 +337,7 @@ package body Directory_Tree is
             Value : GValue;
          begin
             Get_Value (Tree.File_Model, Iter, File_Column, Value);
-            Tree.Current_Dir := VFS.Values.Get_File (Value);
+            Tree.Current_Dir := GNATCOLL.VFS.GtkAda.Get_File (Value);
          end;
       end if;
    end On_Tree_Select_Row;
@@ -390,7 +390,7 @@ package body Directory_Tree is
 
    procedure Show_Directory
      (Tree           : access Dir_Tree_Record;
-      Dir            : VFS.Virtual_File;
+      Dir            : GNATCOLL.VFS.Virtual_File;
       Busy_Cursor_On : Gdk.Window.Gdk_Window := null)
    is
       Parent   : Gtk_Tree_Iter;
@@ -545,7 +545,7 @@ package body Directory_Tree is
 
    function Get_Selection
      (Tree : access Dir_Tree_Record)
-     return VFS.Virtual_File is
+     return GNATCOLL.VFS.Virtual_File is
    begin
       if Tree.Current_Dir = No_File then
          return No_File;
@@ -1040,7 +1040,7 @@ package body Directory_Tree is
 
    function Get_Multiple_Selection
      (Selector : access Directory_Selector_Record'Class)
-      return VFS.File_Array
+      return GNATCOLL.VFS.File_Array
    is
       Iter   : Gtk_Tree_Iter;
       Length : Integer := 0;
@@ -1363,7 +1363,7 @@ package body Directory_Tree is
    begin
       return GType_Array'
         (Icon_Column      => Gdk.Pixbuf.Get_Type,
-         File_Column      => VFS.Values.Get_Virtual_File_Type,
+         File_Column      => GNATCOLL.VFS.GtkAda.Get_Virtual_File_Type,
          Base_Name_Column => GType_String);
    end Columns_Types;
 
@@ -1707,7 +1707,7 @@ package body Directory_Tree is
    begin
       Clear (Explorer.File_Model);
       File_Remove_Idle_Calls (Explorer);
-      Get_Logical_Drives (Get_Filesystem (Get_Host (Dir)), Buffer, Len);
+      Get_Filesystem (Get_Host (Dir)).Get_Logical_Drives (Buffer, Len);
 
       if Len = 0 then
          File_Append_Directory
@@ -1721,7 +1721,8 @@ package body Directory_Tree is
             if Buffer (J) = ASCII.NUL then
                declare
                   Drive : constant Virtual_File :=
-                    Create (Get_Host (Dir), Buffer (Last .. J - 1));
+                    Create (FS            => Get_Filesystem (Get_Host (Dir)),
+                            Full_Filename => Buffer (Last .. J - 1));
                begin
                   if Is_Parent (Drive, Dir) then
                      File_Append_Directory

@@ -74,7 +74,7 @@ with Remote;                       use Remote;
 with Switches_Editors;             use Switches_Editors;
 with System;
 with Traces;                       use Traces;
-with VFS;                          use VFS;
+with GNATCOLL.VFS;                          use GNATCOLL.VFS;
 with Variable_Editors;             use Variable_Editors;
 
 package body Project_Viewers is
@@ -193,7 +193,7 @@ package body Project_Viewers is
 
    procedure Append_Line
      (Viewer           : access Project_Viewer_Record'Class;
-      File_Name        : VFS.Virtual_File;
+      File_Name        : GNATCOLL.VFS.Virtual_File;
       Directory_Filter : String := "");
    --  Append a new line in the current page of Viewer, for File_Name.
    --  The exact contents inserted depends on the current view.
@@ -261,7 +261,7 @@ package body Project_Viewers is
      (Viewer    : access Project_Viewer_Record'Class;
       Project   : Project_Type;
       Directory : String := "";
-      File      : Virtual_File := VFS.No_File);
+      File      : Virtual_File := GNATCOLL.VFS.No_File);
    --  Update the contents of the viewer.
    --  Directory and File act as filters for the information that is displayed.
 
@@ -427,7 +427,7 @@ package body Project_Viewers is
 
    procedure Append_Line
      (Viewer           : access Project_Viewer_Record'Class;
-      File_Name        : VFS.Virtual_File;
+      File_Name        : GNATCOLL.VFS.Virtual_File;
       Directory_Filter : String := "")
    is
       Iter : Gtk_Tree_Iter;
@@ -511,7 +511,7 @@ package body Project_Viewers is
      (Viewer    : access Project_Viewer_Record'Class;
       Project   : Project_Type;
       Directory : String := "";
-      File      : Virtual_File := VFS.No_File)
+      File      : Virtual_File := GNATCOLL.VFS.No_File)
    is
       Child : MDI_Child;
       Iter  : Gtk_Tree_Iter;
@@ -542,7 +542,7 @@ package body Project_Viewers is
          Show_Project (Viewer, Viewer.Current_Project, Directory);
       end if;
 
-      if File /= VFS.No_File then
+      if File /= GNATCOLL.VFS.No_File then
          Iter := Get_Iter_First (Viewer.Model);
          while Iter /= Null_Iter loop
             if Create
@@ -1033,7 +1033,7 @@ package body Project_Viewers is
          Project            => Project,
          Languages          => Languages,
          Scenario_Variables => Scenario_Variables,
-         Files              => (1 .. 0 => VFS.No_File));
+         Files              => (1 .. 0 => GNATCOLL.VFS.No_File));
 
    exception
       when E : others =>

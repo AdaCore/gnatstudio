@@ -23,7 +23,7 @@ with GNAT.Strings;
 with Language;               use Language;
 with Language.Tree;          use Language.Tree;
 with Language.Tree.Database; use Language.Tree.Database;
-with VFS;
+with GNATCOLL.VFS;
 with Projects.Registry;
 
 with Generic_List;
@@ -80,10 +80,11 @@ package Codefix.Text_Manager is
    type File_Cursor is new Text_Cursor with private;
    Null_File_Cursor : constant File_Cursor;
 
-   procedure Set_File (This : in out File_Cursor; File : VFS.Virtual_File);
+   procedure Set_File
+     (This : in out File_Cursor; File : GNATCOLL.VFS.Virtual_File);
    --  Set the file information
 
-   function Get_File (This : File_Cursor) return VFS.Virtual_File;
+   function Get_File (This : File_Cursor) return GNATCOLL.VFS.Virtual_File;
    --  Return the file associated with the cursor
 
    function "=" (Left, Right : File_Cursor) return Boolean;
@@ -171,7 +172,7 @@ package Codefix.Text_Manager is
 
    procedure Initialize
      (This      : in out Text_Interface;
-      File_Name : VFS.Virtual_File) is abstract;
+      File_Name : GNATCOLL.VFS.Virtual_File) is abstract;
    --  Initialize the structure of the Text_Interface
 
    procedure Free (This : in out Text_Interface);
@@ -240,7 +241,8 @@ package Codefix.Text_Manager is
      (This : access Text_Interface'Class) return GNAT.Strings.String_Access;
    --  Return the buffer stored in this text
 
-   function Get_File_Name (This : Text_Interface) return VFS.Virtual_File;
+   function Get_File_Name
+     (This : Text_Interface) return GNATCOLL.VFS.Virtual_File;
    --  Return the name of the file
 
    type Token_Record is record
@@ -373,8 +375,8 @@ package Codefix.Text_Manager is
      (Text : Text_Navigator_Abstr) return Construct_Database_Access;
 
    function Get_Body_Or_Spec
-     (Text : Text_Navigator_Abstr; File_Name : VFS.Virtual_File)
-      return VFS.Virtual_File;
+     (Text : Text_Navigator_Abstr; File_Name : GNATCOLL.VFS.Virtual_File)
+      return GNATCOLL.VFS.Virtual_File;
    --  When File_Name is a spec file, this function returns the body
    --  corresponding, otherwise it returns the spec.
 
@@ -443,7 +445,7 @@ package Codefix.Text_Manager is
 
    function Read_File
      (This      : Text_Navigator_Abstr;
-      File_Name : VFS.Virtual_File) return GNAT.Strings.String_Access;
+      File_Name : GNATCOLL.VFS.Virtual_File) return GNAT.Strings.String_Access;
    --  Get the entire file File_Name
 
    procedure Replace
@@ -491,7 +493,7 @@ package Codefix.Text_Manager is
 
    function Search_Unit
      (This      : Text_Navigator_Abstr'Class;
-      File_Name : VFS.Virtual_File;
+      File_Name : GNATCOLL.VFS.Virtual_File;
       Category  : Language_Category;
       Name      : String := "") return Simple_Construct_Information;
    --  Return the first Contruct_Information that matche Category and name.
@@ -501,7 +503,7 @@ package Codefix.Text_Manager is
 
    function Line_Max
      (This      : Text_Navigator_Abstr'Class;
-      File_Name : VFS.Virtual_File) return Natural;
+      File_Name : GNATCOLL.VFS.Virtual_File) return Natural;
    --  Return the number of the last line in the text loaded
 
    function Get_Full_Prefix
@@ -535,7 +537,7 @@ package Codefix.Text_Manager is
 
    function Get_Structure
      (This      : Text_Navigator_Abstr'Class;
-      File_Name : VFS.Virtual_File) return Construct_List_Access;
+      File_Name : GNATCOLL.VFS.Virtual_File) return Construct_List_Access;
    --  Return the parsed strucutre of the text_interface
 
    procedure Update_All
@@ -549,7 +551,8 @@ package Codefix.Text_Manager is
    --  position specified by the cursor.
 
    procedure Undo
-     (This : Text_Navigator_Abstr'Class; File_Name : VFS.Virtual_File);
+     (This      : Text_Navigator_Abstr'Class;
+      File_Name : GNATCOLL.VFS.Virtual_File);
    --  Undo the last action from the File_Name
 
    function Get_Structured_File
@@ -1273,13 +1276,13 @@ private
 
    function Get_File
      (This    : Text_Navigator_Abstr'Class;
-      Name    : VFS.Virtual_File) return Ptr_Text;
+      Name    : GNATCOLL.VFS.Virtual_File) return Ptr_Text;
    --  Returns the existent file interface, or create a new one if it doesn't
    --  exists.
 
    type Mark_Abstr is abstract tagged record
       Is_First_Line : Boolean := False;
-      File_Name     : VFS.Virtual_File;
+      File_Name     : GNATCOLL.VFS.Virtual_File;
    end record;
 
    ----------------------------------------------------------------------------
@@ -1296,7 +1299,7 @@ private
       Structure            : Construct_List_Access := new Construct_List;
       Construct_File       : Structured_File_Access := null;
       Buffer               : GNAT.Strings.String_Access := null;
-      File_Name            : VFS.Virtual_File;
+      File_Name            : GNATCOLL.VFS.Virtual_File;
       Structure_Up_To_Date : Ptr_Boolean := new Boolean'(False);
       Construct_Db         : Construct_Database_Access;
    end record;
@@ -1434,10 +1437,10 @@ private
    end record;
 
    type File_Cursor is new Text_Cursor with record
-      File : VFS.Virtual_File;
+      File : GNATCOLL.VFS.Virtual_File;
    end record;
 
-   Null_File_Cursor : constant File_Cursor := (0, 0, VFS.No_File);
+   Null_File_Cursor : constant File_Cursor := (0, 0, GNATCOLL.VFS.No_File);
 
    type Word_Cursor is new File_Cursor with record
       String_Match : GNAT.Strings.String_Access;

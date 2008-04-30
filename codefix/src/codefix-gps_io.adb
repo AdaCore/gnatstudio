@@ -22,7 +22,7 @@ with GPS.Kernel.Console; use GPS.Kernel.Console;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 with String_Utils;       use String_Utils;
 with Traces;             use Traces;
-with VFS;                use VFS;
+with GNATCOLL.VFS;                use GNATCOLL.VFS;
 
 package body Codefix.GPS_Io is
 
@@ -381,7 +381,7 @@ package body Codefix.GPS_Io is
 
    procedure Initialize
      (This : in out Console_Interface;
-      Path : VFS.Virtual_File)
+      Path : GNATCOLL.VFS.Virtual_File)
    is
       pragma Unreferenced (This, Path);
    begin

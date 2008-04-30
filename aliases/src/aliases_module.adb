@@ -88,7 +88,7 @@ with Histories;                use Histories;
 with String_Hash;
 with String_Utils;             use String_Utils;
 with Traces;                   use Traces;
-with VFS;                      use VFS;
+with GNATCOLL.VFS;                      use GNATCOLL.VFS;
 with XML_Parsers;
 
 package body Aliases_Module is
@@ -169,7 +169,7 @@ package body Aliases_Module is
    procedure Destroy (Module : in out Aliases_Module_Id_Record);
    procedure Customize
      (Module : access Aliases_Module_Id_Record;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Node   : Glib.Xml_Int.Node_Ptr;
       Level  : Customization_Level);
    --  See inherited documentation
@@ -2123,7 +2123,7 @@ package body Aliases_Module is
 
    procedure Customize
      (Module : access Aliases_Module_Id_Record;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level)
    is

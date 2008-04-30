@@ -33,7 +33,7 @@ with Files_Extra_Info_Pkg;
 with Generic_List;
 with GPS.Kernel;
 with Language_Handlers;
-with VFS;
+with GNATCOLL.VFS;
 with Src_Editor_Buffer;             use Src_Editor_Buffer;
 
 package Src_Contexts is
@@ -147,7 +147,7 @@ package Src_Contexts is
 
    function Current_File
      (Context : access Abstract_Files_Context)
-      return VFS.Virtual_File is abstract;
+      return GNATCOLL.VFS.Virtual_File is abstract;
    --  Return the current file.
    --  Return No_File if there are no more files to examine
 
@@ -215,7 +215,7 @@ package Src_Contexts is
 
    procedure Set_File_List
      (Context : access Files_Project_Context;
-      Files   : VFS.File_Array_Access);
+      Files   : GNATCOLL.VFS.File_Array_Access);
    --  Set the list of files to search.
    --  No copy of Files is made, the memory will be freed automatically.
 
@@ -255,7 +255,7 @@ package Src_Contexts is
 
    procedure Set_File_List
      (Context : access Open_Files_Context;
-      Files   : VFS.File_Array_Access);
+      Files   : GNATCOLL.VFS.File_Array_Access);
    --  Set the list of files to search.
    --  No copy of Files is made, the memory will be freed automatically.
 
@@ -369,7 +369,7 @@ private
       Files_Pattern : GNAT.Regexp.Regexp;
       Recurse       : Boolean                   := False;
       Dirs          : Directory_List.List;
-      Current_File  : VFS.Virtual_File;
+      Current_File  : GNATCOLL.VFS.Virtual_File;
 
       Directory     : GNAT.Strings.String_Access := null;
 
@@ -381,29 +381,29 @@ private
    end record;
 
    type Files_Project_Context is new Abstract_Files_Context with record
-      Files         : VFS.File_Array_Access := null;
+      Files         : GNATCOLL.VFS.File_Array_Access := null;
       Current_File  : Natural;
    end record;
 
    type Open_Files_Context is new Abstract_Files_Context with record
-      Files        : VFS.File_Array_Access := null;
+      Files        : GNATCOLL.VFS.File_Array_Access := null;
       Current_File : Natural := 0;
    end record;
 
    function Current_File
-     (Context : access Files_Project_Context) return VFS.Virtual_File;
+     (Context : access Files_Project_Context) return GNATCOLL.VFS.Virtual_File;
    procedure Move_To_Next_File (Context : access Files_Project_Context);
    procedure Move_To_First_File (Context : access Files_Project_Context);
    procedure Free (Context : in out Files_Project_Context);
 
    function Current_File (Context : access Files_Context)
-     return VFS.Virtual_File;
+     return GNATCOLL.VFS.Virtual_File;
    procedure Move_To_Next_File (Context : access Files_Context);
    procedure Move_To_First_File (Context : access Files_Context);
    procedure Free (Context : in out Files_Context);
 
    function Current_File
-     (Context : access Open_Files_Context) return VFS.Virtual_File;
+     (Context : access Open_Files_Context) return GNATCOLL.VFS.Virtual_File;
    procedure Move_To_Next_File (Context : access Open_Files_Context);
    procedure Move_To_First_File (Context : access Open_Files_Context);
    procedure Free (Context : in out Open_Files_Context);

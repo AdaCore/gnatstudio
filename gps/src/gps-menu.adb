@@ -44,7 +44,7 @@ with GPS.Main_Window;        use GPS.Main_Window;
 with Histories;              use Histories;
 with Projects;               use Projects;
 with Traces;                 use Traces;
-with VFS;                    use VFS;
+with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 
 package body GPS.Menu is
 
@@ -230,7 +230,7 @@ package body GPS.Menu is
       Project : constant Project_Type := Get_Project (Kernel);
       Path    : constant Virtual_File := Project_Path (Project);
    begin
-      if Status (Project) = From_File and then Path /= VFS.No_File then
+      if Status (Project) = From_File and then Path /= No_File then
          Add_To_History
            (Kernel, Project_History_Key,
             Full_Name (Path, Normalize => False).all);
@@ -299,7 +299,7 @@ package body GPS.Menu is
               Kind              => Open_File,
               History           => Get_History (Kernel));
       begin
-         if Filename /= VFS.No_File then
+         if Filename /= GNATCOLL.VFS.No_File then
             Load_Project (Kernel, Filename);
          end if;
       end;
@@ -329,7 +329,7 @@ package body GPS.Menu is
               Kind              => Open_File,
               History           => Get_History (Kernel));
       begin
-         if Filename /= VFS.No_File then
+         if Filename /= GNATCOLL.VFS.No_File then
             Load_Project (Kernel, Filename);
          end if;
       end;

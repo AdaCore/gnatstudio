@@ -37,7 +37,7 @@ with GVD.Types;
 with GVD.Histories;
 with Projects;
 pragma Elaborate_All (GVD.Histories);
-with VFS;
+with GNATCOLL.VFS;
 
 with Interactive_Consoles; use Interactive_Consoles;
 
@@ -144,7 +144,7 @@ package GVD.Process is
       --  This is needed to avoid matching twice the same string and to
       --  optimize the handling of regexp filters.
 
-      Current_File            : VFS.Virtual_File;
+      Current_File            : GNATCOLL.VFS.Virtual_File;
       --  The file containing the current location.
 
       Current_Line            : Integer := 0;
@@ -157,7 +157,7 @@ package GVD.Process is
 
    function Spawn
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File    : VFS.Virtual_File;
+      File    : GNATCOLL.VFS.Virtual_File;
       Project : Projects.Project_Type;
       Args    : String) return Visual_Debugger;
    --  Spawn a new debugger on File (taking into account the settings from
@@ -326,12 +326,13 @@ package GVD.Process is
 
    procedure Set_Current_Source_Location
      (Process : access Visual_Debugger_Record;
-      File    : VFS.Virtual_File;
+      File    : GNATCOLL.VFS.Virtual_File;
       Line    : Integer);
    --  Set the source location.
 
    function Get_Current_Source_File
-     (Process : access Visual_Debugger_Record) return VFS.Virtual_File;
+     (Process : access Visual_Debugger_Record)
+      return GNATCOLL.VFS.Virtual_File;
    --  Get the file containing the current location, or "" if there is none.
 
    function Get_Current_Source_Line

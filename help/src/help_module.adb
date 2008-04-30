@@ -54,7 +54,7 @@ with GPS.Kernel.Custom;          use GPS.Kernel.Custom;
 with Traces;                     use Traces;
 with File_Utils;                 use File_Utils;
 with Generic_List;
-with VFS;                        use VFS;
+with GNATCOLL.VFS;                        use GNATCOLL.VFS;
 with Welcome_Page;               use Welcome_Page;
 with XML_Parsers;
 with Config;
@@ -125,7 +125,7 @@ package body Help_Module is
    procedure Destroy (Module : in out Help_Module_ID_Record);
    procedure Customize
      (Module : access Help_Module_ID_Record;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level);
    procedure Default_Context_Factory
@@ -226,7 +226,7 @@ package body Help_Module is
    --  Filename can be an url, a full name or a base name, and can include
    --  ancors (e.g "foo.html#anchor").
 
-   function Find_File (Name : Glib.UTF8_String) return VFS.Virtual_File;
+   function Find_File (Name : Glib.UTF8_String) return Virtual_File;
    --  Finds a doc file from base name on disc by looking in doc places
 
    procedure Parse_Index_File
@@ -277,7 +277,7 @@ package body Help_Module is
          return Str;
       end To_Slashes;
 
-      File     : VFS.Virtual_File;
+      File     : GNATCOLL.VFS.Virtual_File;
       Anchor   : Natural := Index (Name, "#");
       Protocol : constant Natural := Index (Name, "://");
    begin
@@ -296,7 +296,7 @@ package body Help_Module is
 
       File := Find_File (Name (Name'First .. Anchor - 1));
 
-      if File = VFS.No_File then
+      if File = GNATCOLL.VFS.No_File then
          return "";
       end if;
 
@@ -307,7 +307,7 @@ package body Help_Module is
    -- Find_File --
    ---------------
 
-   function Find_File (Name : Glib.UTF8_String) return VFS.Virtual_File is
+   function Find_File (Name : Glib.UTF8_String) return Virtual_File is
       Full : GNAT.Strings.String_Access;
    begin
       if Is_Absolute_Path (Name) then
@@ -318,7 +318,7 @@ package body Help_Module is
         (Locale_From_UTF8 (Name), Help_Module_ID.Doc_Path.all);
 
       if Full = null then
-         return VFS.No_File;
+         return GNATCOLL.VFS.No_File;
 
       else
          declare
@@ -961,7 +961,7 @@ package body Help_Module is
 
    procedure Customize
      (Module : access Help_Module_ID_Record;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level)
    is

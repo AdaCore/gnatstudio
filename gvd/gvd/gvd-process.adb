@@ -83,7 +83,7 @@ with Remote;                     use Remote;
 with Remote.Path.Translator;     use Remote.Path.Translator;
 with String_Utils;               use String_Utils;
 with Traces;                     use Traces;
-with VFS;                        use VFS;
+with GNATCOLL.VFS;                        use GNATCOLL.VFS;
 
 package body GVD.Process is
    Me : constant Debug_Handle := Create ("GVD.Process");
@@ -141,7 +141,7 @@ package body GVD.Process is
      (Process         : access Visual_Debugger_Record'Class;
       Kind            : GVD.Types.Debugger_Type;
       Proxy           : Process_Proxy_Access;
-      Executable      : VFS.Virtual_File;
+      Executable      : GNATCOLL.VFS.Virtual_File;
       Debugger_Args   : Argument_List;
       Executable_Args : String;
       Remote_Target   : String := "";
@@ -253,7 +253,7 @@ package body GVD.Process is
                if Br.Expression /= null then
                   Set_Attribute (Breaks, "expression", Br.Expression.all);
                end if;
-               if Br.File /= VFS.No_File then
+               if Br.File /= GNATCOLL.VFS.No_File then
                   Set_Attribute (Breaks, "file", Full_Name (Br.File).all);
                end if;
                if Br.Except /= null then
@@ -359,7 +359,7 @@ package body GVD.Process is
               (Get_Attribute
                  (Breaks, "action", Action_Type'Image (No_Action)));
             if Get_Attribute (Breaks, "file", "") = "" then
-               Br.File := VFS.No_File;
+               Br.File := GNATCOLL.VFS.No_File;
             else
                Br.File := Create
                  (Full_Filename => Get_Attribute (Breaks, "file"));
@@ -396,7 +396,7 @@ package body GVD.Process is
                  (Process.Debugger, Br.Except.all,
                   Temporary => Br.Disposition /= Keep, Mode => Internal,
                   Unhandled => False);
-            elsif Br.Line /= 0 and then Br.File /= VFS.No_File then
+            elsif Br.Line /= 0 and then Br.File /= GNATCOLL.VFS.No_File then
                Break_Source
                  (Process.Debugger, Br.File, Br.Line,
                   Temporary => Br.Disposition /= Keep, Mode => Internal);
@@ -975,7 +975,7 @@ package body GVD.Process is
      (Process         : access Visual_Debugger_Record'Class;
       Kind            : Debugger_Type;
       Proxy           : Process_Proxy_Access;
-      Executable      : VFS.Virtual_File;
+      Executable      : GNATCOLL.VFS.Virtual_File;
       Debugger_Args   : Argument_List;
       Executable_Args : String;
       Remote_Target   : String := "";
@@ -1703,7 +1703,7 @@ package body GVD.Process is
 
    procedure Set_Current_Source_Location
      (Process : access Visual_Debugger_Record;
-      File    : VFS.Virtual_File;
+      File    : GNATCOLL.VFS.Virtual_File;
       Line    : Integer) is
    begin
       Process.Current_File := File;
@@ -1715,7 +1715,7 @@ package body GVD.Process is
    -----------------------------
 
    function Get_Current_Source_File
-     (Process : access Visual_Debugger_Record) return VFS.Virtual_File is
+     (Process : access Visual_Debugger_Record) return Virtual_File is
    begin
       return Process.Current_File;
    end Get_Current_Source_File;
@@ -1736,7 +1736,7 @@ package body GVD.Process is
 
    function Spawn
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File    : VFS.Virtual_File;
+      File    : GNATCOLL.VFS.Virtual_File;
       Project : Projects.Project_Type;
       Args    : String) return Visual_Debugger
    is
@@ -1744,7 +1744,7 @@ package body GVD.Process is
                        GPS_Window (Get_Main_Window (Kernel));
       Process      : Visual_Debugger;
       Edit         : GVD.Source_Editor.GPS.GEdit;
-      Module       : VFS.Virtual_File;
+      Module       : GNATCOLL.VFS.Virtual_File;
       Program_Args : GNAT.Strings.String_Access;
       Blank_Pos    : Natural;
       Proxy        : Process_Proxy_Access;
@@ -1766,7 +1766,7 @@ package body GVD.Process is
          Tmp        : Virtual_File;
 
       begin
-         if Module = VFS.No_File or else Is_Regular_File (Module) then
+         if Module = GNATCOLL.VFS.No_File or else Is_Regular_File (Module) then
             return;
          end if;
 
@@ -1791,7 +1791,7 @@ package body GVD.Process is
 
       Program_Args := new String'("");
 
-      if File /= VFS.No_File then
+      if File /= GNATCOLL.VFS.No_File then
          Module := File;
 
       elsif Args /= "" then
@@ -1832,7 +1832,7 @@ package body GVD.Process is
          end if;
 
       else
-         Module := VFS.No_File;
+         Module := GNATCOLL.VFS.No_File;
       end if;
 
       Check_Extension (Module);
@@ -1946,7 +1946,7 @@ package body GVD.Process is
       begin
          Unload_Project (Project_Registry (Get_Registry (Kernel).all));
 
-         if Exec /= VFS.No_File then
+         if Exec /= GNATCOLL.VFS.No_File then
             Project := Create_Project
               (Project_Registry (Get_Registry (Kernel).all),
                "debugger_" & Base_Name (Exec), Get_Current_Dir);
@@ -2082,7 +2082,7 @@ package body GVD.Process is
 
          --  Object_Dir, Exec_Dir, Main
 
-         if Exec /= VFS.No_File then
+         if Exec /= GNATCOLL.VFS.No_File then
             Update_Attribute_Value_In_Scenario
               (Project,
                Scenario_Variables => No_Scenario,

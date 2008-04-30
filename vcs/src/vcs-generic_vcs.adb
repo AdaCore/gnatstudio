@@ -47,7 +47,7 @@ with VCS_View.Activities;       use VCS_View.Activities;
 with VCS_View.Explorer;         use VCS_View.Explorer;
 with VCS_Module;                use VCS_Module;
 with VCS_Status;                use VCS_Status;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 with String_Utils;              use String_Utils;
 
 package body VCS.Generic_VCS is
@@ -76,7 +76,7 @@ package body VCS.Generic_VCS is
    procedure Destroy (Id : in out VCS_Generic_Module_ID_Record);
    procedure Customize
      (Module : access VCS_Generic_Module_ID_Record;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level);
    --  See inherited documentation
@@ -123,7 +123,7 @@ package body VCS.Generic_VCS is
 
    procedure Generic_Command
      (Ref        : access Generic_VCS_Record;
-      File       : VFS.Virtual_File;
+      File       : GNATCOLL.VFS.Virtual_File;
       First_Args : GNAT.Strings.String_List_Access;
       Action     : VCS_Action);
    --  Launch a generic command corresponding to Action
@@ -526,7 +526,7 @@ package body VCS.Generic_VCS is
 
    procedure Generic_Command
      (Ref        : access Generic_VCS_Record;
-      File       : VFS.Virtual_File;
+      File       : GNATCOLL.VFS.Virtual_File;
       First_Args : GNAT.Strings.String_List_Access;
       Action     : VCS_Action)
    is
@@ -796,7 +796,7 @@ package body VCS.Generic_VCS is
 
    procedure Create_Tag
      (Rep       : access Generic_VCS_Record;
-      Dir       : VFS.Virtual_File;
+      Dir       : GNATCOLL.VFS.Virtual_File;
       Tag       : String;
       As_Branch : Boolean)
    is
@@ -882,7 +882,7 @@ package body VCS.Generic_VCS is
 
    procedure Switch
      (Rep : access Generic_VCS_Record;
-      Dir : VFS.Virtual_File;
+      Dir : GNATCOLL.VFS.Virtual_File;
       Tag : String)
    is
       Args     : GNAT.Strings.String_List_Access;
@@ -947,7 +947,7 @@ package body VCS.Generic_VCS is
 
    procedure File_Revision
      (Rep      : access Generic_VCS_Record;
-      File     : VFS.Virtual_File;
+      File     : GNATCOLL.VFS.Virtual_File;
       Revision : String)
    is
       Args : GNAT.Strings.String_List_Access;
@@ -1025,7 +1025,7 @@ package body VCS.Generic_VCS is
 
    procedure Diff
      (Rep       : access Generic_VCS_Record;
-      File      : VFS.Virtual_File;
+      File      : GNATCOLL.VFS.Virtual_File;
       Version_1 : String := "";
       Version_2 : String := "")
    is
@@ -1062,8 +1062,8 @@ package body VCS.Generic_VCS is
 
    procedure Diff_Patch
      (Rep    : access Generic_VCS_Record;
-      File   : VFS.Virtual_File;
-      Output : VFS.Virtual_File)
+      File   : GNATCOLL.VFS.Virtual_File;
+      Output : GNATCOLL.VFS.Virtual_File)
    is
       Args : GNAT.Strings.String_List_Access;
    begin
@@ -1080,7 +1080,7 @@ package body VCS.Generic_VCS is
 
    procedure Diff_Base_Head
      (Rep  : access Generic_VCS_Record;
-      File : VFS.Virtual_File) is
+      File : GNATCOLL.VFS.Virtual_File) is
    begin
       Generic_Command (Rep, File, null, Diff_Base_Head);
    end Diff_Base_Head;
@@ -1091,7 +1091,7 @@ package body VCS.Generic_VCS is
 
    procedure Diff_Working
      (Rep  : access Generic_VCS_Record;
-      File : VFS.Virtual_File) is
+      File : GNATCOLL.VFS.Virtual_File) is
    begin
       Generic_Command (Rep, File, null, Diff_Working);
    end Diff_Working;
@@ -1102,7 +1102,7 @@ package body VCS.Generic_VCS is
 
    procedure Diff_Tag
      (Rep      : access Generic_VCS_Record;
-      File     : VFS.Virtual_File;
+      File     : GNATCOLL.VFS.Virtual_File;
       Tag_Name : String)
    is
       Args : GNAT.Strings.String_List_Access;
@@ -1122,7 +1122,7 @@ package body VCS.Generic_VCS is
 
    procedure Log
      (Rep     : access Generic_VCS_Record;
-      File    : VFS.Virtual_File;
+      File    : GNATCOLL.VFS.Virtual_File;
       Rev     : String;
       As_Text : Boolean := True)
    is
@@ -1151,7 +1151,7 @@ package body VCS.Generic_VCS is
 
    procedure Annotate
      (Rep  : access Generic_VCS_Record;
-      File : VFS.Virtual_File) is
+      File : GNATCOLL.VFS.Virtual_File) is
    begin
       Generic_Command (Rep, File, null, Annotate);
    end Annotate;
@@ -1162,7 +1162,7 @@ package body VCS.Generic_VCS is
 
    procedure Customize
      (Module : access VCS_Generic_Module_ID_Record;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level)
    is
@@ -1741,7 +1741,7 @@ package body VCS.Generic_VCS is
 
    procedure Parse_Annotations
      (Rep  : access Generic_VCS_Record;
-      File : VFS.Virtual_File;
+      File : GNATCOLL.VFS.Virtual_File;
       Text : String)
    is
       Kernel : Kernel_Handle renames Rep.Kernel;
@@ -1919,7 +1919,7 @@ package body VCS.Generic_VCS is
 
    procedure Parse_Log
      (Rep  : access Generic_VCS_Record;
-      File : VFS.Virtual_File;
+      File : GNATCOLL.VFS.Virtual_File;
       Text : String)
    is
       use Ada.Strings.Unbounded;
@@ -2058,7 +2058,7 @@ package body VCS.Generic_VCS is
 
    procedure Parse_Revision
      (Rep  : access Generic_VCS_Record;
-      File : VFS.Virtual_File;
+      File : GNATCOLL.VFS.Virtual_File;
       Text : String)
    is
       Kernel  : Kernel_Handle renames Rep.Kernel;

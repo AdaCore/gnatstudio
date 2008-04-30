@@ -74,7 +74,7 @@ with Project_Explorers_Common;  use Project_Explorers_Common;
 with Projects;                  use Projects;
 with String_Utils;              use String_Utils;
 with Tooltips;                  use Tooltips;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 package body Outline_View is
 
@@ -119,7 +119,7 @@ package body Outline_View is
    type Outline_View_Record is new Gtk.Box.Gtk_Box_Record with record
       Kernel    : Kernel_Handle;
       Tree      : Gtk_Tree_View;
-      File      : VFS.Virtual_File;
+      File      : GNATCOLL.VFS.Virtual_File;
       Icon      : Gdk_Pixbuf;
       File_Icon : Gdk_Pixbuf;
    end record;
@@ -910,7 +910,7 @@ package body Outline_View is
             Default_Sort_Column_Id, Sort_Ascending);
       end if;
 
-      if Outline.File /= VFS.No_File then
+      if Outline.File /= GNATCOLL.VFS.No_File then
          Handler := Get_LI_Handler_From_File (Languages, Outline.File);
          Lang := Get_Language_From_File (Languages, Outline.File);
       end if;
@@ -1103,7 +1103,7 @@ package body Outline_View is
          Outline := Outline_View_Access (Get_Widget (Child));
 
          if Outline.File = D.File then
-            Outline.File := VFS.No_File;
+            Outline.File := GNATCOLL.VFS.No_File;
             Refresh (Outline);
          end if;
       end if;
@@ -1129,7 +1129,7 @@ package body Outline_View is
 
          if Outline.File = D.File then
             Refresh (Outline);
-         elsif Outline.File = VFS.No_File then
+         elsif Outline.File = GNATCOLL.VFS.No_File then
             Outline.File := D.File;
             Refresh (Outline);
          end if;
@@ -1164,13 +1164,13 @@ package body Outline_View is
             if Has_File_Information (D.Context) then
                File := File_Information (D.Context);
             else
-               File := VFS.No_File;
+               File := GNATCOLL.VFS.No_File;
             end if;
 
             if File /= Outline.File then
                Outline.File := File;
                Refresh (Outline);
-            elsif Outline.File = VFS.No_File then
+            elsif Outline.File = GNATCOLL.VFS.No_File then
                Refresh (Outline);
             end if;
          end if;

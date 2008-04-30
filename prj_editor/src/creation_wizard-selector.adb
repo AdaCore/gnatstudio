@@ -36,7 +36,7 @@ with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel;                use GPS.Kernel;
 with Traces;                    use Traces;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 with Wizards;                   use Wizards;
 
 package body Creation_Wizard.Selector is
@@ -144,7 +144,7 @@ package body Creation_Wizard.Selector is
       P.Name_And_Loc := Add_Name_And_Location_Page (Wiz);
 
       Name := Run (Wiz);
-      if Name /= VFS.No_File then
+      if Name /= GNATCOLL.VFS.No_File then
          Load_Project (Kernel, Name);
          return True;
       end if;

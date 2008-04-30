@@ -330,7 +330,7 @@ package body Debugger is
 
    procedure Lines_With_Code
      (Debugger : access Debugger_Root;
-      File     : VFS.Virtual_File;
+      File     : GNATCOLL.VFS.Virtual_File;
       Result   : out Boolean;
       Lines    : out Line_Array)
    is

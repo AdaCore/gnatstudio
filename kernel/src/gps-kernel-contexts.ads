@@ -20,7 +20,7 @@
 --  This package provides support for the description of the various
 --  contexts and selections in GPS.
 
-with VFS;
+with GNATCOLL.VFS;
 with Basic_Types;
 with Entities;
 with Projects;
@@ -38,7 +38,7 @@ package GPS.Kernel.Contexts is
 
    procedure Set_File_Information
      (Context           : in out Selection_Context;
-      Files             : VFS.File_Array := VFS.Empty_File_Array;
+      Files         : GNATCOLL.VFS.File_Array := GNATCOLL.VFS.Empty_File_Array;
       Project           : Projects.Project_Type := Projects.No_Project;
       Importing_Project : Projects.Project_Type := Projects.No_Project;
       Line              : Integer := 0;
@@ -61,9 +61,9 @@ package GPS.Kernel.Contexts is
      (Context : Selection_Context) return Boolean;
    --  Return True if Context has file information
    function File_Information
-     (Context : Selection_Context) return VFS.Virtual_File;
+     (Context : Selection_Context) return GNATCOLL.VFS.Virtual_File;
    function File_Information
-     (Context : Selection_Context) return VFS.File_Array;
+     (Context : Selection_Context) return GNATCOLL.VFS.File_Array;
    --  Return the information about the selected file. This is only relevant
    --  if Has_File_Information is True.
    --  This is the base file name for the file. This name is UTF8-encoded.

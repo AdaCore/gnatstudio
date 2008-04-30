@@ -21,6 +21,7 @@ with Ada.Unchecked_Conversion;
 
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with GNAT.Regpat;             use GNAT.Regpat;
+with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
 with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.Scripts.Utils;  use GNATCOLL.Scripts.Utils;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
@@ -36,7 +37,6 @@ with Gtk.Widget;              use Gtk.Widget;
 with Basic_Types;             use Basic_Types;
 with Commands.Interactive;    use Commands, Commands.Interactive;
 with Entities.Queries;        use Entities, Entities.Queries;
-with Filesystems;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
 with GPS.Kernel.Console;      use GPS.Kernel.Console;
@@ -62,7 +62,7 @@ with System;                  use System;
 with System.Address_Image;
 with System.Assertions;
 with Traces;
-with VFS;                     use VFS;
+with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 with OS_Utils;                use OS_Utils;
 
 package body GPS.Kernel.Scripts is
@@ -394,7 +394,7 @@ package body GPS.Kernel.Scripts is
       end if;
 
       if Data = null then
-         return VFS.No_File;
+         return GNATCOLL.VFS.No_File;
       else
          return GPS_Properties (Data).File;
       end if;
@@ -448,8 +448,7 @@ package body GPS.Kernel.Scripts is
          Set_Return_Value (Data, Get_System_Dir (Kernel));
 
       elsif Command = "get_tmp_dir" then
-         Set_Return_Value
-           (Data, Filesystems.Get_Local_Filesystem.Get_Tmp_Directory);
+         Set_Return_Value (Data, Get_Local_Filesystem.Get_Tmp_Directory);
 
       elsif Command = "get_home_dir" then
          Set_Return_Value (Data, Get_Home_Dir (Kernel));

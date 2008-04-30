@@ -24,7 +24,7 @@ with Codefix.Formal_Errors; use Codefix.Formal_Errors;
 
 with Codefix_Module;        use Codefix_Module;
 with GPS.Intl;              use GPS.Intl;
-with VFS;                   use VFS;
+with GNATCOLL.VFS;                   use GNATCOLL.VFS;
 
 package body Commands.Codefix is
 

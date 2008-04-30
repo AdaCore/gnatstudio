@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with VCS; use VCS;
-with VFS; use VFS;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 package Ignore_Db is
 

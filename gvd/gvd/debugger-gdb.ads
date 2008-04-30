@@ -27,7 +27,7 @@ with GNAT.Regpat;
 with Gtk.Window;
 with Language.Debugger;
 with GVD.Types;
-with VFS;
+with GNATCOLL.VFS;
 
 package Debugger.Gdb is
 
@@ -36,7 +36,7 @@ package Debugger.Gdb is
    procedure Spawn
      (Debugger        : access Gdb_Debugger;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Executable      : VFS.Virtual_File := VFS.No_File;
+      Executable      : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Debugger_Args   : GNAT.Strings.String_List;
       Executable_Args : String;
       Proxy           : Process_Proxies.Process_Proxy_Access;
@@ -125,11 +125,11 @@ package Debugger.Gdb is
 
    procedure Set_Executable
      (Debugger   : access Gdb_Debugger;
-      Executable : VFS.Virtual_File;
+      Executable : GNATCOLL.VFS.Virtual_File;
       Mode       : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    function Get_Executable
-     (Debugger : access Gdb_Debugger) return VFS.Virtual_File;
+     (Debugger : access Gdb_Debugger) return GNATCOLL.VFS.Virtual_File;
 
    procedure Load_Core_File
      (Debugger : access Gdb_Debugger;
@@ -223,7 +223,7 @@ package Debugger.Gdb is
 
    procedure Break_Source
      (Debugger  : access Gdb_Debugger;
-      File      : VFS.Virtual_File;
+      File      : GNATCOLL.VFS.Virtual_File;
       Line      : Positive;
       Temporary : Boolean := False;
       Mode      : GVD.Types.Command_Type := GVD.Types.Hidden);
@@ -339,7 +339,7 @@ package Debugger.Gdb is
 
    procedure Lines_With_Code
      (Debugger : access Gdb_Debugger;
-      File     : VFS.Virtual_File;
+      File     : GNATCOLL.VFS.Virtual_File;
       Result   : out Boolean;
       Lines    : out Line_Array);
 
@@ -426,7 +426,7 @@ private
    --    connected to a target.
 
    type Gdb_Debugger is new Debugger.Debugger_Root with record
-      Executable       : VFS.Virtual_File;
+      Executable       : GNATCOLL.VFS.Virtual_File;
       Executable_Args  : GNAT.Strings.String_Access;
       Stored_Language  : GNAT.Strings.String_Access;
       WTX_List         : GNAT.Strings.String_Access;

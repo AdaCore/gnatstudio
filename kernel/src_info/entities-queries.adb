@@ -30,7 +30,7 @@ with Projects;                  use Projects;
 with Projects.Registry;         use Projects.Registry;
 with String_Utils;              use String_Utils;
 with Traces;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 package body Entities.Queries is
 
@@ -429,7 +429,7 @@ package body Entities.Queries is
 
    procedure Find_Declaration
      (Db              : Entities_Database;
-      File_Name       : VFS.Virtual_File;
+      File_Name       : GNATCOLL.VFS.Virtual_File;
       Entity_Name     : String := "";
       Line            : Natural;
       Column          : Basic_Types.Visible_Column_Type;
@@ -450,7 +450,7 @@ package body Entities.Queries is
 
    procedure Find_Declaration
      (Db              : Entities_Database;
-      File_Name       : VFS.Virtual_File;
+      File_Name       : GNATCOLL.VFS.Virtual_File;
       Entity_Name     : String := "";
       Line            : Natural;
       Column          : Basic_Types.Visible_Column_Type;
@@ -1316,7 +1316,7 @@ package body Entities.Queries is
    procedure Next (Iter : in out Dependency_Iterator) is
       Source : Source_File;
       Count  : Natural;
-      VF     : VFS.Virtual_File := VFS.No_File;
+      VF     : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       pragma Unreferenced (Source, Count);
    begin
       if Iter.Handler = null then
@@ -1326,13 +1326,13 @@ package body Entities.Queries is
             Iter.Source_File_Index := Iter.Source_File_Index + 1;
             VF := Get_Source_File
               (Current (Iter.Importing), Iter.Source_File_Index);
-            if VF /= VFS.No_File then
+            if VF /= GNATCOLL.VFS.No_File then
                Iter.Current_Progress := Iter.Current_Progress + 1;
                Source := Get_Source_Info (Iter.Handler, VF);
             end if;
          end if;
 
-         if VF = VFS.No_File then
+         if VF = GNATCOLL.VFS.No_File then
             Next (Iter.Importing);
             if Current (Iter.Importing) = No_Project then
                Iter.Handler := null;

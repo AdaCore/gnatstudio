@@ -45,7 +45,8 @@ with SN.DB_Structures;          use SN.DB_Structures;
 with SN.Find_Fns;               use SN.Find_Fns;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
-with VFS;                       use VFS;
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 package body CPP_Parser is
 
@@ -151,7 +152,7 @@ package body CPP_Parser is
    function Get_Name (LI : access CPP_Handler_Record) return String;
    function Get_Source_Info
      (Handler               : access CPP_Handler_Record;
-      Source_Filename       : VFS.Virtual_File;
+      Source_Filename       : GNATCOLL.VFS.Virtual_File;
       File_Has_No_LI_Report : File_Error_Reporter := null) return Source_File;
    function Case_Insensitive_Identifiers
      (Handler         : access CPP_Handler_Record) return Boolean;
@@ -168,7 +169,7 @@ package body CPP_Parser is
    procedure Parse_File_Constructs
      (Handler   : access CPP_Handler_Record;
       Languages : access Abstract_Language_Handler_Record'Class;
-      File_Name : VFS.Virtual_File;
+      File_Name : GNATCOLL.VFS.Virtual_File;
       Result    : out Language.Construct_List);
    --  See doc for inherited subprograms
 
@@ -186,7 +187,7 @@ package body CPP_Parser is
       PD              : GNAT.Expect.TTY.TTY_Process_Descriptor;
       Prj_Iterator    : Projects.Imported_Project_Iterator;
       List_Filename   : GNAT.Strings.String_Access;
-      Current_Files   : VFS.File_Array_Access;
+      Current_Files   : GNATCOLL.VFS.File_Array_Access;
       Current_File    : Natural;
       Lang_Handler    : Language_Handler;
 
@@ -208,7 +209,7 @@ package body CPP_Parser is
      (Project     : Project_Type;
       Iterator    : in out CPP_Handler_Iterator'Class;
       Errors      : Projects.Error_Report;
-      Single_File : VFS.Virtual_File := VFS.No_File);
+      Single_File : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File);
    --  Runs cbrowser for all source files of Project.
    --  If Single_File is specified, then only this information for this file
    --  will be generated.
@@ -218,7 +219,7 @@ package body CPP_Parser is
       Lang_Handler : access Abstract_Language_Handler_Record'Class;
       Project      : Project_Type;
       Errors       : Projects.Error_Report;
-      File         : VFS.Virtual_File) return LI_Handler_Iterator'Class;
+      File         : Virtual_File) return LI_Handler_Iterator'Class;
    --  Generate the cbrowser information for a single file. This means that
    --  we will mostly know about entity declaration and bodies, but not about
    --  references. On the other hand, it is extremely fast, and suitable when
@@ -485,7 +486,7 @@ package body CPP_Parser is
 
    function Time_Stamp_From_DB
      (Project   : Project_Type;
-      File_Name : VFS.Virtual_File) return Time;
+      File_Name : GNATCOLL.VFS.Virtual_File) return Time;
    --  Return the timestamp of File_Name when the database was last created.
    --  This is a GMT time
 
@@ -2742,11 +2743,11 @@ package body CPP_Parser is
 
    function Get_Source_Info
      (Handler               : access CPP_Handler_Record;
-      Source_Filename       : VFS.Virtual_File;
+      Source_Filename       : GNATCOLL.VFS.Virtual_File;
       File_Has_No_LI_Report : File_Error_Reporter := null) return Source_File
    is
       function Load_File
-        (File : VFS.Virtual_File; File_Project : Project_Type := No_Project)
+        (File : Virtual_File; File_Project : Project_Type := No_Project)
          return Source_File;
       --  Load the information for one specific file in memory
 
@@ -2755,7 +2756,7 @@ package body CPP_Parser is
       ---------------
 
       function Load_File
-        (File : VFS.Virtual_File; File_Project : Project_Type := No_Project)
+        (File : Virtual_File; File_Project : Project_Type := No_Project)
          return Source_File
       is
          Project : Project_Type;
@@ -2786,7 +2787,7 @@ package body CPP_Parser is
             Project := File_Project;
          end if;
 
-         if Get_Time_Stamp (Source) = VFS.No_Time
+         if Get_Time_Stamp (Source) = GNATCOLL.Utils.No_Time
            or else Get_LI (Source) = null
            or else Database_Timestamp (Project) /=
              Get_Timestamp (Get_LI (Source))
@@ -2799,7 +2800,7 @@ package body CPP_Parser is
          return Source;
       end Load_File;
 
-      Other_File_Name     : VFS.Virtual_File;
+      Other_File_Name     : GNATCOLL.VFS.Virtual_File;
       Source, Other_File  : Source_File;
       Project             : Project_Type;
       pragma Unreferenced (Other_File);
@@ -2949,7 +2950,7 @@ package body CPP_Parser is
      (Project     : Project_Type;
       Iterator    : in out CPP_Handler_Iterator'Class;
       Errors      : Projects.Error_Report;
-      Single_File : VFS.Virtual_File := VFS.No_File)
+      Single_File : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File)
    is
       DB_Dir       : constant String := Get_DB_Dir (Project);
       TO_Timestamp : constant Time := Database_Timestamp (Project);
@@ -2966,7 +2967,7 @@ package body CPP_Parser is
 
       Unchecked_Free (Iterator.Current_Files);
 
-      if Single_File = VFS.No_File then
+      if Single_File = GNATCOLL.VFS.No_File then
          Iterator.Current_Files := Get_Source_Files
            (Project   => Project,
             Recursive => False);
@@ -3068,7 +3069,7 @@ package body CPP_Parser is
       Lang_Handler : access Abstract_Language_Handler_Record'Class;
       Project      : Project_Type;
       Errors       : Projects.Error_Report;
-      File         : VFS.Virtual_File) return LI_Handler_Iterator'Class
+      File         : Virtual_File) return LI_Handler_Iterator'Class
    is
       Iter : CPP_Handler_Iterator;
    begin
@@ -3291,7 +3292,7 @@ package body CPP_Parser is
 
    function Time_Stamp_From_DB
      (Project   : Project_Type;
-      File_Name : VFS.Virtual_File) return Ada.Calendar.Time
+      File_Name : GNATCOLL.VFS.Virtual_File) return Ada.Calendar.Time
    is
       Files   : chars_ptr_array (1 .. 1);
       Table   : DB_File;
@@ -3338,7 +3339,7 @@ package body CPP_Parser is
       end if;
 
       DB_API.Close (Table, Success);
-      return VFS.No_Time;
+      return GNATCOLL.Utils.No_Time;
    end Time_Stamp_From_DB;
 
    ---------------------------
@@ -3348,7 +3349,7 @@ package body CPP_Parser is
    procedure Parse_File_Constructs
      (Handler   : access CPP_Handler_Record;
       Languages : access Abstract_Language_Handler_Record'Class;
-      File_Name : VFS.Virtual_File;
+      File_Name : GNATCOLL.VFS.Virtual_File;
       Result    : out Language.Construct_List)
    is
       Project    : constant Project_Type :=

@@ -24,7 +24,7 @@ with Gtk.Widget;      use Gtk.Widget;
 
 with Pango.Font;      use Pango.Font;
 with GVD.Types;       use GVD.Types;
-with VFS;             use VFS;
+with GNATCOLL.VFS;             use GNATCOLL.VFS;
 
 package body GVD.Code_Editors is
 
@@ -135,7 +135,7 @@ package body GVD.Code_Editors is
 
    procedure Load_File
      (Editor      : access Code_Editor_Record;
-      File_Name   : VFS.Virtual_File) is
+      File_Name   : GNATCOLL.VFS.Virtual_File) is
    begin
       Load_File (Editor.Source, File_Name);
    end Load_File;

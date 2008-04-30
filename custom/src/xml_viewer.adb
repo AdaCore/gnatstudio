@@ -52,7 +52,7 @@ with GUI_Utils;                 use GUI_Utils;
 with UTF8_Utils;                use UTF8_Utils;
 with Traces;                    use Traces;
 with XML_Parsers;               use XML_Parsers;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 package body XML_Viewer is
 

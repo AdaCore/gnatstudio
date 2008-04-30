@@ -118,7 +118,7 @@ package GPS.Kernel.Properties is
 
    procedure Set_Property
      (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File       : VFS.Virtual_File;
+      File       : GNATCOLL.VFS.Virtual_File;
       Name       : String;
       Property   : access Property_Record'Class;
       Persistent : Boolean := False);
@@ -130,7 +130,7 @@ package GPS.Kernel.Properties is
 
    procedure Get_Property
      (Property : out Property_Record'Class;
-      File     : VFS.Virtual_File;
+      File     : GNATCOLL.VFS.Virtual_File;
       Name     : String;
       Found    : out Boolean);
    --  Return the given named property associated with File.
@@ -139,7 +139,7 @@ package GPS.Kernel.Properties is
 
    procedure Remove_Property
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File     : VFS.Virtual_File;
+      File     : GNATCOLL.VFS.Virtual_File;
       Name     : String);
    --  Remove the named property (persistent or not) from the file.
 
@@ -196,7 +196,7 @@ package GPS.Kernel.Properties is
 
    procedure Set_Language_From_File
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Filename : VFS.Virtual_File;
+      Filename : GNATCOLL.VFS.Virtual_File;
       Language : String := "");
    --  Override the language to be used for the specific filename. This doesn't
    --  change the project itself, just the properties associated with the file.

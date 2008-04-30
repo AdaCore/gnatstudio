@@ -30,7 +30,9 @@ with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT; use GNAT.OS_Lib;
-with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
+with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNAT.Strings;
 with GNAT.Case_Util;            use GNAT.Case_Util;
 
@@ -64,8 +66,6 @@ with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Location_View;         use GPS.Location_View;
 
-with Filesystems;
-with VFS;                       use VFS;
 with Projects;                  use Projects;
 with Interactive_Consoles;      use Interactive_Consoles;
 with Language_Handlers;         use Language_Handlers;
@@ -548,7 +548,7 @@ package body Builder_Module is
             end loop;
          end if;
 
-         if File = VFS.No_File then
+         if File = GNATCOLL.VFS.No_File then
             if Unique_Project then
                K := K + 1;
                R_Tmp (K) := new String'(Unique_Compile);
@@ -790,7 +790,7 @@ package body Builder_Module is
 
       --  If no file was specified in data, simply compile the current file
 
-      if File = VFS.No_File and then Project = No_Project then
+      if File = GNATCOLL.VFS.No_File and then Project = No_Project then
          Context := Get_Current_Context (Kernel);
 
          if Has_File_Information (Context) then
@@ -995,7 +995,7 @@ package body Builder_Module is
    begin
       --  Is there a file to compile ?
 
-      if File = VFS.No_File then
+      if File = GNATCOLL.VFS.No_File then
          if not Quiet then
             Console.Insert
               (Kernel, -"No file name, cannot compile",
@@ -1075,7 +1075,7 @@ package body Builder_Module is
 
          declare
             Tmp_Dir      : constant String :=
-              Filesystems.Get_Local_Filesystem.Get_Tmp_Directory;
+              Get_Local_Filesystem.Get_Tmp_Directory;
             Temp_Project : constant Virtual_File :=
                              Create (Tmp_Dir & "ext.gpr");
             Temp_File    : constant Virtual_File :=
@@ -1709,7 +1709,7 @@ package body Builder_Module is
       end Launch;
 
    begin
-      if Data.File = VFS.No_File then
+      if Data.File = GNATCOLL.VFS.No_File then
          declare
             Command : constant String := Display_Entry_Dialog
               (Parent         => Get_Current_Window (K),
@@ -1840,7 +1840,7 @@ package body Builder_Module is
          --  able to resolve it.
 
          Main := Create (Mains (M).all, Project);
-         if Main = VFS.No_File then
+         if Main = GNATCOLL.VFS.No_File then
             Main := Create_From_Base
               (Executables_Directory (Project) & Mains (M).all);
          end if;
@@ -1914,7 +1914,7 @@ package body Builder_Module is
          Slot_Object => Kernel,
          User_Data   => File_Project_Record'
            (Project => Get_Project (Kernel),
-            File    => VFS.No_File));
+            File    => GNATCOLL.VFS.No_File));
 
       Mitem := new Dynamic_Menu_Item_Record;
       Gtk.Menu_Item.Initialize (Mitem, -All_Make_Suffix);
@@ -1930,7 +1930,7 @@ package body Builder_Module is
          Slot_Object => Kernel,
          User_Data => File_Project_Record'
            (Project => Get_Project (Kernel),
-            File    => VFS.No_File));
+            File    => GNATCOLL.VFS.No_File));
    end Add_Root_Project_Build_Menu;
 
    ------------------
@@ -2176,7 +2176,7 @@ package body Builder_Module is
          Slot_Object => Kernel,
          User_Data => File_Project_Record'
            (Project => No_Project,
-            File    => VFS.No_File));
+            File    => GNATCOLL.VFS.No_File));
 
       Mitem := new Dynamic_Menu_Item_Record;
       Gtk.Menu_Item.Initialize (Mitem, -Custom_Make_Suffix);
@@ -2197,7 +2197,7 @@ package body Builder_Module is
         (Mitem, Signal_Activate, On_Run'Access,
          Slot_Object => Kernel,
          User_Data   => File_Project_Record'
-           (Project => Get_Project (Kernel), File => VFS.No_File));
+           (Project => Get_Project (Kernel), File => GNATCOLL.VFS.No_File));
       Show_All (Menu1);
       Show_All (Menu2);
 

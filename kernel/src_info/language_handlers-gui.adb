@@ -25,7 +25,7 @@ with Gtk.Combo;                 use Gtk.Combo;
 with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.List;                  use Gtk.List;
 with Gtk.List_Item;             use Gtk.List_Item;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 package body Language_Handlers.GUI is
 
@@ -35,7 +35,7 @@ package body Language_Handlers.GUI is
 
    function Create_Language_Combo
      (Handler : access Language_Handler_Record'Class;
-      File    : VFS.Virtual_File;
+      File    : GNATCOLL.VFS.Virtual_File;
       Default : String := "") return Gtk_Combo
    is
       Combo     : Gtk_Combo;
@@ -65,9 +65,9 @@ package body Language_Handlers.GUI is
 
       Free (Languages);
 
-      if File = VFS.No_File and then Default /= "" then
+      if File = GNATCOLL.VFS.No_File and then Default /= "" then
          Set_Text (Get_Entry (Combo), Default);
-      elsif File /= VFS.No_File
+      elsif File /= GNATCOLL.VFS.No_File
         and then Language_Is_Overriden (Handler, File)
       then
          Set_Text (Get_Entry (Combo), Get_Language_From_File (Handler, File));

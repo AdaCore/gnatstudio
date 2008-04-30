@@ -68,7 +68,7 @@ package body VCS_Activities is
    end record;
 
    Empty_Activity : constant Activity_Record :=
-                      (VFS.No_File, null, No_Class_Instance, No_Activity,
+                      (No_File, null, No_Class_Instance, No_Activity,
                        null, False, False, null, String_List.Null_List, False);
 
    subtype Hash_Header is Positive range 1 .. 123;
@@ -546,7 +546,7 @@ package body VCS_Activities is
    -- Get_File_Activity --
    -----------------------
 
-   function Get_File_Activity (File : VFS.Virtual_File) return Activity_Id is
+   function Get_File_Activity (File : Virtual_File) return Activity_Id is
       Item : Activity_Record := Get_First;
    begin
       while Item /= Empty_Activity loop

@@ -200,7 +200,7 @@ package body Code_Analysis is
 
    function Get_Or_Create
      (Project_Node : Project_Access;
-      File_Name    : VFS.Virtual_File) return File_Access
+      File_Name    : GNATCOLL.VFS.Virtual_File) return File_Access
    is
       File_Node : File_Access;
    begin

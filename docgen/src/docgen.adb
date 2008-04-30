@@ -21,7 +21,7 @@
 with GPS.Kernel.Console; use GPS.Kernel.Console;
 with GPS.Kernel.Project; use GPS.Kernel.Project;
 with Projects.Registry;  use Projects, Projects.Registry;
-with VFS;                use VFS;
+with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with GPS.Intl;           use GPS.Intl;
 
 package body Docgen is
@@ -220,7 +220,7 @@ package body Docgen is
    -----------------------
 
    function Get_Doc_File_Name
-     (Source_Filename : VFS.Virtual_File;
+     (Source_Filename : GNATCOLL.VFS.Virtual_File;
       Doc_Suffix      : String) return String
    is
       Ext : constant String := File_Extension (Source_Filename);
@@ -295,7 +295,7 @@ package body Docgen is
 
    function Is_Spec_File
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File) return Boolean is
+      File   : GNATCOLL.VFS.Virtual_File) return Boolean is
    begin
       return Get_Unit_Part_From_Filename
         (Get_Project_From_File (Get_Registry (Kernel).all, File), File) =

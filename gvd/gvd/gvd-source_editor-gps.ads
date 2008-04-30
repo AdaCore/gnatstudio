@@ -56,7 +56,7 @@ package GVD.Source_Editor.GPS is
 
    procedure Load_File
      (Editor    : access GEdit_Record;
-      File_Name : VFS.Virtual_File);
+      File_Name : GNATCOLL.VFS.Virtual_File);
    --  See GVD.Text_Box.Source_Editor for more information.
 
    procedure Highlight_Current_Line (Editor : access GEdit_Record);

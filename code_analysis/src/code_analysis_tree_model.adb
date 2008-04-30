@@ -27,7 +27,7 @@ with GPS.Intl;                 use GPS.Intl;
 with Projects;                 use Projects;
 with Code_Analysis_Tree_Model; use Code_Analysis_Tree_Model;
 with Code_Coverage;            use Code_Coverage;
-with VFS;
+with GNATCOLL.VFS;
 
 package body Code_Analysis_Tree_Model is
 
@@ -127,7 +127,7 @@ package body Code_Analysis_Tree_Model is
       Self_Iter := Iter;
       Gtk.Tree_Store.Set (Model, Iter, Pix_Col, C_Proxy (Icons.File_Pixbuf));
       Gtk.Tree_Store.Set
-        (Model, Iter, Name_Col, VFS.Base_Name (File_Node.Name));
+        (Model, Iter, Name_Col, GNATCOLL.VFS.Base_Name (File_Node.Name));
       File_Set.Set (Model, Iter, Node_Col, File_Node.all'Access);
       File_Set.Set (Model, Iter, File_Col, File_Node.all'Access);
       Project_Set.Set (Model, Iter, Prj_Col, Prj_Node.all'Access);
@@ -169,7 +169,7 @@ package body Code_Analysis_Tree_Model is
 
       Gtk.Tree_Store.Set (Model, Iter, Pix_Col, C_Proxy (Icons.File_Pixbuf));
       Gtk.Tree_Store.Set
-        (Model, Iter, Name_Col, VFS.Base_Name (File_Node.Name));
+        (Model, Iter, Name_Col, GNATCOLL.VFS.Base_Name (File_Node.Name));
       File_Set.Set (Model, Iter, Node_Col, File_Node.all'Access);
       File_Set.Set (Model, Iter, File_Col, File_Node.all'Access);
       Project_Set.Set (Model, Iter, Prj_Col, Prj_Node.all'Access);

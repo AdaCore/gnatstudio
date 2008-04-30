@@ -65,7 +65,7 @@ with GUI_Utils;               use GUI_Utils;
 with Pango.Enums;             use Pango.Enums;
 with System;                  use System;
 with Traces;                  use Traces;
-with VFS;                     use VFS;
+with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 
 package body KeyManager_Module.GUI is
    use Key_Htable;
@@ -521,7 +521,7 @@ package body KeyManager_Module.GUI is
             Insert_With_Tags
               (Ed.Help, Text_Iter, ASCII.LF & (-"Declared in: "),
                Bold);
-            if Action.Defined_In /= VFS.No_File then
+            if Action.Defined_In /= GNATCOLL.VFS.No_File then
                Insert (Ed.Help, Text_Iter, Full_Name (Action.Defined_In).all);
 
                Comp_Iter := Start (Action.Command);

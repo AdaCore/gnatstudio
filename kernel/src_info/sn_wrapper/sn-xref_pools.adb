@@ -23,7 +23,7 @@ with Ada.Exceptions; use Ada.Exceptions;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with String_Utils; use String_Utils;
-with VFS; use VFS;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 package body SN.Xref_Pools is
 
@@ -32,7 +32,7 @@ package body SN.Xref_Pools is
    --  GNAT.Directory_Operations)
 
    function Generate_Filename
-     (Source_Filename : VFS.Virtual_File;
+     (Source_Filename : GNATCOLL.VFS.Virtual_File;
       Directory       : String;
       N               : Integer) return Virtual_File;
    --  Generate xref file name based on specified source file name and counter
@@ -115,7 +115,7 @@ package body SN.Xref_Pools is
    -- Load --
    ----------
 
-   procedure Load (Pool : in out Xref_Pool; Filename : VFS.Virtual_File) is
+   procedure Load (Pool : in out Xref_Pool; Filename : Virtual_File) is
    begin
       Init (Pool);
 
@@ -186,7 +186,7 @@ package body SN.Xref_Pools is
    -- Save --
    ----------
 
-   procedure Save (Pool : Xref_Pool; Filename : VFS.Virtual_File) is
+   procedure Save (Pool : Xref_Pool; Filename : GNATCOLL.VFS.Virtual_File) is
       FD : File_Type;
       Iter : STable.Iterator;
       E  : Xref_Elmt_Ptr;
@@ -249,7 +249,7 @@ package body SN.Xref_Pools is
    -----------------------
 
    function Generate_Filename
-     (Source_Filename : VFS.Virtual_File;
+     (Source_Filename : GNATCOLL.VFS.Virtual_File;
       Directory       : String;
       N               : Integer) return Virtual_File
    is
@@ -268,9 +268,9 @@ package body SN.Xref_Pools is
    -----------------------
 
    function Xref_Filename_For
-     (Source_Filename : VFS.Virtual_File;
+     (Source_Filename : GNATCOLL.VFS.Virtual_File;
       Directory       : String;
-      Pool            : Xref_Pool) return VFS.Virtual_File
+      Pool            : Xref_Pool) return GNATCOLL.VFS.Virtual_File
    is
       Data   : Xref_Elmt_Ptr;
       N      : Integer := 0;
@@ -313,7 +313,7 @@ package body SN.Xref_Pools is
                   Raise_Exception
                     (Xref_File_Error'Identity,
                      "unable to create a new file: "
-                     & VFS.Full_Name (Full_Name).all);
+                     & GNATCOLL.VFS.Full_Name (Full_Name).all);
                end if;
 
                Close (FD);
@@ -336,7 +336,7 @@ package body SN.Xref_Pools is
    -------------------
 
    function Is_Xref_Valid
-     (Source_Filename : VFS.Virtual_File;
+     (Source_Filename : GNATCOLL.VFS.Virtual_File;
       Pool            : Xref_Pool) return Boolean
    is
       Full      : aliased String := Full_Name (Source_Filename).all;
@@ -351,7 +351,7 @@ package body SN.Xref_Pools is
    ---------------
 
    procedure Set_Valid
-     (Source_Filename : VFS.Virtual_File;
+     (Source_Filename : GNATCOLL.VFS.Virtual_File;
       Valid           : Boolean;
       Pool            : Xref_Pool)
    is

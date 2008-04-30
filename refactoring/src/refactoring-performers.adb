@@ -30,7 +30,7 @@ with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with GPS.Kernel;              use GPS.Kernel;
 with String_Utils;            use String_Utils;
 with Traces;                  use Traces;
-with VFS;                     use VFS;
+with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 
 package body Refactoring.Performers is
    Me : constant Debug_Handle := Create ("Refactoring");
@@ -291,7 +291,7 @@ package body Refactoring.Performers is
 
    function Get_Text
      (Kernel    : access Kernel_Handle_Record'Class;
-      From_File : VFS.Virtual_File;
+      From_File : GNATCOLL.VFS.Virtual_File;
       Line      : Integer;
       Column    : Visible_Column_Type;
       Length    : Integer) return String
@@ -315,7 +315,7 @@ package body Refactoring.Performers is
 
    function Insert_Text
      (Kernel            : access Kernel_Handle_Record'Class;
-      In_File           : VFS.Virtual_File;
+      In_File           : GNATCOLL.VFS.Virtual_File;
       Line              : Integer;
       Column            : Visible_Column_Type := 1;
       Text              : String;
@@ -372,7 +372,7 @@ package body Refactoring.Performers is
 
    procedure Delete_Text
      (Kernel     : access Kernel_Handle_Record'Class;
-      In_File    : VFS.Virtual_File;
+      In_File    : GNATCOLL.VFS.Virtual_File;
       Line_Start : Integer;
       Line_End   : Integer)
    is
@@ -395,7 +395,7 @@ package body Refactoring.Performers is
 
    procedure Start_Undo_Group
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File) is
+      File   : GNATCOLL.VFS.Virtual_File) is
    begin
       Execute_GPS_Shell_Command
         (Kernel,
@@ -409,7 +409,7 @@ package body Refactoring.Performers is
 
    procedure Finish_Undo_Group
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File) is
+      File   : GNATCOLL.VFS.Virtual_File) is
    begin
       Execute_GPS_Shell_Command
         (Kernel,

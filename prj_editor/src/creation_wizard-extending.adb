@@ -41,7 +41,7 @@ with GUI_Utils;                use GUI_Utils;
 with Projects;                 use Projects;
 with Projects.Editor;          use Projects.Editor;
 with Projects.Registry;        use Projects.Registry;
-with VFS;                      use VFS;
+with GNATCOLL.VFS;                      use GNATCOLL.VFS;
 with Wizards;                  use Wizards;
 
 package body Creation_Wizard.Extending is
@@ -81,7 +81,7 @@ package body Creation_Wizard.Extending is
    procedure Add_Source_Files
      (Kernel       : access Kernel_Handle_Record'Class;
       Root_Project : Project_Type;
-      Files        : VFS.File_Array;
+      Files        : GNATCOLL.VFS.File_Array;
       File_Project : Project_Type;
       Copy_Files   : Boolean;
       Recompute    : Boolean);
@@ -121,7 +121,7 @@ package body Creation_Wizard.Extending is
       FIter    : Gtk_Tree_Iter;
       Project  : Project_Type;
       Model    : Gtk_Tree_Store;
-      File     : VFS.Virtual_File;
+      File     : GNATCOLL.VFS.Virtual_File;
       File_Index : Positive;
    begin
       Gtk_New_Vbox (Box, Homogeneous => False);
@@ -173,7 +173,7 @@ package body Creation_Wizard.Extending is
          File_Index := 1;
          loop
             File := Get_Source_File (Project, File_Index);
-            exit when File = VFS.No_File;
+            exit when File = GNATCOLL.VFS.No_File;
 
             Append (Model, FIter, TIter);
             Set (Model, FIter, 0, False);
@@ -203,7 +203,7 @@ package body Creation_Wizard.Extending is
       Parent   : Project_Type := Get_Project (Kernel);
       PIter, FIter : Gtk_Tree_Iter;
       Model    : Gtk_Tree_Store;
-      File     : VFS.Virtual_File;
+      File     : GNATCOLL.VFS.Virtual_File;
       Prj      : Project_Type;
       P        : Integer;
       Projects : Project_Type_Array (1 .. Page.Projects_Count) :=
@@ -211,14 +211,14 @@ package body Creation_Wizard.Extending is
       Files    : array (1 .. Page.Projects_Count) of File_Array_Access;
       Count    : array (1 .. Page.Projects_Count) of Natural := (others => 0);
 
-      procedure Add_File (Prj : Project_Type; File : VFS.Virtual_File);
+      procedure Add_File (Prj : Project_Type; File : Virtual_File);
       --  Add a file into the list of files that are locally modified
 
       --------------
       -- Add_File --
       --------------
 
-      procedure Add_File (Prj : Project_Type; File : VFS.Virtual_File) is
+      procedure Add_File (Prj : Project_Type; File : Virtual_File) is
          P   : Integer;
       begin
          P := Projects'First;
@@ -275,7 +275,7 @@ package body Creation_Wizard.Extending is
             P := 1;
             loop
                File := Get_Source_File (Prj, P);
-               exit when File = VFS.No_File;
+               exit when File = GNATCOLL.VFS.No_File;
                Add_File (Prj, File);
                P := P + 1;
             end loop;
@@ -320,7 +320,7 @@ package body Creation_Wizard.Extending is
    procedure Add_Source_Files
      (Kernel       : access Kernel_Handle_Record'Class;
       Root_Project : Project_Type;
-      Files        : VFS.File_Array;
+      Files        : GNATCOLL.VFS.File_Array;
       File_Project : Project_Type;
       Copy_Files   : Boolean;
       Recompute    : Boolean)
@@ -404,7 +404,7 @@ package body Creation_Wizard.Extending is
    is
       pragma Unreferenced (Command);
       Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
-      File     : constant VFS.Virtual_File :=
+      File     : constant GNATCOLL.VFS.Virtual_File :=
         File_Information (Context.Context);
       Project  : constant Project_Type :=
         Get_Project_From_File (Get_Registry (Kernel).all, File);
@@ -439,14 +439,14 @@ package body Creation_Wizard.Extending is
    is
       pragma Unreferenced (Filter);
       Kernel  : constant Kernel_Handle := Get_Kernel (Context);
-      File    : VFS.Virtual_File;
+      File    : GNATCOLL.VFS.Virtual_File;
       Project : Project_Type;
    begin
       --  If the current root project is an extending all project
 
       if Parent_Project (Get_Project (Kernel)) /= No_Project then
          File := File_Information (Context);
-         if File /= VFS.No_File then
+         if File /= GNATCOLL.VFS.No_File then
             Project := Get_Project_From_File
               (Get_Registry (Kernel).all, File);
 

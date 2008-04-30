@@ -150,7 +150,7 @@ package body GPS.Kernel.Standard_Hooks is
          Every_Line        => Every_Line,
          Normalize         => Normalize);
    begin
-      if File /= VFS.No_File then
+      if File /= GNATCOLL.VFS.No_File then
          if not Run_Hook_Until_Success
            (Kernel, File_Line_Action_Hook, Data'Unchecked_Access,
             Set_Busy => False)
@@ -161,7 +161,7 @@ package body GPS.Kernel.Standard_Hooks is
 
       else
          declare
-            Files : constant VFS.File_Array := Open_Files (Kernel);
+            Files : constant GNATCOLL.VFS.File_Array := Open_Files (Kernel);
          begin
             for Node in Files'Range loop
                Data.File := Files (Node);
@@ -328,7 +328,7 @@ package body GPS.Kernel.Standard_Hooks is
 
    procedure Open_File_Editor
      (Kernel            : access Kernel_Handle_Record'Class;
-      Filename          : VFS.Virtual_File;
+      Filename          : GNATCOLL.VFS.Virtual_File;
       Line              : Natural := 1;
       Column            : Basic_Types.Visible_Column_Type := 1;
       Column_End        : Basic_Types.Visible_Column_Type := 0;
@@ -426,8 +426,8 @@ package body GPS.Kernel.Standard_Hooks is
 
    procedure Display_Differences
      (Kernel    : access Kernel_Handle_Record'Class;
-      Orig_File : Virtual_File := VFS.No_File;
-      New_File  : Virtual_File := VFS.No_File;
+      Orig_File : Virtual_File := GNATCOLL.VFS.No_File;
+      New_File  : Virtual_File := GNATCOLL.VFS.No_File;
       Diff_File : Virtual_File)
    is
       Data : aliased Diff_Hooks_Args :=
@@ -446,7 +446,7 @@ package body GPS.Kernel.Standard_Hooks is
 
    procedure File_Status_Changed
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Status : File_Status)
    is
       Data : aliased File_Status_Changed_Hooks_Args :=

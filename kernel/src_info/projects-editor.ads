@@ -68,7 +68,7 @@ package Projects.Editor is
    function Create_Project
      (Registry : Projects.Registry.Project_Registry'Class;
       Name     : String;
-      Path     : VFS.Virtual_File) return Project_Type;
+      Path     : GNATCOLL.VFS.Virtual_File) return Project_Type;
    --  Create a new empty project and its declaration.
    --  The project is also registered, so that it can be retrieved from one of
    --  its view.
@@ -77,7 +77,7 @@ package Projects.Editor is
      (Root_Project  : Project_Type;
       Project       : Project_Type;
       New_Name      : String;
-      New_Path      : VFS.Virtual_File;
+      New_Path      : GNATCOLL.VFS.Virtual_File;
       Report_Errors : Output.Output_Proc := null);
    --  Rename Project to New_Name. All the nodes in the project tree starting
    --  at Root_Project, that reference Project, are also updated accordingly.
@@ -102,7 +102,7 @@ package Projects.Editor is
    function Add_Imported_Project
      (Root_Project              : Project_Type;
       Project                   : Project_Type;
-      Imported_Project_Location : VFS.Virtual_File;
+      Imported_Project_Location : GNATCOLL.VFS.Virtual_File;
       Report_Errors             : Output.Output_Proc := null;
       Use_Relative_Path         : Boolean;
       Limited_With              : Boolean := False)

@@ -23,7 +23,7 @@ with GNAT.OS_Lib;
 with Prj.Tree;
 with String_List_Utils;
 with Namet;
-with VFS;
+with GNATCOLL.VFS;
 with Glib;
 
 package Projects is
@@ -90,7 +90,7 @@ package Projects is
      (Base_Name       : Glib.UTF8_String;
       Project         : Projects.Project_Type;
       Use_Source_Path : Boolean := True;
-      Use_Object_Path : Boolean := True) return VFS.Virtual_File;
+      Use_Object_Path : Boolean := True) return GNATCOLL.VFS.Virtual_File;
    --  Create a new instance of the file.
 
    -------------------
@@ -99,7 +99,7 @@ package Projects is
 
    function Save_Project
      (Project      : Project_Type;
-      Path         : VFS.Virtual_File := VFS.No_File;
+      Path         : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Force        : Boolean := False;
       Report_Error : Error_Report := null) return Boolean;
    --  Save the project to the corresponding file. If path is equals to
@@ -125,13 +125,13 @@ package Projects is
 
    function Project_Path
      (Project : Project_Type;
-      Host    : String := "") return VFS.Virtual_File;
+      Host    : String := "") return GNATCOLL.VFS.Virtual_File;
    --  Return the full path name to the project file
    --  If Host is given, the path will be the one on the specified host.
 
    function Project_Directory
      (Project : Project_Type;
-      Host    : String := "") return VFS.Virtual_File;
+      Host    : String := "") return GNATCOLL.VFS.Virtual_File;
    --  Return the directory that contains the project file.
    --  No_File is returned if the project is No_Project.
 
@@ -204,7 +204,7 @@ package Projects is
 
    function Get_Source_Files
      (Project   : Project_Type;
-      Recursive : Boolean) return VFS.File_Array_Access;
+      Recursive : Boolean) return GNATCOLL.VFS.File_Array_Access;
    --  Return the list of source files belonging to the project.
    --  If Recursive is False, only the direct sources of the project are
    --  returned. Otherwise, the sources from imported projects are returned as
@@ -224,7 +224,8 @@ package Projects is
    --  Return the number of direct source files for Project
 
    function Get_Source_File
-     (Project : Project_Type; Index : Positive) return VFS.Virtual_File;
+     (Project : Project_Type; Index : Positive)
+      return GNATCOLL.VFS.Virtual_File;
    --  Return the Index-th source file in the project, or VFS.No_File if there
    --  is no more direct source.
 
@@ -238,14 +239,16 @@ package Projects is
    --    - Unit_Body represents package/subprogram/generic bodies and subunits.
 
    function Get_Unit_Part_From_Filename
-     (Project : Project_Type; Filename : VFS.Virtual_File) return Unit_Part;
+     (Project : Project_Type; Filename : GNATCOLL.VFS.Virtual_File)
+      return Unit_Part;
    --  Return the type of File.
    --  This function doesn't assume any knowledge of the language, and will
    --  check in all the languages known to the project.
    --  Unit_Separate is returned if the file is neither a spec nor a body.
 
    function Get_Unit_Name_From_Filename
-     (Project : Project_Type; Filename : VFS.Virtual_File) return String;
+     (Project : Project_Type; Filename : GNATCOLL.VFS.Virtual_File)
+      return String;
    --  Return the unit name associated with a given file name, or the empty
    --  string if the name of the unit couldn't be computed.
 
@@ -268,7 +271,7 @@ package Projects is
    --  simply be Filename'Last.
 
    function Other_File_Base_Name
-     (Project : Project_Type; Source_Filename : VFS.Virtual_File)
+     (Project : Project_Type; Source_Filename : GNATCOLL.VFS.Virtual_File)
       return String;
    --  Return the base name of the spec or body for Source_Filename.
    --  If the other file is not found in the project, then the other file base
@@ -416,7 +419,7 @@ package Projects is
    procedure Get_Switches
      (Project          : Project_Type;
       In_Pkg           : String;
-      File             : VFS.Virtual_File;
+      File             : GNATCOLL.VFS.Virtual_File;
       Language         : String;
       Value            : out Prj.Variable_Value;
       Is_Default_Value : out Boolean);
@@ -651,7 +654,7 @@ private
 
    procedure Set_Source_Files
      (Project      : Project_Type;
-      Source_Files : VFS.File_Array_Access);
+      Source_Files : GNATCOLL.VFS.File_Array_Access);
    --  Set the source file cache of the project
 
    procedure Create_From_Node

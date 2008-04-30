@@ -30,12 +30,12 @@ package body Language_Utils is
 
    procedure Parse_File_Constructs
      (Lang      : access Language_Root'Class;
-      File_Name : VFS.Virtual_File;
+      File_Name : GNATCOLL.VFS.Virtual_File;
       Result    : out Construct_List)
    is
       Buffer : GNAT.Strings.String_Access;
    begin
-      Buffer := VFS.Read_File (File_Name);
+      Buffer := GNATCOLL.VFS.Read_File (File_Name);
 
       if Buffer /= null then
          --  ??? The call to Locale_To_UTF8 is not optimal

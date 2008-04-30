@@ -56,7 +56,7 @@ with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
 with System;                   use System;
 with GNAT.Strings;             use GNAT.Strings;
-with VFS;
+with GNATCOLL.VFS;
 
 package body Theme_Manager_Module is
 
@@ -118,7 +118,7 @@ package body Theme_Manager_Module is
    procedure Destroy (Module : in out Theme_Manager_Module_Record);
    procedure Customize
      (Module : access Theme_Manager_Module_Record;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level);
    --  See inherited documentation
@@ -149,7 +149,7 @@ package body Theme_Manager_Module is
 
    procedure Load_XML_Theme
      (Kernel : access Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       XML    : Node_Ptr);
    --  Load an XML node as a customization file
 
@@ -159,7 +159,7 @@ package body Theme_Manager_Module is
 
    procedure Load_XML_Theme
      (Kernel : access Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       XML    : Node_Ptr) is
    begin
       Execute_Customization_String
@@ -239,7 +239,7 @@ package body Theme_Manager_Module is
 
    procedure Customize
      (Module : access Theme_Manager_Module_Record;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level)
    is
@@ -401,7 +401,7 @@ package body Theme_Manager_Module is
                   if Themes.Name.all = Name then
                      Trace (Me, "Loading theme " & Name);
                      Load_XML_Theme
-                       (Ed.Kernel, VFS.No_File, Themes.Xml.Child);
+                       (Ed.Kernel, GNATCOLL.VFS.No_File, Themes.Xml.Child);
                      exit;
                   end if;
 

@@ -46,9 +46,9 @@ package body Coverage_GUI is
      (Kernel   : Kernel_Handle;
       Prj_Node : Project_Access)
    is
-      Src_Files : VFS.File_Array_Access;
-      Src_File  : VFS.Virtual_File;
-      Cov_File  : VFS.Virtual_File;
+      Src_Files : GNATCOLL.VFS.File_Array_Access;
+      Src_File  : GNATCOLL.VFS.Virtual_File;
+      Cov_File  : GNATCOLL.VFS.Virtual_File;
    begin
       --  get every source files of the project
       --  check if they are associated with gcov info
@@ -80,8 +80,8 @@ package body Coverage_GUI is
 
    procedure Add_Gcov_File_Info
      (Kernel       : Kernel_Handle;
-      Src_File     : VFS.Virtual_File;
-      Cov_File     : VFS.Virtual_File;
+      Src_File     : GNATCOLL.VFS.Virtual_File;
+      Cov_File     : GNATCOLL.VFS.Virtual_File;
       Project_Node : Project_Access)
    is
       use Language.Tree.Database;
@@ -436,10 +436,10 @@ package body Coverage_GUI is
 
    function Find_Gcov_File
      (Kernel  : Kernel_Handle;
-      Source  : VFS.Virtual_File) return VFS.Virtual_File
+      Source  : GNATCOLL.VFS.Virtual_File) return GNATCOLL.VFS.Virtual_File
    is
       Gcov_Root : String_Access;
-      Result    : VFS.Virtual_File;
+      Result    : GNATCOLL.VFS.Virtual_File;
    begin
       Gcov_Root := Getenv ("GCOV_ROOT");
 

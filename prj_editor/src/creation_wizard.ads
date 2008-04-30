@@ -25,7 +25,7 @@ with GPS.Kernel;
 with Projects;
 with Gtk.Widget;
 with Gtk.Handlers;
-with VFS;
+with GNATCOLL.VFS;
 
 package Creation_Wizard is
 
@@ -75,7 +75,7 @@ package Creation_Wizard is
    --  Initialize a new project wizard.
 
    function Run
-     (Wiz : access Project_Wizard_Record) return VFS.Virtual_File;
+     (Wiz : access Project_Wizard_Record) return GNATCOLL.VFS.Virtual_File;
    --  Display the dialog, let the user interact with it, and return the name
    --  of the project that was created (and not loaded).
    --  The empty string is returned if the user pressed Cancel.

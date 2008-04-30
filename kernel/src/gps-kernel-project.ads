@@ -46,7 +46,7 @@
 
 with GNAT.OS_Lib;
 with Projects.Registry;
-with VFS;
+with GNATCOLL.VFS;
 
 package GPS.Kernel.Project is
 
@@ -56,7 +56,7 @@ package GPS.Kernel.Project is
 
    procedure Load_Project
      (Kernel                   : access Kernel_Handle_Record'Class;
-      Project                  : VFS.Virtual_File;
+      Project                  : GNATCOLL.VFS.Virtual_File;
       No_Save                  : Boolean := False;
       Clear                    : Boolean := True;
       Is_Default               : Boolean := False;
@@ -76,7 +76,7 @@ package GPS.Kernel.Project is
 
    procedure Load_Default_Project
      (Kernel               : access Kernel_Handle_Record'Class;
-      Directory            : VFS.Virtual_File;
+      Directory            : GNATCOLL.VFS.Virtual_File;
       Load_Default_Desktop : Boolean := True;
       Clear                : Boolean := True);
    --  Create and load a default project in Directory.
@@ -164,7 +164,7 @@ package GPS.Kernel.Project is
    function Get_Switches
      (Project           : Projects.Project_Type;
       Tool              : Tool_Properties_Record;
-      File              : VFS.Virtual_File := VFS.No_File;
+      File              : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Use_Initial_Value : Boolean := False) return GNAT.OS_Lib.Argument_List;
    --  Same as Projects.Get_Switches.
    --  If the package or its attribute isn't defined, or Project is No_Project,

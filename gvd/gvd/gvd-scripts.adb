@@ -30,7 +30,7 @@ with GPS.Intl;                use GPS.Intl;
 with GVD.Process;             use GVD.Process;
 with GVD.Types;
 with GVD_Module;              use GVD_Module;
-with VFS;                     use VFS;
+with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 
 package body GVD.Scripts is
 

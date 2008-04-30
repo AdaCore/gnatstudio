@@ -172,7 +172,7 @@ package body Src_Editor_Module.Shell is
      (Data : in out Callback_Data'Class; Command : String);
    procedure Common_Search_Command_Handler
      (Data  : in out Callback_Data'Class;
-      Files : VFS.File_Array_Access);
+      Files : GNATCOLL.VFS.File_Array_Access);
    --  Interactive command handler for the source editor module (Search part)
 
    procedure On_Raise_Child
@@ -963,7 +963,7 @@ package body Src_Editor_Module.Shell is
             Column := Visible_Column_Type (Nth_Arg (Data, 3, Default => 1));
             Length := Nth_Arg (Data, 4, Default => 0);
 
-            if File /= VFS.No_File then
+            if File /= GNATCOLL.VFS.No_File then
                if Command = "edit" then
                   Force := Nth_Arg (Data, 5, Default => False);
                   Position := Nth_Arg
@@ -1566,7 +1566,7 @@ package body Src_Editor_Module.Shell is
             File    : constant Virtual_File :=
               Create (Nth_Arg (Data, 1), Kernel);
             Child   : constant MDI_Child := Find_Editor (Kernel, File);
-            To_File : Virtual_File := VFS.No_File;
+            To_File : Virtual_File := GNATCOLL.VFS.No_File;
             Result  : Boolean;
          begin
             if Number_Of_Arguments (Data) >= 2 then
@@ -1574,7 +1574,7 @@ package body Src_Editor_Module.Shell is
             end if;
 
             if Child /= null then
-               if To_File /= VFS.No_File then
+               if To_File /= GNATCOLL.VFS.No_File then
                   Save_To_File
                     (Get_Buffer (Source_Editor_Box (Get_Widget (Child))),
                      To_File,
@@ -1885,12 +1885,12 @@ package body Src_Editor_Module.Shell is
          Force := Nth_Arg (Data, 2, Default => False);
 
          if File_Inst = No_Class_Instance then
-            File := VFS.No_File;
+            File := GNATCOLL.VFS.No_File;
          else
             File := Get_Data (File_Inst);
          end if;
 
-         if File /= VFS.No_File then
+         if File /= GNATCOLL.VFS.No_File then
             Child := Find_Editor (Kernel, File);
          else
             Child := Find_Current_Editor (Kernel);
@@ -1907,7 +1907,7 @@ package body Src_Editor_Module.Shell is
          else
             Box := Get_Source_Box_From_MDI (Child);
 
-            if File /= VFS.No_File and Force then
+            if File /= GNATCOLL.VFS.No_File and Force then
                Check_Timestamp_And_Reload (Box, False, True);
             end if;
          end if;
@@ -1969,9 +1969,9 @@ package body Src_Editor_Module.Shell is
          Get_Buffer (Buffer, Data, 1);
          if Buffer /= null then
             declare
-               File : VFS.Virtual_File := Get_Filename (Buffer);
+               File : GNATCOLL.VFS.Virtual_File := Get_Filename (Buffer);
             begin
-               if File = VFS.No_File then
+               if File = GNATCOLL.VFS.No_File then
                   File := Get_File_Identifier (Buffer);
                end if;
 

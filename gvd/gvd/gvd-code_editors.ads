@@ -41,7 +41,7 @@ with Gtkada.Types;
 with GVD.Source_Editor;
 with GVD.Types;
 with Pango.Font;
-with VFS;
+with GNATCOLL.VFS;
 
 package GVD.Code_Editors is
 
@@ -67,7 +67,7 @@ package GVD.Code_Editors is
 
    procedure Load_File
      (Editor      : access Code_Editor_Record;
-      File_Name   : VFS.Virtual_File);
+      File_Name   : GNATCOLL.VFS.Virtual_File);
    --  Load and append a file in the editor.
    --  File_Name becomes the current file for the
    --  debugger (ie the one that contains the current execution line).
@@ -129,7 +129,7 @@ package GVD.Code_Editors is
    --  Return the widget used to display the source code
 
    function Get_Current_File
-     (Editor : access Code_Editor_Record) return VFS.Virtual_File;
+     (Editor : access Code_Editor_Record) return GNATCOLL.VFS.Virtual_File;
    --  Return the name of the currently edited file.
    --  "" is returned if there is no current file.
 

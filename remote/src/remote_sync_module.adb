@@ -49,7 +49,7 @@ with Filesystems;         use Filesystems;
 with Password_Manager;    use Password_Manager;
 with String_Utils;        use String_Utils;
 with Traces;              use Traces;
-with VFS;                 use VFS;
+with GNATCOLL.VFS;                 use GNATCOLL.VFS;
 
 with Machine_Descriptors; use Machine_Descriptors;
 
@@ -71,7 +71,7 @@ package body Remote_Sync_Module is
 
    procedure Customize
      (Module : access Rsync_Module_Record;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level);
    --  See doc for inherited subprogram
@@ -138,7 +138,7 @@ package body Remote_Sync_Module is
 
    procedure Customize
      (Module : access Rsync_Module_Record;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level)
    is
@@ -315,11 +315,10 @@ package body Remote_Sync_Module is
       if Rsync_Data.Src_Name = "" then
          --  Local src machine, remote dest machine
          Machine   := Get_Machine_Descriptor (Rsync_Data.Dest_Name);
-         Src_FS    := new Filesystem_Record'Class'(Get_Local_Filesystem);
+         Src_FS    := Get_Local_Filesystem;
          Src_Path  := new String'
            (To_Unix (Src_FS.all, Rsync_Data.Src_Path, True));
-         Dest_FS   := new Filesystem_Record'Class'
-           (Get_Filesystem (Rsync_Data.Dest_Name));
+         Dest_FS   := Get_Filesystem (Rsync_Data.Dest_Name);
 
          if Machine.User_Name.all /= "" then
             Dest_Path := new String'
@@ -336,8 +335,7 @@ package body Remote_Sync_Module is
       else
          --  Remote src machine, local dest machine
          Machine := Get_Machine_Descriptor (Rsync_Data.Src_Name);
-         Src_FS  := new Filesystem_Record'Class'
-           (Get_Filesystem (Rsync_Data.Src_Name));
+         Src_FS  := Get_Filesystem (Rsync_Data.Src_Name);
 
          if Machine.User_Name.all /= "" then
             Src_Path  := new String'
@@ -351,7 +349,7 @@ package body Remote_Sync_Module is
                To_Unix (Src_FS.all, Rsync_Data.Src_Path, True));
          end if;
 
-         Dest_FS   := new Filesystem_Record'Class'(Get_Local_Filesystem);
+         Dest_FS   := Get_Local_Filesystem;
          Dest_Path := new String'
            (To_Unix (Dest_FS.all, Rsync_Data.Dest_Path, True));
       end if;

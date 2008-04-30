@@ -3,7 +3,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Projects.Editor;           use Projects, Projects.Editor;
 with Projects.Registry;         use Projects.Registry;
 with Adp_Converter;             use Adp_Converter;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 package body Convert.Adp is
 

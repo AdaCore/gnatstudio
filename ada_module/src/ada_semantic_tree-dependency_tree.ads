@@ -28,7 +28,7 @@ with GNAT.Strings; use GNAT.Strings;
 
 with Language.Tree;          use Language.Tree;
 with Language.Tree.Database; use Language.Tree.Database;
-with VFS;                    use VFS;
+with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 
 private with Ada.Unchecked_Deallocation;
 private with Ada_Semantic_Tree.Units;

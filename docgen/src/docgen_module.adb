@@ -55,7 +55,7 @@ with Projects;                  use Projects;
 with Projects.Registry;         use Projects.Registry;
 with Templates_Parser;          use Templates_Parser;
 with Traces;                    use Traces;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 package body Docgen_Module is
 
@@ -102,7 +102,7 @@ package body Docgen_Module is
 
    procedure Customize
      (Module : access Docgen_Module_Record;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Node   : Glib.Xml_Int.Node_Ptr;
       Level  : Customization_Level);
    --  See inherited documentation
@@ -132,7 +132,7 @@ package body Docgen_Module is
 
    procedure Array2List
      (Kernel        : Kernel_Handle;
-      Tab           : VFS.File_Array_Access;
+      Tab           : GNATCOLL.VFS.File_Array_Access;
       List          : in out Type_Source_File_Table.HTable;
       Doc_Suffix    : String;
       Nb_Files      : out Natural);
@@ -269,7 +269,7 @@ package body Docgen_Module is
 
    procedure Array2List
      (Kernel        : Kernel_Handle;
-      Tab           : VFS.File_Array_Access;
+      Tab           : GNATCOLL.VFS.File_Array_Access;
       List          : in out Type_Source_File_Table.HTable;
       Doc_Suffix    : String;
       Nb_Files      : out Natural)
@@ -380,7 +380,7 @@ package body Docgen_Module is
       if Has_File_Information (Context) then
          File := File_Information (Context);
 
-         if File /= VFS.No_File then
+         if File /= GNATCOLL.VFS.No_File then
             Generate_File (Kernel, File);
          end if;
       end if;
@@ -421,7 +421,7 @@ package body Docgen_Module is
    is
       B                : constant Docgen.Backend.Backend_Handle :=
         Get_Backend (Kernel);
-      Sources          : VFS.File_Array_Access;
+      Sources          : GNATCOLL.VFS.File_Array_Access;
       Source_File_List : Type_Source_File_Table.HTable;
       Nb_Files         : Natural;
       P                : Project_Type := Project;
@@ -491,7 +491,7 @@ package body Docgen_Module is
            Pattern_Name      => -"All files;Ada files;C/C++ files",
            History           => Get_History (Kernel));
    begin
-      if File /= VFS.No_File then
+      if File /= GNATCOLL.VFS.No_File then
          Generate_File (Kernel, File);
       end if;
    end Choose_Menu_File;
@@ -502,7 +502,7 @@ package body Docgen_Module is
 
    procedure Customize
      (Module : access Docgen_Module_Record;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Node   : Glib.Xml_Int.Node_Ptr;
       Level  : Customization_Level)
    is

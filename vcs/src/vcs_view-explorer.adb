@@ -36,6 +36,7 @@ with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
+with Filesystems;               use Filesystems;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
@@ -441,7 +442,7 @@ package body VCS_View.Explorer is
    begin
       Displayed := False;
 
-      if not VFS.Is_Directory (File)
+      if not GNATCOLL.VFS.Is_Directory (File)
         and then not Ignore_File (VCS_Identifier, File)
       then
          Line := Get_Cache (Get_Status_Cache, File);
@@ -450,7 +451,8 @@ package body VCS_View.Explorer is
            or else Override_Cache
            or else Line.Status.Status = Unknown
          then
-            Log := Get_Log_From_File (Kernel, File, False) /= VFS.No_File;
+            Log :=
+              Get_Log_From_File (Kernel, File, False) /= GNATCOLL.VFS.No_File;
 
             Line := (Copy_File_Status (File_Status), Log);
             Set_Cache (Get_Status_Cache, File, Line);
@@ -828,7 +830,7 @@ package body VCS_View.Explorer is
 
             Set_File_Information
               (Context,
-               Files   => VFS.Empty_File_Array,
+               Files   => GNATCOLL.VFS.Empty_File_Array,
                Project => Project);
 
             Root_Node := True;
@@ -847,7 +849,7 @@ package body VCS_View.Explorer is
 
             Set_File_Information
               (Context,
-               Files   => VFS.Create (Files),
+               Files   => Create (Files),
                Project => Project);
 
             String_List.Free (Files);

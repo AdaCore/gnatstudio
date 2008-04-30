@@ -28,7 +28,7 @@ with GNAT.Strings;
 with List_Utils;                use List_Utils;
 with Entities;                  use Entities;
 with GPS.Kernel;                use GPS.Kernel;
-with VFS;
+with GNATCOLL.VFS;
 with Generic_List;
 with HTables;
 
@@ -245,7 +245,7 @@ package Docgen is
    --  Return the number of point in the given string
 
    function Get_Doc_File_Name
-     (Source_Filename : VFS.Virtual_File;
+     (Source_Filename : GNATCOLL.VFS.Virtual_File;
       Doc_Suffix      : String) return String;
    --  Return a string with the base name for the new doc file:
 
@@ -256,7 +256,7 @@ package Docgen is
 
    function Is_Spec_File
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File) return Boolean;
+      File   : GNATCOLL.VFS.Virtual_File) return Boolean;
    --  Return whether the File is a Spec file
 
 end Docgen;

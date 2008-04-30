@@ -51,7 +51,7 @@ package Docgen.Backend is
      (B              : access Backend;
       Kernel         : access Kernel_Handle_Record'Class;
       Result         : in out Unbounded_String;
-      Header_File    : VFS.Virtual_File;
+      Header_File    : GNATCOLL.VFS.Virtual_File;
       Header_Package : String;
       Header_Line    : Natural;
       Header_Link    : Boolean) is abstract;
@@ -86,7 +86,7 @@ package Docgen.Backend is
       Options          : All_Options;
       Level            : Natural;
       With_Header      : String;
-      With_File        : VFS.Virtual_File;
+      With_File        : GNATCOLL.VFS.Virtual_File;
       With_Header_Line : Natural) is abstract;
    --  With clauses for imported packages
 
@@ -287,7 +287,7 @@ package Docgen.Backend is
       Source_File_List : Type_Source_File_Table.HTable;
       Options          : All_Options;
       Level            : Natural;
-      Body_File        : VFS.Virtual_File;
+      Body_File        : GNATCOLL.VFS.Virtual_File;
       Body_Text        : String) is abstract;
    --  Process a whole body
 
@@ -347,7 +347,7 @@ package Docgen.Backend is
       Text             : String;
       Sloc_Start  : Source_Location;
       Sloc_End    : Source_Location;
-      File_Name        : VFS.Virtual_File;
+      File_Name        : GNATCOLL.VFS.Virtual_File;
       Entity_Line      : Natural;
       Line_In_Body     : Natural;
       Source_File_List : Type_Source_File_Table.HTable;
@@ -370,7 +370,7 @@ package Docgen.Backend is
       Result           : in out Unbounded_String;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Text             : String;
-      File_Name        : VFS.Virtual_File;
+      File_Name        : GNATCOLL.VFS.Virtual_File;
       Entity_Line      : Natural;
       Line_In_Body     : Natural;
       Is_Body          : Boolean;
@@ -407,7 +407,7 @@ package Docgen.Backend is
       Text             : String;
       Sloc_Start       : Source_Location;
       Sloc_End         : Source_Location;
-      File_Name        : VFS.Virtual_File;
+      File_Name        : GNATCOLL.VFS.Virtual_File;
       Entity_Line      : Natural;
       Line_In_Body     : Natural;
       Source_File_List : Type_Source_File_Table.HTable;
@@ -463,7 +463,7 @@ package Docgen.Backend is
       Text             : String;
       Sloc_Start       : Source_Location;
       Sloc_End         : Source_Location;
-      File_Name        : VFS.Virtual_File;
+      File_Name        : GNATCOLL.VFS.Virtual_File;
       Entity_Line      : Natural;
       Line_In_Body     : Natural;
       Source_File_List : Type_Source_File_Table.HTable;

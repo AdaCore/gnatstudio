@@ -54,7 +54,7 @@ package body Vdiff_Utils is
 
    type Vdiff_Info is new GObject_Record with record
       Kernel : Kernel_Handle;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
    end record;
    type Vdiff_Info_Access is access all Vdiff_Info'Class;
 
@@ -69,13 +69,13 @@ package body Vdiff_Utils is
    procedure Gtk_New
      (Vdiff  : out Vdiff_Info_Access;
       Kernel : Kernel_Handle;
-      File   : VFS.Virtual_File);
+      File   : GNATCOLL.VFS.Virtual_File);
    --  Create a new Vdiff_Info
 
    procedure Initialize
      (Vdiff  : access Vdiff_Info'Class;
       Kernel : Kernel_Handle;
-      File   : VFS.Virtual_File);
+      File   : GNATCOLL.VFS.Virtual_File);
    --  Internal initialization function
 
    procedure On_Destroy
@@ -156,7 +156,7 @@ package body Vdiff_Utils is
    procedure Gtk_New
      (Vdiff  : out Vdiff_Info_Access;
       Kernel : Kernel_Handle;
-      File   : VFS.Virtual_File) is
+      File   : GNATCOLL.VFS.Virtual_File) is
    begin
       Vdiff := new Vdiff_Info;
       Initialize (Vdiff, Kernel, File);
@@ -183,7 +183,7 @@ package body Vdiff_Utils is
    procedure Initialize
      (Vdiff  : access Vdiff_Info'Class;
       Kernel : Kernel_Handle;
-      File   : VFS.Virtual_File) is
+      File   : GNATCOLL.VFS.Virtual_File) is
    begin
       Initialize (Vdiff);
       Vdiff.Kernel := Kernel;
@@ -198,8 +198,8 @@ package body Vdiff_Utils is
      (Kernel : access Kernel_Handle_Record'Class;
       List1  : access Gtk_Clist_Record'Class;
       List2  : access Gtk_Clist_Record'Class;
-      File1  : VFS.Virtual_File;
-      File2  : VFS.Virtual_File;
+      File1  : GNATCOLL.VFS.Virtual_File;
+      File2  : GNATCOLL.VFS.Virtual_File;
       Diff   : Diff_Occurrence_Link)
    is
       Context_Len     : Integer :=
@@ -570,8 +570,8 @@ package body Vdiff_Utils is
       end Add_Line;
 
    begin
-      Gtk_New (Info_1, Kernel_Handle (Kernel), VFS.No_File);
-      Gtk_New (Info_2, Kernel_Handle (Kernel), VFS.No_File);
+      Gtk_New (Info_1, Kernel_Handle (Kernel), GNATCOLL.VFS.No_File);
+      Gtk_New (Info_2, Kernel_Handle (Kernel), GNATCOLL.VFS.No_File);
 
       Object_Callback.Object_Connect
         (List1, Signal_Destroy,

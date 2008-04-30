@@ -30,7 +30,7 @@ with Gtk.Window;
 with GVD.Types;
 with GVD.Proc_Utils;
 with GPS.Kernel; use GPS.Kernel;
-with VFS;
+with GNATCOLL.VFS;
 with Ada.Unchecked_Deallocation;
 
 package Debugger is
@@ -44,7 +44,7 @@ package Debugger is
    procedure Spawn
      (Debugger        : access Debugger_Root;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Executable      : VFS.Virtual_File;
+      Executable      : GNATCOLL.VFS.Virtual_File;
       Debugger_Args   : GNAT.Strings.String_List;
       Executable_Args : String;
       Proxy           : Process_Proxies.Process_Proxy_Access;
@@ -363,7 +363,7 @@ package Debugger is
 
    procedure Set_Executable
      (Debugger   : access Debugger_Root;
-      Executable : VFS.Virtual_File;
+      Executable : GNATCOLL.VFS.Virtual_File;
       Mode       : GVD.Types.Command_Type := GVD.Types.Hidden)
       is abstract;
    --  Load an executable into the debugger.
@@ -374,7 +374,8 @@ package Debugger is
    --  GDB_COMMAND: "file"
 
    function Get_Executable
-     (Debugger : access Debugger_Root) return VFS.Virtual_File is abstract;
+     (Debugger : access Debugger_Root)
+      return GNATCOLL.VFS.Virtual_File is abstract;
    --  Return the name of the executable currently debugged.
 
    procedure Load_Core_File
@@ -573,7 +574,7 @@ package Debugger is
 
    procedure Break_Source
      (Debugger  : access Debugger_Root;
-      File      : VFS.Virtual_File;
+      File      : GNATCOLL.VFS.Virtual_File;
       Line      : Positive;
       Temporary : Boolean := False;
       Mode      : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
@@ -792,7 +793,7 @@ package Debugger is
 
    procedure Lines_With_Code
      (Debugger : access Debugger_Root;
-      File     : VFS.Virtual_File;
+      File     : GNATCOLL.VFS.Virtual_File;
       Result   : out Boolean;
       Lines    : out Line_Array);
    --  Set to True every line in File that is associated with code.

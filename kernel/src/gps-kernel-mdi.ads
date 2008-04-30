@@ -93,7 +93,7 @@ package GPS.Kernel.MDI is
 
    function Get_File_Editor
      (Handle : access Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File) return Gtkada.MDI.MDI_Child;
+      File   : GNATCOLL.VFS.Virtual_File) return Gtkada.MDI.MDI_Child;
    --  Return the first MDI child associated to an editor for File.
    --  Return null if no such editor was found.
 

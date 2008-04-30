@@ -30,7 +30,7 @@ with Projects;                   use Projects;
 with Remote;                     use Remote;
 with String_Hash;
 with Traces;                     use Traces;
-with VFS;                        use VFS;
+with GNATCOLL.VFS;                        use GNATCOLL.VFS;
 
 package body GPS.Kernel.Properties is
 
@@ -387,7 +387,7 @@ package body GPS.Kernel.Properties is
       Remove_Resource_Property (Kernel, Index_Value, Index_Name, Name);
    end Remove_Property;
 
-   function To_String (File : VFS.Virtual_File) return String;
+   function To_String (File : GNATCOLL.VFS.Virtual_File) return String;
    --  Returns the file name
 
    function To_String (Prj : Projects.Project_Type) return String;
@@ -397,7 +397,7 @@ package body GPS.Kernel.Properties is
    -- To_String --
    ---------------
 
-   function To_String (File : VFS.Virtual_File) return String is
+   function To_String (File : GNATCOLL.VFS.Virtual_File) return String is
       Filename : String := Full_Name (File, True).all;
    begin
       Canonical_Case_File_Name (Filename);
@@ -419,7 +419,7 @@ package body GPS.Kernel.Properties is
 
    procedure Set_Property
      (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File       : VFS.Virtual_File;
+      File       : GNATCOLL.VFS.Virtual_File;
       Name       : String;
       Property   : access Property_Record'Class;
       Persistent : Boolean := False) is
@@ -449,7 +449,7 @@ package body GPS.Kernel.Properties is
 
    procedure Get_Property
      (Property : out Property_Record'Class;
-      File     : VFS.Virtual_File;
+      File     : GNATCOLL.VFS.Virtual_File;
       Name     : String;
       Found    : out Boolean) is
    begin
@@ -475,7 +475,7 @@ package body GPS.Kernel.Properties is
 
    procedure Remove_Property
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File     : VFS.Virtual_File;
+      File     : GNATCOLL.VFS.Virtual_File;
       Name     : String) is
    begin
       Remove_Property (Kernel, "file", To_String (File), Name);
@@ -683,7 +683,7 @@ package body GPS.Kernel.Properties is
 
    procedure Set_Language_From_File
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Filename : VFS.Virtual_File;
+      Filename : GNATCOLL.VFS.Virtual_File;
       Language : String := "")
    is
       Prop : String_Property_Access;

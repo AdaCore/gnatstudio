@@ -21,6 +21,8 @@ with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with GNATCOLL.Scripts;         use GNATCOLL.Scripts;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
+with GNATCOLL.VFS;             use GNATCOLL.VFS;
+with GNATCOLL.VFS.GtkAda;      use GNATCOLL.VFS.GtkAda;
 with System;
 
 with Gdk.Event;                use Gdk.Event;
@@ -65,8 +67,6 @@ with String_List_Utils;        use String_List_Utils;
 with String_Utils;             use String_Utils;
 with UTF8_Utils;               use UTF8_Utils;
 with Traces;                   use Traces;
-with VFS;                      use VFS;
-with VFS.Values;               use VFS.Values;
 
 package body GPS.Location_View is
 
@@ -169,7 +169,7 @@ package body GPS.Location_View is
    -----------------
 
    type Location is record
-      File    : VFS.Virtual_File := VFS.No_File;
+      File    : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Line    : Positive := 1;
       Column  : Visible_Column_Type := 1;
       Message : GNAT.Strings.String_Access;
@@ -187,7 +187,7 @@ package body GPS.Location_View is
 
    procedure Dump_To_File
      (Kernel : access Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File);
+      File   : GNATCOLL.VFS.Virtual_File);
    --  Dump the contents of the Locations View in File, in XML format
 
    procedure Read_Secondary_Pattern_Preferences
@@ -217,13 +217,13 @@ package body GPS.Location_View is
 
    function Get_File
      (View : access Location_View_Record'Class;
-      Iter : Gtk_Tree_Iter) return VFS.Virtual_File;
+      Iter : Gtk_Tree_Iter) return GNATCOLL.VFS.Virtual_File;
    --  Return the file stored at Iter
 
    procedure Remove_Category
      (View       : access Location_View_Record'Class;
       Identifier : String;
-      File       : VFS.Virtual_File;
+      File       : GNATCOLL.VFS.Virtual_File;
       Line       : Natural := 0);
    --  Remove category Identifier from the view. All corresponding marks
    --  are deleted.
@@ -236,7 +236,7 @@ package body GPS.Location_View is
      (View          : access Location_View_Record'Class;
       Category      : Glib.UTF8_String;
       H_Category    : Style_Access;
-      File          : VFS.Virtual_File;
+      File          : GNATCOLL.VFS.Virtual_File;
       Category_Iter : out Gtk_Tree_Iter;
       File_Iter     : out Gtk_Tree_Iter;
       New_Category  : out Boolean;
@@ -261,7 +261,7 @@ package body GPS.Location_View is
       Model              : Gtk_Tree_Store;
       Iter               : Gtk_Tree_Iter;
       Base_Name          : String;
-      Absolute_Name      : VFS.Virtual_File;
+      Absolute_Name      : GNATCOLL.VFS.Virtual_File;
       Message            : UTF8_String;
       Mark               : Integer := -1;
       Line               : Integer;
@@ -278,7 +278,7 @@ package body GPS.Location_View is
    procedure Add_Location
      (View               : access Location_View_Record'Class;
       Category           : Glib.UTF8_String;
-      File               : VFS.Virtual_File;
+      File               : GNATCOLL.VFS.Virtual_File;
       Line               : Positive;
       Column             : Visible_Column_Type;
       Length             : Natural;
@@ -362,7 +362,7 @@ package body GPS.Location_View is
 
    function Create_Mark
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Filename : VFS.Virtual_File;
+      Filename : GNATCOLL.VFS.Virtual_File;
       Line     : Natural := 1;
       Column   : Visible_Column_Type := 1;
       Length   : Natural := 0) return String;
@@ -372,7 +372,7 @@ package body GPS.Location_View is
 
    procedure Highlight_Line
      (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Filename           : VFS.Virtual_File;
+      Filename           : GNATCOLL.VFS.Virtual_File;
       Line               : Natural;
       Column             : Visible_Column_Type;
       Length             : Natural;
@@ -457,7 +457,7 @@ package body GPS.Location_View is
       Data   : access Hooks_Data'Class)
    is
       View : Location_View renames Hook.View;
-      File : constant VFS.Virtual_File := File_Hooks_Args (Data.all).File;
+      File : constant Virtual_File := File_Hooks_Args (Data.all).File;
 
       Category_Iter : Gtk_Tree_Iter;
       File_Iter     : Gtk_Tree_Iter;
@@ -595,7 +595,7 @@ package body GPS.Location_View is
 
    function Create_Mark
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Filename : VFS.Virtual_File;
+      Filename : GNATCOLL.VFS.Virtual_File;
       Line     : Natural := 1;
       Column   : Visible_Column_Type := 1;
       Length   : Natural := 0) return String
@@ -619,7 +619,7 @@ package body GPS.Location_View is
 
    procedure Highlight_Line
      (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Filename           : VFS.Virtual_File;
+      Filename           : GNATCOLL.VFS.Virtual_File;
       Line               : Natural;
       Column             : Visible_Column_Type;
       Length             : Natural;
@@ -909,7 +909,7 @@ package body GPS.Location_View is
       Model              : Gtk_Tree_Store;
       Iter               : Gtk_Tree_Iter;
       Base_Name          : String;
-      Absolute_Name      : VFS.Virtual_File;
+      Absolute_Name      : GNATCOLL.VFS.Virtual_File;
       Message            : UTF8_String;
       Mark               : Integer := -1;
       Line               : Integer;
@@ -926,7 +926,7 @@ package body GPS.Location_View is
    begin
       if Base_Name = "" then
          Set (Model, Iter, Base_Name_Column,
-              VFS.Display_Base_Name (Absolute_Name));
+              GNATCOLL.VFS.Display_Base_Name (Absolute_Name));
       else
          if Message = "" then
             Set (Model, Iter, Base_Name_Column, Base_Name);
@@ -1120,7 +1120,7 @@ package body GPS.Location_View is
      (View          : access Location_View_Record'Class;
       Category      : Glib.UTF8_String;
       H_Category    : Style_Access;
-      File          : VFS.Virtual_File;
+      File          : GNATCOLL.VFS.Virtual_File;
       Category_Iter : out Gtk_Tree_Iter;
       File_Iter     : out Gtk_Tree_Iter;
       New_Category  : out Boolean;
@@ -1142,7 +1142,7 @@ package body GPS.Location_View is
          if Create then
             Append (Model, Category_Iter, Null_Iter);
             Fill_Iter
-              (View, Model, Category_Iter, Category, VFS.No_File,
+              (View, Model, Category_Iter, Category, GNATCOLL.VFS.No_File,
                "", -1, 0, 0, 0, False,
                H_Category, View.Category_Pixbuf);
             New_Category := True;
@@ -1151,7 +1151,7 @@ package body GPS.Location_View is
          end if;
       end if;
 
-      if File = VFS.No_File then
+      if File = GNATCOLL.VFS.No_File then
          return;
       end if;
 
@@ -1213,7 +1213,7 @@ package body GPS.Location_View is
    procedure Add_Location
      (View               : access Location_View_Record'Class;
       Category           : Glib.UTF8_String;
-      File               : VFS.Virtual_File;
+      File               : GNATCOLL.VFS.Virtual_File;
       Line               : Positive;
       Column             : Visible_Column_Type;
       Length             : Natural;
@@ -1920,7 +1920,7 @@ package body GPS.Location_View is
    procedure Insert_Location
      (Kernel             : access Kernel_Handle_Record'Class;
       Category           : Glib.UTF8_String;
-      File               : VFS.Virtual_File;
+      File               : GNATCOLL.VFS.Virtual_File;
       Text               : UTF8_String;
       Line               : Positive;
       Column             : Visible_Column_Type;
@@ -1991,7 +1991,7 @@ package body GPS.Location_View is
       Get_Category_File
         (View,
          Glib.Convert.Escape_Text (Category),
-         null, VFS.No_File, Cat, Iter, Dummy, False);
+         null, GNATCOLL.VFS.No_File, Cat, Iter, Dummy, False);
 
       if Cat = Null_Iter then
          return;
@@ -2033,7 +2033,7 @@ package body GPS.Location_View is
       Get_Category_File
         (View,
          Glib.Convert.Escape_Text (Category),
-         null, VFS.No_File, Cat, Iter, Dummy, False);
+         null, GNATCOLL.VFS.No_File, Cat, Iter, Dummy, False);
 
       if Cat = Null_Iter then
          return 0;
@@ -2049,7 +2049,7 @@ package body GPS.Location_View is
    procedure Remove_Location_Category
      (Kernel   : access Kernel_Handle_Record'Class;
       Category : String;
-      File     : VFS.Virtual_File := VFS.No_File;
+      File     : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Line     : Natural := 0)
    is
       View : constant Location_View :=
@@ -2068,7 +2068,7 @@ package body GPS.Location_View is
    procedure Remove_Category
      (View       : access Location_View_Record'Class;
       Identifier : String;
-      File       : VFS.Virtual_File;
+      File       : GNATCOLL.VFS.Virtual_File;
       Line       : Natural := 0)
    is
       Iter      : Gtk_Tree_Iter;
@@ -2227,7 +2227,7 @@ package body GPS.Location_View is
       Identifier    : String;
       Category      : String;
       H_Category    : Style_Access;
-      File          : VFS.Virtual_File;
+      File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Natural;
       Message       : String;
@@ -3009,7 +3009,7 @@ package body GPS.Location_View is
             Dummy_B   : Boolean;
             Script    : constant Scripting_Language := Get_Script (Data);
             Category  : constant String := Nth_Arg (Data, 1);
-            File      : constant VFS.Virtual_File := Create
+            File      : constant GNATCOLL.VFS.Virtual_File := Create
               (Nth_Arg (Data, 2), Get_Kernel (Data), Use_Source_Path => True);
             Line, Col : Gint;
          begin
@@ -3081,7 +3081,7 @@ package body GPS.Location_View is
 
    procedure Dump_To_File
      (Kernel : access Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File)
+      File   : GNATCOLL.VFS.Virtual_File)
    is
       View    : constant Location_View :=
                   Get_Or_Create_Location_View (Kernel);
@@ -3356,7 +3356,7 @@ package body GPS.Location_View is
 
    function Get_File
      (View : access Location_View_Record'Class;
-      Iter : Gtk_Tree_Iter) return VFS.Virtual_File
+      Iter : Gtk_Tree_Iter) return GNATCOLL.VFS.Virtual_File
    is
       Result : Virtual_File;
       Value  : GValue;

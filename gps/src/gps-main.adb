@@ -28,8 +28,9 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Mmap;             use GNATCOLL.Mmap;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNAT.Strings;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 with GNATCOLL.Traces;
-
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 
 with Glib.Error;                use Glib.Error;
@@ -54,7 +55,6 @@ with Gtkada.MDI;                use Gtkada.MDI;
 with Config;                    use Config;
 with DDE;
 with File_Utils;
-with Filesystems;
 with GPS.Callbacks;             use GPS.Callbacks;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
@@ -82,7 +82,6 @@ with Src_Editor_Box;            use Src_Editor_Box;
 with String_Utils;
 with Task_Manager;
 with Traces;                    use Traces;
-with VFS;                       use VFS;
 with Welcome;                   use Welcome;
 with Welcome_Page;              use Welcome_Page;
 
@@ -221,7 +220,7 @@ procedure GPS.Main is
    Str                    : String (1 .. 1024);
    Last                   : Natural;
    Home                   : String_Access;
-   Project_Name           : Virtual_File := VFS.No_File;
+   Project_Name           : Virtual_File := No_File;
    Prefix                 : String_Access;
    Dir                    : String_Access;
    Batch_File             : String_Access;
@@ -554,8 +553,7 @@ procedure GPS.Main is
       end;
 
       declare
-         Tmp : constant String :=
-           Filesystems.Get_Local_Filesystem.Get_Tmp_Directory;
+         Tmp : constant String := Get_Local_Filesystem.Get_Tmp_Directory;
       begin
          if not Is_Directory (Tmp) then
             Button := Message_Dialog
@@ -1038,7 +1036,7 @@ procedure GPS.Main is
             exit when Last = 0;
 
             if File_Extension (Str (1 .. Last)) = Project_File_Extension then
-               if Project_Name = VFS.No_File then
+               if Project_Name = No_File then
                   Auto_Load_Project := True;
                   Project_Name := Create
                     (Normalize_Pathname (Str (1 .. Last), Current,
@@ -1492,7 +1490,7 @@ procedure GPS.Main is
 
          Setup_Debug;
       else
-         if Project_Name /= VFS.No_File
+         if Project_Name /= No_File
            and then not Is_Regular_File (Project_Name)
          then
             --  We can finally search on ADA_PROJECT_PATH, which is now known
@@ -1502,7 +1500,7 @@ procedure GPS.Main is
                  (Get_Registry (GPS_Main.Kernel).all));
          end if;
 
-         if Project_Name = VFS.No_File then
+         if Project_Name = No_File then
             if Server_Mode then
                Auto_Load_Project := True;
                Load_Empty_Project (GPS_Main.Kernel);
@@ -1516,7 +1514,7 @@ procedure GPS.Main is
          end if;
       end if;
 
-      if Auto_Load_Project and then Project_Name /= VFS.No_File then
+      if Auto_Load_Project and then Project_Name /= No_File then
          --  Do not clear to keep the welcome message on kernel's console
          Load_Project (GPS_Main.Kernel, Project_Name, Clear => False);
          Load_Sources;

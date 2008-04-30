@@ -57,7 +57,7 @@ with Language;                use Language;
 with Process_Proxies;         use Process_Proxies;
 with Remote.Path.Translator;  use Remote, Remote.Path.Translator;
 with String_Utils;            use String_Utils;
-with VFS;                     use VFS;
+with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 
 package body Debugger.Gdb is
 
@@ -243,7 +243,7 @@ package body Debugger.Gdb is
      (Debugger : access Gdb_Debugger);
    --  Restore the language that was active before Switch_Language was called.
 
-   function Get_Module (Executable : VFS.Virtual_File) return String;
+   function Get_Module (Executable : GNATCOLL.VFS.Virtual_File) return String;
    --  Return the name of the module contained in Executable
    --  Assume that the name of the module is the executable file
    --  with no path information and no extension.
@@ -724,7 +724,7 @@ package body Debugger.Gdb is
    procedure Spawn
      (Debugger        : access Gdb_Debugger;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Executable      : VFS.Virtual_File := VFS.No_File;
+      Executable      : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Debugger_Args   : GNAT.OS_Lib.Argument_List;
       Executable_Args : String;
       Proxy           : Process_Proxies.Process_Proxy_Access;
@@ -884,7 +884,7 @@ package body Debugger.Gdb is
 
       --  Load the module to debug, if any.
 
-      if Debugger.Executable /= VFS.No_File then
+      if Debugger.Executable /= GNATCOLL.VFS.No_File then
          Set_Executable (Debugger, Debugger.Executable, Mode => Visible);
 
       else
@@ -940,7 +940,7 @@ package body Debugger.Gdb is
       end if;
 
       if Debugger.Window /= null
-        and then Debugger.Executable = VFS.No_File
+        and then Debugger.Executable = GNATCOLL.VFS.No_File
       then
          Display_Prompt (Debugger);
       end if;
@@ -1041,7 +1041,7 @@ package body Debugger.Gdb is
    --------------------
 
    function Get_Executable
-     (Debugger : access Gdb_Debugger) return VFS.Virtual_File is
+     (Debugger : access Gdb_Debugger) return GNATCOLL.VFS.Virtual_File is
    begin
       return Debugger.Executable;
    end Get_Executable;
@@ -1084,7 +1084,7 @@ package body Debugger.Gdb is
 
    procedure Set_Executable
      (Debugger   : access Gdb_Debugger;
-      Executable : VFS.Virtual_File;
+      Executable : GNATCOLL.VFS.Virtual_File;
       Mode       : Command_Type := Hidden)
    is
       pragma Unreferenced (Mode);
@@ -1408,7 +1408,7 @@ package body Debugger.Gdb is
    -- Get_Module --
    ----------------
 
-   function Get_Module (Executable : VFS.Virtual_File) return String is
+   function Get_Module (Executable : Virtual_File) return String is
       Exec      : constant String := Base_Name (Executable);
       Dot_Index : Natural;
    begin
@@ -1433,7 +1433,7 @@ package body Debugger.Gdb is
       Mode      : Command_Type := Hidden) is
    begin
       if Arguments = "" and then Debugger.Remote_Target /= null
-        and then Debugger.Executable /= VFS.No_File
+        and then Debugger.Executable /= GNATCOLL.VFS.No_File
       then
          declare
             Module : constant String := Get_Module (Debugger.Executable);
@@ -1475,7 +1475,7 @@ package body Debugger.Gdb is
       end if;
 
       if Arguments = "" and then Debugger.Remote_Target /= null
-        and then Debugger.Executable /= VFS.No_File
+        and then Debugger.Executable /= GNATCOLL.VFS.No_File
       then
          declare
             Module : constant String := Get_Module (Debugger.Executable);
@@ -1820,7 +1820,7 @@ package body Debugger.Gdb is
 
    procedure Break_Source
      (Debugger  : access Gdb_Debugger;
-      File      : VFS.Virtual_File;
+      File      : GNATCOLL.VFS.Virtual_File;
       Line      : Positive;
       Temporary : Boolean := False;
       Mode      : Command_Type := Hidden) is
@@ -2321,12 +2321,12 @@ package body Debugger.Gdb is
    -- Lines_With_Code --
    ---------------------
 
-   Cached_File  : VFS.Virtual_File;
+   Cached_File  : GNATCOLL.VFS.Virtual_File;
    Cached_Lines : Line_Array_Access;
 
    procedure Lines_With_Code
      (Debugger : access Gdb_Debugger;
-      File     : VFS.Virtual_File;
+      File     : GNATCOLL.VFS.Virtual_File;
       Result   : out Boolean;
       Lines    : out Line_Array)
    is

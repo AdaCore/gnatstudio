@@ -19,13 +19,13 @@
 -----------------------------------------------------------------------
 
 with Language; use Language;
-with VFS;
+with GNATCOLL.VFS;
 
 package Language_Utils is
 
    procedure Parse_File_Constructs
      (Lang      : access Language_Root'Class;
-      File_Name : VFS.Virtual_File;
+      File_Name : GNATCOLL.VFS.Virtual_File;
       Result    : out Construct_List);
    --  Same as Language.Parse_Constructs, but works on a given file.
    --  Since Parse_File_Constructs calls Parse_Constructs, this function does

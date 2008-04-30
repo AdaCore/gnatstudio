@@ -19,7 +19,7 @@
 
 with GNAT.Strings;
 with Codefix.Text_Manager.Ada_Extracts; use Codefix.Text_Manager.Ada_Extracts;
-with VFS;
+with GNATCOLL.VFS;
 
 package Codefix.Text_Manager.Ada_Commands is
 
@@ -106,7 +106,7 @@ package Codefix.Text_Manager.Ada_Commands is
       Current_Text : Text_Navigator_Abstr'Class;
       Word         : Word_Cursor;
       Position     : Relative_Position := Specified;
-      Destination  : VFS.Virtual_File := VFS.No_File;
+      Destination  : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Category     : Dependency_Category := Cat_With);
    --  Set all the marks that will be needed to remove package clauses.
    --  If Destination is different from "", then the procedure Execute will add
@@ -221,8 +221,8 @@ package Codefix.Text_Manager.Ada_Commands is
       Current_Text     : Text_Navigator_Abstr'Class;
       Destination_It   : Construct_Tree_Iterator;
       Source_It        : Construct_Tree_Iterator;
-      Destination_File : VFS.Virtual_File;
-      Source_File      : VFS.Virtual_File);
+      Destination_File : GNATCOLL.VFS.Virtual_File;
+      Source_File      : GNATCOLL.VFS.Virtual_File);
    --  Set all the marks that will be needed to paste the profile later.
 
    procedure Execute
@@ -251,7 +251,7 @@ package Codefix.Text_Manager.Ada_Commands is
      (This             : out Get_Visible_Declaration_Cmd;
       Current_Text     : Text_Navigator_Abstr'Class;
       Source_Position  : File_Cursor'Class;
-      File_Destination : VFS.Virtual_File;
+      File_Destination : GNATCOLL.VFS.Virtual_File;
       With_Could_Miss  : Boolean);
    --  Set all the marks that will be needed to add an use later.
 

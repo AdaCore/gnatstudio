@@ -19,7 +19,7 @@
 
 with GPS.Kernel;           use GPS.Kernel;
 with GPS.Intl;             use GPS.Intl;
-with VFS;                    use VFS;
+with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 with Entities;               use Entities;
 
 with Glib;                  use Glib;

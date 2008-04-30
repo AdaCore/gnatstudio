@@ -25,7 +25,7 @@
 
 with Commands.Interactive;
 with GNAT.Strings;
-with VFS;
+with GNATCOLL.VFS;
 
 package GPS.Kernel.Actions is
 
@@ -36,7 +36,7 @@ package GPS.Kernel.Actions is
       Modified    : Boolean;
       Overriden   : Boolean;
       Category    : GNAT.Strings.String_Access;
-      Defined_In  : VFS.Virtual_File;
+      Defined_In  : GNATCOLL.VFS.Virtual_File;
    end record;
    --  Command is freed automatically by the kernel.
    --  Filter indicates when the action can be executed. If null, this means
@@ -57,7 +57,7 @@ package GPS.Kernel.Actions is
       Description : String := "";
       Filter      : Action_Filter := null;
       Category    : String := "General";
-      Defined_In  : VFS.Virtual_File := VFS.No_File);
+      Defined_In  : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File);
    function Register_Action
      (Kernel      : access Kernel_Handle_Record'Class;
       Name        : String;
@@ -65,7 +65,7 @@ package GPS.Kernel.Actions is
       Description : String := "";
       Filter      : Action_Filter := null;
       Category    : String := "General";
-      Defined_In  : VFS.Virtual_File := VFS.No_File)
+      Defined_In  : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File)
       return Action_Record_Access;
    --  Register a new named action in GPS.
    --  Only the actions that can be executed interactively by the user

@@ -57,7 +57,7 @@ with Pango.Layout;           use Pango.Layout;
 with Projects.Registry;      use Projects.Registry;
 with Projects;               use Projects;
 with Traces;                 use Traces;
-with VFS;                    use VFS;
+with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 
 package body Browsers.Dependency_Items is
 
@@ -927,7 +927,7 @@ package body Browsers.Dependency_Items is
       --  ??? Should set up filters to only open file from the current project
 
    begin
-      if File /= VFS.No_File then
+      if File /= GNATCOLL.VFS.No_File then
          Examine_Dependencies (Get_Kernel (Context), File);
       end if;
    end Open_File;
@@ -1259,7 +1259,7 @@ package body Browsers.Dependency_Items is
             File_Information (Context.Context)),
          Project_Information (Context.Context));
    begin
-      if Other_File /= VFS.No_File then
+      if Other_File /= GNATCOLL.VFS.No_File then
          Item := File_Item (Find_File (B, Other_File));
          if Item = null then
             Gtk_New (Item, B,  Get_Kernel (Context.Context), Other_File);

@@ -34,7 +34,7 @@ with Gtk.Widget;                 use Gtk.Widget;
 with Default_Preferences;        use Default_Preferences;
 with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
 with GPS.Intl;                   use GPS.Intl;
-with VFS;                        use VFS;
+with GNATCOLL.VFS;                        use GNATCOLL.VFS;
 
 package body GPS.Kernel.Charsets is
 
@@ -135,7 +135,7 @@ package body GPS.Kernel.Charsets is
    --------------------------
 
    function Create_Charset_Combo
-     (File    : VFS.Virtual_File;
+     (File    : GNATCOLL.VFS.Virtual_File;
       Default : String := "") return Gtk.Combo.Gtk_Combo
    is
       Combo : Gtk_Combo;
@@ -154,7 +154,7 @@ package body GPS.Kernel.Charsets is
          Show_All (Item);
       end loop;
 
-      if File /= VFS.No_File then
+      if File /= GNATCOLL.VFS.No_File then
          Get_Property (Prop, File, "charset", Found);
       end if;
 
@@ -278,11 +278,11 @@ package body GPS.Kernel.Charsets is
    -- Get_File_Charset --
    ----------------------
 
-   function Get_File_Charset (File : VFS.Virtual_File) return String is
+   function Get_File_Charset (File : Virtual_File) return String is
       Found : Boolean;
       Prop  : String_Property;
    begin
-      if File = VFS.No_File then
+      if File = GNATCOLL.VFS.No_File then
          if Default_Charset = null then
             --  Cannot happen in GPS itself, but could in the test suites,
             --  e.g. when no kernel/preferences are available.
@@ -313,7 +313,7 @@ package body GPS.Kernel.Charsets is
 
    procedure Set_File_Charset
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File : VFS.Virtual_File; Charset : String := "")
+      File : GNATCOLL.VFS.Virtual_File; Charset : String := "")
    is
       Prop : String_Property_Access;
    begin

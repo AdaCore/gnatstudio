@@ -27,7 +27,7 @@ with GNATCOLL.Scripts;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with Interactive_Consoles;
 with Remote;                 use Remote;
-with VFS;
+with GNATCOLL.VFS;
 
 package GPS.Kernel.Remote is
 
@@ -181,7 +181,7 @@ package GPS.Kernel.Remote is
      (Kernel     : Kernel_Handle;
       Server     : Server_Type;
       Nickname   : String;
-      Prj_File   : VFS.Virtual_File := VFS.No_File;
+      Prj_File   : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Reload_Prj : Boolean := False);
    --  Assigns a Server to a configuration
    --  Prj_File allows to select to which project file this configuration is

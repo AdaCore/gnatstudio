@@ -48,7 +48,7 @@ with Projects;                   use Projects;
 with String_Utils;               use String_Utils;
 with System;
 with Traces;                     use Traces;
-with VFS;                        use VFS;
+with GNATCOLL.VFS;                        use GNATCOLL.VFS;
 
 package body Python_Module is
 
@@ -328,7 +328,7 @@ package body Python_Module is
       D       : Dir_Type;
       File    : String (1 .. 1024);
       Last    : Natural;
-      VF      : VFS.Virtual_File;
+      VF      : GNATCOLL.VFS.Virtual_File;
       Command : Custom_Command_Access;
       Errors  : Boolean;
       Script  : constant Scripting_Language :=

@@ -41,7 +41,7 @@ with Projects;                       use Projects;
 with Projects.Registry;              use Projects.Registry;
 with String_Utils;                   use String_Utils;
 with Entities;                       use Entities;
-with VFS;                            use VFS;
+with GNATCOLL.VFS;                            use GNATCOLL.VFS;
 
 procedure Ada_Semantic_Tree.Test is
 
@@ -56,7 +56,7 @@ procedure Ada_Semantic_Tree.Test is
       Word_Begin : out Natural;
       Word_End   : out Natural);
 
-   procedure Analyze_File (File : VFS.Virtual_File);
+   procedure Analyze_File (File : GNATCOLL.VFS.Virtual_File);
 
    New_Registry : aliased Project_Registry;
    Construct_Db : constant Construct_Database_Access := new Construct_Database;
@@ -382,7 +382,7 @@ procedure Ada_Semantic_Tree.Test is
                return True;
             end Callback;
 
-            Files : constant VFS.File_Array_Access :=
+            Files : constant GNATCOLL.VFS.File_Array_Access :=
               Get_Source_Files (Get_Root_Project (New_Registry), True);
 
             Lang_Name : Namet.Name_Id;
@@ -495,7 +495,7 @@ procedure Ada_Semantic_Tree.Test is
       Index := Word_End + 1;
    end Read_Next_Word;
 
-   procedure Analyze_File (File : VFS.Virtual_File) is
+   procedure Analyze_File (File : GNATCOLL.VFS.Virtual_File) is
       Index : Natural;
       File_Node : Structured_File_Access;
    begin
@@ -545,7 +545,7 @@ begin
    Ada_Semantic_Tree.Assistants.Register_Ada_Assistants (Construct_Db);
 
    declare
-      Files : constant VFS.File_Array_Access :=
+      Files : constant GNATCOLL.VFS.File_Array_Access :=
         Get_Source_Files (Get_Root_Project (New_Registry), True);
       File_Node : Structured_File_Access;
 

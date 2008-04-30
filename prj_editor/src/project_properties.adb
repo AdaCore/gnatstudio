@@ -90,7 +90,7 @@ with Remote;                    use Remote;
 with Scenario_Selectors;        use Scenario_Selectors;
 with Traces;                    use Traces;
 with Namet;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 with Wizards;                   use Wizards;
 
 package body Project_Properties is
@@ -279,7 +279,7 @@ package body Project_Properties is
    procedure Destroy (Module : in out Properties_Module_ID_Record);
    procedure Customize
      (Module : access Properties_Module_ID_Record;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Node   : Glib.Xml_Int.Node_Ptr;
       Level  : Customization_Level);
    --  See inherited documentation
@@ -625,7 +625,7 @@ package body Project_Properties is
       Project_Path      : String;
       As_Directory      : Boolean;
       Filter            : File_Filter;
-      Allow_Multiple    : Boolean := False) return VFS.File_Array;
+      Allow_Multiple    : Boolean := False) return GNATCOLL.VFS.File_Array;
    --  Open a dialog to select one or more file or directory names.
    --  Filter is used to select what kind of files should be shown to the user
 
@@ -2336,7 +2336,7 @@ package body Project_Properties is
 
    procedure Customize
      (Module : access Properties_Module_ID_Record;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Node   : Glib.Xml_Int.Node_Ptr;
       Level  : Customization_Level)
    is
@@ -2819,7 +2819,7 @@ package body Project_Properties is
       Project_Path      : String;
       As_Directory      : Boolean;
       Filter            : File_Filter;
-      Allow_Multiple    : Boolean := False) return VFS.File_Array
+      Allow_Multiple    : Boolean := False) return GNATCOLL.VFS.File_Array
    is
       pragma Unreferenced (Allow_Multiple);
       Dialog : Gtk_Dialog;
@@ -2827,7 +2827,7 @@ package body Project_Properties is
       Model  : Gtk_Tree_Store;
       Iter   : Gtk_Tree_Iter;
       Source : Natural;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Button : Gtk_Widget;
       Prj    : Project_Type;
       Scrolled : Gtk_Scrolled_Window;
@@ -2836,8 +2836,8 @@ package body Project_Properties is
          File := Select_Directory
            (Parent            => Gtk_Window (Toplevel),
             Use_Native_Dialog => Get_Pref (Use_Native_Dialogs));
-         if File = VFS.No_File then
-            return (1 .. 0 => VFS.No_File);
+         if File = GNATCOLL.VFS.No_File then
+            return (1 .. 0 => GNATCOLL.VFS.No_File);
          else
             return (1 => File);
          end if;
@@ -2880,7 +2880,7 @@ package body Project_Properties is
                Source := 1;
                loop
                   File := Get_Source_File (Prj, Source);
-                  exit when File = VFS.No_File;
+                  exit when File = GNATCOLL.VFS.No_File;
 
                   Append (Model, Iter, Null_Iter);
                   Set (Model, Iter, 0, False);
@@ -2913,7 +2913,7 @@ package body Project_Properties is
 
                if Source = 0 then
                   Destroy (Dialog);
-                  return (1 .. 0 => VFS.No_File);
+                  return (1 .. 0 => GNATCOLL.VFS.No_File);
                else
                   declare
                      Result : File_Array (1 .. Source);
@@ -2938,7 +2938,7 @@ package body Project_Properties is
             end if;
 
             Destroy (Dialog);
-            return (1 .. 0 => VFS.No_File);
+            return (1 .. 0 => GNATCOLL.VFS.No_File);
 
          else
             if Default = "" then
@@ -2957,8 +2957,8 @@ package body Project_Properties is
                   Use_Native_Dialog => Get_Pref (Use_Native_Dialogs));
             end if;
 
-            if File = VFS.No_File then
-               return (1 .. 0 => VFS.No_File);
+            if File = GNATCOLL.VFS.No_File then
+               return (1 .. 0 => GNATCOLL.VFS.No_File);
             else
                return (1 => File);
             end if;
@@ -2974,7 +2974,7 @@ package body Project_Properties is
      (Editor : access Gtk_Widget_Record'Class)
    is
       Ed    : constant File_Attribute_Editor := File_Attribute_Editor (Editor);
-      Files : constant VFS.File_Array := Select_Files_Or_Directories
+      Files : constant GNATCOLL.VFS.File_Array := Select_Files_Or_Directories
         (Toplevel       => Gtk_Window (Get_Toplevel (Editor)),
          Project        => Ed.Project,
          Default        => Get_Text (Gtk_Entry (Ed.Ent)),
@@ -3421,7 +3421,7 @@ package body Project_Properties is
             declare
                Current : constant String := Get_Current_Value
                  (Project, Description, Index => Attribute_Index);
-               Files   : constant VFS.File_Array := Select_Files_Or_Directories
+               Files   : constant File_Array := Select_Files_Or_Directories
                  (Toplevel          => Toplevel,
                   Project           => Project,
                   Default           => Current,

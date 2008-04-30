@@ -22,7 +22,7 @@ with String_List_Utils; use String_List_Utils;
 with GPS.Kernel;        use GPS.Kernel;
 with VCS;               use VCS;
 with VCS_Activities;    use VCS_Activities;
-with VFS;
+with GNATCOLL.VFS;
 
 package Log_Utils is
 
@@ -32,15 +32,15 @@ package Log_Utils is
 
    function Get_ChangeLog_From_File
      (Kernel    : access Kernel_Handle_Record'Class;
-      File_Name : VFS.Virtual_File) return VFS.Virtual_File;
+      File_Name : GNATCOLL.VFS.Virtual_File) return GNATCOLL.VFS.Virtual_File;
    --  Returns the global ChangeLog file given a File_Name. A global ChangeLog
    --  is named ChangeLog and is placed into the same directory as File_Name.
 
    function Get_Log_From_File
      (Kernel    : access Kernel_Handle_Record'Class;
-      File_Name : VFS.Virtual_File;
+      File_Name : GNATCOLL.VFS.Virtual_File;
       Create    : Boolean;
-      Suffix    : String := "$log") return VFS.Virtual_File;
+      Suffix    : String := "$log") return GNATCOLL.VFS.Virtual_File;
    --  Return the name for the log file corresponding to File_Name.
    --  If the log file doesn't exist and Create is True, then
    --  the function will create the file, return an empty string
@@ -50,17 +50,17 @@ package Log_Utils is
 
    function Get_File_From_Log
      (Kernel   : access Kernel_Handle_Record'Class;
-      Log_Name : VFS.Virtual_File) return VFS.Virtual_File;
+      Log_Name : GNATCOLL.VFS.Virtual_File) return GNATCOLL.VFS.Virtual_File;
    --  Return the name for the file corresponding to Log_Name
 
    function Get_Log
      (Kernel    : access Kernel_Handle_Record'Class;
-      File_Name : VFS.Virtual_File) return String;
+      File_Name : GNATCOLL.VFS.Virtual_File) return String;
    --   Return the log content for the given file
 
    procedure Get_Log_From_ChangeLog
      (Kernel    : access Kernel_Handle_Record'Class;
-      File_Name : VFS.Virtual_File;
+      File_Name : GNATCOLL.VFS.Virtual_File;
       Suffix    : String := "$log");
    --  Read the global ChangeLog entry for File_Name and write it into the
    --  log file corresponding to File_Name. If a current log file exists it
@@ -69,7 +69,7 @@ package Log_Utils is
 
    procedure Remove_File_From_Mapping
      (Kernel    : access Kernel_Handle_Record'Class;
-      File_Name : VFS.Virtual_File);
+      File_Name : GNATCOLL.VFS.Virtual_File);
    --  Remove the entry File_Name from the logs mapping,
    --  if such an entry exists.
 

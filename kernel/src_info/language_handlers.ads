@@ -36,7 +36,7 @@ with Entities;
 with Language;
 with Language.Tree;
 with Projects;
-with VFS;
+with GNATCOLL.VFS;
 
 package Language_Handlers is
 
@@ -72,7 +72,7 @@ package Language_Handlers is
 
    function Get_LI_Handler_From_File
      (Handler         : access Language_Handler_Record;
-      Source_Filename : VFS.Virtual_File) return Entities.LI_Handler;
+      Source_Filename : GNATCOLL.VFS.Virtual_File) return Entities.LI_Handler;
    --  Return the LI handler to use for a specific file name.
    --  null is returned if the language is unknown.
    --  Project is the project that contains Source_Filename, or No_Project if
@@ -96,7 +96,7 @@ package Language_Handlers is
 
    function Get_Language_From_File
      (Handler           : access Language_Handler_Record;
-      Source_Filename   : VFS.Virtual_File;
+      Source_Filename   : GNATCOLL.VFS.Virtual_File;
       From_Project_Only : Boolean := False) return Language.Language_Access;
    --  Find the language of a given file.
    --  The language is guessed either from a specific setup the user has done
@@ -107,14 +107,14 @@ package Language_Handlers is
 
    function Get_Tree_Language_From_File
      (Handler           : access Language_Handler_Record;
-      Source_Filename   : VFS.Virtual_File;
+      Source_Filename   : GNATCOLL.VFS.Virtual_File;
       From_Project_Only : Boolean := False)
       return Language.Tree.Tree_Language_Access;
    --  Same as above but returns the tree language
 
    function Get_Language_From_File
      (Handler           : access Language_Handler_Record;
-      Source_Filename   : VFS.Virtual_File;
+      Source_Filename   : GNATCOLL.VFS.Virtual_File;
       From_Project_Only : Boolean := False) return String;
    --  Return "" if the language is unknown.
    --  The language is guessed either from a specific setup the user has done
@@ -125,7 +125,7 @@ package Language_Handlers is
 
    function Language_Is_Overriden
      (Handler  : access Language_Handler_Record;
-      Filename : VFS.Virtual_File) return Boolean;
+      Filename : GNATCOLL.VFS.Virtual_File) return Boolean;
    --  Return True if the language for Filename doesn't come from the project,
    --  but from a user setting.
 

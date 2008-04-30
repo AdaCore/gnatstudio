@@ -38,7 +38,7 @@ with Language.Tree;             use Language.Tree;
 with Language.Tree.Database;    use Language.Tree.Database;
 with Language_Handlers;         use Language_Handlers;
 with String_Utils;              use String_Utils;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 package body Entities.Tooltips is
 

@@ -62,7 +62,7 @@ with GVD.Process;      use GVD.Process;
 with GVD.Types;        use GVD.Types;
 with GUI_Utils;        use GUI_Utils;
 with Debugger;         use Debugger;
-with VFS;              use VFS;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with Traces;           use Traces;
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
@@ -268,7 +268,7 @@ package body Breakpoints_Editor is
       else
          Set_Page (Editor.Notebook1, 0);
 
-         if Br.File /= VFS.No_File then
+         if Br.File /= GNATCOLL.VFS.No_File then
             Set_Active (Editor.Location_Selected, True);
             Add_Unique_Combo_Entry
               (Editor.File_Combo, Base_Name (Br.File));
@@ -773,7 +773,7 @@ package body Breakpoints_Editor is
             Set (Model, Iter, Col_File, Br.Expression.all);
          end if;
 
-         if Br.File /= VFS.No_File then
+         if Br.File /= GNATCOLL.VFS.No_File then
             Set (Model, Iter, Col_File, Base_Name (Br.File));
             Set (Model, Iter, Col_Line, Integer'Image (Br.Line));
          end if;

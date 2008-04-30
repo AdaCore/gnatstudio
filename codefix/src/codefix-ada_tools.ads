@@ -22,7 +22,7 @@
 
 with Generic_List;
 with GNAT.Strings;
-with VFS;
+with GNATCOLL.VFS;
 
 with Codefix.Text_Manager; use Codefix.Text_Manager;
 
@@ -33,7 +33,7 @@ package Codefix.Ada_Tools is
 
    function Get_Use_Clauses
      (Clause_Name  : String;
-      File_Name    : VFS.Virtual_File;
+      File_Name    : GNATCOLL.VFS.Virtual_File;
       Current_Text : Text_Navigator_Abstr'Class;
       Exclusive    : Boolean := False) return Words_Lists.List;
    --  Return all the use clauses that are related to a with or an
@@ -42,11 +42,11 @@ package Codefix.Ada_Tools is
 
    function Get_Next_With_Position
      (Current_Text : Text_Navigator_Abstr'Class;
-      File_Name    : VFS.Virtual_File) return File_Cursor'Class;
+      File_Name    : GNATCOLL.VFS.Virtual_File) return File_Cursor'Class;
 
    function Search_With
      (Current_Text : Text_Navigator_Abstr'Class;
-      File_Name    : VFS.Virtual_File;
+      File_Name    : GNATCOLL.VFS.Virtual_File;
       Pkg_Name     : String) return File_Cursor'Class;
 
 private
@@ -95,12 +95,12 @@ private
 
    function List_All_With
      (Current_Text : Text_Navigator_Abstr'Class;
-      File_Name    : VFS.Virtual_File) return With_Lists.List;
+      File_Name    : GNATCOLL.VFS.Virtual_File) return With_Lists.List;
    --  List all the with clauses existing in File_Name.
 
    function List_All_Use
      (Current_Text : Text_Navigator_Abstr'Class;
-      File_Name    : VFS.Virtual_File) return Use_Lists.List;
+      File_Name    : GNATCOLL.VFS.Virtual_File) return Use_Lists.List;
    --  List all the use clauses existing in File_Name.
 
    procedure Link_All_Clauses

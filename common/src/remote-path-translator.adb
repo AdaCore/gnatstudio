@@ -210,13 +210,12 @@ package body Remote.Path.Translator is
       declare
          Path_From     : constant String := Mirror.Get_Local_Path;
          Path_To       : constant String := Mirror.Get_Remote_Path;
-         To_Filesystem : constant Filesystem_Record'Class :=
-           Get_Filesystem (To);
+         To_Filesystem : constant Filesystem_Access := Get_Filesystem (To);
          U_Path        : constant String :=
-           To_Unix (Get_Local_Filesystem, Path);
+           Get_Local_Filesystem.To_Unix (Path);
          --  The input path in unix style
-         U_Frompath    : constant String := To_Unix (Get_Local_Filesystem,
-                                                  Path_From);
+         U_Frompath    : constant String :=
+           Get_Local_Filesystem.To_Unix (Path_From);
          --  The local root dir, in unix style
          U_Subpath  : constant String :=
            U_Path (U_Path'First + U_Frompath'Length .. U_Path'Last);
@@ -226,12 +225,11 @@ package body Remote.Path.Translator is
          --  translate the path
 
          if Unix_Style then
-            return To_Unix (To_Filesystem, Path_To) & U_Subpath;
+            return To_Filesystem.To_Unix (Path_To) & U_Subpath;
 
          else
-            return Concat (To_Filesystem,
-                           Path_To,
-                           From_Unix (To_Filesystem, U_Subpath));
+            return To_Filesystem.Concat
+              (Path_To, To_Filesystem.From_Unix (U_Subpath));
          end if;
       end;
    end To_Remote;
@@ -272,8 +270,8 @@ package body Remote.Path.Translator is
       while Has_Element (Cursor) loop
          Mirror := Mirror_List.Element (Cursor);
 
-         exit when Is_Subtree
-           (Get_Filesystem (From), Mirror.Get_Remote_Path, Path);
+         exit when Get_Filesystem (From).Is_Subtree
+           (Mirror.Get_Remote_Path, Path);
 
          Mirror_List.Next (Cursor);
       end loop;
@@ -289,11 +287,10 @@ package body Remote.Path.Translator is
       declare
          Path_From  : constant String := Mirror.Get_Remote_Path;
          Path_To    : constant String := Mirror.Get_Local_Path;
-         FS         : constant Filesystem_Record'Class :=
-                        Get_Filesystem (From);
-         U_Path     : constant String := To_Unix (FS, Path);
+         FS         : constant Filesystem_Access := Get_Filesystem (From);
+         U_Path     : constant String := FS.To_Unix (Path);
          --  The input path in unix style
-         U_Frompath : constant String := To_Unix (FS, Path_From);
+         U_Frompath : constant String := FS.To_Unix (Path_From);
          --  The local root dir, in unix style
          U_Subpath  : constant String :=
                         U_Path
@@ -303,16 +300,12 @@ package body Remote.Path.Translator is
          if Active (Me) then
             Trace
               (Me, " => " &
-               Concat
-                 (Get_Local_Filesystem,
-                  Path_To,
-                  From_Unix (Get_Local_Filesystem, U_Subpath)));
+               Get_Local_Filesystem.Concat
+                 (Path_To, Get_Local_Filesystem.From_Unix (U_Subpath)));
          end if;
 
-         return Concat
-           (Get_Local_Filesystem,
-            Path_To,
-            From_Unix (Get_Local_Filesystem, U_Subpath));
+         return Get_Local_Filesystem.Concat
+           (Path_To, Get_Local_Filesystem.From_Unix (U_Subpath));
       end;
    end To_Local;
 

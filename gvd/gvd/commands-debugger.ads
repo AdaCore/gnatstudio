@@ -22,7 +22,7 @@
 
 with GPS.Kernel; use GPS.Kernel;
 with GVD.Process;  use GVD.Process;
-with VFS;          use VFS;
+with GNATCOLL.VFS;          use GNATCOLL.VFS;
 
 package Commands.Debugger is
 
@@ -38,7 +38,7 @@ package Commands.Debugger is
       Kernel         : Kernel_Handle;
       Debugger       : Visual_Debugger;
       Mode           : Breakpoint_Command_Mode;
-      File           : VFS.Virtual_File;
+      File           : GNATCOLL.VFS.Virtual_File;
       Line           : Positive);
 
    function Execute
@@ -47,7 +47,7 @@ package Commands.Debugger is
 private
 
    type Set_Breakpoint_Command is new Root_Command with record
-      File     : VFS.Virtual_File;
+      File     : GNATCOLL.VFS.Virtual_File;
       Kernel   : Kernel_Handle;
       Line     : Positive;
       BMode    : Breakpoint_Command_Mode;

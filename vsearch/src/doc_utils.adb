@@ -28,7 +28,7 @@ with Interfaces.C.Strings;   use Interfaces.C.Strings;
 with GPS.Kernel.Charsets;    use GPS.Kernel.Charsets;
 with GNAT.Strings;           use GNAT.Strings;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
-with VFS;                    use VFS;
+with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 with Language_Handlers;      use Language_Handlers;
 with Language.Documentation; use Language.Documentation;
 

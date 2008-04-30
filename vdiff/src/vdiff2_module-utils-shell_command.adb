@@ -87,11 +87,11 @@ package body Vdiff2_Module.Utils.Shell_Command is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File1  : Virtual_File;
       File2  : Virtual_File;
-      File3  : Virtual_File := VFS.No_File)
+      File3  : Virtual_File := GNATCOLL.VFS.No_File)
    is
       Args : Argument_List_Access;
    begin
-      if File3 = VFS.No_File then
+      if File3 = GNATCOLL.VFS.No_File then
          Args := new Argument_List'
            (1 => new String'(Full_Name (File1).all),
             2 => new String'(Full_Name (File2).all));

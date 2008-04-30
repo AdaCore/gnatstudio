@@ -89,7 +89,7 @@ with String_Hash;
 with String_Utils;              use String_Utils;
 with Tooltips;
 with Traces;                    use Traces;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 package body Project_Explorers is
 
@@ -2472,7 +2472,7 @@ package body Project_Explorers is
       pragma Inline (Next_File_Node);
       --  Move to the next node, starting from a file node
 
-      function Check_Entities (File : VFS.Virtual_File) return Boolean;
+      function Check_Entities (File : Virtual_File) return Boolean;
       pragma Inline (Check_Entities);
       --  Check if File contains any entity matching C.
       --  Return True if there is a match.
@@ -2687,7 +2687,7 @@ package body Project_Explorers is
       -- Check_Entities --
       --------------------
 
-      function Check_Entities (File : VFS.Virtual_File) return Boolean is
+      function Check_Entities (File : Virtual_File) return Boolean is
          use type Entities.LI_Handler;
          Languages  : constant Language_Handler :=
                         Language_Handler (Get_Language_Handler (Kernel));
@@ -2834,7 +2834,7 @@ package body Project_Explorers is
                   end;
                end loop;
 
-               VFS.Unchecked_Free (Sources);
+               GNATCOLL.VFS.Unchecked_Free (Sources);
             end;
 
             Next (Iter);

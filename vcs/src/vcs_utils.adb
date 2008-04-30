@@ -121,7 +121,7 @@ package body VCS_Utils is
       if Has_File_Information (Context) then
          return File_Information (Context);
       end if;
-      return VFS.No_File;
+      return GNATCOLL.VFS.No_File;
    end Get_Current_File;
 
    ----------------
@@ -200,7 +200,7 @@ package body VCS_Utils is
                   Log : constant Virtual_File :=
                           Get_Log_From_File (Kernel, File, False);
                begin
-                  if Log /= VFS.No_File and then Is_Regular_File (Log) then
+                  if Log /= No_File and then Is_Regular_File (Log) then
                      Delete (Log, Success);
                      Close_File_Editors (Kernel, Log);
                   end if;

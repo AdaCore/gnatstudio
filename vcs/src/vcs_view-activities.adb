@@ -33,6 +33,7 @@ with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 
+with Filesystems;               use Filesystems;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
@@ -542,7 +543,7 @@ package body VCS_View.Activities is
 
                if Line = No_Data or else Override_Cache then
                   Log := Get_Log_From_File
-                    (Kernel, File, False) /= VFS.No_File;
+                    (Kernel, File, False) /= GNATCOLL.VFS.No_File;
 
                   Line :=
                     (Copy_File_Status
@@ -749,7 +750,7 @@ package body VCS_View.Activities is
             Set_Activity_Information
               (Context,
                Get_String (Explorer.Model, Iter, Activity_Column));
-            Set_File_Information (Context, Files => VFS.Create (Files));
+            Set_File_Information (Context, Files => Create (Files));
 
             String_List.Free (Files);
          end if;

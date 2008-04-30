@@ -19,7 +19,7 @@
 
 with GPS.Kernel;
 with Entities;
-with VFS;
+with GNATCOLL.VFS;
 
 package Refactoring.Performers is
 
@@ -64,7 +64,7 @@ package Refactoring.Performers is
 
    function Insert_Text
      (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
-      In_File           : VFS.Virtual_File;
+      In_File           : GNATCOLL.VFS.Virtual_File;
       Line              : Integer;
       Column            : Visible_Column_Type := 1;
       Text              : String;
@@ -82,14 +82,14 @@ package Refactoring.Performers is
 
    procedure Delete_Text
      (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
-      In_File    : VFS.Virtual_File;
+      In_File    : GNATCOLL.VFS.Virtual_File;
       Line_Start : Integer;
       Line_End   : Integer);
    --  Delete a range of text
 
    function Get_Text
      (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
-      From_File  : VFS.Virtual_File;
+      From_File  : GNATCOLL.VFS.Virtual_File;
       Line       : Integer;
       Column     : Visible_Column_Type;
       Length     : Integer) return String;
@@ -97,10 +97,10 @@ package Refactoring.Performers is
 
    procedure Start_Undo_Group
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File);
+      File   : GNATCOLL.VFS.Virtual_File);
    procedure Finish_Undo_Group
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File);
+      File   : GNATCOLL.VFS.Virtual_File);
    --  Interface to start/finish undo group
 
    function Get_Initial_Value

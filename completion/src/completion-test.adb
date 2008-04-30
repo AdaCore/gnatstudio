@@ -44,7 +44,7 @@ with Ada_Semantic_Tree.Assistants; use Ada_Semantic_Tree.Assistants;
 with Projects;               use Projects;
 with Projects.Registry;      use Projects.Registry;
 with Entities;               use Entities;
-with VFS;                    use VFS;
+with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 
 procedure Completion.Test is
    use Standard.Ada;
@@ -306,7 +306,7 @@ procedure Completion.Test is
          Recompute_View (New_Registry, Project_Error'Unrestricted_Access);
 
          declare
-            Files : constant VFS.File_Array_Access :=
+            Files : constant GNATCOLL.VFS.File_Array_Access :=
               Get_Source_Files (Get_Root_Project (New_Registry), True);
          begin
             for J in Files.all'Range loop

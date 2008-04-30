@@ -32,7 +32,7 @@ with GPS.Kernel;     use GPS.Kernel;
 with GPS.Kernel.MDI; use GPS.Kernel.MDI;
 with Language;       use Language;
 with Projects;
-with VFS;
+with GNATCOLL.VFS;
 
 package Project_Explorers_Common is
 
@@ -115,7 +115,7 @@ package Project_Explorers_Common is
      (Kernel : Kernel_Handle;
       Model  : Gtk_Tree_Store;
       Base   : Gtk_Tree_Iter;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Sorted : Boolean := False);
    --  Append a file node to Base in the model.
    --  File must be an absolute file name.
@@ -127,7 +127,7 @@ package Project_Explorers_Common is
 
    function Append_Category_Node
      (Model         : Gtk_Tree_Store;
-      File          : VFS.Virtual_File;
+      File          : GNATCOLL.VFS.Virtual_File;
       Category      : Language_Category;
       Category_Name : Strings.String_Access;
       Parent_Iter   : Gtk_Tree_Iter) return Gtk_Tree_Iter;
@@ -135,7 +135,7 @@ package Project_Explorers_Common is
 
    function Append_Entity_Node
      (Model       : Gtk_Tree_Store;
-      File        : VFS.Virtual_File;
+      File        : GNATCOLL.VFS.Virtual_File;
       Construct   : Construct_Information;
       Parent_Iter : Gtk_Tree_Iter) return Gtk_Tree_Iter;
    --  Add an entity node in the model
@@ -144,7 +144,7 @@ package Project_Explorers_Common is
      (Kernel    : Kernel_Handle;
       Model     : Gtk_Tree_Store;
       Node      : Gtk_Tree_Iter;
-      File_Name : VFS.Virtual_File);
+      File_Name : GNATCOLL.VFS.Virtual_File);
    --  Add info to a file node in the model
 
    function Get_Node_Type
@@ -195,7 +195,7 @@ package Project_Explorers_Common is
 
    function Get_File_From_Node
      (Model : Gtk_Tree_Store;
-      Node  : Gtk_Tree_Iter) return VFS.Virtual_File;
+      Node  : Gtk_Tree_Iter) return GNATCOLL.VFS.Virtual_File;
    --  Return the name of the file containing Node (or, in case Node is an
    --  Entity_Node, the name of the file that contains the entity).
 
@@ -264,7 +264,7 @@ private
      new GPS.Kernel.MDI.GPS_MDI_Child_Record with
       record
          Kernel        : GPS.Kernel.Kernel_Handle;
-         Dnd_From_File : VFS.Virtual_File := VFS.No_File;
+         Dnd_From_File : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
          --  The file from which we started a Dnd operation
       end record;
 

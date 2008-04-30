@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --               GtkAda - Ada95 binding for Gtk+/Gnome               --
 --                                                                   --
---                  Copyright (C) 2001-2007, AdaCore                 --
+--                  Copyright (C) 2001-2008, AdaCore                 --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -31,6 +31,8 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Expect;               use GNAT.Expect;
 with GNAT.Regexp;               use GNAT.Regexp;
 with GNAT.Strings;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with Interfaces.C.Strings;
 with System;
 
@@ -64,15 +66,14 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.Intl;               use Gtkada.Intl;
 with Gtkada.Types;              use Gtkada.Types;
 
+with Filesystems;               use Filesystems;
 with Shell_Descriptors;         use Shell_Descriptors;
 with File_Utils;                use File_Utils;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 with GUI_Utils;                 use GUI_Utils;
 with Histories;                 use Histories;
 with Remote;                    use Remote;
 with Traces;                    use Traces;
 with Unchecked_Deallocation;
-with VFS;                       use VFS;
 
 with Machine_Descriptors;       use Machine_Descriptors;
 
@@ -88,8 +89,8 @@ package body Gtkada.File_Selector is
    Text_Color_Column : constant := 2;
    Icon_Column       : constant := 3;
 
-   Last_Directory : Virtual_File := VFS.Get_Current_Dir;
-   Last_Remote_Directory : Virtual_File := VFS.Get_Current_Dir;
+   Last_Directory : Virtual_File := GNATCOLL.VFS.Get_Current_Dir;
+   Last_Remote_Directory : Virtual_File := GNATCOLL.VFS.Get_Current_Dir;
    --  It would be nice to use a user data instead of this global variable,
    --  but this is in any case better than changing the current directory
    --  as we did before.
@@ -140,7 +141,7 @@ package body Gtkada.File_Selector is
 
    procedure Change_Directory
      (Win : access File_Selector_Window_Record'Class;
-      Dir : VFS.Virtual_File);
+      Dir : GNATCOLL.VFS.Virtual_File);
    --  Called every time that the contents of a new directory should be
    --  displayed in the File_Explorer. Dir is the absolute pathname to
    --  that directory.
@@ -302,7 +303,9 @@ package body Gtkada.File_Selector is
    begin
       for J in Str'First .. Str'Last - 1 loop
          if Str (J .. J + 1) = ":|" then
-            return Create (Str (Str'First .. J - 1), Str (J + 2 .. Str'Last));
+            return Create
+              (FS            => Get_Filesystem (Str (Str'First .. J - 1)),
+               Full_Filename => Str (J + 2 .. Str'Last));
          end if;
       end loop;
 
@@ -421,23 +424,25 @@ package body Gtkada.File_Selector is
    -------------------
 
    function Get_Selection
-     (Dialog : access File_Selector_Window_Record) return VFS.Virtual_File is
+     (Dialog : access File_Selector_Window_Record) return Virtual_File is
    begin
       if Dialog.Selection_Entry = null
         or else Get_Text (Dialog.Selection_Entry) = ""
       then
-         return VFS.No_File;
+         return GNATCOLL.VFS.No_File;
 
       else
          declare
             Filename : constant String := Get_Text (Dialog.Selection_Entry);
             File     : Virtual_File;
          begin
-            File := Create (Get_Host (Dialog.Current_Directory), Filename);
+            File := Create
+              (FS => Get_Filesystem (Get_Host (Dialog.Current_Directory)),
+               Full_Filename => Filename);
             if Is_Absolute_Path (File) then
                return File;
             else
-               File := VFS.Create_From_Dir
+               File := GNATCOLL.VFS.Create_From_Dir
                  (Dialog.Current_Directory, Filename);
                return File;
             end if;
@@ -481,7 +486,7 @@ package body Gtkada.File_Selector is
       Remote_Browsing   : Boolean := False;
       Use_Native_Dialog : Boolean := False;
       Kind              : File_Selector_Kind := Unspecified;
-      History           : Histories.History := null) return VFS.Virtual_File
+      History           : Histories.History := null) return Virtual_File
    is
       Pos_Mouse     : constant := 2;
       File_Selector : File_Selector_Window_Access;
@@ -532,7 +537,7 @@ package body Gtkada.File_Selector is
             c_free (S);
 
             if Val = "" then
-               return VFS.No_File;
+               return GNATCOLL.VFS.No_File;
             else
                Last_Directory := Create (Locale_To_UTF8 (Dir_Name (Val)));
 
@@ -625,7 +630,7 @@ package body Gtkada.File_Selector is
 
    function Select_File
      (File_Selector : File_Selector_Window_Access;
-      Parent        : Gtk_Window := null) return VFS.Virtual_File
+      Parent        : Gtk_Window := null) return GNATCOLL.VFS.Virtual_File
    is
       Filter_A      : constant Filter_Show_All_Access := new Filter_Show_All;
       Selected_File : aliased Virtual_File := No_File;
@@ -707,7 +712,7 @@ package body Gtkada.File_Selector is
             c_free (S);
 
             if Val = "" then
-               return VFS.No_File;
+               return GNATCOLL.VFS.No_File;
             else
                Last_Directory := Create (Locale_To_UTF8 (Val));
 
@@ -720,7 +725,7 @@ package body Gtkada.File_Selector is
 
       if Base_Directory = No_File then
          if Last_Directory = No_File then
-            Last_Directory := VFS.Get_Current_Dir;
+            Last_Directory := GNATCOLL.VFS.Get_Current_Dir;
          end if;
 
          Gtk_New
@@ -1034,7 +1039,7 @@ package body Gtkada.File_Selector is
 
    procedure Change_Directory
      (Win : access File_Selector_Window_Record'Class;
-      Dir : VFS.Virtual_File)
+      Dir : GNATCOLL.VFS.Virtual_File)
    is
    begin
       --  If the new directory is not the one currently shown in the File_List,
@@ -1133,7 +1138,7 @@ package body Gtkada.File_Selector is
         File_Selector_Window_Access (Get_Toplevel (Object));
       Host : constant String := Get_Host (Win.Current_Directory);
       H   : Virtual_File := Create
-        (Host => Host,
+        (FS => Get_Filesystem (Host),
          Full_Filename =>
            Home_Dir (Get_Filesystem (Get_Machine_Descriptor (Host)).all));
 
@@ -1240,7 +1245,8 @@ package body Gtkada.File_Selector is
       pragma Unreferenced (Dead);
    begin
       if Host /= Local_Nickname then
-         Dir := Get_Root (Create (Host, ""));
+         Dir := Get_Root
+           (Create (FS => Get_Filesystem (Host), Full_Filename => ""));
       else
          Dir := Get_Current_Dir;
       end if;
@@ -1676,20 +1682,22 @@ package body Gtkada.File_Selector is
             --  Handle the easy part: change to the longest directory available
 
             if S /= "" then
-               File := Create (Get_Host (Win.Current_Directory), S);
+               File := Create
+                 (FS => Get_Filesystem (Get_Host (Win.Current_Directory)),
+                  Full_Filename => S);
             else
-               File := VFS.No_File;
+               File := GNATCOLL.VFS.No_File;
             end if;
 
             Sub_File := Create_From_Dir (Win.Current_Directory, S);
 
             if Is_Absolute_Path (File)
-              and then Is_Directory (VFS.Dir (File))
+              and then Is_Directory (GNATCOLL.VFS.Dir (File))
             then
-               Change_Directory (Win, VFS.Dir (File));
-            elsif Is_Directory (VFS.Dir (Sub_File)) then
+               Change_Directory (Win, GNATCOLL.VFS.Dir (File));
+            elsif Is_Directory (GNATCOLL.VFS.Dir (Sub_File)) then
                File := Sub_File;
-               Change_Directory (Win, VFS.Dir (File));
+               Change_Directory (Win, GNATCOLL.VFS.Dir (File));
                Set_Text (Win.Selection_Entry, Base_Dir_Name (File));
                Set_Position
                  (Win.Selection_Entry, Base_Dir_Name (File)'Length);
@@ -1717,7 +1725,7 @@ package body Gtkada.File_Selector is
 
                while Iter /= Null_Iter loop
                   Matcher
-                    (VFS.Base_Dir_Name (File),
+                    (GNATCOLL.VFS.Base_Dir_Name (File),
                      Locale_From_UTF8
                        (Get_String (Win.File_Model, Iter, Base_Name_Column)),
                      Iter);
@@ -1757,7 +1765,7 @@ package body Gtkada.File_Selector is
                             Locale_To_UTF8 (Best_Match (1 .. Suffix_Length)));
                   Set_Position (Win.Selection_Entry, Gint (Suffix_Length));
 
-                  Dir := VFS.Sub_Dir (Win.Current_Directory,
+                  Dir := GNATCOLL.VFS.Sub_Dir (Win.Current_Directory,
                                       Best_Match (1 .. Suffix_Length));
                   if Is_Directory (Dir)
                     and then Win.Current_Directory /= Dir
@@ -1832,7 +1840,7 @@ package body Gtkada.File_Selector is
             Dialog_Title, Show_Files, History, Remote_Browsing);
       else
          Initialize
-           (File_Selector_Window, VFS.Get_Current_Dir, Initial_Directory,
+           (File_Selector_Window, Get_Current_Dir, Initial_Directory,
             Dialog_Title, Show_Files, History, Remote_Browsing);
       end if;
    end Gtk_New;
@@ -2212,7 +2220,7 @@ package body Gtkada.File_Selector is
       else
          Show_Directory
            (File_Selector_Window.Explorer_Tree,
-            VFS.Get_Current_Dir,
+            GNATCOLL.VFS.Get_Current_Dir,
             Get_Window (File_Selector_Window));
       end if;
 
@@ -2223,7 +2231,7 @@ package body Gtkada.File_Selector is
       Grab_Focus (File_Selector_Window.Selection_Entry);
 
       if Initial_Directory = No_File then
-         Change_Directory (File_Selector_Window, VFS.Get_Current_Dir);
+         Change_Directory (File_Selector_Window, GNATCOLL.VFS.Get_Current_Dir);
       else
          Change_Directory (File_Selector_Window, Initial_Directory);
       end if;

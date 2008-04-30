@@ -22,12 +22,12 @@ with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Regexp;               use GNAT.Regexp;
-with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
+with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNAT.Strings;
 
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 
-with Filesystems;
 with File_Utils;                use File_Utils;
 with GUI_Utils;                 use GUI_Utils;
 with GPS.Kernel;                use GPS.Kernel;
@@ -42,7 +42,7 @@ with Projects;                  use Projects;
 with Projects.Editor;           use Projects.Editor;
 with Remote;                    use Remote;
 with Traces;                    use Traces;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 with OS_Utils;
 with UTF8_Utils;                use UTF8_Utils;
 with Commands.Interactive;      use Commands, Commands.Interactive;
@@ -93,7 +93,7 @@ package body VFS_Module is
 
    procedure Check_Prj
      (Project  : Projects.Project_Type;
-      File_In  : VFS.Virtual_File;
+      File_In  : GNATCOLL.VFS.Virtual_File;
       Success  : out Boolean;
       Prj_List : out Unbounded_String);
    --  Check if the project contains File_In directory or file.
@@ -255,7 +255,7 @@ package body VFS_Module is
             File     : Virtual_File;
             Writable : Writable_File;
             Tmp_Dir  : constant String :=
-              Filesystems.Get_Local_Filesystem.Get_Tmp_Directory;
+              Get_Local_Filesystem.Get_Tmp_Directory;
          begin
             if not Is_Absolute_Path (Filename) then
                File := Create (Tmp_Dir & Filename);
@@ -282,7 +282,7 @@ package body VFS_Module is
 
    procedure Check_Prj
      (Project  : Projects.Project_Type;
-      File_In  : VFS.Virtual_File;
+      File_In  : GNATCOLL.VFS.Virtual_File;
       Success  : out Boolean;
       Prj_List : out Unbounded_String)
    is
@@ -363,7 +363,7 @@ package body VFS_Module is
       Dir     : constant String := Directory_Information (Context.Context);
       Success : Boolean;
       Res     : Gtkada.Dialogs.Message_Dialog_Buttons;
-      File    : VFS.Virtual_File := VFS.No_File;
+      File    : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       List    : Unbounded_String;
 
    begin
@@ -467,7 +467,7 @@ package body VFS_Module is
       Prj_List : Unbounded_String;
 
       procedure Actual_Rename
-        (File_In     : VFS.Virtual_File;
+        (File_In     : GNATCOLL.VFS.Virtual_File;
          Success     : out Boolean;
          Prj_Changed : out Boolean);
       --  Performs the actual renaming
@@ -514,12 +514,12 @@ package body VFS_Module is
       -------------------
 
       procedure Actual_Rename
-        (File_In     : VFS.Virtual_File;
+        (File_In     : GNATCOLL.VFS.Virtual_File;
          Success     : out Boolean;
          Prj_Changed : out Boolean)
       is
          Renamed : Unbounded_String;
-         To_File : VFS.Virtual_File;
+         To_File : GNATCOLL.VFS.Virtual_File;
       begin
          if Is_Directory (File_In) then
             declare
@@ -622,7 +622,7 @@ package body VFS_Module is
       end Actual_Rename;
 
       Prj_Changed : Boolean;
-      Dir_File    : VFS.Virtual_File;
+      Dir_File    : GNATCOLL.VFS.Virtual_File;
 
    begin
       Trace (Me, "renaming "
@@ -632,7 +632,7 @@ package body VFS_Module is
       Is_Dir := not Has_File_Information (Context.Context);
 
       if Is_Dir then
-         Dir_File := VFS.Create (Dir);
+         Dir_File := GNATCOLL.VFS.Create (Dir);
          Ensure_Directory (Dir_File);
          Actual_Rename (Dir_File, Success, Prj_Changed);
 
@@ -660,7 +660,7 @@ package body VFS_Module is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       Dir         : constant String := Directory_Information (Context.Context);
-      File        : VFS.Virtual_File;
+      File        : GNATCOLL.VFS.Virtual_File;
       Prj_Changed : Boolean;
       Prj_List    : Unbounded_String;
 
@@ -697,12 +697,12 @@ package body VFS_Module is
                        Password_Mode => False,
                        Urgent        => False,
                        Default       => "");
-            W_File : VFS.Writable_File;
+            W_File : GNATCOLL.VFS.Writable_File;
          begin
             if Res /= "" then
                File := Create (Dir & Res);
-               W_File := VFS.Write_File (File);
-               VFS.Close (W_File);
+               W_File := GNATCOLL.VFS.Write_File (File);
+               GNATCOLL.VFS.Close (W_File);
             end if;
          exception
             when others =>

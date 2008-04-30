@@ -32,6 +32,7 @@ with GNATCOLL.Utils;             use GNATCOLL.Utils;
 
 with Basic_Types;                use Basic_Types;
 with Casing;                     use Casing;
+with Filesystems;                use Filesystems;
 with File_Utils;                 use File_Utils;
 with Namet;                      use Namet;
 with Osint;                      use Osint;
@@ -48,7 +49,7 @@ with Remote.Path.Translator;     use Remote, Remote.Path.Translator;
 with Snames;                     use Snames;
 with String_Hash;
 with Traces;
-with VFS;                        use VFS;
+with GNATCOLL.VFS;                        use GNATCOLL.VFS;
 
 package body Projects is
 
@@ -101,7 +102,7 @@ package body Projects is
       View_Is_Complete : Boolean := False;
       --  True if the view for the project was correctly computed
 
-      Files : VFS.File_Array_Access;
+      Files : GNATCOLL.VFS.File_Array_Access;
       --  The list of source files for this project
 
       Uses_Variables : Boolean := False;
@@ -254,7 +255,7 @@ package body Projects is
 
    function Save_Project
      (Project       : Project_Type;
-      Path          : Virtual_File := VFS.No_File;
+      Path          : Virtual_File := GNATCOLL.VFS.No_File;
       Force         : Boolean := False;
       Report_Error  : Error_Report := null) return Boolean
    is
@@ -310,7 +311,7 @@ package body Projects is
             return False;
          end if;
 
-         if Path = VFS.No_File then
+         if Path = GNATCOLL.VFS.No_File then
             Filename :=  Project_Path (Project);
          else
             Filename := Path;
@@ -411,7 +412,7 @@ package body Projects is
 
    function Project_Path
      (Project : Project_Type;
-      Host    : String := "") return VFS.Virtual_File
+      Host    : String := "") return GNATCOLL.VFS.Virtual_File
    is
       View : constant Prj.Project_Id := Get_View (Project);
    begin
@@ -419,15 +420,15 @@ package body Projects is
          --  View=Prj.No_Project case needed for the project wizard
 
          return Create
-           (Host,
-            To_Remote
+           (FS => Get_Filesystem (Host),
+            Full_Filename => To_Remote
               (Get_String (Path_Name_Of (Project.Node, Project.Tree)),
                Host));
 
       else
          return Create
-           (Host,
-            To_Remote
+           (FS => Get_Filesystem (Host),
+            Full_Filename => To_Remote
               (Get_String (Projects_Table (Project)(View).Display_Path_Name),
                Host));
       end if;
@@ -439,7 +440,7 @@ package body Projects is
 
    function Project_Directory
      (Project : Project_Type;
-      Host    : String := "") return VFS.Virtual_File is
+      Host    : String := "") return GNATCOLL.VFS.Virtual_File is
    begin
       return Dir (Project_Path (Project, Host));
    end Project_Directory;
@@ -620,16 +621,16 @@ package body Projects is
      (Base_Name       : Glib.UTF8_String;
       Project         : Projects.Project_Type;
       Use_Source_Path : Boolean := True;
-      Use_Object_Path : Boolean := True) return VFS.Virtual_File
+      Use_Object_Path : Boolean := True) return GNATCOLL.VFS.Virtual_File
    is
       Full : constant String := Get_Full_Path_From_File
         (Project_Registry (Get_Registry (Project)), Base_Name,
          Use_Source_Path, Use_Object_Path, Project);
    begin
       if Full = "" then
-         return VFS.No_File;
+         return GNATCOLL.VFS.No_File;
       else
-         return VFS.Create (Full);
+         return GNATCOLL.VFS.Create (Full);
       end if;
    end Create;
 
@@ -638,12 +639,12 @@ package body Projects is
    ---------------------
 
    function Get_Source_File
-     (Project : Project_Type; Index : Positive) return VFS.Virtual_File is
+     (Project : Project_Type; Index : Positive) return Virtual_File is
    begin
       if Index <= Project.Data.Files'Last then
          return Project.Data.Files (Index);
       else
-         return VFS.No_File;
+         return GNATCOLL.VFS.No_File;
       end if;
    end Get_Source_File;
 
@@ -653,7 +654,7 @@ package body Projects is
 
    function Get_Source_Files
      (Project   : Project_Type;
-      Recursive : Boolean) return VFS.File_Array_Access
+      Recursive : Boolean) return GNATCOLL.VFS.File_Array_Access
    is
       Count   : Natural;
       Index   : Natural := 1;
@@ -908,7 +909,7 @@ package body Projects is
    ---------------------------------
 
    function Get_Unit_Part_From_Filename
-     (Project : Project_Type; Filename : VFS.Virtual_File) return Unit_Part
+     (Project : Project_Type; Filename : Virtual_File) return Unit_Part
    is
       Unit       : Unit_Part;
       Name, Lang : Name_Id;
@@ -923,7 +924,7 @@ package body Projects is
    ---------------------------------
 
    function Get_Unit_Name_From_Filename
-     (Project : Project_Type; Filename : VFS.Virtual_File) return String
+     (Project : Project_Type; Filename : Virtual_File) return String
    is
       Unit       : Unit_Part;
       Name, Lang : Name_Id;
@@ -2481,7 +2482,7 @@ package body Projects is
    procedure Get_Switches
      (Project          : Project_Type;
       In_Pkg           : String;
-      File             : VFS.Virtual_File;
+      File             : GNATCOLL.VFS.Virtual_File;
       Language         : String;
       Value            : out Variable_Value;
       Is_Default_Value : out Boolean) is
@@ -2489,7 +2490,7 @@ package body Projects is
       Value := Nil_Variable_Value;
 
       --  Do we have some file-specific switches ?
-      if Project /= No_Project and then File /= VFS.No_File then
+      if Project /= No_Project and then File /= GNATCOLL.VFS.No_File then
          Value := Get_Attribute_Value
            (Project        => Project,
             Attribute      =>
@@ -2930,7 +2931,7 @@ package body Projects is
 
    procedure Set_Source_Files
      (Project      : Project_Type;
-      Source_Files : VFS.File_Array_Access) is
+      Source_Files : GNATCOLL.VFS.File_Array_Access) is
    begin
       if Project.Data.Files /= null then
          Unchecked_Free (Project.Data.Files);

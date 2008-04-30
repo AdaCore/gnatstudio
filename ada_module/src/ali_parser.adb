@@ -25,21 +25,22 @@ with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Strings;
-with GNATCOLL.Traces;               use GNATCOLL.Traces;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Basic_Types;               use Basic_Types;
 with Entities.Queries;          use Entities.Queries;
 with Entities;                  use Entities;
 with File_Utils;                use File_Utils;
 with Filesystems;               use Filesystems;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 with Glib.Convert;              use Glib.Convert;
 with Projects.Editor;           use Projects.Editor;
 with Projects.Registry;         use Projects.Registry;
 with Projects;                  use Projects;
 with Remote;                    use Remote;
 with Traces;
-with VFS;                       use VFS;
 
 with ALI;                       use ALI;
 with Types;                     use Types;
@@ -61,7 +62,7 @@ package body ALI_Parser is
    function Get_Name (LI : access ALI_Handler_Record) return String;
    function Get_Source_Info
      (Handler               : access ALI_Handler_Record;
-      Source_Filename       : VFS.Virtual_File;
+      Source_Filename       : GNATCOLL.VFS.Virtual_File;
       File_Has_No_LI_Report : File_Error_Reporter := null) return Source_File;
    function Case_Insensitive_Identifiers
      (Handler : access ALI_Handler_Record) return Boolean;
@@ -361,7 +362,7 @@ package body ALI_Parser is
    function Locate_ALI
      (Handler            : access ALI_Handler_Record'Class;
       Short_ALI_Filename : String;
-      Source_Filename    : VFS.Virtual_File;
+      Source_Filename    : GNATCOLL.VFS.Virtual_File;
       Project            : Project_Type) return Virtual_File;
    --  Search for the full name of the ALI file. We also search the parent
    --  unit's ALi file, in case the file is a separate.
@@ -376,7 +377,7 @@ package body ALI_Parser is
 
    function Get_Source_Info_Internal
      (Handler               : access ALI_Handler_Record'Class;
-      Source_Filename       : VFS.Virtual_File;
+      Source_Filename       : GNATCOLL.VFS.Virtual_File;
       File_Has_No_LI_Report : File_Error_Reporter := null;
       Reset_ALI             : Boolean) return Source_File;
    --  Same as Get_Source_Info, but it is possible not to reset the internal
@@ -441,7 +442,7 @@ package body ALI_Parser is
          Full_Filename => Base_Name,
          Handler       => Handler,
          LI            => LI);
-      Set_Time_Stamp (File, VFS.No_Time);
+      Set_Time_Stamp (File, GNATCOLL.Utils.No_Time);
 
       --  Strip the %s or %b terminator
       Set_Unit_Name (File, Unit (Unit'First .. Unit'Last - 2));
@@ -516,7 +517,7 @@ package body ALI_Parser is
                 Is_Unit     => False);
 
       if Is_Separate then
-         Set_Time_Stamp (Sfile.File, VFS.No_Time);
+         Set_Time_Stamp (Sfile.File, GNATCOLL.Utils.No_Time);
       end if;
    end Process_Sdep;
 
@@ -1411,7 +1412,7 @@ package body ALI_Parser is
    function Locate_ALI
      (Handler            : access ALI_Handler_Record'Class;
       Short_ALI_Filename : String;
-      Source_Filename    : VFS.Virtual_File;
+      Source_Filename    : GNATCOLL.VFS.Virtual_File;
       Project            : Project_Type) return Virtual_File
    is
       procedure Next_Candidate (Last : in out Integer; Dot : String);
@@ -1505,7 +1506,7 @@ package body ALI_Parser is
       end if;
 
       if Dir = null then
-         return VFS.No_File;
+         return GNATCOLL.VFS.No_File;
       else
          declare
             F  : constant Virtual_File := Create (Dir.all);
@@ -1522,7 +1523,7 @@ package body ALI_Parser is
                   File      => F,
                   Project   => Project);
                if LI = null then
-                  return VFS.No_File;
+                  return GNATCOLL.VFS.No_File;
 
                --  Do not reset ALI below, since we are in the process of
                --  parsing an ALI file, and need to parse a second one. We
@@ -1530,7 +1531,7 @@ package body ALI_Parser is
                elsif not Update_ALI (Handler, LI, Reset_ALI => False)
                  or else not Check_LI_And_Source (LI, Source_Filename)
                then
-                  return VFS.No_File;
+                  return GNATCOLL.VFS.No_File;
                else
                   return F;
                end if;
@@ -1577,7 +1578,7 @@ package body ALI_Parser is
       --  The separator character depends on the file system ('$' in most
       --  cases, '~' on VMS).
       Char     : constant Character := Multi_Unit_Index_Char
-        (Get_Filesystem (Get_Nickname (Build_Server)));
+        (Get_Filesystem (Get_Nickname (Build_Server)).all);
 
       P        : Project_Type := Project;
       Dir      : Dir_Type;
@@ -1665,7 +1666,7 @@ package body ALI_Parser is
          end if;
       end loop;
 
-      return VFS.No_File;
+      return GNATCOLL.VFS.No_File;
    end Find_Multi_Unit_ALI;
 
    -----------------------------
@@ -1687,7 +1688,7 @@ package body ALI_Parser is
               (Handler,
                Get_ALI_Filename (Base_Name (Source_Filename)),
                Source_Filename, Project);
-            if LI /= VFS.No_File then
+            if LI /= GNATCOLL.VFS.No_File then
                return LI;
             end if;
 
@@ -1697,7 +1698,7 @@ package body ALI_Parser is
             Ext := Extended_Project (Project);
             if Ext /= No_Project then
                LI := LI_Filename_From_Source (Handler, Source_Filename, Ext);
-               if LI /= VFS.No_File then
+               if LI /= GNATCOLL.VFS.No_File then
                   return LI;
                end if;
             end if;
@@ -1750,7 +1751,7 @@ package body ALI_Parser is
                Source_Filename,
                Project);
 
-            if LI /= VFS.No_File then
+            if LI /= GNATCOLL.VFS.No_File then
                return LI;
             end if;
 
@@ -1760,7 +1761,7 @@ package body ALI_Parser is
             Ext := Extended_Project (Project);
             if Ext /= No_Project then
                LI := LI_Filename_From_Source (Handler, Source_Filename, Ext);
-               if LI /= VFS.No_File then
+               if LI /= GNATCOLL.VFS.No_File then
                   return LI;
                end if;
             end if;
@@ -1772,7 +1773,7 @@ package body ALI_Parser is
                Get_ALI_Filename (Base_Name (Source_Filename)),
                Source_Filename, Project);
 
-            if LI /= VFS.No_File then
+            if LI /= GNATCOLL.VFS.No_File then
                return LI;
             end if;
 
@@ -1790,7 +1791,7 @@ package body ALI_Parser is
 
    function Get_Source_Info
      (Handler               : access ALI_Handler_Record;
-      Source_Filename       : VFS.Virtual_File;
+      Source_Filename       : GNATCOLL.VFS.Virtual_File;
       File_Has_No_LI_Report : File_Error_Reporter := null) return Source_File
    is
    begin
@@ -1805,7 +1806,7 @@ package body ALI_Parser is
 
    function Get_Source_Info_Internal
      (Handler               : access ALI_Handler_Record'Class;
-      Source_Filename       : VFS.Virtual_File;
+      Source_Filename       : GNATCOLL.VFS.Virtual_File;
       File_Has_No_LI_Report : File_Error_Reporter := null;
       Reset_ALI             : Boolean) return Source_File
    is
@@ -1852,7 +1853,7 @@ package body ALI_Parser is
 
       LI_Name := LI_Filename_From_Source (Handler, Source_Filename, Project);
 
-      if LI_Name = VFS.No_File then
+      if LI_Name = GNATCOLL.VFS.No_File then
          Trace (Me, "No LI found for " & Full_Name (Source_Filename).all);
 
          if File_Has_No_LI_Report /= null then

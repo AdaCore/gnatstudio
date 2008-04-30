@@ -20,7 +20,8 @@
 with Ada.Calendar;
 with GNAT.Strings;
 with HTables;
-with VFS;
+with GNATCOLL.Utils;
+with GNATCOLL.VFS;
 with Dynamic_Arrays;
 with Projects.Registry;
 with Language;
@@ -87,7 +88,7 @@ package Entities is
 
    function Get_LI_Handler
      (Db              : Entities_Database;
-      Source_Filename : VFS.Virtual_File) return LI_Handler;
+      Source_Filename : GNATCOLL.VFS.Virtual_File) return LI_Handler;
    --  Return the LI_Handler to use to get the cross-reference information for
    --  that file.
 
@@ -314,7 +315,7 @@ package Entities is
    type LI_File_Record is tagged private;
    type LI_File is access all LI_File_Record'Class;
 
-   function Get_LI_Filename (LI : LI_File) return VFS.Virtual_File;
+   function Get_LI_Filename (LI : LI_File) return GNATCOLL.VFS.Virtual_File;
    --  Return the name of the file
 
    procedure Unref (LI : in out LI_File);
@@ -328,7 +329,7 @@ package Entities is
 
    function Get_Or_Create
      (Db        : Entities_Database;
-      File      : VFS.Virtual_File;
+      File      : GNATCOLL.VFS.Virtual_File;
       Project   : Projects.Project_Type) return LI_File;
    --  Get (or create) a new entry for File in the database. If an entry
    --  already exists, it is returned.
@@ -336,7 +337,7 @@ package Entities is
    --  structure.
 
    procedure Set_Time_Stamp
-     (LI : LI_File; Timestamp : Ada.Calendar.Time := VFS.No_Time);
+     (LI : LI_File; Timestamp : Ada.Calendar.Time := GNATCOLL.Utils.No_Time);
    pragma Inline (Set_Time_Stamp);
    --  Update the timestamp that indicates when LI was last parsed
 
@@ -353,14 +354,14 @@ package Entities is
    --  Return the timestamp last set through Update_Timestamp
 
    function Check_LI_And_Source
-     (LI : LI_File; Source : VFS.Virtual_File) return Boolean;
+     (LI : LI_File; Source : GNATCOLL.VFS.Virtual_File) return Boolean;
    --  Return True if LI contains the xref information for Source
 
    -----------------
    -- Source_File --
    -----------------
 
-   function Get_Filename (File : Source_File) return VFS.Virtual_File;
+   function Get_Filename (File : Source_File) return GNATCOLL.VFS.Virtual_File;
    pragma Inline (Get_Filename);
    --  Return the name of the file file
 
@@ -380,10 +381,10 @@ package Entities is
 
    function Get_Or_Create
      (Db           : Entities_Database;
-      File         : VFS.Virtual_File;
+      File         : GNATCOLL.VFS.Virtual_File;
       Handler      : LI_Handler := null;
       LI           : LI_File := null;
-      Timestamp    : Ada.Calendar.Time := VFS.No_Time;
+      Timestamp    : Ada.Calendar.Time := GNATCOLL.Utils.No_Time;
       Allow_Create : Boolean := True) return Source_File;
    --  Get or create a Source_File corresponding to File.
    --  If there is already an entry for it in the database, the corresponding
@@ -402,7 +403,7 @@ package Entities is
       Full_Filename : String;
       Handler       : access LI_Handler_Record'Class;
       LI            : LI_File := null;
-      Timestamp     : Ada.Calendar.Time := VFS.No_Time;
+      Timestamp     : Ada.Calendar.Time := GNATCOLL.Utils.No_Time;
       Allow_Create  : Boolean := True) return Source_File;
    --  Same as above, but the file name is specified through a string
 
@@ -757,7 +758,7 @@ package Entities is
 
    function Get_Source_Info
      (Handler               : access LI_Handler_Record;
-      Source_Filename       : VFS.Virtual_File;
+      Source_Filename       : GNATCOLL.VFS.Virtual_File;
       File_Has_No_LI_Report : File_Error_Reporter := null)
       return Source_File is abstract;
    --  Return a handle to the source file structure corresponding to
@@ -798,7 +799,7 @@ package Entities is
    procedure Parse_File_Constructs
      (Handler      : access LI_Handler_Record;
       Languages    : access Abstract_Language_Handler_Record'Class;
-      File_Name    : VFS.Virtual_File;
+      File_Name    : GNATCOLL.VFS.Virtual_File;
       Result       : out Language.Construct_List);
    --  Build a Construct_List, either using the src_info tools (like SN)
    --  or a language parser. Any potential error should be ignored, and we
@@ -1160,11 +1161,11 @@ private
    type Source_File_Record is tagged record
       Db           : Entities_Database;
 
-      Timestamp    : Ada.Calendar.Time := VFS.No_Time;
+      Timestamp    : Ada.Calendar.Time := GNATCOLL.Utils.No_Time;
       --  The timestamp of the file at the time it was parsed. This is left
       --  to No_Time if the file has never been parsed.
 
-      Name        : VFS.Virtual_File;
+      Name        : GNATCOLL.VFS.Virtual_File;
 
       Entities    : Entities_Hash.HTable;
       --  All the entities defined in the source file. This list also contains
@@ -1222,9 +1223,11 @@ private
 
    procedure Set_Next (E : Source_File_Item; Next : Source_File_Item);
    function  Next     (E : Source_File_Item) return Source_File_Item;
-   function  Get_Key  (E : Source_File_Item) return VFS.Cst_String_Access;
-   function  Hash     (Key : VFS.Cst_String_Access) return HTable_Header;
-   function  Equal    (K1, K2 : VFS.Cst_String_Access) return Boolean;
+   function  Get_Key
+     (E : Source_File_Item) return GNATCOLL.VFS.Cst_String_Access;
+   function  Hash
+     (Key : GNATCOLL.VFS.Cst_String_Access) return HTable_Header;
+   function  Equal    (K1, K2 : GNATCOLL.VFS.Cst_String_Access) return Boolean;
    procedure Free     (E : in out Source_File_Item);
    pragma Inline (Set_Next, Next, Get_Key, Hash, Equal, Free);
 
@@ -1234,7 +1237,7 @@ private
       Null_Ptr      => null,
       Set_Next      => Set_Next,
       Next          => Next,
-      Key           => VFS.Cst_String_Access,
+      Key           => GNATCOLL.VFS.Cst_String_Access,
       Get_Key       => Get_Key,
       Hash          => Hash,
       Equal         => Equal,
@@ -1247,8 +1250,8 @@ private
    type LI_File_Record is tagged record
       Db        : Entities_Database;
 
-      Name      : VFS.Virtual_File;
-      Timestamp : Ada.Calendar.Time := VFS.No_Time;
+      Name      : GNATCOLL.VFS.Virtual_File;
+      Timestamp : Ada.Calendar.Time := GNATCOLL.Utils.No_Time;
 
       Project   : Projects.Project_Type;
 
@@ -1272,7 +1275,7 @@ private
 
    procedure Set_Next (E : LI_File_Item; Next : LI_File_Item);
    function  Next     (E : LI_File_Item) return LI_File_Item;
-   function  Get_Key  (E : LI_File_Item) return VFS.Cst_String_Access;
+   function  Get_Key  (E : LI_File_Item) return GNATCOLL.VFS.Cst_String_Access;
    procedure Free     (E : in out LI_File_Item);
    pragma Inline (Set_Next, Next, Get_Key, Free);
 
@@ -1282,7 +1285,7 @@ private
       Null_Ptr      => null,
       Set_Next      => Set_Next,
       Next          => Next,
-      Key           => VFS.Cst_String_Access,
+      Key           => GNATCOLL.VFS.Cst_String_Access,
       Get_Key       => Get_Key,
       Hash          => Hash,
       Equal         => Equal,

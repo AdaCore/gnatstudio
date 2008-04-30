@@ -22,7 +22,7 @@ with GPS.Intl;           use GPS.Intl;
 with GPS.Kernel.Console; use GPS.Kernel.Console;
 with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 with VCS_Module;         use VCS_Module;
-with VFS;                use VFS;
+with GNATCOLL.VFS;                use GNATCOLL.VFS;
 
 package body VCS.Unknown_VCS is
 
@@ -134,7 +134,7 @@ package body VCS.Unknown_VCS is
 
    procedure Create_Tag
      (Rep       : access Unknown_VCS_Record;
-      Dir       : VFS.Virtual_File;
+      Dir       : GNATCOLL.VFS.Virtual_File;
       Tag       : String;
       As_Branch : Boolean)
    is
@@ -198,7 +198,7 @@ package body VCS.Unknown_VCS is
 
    procedure Switch
      (Rep : access Unknown_VCS_Record;
-      Dir : VFS.Virtual_File;
+      Dir : GNATCOLL.VFS.Virtual_File;
       Tag : String)
    is
       pragma Unreferenced (Rep, Tag);
@@ -296,7 +296,7 @@ package body VCS.Unknown_VCS is
 
    procedure File_Revision
      (Rep      : access Unknown_VCS_Record;
-      File     : VFS.Virtual_File;
+      File     : GNATCOLL.VFS.Virtual_File;
       Revision : String)
    is
       pragma Unreferenced (Rep, File, Revision);
@@ -310,7 +310,7 @@ package body VCS.Unknown_VCS is
 
    procedure Diff
      (Rep       : access Unknown_VCS_Record;
-      File      : VFS.Virtual_File;
+      File      : GNATCOLL.VFS.Virtual_File;
       Version_1 : String := "";
       Version_2 : String := "")
    is
@@ -325,8 +325,8 @@ package body VCS.Unknown_VCS is
 
    procedure Diff_Patch
      (Rep    : access Unknown_VCS_Record;
-      File   : VFS.Virtual_File;
-      Output : VFS.Virtual_File)
+      File   : GNATCOLL.VFS.Virtual_File;
+      Output : GNATCOLL.VFS.Virtual_File)
    is
       pragma Unreferenced (Rep, File, Output);
    begin
@@ -339,7 +339,7 @@ package body VCS.Unknown_VCS is
 
    procedure Diff_Base_Head
      (Rep  : access Unknown_VCS_Record;
-      File : VFS.Virtual_File)
+      File : GNATCOLL.VFS.Virtual_File)
    is
       pragma Unreferenced (Rep, File);
    begin
@@ -352,7 +352,7 @@ package body VCS.Unknown_VCS is
 
    procedure Diff_Working
      (Rep  : access Unknown_VCS_Record;
-      File : VFS.Virtual_File)
+      File : GNATCOLL.VFS.Virtual_File)
    is
       pragma Unreferenced (Rep, File);
    begin
@@ -365,7 +365,7 @@ package body VCS.Unknown_VCS is
 
    procedure Diff_Tag
      (Rep      : access Unknown_VCS_Record;
-      File     : VFS.Virtual_File;
+      File     : GNATCOLL.VFS.Virtual_File;
       Tag_Name : String)
    is
       pragma Unreferenced (Rep, File, Tag_Name);
@@ -379,7 +379,7 @@ package body VCS.Unknown_VCS is
 
    procedure Log
      (Rep     : access Unknown_VCS_Record;
-      File    : VFS.Virtual_File;
+      File    : GNATCOLL.VFS.Virtual_File;
       Rev     : String;
       As_Text : Boolean := True)
    is
@@ -394,7 +394,7 @@ package body VCS.Unknown_VCS is
 
    procedure Annotate
      (Rep  : access Unknown_VCS_Record;
-      File : VFS.Virtual_File)
+      File : GNATCOLL.VFS.Virtual_File)
    is
       pragma Unreferenced (Rep);
    begin

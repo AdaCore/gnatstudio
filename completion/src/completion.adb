@@ -95,7 +95,7 @@ package body Completion is
    -- Get_File --
    --------------
 
-   function Get_File (Context : Completion_Context) return VFS.Virtual_File is
+   function Get_File (Context : Completion_Context) return Virtual_File is
    begin
       return Context.File;
    end Get_File;
@@ -205,7 +205,7 @@ package body Completion is
 
    function Create_Context
      (Manager : access Completion_Manager;
-      File    : VFS.Virtual_File;
+      File    : GNATCOLL.VFS.Virtual_File;
       Buffer  : String_Access;
       Offset  : Natural) return Completion_Context
    is
@@ -507,7 +507,7 @@ package body Completion is
       return (Proposal.Name'Length,
               "SIMPLE  ",
               Proposal.Name.all,
-              VFS.No_File, 0, 0);
+              GNATCOLL.VFS.No_File, 0, 0);
    end To_Completion_Id;
 
    ----------

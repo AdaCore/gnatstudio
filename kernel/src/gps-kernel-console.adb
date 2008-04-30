@@ -46,7 +46,7 @@ with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
 with Histories;              use Histories;
 with String_Utils;           use String_Utils;
 with Traces;                 use Traces;
-with VFS;                    use VFS;
+with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 
 package body GPS.Kernel.Console is
 
@@ -226,7 +226,7 @@ package body GPS.Kernel.Console is
               Parent            => Get_Current_Window (Kernel),
               History           => Get_History (Kernel));
       begin
-         if File = VFS.No_File then
+         if File = GNATCOLL.VFS.No_File then
             return;
          end if;
 
@@ -266,7 +266,7 @@ package body GPS.Kernel.Console is
          Parent            => Get_Current_Window (Kernel),
          History           => Get_History (Kernel));
 
-      if File = VFS.No_File then
+      if File = GNATCOLL.VFS.No_File then
          return;
       end if;
 

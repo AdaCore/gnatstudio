@@ -44,7 +44,7 @@ with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Project;       use GPS.Kernel.Project;
 with GPS.Main_Window;          use GPS.Main_Window;
 with Projects;                 use Projects;
-with VFS;                      use VFS;
+with GNATCOLL.VFS;                      use GNATCOLL.VFS;
 
 package body GPS.Kernel.MDI is
 
@@ -162,7 +162,7 @@ package body GPS.Kernel.MDI is
 
    function Get_File_Editor
      (Handle : access Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File) return Gtkada.MDI.MDI_Child
+      File   : GNATCOLL.VFS.Virtual_File) return Gtkada.MDI.MDI_Child
    is
       MDI   : constant MDI_Window := Get_MDI (Handle);
       Child : MDI_Child;

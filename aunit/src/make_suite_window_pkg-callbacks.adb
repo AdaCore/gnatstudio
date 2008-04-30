@@ -33,7 +33,7 @@ with Case_Handling;           use Case_Handling;
 with GPS.Intl;                use GPS.Intl;
 with Pixmaps_IDE;             use Pixmaps_IDE;
 with Row_Data;                use Row_Data;
-with VFS;                     use VFS;
+with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 
 with Templates_Parser;        use Templates_Parser;
 with AUnit_Templates;         use AUnit_Templates;
@@ -92,7 +92,7 @@ package body Make_Suite_Window_Pkg.Callbacks is
       Filter_A     : Filter_Show_All_Access;
       Filter_B     : Filter_Show_Ada_Access;
       Filter_C     : Filter_Show_Tests_Access;
-      Response     : VFS.Virtual_File;
+      Response     : GNATCOLL.VFS.Virtual_File;
       Suite_Name   : String_Access;
       Package_Name : String_Access;
       F_Type       : Test_Type;
@@ -137,7 +137,7 @@ package body Make_Suite_Window_Pkg.Callbacks is
 
       Response := Select_File (Explorer);
 
-      if Response = VFS.No_File then
+      if Response = GNATCOLL.VFS.No_File then
          return;
       end if;
 

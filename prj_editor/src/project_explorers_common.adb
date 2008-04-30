@@ -44,7 +44,8 @@ with Projects.Registry;         use Projects, Projects.Registry;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with Namet;                     use Namet;
-with VFS;                       use VFS;
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 package body Project_Explorers_Common is
 
@@ -130,7 +131,7 @@ package body Project_Explorers_Common is
      (Kernel : Kernel_Handle;
       Model  : Gtk_Tree_Store;
       Base   : Gtk_Tree_Iter;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Sorted : Boolean := False)
    is
       Iter  : Gtk_Tree_Iter;
@@ -204,7 +205,7 @@ package body Project_Explorers_Common is
 
    function Append_Category_Node
      (Model         : Gtk_Tree_Store;
-      File          : VFS.Virtual_File;
+      File          : GNATCOLL.VFS.Virtual_File;
       Category      : Language_Category;
       Category_Name : Strings.String_Access;
       Parent_Iter   : Gtk_Tree_Iter) return Gtk_Tree_Iter
@@ -311,7 +312,7 @@ package body Project_Explorers_Common is
 
    function Append_Entity_Node
      (Model       : Gtk_Tree_Store;
-      File        : VFS.Virtual_File;
+      File        : GNATCOLL.VFS.Virtual_File;
       Construct   : Construct_Information;
       Parent_Iter : Gtk_Tree_Iter) return Gtk_Tree_Iter
    is
@@ -356,7 +357,7 @@ package body Project_Explorers_Common is
      (Kernel    : Kernel_Handle;
       Model     : Gtk_Tree_Store;
       Node      : Gtk_Tree_Iter;
-      File_Name : VFS.Virtual_File)
+      File_Name : GNATCOLL.VFS.Virtual_File)
    is
       Languages  : constant Language_Handler :=
                      Language_Handler (Get_Language_Handler (Kernel));
@@ -384,7 +385,7 @@ package body Project_Explorers_Common is
       --  Mark the file information as up-to-date
 
       Set (Model, Node, Timestamp_Column,
-           Gint (File_Time_Stamp (File_Name) - VFS.No_Time));
+           Gint (File_Time_Stamp (File_Name) - GNATCOLL.Utils.No_Time));
 
       --  Remove any previous information for this file
 
@@ -517,7 +518,7 @@ package body Project_Explorers_Common is
    is
       C : MDI_Child;
    begin
-      if Child.Dnd_From_File = VFS.No_File then
+      if Child.Dnd_From_File = GNATCOLL.VFS.No_File then
          --  So that we can move the explorer itself
          return MDI_Child (Child);
 
@@ -545,7 +546,7 @@ package body Project_Explorers_Common is
    procedure Child_Drag_Finished (Child : access MDI_Explorer_Child_Record) is
    begin
       --  So that we can also move the explorer itself
-      Child.Dnd_From_File := VFS.No_File;
+      Child.Dnd_From_File := GNATCOLL.VFS.No_File;
    end Child_Drag_Finished;
 
    ---------------------
@@ -781,7 +782,7 @@ package body Project_Explorers_Common is
                     Get_String (Model, Node, Absolute_Name_Column));
             begin
                return Duration (Get_Int (Model, Node, Timestamp_Column)) +
-                 VFS.No_Time =
+                 GNATCOLL.Utils.No_Time =
                    File_Time_Stamp (File);
             end;
 
@@ -830,12 +831,12 @@ package body Project_Explorers_Common is
 
    function Get_File_From_Node
      (Model : Gtk_Tree_Store;
-      Node  : Gtk_Tree_Iter) return VFS.Virtual_File
+      Node  : Gtk_Tree_Iter) return GNATCOLL.VFS.Virtual_File
    is
       Absolute : constant String := Get_Absolute_Name (Model, Node);
    begin
       if Absolute = "" then
-         return VFS.No_File;
+         return GNATCOLL.VFS.No_File;
       else
          return Create (Full_Filename => Absolute);
       end if;

@@ -38,7 +38,7 @@ with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;          use GPS.Kernel.Scripts;
 with Projects;                    use Projects;
 with Traces;                      use Traces;
-with VFS;                         use VFS;
+with GNATCOLL.VFS;                         use GNATCOLL.VFS;
 
 package body Docgen2_Module is
 
@@ -318,7 +318,7 @@ package body Docgen2_Module is
       if Has_File_Information (Context) then
          File := File_Information (Context);
 
-         if File /= VFS.No_File then
+         if File /= GNATCOLL.VFS.No_File then
             Generate
               (Kernel,
                Docgen_Module (Docgen_Module_Id).Backend,
@@ -392,7 +392,7 @@ package body Docgen2_Module is
            Pattern_Name      => -"All files;Ada files;C/C++ files",
            History           => Get_History (Kernel));
    begin
-      if File /= VFS.No_File then
+      if File /= GNATCOLL.VFS.No_File then
          Generate
            (Kernel,
             Docgen_Module (Docgen_Module_Id).Backend,

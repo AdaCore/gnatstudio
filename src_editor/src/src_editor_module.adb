@@ -66,6 +66,7 @@ with Commands.Interactive;              use Commands, Commands.Interactive;
 with Completion_Module;                 use Completion_Module;
 with Default_Preferences;
 with File_Utils;                        use File_Utils;
+with Filesystems;                       use Filesystems;
 with Find_Utils;                        use Find_Utils;
 with GPS.Intl;                          use GPS.Intl;
 with GPS.Kernel.Actions;                use GPS.Kernel.Actions;
@@ -146,14 +147,14 @@ package body Src_Editor_Module is
 
    procedure Save_To_File
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Name    : VFS.Virtual_File := VFS.No_File;
+      Name    : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Success : out Boolean);
    --  Save the current editor to Name, or its associated filename if Name is
    --  null.
 
    function Create_File_Editor
      (Kernel     : access Kernel_Handle_Record'Class;
-      File       : VFS.Virtual_File;
+      File       : GNATCOLL.VFS.Virtual_File;
       Create_New : Boolean := True) return Source_Editor_Box;
    --  Create a new text editor that edits File.
    --  If File is the empty string, or the file doesn't exist and Create_New is
@@ -325,11 +326,11 @@ package body Src_Editor_Module is
      (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File);
    --  Add an entry for File to the Recent menu, if needed.
 
-   function Get_Filename (Child : MDI_Child) return VFS.Virtual_File;
+   function Get_Filename (Child : MDI_Child) return GNATCOLL.VFS.Virtual_File;
    --  If Child is a file editor, return the corresponding filename,
    --  otherwise return an empty string.
 
-   function Get_File_Identifier (Child  : MDI_Child) return VFS.Virtual_File;
+   function Get_File_Identifier (Child  : MDI_Child) return Virtual_File;
    --  Return the file identifier if Child is a file editor
 
    function Expand_Aliases_Entities
@@ -478,7 +479,7 @@ package body Src_Editor_Module is
    -- Get_File_Identifier --
    -------------------------
 
-   function Get_File_Identifier (Child : MDI_Child) return VFS.Virtual_File is
+   function Get_File_Identifier (Child : MDI_Child) return Virtual_File is
    begin
       if Child /= null
         and then Get_Widget (Child) /= null
@@ -487,7 +488,7 @@ package body Src_Editor_Module is
          return Get_File_Identifier
            (Get_Buffer (Source_Editor_Box (Get_Widget (Child))));
       else
-         return VFS.No_File;
+         return GNATCOLL.VFS.No_File;
       end if;
    end Get_File_Identifier;
 
@@ -495,7 +496,7 @@ package body Src_Editor_Module is
    -- Get_Filename --
    ------------------
 
-   function Get_Filename (Child : MDI_Child) return VFS.Virtual_File is
+   function Get_Filename (Child : MDI_Child) return Virtual_File is
    begin
       if Child /= null
         and then Get_Widget (Child) /= null
@@ -503,7 +504,7 @@ package body Src_Editor_Module is
       then
          return Get_Filename (Source_Editor_Box (Get_Widget (Child)));
       else
-         return VFS.No_File;
+         return GNATCOLL.VFS.No_File;
       end if;
    end Get_Filename;
 
@@ -551,7 +552,7 @@ package body Src_Editor_Module is
          if Get_Widget (Child).all in Source_Editor_Box_Record'Class then
             Box := Source_Editor_Box (Get_Widget (Child));
 
-            if D.File = VFS.No_File
+            if D.File = GNATCOLL.VFS.No_File
               or else D.File = Get_Filename (Box)
             then
                Check_Timestamp_And_Reload
@@ -579,7 +580,7 @@ package body Src_Editor_Module is
    begin
       --  Insert the saved file in the Recent menu.
 
-      if D.File /= VFS.No_File
+      if D.File /= GNATCOLL.VFS.No_File
         and then not Is_Auto_Save (D.File)
       then
          Add_To_Recent_Menu (Kernel, D.File);
@@ -1051,7 +1052,7 @@ package body Src_Editor_Module is
 
    function Create_File_Editor
      (Kernel     : access Kernel_Handle_Record'Class;
-      File       : VFS.Virtual_File;
+      File       : GNATCOLL.VFS.Virtual_File;
       Create_New : Boolean := True) return Source_Editor_Box
    is
       Success     : Boolean;
@@ -1079,7 +1080,7 @@ package body Src_Editor_Module is
          --  anyway (for instance a remote file for which we couldn't establish
          --  the connection)
 
-         if File = VFS.No_File then
+         if File = GNATCOLL.VFS.No_File then
             Is_Writable := True;
          else
             Writable := Write_File (File);
@@ -1124,7 +1125,7 @@ package body Src_Editor_Module is
 
    function Open_File
      (Kernel           : access Kernel_Handle_Record'Class;
-      File             : VFS.Virtual_File := VFS.No_File;
+      File             : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Create_New       : Boolean := True;
       Focus            : Boolean := True;
       Force            : Boolean := False;
@@ -1188,7 +1189,7 @@ package body Src_Editor_Module is
                 & " Focus=" & Focus'Img);
       end if;
 
-      if File /= VFS.No_File then
+      if File /= GNATCOLL.VFS.No_File then
          Child2 := Find_Editor (Kernel, File);
 
          if Child2 /= null then
@@ -1260,7 +1261,7 @@ package body Src_Editor_Module is
 
          Jump_To_Location;
 
-         if File /= VFS.No_File then
+         if File /= GNATCOLL.VFS.No_File then
             if Is_Local (File) then
                Set_Title
                  (Child, Full_Name (File).all, Display_Base_Name (File));
@@ -1288,7 +1289,7 @@ package body Src_Editor_Module is
                   if The_Child /= MDI_Child (Child)
                     and then Get_Widget (The_Child).all in
                     Source_Editor_Box_Record'Class
-                    and then Get_Filename (The_Child) = VFS.No_File
+                    and then Get_Filename (The_Child) = GNATCOLL.VFS.No_File
                   then
                      declare
                         Ident : constant String := Base_Name
@@ -1339,7 +1340,7 @@ package body Src_Editor_Module is
             end;
          end if;
 
-         if File /= VFS.No_File then
+         if File /= GNATCOLL.VFS.No_File then
             Add_To_Recent_Menu (Kernel, File);
          end if;
 
@@ -1359,7 +1360,7 @@ package body Src_Editor_Module is
 
    procedure Save_To_File
      (Kernel  : access Kernel_Handle_Record'Class;
-      Name    : VFS.Virtual_File := VFS.No_File;
+      Name    : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Success : out Boolean)
    is
       Child  : constant MDI_Child := Find_Current_Editor (Kernel);
@@ -1384,7 +1385,7 @@ package body Src_Editor_Module is
    is
       pragma Unreferenced (Widget);
       Context : Selection_Context;
-      Dir     : VFS.Virtual_File := VFS.No_File;
+      Dir     : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
    begin
       Context := Get_Current_Context (Kernel);
 
@@ -1404,7 +1405,7 @@ package body Src_Editor_Module is
               Pattern_Name      => -"All files;Ada files;C/C++ files",
               History           => Get_History (Kernel));
       begin
-         if Filename /= VFS.No_File then
+         if Filename /= GNATCOLL.VFS.No_File then
             Open_File_Editor (Kernel, Filename);
          end if;
       end;
@@ -1435,7 +1436,7 @@ package body Src_Editor_Module is
               History           => Get_History (Kernel));
 
       begin
-         if Filename /= VFS.No_File then
+         if Filename /= GNATCOLL.VFS.No_File then
             Open_File_Editor (Kernel, Filename);
          end if;
       end;
@@ -1451,7 +1452,7 @@ package body Src_Editor_Module is
    function Completion
      (Factory : File_Completion_Factory; Index : Positive) return String
    is
-      File : VFS.Virtual_File;
+      File : GNATCOLL.VFS.Virtual_File;
    begin
       if Index > Factory.File1'Length then
          if Index - Factory.File1'Length > Factory.File2'Length then
@@ -1464,7 +1465,7 @@ package body Src_Editor_Module is
          File := Factory.File1 (Factory.File1'First + Index - 1);
       end if;
 
-      if File = VFS.No_File then
+      if File = GNATCOLL.VFS.No_File then
          return "@$#$";  --  Unlikely string, will not match any suffix
       else
          return Base_Name (File);
@@ -1478,7 +1479,7 @@ package body Src_Editor_Module is
    function Description
      (Factory : File_Completion_Factory; Index : Positive) return String
    is
-      File : VFS.Virtual_File;
+      File : GNATCOLL.VFS.Virtual_File;
    begin
       if Index > Factory.File1'Length then
          if Index - Factory.File1'Length > Factory.File2'Length then
@@ -1491,7 +1492,7 @@ package body Src_Editor_Module is
          File := Factory.File1 (Factory.File1'First + Index - 1);
       end if;
 
-      if File = VFS.No_File then
+      if File = GNATCOLL.VFS.No_File then
          return "";
       else
          return Full_Name (File).all;
@@ -1646,7 +1647,7 @@ package body Src_Editor_Module is
       pragma Unreferenced (Widget, Editor);
    begin
       Editor := Open_File
-        (Kernel, File => VFS.No_File,
+        (Kernel, File => GNATCOLL.VFS.No_File,
          Line => 1, Column => 1, Column_End => 1);
 
    exception
@@ -1700,7 +1701,7 @@ package body Src_Editor_Module is
                  History           => Get_History (Kernel));
 
          begin
-            if New_Name /= VFS.No_File then
+            if New_Name /= GNATCOLL.VFS.No_File then
                Save_To_File (Kernel, New_Name, Success);
             end if;
          end;
@@ -1853,7 +1854,7 @@ package body Src_Editor_Module is
             Column : Character_Offset_Type;
 
          begin
-            if F /= VFS.No_File then
+            if F /= GNATCOLL.VFS.No_File then
                Buffer := Read_File (F);
                Get_Cursor_Position (Get_Buffer (Source), Line, Column);
                Insert (Get_Buffer (Source), Line, Column, Buffer.all);
@@ -2199,7 +2200,7 @@ package body Src_Editor_Module is
       File_Data : constant File_Hooks_Args := File_Hooks_Args (Data.all);
       Buffer    : Source_Buffer;
    begin
-      if File_Data.File = VFS.No_File then
+      if File_Data.File = GNATCOLL.VFS.No_File then
          return;
       end if;
 
@@ -2245,7 +2246,8 @@ package body Src_Editor_Module is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      File   : constant VFS.Virtual_File := File_Information (Context.Context);
+      File   : constant GNATCOLL.VFS.Virtual_File :=
+        File_Information (Context.Context);
       Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
       Dialog  : Gtk_Dialog;
       Button  : Gtk_Widget;
@@ -2444,7 +2446,7 @@ package body Src_Editor_Module is
 
    procedure Customize
      (Module : access Source_Editor_Module_Record;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Node   : Glib.Xml_Int.Node_Ptr;
       Level  : Customization_Level) is
    begin
@@ -3190,7 +3192,7 @@ package body Src_Editor_Module is
          --  we need either to show or to hide the name on all open editors.
 
          declare
-            Files : constant VFS.File_Array := Open_Files (Kernel);
+            Files : constant GNATCOLL.VFS.File_Array := Open_Files (Kernel);
          begin
             for Node in Files'Range loop
                declare
@@ -3317,16 +3319,16 @@ package body Src_Editor_Module is
 
    function Find_Editor
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File) return Gtkada.MDI.MDI_Child
+      File   : GNATCOLL.VFS.Virtual_File) return Gtkada.MDI.MDI_Child
    is
       Id    : constant Source_Editor_Module :=
                 Source_Editor_Module (Src_Editor_Module_Id);
       Iter  : Child_Iterator;
       Child : MDI_Child;
-      Full  : VFS.Virtual_File;
+      Full  : GNATCOLL.VFS.Virtual_File;
 
    begin
-      if File = VFS.No_File
+      if File = GNATCOLL.VFS.No_File
         or else Get_MDI (Kernel) = null
       then
          return null;
@@ -3487,7 +3489,7 @@ package body Src_Editor_Module is
    -- Autosaved_File --
    --------------------
 
-   function Autosaved_File (File : VFS.Virtual_File) return VFS.Virtual_File is
+   function Autosaved_File (File : Virtual_File) return Virtual_File is
    begin
       --  Implementation must be in sync with Is_Auto_Save below.
       return Create
@@ -3498,7 +3500,7 @@ package body Src_Editor_Module is
    -- Is_Auto_Save --
    ------------------
 
-   function Is_Auto_Save (File : VFS.Virtual_File) return Boolean is
+   function Is_Auto_Save (File : GNATCOLL.VFS.Virtual_File) return Boolean is
       Base : constant String := Base_Name (File);
    begin
       return Base'Length >= 2

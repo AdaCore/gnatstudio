@@ -90,7 +90,7 @@ with Std_Dialogs;               use Std_Dialogs;
 with String_Utils;              use String_Utils;
 with Tooltips;                  use Tooltips;
 with Traces;                    use Traces;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 package body Src_Editor_Box is
 
@@ -263,9 +263,9 @@ package body Src_Editor_Box is
    is
       Line   : Editable_Line_Type;
       Dummy  : Character_Offset_Type;
-      File   : VFS.Virtual_File := Get_Filename (Source.Source_Buffer);
+      File   : Virtual_File := Get_Filename (Source.Source_Buffer);
    begin
-      if File = VFS.No_File then
+      if File = GNATCOLL.VFS.No_File then
          File := Get_File_Identifier (Source.Source_Buffer);
       end if;
 
@@ -317,7 +317,7 @@ package body Src_Editor_Box is
       Filename : Virtual_File;
 
    begin
-      if Get_Filename (Editor) = VFS.No_File then
+      if Get_Filename (Editor) = GNATCOLL.VFS.No_File then
          Console.Insert
            (Kernel, -"Cross-references not possible on unamed files",
             Mode => Error);
@@ -728,9 +728,9 @@ package body Src_Editor_Box is
    is
       pragma Unreferenced (Buffer);
       Child : MDI_Child;
-      File  : VFS.Virtual_File := Get_Filename (Box.Source_Buffer);
+      File  : GNATCOLL.VFS.Virtual_File := Get_Filename (Box.Source_Buffer);
    begin
-      if File = VFS.No_File then
+      if File = GNATCOLL.VFS.No_File then
          File := Get_File_Identifier (Box.Source_Buffer);
       end if;
 
@@ -1213,7 +1213,7 @@ package body Src_Editor_Box is
    is
       Editor        : constant Source_Editor_Box := Source_Editor_Box (Object);
       V             : constant Source_View := Editor.Source_View;
-      Filename      : constant VFS.Virtual_File :=
+      Filename      : constant GNATCOLL.VFS.Virtual_File :=
                         Get_Filename (Editor.Source_Buffer);
       Line          : Gint := 0;
       Column        : Gint := 0;
@@ -1716,7 +1716,7 @@ package body Src_Editor_Box is
    begin
       if Has_File_Information (Context) then
          declare
-            File    : constant VFS.Virtual_File := File_Information (Context);
+            File    : constant Virtual_File := File_Information (Context);
             Project    : constant Project_Type := Get_Project_From_File
               (Get_Registry (Kernel).all, File);
             Other_File : constant String := Other_File_Base_Name
@@ -1808,7 +1808,7 @@ package body Src_Editor_Box is
    is
       pragma Unreferenced (Command);
       Kernel     : constant Kernel_Handle := Get_Kernel (Context.Context);
-      File  : constant VFS.Virtual_File := File_Information (Context.Context);
+      File  : constant Virtual_File := File_Information (Context.Context);
       Project    : constant Project_Type := Get_Project_From_File
         (Get_Registry (Kernel).all, File);
       Other_File : constant Virtual_File := Create
@@ -1818,7 +1818,7 @@ package body Src_Editor_Box is
              & Full_Name (File).all
              & " Project=" & Project_Name (Project)
              & " Other_File=" & Full_Name (Other_File).all);
-      if Other_File /= VFS.No_File then
+      if Other_File /= GNATCOLL.VFS.No_File then
          Open_File_Editor (Kernel, Other_File, Line => 0);
          return Commands.Success;
       else
@@ -2084,8 +2084,8 @@ package body Src_Editor_Box is
       if Read_Only_Set then
          Writable := False;
       else
-         Writable := Get_Filename (Editor.Source_Buffer) = VFS.No_File
-           or else VFS.Is_Writable (Get_Filename (Editor.Source_Buffer))
+         Writable := Get_Filename (Editor.Source_Buffer) = GNATCOLL.VFS.No_File
+           or else Is_Writable (Get_Filename (Editor.Source_Buffer))
          or else (not Is_Regular_File (Get_Filename (Editor.Source_Buffer))
                     and then Get_Writable (Editor.Source_Buffer));
       end if;
@@ -2117,7 +2117,7 @@ package body Src_Editor_Box is
 
    procedure Load_File
      (Editor          : access Source_Editor_Box_Record;
-      Filename        : VFS.Virtual_File;
+      Filename        : GNATCOLL.VFS.Virtual_File;
       Lang_Autodetect : Boolean := True;
       Force_Focus     : Boolean := True;
       Success         : out Boolean) is
@@ -2138,7 +2138,7 @@ package body Src_Editor_Box is
 
    procedure Load_Empty_File
      (Editor          : access Source_Editor_Box_Record;
-      Filename        : VFS.Virtual_File;
+      Filename        : GNATCOLL.VFS.Virtual_File;
       Lang_Handler    : Language_Handlers.Language_Handler;
       Lang_Autodetect : Boolean := True) is
    begin
@@ -2162,10 +2162,10 @@ package body Src_Editor_Box is
 
    procedure Save_To_File
      (Editor   : access Source_Editor_Box_Record;
-      Filename : VFS.Virtual_File := VFS.No_File;
+      Filename : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Success  : out Boolean)
    is
-      File          : constant VFS.Virtual_File :=
+      File          : constant GNATCOLL.VFS.Virtual_File :=
                         Get_Filename (Editor.Source_Buffer);
       Constructs    : Construct_List;
       Info          : Construct_Access;
@@ -2179,7 +2179,7 @@ package body Src_Editor_Box is
       --  another disk file.
 
       if not Get_Writable (Editor.Source_Buffer)
-        and then Filename = VFS.No_File
+        and then Filename = GNATCOLL.VFS.No_File
       then
          Success := False;
          return;
@@ -2191,8 +2191,8 @@ package body Src_Editor_Box is
 
       Success := True;
 
-      if Filename = VFS.No_File then
-         if File = VFS.No_File then
+      if Filename = GNATCOLL.VFS.No_File then
+         if File = GNATCOLL.VFS.No_File then
             --  ??? This is Ada specific
             --  Figure out what the name of the file should be, based on the
             --  unit <-> file name mapping
@@ -2248,7 +2248,7 @@ package body Src_Editor_Box is
             begin
                GNAT.OS_Lib.Free (New_Base_Name);
 
-               if Name = VFS.No_File then
+               if Name = GNATCOLL.VFS.No_File then
                   Success := False;
                   return;
                end if;
@@ -2326,7 +2326,7 @@ package body Src_Editor_Box is
       Column   : Character_Offset_Type;
       Data     : aliased File_Hooks_Args;
    begin
-      if Get_Filename (Editor.Source_Buffer) /= VFS.No_File then
+      if Get_Filename (Editor.Source_Buffer) /= GNATCOLL.VFS.No_File then
          if Always_Reload
            or else not Check_Timestamp (Editor.Source_Buffer, Update => True)
          then

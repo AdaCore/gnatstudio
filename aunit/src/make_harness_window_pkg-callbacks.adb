@@ -26,7 +26,7 @@ with Aunit_Filters;   use Aunit_Filters;
 with Gdk.Pixbuf;      use Gdk.Pixbuf;
 
 with GPS.Intl;                  use GPS.Intl;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 with AUnit_Templates;         use AUnit_Templates;
 with Templates_Parser;        use Templates_Parser;
@@ -98,7 +98,7 @@ package body Make_Harness_Window_Pkg.Callbacks is
       Filter_A     : Filter_Show_All_Access;
       Filter_B     : Filter_Show_Ada_Access;
       Filter_C     : Filter_Show_Suites_Access;
-      Response     : VFS.Virtual_File;
+      Response     : GNATCOLL.VFS.Virtual_File;
       Suite_Name   : String_Access;
       Package_Name : String_Access;
       F_Type       : Test_Type;
@@ -123,15 +123,15 @@ package body Make_Harness_Window_Pkg.Callbacks is
       if Get_Text (Win.Directory_Entry) = "" then
          Gtk_New
            (Explorer,
-            VFS.Local_Root_Dir,
-            VFS.Get_Current_Dir,
+            GNATCOLL.VFS.Local_Root_Dir,
+            GNATCOLL.VFS.Get_Current_Dir,
             -"Select test harness",
             History => null); --  ??? No history
       else
          Gtk_New
            (Explorer,
-            VFS.Local_Root_Dir,
-            VFS.Create (Get_Text (Win.Directory_Entry)),
+            GNATCOLL.VFS.Local_Root_Dir,
+            GNATCOLL.VFS.Create (Get_Text (Win.Directory_Entry)),
             -"Select test harness",
             History => null); --  ??? No history
       end if;
@@ -142,7 +142,7 @@ package body Make_Harness_Window_Pkg.Callbacks is
 
       Response := Select_File (Explorer);
 
-      if Response = VFS.No_File then
+      if Response = GNATCOLL.VFS.No_File then
          return;
       end if;
 

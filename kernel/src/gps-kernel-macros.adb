@@ -27,7 +27,7 @@ with Projects;                use Projects;
 with Projects.Registry;       use Projects.Registry;
 with Remote.Path.Translator;  use Remote.Path.Translator;
 with String_Utils;            use String_Utils;
-with VFS;                     use VFS;
+with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 with GNAT.Strings;
 with GNATCOLL.Templates;          use GNATCOLL.Templates;
 

@@ -29,7 +29,7 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Strings; use GNAT.Strings;
 
 with Construct_Tries;
-with VFS;   use VFS;
+with GNATCOLL.VFS;   use GNATCOLL.VFS;
 
 package Language.Tree.Database is
 
@@ -47,7 +47,7 @@ package Language.Tree.Database is
 
    function Get_Buffer
      (Provider : access Buffer_Provider;
-      File     : VFS.Virtual_File) return String_Access is abstract;
+      File     : GNATCOLL.VFS.Virtual_File) return String_Access is abstract;
    --  Return the buffer corresponding to this buffer provider. The returned
    --  access type is supposed to be a copy of the actual buffer - it will be
    --  freed by the completion engine when needed.
@@ -60,7 +60,7 @@ package Language.Tree.Database is
 
    function Get_Buffer
      (Provider : access File_Buffer_Provider;
-      File     : VFS.Virtual_File) return String_Access;
+      File     : GNATCOLL.VFS.Virtual_File) return String_Access;
    --  Return the buffer corresponding to the file given in parameter - by
    --  default just read the file.
    --  ??? What is the encoding of the returned data?

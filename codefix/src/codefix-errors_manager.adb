@@ -17,7 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with VFS;                   use VFS;
+with GNATCOLL.VFS;                   use GNATCOLL.VFS;
 
 package body Codefix.Errors_Manager is
 
@@ -320,7 +320,7 @@ package body Codefix.Errors_Manager is
 
    function Search_Error
      (This         : Correction_Manager;
-      File         : VFS.Virtual_File;
+      File         : GNATCOLL.VFS.Virtual_File;
       Line         : Integer;
       Column       : Column_Index;
       Message      : String := "")

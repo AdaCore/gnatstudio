@@ -24,6 +24,7 @@ with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Strings;
 with GNATCOLL.Filesystem;        use GNATCOLL.Filesystem;
+with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 with Glib;                       use Glib;
 with Glib.Convert;               use Glib.Convert;
@@ -51,7 +52,6 @@ with Gtk.Widget;                 use Gtk.Widget;
 with Gtkada.MDI;                 use Gtkada.MDI;
 with Gtkada.Handlers;            use Gtkada.Handlers;
 
-with VFS;                        use VFS;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
@@ -64,7 +64,6 @@ with Projects;                   use Projects;
 with Projects.Registry;          use Projects.Registry;
 with Remote;                     use Remote;
 with String_List_Utils;          use String_List_Utils;
-with Filesystems;                use Filesystems;
 with File_Utils;                 use File_Utils;
 with GUI_Utils;                  use GUI_Utils;
 with OS_Utils;                   use OS_Utils;
@@ -254,12 +253,12 @@ package body Project_Explorers_Files is
 
    procedure Remove_File
      (View : Project_Explorer_Files;
-      File : VFS.Virtual_File);
+      File : GNATCOLL.VFS.Virtual_File);
    --  Remove a file or directory node from the tree
 
    procedure Add_File
      (View : Project_Explorer_Files;
-      File : VFS.Virtual_File);
+      File : GNATCOLL.VFS.Virtual_File);
    --  Add a file or directory node in the tree
 
    ------------------------------
@@ -1083,7 +1082,7 @@ package body Project_Explorers_Files is
             String_List_Utils.String_List.Free (Inc);
          end;
       else
-         Get_Logical_Drives (Get_Local_Filesystem, Buffer, Len);
+         Get_Local_Filesystem.Get_Logical_Drives (Buffer, Len);
 
          if Len = 0 then
             File_Append_Directory
@@ -1261,7 +1260,7 @@ package body Project_Explorers_Files is
 
    procedure Remove_File
      (View : Project_Explorer_Files;
-      File : VFS.Virtual_File)
+      File : GNATCOLL.VFS.Virtual_File)
    is
       Iter      : Gtk.Tree_Model.Gtk_Tree_Iter;
       Next_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
@@ -1313,12 +1312,12 @@ package body Project_Explorers_Files is
 
    procedure Add_File
      (View : Project_Explorer_Files;
-      File : VFS.Virtual_File)
+      File : GNATCOLL.VFS.Virtual_File)
    is
       Iter      : Gtk.Tree_Model.Gtk_Tree_Iter;
       Next_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
       Iter2     : Gtk.Tree_Model.Gtk_Tree_Iter := Null_Iter;
-      Dir       : VFS.Virtual_File := VFS.Dir (File);
+      Dir       : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.Dir (File);
       Path      : Gtk_Tree_Path;
       Dead      : Boolean;
       Done      : Boolean;
@@ -1328,7 +1327,7 @@ package body Project_Explorers_Files is
       Iter := Get_Iter_First (View.File_Model);
 
       if Is_Directory (File) then
-         Dir := VFS.Get_Parent (File);
+         Dir := GNATCOLL.VFS.Get_Parent (File);
       end if;
 
       while Iter /= Null_Iter loop

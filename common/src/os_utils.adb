@@ -20,7 +20,7 @@
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Interfaces.C;              use Interfaces.C;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
-with Filesystems;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Directory_Operations; use GNAT, GNAT.Directory_Operations;
 
@@ -34,8 +34,7 @@ package body OS_Utils is
 
    function Create_Tmp_File return String is
       Current_Dir : constant String := Get_Current_Dir;
-      Temp_Dir    : constant String :=
-        Filesystems.Get_Local_Filesystem.Get_Tmp_Directory;
+      Temp_Dir    : constant String := Get_Local_Filesystem.Get_Tmp_Directory;
       Fd          : File_Descriptor;
       Base        : String_Access;
 

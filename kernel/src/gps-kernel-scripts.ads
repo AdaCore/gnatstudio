@@ -134,14 +134,15 @@ package GPS.Kernel.Scripts is
    --  been created.
 
    function Get_Data
-     (Data : Callback_Data'Class; N : Positive) return VFS.Virtual_File;
+     (Data : Callback_Data'Class; N : Positive)
+      return GNATCOLL.VFS.Virtual_File;
    function Get_Data
-     (Instance : Class_Instance) return VFS.Virtual_File;
+     (Instance : Class_Instance) return GNATCOLL.VFS.Virtual_File;
    --  Retrieve the file information from an instance
 
    function Create_File
      (Script : access Scripting_Language_Record'Class;
-      File   : VFS.Virtual_File) return Class_Instance;
+      File   : GNATCOLL.VFS.Virtual_File) return Class_Instance;
    --  Return a new file
 
    ---------------

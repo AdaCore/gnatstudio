@@ -35,7 +35,7 @@ package body Commands.Debugger is
       Kernel     : Kernel_Handle;
       Debugger   : Visual_Debugger;
       Mode       : Breakpoint_Command_Mode;
-      File       : VFS.Virtual_File;
+      File       : GNATCOLL.VFS.Virtual_File;
       Line       : Positive) is
    begin
       Item          := new Set_Breakpoint_Command;

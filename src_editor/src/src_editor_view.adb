@@ -69,7 +69,7 @@ with Language;                   use Language;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 with Traces;                     use Traces;
-with VFS;                        use VFS;
+with GNATCOLL.VFS;                        use GNATCOLL.VFS;
 
 package body Src_Editor_View is
 
@@ -1628,9 +1628,9 @@ package body Src_Editor_View is
       D      : constant File_Hooks_Args := File_Hooks_Args (Data.all);
       Buffer : constant Source_Buffer :=
                  Source_Buffer (Get_Buffer (Hook.View));
-      File   : VFS.Virtual_File := Get_Filename (Buffer);
+      File   : GNATCOLL.VFS.Virtual_File := Get_Filename (Buffer);
    begin
-      if File = VFS.No_File then
+      if File = GNATCOLL.VFS.No_File then
          File := Get_File_Identifier (Buffer);
       end if;
 

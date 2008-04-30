@@ -19,7 +19,7 @@
 
 with Namet;
 with Prj.PP;
-with VFS;
+with GNATCOLL.VFS;
 with Glib;
 
 package Projects.Registry is
@@ -47,7 +47,7 @@ package Projects.Registry is
      (Name            : Glib.UTF8_String;
       Registry        : Project_Registry'Class;
       Use_Source_Path : Boolean := True;
-      Use_Object_Path : Boolean := True) return VFS.Virtual_File;
+      Use_Object_Path : Boolean := True) return GNATCOLL.VFS.Virtual_File;
    --  Create a new file. This will automatically try to solve Name to an
    --  absolute path if it currently is a base name.
 
@@ -102,7 +102,7 @@ package Projects.Registry is
    --  project path has been set yet.
 
    function Get_Predefined_Source_Files
-     (Registry : Project_Registry) return VFS.File_Array_Access;
+     (Registry : Project_Registry) return GNATCOLL.VFS.File_Array_Access;
    --  Return the list of sources found in the predefined project (e.g. the Ada
    --  runtime). Returned memory must be freed by the caller
 
@@ -124,7 +124,7 @@ package Projects.Registry is
 
    procedure Load
      (Registry           : in out Project_Registry;
-      Root_Project_Path  : VFS.Virtual_File;
+      Root_Project_Path  : GNATCOLL.VFS.Virtual_File;
       Errors             : Projects.Error_Report;
       New_Project_Loaded : out Boolean;
       Status             : out Boolean);
@@ -228,7 +228,7 @@ package Projects.Registry is
 
    function Get_Project_From_File
      (Registry          : Project_Registry;
-      Source_Filename   : VFS.Virtual_File;
+      Source_Filename   : GNATCOLL.VFS.Virtual_File;
       Root_If_Not_Found : Boolean := True) return Project_Type;
    function Get_Project_From_File
      (Registry          : Project_Registry;
@@ -291,7 +291,7 @@ package Projects.Registry is
    --  Name_Len is set to 0 if the file wasn't found on the search path
 
    function Get_Language_From_File_From_Project
-     (Registry : Project_Registry; Source_Filename : VFS.Virtual_File)
+     (Registry : Project_Registry; Source_Filename : GNATCOLL.VFS.Virtual_File)
       return Namet.Name_Id;
    --  Return the language for a file, according to the project's naming
    --  scheme. You shouldn't call this function directly, but use the one

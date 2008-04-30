@@ -23,7 +23,7 @@ with Gtk.Label; use Gtk.Label;
 with Gtk.Frame; use Gtk.Frame;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Clist; use Gtk.Clist;
-with VFS;
+with GNATCOLL.VFS;
 
 package Vdiff_Pkg is
 
@@ -51,7 +51,7 @@ package Vdiff_Pkg is
       Clist2 : Gtk_Clist;
       Label10 : Gtk_Label;
       Label11 : Gtk_Label;
-      File1, File2 : VFS.Virtual_File;
+      File1, File2 : GNATCOLL.VFS.Virtual_File;
    end record;
    type Vdiff_Access is access all Vdiff_Record'Class;
 

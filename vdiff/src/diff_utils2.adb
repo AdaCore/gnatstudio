@@ -220,7 +220,7 @@ package body Diff_Utils2 is
 
    function Diff
      (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Ref_File, New_File : VFS.Virtual_File) return Diff_List
+      Ref_File, New_File : GNATCOLL.VFS.Virtual_File) return Diff_List
    is
       Diff_Command : constant String := Get_Pref (Diff_Cmd);
    begin
@@ -234,7 +234,7 @@ package body Diff_Utils2 is
    function Diff
      (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Diff_Command       : String;
-      Ref_File, New_File : VFS.Virtual_File) return Diff_List
+      Ref_File, New_File : GNATCOLL.VFS.Virtual_File) return Diff_List
    is
       Pattern    : constant Pattern_Matcher := Compile
         ("^([0-9]+)(,[0-9]+)?([acd])([0-9]+)(,[0-9]+)?.*\n", Multiple_Lines);
@@ -301,9 +301,9 @@ package body Diff_Utils2 is
 
    function Diff
      (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Orig_File : VFS.Virtual_File;
-      New_File  : VFS.Virtual_File;
-      Diff_File : VFS.Virtual_File;
+      Orig_File : GNATCOLL.VFS.Virtual_File;
+      New_File  : GNATCOLL.VFS.Virtual_File;
+      Diff_File : GNATCOLL.VFS.Virtual_File;
       Revert    : Boolean := False) return Diff_List
    is
       Patch_Command : constant String := Get_Pref (Patch_Cmd);
@@ -407,8 +407,8 @@ package body Diff_Utils2 is
    begin
       Free (Item.List);
 
-      if Item.Files (1) /= VFS.No_File and Item.Files (2) /= VFS.No_File then
-         if Item.Files (3) /= VFS.No_File then
+      if Item.Files (1) /= No_File and Item.Files (2) /= No_File then
+         if Item.Files (3) /= GNATCOLL.VFS.No_File then
             Item.List :=
               Diff3 (Kernel, Item.Files (1), Item.Files (2), Item.Files (3));
          else
@@ -424,7 +424,7 @@ package body Diff_Utils2 is
 
    function Diff3
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      My_Change, Old_File, Your_Change : VFS.Virtual_File) return Diff_List
+      My_Change, Old_File, Your_Change : Virtual_File) return Diff_List
    is
       Diff3_Command : constant String := Get_Pref (Diff3_Cmd);
    begin
@@ -438,7 +438,7 @@ package body Diff_Utils2 is
    function Diff3
      (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
       Diff3_Command : String;
-      My_Change, Old_File, Your_Change : VFS.Virtual_File) return Diff_List
+      My_Change, Old_File, Your_Change : Virtual_File) return Diff_List
    is
       Pattern_Bloc   : constant Pattern_Matcher :=
                          Compile ("^====([1-3])?$", Multiple_Lines);

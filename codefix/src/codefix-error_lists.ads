@@ -24,7 +24,7 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Regpat; use GNAT.Regpat;
 
 with Codefix.Formal_Errors; use Codefix.Formal_Errors;
-with VFS; use VFS;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 with Projects.Registry; use Projects.Registry;
 
@@ -108,7 +108,7 @@ private
    use Internal_Message_List_Pckg;
 
    type Messages_Loc is record
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Line   : Integer;
       Column : Column_Index;
    end record;

@@ -42,7 +42,7 @@ with Gtk.Menu_Item;           use Gtk.Menu_Item;
 with Gtk.Widget;              use Gtk.Widget;
 with Gtk.Window;              use Gtk.Window;
 with Traces;                  use Traces;
-with VFS;                     use VFS;
+with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 
 package body KeyManager_Module.Macros is
    Me        : constant Debug_Handle := Create ("Keymanager.Macros");
@@ -557,7 +557,7 @@ package body KeyManager_Module.Macros is
               History           => Get_History (Kernel));
 
       begin
-         if Name = VFS.No_File then
+         if Name = GNATCOLL.VFS.No_File then
             return;
          end if;
 
@@ -601,7 +601,7 @@ package body KeyManager_Module.Macros is
               History           => Get_History (Kernel));
 
       begin
-         if Name = VFS.No_File then
+         if Name = GNATCOLL.VFS.No_File then
             return;
          end if;
 

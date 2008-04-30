@@ -89,7 +89,7 @@ package body GPS.Kernel.Preferences is
    type Preferences_Module is new Module_ID_Record with null record;
    procedure Customize
      (Module : access Preferences_Module;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Node   : Glib.Xml_Int.Node_Ptr;
       Level  : Customization_Level);
    --  Handle GPS customization files for this module
@@ -1281,7 +1281,7 @@ package body GPS.Kernel.Preferences is
 
    procedure Customize
      (Module : access Preferences_Module;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Node   : Glib.Xml_Int.Node_Ptr;
       Level  : Customization_Level)
    is

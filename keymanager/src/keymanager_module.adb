@@ -63,7 +63,7 @@ with GUI_Utils;               use GUI_Utils;
 with HTables;                 use HTables;
 with KeyManager_Module.GUI;
 with Traces;
-with VFS;                     use VFS;
+with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 with XML_Parsers;
 
 package body KeyManager_Module is
@@ -187,7 +187,7 @@ package body KeyManager_Module is
 
    procedure Customize
      (Module : access Keymanager_Module_Record;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level);
    procedure Destroy (Module : in out Keymanager_Module_Record);
@@ -1418,7 +1418,7 @@ package body KeyManager_Module is
 
    procedure Customize
      (Module : access Keymanager_Module_Record;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level)
    is

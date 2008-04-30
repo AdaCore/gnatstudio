@@ -31,7 +31,7 @@ with Language;                 use Language;
 with Language.Tree;            use Language.Tree;
 with Language.Ada;             use Language.Ada;
 with GNAT.Strings;             use GNAT.Strings;
-with VFS;                      use VFS;
+with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with Glib;                     use Glib;
 with Gtk.Main;                 use Gtk.Main;
 with Gtk.Window;               use Gtk.Window;
@@ -115,8 +115,8 @@ procedure Code_Analysis_Test is
          Put_Line ("Error loading project: " & Msg);
       end Project_Error;
 
-      Src_File_Name : VFS.Virtual_File;
-      Cov_File_Name : VFS.Virtual_File;
+      Src_File_Name : Virtual_File;
+      Cov_File_Name : Virtual_File;
       File_Contents : GNAT.Strings.String_Access;
       Registry      : constant Project_Registry_Access := new Project_Registry;
       Loaded        : Boolean;
@@ -195,8 +195,8 @@ procedure Code_Analysis_Test is
                         Project_Num  : String;
                         File_Num     : String) is
       use Project_Maps;
-      VFS_File_Name : VFS.Virtual_File;
-      Cov_File_Name : VFS.Virtual_File;
+      VFS_File_Name : Virtual_File;
+      Cov_File_Name : Virtual_File;
       File_Contents : GNAT.Strings.String_Access;
       File_Node     : Code_Analysis.File_Access;
       Registry      : Project_Registry;

@@ -46,7 +46,7 @@ with GPS.Intl;                  use GPS.Intl;
 with Logo_Boxes;                use Logo_Boxes;
 with Histories;                 use Histories;
 with Creation_Wizard.Selector;  use Creation_Wizard.Selector;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 with Projects;                  use Projects;
 with Traces;                    use Traces;
 
@@ -88,7 +88,7 @@ package body Welcome is
    procedure Gtk_New
      (Screen       : out Welcome_Screen;
       Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Project_Name : VFS.Virtual_File := VFS.No_File)
+      Project_Name : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File)
    is
       Box, Hbox    : Gtk_Box;
       Sep          : Gtk_Separator;
@@ -408,7 +408,7 @@ package body Welcome is
             History           => Get_History (S.Kernel));
 
       begin
-         if File /= VFS.No_File then
+         if File /= GNATCOLL.VFS.No_File then
             Set_Text (Get_Entry (S.Open_Project), Full_Name (File).all);
          end if;
       end;

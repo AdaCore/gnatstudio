@@ -27,7 +27,7 @@ with GVD.Process;               use GVD.Process;
 with GVD.Types;                 use GVD.Types;
 with Debugger_Pixmaps;          use Debugger_Pixmaps;
 with String_List_Utils;         use String_List_Utils;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 with Commands;                  use Commands;
 with Commands.Debugger;         use Commands.Debugger;
@@ -73,7 +73,7 @@ package body GVD.Source_Editor.GPS is
    procedure Highlight_Current_Line (Editor : access GEdit_Record) is
       Kernel : constant Kernel_Handle := GPS_Window (Editor.Window).Kernel;
    begin
-      if Editor.Current_File = VFS.No_File then
+      if Editor.Current_File = GNATCOLL.VFS.No_File then
          return;
       end if;
 
@@ -131,7 +131,7 @@ package body GVD.Source_Editor.GPS is
                  Get_Current_Source_Line (Visual_Debugger (Process));
 
    begin
-      if Editor.Current_File = VFS.No_File then
+      if Editor.Current_File = GNATCOLL.VFS.No_File then
          return;
       end if;
 
@@ -189,13 +189,13 @@ package body GVD.Source_Editor.GPS is
 
    procedure Load_File
      (Editor    : access GEdit_Record;
-      File_Name : VFS.Virtual_File)
+      File_Name : GNATCOLL.VFS.Virtual_File)
    is
       Kernel : constant Kernel_Handle := GPS_Window (Editor.Window).Kernel;
       File   : Virtual_File;
    begin
-      if File_Name = VFS.No_File then
-         Editor.Current_File := VFS.No_File;
+      if File_Name = GNATCOLL.VFS.No_File then
+         Editor.Current_File := GNATCOLL.VFS.No_File;
          return;
       end if;
 
@@ -253,7 +253,7 @@ package body GVD.Source_Editor.GPS is
               (Prev_Current_Line => Empty_Line_Information));
       end if;
 
-      if Editor.Current_File = VFS.No_File then
+      if Editor.Current_File = GNATCOLL.VFS.No_File then
          return;
       end if;
 
@@ -292,7 +292,7 @@ package body GVD.Source_Editor.GPS is
    is
       Kernel  : constant Kernel_Handle := GPS_Window (Editor.Window).Kernel;
    begin
-      Editor.Current_File := VFS.No_File;
+      Editor.Current_File := GNATCOLL.VFS.No_File;
       Console.Insert (Kernel, Message);
       --  ??? Do not insert an error, to avoid loosing the focus from the
       --  debugger console. Consider putting a message in the status bar
@@ -390,7 +390,7 @@ package body GVD.Source_Editor.GPS is
       is
          First_Zero : Integer := -1;
       begin
-         if N.File = VFS.No_File then
+         if N.File = GNATCOLL.VFS.No_File then
             Added := False;
             return;
          end if;
@@ -409,7 +409,7 @@ package body GVD.Source_Editor.GPS is
             end if;
 
             if First_Zero = -1
-              and then A (J).File = VFS.No_File
+              and then A (J).File = GNATCOLL.VFS.No_File
             then
                First_Zero := J;
             end if;
@@ -477,7 +477,7 @@ package body GVD.Source_Editor.GPS is
       end if;
 
       for J in Editor.Current_Breakpoints'Range loop
-         if Editor.Current_Breakpoints (J).File /= VFS.No_File then
+         if Editor.Current_Breakpoints (J).File /= GNATCOLL.VFS.No_File then
             Found := False;
             Index := Br'First;
 

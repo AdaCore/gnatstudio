@@ -30,7 +30,7 @@ with GPS.Kernel.Standard_Hooks;     use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;       use GPS.Kernel.Task_Manager;
 with OS_Utils;                      use OS_Utils;
 with Traces;                        use Traces;
-with VFS;                           use VFS;
+with GNATCOLL.VFS;                           use GNATCOLL.VFS;
 
 package body Docgen.Work_On_File is
 

@@ -22,7 +22,7 @@ with GNAT.Expect;
 with Docgen2_Backend;
 with GPS.Kernel;
 with Projects;
-with VFS;
+with GNATCOLL.VFS;
 
 package Docgen2 is
 
@@ -42,7 +42,7 @@ package Docgen2 is
    procedure Generate
      (Kernel  : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Backend : Docgen2_Backend.Backend_Handle;
-      File    : VFS.Virtual_File;
+      File    : GNATCOLL.VFS.Virtual_File;
       Options : Docgen_Options);
    --  Generate documentation for a single file using Backend.
 

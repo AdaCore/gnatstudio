@@ -31,6 +31,7 @@ with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Regpat;                use GNAT.Regpat;
 with GNATCOLL.Filesystem;        use GNATCOLL.Filesystem;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
+with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GNAT.Strings;
 
 with Glib;                       use Glib;
@@ -90,7 +91,6 @@ with Remote.Path.Translator;     use Remote.Path, Remote.Path.Translator;
 with Shell_Descriptors;          use Shell_Descriptors;
 with String_Utils;               use String_Utils;
 with Traces;                     use Traces;
-with VFS;                        use VFS;
 with XML_Parsers;
 
 with Remote_Descriptors;         use Remote_Descriptors;
@@ -115,7 +115,7 @@ package body GPS.Kernel.Remote is
 
    procedure Customize
      (Module : access Remote_Module_Record;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level);
    procedure Destroy (Module : in out Remote_Module_Record);
@@ -430,7 +430,7 @@ package body GPS.Kernel.Remote is
    ----------------------------
 
    type Reload_Callback_Data is record
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Kernel : Kernel_Handle;
    end record;
 
@@ -1186,7 +1186,7 @@ package body GPS.Kernel.Remote is
          raise Invalid_Path;
       end if;
 
-      if not Is_Absolute_Path (Get_Local_Filesystem, Local) then
+      if not Get_Local_Filesystem.Is_Absolute_Path (Local) then
          Dead := Message_Dialog
            (-"Local path " & Local & (-" needs to be an absolute path"),
             Error, Button_OK);
@@ -1278,7 +1278,7 @@ package body GPS.Kernel.Remote is
       end if;
 
       declare
-         Dir : constant VFS.Virtual_File :=
+         Dir : constant GNATCOLL.VFS.Virtual_File :=
                  Select_Directory
                    (Base_Directory => Start_Dir,
                     Parent         => Gtk_Window (Widget.Widget.Dialog));
@@ -1324,7 +1324,9 @@ package body GPS.Kernel.Remote is
 
       --  Check connection before browsing the remote host
       Start_Dir := Get_Root
-        (Create (Dialog.Selected_Machine.Desc.Nickname.all, ""));
+        (Create
+           (FS => Get_Filesystem (Dialog.Selected_Machine.Desc.Nickname.all),
+            Full_Filename => ""));
 
       if not Is_Directory (Start_Dir) then
          Gtk_Resp := Message_Dialog
@@ -1337,7 +1339,8 @@ package body GPS.Kernel.Remote is
       --  Determine Start directory
       if Current_Dir /= Enter_Local_Path_String then
          Start_Dir := Create
-           (Dialog.Selected_Machine.Desc.Nickname.all, Current_Dir);
+           (FS => Get_Filesystem (Dialog.Selected_Machine.Desc.Nickname.all),
+            Full_Filename => Current_Dir);
 
          if not Is_Directory (Start_Dir) then
             Start_Dir := No_File;
@@ -1345,12 +1348,13 @@ package body GPS.Kernel.Remote is
       end if;
 
       if Start_Dir = No_File then
-         Start_Dir :=
-           Get_Root (Create (Dialog.Selected_Machine.Desc.Nickname.all, ""));
+         Start_Dir := Get_Root (Create
+             (FS => Get_Filesystem (Dialog.Selected_Machine.Desc.Nickname.all),
+              Full_Filename => ""));
       end if;
 
       declare
-         Dir : constant VFS.Virtual_File :=
+         Dir : constant GNATCOLL.VFS.Virtual_File :=
                  Select_Directory
                    (Base_Directory => Start_Dir,
                     Parent         => Gtk_Window (Widget.Widget.Dialog));
@@ -2793,7 +2797,7 @@ package body GPS.Kernel.Remote is
       Property   : Servers_Property;
       Prop       : Property_Access;
       Success    : Boolean;
-      Local_File : VFS.Virtual_File;
+      Local_File : GNATCOLL.VFS.Virtual_File;
 
    begin
       --  This module reloaded the project: remote config is OK
@@ -2919,7 +2923,7 @@ package body GPS.Kernel.Remote is
 
    procedure Customize
      (Module : access Remote_Module_Record;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Node   : Glib.Xml_Int.Node_Ptr;
       Level  : Customization_Level)
    is
@@ -3278,7 +3282,7 @@ package body GPS.Kernel.Remote is
    -------------------------------
 
    function Is_Default_Remote_Setting return Boolean is
-      The_File : VFS.Virtual_File;
+      The_File : GNATCOLL.VFS.Virtual_File;
       Property : Servers_Property;
       Found    : Boolean;
 
@@ -3321,7 +3325,7 @@ package body GPS.Kernel.Remote is
    ---------------------------------
 
    procedure Set_Default_Remote_Settings is
-      The_File : VFS.Virtual_File;
+      The_File : GNATCOLL.VFS.Virtual_File;
       Property : Servers_Property;
       Prop     : Property_Access;
       Found    : Boolean;
@@ -3378,7 +3382,7 @@ package body GPS.Kernel.Remote is
      (Kernel     : Kernel_Handle;
       Server     : Server_Type;
       Nickname   : String;
-      Prj_File   : VFS.Virtual_File := VFS.No_File;
+      Prj_File   : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Reload_Prj : Boolean := False)
    is
       Data      : aliased Server_Config_Changed_Hooks_Args :=
@@ -3412,8 +3416,8 @@ package body GPS.Kernel.Remote is
          Load_Data.Kernel := Kernel;
          Load_Data.File :=
            Create
-             (Get_Nickname (Build_Server),
-              To_Remote
+             (FS => Get_Filesystem (Get_Nickname (Build_Server)),
+              Full_Filename => To_Remote
                 (Project_Path (Get_Project (Kernel)).Full_Name (True).all,
                  Build_Server));
 
@@ -3436,20 +3440,6 @@ package body GPS.Kernel.Remote is
 
       Run_Hook (Kernel, Server_Config_Changed_Hook, Data'Unchecked_Access);
    end Assign;
-
-   --------------------
-   -- Get_Filesystem --
-   --------------------
-
---     function Get_Filesystem
---       (Server : Server_Type) return Filesystem_Record'Class is
---     begin
---        if Is_Local (Server) then
---           return Get_Local_Filesystem;
---        else
---           return Get_Filesystem (Get_Nickname (Server));
---        end if;
---     end Get_Filesystem;
 
    ----------------------
    -- Get_New_Queue_Id --

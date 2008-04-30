@@ -32,7 +32,7 @@ with Traces;                    use Traces;
 with Vdiff2_Command_Block;      use Vdiff2_Command_Block;
 with Vdiff2_Module.Callback;    use Vdiff2_Module.Callback;
 with Vdiff2_Module.Utils;       use Vdiff2_Module.Utils;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 package body Vdiff2_Module is
 
@@ -199,7 +199,7 @@ package body Vdiff2_Module is
             Set_Return_Value_As_List (Data);
 
             for Index in Property.Vdiff.Files'Range loop
-               if Property.Vdiff.Files (Index) /= VFS.No_File then
+               if Property.Vdiff.Files (Index) /= GNATCOLL.VFS.No_File then
                   Set_Return_Value
                     (Data,
                      Create_File

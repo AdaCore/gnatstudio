@@ -30,7 +30,7 @@ with Glib;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
-with VFS;
+with GNATCOLL.VFS;
 
 with GNAT.Regpat;               use GNAT.Regpat;
 with Gtkada.Tree_View;          use Gtkada.Tree_View;
@@ -74,7 +74,7 @@ package GPS.Location_View is
    procedure Insert_Location
      (Kernel             : access Kernel_Handle_Record'Class;
       Category           : Glib.UTF8_String;
-      File               : VFS.Virtual_File;
+      File               : GNATCOLL.VFS.Virtual_File;
       Text               : Glib.UTF8_String;
       Line               : Positive;
       Column             : Visible_Column_Type;
@@ -115,7 +115,7 @@ package GPS.Location_View is
    procedure Remove_Location_Category
      (Kernel   : access Kernel_Handle_Record'Class;
       Category : String;
-      File     : VFS.Virtual_File := VFS.No_File;
+      File     : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Line     : Natural := 0);
    --  Remove Category from the results view, if it exists.
    --  If File /= No_File, remove only the node corresponding to File in
@@ -135,7 +135,7 @@ package GPS.Location_View is
       Identifier : String;
       Category   : String;
       H_Category : Style_Access;
-      File       : VFS.Virtual_File;
+      File       : GNATCOLL.VFS.Virtual_File;
       Line       : Natural;
       Column     : Natural;
       Message    : String;
@@ -185,7 +185,7 @@ private
 
    type Location_Record is record
       Category           : GNAT.Strings.String_Access;
-      File               : VFS.Virtual_File;
+      File               : GNATCOLL.VFS.Virtual_File;
       Line               : Integer;
       Column             : Visible_Column_Type;
       Length             : Integer;

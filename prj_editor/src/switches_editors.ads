@@ -30,7 +30,7 @@ with GNAT.Strings;
 with GPS.Kernel;
 with Projects;
 with Switches_Chooser.Gtkada;
-with VFS;
+with GNATCOLL.VFS;
 with Commands.Interactive;
 
 package Switches_Editors is
@@ -88,7 +88,7 @@ package Switches_Editors is
       Project            : Projects.Project_Type;
       Languages          : GNAT.Strings.String_List;
       Scenario_Variables : Projects.Scenario_Variable_Array;
-      Files              : VFS.File_Array)
+      Files              : GNATCOLL.VFS.File_Array)
       return Boolean;
    --  Generate the information in Project to represent the status of Switches.
    --  True is returned if at least one project was modified.
@@ -115,7 +115,7 @@ package Switches_Editors is
    function Edit_Switches_For_Files
      (Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
       Project      : Projects.Project_Type;
-      Files        : VFS.File_Array) return Boolean;
+      Files        : GNATCOLL.VFS.File_Array) return Boolean;
    --  Edit the switches for a list of files. All the files will be assigned
    --  the same switches.
    --  If there are no files in Files, the default switches are edited.
@@ -149,7 +149,7 @@ private
 
    type Switches_Edit_Record is new Gtk_Notebook_Record with record
       Kernel   : GPS.Kernel.Kernel_Handle;
-      Files    : VFS.File_Array_Access;
+      Files    : GNATCOLL.VFS.File_Array_Access;
       Project  : Projects.Project_Type;
       Pages    : Page_Array_Access;
    end record;

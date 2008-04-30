@@ -17,7 +17,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Config;                             use Config;
 with Machine_Descriptors;                use Machine_Descriptors;
 with GNATCOLL.Filesystem.Unix.Remote;    use GNATCOLL.Filesystem.Unix.Remote;
 with GNATCOLL.Filesystem.Windows;        use GNATCOLL.Filesystem.Windows;
@@ -31,7 +30,11 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote;             use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 
+with Glib.Convert;                       use Glib.Convert;
+
 package body Filesystems is
+
+   package SLU renames String_List_Utils;
 
    type GPS_Transport_Record
      is new Filesystem_Transport_Record with null record;
@@ -56,6 +59,26 @@ package body Filesystems is
 
    Transport : aliased GPS_Transport_Record;
    --  A global variable, only used as a dispatcher below
+
+   function Encode_To_UTF8 (Name : String) return String;
+   --  Convert Name into a proper utf8 string if needed
+
+   --------------------
+   -- Encode_To_UTF8 --
+   --------------------
+
+   function Encode_To_UTF8 (Name : String) return String is
+      Result : constant String := Locale_To_UTF8 (Name);
+   begin
+      --  The name might already be UTF-8 (for instance on windows), but we
+      --  try anyway and handle errors appropriately
+
+      if Result = "" then
+         return Name;
+      else
+         return Result;
+      end if;
+   end Encode_To_UTF8;
 
    ----------------------
    -- Execute_Remotely --
@@ -110,30 +133,14 @@ package body Filesystems is
    --------------------
 
    function Get_Filesystem
-     (Nickname : String) return Filesystem_Record'Class is
+     (Nickname : String) return Filesystem_Access is
    begin
-      if Nickname = "" then
+      if Nickname = "" or else Nickname = Remote.Local_Nickname then
          return Get_Local_Filesystem;
       else
-         return Get_Filesystem (Get_Machine_Descriptor (Nickname)).all;
+         return Get_Filesystem (Get_Machine_Descriptor (Nickname));
       end if;
    end Get_Filesystem;
-
-   --------------------------
-   -- Get_Local_Filesystem --
-   --------------------------
-
-   function Get_Local_Filesystem return Filesystem_Record'Class is
-      Windows_FS : GNATCOLL.Filesystem.Windows.Windows_Filesystem_Record;
-      Unix_FS    : GNATCOLL.Filesystem.Unix.Unix_Filesystem_Record;
-   begin
-      if Host = Config.Windows then
-         return Windows_FS;
-      else
-         --  Unix and windows support only
-         return Unix_FS;
-      end if;
-   end Get_Local_Filesystem;
 
    ------------------------
    -- Filesystem_Factory --
@@ -172,7 +179,74 @@ package body Filesystems is
          end case;
       end if;
 
+      Set_Locale_To_Display_Encoder (FS.all, Encode_To_UTF8'Access);
       return FS;
    end Filesystem_Factory;
 
+   -------------------------
+   -- Is_Local_Filesystem --
+   -------------------------
+
+   function Is_Local_Filesystem
+     (FS : access Filesystem_Record'Class) return Boolean is
+   begin
+      return FS.all not in Remote_Unix_Filesystem_Record'Class
+        and then FS.all not in Remote_Windows_Filesystem_Record'Class;
+   end Is_Local_Filesystem;
+
+   --------------
+   -- Get_Host --
+   --------------
+
+   function Get_Host
+     (FS : access Filesystem_Record'Class) return String is
+   begin
+      if FS.all in Remote_Unix_Filesystem_Record'Class then
+         return Get_Host (Remote_Unix_Filesystem_Record (FS.all));
+      elsif FS.all in Remote_Windows_Filesystem_Record'Class then
+         return Get_Host (Remote_Windows_Filesystem_Record (FS.all));
+      else
+         return "";
+      end if;
+   end Get_Host;
+
+   --------------
+   -- Is_Local --
+   --------------
+
+   function Is_Local (File : Virtual_File) return Boolean is
+   begin
+      return Is_Local_Filesystem (File.Get_Filesystem);
+   end Is_Local;
+
+   ------------
+   -- Create --
+   ------------
+
+   function Create (Files : SLU.String_List.List) return File_Array is
+      FA   : File_Array (1 .. SLU.String_List.Length (Files));
+      Iter : SLU.String_List.List_Node;
+   begin
+      Iter := SLU.String_List.First (Files);
+
+      for K in FA'Range loop
+         FA (K) := Create (SLU.String_List.Data (Iter));
+         Iter := SLU.String_List.Next (Iter);
+      end loop;
+
+      return FA;
+   end Create;
+
+   --------------
+   -- Get_Host --
+   --------------
+
+   function Get_Host (File : Virtual_File) return String is
+   begin
+      return Get_Host (File.Get_Filesystem);
+   end Get_Host;
+
+begin
+   Set_Locale_To_Display_Encoder
+     (Get_Local_Filesystem.all, Encode_To_UTF8'Access);
 end Filesystems;

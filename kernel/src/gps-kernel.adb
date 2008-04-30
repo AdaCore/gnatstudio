@@ -28,6 +28,7 @@ with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.Templates;        use GNATCOLL.Templates;
 with GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with System;                    use System;
 
 with Gdk;                       use Gdk;
@@ -94,7 +95,6 @@ with Projects.Registry;         use Projects, Projects.Registry;
 with Switches_Chooser;          use Switches_Chooser;
 with System.Address_Image;
 with Traces;                    use Traces;
-with VFS;                       use VFS;
 with XML_Parsers;
 
 package body GPS.Kernel is
@@ -431,7 +431,7 @@ package body GPS.Kernel is
 
    procedure File_Edited
      (Handle : access Kernel_Handle_Record;
-      File   : VFS.Virtual_File)
+      File   : GNATCOLL.VFS.Virtual_File)
    is
       Files : File_Array_Access := Handle.Open_Files;
       Data  : aliased File_Hooks_Args;
@@ -458,7 +458,7 @@ package body GPS.Kernel is
 
    procedure Before_File_Saved
      (Handle : access Kernel_Handle_Record;
-      File   : VFS.Virtual_File)
+      File   : GNATCOLL.VFS.Virtual_File)
    is
       Data : aliased File_Hooks_Args := (Hooks_Data with File => File);
    begin
@@ -471,7 +471,7 @@ package body GPS.Kernel is
 
    procedure File_Saved
      (Handle : access Kernel_Handle_Record;
-      File   : VFS.Virtual_File)
+      File   : GNATCOLL.VFS.Virtual_File)
    is
       Data : aliased File_Hooks_Args := (Hooks_Data with File => File);
    begin
@@ -484,7 +484,7 @@ package body GPS.Kernel is
 
    procedure File_Closed
      (Handle : access Kernel_Handle_Record;
-      File   : VFS.Virtual_File)
+      File   : GNATCOLL.VFS.Virtual_File)
    is
       Files : File_Array_Access;
       Data  : aliased File_Hooks_Args := (Hooks_Data with File => File);
@@ -517,7 +517,7 @@ package body GPS.Kernel is
 
    procedure File_Deleted
      (Handle : access Kernel_Handle_Record;
-      File   : VFS.Virtual_File)
+      File   : GNATCOLL.VFS.Virtual_File)
    is
       Data : aliased File_Hooks_Args := (Hooks_Data with File => File);
    begin
@@ -530,8 +530,8 @@ package body GPS.Kernel is
 
    procedure File_Renamed
      (Handle   : access Kernel_Handle_Record;
-      File     : VFS.Virtual_File;
-      New_Path : VFS.Virtual_File)
+      File     : GNATCOLL.VFS.Virtual_File;
+      New_Path : GNATCOLL.VFS.Virtual_File)
    is
       Data : aliased Files_2_Hooks_Args :=
                (Hooks_Data with File => File, Renamed => New_Path);
@@ -545,7 +545,7 @@ package body GPS.Kernel is
 
    procedure File_Changed_On_Disk
      (Handle : access Kernel_Handle_Record;
-      File   : VFS.Virtual_File)
+      File   : GNATCOLL.VFS.Virtual_File)
    is
       Data : aliased File_Hooks_Args := (Hooks_Data with File => File);
    begin
@@ -591,7 +591,7 @@ package body GPS.Kernel is
 
    function Is_Open
      (Kernel   : access Kernel_Handle_Record;
-      Filename : VFS.Virtual_File) return Boolean is
+      Filename : GNATCOLL.VFS.Virtual_File) return Boolean is
    begin
       if Kernel.Open_Files /= null then
          for F in Kernel.Open_Files'Range loop
@@ -609,12 +609,12 @@ package body GPS.Kernel is
    ----------------
 
    function Open_Files
-     (Kernel : access Kernel_Handle_Record) return VFS.File_Array is
+     (Kernel : access Kernel_Handle_Record) return GNATCOLL.VFS.File_Array is
    begin
       if Kernel.Open_Files /= null then
          return Kernel.Open_Files.all;
       else
-         return (1 .. 0 => VFS.No_File);
+         return (1 .. 0 => GNATCOLL.VFS.No_File);
       end if;
    end Open_Files;
 
@@ -712,7 +712,7 @@ package body GPS.Kernel is
          Project : constant Project_Type := Get_Project (Handle);
       begin
          if As_Default_Desktop or else Status (Project) /= From_File then
-            return VFS.No_File;
+            return GNATCOLL.VFS.No_File;
          else
             return Project_Path (Project);
          end if;
@@ -730,7 +730,9 @@ package body GPS.Kernel is
       Success      : Boolean;
 
    begin
-      if Project_Name = VFS.No_File and then not As_Default_Desktop then
+      if Project_Name = GNATCOLL.VFS.No_File
+        and then not As_Default_Desktop
+      then
          Trace (Me, "not saving the default desktop");
          return;
       end if;
@@ -851,7 +853,7 @@ package body GPS.Kernel is
                                   Get_System_Dir (Handle) &
                                     "share/gps/desktop.xml";
       Node                    : Node_Ptr;
-      Project_Name            : Virtual_File := VFS.No_File;
+      Project_Name            : Virtual_File := GNATCOLL.VFS.No_File;
       Child                   : Node_Ptr;
       Desktop_Node            : Node_Ptr;
       Default_Desktop_Node    : Node_Ptr;
@@ -995,7 +997,7 @@ package body GPS.Kernel is
 
             --   ??? problem of double deallocation at shutdown time, ideally
             --   the following call should be outside of the conditional.
-            VFS.Unchecked_Free (Data.Files);
+            GNATCOLL.VFS.Unchecked_Free (Data.Files);
          end if;
 
          Free (Data.Activity_Id);
@@ -1812,7 +1814,7 @@ package body GPS.Kernel is
      (Name            : Glib.UTF8_String;
       Kernel          : access Kernel_Handle_Record;
       Use_Source_Path : Boolean := True;
-      Use_Object_Path : Boolean := True) return VFS.Virtual_File is
+      Use_Object_Path : Boolean := True) return GNATCOLL.VFS.Virtual_File is
    begin
       return Projects.Registry.Create
         (Name, Get_Registry (Kernel).all, Use_Source_Path, Use_Object_Path);
@@ -1824,7 +1826,7 @@ package body GPS.Kernel is
 
    function Create_From_Base
      (Name   : Glib.UTF8_String;
-      Kernel : access Kernel_Handle_Record) return VFS.Virtual_File
+      Kernel : access Kernel_Handle_Record) return GNATCOLL.VFS.Virtual_File
    is
       Full : constant String := Get_Full_Path_From_File
         (Registry        => Get_Registry (Kernel).all,
@@ -2100,7 +2102,7 @@ package body GPS.Kernel is
          when Standard_Filter =>
             if Filter.Language /= null then
                if not Has_File_Information (Context)
-                 or else VFS.No_File = File_Information (Context)
+                 or else GNATCOLL.VFS.No_File = File_Information (Context)
                then
                   Result := False;
 

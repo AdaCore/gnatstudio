@@ -30,6 +30,7 @@ with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
 with Basic_Types;               use Basic_Types;
+with Filesystems;               use Filesystems;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
@@ -58,7 +59,7 @@ package body VCS_View is
    -- File_Key --
    --------------
 
-   function File_Key (File : VFS.Virtual_File) return String is
+   function File_Key (File : GNATCOLL.VFS.Virtual_File) return String is
    begin
       if Is_Directory (File) then
          --  In case of a directory we remove the last directory separator.
@@ -389,7 +390,7 @@ package body VCS_View is
 
    function Get_Iter_From_File
      (Explorer : access VCS_View_Record'Class;
-      File     : VFS.Virtual_File) return Gtk_Tree_Iter
+      File     : GNATCOLL.VFS.Virtual_File) return Gtk_Tree_Iter
    is
       Full_Name : constant String := File_Key (File);
 
@@ -427,7 +428,7 @@ package body VCS_View is
 
    function Get_Iter_From_File
      (Explorer : access VCS_View_Record'Class;
-      File     : VFS.Virtual_File;
+      File     : GNATCOLL.VFS.Virtual_File;
       Parent   : Gtk_Tree_Iter) return Gtk_Tree_Iter
    is
       Full_Name : constant String := File_Key (File);
@@ -697,14 +698,14 @@ package body VCS_View is
 
    procedure Refresh_Log
      (Explorer : access VCS_View_Record'Class;
-      File     : VFS.Virtual_File)
+      File     : GNATCOLL.VFS.Virtual_File)
    is
       Log   : Boolean;
       Dummy : Boolean;
       Iter  : Gtk_Tree_Iter;
       Line  : Line_Record;
    begin
-      if Get_Log_From_File (Explorer.Kernel, File, False) = VFS.No_File then
+      if Get_Log_From_File (Explorer.Kernel, File, False) = No_File then
          Log := False;
       else
          Log := True;
@@ -876,7 +877,7 @@ package body VCS_View is
 
    procedure Remove_File
      (Explorer : access VCS_View_Record'Class;
-      File     : VFS.Virtual_File)
+      File     : GNATCOLL.VFS.Virtual_File)
    is
       Iter : Gtk_Tree_Iter := Get_Iter_From_File (Explorer, File);
    begin

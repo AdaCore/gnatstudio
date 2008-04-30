@@ -22,7 +22,7 @@ with Gtk.Window; use Gtk.Window;
 with Gtkada.File_Selector; use Gtkada.File_Selector;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Intl; use GPS.Intl;
-with VFS; use VFS;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 package body Files_Extra_Info_Pkg.Callbacks is
 
@@ -35,7 +35,7 @@ package body Files_Extra_Info_Pkg.Callbacks is
    is
       Extra : constant Files_Extra_Info_Access :=
         Files_Extra_Info_Access (Object);
-      S     : constant VFS.Virtual_File := Select_Directory
+      S     : constant GNATCOLL.VFS.Virtual_File := Select_Directory
         (-"Select a directory",
          Parent  => Gtk_Window (Get_Toplevel (Object)),
          Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
@@ -43,7 +43,7 @@ package body Files_Extra_Info_Pkg.Callbacks is
 
    begin
       if S /= No_File then
-         Set_Text (Extra.Directory_Entry, VFS.Full_Name (S).all);
+         Set_Text (Extra.Directory_Entry, GNATCOLL.VFS.Full_Name (S).all);
       end if;
    end On_Browse_Button_Clicked;
 

@@ -25,7 +25,7 @@ with VCS_Module;          use VCS_Module;
 with VCS_Status;          use VCS_Status;
 with VCS_View;            use VCS_View;
 with VCS_View.Activities; use VCS_View.Activities;
-with VFS;                 use VFS;
+with GNATCOLL.VFS;                 use GNATCOLL.VFS;
 
 package body Commands.VCS is
 

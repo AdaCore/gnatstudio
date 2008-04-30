@@ -72,7 +72,7 @@ with GPS.Location_View;             use GPS.Location_View;
 with Histories;                     use Histories;
 with String_Utils;                  use String_Utils;
 with Traces;                        use Traces;
-with VFS;                           use VFS;
+with GNATCOLL.VFS;                           use GNATCOLL.VFS;
 with Generic_List;
 
 package body Browsers.Call_Graph is
@@ -120,7 +120,7 @@ package body Browsers.Call_Graph is
    function All_Refs_Category
      (Entity             : Entity_Information;
       Local_Only         : Boolean;
-      Local_File         : VFS.Virtual_File;
+      Local_File         : GNATCOLL.VFS.Virtual_File;
       All_From_Same_File : Boolean) return String;
    --  Return the category title when doing a find all refs on a given entity.
    --  If All_From_Same_File is true, we will in fact list all entities
@@ -368,7 +368,7 @@ package body Browsers.Call_Graph is
      (Kernel             : access Kernel_Handle_Record'Class;
       Entity             : Entity_Information;
       Locals_Only        : Boolean;
-      Local_File         : VFS.Virtual_File;
+      Local_File         : GNATCOLL.VFS.Virtual_File;
       All_From_Same_File : Boolean;
       Show_Caller        : Boolean;
       Filter             : Reference_Kind_Filter;
@@ -486,7 +486,7 @@ package body Browsers.Call_Graph is
    function All_Refs_Category
      (Entity             : Entity_Information;
       Local_Only         : Boolean;
-      Local_File         : VFS.Virtual_File;
+      Local_File         : GNATCOLL.VFS.Virtual_File;
       All_From_Same_File : Boolean) return String
    is
       Decl : constant File_Location := Get_Declaration_Of (Entity);
@@ -1351,7 +1351,7 @@ package body Browsers.Call_Graph is
                Category_Title   => All_Refs_Category
                  (Entity             => Entity,
                   Local_Only         => False,
-                  Local_File         => VFS.No_File,
+                  Local_File         => GNATCOLL.VFS.No_File,
                   All_From_Same_File => False),
                Filter           => Read_Reference_Filter
                or Write_Reference_Filter,
@@ -1456,7 +1456,7 @@ package body Browsers.Call_Graph is
             Category_Title   => All_Refs_Category
               (Entity             => Entity,
                Local_Only         => False,
-               Local_File         => VFS.No_File,
+               Local_File         => GNATCOLL.VFS.No_File,
                All_From_Same_File => False),
             Show_Caller      => False,
             Filter           => Filter);

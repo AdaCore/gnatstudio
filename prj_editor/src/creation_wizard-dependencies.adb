@@ -54,7 +54,7 @@ with Projects.Registry;         use Projects.Registry;
 with GPS.Intl;                  use GPS.Intl;
 with Creation_Wizard.Full;      use Creation_Wizard, Creation_Wizard.Full;
 with Wizards;                   use Wizards;
-with VFS;                       use VFS;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 with File_Utils;                use File_Utils;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with GUI_Utils;                 use GUI_Utils;
@@ -602,7 +602,7 @@ package body Creation_Wizard.Dependencies is
         (Wiz, Creation_Wizard.Add_Name_And_Location_Page (Wiz), "wizard");
 
       Name := Creation_Wizard.Run (Wiz);
-      if Name /= VFS.No_File then
+      if Name /= GNATCOLL.VFS.No_File then
          Append (Model, Iter, Null_Iter);
          Set (Model, Iter, Project_Name_Column, Display_Base_Name (Name));
          Set (Model, Iter, Is_Limited_Column, False);
@@ -635,7 +635,7 @@ package body Creation_Wizard.Dependencies is
          History           => Get_History (B.Kernel));
       Iter  : Gtk_Tree_Iter;
    begin
-      if Name /= VFS.No_File then
+      if Name /= GNATCOLL.VFS.No_File then
          Append (Model, Iter, Null_Iter);
          Set (Model, Iter, Project_Name_Column, Base_Name (Name));
          Set (Model, Iter, Is_Limited_Column, False);

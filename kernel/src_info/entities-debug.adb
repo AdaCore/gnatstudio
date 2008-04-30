@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003-2007, AdaCore           --
+--                        Copyright (C) 2003-2008, AdaCore           --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,12 +17,13 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Calendar; use Ada.Calendar;
-with GNAT.Calendar; use GNAT.Calendar;
-with String_Utils; use String_Utils;
-with VFS;          use VFS;
-with GNAT.Strings; use GNAT.Strings;
-with GNAT.Heap_Sort; use GNAT.Heap_Sort;
+with Ada.Calendar;      use Ada.Calendar;
+with GNAT.Calendar;     use GNAT.Calendar;
+with String_Utils;      use String_Utils;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
+with GNATCOLL.Utils;    use GNATCOLL.Utils;
+with GNAT.Strings;      use GNAT.Strings;
+with GNAT.Heap_Sort;    use GNAT.Heap_Sort;
 
 with Basic_Types; use Basic_Types;
 
@@ -264,7 +265,7 @@ package body Entities.Debug is
       Seconds : Second_Number;
       Sub     : Second_Duration;
    begin
-      if Timestamp = VFS.No_Time then
+      if Timestamp = GNATCOLL.Utils.No_Time then
          Output ("@<no_time>");
       elsif not Show_Timestamps then
          Output ("@<hidden time>");
@@ -359,9 +360,9 @@ package body Entities.Debug is
             OpF2 : constant Virtual_File :=
               Get_LI_Filename (Sorted (Op2).File);
          begin
-            if OpF1 = VFS.No_File then
-               return OpF2 /= VFS.No_File;
-            elsif OpF2 = VFS.No_File then
+            if OpF1 = GNATCOLL.VFS.No_File then
+               return OpF2 /= GNATCOLL.VFS.No_File;
+            elsif OpF2 = GNATCOLL.VFS.No_File then
                return False;
             elsif Dump_Full_File_Names then
                --  We want <=, but it is more efficient to compute it this way
@@ -513,9 +514,9 @@ package body Entities.Debug is
             OpF1 : constant Virtual_File := Get_Filename (Sorted (Op1));
             OpF2 : constant Virtual_File := Get_Filename (Sorted (Op2));
          begin
-            if OpF1 = VFS.No_File then
-               return OpF2 /= VFS.No_File;
-            elsif OpF2 = VFS.No_File then
+            if OpF1 = GNATCOLL.VFS.No_File then
+               return OpF2 /= GNATCOLL.VFS.No_File;
+            elsif OpF2 = GNATCOLL.VFS.No_File then
                return False;
             elsif Dump_Full_File_Names then
                --  We want <=, but it is more efficient to compute it this way

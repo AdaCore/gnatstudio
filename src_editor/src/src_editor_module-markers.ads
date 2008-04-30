@@ -21,7 +21,7 @@ with Glib.Xml_Int;
 with Gtk.Text_Mark;
 
 with GPS.Kernel;
-with VFS;
+with GNATCOLL.VFS;
 
 package Src_Editor_Module.Markers is
 
@@ -32,7 +32,7 @@ package Src_Editor_Module.Markers is
 
    function Create_File_Marker
      (Kernel : access Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Line   : Editable_Line_Type;
       Column : Visible_Column_Type;
       Length : Natural := 0) return File_Marker;
@@ -42,7 +42,7 @@ package Src_Editor_Module.Markers is
 
    function Create_File_Marker
      (Kernel : access Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File;
+      File   : GNATCOLL.VFS.Virtual_File;
       Mark   : Gtk.Text_Mark.Gtk_Text_Mark) return File_Marker;
    --  Create a new marker from an existing text mark. The mark will always
    --  indicate the same position in the file.
@@ -60,7 +60,8 @@ package Src_Editor_Module.Markers is
    --  Create a new marker either from From_XML or from the current context
 
    function Get_File
-     (Marker : access File_Marker_Record'Class) return VFS.Virtual_File;
+     (Marker : access File_Marker_Record'Class)
+      return GNATCOLL.VFS.Virtual_File;
    --  Return the file in which Marker is set
 
    function Get_Line
@@ -80,7 +81,7 @@ package Src_Editor_Module.Markers is
 
    procedure Reset_Markers_For_File
      (Kernel : access Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File);
+      File   : GNATCOLL.VFS.Virtual_File);
    --  Rests all markers that were set for File, so that we recreate the
    --  text_marks associated with them.
 
@@ -89,7 +90,7 @@ private
      is new GPS.Kernel.Location_Marker_Record with
       record
          Id     : Natural;   --  Needed only for the shell API
-         File   : VFS.Virtual_File;
+         File   : GNATCOLL.VFS.Virtual_File;
          Line   : Editable_Line_Type;
          Column : Visible_Column_Type;
          Length : Natural := 1;

@@ -63,7 +63,7 @@ with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
 with GPS.Kernel;               use GPS.Kernel;
 with GUI_Utils;                use GUI_Utils;
 with Traces;                   use Traces;
-with VFS;                      use VFS;
+with GNATCOLL.VFS;                      use GNATCOLL.VFS;
 with XML_Parsers;              use XML_Parsers;
 
 package body Action_Editor is

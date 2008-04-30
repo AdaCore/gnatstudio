@@ -28,7 +28,7 @@ with Codefix.Text_Manager.Ada_Extracts; use Codefix.Text_Manager.Ada_Extracts;
 with Language.Ada;                      use Language.Ada;
 with Projects.Registry;                 use Projects.Registry;
 with Traces;                            use Traces;
-with VFS;                               use VFS;
+with GNATCOLL.VFS;                               use GNATCOLL.VFS;
 
 package body Codefix.Formal_Errors is
 
@@ -116,7 +116,7 @@ package body Codefix.Formal_Errors is
 
    procedure Initialize
      (This    : in out Error_Message;
-      File    : VFS.Virtual_File;
+      File    : GNATCOLL.VFS.Virtual_File;
       Line    : Positive;
       Col     : Column_Index;
       Message : String) is
