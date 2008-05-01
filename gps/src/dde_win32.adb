@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
---                            ACT-Europe                             --
+--                        Copyright (C) 2003-2008, AdaCore           --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -27,7 +26,7 @@ with Ada.Exceptions;    use Ada.Exceptions;
 
 with GPS.Kernel.Standard_Hooks;
 with Traces;            use Traces;
-with VFS;               use VFS;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
 package body DDE is
 
