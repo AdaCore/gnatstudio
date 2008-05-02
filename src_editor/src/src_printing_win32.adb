@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2006                      --
---                              AdaCore                              --
+--                   Copyright (C) 2003-2008, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,7 +19,7 @@
 
 --  Win32 version of this file
 
-with VFS;
+with GNATCOLL.VFS; use GNATCOLL;
 with Ada.Characters.Latin_1;
 with Src_Editor_Buffer.Text_Handling;
 
