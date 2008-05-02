@@ -17,7 +17,7 @@ default build compile link ada c c++: setup-tp
 	$(MAKE) -s -C gps -f Makefile.gps $@
 
 setup-tp:
-	$(MAKE) -C templates_parser setup
+	$(MAKE) LIBRARY_TYPE=static -C templates_parser setup
 
 clean:
 	$(RM) gnat/*.ad*
