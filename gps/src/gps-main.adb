@@ -1706,5 +1706,6 @@ begin
    Do_Cleanups;
 
 exception
-   when E : others => Trace (Exception_Handle, E);
+   when E : others =>
+      Trace (Exception_Handle, E);
 end GPS.Main;
