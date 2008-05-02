@@ -195,7 +195,9 @@ package body Language is
             Column := Column + (Tmp - Next_Char);
             Next_Char := Tmp;
 
-            if Buffer (Next_Char) = ASCII.LF then
+            if Next_Char <= Buffer'Last
+              and then Buffer (Next_Char) = ASCII.LF
+            then
                Column := 1;
                Line := Line + 1;
             end if;
