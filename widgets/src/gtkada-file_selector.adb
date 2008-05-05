@@ -1140,12 +1140,11 @@ package body Gtkada.File_Selector is
       H   : Virtual_File := Create
         (FS => Get_Filesystem (Host),
          Full_Filename =>
-           Home_Dir (Get_Filesystem (Get_Machine_Descriptor (Host)).all));
+           Home_Dir (Get_Filesystem (Nickname => Host).all));
 
    begin
       if H /= No_File then
-         Change_Directory
-           (Win, H);
+         Change_Directory (Win, H);
       else
          Change_Directory (Win, Win.Home_Directory);
       end if;
