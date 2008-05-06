@@ -224,11 +224,6 @@ package String_Utils is
    function Image (N : Integer) return String;
    --  Create a string image of the given Integer
 
-   function Image (N : Integer; Length : Positive) return String;
-   --  Create a string image of the given Integer.
-   --  The returned string is padded with leading spaces to create a string of
-   --  at least length characters.
-
    function Safe_Value (S : String; Default : Integer := 1) return Integer;
    --  Convert S to a Natural, making sure there is no exception raised.
    --  If S doesn't contain a valid number, Default is returned.

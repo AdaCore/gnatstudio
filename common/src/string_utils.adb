@@ -18,11 +18,11 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling;    use Ada.Characters.Handling;
-with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 
 with GNAT.Strings;               use GNAT.Strings;
-with GNATCOLL.Scripts.Utils;         use GNATCOLL.Scripts.Utils;
+with GNATCOLL.Scripts.Utils;     use GNATCOLL.Scripts.Utils;
+with GNATCOLL.Utils;
 
 with Glib.Unicode;               use Glib, Glib.Unicode;
 
@@ -956,31 +956,7 @@ package body String_Utils is
 
    function Image (N : Integer) return String is
    begin
-      return Ada.Strings.Fixed.Trim (Integer'Image (N), Ada.Strings.Left);
-   end Image;
-
-   function Image (N : Integer; Length : Positive) return String is
-      Pad         : constant Character := ' ';
-      Small_Image : constant String := Image (N);
-
-   begin
-      if Small_Image'Length >= Length then
-         return Small_Image;
-      else
-         declare
-            Padded_Image : String (1 .. Length);
-         begin
-            for Index in 1 .. Length - Small_Image'Length loop
-               Padded_Image (Index) := Pad;
-            end loop;
-
-            Padded_Image
-              (Length - Small_Image'Length + 1 ..  Length) :=
-              Small_Image;
-
-            return Padded_Image;
-         end;
-      end if;
+      return GNATCOLL.Utils.Image (N, Min_Width => 1);
    end Image;
 
    ----------------------

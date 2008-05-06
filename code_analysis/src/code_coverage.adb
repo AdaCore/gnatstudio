@@ -24,7 +24,8 @@ with GNAT.Regpat;       use GNAT.Regpat;
 with Glib;
 with GPS.Intl;          use GPS.Intl;
 with String_Utils;      use String_Utils;
-with GNATCOLL.VFS;               use GNATCOLL.VFS;
+with GNATCOLL.Utils;    use GNATCOLL.Utils;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
 with Language;          use Language;
 with Code_Analysis_GUI; use Code_Analysis_GUI;
 
@@ -542,12 +543,13 @@ package body Code_Coverage is
                       & Pango_Markup_To_Close);
          when others =>
             Result.Text := new
-              String'(Pango_Markup_To_Open_1
-                      & "black"
-                      & Pango_Markup_To_Open_2
-                      & Image (Coverage.Coverage, Int_Image_Padding)
-                      & " times"
-                      & Pango_Markup_To_Close);
+              String'
+                (Pango_Markup_To_Open_1
+                 & "black"
+                 & Pango_Markup_To_Open_2
+                 & Image (Coverage.Coverage)
+                 & " times"
+                 & Pango_Markup_To_Close);
          end case;
       end if;
 
@@ -653,7 +655,7 @@ package body Code_Coverage is
             end if;
 
             Set (Tree_Store, Iter, Cov_Col,
-                 Image (Lig_Count, Int_Image_Padding)
+                 Image (Lig_Count)
                  & Txt_Lig (Lig_Count)
                  & Cov_Txt (Cov_Txt'First + 1 .. Cov_Txt'Last)
                  & (-" not covered)")

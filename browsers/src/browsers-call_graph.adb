@@ -1496,6 +1496,7 @@ package body Browsers.Call_Graph is
                Filter                => Filter,
                In_File               => In_File,
                File_Has_No_LI_Report => null);
+            --  ??? Should we give access to In_Scope
 
             if Synchronous then
                --  Synchronous, return directly the result

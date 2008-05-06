@@ -25,6 +25,7 @@ with GNAT.Calendar.Time_IO;    use GNAT.Calendar.Time_IO;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with GNATCOLL.Templates;       use GNATCOLL.Templates;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
+with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with System.Assertions;
 
 with Gdk.Color;                use Gdk.Color;
@@ -88,7 +89,6 @@ with Histories;                use Histories;
 with String_Hash;
 with String_Utils;             use String_Utils;
 with Traces;                   use Traces;
-with GNATCOLL.VFS;                      use GNATCOLL.VFS;
 with XML_Parsers;
 
 package body Aliases_Module is
