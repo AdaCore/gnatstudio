@@ -12,6 +12,7 @@ sharedir        = $(prefix)/share
 examplesdir     = $(prefix)/share/examples/gps
 
 export TP_TASKING = No_Tasking
+export LIBRARY_TYPE = static
 
 default build compile link ada c c++: setup-tp
 	$(MAKE) -s -C gps -f Makefile.gps $@
