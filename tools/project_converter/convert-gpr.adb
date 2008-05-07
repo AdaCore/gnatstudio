@@ -239,7 +239,7 @@ package body Convert.Gpr is
               ("build_dir=" &
                Get_Name_String
                  (View_Tree.Projects.Table
-                    (Project_View).Exec_Directory.name));
+                    (Project_View).Exec_Directory.Name));
             Put_Line ("comp_opt=-gnatQ -P" & Gpr_Filename);
             Put_Line ("make_cmd=" & Compiler & " ${comp_opt} ${main}");
             Put_Line ("comp_cmd=" & Compiler
