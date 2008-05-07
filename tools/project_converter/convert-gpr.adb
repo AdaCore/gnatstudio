@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2002-2007, AdaCore                  --
+--                 Copyright (C) 2002-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -238,7 +238,8 @@ package body Convert.Gpr is
             Put_Line
               ("build_dir=" &
                Get_Name_String
-                 (View_Tree.Projects.Table (Project_View).Exec_Directory));
+                 (View_Tree.Projects.Table
+                    (Project_View).Exec_Directory.name));
             Put_Line ("comp_opt=-gnatQ -P" & Gpr_Filename);
             Put_Line ("make_cmd=" & Compiler & " ${comp_opt} ${main}");
             Put_Line ("comp_cmd=" & Compiler
