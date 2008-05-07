@@ -40,12 +40,12 @@ docs/gps.vr
 gnat/*
 gnat_src
 gnatlib/Makefile.conf
-gnatlib/distrib/gnatlib_python.gpr
-gnatlib/distrib/relocatable/gnatlib.gpr
-gnatlib/distrib/static/gnatlib.gpr
+gnatlib/distrib/gnatcoll_python.gpr
+gnatlib/distrib/relocatable/gnatcoll.gpr
+gnatlib/distrib/static/gnatcoll.gpr
 gnatlib/docs/Makefile
-gnatlib/gnatlib_shared.gpr
-gnatlib/src/gnatlib_python.gpr
+gnatlib/gnatcoll_shared.gpr
+gnatlib/src/gnatcoll_python.gpr
 gnatlib/src/lib
 gnatlib/src/obj
 gps/gmon.out*
