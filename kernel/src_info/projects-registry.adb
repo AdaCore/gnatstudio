@@ -966,10 +966,10 @@ package body Projects.Registry is
 
          Register_Directory
            (Get_String (Projects_Table
-                          (Registry)(Get_View (P)).Object_Directory));
+                          (Registry)(Get_View (P)).Object_Directory.Name));
          Register_Directory
            (Get_String (Projects_Table
-                          (Registry)(Get_View (P)).Exec_Directory));
+                          (Registry)(Get_View (P)).Exec_Directory.Name));
 
          --  Add the Ada sources that are already in the project.
          --  Convert the names to UTF8 for proper handling in GPS
@@ -1015,7 +1015,7 @@ package body Projects.Registry is
                         then
                            Directory :=
                              Name_Id (Registry.Data.View_Tree.Units.Table
-                             (Unit.Unit).File_Names (S).Display_Path);
+                             (Unit.Unit).File_Names (S).Path.Display_Name);
 
                            --  Convert the directory name to UTF8 if needed.
                            --  This might unfortunately be costly, but there is
@@ -1515,7 +1515,7 @@ package body Projects.Registry is
             declare
                F : constant String :=
                      Name_As_Directory
-                       (Get_String (Data.Directory)) &
+                       (Get_String (Data.Directory.Name)) &
                         Get_String (Source_List_File.Value);
             begin
                if Is_Regular_File (F) then

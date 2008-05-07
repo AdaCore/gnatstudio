@@ -429,7 +429,7 @@ package body Projects is
          return Create
            (FS => Get_Filesystem (Host),
             Full_Filename => To_Remote
-              (Get_String (Projects_Table (Project)(View).Display_Path_Name),
+              (Get_String (Projects_Table (Project)(View).Path.Display_Name),
                Host));
       end if;
    end Project_Path;
@@ -577,20 +577,26 @@ package body Projects is
 
       elsif Including_Libraries
         and then Projects_Table (Project)(View).Library
-        and then Projects_Table (Project)(View).Library_ALI_Dir /= No_Path
+        and then Projects_Table (Project)(View).Library_ALI_Dir /=
+                                                  No_Path_Information
       then
-         if Projects_Table (Project)(View).Display_Object_Dir = No_Path then
+         if Projects_Table (Project)(View).Object_Directory =
+                                             No_Path_Information
+         then
             return Get_String
-              (Projects_Table (Project)(View).Library_ALI_Dir);
+              (Projects_Table (Project)(View).Library_ALI_Dir.Name);
          else
             return Get_String
-              (Projects_Table (Project)(View).Display_Object_Dir)
+              (Projects_Table (Project)(View).Object_Directory.Display_Name)
               & Path_Separator & Get_String
-              (Projects_Table (Project)(View).Library_ALI_Dir);
+              (Projects_Table (Project)(View).Library_ALI_Dir.Name);
          end if;
-      elsif Projects_Table (Project)(View).Display_Object_Dir /= No_Path then
+      elsif Projects_Table (Project)(View).Object_Directory /=
+                                             No_Path_Information
+      then
          return Get_String
-                  (Projects_Table (Project)(View).Display_Object_Dir);
+                  (Projects_Table
+                     (Project)(View).Object_Directory.Display_Name);
 
       else
          return "";
@@ -1517,7 +1523,8 @@ package body Projects is
          declare
             Exec : constant String := Get_String
              (Name_Id
-              (Projects_Table (Project)(Get_View (Project)).Display_Exec_Dir));
+              (Projects_Table
+                 (Project)(Get_View (Project)).Exec_Directory.Display_Name));
          begin
             if Exec /= "" then
                return Name_As_Directory (Exec);
