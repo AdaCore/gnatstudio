@@ -2268,6 +2268,13 @@ If the line and column are not specified, then the current selection is returned
       <description>Close all file editors for file</description>
   </shell_doc>
 
+  <shell_doc name="GPS.Editor.set_title">
+      <obsolescent />
+      <param name="file">A string</param>
+      <param name="title">A string</param>
+      <description>Change the title of the buffer containing the given file</description>
+  </shell_doc>
+
   <shell_doc name="GPS.Editor.set_writable">
       <obsolescent />
       <param name="file">A string</param>
