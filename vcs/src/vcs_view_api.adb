@@ -938,6 +938,20 @@ package body VCS_View_API is
                Add_Action (Diff_Tag, On_Menu_Diff_Tag'Access);
             end if;
 
+            if Has_Revision_Information (Context)
+              and then Has_Other_Revision_Information (Context)
+            then
+               Gtk_New
+                 (Item,
+                  Label => -"Compare against previous revision ("
+                              & Other_Revision_Information (Context) & ')');
+               Append (Menu, Item);
+               Context_Callback.Connect
+                 (Item, Gtk.Menu_Item.Signal_Activate,
+                  On_Menu_Diff_Other_Revision'Access, Context);
+               Set_Sensitive (Item, Section_Active);
+            end if;
+
             Add_Separator;
 
             if Actions (Annotate) /= null then
@@ -3147,6 +3161,31 @@ package body VCS_View_API is
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Menu_Diff_Tag;
+
+   ---------------------------------
+   -- On_Menu_Diff_Other_Revision --
+   ---------------------------------
+
+   procedure On_Menu_Diff_Other_Revision
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context)
+   is
+      pragma Unreferenced (Widget);
+      Ref : constant VCS_Access := Get_Current_Ref (Context);
+   begin
+      if Has_File_Information (Context)
+        and then Has_Revision_Information (Context)
+        and then Has_Other_Revision_Information (Context)
+      then
+         Diff
+           (Ref,
+            File_Information (Context),
+            Version_1 => Other_Revision_Information (Context),
+            Version_2 => Revision_Information (Context));
+      end if;
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end On_Menu_Diff_Other_Revision;
 
    ----------------
    -- Comparison --

@@ -133,6 +133,11 @@ package VCS_View_API is
       Context : Selection_Context);
    --  Do a diff between the current version and a specific tag
 
+   procedure On_Menu_Diff_Other_Revision
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context);
+   --  Do a diff between the other revision and revision
+
    procedure On_Menu_View_Log
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context);

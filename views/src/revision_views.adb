@@ -459,42 +459,33 @@ package body Revision_Views is
    is
       pragma Unreferenced (Event_Widget, Kernel, Menu);
 
-      function Get_Parent_Revision (Iter : Gtk_Tree_Iter) return String;
+      procedure Get_Parent_Revision_Node (Iter : in out Gtk_Tree_Iter);
       --  Return the revision for Iter's parent
 
       V     : constant Revision_View := Revision_View (Object);
       Model : constant Gtk_Tree_Model := Get_Model (V.Tree);
 
-      -------------------------
-      -- Get_Parent_Revision --
-      -------------------------
+      ------------------------------
+      -- Get_Parent_Revision_Node --
+      ------------------------------
 
-      function Get_Parent_Revision (Iter : Gtk_Tree_Iter) return String is
-         J : Gtk_Tree_Iter;
+      procedure Get_Parent_Revision_Node (Iter : in out Gtk_Tree_Iter) is
       begin
-         Iter_Copy (Iter, J);
-         --  Climb the tree until finding a revision node corresponding to the
-         --  current iter.
-
-         Look_For_Revision : while J /= Null_Iter loop
+         Look_For_Revision : while Iter /= Null_Iter loop
             declare
                Rev : constant String :=
-                       Get_String (Model, J, Rev_Info_Column);
+                       Get_String (Model, Iter, Rev_Info_Column);
             begin
-               if Rev /= "" then
-                  return Rev;
-               end if;
-
-               J := Parent (Model, J);
+               exit Look_For_Revision when Rev /= "";
+               Iter := Parent (Model, Iter);
             end;
          end loop Look_For_Revision;
+      end Get_Parent_Revision_Node;
 
-         return "";
-      end Get_Parent_Revision;
-
-      Iter : Gtk_Tree_Iter;
-      Rev  : Unbounded_String;
-      Tag  : Unbounded_String;
+      Iter  : Gtk_Tree_Iter;
+      Rev   : Unbounded_String;
+      O_Rev : Unbounded_String;
+      Tag   : Unbounded_String;
 
    begin
       Iter := Find_Iter_For_Event (V.Tree, Model, Event);
@@ -502,6 +493,8 @@ package body Revision_Views is
       if Iter = Null_Iter then
          return;
       end if;
+
+      --  Get selected file revision and tag information
 
       declare
          R : constant String := Get_String (Model, Iter, Rev_Info_Column);
@@ -514,19 +507,34 @@ package body Revision_Views is
             else
                --  We are on a tag/branch node
                Tag := To_Unbounded_String (R);
-               Rev := To_Unbounded_String (Get_Parent_Revision (Iter));
+
+               Get_Parent_Revision_Node (Iter);
+               Rev := To_Unbounded_String
+                 (Get_String (Model, Iter, Rev_Info_Column));
             end if;
 
          else
-            Rev := To_Unbounded_String (Get_Parent_Revision (Iter));
+            Get_Parent_Revision_Node (Iter);
+            Rev := To_Unbounded_String
+              (Get_String (Model, Iter, Rev_Info_Column));
          end if;
       end;
 
+      --  Get the previous revision if any
+
+      Next (Model, Iter);
+
+      if Iter /= Null_Iter then
+         O_Rev := To_Unbounded_String
+           (Get_String (Model, Iter, Rev_Info_Column));
+      end if;
+
       Set_File_Information
         (Context,
-         Files    => (1 => V.File),
-         Revision => To_String (Rev),
-         Tag      => To_String (Tag));
+         Files          => (1 => V.File),
+         Revision       => To_String (Rev),
+         Other_Revision => To_String (O_Rev),
+         Tag            => To_String (Tag));
    end View_Context_Factory;
 
    -----------------------------

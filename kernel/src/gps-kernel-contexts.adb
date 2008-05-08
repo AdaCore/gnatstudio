@@ -203,6 +203,7 @@ package body GPS.Kernel.Contexts is
       Line              : Integer := 0;
       Column            : Basic_Types.Visible_Column_Type := 0;
       Revision          : String := "";
+      Other_Revision    : String := "";
       Tag               : String := "") is
    begin
       GNATCOLL.VFS.Unchecked_Free (Context.Data.Data.Files);
@@ -220,6 +221,10 @@ package body GPS.Kernel.Contexts is
 
       if Revision /= "" then
          Context.Data.Data.Revision := new String'(Revision);
+      end if;
+
+      if Other_Revision /= "" then
+         Context.Data.Data.Other_Revision := new String'(Other_Revision);
       end if;
 
       if Tag /= "" then
@@ -401,6 +406,27 @@ package body GPS.Kernel.Contexts is
    begin
       return Context.Data.Data.Revision.all;
    end Revision_Information;
+
+   ------------------------------------
+   -- Has_Other_Revision_Information --
+   ------------------------------------
+
+   function Has_Other_Revision_Information
+     (Context : Selection_Context) return Boolean is
+   begin
+      return Context.Data.Data /= null
+        and then Context.Data.Data.Other_Revision /= null;
+   end Has_Other_Revision_Information;
+
+   --------------------------------
+   -- Other_Revision_Information --
+   --------------------------------
+
+   function Other_Revision_Information
+     (Context : Selection_Context) return String is
+   begin
+      return Context.Data.Data.Other_Revision.all;
+   end Other_Revision_Information;
 
    -------------------------
    -- Has_Tag_Information --

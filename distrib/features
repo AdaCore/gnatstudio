@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Apr 08, 2008
+GPS 4.3 NEW FEATURES LIST Current as of May 08, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -14,6 +14,11 @@ of the feature.
 
 New features in GPS 4.3.0
 -------------------------
+
+NF-43-H502-016 New action to compare version N and N-1 (2008-05-08)
+
+  In the Revision View it is now possible to compare any revision with the
+  previous one.
 
 NF-43-H401-006 Support for the arm-nucleus toolchain (2008-04-08)
 

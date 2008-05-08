@@ -257,11 +257,12 @@ package body VFS_Module is
             Tmp_Dir  : constant String :=
               Get_Local_Filesystem.Get_Tmp_Directory;
          begin
-            if not Is_Absolute_Path (Filename) then
-               File := Create (Tmp_Dir & Filename);
-            else
-               File := Create (Filename);
+            File := Create (Filename);
+
+            if not Is_Absolute_Path (File) then
+               File := Create (Tmp_Dir & Full_Name (File).all);
             end if;
+
             Writable := Write_File (File, Append => True);
 
             if Nth_Arg (Data, 3, Default => False) then

@@ -44,6 +44,7 @@ package GPS.Kernel.Contexts is
       Line              : Integer := 0;
       Column            : Basic_Types.Visible_Column_Type := 0;
       Revision          : String := "";
+      Other_Revision    : String := "";
       Tag               : String := "");
    --  Set the information in this context.
    --  ??? We should use non-ambiguous types for Line and Column
@@ -114,6 +115,13 @@ package GPS.Kernel.Contexts is
      (Context : Selection_Context) return String;
    --  Return the revision information associated with the file. The revision
    --  is the number or tag used by the VCS to specify a uniq version of file.
+
+   function Has_Other_Revision_Information
+     (Context : Selection_Context) return Boolean;
+   --  Return True if Context has an other revision information
+   function Other_Revision_Information
+     (Context : Selection_Context) return String;
+   --  Return the other revision information associated with the file
 
    function Has_Tag_Information
      (Context : Selection_Context) return Boolean;

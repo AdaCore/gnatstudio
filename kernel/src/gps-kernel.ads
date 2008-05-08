@@ -789,10 +789,11 @@ private
       Line              : Integer := 0;
       Column            : Basic_Types.Visible_Column_Type := 0;
 
-      Category_Name : GNAT.Strings.String_Access := null;
-      Message       : GNAT.Strings.String_Access := null;
-      Revision      : GNAT.Strings.String_Access := null;
-      Tag           : GNAT.Strings.String_Access := null;
+      Category_Name  : GNAT.Strings.String_Access := null;
+      Message        : GNAT.Strings.String_Access := null;
+      Revision       : GNAT.Strings.String_Access := null;
+      Other_Revision : GNAT.Strings.String_Access := null;
+      Tag            : GNAT.Strings.String_Access := null;
       --  In the location window
 
       Start_Line : Integer;
