@@ -834,6 +834,16 @@ GPS.parse_xml ("""
      <description>Writes text to filename on the disk. This is mostly intended for poor shells like the GPS shell which do not have better solutions. In python, it is recommended to use python's own mechanisms</description>
   </shell_doc>
 
+  <shell_doc name="GPS.base_name">
+     <param name="filename">A string</param>
+     <description>Returns the base name for the given full path name</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.dir_name">
+     <param name="filename">A string</param>
+     <description>Returns the directory name for the given full path name</description>
+  </shell_doc>
+
   <shell_doc name="GPS.cd">
      <param name="dir">A string</param>
      <description>Change the current directory to dir</description>

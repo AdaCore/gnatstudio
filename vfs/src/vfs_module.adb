@@ -273,6 +273,24 @@ package body VFS_Module is
             Close (Writable);
             Set_Return_Value (Data, Full_Name (File).all);
          end;
+
+      elsif Command = "base_name" then
+         declare
+            Filename : constant String := Nth_Arg (Data, 1);
+            File     : Virtual_File;
+         begin
+            File := Create (Filename);
+            Set_Return_Value (Data, Base_Name (File));
+         end;
+
+      elsif Command = "dir_name" then
+         declare
+            Filename : constant String := Nth_Arg (Data, 1);
+            File     : Virtual_File;
+         begin
+            File := Create (Filename);
+            Set_Return_Value (Data, Dir_Name (File).all);
+         end;
       end if;
    end VFS_Command_Handler;
 
@@ -860,6 +878,16 @@ package body VFS_Module is
         (Kernel, "dump_file",
          Minimum_Args => 2,
          Maximum_Args => 3,
+         Handler      => VFS_Command_Handler'Access);
+      Register_Command
+        (Kernel, "base_name",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => VFS_Command_Handler'Access);
+      Register_Command
+        (Kernel, "dir_name",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
          Handler      => VFS_Command_Handler'Access);
    end Register_Module;
 
