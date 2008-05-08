@@ -21,10 +21,11 @@ with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
 with Ada.Tags;                  use Ada.Tags;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+with System;
+
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Scripts.Gtkada;   use GNATCOLL.Scripts, GNATCOLL.Scripts.Gtkada;
 with GNAT.Strings;
-with System;
 
 with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
@@ -162,7 +163,7 @@ package body Src_Editor_Module.Shell is
 
    procedure Edit_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
-   --  Interactive command handler for the source editor module.
+   --  Interactive command handler for the source editor module
 
    procedure Current_Search_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
@@ -178,12 +179,12 @@ package body Src_Editor_Module.Shell is
    procedure On_Raise_Child
      (Child   : access Gtk_Widget_Record'Class;
       Triplet : Child_Triplet_Access);
-   --  Called when synchronized editor Child in Triplet is raised.
+   --  Called when synchronized editor Child in Triplet is raised
 
    procedure On_Delete_Child
      (Child   : access Gtk_Widget_Record'Class;
       Triplet : Child_Triplet_Access);
-   --  Called when synchronized editor Child in Triplet is deleted.
+   --  Called when synchronized editor Child in Triplet is deleted
 
    procedure Buffer_Cmds (Data : in out Callback_Data'Class; Command : String);
    --  Command handler for the EditorBuffer class
@@ -822,7 +823,7 @@ package body Src_Editor_Module.Shell is
          Kernel   => Kernel,
          Callback => Callback'Unrestricted_Access)
       loop
-         --  No need to delay, since the search is done in same process.
+         --  No need to delay, since the search is done in same process
          null;
       end loop;
    end Common_Search_Command_Handler;
@@ -1484,7 +1485,7 @@ package body Src_Editor_Module.Shell is
                      end loop;
 
                      if Column /= 1 then
-                        --  Adjust column number.
+                        --  Adjust column number
                         Column := Column - Visible_Column_Type
                           (Chars'First) + 1;
                      end if;
@@ -1530,7 +1531,7 @@ package body Src_Editor_Module.Shell is
 
                Free (A);
             else
-               --  The buffer is not currently open, read directly from disk.
+               --  The buffer is not currently open, read directly from disk
 
                B := Read_File (File);
 
@@ -2042,7 +2043,7 @@ package body Src_Editor_Module.Shell is
       elsif Command = "characters_count" then
          Get_Buffer (Buffer, Data, 1);
          if Buffer /= null then
-            --  ??? This is incompatible with blank/folded lines.
+            --  ??? This is incompatible with blank/folded lines
             Set_Return_Value (Data, Integer (Get_Char_Count (Buffer)));
          end if;
 

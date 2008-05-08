@@ -504,7 +504,6 @@ This directory always ends with a directory separator</description>
      <see_also name="GPS.get_home_dir()" />
   </shell_doc>
 
-
   <shell_doc name="GPS.get_tmp_dir">
      <return>The install directory for GPS</return>
      <description>Return the directory where gps creates temporary files.
@@ -2298,7 +2297,6 @@ If the line and column are not specified, then the current selection is returned
        <param name="line">An integer</param>
        <description>Print the contents of the items attached to the side of a line. This is used mainly for debugging and testing purposes.</description>
   </shell_doc>
-
 
   <!--#################################################################
     ####  VCS class
@@ -5382,6 +5380,5 @@ also saved so that they can be pasted later on</description>
   <shell_doc name="GPS.Unexpected_Exception">
      <description>An exception raised by GPS. It indicates an internal error in GPS, raised by the Ada code itself. This exception is unexpected and indicates a bug in GPS itself, not in the python script, although it might be possible to modify the latter to work around the issue</description>
   </shell_doc>
-
 
 </docs>

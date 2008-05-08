@@ -69,7 +69,7 @@ package body VFS_Module is
    procedure VFS_Command_Handler
      (Data    : in out Callback_Data'Class;
       Command : String);
-   --  Interactive command handler for the vfs module.
+   --  Interactive command handler for the vfs module
 
    type Delete_Command is new Interactive_Command with null record;
    function Execute
@@ -305,7 +305,7 @@ package body VFS_Module is
 
          Found := False;
 
-         --  Check directories.
+         --  Check directories
          if Is_Directory (File_In)
            and then Projects.Editor.Contains_Path (Prj, File_In.Full_Name.all)
          then
@@ -315,12 +315,12 @@ package body VFS_Module is
          --  Check files
          elsif not Is_Directory (File_In) then
 
-            --  First check if the file is a project file.
+            --  First check if the file is a project file
             if File_In = Project_Path (Prj) then
                Success := True;
                Found := True;
 
-            --  Then check if the file is a source file.
+            --  Then check if the file is a source file
             else
                declare
                   Files : File_Array_Access :=
@@ -584,7 +584,7 @@ package body VFS_Module is
 
             Get_Kernel (Context.Context).File_Renamed (File_In, To_File);
 
-            --  First check if file_in is defined in the projects.
+            --  First check if file_in is defined in the projects
             Check_Prj
               (Get_Project (Get_Kernel (Context.Context)),
                File_In, Prj_Changed, Prj_List);

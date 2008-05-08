@@ -3252,6 +3252,7 @@ package body VCS_View_API is
                Str.all,
                "");
          end if;
+
       else
          if Str'Length /= 0 then
             Index := Str'First;
