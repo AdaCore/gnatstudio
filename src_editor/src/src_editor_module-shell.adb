@@ -1838,12 +1838,12 @@ package body Src_Editor_Module.Shell is
          Name_Parameters (Data, Set_Writable_Cmd_Parameters);
 
          declare
-            Filename : constant Virtual_File :=
-                         Create (Nth_Arg (Data, 1), Kernel);
-            Write    : constant Boolean := Nth_Arg (Data, 2);
-            Child    : MDI_Child;
+            File  : constant Virtual_File :=
+                      Create (Nth_Arg (Data, 1), Kernel);
+            Write : constant Boolean := Nth_Arg (Data, 2);
+            Child : MDI_Child;
          begin
-            Child := Find_Editor (Kernel, Filename);
+            Child := Find_Editor (Kernel, File);
 
             if Child /= null then
                Set_Writable (Source_Editor_Box (Get_Widget (Child)), Write);
