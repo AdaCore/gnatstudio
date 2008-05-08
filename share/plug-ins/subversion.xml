@@ -294,7 +294,15 @@
    </action>
 
    <action name="generic_svn_diff2" show-command="false" output="none" category="">
-      <shell output="">echo "Getting comparison between revisions $1 / $2 of $3 ..."</shell>
+      <shell output="">echo "Getting comparison between revisions $1:$2 of $3 ..."</shell>
+      <external check-password="true">svn --non-interactive cat -r$2 "$3"</external>
+      <on-failure>
+         <shell output="">echo_error "SVN error:"</shell>
+         <shell output="">echo_error "%2"</shell>
+      </on-failure>
+      <shell>base_name "$3"</shell>
+      <shell>dump_file "%2" "r$1_$2_%1" TRUE</shell>
+      <shell>File "%1"</shell>
       <external check-password="true">svn --non-interactive diff --diff-cmd diff -x --normal -r$1:$2 "$3"</external>
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>

@@ -295,7 +295,8 @@
          <shell output="">echo_error "CVS error:"</shell>
          <shell output="">echo_error "%2"</shell>
       </on-failure>
-      <shell>dump "%1" TRUE</shell>
+      <shell>base_name "$3"</shell>
+      <shell>dump_file "%2" "r$1_$2_%1" TRUE</shell>
       <shell>File "%1"</shell>
 
       <external check-password="true">cvs -f diff -r$1 -r$2 "$3"</external>

@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.3.0
 
+- H504-003: Subversion compare two revisions not working
+  Problem:    The "Compare two revisions" VCS action is not working with
+              Subversion. The action seems to be ignored and no error
+              message is displayed.
+  Workaround: Compare both versions from the command line
+
 - H427-004: Subversion head revisions log not displayed
   Problem:    In the VCS Subversion log output, the head revisions are not
               displayed if they correspond to changes not yet updated
