@@ -1838,6 +1838,7 @@ package body GPS.Location_View is
       Gtk_New (View.Tree, Columns_Types);
       Set_Column_Types (View);
       Set_Headers_Visible (View.Tree, False);
+      Set_Name (View.Tree, "Locations Tree");
 
       Gtk_New (Scrolled);
       Set_Policy

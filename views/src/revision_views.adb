@@ -777,7 +777,7 @@ package body Revision_Views is
       File   : Virtual_File) return Revision_View
    is
       B_Name : constant String := Base_Name (File);
-      Title  : constant String := -"Revision View - " & B_Name;
+      Title  : constant String := "Revision View - " & B_Name;
       View   : Revision_View;
       Child  : MDI_Child;
 
@@ -802,6 +802,7 @@ package body Revision_Views is
                   Group          => Group_Consoles,
                   Module         => Revision_View_Module_ID);
          View.Child := Child;
+         Set_Name (View.Tree, -Title);
          Set_Title (Child, -Title);
          Put (Get_MDI (Kernel), GPS_MDI_Child (Child));
          Set_Focus_Child (Child);
