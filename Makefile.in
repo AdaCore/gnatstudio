@@ -11,14 +11,22 @@ bindir          = $(prefix)/bin
 sharedir        = $(prefix)/share
 examplesdir     = $(prefix)/share/examples/gps
 
+ifeq ($(Build), Production)
+TP_BUILD=Release
+else
+TP_BUILD=Debug
+endif
+
 export TP_TASKING = No_Tasking
+export PRJ_BUILD = $(TP_BUILD)
 export LIBRARY_TYPE = static
 
 default build compile link ada c c++: setup-tp
 	$(MAKE) -s -C gps -f Makefile.gps $@
 
 setup-tp:
-	$(MAKE) LIBRARY_TYPE=static -C templates_parser setup
+	$(MAKE) PRJ_BUILD=$(TP_BUILD) LIBRARY_TYPE=static \
+		-C templates_parser setup
 
 clean:
 	$(RM) gnat/*.ad*
