@@ -920,9 +920,16 @@ package body Completion_Window is
          if Is_Graphic (C)
            and then not Is_In (C, Word_Character_Set (Window.Lang))
          then
-            --  If we reach this point, complete, and let the event through so
-            --  that the character gets inserted as expected.
-            Dummy := Complete;
+            --  We have just inserted a graphic (ie alphanumeric or special)
+            --  character which is not part of an identifier in the language.
+            --  If we are in Volatile mode, return. Otherwise complete.
+            --  In any case, let the event through so that the character gets
+            --  inserted as expected.
+
+            if not Window.Volatile then
+               Dummy := Complete;
+            end if;
+
             return False;
          end if;
       end if;
