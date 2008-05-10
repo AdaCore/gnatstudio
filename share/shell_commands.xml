@@ -478,6 +478,22 @@ GPS.Hook ("debugger_command_action_hook").add (debugger_commands)
     <description>Hook called when an activity has been checked, this is the last step done after the activity has been committed. It is at this point that the activity closed status is updated.</description>
   </shell_doc>
 
+  <shell_doc name="@hook@ status_parsed_hook">
+    <description>Hook called when the last file status has been parsed after the corresponding VCS action.</description>
+  </shell_doc>
+
+  <shell_doc name="@hook@ log_parsed_hook">
+    <description>Hook called when the last file log has been parsed after the corresponding VCS action.</description>
+  </shell_doc>
+
+  <shell_doc name="@hook@ annotation_parsed_hook">
+    <description>Hook called when the last file annotation has been parsed after the corresponding VCS action.</description>
+  </shell_doc>
+
+  <shell_doc name="@hook@ revision_parsed_hook">
+    <description>Hook called when the last file revision has been parsed after the corresponding VCS action.</description>
+  </shell_doc>
+
   <!--#################################################################
     ####   Top level functions
     ###################################################################-->
