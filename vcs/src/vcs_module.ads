@@ -40,6 +40,18 @@ package VCS_Module is
    Activity_Checked_Hook : constant Hook_Name := "activity_checked_hook";
    --  Raised when an activity status has been checked
 
+   Log_Parsed_Hook : constant Hook_Name := "log_parsed_hook";
+   --  Raised when the last log has been parsed
+
+   Status_Parsed_Hook : constant Hook_Name := "status_parsed_hook";
+   --  Raised when the last status has been parsed
+
+   Revision_Parsed_Hook : constant Hook_Name := "revision_parsed_hook";
+   --  Raised when the last revision has been parsed
+
+   Annotation_Parsed_Hook : constant Hook_Name := "annotation_parsed_hook";
+   --  Raised when the last annotation has been parsed
+
    type VCS_Module_ID_Record is new Module_ID_Record with record
       VCS_List         : Argument_List_Access;
       --  The list of all VCS systems recognized by the kernel

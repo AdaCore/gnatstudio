@@ -544,6 +544,10 @@ package body VCS_Module is
 
       Register_Hook_No_Args (Kernel, Commit_Done_Hook);
       Register_Hook_No_Args (Kernel, Activity_Checked_Hook);
+      Register_Hook_No_Args (Kernel, Log_Parsed_Hook);
+      Register_Hook_No_Args (Kernel, Status_Parsed_Hook);
+      Register_Hook_No_Args (Kernel, Revision_Parsed_Hook);
+      Register_Hook_No_Args (Kernel, Annotation_Parsed_Hook);
 
       --  Register VCS commands
 

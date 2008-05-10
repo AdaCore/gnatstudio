@@ -36,6 +36,7 @@ with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
@@ -172,6 +173,27 @@ package body VCS.Generic_VCS is
 
    procedure Free (Command : in out Parser_Command_Type);
    --  Free memory associated to Command
+
+   --  Simple Hook command
+
+   type Run_Hook_Command_Type (Size : Positive) is new Root_Command with record
+      Kernel : Kernel_Handle;
+      Name   : Hook_Name (1 .. Size);
+   end record;
+
+   overriding function Execute
+     (Command : access Run_Hook_Command_Type) return Command_Return_Type;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Run_Hook_Command_Type) return Command_Return_Type is
+   begin
+      Run_Hook (Command.Kernel, Command.Name);
+      return Success;
+   end Execute;
 
    ----------
    -- Free --
@@ -1562,6 +1584,8 @@ package body VCS.Generic_VCS is
                Clear_Logs     => Command.Clear_Logs,
                Display        => Command.Override_Cache);
 
+            Run_Hook (Command.Rep.Kernel, Status_Parsed_Hook);
+
             return Success;
          end if;
 
@@ -1911,6 +1935,8 @@ package body VCS.Generic_VCS is
             Annotation_Id,
             new Line_Information_Array'(A));
       end;
+
+      Run_Hook (Kernel, Annotation_Parsed_Hook);
    end Parse_Annotations;
 
    ---------------
@@ -2050,6 +2076,17 @@ package body VCS.Generic_VCS is
 
          Start := Matches (0).Last + 1;
       end loop;
+
+      declare
+         C : constant Command_Access :=
+               new Run_Hook_Command_Type'
+                 (Root_Command with
+                  Log_Parsed_Hook'Length,
+                  Rep.Kernel, Log_Parsed_Hook);
+      begin
+         Launch_Background_Command
+           (Rep.Kernel, C, True, False, Revision_Handling_Queue);
+      end;
    end Parse_Log;
 
    --------------------
@@ -2067,6 +2104,7 @@ package body VCS.Generic_VCS is
       Matches : Match_Array (0 .. Parser.Matches_Num);
       Script  : Scripting_Language;
       Start   : Integer := S'First;
+      Command : Custom_Command_Access;
    begin
       if Parser.Regexp = null then
          Insert (Rep.Kernel,
@@ -2088,7 +2126,6 @@ package body VCS.Generic_VCS is
             Sym     : constant String :=
                         S (Matches (Parser.Sym_Index).First
                            .. Matches (Parser.Sym_Index).Last);
-            Command : Custom_Command_Access;
          begin
             Create
               (Command, -"add revision", Kernel,
@@ -2103,6 +2140,17 @@ package body VCS.Generic_VCS is
 
          Start := Matches (0).Last + 1;
       end loop;
+
+      declare
+         C : constant Command_Access :=
+               new Run_Hook_Command_Type'
+                 (Root_Command with
+                  Revision_Parsed_Hook'Length,
+                  Rep.Kernel, Revision_Parsed_Hook);
+      begin
+         Launch_Background_Command
+           (Rep.Kernel, C, True, False, Revision_Handling_Queue);
+      end;
    end Parse_Revision;
 
    ----------------------------
