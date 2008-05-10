@@ -23,7 +23,7 @@ with Ada.Strings.Unbounded;
 
 with GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
+with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 
 with Glib;                      use Glib;
 with Glib.Convert;              use Glib.Convert;
@@ -48,7 +48,7 @@ with VCS_View.Activities;       use VCS_View.Activities;
 with VCS_View.Explorer;         use VCS_View.Explorer;
 with VCS_Module;                use VCS_Module;
 with VCS_Status;                use VCS_Status;
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with String_Utils;              use String_Utils;
 
 package body VCS.Generic_VCS is
@@ -165,13 +165,14 @@ package body VCS.Generic_VCS is
 
    --  ??? Need to implement destroy
 
-   function Execute
+   overriding function Execute
      (Command : access Parser_Command_Type) return Command_Return_Type;
-   function Name (Command : access Parser_Command_Type) return String;
+   overriding function Name
+     (Command : access Parser_Command_Type) return String;
 
    type Parser_Command_Access is access all Parser_Command_Type;
 
-   procedure Free (Command : in out Parser_Command_Type);
+   overriding procedure Free (Command : in out Parser_Command_Type);
    --  Free memory associated to Command
 
    --  Simple Hook command
@@ -1547,7 +1548,7 @@ package body VCS.Generic_VCS is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Parser_Command_Type) return Command_Return_Type
    is
       S           : String renames Command.Text.all;
@@ -1845,7 +1846,6 @@ package body VCS.Generic_VCS is
       Script := Lookup_Scripting_Language
         (Get_Scripts (Kernel), GPS_Shell_Name);
 
-      declare
       begin
          Max := Natural'Value
            (Execute_GPS_Shell_Command
