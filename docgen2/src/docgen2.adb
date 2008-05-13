@@ -1091,7 +1091,10 @@ package body Docgen2 is
       Body_Location : File_Location;
       Context_Elem  : constant Context_Stack_Element := Current (Context);
 
-      function Create_Xref (E    : Entity_Information) return Cross_Ref;
+      function Create_Xref
+        (E             : Entity_Information;
+         Use_Full_Name : Boolean := False)
+         return Cross_Ref;
       function Create_Xref
         (Name : String; Loc : File_Location) return Cross_Ref;
       --  Create a new Cross-Ref and update the Cross-Refs list
@@ -1134,7 +1137,10 @@ package body Docgen2 is
       -- Create_Xref --
       -----------------
 
-      function Create_Xref (E : Entity_Information) return Cross_Ref is
+      function Create_Xref
+        (E             : Entity_Information;
+         Use_Full_Name : Boolean := False)
+         return Cross_Ref is
       begin
          if E = null then
             return null;
@@ -1142,7 +1148,9 @@ package body Docgen2 is
 
          --  If the cross ref is in the same file, use a simple name
          --  If in another file, then use the fully qualified name
-         if Get_Declaration_Of (E).File = Get_Declaration_Of (Entity).File then
+         if Get_Declaration_Of (E).File = Get_Declaration_Of (Entity).File
+           and then not Use_Full_Name
+         then
             return Create_Xref (Get_Name (E).all, Get_Declaration_Of (E));
          else
             return Create_Xref (Get_Full_Name (E), Get_Declaration_Of (E));
@@ -1177,9 +1185,10 @@ package body Docgen2 is
          end if;
 
          if E_Info.Category = Cat_Class then
+            --  Class list is global for all tagged types. Use the full name.
             Class_List.Append
               (Create_Xref
-                 (Get_Name (Entity).all, Get_Declaration_Of (Entity)));
+                 (Get_Full_Name (Entity), Get_Declaration_Of (Entity)));
          end if;
 
          return E_Info;
@@ -1549,7 +1558,7 @@ package body Docgen2 is
                   while not At_End (Children) loop
                      if Get (Children) /= null then
                         E_Info.Class_Children.Append
-                          (Create_Xref (Get (Children)));
+                          (Create_Xref (Get (Children), True));
                      end if;
 
                      Next (Children);
@@ -3194,6 +3203,7 @@ package body Docgen2 is
             declare
                Prim_Tag, Parent_Tag, Children_Tag : Vector_Tag;
                Xref        : Cross_Ref;
+               Prev_Xref   : Cross_Ref := null;
                Prim_Op_Str : Ada.Strings.Unbounded.Unbounded_String;
             begin
                --  Init entities common information
@@ -3204,18 +3214,34 @@ package body Docgen2 is
                  Child_EInfo.Parents.Last_Index
                loop
                   Xref := Child_EInfo.Parents.Element (J);
-                  Append (Parent_Tag, Gen_Href (Backend, Xref));
+
+                  --  avoid duplicated entries
+                  if Prev_Xref = null
+                    or else Xref.Location /= Prev_Xref.Location
+                  then
+                     Append (Parent_Tag, Gen_Href (Backend, Xref));
+                  end if;
+                  Prev_Xref := Xref;
                end loop;
 
                Append (Class_Parents, Parent_Tag);
 
                Vector_Sort.Sort (Child_EInfo.Class_Children);
+               Prev_Xref := null;
 
                for J in Child_EInfo.Class_Children.First_Index ..
                  Child_EInfo.Class_Children.Last_Index
                loop
                   Xref := Child_EInfo.Class_Children.Element (J);
-                  Append (Children_Tag, Gen_Href (Backend, Xref));
+
+                  --  avoid duplicated entries
+                  if Prev_Xref = null
+                    or else Xref.Location /= Prev_Xref.Location
+                  then
+                     Append (Children_Tag, Gen_Href (Backend, Xref));
+                  end if;
+
+                  Prev_Xref := Xref;
                end loop;
 
                Append (Class_Children, Children_Tag);
@@ -3642,6 +3668,7 @@ package body Docgen2 is
          Tree_Loc_Tag      : Vector_Tag;
          Root_Tree_Tag     : Vector_Tag;
          Tree_Children_Tag : Vector_Tag;
+         Xref, Prev_Xref   : Cross_Ref;
       begin
          if Class = null then
             return "";
@@ -3654,25 +3681,33 @@ package body Docgen2 is
          Append (Root_Tree_Tag, Depth = 0);
 
          Vector_Sort.Sort (Class.Class_Children);
-
+         Prev_Xref := null;
          Cursor := Class.Class_Children.First;
 
          while Cross_Ref_List.Has_Element (Cursor) loop
-            if Cross_Ref_List.Element (Cursor).Xref /= null
-              and then not Cross_Ref_List.Element (Cursor).Xref.Displayed
+            Xref := Cross_Ref_List.Element (Cursor);
+
+            if Xref.Xref /= null
+              and then not Xref.Xref.Displayed
             then
-               declare
-                  Child : constant String :=
-                            Print_Tree
-                              (Cross_Ref_List.Element (Cursor).Name.all,
-                               Cross_Ref_List.Element (Cursor).Xref,
-                               Depth + 1);
-               begin
-                  if Child /= "" then
-                     Append (Tree_Children_Tag, Child);
-                  end if;
-               end;
+               if Prev_Xref = null
+                 or else Xref.Location /= Prev_Xref.Location
+               then
+                  declare
+                     Child : constant String :=
+                       Print_Tree
+                         (Xref.Name.all,
+                          Xref.Xref,
+                          Depth + 1);
+                  begin
+                     if Child /= "" then
+                        Append (Tree_Children_Tag, Child);
+                     end if;
+                  end;
+               end if;
             end if;
+
+            Prev_Xref := Xref;
 
             Cross_Ref_List.Next (Cursor);
          end loop;
