@@ -3907,7 +3907,7 @@ package body Docgen2 is
       return File_Utils.Name_As_Directory
         (Object_Path
            (Get_Root_Project (Get_Registry (Kernel).all),
-            False)) & "doc/";
+            False, False)) & "doc/";
    end Get_Doc_Directory;
 
 end Docgen2;
