@@ -230,7 +230,7 @@ package body Docgen2 is
    procedure Set_Printout
      (Construct   : Simple_Construct_Information;
       File_Buffer : GNAT.Strings.String_Access;
-      E_Info      : in Entity_Info);
+      E_Info      : Entity_Info);
    --  Retrieve the Source extract representing the construct, and
    --  set the printout field of E_Info
 
@@ -238,7 +238,7 @@ package body Docgen2 is
      (Construct   : Simple_Construct_Information;
       Entity      : Entity_Information;
       File_Buffer : GNAT.Strings.String_Access;
-      E_Info      : in Entity_Info);
+      E_Info      : Entity_Info);
    --  Retrieve the Source extract representing the header of the package, or
    --  the full construct if the package is an instantiation or a renaming.
 
@@ -905,7 +905,7 @@ package body Docgen2 is
    procedure Set_Printout
      (Construct   : Simple_Construct_Information;
       File_Buffer : GNAT.Strings.String_Access;
-      E_Info      : in Entity_Info)
+      E_Info      : Entity_Info)
    is
       Sloc_Start, Sloc_End : Source_Location;
    begin
@@ -929,7 +929,7 @@ package body Docgen2 is
      (Construct   : Simple_Construct_Information;
       Entity      : Entity_Information;
       File_Buffer : GNAT.Strings.String_Access;
-      E_Info      : in Entity_Info)
+      E_Info      : Entity_Info)
    is
       Start_Index : Natural;
       End_Index   : Natural;
@@ -1514,6 +1514,8 @@ package body Docgen2 is
                end if;
 
             when Cat_Task | Cat_Protected =>
+               E_Info.Is_Type := Entity_Kind.Is_Type;
+
                --  Get children (task entries)
 
                declare
@@ -1888,16 +1890,28 @@ package body Docgen2 is
             Generate_Support_Files (Command.Kernel, Command.Backend);
          end if;
 
-         Command.File_Index := Command.File_Index + 1;
-
          --  Clean-up previous context if needed
          Free (Command.Analysis_Ctxt.Tree);
          Free (Command.Analysis_Ctxt.File_Buffer);
+
+         Command.File_Index := Command.File_Index + 1;
 
          --  Only analyze specs
          if Is_Spec_File (Command.Kernel,
                           Command.Source_Files (Command.File_Index))
          then
+            if not Command.Source_Files
+                     (Command.File_Index).Is_Regular_File
+            then
+               Insert
+                 (Command.Kernel,
+                  (-"warning: the file ") &
+                  Command.Source_Files (Command.File_Index).Full_Name.all &
+                  (-" cannot be found. It will be skipped."),
+                  Mode => Info);
+               return Execute_Again;
+            end if;
+
             File := Get_Or_Create
               (Database,
                Command.Source_Files (Command.File_Index));
@@ -2084,6 +2098,18 @@ package body Docgen2 is
               Command.Source_Files (Command.Src_File_Index))
            or else Command.Options.Process_Body_Files
          then
+            if not Command.Source_Files
+                     (Command.Src_File_Index).Is_Regular_File
+            then
+               Insert
+                 (Command.Kernel,
+                  (-"warning: the file ") &
+                  Command.Source_Files (Command.Src_File_Index).Full_Name.all &
+                  (-" cannot be found. It will be skipped."),
+                  Mode => Info);
+               return Execute_Again;
+            end if;
+
             File := Get_Or_Create
               (Database,
                Command.Source_Files (Command.Src_File_Index));
