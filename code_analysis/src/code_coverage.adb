@@ -31,8 +31,10 @@ with Code_Analysis_GUI; use Code_Analysis_GUI;
 
 package body Code_Coverage is
 
-   Int_Image_Padding : constant Positive := 5;
-   --  Size of padding wanted with String_Utils.Image
+   Int_Image_Pad : constant Positive := 5;
+   --  Size of padding wanted with GNATCOLL.Utils.Image
+   Int_Char_Pad  : constant Character := ' ';
+   --  Character used to pad in GNATCOLL.Utils.Image
 
    ---------------
    -- Set_Error --
@@ -663,7 +665,8 @@ package body Code_Coverage is
             Set (Tree_Store, Iter, Cov_Sort, Glib.Gint (Coverage.Coverage));
             Set (Tree_Store, Iter, Cov_Bar_Val, Glib.Gint (Cov_Percent));
             Set (Tree_Store, Iter, Cov_Bar_Txt,
-                 Image (Cov_Percent, Int_Image_Padding) & " %");
+                 Image (Cov_Percent, Int_Image_Pad, Padding => Int_Char_Pad) &
+                 " %");
          end;
 
       else
