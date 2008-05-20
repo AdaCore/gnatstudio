@@ -615,7 +615,8 @@ package body Projects is
          return 0;
       else
          return Length (Project.View_Tree,
-                        Projects_Table (Project)(Get_View (Project)).Sources);
+                        Projects_Table
+                          (Project)(Get_View (Project)).Ada_Sources);
       end if;
    end Direct_Sources_Count;
 

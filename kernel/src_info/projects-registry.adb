@@ -974,7 +974,7 @@ package body Projects.Registry is
          --  Add the Ada sources that are already in the project.
          --  Convert the names to UTF8 for proper handling in GPS
 
-         Sources := Projects_Table (Registry)(Get_View (P)).Sources;
+         Sources := Projects_Table (Registry)(Get_View (P)).Ada_Sources;
          while Sources /= Nil_String loop
             Get_Name_String
               (String_Elements (Registry) (Sources).Display_Value);
@@ -1360,8 +1360,8 @@ package body Projects.Registry is
             Location      => No_Location,
             Index         => 0,
             Next          => Projects_Table
-              (Registry) (Get_View (Project)).Sources);
-         Projects_Table (Registry) (Get_View (Project)).Sources :=
+              (Registry) (Get_View (Project)).Ada_Sources);
+         Projects_Table (Registry) (Get_View (Project)).Ada_Sources :=
            String_Element_Table.Last (Registry.Data.View_Tree.String_Elements);
          Set
            (Registry.Data.Sources, K => File, E => (Project, Lang, Full_Path));
@@ -1422,7 +1422,7 @@ package body Projects.Registry is
       --  We already know if the directories contain Ada files. Update the
       --  status accordingly, in case they don't contain any other file.
 
-      Src := Projects_Table (Registry) (Get_View (Project)).Sources;
+      Src := Projects_Table (Registry) (Get_View (Project)).Ada_Sources;
 
       while Src /= Nil_String loop
          Get_Name_String (String_Elements (Registry) (Src).Display_Value);
