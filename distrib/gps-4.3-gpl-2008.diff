@@ -10,8 +10,6 @@
 +   Build : Build_Type := External ("Build", "Production");
 --- templates_parser/tp_shared.gpr.old	2008-05-20 16:12:51.062500000 +0200
 +++ templates_parser/tp_shared.gpr	2008-05-20 16:14:04.015625000 +0200
-@@ -33,3 +33,3 @@
-    type Build_Type is ("Debug", "Release");
+@@ -34 +34 @@
 -   Build : Build_Type := external ("PRJ_BUILD", "Debug");
 +   Build : Build_Type := external ("PRJ_BUILD", "Release");
- 
