@@ -43,6 +43,7 @@
           <choice>erc32-elf-gnatmake</choice>
           <choice>leon-elf-gnatmake</choice>
           <choice>arm-mentor-nucleus-gnatmake</choice>
+          <choice>avr-gnatmake</choice>
           <choice>dotnet-gnatmake</choice>
           <choice>gnaampmake</choice>
           <choice>jgnatmake</choice>
@@ -73,6 +74,7 @@
        <choice>erc32-elf-gnatls</choice>
        <choice>leon-elf-gnatls</choice>
        <choice>arm-mentor-nucleus-gnatls</choice>
+       <choice>avr-gnatls</choice>
        <choice>dotnet-gnatls</choice>
        <choice>gnaampls</choice>
        <choice>jgnatls</choice>
@@ -98,6 +100,7 @@
        <choice>erc32-elf-gnat</choice>
        <choice>leon-elf-gnat</choice>
        <choice>arm-mentor-nucleus-gnat</choice>
+       <choice>avr-gnat</choice>
        <choice>dotnet-gnat</choice>
        <choice>gnaampcmd</choice>
        <choice>jgnatcmd</choice>
