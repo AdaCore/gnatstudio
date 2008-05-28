@@ -419,10 +419,6 @@ package body KeyManager_Module is
          end loop;
       end Call_Handlers;
 
-      --  We do not put a global exception handler in this procedure since
-      --  it is called very often, so when using setjmp/longjmp, the cost
-      --  may not be negligible.
-
       if Event_Type = Key_Press or else Event_Type = Key_Release then
          --  Check that the current input window is not modal.
          --  In the case that we have a modal dialog, we do not want to
@@ -453,11 +449,9 @@ package body KeyManager_Module is
       --  Dispatch the event in the standard gtk+ main loop
       Gtk.Main.Do_Event (Event);
 
-   exception
-      when E : others =>
-         Trace (Traces.Exception_Handle, E);
-         --  Dispatch the event in the standard gtk+ main loop
-         Gtk.Main.Do_Event (Event);
+   --  We do not put a global exception handler in this procedure since
+   --  it is called very often, so when using setjmp/longjmp, the cost
+   --  may not be negligible.
 
    end General_Event_Handler;
 
@@ -471,7 +465,6 @@ package body KeyManager_Module is
       Event_Type : constant Gdk_Event_Type := Get_Event_Type (Event);
    begin
       Trace (Event_Debug_Trace, Event_Type'Img);
-
       General_Event_Handler (Event, Kernel);
 
    exception
