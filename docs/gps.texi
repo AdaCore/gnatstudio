@@ -13552,6 +13552,12 @@ This is the leading character of command line arguments that indicate they
 are considered as switches. Arguments not starting with this character will
 be kept as is, and cannot have graphical widgets associated with them
 
+@item sections (Default value is empty)
+This is a space separated list of switches delimiting a section (such as
+"-bargs -cargs -largs"). A section of switches is a set of switches that
+need to be grouped together and preceded by a specific switch. Sections are
+always placed at the end of the command line, after regular switches.
+
 @end table
 
 This @code{<switches>} tag can have any number of child tag, among the
@@ -13576,6 +13582,10 @@ This is the text that should be put on the command line if that switch is
 selected. Depending on its type, a variant of the text might be put instead,
 see the description of @code{combo} and @code{spin} below.
 This switch shouldn't contain any space.
+
+@item section (default value is empty)
+This is the switch section delimiter (such as "-cargs"). See the 'sections'
+attribute of the tag 'switches' for more information.
 
 @item tip (default value is empty)
 This is the tooltip which describes that switch more extensively. It is
@@ -13634,16 +13644,16 @@ switches editor.
 
 @item <check>
 @cindex <check>
-This tag accepts the @code{line}, @code{column}, @code{label}, @code{switch}
-and @code{tip} attributes. It creates a toggle button. When the latter is
-active, the text defined in the switch attribute is added as is
+This tag accepts the @code{line}, @code{column}, @code{label}, @code{switch},
+@code{section} and @code{tip} attributes. It creates a toggle button. When
+the latter is active, the text defined in the switch attribute is added as is
 to the command line. This tag doesn't have any value or child tags.
 
 @item <spin>
 @cindex <spin>
 This tag accepts the @code{line}, @code{column}, @code{label}, @code{switch},
-@code{tip}, @code{min}, @code{max}, @code{separator} and @code{default}
-attributes.
+@code{section}, @code{tip}, @code{min}, @code{max}, @code{separator} and
+@code{default} attributes.
 This switch will add the contents of the @code{switch} attribute followed by
 the current numeric value of the widget to the command line. This is typically
 used to indicate indentation length for instance.
@@ -13658,15 +13668,15 @@ number of children, each of which is associated with its own switch. However,
 only one of the children can be selected at any given time.
 
 The children must have the tag @code{radio-entry}. This tag accepts the
-attributes @code{label}, @code{switch} and @code{tip}. As a special case,
-the switch attribute can have an empty value ("") to indicate this is the
-default switch to use in this group of radio buttons.
+attributes @code{label}, @code{switch}, @code{section} and @code{tip}. As a
+special case, the switch attribute can have an empty value ("") to indicate
+this is the default switch to use in this group of radio buttons.
 
 @item <field>
 @cindex <field>
 This tag accepts the @code{line}, @code{column}, @code{label}, @code{switch},
-@code{separator} and @code{tip} attributes. This tag describes a text edition
-field, which can
+@code{section}, @code{separator} and @code{tip} attributes. This tag describes
+a text edition field, which can
 contain any text the user types. This text will be prefixed by the value of
 the @code{switch} attribute, and the separator (by default nothing). If no text
 is entered in the field
@@ -13691,7 +13701,8 @@ This tag accepts two extra attributes:
 @cindex <combo>
 @cindex <combo-entry>
 This tags accepts the @code{line}, @code{column}, @code{label}, @code{switch},
-@code{tip}, @code{noswitch}, @code{separator} and @code{nodigit} attributes.
+@code{section}, @code{tip}, @code{noswitch}, @code{separator} and
+@code{nodigit} attributes.
 
 The text inserted in the command line is the text from the @code{switch}
 attribute, concatenated with the text of the @code{value} attribute for the
@@ -13726,16 +13737,17 @@ forces it for the Ada compiler as well.
 It has its own set of attributes:
 
    @table @code
-   @item master-page master-switch
+   @item master-page master-switch master-section
    These two attributes define the switch that possibly forces a specific
    setting on the slave switch. In our example, they would have the values
    "Make" and "-g".
    The switch referenced by these attributes must be of type @code{<check>}
-   or @code{<field>}. If the check button is selected, it forces the
+   or @code{<field>}. If it is part of a section, then 'master-section' needs
+   to be defined. If the check button is selected, it forces the
    selection of the slave check button. Likewise, if the field is set to
    any value, it forces the selection of the slave.
 
-   @item slave-page slave-switch
+   @item slave-page slave-switch slave-section
    These two attributes define the switch which is acted upon by the master
    switch. In our example, they would have the values "Ada" and "-g".
    The switch referenced by these attributes must be of type @code{<check>}.

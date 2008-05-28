@@ -3692,6 +3692,13 @@ create()
      </example>
   </shell_doc>
 
+  <shell_doc name="GPS.MDI.file_selector">
+    <param name="file_filter" default="empty">A string</param>
+    <return>An instance of GPS.File</param>
+    <description>Display a modal file selector. The user selected file is returned, or a file with an empty name if 'Cancel' is pressed.
+A file filter can be defined (such as "*.ads") to show only a category of files.</description>
+  </shell_doc>
+
   <shell_doc name="GPS.MDI.input_dialog">
      <param name="msg">A string</param>
      <param name="...">Any number of strings</param>

@@ -452,6 +452,13 @@ package body KeyManager_Module is
 
       --  Dispatch the event in the standard gtk+ main loop
       Gtk.Main.Do_Event (Event);
+
+   exception
+      when E : others =>
+         Trace (Traces.Exception_Handle, E);
+         --  Dispatch the event in the standard gtk+ main loop
+         Gtk.Main.Do_Event (Event);
+
    end General_Event_Handler;
 
    -------------------------
@@ -466,6 +473,10 @@ package body KeyManager_Module is
       Trace (Event_Debug_Trace, Event_Type'Img);
 
       General_Event_Handler (Event, Kernel);
+
+   exception
+      when E : others =>
+         Trace (Traces.Exception_Handle, E);
    end Debug_Event_Handler;
 
    ----------

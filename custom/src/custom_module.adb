@@ -367,9 +367,11 @@ package body Custom_Module is
          Add_Dependency
            (Config,
             Master_Switch,
+            Get_Attribute (N, "master-section"),
             Master_Status = "true" or else Master_Status = "on",
             Slave_Page,
             Slave_Switch,
+            Get_Attribute (N, "slave-section"),
             Slave_Status = "true" or else Slave_Status = "on");
       end Process_Dependency_Node;
 
@@ -403,11 +405,12 @@ package body Custom_Module is
                   end if;
 
                   Add_Radio_Entry
-                    (Config => Current_Tool.Config,
-                     Radio  => Radio,
-                     Label  => Label,
-                     Switch => Switch,
-                     Tip    => Get_Attribute (N, "tip"));
+                    (Config  => Current_Tool.Config,
+                     Radio   => Radio,
+                     Label   => Label,
+                     Switch  => Switch,
+                     Section => Get_Attribute (N, "section"),
+                     Tip     => Get_Attribute (N, "tip"));
                end;
             end if;
             N := N.Next;
@@ -547,6 +550,7 @@ package body Custom_Module is
             No_Switch => Get_Attribute (N, "noswitch"),
             No_Digit  => Get_Attribute (N, "nodigit"),
             Entries   => Process_Combo_Entry_Nodes (N),
+            Section   => Get_Attribute (N, "section"),
             Tip       => Get_Attribute (N, "tip"),
             Line      => Line,
             Column    => Col,
@@ -581,6 +585,7 @@ package body Custom_Module is
             Label        => Label,
             Switch       => Switch,
             Separator    => Get_Attribute (N, "separator", Default_Sep),
+            Section      => Get_Attribute (N, "section"),
             Tip          => Get_Attribute (N, "tip"),
             As_Directory =>
               Get_Attribute (N, "as-directory", "false") = "true",
@@ -617,6 +622,7 @@ package body Custom_Module is
            (Config    => Current_Tool.Config,
             Label     => Label,
             Switch    => Switch,
+            Section   => Get_Attribute (N, "section"),
             Tip       => Get_Attribute (N, "tip"),
             Separator => Get_Attribute (N, "separator", Default_Sep),
             Min       => Safe_Value (Get_Attribute (N, "min", "1")),
@@ -651,13 +657,14 @@ package body Custom_Module is
          end if;
 
          Add_Check
-           (Config => Current_Tool.Config,
-            Label  => Label,
-            Switch => Switch,
-            Tip    => Get_Attribute (N, "tip"),
-            Line   => Line,
-            Column => Col,
-            Popup  => Popup);
+           (Config  => Current_Tool.Config,
+            Label   => Label,
+            Switch  => Switch,
+            Section => Get_Attribute (N, "section"),
+            Tip     => Get_Attribute (N, "tip"),
+            Line    => Line,
+            Column  => Col,
+            Popup   => Popup);
       end Process_Check_Node;
 
       ----------------------------
@@ -737,7 +744,8 @@ package body Custom_Module is
          Show_Command_Line => Boolean'Value
            (Get_Attribute (Node, "show_command_line", "true")),
          Lines           => Safe_Value (Get_Attribute (Node, "lines", "1")),
-         Columns         => Safe_Value (Get_Attribute (Node, "columns", "1")));
+         Columns         => Safe_Value (Get_Attribute (Node, "columns", "1")),
+         Sections        => Get_Attribute (Node, "sections"));
 
       Parse_Popup_Or_Main (Node, Main_Window);
 

@@ -49,7 +49,8 @@ package Switches_Chooser is
       Scrolled_Window   : Boolean := False;
       Lines             : Positive := 1;
       Columns           : Positive := 1;
-      Show_Command_Line : Boolean := True) return Switches_Editor_Config;
+      Show_Command_Line : Boolean := True;
+      Sections          : String := "") return Switches_Editor_Config;
    --  A switches editor can be split into several lines and columns. Each cell
    --  act as a group for some switches, to help make the interface clearer for
    --  the user.
@@ -58,6 +59,9 @@ package Switches_Chooser is
    --  If Scrolled_Window is true, the editor will be contained in a
    --  scrolling window, which is useful if the number of switches is
    --  especially important.
+   --  Sections contains the list of sections defined for the tool's command
+   --  line.
+   --   for example: "cargs bargs largs"
 
    procedure Free (Config : in out Switches_Editor_Config) is null;
    --  Free the memory associated with Config.
@@ -83,13 +87,14 @@ package Switches_Chooser is
    --  more of its neighbors through the *_Span parameters.
 
    procedure Add_Check
-     (Config : Switches_Editor_Config;
-      Label  : String;
-      Switch : String;
-      Tip    : String := "";
-      Line   : Positive := 1;
-      Column : Positive := 1;
-      Popup  : Popup_Index := Main_Window);
+     (Config  : Switches_Editor_Config;
+      Label   : String;
+      Switch  : String;
+      Section : String := "";
+      Tip     : String := "";
+      Line    : Positive := 1;
+      Column  : Positive := 1;
+      Popup   : Popup_Index := Main_Window);
    --  Adds a check button in a specific area of the editor.
    --  When the button is active, the corresponding command line switch is
    --  present, otherwise it is omitted.
@@ -99,6 +104,7 @@ package Switches_Chooser is
       Label        : String;
       Switch       : String;
       Separator    : String := ""; --  no separator
+      Section      : String := "";
       Tip          : String := "";
       As_Directory : Boolean := False;
       As_File      : Boolean := False;
@@ -115,6 +121,7 @@ package Switches_Chooser is
       Min       : Integer;
       Max       : Integer;
       Default   : Integer;
+      Section   : String := "";
       Tip       : String := "";
       Line      : Positive := 1;
       Column    : Positive := 1;
@@ -132,6 +139,7 @@ package Switches_Chooser is
       Radio     : Radio_Switch;
       Label     : String;
       Switch    : String;
+      Section   : String := "";
       Tip       : String := "");
    --  Create a radio button: only one of these switches is active at any time.
    --  A radio_entry is in all ways similar to a check button.
@@ -150,6 +158,7 @@ package Switches_Chooser is
       No_Switch : String;
       No_Digit  : String;
       Entries   : Combo_Switch_Array;
+      Section   : String := "";
       Tip       : String := "";
       Line      : Positive := 1;
       Column    : Positive := 1;
@@ -180,9 +189,11 @@ package Switches_Chooser is
    procedure Add_Dependency
      (Config         : Switches_Editor_Config;
       Switch         : String;
+      Section        : String;
       Status         : Boolean;
       Slave_Tool     : String;
       Slave_Switch   : String;
+      Slave_Section  : String;
       Slave_Activate : Boolean := True);
    --  Add dependency between two switches: if Switch's status becomes
    --  Status, then Slave_Switch will be automatically set to a new
@@ -337,6 +348,7 @@ private
       Switch    : Ada.Strings.Unbounded.Unbounded_String;
       Label     : Ada.Strings.Unbounded.Unbounded_String;
       Tip       : Ada.Strings.Unbounded.Unbounded_String;
+      Section   : Ada.Strings.Unbounded.Unbounded_String;
       Line      : Positive := 1;
       Column    : Positive := 1;
       Separator : Character;
@@ -380,10 +392,11 @@ private
    type Dependency_Description;
    type Dependency_Description_Access is access Dependency_Description;
    type Dependency_Description is record
-      Slave_Tool                  : GNAT.Strings.String_Access;
-      Master_Switch, Slave_Switch : GNAT.Strings.String_Access;
-      Master_Status, Slave_Status : Boolean;
-      Next                        : Dependency_Description_Access;
+      Slave_Tool                    : GNAT.Strings.String_Access;
+      Master_Switch, Slave_Switch   : GNAT.Strings.String_Access;
+      Master_Section, Slave_Section : GNAT.Strings.String_Access;
+      Master_Status, Slave_Status   : Boolean;
+      Next                          : Dependency_Description_Access;
    end record;
    --  Description of a dependency (see Add_Dependency). This is needed because
    --  the dependencies can only be fully setup once all pages have been
@@ -396,6 +409,7 @@ private
       Show_Command_Line : Boolean := True;
       Default_Separator : Ada.Strings.Unbounded.Unbounded_String;
       Getopt_Switches   : Ada.Strings.Unbounded.Unbounded_String;
+      Sections          : Ada.Strings.Unbounded.Unbounded_String;
       Scrolled_Window   : Boolean := False;
       Switch_Char       : Character;
       Frames            : Frame_Description_Vectors.Vector;
