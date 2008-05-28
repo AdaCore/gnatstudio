@@ -233,6 +233,9 @@ package body Custom_Module is
       Char       : constant String := Get_Attribute (Node, "switch_char", "-");
       Default_Sep : constant String := Get_Attribute (Node, "separator", "");
 
+      Scrolled_Window   : Boolean;
+      Show_Command_Line : Boolean;
+
       procedure Coordinates_From_Node (N : Node_Ptr; Line, Col : out Natural);
       --  Get the line and column from N
 
@@ -736,16 +739,41 @@ package body Custom_Module is
       end Parse_Popup_Or_Main;
 
    begin
+      begin
+         Scrolled_Window := Boolean'Value
+           (Get_Attribute (Node, "use_scrolled_window", "false"));
+      exception
+         when Constraint_Error =>
+            Insert
+              (Kernel,
+               -("Invalid value specified for use_scrolled_windows: ")
+               & Get_Attribute (Node, "use_scrolled_window"),
+               Mode => Error);
+            Scrolled_Window := False;
+      end;
+
+      begin
+         Show_Command_Line := Boolean'Value
+           (Get_Attribute (Node, "show_command_line", "true"));
+      exception
+         when Constraint_Error =>
+            Insert
+              (Kernel,
+               -("Invalid value specified for show_command_line: ")
+               & Get_Attribute (Node, "show_command_line"),
+               Mode => Error);
+            Show_Command_Line := True;
+      end;
+
       Current_Tool.Config := Create
         (Default_Separator => Default_Sep,
-         Switch_Char     => Char (Char'First),
-         Scrolled_Window => Boolean'Value
-           (Get_Attribute (Node, "use_scrolled_window", "false")),
-         Show_Command_Line => Boolean'Value
-           (Get_Attribute (Node, "show_command_line", "true")),
-         Lines           => Safe_Value (Get_Attribute (Node, "lines", "1")),
-         Columns         => Safe_Value (Get_Attribute (Node, "columns", "1")),
-         Sections        => Get_Attribute (Node, "sections"));
+         Switch_Char       => Char (Char'First),
+         Scrolled_Window   => Scrolled_Window,
+         Show_Command_Line => Show_Command_Line,
+         Lines             => Safe_Value (Get_Attribute (Node, "lines", "1")),
+         Columns           =>
+           Safe_Value (Get_Attribute (Node, "columns", "1")),
+         Sections          => Get_Attribute (Node, "sections"));
 
       Parse_Popup_Or_Main (Node, Main_Window);
 
