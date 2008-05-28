@@ -3,19 +3,19 @@ Known Problems fixed in GPS 4.3.0
 - H526-009: Subversion status not properly reported
   Problem:    The "Needs merge" status is reported as "Needs update" in the
               VCS Explorer.
-  Workaround: Use Subversion from the command line to get proper status
+  Workaround: Use Subversion from the command line to get proper status.
 
 - H504-003: Subversion compare two revisions not working
   Problem:    The "Compare two revisions" VCS action is not working with
               Subversion. The action seems to be ignored and no error
               message is displayed.
-  Workaround: Compare both versions from the command line
+  Workaround: Compare both versions from the command line.
 
 - H427-004: Subversion head revisions log not displayed
   Problem:    In the VCS Subversion log output, the head revisions are not
               displayed if they correspond to changes not yet updated
               locally.
-  Workaround: Do an update of the file before displaying the log
+  Workaround: Do an update of the file before displaying the log.
 
 - H415-015: Wrong file used when compiling a file with no project
   Problem:    When compiling a file which does not belong to the current
