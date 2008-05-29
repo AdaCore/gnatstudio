@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 4.3.0
 
+- H529-001: Separator for combo boxes not supported in XML files
+  Problem:    If you defined a "separator" attribute for a <combo> switch
+              in the XML files, that separator is ignored
+  Workaround: none
+
 - H526-009: Subversion status not properly reported
   Problem:    The "Needs merge" status is reported as "Needs update" in the
               VCS Explorer.

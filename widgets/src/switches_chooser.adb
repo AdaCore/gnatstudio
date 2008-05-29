@@ -296,12 +296,16 @@ package body Switches_Chooser is
       Column    : Positive := 1;
       Popup     : Popup_Index := Main_Window)
    is
-      pragma Unreferenced (Separator);
       Ent : Combo_Switch_Vectors.Vector;
+      S   : Character := ASCII.NUL;
    begin
       for E in Entries'Range loop
          Append (Ent, Entries (E));
       end loop;
+
+      if Separator /= "" then
+         S := Separator (Separator'First);
+      end if;
 
       Append
         (Config.Switches,
@@ -311,14 +315,19 @@ package body Switches_Chooser is
             Label     => To_Unbounded_String (Label),
             Tip       => To_Unbounded_String (Tip),
             Section   => To_Unbounded_String (Section),
-            Separator => ASCII.NUL,
+            Separator => S,
             No_Switch => To_Unbounded_String (No_Switch),
             No_Digit  => To_Unbounded_String (No_Digit),
             Entries   => Ent,
             Line      => Line,
             Column    => Column,
             Popup     => Popup));
-      Add_To_Getopt (Config, Switch, ASCII.CR);      --  optional parameter
+
+      if Separator = "" then
+         Add_To_Getopt (Config, Switch, ASCII.CR);      --  optional parameter
+      else
+         Add_To_Getopt (Config, Switch, Separator (Separator'First));
+      end if;
    end Add_Combo;
 
    ---------------

@@ -549,7 +549,7 @@ package body Custom_Module is
            (Config    => Current_Tool.Config,
             Label     => Label,
             Switch    => Switch,
-            Separator => Get_Attribute (N, "separator", " "),
+            Separator => Get_Attribute (N, "separator", ""),
             No_Switch => Get_Attribute (N, "noswitch"),
             No_Digit  => Get_Attribute (N, "nodigit"),
             Entries   => Process_Combo_Entry_Nodes (N),
