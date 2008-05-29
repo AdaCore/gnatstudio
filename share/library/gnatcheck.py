@@ -48,9 +48,10 @@ class rulesSelector(gtk.Dialog):
       self.fileEntry.show()
       hbox.pack_start (self.fileEntry, True, True, 0)
 
-      self.fileEntry.connect ('changed', self.on_file_entry_changed)
       if None != defaultfile:
          self.fileEntry.set_text (defaultfile.name())
+      self.fileEntry.connect ('changed', self.on_file_entry_changed)
+      self.on_file_entry_changed()
 
       button=gtk.Button ('Browse')
       button.connect ('clicked', self.on_coding_standard_file_browse)
