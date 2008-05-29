@@ -17,6 +17,69 @@ def locate_exec_on_path (prog):
             return file
     return ""
 
+class rulesSelector(gtk.Dialog):
+   """Dialog used to select a coding standard file before launching gnatcheck."""
+
+   def __init__ (self, projectname, defaultfile):
+      gtk.Dialog.__init__ (self, title="Select a coding standard file", parent=GPS.MDI.current().pywidget().get_toplevel(), flags=gtk.DIALOG_MODAL, buttons=None)
+
+      # OK - Cancel buttons
+      self.okButton=gtk.Button ('OK')
+      self.okButton.connect ('clicked', self.on_ok)
+      self.okButton.show()
+      self.action_area.pack_start(self.okButton, True, True, 0)
+
+      self.cancelButton=gtk.Button ('Cancel')
+      self.cancelButton.connect ('clicked', self.on_cancel)
+      self.cancelButton.show()
+      self.action_area.pack_start(self.cancelButton, True, True, 0)
+
+      label=gtk.Label("No check switches are defined for project " + projectname + "\n" +
+                      "Please enter a coding standard file containing the desired gnatcheck rules:");
+      label.show()
+      self.vbox.pack_start (label, False, False, 0)
+
+      hbox = gtk.HBox()
+      hbox.show()
+      self.vbox.pack_start (hbox, False, False, 0)
+
+      self.fileEntry = gtk.Entry()
+      self.fileEntry.set_editable(True)
+      self.fileEntry.show()
+      hbox.pack_start (self.fileEntry, True, True, 0)
+
+      self.fileEntry.connect ('changed', self.on_file_entry_changed)
+      if None != defaultfile:
+         self.fileEntry.set_text (defaultfile.name())
+
+      button=gtk.Button ('Browse')
+      button.connect ('clicked', self.on_coding_standard_file_browse)
+      button.show()
+      hbox.pack_start (button, False, False, 0)
+
+   def get_file (self):
+      return self.fileEntry.get_text()
+
+   def on_file_entry_changed (self, *args):
+      """Callback when the file entry changed"""
+      name = self.fileEntry.get_text()
+      if name == "":
+        self.okButton.set_sensitive(False)
+      else:
+        self.okButton.set_sensitive(True)
+
+   def on_coding_standard_file_browse (self, *args):
+      """Callback to coding standard 'Browse' button"""
+      file = GPS.MDI.file_selector ()
+      self.fileEntry.set_text (file.name())
+
+   def on_ok (self, *args):
+      """Callback to 'Cancel' button"""
+      self.response(gtk.RESPONSE_OK)
+
+   def on_cancel (self, *args):
+      """Callback to 'Cancel' button"""
+      self.response(gtk.RESPONSE_CANCEL)
 
 class rulesEditor(gtk.Dialog):
    """Dialog used to edit the coding standard file."""
@@ -332,6 +395,27 @@ class gnatCheckProc:
          self.msg = ""
 
    def internalSpawn (self, filestr, project, recursive=False):
+      rules_file = None
+      need_rules_file = False
+      opts = project.get_attribute_as_list("default_switches", package="check", index="ada")
+      if len(opts) == 0:
+         need_rules_file = True
+         opts = GPS.Project.root().get_attribute_as_list("default_switches", package="check", index="ada")
+         for opt in opts:
+           res = re.split ("^\-from\=(.*)$", opt)
+           if len(res)>1:
+             rootdir = GPS.Project.root().file().directory()
+             rules_file = rootdir+res[1]
+
+      if need_rules_file:
+         selector = rulesSelector (project.name(), rules_file)
+         if selector.run() == gtk.RESPONSE_OK:
+            rules_file = selector.get_file()
+            selector.destroy()
+         else:
+            selector.destroy()
+            return;
+
       if self.gnatcheckCmd == "":
          GPS.Console ("Messages").write ("Error: could not find gnatcheck");
          return
@@ -344,8 +428,14 @@ class gnatCheckProc:
       scenario = GPS.Project.scenario_variables()
       for i, j in scenario.iteritems():
          cmd += " -X" + i + "=" + j
-      # use progress, specify the file name to check
-      cmd +=  " -dd " + filestr
+      # use progress
+      cmd +=  " -dd"
+
+      if need_rules_file:
+         cmd += " -rules -from=" + rules_file
+
+      # now specify the files to check
+      cmd += " " + filestr
 
       # clear the Checks category in the Locations view
       if GPS.Locations.list_categories().count (self.locations_string) > 0:
@@ -476,7 +566,7 @@ def on_gps_started (hook_name):
     <filter id="Source editor"/>
     <shell lang="python">gnatcheck.gnatcheckproc.check_file (GPS.Project.root())</shell>
   </action>
-  <action name="edit gnatcheck rules" category="Gnatcheck">
+  <action name="edit gnatcheck rules" category="Gnatcheck" output="none">
     <description>Edit the gnatcheck rules file (coding standard)</description>
     <shell lang="python">gnatcheck.gnatcheckproc.edit ()</shell>
   </action>
