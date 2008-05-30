@@ -450,19 +450,25 @@ package body Python_Module is
          Set_Return_Value (Data, Full_Name (Info).all);
 
       elsif Command = "__cmp__" then
-         declare
-            Inst2 : constant Class_Instance := Nth_Arg
-              (Data, 2, Get_File_Class (Kernel));
-            Name  : constant String := Full_Name (Info, True).all;
-            Name2 : constant String := Full_Name (Get_Data (Inst2), True).all;
          begin
-            if Name < Name2 then
-               Set_Return_Value (Data, -1);
-            elsif Name = Name2 then
-               Set_Return_Value (Data, 0);
-            else
+            declare
+               Inst2 : constant Class_Instance := Nth_Arg
+                 (Data, 2, Get_File_Class (Kernel));
+               Name  : constant String := Full_Name (Info, True).all;
+               Name2 : constant String :=
+                         Full_Name (Get_Data (Inst2), True).all;
+            begin
+               if Name < Name2 then
+                  Set_Return_Value (Data, -1);
+               elsif Name = Name2 then
+                  Set_Return_Value (Data, 0);
+               else
+                  Set_Return_Value (Data, 1);
+               end if;
+            end;
+         exception
+            when Invalid_Parameter | No_Such_Parameter =>
                Set_Return_Value (Data, 1);
-            end if;
          end;
 
       elsif Command = "__hash__" then
