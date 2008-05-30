@@ -85,16 +85,18 @@ class rulesSelector(gtk.Dialog):
 class rulesEditor(gtk.Dialog):
    """Dialog used to edit the coding standard file."""
 
-   def __init__ (self, rules, projectfile):
+   def __init__ (self, rules, warnings, projectfile):
       # call parent __init__
       gtk.Dialog.__init__ (self, title="Coding Standard editor", parent=GPS.MDI.current().pywidget().get_toplevel(), flags=gtk.DIALOG_MODAL, buttons=None)
-      self.set_default_size (400, 400)
+      self.set_default_size (600, 400)
       self.set_name ("CodingStandardEditor")
 
       # rules_list contains the list of rules extracted from gnatcheck -h
       self.rules_list = rules
+      self.warnings_list = warnings
       # list of widgets (de)activating the different rules
-      self.widgets = []
+      self.rules_widgets = []
+      self.warnings_widgets = []
       # additional switches that might be defined in the coding standard file
       self.additional_switches = []
 
@@ -147,6 +149,11 @@ class rulesEditor(gtk.Dialog):
       button.show()
       hbox.pack_start (button, False, False, 0)
 
+      label=gtk.Label()
+      label.set_markup("<span weight='bold' size='large'>Check rules</span>")
+      label.show()
+      self.switchvbox.pack_start (label, False, False, 0)
+
       self.tips = gtk.Tooltips()
 
       # Add rules widgets
@@ -161,14 +168,14 @@ class rulesEditor(gtk.Dialog):
           spin.show()
           hbox.pack_start (spin, False, False, 0)
           switch = res[1] + ':' + res[2]
-          self.widgets.append ([spin, switch, ">"])
+          self.rules_widgets.append ([spin, switch, ">"])
         else:
           # simple on/off rule
           check = gtk.CheckButton()
           check.show()
           hbox.pack_start (check, False, False, 0)
           switch = j[0]
-          self.widgets.append ([check, switch, ""])
+          self.rules_widgets.append ([check, switch, ""])
         label = gtk.Label (j[1])
         label.show()
         hbox.pack_start (label, False, False, 0)
@@ -176,6 +183,47 @@ class rulesEditor(gtk.Dialog):
         self.tips.set_tip (hbox, switch)
 
         self.switchvbox.pack_start (hbox, True, True, 0)
+
+      # Add rule for compiler Warnings
+      hbox = gtk.HBox()
+      hbox.show()
+      self.warnings_check = gtk.CheckButton()
+      self.warnings_check.show()
+      hbox.pack_start (self.warnings_check, False, False, 0)
+      label = gtk.Label ("Activate compiler warnings")
+      label.show()
+      hbox.pack_start (label, False, False, 0)
+      self.tips.set_tip (hbox, "+RWarnings")
+      self.switchvbox.pack_start (hbox, True, True, 0)
+
+      label=gtk.Label()
+      label.set_markup("<span weight='bold' size='large'>Compiler warnings</span>")
+      label.show()
+      self.switchvbox.pack_start (label, False, False, 0)
+
+      # Add compiler warnings widgets
+      for j in self.warnings_list:
+        hbox = gtk.HBox()
+        hbox.show()
+
+        check = gtk.CheckButton()
+        check.show()
+        hbox.pack_start (check, False, False, 0)
+        switch = j[0]
+        if j[0] == "a":
+           check.connect('toggled', self.on_gnatwa_toggled)
+        self.warnings_widgets.append ([check, switch, j[2]])
+
+        label = gtk.Label ()
+        label.set_markup (re.sub('^turn on', "turn <span color='blue'>on</span>", re.sub('^turn off', "turn <span color='red'>off</span>", j[1])))
+        label.show()
+        hbox.pack_start (label, False, False, 0)
+        self.tips.set_tip (hbox, switch)
+
+        self.switchvbox.pack_start (hbox, True, True, 0)
+
+      self.warnings_check.connect('toggled', self.on_warnings_toggled)
+      self.on_warnings_toggled()
 
       # Save - Cancel buttons
       self.saveButton=gtk.Button ('Save')
@@ -189,6 +237,20 @@ class rulesEditor(gtk.Dialog):
       self.action_area.pack_start(self.cancelButton, True, True, 0)
 
       self.on_file_entry_changed()
+
+   def on_warnings_toggled (self, *args):
+      """Callback when the compiler warnings switch is toggled"""
+      for sw in self.warnings_widgets:
+        sw[0].set_sensitive(self.warnings_check.get_active())
+
+   def on_gnatwa_toggled (self, *args):
+      """Callback when the gnatwa switch is toggled"""
+      for sw in self.warnings_widgets:
+        if sw[1] == "a":
+          if not sw[0].get_active():
+             return
+        elif sw[2]:
+          sw[0].set_active(True)
 
    def on_file_entry_changed (self, *args):
       """Callback when the file entry changed"""
@@ -219,7 +281,7 @@ class rulesEditor(gtk.Dialog):
       elif content[0:2] == "-R":
         ok = True
       if not ok:
-        if not GPS.MDI.yes_no_dialog ("The selected file does not seem to contain gnatcheck rules. Are you sure you want to override it ?"):
+        if not GPS.MDI.yes_no_dialog ("The selected file does not seem to be a valid Coding Standard file.\nAre you sure you want to override it ?"):
            self.fileEntry.set_text("")
            return
       switches = re.findall("[^ ]*", content)
@@ -235,14 +297,34 @@ class rulesEditor(gtk.Dialog):
         elif sw == "+ALL":
            self.check_all (True)
 
+        elif sw[0:10] == "+RWarnings":
+           self.warnings_check.set_active (True)
+           res = re.split (".RWarnings:?([.a-zA-Z]*)", sw);
+           w_sw_list = re.findall("[.]?[a-zA-Z]", res[1])
+           for w_sw in w_sw_list:
+             if w_sw == "a":
+               for widg in self.warnings_widgets:
+                 if widg[1] == "a":
+                   widg[0].set_active (True)
+                 elif widg[2]:
+                   widg[0].set_active (True)
+             else:
+               for widg in self.warnings_widgets:
+                 if widg[1] == w_sw:
+                   widg[0].set_active (True)
+                 elif widg[1].lower() == w_sw or widg[1] == w_sw.lower():
+                   widg[0].set_active (False)
+
         elif sw[0:2] == "+R" or sw[0:2] == "-R":
            activate = False
            if sw[0] == "+":
               activate = True
 
            res = re.split ('^([^<>]*)[<>](.*)$',sw[2:])
-           for elem in self.widgets:
+           found = False
+           for elem in self.rules_widgets:
               if sw[2:] == elem[1]:
+                 found = True
                  if elem[2] == "":
                     elem[0].set_active(activate)
                  else:
@@ -250,14 +332,18 @@ class rulesEditor(gtk.Dialog):
                  break
               elif len (res) > 1:
                  if res[1] == elem[1]:
+                    found = True
                     elem[0].set_value (float(res[2]))
                     break
+           if not found:
+              self.additional_switches.append (sw)
         elif sw != "":
            self.additional_switches.append (sw)
 
    def check_all (self, value):
       """Change all check states for the switches to 'value'"""
-      for elem in self.widgets:
+      self.warnings_check.set_active (True)
+      for elem in self.rules_widgets:
          if elem[2] != "":
             if value:
                elem[0].set_value(1)
@@ -285,13 +371,34 @@ class rulesEditor(gtk.Dialog):
       f = open (file.name(), "w")
 
       f.write ("-ALL\n")
-      for elem in self.widgets:
+      for elem in self.rules_widgets:
          if elem[2] == "":
             if elem[0].get_active():
                f.write ("+R%s\n" % (elem[1]))
          else:
             if elem[0].get_value_as_int() > 0:
                f.write ("+R%s%s%i\n" % (elem[1],elem[2],elem[0].get_value_as_int()))
+
+      if self.warnings_check.get_active():
+         f.write ("+RWarnings")
+         first_switch = True
+         a_switch = False
+         for elem in self.warnings_widgets:
+            if elem[0].get_active():
+              if first_switch:
+                f.write (":")
+                first_switch = False
+
+            if elem[1] == "a" and elem[0].get_active():
+              a_switch = True
+              f.write (elem[1])
+            elif a_switch and elem[2] and not elem[0].get_active():
+              f.write (elem[1].upper())
+            elif a_switch and not elem[2] and elem[0].get_active():
+              f.write (elem[1])
+            elif not a_switch and elem[0].get_active():
+              f.write (elem[1])
+         f.write ("\n")
 
       for sw in self.additional_switches:
          f.write (sw)
@@ -311,32 +418,33 @@ class gnatCheckProc:
    """This class controls the gnatcheck execution"""
    def __init__ (self):
       self.rules_list = []
+      self.warnings_list = []
+      self.style_checks_list = []
+      self.restrictions_list = []
+
       self.locations_string = "Coding Standard violations"
-      self.gnatcheckCmd = ""
+      self.gnatCmd = ""
       self.projectfile = None
       self.projectChanged (None)
 
    def isValid (self):
-      return self.gnatcheckCmd != ""
+      return self.gnatCmd != ""
 
    def projectChanged (self, p):
-      prev_cmd = self.gnatcheckCmd
-      driver = GPS.Project.root().get_attribute_as_string("gnat", "ide")
+      prev_cmd = self.gnatCmd
+      self.gnatCmd = GPS.Project.root().get_attribute_as_string("gnat", "ide")
 
-      if driver == "":
-         driver = "gnat"
-      if not os.path.isfile (driver):
-         driver = locate_exec_on_path (driver)
-      if driver == "":
+      if self.gnatCmd == "":
+         self.gnatCmd = "gnat"
+      if not os.path.isfile (self.gnatCmd):
+         self.gnatCmd = locate_exec_on_path (self.gnatCmd)
+      if self.gnatCmd == "":
          GPS.Console ("Messages").write ("Error: 'gnat' is not in the path.\n")
          GPS.Console ("Messages").write ("Error: Could not initialize the gnatcheck module.\n")
-         self.gnatcheckCmd = ""
          return
-      else:
-         self.gnatcheckCmd = driver + " check"
 
       # gnat check command changed: we reinitialize the rules list
-      if prev_cmd != self.gnatcheckCmd:
+      if prev_cmd != self.gnatCmd:
          self.get_supported_rules()
 
       # we retrieve the coding standard file from the project
@@ -348,51 +456,131 @@ class gnatCheckProc:
 
    def edit(self):
       global ruleseditor
-      ruleseditor = rulesEditor(self.rules_list, self.projectfile)
+      ruleseditor = rulesEditor(self.rules_list, self.warnings_list, self.projectfile)
       ruleseditor.run()
       ruleseditor.destroy()
       return
 
    def add_rule (self, process, matched, unmatched):
-      if re.search ("GNAT", matched):
-         # do not take into account GNAT compiler warnings handling as they
-         # require parameters and another module (check syntax) allows this
-         self.rules_analysis_finished = True
-         return
+      if unmatched == "\n":
+        if re.search ("GNAT", self.msg):
+          # do not take into account GNAT compiler warnings handling as they
+          # require parameters and another module (check syntax) allows this
+          self.check_rules_analysis = False
+          return
 
-      if not self.rules_analysis_finished:
-         res = re.split ("^ *([^ ]+) +[-] +(.+) *$", matched)
-         if len(res) > 1:
+        if self.check_rules_analysis:
+          res = re.split ("^ *([^ ]+) +[-] +(.+) *$", self.msg)
+          if len(res) > 1:
             if res[1] != "Metrics_Violation":
-               self.rules_list.append([res[1], res[2]])
-         elif len(self.rules_list) > 0:
+              self.rules_list.append([res[1], res[2]])
+          elif len(self.rules_list) > 0:
             # Explanation was continuing on next line. Append it to previously
             # inserted rule
-            self.rules_list [len (self.rules_list) - 1] [1] += ' ' + matched.strip()
+            self.rules_list [len (self.rules_list) - 1] [1] += ' ' + self.msg.strip()
+        self.msg = ""
+      self.msg += matched
+
+   def add_gnat_rule (self, process, matched, unmatched):
+      if unmatched == "\n":
+        if re.search ("^ +[-]gnatwxx", self.msg):
+          self.warnings_rules_analysis = True
+        elif re.search ("^ +[-]gnatyxx", self.msg):
+          self.style_rules_analysis = True
+        elif re.search ("^ +[-]gnat", self.msg):
+          self.warnings_rules_analysis = False
+          self.style_rules_analysis = False
+        else:
+          if self.style_rules_analysis or self.warnings_rules_analysis:
+            res = re.split ("^ *([^ *]+)([*]?) +(.+) *$", self.msg)
+            if self.style_rules_analysis:
+              # ??? todo
+              # report = "New style rule: "
+              # GPS.Console ("Messages").write ("(dbg)" + report + "["+res[1]+"] ["+res[3]+"]\n")
+              self.style_rules_analysis = self.style_rules_analysis
+
+            else:
+              if len (res) > 2:
+                if res[1] == "a":
+                  # retrieve the list of warnings not activated by -gnatwa
+                  exception = re.split ("\(except ([a-zA-Z.]*)\) *$", res[3])
+                  self.all_warnings_exception_list = re.findall("[.]?[a-zA-Z]", exception[1])
+
+                # ignore the comment made for '*', and include only on/off warnings: this ignores '-gnatwe' which we don't want in gnatcheck
+                if res[2] != "*" and re.search ("turn", res[3]):
+                  if res[1] != "a":
+                    # search all warnings not covered by -gnatwa (this list was retrieved just above)
+                    if re.search ("turn off", res[3]):
+                      found = True
+                    else:
+                      found = False
+                      for ex in self.all_warnings_exception_list:
+                        if ex == res[1]:
+                          found = True
+                          break
+                  else:
+                    # do not include -gnatwa in the gnatwa alias list !
+                    found = True
+                  if res[1] != "A":
+                    self.warnings_list.append ([res[1], res[3], not found])
+
+        self.msg = ""
+      self.msg += matched
 
    def get_supported_rules (self):
       # Verify we have the correct gnatcheck executable
       self.rules_list = []
-      self.rules_analysis_finished = False
-      if self.gnatcheckCmd != "":
-         process = GPS.Process (self.gnatcheckCmd + " -h", "^.+$",
+      self.warnings_list = []
+      self.all_warnings_exception_list = []
+      self.style_checks_list = []
+      self.restrictions_list = []
+
+      self.check_rules_analysis = True
+      self.warnings_rules_analysis = False
+      self.style_rules_analysis = False
+
+      if self.gnatCmd != "":
+         # First get gnatcheck rules
+         self.msg = ""
+         process = GPS.Process (self.gnatCmd + " check -h", "^.+$",
                                 on_match=self.add_rule)
+         process.get_result()
+
+         # verify the we had a correct execution of gnat check
+         if len (self.rules_list) == 0:
+            GPS.Console ("Messages").write ("Error: Gnatcheck not found, the gnatcheck module is disabled")
+            self.gnatCmd = ""
+            return
+
+         # Then retrieve warnings/style/restriction checks from gnatmake
+         self.msg = ""
+         process = GPS.Process (self.gnatCmd + " make -h", "^.+$",
+                                on_match=self.add_gnat_rule)
          process.get_result()
       return True
 
+   def parse_output (self, msg):
+     # gnatcheck sometimes displays incorrectly formatted warnings (not handled by GPS correctly then)
+     # let's reformat those here:
+     # expecting "file.ext:nnn:nnn: msg"
+     # receiving "file.ext:nnn:nnn msg"
+     res = re.split ("^([^:]*[:][0-9]+:[0-9]+)([^:0-9].*)$", msg)
+     if len (res) > 3:
+       msg = res[1]+":"+res[2]
+     GPS.Locations.parse (msg, self.locations_string)
+     GPS.Codefix.parse (msg, self.locations_string)
+
    def on_match (self, process, matched, unmatched):
       if unmatched == "\n":
-         GPS.Locations.parse (self.msg, self.locations_string)
-         GPS.Codefix.parse (self.locations_string, self.msg)
          GPS.Console ("Messages").write (self.msg+unmatched)
+         self.parse_output (self.msg)
          self.msg = ""
       self.msg += matched
 
    def on_exit (self, process, status, remaining_output):
       if self.msg != "":
          GPS.Locations.parse (self.msg, self.locations_string)
-         GPS.Codefix.parse (self.locations_string, self.msg)
-         GPS.Console ("Messages").write (self.msg+"'\n")
+         self.parse_output (self.msg)
          self.msg = ""
 
    def internalSpawn (self, filestr, project, recursive=False):
@@ -417,11 +605,11 @@ class gnatCheckProc:
             selector.destroy()
             return;
 
-      if self.gnatcheckCmd == "":
+      if self.gnatCmd == "":
          GPS.Console ("Messages").write ("Error: could not find gnatcheck");
          return
       # launch gnat check with current project
-      cmd = self.gnatcheckCmd + " -P" + project.file().name()
+      cmd = self.gnatCmd + " check -P" + project.file().name()
       # also analyse subprojects ?
       if recursive:
         cmd += " -U"
