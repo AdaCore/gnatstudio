@@ -49,7 +49,7 @@ class rulesSelector(gtk.Dialog):
       hbox.pack_start (self.fileEntry, True, True, 0)
 
       if None != defaultfile:
-         self.fileEntry.set_text (defaultfile.name())
+         self.fileEntry.set_text (defaultfile)
       self.fileEntry.connect ('changed', self.on_file_entry_changed)
       self.on_file_entry_changed()
 
@@ -87,9 +87,9 @@ class rulesEditor(gtk.Dialog):
 
    def __init__ (self, rules, projectfile):
       # call parent __init__
-      gtk.Dialog.__init__ (self, title="gnatcheck rules editor", parent=GPS.MDI.current().pywidget().get_toplevel(), flags=gtk.DIALOG_MODAL, buttons=None)
+      gtk.Dialog.__init__ (self, title="Coding Standard editor", parent=GPS.MDI.current().pywidget().get_toplevel(), flags=gtk.DIALOG_MODAL, buttons=None)
       self.set_default_size (400, 400)
-      self.set_name ("GnatcheckRulesEditor")
+      self.set_name ("CodingStandardEditor")
 
       # rules_list contains the list of rules extracted from gnatcheck -h
       self.rules_list = rules
@@ -311,7 +311,7 @@ class gnatCheckProc:
    """This class controls the gnatcheck execution"""
    def __init__ (self):
       self.rules_list = []
-      self.locations_string = "gnatcheck rules violations"
+      self.locations_string = "Coding Standard violations"
       self.gnatcheckCmd = ""
       self.projectfile = None
       self.projectChanged (None)
@@ -466,7 +466,7 @@ class gnatCheckProc:
 # Contextual menu for checking files
 class contextualMenu (GPS.Contextual):
    def __init__ (self):
-      GPS.Contextual.__init__ (self, "Check file with gnatcheck")
+      GPS.Contextual.__init__ (self, "Check Coding Standard")
       self.create (on_activate = self.on_activate,
                    filter      = self.filter,
                    label       = self.label)
@@ -495,7 +495,7 @@ class contextualMenu (GPS.Contextual):
          try:
            self.desttype = "dir"
            # verify this is a dir
-           dir = context.directory()
+           self.dir = context.directory()
            # check this directory contains ada sources
            srcs = GPS.Project.root().sources (recursive = True)
            found = False
@@ -521,11 +521,11 @@ class contextualMenu (GPS.Contextual):
 
    def label (self, context):
       if self.desttype == "file":
-         return "Check "+os.path.basename(self.file.name())+" with gnatcheck"
+         return "Check Coding standard of " + os.path.basename(self.file.name())
       elif self.desttype == "dir":
-         return "Check directory with gnatcheck"
+         return "Check Coding standard of files in " + os.path.basename (self.dir)
       elif self.desttype == "project":
-         return "Check project with gnatcheck"
+         return "Check Coding standard of files in " + self.project.name()
       return ""
 
    def on_activate (self, context):
@@ -554,27 +554,27 @@ def on_gps_started (hook_name):
         <field label="Coding standard file" switch="-from" separator="=" as-file="true" line="1" section="-rules"/>
      </switches>
   </tool>
-  <action name="gnatcheck root project" category="Gnatcheck" output="none">
-    <description>Check the root project with gnatcheck</description>
+  <action name="gnatcheck root project" category="Coding Standard" output="none">
+    <description>Check Coding Standard of the root project</description>
     <shell lang="python">gnatcheck.gnatcheckproc.check_project (GPS.Project.root())</shell>
   </action>
-  <action name="gnatcheck root project recursive" category="Gnatcheck" output="none">
-    <description>Check the root project and its subprojects with gnatcheck</description>
+  <action name="gnatcheck root project recursive" category="Coding Standard" output="none">
+    <description>Check Coding Standard of the root project and its subprojects</description>
     <shell lang="python">gnatcheck.gnatcheckproc.check_project (GPS.Project.root(), True)</shell>
   </action>
-  <action name="gnatcheck file" category="Gnatcheck" output="none">
-    <description>Check the root project with gnatcheck</description>
+  <action name="gnatcheck file" category="Coding Standard" output="none">
+    <description>Check Coding Standard of the selected file</description>
     <filter id="Source editor"/>
     <shell lang="python">gnatcheck.gnatcheckproc.check_file (GPS.Project.root())</shell>
   </action>
-  <action name="edit gnatcheck rules" category="Gnatcheck" output="none">
-    <description>Edit the gnatcheck rules file (coding standard)</description>
+  <action name="edit gnatcheck rules" category="Coding Standard" output="none">
+    <description>Edit the Coding Standard file (coding standard)</description>
     <shell lang="python">gnatcheck.gnatcheckproc.edit ()</shell>
   </action>
   <submenu>
     <title>Build</title>
     <submenu after="Check Semantic">
-      <title>Check with _gnatcheck</title>
+      <title>Check Coding Standard</title>
       <menu action="gnatcheck root project">
         <title>Check root _project</title>
       </menu>
@@ -589,7 +589,7 @@ def on_gps_started (hook_name):
   <submenu>
     <title>Tools</title>
     <submenu after="Documentation">
-      <title>Gnatcheck</title>
+      <title>Coding Standard</title>
       <menu action="edit gnatcheck rules">
         <title>Edit coding standard file</title>
       </menu>
