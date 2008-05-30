@@ -454,10 +454,10 @@ class gnatCheckProc:
    def check_project (self, project, recursive=False):
       self.internalSpawn ("", project, recursive)
 
-   def check_file (self, file, project):
+   def check_file (self, file):
       self.internalSpawn (file.name(), file.project())
 
-   def check_files (self, files, project):
+   def check_files (self, files):
       filestr = ""
       for f in files:
          filestr += f.name() + " "
