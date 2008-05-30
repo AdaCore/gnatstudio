@@ -565,7 +565,7 @@ def on_gps_started (hook_name):
   <action name="gnatcheck file" category="Coding Standard" output="none">
     <description>Check Coding Standard of the selected file</description>
     <filter id="Source editor"/>
-    <shell lang="python">gnatcheck.gnatcheckproc.check_file (GPS.Project.root())</shell>
+    <shell lang="python">gnatcheck.gnatcheckproc.check_file (GPS.EditorBuffer.get().file())</shell>
   </action>
   <action name="edit gnatcheck rules" category="Coding Standard" output="none">
     <description>Edit the Coding Standard file (coding standard)</description>
