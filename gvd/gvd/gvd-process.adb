@@ -205,7 +205,7 @@ package body GVD.Process is
 
    procedure Save_Breakpoints_In_Properties
      (Process  : access Visual_Debugger_Record'Class;
-      Property : in Breakpoint_Property);
+      Property : Breakpoint_Property);
    --  Save the breakpoints currently set in Process into Property.
    --  Breakpoints that are set automatically by GPS are filtered out
 
@@ -1116,7 +1116,7 @@ package body GVD.Process is
 
    procedure Save_Breakpoints_In_Properties
      (Process  : access Visual_Debugger_Record'Class;
-      Property : in Breakpoint_Property)
+      Property : Breakpoint_Property)
    is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Breakpoint_Array, Breakpoint_Array_Ptr);
@@ -1781,6 +1781,8 @@ package body GVD.Process is
          end loop;
       end Check_Extension;
 
+      End_Of_Exec : Natural;
+
    begin
       Push_State (Kernel_Handle (Kernel), Busy);
 
@@ -1798,38 +1800,46 @@ package body GVD.Process is
          Blank_Pos := Ada.Strings.Fixed.Index (Args, " ");
 
          if Blank_Pos = 0 then
-            Exec := Locate_Exec_On_Path (Args);
-
-            if Exec /= null then
-               Module := Create
-                 (Full_Filename =>
-                    Normalize_Pathname (Exec.all, Get_Current_Dir));
-               Free (Exec);
-
-            else
-               Module := Create
-                 (Full_Filename => Normalize_Pathname (Args, Get_Current_Dir));
-            end if;
-
+            End_Of_Exec := Args'Last;
          else
-            Exec := Locate_Exec_On_Path (Args (Args'First .. Blank_Pos - 1));
-
-            if Exec /= null then
-               Module := Create
-                 (Full_Filename =>
-                    Normalize_Pathname (Exec.all, Get_Current_Dir));
-               Free (Exec);
-
-            else
-               Module := Create
-                 (Full_Filename =>
-                    Normalize_Pathname (Args (Args'First .. Blank_Pos - 1),
-                                        Get_Current_Dir));
-            end if;
-
+            End_Of_Exec := Blank_Pos - 1;
             Free (Program_Args);
             Program_Args := new String'(Args (Blank_Pos + 1 .. Args'Last));
          end if;
+
+         --  The code below assumes that the name of the executable is in
+         --  Args (Args'First .. End_Of_Exec).
+
+         declare
+            Exec_Name : constant String := Args (Args'First .. End_Of_Exec);
+         begin
+            --  First check whether Exec_Name is an absolute path
+
+            Module := Create (Full_Filename => Exec_Name);
+
+            if not Is_Absolute_Path (Module) then
+               --  If the Exec name is not an absolute path, check whether it
+               --  corresponds to a file found from the current directory.
+
+               Module := Create
+                 (Full_Filename =>
+                    Normalize_Pathname (Exec_Name, Get_Current_Dir));
+
+               if not Is_Regular_File (Module) then
+                  --  If the Exec is not an absolute path and it is not found
+                  --  from the current directory, try to locate it on path.
+
+                  Exec := Locate_Exec_On_Path (Exec_Name);
+
+                  if Exec /= null then
+                     Module := Create
+                       (Full_Filename =>
+                          Normalize_Pathname (Exec.all, Get_Current_Dir));
+                     Free (Exec);
+                  end if;
+               end if;
+            end if;
+         end;
 
       else
          Module := GNATCOLL.VFS.No_File;
