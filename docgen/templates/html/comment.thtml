@@ -1,6 +1,0 @@
-@@--
-@@-- Used to output a comment string
-@@--
-@@-- TEXT : The comment to output
-@@--
-<font color="green">@_WEB_ESCAPE:TEXT_@</font>

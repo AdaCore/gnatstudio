@@ -1,9 +1,0 @@
-@@--
-@@-- Used for every cross reference links.
-@@--
-@@-- REF_FILE  : file where the entity is declared using the rendering
-@@--             convention, this reference can be used in an href
-@@-- DECL_LINE : line of the entity declaration
-@@-- NAME      : the name of the entity to reference
-@@--
-<a href="@_REF_FILE_@#@_DECL_LINE_@">@_NAME_@</a>

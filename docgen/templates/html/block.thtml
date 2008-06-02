@@ -1,8 +1,0 @@
-@@--
-@@-- Used to output a block of text, a reference to the source line is provided
-@@--
-@@-- BLOCK : block of text. This block has been rendered with another set
-@@--         of templates.
-@@-- LINE  : the source line number for this block
-@@--
-<a name="@_LINE_@"></a>@_WEB_ESCAPE:BLOCK_@

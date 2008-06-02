@@ -1,6 +1,0 @@
-@@--
-@@-- Used to output a strings
-@@--
-@@-- TEXT : The string to output
-@@--
-<font color="red">@_WEB_ESCAPE:TEXT_@</font>

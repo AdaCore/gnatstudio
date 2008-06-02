@@ -1,6 +1,0 @@
-@@--
-@@-- Used to output a keyword
-@@--
-@@-- TEXT : The keyword to output
-@@--
-<b>@_TEXT_@</b>

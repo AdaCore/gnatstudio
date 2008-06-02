@@ -1,8 +1,0 @@
-@@--
-@@-- Template used to output the package description
-@@--
-@@-- DESCRIPTION : package description
-@@--
-@@-- Comes after template "header.thtml".
-@@--
-<PRE>@_WEB_ESCAPE:DESCRIPTION_@</PRE>
