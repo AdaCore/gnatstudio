@@ -618,11 +618,11 @@ class gnatCheckProc:
       # use progress
       cmd +=  " -dd"
 
-      if need_rules_file:
-         cmd += " -rules -from=" + rules_file
-
       # now specify the files to check
       cmd += " " + filestr
+
+      if need_rules_file:
+         cmd += " -rules -from=" + rules_file
 
       # clear the Checks category in the Locations view
       if GPS.Locations.list_categories().count (self.locations_string) > 0:
