@@ -232,6 +232,12 @@ Known Problems fixed in GPS 4.3.0
               manage to remove it properly.
   Workaround: Remove manually the variable.
 
+- G513-020: Option --debug looking for executables in PATH
+  Problem:    When launching GPS with the option "--debug=executable", looks
+              for executable in the PATH, instead of looking in the current
+              directory first.
+  Workaround: Specify the full path to the executable.
+
 - FA23-004: Mischosen "from" as parameter name in the python API
   Problem:    "from" had been chosen as a parameter name of several methods of
               the GPS.EditorBuffer class. As a result, it was not possible to
