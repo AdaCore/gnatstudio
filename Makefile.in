@@ -58,8 +58,8 @@ endif
 	(cd share; tar cf - plug-ins/*.xml) | (cd $(sharedir)/gps; tar xf -)
 ifeq ($(OS),Windows_NT)
 # Clean-up changes made above for Windows.
-	mv share/plug-ins/_subversion_ share/plug-ins/subversion.xml
-	rm share/plug-ins/subversion_native_windows.xml
+	$(MV) share/plug-ins/_subversion_ share/plug-ins/subversion.xml
+	$(RM) share/plug-ins/subversion_native_windows.xml
 endif
 	(cd share; tar cf - plug-ins/*.py) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - plug-ins/*.png) | (cd $(sharedir)/gps; tar xf -)
@@ -68,6 +68,7 @@ endif
 	(cd share; tar cf - library/pygps/*.py) | (cd $(sharedir)/gps; tar xf -)
 	$(RM) $(sharedir)/gps/python/GPS_old.py
 	$(RM) $(sharedir)/gps/plug-ins/emacs.xml
+	$(RM) $(sharedir)/gps/library/gnatcheck.py
 	$(RM) $(sharedir)/gps/library/gnatpsta.py
 	$(RM) $(sharedir)/gps/library/methods.py
 	-$(RMDIR) $(sharedir)/gps/python/
