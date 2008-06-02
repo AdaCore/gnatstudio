@@ -615,8 +615,9 @@ class gnatCheckProc:
         cmd += " -U"
       # define the scenario variables
       scenario = GPS.Project.scenario_variables()
-      for i, j in scenario.iteritems():
-         cmd += " -X" + i + "=" + j
+      if scenario != None:
+         for i, j in scenario.iteritems():
+            cmd += " -X" + i + "=" + j
       # use progress
       cmd +=  " -dd"
 
@@ -640,16 +641,25 @@ class gnatCheckProc:
                              show_command = True)
 
    def check_project (self, project, recursive=False):
-      self.internalSpawn ("", project, recursive)
+      try:
+         self.internalSpawn ("", project, recursive)
+      except:
+         GPS.Console ("Messages").write ("Unexpected exception in gnatcheck.py:\n%s\n" % (traceback.format_exc()))
 
    def check_file (self, file):
-      self.internalSpawn (file.name(), file.project())
+      try:
+         self.internalSpawn (file.name(), file.project())
+      except:
+         GPS.Console ("Messages").write ("Unexpected exception in gnatcheck.py:\n%s\n" % (traceback.format_exc()))
 
    def check_files (self, files):
-      filestr = ""
-      for f in files:
-         filestr += f.name() + " "
-      self.internalSpawn (filestr, files[0].project());
+      try:
+         filestr = ""
+         for f in files:
+            filestr += f.name() + " "
+         self.internalSpawn (filestr, files[0].project());
+      except:
+         GPS.Console ("Messages").write ("Unexpected exception in gnatcheck.py:\n%s\n" % (traceback.format_exc()))
 
 # Contextual menu for checking files
 class contextualMenu (GPS.Contextual):
