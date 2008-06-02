@@ -2477,10 +2477,6 @@ package body Src_Editor_View is
    function In_Completion
      (View : access Source_View_Record'Class) return Boolean is
    begin
-      if View.In_Completion then
-         Select_Next (View.Completion_Window);
-      end if;
-
       return View.In_Completion;
    end In_Completion;
 
