@@ -413,7 +413,9 @@ package body Completion_Window is
       --  select the first iter
 
       if Prev /= Null_Iter then
-         Select_Iter (Selection, Prev);
+         if not Window.all.Volatile then
+            Select_Iter (Selection, Prev);
+         end if;
       else
          Prev := Get_Iter_First (Window.Model);
 
@@ -422,7 +424,9 @@ package body Completion_Window is
             Delete (Window);
             return;
          else
-            Select_Iter (Selection, Prev);
+            if not Window.all.Volatile then
+               Select_Iter (Selection, Prev);
+            end if;
          end if;
       end if;
    end Adjust_Selected;
@@ -946,20 +950,7 @@ package body Completion_Window is
             return Complete;
 
          when GDK_Down | GDK_KP_Down =>
-            Sel := Get_Selection (Window.View);
-            Get_Selected (Sel, Model, Iter);
-
-            if Iter = Null_Iter then
-               Iter := Get_Iter_First (Window.Model);
-            else
-               Next (Window.Model, Iter);
-            end if;
-
-            if Iter /= Null_Iter then
-               Select_Iter (Sel, Iter);
-               --  We have selected an iter: the window is no longer volatile
-               Window.Volatile := False;
-            end if;
+            Select_Next (Completion_Window_Access (Window));
 
          when GDK_Page_Down =>
             Move_Page (Down);
@@ -1329,26 +1320,19 @@ package body Completion_Window is
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_Tree_Model;
    begin
-      if not Complete_Common_Prefix (Window) then
-         Sel := Get_Selection (Window.View);
-         Get_Selected (Sel, Model, Iter);
+      Sel := Get_Selection (Window.View);
+      Get_Selected (Sel, Model, Iter);
 
-         if Iter /= Null_Iter then
-            Next (Window.Model, Iter);
+      if Iter = Null_Iter then
+         Iter := Get_Iter_First (Window.Model);
+      else
+         Next (Window.Model, Iter);
+      end if;
 
-            if Iter = Null_Iter then
-               Iter := Get_Iter_First (Window.Model);
-            end if;
-         end if;
-
-         --  Iter can be null here if there is an exception returned by the
-         --  completion engine, when expanding the completions list, for
-         --  instance.
-         --  Add protection against this, since calling Select_Iter with an
-         --  empty iter can cause a storage_error.
-         if Iter /= Null_Iter then
-            Select_Iter (Sel, Iter);
-         end if;
+      if Iter /= Null_Iter then
+         Select_Iter (Sel, Iter);
+         --  We have selected an iter: the window is no longer volatile
+         Window.Volatile := False;
       end if;
    end Select_Next;
 
