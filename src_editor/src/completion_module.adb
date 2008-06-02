@@ -76,6 +76,8 @@ with Language.Tree.Ada;         use Language.Tree.Ada;
 
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 
+with Glib.Generic_Properties;   use Glib.Generic_Properties;
+
 package body Completion_Module is
 
    Me : constant Trace_Handle := Create ("Completion");
@@ -85,7 +87,16 @@ package body Completion_Module is
    Db_Loading_Queue : constant String := "constructs_db_loading";
 
    Smart_Completion_Trigger_Timeout : Param_Spec_Int;
-   Smart_Completion : Param_Spec_Boolean;
+
+   type Smart_Completion_Type is (Disabled, Lazy, Dynamic);
+   for Smart_Completion_Type'Size use Glib.Gint'Size;
+   pragma Convention (C, Smart_Completion_Type);
+
+   package Smart_Completion_Properties is new Generic_Enumeration_Property
+     ("Smart_Completion", Smart_Completion_Type);
+
+   Smart_Completion : Param_Spec_Enum;
+
    Smart_Completion_Set : Param_Spec_Boolean;
 
    use String_List_Utils.String_List;
@@ -143,8 +154,10 @@ package body Completion_Module is
       Smart_Completion_Launched : Boolean := False;
       --  Whether the smart completion has been launched once.
 
-      Previous_Smart_Completion_State : Boolean := False;
-      Previous_Smart_Completion_Trigger_State : Boolean := False;
+      Previous_Smart_Completion_State         : Smart_Completion_Type
+        := Disabled;
+      Previous_Smart_Completion_Trigger_State : Smart_Completion_Type
+        := Disabled;
       --  Stores the state of the Smart Completion preference, to add/remove
       --  the corresponding hook.
 
@@ -258,24 +271,30 @@ package body Completion_Module is
    -------------------------
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class) is
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      Smart_Completion_Pref : constant Smart_Completion_Type
+        := Smart_Completion_Type'Val (Get_Pref (Smart_Completion));
    begin
       Completion_Module.Smart_Completion_Launched :=
-        Get_Pref (Smart_Completion_Set) or else Get_Pref (Smart_Completion);
+        Get_Pref (Smart_Completion_Set) or else
+        (Smart_Completion_Pref /= Disabled);
 
-      if Get_Pref (Smart_Completion)
-        and then not Completion_Module.Previous_Smart_Completion_State
+      if Smart_Completion_Pref /= Disabled
+        and then Completion_Module.Previous_Smart_Completion_State /= Disabled
       then
          Load_Construct_Database (Kernel);
       end if;
 
-      if Get_Pref (Smart_Completion)
+      if Smart_Completion_Pref
         /= Completion_Module.Previous_Smart_Completion_Trigger_State
       then
          Completion_Module.Previous_Smart_Completion_Trigger_State :=
-           Get_Pref (Smart_Completion);
+           Smart_Completion_Pref;
 
-         if Completion_Module.Previous_Smart_Completion_Trigger_State then
+         if Completion_Module.Previous_Smart_Completion_Trigger_State
+           /= Disabled
+         then
             Add_Hook (Kernel, Character_Added_Hook,
                       Completion_Module.Completion_Triggers_Callback,
                       Name => "completion_module.character_added");
@@ -289,14 +308,14 @@ package body Completion_Module is
         Get_Pref (Smart_Completion_Trigger_Timeout);
 
       Completion_Module.Previous_Smart_Completion_State :=
-        Get_Pref (Smart_Completion);
+        Smart_Completion_Pref;
 
       Language.Icons.Init_Graphics (Gtk_Widget (Get_Main_Window (Kernel)));
    end Preferences_Changed;
 
-   ---------------
-   -- File_Save --
-   ---------------
+   ----------------
+   -- File_Saved --
+   ----------------
 
    procedure File_Saved
      (Kernel : access Kernel_Handle_Record'Class;
@@ -304,8 +323,11 @@ package body Completion_Module is
    is
       File_Data : constant File_Hooks_Args := File_Hooks_Args (Data.all);
       File      : Structured_File_Access;
+      Smart_Completion_Pref : constant Smart_Completion_Type
+        := Smart_Completion_Type'Val (Get_Pref (Smart_Completion));
+
    begin
-      if Get_Pref (Smart_Completion) then
+      if Smart_Completion_Pref /= Disabled then
          if Get_Language_From_File
            (Get_Language_Handler (Kernel), File_Data.File)
            = Ada_Lang
@@ -786,7 +808,10 @@ package body Completion_Module is
                   Justification  => Justify_Left);
 
                if (Buttons and Button_Yes) /= 0 then
-                  Set_Pref (Kernel, Smart_Completion, True);
+                  Set_Pref (Kernel, Param_Spec_Int (Smart_Completion),
+                            Gint (Smart_Completion_Type'Pos (Lazy)));
+                  --  ??? When activating smart completion for the first time,
+                  --  we are activating it in Lazy mode, is this correct?
                   Preferences_Changed (Kernel);
                end if;
             end;
@@ -959,7 +984,12 @@ package body Completion_Module is
       if Get_Language (Buffer) = Ada_Lang
         and then Command.Smart_Completion
       then
-         return Smart_Complete (Command.Kernel, Complete => True);
+         if Completion_Module.Has_Smart_Completion then
+            Select_Next (Completion_Module.Smart_Completion);
+            return Commands.Success;
+         else
+            return Smart_Complete (Command.Kernel, Complete => True);
+         end if;
       end if;
 
       --  If we are not already in the middle of a completion:
@@ -1052,10 +1082,12 @@ package body Completion_Module is
    ---------------------
 
    procedure On_View_Changed (Kernel : access Kernel_Handle_Record'Class) is
+      Smart_Completion_Pref : constant Smart_Completion_Type
+        := Smart_Completion_Type'Val (Get_Pref (Smart_Completion));
    begin
       Clear (Get_Construct_Database (Kernel));
 
-      if Get_Pref (Smart_Completion) then
+      if Smart_Completion_Pref /= Disabled then
          Load_Construct_Database (Kernel);
       end if;
    end On_View_Changed;
@@ -1201,6 +1233,13 @@ package body Completion_Module is
         File_Edition_Hooks_Args (Data.all);
       Buffer       : UTF8_String (1 .. 6);
       Last         : Natural;
+      Dummy        : Boolean;
+      pragma Unreferenced (Dummy);
+
+      Smart_Completion_Pref : constant Smart_Completion_Type
+        := Smart_Completion_Type'Val (Get_Pref (Smart_Completion));
+
+      Timeout : Gint;
    begin
       --  Remove the previous timeout, if registered.
       if Completion_Module.Has_Trigger_Timeout then
@@ -1215,10 +1254,21 @@ package body Completion_Module is
                   or else Buffer (1) = ','
                   or else Buffer (1) = '(')
       then
+         if Smart_Completion_Pref = Dynamic then
+            Timeout := 0;
+         else
+            Timeout := Completion_Module.Trigger_Timeout_Value;
+         end if;
+
          Completion_Module.Trigger_Timeout :=
-           Timeout_Add (Guint32 (Completion_Module.Trigger_Timeout_Value),
+           Timeout_Add (Guint32 (Timeout),
                         Trigger_Timeout_Callback'Access);
+
          Completion_Module.Has_Trigger_Timeout := True;
+      end if;
+
+      if Smart_Completion_Pref = Dynamic then
+         Dummy := Trigger_Timeout_Callback;
       end if;
 
    exception
@@ -1234,13 +1284,15 @@ package body Completion_Module is
      (Kernel : access Kernel_Handle_Record'Class)
    is
    begin
-      Smart_Completion := Glib.Properties.Creation.Param_Spec_Boolean
-        (Gnew_Boolean
-           (Name  => "Smart-Completion",
+      Smart_Completion := Glib.Properties.Creation.Param_Spec_Enum
+        (Smart_Completion_Properties.Gnew_Enum
+           (Name  => "Smart-Completion-Mode",
             Nick  => -"Smart completion",
-            Blurb => -("Enable all the mechanisms needed to have the smart " &
-              "completion working."),
-            Default => False));
+            Blurb => -("Disabled: smart completion is disabled." & ASCII.LF &
+              "Lazy: smart completion occurs on key press," &
+              " or after a timeout on special characters." & ASCII.LF &
+              "Dynamic: the smart completion occurs on every key press."),
+            Default => Disabled));
       Register_Property
         (Kernel, Param_Spec (Smart_Completion), -"Editor");
 
@@ -1250,8 +1302,8 @@ package body Completion_Module is
                (Name    => "Smart-Completion-Trigger-Timeout",
                 Minimum => 0,
                 Maximum => 9999,
-                Blurb   => -("The timeout (in milliseconds)"
-                  & " for character-triggered smart completion"),
+                Blurb   => -("The timeout (in milliseconds) for "
+                  & "character-triggered smart completion in 'Lazy' mode"),
                 Nick    => -"Smart completion timeout",
                 Default => 200));
       Register_Property
@@ -1259,7 +1311,7 @@ package body Completion_Module is
 
       Smart_Completion_Set := Param_Spec_Boolean
         (Gnew_Boolean
-           (Name    => "Smart-Completion-Set",
+           (Name    => "Smart-Completion-Mode-Set",
             Default => False,
             Blurb   => -("Whether the user has manually launched"
               & " smart completion at least once"),
@@ -1289,7 +1341,7 @@ package body Completion_Module is
         Wrapper (Character_Added_Hook_Callback'Access);
 
       Completion_Module.Previous_Smart_Completion_State :=
-        Get_Pref (Smart_Completion);
+        Smart_Completion_Type'Val (Get_Pref (Smart_Completion));
    end Register_Preferences;
 
 end Completion_Module;
