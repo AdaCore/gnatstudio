@@ -14,7 +14,6 @@ with "../navigation/navigation";
 with "../custom/custom";
 with "../help/help";
 with "../vfs/vfs";
-with "../docgen/docgen";
 with "../docgen2/docgen2";
 with "../ada_module/ada_module";
 with "../cpp_module/cpp_module";

@@ -107,7 +107,6 @@ with Codefix_Module;
 with Command_Window;
 with Cpp_Module;
 with Custom_Module;
-with Docgen_Module;
 with Docgen2_Module;
 with External_Editor_Module;
 with GPS.Location_View;
@@ -144,8 +143,6 @@ procedure GPS.Main is
    Me        : constant Debug_Handle := Create ("GPS");
    Pid_Image : constant String := String_Utils.Image (Get_Process_Id);
 
-   Docgen_Trace           : constant Debug_Handle :=
-                              Create ("MODULE.Docgen", GNATCOLL.Traces.Off);
    Docgen2_Trace           : constant Debug_Handle :=
                               Create ("MODULE.Docgen2", GNATCOLL.Traces.On);
    Refactor_Trace         : constant Debug_Handle :=
@@ -1365,10 +1362,7 @@ procedure GPS.Main is
          Refactoring_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
-      --  Do not activate both docgen and docgen2 modules at the same time
-      if Active (Docgen_Trace) then
-         Docgen_Module.Register_Module (GPS_Main.Kernel);
-      elsif Active (Docgen2_Trace) then
+      if Active (Docgen2_Trace) then
          Docgen2_Module.Register_Module (GPS_Main.Kernel);
       end if;
 

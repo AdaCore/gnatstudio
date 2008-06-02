@@ -7871,14 +7871,6 @@ generated documentation. The templates used for generating the documentation
 can be found under @file{<install_dir>/share/gps/docgen2}. If you need a
 different layout as the proposed one, you can change directly those files.
 
-If you relied on the old docgen module, it is still possible to use it
-instead of the new one. There are two ways of doing this:
-@itemize @bullet
-@item run GPS with --traceon=MODULE.Docgen
-@item in your .gps directory, modify/create the 'traces.cfg' file to add the
- line "MODULE.Docgen = TRUE"
-@end itemize
-
 @c For a description of the
 @c documentation generator renderer @pxref{Defining a documentation format}.
 
