@@ -767,26 +767,20 @@ def on_gps_started (hook_name):
     <shell lang="python">gnatcheck.gnatcheckproc.edit ()</shell>
   </action>
   <submenu>
-    <title>Build</title>
-    <submenu after="Check Semantic">
-      <title>Check Coding Standard</title>
+    <title>Tools</title>
+    <submenu after="Documentation">
+      <title>Coding _Standard</title>
+      <menu action="edit gnatcheck rules">
+        <title>_Edit coding standard file</title>
+      </menu>
+      <menu action="gnatcheck root project recursive">
+        <title>Check root project and _subprojects</title>
+      </menu>
       <menu action="gnatcheck root project">
         <title>Check root _project</title>
       </menu>
-      <menu action="gnatcheck root project recursive">
-        <title>Check root _project and subprojects</title>
-      </menu>
       <menu action="gnatcheck file">
         <title>Check current _file</title>
-      </menu>
-    </submenu>
-  </submenu>
-  <submenu>
-    <title>Tools</title>
-    <submenu after="Documentation">
-      <title>Coding Standard</title>
-      <menu action="edit gnatcheck rules">
-        <title>Edit coding standard file</title>
       </menu>
     </submenu>
   </submenu>""");
