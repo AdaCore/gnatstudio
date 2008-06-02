@@ -196,6 +196,12 @@ Known Problems fixed in GPS 4.3.0
               instead of preserving it.
   Workaround: Edit the project a second time
 
+- GC13-020: Option --debug looking for executables in PATH
+  Problem:    When launching GPS with the option "--debug=executable", looks
+              for executable in the PATH, instead of looking in the current
+              directory first.
+  Workaround: Specify the full path to the executable.
+
 - GC07-025: Ouline View can't display large profile
   Problem:    Routines with a large profile (more than 50 parameters)
               won't be properly output in the outline view.
@@ -232,11 +238,6 @@ Known Problems fixed in GPS 4.3.0
               manage to remove it properly.
   Workaround: Remove manually the variable.
 
-- G513-020: Option --debug looking for executables in PATH
-  Problem:    When launching GPS with the option "--debug=executable", looks
-              for executable in the PATH, instead of looking in the current
-              directory first.
-  Workaround: Specify the full path to the executable.
 
 - FA23-004: Mischosen "from" as parameter name in the python API
   Problem:    "from" had been chosen as a parameter name of several methods of
