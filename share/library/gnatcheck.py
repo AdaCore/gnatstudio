@@ -72,7 +72,8 @@ class rulesSelector(gtk.Dialog):
    def on_coding_standard_file_browse (self, *args):
       """Callback to coding standard 'Browse' button"""
       file = GPS.MDI.file_selector ()
-      self.fileEntry.set_text (file.name())
+      if file.name() != "":
+         self.fileEntry.set_text (file.name())
 
    def on_ok (self, *args):
       """Callback to 'Cancel' button"""
@@ -181,6 +182,11 @@ class rulesEditor(gtk.Dialog):
 
         self.switchvbox.pack_start (hbox, True, True, 0)
 
+      label=gtk.Label()
+      label.set_markup("<span weight='bold' size='large'>Compiler warnings</span>")
+      label.show()
+      self.switchvbox.pack_start (label, False, False, 0)
+
       # Add rule for compiler Warnings
       hbox = gtk.HBox()
       hbox.show()
@@ -192,11 +198,7 @@ class rulesEditor(gtk.Dialog):
       hbox.pack_start (label, False, False, 0)
       self.tips.set_tip (hbox, "+RWarnings")
       self.switchvbox.pack_start (hbox, True, True, 0)
-
-      label=gtk.Label()
-      label.set_markup("<span weight='bold' size='large'>Compiler warnings</span>")
-      label.show()
-      self.switchvbox.pack_start (label, False, False, 0)
+      self.rules_widgets.append ([self.warnings_check, "+RWarnings", ""])
 
       # Add compiler warnings widgets
       for j in self.warnings_list:
@@ -356,7 +358,8 @@ class rulesEditor(gtk.Dialog):
    def on_coding_standard_file_browse (self, *args):
       """Callback to coding standard 'Browse' button"""
       file = GPS.MDI.file_selector ()
-      self.fileEntry.set_text (file.name())
+      if file.name() != "":
+         self.fileEntry.set_text (file.name())
 
    def on_cancel (self, *args):
       """Callback to 'Cancel' button"""
@@ -506,7 +509,7 @@ class gnatCheckProc:
                 # ignore the comment made for '*', and include only on/off warnings: this ignores '-gnatwe' which we don't want in gnatcheck
                 if res[2] != "*" and re.search ("turn", res[3]):
                   if res[1] != "a":
-                    # search all warnings not covered by -gnatwa (this list was retrieved just above)
+                    # search through all warnings not covered by -gnatwa (this list was retrieved just above)
                     if re.search ("turn off", res[3]):
                       found = True
                     else:
