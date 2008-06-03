@@ -74,8 +74,6 @@ with Language.Ada;              use Language.Ada;
 with Language.Tree.Database;    use Language.Tree.Database;
 with Language.Tree.Ada;         use Language.Tree.Ada;
 
-with Gtkada.Dialogs;            use Gtkada.Dialogs;
-
 with Glib.Generic_Properties;   use Glib.Generic_Properties;
 
 package body Completion_Module is
@@ -88,7 +86,7 @@ package body Completion_Module is
 
    Smart_Completion_Trigger_Timeout : Param_Spec_Int;
 
-   type Smart_Completion_Type is (Disabled, Lazy, Dynamic);
+   type Smart_Completion_Type is (Disabled, Normal, Dynamic);
    for Smart_Completion_Type'Size use Glib.Gint'Size;
    pragma Convention (C, Smart_Completion_Type);
 
@@ -96,8 +94,6 @@ package body Completion_Module is
      ("Smart_Completion", Smart_Completion_Type);
 
    Smart_Completion : Param_Spec_Enum;
-
-   Smart_Completion_Set : Param_Spec_Boolean;
 
    use String_List_Utils.String_List;
 
@@ -277,8 +273,7 @@ package body Completion_Module is
         := Smart_Completion_Type'Val (Get_Pref (Smart_Completion));
    begin
       Completion_Module.Smart_Completion_Launched :=
-        Get_Pref (Smart_Completion_Set) or else
-        (Smart_Completion_Pref /= Disabled);
+        Smart_Completion_Pref /= Disabled;
 
       if Smart_Completion_Pref /= Disabled
         and then Completion_Module.Previous_Smart_Completion_State /= Disabled
@@ -783,40 +778,6 @@ package body Completion_Module is
       --  function returning the proper manager, taking a language in
       --  parameter.
       then
-         --  Display the dialog if necessary.
-
-         if not Completion_Module.Smart_Completion_Launched then
-            Set_Pref (Kernel, Smart_Completion_Set, True);
-            Completion_Module.Smart_Completion_Launched := True;
-
-            declare
-               Buttons : Message_Dialog_Buttons;
-            begin
-               Buttons := Message_Dialog
-                 (Msg            =>
-                  -("You are using smart completion for the first time."
-                    & ASCII.LF & ASCII.LF
-                    & "To take full advantage of this, you need to enable"
-                    & " the automatic parsing engine."
-                    & ASCII.LF
-                    & "The entity database will then be loaded at GPS "
-                    & " startup and recomputed when needed."
-                    & ASCII.LF & ASCII.LF
-                    & "Do you want to activate this now?"),
-                  Buttons        => Button_Yes or Button_No,
-                  Default_Button => Button_Yes,
-                  Justification  => Justify_Left);
-
-               if (Buttons and Button_Yes) /= 0 then
-                  Set_Pref (Kernel, Param_Spec_Int (Smart_Completion),
-                            Gint (Smart_Completion_Type'Pos (Lazy)));
-                  --  ??? When activating smart completion for the first time,
-                  --  we are activating it in Lazy mode, is this correct?
-                  Preferences_Changed (Kernel);
-               end if;
-            end;
-         end if;
-
          declare
             Win  : Completion_Window_Access
             renames Completion_Module.Smart_Completion;
@@ -1289,10 +1250,10 @@ package body Completion_Module is
            (Name  => "Smart-Completion-Mode",
             Nick  => -"Smart completion",
             Blurb => -("Disabled: smart completion is disabled." & ASCII.LF &
-              "Lazy: smart completion occurs on key press," &
+              "Normal: smart completion occurs on key press," &
               " or after a timeout on special characters." & ASCII.LF &
               "Dynamic: the smart completion occurs on every key press."),
-            Default => Disabled));
+            Default => Normal));
       Register_Property
         (Kernel, Param_Spec (Smart_Completion), -"Editor");
 
@@ -1303,23 +1264,11 @@ package body Completion_Module is
                 Minimum => 0,
                 Maximum => 9999,
                 Blurb   => -("The timeout (in milliseconds) for "
-                  & "character-triggered smart completion in 'Lazy' mode"),
+                  & "character-triggered smart completion in 'Normal' mode"),
                 Nick    => -"Smart completion timeout",
                 Default => 200));
       Register_Property
         (Kernel, Param_Spec (Smart_Completion_Trigger_Timeout), -"Editor");
-
-      Smart_Completion_Set := Param_Spec_Boolean
-        (Gnew_Boolean
-           (Name    => "Smart-Completion-Mode-Set",
-            Default => False,
-            Blurb   => -("Whether the user has manually launched"
-              & " smart completion at least once"),
-            Nick    => -"Smart completion set",
-            Flags   => Param_Readable));
-      Register_Property
-        (Kernel,
-         Param_Spec (Smart_Completion_Set), -"Editor");
 
       --  ??? Deactivated code. This registers a preference to control the
       --  "character triggers". We have decided for now to reuse the
