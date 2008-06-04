@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                Copyright (C) 2000-2007, AdaCore                   --
+--                Copyright (C) 2000-2008, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,6 +23,7 @@ with Gdk.Drawable;         use Gdk.Drawable;
 with Gdk.Event;            use Gdk.Event;
 with Gdk.Pixmap;           use Gdk.Pixmap;
 with Gdk.Rectangle;        use Gdk.Rectangle;
+with Gdk.Screen;           use Gdk.Screen;
 with Gdk.Types;            use Gdk.Types;
 with Gdk.Window;           use Gdk.Window;
 
@@ -104,9 +105,8 @@ package body Tooltips is
       Window                : Gdk_Window;
       W                     : Gtk_Widget;
       Focus                 : Gtk_Widget;
-      Win_X, Win_Y          : Gint;
       Win_Width, Win_Height : Gint;
-      Win_Depth             : Gint;
+
    begin
       if not Tooltip.Active then
          return False;
@@ -129,22 +129,8 @@ package body Tooltips is
 
          --  Get screen size
 
-         Get_Geometry
-           (Null_Window, Win_X, Win_Y, Win_Width, Win_Height, Win_Depth);
-
-         --  Adjust Win_Width and Win_Height to correspond to the proper screen
-         --  in case of multiple screen display.
-         --  ??? Note that this code assume that all the screens have the same
-         --  size, it could be the case that some tooltips are partly of the
-         --  screen if GPS is not on the main screen.
-
-         if X > Win_Width then
-            Win_Width := Win_Width * (1 + X / Win_Width);
-         end if;
-
-         if Y > Win_Height then
-            Win_Height := Win_Height * (1 + Y / Win_Height);
-         end if;
+         Win_Width := Get_Width (Gdk.Screen.Get_Default);
+         Win_Height := Get_Height (Gdk.Screen.Get_Default);
 
          --  Now adjust the screen position for the full tooltip window to
          --  always be on the screen.
