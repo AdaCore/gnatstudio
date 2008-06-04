@@ -193,7 +193,7 @@ class rulesEditor(gtk.Dialog):
       self.warnings_check = gtk.CheckButton()
       self.warnings_check.show()
       hbox.pack_start (self.warnings_check, False, False, 0)
-      label = gtk.Label ("Activate compiler warnings")
+      label = gtk.Label ("Enable compiler warnings")
       label.show()
       hbox.pack_start (label, False, False, 0)
       self.tips.set_tip (hbox, "Warnings")
@@ -526,8 +526,8 @@ class gnatCheckProc:
                   exception = re.split ("\(except ([a-zA-Z.]*)\) *$", res[3])
                   self.all_warnings_exception_list = re.findall("[.]?[a-zA-Z]", exception[1])
 
-                # include only on warnings: this ignores '-gnatwe' which we don't want in gnatcheck
-                if re.search ("turn on", res[3]):
+                # include only on and non global warnings: this ignores '-gnatwe/wa/w.e' which we don't want in gnatcheck
+                if re.search ("turn on", res[3]) and not re.search ("(all|every) optional warning", res[3]):
                   is_alias_part = False
                   if res[1] != "a":
                     # switches activated by default are not part of gnatwa
@@ -541,7 +541,7 @@ class gnatCheckProc:
                           break
                   # warnings_list is a list of [switch, description, default value, part_of_gnatwa]
                   # remove the 'turn on' in the description
-                  self.warnings_list.append ([res[1], re.sub ("^turn on ", "", res[3]), res[2] == "*", is_alias_part])
+                  self.warnings_list.append ([res[1], re.sub ("^turn on warnings (on|for) ", "", res[3]), res[2] == "*", is_alias_part])
 
         self.msg = ""
       self.msg += matched
