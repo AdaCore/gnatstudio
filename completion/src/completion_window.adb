@@ -22,6 +22,7 @@ with Glib.Convert;              use Glib.Convert;
 
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Rectangle;             use Gdk.Rectangle;
+with Gdk.Screen;                use Gdk.Screen;
 with Gdk.Window;                use Gdk.Window;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
@@ -1131,7 +1132,6 @@ package body Completion_Window is
       X, Y               : Gint;
       Requisition        : Gtk_Requisition;
 
-      Dummy_X, Dummy_Y, D     : Gint;
       Root_Width, Root_Height : Gint;
 
       Cursor                  : Gtk_Text_Iter;
@@ -1207,7 +1207,8 @@ package body Completion_Window is
 
       --  Compute the coordinates of the window so that it doesn't get past
       --  the screen border.
-      Get_Geometry (Null_Window, Dummy_X, Dummy_Y, Root_Width, Root_Height, D);
+      Root_Width := Get_Width (Gdk.Screen.Get_Default);
+      Root_Height := Get_Height (Gdk.Screen.Get_Default);
       X := Gint'Min (Gdk_X + Window_X, Root_Width - Width);
 
       --  Make sure the completion window doesn't overlap the current line. In
