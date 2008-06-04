@@ -86,7 +86,7 @@ class rulesSelector(gtk.Dialog):
 class rulesEditor(gtk.Dialog):
    """Dialog used to edit the coding standard file."""
 
-   def __init__ (self, rules, warnings, projectfile):
+   def __init__ (self, rules, warnings, defaultfile):
       # call parent __init__
       gtk.Dialog.__init__ (self, title="Coding Standard editor", parent=GPS.MDI.current().pywidget().get_toplevel(), flags=gtk.DIALOG_MODAL, buttons=None)
       self.set_default_size (600, 400)
@@ -118,8 +118,8 @@ class rulesEditor(gtk.Dialog):
       # Connect callbacks on the file entry modifications
       self.fileEntry.set_editable(True)
       self.fileEntry.show()
-      if None != projectfile:
-         self.fileEntry.set_text (projectfile.name())
+      if None != defaultfile:
+         self.fileEntry.set_text (defaultfile)
       self.fileEntry.connect ('changed', self.on_file_entry_changed)
       hbox.pack_start (self.fileEntry, True, True, 0)
 
@@ -238,6 +238,9 @@ class rulesEditor(gtk.Dialog):
       self.action_area.pack_start(self.cancelButton, True, True, 0)
 
       self.on_file_entry_changed()
+
+   def get_filename (self):
+      return GPS.File (self.fileEntry.get_text()).name()
 
    def on_warnings_toggled (self, *args):
       """Callback when the compiler warnings switch is toggled"""
@@ -435,6 +438,7 @@ def activate (widg):
 class gnatCheckProc:
    """This class controls the gnatcheck execution"""
    def __init__ (self):
+      self.rules_file = None
       self.rules_list = []
       self.warnings_list = []
       self.style_checks_list = []
@@ -442,13 +446,9 @@ class gnatCheckProc:
 
       self.locations_string = "Coding Standard violations"
       self.gnatCmd = ""
-      self.projectfile = None
-      self.projectChanged (None)
 
-   def isValid (self):
-      return self.gnatCmd != ""
-
-   def projectChanged (self, p):
+   def edit(self):
+      global ruleseditor
       prev_cmd = self.gnatCmd
       self.gnatCmd = GPS.Project.root().get_attribute_as_string("gnat", "ide")
 
@@ -466,17 +466,17 @@ class gnatCheckProc:
          self.get_supported_rules()
 
       # we retrieve the coding standard file from the project
-      self.projectfile = None
       for opt in GPS.Project.root().get_attribute_as_list("default_switches", package="check", index="ada"):
         res = re.split ("^\-from\=(.*)$", opt)
         if len(res)>1:
-          self.projectfile = GPS.File (res[1])
+          self.rules_file = GPS.File (res[1]).name()
 
-   def edit(self):
-      global ruleseditor
       try:
-        ruleseditor = rulesEditor(self.rules_list, self.warnings_list, self.projectfile)
+        ruleseditor = rulesEditor(self.rules_list, self.warnings_list, self.rules_file)
         ruleseditor.run()
+        fname = ruleseditor.get_filename()
+        if fname != "":
+           self.rules_file = fname
         ruleseditor.destroy()
       except:
          GPS.Console ("Messages").write ("Unexpected exception in gnatcheck.py:\n%s\n" % (traceback.format_exc()))
@@ -603,7 +603,6 @@ class gnatCheckProc:
          self.msg = ""
 
    def internalSpawn (self, filestr, project, recursive=False):
-      rules_file = None
       need_rules_file = False
       opts = project.get_attribute_as_list("default_switches", package="check", index="ada")
       if len(opts) == 0:
@@ -613,12 +612,13 @@ class gnatCheckProc:
            res = re.split ("^\-from\=(.*)$", opt)
            if len(res)>1:
              rootdir = GPS.Project.root().file().directory()
-             rules_file = rootdir+res[1]
+             self.rules_file = rootdir+res[1]
 
       if need_rules_file:
-         selector = rulesSelector (project.name(), rules_file)
+         selector = rulesSelector (project.name(), self.rules_file)
+
          if selector.run() == gtk.RESPONSE_OK:
-            rules_file = selector.get_file()
+            self.rules_file = selector.get_file()
             selector.destroy()
          else:
             selector.destroy()
@@ -644,7 +644,7 @@ class gnatCheckProc:
       cmd += " " + filestr
 
       if need_rules_file:
-         cmd += " -rules -from=" + rules_file
+         cmd += " -rules -from=" + self.rules_file
 
       # clear the Checks category in the Locations view
       if GPS.Locations.list_categories().count (self.locations_string) > 0:
@@ -691,9 +691,7 @@ class contextualMenu (GPS.Contextual):
    def filter (self, context):
       global gnatcheckproc
       self.desttype = "none"
-      if not gnatcheckproc.isValid():
-         return False
-      elif not isinstance(context, GPS.FileContext):
+      if not isinstance(context, GPS.FileContext):
          return False
       try:
          # might be a file
@@ -761,7 +759,6 @@ def on_gps_started (hook_name):
    gnatcheckproc = gnatCheckProc()
    contextualMenu()
 
-   GPS.Hook("project_view_changed").add (gnatcheckproc.projectChanged);
    GPS.parse_xml ("""
   <tool name="GnatCheck" package="Check" index="Ada" override="false">
      <language>Ada</language>
