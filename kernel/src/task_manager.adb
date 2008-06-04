@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2007                      --
---                               AdaCore                             --
+--                    Copyright (C) 2003-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -43,15 +42,15 @@ package body Task_Manager is
    --  Return an index in Manager.Queues corresponding to Queue_Id
 
    function Active_Incremental
-     (Manager : in Task_Manager_Access) return Boolean;
+     (Manager : Task_Manager_Access) return Boolean;
    --  Incremental function for the active loop
 
    function Passive_Incremental
-     (Manager : in Task_Manager_Access) return Boolean;
+     (Manager : Task_Manager_Access) return Boolean;
    --  Incremental function for the passive loop
 
    function Execute_Incremental
-     (Manager : in Task_Manager_Access;
+     (Manager : Task_Manager_Access;
       Active  : Boolean) return Boolean;
    --  Incremental function to execute the task manager
 
@@ -80,7 +79,7 @@ package body Task_Manager is
    ------------------------
 
    function Active_Incremental
-     (Manager : in Task_Manager_Access) return Boolean
+     (Manager : Task_Manager_Access) return Boolean
    is
       Result      : Boolean;
       Return_Type : Command_Return_Type;
@@ -121,7 +120,7 @@ package body Task_Manager is
    -------------------------
 
    function Passive_Incremental
-     (Manager : in Task_Manager_Access) return Boolean
+     (Manager : Task_Manager_Access) return Boolean
    is
       Result      : Boolean;
       Return_Type : Command_Return_Type;
@@ -151,7 +150,7 @@ package body Task_Manager is
    -------------------------
 
    function Execute_Incremental
-     (Manager : in Task_Manager_Access;
+     (Manager : Task_Manager_Access;
       Active  : Boolean) return Boolean
    is
       Lowest        : Integer := Integer'Last;
@@ -161,6 +160,71 @@ package body Task_Manager is
       Command       : Command_Access;
       Previous_Prio : Integer;
       Queue         : Task_Queue_Access;
+
+      function Free_Queue return Boolean;
+      --  Free queue referenced by Queue.
+      --  Return True if the callback should be called again, False otherwise.
+
+      function Free_Queue return Boolean is
+      begin
+         GNAT.Strings.Free (Queue.Id);
+
+         if Queue.Bar /= null then
+            Destroy (Get_Parent (Queue.Bar));
+            Queue.Bar := null;
+         end if;
+
+         Manager.Need_Global_Refresh := True;
+
+         if Manager.Queues'Length = 1 then
+            Unchecked_Free (Manager.Queues);
+            Manager.Referenced_Command := -1;
+            return False;
+
+         else
+            declare
+               New_Queues : Task_Queue_Array
+                 (Manager.Queues'First .. Manager.Queues'Last - 1);
+               Index      : Integer := -1;
+            begin
+               --  Find the index of the current running queue
+
+               for J in Manager.Queues'Range loop
+                  if Manager.Queues (J) = Queue then
+                     Index := J;
+                     exit;
+                  end if;
+               end loop;
+
+               New_Queues (Manager.Queues'First .. Index - 1) :=
+                 Manager.Queues (Manager.Queues'First .. Index - 1);
+
+               New_Queues (Index .. Manager.Queues'Last - 1) :=
+                 Manager.Queues (Index + 1 .. Manager.Queues'Last);
+
+               if Active then
+                  Manager.Passive_Index := Manager.Passive_Index - 1;
+               end if;
+
+               if Manager.Referenced_Command = Index then
+                  Manager.Referenced_Command := -1;
+
+               elsif Manager.Referenced_Command >
+                 Index
+               then
+                  Manager.Referenced_Command :=
+                    Manager.Referenced_Command - 1;
+               end if;
+
+               Unchecked_Free (Queue);
+               Unchecked_Free (Manager.Queues);
+               Manager.Queues := new Task_Queue_Array'(New_Queues);
+            end;
+         end if;
+
+         return True;
+      end Free_Queue;
+
    begin
       if Manager.Queues = null then
          return False;
@@ -204,6 +268,13 @@ package body Task_Manager is
 
          if Queue.Status = Paused then
             return False;
+         end if;
+
+         if Command_Queues.Is_Empty (Queue.Queue) then
+            --  The queue is empty: this can happen when scripts call the
+            --  interrupt function.
+            --  In this case, free the queue and return.
+            return Free_Queue;
          end if;
 
          Command := Command_Queues.Head (Queue.Queue);
@@ -257,60 +328,7 @@ package body Task_Manager is
                --  If it was the last command in the queue, free the queue
 
                if Command_Queues.Is_Empty (Queue.Queue) then
-                  GNAT.Strings.Free (Queue.Id);
-
-                  if Queue.Bar /= null then
-                     Destroy (Get_Parent (Queue.Bar));
-                     Queue.Bar := null;
-                  end if;
-
-                  Manager.Need_Global_Refresh := True;
-
-                  if Manager.Queues'Length = 1 then
-                     Unchecked_Free (Manager.Queues);
-                     Manager.Referenced_Command := -1;
-                     return False;
-
-                  else
-                     declare
-                        New_Queues : Task_Queue_Array
-                          (Manager.Queues'First .. Manager.Queues'Last - 1);
-                        Index      : Integer := -1;
-                     begin
-                        --  Find the index of the current running queue
-
-                        for J in Manager.Queues'Range loop
-                           if Manager.Queues (J) = Queue then
-                              Index := J;
-                              exit;
-                           end if;
-                        end loop;
-
-                        New_Queues (Manager.Queues'First .. Index - 1) :=
-                          Manager.Queues (Manager.Queues'First .. Index - 1);
-
-                        New_Queues (Index .. Manager.Queues'Last - 1) :=
-                          Manager.Queues (Index + 1 .. Manager.Queues'Last);
-
-                        if Active then
-                           Manager.Passive_Index := Manager.Passive_Index - 1;
-                        end if;
-
-                        if Manager.Referenced_Command = Index then
-                           Manager.Referenced_Command := -1;
-
-                        elsif Manager.Referenced_Command >
-                          Index
-                        then
-                           Manager.Referenced_Command :=
-                             Manager.Referenced_Command - 1;
-                        end if;
-
-                        Unchecked_Free (Queue);
-                        Unchecked_Free (Manager.Queues);
-                        Manager.Queues := new Task_Queue_Array'(New_Queues);
-                     end;
-                  end if;
+                  return Free_Queue;
                end if;
 
             when Raise_Priority =>
