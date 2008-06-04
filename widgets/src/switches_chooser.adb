@@ -648,7 +648,8 @@ package body Switches_Chooser is
 
             --  We will rebuild here the command line, adding sections at the
             --  end
-            Start (Editor.Cmd_Line, Cmlin_Iter, Expanded => False);
+            Set_Configuration (New_Cmd, Get_Configuration (Cmd));
+            Start (Editor.Cmd_Line, Cmlin_Iter, Expanded => True);
             while Has_More (Cmlin_Iter) loop
                if Is_Section (Current_Switch (Cmlin_Iter)) then
                   --  First insert the new switch before going to the next
@@ -715,50 +716,32 @@ package body Switches_Chooser is
             Switch  : String)
          is
             pragma Unreferenced (Section);
-            New_Cmd         : Command_Line;
             Cmlin_Iter      : Command_Line_Iterator;
             Current_Section : Unbounded_String :=
                                 Null_Unbounded_String;
+            Has_Switch      : Boolean := True;
          begin
             Remove_Switch (Cmd, Switch);
 
             --  If a section has no more switches, we remove it.
-            Start (Editor.Cmd_Line, Cmlin_Iter, Expanded => False);
+            Start (Editor.Cmd_Line, Cmlin_Iter, Expanded => True);
             while Has_More (Cmlin_Iter) loop
                if Is_Section (Current_Switch (Cmlin_Iter)) then
+                  if not Has_Switch then
+                     Remove_Switch (Cmd, To_String (Current_Section));
+
+                     return;
+                  end if;
+
+                  Has_Switch := False;
                   Current_Section :=
                     To_Unbounded_String (Current_Switch (Cmlin_Iter));
                else
-                  if Current_Section /= Null_Unbounded_String then
-                     --  The section has switches, so we keep it.
-                     Add_Switch (New_Cmd, To_String (Current_Section));
-                  end if;
-
-                  Current_Section := Null_Unbounded_String;
-
-                  declare
-                     Separator : constant String :=
-                                   Current_Separator (Cmlin_Iter);
-                     Sep       : Character := ASCII.NUL;
-                  begin
-                     if Separator'Length >= 1 then
-                        Sep := Separator (Separator'First);
-                     else
-                        Sep := ASCII.NUL;
-                     end if;
-
-                     Add_Switch (New_Cmd,
-                                 Current_Switch (Cmlin_Iter),
-                                 Current_Parameter (Cmlin_Iter),
-                                 Sep);
-                  end;
+                  Has_Switch := True;
                end if;
 
                Next (Cmlin_Iter);
             end loop;
-
-            Free (Cmd);
-            Cmd := New_Cmd;
          end Remove_Switch;
 
          --------------------------
