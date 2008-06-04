@@ -1,7 +1,7 @@
 #
 #  gnatcheck Python support for GPS integration
 #
-import GPS, os, os.path, re, string, pygtk
+import GPS, os, os.path, re, string, pygtk, traceback
 pygtk.require('2.0')
 import gobject, gtk
 
@@ -196,9 +196,9 @@ class rulesEditor(gtk.Dialog):
       label = gtk.Label ("Activate compiler warnings")
       label.show()
       hbox.pack_start (label, False, False, 0)
-      self.tips.set_tip (hbox, "+RWarnings")
+      self.tips.set_tip (hbox, "Warnings")
       self.switchvbox.pack_start (hbox, True, True, 0)
-      self.rules_widgets.append ([self.warnings_check, "+RWarnings", ""])
+      self.rules_widgets.append ([self.warnings_check, "Warnings", ""])
 
       # Add compiler warnings widgets
       for j in self.warnings_list:
@@ -207,17 +207,19 @@ class rulesEditor(gtk.Dialog):
 
         check = gtk.CheckButton()
         check.show()
+        check.set_active (j[2])
         hbox.pack_start (check, False, False, 0)
-        switch = j[0]
         if j[0] == "a":
            check.connect('toggled', self.on_gnatwa_toggled)
-        self.warnings_widgets.append ([check, switch, j[2]])
+        self.warnings_widgets.append ([check, j[0], j[2], j[3]])
 
-        label = gtk.Label ()
-        label.set_markup (re.sub('^turn on', "turn <span color='blue'>on</span>", re.sub('^turn off', "turn <span color='red'>off</span>", j[1])))
+        label = gtk.Label (j[1])
         label.show()
         hbox.pack_start (label, False, False, 0)
-        self.tips.set_tip (hbox, switch)
+        if j[2]:
+          self.tips.set_tip (hbox, j[0] + " (activated by default)")
+        else:
+          self.tips.set_tip (hbox, j[0])
 
         self.switchvbox.pack_start (hbox, True, True, 0)
 
@@ -239,8 +241,15 @@ class rulesEditor(gtk.Dialog):
 
    def on_warnings_toggled (self, *args):
       """Callback when the compiler warnings switch is toggled"""
+      is_active = self.warnings_check.get_active()
       for sw in self.warnings_widgets:
         sw[0].set_sensitive(self.warnings_check.get_active())
+        if not is_active:
+          sw[0].set_active (False)
+        else:
+          # init the default value
+          sw[0].set_active (sw[2])
+
 
    def on_gnatwa_toggled (self, *args):
       """Callback when the gnatwa switch is toggled"""
@@ -248,7 +257,7 @@ class rulesEditor(gtk.Dialog):
         if sw[1] == "a":
           if not sw[0].get_active():
              return
-        elif sw[2]:
+        elif sw[3]:
           sw[0].set_active(True)
 
    def on_file_entry_changed (self, *args):
@@ -305,13 +314,14 @@ class rulesEditor(gtk.Dialog):
                for widg in self.warnings_widgets:
                  if widg[1] == "a":
                    widg[0].set_active (True)
-                 elif widg[2]:
+                 elif widg[3]:
                    widg[0].set_active (True)
              else:
                for widg in self.warnings_widgets:
                  if widg[1] == w_sw:
                    widg[0].set_active (True)
-                 elif widg[1].lower() == w_sw or widg[1] == w_sw.lower():
+                 elif widg[1] == w_sw.lower():
+                   # switch deactivated
                    widg[0].set_active (False)
 
         elif sw[0:2] == "+R" or sw[0:2] == "-R":
@@ -341,7 +351,6 @@ class rulesEditor(gtk.Dialog):
 
    def check_all (self, value):
       """Change all check states for the switches to 'value'"""
-      self.warnings_check.set_active (True)
       for elem in self.rules_widgets:
          if elem[2] != "":
             if value:
@@ -372,19 +381,20 @@ class rulesEditor(gtk.Dialog):
 
       f.write ("-ALL\n")
       for elem in self.rules_widgets:
-         if elem[2] == "":
-            if elem[0].get_active():
-               f.write ("+R%s\n" % (elem[1]))
-         else:
-            if elem[0].get_value_as_int() > 0:
-               f.write ("+R%s%s%i\n" % (elem[1],elem[2],elem[0].get_value_as_int()))
+         if elem[1] != "Warnings":
+            if elem[2] == "":
+               if elem[0].get_active():
+                  f.write ("+R%s\n" % (elem[1]))
+            else:
+               if elem[0].get_value_as_int() > 0:
+                  f.write ("+R%s%s%i\n" % (elem[1],elem[2],elem[0].get_value_as_int()))
 
       if self.warnings_check.get_active():
          f.write ("+RWarnings")
          first_switch = True
          a_switch = False
          for elem in self.warnings_widgets:
-            if elem[0].get_active():
+            if elem[2] != elem[0].get_active():
               if first_switch:
                 f.write (":")
                 first_switch = False
@@ -392,12 +402,20 @@ class rulesEditor(gtk.Dialog):
             if elem[1] == "a" and elem[0].get_active():
               a_switch = True
               f.write (elem[1])
-            elif a_switch and elem[2] and not elem[0].get_active():
+
+            elif a_switch and elem[3] and not elem[0].get_active():
+              # part of -gnatwa, but deactivated while gnatwa is present
               f.write (elem[1].upper())
-            elif a_switch and not elem[2] and elem[0].get_active():
-              f.write (elem[1])
-            elif not a_switch and elem[0].get_active():
-              f.write (elem[1])
+
+            elif not (a_switch and elem[3] and elem[0].get_active()) and elem[2] != elem[0].get_active():
+              # ignore parts of -gnatwa and take care only of switchezs not in their default state
+              if elem[0].get_active():
+                # deactivated by default. Let's write the lower case switch to activate it
+                f.write (elem[1].lower())
+              else:
+                # activated by default: Upper case switch will deactivate it.
+                f.write (elem[1].upper())
+
          f.write ("\n")
 
       for sw in self.additional_switches:
@@ -456,10 +474,12 @@ class gnatCheckProc:
 
    def edit(self):
       global ruleseditor
-      ruleseditor = rulesEditor(self.rules_list, self.warnings_list, self.projectfile)
-      ruleseditor.run()
-      ruleseditor.destroy()
-      return
+      try:
+        ruleseditor = rulesEditor(self.rules_list, self.warnings_list, self.projectfile)
+        ruleseditor.run()
+        ruleseditor.destroy()
+      except:
+         GPS.Console ("Messages").write ("Unexpected exception in gnatcheck.py:\n%s\n" % (traceback.format_exc()))
 
    def add_rule (self, process, matched, unmatched):
       if unmatched == "\n":
@@ -506,23 +526,22 @@ class gnatCheckProc:
                   exception = re.split ("\(except ([a-zA-Z.]*)\) *$", res[3])
                   self.all_warnings_exception_list = re.findall("[.]?[a-zA-Z]", exception[1])
 
-                # ignore the comment made for '*', and include only on/off warnings: this ignores '-gnatwe' which we don't want in gnatcheck
-                if res[2] != "*" and re.search ("turn", res[3]):
+                # include only on warnings: this ignores '-gnatwe' which we don't want in gnatcheck
+                if re.search ("turn on", res[3]):
+                  is_alias_part = False
                   if res[1] != "a":
-                    # search through all warnings not covered by -gnatwa (this list was retrieved just above)
-                    if re.search ("turn off", res[3]):
-                      found = True
-                    else:
-                      found = False
+                    # switches activated by default are not part of gnatwa
+                    if res[2] != "*":
+                      is_alias_part = True
+                      # part of gnatwa, unless explicitely part of the gnatwa exception list
+                      # search if warning is not part of gnatwa
                       for ex in self.all_warnings_exception_list:
                         if ex == res[1]:
-                          found = True
+                          is_alias_part = False
                           break
-                  else:
-                    # do not include -gnatwa in the gnatwa alias list !
-                    found = True
-                  if res[1] != "A":
-                    self.warnings_list.append ([res[1], res[3], not found])
+                  # warnings_list is a list of [switch, description, default value, part_of_gnatwa]
+                  # remove the 'turn on' in the description
+                  self.warnings_list.append ([res[1], re.sub ("^turn on ", "", res[3]), res[2] == "*", is_alias_part])
 
         self.msg = ""
       self.msg += matched
