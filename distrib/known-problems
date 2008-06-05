@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 4.3.0
 
+- H604-001: Delay in scripts execution in batch mode
+  Problem:    When launching GPS with the option "--load=<a script>", the
+              script only gets executed after the end of all background tasks
+              such as the loading of the entity database for the Smart
+              Completion.
+  Workaround: Disable the preferences/scripts that launch these background
+              tasks (such as the Smart Completion)
+
 - H529-001: Separator for combo boxes not supported in XML files
   Problem:    If you defined a "separator" attribute for a <combo> switch
               in the XML files, that separator is ignored
