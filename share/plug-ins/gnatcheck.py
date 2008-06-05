@@ -737,7 +737,7 @@ class contextualMenu (GPS.Contextual):
             except:
                # Weird case where we have a FileContext with neither file,
                # dir or project information...
-               # This may happend if the file is newly created, and has not
+               # This may happen if the file is newly created, and has not
                # been saved yet, thus does not exist on the disk.
                return False
 
