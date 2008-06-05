@@ -1,6 +1,9 @@
-#
-#  gnatcheck Python support for GPS integration
-#
+"""gnatcheck support for GPS
+
+This plug-in adds support gnatcheck, a coding standard checker
+"""
+
+
 import GPS, os, os.path, re, string, pygtk, traceback
 pygtk.require('2.0')
 import gobject, gtk
@@ -794,7 +797,7 @@ def on_gps_started (hook_name):
   </action>
   <submenu>
     <title>Tools</title>
-    <submenu after="Documentation">
+    <submenu after="Browsers">
       <title>Coding _Standard</title>
       <menu action="edit gnatcheck rules">
         <title>_Edit coding standard file</title>

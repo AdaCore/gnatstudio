@@ -1,7 +1,10 @@
-# This is a plug-in that handles cleaning project trees. It drives the
-# appropriate tool depending on the user preferences and project properties to
-# configure the builder.
+"""Handle cleaning project trees.
 
+This script drives the appropriate tool depending on the user preferences
+and project properties to configure the builder.
+"""
+
+
 from GPS import *
 
 def on_exit(process, status, output):
