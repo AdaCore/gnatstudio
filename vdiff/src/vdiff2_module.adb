@@ -394,7 +394,7 @@ package body Vdiff2_Module is
         (Kernel, '/' & (-"Tools") & '/', (-"C_ompare"),
          Callback => null,
          Ref_Item   => -"Consoles",
-         Add_Before => False);
+         Add_Before => True);
 
       Register_Menu
         (Kernel, Tools, -"_Two Files...", "",
