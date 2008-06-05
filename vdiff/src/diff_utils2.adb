@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2008, AdaCore             --
+--                 Copyright (C) 2003-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -49,7 +49,7 @@ package body Diff_Utils2 is
    end record;
 
    procedure Free (Vect : in out Diff3_Block);
-   --  Free all content of Vect.
+   --  Free all content of Vect
 
    procedure Compute3_Occurrence
      (Ret        : in out Diff_List;
@@ -382,8 +382,7 @@ package body Diff_Utils2 is
          Match (Pattern, Buffer (1 .. Last), Matches);
 
          if Matches (0) /= No_Match then
-            Compute_Occurrence
-              (Ret, Occurrence, Buffer (1 .. Last), Matches);
+            Compute_Occurrence (Ret, Occurrence, Buffer (1 .. Last), Matches);
          end if;
       end loop;
 

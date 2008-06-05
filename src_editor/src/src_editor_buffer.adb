@@ -2954,7 +2954,7 @@ package body Src_Editor_Buffer is
 
       declare
          Terminator_Pref : constant Line_Terminators :=
-           Line_Terminators'Val (Get_Pref (Line_Terminator));
+                             Line_Terminators'Val (Get_Pref (Line_Terminator));
          Bytes_Written   : Integer;
          pragma Unreferenced (Bytes_Written);
 
@@ -2981,7 +2981,7 @@ package body Src_Editor_Buffer is
            Buffer.Editable_Lines'First .. Buffer.Last_Editable_Line
          loop
             declare
-               Str  : Src_String := Get_String (Buffer, Line);
+               Str : Src_String := Get_String (Buffer, Line);
             begin
                if Str.Length = 0 then
                   if Line /= Buffer.Last_Editable_Line then
@@ -3043,9 +3043,8 @@ package body Src_Editor_Buffer is
       end;
 
       --  If we observed UTF-8 conversion errors, warn the user
-      if Has_Errors
-        and then not Internal
-      then
+
+      if Has_Errors and then not Internal then
          declare
             Buttons : Message_Dialog_Buttons;
             pragma Unreferenced (Buttons);
@@ -3121,9 +3120,7 @@ package body Src_Editor_Buffer is
       --  not to another filename (which happens for example when doing
       --  automatic saves.
 
-      if Success
-        and then not Internal
-      then
+      if Success and then not Internal then
          Buffer.Save_Complete := not Has_Errors;
 
          if Buffer.Filename /= Filename then

@@ -60,7 +60,7 @@ package body Vdiff2_Module is
 
    File1_Cst : aliased constant String := "file1";
    File2_Cst : aliased constant String := "file2";
-   File3_Cst : aliased constant String := "File3";
+   File3_Cst : aliased constant String := "file3";
 
    Vdiff_Create_Parameters : constant Cst_Argument_List :=
                                (1 => File1_Cst'Access,
@@ -469,9 +469,9 @@ package body Vdiff2_Module is
    -------------------------
 
    function Instance_From_Vdiff
-        (Vdiff  : access Diff_Head;
-         Class  : Class_Type;
-         Script : access Scripting_Language_Record'Class) return Class_Instance
+     (Vdiff  : access Diff_Head;
+      Class  : Class_Type;
+      Script : access Scripting_Language_Record'Class) return Class_Instance
    is
       Instance : Class_Instance;
    begin

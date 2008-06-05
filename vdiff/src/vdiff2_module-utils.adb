@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2007, AdaCore                  --
+--                 Copyright (C) 2003-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -181,15 +181,18 @@ package body Vdiff2_Module.Utils is
       File              : Virtual_File;
       Line              : Natural)
    is
-      Hor_List     : constant Diff_List := Horizontal_Diff
-        (Kernel, Current_Line_Dest, Current_Line_Source);
+      Hor_List     : constant Diff_List :=
+                       Horizontal_Diff
+                         (Kernel, Current_Line_Dest, Current_Line_Source);
       Curr_Node    : Diff_Chunk_List.List_Node := First (Hor_List);
       Diff         : Diff_Chunk;
       First        : Natural := 0;
       Last         : Natural := 0;
       Nb_Hghlt_Chr : Natural := 0;
    begin
-      if Current_Line_Dest'Length = 0 or Current_Line_Source'Length = 0 then
+      if Current_Line_Dest'Length = 0
+        or else Current_Line_Source'Length = 0
+      then
          return;
       end if;
 
@@ -257,9 +260,9 @@ package body Vdiff2_Module.Utils is
       Dest_Range   : Diff_Range := Null_Range)
    is
       Offset_Dest         : constant Natural :=
-        Dest_Range.Last - Dest_Range.First;
+                              Dest_Range.Last - Dest_Range.First;
       Offset_Source       : constant Natural :=
-        Source_Range.Last - Source_Range.First;
+                              Source_Range.Last - Source_Range.First;
       Offset_Min          : Natural;
       Current_Line_Source : String_Access;
       Current_Line_Dest   : String_Access;
