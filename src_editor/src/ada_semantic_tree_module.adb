@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2007, AdaCore                   --
+--                  Copyright (C) 2007-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -63,11 +63,14 @@ package body Ada_Semantic_Tree_Module is
       if Is_Open (Provider.Kernel, File) then
          Editor := Find_Editor (Provider.Kernel, File);
 
-         return new String'(Get_Text
-           (Get_Buffer (Source_Editor_Box (Get_Widget (Editor))), 1, 1));
-      else
-         return Read_File (File);
+         if Editor /= null then
+            return new String'
+              (Get_Text
+                 (Get_Buffer (Source_Editor_Box (Get_Widget (Editor))), 1, 1));
+         end if;
       end if;
+
+      return Read_File (File);
    end Get_Buffer;
 
    ---------------------
