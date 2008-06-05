@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2007, AdaCore                     --
+--                   Copyright (C) 2007-2008, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -522,7 +522,7 @@ package body Docgen2_Module is
 
       Register_Menu
         (Kernel, Tools, "_Documentation", Callback => null,
-         Ref_Item => -"Compare", Add_Before => False);
+         Ref_Item => -"Consoles", Add_Before => False);
 
       Register_Menu
         (Kernel,
