@@ -74,7 +74,7 @@
 
   <submenu>
     <title>Tools</title>
-    <submenu after="Documentation">
+    <submenu after="Macro">
       <title>_Metrics</title>
       <menu action="metrics root project">
         <title>Compute metrics for root _project</title>
