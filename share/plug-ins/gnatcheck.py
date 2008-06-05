@@ -541,7 +541,7 @@ class gnatCheckProc:
                           break
                   # warnings_list is a list of [switch, description, default value, part_of_gnatwa]
                   # remove the 'turn on' in the description
-                  self.warnings_list.append ([res[1], re.sub ("^turn on warnings (on|for) ", "", res[3]), res[2] == "*", is_alias_part])
+                  self.warnings_list.append ([res[1], re.sub ("^turn on( warnings (on|for))? ", "", res[3]), res[2] == "*", is_alias_part])
 
         self.msg = ""
       self.msg += matched
