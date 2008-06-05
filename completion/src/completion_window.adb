@@ -613,54 +613,59 @@ package body Completion_Window is
          Hide_All (Window.Location_Button);
          Set_Markup (Window.Location_Label, "");
 
-      elsif Iter = Window.More_Iter then
-         Path := Get_Path (Window.Model, Iter);
-
-         if Prev (Path) then
-            Iter := Get_Iter (Window.Model, Path);
-            Expand_Selection (Window, Minimal_Items_To_Show);
-            Select_Iter (Sel, Iter);
-         end if;
-
       else
-         Path := Get_Path (Model, Iter);
-         Scroll_To_Cell (Window.View, Path, null, False, 0.1, 0.1);
-         Path_Free (Path);
+         --  Something is selected: the window is no longer Volatile.
+         Window.Volatile := False;
 
-         Index := Natural (Get_Int (Window.Model, Iter, Index_Column));
+         if Iter = Window.More_Iter then
+            Path := Get_Path (Window.Model, Iter);
 
-         Show_All (Window.Notes_Window);
-
-         if Window.Info (Index).Notes = null then
-            if Window.Info (Index).Proposal /= null then
-               Window.Info (Index).Notes := new String'
-                 (Get_Documentation (Window.Info (Index).Proposal.all));
-            end if;
-         end if;
-
-         declare
-            Loc : File_Location :=
-              Get_Location (Window.Info (Index).Proposal.all);
-         begin
-            if Loc = Null_File_Location then
-               Hide_All (Window.Location_Title);
-               Hide_All (Window.Location_Button);
-               Set_Markup (Window.Location_Label, "");
-            else
-               Show_All (Window.Location_Title);
-               Show_All (Window.Location_Button);
-               Set_Markup
-                 (Window.Location_Label, Location_To_Label (Loc));
+            if Prev (Path) then
+               Iter := Get_Iter (Window.Model, Path);
+               Expand_Selection (Window, Minimal_Items_To_Show);
+               Select_Iter (Sel, Iter);
             end if;
 
-            Window.Location_Location := Loc;
-         end;
-
-         if Window.Info (Index).Notes.all = "" then
-            Set_Markup
-              (Window.Notes_Label, "<i>No documentation available</i>");
          else
-            Set_Markup (Window.Notes_Label, Window.Info (Index).Notes.all);
+            Path := Get_Path (Model, Iter);
+            Scroll_To_Cell (Window.View, Path, null, False, 0.1, 0.1);
+            Path_Free (Path);
+
+            Index := Natural (Get_Int (Window.Model, Iter, Index_Column));
+
+            Show_All (Window.Notes_Window);
+
+            if Window.Info (Index).Notes = null then
+               if Window.Info (Index).Proposal /= null then
+                  Window.Info (Index).Notes := new String'
+                    (Get_Documentation (Window.Info (Index).Proposal.all));
+               end if;
+            end if;
+
+            declare
+               Loc : File_Location :=
+                       Get_Location (Window.Info (Index).Proposal.all);
+            begin
+               if Loc = Null_File_Location then
+                  Hide_All (Window.Location_Title);
+                  Hide_All (Window.Location_Button);
+                  Set_Markup (Window.Location_Label, "");
+               else
+                  Show_All (Window.Location_Title);
+                  Show_All (Window.Location_Button);
+                  Set_Markup
+                    (Window.Location_Label, Location_To_Label (Loc));
+               end if;
+
+               Window.Location_Location := Loc;
+            end;
+
+            if Window.Info (Index).Notes.all = "" then
+               Set_Markup
+                 (Window.Notes_Label, "<i>No documentation available</i>");
+            else
+               Set_Markup (Window.Notes_Label, Window.Info (Index).Notes.all);
+            end if;
          end if;
       end if;
 
