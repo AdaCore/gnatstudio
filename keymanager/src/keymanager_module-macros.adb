@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2007, AdaCore              --
+--                     Copyright (C) 2003-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -759,7 +759,9 @@ package body KeyManager_Module.Macros is
       Register_Menu
         (Kernel, Macro_Menu, -"_Start Keyboard Macro",
          Callback => null,
-         Action   => Action);
+         Action   => Action,
+         Ref_Item => "Documentation",
+         Add_Before => False);
 
       if Active (Mouse_Macro_Support) then
          Command := new Macro_Command;
