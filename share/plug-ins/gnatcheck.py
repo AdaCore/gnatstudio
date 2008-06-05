@@ -722,17 +722,24 @@ class contextualMenu (GPS.Contextual):
                    found = True
            return found
          except:
-            # this is a project file
-            self.desttype = "project"
-            self.project = context.project()
-            srcs = self.project.sources (recursive = False)
-            found = False
-            self.files = []
-            for f in srcs:
-               if f.language().lower() == "ada":
-                  self.files.append (f)
-                  found = True
-            return found
+            try:
+               # this is a project file
+               self.desttype = "project"
+               self.project = context.project()
+               srcs = self.project.sources (recursive = False)
+               found = False
+               self.files = []
+               for f in srcs:
+                  if f.language().lower() == "ada":
+                     self.files.append (f)
+                     found = True
+               return found
+            except:
+               # Weird case where we have a FileContext with neither file,
+               # dir or project information...
+               # This may happend if the file is newly created, and has not
+               # been saved yet, thus does not exist on the disk.
+               return False
 
    def label (self, context):
       if self.desttype == "file":
