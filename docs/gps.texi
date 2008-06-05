@@ -7660,9 +7660,15 @@ Open a view containing all currently opened files.
 
 @end table
 
+@item Coding Standard
+@c ??? need documentation
+
+@item Compare
+@cindex visual diff
+@xref{Visual Comparison}.
+
 @item Consoles
 @table @b
-@end table
 
 @item GPS Shell
 @cindex shell
@@ -7676,26 +7682,23 @@ commands such as @code{help}.
 @cindex python
 Open a python console to access the python interpreter.
 @xref{The Shell and Python Windows}.
-
-@item Compare
-@cindex visual diff
-@xref{Visual Comparison}.
-
-@item Documentation
-@cindex documentation
-@xref{Documentation Generation}.
-
-@item Metrics
-@cindex metrics
-@xref{Metrics}.
+@end table
 
 @item Coverage
 @cindex code coverage
 @xref{Code Coverage}.
 
+@item Documentation
+@cindex documentation
+@xref{Documentation Generation}.
+
 @item Macro
 @cindex macros
 @xref{Recording and replaying macros}.
+
+@item Metrics
+@cindex metrics
+@xref{Metrics}.
 
 @item Plug-ins
 @cindex plug-ins
