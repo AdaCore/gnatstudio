@@ -2865,7 +2865,7 @@ package body Code_Analysis_Module is
       Analysis            : Code_Analysis_Instance;
       pragma Unreferenced (Analysis);
       Tools               : constant String := '/' & (-"Tools");
-      Coverage            : constant String := -"Covera_ge";
+      Coverage            : constant String := -"Cov_erage";
       Views               : constant String := -"Views";
       Mitem               : Gtk_Menu_Item;
    begin
@@ -2892,7 +2892,7 @@ package body Code_Analysis_Module is
          Text        => -"_Show report",
          Callback    => On_Single_View_Menu'Access,
          Ref_Item    => -"Documentation",
-         Add_Before  => False);
+         Add_Before  => True);
 
       --  Deactivate the dynamic menu for now.
       --  Use a static menu, so that the "gcov.py" plug-in can add menus to
