@@ -169,6 +169,16 @@ package Entities is
    --  the C++ case).
    --  Is_Type is true if this is a type, instead of an instance of a type.
 
+   type Entity_Category is
+     (Label,
+      Literal,
+      Object,
+      Package_Or_Namespace,
+      Subprogram,
+      Type_Or_Subtype,
+      Unknown);
+   --  High level categories for each entity
+
    Unresolved_Entity_Kind : constant E_Kind :=
      (Unresolved_Entity, False, False, False);
 
@@ -184,6 +194,9 @@ package Entities is
 
    function Kind_To_String (Kind : E_Kind) return String;
    --  Return a string suitable to describe the kind
+
+   function Category_To_String (Category : Entity_Category) return String;
+   --  Return a string suitable to describe the category
 
    ----------------
    -- Attributes --
@@ -591,6 +604,9 @@ package Entities is
 
    function Get_Kind (Entity : Entity_Information) return E_Kind;
    --  Return the kind of the entity.
+
+   function Get_Category (Entity : Entity_Information) return Entity_Category;
+   --  Compute the category of the entity.
 
    function Get_Attributes
      (Entity : Entity_Information) return Entity_Attributes;

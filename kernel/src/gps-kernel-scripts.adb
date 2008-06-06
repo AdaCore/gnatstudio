@@ -817,6 +817,32 @@ package body GPS.Kernel.Scripts is
                Set_Return_Value_Key (Data, Image (A));
             end loop;
          end;
+
+      elsif Command = "category" then
+         Entity := Get_Data (Data, 1);
+         Set_Return_Value (Data, Category_To_String (Get_Category (Entity)));
+
+      elsif Command = "end_of_scope" then
+         declare
+            Location : File_Location := Standard.Entities.No_File_Location;
+            Kind     : Reference_Kind;
+         begin
+            Entity := Get_Data (Data, 1);
+            Get_End_Of_Scope (Entity, Location, Kind);
+
+            if Location /= Standard.Entities.No_File_Location then
+               Set_Return_Value
+                 (Data, Create_File_Location
+                    (Get_Script (Data),
+                     File   => Create_File
+                       (Get_Script (Data), Get_Filename (Get_File (Location))),
+                     Line   => Get_Line (Location),
+                     Column => Get_Column (Location)));
+
+            else
+               Set_Error_Msg (Data, -"end-of-scope not found for the entity");
+            end if;
+         end;
       end if;
    end Create_Entity_Command_Handler;
 
@@ -1759,6 +1785,16 @@ package body GPS.Kernel.Scripts is
          Handler      => Create_Entity_Command_Handler'Access);
       Register_Command
         (Kernel, "attributes",
+         Class        => Get_Entity_Class (Kernel),
+         Handler      => Create_Entity_Command_Handler'Access);
+      Register_Command
+        (Kernel, "category",
+         Class        => Get_Entity_Class (Kernel),
+         Handler      => Create_Entity_Command_Handler'Access);
+      Register_Command
+        (Kernel, "end_of_scope",
+         Minimum_Args => 0,
+         Maximum_Args => 1,
          Class        => Get_Entity_Class (Kernel),
          Handler      => Create_Entity_Command_Handler'Access);
 

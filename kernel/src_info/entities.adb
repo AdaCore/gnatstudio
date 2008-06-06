@@ -2117,6 +2117,39 @@ package body Entities is
       end if;
    end Set_Time_Stamp;
 
+   ------------------
+   -- Get_Category --
+   ------------------
+
+   function Get_Category
+     (Entity : Entity_Information) return Entity_Category is
+   begin
+      if Entity.Kind.Is_Type then
+         return Type_Or_Subtype;
+      else
+         case Entity.Kind.Kind is
+            when Overloaded_Entity | Unresolved_Entity | Macro =>
+               return Unknown;
+
+            when Procedure_Kind | Function_Or_Operator |
+                 Entry_Or_Entry_Family =>
+               return Subprogram;
+
+            when Package_Kind =>
+               return Package_Or_Namespace;
+
+            when Label_On_Block | Label_On_Loop | Label_On_Statement =>
+               return Label;
+
+            when Enumeration_Literal | Named_Number =>
+               return Literal;
+
+            when others =>
+               return Object;
+         end case;
+      end if;
+   end Get_Category;
+
    --------------
    -- Get_Kind --
    --------------
@@ -2196,6 +2229,30 @@ package body Entities is
          return null;
       end if;
    end From_Instantiation_At;
+
+   ------------------------
+   -- Category_To_String --
+   ------------------------
+
+   function Category_To_String (Category : Entity_Category) return String is
+   begin
+      case Category is
+         when Label =>
+            return "label";
+         when Literal =>
+            return "literal";
+         when Object =>
+            return "object";
+         when Subprogram =>
+            return "subprogram";
+         when Package_Or_Namespace =>
+            return "package/namespace";
+         when Type_Or_Subtype =>
+            return "type";
+         when Unknown =>
+            return "unknown";
+      end case;
+   end Category_To_String;
 
    --------------------
    -- Kind_To_String --

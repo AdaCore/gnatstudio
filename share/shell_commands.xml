@@ -1242,6 +1242,12 @@ This is different than setting instance properties through Python's standard mec
       </example>
   </shell_doc>
 
+  <shell_doc name="GPS.Entity.end_of_scope">
+      <param name="self">The instance of GPS.Entity</param>
+      <return>An instance of GPS.FileLocation</return>
+      <description>Return the location at which the end of the entity is found.
+  </shell_doc>
+
   <shell_doc name="GPS.Entity.body">
       <param name="self">The instance of GPS.Entity</param>
       <param name="nth" default="1">An integer</param>
@@ -1260,6 +1266,12 @@ Some entities have several bodies. This is for instance the case of a separate s
       <param name="self">The instance of GPS.Entity</param>
       <return>A htable</return>
       <description>Return various boolean attributes of the entity: is the entity global, static, static for a class, protected,...</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Entity.category">
+      <param name="self">The instance of GPS.Entity</param>
+      <return>A string</return>
+      <description>Return the category of a given entity. Possible values include: label, literal, object, subprogram, package/namespace, type, unknown.</description>
   </shell_doc>
 
   <shell_doc name="GPS.Entity.find_all_refs">
@@ -3850,6 +3862,7 @@ highlight_category, style_category and warning_category reference the colors to 
      <param name="message">A string</param>
      <param name="highlight" default="">A string, the name of the highlight category</param>
      <param name="length" default="0">An integer</param>
+     <param name="look_for_secondary" default="False">A boolean</param>
      <description>Add a new entry in the location window. Nodes are created as needed for the category or file. If Highlight is specified to a non-empty string, the whole line is highlighted in the file, with a color given by that highlight category (see register_highlighting for more information). Length is the length of the highlighting. The default value of 0 indicates that the whole line should be highlighted</description>
      <example lang="python">
         GPS.Editor.register_highlighting ("My_Category", "blue")
