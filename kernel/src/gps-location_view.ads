@@ -85,7 +85,8 @@ package GPS.Location_View is
       Remove_Duplicates  : Boolean := True;
       Enable_Counter     : Boolean := True;
       Has_Markups        : Boolean := False;
-      Sort_In_File       : Boolean := False);
+      Sort_In_File       : Boolean := False;
+      Look_For_Secondary : Boolean := False);
    --  Insert a new location in the result view.
    --  This is similar to Insert, except it creates the result view if
    --  necessary.
@@ -98,9 +99,11 @@ package GPS.Location_View is
    --  If Has_Markups is True, then Text should be in Pango Markup language;
    --  in this case, the markups will be interpreted and displayed in the
    --  Locations view.
-   --  If Sort_In_File is true, then the new entry will be inserted before the
+   --  If Sort_In_File is True, then the new entry will be inserted before the
    --  first entry with a higher line number. This should be avoided if you
    --  know that you are already inserting entries sorted, since it is slower.
+   --  If Look_For_Secondary is True, Text will be scanned for additional
+   --  references of the form file:line[:column].
 
    function Category_Count
      (Kernel   : access Kernel_Handle_Record'Class;

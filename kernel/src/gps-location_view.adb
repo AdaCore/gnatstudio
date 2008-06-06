@@ -139,6 +139,7 @@ package body GPS.Location_View is
    Highlight_Cat_Cst : aliased constant String := "highlight_category";
    Style_Cat_Cst     : aliased constant String := "style_category";
    Warning_Cat_Cst   : aliased constant String := "warning_category";
+   Look_Sec_Cst      : aliased constant String := "look_for_secondary";
 
    Parse_Location_Parameters  : constant Cst_Argument_List :=
                                   (1  => Output_Cst'Access,
@@ -162,7 +163,8 @@ package body GPS.Location_View is
                                    4 => Column_Cst'Access,
                                    5 => Message_Cst'Access,
                                    6 => Highlight_Cst'Access,
-                                   7 => Length_Cst'Access);
+                                   7 => Length_Cst'Access,
+                                   8 => Look_Sec_Cst'Access);
 
    -----------------
    -- Local types --
@@ -1932,7 +1934,8 @@ package body GPS.Location_View is
       Remove_Duplicates  : Boolean := True;
       Enable_Counter     : Boolean := True;
       Has_Markups        : Boolean := False;
-      Sort_In_File       : Boolean := False)
+      Sort_In_File       : Boolean := False;
+      Look_For_Secondary : Boolean := False)
    is
       View : constant Location_View := Get_Or_Create_Location_View (Kernel);
       Iter : Gtk_Tree_Iter := Null_Iter;
@@ -1949,7 +1952,7 @@ package body GPS.Location_View is
                Enable_Counter     => Enable_Counter,
                Sort_In_File       => Sort_In_File,
                Parent_Iter        => Iter,
-               Look_For_Secondary => False);
+               Look_For_Secondary => Look_For_Secondary);
          else
             Add_Location
               (View,
@@ -1961,7 +1964,7 @@ package body GPS.Location_View is
                Enable_Counter     => Enable_Counter,
                Sort_In_File       => Sort_In_File,
                Parent_Iter        => Iter,
-               Look_For_Secondary => False);
+               Look_For_Secondary => Look_For_Secondary);
          end if;
 
          Gtkada.MDI.Highlight_Child (Find_MDI_Child (Get_MDI (Kernel), View));
@@ -2852,30 +2855,30 @@ package body GPS.Location_View is
    begin
       Register_Command
         (Kernel, "parse",
-         Minimum_Args => 2,
-         Maximum_Args => 12,
+         Minimum_Args  => 2,
+         Maximum_Args  => Parse_Location_Parameters'Length,
          Class         => Locations_Class,
          Static_Method => True,
          Handler       => Default_Command_Handler'Access);
       Register_Command
         (Kernel, "add",
-         Minimum_Args => Locations_Add_Parameters'Length - 2,
-         Maximum_Args => Locations_Add_Parameters'Length,
+         Minimum_Args  => Locations_Add_Parameters'Length - 2,
+         Maximum_Args  => Locations_Add_Parameters'Length,
          Class         => Locations_Class,
          Static_Method => True,
-         Handler      => Default_Command_Handler'Access);
+         Handler       => Default_Command_Handler'Access);
       Register_Command
         (Kernel, "remove_category",
-         Minimum_Args => 1,
-         Maximum_Args => 1,
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
          Class         => Locations_Class,
          Static_Method => True,
-         Handler      => Default_Command_Handler'Access);
+         Handler       => Default_Command_Handler'Access);
       Register_Command
         (Kernel, "list_categories",
          Class         => Locations_Class,
          Static_Method => True,
-         Handler      => Default_Command_Handler'Access);
+         Handler       => Default_Command_Handler'Access);
       Register_Command
         (Kernel, "list_locations",
          Class         => Locations_Class,
@@ -2885,11 +2888,11 @@ package body GPS.Location_View is
          Handler       => Default_Command_Handler'Access);
       Register_Command
         (Kernel, "dump",
-         Minimum_Args => 1,
-         Maximum_Args => 1,
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
          Class         => Locations_Class,
          Static_Method => True,
-         Handler      => Default_Command_Handler'Access);
+         Handler       => Default_Command_Handler'Access);
    end Register_Commands;
 
    -----------------------------
@@ -3067,7 +3070,9 @@ package body GPS.Location_View is
                Highlight          => Highlight /= "",
                Highlight_Category => Get_Or_Create_Style
                  (Get_Kernel (Data), Highlight, False),
-               Quiet              => True);
+               Quiet              => True,
+               Sort_In_File       => True,
+               Look_For_Secondary => Nth_Arg (Data, 8, False));
          end;
 
       elsif Command = "dump" then
