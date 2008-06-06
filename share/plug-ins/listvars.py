@@ -10,7 +10,7 @@ used in the selected subprogram.
 ## No user customization below this line
 ############################################################################
 
-import GPS, re
+import GPS
 
 def list_vars (subprogram):
    """List all variables referenced by the subprogram.
