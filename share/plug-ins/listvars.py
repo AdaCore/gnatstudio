@@ -68,7 +68,11 @@ def on_filter (context):
    return isinstance (context, GPS.EntityContext)
 
 def on_label (context):
-   return "References/Variables used in <b>" + context.entity().name() + "</b>"
+   entity = context.entity()
+   if entity:
+     return "References/Variables used in <b>" + entity.name() + "</b>"
+   else:
+     return ""
 
 def on_activate (context):
    list_vars (context.entity())
