@@ -8,12 +8,6 @@ bind key shortcuts through the menu /Edit/Key shortcuts:
   - "goto other file" 
 """
 
-############################################################################
-# Customization variables
-# These variables can be changed in the initialization commands associated
-# with this script (see /Tools/Scripts)
-
-
 
 ############################################################################
 ## No user customization below this line

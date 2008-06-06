@@ -8,6 +8,7 @@ At the end of the processing, the open editors are decorated with coverage
 information.
 """
 
+
 import GPS, os
 from GPS import *
 from os import *

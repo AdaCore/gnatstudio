@@ -19,11 +19,6 @@ being edited:
     Open a read-only widget that shows the organization of the XML file
 """
 
-############################################################################
-# Customization variables
-# These variables can be changed in the initialization commands associated
-# with this script (see /Tools/Scripts)
-
 
 ############################################################################
 ## No user customization below this line

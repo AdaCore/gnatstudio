@@ -1,4 +1,7 @@
+"""git support plug-in
+"""
 
+
 import os.path
 
 def from_git_root (filename):

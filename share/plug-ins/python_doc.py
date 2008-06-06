@@ -10,11 +10,6 @@ This package provides support for:
    particular, a predefined menu is added for the GPS extensions
 """
 
-############################################################################
-# Customization variables
-# These variables can be changed in the initialization commands associated
-# with this script (see /Tools/Scripts)
-
 
 ############################################################################
 ## No user customization below this line

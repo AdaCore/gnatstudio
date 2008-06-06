@@ -414,7 +414,7 @@ class rulesEditor(gtk.Dialog):
               f.write (elem[1].upper())
 
             elif not (a_switch and elem[3] and elem[0].get_active()) and elem[2] != elem[0].get_active():
-              # ignore parts of -gnatwa and take care only of switchezs not in their default state
+              # ignore parts of -gnatwa and take care only of switches not in their default state
               if elem[0].get_active():
                 # deactivated by default. Let's write the lower case switch to activate it
                 f.write (elem[1].lower())

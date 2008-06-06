@@ -1,53 +1,50 @@
-## This file provides utilities used by the SPARK plug-in for GPS.
-## Copyright (c) 2004-2007 Praxis High Integrity Systems Limited
-## Copyright (c) 2005-2007 AdaCore
+"""This file provides utilities used by the SPARK plug-in for GPS.
+Copyright (c) 2004-2007 Praxis High Integrity Systems Limited
+Copyright (c) 2005-2008 AdaCore
+
+SPARK Toolset Customization for GPS
+-----------------------------------
+
+Introduction
+------------
+
+This plug-in provides support for the SPARK language and toolset.
+
+It is intended for use with Release 7.4 or later of the
+SPARK Toolset.  The customization depends on the presence of the
+"brief output" Examiner switch, which is not available
+in earlier releases.  If you don't have release 7.4 or better,
+please contact Praxis High Integrity Systems: sparkinfo@praxis-his.com
+
+This plug-in remains a work-in-progress, and there is lots of
+room for improvement.  We welcome contributions.
+
+Use
+---
+
+This plug-in will be enabled only if you have spark tools available in
+your PATH variable (e.g. Spark Examiner, POGs, etc).
+
+Edit the project preferences (from the Project menu) and tick the necessary
+languages on the Languages tab: Spark, Index, Listing, Metafile, Siv, Vcg.
+
+Switches for the tools can be set on the same menu under the Switches tab.
+
+The Examiner output produced is always /brief so that GPS is able to parse
+the resulting files.
+
+The tools can be run from the SPARK menu, or right-clicking on files will
+produce a contextual menu.  Not all tools can be run on all files and GPS
+will produce a warning if the incorrect context is selected.
+"""
+
 
-#####################################
-# SPARK Toolset Customization for GPS
-# -----------------------------------
-#
-# Introduction
-# ------------
-#
-# This package is a customization of AdaCore's GPS system for use with the
-# SPARK language and toolset.
-#
-# The customization is intended for use with Release 7.4 of the
-# SPARK Toolset.  The customization depends on the presence of the
-# "brief output" Examiner switch, which is not available
-# in earlier releases.  If you don't have release 7.4 or better,
-# please contact Praxis High Integrity Systems: sparkinfo@praxis-his.com
-#
-# This customization remains a work-in-progress, and there is lots of
-# room for improvement.  We welcome contributions.
-#
-# Use
-# ---
-#
-# This plug-in will be enabled only if you have spark tools available in
-# your PATH variable (e.g. Spark Examiner, POGs, etc).
-#
-# Edit the project preferences (from the Project menu) and tick the necessary
-# languages on the Languages tab: Spark, Index, Listing, Metafile, Siv, Vcg.
-#
-# Switches for the tools can be set on the same menu under the Switches tab.
-#
-# The Examiner output produced is always /brief so that GPS is able to parse
-# the resulting files.
-#
-# The tools can be run from the SPARK menu, or right-clicking on files will
-# produce a contextual menu.  Not all tools can be run on all files and GPS
-# will produce a warning if the incorrect context is selected.
-#
 # Future work
 # -----------
-#
+
 # Nice-to-haves include:
 #   - Context sensitive navigation in annotations
 #   - Hot keys displayed on the SPARK Menu
-#   - Better EMACS integration (particularly on Windows...)
-#
-######################################
 
 a = """<?xml version="1.0"?>
 <!--  Note: do not use the ampersand character in XML comments!!       -->
