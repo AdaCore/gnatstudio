@@ -36,7 +36,9 @@ def list_vars (subprogram):
       if e.category() == "object":
          found = False
          for r in e.references (include_implicit=True, in_file=locFile):
-            if not found and r.line() >= locFrom and r.line() <= locTo:
+            if not found \
+              and r.file() == locFile \
+              and r.line() >= locFrom and r.line() <= locTo:
                decl = e.declaration()
 
                if decl.file() != locFile \
