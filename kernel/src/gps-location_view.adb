@@ -2862,7 +2862,7 @@ package body GPS.Location_View is
          Handler       => Default_Command_Handler'Access);
       Register_Command
         (Kernel, "add",
-         Minimum_Args  => Locations_Add_Parameters'Length - 2,
+         Minimum_Args  => Locations_Add_Parameters'Length - 3,
          Maximum_Args  => Locations_Add_Parameters'Length,
          Class         => Locations_Class,
          Static_Method => True,
