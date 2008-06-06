@@ -3320,6 +3320,11 @@ entities.
 Find all references to @i{entity} in the current file (or in the current
 top level unit for Ada sources).
 See @ref{Find All References} for more details.
+
+@item Variables used in @i{entity}
+@cindex variables used
+Find all variables (local or global) used in @i{entity} and list each first
+reference in the locations window.
 @end table
 
 @item Methods of @i{entity}
