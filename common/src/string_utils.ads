@@ -314,7 +314,7 @@ package String_Utils is
    --     foo\"foo    -> foo\"foo    (backslash not removed from output)
 
    function Protect
-     (S : String;
+     (S              : String;
       Protect_Quotes : Boolean := True;
       Protect_Spaces : Boolean := False) return String;
    --  Escape special characters in S.

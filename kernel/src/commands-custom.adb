@@ -210,7 +210,7 @@ package body Commands.Custom is
       Command        : access Custom_Command_Editor_Record'Class;
       Kernel         : access Kernel_Handle_Record'Class;
       Default_Output : String) return Custom_Component_Editor;
-   --  Return a widget used to edit Component.
+   --  Return a widget used to edit Component
 
    function Create_Empty_Component_Editor
      (Kernel         : access Kernel_Handle_Record'Class;
@@ -1079,15 +1079,15 @@ package body Commands.Custom is
       function Dollar_Substitution
         (Param  : String;
          Quoted : Boolean) return String;
-      --  Substitution function for the "$1" .. "$N", "$*", "$@" parameters.
+      --  Substitution function for the "$1" .. "$N", "$*", "$@" parameters
 
       function Substitution
-        (Param  : String; Quoted : Boolean) return String;
+        (Param : String; Quoted : Boolean) return String;
       --  Substitution function for '%1', '%2',...
 
       function Execute_Simple_Command
         (Component : Custom_Component) return Boolean;
-      --  Execute a single command, and return whether it succeeded.
+      --  Execute a single command, and return whether it succeeded
 
       function Terminate_Command return Command_Return_Type;
       --  Terminate the command and free associated memory
@@ -1346,9 +1346,9 @@ package body Commands.Custom is
             --  correctly set:
             Subst_Cmd_Line : constant String := Substitute
               (Subst_Percent,
-               Delimiter         => GPS.Kernel.Macros.Special_Character,
-               Callback          => Substitution'Unrestricted_Access,
-               Recursive         => False);
+               Delimiter => GPS.Kernel.Macros.Special_Character,
+               Callback  => Substitution'Unrestricted_Access,
+               Recursive => False);
          begin
             if Context.Dir /= null then
                Old_Dir := new String'(Get_Current_Dir);

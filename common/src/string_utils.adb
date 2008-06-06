@@ -1163,7 +1163,7 @@ package body String_Utils is
    -------------
 
    function Protect
-     (S : String;
+     (S              : String;
       Protect_Quotes : Boolean := True;
       Protect_Spaces : Boolean := False) return String
    is

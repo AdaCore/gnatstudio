@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2008, AdaCore             --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -290,7 +290,7 @@ package body Src_Editor_Module is
    function Execute
      (Command : access Close_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Close the current window (or all windows if Close_All is True).
+   --  Close the current window (or all windows if Close_All is True)
 
    procedure New_View
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
@@ -301,30 +301,30 @@ package body Src_Editor_Module is
    procedure File_Edited_Cb
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
-   --  Callback for the "file_edited" hook.
+   --  Callback for the "file_edited" hook
 
    procedure File_Changed_On_Disk_Cb
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
-   --  Callback for the "file_changed_on_disk" hook.
+   --  Callback for the "file_changed_on_disk" hook
 
    procedure File_Saved_Cb
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
-   --  Callback for the "file_saved" hook.
+   --  Callback for the "file_saved" hook
 
    procedure Cursor_Stopped_Cb
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
-   --  Callback for the "cursor_stopped" hook.
+   --  Callback for the "cursor_stopped" hook
 
    procedure Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class);
-   --  Called when the preferences have changed.
+   --  Called when the preferences have changed
 
    procedure Add_To_Recent_Menu
      (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File);
-   --  Add an entry for File to the Recent menu, if needed.
+   --  Add an entry for File to the Recent menu, if needed
 
    function Get_Filename (Child : MDI_Child) return GNATCOLL.VFS.Virtual_File;
    --  If Child is a file editor, return the corresponding filename,
@@ -337,7 +337,7 @@ package body Src_Editor_Module is
      (Kernel    : access Kernel_Handle_Record'Class;
       Expansion : String;
       Special   : Character) return String;
-   --  Does the expansion of special entities in the aliases.
+   --  Does the expansion of special entities in the aliases
 
    type On_Recent is new Menu_Callback_Record with record
       Kernel : Kernel_Handle;
@@ -350,7 +350,7 @@ package body Src_Editor_Module is
    --  undo/redo items.
 
    procedure Map_Cb (Widget : access Gtk_Widget_Record'Class);
-   --  Create the module-wide GCs.
+   --  Create the module-wide GCs
 
    package File_Callback is new Gtk.Handlers.User_Callback
      (Gtk_Widget_Record, Virtual_File);
@@ -359,7 +359,7 @@ package body Src_Editor_Module is
      (Widget : access Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues;
       User   : Virtual_File);
-   --  Callback to call when an editor is about to be destroyed.
+   --  Callback to call when an editor is about to be destroyed
 
    procedure Update_Cache_On_Focus
      (Child : access Gtk_Widget_Record'Class);
@@ -578,7 +578,7 @@ package body Src_Editor_Module is
    is
       D : constant File_Hooks_Args := File_Hooks_Args (Data.all);
    begin
-      --  Insert the saved file in the Recent menu.
+      --  Insert the saved file in the Recent menu
 
       if D.File /= GNATCOLL.VFS.No_File
         and then not Is_Auto_Save (D.File)
@@ -1145,7 +1145,7 @@ package body Src_Editor_Module is
       Child2  : MDI_Child;
 
       procedure Jump_To_Location;
-      --  Jump to the location given in parameter to Open_File.
+      --  Jump to the location given in parameter to Open_File
 
       ----------------------
       -- Jump_To_Location --
@@ -1247,7 +1247,7 @@ package body Src_Editor_Module is
          Widget_Callback.Connect
            (Child, Signal_Selected, Update_Cache_On_Focus'Access);
 
-         --  Add child to the hash table of editors.
+         --  Add child to the hash table of editors
          Editors_Hash.Set (Id.Editors, File, (Child => MDI_Child (Child)));
 
          --  Make sure the entry in the hash table is removed when the editor
@@ -1275,7 +1275,7 @@ package body Src_Editor_Module is
             File_Edited (Kernel, Get_Filename (MDI_Child (Child)));
 
          else
-            --  Determine the number of "Untitled" files open.
+            --  Determine the number of "Untitled" files open
 
             declare
                Iterator    : Child_Iterator := First_Child (MDI);
@@ -2102,7 +2102,7 @@ package body Src_Editor_Module is
 
    begin
       if D.Line = -1 then
-         --  Close all file editors corresponding to File.
+         --  Close all file editors corresponding to File
 
          loop
             Child := Find_Editor (Kernel, D.File);
@@ -3245,7 +3245,7 @@ package body Src_Editor_Module is
             Id.Character_Width := 0;
          end if;
 
-         --  Tell the editors to refresh their side columns.
+         --  Tell the editors to refresh their side columns
          Iter  := First_Child (Get_MDI (Kernel));
 
          loop
@@ -3328,9 +3328,7 @@ package body Src_Editor_Module is
       Full  : GNATCOLL.VFS.Virtual_File;
 
    begin
-      if File = GNATCOLL.VFS.No_File
-        or else Get_MDI (Kernel) = null
-      then
+      if File = GNATCOLL.VFS.No_File or else Get_MDI (Kernel) = null then
          return null;
       end if;
 
@@ -3344,7 +3342,7 @@ package body Src_Editor_Module is
          return Child;
       end if;
 
-      --  Attempt to find the editor in the cache.
+      --  Attempt to find the editor in the cache
 
       Child := Editors_Hash.Get (Id.Editors, File).Child;
 
@@ -3491,7 +3489,7 @@ package body Src_Editor_Module is
 
    function Autosaved_File (File : Virtual_File) return Virtual_File is
    begin
-      --  Implementation must be in sync with Is_Auto_Save below.
+      --  Implementation must be in sync with Is_Auto_Save below
       return Create
         (Full_Filename => Dir_Name (File).all & ".#" & Base_Name (File) & "#");
    end Autosaved_File;

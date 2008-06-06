@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2006                      --
---                              AdaCore                              --
+--                 Copyright (C) 2003-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -77,7 +76,7 @@ package Commands.Interactive is
       Remaining_Repeat => 0);
 
    procedure Free (X : in out Interactive_Command_Context);
-   --  Free memory associated to X.
+   --  Free memory associated to X
 
    ------------------------
    --  Command_Component --
@@ -145,7 +144,7 @@ package Commands.Interactive is
    --  Return a widget to edit a command and its various components
 
    function To_XML
-     (Editor      : access Command_Editor_Record)
+     (Editor : access Command_Editor_Record)
       return Glib.Xml_Int.Node_Ptr is abstract;
    --  Return a newly allocated XML node representing the command edited by
    --  Editor. null will be returned if the command cannot be represented in

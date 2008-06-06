@@ -2067,7 +2067,7 @@ package body GPS.Kernel.Scripts is
       Command : String)
    is
       Errors : aliased Boolean;
-      Str : constant String := Execute_Command
+      Str    : constant String := Execute_Command
         (Lookup_Scripting_Language (Kernel.Scripts, GPS_Shell_Name),
          Command, null, True, True, Errors'Unchecked_Access);
       pragma Unreferenced (Str);
@@ -2293,7 +2293,7 @@ package body GPS.Kernel.Scripts is
      (Instance : Class_Instance) return GPS.Kernel.Selection_Context
    is
       Value : constant Instance_Property :=
-        Get_Data (Instance, Context_Class_Name);
+                Get_Data (Instance, Context_Class_Name);
    begin
       if Value = null then
          return No_Context;
@@ -2306,8 +2306,9 @@ package body GPS.Kernel.Scripts is
    -- Get_Data --
    --------------
 
-   function Get_Data (Data : Callback_Data'Class; N : Positive)
-                      return GPS.Kernel.Selection_Context is
+   function Get_Data
+     (Data : Callback_Data'Class; N : Positive)
+      return GPS.Kernel.Selection_Context is
    begin
       return Get_Data
         (Nth_Arg (Data, N, Get_Context_Class (Get_Kernel (Data))));
@@ -2373,11 +2374,10 @@ package body GPS.Kernel.Scripts is
    function Get_Or_Create_Context
      (Script  : access Scripting_Language_Record'Class;
       Class   : Class_Type;
-      Context : GPS.Kernel.Selection_Context)
-      return Class_Instance
+      Context : GPS.Kernel.Selection_Context) return Class_Instance
    is
-      Instance : Class_Instance;
-      Initial_Ref      : constant Integer := Context.Data.Data.Ref_Count;
+      Initial_Ref : constant Integer := Context.Data.Data.Ref_Count;
+      Instance    : Class_Instance;
    begin
       if Active (Ref_Me) then
          Increase_Indent
@@ -2531,8 +2531,7 @@ package body GPS.Kernel.Scripts is
    -------------------
 
    function Get_Instances
-     (Prop : GPS_Properties_Record) return Instance_List_Access
-   is
+     (Prop : GPS_Properties_Record) return Instance_List_Access is
    begin
       case Prop.Typ is
          when Contexts =>
@@ -2554,8 +2553,8 @@ package body GPS.Kernel.Scripts is
    procedure On_Click
      (Link : access Hyper_Link_Subprogram; Text : String)
    is
-      Data : Callback_Data'Class :=
-        Create (Get_Script (Link.Subprogram.all), 1);
+      Data   : Callback_Data'Class :=
+                 Create (Get_Script (Link.Subprogram.all), 1);
       Result : Boolean;
       pragma Unreferenced (Result);
    begin
