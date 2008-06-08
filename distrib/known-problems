@@ -8,6 +8,12 @@ Known Problems fixed in GPS 4.3.0
   Workaround: Disable the preferences/scripts that launch these background
               tasks (such as the Smart Completion)
 
+- H602-007: Cannot write data into read-only files
+  Problem:    GPS does not properly detect that a file is read-only.
+              This prevents GPS from temporarily set the file to writable
+              to save the content as it is supposed to happen.
+  Workaround: Set manually the file to writable.
+
 - H529-001: Separator for combo boxes not supported in XML files
   Problem:    If you defined a "separator" attribute for a <combo> switch
               in the XML files, that separator is ignored

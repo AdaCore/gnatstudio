@@ -3072,10 +3072,7 @@ package body Src_Editor_Buffer is
 
       --  The file could not be opened, check whether it is read-only
 
-      if FD = Invalid_File
-        and then Is_Regular_File (Filename)
-        and then not Is_Writable (Filename)
-      then
+      if Is_Regular_File (Filename) and then not Is_Writable (Filename) then
          declare
             Buttons : Message_Dialog_Buttons;
          begin
@@ -3093,7 +3090,6 @@ package body Src_Editor_Buffer is
             if Buttons = Button_Yes then
                Force_Write := True;
                Set_Writable (Filename, True);
-               FD := Write_File (Filename);
             end if;
          end;
       end if;
