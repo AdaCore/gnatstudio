@@ -17,16 +17,16 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Strings; use GNAT.Strings;
+with GNAT.Strings;                 use GNAT.Strings;
 
-with Language.Tree.Database;  use Language.Tree.Database;
+with Language.Tree.Database;       use Language.Tree.Database;
 with Ada_Semantic_Tree.Assistants; use Ada_Semantic_Tree.Assistants;
-with GNATCOLL.VFS;                    use GNATCOLL.VFS;
-with Gtkada.MDI; use Gtkada.MDI;
-with Gtkada; use Gtkada;
-with Src_Editor_Module; use Src_Editor_Module;
-with Src_Editor_Buffer; use Src_Editor_Buffer;
-with Src_Editor_Box; use Src_Editor_Box;
+with GNATCOLL.VFS;                 use GNATCOLL.VFS;
+with Gtkada.MDI;                   use Gtkada.MDI;
+with Gtkada;                       use Gtkada;
+with Src_Editor_Module;            use Src_Editor_Module;
+with Src_Editor_Buffer;            use Src_Editor_Buffer;
+with Src_Editor_Box;               use Src_Editor_Box;
 
 package body Ada_Semantic_Tree_Module is
 
