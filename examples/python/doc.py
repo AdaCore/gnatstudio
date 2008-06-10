@@ -5,21 +5,16 @@
 ##    $ gps -P /foo/bar/my_project.gpr --load=python:doc.py
 
 from GPS import *
-
-# If GPS is done with its processing, exit.
-def delayed_exit (t):
-   if len (Command.list()) == 0:
-      exit()
+from pygps import delayed_exit
 
 # Set the preferences. You can adjust them at your convenience.
 Preference ("Doc-Process-Body").set (True)
-Preference ("Doc-Xref-All").set (True)
-Preference ("Doc-Tagged").set (True)
 Preference ("Doc-Show-Private").set (True)
 Preference ("Doc-References").set (True)
+Preference ("Doc-Up-To-Date-Only").set (False)
 
 # Generate documentation for the root projects and all subprojects.
-execute_action ("/Tools/Documentation/Generate project & subprojects")
+Project.root().generate_doc (recursive=True)
 
 # Try to exit every 10 seconds.
-Timeout (10000, delayed_exit)
+delayed_exit (10000)
