@@ -32,6 +32,8 @@ with String_Utils;           use String_Utils;
 with Traces;                 use Traces;
 with Vdiff2_Module;          use Vdiff2_Module;
 
+with String_Diff;            use String_Diff;
+
 package body Diff_Utils2 is
 
    use Diff_Chunk_List;
@@ -619,54 +621,83 @@ package body Diff_Utils2 is
      (Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
       Line1, Line2 : String) return Diff_List
    is
-      V_Fich1,
-      V_Fich2     : Virtual_File;
-      Fich1,
-      Fich2       : String_Access;
-      Local_Line1 : String (1 .. 2 * Line1'Length);
-      Local_Line2 : String (1 .. 2 * Line2'Length);
-      FD1,
-      FD2         : File_Descriptor;
-      Diff1       : Diff_List;
-      Success     : Boolean;
-      N           : Integer;
-      pragma Unreferenced (N, Success);
+      pragma Unreferenced (Kernel);
+
+      Result : Diff_List;
+
+      Current_Chunk : Diff_Chunk_Access := null;
+
+      Old_Range : Natural := 1;
+
+      procedure Cb
+        (Old_Obj, New_Obj : Character;
+         State : String_Diff.Diff_State);
+      --  Callback for the diff procedure.
+
+      --------
+      -- Cb --
+      --------
+
+      procedure Cb
+        (Old_Obj, New_Obj : Character;
+         State : String_Diff.Diff_State)
+      is
+         pragma Unreferenced (Old_Obj, New_Obj);
+         Action : Diff_Action;
+      begin
+         case State is
+            when Added => Action := Append;
+            when Removed => Action := Delete;
+            when Equal => Action := Nothing;
+         end case;
+
+         if Current_Chunk /= null
+           and then Action /= Current_Chunk.Range1.Action
+         then
+            Diff_Chunk_List.Append (Result, Current_Chunk);
+            Current_Chunk := null;
+         end if;
+
+         case Action is
+            when Nothing =>
+               Old_Range := Old_Range + 1;
+
+            when Append =>
+               if Current_Chunk = null then
+                  Current_Chunk := new Diff_Chunk'
+                    (Range1 => (First => Old_Range, Last => Old_Range + 1,
+                                Action           => Action,
+                                Blank_Lines_Mark => Invalid_Mark),
+                     Range2 => Null_Range,
+                     Range3 => Null_Range,
+                     Location  => 0,
+                     Conflict  => False);
+               else
+                  Current_Chunk.Range1.Last := Current_Chunk.Range1.Last + 1;
+               end if;
+
+               Old_Range := Old_Range + 1;
+
+            when Delete =>
+               if Current_Chunk = null then
+                  Current_Chunk := new Diff_Chunk'
+                    (Range1 => (First => Old_Range - 1, Last => Old_Range,
+                                Action           => Action,
+                                Blank_Lines_Mark => Invalid_Mark),
+                     Range2 => Null_Range,
+                     Range3 => Null_Range,
+                     Location  => 0,
+                     Conflict  => False);
+               end if;
+
+            when Change =>
+               null;
+         end case;
+      end Cb;
 
    begin
-      if Line1 = "" or else Line2 = "" then
-         return Diff1;
-      end if;
-
-      Create_Temp_File (FD1, Fich1);
-      Create_Temp_File (FD2, Fich2);
-
-      V_Fich1 := Create (Fich1.all);
-      V_Fich2 := Create (Fich2.all);
-
-      for J in Line1'Range loop
-         Local_Line1 (2 * J - 1) := Line1 (J);
-         Local_Line1 (2 * J)     := ASCII.LF;
-      end loop;
-
-      for J in Line2'Range loop
-         Local_Line2 (2 * J - 1) := Line2 (J);
-         Local_Line2 (2 * J)     := ASCII.LF;
-      end loop;
-
-      N := Write (FD1, Local_Line1 (Local_Line1'First)'Address,
-                  Local_Line1'Length);
-      N := Write (FD2, Local_Line2 (Local_Line2'First)'Address,
-                  Local_Line2'Length);
-      Close (FD1);
-      Close (FD2);
-
-      Diff1 := Diff (Kernel, V_Fich1, V_Fich2);
-
-      Delete_File (Fich1.all, Success);
-      Delete_File (Fich2.all, Success);
-      Free (Fich1);
-      Free (Fich2);
-      return Diff1;
+      String_Diff.Diff (Line2, Line1, Cb'Unrestricted_Access);
+      return Result;
    end Horizontal_Diff;
 
    ---------------
