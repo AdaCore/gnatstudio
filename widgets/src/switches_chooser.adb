@@ -483,7 +483,7 @@ package body Switches_Chooser is
          Slave_Section  => new String'(Slave_Section),
          Slave_Switch   => new String'(Slave_Switch),
          Slave_Status   => Slave_Activate,
-         Act_On_Default => True);
+         Act_On_Default => False);
    end Add_Dependency;
 
    ----------------------------

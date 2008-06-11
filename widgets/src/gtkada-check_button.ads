@@ -27,13 +27,12 @@
 -----------------------------------------------------------------------
 
 with Glib; use Glib;
-with Gtk.Button;
 with Gtk.Check_Button;
 
 package Gtkada.Check_Button is
 
    type Gtkada_Check_Button_Record is new
-     Gtk.Button.Gtk_Button_Record with private;
+     Gtk.Check_Button.Gtk_Check_Button_Record with private;
    type Gtkada_Check_Button is access all Gtkada_Check_Button_Record'Class;
    --  This version of the Check Button is a variant of the original gtk+
    --  widget, in that is handles 3 states instead of two: Checked/Unchecked/
@@ -79,7 +78,6 @@ private
      Gtk.Check_Button.Gtk_Check_Button_Record with record
       State     : State_Type;
       Default   : Boolean;
-      In_Handle : Boolean := False;
    end record;
 
 end Gtkada.Check_Button;

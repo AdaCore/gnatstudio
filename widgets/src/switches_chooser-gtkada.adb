@@ -473,7 +473,7 @@ package body Switches_Chooser.Gtkada is
             Pack_Start (Box, Check, Expand => False);
             Set_Tooltip (Editor, Check, Switch, S);
             User_Widget_Callback.Connect
-              (Check, Gtk.Button.Signal_Clicked,
+              (Check, Gtk.Toggle_Button.Signal_Toggled,
                On_Toggle_Check'Access,
                (Switches_Editor (Editor), Switch));
 

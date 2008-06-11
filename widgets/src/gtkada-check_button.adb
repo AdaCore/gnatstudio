@@ -53,6 +53,10 @@ package body Gtkada.Check_Button is
       Event : Gdk_Event) return Boolean;
    --  Callback for the expose event
 
+   procedure State_Changed
+     (Check : access Gtkada_Check_Button_Record'Class);
+   --  Called every time the state is changed
+
    -------------
    -- Gtk_New --
    -------------
@@ -78,7 +82,6 @@ package body Gtkada.Check_Button is
       Gtk.Check_Button.Initialize (Check, Label);
       Check.Default := False;
       Check.State   := State_Unchecked;
-      Check.In_Handle := False;
       Set_Default (Check, Default);
       Callback.Connect
         (Check, Gtk.Button.Signal_Clicked,
@@ -88,6 +91,28 @@ package body Gtkada.Check_Button is
          Gtk.Widget.Signal_Expose_Event,
          Return_Callback.To_Marshaller (On_Expose'Access));
    end Initialize;
+
+   -------------------
+   -- State_Changed --
+   -------------------
+
+   procedure State_Changed
+     (Check : access Gtkada_Check_Button_Record'Class)
+   is
+      procedure Internal (Check : System.Address);
+      pragma Import (C, Internal, "gtkada_button_clicked");
+      --  A way to update the underlying check_button state without re-raising
+      --  the clicked signal.
+      Active : constant Boolean := Check.State /= State_Unchecked;
+   begin
+      if Active /= Get_Active (Check) then
+         Internal (Get_Object (Check));
+      else
+         --  Still notify the toggled signal
+         Toggled (Check);
+      end if;
+      Draw (Check);
+   end State_Changed;
 
    -----------------
    -- Set_Default --
@@ -121,7 +146,7 @@ package body Gtkada.Check_Button is
       end case;
 
       if Check.State /= Old_State then
-         Draw (Check);
+         State_Changed (Check);
       end if;
    end Set_Default;
 
@@ -153,7 +178,7 @@ package body Gtkada.Check_Button is
       end if;
 
       if Check.State /= Old_State then
-         Draw (Check);
+         State_Changed (Check);
       end if;
    end Set_Active;
 
@@ -173,12 +198,6 @@ package body Gtkada.Check_Button is
 
    procedure On_Clicked (Check : access Gtkada_Check_Button_Record'Class) is
    begin
-      if Check.In_Handle then
-         return;
-      end if;
-
-      Check.In_Handle := True;
-
       case Check.State is
          when State_Checked_Default =>
             Check.State := State_Unchecked;
@@ -195,8 +214,7 @@ package body Gtkada.Check_Button is
 
       end case;
 
-      Draw (Check);
-      Check.In_Handle := False;
+      State_Changed (Check);
    end On_Clicked;
 
    ---------------
