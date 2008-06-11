@@ -24,6 +24,13 @@ Known Problems fixed in GPS 4.3.0
               VCS Explorer.
   Workaround: Use Subversion from the command line to get proper status.
 
+- H512-021: Visual Differences is slow
+  Problem:    It can take a long time to compute Visual Differences (for
+              instance through the menu Tools->Compare or through VCS queries.
+  Workaround: Disable the computation of fine changes. This is done by
+              setting the "Fine Change Color" preference to the same value as
+              the "Change Color" preference, in the "Visual Diff" panel.
+
 - H504-003: Subversion compare two revisions not working
   Problem:    The "Compare two revisions" VCS action is not working with
               Subversion. The action seems to be ignored and no error
