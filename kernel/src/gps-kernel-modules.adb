@@ -1056,6 +1056,7 @@ package body GPS.Kernel.Modules is
       when E : others =>
          Trace (Exception_Handle, E);
          Destroy (Menu);
+         Menu := null;
    end Create_Contextual_Menu;
 
    ----------------------------

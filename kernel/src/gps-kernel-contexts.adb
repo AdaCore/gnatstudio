@@ -261,14 +261,14 @@ package body GPS.Kernel.Contexts is
    end Project_Information;
 
    generic
-      with function Check (File : in Virtual_File) return Boolean;
-   function Check_All (Files : in File_Array) return Boolean;
+      with function Check (File : Virtual_File) return Boolean;
+   function Check_All (Files : File_Array) return Boolean;
 
    ---------------
    -- Check_All --
    ---------------
 
-   function Check_All (Files : in File_Array) return Boolean is
+   function Check_All (Files : File_Array) return Boolean is
    begin
       if Files'Length = 0 then
          return False;
@@ -339,7 +339,9 @@ package body GPS.Kernel.Contexts is
    function File_Information
      (Context : Selection_Context) return Virtual_File is
    begin
-      if Context.Data.Data.Files'Length = 0 then
+      if Context.Data.Data.Files = null
+        or else Context.Data.Data.Files'Length = 0
+      then
          return No_File;
 
       else
