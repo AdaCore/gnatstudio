@@ -19,10 +19,12 @@
 
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with Glib;                   use Glib;
+with Glib.Object;            use Glib.Object;
 with Gtk.Adjustment;         use Gtk.Adjustment;
 with Gtk.Box;                use Gtk.Box;
 with Gtk.Button;             use Gtk.Button;
 with Gtk.Check_Button;       use Gtk.Check_Button;
+with Gtkada.Check_Button;    use Gtkada.Check_Button;
 with Gtk.Combo;              use Gtk.Combo;
 with Gtk.Dialog;             use Gtk.Dialog;
 with Gtk.Editable;           use Gtk.Editable;
@@ -54,7 +56,7 @@ package body Switches_Chooser.Gtkada is
 
    type Switch_Data is record
       Editor : Switches_Editor;
-      Switch : Switch_Description_Vectors.Extended_Index;
+      Switch : Switch_Description_Vectors.Cursor;
    end record;
    package User_Widget_Callback is new Gtk.Handlers.User_Callback
      (Gtk_Widget_Record, Switch_Data);
@@ -65,6 +67,9 @@ package body Switches_Chooser.Gtkada is
    type Popup_Button is access all Popup_Button_Record'Class;
 
    procedure On_Toggle_Check
+     (Toggle : access Gtk_Widget_Record'Class;
+      Data   : Switch_Data);
+   procedure On_Toggle_Radio
      (Toggle : access Gtk_Widget_Record'Class;
       Data   : Switch_Data);
    procedure On_Field_Changed
@@ -141,11 +146,37 @@ package body Switches_Chooser.Gtkada is
      (Toggle : access Gtk_Widget_Record'Class;
       Data   : Switch_Data)
    is
+      State : constant State_Type := Get_State (Gtkada_Check_Button (Toggle));
+   begin
+      case State is
+         when State_Checked =>
+            Change_Switch
+              (Data.Editor.all, Toggle,
+               Parameter => "Checked");
+         when State_Unchecked =>
+            Change_Switch
+              (Data.Editor.all, Toggle,
+               Parameter => "Unchecked");
+         when State_Checked_Default =>
+            Change_Switch
+              (Data.Editor.all, Toggle,
+               Parameter => "Checked_Default");
+      end case;
+   end On_Toggle_Check;
+
+   ---------------------
+   -- On_Toggle_Radio --
+   ---------------------
+
+   procedure On_Toggle_Radio
+     (Toggle : access Gtk_Widget_Record'Class;
+      Data   : Switch_Data)
+   is
    begin
       Change_Switch
         (Data.Editor.all, Toggle,
          Parameter => Boolean'Image (Get_Active (Gtk_Check_Button (Toggle))));
-   end On_Toggle_Check;
+   end On_Toggle_Radio;
 
    --------------------
    -- Destroy_Dialog --
@@ -280,15 +311,27 @@ package body Switches_Chooser.Gtkada is
    --------------------------
 
    procedure Set_Graphical_Widget
-     (Editor    : in out Switches_Editor_Record;
-      Widget    : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Switch    : Switch_Type;
-      Parameter : String)
+     (Editor     : in out Switches_Editor_Record;
+      Widget     : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Switch     : Switch_Type;
+      Parameter  : String;
+      Is_Default : Boolean := False)
    is
       pragma Unreferenced (Editor);
    begin
       case Switch is
-         when Switch_Check | Switch_Radio =>
+         when Switch_Check =>
+            if Is_Default then
+               Set_Default
+                 (Gtkada_Check_Button (Widget),
+                  Boolean'Value (Parameter));
+            else
+               Set_Active
+                 (Gtkada_Check_Button (Widget),
+                  Boolean'Value (Parameter));
+            end if;
+
+         when Switch_Radio =>
             Set_Active (Gtk_Check_Button (Widget), Boolean'Value (Parameter));
 
          when Switch_Field =>
@@ -358,7 +401,7 @@ package body Switches_Chooser.Gtkada is
    is
       pragma Unreferenced (Widget);
    begin
-      Set_Widget (Data.Editor.all, Data.Switch, null);
+      Set_Widget (Data.Editor.all, To_Index (Data.Switch), null);
    end On_Destroy;
 
    -----------------
@@ -375,7 +418,7 @@ package body Switches_Chooser.Gtkada is
       Set_Widget (Editor.all, To_Index (Switch), Gtk_Widget (W));
       User_Widget_Callback.Connect
         (W, Gtk.Object.Signal_Destroy, On_Destroy'Access,
-         (Switches_Editor (Editor), To_Index (Switch)));
+         (Switches_Editor (Editor), Switch));
       if S.Tip /= "" then
          Set_Tip
            (Editor.Tooltips, W,
@@ -397,7 +440,7 @@ package body Switches_Chooser.Gtkada is
       Box      : Gtk_Box)
    is
       S : constant Switch_Description := Element (Switch);
-      Check    : Gtk_Check_Button;
+      Check    : Gtkada_Check_Button;
       Field    : Gtk_Entry;
       Label    : Gtk_Label;
       Spin     : Gtk_Spin_Button;
@@ -426,13 +469,13 @@ package body Switches_Chooser.Gtkada is
 
       case S.Typ is
          when Switch_Check =>
-            Gtk_New    (Check, To_String (S.Label));
+            Gtk_New    (Check, To_String (S.Label), S.Default_State);
             Pack_Start (Box, Check, Expand => False);
             Set_Tooltip (Editor, Check, Switch, S);
             User_Widget_Callback.Connect
-              (Check, Gtk.Toggle_Button.Signal_Toggled,
+              (Check, Gtk.Button.Signal_Clicked,
                On_Toggle_Check'Access,
-               (Switches_Editor (Editor), To_Index (Switch)));
+               (Switches_Editor (Editor), Switch));
 
          when Switch_Field =>
             Gtk_New (Field);
@@ -441,7 +484,7 @@ package body Switches_Chooser.Gtkada is
             User_Widget_Callback.Connect
               (Field, Gtk.Editable.Signal_Changed,
                On_Field_Changed'Access,
-               (Switches_Editor (Editor), To_Index (Switch)));
+               (Switches_Editor (Editor), Switch));
 
             if S.As_File then
                Gtk_New (Button, -"Browse");
@@ -449,7 +492,7 @@ package body Switches_Chooser.Gtkada is
                User_Widget_Callback.Object_Connect
                  (Button, Signal_Clicked, Browse_File'Access,
                   Slot_Object => Field, User_Data =>
-                    (Switches_Editor (Editor), To_Index (Switch)));
+                    (Switches_Editor (Editor), Switch));
 
             elsif S.As_Directory then
                Gtk_New (Button, -"Browse");
@@ -458,7 +501,7 @@ package body Switches_Chooser.Gtkada is
                  (Button, Signal_Clicked,
                   Browse_Directory'Access,
                   Slot_Object => Field, User_Data =>
-                    (Switches_Editor (Editor), To_Index (Switch)));
+                    (Switches_Editor (Editor), Switch));
             end if;
 
          when Switch_Spin =>
@@ -472,7 +515,7 @@ package body Switches_Chooser.Gtkada is
             User_Widget_Callback.Connect
               (Spin, Gtk.Spin_Button.Signal_Value_Changed,
                On_Spin_Changed'Access,
-               (Switches_Editor (Editor), To_Index (Switch)));
+               (Switches_Editor (Editor), Switch));
 
          when Switch_Radio =>
             if S.Label = Null_Unbounded_String then
@@ -492,8 +535,8 @@ package body Switches_Chooser.Gtkada is
                         Set_Tooltip (Editor, Radio, Switch2, S2);
                         User_Widget_Callback.Connect
                           (Radio, Gtk.Toggle_Button.Signal_Toggled,
-                           On_Toggle_Check'Access,
-                           (Switches_Editor (Editor), To_Index (Switch)));
+                           On_Toggle_Radio'Access,
+                           (Switches_Editor (Editor), Switch));
                      end if;
                   end;
 
@@ -518,7 +561,7 @@ package body Switches_Chooser.Gtkada is
             User_Widget_Callback.Object_Connect
               (Get_Entry (Combo), Gtk.Editable.Signal_Changed,
                On_Combo_Changed'Access, Combo,
-               (Switches_Editor (Editor), To_Index (Switch)));
+               (Switches_Editor (Editor), Switch));
 
          when Switch_Popup =>
             Pop := new Popup_Button_Record'
@@ -540,7 +583,7 @@ package body Switches_Chooser.Gtkada is
             User_Widget_Callback.Connect
               (Pop, Gtk.Button.Signal_Clicked,
                On_Popup_Button_Clicked'Access,
-               (Switches_Editor (Editor), To_Index (Switch)));
+               (Switches_Editor (Editor), Switch));
 
       end case;
    end Create_Widget;

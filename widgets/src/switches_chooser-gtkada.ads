@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2007, AdaCore                  --
+--                  Copyright (C) 2007-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -52,10 +52,11 @@ private
    overriding procedure Set_Graphical_Command_Line
      (Editor    : in out Switches_Editor_Record; Cmd_Line  : String);
    overriding procedure Set_Graphical_Widget
-     (Editor    : in out Switches_Editor_Record;
-      Widget    : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Switch    : Switch_Type;
-      Parameter : String);
+     (Editor     : in out Switches_Editor_Record;
+      Widget     : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Switch     : Switch_Type;
+      Parameter  : String;
+      Is_Default : Boolean := False);
 
    type Switches_Editor_Record is new Gtk_Switches_Editors.Root_Switches_Editor
    with record

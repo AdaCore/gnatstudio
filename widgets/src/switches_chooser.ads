@@ -99,6 +99,22 @@ package Switches_Chooser is
    --  When the button is active, the corresponding command line switch is
    --  present, otherwise it is omitted.
 
+   procedure Add_Check
+     (Config        : Switches_Editor_Config;
+      Label         : String;
+      Switch_Set    : String;
+      Switch_Unset  : String;
+      Default_State : Boolean;
+      Section       : String := "";
+      Tip           : String := "";
+      Line          : Positive := 1;
+      Column        : Positive := 1;
+      Popup         : Popup_Index := Main_Window);
+   --  Adds a check button in a specific area of the editor.
+   --  When the button is different from its default state, then the switch
+   --  corresponding to the activation state (set or unset) is present,
+   --  otherwise it is omitted
+
    procedure Add_Field
      (Config       : Switches_Editor_Config;
       Label        : String;
@@ -203,6 +219,21 @@ package Switches_Chooser is
    --  is "-g" for the compiler, with Status=True and
    --  Slave_Activate=True, then everytime the user selects "-g" for the
    --  builder, "-g" will also be forced for the compiler.
+
+   procedure Add_Default_Value_Dependency
+     (Config         : Switches_Editor_Config;
+      Switch         : String;
+      Section        : String;
+      Slave_Switch   : String;
+      Slave_Section  : String);
+   --  Add dependency between two switches: if Switch's status becomes
+   --  Status, then Slave_Switch will have its default value set to
+   --  Slave_Default.
+   --  For instance: if Switch is "-gnatwa" for the compiler, and Slave_Switch
+   --  is "-gnatwc", with Status=True and
+   --  Slave_Default=True, then everytime the user selects "-gnatwa" for the
+   --  builder, "-gnatwc" will be defaulted to True. Unselecting it will
+   --  then add its Switch_Unset value: "-gnatwC"
 
    procedure Get_Command_Line
      (Cmd      : in out Command_Line;
@@ -316,12 +347,14 @@ package Switches_Chooser is
       --  line. No update of the other widgets should take place
 
       procedure Set_Graphical_Widget
-        (Editor    : in out Root_Switches_Editor;
-         Widget    : access Root_Widget_Record'Class;
-         Switch    : Switch_Type;
-         Parameter : String) is abstract;
+        (Editor     : in out Root_Switches_Editor;
+         Widget     : access Root_Widget_Record'Class;
+         Switch     : Switch_Type;
+         Parameter  : String;
+         Is_Default : Boolean := False) is abstract;
       --  Change Widget so that it shows the value of Parameter. The exact
       --  meaning of Parameter depends on the type of Switch
+      --  Is_Default tells if the parameter corresponds to a default value.
 
    private
       type Root_Widget is access all Root_Widget_Record'Class;
@@ -356,7 +389,8 @@ private
 
       case Typ is
          when Switch_Check =>
-            null;
+            Switch_Unset  : Ada.Strings.Unbounded.Unbounded_String;
+            Default_State : Boolean;
          when Switch_Field =>
             As_Directory : Boolean;
             As_File      : Boolean;
@@ -396,6 +430,7 @@ private
       Master_Switch, Slave_Switch   : GNAT.Strings.String_Access;
       Master_Section, Slave_Section : GNAT.Strings.String_Access;
       Master_Status, Slave_Status   : Boolean;
+      Act_On_Default                : Boolean;
       Next                          : Dependency_Description_Access;
    end record;
    --  Description of a dependency (see Add_Dependency). This is needed because

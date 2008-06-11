@@ -250,6 +250,7 @@ package body Custom_Module is
       procedure Process_Combo_Node      (N : Node_Ptr; Popup : Popup_Index);
       procedure Process_Popup_Node      (N : Node_Ptr; Popup : Popup_Index);
       procedure Process_Dependency_Node (N : Node_Ptr);
+      procedure Process_Default_Value_Dependency_Node (N : Node_Ptr);
       procedure Process_Expansion_Node  (N : Node_Ptr);
       --  Process a child node (resp. <title>, <check>, <spin>, <radio>,
       --  <combo>, <popup>, <dependency>, <expansion>)
@@ -320,6 +321,28 @@ package body Custom_Module is
             Popup     => Popup);
       end Process_Title_Node;
 
+      procedure Process_Default_Value_Dependency_Node (N : Node_Ptr) is
+         Master_Switch : constant String := Get_Attribute (N, "master-switch");
+         Slave_Switch  : constant String := Get_Attribute (N, "slave-switch");
+      begin
+         if Master_Switch = "" or else Slave_Switch = "" then
+            Insert
+              (Kernel,
+               -("Invalid <default-value-dependency> node in custom file," &
+                 " attributes master-switch and slave-switch must be " &
+                 "specified, in file ") & Full_Name (File).all,
+               Mode => GPS.Kernel.Console.Error);
+            return;
+         end if;
+
+         Add_Default_Value_Dependency
+           (Current_Tool.Config,
+            Master_Switch,
+            Get_Attribute (N, "master-section"),
+            Slave_Switch,
+            Get_Attribute (N, "slave-section"));
+      end Process_Default_Value_Dependency_Node;
+
       -----------------------------
       -- Process_Dependency_Node --
       -----------------------------
@@ -332,7 +355,7 @@ package body Custom_Module is
          Master_Status : constant String :=
                            Get_Attribute (N, "master-status", "true");
          Slave_Status  : constant String :=
-           Get_Attribute (N, "slave-status", "true");
+                           Get_Attribute (N, "slave-status", "true");
          Tool          : Tool_Properties_Record;
          Config        : Switches_Editor_Config;
       begin
@@ -343,9 +366,9 @@ package body Custom_Module is
          then
             Insert
               (Kernel,
-                 -("Invalid <dependency> node in custom file,"
-                 & " all attributes must be specified, in file "
-                 & Full_Name (File).all),
+               -("Invalid <dependency> node in custom file,"
+                 & " all attributes must be specified, in file ")
+               & Full_Name (File).all,
                Mode => GPS.Kernel.Console.Error);
             return;
          end if;
@@ -641,9 +664,12 @@ package body Custom_Module is
       ------------------------
 
       procedure Process_Check_Node (N : Node_Ptr; Popup : Popup_Index) is
-         Line, Col : Natural;
-         Label     : constant String := Get_Attribute (N, "label");
-         Switch    : constant String := Get_Attribute (N, "switch");
+         Line, Col     : Natural;
+         Label         : constant String := Get_Attribute (N, "label");
+         Switch        : constant String := Get_Attribute (N, "switch");
+         Switch_Unset  : constant String :=
+                           Get_Attribute (N, "switch-off");
+         Default_State : Boolean;
       begin
          Coordinates_From_Node (N, Line, Col);
 
@@ -659,15 +685,53 @@ package body Custom_Module is
             return;
          end if;
 
-         Add_Check
-           (Config  => Current_Tool.Config,
-            Label   => Label,
-            Switch  => Switch,
-            Section => Get_Attribute (N, "section"),
-            Tip     => Get_Attribute (N, "tip"),
-            Line    => Line,
-            Column  => Col,
-            Popup   => Popup);
+         if Switch_Unset = "" then
+            Add_Check
+              (Config  => Current_Tool.Config,
+               Label   => Label,
+               Switch  => Switch,
+               Section => Get_Attribute (N, "section"),
+               Tip     => Get_Attribute (N, "tip"),
+               Line    => Line,
+               Column  => Col,
+               Popup   => Popup);
+         else
+            declare
+               Default : constant String :=
+                           To_Lower (Get_Attribute (N, "default", "off"));
+            begin
+               if Default = "off"
+                 or else Default = "false"
+               then
+                  Default_State := False;
+               elsif Default = "on"
+                 or else Default = "true"
+               then
+                  Default_State := True;
+               else
+                  Insert
+                    (Kernel,
+                     -("Invalid <switch> node in custom file: the " &
+                       """default"" attribute can only take the values " &
+                       "'on', 'true', 'off' or 'false'. " &
+                       "The value found is: ") & Default,
+                     Mode => GPS.Kernel.Console.Error);
+                  return;
+               end if;
+            end;
+
+            Add_Check
+              (Config        => Current_Tool.Config,
+               Label         => Label,
+               Switch_Set    => Switch,
+               Switch_Unset  => Switch_Unset,
+               Default_State => Default_State,
+               Section       => Get_Attribute (N, "section"),
+               Tip           => Get_Attribute (N, "tip"),
+               Line          => Line,
+               Column        => Col,
+               Popup   => Popup);
+         end if;
       end Process_Check_Node;
 
       ----------------------------
@@ -724,6 +788,8 @@ package body Custom_Module is
                Process_Popup_Node (N2, Popup);
             elsif N2.Tag.all = "dependency" then
                Process_Dependency_Node (N2);
+            elsif N2.Tag.all = "default-value-dependency" then
+               Process_Default_Value_Dependency_Node (N2);
             elsif N2.Tag.all = "expansion" then
                Process_Expansion_Node (N2);
             else

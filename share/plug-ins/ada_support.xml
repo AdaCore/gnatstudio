@@ -74,67 +74,108 @@
          <check label="Full errors" switch="-gnatf" line="2" column="1"
                 tip="Full Errors. Multiple errors per line, all undefined references" />
          <popup label="Warnings" line="2" column="1">
-            <check label="Constant conditional" switch="-gnatwc"
+            <check label="Turn on all optional warnings (except dhl.ot.w)" switch="-gnatwa"
+                   tip="Activates all optional warnings" />
+            <check label="Failing assertions" switch="-gnatw.a" switch-off="-gnatw.A" default="on" />
+            <check label="Bad fixed value (not multiple of small)" switch="-gnatwb" switch-off="-gnatwB" default="off" />
+            <check label="Constant conditional" switch="-gnatwc" switch-off="-gnatwC" default="off"
                    tip="Activates warnings for conditional expression used in tests that are known to be True or False at compile time" />
-            <check label="Implicit dereference" switch="-gnatwd"
+            <check label="Unrepped components" switch="-gnatw.c" switch-off="-gnatw.C" default="off" />
+            <check label="Implicit dereference" switch="-gnatwd" switch-off="-gnatwD" default="off"
                    tip="If set, the use of a prefix of an access type in an indexed component, slice or selected component without an explicit .all will generate a warning. With this warning enabled, access checks occur only at points where an explicit .all appears" />
             <check label="Warnings=Errors" switch="-gnatwe"
                    tip="Causes warning messages to be treated as errors" />
-            <check label="Unreferenced formal" switch="-gnatwf"
+            <check label="Unreferenced formal" switch="-gnatwf" switch-off="-gnatwF" default="off"
                    tip="Causes warnings to be generated if a formal parameter is not referenced in the body" />
-            <check label="Hiding variable" switch="-gnatwh"
+            <check label="Unrecognized pragmas" switch="-gnatwg" switch-off="-gnatwG" default="on"
+                   top="Causes warnings to be generated if a pragma is not recognized" />
+            <check label="Hiding variable" switch="-gnatwh" switch-off="-gnatwH" default="off"
                    tip="This switch activates warnings on hiding declarations. A declaration is considered hiding if it is for a non-overloadable entity, and if it declares an entity with the same name as some other entity that is directly or use-visible" />
-            <check label="Implementation unit" switch="-gnatwi"
+            <check label="Implementation unit" switch="-gnatwi" switch-off="-gnatwI" default="on"
                    tip="This switch activates warnings for a with of an internal GNAT implementation unit" />
-            <check label="Obsolescent feature" switch="-gnatwj" />
-            <check label="Constant variable" switch="-gnatwk" />
-            <check label="Missing elaboration pragma" switch="-gnatwl"
+            <check label="Obsolescent feature" switch="-gnatwj" switch-off="-gnatwJ" default="off" />
+            <check label="Constant variable" switch="-gnatwk" switch-off="-gnatwK" default="off" />
+            <check label="Missing elaboration pragma" switch="-gnatwl" switch-off="-gnatwL" default="off"
                    tip="This switch activates warnings on missing pragma Elaborate_All statements" />
-            <check label="Variable assigned but not read" switch="-gnatwm" />
-            <check label="Address clause overlay" switch="-gnatwo"
+            <check label="Variable assigned but not read" switch="-gnatwm" switch-off="-gnatwM" default="off"/>
+            <check label="Address clause overlay" switch="-gnatwo" switch-off="-gnatwO" default="on"
                    tip="This switch activates warnings for possible unintended initialization effects of defining address clauses that cause one variable to overlap another" />
-            <check label="Ineffective pragma inline" switch="-gnatwp"
+            <check label="Out parameters assigned but not read" switch="-gnatw.o" switch-off="-gnatw.O" default="off" />
+            <check label="Ineffective pragma inline" switch="-gnatwp" switch-off="-gnatwP" default="off"
                    tip="This switch activates warnings for a failure of front end inlining to inline a particular call" />
-            <check label="Redundant construct" switch="-gnatwr"
+            <check label="Suspicious parameter order" switch="-gnatw.p" switch-off="-gnatw.P" default="off"
+                   tip="This switch activates warnings for a failure of front end inlining to inline a particular call" />
+            <check label="Questionable missing parentheses" switch="-gnatwq" switch-off="-gnatwQ" default="on" />
+            <check label="Redundant construct" switch="-gnatwr" switch-off="-gnatwR" default="off"
                    tip="This switch activates warnings for redundant constructs:
  - Assignment of an item to itself
  - Type conversion that converts an expression to its own type
  - ..." />
-           <check label="Unused entity" switch="-gnatwu"
+           <check label="Object renaming function" switch="-gnatw.r" switch-off="-gnatw.R" default="off" />
+           <check label="Tracking deleted code" switch="-gnatwt" switch-off="-gnatwT" default="off" />
+           <check label="Unused entity" switch="-gnatwu" switch-off="-gnatwU" default="off"
                   tip="This switch activates warnings to be generated for entities that are defined but not referenced" />
-           <check label="Unassigned variable" switch="-gnatwv" />
+           <check label="Unassigned variable" switch="-gnatwv" switch-off="-gnatwV" default="on"/>
+           <check label="Wrong low bound assumption" switch="-gnatww" switch-off="-gnatwW" default="on"/>
+           <check label="Pragma Warnings off" switch="-gnatw.w" switch-off="-gnatw.W" default="off"/>
+           <check label="Export/import" switch="-gnatwx" switch-off="-gnatwX" default="on"/>
+           <check label="Non-local exceptions" switch="-gnatw.x" switch-off="-gnatw.X" default="off"/>
+           <check label="Ada 2005 incompatibility" switch="-gnatwy" switch-off="-gnatwY" default="on"/>
            <check label="Size/align warnings for unchecked conversion"
-                  switch="-gnatwz" />
+                  switch="-gnatwz" switch-off="-gnatwZ" default="on" />
+           <default-value-dependency master-switch="-gnatwa" slave-switch="-gnatwb"/>
+           <default-value-dependency master-switch="-gnatwa" slave-switch="-gnatwc"/>
+           <default-value-dependency master-switch="-gnatwa" slave-switch="-gnatw.c"/>
+           <default-value-dependency master-switch="-gnatwa" slave-switch="-gnatwf"/>
+           <default-value-dependency master-switch="-gnatwa" slave-switch="-gnatwj"/>
+           <default-value-dependency master-switch="-gnatwa" slave-switch="-gnatwk"/>
+           <default-value-dependency master-switch="-gnatwa" slave-switch="-gnatwm"/>
+           <default-value-dependency master-switch="-gnatwa" slave-switch="-gnatwp"/>
+           <default-value-dependency master-switch="-gnatwa" slave-switch="-gnatw.p"/>
+           <default-value-dependency master-switch="-gnatwa" slave-switch="-gnatwr"/>
+           <default-value-dependency master-switch="-gnatwa" slave-switch="-gnatw.r"/>
+           <default-value-dependency master-switch="-gnatwa" slave-switch="-gnatwu"/>
+           <default-value-dependency master-switch="-gnatwa" slave-switch="-gnatw.x"/>
            <expansion switch="-gnatw" />
-           <expansion switch="-gnatwa" alias="-gnatwcfijkmopruvz" />
          </popup>
 
          <popup label="Validity checking mode" line="2" column="1" >
-            <check label="Checking for copies" switch="-gnatVc"
+            <check label="Turn on all validity checking options" switch="-gnatVa" />
+            <check label="Checking for copies" switch="-gnatVc" switch-off="-gnatVC" default="off"
                    tip="The right hand side of assignments, and the initializing values of object declarations are validity checked" />
-            <check label="Default Reference Manual Checking" switch="-gnatVd" />
-            <check label="Checking for floating-point" switch="-gnatVf" />
-            <check label="Checking for 'in' parameters" switch="-gnatVi"
+            <check label="Default Reference Manual Checking" switch="-gnatVd" switch-off="-gnatVD" default="off" />
+            <check label="Checking for elementary components" switch="-gnatVe" switch-off="-gnatVE" default="off" />
+            <check label="Checking for floating-point" switch="-gnatVf" switch-off="-gnatVF" default="off" />
+            <check label="Checking for 'in' parameters" switch="-gnatVi" switch-off="-gnatVI" default="off"
                    tip="Arguments for parameters of mode in are validity checked in function and procedure calls at the point of call" />
-            <check label="Checking for 'in out' parameters" switch="-gnatVm"
+            <check label="Checking for 'in out' parameters" switch="-gnatVm" switch-off="-gnatVM" default="off"
                    tip="Arguments for parameters of mode in out are validity checked in procedure calls at the point of call" />
-            <check label="Checking for operators and attributes" switch="-gnatVo"
+            <check label="Checking for operators and attributes" switch="-gnatVo" switch-off="-gnatVO" default="off"
                    tip="Arguments for predefined operations and attributes are validity checked" />
-            <check label="Checking for returns" switch="-gnatVr"
+            <check label="Checking for returns" switch="-gnatVr" switch-off="-gnatVR" default="off"
                    tip="The expression in return statements in functions is validity checked" />
-            <check label="Checking for subscripts" switch="-gnatVs"
+            <check label="Checking for subscripts" switch="-gnatVs" switch-off="-gnatVS" default="off"
                    tip="All subscripts expressions are checked for validty" />
-            <check label="Checking for tests" switch="-gnatVt"
+            <check label="Checking for tests" switch="-gnatVt" switch-off="-gnatVT" default="off"
                    tip="Expressions used as conditions in if, while or exit statements are checked, as well as guard expressions in entry calls" />
             <expansion switch="-gnatV" />
-            <expansion switch="-gnatVa" alias="-gnatVcdfimorst" />
+           <default-value-dependency master-switch="-gnatVa" slave-switch="-gnatVc"/>
+           <default-value-dependency master-switch="-gnatVa" slave-switch="-gnatVd"/>
+           <default-value-dependency master-switch="-gnatVa" slave-switch="-gnatVe"/>
+           <default-value-dependency master-switch="-gnatVa" slave-switch="-gnatVf"/>
+           <default-value-dependency master-switch="-gnatVa" slave-switch="-gnatVi"/>
+           <default-value-dependency master-switch="-gnatVa" slave-switch="-gnatVm"/>
+           <default-value-dependency master-switch="-gnatVa" slave-switch="-gnatVo"/>
+           <default-value-dependency master-switch="-gnatVa" slave-switch="-gnatVr"/>
+           <default-value-dependency master-switch="-gnatVa" slave-switch="-gnatVs"/>
+           <default-value-dependency master-switch="-gnatVa" slave-switch="-gnatVt"/>
          </popup>
 
          <popup label="Style checks" line="2" column="1">
             <spin label="indentation" switch="-gnaty" min="1" max="9"
                   default="3" />
             <check label="Check casing" switch="-gnatya" />
-            <check label="Check end of line blanks" switch="-gnatyb" />
+            <check label="Check end of line blanks" switch="-gnatyb" default="off"/>
             <check label="Check comment format" switch="-gnatyc" />
             <check label="Check end/exit labels" switch="-gnatye" />
             <check label="Check no form feeds" switch="-gnatyf" />
