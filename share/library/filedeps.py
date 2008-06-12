@@ -86,7 +86,7 @@ def print_dependency_path (from_file, to_file):
 
 def interactive_dependency_path (menu):
    (file1, file2) = GPS.MDI.input_dialog ("Show dependency path for:", "From:", "To:")
-   print_dependency_path (file1, file2)
+   print_dependency_path (GPS.File (file1), GPS.File (file2))
 
 GPS.Menu.create ("/Navigate/Show File Dependency Path",
                  interactive_dependency_path)

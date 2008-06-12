@@ -1,5 +1,14 @@
 Known Problems fixed in GPS 4.3.0
 
+- H611-032: File Dependencies plug-in fails
+  Problem:    If you active the filedeps.py plugin, you see a new menu
+              /Navigate/Show File Dependency Path. However, this menu will
+              not work and report a python error
+  Workaround: open the python console, and type the following command,
+              replacing file names as appropriate:
+              filedeps.print_dependency_path \
+                (GPS.File ("file1"), GPS.File ("file2"))
+
 - H604-001: Delay in scripts execution in batch mode
   Problem:    When launching GPS with the option "--load=<a script>", the
               script only gets executed after the end of all background tasks
