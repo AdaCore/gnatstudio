@@ -1245,7 +1245,7 @@ This is different than setting instance properties through Python's standard mec
   <shell_doc name="GPS.Entity.end_of_scope">
       <param name="self">The instance of GPS.Entity</param>
       <return>An instance of GPS.FileLocation</return>
-      <description>Return the location at which the end of the entity is found.
+      <description>Return the location at which the end of the entity is found.</description>
   </shell_doc>
 
   <shell_doc name="GPS.Entity.body">
