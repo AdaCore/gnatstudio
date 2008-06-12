@@ -5,20 +5,11 @@ This plug-in adds support gnatcheck, a coding standard checker
 
 
 import GPS, os, os.path, re, string, pygtk, traceback
+import os_utils
 pygtk.require('2.0')
 import gobject, gtk
 
 gnatcheck = None
-
-
-def locate_exec_on_path (prog):
-    """Utility function to locate an executable on path."""
-
-    alldirs = string.split (os.getenv('PATH'), os.pathsep)
-    for file in [os.path.join(dir,prog) for dir in alldirs]:
-        if os.path.isfile(file) or os.path.isfile(file+".exe"):
-            return file
-    return ""
 
 class rulesSelector(gtk.Dialog):
    """Dialog used to select a coding standard file before launching gnatcheck."""
@@ -458,7 +449,7 @@ class gnatCheckProc:
       if self.gnatCmd == "":
          self.gnatCmd = "gnat"
       if not os.path.isfile (self.gnatCmd):
-         self.gnatCmd = locate_exec_on_path (self.gnatCmd)
+         self.gnatCmd = os_utils.locate_exec_on_path (self.gnatCmd)
       if self.gnatCmd == "":
          GPS.Console ("Messages").write ("Error: 'gnat' is not in the path.\n")
          GPS.Console ("Messages").write ("Error: Could not initialize the gnatcheck module.\n")

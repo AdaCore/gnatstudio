@@ -420,6 +420,7 @@ a = """<?xml version="1.0"?>
 """
 
 import os, re, string
+import os_utils
 import GPS
 
 def pogs_file ():
@@ -430,25 +431,7 @@ def pogs_file ():
   dir_name = match_obj.group(1)
   return (full_path + dir_name + '.sum')
 
-def on_path (executable):
-  """ locates an executable named 'executable' on the path.
-no extension is expected in the name supplied as the parameter.
-returns True if found, False otherwise."""
-
-  if os.name == 'nt':
-    extension = ".exe"
-  else:
-    extension = ""
-  target = executable + extension;
-  the_path = os.environ["PATH"];
-  path_dirs = string.split (the_path, os.pathsep);
-  for D in path_dirs:
-    test = os.path.join (D, target);
-    if os.path.exists (test):
-      return True;
-  return False;
-
-if on_path("spark"):
+if os_utils.locate_exec_on_path ("spark") != "":
   if os.name == 'nt':
     a = a.replace('~', '/')
   else:
