@@ -30,7 +30,6 @@ with System;
 with Glib.Object;      use Glib.Object;
 with Gdk.Event;        use Gdk.Event;
 with Gdk.Rectangle;    use Gdk.Rectangle;
-with Gtk.Button;       use Gtk.Button;
 with Gtk.Enums;        use Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Style;        use Gtk.Style;
@@ -38,24 +37,17 @@ with Gtk.Widget;       use Gtk.Widget;
 
 package body Gtkada.Check_Button is
 
-   package Callback is new
-     Gtk.Handlers.Callback (Gtkada_Check_Button_Record);
-
    package Return_Callback is new Gtk.Handlers.Return_Callback
      (Gtkada_Check_Button_Record, Boolean);
 
-   procedure On_Clicked
-     (Check : access Gtkada_Check_Button_Record'Class);
+   procedure On_Clicked (Obj : System.Address);
+   pragma Convention (C, On_Clicked);
    --  Callback for the clicked event
 
    function On_Expose
      (Check : access Gtkada_Check_Button_Record'Class;
       Event : Gdk_Event) return Boolean;
    --  Callback for the expose event
-
-   procedure State_Changed
-     (Check : access Gtkada_Check_Button_Record'Class);
-   --  Called every time the state is changed
 
    -------------
    -- Gtk_New --
@@ -74,45 +66,52 @@ package body Gtkada.Check_Button is
    -- Initialize --
    ----------------
 
+   Class_Record : GObject_Class := Uninitialized_Class;
+
    procedure Initialize
      (Check : access Gtkada_Check_Button_Record'Class;
       Label : UTF8_String := "";
-      Default : Boolean := False) is
+      Default : Boolean := False)
+   is
+      procedure Install_Clicked_Handler
+        (Obj     : System.Address;
+         Handler : System.Address);
+      pragma Import (C, Install_Clicked_Handler,
+                     "gtkada_check_button_install_handler");
+
+      Set_Handler : Boolean := False;
    begin
       Gtk.Check_Button.Initialize (Check, Label);
       Check.Default := False;
       Check.State   := State_Unchecked;
       Set_Default (Check, Default);
-      Callback.Connect
-        (Check, Gtk.Button.Signal_Clicked,
-         Callback.To_Marshaller (On_Clicked'Access));
+
+      --  We need to create a new Class Record for this widget, as we are
+      --  going to replace the default handler for the 'clicked' signal.
+      if Class_Record = Uninitialized_Class then
+         Set_Handler := True;
+      end if;
+
+      Initialize_Class_Record
+        (Object       => Check,
+         Signals      => (1 .. 0 => <>),
+         Class_Record => Class_Record,
+         Type_Name    => "GtkadaCheckButton");
+
+      if Set_Handler then
+         --  We replace the class handler for 'clicked' because this signal
+         --  has the flag G_SIGNAL_RUN_FIRST which makes the class handler
+         --  always being called first even when connecting a new signal
+         --  handler with 'Last' set to false.
+         --  We absolutely need to be called before the class handler.
+         Install_Clicked_Handler (Get_Object (Check), On_Clicked'Address);
+      end if;
+
       Return_Callback.Connect
         (Check,
          Gtk.Widget.Signal_Expose_Event,
          Return_Callback.To_Marshaller (On_Expose'Access));
    end Initialize;
-
-   -------------------
-   -- State_Changed --
-   -------------------
-
-   procedure State_Changed
-     (Check : access Gtkada_Check_Button_Record'Class)
-   is
-      procedure Internal (Check : System.Address);
-      pragma Import (C, Internal, "gtkada_button_clicked");
-      --  A way to update the underlying check_button state without re-raising
-      --  the clicked signal.
-      Active : constant Boolean := Check.State /= State_Unchecked;
-   begin
-      if Active /= Get_Active (Check) then
-         Internal (Get_Object (Check));
-      else
-         --  Still notify the toggled signal
-         Toggled (Check);
-      end if;
-      Draw (Check);
-   end State_Changed;
 
    -----------------
    -- Set_Default --
@@ -122,7 +121,8 @@ package body Gtkada.Check_Button is
      (Check : access Gtkada_Check_Button_Record;
       State : Boolean)
    is
-      Old_State   : constant State_Type := Check.State;
+      Send_Signal : Boolean := False;
+
    begin
       if State = Check.Default then
          return;
@@ -138,15 +138,24 @@ package body Gtkada.Check_Button is
                Check.State := State_Checked_Default;
             end if;
 
+            --  Force the toggled signal to be sent anyway as the user might
+            --  want to be aware that the button is now in its default state.
+            Send_Signal := True;
+
          when State_Checked_Default =>
             Check.State := State_Unchecked;
+            Send_Signal := True;
 
          when State_Checked =>
+            --  Special case: the checked state indicates that the button is
+            --  forced (not Checked_Default). So we don't send signals in this
+            --  case.
             null;
+
       end case;
 
-      if Check.State /= Old_State then
-         State_Changed (Check);
+      if Send_Signal then
+         Clicked (Check);
       end if;
    end Set_Default;
 
@@ -168,18 +177,20 @@ package body Gtkada.Check_Button is
      (Check      : access Gtkada_Check_Button_Record;
       State      : Boolean)
    is
-      Old_State   : constant State_Type := Check.State;
-
    begin
+      if (State and then Check.State = State_Checked)
+        or else (not State and then Check.State = State_Unchecked)
+      then
+         return;
+      end if;
+
       if State then
          Check.State := State_Checked;
       else
          Check.State := State_Unchecked;
       end if;
 
-      if Check.State /= Old_State then
-         State_Changed (Check);
-      end if;
+      Clicked (Check);
    end Set_Active;
 
    ---------------
@@ -192,11 +203,47 @@ package body Gtkada.Check_Button is
       return Check.State;
    end Get_State;
 
+   -------------
+   -- Clicked --
+   -------------
+
+   procedure Clicked (Check : access Gtkada_Check_Button_Record) is
+   begin
+      --  We need to change the state so that On_Click returns to the
+      --  current state... A bit tricky but allows all signals to be correctly
+      --  generated.
+      case Check.State is
+         when State_Checked_Default =>
+            Check.State := State_Checked;
+
+         when State_Checked =>
+            Check.State := State_Unchecked;
+
+         when State_Unchecked =>
+            Check.State := State_Checked_Default;
+      end case;
+
+      Gtk.Check_Button.Clicked
+        (Gtk.Check_Button.Gtk_Check_Button_Record (Check.all)'Access);
+   end Clicked;
+
    ----------------
    -- On_Clicked --
    ----------------
 
-   procedure On_Clicked (Check : access Gtkada_Check_Button_Record'Class) is
+   procedure On_Clicked (Obj : System.Address)
+   is
+      procedure Force_State (Check : System.Address; Val : Integer);
+      pragma Import (C, Force_State, "gtkada_check_button_force_state");
+      procedure Original_Handler (Check : System.Address);
+      pragma Import (C, Original_Handler, "gtkada_check_button_clicked");
+
+      Stub  : Gtkada_Check_Button_Record;
+      pragma Warnings (Off, Stub);
+      Check : constant Gtkada_Check_Button :=
+                Gtkada_Check_Button (Get_User_Data (Obj, Stub));
+      Underlying_State : Boolean;
+
    begin
       case Check.State is
          when State_Checked_Default =>
@@ -214,7 +261,25 @@ package body Gtkada.Check_Button is
 
       end case;
 
-      State_Changed (Check);
+      Underlying_State := Check.State /= State_Unchecked;
+      --  the desired underlying GtkCheckButton state
+
+      if Underlying_State = Get_Active (Check) then
+         --  We are synchronized: this is wrong as the GtkCheckButton handler
+         --  will be called just afterwards, and will thus change its
+         --  activation state
+         declare
+         begin
+            if Underlying_State then
+               --  We force it deactivated
+               Force_State (Get_Object (Check), 0);
+            else
+               Force_State (Get_Object (Check), 1);
+            end if;
+         end;
+      end if;
+
+      Original_Handler (Get_Object (Check));
    end On_Clicked;
 
    ---------------

@@ -18,8 +18,24 @@
  *********************************************************************/
 
 #include <gtk/gtkbutton.h>
+#include <gtk/gtktogglebutton.h>
 
-void gtkada_button_clicked (GtkButton *button)
+void (* clicked_orig) (GtkButton *button);
+
+void gtkada_check_button_install_handler
+  (GtkButton *button, void (* clicked) (GtkButton *button))
 {
-   GTK_BUTTON_GET_CLASS (button)->clicked (button);
+   clicked_orig = GTK_BUTTON_GET_CLASS (button)->clicked;
+   GTK_BUTTON_GET_CLASS (button)->clicked = clicked;
 }
+
+void gtkada_check_button_clicked (GtkButton *button)
+{
+   clicked_orig (button);
+}
+
+void gtkada_check_button_force_state (GtkToggleButton *button, int state)
+{
+   button->active = state;
+}
+
