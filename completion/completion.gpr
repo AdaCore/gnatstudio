@@ -1,6 +1,5 @@
 with "../kernel/kernel";
 with "../common/common";
-with "../vsearch/vsearch";
 with "../shared";
 with "../ada_module/ada_module.gpr";
 
