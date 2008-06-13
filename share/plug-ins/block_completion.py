@@ -12,7 +12,7 @@ Example of use:
       if Foo then
          null;
       _
-  and then select the menu /Edit/Complete Block
+  and then select the menu /Edit/More Completion/Complete Block
   This automatically adds "end if;" on the line following the statement
 """
 
@@ -22,7 +22,7 @@ Example of use:
 # with this script (see /Tools/Scripts)
 
 action_name = "Block Completion"
-menu_name   = "/Edit/Complete Block"
+menu_name   = "/Edit/More Completion/Complete _Block"
 ## Name of the action and the menu defined by this package.
 
 

@@ -4,8 +4,8 @@ This file provides two sort functions, which can be used to sort lines
 in a source file.
 To use: first select the lines that you wish to sort, and then select
 one of the two menus:
-  - /Edit/Sort Ascending
-  - /Edit/Sort Descending
+  - /Edit/Selection/Sort
+  - /Edit/Selection/Sort Reverse
 """
 
 ############################################################################
@@ -13,8 +13,8 @@ one of the two menus:
 # These variables can be changed in the initialization commands associated
 # with this script (see /Tools/Scripts)
 
-menu_name1 = "/Edit/Sort Descending"
-menu_name2 = "/Edit/Sort Ascending"
+menu_name1 = "/Edit/Selection/Sort Reverse"
+menu_name2 = "/Edit/Selection/Sort"
 
 
 ############################################################################
@@ -26,24 +26,21 @@ import string
 
 def on_gps_started (hook_name):
   GPS.parse_xml ("""
+  <action name="sort selected lines descending" output="none" category="Editor">
+     <filter id="Source editor" />
+     <description>Sorts current selection</description>
+     <shell lang="python" >sort_selection.sort_selection(1)</shell>
+  </action>
+  <menu action="sort selected lines descending" after="Refill">
+     <title>""" + menu_name1 + """</title>
+  </menu>
   <action name="sort selected lines ascending" output="none" category="Editor">
      <filter id="Source editor" />
      <description>Sorts current selection</description>
      <shell lang="python" >sort_selection.sort_selection(0)</shell>
   </action>
-
   <menu action="sort selected lines ascending" after="Refill">
      <title>""" + menu_name2 + """</title>
-  </menu>
-
-   <action name="sort selected lines descending" output="none" category="Editor">
-      <filter id="Source editor" />
-      <description>Sorts current selection</description>
-      <shell lang="python" >sort_selection.sort_selection(1)</shell>
-   </action>
-
-  <menu action="sort selected lines descending" after="Refill">
-     <title>""" + menu_name1 + """</title>
   </menu>
 """)
 
