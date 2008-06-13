@@ -1,5 +1,5 @@
 """Processes a text selection through an external shell command, and
-   substitute it with the output of that command.
+   substitutes it with the output of that command.
 
    This is similar to vi's ! command. For instance, you can use this
    script to run a select chunk of text through the following shell
@@ -32,6 +32,7 @@ background_color = "yellow"
 ############################################################################
 
 from GPS import *
+import os_utils
 
 def pipe (command, buffer=None):
    """Process the current selection in BUFFER through COMMAND,
@@ -74,14 +75,14 @@ def fmt_selection ():
   loc = buffer.selection_start().beginning_of_line()
   while loc.get_char() == ' ':
      loc = loc + 1
-    
-  prefix = '-p """' + (' ' * (loc.column() - 1)) + prefix + '"""' 
+
+  prefix = '-p """' + (' ' * (loc.column() - 1)) + prefix + '"""'
   pipe ("fmt " + prefix + " -w " + `width`, buffer)
 
 class ShellProcess (CommandWindow):
    """Send the current selection to an external process,
       and replace it with the output of that process"""
-    
+
    def __init__ (self):
       CommandWindow.__init__ (self, global_window = True,
                               prompt = "Shell command:",
@@ -92,12 +93,13 @@ class ShellProcess (CommandWindow):
       pipe (shell_command)
 
 def on_gps_started (hook):
-   Menu.create ("/Edit/Pipe in external program",
-                ref = "Create Bookmark",
+   Menu.create ("/Edit/Selection/Pipe in external program...",
                 on_activate=lambda menu: ShellProcess())
-   Menu.create ("/Edit/Refill with fmt",
-                ref = "Refill", add_before=False,
-                on_activate=lambda menu: fmt_selection())
+
+   if os_utils.locate_exec_on_path ("fmt") != "":
+      Menu.create ("/Edit/Selection/Refill with fmt",
+                   ref = "Refill", add_before=False,
+                   on_activate=lambda menu: fmt_selection())
 
 parse_xml ("""
   <action name="Pipe" output="none">
