@@ -41,7 +41,7 @@ copy_with_line_numbers_contextual=False
 # If True and standard_contextual is also True, a contextual menu to copy some
 # text with the line numbers will be created.
 #  Otherwise, the capability will only be accessible from the
-# /Edit/Copy with line numbers menu and eventualllly the associated key
+# /Edit/Copy with line numbers menu and possibly the associated key
 # shortcut.
 
 grey_out_contextual=True

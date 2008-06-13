@@ -1,4 +1,4 @@
-"""This plug-in provides menus to list unusued entities
+"""This plug-in provides menus to list unused entities
 
 This menu adds some submenus to /Navigate that will show the list of entities
 that are declared in the whole application, a specific project or a specific
