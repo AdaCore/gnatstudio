@@ -87,5 +87,3 @@ def create_project_and_main():
    os.chdir (dir)
    create_from_main (main, create_main=1)
 
-
-
