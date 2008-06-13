@@ -51,7 +51,7 @@ ispell_command = ispell_cmd + " -a --lang=en"
 # replace the current one.
 #   -a => read from stdin, until pipe is closed
 
-contextual_menu_type = "static"
+contextual_menu_type = "dynamic"
 # What type of contextual menu we should use. Value can be:
 #   "dynamic", "static", or "none"
 # See above for a description of the various types
@@ -264,15 +264,16 @@ class Dynamic_Contextual (GPS.Contextual):
    def factory (self, context):
       """Return a list of strings, each of which is the title to use for an
          entry in the dynamic contextual menu"""
-      try:
-        return ispell.parse (context.ispell_module_word)[0][2]
-      except:
-        return []
+      list = ispell.parse (context.ispell_module_word)
+
+      if list:
+         return list[0][2]
+      else:
+         return []
 
    def on_activate (self, context, choice, choice_index):
       context.ispell_module_start.buffer().delete (context.ispell_module_start, context.ispell_module_end)
       context.ispell_module_start.buffer().insert (context.ispell_module_start, choice)
-
 
 ####################################
 ### Spell check paragraphs and buffers
@@ -443,7 +444,7 @@ def on_gps_started (hook_name):
    ispell = Ispell()
 
    if contextual_menu_type == "static":
-      static = Static_Contextual ()
+      static = Static_Contextual()
    elif contextual_menu_type == "dynamic":
       dynamic = Dynamic_Contextual() 
 
@@ -469,8 +470,8 @@ def on_gps_started (hook_name):
       <shell lang="python">ispell.SpellCheckBuffer ("word")</shell>
     </action>
 
-    <submenu before="Comment Lines">
-      <title>/Edit/Spell Check</title>
+    <submenu after="Selection">
+      <title>/Edit/Spe_ll Check</title>
       <menu action="spell check comments">
          <title>Comments</title>
       </menu>
