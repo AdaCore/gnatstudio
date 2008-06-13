@@ -454,6 +454,7 @@ class BlockIterator:
            else:
               return (loc.buffer().beginning_of_buffer(),
                       loc.buffer().end_of_buffer())
+        raise StopIteration
       else:
         # Find beginning of next section
         if not loc.has_overlay (self.overlay):
