@@ -820,7 +820,11 @@ package body Expect_Interface is
 
             --  Get the Server_Type value
             begin
-               D.Server := Server_Type'Value (Remote_Server);
+               if Remote_Server = "" then
+                  D.Server := GPS_Server;
+               else
+                  D.Server := Server_Type'Value (Remote_Server);
+               end if;
             exception
                when Constraint_Error =>
                   D.Server := GPS_Server;
