@@ -1,10 +1,10 @@
 """Provides an action to reset the Win32 registry settings for GPS.
 
-This script specifically reset all the file associations that are normally
+This script specifically resets all the file associations that are normally
 created when installing GPS. It can be the case that installing another
 application breaks the initial associations.
 
-This is only to be used on Windows plate-forms.
+This is only to be used on Windows plateforms.
 """
 
 import GPS

@@ -1,6 +1,6 @@
 """Highlights all instances of current word in current editor
 
-This script provides a GPS action which, when executed, hilights all
+This script provides a GPS action which, when executed, highlights all
 occurrences of the current word in the current editor.
 This is a textual search, and ignores cross-references information. As
 a result, if you select "Tmp" and have two variables with that names,

@@ -5,6 +5,7 @@ for this file, this package will automatically fill the changelog with stubs
 with names of subprograms where differences have been found.
 """
 
+
 from GPS import *
 
 def on_file_edited (hook, file):
