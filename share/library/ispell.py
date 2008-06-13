@@ -1,10 +1,10 @@
 """Spell-checking support
 
-This script demonstrates how to add a spell-checking contextual menu.
-This menu should only be visible when the user has clicked on a word
-inside the source editor.
-It requires that the "aspell" executable be visible in the PATH.
-Two types of menus are provided in this example:
+This plug-in adds spell-checking capabilities.
+In particular, a contextual menu is added, which should only be visible
+when the user has clicked on a word inside the source editor.
+It will be enabled when the "aspell" executable is visible in the PATH.
+Two types of menus are provided in this plug-in:
   - Static menu: the menu will be a simple menu entry, which, when
     clicked, starts aspell and displays, in the console, the possible
     replacements for a word
@@ -29,7 +29,7 @@ keys are recognized:
 The menus are implemented as new python classes, since this is the
 cleanest way to encapsulate data in python. We could have used global
 function calls instead.
-This example also demonstrates how to start and monitor an external
+This plug-in also demonstrates how to start and monitor an external
 executable.
 It also shows how to get the word under the cursor in GPS.
 
@@ -40,14 +40,16 @@ It also shows how to get the word under the cursor in GPS.
 # These variables can be changed in the initialization commands associated
 # with this script (see /Tools/Plug-ins)
 
-#ispell_command = "ispell -S -a"
-ispell_command = "aspell -a --lang=en "
+# ispell_cmd = "ispell"
+# ispell_command = ispell_cmd + " -S -a"
+#   -S => Sort the list of guesses by probable correctness
+
+ispell_cmd = "aspell"
+ispell_command = ispell_cmd + " -a --lang=en"
 # Command to use to start a process to which words can be sent on standard
 # input. The process is expected to return a list of words that could
 # replace the current one.
-#   -S => Sort the list of guesses by probable correctness
 #   -a => read from stdin, until pipe is closed
-
 
 contextual_menu_type = "static"
 # What type of contextual menu we should use. Value can be:
@@ -62,7 +64,7 @@ background_color = "yellow"
 ## No user customization below this line
 ############################################################################
 
-import GPS, re
+import GPS, re, os_utils
 from text_utils import *
 import traceback
 
@@ -483,7 +485,7 @@ def on_gps_started (hook_name):
       </menu>
      </submenu>""")
 
-GPS.Hook ("before_exit_action_hook").add (before_exit)
-GPS.Hook ("gps_started").add (on_gps_started)
-
+if os_utils.locate_exec_on_path (ispell_cmd) != "":
+   GPS.Hook ("before_exit_action_hook").add (before_exit)
+   GPS.Hook ("gps_started").add (on_gps_started)
 
