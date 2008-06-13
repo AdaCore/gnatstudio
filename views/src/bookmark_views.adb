@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---               Copyright (C) 2005-2007, AdaCore                    --
+--               Copyright (C) 2005-2008, AdaCore                    --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1061,8 +1061,8 @@ package body Bookmark_Views is
       Command := new Create_Bookmark_Command;
       Register_Menu
         (Kernel,
-         "/" & (-"Edit"), -"Create Bookmark", "",
-         Ref_Item => -"Comment Lines",
+         "/" & (-"Edit"), -"Create Boo_kmark", "",
+         Ref_Item => -"Unit Testing",
          Callback => null,
          Command  => Command,
          Filter   => Src_Action_Context);

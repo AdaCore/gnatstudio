@@ -2201,18 +2201,10 @@ Select the whole contents of the current source editor.
 Open a file selection dialog and insert the contents of this file in
 the current source editor, at the current cursor location.
 
-@item Create Bookmark
-Creates a new Bookmark at cursor position. For more information,
-@xref{Bookmarks}.
-
-@item Comment Lines
-@cindex comment
-Comment the current selection or line based on the current programming
-language syntax.
-
-@item Uncomment Lines
-@cindex uncomment
-Remove the comment delimiters from the current selection or line.
+@item Format Selection
+@cindex format selection
+Indent and format the selection or the current line.
+@xref{The Preferences Dialog}, for preferences related to source formatting.
 
 @item Smart Completion
 @anchor{Smart Completion}
@@ -2315,9 +2307,20 @@ Limitations:
 @item Completion does not work with generics.
 
 @item This feature is currently only available for Ada.
-Using the smart completion on non Ada files behaves as the identifier completion does. See below.
+Using the smart completion on non Ada files behaves as the identifier completion does.
+@xref{Complete Identifier}.
 
 @end table
+
+@item More Completion
+@cindex completion
+
+This submenu contains more ways to automatically complete code
+
+@table @bullet
+@item Expand Alias
+Consider the current word as an alias and expand according to aliases
+defined in @ref{Defining text aliases}.
 
 @item Complete Identifier
 @anchor{Complete Identifier}
@@ -2330,24 +2333,49 @@ through all identifiers starting with the given prefix.
 Close the current statement (if, case, loop) or unit (procedure,
 function, package). This action works only on an Ada buffer.
 
+@end table
+
+@item Selection
+@cindex selection
+
+@table @bullet
+
+@item Comment Lines
+@cindex comment
+Comment the current selection or line based on the current programming
+language syntax.
+
+@item Uncomment Lines
+@cindex uncomment
+Remove the comment delimiters from the current selection or line.
+
 @item Refill
 @cindex refill
 Refill text on the selection or current line according to the right
 margin as defined by the right margin preference
 (@pxref{The Preferences Dialog}).
 
-@item Sort Descending
-Sort the selected lines in reverse alphabetical order
+@item Refill with fmt
+@cindex refill
+@cindex fmt
+Refill text on the selection or current line using the external utility
+@code{fmt}. If @code{fmt} is not found on your system, this menu will not be
+displayed.
 
-@item Sort Ascending
+@item Sort
 Sort the selected lines alphabetically. This is particularly useful when
 editing non source code, or for specific parts of the code, like with clauses
 in Ada.
 
-@item Format Selection
-@cindex format selection
-Format the selection or the current line. @xref{The Preferences Dialog}, for
-preferences related to source formating.
+@item Sort Reverse
+Sort the selected lines in reverse alphabetical order
+
+@item Pipe in external program...
+Open an input window at the bottom of the GPS window where you can specify any
+external command, which will take the current selection as input. The output of
+the command will replace the contents of the selection on success.
+
+@end table
 
 @item Fold all blocks
 @cindex fold
@@ -2357,11 +2385,9 @@ Collapse all the blocks in the current file.
 @cindex unfold
 Uncollapse all the blocks in the current file.
 
-@item Generate Body
-@cindex gnatstub
-@cindex generate body
-Generate Ada body stub for the current source editor by calling the
-external tool @code{gnatstub}.
+@item Create Bookmark
+Creates a new Bookmark at cursor position. For more information,
+@xref{Bookmarks}.
 
 @item Pretty Print
 @cindex gnatpp
@@ -2369,6 +2395,12 @@ external tool @code{gnatstub}.
 Pretty print the current source editor by calling the external tool
 @code{gnatpp}. It is possible to specify @code{gnatpp} switches in the
 switch editor. @xref{The Switches Editor}.
+
+@item Generate Body
+@cindex gnatstub
+@cindex generate body
+Generate Ada body stub for the current source editor by calling the
+external tool @code{gnatstub}.
 
 @item Unit Testing
 @cindex AUnit
@@ -2393,6 +2425,7 @@ Create a new test harness. See AUnit documentation for more details.
 @end table
 
 @item Aliases
+@cindex alias
 Display the Aliases editor. @xref{Defining text aliases}.
 
 @item Key shortcuts

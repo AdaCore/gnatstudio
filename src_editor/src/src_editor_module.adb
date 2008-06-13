@@ -2462,6 +2462,7 @@ package body Src_Editor_Module is
    is
       File               : constant String := '/' & (-"File") & '/';
       Edit               : constant String := '/' & (-"Edit") & '/';
+      Selection          : constant String := Edit & (-"S_election") & '/';
       Navigate           : constant String := '/' & (-"Navigate") & '/';
       Mitem              : Gtk_Menu_Item;
       Toolbar            : constant Gtk_Toolbar := Get_Toolbar (Kernel);
@@ -2901,56 +2902,57 @@ package body Src_Editor_Module is
       Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Select All",
                      Add_Before => False);
 
-      Register_Menu (Kernel, Edit, -"Comment _Lines", "",
+      Register_Menu (Kernel, Selection, -"Comment _Lines", "",
                      On_Comment_Lines'Access, null,
-                     GDK_minus, Control_Mask, Ref_Item => -"Insert File...",
+                     GDK_minus, Control_Mask, Ref_Item => -"More Completion",
                      Add_Before => False,
                      Filter => Src_Action_Context);
 
-      Gtk_New (Mitem);
-      Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Insert File...",
-                    Add_Before => False);
-
-      Register_Menu (Kernel, Edit, -"Uncomment L_ines", "",
+      Register_Menu (Kernel, Selection, -"Uncomment L_ines", "",
                      On_Uncomment_Lines'Access, null,
                      GDK_underscore, Control_Mask,
                      Ref_Item   => -"Comment Lines",
                      Add_Before => False,
                      Filter     => Src_Action_Context);
-      Register_Menu (Kernel, Edit, -"R_efill", "",
+      Register_Menu (Kernel, Selection, -"R_efill", "",
                      On_Refill'Access, null,
                      GDK_equal, Control_Mask,
                      Ref_Item   => "Expand Alias",
                      Add_Before => False,
                      Filter     => Src_Action_Context);
 
+      Gtk_New (Mitem);
+      Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Selection",
+                    Add_Before => False);
+
       Command := new Indentation_Command;
       Indentation_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Register_Menu
         (Kernel, Edit, -"Format Selectio_n", "",
          null, Command, GDK_Tab, Control_Mask,
-         Ref_Item   => "Refill",
+         Ref_Item   => "Insert File...",
          Add_Before => False,
          Filter     => Src_Action_Context);
 
+      Gtk_New (Mitem);
+      Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Insert File...",
+                     Add_Before => False);
+
       Register_Menu (Kernel, Edit, -"_Fold all blocks", "",
                      On_Fold_Blocks'Access, null,
-                     0, 0, Ref_Item => -"Format Selection",
+                     0, 0, Ref_Item => -"Selection",
                      Add_Before     => False,
                      Filter         => Src_Action_Context);
+
       Gtk_New (Mitem);
-      Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Format Selection",
-                     Add_Before => False);
+      Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Fold all blocks",
+                     Add_Before => True);
 
       Register_Menu (Kernel, Edit, -"Unfold all _blocks", "",
                      On_Unfold_Blocks'Access, null,
                      0, 0, Ref_Item => -"Fold all blocks",
                      Add_Before     => False,
                      Filter         => Src_Action_Context);
-
-      Gtk_New (Mitem);
-      Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Unfold all blocks",
-                     Add_Before => False);
 
       Command := new Goto_Line_Command;
       Goto_Line_Command (Command.all).Kernel := Kernel_Handle (Kernel);

@@ -1101,6 +1101,8 @@ package body Completion_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Edit               : constant String := '/' & (-"Edit") & '/';
+      Completion         : constant String :=
+                             Edit & '/' & (-"_More Completion");
       Command            : Interactive_Command_Access;
       Command_Smart      : Interactive_Command_Access;
       Src_Action_Context : constant Action_Filter :=
@@ -1120,13 +1122,15 @@ package body Completion_Module is
          -("Complete current identifier based on the contents of the editor"),
          Category => "Editor",
          Filter   => Src_Action_Context);
-      Register_Menu (Kernel, Edit, -"Co_mplete Identifier",
-                     Ref_Item   => -"Refill",
-                     Accel_Key  => GDK_slash,
-                     Accel_Mods => Control_Mask,
-                     Callback   => null,
-                     Action     => Action,
-                     Filter     => Src_Action_Context);
+      Register_Menu
+        (Kernel, Completion, -"Complete _Identifier",
+         Ref_Item   => -"Format Selection",
+         Add_Before => False,
+         Accel_Key  => GDK_slash,
+         Accel_Mods => Control_Mask,
+         Callback   => null,
+         Action     => Action,
+         Filter     => Src_Action_Context);
 
       Command_Smart := new Completion_Command (Smart_Completion => True);
       Completion_Command (Command_Smart.all).Kernel := Kernel_Handle (Kernel);
@@ -1136,7 +1140,8 @@ package body Completion_Module is
          Category => "Editor",
          Filter   => Src_Action_Context);
       Register_Menu (Kernel, Edit, -"Smar_t Completion",
-                     Ref_Item   => -"Complete Identifier",
+                     Ref_Item   => -"Format Selection",
+                     Add_Before => False,
                      Accel_Key  => GDK_space,
                      Accel_Mods => Control_Mask,
                      Callback   => null,

@@ -2228,9 +2228,11 @@ package body Aliases_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Edit : constant String := "/" & (-"Edit");
-      Command : Interactive_Alias_Expansion_Command_Access;
-      Action  : Action_Record_Access;
+      Edit       : constant String := '/' & (-"Edit");
+      Completion : constant String := Edit & '/' & (-"_More Completion");
+      Command    : Interactive_Alias_Expansion_Command_Access;
+      Action     : Action_Record_Access;
+
    begin
       Aliases_Module_Id := new Aliases_Module_Id_Record;
       Register_Module
@@ -2257,7 +2259,7 @@ package body Aliases_Module is
          Category    => "Editor",
          Description => -"Expand the alias found just before the cursor");
       Register_Menu
-        (Kernel, Edit, -"Expand alias",
+        (Kernel, Completion, -"Expand _Alias",
          Ref_Item   => -"Aliases",
          Add_Before => True,
          Accel_Key  => GDK_LC_o,
