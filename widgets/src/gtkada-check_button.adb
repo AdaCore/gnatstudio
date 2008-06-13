@@ -81,9 +81,12 @@ package body Gtkada.Check_Button is
 
       Set_Handler : Boolean := False;
    begin
+      Gtkada_Check_Button_Record (Check.all) :=
+        (Gtk.Check_Button.Gtk_Check_Button_Record with
+         Default  => False,
+         State    => State_Unchecked,
+         Internal => False);
       Gtk.Check_Button.Initialize (Check, Label);
-      Check.Default := False;
-      Check.State   := State_Unchecked;
       Set_Default (Check, Default);
 
       --  We need to create a new Class Record for this widget, as we are
@@ -155,7 +158,10 @@ package body Gtkada.Check_Button is
       end case;
 
       if Send_Signal then
+         --  Set Internal so that On_Clicked won't change the state.
+         Check.Internal := True;
          Clicked (Check);
+         Check.Internal := False;
       end if;
    end Set_Default;
 
@@ -190,7 +196,10 @@ package body Gtkada.Check_Button is
          Check.State := State_Unchecked;
       end if;
 
+      --  Set Internal so that On_Clicked won't change the state.
+      Check.Internal := True;
       Clicked (Check);
+      Check.Internal := False;
    end Set_Active;
 
    ---------------
@@ -202,30 +211,6 @@ package body Gtkada.Check_Button is
    begin
       return Check.State;
    end Get_State;
-
-   -------------
-   -- Clicked --
-   -------------
-
-   procedure Clicked (Check : access Gtkada_Check_Button_Record) is
-   begin
-      --  We need to change the state so that On_Click returns to the
-      --  current state... A bit tricky but allows all signals to be correctly
-      --  generated.
-      case Check.State is
-         when State_Checked_Default =>
-            Check.State := State_Checked;
-
-         when State_Checked =>
-            Check.State := State_Unchecked;
-
-         when State_Unchecked =>
-            Check.State := State_Checked_Default;
-      end case;
-
-      Gtk.Check_Button.Clicked
-        (Gtk.Check_Button.Gtk_Check_Button_Record (Check.all)'Access);
-   end Clicked;
 
    ----------------
    -- On_Clicked --
@@ -245,7 +230,10 @@ package body Gtkada.Check_Button is
       Underlying_State : Boolean;
 
    begin
-      case Check.State is
+      --  Change state only when not an internal call, where the state is
+      --  already in the desired state
+      if not Check.Internal then
+         case Check.State is
          when State_Checked_Default =>
             Check.State := State_Unchecked;
 
@@ -259,24 +247,21 @@ package body Gtkada.Check_Button is
          when State_Unchecked =>
             Check.State := State_Checked;
 
-      end case;
+         end case;
+      end if;
 
       Underlying_State := Check.State /= State_Unchecked;
       --  the desired underlying GtkCheckButton state
 
+      --  We want the underlying check_button state be different from the
+      --  current state, as the original handler will toggle it.
       if Underlying_State = Get_Active (Check) then
-         --  We are synchronized: this is wrong as the GtkCheckButton handler
-         --  will be called just afterwards, and will thus change its
-         --  activation state
-         declare
-         begin
-            if Underlying_State then
-               --  We force it deactivated
-               Force_State (Get_Object (Check), 0);
-            else
-               Force_State (Get_Object (Check), 1);
-            end if;
-         end;
+         if Underlying_State then
+            --  We force it deactivated
+            Force_State (Get_Object (Check), 0);
+         else
+            Force_State (Get_Object (Check), 1);
+         end if;
       end if;
 
       Original_Handler (Get_Object (Check));

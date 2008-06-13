@@ -72,16 +72,13 @@ package Gtkada.Check_Button is
      (Check : access Gtkada_Check_Button_Record) return State_Type;
    --  Get the current button state.
 
-   procedure Clicked
-     (Check : access Gtkada_Check_Button_Record);
-   --  Sends the 'clicked' signal.
-
 private
 
    type Gtkada_Check_Button_Record is new
      Gtk.Check_Button.Gtk_Check_Button_Record with record
       State     : State_Type;
       Default   : Boolean;
+      Internal  : Boolean;
    end record;
 
 end Gtkada.Check_Button;
