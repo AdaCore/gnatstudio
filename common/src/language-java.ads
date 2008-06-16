@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2006                       --
---                             AdaCore                               --
+--                   Copyright (C) 2000-2008, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -37,6 +36,9 @@ package Language.Java is
 
    function Keywords
      (Lang : access Java_Language) return Pattern_Matcher_Access;
+
+   function Keywords
+     (Lang : access Java_Language) return GNAT.Strings.String_List;
 
    function Get_Language_Context
      (Lang : access Java_Language) return Language_Context_Access;

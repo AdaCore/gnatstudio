@@ -707,6 +707,16 @@ package body Language.Custom is
       end if;
    end Keywords;
 
+   function Keywords
+     (Lang : access Custom_Language) return GNAT.Strings.String_List
+   is
+   begin
+      --  ??? This list is never populated. We should add a facility for
+      --  specifying lists of keywords in XML, and maybe compute the
+      --  regexp from this list.
+      return Lang.Keywords_List.all;
+   end Keywords;
+
    -----------------------
    -- Record_Field_Name --
    -----------------------

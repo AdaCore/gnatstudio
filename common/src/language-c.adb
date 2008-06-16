@@ -35,6 +35,42 @@ package body Language.C is
    Keywords_List : aliased Pattern_Matcher :=
                      Compile ("^(" & Keywords_Regexp & ")\W");
 
+   The_Keywords : constant GNAT.Strings.String_List :=
+                    (1  => new String'("auto"),
+                     2  => new String'("break"),
+                     3  => new String'("case"),
+                     4  => new String'("const"),
+                     5  => new String'("continue"),
+                     6  => new String'("char"),
+                     7  => new String'("default"),
+                     8  => new String'("do"),
+                     9  => new String'("double"),
+                     10  => new String'("else"),
+                     11  => new String'("enum"),
+                     12  => new String'("extern"),
+                     13  => new String'("float"),
+                     14  => new String'("for"),
+                     15  => new String'("goto"),
+                     16  => new String'("if"),
+                     17  => new String'("int"),
+                     18  => new String'("inline"),
+                     19  => new String'("long"),
+                     20  => new String'("register"),
+                     21  => new String'("restrict"),
+                     22  => new String'("return"),
+                     23  => new String'("short"),
+                     24  => new String'("signed"),
+                     25  => new String'("sizeof"),
+                     26  => new String'("static"),
+                     27  => new String'("struct"),
+                     28  => new String'("switch"),
+                     29  => new String'("union"),
+                     30  => new String'("unsigned"),
+                     31  => new String'("void"),
+                     32  => new String'("volatile"),
+                     33  => new String'("while"),
+                     34  => new String'("typedef"));
+
    Subprogram_RE : aliased Pattern_Matcher :=
      Compile
        ("^\w+\s*"                         --  type specs; there can be no
@@ -169,6 +205,14 @@ package body Language.C is
       pragma Unreferenced (Lang);
    begin
       return Keywords_List'Access;
+   end Keywords;
+
+   function Keywords
+     (Lang : access C_Language) return GNAT.Strings.String_List
+   is
+      pragma Unreferenced (Lang);
+   begin
+      return The_Keywords;
    end Keywords;
 
    --------------------------

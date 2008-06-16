@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2006                       --
---                             AdaCore                               --
+--                   Copyright (C) 2000-2008, AdaCore                --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,15 +20,28 @@
 with GNAT.Regpat; use GNAT.Regpat;
 with Language.C;  use Language.C;
 
+with GNAT.Strings; use GNAT.Strings;
+
 package body Language.Java is
 
    Keywords_Regexp : aliased String :=
                        Language.Keywords (C_Lang).all &
                        "finally|synchronized|implements|extends" &
-                       "t(h(rows|readsafe)|ransient)|native|volatile";
+                       "t(h(rows|readsafe)|ransient)|native";
 
    Keywords_List : aliased Pattern_Matcher :=
                      Compile ("^(" & Keywords_Regexp & ")\W");
+
+   The_Keywords : constant GNAT.Strings.String_List :=
+                    GNAT.Strings.String_List'(Language.Keywords (C_Lang)) &
+                    (1  => new String'("finally"),
+                     2  => new String'("synchronized"),
+                     3  => new String'("implements"),
+                     4  => new String'("extends"),
+                     5  => new String'("throws"),
+                     6  => new String'("threadsafe"),
+                     7  => new String'("transient"),
+                     8  => new String'("native"));
 
    --------------------
    -- Is_Simple_Type --
@@ -104,6 +116,14 @@ package body Language.Java is
       pragma Unreferenced (Lang);
    begin
       return Keywords_List'Access;
+   end Keywords;
+
+   function Keywords
+     (Lang : access Java_Language) return GNAT.Strings.String_List
+   is
+      pragma Unreferenced (Lang);
+   begin
+      return The_Keywords;
    end Keywords;
 
    --------------------------

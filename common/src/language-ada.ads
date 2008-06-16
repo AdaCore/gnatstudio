@@ -42,6 +42,9 @@ package Language.Ada is
    function Keywords
      (Lang : access Ada_Language) return Pattern_Matcher_Access;
 
+   function Keywords
+     (Lang : access Ada_Language) return GNAT.Strings.String_List;
+
    function Get_Language_Context
      (Lang : access Ada_Language) return Language_Context_Access;
 

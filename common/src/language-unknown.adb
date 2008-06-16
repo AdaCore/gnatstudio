@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                              G P S                                --
 --                                                                   --
---                  Copyright (C) 2000-2007, AdaCore                 --
+--                   Copyright (C) 2000-2008, AdaCore                --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -101,6 +101,14 @@ package body Language.Unknown is
       pragma Unreferenced (Lang);
    begin
       return Keywords_List'Access;
+   end Keywords;
+
+   function Keywords
+     (Lang : access Unknown_Language) return GNAT.Strings.String_List
+   is
+      pragma Unreferenced (Lang);
+   begin
+      return GNAT.Strings.String_List'(1 .. 0 => null);
    end Keywords;
 
    --------------------------

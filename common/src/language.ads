@@ -106,6 +106,12 @@ package Language is
    --  keyword for this language. By default, this returns true for letters,
    --  digits and underscore characters.
 
+   function Keywords
+     (Lang : access Language_Root) return GNAT.Strings.String_List is abstract;
+   --  Return a list of keywords, encoded in UTF-8.
+   --  For case-insensitive languages, the keywords are listed in lower case.
+   --  Caller must not free the results.
+
    ----------------------------
    -- Tooltips in the editor --
    ----------------------------

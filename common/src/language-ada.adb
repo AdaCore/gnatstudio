@@ -28,18 +28,92 @@ package body Language.Ada is
    use GNAT.Strings;
 
    Keywords_Regexp : aliased String :=
-                   "a(b(ort|s(tract)?)|cce(pt|ss)|l(iased|l)|nd|rray|t)|b"
+                       "a(b(ort|s(tract)?)|cce(pt|ss)|l(iased|l)|nd|rray|t)|b"
                  & "(egin|ody)|c(ase|onstant)|d(e(clare|l(ay|ta))|igits|o)|"
                  & "e(ls(e|if)|n(d|try)|x(ception|it))|f(or|unction)|g(eneric|"
-                 & "oto)|i[fns]|l(imited|oop)|mod|n(ew|ot|ull)|o(thers|ut|[fr]"
-                 & ")|p(ackage|r(agma|ivate|o(cedure|tected)))|r(a(ise|nge)|e("
-                 & "cord|m|names|queue|turn|verse))|s(e(lect|parate)|ubtype)|t"
-                 & "(a(gged|sk)|erminate|hen|ype)|u(ntil|se)|w(h(en|ile)|ith)|"
-                 & "xor";
+                 & "oto)|i([fs]|n(terface)?)|l(imited|oop)|mod|n(ew|ot|ull)|"
+                 & "o(thers|ut|[fr]|verriding)|p(ackage|r(agma|ivate|o(cedure|"
+                 & "tected)))|r(a(ise|nge)|e(cord|m|names|queue|turn|verse))|s"
+                 & "(e(lect|parate)|ubtype|ynchronized)|t(a(gged|sk)|erminate|"
+                 & "hen|ype)|u(ntil|se)|w(h(en|ile)|ith)|xor";
 
    Keywords_List : aliased Pattern_Matcher :=
                      Compile
                        ("^(" & Keywords_Regexp & ")\b", Case_Insensitive);
+
+   The_Keywords : constant GNAT.Strings.String_List :=
+                    (1  => new String'("abort"),
+                     2  => new String'("abs"),
+                     3  => new String'("abstract"),
+                     4  => new String'("accept"),
+                     5  => new String'("access"),
+                     6  => new String'("aliased"),
+                     7  => new String'("all"),
+                     8  => new String'("and"),
+                     9  => new String'("array"),
+                     10 => new String'("at"),
+                     11 => new String'("begin"),
+                     12 => new String'("body"),
+                     13 => new String'("case"),
+                     14 => new String'("constant"),
+                     15 => new String'("declare"),
+                     16 => new String'("delay"),
+                     17 => new String'("delta"),
+                     18 => new String'("digits"),
+                     19 => new String'("do"),
+                     20 => new String'("else"),
+                     21 => new String'("elsif"),
+                     22 => new String'("end"),
+                     23 => new String'("entry"),
+                     24 => new String'("exception"),
+                     25 => new String'("exit"),
+                     26 => new String'("for"),
+                     27 => new String'("function"),
+                     28 => new String'("generic"),
+                     29 => new String'("goto"),
+                     30 => new String'("if"),
+                     31 => new String'("in"),
+                     32 => new String'("interface"),
+                     33 => new String'("is"),
+                     34 => new String'("limited"),
+                     35 => new String'("loop"),
+                     36 => new String'("mod"),
+                     37 => new String'("new"),
+                     38 => new String'("not"),
+                     39 => new String'("null"),
+                     40 => new String'("others"),
+                     41 => new String'("out"),
+                     42 => new String'("of"),
+                     43 => new String'("or"),
+                     44 => new String'("overriding"),
+                     45 => new String'("package"),
+                     46 => new String'("pragma"),
+                     47 => new String'("private"),
+                     48 => new String'("procedure"),
+                     49 => new String'("protected"),
+                     50 => new String'("raise"),
+                     51 => new String'("range"),
+                     52 => new String'("record"),
+                     53 => new String'("rem"),
+                     54 => new String'("renames"),
+                     55 => new String'("requeue"),
+                     56 => new String'("return"),
+                     57 => new String'("reverse"),
+                     58 => new String'("select"),
+                     59 => new String'("separate"),
+                     60 => new String'("subtype"),
+                     61 => new String'("synchronized"),
+                     62 => new String'("tagged"),
+                     63 => new String'("task"),
+                     64 => new String'("terminate"),
+                     65 => new String'("then"),
+                     66 => new String'("type"),
+                     67 => new String'("until"),
+                     68 => new String'("use"),
+                     69 => new String'("when"),
+                     70 => new String'("while"),
+                     71 => new String'("with"),
+                     72 => new String'("xor"));
 
    --  Make_Entry functions for the explorer
 
@@ -386,6 +460,14 @@ package body Language.Ada is
       pragma Unreferenced (Lang);
    begin
       return Keywords_Regexp'Access;
+   end Keywords;
+
+   function Keywords
+     (Lang : access Ada_Language) return GNAT.Strings.String_List
+   is
+      pragma Unreferenced (Lang);
+   begin
+      return The_Keywords;
    end Keywords;
 
    function Keywords

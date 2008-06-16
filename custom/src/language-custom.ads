@@ -57,6 +57,9 @@ package Language.Custom is
    function Keywords
      (Lang : access Custom_Language) return Pattern_Matcher_Access;
 
+   function Keywords
+     (Lang : access Custom_Language) return GNAT.Strings.String_List;
+
    function Is_Word_Char
      (Lang : access Custom_Language; Char : Glib.Gunichar) return Boolean;
 
@@ -323,6 +326,7 @@ private
       Categories       : Explorer_Categories_Access;
       Keywords         : Pattern_Matcher_Access;
       Keywords_Regexp  : Strings.String_Access;
+      Keywords_List    : GNAT.Strings.String_List_Access;
       Context          : Language_Context_Access;
       Name             : Glib.String_Ptr;
       Project_Fields   : Project_Field_Array_Access;
