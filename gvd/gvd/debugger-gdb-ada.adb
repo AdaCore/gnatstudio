@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                                  GPS                              --
 --                                                                   --
---                      Copyright (C) 2000-2007, AdaCore             --
+--                      Copyright (C) 2000-2008, AdaCore             --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -64,6 +64,14 @@ package body Debugger.Gdb.Ada is
 
    function Keywords
      (Lang : access Gdb_Ada_Language) return Pattern_Matcher_Access
+   is
+      pragma Unreferenced (Lang);
+   begin
+      return Keywords (Ada_Lang);
+   end Keywords;
+
+   function Keywords
+     (Lang : access Gdb_Ada_Language) return GNAT.Strings.String_List
    is
       pragma Unreferenced (Lang);
    begin

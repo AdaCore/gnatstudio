@@ -855,6 +855,7 @@ package body Debugger.Gdb is
 
       use GVD;
 
+      pragma Unreferenced (Num);
    begin
       --  Wait for initial output and prompt (and display it in the window)
       Wait
@@ -1390,6 +1391,7 @@ package body Debugger.Gdb is
 
    procedure Wait_Prompt (Debugger : access Gdb_Debugger) is
       Num : Expect_Match;
+      pragma Unreferenced (Num);
    begin
       Wait (Get_Process (Debugger), Num, Prompt_Regexp, Timeout => -1);
    end Wait_Prompt;
