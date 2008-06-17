@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2007, AdaCore                 --
+--                  Copyright (C) 2006-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -94,7 +94,7 @@ package Completion is
    type Completion_Id (Id_Length : Integer) is record
       Resolver_Id : String (1 .. 8);
       --  This id identifies in an unique way a resolver. Users are responsible
-      --  of avoidinc name clashes.
+      --  of avoiding name clashes.
 
       Id          : String (1 .. Id_Length);
       File        : Virtual_File;
@@ -178,6 +178,7 @@ package Completion is
      (Manager : access Completion_Manager;
       File    : GNATCOLL.VFS.Virtual_File;
       Buffer  : String_Access;
+      Lang    : Language_Access;
       Offset  : Natural) return Completion_Context;
    --  Creates a new context for this manager, with the offset and the buffer
    --  given in parameter.
@@ -315,7 +316,10 @@ private
 
    type Completion_Context_Record is tagged record
       Buffer : String_Access;
+      --  Buffer.all should be encoded in UTF8.
+
       Offset : Integer;
+      Lang   : Language_Access;
       File   : GNATCOLL.VFS.Virtual_File;
    end record;
 
@@ -389,10 +393,16 @@ private
    --------------------------------
 
    type Simple_Completion_Proposal is new Completion_Proposal with record
-      Name : String_Access;
+      Name          : String_Access;
+      Category      : Language_Category := Cat_Unknown;
+      Documentation : String_Access;
    end record;
 
    function Get_Completion
+     (Proposal : Simple_Completion_Proposal) return UTF8_String;
+   --  See inherited documentation
+
+   function Get_Documentation
      (Proposal : Simple_Completion_Proposal) return UTF8_String;
    --  See inherited documentation
 
@@ -424,7 +434,10 @@ private
    --  otherwise
 
    Null_Completion_Proposal : constant Completion_Proposal'Class :=
-     Simple_Completion_Proposal'
-       (Resolver => null, Name => null);
+                                Simple_Completion_Proposal'
+                                  (Resolver => null,
+                                   Name     => null,
+                                   Category => Cat_Unknown,
+                                   Documentation => null);
 
 end Completion;
