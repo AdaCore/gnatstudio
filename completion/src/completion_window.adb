@@ -141,10 +141,6 @@ package body Completion_Window is
    procedure Free (X : in out Information_Record);
    --  Free memory associated to X.
 
-   procedure Complete_And_Exit
-     (Window : access Completion_Window_Record'Class);
-   --  Complete using the current selection and exit.
-
    function Complete_Common_Prefix
      (Window : access Completion_Window_Record'Class) return Boolean;
    --  Complete the text up to the biggest common prefix in the list.
@@ -277,9 +273,10 @@ package body Completion_Window is
          declare
             Proposal : constant Completion_Proposal'Class :=
                          Get_Proposal (Window.Iter);
+            Showable : constant String := To_Showable_String (Proposal);
          begin
             Info :=
-              (new String'(To_Showable_String (Proposal)),
+              (new String'(Showable),
                new String'(Get_Completion (Proposal)),
                null,
                Entity_Icons (False, Get_Visibility (Proposal))
@@ -936,7 +933,9 @@ package body Completion_Window is
             --  In any case, let the event through so that the character gets
             --  inserted as expected.
 
-            if not Window.Volatile then
+            if Window.Mode = Normal
+              and then not Window.Volatile
+            then
                Dummy := Complete;
             end if;
 
@@ -1063,7 +1062,7 @@ package body Completion_Window is
       Add (Window, Frame);
 
       Gtk_New (Window.Tree_Scroll);
-      Set_Policy (Window.Tree_Scroll, Policy_Automatic, Policy_Automatic);
+      Set_Policy (Window.Tree_Scroll, Policy_Never, Policy_Automatic);
       Add (Window.Tree_Scroll, Window.View);
       Add (Frame, Window.Tree_Scroll);
 
@@ -1123,7 +1122,9 @@ package body Completion_Window is
       Iter           : Gtk_Text_Iter;
       Mark           : Gtk_Text_Mark;
       Lang           : Language_Access;
-      Complete       : Boolean)
+      Complete       : Boolean;
+      Volatile       : Boolean;
+      Mode           : Smart_Completion_Type)
    is
       Iter_Coords        : Gdk_Rectangle;
       Window_X, Window_Y : Gint;
@@ -1147,6 +1148,8 @@ package body Completion_Window is
       Window.Buffer := Buffer;
       Window.Mark := Create_Mark (Buffer, "", Iter);
       Window.Cursor_Mark := Mark;
+
+      Window.Mode := Mode;
 
       Get_Iter_At_Mark (Buffer, Cursor, Get_Insert (Buffer));
       Window.Initial_Offset := Get_Offset (Cursor);
@@ -1299,16 +1302,16 @@ package body Completion_Window is
 
       Tree_Iter := Get_Iter_First (Window.Model);
 
+      Window.Volatile := Volatile;
+
       if Tree_Iter = Null_Iter then
          Delete (Window);
          return;
       else
-         if Complete then
+         if not Volatile then
             Select_Iter (Get_Selection (Window.View), Tree_Iter);
          end if;
       end if;
-
-      Window.Volatile := not Complete;
 
       On_Selection_Changed (Window);
 
