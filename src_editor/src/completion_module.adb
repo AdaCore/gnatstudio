@@ -60,6 +60,7 @@ with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 with Completion_Window;         use Completion_Window;
 with Completion;                use Completion;
 with Completion.History;        use Completion.History;
+with Completion.Keywords;       use Completion.Keywords;
 with Completion.Ada;            use Completion.Ada;
 with Completion.Ada.Constructs_Extractor;
 use Completion.Ada.Constructs_Extractor;
@@ -85,10 +86,6 @@ package body Completion_Module is
    Db_Loading_Queue : constant String := "constructs_db_loading";
 
    Smart_Completion_Trigger_Timeout : Param_Spec_Int;
-
-   type Smart_Completion_Type is (Disabled, Normal, Dynamic);
-   for Smart_Completion_Type'Size use Glib.Gint'Size;
-   pragma Convention (C, Smart_Completion_Type);
 
    package Smart_Completion_Properties is new Generic_Enumeration_Property
      ("Smart_Completion", Smart_Completion_Type);
@@ -175,6 +172,7 @@ package body Completion_Module is
       --  Whereas a character trigger timeout is currently registered.
 
       Completion_History  : Completion_History_Access;
+      Completion_Keywords : Completion_Keywords_Access;
    end record;
    type Completion_Module_Access is access all Completion_Module_Record'Class;
 
@@ -257,7 +255,8 @@ package body Completion_Module is
 
    function Smart_Complete
      (Kernel   : Kernel_Handle;
-      Complete : Boolean) return Command_Return_Type;
+      Complete : Boolean;
+      Volatile : Boolean) return Command_Return_Type;
    --  Execute Smart completion at the current location.
    --  Complete indicates whether we should automatically complete to the
    --  biggest common prefix.
@@ -415,6 +414,8 @@ package body Completion_Module is
       end if;
 
       Free (Completion_Resolver_Access (Completion_Module.Completion_History));
+      Free (Completion_Resolver_Access
+            (Completion_Module.Completion_Keywords));
 
       Reset_Completion_Data;
       Completion_Module := null;
@@ -746,7 +747,8 @@ package body Completion_Module is
 
    function Smart_Complete
      (Kernel   : Kernel_Handle;
-      Complete : Boolean) return Command_Return_Type
+      Complete : Boolean;
+      Volatile : Boolean) return Command_Return_Type
    is
       Widget        : constant Gtk_Widget :=
         Get_Current_Focus_Widget (Kernel);
@@ -785,6 +787,8 @@ package body Completion_Module is
             It   : Gtk_Text_Iter;
             Constructs : aliased Construct_List;
 
+            Smart_Completion_Pref : constant Smart_Completion_Type
+              := Smart_Completion_Type'Val (Get_Pref (Smart_Completion));
          begin
             Kernel.Push_State (Busy);
 
@@ -807,6 +811,8 @@ package body Completion_Module is
 
             Register_Resolver
               (Data.Manager, Completion_Module.Completion_History);
+            Register_Resolver
+              (Data.Manager, Completion_Module.Completion_Keywords);
             Register_Resolver (Data.Manager, Data.Constructs_Resolver);
 
             Get_Iter_At_Mark (Buffer, It, Get_Insert (Buffer));
@@ -846,6 +852,7 @@ package body Completion_Module is
                       (Data.Manager,
                        Get_Filename (Buffer),
                        GNAT.Strings.String_Access (Data.The_Text),
+                       Get_Language (Buffer),
                        Offset));
                Trace (Me_Adv, "Getting completions done");
             end;
@@ -898,7 +905,9 @@ package body Completion_Module is
                Gtk_Text_Buffer (Buffer), It,
                Data.End_Mark,
                Get_Language (Buffer),
-               Complete);
+               Complete,
+               Volatile,
+               Smart_Completion_Pref);
 
             Kernel.Pop_State;
          end;
@@ -949,7 +958,8 @@ package body Completion_Module is
             Select_Next (Completion_Module.Smart_Completion);
             return Commands.Success;
          else
-            return Smart_Complete (Command.Kernel, Complete => True);
+            return Smart_Complete
+              (Command.Kernel, Complete => True, Volatile => False);
          end if;
       end if;
 
@@ -1166,6 +1176,7 @@ package body Completion_Module is
       Register_Preferences (Kernel);
 
       Completion_Module.Completion_History := new Completion_History;
+      Completion_Module.Completion_Keywords := new Completion_Keywords;
    end Register_Module;
 
    ------------------------------
@@ -1174,9 +1185,23 @@ package body Completion_Module is
 
    function Trigger_Timeout_Callback return Boolean is
       Result : Command_Return_Type;
+      Smart_Completion_Pref : constant Smart_Completion_Type
+        := Smart_Completion_Type'Val (Get_Pref (Smart_Completion));
+
+      Volatile : Boolean;
       pragma Unreferenced (Result);
    begin
-      Result := Smart_Complete (Get_Kernel (Completion_Module.all), False);
+      if Smart_Completion_Pref = Dynamic then
+         Volatile := False;
+      else
+         Volatile := True;
+      end if;
+
+      Result := Smart_Complete
+        (Get_Kernel (Completion_Module.all),
+         Complete => False,
+         Volatile => Volatile);
+
       Completion_Module.Has_Trigger_Timeout := False;
       return False;
 
