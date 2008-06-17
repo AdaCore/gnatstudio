@@ -57,6 +57,10 @@ with Completion.History; use Completion.History;
 
 package Completion_Window is
 
+   type Smart_Completion_Type is (Disabled, Normal, Dynamic);
+   for Smart_Completion_Type'Size use Glib.Gint'Size;
+   pragma Convention (C, Smart_Completion_Type);
+
    type Completion_Window_Record is new Gtk_Window_Record with private;
    type Completion_Window_Access is access all Completion_Window_Record'Class;
 
@@ -75,7 +79,9 @@ package Completion_Window is
       Iter           : Gtk_Text_Iter;
       Mark           : Gtk_Text_Mark;
       Lang           : Language_Access;
-      Complete       : Boolean);
+      Complete       : Boolean;
+      Volatile       : Boolean;
+      Mode           : Smart_Completion_Type);
    --  Attach the completion window to a text view, and set the completion
    --  to start on the given mark.
    --  Mark is set on the position which the cursor should occupy after a
@@ -96,6 +102,10 @@ package Completion_Window is
      (Window : Completion_Window_Access; History : Completion_History_Access);
    --  Sets the history of the completion window. This history will be feed
    --  by completions chosen by the user.
+
+   procedure Complete_And_Exit
+     (Window : access Completion_Window_Record'Class);
+   --  Complete using the current selection and exit.
 
    procedure Delete (Window : access Completion_Window_Record'Class);
    --  Destroy the window and its contents.
@@ -173,6 +183,9 @@ private
 
       Volatile : Boolean := False;
       --  Whether the completion window was created using an automated trigger.
+
+      Mode : Smart_Completion_Type;
+      --  The mode of smart completion.
 
       Completion_History : Completion_History_Access;
 
