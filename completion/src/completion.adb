@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2007, AdaCore                 --
+--                  Copyright (C) 2006-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -207,6 +207,7 @@ package body Completion is
      (Manager : access Completion_Manager;
       File    : GNATCOLL.VFS.Virtual_File;
       Buffer  : String_Access;
+      Lang    : Language_Access;
       Offset  : Natural) return Completion_Context
    is
       New_Context : constant Completion_Context :=
@@ -215,6 +216,7 @@ package body Completion is
       New_Context.Buffer := Buffer;
       New_Context.Offset := Offset;
       New_Context.File := File;
+      New_Context.Lang := Lang;
 
       Append (Manager.Contexts, New_Context);
 
@@ -424,6 +426,20 @@ package body Completion is
       return Proposal.Name.all;
    end Get_Completion;
 
+   -----------------------
+   -- Get_Documentation --
+   -----------------------
+
+   function Get_Documentation
+     (Proposal : Simple_Completion_Proposal) return UTF8_String is
+   begin
+      if Proposal.Documentation = null then
+         return "";
+      end if;
+
+      return Proposal.Documentation.all;
+   end Get_Documentation;
+
    ------------------
    -- Get_Category --
    ------------------
@@ -470,6 +486,7 @@ package body Completion is
    procedure Free (Proposal : in out Simple_Completion_Proposal) is
    begin
       Free (Proposal.Name);
+      Free (Proposal.Documentation);
    end Free;
 
    -----------
