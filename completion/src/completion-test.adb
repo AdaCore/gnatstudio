@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2007, AdaCore                 --
+--                  Copyright (C) 2006-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -35,6 +35,7 @@ use Completion.Ada.Constructs_Extractor;
 
 with Language;               use Language;
 with String_Utils;           use String_Utils;
+with Language.Ada;           use Language.Ada;
 with Language.Tree;          use Language.Tree;
 with Language.Tree.Ada;      use Language.Tree.Ada;
 with Language.Tree.Database; use Language.Tree.Database;
@@ -369,7 +370,7 @@ procedure Completion.Test is
          Result := Get_Initial_Completion_List
            (Manager => Manager,
             Context =>
-              Create_Context (Manager, File, Buffer, End_Word));
+              Create_Context (Manager, File, Buffer, Ada_Lang, End_Word));
 
          Time_Passed := Clock - Start_Date;
 
@@ -420,7 +421,8 @@ procedure Completion.Test is
 
          Result := Get_Initial_Completion_List
            (Manager => Manager,
-            Context => Create_Context (Manager, File, Buffer, End_Word));
+            Context => Create_Context
+              (Manager, File, Buffer, Ada_Lang, End_Word));
 
          Time_Passed := Clock - Start_Date;
 
@@ -469,7 +471,8 @@ procedure Completion.Test is
          Get_Completion_Root
            (Resolver => Resolver,
             Offset   => End_Word,
-            Context  => Create_Context (Manager, File, Buffer, End_Word),
+            Context  => Create_Context
+              (Manager, File, Buffer, Ada_Lang, End_Word),
             Result   => Result);
 
          Time_Passed := Clock - Start_Date;
@@ -545,7 +548,8 @@ procedure Completion.Test is
 
          Result := Get_Initial_Completion_List
            (Manager => Manager,
-            Context => Create_Context (Manager, File, Buffer, End_Word));
+            Context => Create_Context
+              (Manager, File, Buffer, Ada_Lang, End_Word));
 
          Time_Passed := Clock - Start_Date;
 
