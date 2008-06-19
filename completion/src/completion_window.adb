@@ -432,6 +432,10 @@ package body Completion_Window is
          if (Idle_Expand (Completion_Window_Access (Window)) = False)
            or else Window.Shown - First_Shown >= Number
          then
+            if Window.More_Iter /= Null_Iter then
+               Set (Window.Model, Window.More_Iter, Markup_Column,
+                    "<span color=""grey""><i> (more...) </i></span>");
+            end if;
             return;
          end if;
 
@@ -529,10 +533,6 @@ package body Completion_Window is
             if Is_Prefix (Window.Pattern.all, Info.Text.all) then
                if Window.More_Iter /= Null_Iter then
                   Insert_Before (Window.Model, Iter, Window.More_Iter);
-
-                  --  Update the value of the "more" iter.
-                  Iter_Copy (Iter, Window.More_Iter);
-                  Next (Window.Model, Window.More_Iter);
                else
                   Append (Window.Model, Iter);
                end if;
@@ -572,6 +572,7 @@ package body Completion_Window is
 
          if Window.More_Iter /= Null_Iter then
             Remove (Window.Model, Window.More_Iter);
+            Window.More_Iter := Null_Iter;
          end if;
 
          --  If the model is empty, this means we have not found any suitable
