@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Jun 06, 2008
+GPS 4.3 NEW FEATURES LIST Current as of Jun 19, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -47,6 +47,23 @@ NF-43-H306-004 Switch editor pages can hide command line (2008-03-28)
   When you define a new tool in XML, along with its switches, you can now
   indicate that the command line of the tool should not be displayed in the
   project editor (only the buttons to edit the switches)
+
+NF-43-H227-010 Improvements in the Smart Completion (2008-06-19)
+
+  A new "Dynamic" Smart Completion mode has been introduced. In this mode, the
+  Smart Completion window is invoked as soon as a character is entered in the
+  editor.
+  To activate the dynamic mode, set the Smart Completion preference to
+  "Dynamic" in the Editor panel of the Preferences dialog.
+
+  The Smart Completion now offers language keywords as completions.
+
+  Multiple entries corresponding to the same completion are now collapsed into
+  one entry, and in this case the Documentation window lists all corresponding
+  declaration locations, along with the documentations.
+
+  To improve typing speed, the "TAB" key automatically completes to the first
+  entry in the list, or with the selected entry if there is a selection.
 
 NF-43-H226-031 Support for -eL gnatmake/gprbuild switch (2008-02-27)
 
