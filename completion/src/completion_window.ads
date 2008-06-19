@@ -33,10 +33,9 @@ with GNAT.Strings;   use GNAT.Strings;
 
 with Gdk.Pixbuf;
 
-with Gtk.Window;     use Gtk.Window;
+with Gtk.Bin;        use Gtk.Bin;
 
-with Gtk.Button;     use Gtk.Button;
-with Gtk.Label;      use Gtk.Label;
+with Gtk.Window;     use Gtk.Window;
 
 with Gtk.Tree_View;  use Gtk.Tree_View;
 with Gtk.List_Store; use Gtk.List_Store;
@@ -116,10 +115,18 @@ private
 
    type Completion_Proposal_Access is access Completion_Proposal'Class;
 
+   type Note_Type is record
+      Markup   : String_Access;
+      Location : File_Location;
+   end record;
+
+   type Notes_Array is array (Positive range <>) of Note_Type;
+   type Notes_Array_Access is access Notes_Array;
+
    type Information_Record is record
       Markup  : String_Access;
       Text    : String_Access;
-      Notes   : String_Access;
+      Notes   : Notes_Array_Access;
       Icon    : Gdk.Pixbuf.Gdk_Pixbuf;
       --  This can be null, in which case it indicates that it must be computed
       --  from Proposal.
@@ -158,12 +165,10 @@ private
       --  Index to the first free position in Info.
 
       Notes_Window : Gtk_Window;
-      Notes_Label  : Gtk_Label;
+      --  The window containing the documentation
 
-      Location_Label  : Gtk_Label;
-      Location_Title  : Gtk_Label;
-      Location_Button : Gtk_Button;
-      Location_Location : File_Location;
+      Notes_Container : Gtk_Bin;
+      --  The container which actually contains the notes.
 
       Case_Sensitive : Boolean;
       In_Deletion    : Boolean := False;

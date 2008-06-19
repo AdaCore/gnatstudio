@@ -28,6 +28,7 @@ with Gdk.Types;                 use Gdk.Types;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 
 with Gtk.Adjustment;            use Gtk.Adjustment;
+with Gtk.Button;                use Gtk.Button;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Frame;                 use Gtk.Frame;
@@ -40,6 +41,7 @@ with Gtk.Style;                 use Gtk.Style;
 with Gtk.Scrollbar;             use Gtk.Scrollbar;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Viewport;              use Gtk.Viewport;
+with Gtk.Label;                 use Gtk.Label;
 
 with Pango.Font;                use Pango.Font;
 with Pango.Layout;              use Pango.Layout;
@@ -49,9 +51,14 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 
 with Traces;                    use Traces;
+
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+
 with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 with Language.Icons;            use Language.Icons;
+
+with String_Utils; use String_Utils;
 
 package body Completion_Window is
 
@@ -73,12 +80,20 @@ package body Completion_Window is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Completion_Proposal'Class, Completion_Proposal_Access);
 
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Notes_Array, Notes_Array_Access);
+
    package Return_Cb is new Gtk.Handlers.Return_Callback
      (Completion_Window_Record, Boolean);
    use Return_Cb;
 
-   package Cb is new Gtk.Handlers.Callback (Completion_Window_Record);
+   package Cb is new Gtk.Handlers.User_Callback
+     (Completion_Window_Record, File_Location);
    use Cb;
+
+   package Simple_Cb is new Gtk.Handlers.Callback
+     (Completion_Window_Record);
+   use Simple_Cb;
 
    function Column_Types return GType_Array;
    --  Return the types of the columns to use in the model.
@@ -125,7 +140,8 @@ package body Completion_Window is
    --  Callback on a selection change in the tree view.
 
    procedure On_Location_Button_Clicked
-     (Window : access Completion_Window_Record'Class);
+     (Window    : access Completion_Window_Record'Class;
+      User_Data : File_Location);
    --  Callback on a click on the location button
 
    procedure Adjust_Selected (Window : access Completion_Window_Record'Class);
@@ -149,6 +165,162 @@ package body Completion_Window is
    function To_Showable_String
      (P : Completion_Proposal'Class) return String;
    --  Return the string to display in the main window.
+
+   procedure Fill_Notes_Window
+     (Window : access Completion_Window_Record'Class;
+      Notes  : Notes_Array_Access);
+   --  Fill the Notes window and show it.
+
+   procedure Empty_Notes_Window
+     (Window : access Completion_Window_Record'Class);
+   --  Empty the Notes window.
+
+   procedure Augment_Notes
+     (Info     : in out Information_Record;
+      Proposal : Completion_Proposal'Class);
+   --  Add Note to the notes stored in Info.
+
+   -------------------
+   -- Augment_Notes --
+   -------------------
+
+   procedure Augment_Notes
+     (Info     : in out Information_Record;
+      Proposal : Completion_Proposal'Class)
+   is
+      Note : Note_Type;
+   begin
+      Note.Markup := new String'(Get_Documentation (Proposal));
+      Note.Location := Get_Location (Proposal);
+
+      if Info.Notes = null then
+         Info.Notes := new Notes_Array'(1 => Note);
+      else
+         declare
+            A : constant Notes_Array :=
+                  Info.Notes.all & Notes_Array'(1 => Note);
+         begin
+            Unchecked_Free (Info.Notes);
+            Info.Notes := new Notes_Array'(A);
+         end;
+      end if;
+   end Augment_Notes;
+
+   ------------------------
+   -- Empty_Notes_Window --
+   ------------------------
+
+   procedure Empty_Notes_Window
+     (Window : access Completion_Window_Record'Class)
+   is
+      Widget : constant Gtk_Widget := Get_Child (Window.Notes_Container);
+   begin
+      if Widget /= null then
+         Remove (Window.Notes_Container, Widget);
+      end if;
+   end Empty_Notes_Window;
+
+   -----------------------
+   -- Fill_Notes_Window --
+   -----------------------
+
+   procedure Fill_Notes_Window
+     (Window : access Completion_Window_Record'Class;
+      Notes  : Notes_Array_Access)
+   is
+      Frame    : Gtk_Frame;
+      VBox,
+        VBox2  : Gtk_Vbox;
+      HBox     : Gtk_Hbox;
+
+      Button   : Gtk_Button;
+      Label    : Gtk_Label;
+      Title    : Gtk_Label;
+      Button_Label : Gtk_Label;
+
+      function Location_To_Label (Loc : File_Location) return String;
+      --  Return a pango markup label corresponding to Loc.
+
+      -----------------------
+      -- Location_To_Label --
+      -----------------------
+
+      function Location_To_Label (Loc : File_Location) return String is
+      begin
+         return "<span color=""blue""><u>" & Base_Name (Loc.File_Path)
+           & ":" & Image (Loc.Line) & "</u></span>";
+      end Location_To_Label;
+
+   begin
+      --  If the notes window is not empty, empty it here.
+      Empty_Notes_Window (Window);
+
+      if Notes = null then
+         return;
+      end if;
+
+      Gtk_New_Vbox (VBox);
+      Add (Window.Notes_Container, VBox);
+
+      for N in Notes'Range loop
+         Gtk_New (Frame);
+
+         --  Create the label
+         Gtk_New (Label);
+         Set_Line_Wrap (Label, False);
+         Set_Use_Markup (Label, True);
+
+         if Notes (N).Markup /= null
+           and then Notes (N).Markup.all /= ""
+         then
+            Set_Markup (Label, Notes (N).Markup.all);
+         else
+            Set_Markup
+              (Label, "<span color=""darkgrey"">No documentation</span>");
+         end if;
+
+         Gtk_New_Hbox (HBox);
+         Pack_Start (HBox, Label, False, False, 3);
+
+         Gtk_New_Vbox (VBox2);
+         Pack_Start (VBox2, HBox, False, False, 3);
+         Add (Frame, VBox2);
+
+         --  If there is a file location, create a link to it.
+
+         if Notes (N).Location /= Null_File_Location then
+            Gtk_New_Hbox (HBox);
+            Set_Label_Widget (Frame, HBox);
+
+            --  Create a title
+            Gtk_New (Title);
+            Set_Use_Markup (Title, True);
+            Set_Markup (Title, "<b>Declaration:</b>");
+            Pack_Start (HBox, Title, False, False, 1);
+
+            --  Create a button
+            Gtk_New (Button, "");
+            Gtk_New (Button_Label);
+            Pack_Start (HBox, Button, False, False, 0);
+            Add (Button, Button_Label);
+            Set_Use_Markup (Button_Label, True);
+            Set_Relief (Button, Relief_None);
+            Set_Markup (Button_Label, Location_To_Label (Notes (N).Location));
+
+            Object_Connect
+              (Button, Gtk.Button.Signal_Clicked,
+               To_Marshaller (On_Location_Button_Clicked'Access), Window,
+               After => False,
+               User_Data => Notes (N).Location);
+         end if;
+
+         Gtk_New_Hbox (HBox);
+         Pack_Start (VBox, HBox, False, False, 5);
+         Pack_Start (HBox, Frame, True, True, 3);
+      end loop;
+
+      Show_All (Window.Notes_Window);
+   end Fill_Notes_Window;
 
    ------------------------
    -- To_Showable_String --
@@ -182,6 +354,10 @@ package body Completion_Window is
       Unchecked_Free (X.Text);
 
       if X.Notes /= null then
+         for J in X.Notes'Range loop
+            Unchecked_Free (X.Notes (J).Markup);
+         end loop;
+
          Unchecked_Free (X.Notes);
       end if;
 
@@ -269,49 +445,59 @@ package body Completion_Window is
          Next  (Window.Iter);
       end if;
 
+      Info.Markup := null;
+
       while not At_End (Window.Iter) loop
          declare
             Proposal : constant Completion_Proposal'Class :=
                          Get_Proposal (Window.Iter);
             Showable : constant String := To_Showable_String (Proposal);
          begin
-            Info :=
-              (new String'(Showable),
-               new String'(Get_Completion (Proposal)),
-               null,
-               Entity_Icons (False, Get_Visibility (Proposal))
-               (Get_Category (Proposal)),
-               Get_Caret_Offset (Proposal),
-               new Completion_Proposal'Class'(Get_Proposal (Window.Iter)),
-               True);
+            if Info.Markup = null
+               or else Info.Markup.all /= Showable
+            then
+               Info :=
+                 (new String'(Showable),
+                  new String'(Get_Completion (Proposal)),
+                  null,
+                  Entity_Icons (False, Get_Visibility (Proposal))
+                  (Get_Category (Proposal)),
+                  Get_Caret_Offset (Proposal),
+                  new Completion_Proposal'Class'(Get_Proposal (Window.Iter)),
+                  True);
+
+               Augment_Notes (Info, Proposal);
+
+               Window.Info (Window.Index) := Info;
+
+               if Is_Prefix (Window.Pattern.all, Info.Text.all) then
+                  Append (Window.Model, Iter);
+                  Set (Window.Model, Iter,
+                       Markup_Column, Info.Markup.all);
+                  Set (Window.Model, Iter,
+                       Icon_Column, Info.Icon);
+                  Set (Window.Model, Iter,
+                       Index_Column, Gint (Window.Index));
+
+                  Added := Added + 1;
+               end if;
+
+               Window.Index := Window.Index + 1;
+
+               if Window.Index > Window.Info'Last then
+                  declare
+                     A : Information_Array (1 .. Window.Info'Last * 2);
+                  begin
+                     A (1 .. Window.Index - 1) :=
+                       Window.Info (1 .. Window.Index - 1);
+                     Unchecked_Free (Window.Info);
+                     Window.Info := new Information_Array'(A);
+                  end;
+               end if;
+            else
+               Augment_Notes (Window.Info (Window.Index - 1), Proposal);
+            end if;
          end;
-
-         --  ??? some code duplication with Add_Contents
-         Window.Info (Window.Index) := Info;
-         Window.Index := Window.Index + 1;
-
-         if Window.Index > Window.Info'Last then
-            declare
-               A : Information_Array (1 .. Window.Info'Last * 2);
-            begin
-               A (1 .. Window.Index - 1) :=
-                 Window.Info (1 .. Window.Index - 1);
-               Unchecked_Free (Window.Info);
-               Window.Info := new Information_Array'(A);
-            end;
-         end if;
-         --  ??? End of code duplication
-
-         if Is_Prefix (Window.Pattern.all, Info.Text.all) then
-            --  ??? some code duplication with Add_Contents
-            Append (Window.Model, Iter);
-            Set (Window.Model, Iter, Markup_Column, Info.Markup.all);
-            Set (Window.Model, Iter, Icon_Column, Info.Icon);
-            Set (Window.Model, Iter, Index_Column, Gint (Window.Index - 1));
-            --  ??? End of code duplication
-
-            Added := Added + 1;
-         end if;
 
          Next (Window.Iter);
          exit when Added = Number;
@@ -559,13 +745,14 @@ package body Completion_Window is
    --------------------------------
 
    procedure On_Location_Button_Clicked
-     (Window : access Completion_Window_Record'Class) is
+     (Window    : access Completion_Window_Record'Class;
+      User_Data : File_Location) is
    begin
       Open_File_Editor
         (Window.Kernel,
-         Window.Location_Location.File_Path,
-         Window.Location_Location.Line,
-         Window.Location_Location.Column);
+         User_Data.File_Path,
+         User_Data.Line,
+         User_Data.Column);
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Location_Button_Clicked;
@@ -583,32 +770,13 @@ package body Completion_Window is
       Model : Gtk_Tree_Model;
       Index : Natural;
 
-      function Location_To_Label (Loc : File_Location) return String;
-      --  Return a pango markup label corresponding to Loc.
-
-      -----------------------
-      -- Location_To_Label --
-      -----------------------
-
-      function Location_To_Label (Loc : File_Location) return String is
-      begin
-         if Loc.Column = 0 then
-            return "<span color=""blue""><u>" & Base_Name (Loc.File_Path)
-              & ":" & Loc.Line'Img & "</u></span>";
-         else
-            return "<span color=""blue""><u>" & Base_Name (Loc.File_Path)
-              & ":" & Loc.Line'Img & ":" & Loc.Column'Img & "</u></span>";
-         end if;
-      end Location_To_Label;
-
    begin
       Sel := Get_Selection (Window.View);
       Get_Selected (Sel, Model, Iter);
 
       if Iter = Null_Iter then
-         Hide_All (Window.Location_Title);
-         Hide_All (Window.Location_Button);
-         Set_Markup (Window.Location_Label, "");
+         --  Hide the contents window.
+         Hide_All (Window.Notes_Window);
 
       else
          --  Something is selected: the window is no longer Volatile.
@@ -630,39 +798,7 @@ package body Completion_Window is
 
             Index := Natural (Get_Int (Window.Model, Iter, Index_Column));
 
-            Show_All (Window.Notes_Window);
-
-            if Window.Info (Index).Notes = null then
-               if Window.Info (Index).Proposal /= null then
-                  Window.Info (Index).Notes := new String'
-                    (Get_Documentation (Window.Info (Index).Proposal.all));
-               end if;
-            end if;
-
-            declare
-               Loc : File_Location :=
-                       Get_Location (Window.Info (Index).Proposal.all);
-            begin
-               if Loc = Null_File_Location then
-                  Hide_All (Window.Location_Title);
-                  Hide_All (Window.Location_Button);
-                  Set_Markup (Window.Location_Label, "");
-               else
-                  Show_All (Window.Location_Title);
-                  Show_All (Window.Location_Button);
-                  Set_Markup
-                    (Window.Location_Label, Location_To_Label (Loc));
-               end if;
-
-               Window.Location_Location := Loc;
-            end;
-
-            if Window.Info (Index).Notes.all = "" then
-               Set_Markup
-                 (Window.Notes_Label, "<i>No documentation available</i>");
-            else
-               Set_Markup (Window.Notes_Label, Window.Info (Index).Notes.all);
-            end if;
+            Fill_Notes_Window (Window, Window.Info (Index).Notes);
          end if;
       end if;
 
@@ -952,6 +1088,19 @@ package body Completion_Window is
             Delete (Window);
 
          when GDK_Return =>
+            if Window.Volatile then
+               return False;
+            else
+               return Complete;
+            end if;
+
+         when GDK_Tab =>
+            --  Key press on TAB completes.
+            --  If the window is volatile, first select the top item.
+            if Window.Volatile then
+               Select_Next (Completion_Window_Access (Window));
+            end if;
+
             return Complete;
 
          when GDK_Down | GDK_KP_Down =>
@@ -1031,8 +1180,6 @@ package body Completion_Window is
       Dummy    : Gint;
       Frame    : Gtk_Frame;
       Scroll   : Gtk_Scrolled_Window;
-      VBox     : Gtk_Vbox;
-      HBox     : Gtk_Hbox;
       Viewport : Gtk_Viewport;
 
       pragma Unreferenced (Dummy);
@@ -1042,6 +1189,7 @@ package body Completion_Window is
 
       Gtk_New (Window.Model, Column_Types);
       Gtk_New (Window.View, Window.Model);
+
       Set_Headers_Visible (Window.View, False);
 
       Gtk_New (Col);
@@ -1062,6 +1210,7 @@ package body Completion_Window is
       Add (Window, Frame);
 
       Gtk_New (Window.Tree_Scroll);
+      Set_Shadow_Type (Window.Tree_Scroll, Shadow_None);
       Set_Policy (Window.Tree_Scroll, Policy_Never, Policy_Automatic);
       Add (Window.Tree_Scroll, Window.View);
       Add (Frame, Window.Tree_Scroll);
@@ -1072,43 +1221,22 @@ package body Completion_Window is
       --  Create the Notes window
 
       Gtk_New (Window.Notes_Window, Window_Popup);
-      Gtk_New (Window.Notes_Label);
-      Set_Line_Wrap (Window.Notes_Label, False);
-      Set_Use_Markup (Window.Notes_Label, True);
-      Gtk_New_Vbox (VBox);
+      Modify_Bg (Window.Notes_Window, State_Normal, Get_Pref (Tooltip_Color));
+
       Gtk_New (Frame);
+--        Modify_Bg (Frame, State_Normal, Get_Pref (Tooltip_Color));
+
       Gtk_New (Scroll);
       Set_Policy (Scroll, Policy_Automatic, Policy_Automatic);
       Add (Frame, Scroll);
       Add (Window.Notes_Window, Frame);
       Gtk_New (Viewport);
+      Modify_Bg (Viewport, State_Normal, Get_Pref (Tooltip_Color));
+
       Set_Shadow_Type (Viewport, Shadow_None);
       Add (Scroll, Viewport);
-      Add (Viewport, VBox);
 
-      Gtk_New_Hbox (HBox);
-      Pack_Start (VBox, HBox, False, False, 3);
-
-      Gtk_New (Window.Location_Title);
-      Set_Use_Markup (Window.Location_Title, True);
-      Set_Markup (Window.Location_Title, "<b>Declaration at: </b>");
-      Pack_Start (HBox, Window.Location_Title, False, False, 3);
-
-      Gtk_New (Window.Location_Button, "");
-      Gtk_New (Window.Location_Label);
-      Pack_Start (HBox, Window.Location_Button, False, False, 3);
-      Add (Window.Location_Button, Window.Location_Label);
-      Set_Use_Markup (Window.Location_Label, True);
-
-      Set_Relief (Window.Location_Button, Relief_None);
-      Object_Connect
-        (Window.Location_Button, Gtk.Button.Signal_Clicked,
-         To_Marshaller (On_Location_Button_Clicked'Access), Window,
-         After => False);
-
-      Gtk_New_Hbox (HBox);
-      Pack_Start (VBox, HBox, False, False, 3);
-      Pack_Start (HBox, Window.Notes_Label, False, False, 3);
+      Window.Notes_Container := Gtk_Bin (Viewport);
    end Initialize;
 
    ----------
@@ -1186,7 +1314,6 @@ package body Completion_Window is
          Layout : Pango_Layout;
       begin
          Modify_Font (Window.View, Font);
-         Modify_Font (Window.Notes_Label, Font);
 
          Layout := Create_Pango_Layout (Window.View);
          Set_Font_Description (Layout, Font);
@@ -1211,7 +1338,7 @@ package body Completion_Window is
          Height := Max_Height + 5;
       end if;
 
-      Set_Default_Size (Window, Width, Height);
+      Set_Size_Request (Window, Width, Height);
 
       --  Compute the coordinates of the window so that it doesn't get past
       --  the screen border.
