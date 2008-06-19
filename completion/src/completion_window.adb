@@ -180,6 +180,10 @@ package body Completion_Window is
       Proposal : Completion_Proposal'Class);
    --  Add Note to the notes stored in Info.
 
+   function Idle_Expand
+     (Window : Completion_Window_Access) return Boolean;
+   --  Expand the tree in the completion window.
+
    -------------------
    -- Augment_Notes --
    -------------------
@@ -264,6 +268,13 @@ package body Completion_Window is
 
       for N in Notes'Range loop
          Gtk_New (Frame);
+
+         --  If there is only one documentation to display, do not draw a
+         --  border around the frame, as this is just graphical noise in this
+         --  case.
+         if Notes'Length = 1 then
+            Set_Shadow_Type (Frame, Shadow_None);
+         end if;
 
          --  Create the label
          Gtk_New (Label);
@@ -377,6 +388,10 @@ package body Completion_Window is
 
       Window.In_Destruction := True;
 
+      if Window.Has_Idle_Expansion then
+         Remove (Window.Idle_Expansion);
+      end if;
+
       for J in 1 .. Window.Index - 1 loop
          Free (Window.Info (J));
       end loop;
@@ -398,10 +413,52 @@ package body Completion_Window is
      (Window : access Completion_Window_Record'Class;
       Number : Natural)
    is
-      Added : Natural := 0;
-      Info  : Information_Record;
-      Iter  : Gtk_Tree_Iter;
+      First_Shown : constant Natural := Window.Shown;
+      Count       : Natural := 0;
+   begin
+      --  If the idle function is running, unregister it.
 
+      if Window.Has_Idle_Expansion then
+         Remove (Window.Idle_Expansion);
+         Window.Has_Idle_Expansion := False;
+      end if;
+
+      --  Give ourselves Number * 2 chances to get Number items without having
+      --  to resort to an idle computation.
+
+      loop
+         --  Call Idle_Expand, and exit the loop if the function returns False
+
+         if (Idle_Expand (Completion_Window_Access (Window)) = False)
+           or else Window.Shown - First_Shown >= Number
+         then
+            return;
+         end if;
+
+         Count := Count + 1;
+
+         --  Exit when we have found the number of items we wanted.
+
+         exit when Count >= Number * 2;
+      end loop;
+
+      --  If we failed to get Number items, register an idle computation to
+      --  fill the data.
+
+      Window.Has_Idle_Expansion := True;
+      Window.Idle_Expansion := Completion_Window_Idle.Idle_Add
+        (Idle_Expand'Access, Completion_Window_Access (Window));
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end Expand_Selection;
+
+   -----------------
+   -- Idle_Expand --
+   -----------------
+
+   function Idle_Expand
+     (Window : Completion_Window_Access) return Boolean
+   is
       function Is_Prefix (S1, S2 : String) return Boolean;
       --  Return True if S1 is a prefix of S2, case-sensitivity taken into
       --  account.
@@ -428,14 +485,13 @@ package body Completion_Window is
          return False;
       end Is_Prefix;
 
-   begin
-      if At_End (Window.Iter) then
-         return;
-      end if;
+      Info  : Information_Record;
+      Iter  : Gtk_Tree_Iter;
 
-      if Window.More_Iter /= Null_Iter then
-         Remove (Window.Model, Window.More_Iter);
-         Window.More_Iter := Null_Iter;
+   begin
+
+      if At_End (Window.Iter) then
+         return False;
       end if;
 
       if not Is_Valid (Window.Iter) then
@@ -445,72 +501,103 @@ package body Completion_Window is
          Next  (Window.Iter);
       end if;
 
-      Info.Markup := null;
+      declare
+         Proposal   : constant Completion_Proposal'Class :=
+                        Get_Proposal (Window.Iter);
+         Showable   : constant String := To_Showable_String (Proposal);
+         Completion : constant String := Get_Completion (Proposal);
+      begin
+         --  Check whether the current iter contains the same completion.
+         if Window.Index = 1
+           or else Window.Info (Window.Index - 1).Text = null
+           or else Window.Info (Window.Index - 1).Text.all /= Completion
+         then
+            Info :=
+              (new String'(Showable),
+               new String'(Completion),
+               null,
+               Entity_Icons (False, Get_Visibility (Proposal))
+               (Get_Category (Proposal)),
+               Get_Caret_Offset (Proposal),
+               new Completion_Proposal'Class'(Get_Proposal (Window.Iter)),
+               True);
 
-      while not At_End (Window.Iter) loop
-         declare
-            Proposal : constant Completion_Proposal'Class :=
-                         Get_Proposal (Window.Iter);
-            Showable : constant String := To_Showable_String (Proposal);
-         begin
-            if Info.Markup = null
-               or else Info.Markup.all /= Showable
-            then
-               Info :=
-                 (new String'(Showable),
-                  new String'(Get_Completion (Proposal)),
-                  null,
-                  Entity_Icons (False, Get_Visibility (Proposal))
-                  (Get_Category (Proposal)),
-                  Get_Caret_Offset (Proposal),
-                  new Completion_Proposal'Class'(Get_Proposal (Window.Iter)),
-                  True);
+            Augment_Notes (Info, Proposal);
 
-               Augment_Notes (Info, Proposal);
+            Window.Info (Window.Index) := Info;
 
-               Window.Info (Window.Index) := Info;
+            if Is_Prefix (Window.Pattern.all, Info.Text.all) then
+               if Window.More_Iter /= Null_Iter then
+                  Insert_Before (Window.Model, Iter, Window.More_Iter);
 
-               if Is_Prefix (Window.Pattern.all, Info.Text.all) then
+                  --  Update the value of the "more" iter.
+                  Iter_Copy (Iter, Window.More_Iter);
+                  Next (Window.Model, Window.More_Iter);
+               else
                   Append (Window.Model, Iter);
-                  Set (Window.Model, Iter,
-                       Markup_Column, Info.Markup.all);
-                  Set (Window.Model, Iter,
-                       Icon_Column, Info.Icon);
-                  Set (Window.Model, Iter,
-                       Index_Column, Gint (Window.Index));
-
-                  Added := Added + 1;
                end if;
 
-               Window.Index := Window.Index + 1;
+               Set (Window.Model, Iter,
+                    Markup_Column, Info.Markup.all);
+               Set (Window.Model, Iter,
+                    Icon_Column, Info.Icon);
+               Set (Window.Model, Iter,
+                    Index_Column, Gint (Window.Index));
 
-               if Window.Index > Window.Info'Last then
-                  declare
-                     A : Information_Array (1 .. Window.Info'Last * 2);
-                  begin
-                     A (1 .. Window.Index - 1) :=
-                       Window.Info (1 .. Window.Index - 1);
-                     Unchecked_Free (Window.Info);
-                     Window.Info := new Information_Array'(A);
-                  end;
-               end if;
-            else
-               Augment_Notes (Window.Info (Window.Index - 1), Proposal);
+               Window.Shown := Window.Shown + 1;
             end if;
-         end;
 
-         Next (Window.Iter);
-         exit when Added = Number;
-      end loop;
+            Window.Index := Window.Index + 1;
 
-      if not At_End (Window.Iter) then
-         Append (Window.Model, Window.More_Iter);
-         Set (Window.Model, Window.More_Iter, Markup_Column,
-              "<span color=""grey""><i> (more...) </i></span>");
+            if Window.Index > Window.Info'Last then
+               declare
+                  A : Information_Array (1 .. Window.Info'Last * 2);
+               begin
+                  A (1 .. Window.Index - 1) :=
+                    Window.Info (1 .. Window.Index - 1);
+                  Unchecked_Free (Window.Info);
+                  Window.Info := new Information_Array'(A);
+               end;
+            end if;
+         else
+            Augment_Notes (Window.Info (Window.Index - 1), Proposal);
+         end if;
+      end;
+
+      Next (Window.Iter);
+
+      if At_End (Window.Iter) then
+         --  We have reached the end. We can remove the "more" iter, since we
+         --  will no longer be computing.
+
+         if Window.More_Iter /= Null_Iter then
+            Remove (Window.Model, Window.More_Iter);
+         end if;
+
+         --  If the model is empty, this means we have not found any suitable
+         --  completion. In this case, delete the window.
+
+         if Get_Iter_First (Window.Model) = Null_Iter then
+            Delete (Window);
+         end if;
+
+         return False;
+      else
+         --  If ther is no "more" iter displayed, create one now since we are
+         --  still computing.
+         if Window.More_Iter = Null_Iter then
+            Append (Window.Model, Window.More_Iter);
+            Set (Window.Model, Window.More_Iter, Markup_Column,
+                 "<span color=""grey""><i> (computing...) </i></span>");
+         end if;
+
+         return True;
       end if;
+
    exception
       when E : others => Trace (Exception_Handle, E);
-   end Expand_Selection;
+         return False;
+   end Idle_Expand;
 
    ---------------------
    -- Adjust_Selected --
@@ -524,8 +611,6 @@ package body Completion_Window is
 
       Selection : Gtk_Tree_Selection;
       Model     : Gtk_Tree_Model;
-
-      Appended  : Natural := 0;
 
       Previously_Selected : Natural := 0;
 
@@ -560,7 +645,12 @@ package body Completion_Window is
       --  Clear the model
 
       Clear (Window.Model);
+      Window.Shown := 0;
       Window.More_Iter := Null_Iter;
+
+      if Window.Has_Idle_Expansion then
+         Remove (Window.Idle_Expansion);
+      end if;
 
       --  Browse through the completion possibilities and filter out the
       --  lines that don't match.
@@ -575,7 +665,7 @@ package body Completion_Window is
                  .. Window.Info (J).Text'First - 1 + UTF8'Length), UTF8)
          then
             Append (Window.Model, Curr);
-            Appended := Appended + 1;
+            Window.Shown := Window.Shown + 1;
 
             Set (Window.Model, Curr, Markup_Column,
                  Window.Info (J).Markup.all);
@@ -589,8 +679,8 @@ package body Completion_Window is
       end loop;
 
       --  Expand the selection to show more items, if needed.
-      if Appended < Minimal_Items_To_Show then
-         Expand_Selection (Window, Minimal_Items_To_Show - Appended);
+      if Window.Shown < Minimal_Items_To_Show then
+         Expand_Selection (Window, Minimal_Items_To_Show - Window.Shown);
       end if;
 
       --  Re-select the item previously selected, or, if there was none,
@@ -656,10 +746,23 @@ package body Completion_Window is
 
       Get_Text_Iter (Nth (Params, 1), Iter);
       Move_Mark (Window.Buffer, Window.Cursor_Mark, Iter);
+
       Get_Iter_At_Mark (Window.Buffer, Beg, Window.Mark);
       Free (Window.Pattern);
       Window.Pattern := new String'(Get_Text (Window.Buffer, Beg, Iter));
-      Adjust_Selected (Window);
+
+      --  If the character we just inserted is not in the set of identifier
+      --  characters, we know that we won't find the result in the list of
+      --  stored items, so return immediately.
+
+      if not Is_In (Window.Pattern (Window.Pattern'Last),
+                    Word_Character_Set (Window.Lang))
+      then
+         Delete (Window);
+      else
+         Adjust_Selected (Window);
+      end if;
+
    exception
       when E : others => Trace (Exception_Handle, E);
    end Insert_Text_Handler;
@@ -924,7 +1027,9 @@ package body Completion_Window is
    begin
       Get_Selected (Get_Selection (Window.View), Model, Iter);
 
-      if Iter /= Null_Iter then
+      if Iter /= Null_Iter
+        and then Iter /= Window.More_Iter
+      then
          Pos := Natural (Get_Int (Window.Model, Iter, Index_Column));
 
          Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Mark);
