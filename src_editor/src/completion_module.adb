@@ -1185,22 +1185,12 @@ package body Completion_Module is
 
    function Trigger_Timeout_Callback return Boolean is
       Result : Command_Return_Type;
-      Smart_Completion_Pref : constant Smart_Completion_Type
-        := Smart_Completion_Type'Val (Get_Pref (Smart_Completion));
-
-      Volatile : Boolean;
       pragma Unreferenced (Result);
    begin
-      if Smart_Completion_Pref = Dynamic then
-         Volatile := False;
-      else
-         Volatile := True;
-      end if;
-
       Result := Smart_Complete
         (Get_Kernel (Completion_Module.all),
          Complete => False,
-         Volatile => Volatile);
+         Volatile => True);
 
       Completion_Module.Has_Trigger_Timeout := False;
       return False;
@@ -1322,5 +1312,14 @@ package body Completion_Module is
       Completion_Module.Previous_Smart_Completion_State :=
         Smart_Completion_Type'Val (Get_Pref (Smart_Completion));
    end Register_Preferences;
+
+   -------------------------
+   -- In_Smart_Completion --
+   -------------------------
+
+   function In_Smart_Completion return Boolean is
+   begin
+      return Completion_Module.Has_Smart_Completion;
+   end In_Smart_Completion;
 
 end Completion_Module;
