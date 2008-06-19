@@ -5748,7 +5748,8 @@ package body Src_Editor_Buffer is
       --  Do not check the current focus widget ourselves. Instead, we know
       --  it has been properly checked when the context was created, and we
       --  just check the current module from there.
-      return GPS.Kernel.Modules.Module_ID (Get_Creator (Ctxt)) =
+      return not Completion_Module.In_Smart_Completion
+        and then GPS.Kernel.Modules.Module_ID (Get_Creator (Ctxt)) =
         Src_Editor_Module_Id;
    end Filter_Matches_Primitive;
 
