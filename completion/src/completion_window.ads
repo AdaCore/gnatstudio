@@ -29,6 +29,7 @@
 --  selected.
 
 with Glib;           use Glib;
+with Glib.Main;      use Glib.Main;
 with GNAT.Strings;   use GNAT.Strings;
 
 with Gdk.Pixbuf;
@@ -139,6 +140,9 @@ private
    type Information_Array is array (Positive range <>) of Information_Record;
    type Information_Array_Access is access Information_Array;
 
+   package Completion_Window_Idle is new Glib.Main.Generic_Sources
+     (Completion_Window_Access);
+
    type Completion_Window_Record is new Gtk_Window_Record with record
       Kernel : Kernel_Handle;
 
@@ -163,6 +167,9 @@ private
       Info   : Information_Array_Access;
       Index  : Natural;
       --  Index to the first free position in Info.
+
+      Shown : Natural := 0;
+      --  Number of elements displayed in the tree.
 
       Notes_Window : Gtk_Window;
       --  The window containing the documentation
@@ -196,6 +203,12 @@ private
 
       Lang : Language_Access;
       --  The language on which the window is completing.
+
+      Has_Idle_Expansion : Boolean := False;
+      --  Whether we are querying the database for expansion.
+
+      Idle_Expansion : G_Source_Id;
+      --  The id of the current idle callback.
    end record;
 
 end Completion_Window;
