@@ -24,6 +24,7 @@ with Gdk.Event;                 use Gdk.Event;
 with Gdk.Rectangle;             use Gdk.Rectangle;
 with Gdk.Screen;                use Gdk.Screen;
 with Gdk.Window;                use Gdk.Window;
+with Gdk.Keyval;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 
@@ -1073,7 +1074,6 @@ package body Completion_Window is
      (Window : access Completion_Window_Record'Class;
       Event  : Gdk_Event) return Boolean
    is
-      Key      : Gdk_Key_Type;
       Sel      : Gtk_Tree_Selection;
       Iter     : Gtk_Tree_Iter;
       Model    : Gtk_Tree_Model;
@@ -1157,14 +1157,15 @@ package body Completion_Window is
          return True;
       end Complete;
 
-      S     : constant String := Get_String (Event);
-      C     : Character;
-      Dummy : Boolean;
+      Key     : constant Gdk_Key_Type := Get_Key_Val (Event);
+      Unichar : constant Gunichar := Gdk.Keyval.To_Unicode (Key);
+      C       : Character;
+      Dummy   : Boolean;
       pragma Unreferenced (Dummy);
-   begin
 
-      if S'Length = 1 then
-         C := S (S'First);
+   begin
+      if Unichar <= 16#80# then
+         C := Character'Val (Unichar);
 
          if Is_Graphic (C)
            and then not Is_In (C, Word_Character_Set (Window.Lang))
@@ -1194,8 +1195,6 @@ package body Completion_Window is
             return False;
          end if;
       end if;
-
-      Key := Get_Key_Val (Event);
 
       --  Case by case basis
 
