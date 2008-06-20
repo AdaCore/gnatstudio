@@ -1175,16 +1175,20 @@ package body Completion_Window is
             --  In any case, let the event through so that the character gets
             --  inserted as expected.
 
-            if Window.Mode = Normal
-            --  If we are in Normal completion mode, and Volatile at the
-            --  same time, this means that we are completing on '.' -
-            --  in this case, if there is only one entry, this means that we
-            --  have found the completion that we want and can complete.
+            if Window.Mode = Normal then
+               --  If we are in Normal completion mode, and Volatile at the
+               --  same time, this means that we are completing on '.' -
+               --  in this case, if there is only one entry, this means that we
+               --  have found the completion that we want and can complete.
 
-              and then (not Window.Volatile
-                         or else N_Children (Window.Model) = 1)
-            then
-               Dummy := Complete;
+               if Window.Volatile then
+                  if N_Children (Window.Model) = 1 then
+                     Select_Next (Completion_Window_Access (Window));
+                     Dummy := Complete;
+                  end if;
+               else
+                  Dummy := Complete;
+               end if;
             end if;
 
             return False;
@@ -1200,21 +1204,18 @@ package body Completion_Window is
             Delete (Window);
 
          when GDK_Return =>
-            if Window.Mode = Normal then
-               if not Window.Volatile
-                 or else N_Children (Window.Model) = 1
+            if Window.Volatile then
+               if Window.Mode = Normal
+                 and then N_Children (Window.Model) = 1
                then
+                  Select_Next (Completion_Window_Access (Window));
                   return Complete;
                else
                   return False;
                end if;
 
-            elsif Window.Mode = Dynamic then
-               if Window.Volatile then
-                  return False;
-               else
-                  return Complete;
-               end if;
+            else
+               return Complete;
             end if;
 
          when GDK_Tab =>
