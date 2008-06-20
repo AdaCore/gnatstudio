@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Jun 19, 2008
+GPS 4.3 NEW FEATURES LIST Current as of Jun 20, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -14,6 +14,12 @@ of the feature.
 
 New features in GPS 4.3.0
 -------------------------
+
+NF-43-H612-011 Major speed improvement in unused entities (2008-06-20)
+
+  The computation of unused entities as done by the unused_entities
+  plug-in is now several times faster, thanks to a better caching of
+  cross-reference information in memory.
 
 NF-43-H605-016 List all variables used in a subprogram (2008-06-06)
 

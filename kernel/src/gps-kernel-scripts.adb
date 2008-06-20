@@ -639,6 +639,12 @@ package body GPS.Kernel.Scripts is
                end;
             end loop;
          end;
+
+      elsif Command = "freeze_xref" then
+         Freeze (Get_Database (Kernel));
+
+      elsif Command = "thaw_xref" then
+         Thaw (Get_Database (Kernel));
       end if;
    end Default_Command_Handler;
 
@@ -1096,6 +1102,12 @@ package body GPS.Kernel.Scripts is
                end loop;
             end;
 
+         elsif Command = "update_xref" then
+            Name_Parameters (Data, (1 => Recursive_Cst'Access));
+            Parse_All_LI_Information
+              (Kernel    => Kernel,
+               Project   => Get_Data (Data, 1),
+               Recursive => Nth_Arg (Data, 2, False));
          end if;
       end if;
    end Create_Project_Command_Handler;
@@ -1694,6 +1706,12 @@ package body GPS.Kernel.Scripts is
       Register_Command
         (Kernel, "unset_busy",
          Handler      => Default_Command_Handler'Access);
+      Register_Command
+        (Kernel, "freeze_xref",
+         Handler      => Default_Command_Handler'Access);
+      Register_Command
+        (Kernel, "thaw_xref",
+         Handler      => Default_Command_Handler'Access);
 
       Register_Command
         (Kernel, "scenario_variables",
@@ -1857,6 +1875,12 @@ package body GPS.Kernel.Scripts is
          Class        => Get_Project_Class (Kernel),
          Minimum_Args => 0,
          Maximum_Args => 1,
+         Handler      => Create_Project_Command_Handler'Access);
+      Register_Command
+        (Kernel, "update_xref",
+         Minimum_Args => 0,
+         Maximum_Args => 1,
+         Class        => Get_Project_Class (Kernel),
          Handler      => Create_Project_Command_Handler'Access);
 
       if Active (Traces.Testsuite_Handle) then

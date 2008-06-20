@@ -537,6 +537,26 @@ This directory always ends with a directory separator</description>
      <see_also name="GPS.get_system_dir()" />
   </shell_doc>
 
+  <shell_doc name="GPS.freeze_xref">
+     <description>Forces GPS to use the cross-reference information it already has in memory. GPS will no longer check on the disk whether more recent information is available. This can provide a significant speedup in complex scripts or scripts that need to analyze the cross-reference information for lots of files. In such cases, the script should generally call GPS.Project.update_xref to first load all the required information in memory.
+You need to explicitly call GPS.thaw_xref to go back to the default GPS behavior. Note the use of the "finally" exception handling in the following example, which ensures that even if there is some unexpected exception, the script always restores properly the default behavior.</description>
+     <example lang="python">
+try:
+   GPS.Project.root().update_xref (recursive=True)
+   GPS.freeze_xref()
+   ... complex computation
+finally:
+   GPS.thaw_xref()
+     </example>
+     <see_also name="GPS.Project.update_xref()"/>
+     <see_also name="GPS.thaw_xref()"/>
+  </shell_doc>
+
+  <shell_doc name="GPS.thaw_xref">
+     <description>See GPS.freeze_xref for more information</description>
+     <see_also name="GPS.freeze_xref()"/>
+  </shell_doc>
+
   <shell_doc name="GPS.last_command">
      <return>A string</return>
      <description>This function returns the name of the last action executed by GPS. This name is not ultra-precise: it will be accurate only when the action is executed through a key binding. Otherwise, an empty string is returned. However, the intent here is for a command to be able to check whether it is called multiple times in a row. For this, this command will return the command set by GPS.set_last_command() if it was set.</description>
@@ -1549,6 +1569,12 @@ Related hooks:
            print "Current project is " + \
                  GPS.Project.root().name()
       </example>
+  </shell_doc>
+
+  <shell_doc name="GPS.Project.update_xref">
+     <param name="self">The instance of GPS.Project</param>
+     <param name="recursive" default="False">A boolean</param>
+     <description>Updates the cross-reference information in memory for all files of the project. This doesn't regenerate that information, just read all the .ali files found in the object directory of the project (and all imported projects if recursive is True). This should generally be called before calling GPS.freeze_xref, for efficiency.</description>
   </shell_doc>
 
   <shell_doc name="GPS.Project.is_modified">
