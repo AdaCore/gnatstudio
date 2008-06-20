@@ -738,9 +738,10 @@ package body Projects.Editor is
    -------------------------
 
    function Get_Attribute_Value
-     (Project   : Project_Type;
-      Attribute : Attribute_Pkg;
-      Index     : String := "") return Variable_Value
+     (Project      : Project_Type;
+      Attribute    : Attribute_Pkg;
+      Index        : String := "";
+      Use_Extended : Boolean := False) return Variable_Value
    is
       Sep            : constant Natural := Split_Package (Attribute);
       Attribute_Name : constant String :=
@@ -766,7 +767,14 @@ package body Projects.Editor is
               Project.View_Tree.Projects.Table (Project_View).Decl.Packages,
             In_Tree     => Project.View_Tree);
          if Pkg = No_Package then
-            return Nil_Variable_Value;
+            if Use_Extended
+              and then Extended_Project (Project) /= No_Project
+            then
+               return Get_Attribute_Value
+                 (Extended_Project (Project), Attribute, Index, Use_Extended);
+            else
+               return Nil_Variable_Value;
+            end if;
          end if;
          Var := Project.View_Tree.Packages.Table (Pkg).Decl.Attributes;
          Arr := Project.View_Tree.Packages.Table (Pkg).Decl.Arrays;
@@ -789,7 +797,15 @@ package body Projects.Editor is
          Value := Value_Of (N, Var, In_Tree => Project.View_Tree);
       end if;
 
-      return Value;
+      if Value = Nil_Variable_Value
+        and then Use_Extended
+        and then Extended_Project (Project) /= No_Project
+      then
+         return Get_Attribute_Value
+           (Extended_Project (Project), Attribute, Index, Use_Extended);
+      else
+         return Value;
+      end if;
    end Get_Attribute_Value;
 
    --------------------------

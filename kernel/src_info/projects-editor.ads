@@ -332,9 +332,10 @@ package Projects.Editor is
    --  Update_Attribute_Value_In_Scenario multiple times.
 
    function Get_Attribute_Value
-     (Project   : Project_Type;
-      Attribute : Attribute_Pkg;
-      Index     : String := "") return Variable_Value;
+     (Project      : Project_Type;
+      Attribute    : Attribute_Pkg;
+      Index        : String := "";
+      Use_Extended : Boolean := False) return Variable_Value;
    --  Internal version of Get_Attribute_Value
 
    function Attribute_Is_Defined

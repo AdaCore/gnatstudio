@@ -1247,10 +1247,11 @@ package body Projects is
    -------------------------
 
    function Get_Attribute_Value
-     (Project   : Project_Type;
-      Attribute : Attribute_Pkg;
-      Default   : String := "";
-      Index     : String := "") return String
+     (Project      : Project_Type;
+      Attribute    : Attribute_Pkg;
+      Default      : String := "";
+      Index        : String := "";
+      Use_Extended : Boolean := False) return String
    is
       View  : constant Project_Id := Get_View (Project);
       Value : Variable_Value;
@@ -1302,7 +1303,8 @@ package body Projects is
            In_Tree  => Project.View_Tree);
 
       else
-         Value := Get_Attribute_Value (Project, Attribute, Index);
+         Value := Get_Attribute_Value
+           (Project, Attribute, Index, Use_Extended);
       end if;
 
       case Value.Kind is
@@ -1315,9 +1317,14 @@ package body Projects is
       end case;
    end Get_Attribute_Value;
 
+   -------------------------
+   -- Get_Attribute_Value --
+   -------------------------
+
    function Get_Attribute_Value
-     (Project   : Project_Type;
-      Attribute : Attribute_Pkg) return Associative_Array
+     (Project      : Project_Type;
+      Attribute    : Attribute_Pkg;
+      Use_Extended : Boolean := False) return Associative_Array
    is
       Sep            : constant Natural := Split_Package (Attribute);
       Pkg_Name       : constant String :=
@@ -1342,7 +1349,14 @@ package body Projects is
               Projects_Table (Project)(Project_View).Decl.Packages,
             In_Tree => Project.View_Tree);
          if Pkg = No_Package then
-            return (1 .. 0 => (No_Name, Nil_Variable_Value));
+            if Use_Extended
+              and then Extended_Project (Project) /= No_Project
+            then
+               return Get_Attribute_Value
+                 (Extended_Project (Project), Attribute, Use_Extended);
+            else
+               return (1 .. 0 => (No_Name, Nil_Variable_Value));
+            end if;
          end if;
          Arr := Packages (Project)(Pkg).Decl.Arrays;
 
@@ -1354,6 +1368,13 @@ package body Projects is
       Elem := Value_Of (N,
                         In_Arrays => Arr,
                         In_Tree   => Project.View_Tree);
+      if Elem = No_Array_Element
+        and then Use_Extended
+        and then Extended_Project (Project) /= No_Project
+      then
+         return Get_Attribute_Value
+           (Extended_Project (Project), Attribute, Use_Extended);
+      end if;
 
       Elem2 := Elem;
       while Elem2 /= No_Array_Element loop
@@ -1377,13 +1398,18 @@ package body Projects is
       end;
    end Get_Attribute_Value;
 
+   -------------------------
+   -- Get_Attribute_Value --
+   -------------------------
+
    function Get_Attribute_Value
-     (Project   : Project_Type;
-      Attribute : Attribute_Pkg;
-      Index     : String := "") return GNAT.OS_Lib.Argument_List
+     (Project      : Project_Type;
+      Attribute    : Attribute_Pkg;
+      Index        : String := "";
+      Use_Extended : Boolean := False) return GNAT.OS_Lib.Argument_List
    is
       Value : constant Variable_Value := Get_Attribute_Value
-        (Project, Attribute, Index);
+        (Project, Attribute, Index, Use_Extended);
    begin
       return To_Argument_List (Project.View_Tree, Value);
    end Get_Attribute_Value;

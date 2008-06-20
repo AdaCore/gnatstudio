@@ -365,27 +365,33 @@ package Projects is
      of Associative_Array_Element;
 
    function Get_Attribute_Value
-     (Project   : Project_Type;
-      Attribute : Attribute_Pkg;
-      Default   : String := "";
-      Index     : String := "") return String;
+     (Project      : Project_Type;
+      Attribute    : Attribute_Pkg;
+      Default      : String := "";
+      Index        : String := "";
+      Use_Extended : Boolean := False) return String;
    --  Return the value for a single-string attribute.
    --  Default is returned if the attribute wasn't set by the user and
    --  has no default value.
    --  Attribute_Pkg should be of the form:  "Package#Attribute" or
    --  "Attribute" if there is no package.
+   --  If Use_Extended is true and the attribute is not defined in Project
+   --  itself, then the attribute is looked up in the project extended by
+   --  Project (if any)
 
    function Get_Attribute_Value
-     (Project   : Project_Type;
-      Attribute : Attribute_Pkg;
-      Index     : String := "") return GNAT.OS_Lib.Argument_List;
+     (Project      : Project_Type;
+      Attribute    : Attribute_Pkg;
+      Index        : String := "";
+      Use_Extended : Boolean := False) return GNAT.OS_Lib.Argument_List;
    --  Same as above, but for an attribute whose value is a list. An empty
    --  array is returned if the attribute isn't defined.
    --  It is the responsability of the caller to free the memory.
 
    function Get_Attribute_Value
-     (Project   : Project_Type;
-      Attribute : Attribute_Pkg) return Associative_Array;
+     (Project      : Project_Type;
+      Attribute    : Attribute_Pkg;
+      Use_Extended : Boolean := False) return Associative_Array;
    --  Same as above when the attribute is an associative array
 
    function Get_Languages
