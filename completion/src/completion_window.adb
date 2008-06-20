@@ -1176,7 +1176,13 @@ package body Completion_Window is
             --  inserted as expected.
 
             if Window.Mode = Normal
-              and then not Window.Volatile
+            --  If we are in Normal completion mode, and Volatile at the
+            --  same time, this means that we are completing on '.' -
+            --  in this case, if there is only one entry, this means that we
+            --  have found the completion that we want and can complete.
+
+              and then (not Window.Volatile
+                         or else N_Children (Window.Model) = 1)
             then
                Dummy := Complete;
             end if;
@@ -1194,10 +1200,21 @@ package body Completion_Window is
             Delete (Window);
 
          when GDK_Return =>
-            if Window.Volatile then
-               return False;
-            else
-               return Complete;
+            if Window.Mode = Normal then
+               if not Window.Volatile
+                 or else N_Children (Window.Model) = 1
+               then
+                  return Complete;
+               else
+                  return False;
+               end if;
+
+            elsif Window.Mode = Dynamic then
+               if Window.Volatile then
+                  return False;
+               else
+                  return Complete;
+               end if;
             end if;
 
          when GDK_Tab =>
