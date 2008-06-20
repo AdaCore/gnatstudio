@@ -1,14 +1,5 @@
 Known Problems fixed in GPS 4.3.0
 
-- H409-028: Fix the activity contextual menu with multiple selected files
-  Problem:    When selecting multiple files on the VCS Explorer the
-              activity oriented entries in the contextual menu where not
-              always accurate. The menu "Commit as new Activity" or "Add to
-              Activity" could be present even though a selected file was
-              already in an activity. The menu "Remove from Activity" was
-              not listed if the first selected file had no activity.
-  Workaround: Select only files belonging to the same activity.
-
 - H611-032: File Dependencies plug-in fails
   Problem:    If you active the filedeps.py plugin, you see a new menu
               /Navigate/Show File Dependency Path. However, this menu will
@@ -17,6 +8,13 @@ Known Problems fixed in GPS 4.3.0
               replacing file names as appropriate:
               filedeps.print_dependency_path \
                 (GPS.File ("file1"), GPS.File ("file2"))
+
+- H606-009: Incorrect file loaded in debugger with extending project
+  Problem:    If you are loading an extending project is GPS which does not
+              explicitely overrides its parent's Main attribute, then an
+              incorrect executable (the one from the parent project) will be
+              loaded in the debugger
+  Workaround: Define the Main attribute explicitely in the extending project
 
 - H604-001: Delay in scripts execution in batch mode
   Problem:    When launching GPS with the option "--load=<a script>", the
@@ -67,6 +65,15 @@ Known Problems fixed in GPS 4.3.0
               in one of the projects, this file is compiled instead of
               generating an error message.
   Workaround: Make sure your files always belong to a project.
+
+- H409-028: Fix the activity contextual menu with multiple selected files
+  Problem:    When selecting multiple files on the VCS Explorer the
+              activity oriented entries in the contextual menu where not
+              always accurate. The menu "Commit as new Activity" or "Add to
+              Activity" could be present even though a selected file was
+              already in an activity. The menu "Remove from Activity" was
+              not listed if the first selected file had no activity.
+  Workaround: Select only files belonging to the same activity.
 
 - H407-006: Confusion when editing scenario variables
   Problem:    The dialog used to edit a scenario variable appears

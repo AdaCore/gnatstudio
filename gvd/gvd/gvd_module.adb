@@ -29,7 +29,6 @@ with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 
-with Gtk.Accel_Group;           use Gtk.Accel_Group;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -49,7 +48,6 @@ with Gtk.Window;                use Gtk.Window;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Handlers;           use Gtkada.Handlers;
---  with Gtkada.MDI;                use Gtkada.MDI;
 
 with Breakpoints_Editor;        use Breakpoints_Editor;
 with Commands.Debugger;         use Commands.Debugger;
@@ -95,12 +93,9 @@ with Projects;                  use Projects;
 with Std_Dialogs;               use Std_Dialogs;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 package body GVD_Module is
-
---     Flo : constant Debug_Handle := Create ("FLORIAN");
-
    Cst_Run_Arguments_History : constant History_Key := "gvd_run_arguments";
    --  The key in the history for the arguments to the run command.
    --  WARNING: this constant is shared with builder_module.adb, since we want
@@ -2301,22 +2296,52 @@ package body GVD_Module is
 
    procedure On_View_Changed (Kernel : access Kernel_Handle_Record'Class) is
       use GNAT.OS_Lib;
-      Mitem             : Gtk_Menu_Item;
       Menu              : Gtk_Menu renames GVD_Module_ID.Initialize_Menu;
-      Group             : constant Gtk_Accel_Group :=
-                            Get_Default_Accelerators (Kernel);
+      Mitem             : Gtk_Menu_Item;
       Loaded_Project    : constant Project_Type := Get_Project (Kernel);
       Loaded_Mains      : Argument_List :=
                             Get_Attribute_Value
                               (Loaded_Project,
-                               Attribute => Main_Attribute);
-      Loaded_Has_Mains  : constant Boolean := Loaded_Mains'Length > 0;
-      Extended_Project  : constant Project_Type :=
-                            Parent_Project (Loaded_Project);
+                               Attribute    => Main_Attribute);
       Iter              : Imported_Project_Iterator :=
                             Start (Loaded_Project);
       Current_Project   : Project_Type := Current (Iter);
+      Tmp               : Project_Type;
       Debuggable_Suffix : GNAT.Strings.String_Access := Get_Debuggable_Suffix;
+
+      procedure Add_Entries (Mains : in out Argument_List; Prj : Project_Type);
+      --  Add menu entries for all executables in Main. Main is freed on exit
+
+      procedure Add_Entries
+        (Mains : in out Argument_List; Prj : Project_Type)
+      is
+      begin
+         for M in reverse Mains'Range loop
+            declare
+               Exec : constant String :=
+                 Get_Executable_Name (Prj, Mains (M).all);
+            begin
+               Gtk_New (Mitem, Exec);
+               Prepend (Menu, Mitem);
+               File_Project_Cb.Object_Connect
+                 (Mitem, Gtk.Menu_Item.Signal_Activate,
+                  On_Debug_Init'Access,
+                  Slot_Object => Kernel,
+                  User_Data   => File_Project_Record'
+                    (Project => No_Project,
+                     File    => Create (Executables_Directory (Prj) & Exec)));
+
+               --  Only set accelerators for main units of the root project
+               if Prj = Loaded_Project then
+                  Set_Accel_Path
+                    (Mitem, Debug_Menu_Prefix & "item" & Image (M),
+                     Get_Default_Accelerators (Kernel));
+               end if;
+            end;
+         end loop;
+
+         Free (Mains);
+      end Add_Entries;
 
    begin
       --  Remove all existing menus
@@ -2331,44 +2356,35 @@ package body GVD_Module is
       --  module (see Builder_Module.On_View_Changed).
 
       while Current_Project /= No_Project loop
-         if not Loaded_Has_Mains
-           or else Current_Project /= Extended_Project
-         then
-            declare
-               Mains : Argument_List :=
-                         Get_Attribute_Value
-                           (Current_Project, Attribute => Main_Attribute);
-            begin
-               for M in reverse Mains'Range loop
-                  declare
-                     Exec : constant String :=
-                              Get_Executable_Name
-                                (Current_Project, Mains (M).all);
-                  begin
-                     Gtk_New (Mitem, Exec);
-                     Prepend (Menu, Mitem);
-                     File_Project_Cb.Object_Connect
-                       (Mitem, Gtk.Menu_Item.Signal_Activate,
-                        On_Debug_Init'Access,
-                        Slot_Object => Kernel,
-                        User_Data   => File_Project_Record'
-                          (Project => No_Project,
-                           File    => Create
-                             (Executables_Directory
-                                (Current_Project) & Exec)));
+         --  Never show the main units from an extended project, since we only
+         --  look at the actual executables in the extending project
 
-                     if M = Mains'First
-                       and then Current_Project = Loaded_Project
-                     then
-                        Set_Accel_Path
-                          (Mitem, Debug_Menu_Prefix & "item" & Image (M),
-                           Group);
-                     end if;
-                  end;
-               end loop;
+         if Extending_Project (Current_Project) /= No_Project then
+            null;
 
-               Free (Mains);
-            end;
+         --  If we have an extending project, the list of main units could
+         --  come from the project itself, or be inherited from extended
+         --  projects.
+
+         else
+            Tmp := Current_Project;
+            while Tmp /= No_Project loop
+               declare
+                  Mains : Argument_List :=
+                    Get_Attribute_Value (Tmp, Attribute => Main_Attribute);
+               begin
+                  if Mains'Length /= 0 then
+                     --  Basenames inherited, but exec_dir is current project
+                     Add_Entries (Mains, Current_Project);
+
+                     --  Stop looking in inherited project, since the attribute
+                     --  has been overridden.
+                     Tmp := No_Project;
+                  else
+                     Tmp := Extended_Project (Tmp);
+                  end if;
+               end;
+            end loop;
          end if;
 
          Next (Iter);
@@ -2387,7 +2403,8 @@ package body GVD_Module is
          User_Data   => File_Project_Record'
            (Project => Get_Project (Kernel),
             File    => GNATCOLL.VFS.No_File));
-      Set_Accel_Path (Mitem, Debug_Menu_Prefix & "<no main>", Group);
+      Set_Accel_Path (Mitem, Debug_Menu_Prefix & "<no main>",
+                      Get_Default_Accelerators (Kernel));
       Show_All (Menu);
 
    exception
