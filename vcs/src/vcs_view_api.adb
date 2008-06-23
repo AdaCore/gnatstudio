@@ -1042,90 +1042,93 @@ package body VCS_View_API is
 
       --  Fill the section for the activity
 
-      Check_Activity : declare
-         Files      : constant File_Array := File_Information (Context);
-         Activity   : constant Activity_Id :=
-                        Get_File_Activity (File_Information (Context));
-         Consistent : Boolean := True;
-      begin
-         --  Check that all files are belonging to the same activity (which
-         --  can be no activity). This consistency check is done as the
-         --  following menu should only be displayed if the file selection
-         --  context is consistent about the activity.
+      if File_Section then
+         Check_Activity : declare
+            Files      : constant File_Array := File_Information (Context);
+            Activity   : constant Activity_Id :=
+                           Get_File_Activity (File_Information (Context));
+            Consistent : Boolean := True;
+         begin
+            --  Check that all files are belonging to the same activity (which
+            --  can be no activity). This consistency check is done as the
+            --  following menu should only be displayed if the file selection
+            --  context is consistent about the activity.
 
-         for K in Files'Range loop
-            Consistent := Consistent
-              and then Get_File_Activity (Files (K)) = Activity;
-         end loop;
+            for K in Files'Range loop
+               Consistent := Consistent
+                 and then Get_File_Activity (Files (K)) = Activity;
+            end loop;
 
-         if (File_Section
-             and then not Has_Activity_Information (Context)
-             and then not Log_File
-             and then Consistent
-             and then Activity = No_Activity)
-           or else Show_Everything
-         then
-            Items_Inserted := True;
+            if (File_Section
+                 and then not Has_Activity_Information (Context)
+                 and then not Log_File
+                 and then Consistent
+                 and then Activity = No_Activity)
+              or else Show_Everything
+            then
+               Items_Inserted := True;
 
-            Gtk_New (Menu_Item, Label => -"Commit as new Activity");
-            Append (Menu, Menu_Item);
-            Context_Callback.Connect
-              (Menu_Item, Gtk.Menu_Item.Signal_Activate,
-               On_Menu_Commit_As_Activity'Access, Context);
-            Set_Sensitive (Menu_Item, Section_Active);
-         end if;
-
-         if (File_Section
-             and then First /= No_Activity
-             and then not Has_Activity_Information (Context))
-           or else Show_Everything
-         then
-            Items_Inserted := True;
-
-            if Activity = No_Activity and then Consistent then
-               --  File not in an activity
-
-               Gtk_New (Menu_Item, Label => -"Add to Activity");
-               Append (Menu, Menu_Item);
-               Gtk_New (Submenu);
-               Set_Submenu (Menu_Item, Gtk_Widget (Submenu));
-
-               declare
-                  Found : Boolean := False;
-               begin
-                  Found := Create_Activity_Menu (Submenu);
-                  Set_Sensitive (Menu_Item, Found);
-               end;
-
-            else
-               --  Some files are not part of an activity or part of multiple
-               --  activities, we propose to remove from any activity.
-
-               --  If the activities listed in selected files are not
-               --  consistent we do not list the activity name. This is because
-               --  the selected files may belong to multiple activities. We
-               --  save here a loop to buil a list of all unique activity name.
-
-               if Consistent then
-                  Gtk_New
-                    (Menu_Item,
-                     Label => -"Remove from Activity " &
-                     Emphasize (Get_Name (Activity)));
-               else
-                  Gtk_New
-                    (Menu_Item, Label => -"Remove from Activities");
-               end if;
-
-               Set_Use_Markup (Gtk_Label (Get_Child (Menu_Item)), True);
+               Gtk_New (Menu_Item, Label => -"Commit as new Activity");
                Append (Menu, Menu_Item);
                Context_Callback.Connect
                  (Menu_Item, Gtk.Menu_Item.Signal_Activate,
-                  On_Menu_Remove_From_Activity'Access, Context);
+                  On_Menu_Commit_As_Activity'Access, Context);
                Set_Sensitive (Menu_Item, Section_Active);
             end if;
-         end if;
-      end Check_Activity;
 
+            if (File_Section
+                 and then First /= No_Activity
+                 and then not Has_Activity_Information (Context))
+              or else Show_Everything
+            then
+               Items_Inserted := True;
+
+               if Activity = No_Activity and then Consistent then
+                  --  File not in an activity
+
+                  Gtk_New (Menu_Item, Label => -"Add to Activity");
+                  Append (Menu, Menu_Item);
+                  Gtk_New (Submenu);
+                  Set_Submenu (Menu_Item, Gtk_Widget (Submenu));
+
+                  declare
+                     Found : Boolean := False;
+                  begin
+                     Found := Create_Activity_Menu (Submenu);
+                     Set_Sensitive (Menu_Item, Found);
+                  end;
+
+               else
+                  --  Some files are not part of an activity or part of
+                  --  multiple activities, we propose to remove from any
+                  --  activity.
+
+                  --  If the activities listed in selected files are not
+                  --  consistent we do not list the activity name. This is
+                  --  because the selected files may belong to multiple
+                  --  activities. We save here a loop to buil a list of all
+                  --  unique activity name.
+
+                  if Consistent then
+                     Gtk_New
+                       (Menu_Item,
+                        Label => -"Remove from Activity " &
+                        Emphasize (Get_Name (Activity)));
+                  else
+                     Gtk_New
+                       (Menu_Item, Label => -"Remove from Activities");
+                  end if;
+
+                  Set_Use_Markup (Gtk_Label (Get_Child (Menu_Item)), True);
+                  Append (Menu, Menu_Item);
+                  Context_Callback.Connect
+                    (Menu_Item, Gtk.Menu_Item.Signal_Activate,
+                     On_Menu_Remove_From_Activity'Access, Context);
+                  Set_Sensitive (Menu_Item, Section_Active);
+               end if;
+            end if;
+         end Check_Activity;
+      end if;
       --  Fill the section relative to directory
 
       Section_Active := Dir_Section;
