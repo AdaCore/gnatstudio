@@ -19,7 +19,6 @@
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
-with GComLin;                   use GComLin;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Scripts.Gtkada;   use GNATCOLL.Scripts, GNATCOLL.Scripts.Gtkada;
@@ -229,7 +228,6 @@ package body Custom_Module is
       Current_Tool : in out Tool_Properties_Record;
       Node         : Node_Ptr)
    is
-      Comlin_Config : Command_Line_Configuration;
       Char       : constant String := Get_Attribute (Node, "switch_char", "-");
       Default_Sep : constant String := Get_Attribute (Node, "separator", "");
 
@@ -755,9 +753,9 @@ package body Custom_Module is
          end if;
 
          if Alias = "" then
-            Define_Prefix (Comlin_Config, Prefix => Switch);
+            Define_Prefix (Current_Tool.Config, Prefix => Switch);
          else
-            Define_Alias  (Comlin_Config, Switch, Alias);
+            Define_Alias  (Current_Tool.Config, Switch, Alias);
          end if;
       end Process_Expansion_Node;
 
@@ -789,7 +787,8 @@ package body Custom_Module is
             elsif N2.Tag.all = "dependency" then
                Process_Dependency_Node (N2);
             elsif N2.Tag.all = "default-value-dependency" then
-               Process_Default_Value_Dependency_Node (N2);
+               --  Process this node after all other nodes have been parsed.
+               null;
             elsif N2.Tag.all = "expansion" then
                Process_Expansion_Node (N2);
             else
@@ -800,6 +799,17 @@ package body Custom_Module is
 
             N2 := N2.Next;
          end loop;
+
+         N2 := N.Child;
+
+         while N2 /= null loop
+            if N2.Tag.all = "default-value-dependency" then
+               Process_Default_Value_Dependency_Node (N2);
+            end if;
+
+            N2 := N2.Next;
+         end loop;
+
       exception
          when E : others => Trace (Exception_Handle, E);
       end Parse_Popup_Or_Main;
@@ -842,10 +852,6 @@ package body Custom_Module is
          Sections          => Get_Attribute (Node, "sections"));
 
       Parse_Popup_Or_Main (Node, Main_Window);
-
-      --  Set the configuration only after it has potentially
-      --  been created by Parsing_Switches_XML
-      Set_Configuration (Current_Tool.Config, Comlin_Config);
    end Parse_Switches_Node;
 
    ------------------------------

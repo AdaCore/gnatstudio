@@ -29,6 +29,7 @@ GNAT_SOURCES= \
   fname.adb \
   gnatvsn.ads \
   gnatvsn.adb \
+  gnat_ugn.texi \
   hostparm.ads \
   krunch.ads \
   krunch.adb \

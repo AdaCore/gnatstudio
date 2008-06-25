@@ -1571,6 +1571,7 @@ package body GPS.Kernel.Hooks is
       Register_Hook_No_Args (Kernel, Variable_Changed_Hook);
       Register_Hook_No_Args (Kernel, Project_View_Changed_Hook);
       Register_Hook_No_Args (Kernel, Project_Changed_Hook);
+      Register_Hook_No_Args (Kernel, Project_Editor_Hook);
       Register_Hook_No_Return
         (Kernel, Compilation_Finished_Hook, String_Hook_Type);
       Register_Hook_No_Return (Kernel, Project_Saved_Hook, Project_Hook_Type);

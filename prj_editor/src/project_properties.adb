@@ -5082,6 +5082,7 @@ package body Project_Properties is
          end case;
       end if;
 
+      Run_Hook (Kernel, Project_Editor_Hook);
       Gtk_New (Editor, Project, Kernel);
 
       loop

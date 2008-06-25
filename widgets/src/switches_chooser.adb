@@ -55,7 +55,6 @@ package body Switches_Chooser is
         (Lines             => Lines,
          Columns           => Columns,
          Default_Separator => To_Unbounded_String (Default_Separator),
-         Getopt_Switches   => Null_Unbounded_String,
          Scrolled_Window   => Scrolled_Window,
          Switch_Char       => Switch_Char,
          Config            => <>,
@@ -93,17 +92,28 @@ package body Switches_Chooser is
       return Config;
    end Create;
 
-   -----------------------
-   -- Set_Configuration --
-   -----------------------
+   -------------------
+   -- Define_Prefix --
+   -------------------
 
-   procedure Set_Configuration
-     (Config     : access Switches_Editor_Config_Record;
-      Cmd_Config : Command_Line_Configuration)
-   is
+   procedure Define_Prefix
+     (Config : Switches_Editor_Config;
+      Prefix : String) is
    begin
-      Config.Config := Cmd_Config;
-   end Set_Configuration;
+      Define_Prefix (Config.Config, Prefix);
+   end Define_Prefix;
+
+   ------------------
+   -- Define_Alias --
+   ------------------
+
+   procedure Define_Alias
+     (Config   : Switches_Editor_Config;
+      Switch   : String;
+      Expanded : String) is
+   begin
+      Define_Alias (Config.Config, Switch, Expanded);
+   end Define_Alias;
 
    ---------------------
    -- Set_Frame_Title --
@@ -153,20 +163,15 @@ package body Switches_Chooser is
       if Separator = ASCII.LF
         or else Switch (Switch'First) /= Config.Switch_Char
       then
-         Append (Config.Getopt_Switches,
-                 " " & Switch (Switch'First + 1 .. Switch'Last));
+         Define_Switch (Config.Config, Switch);
       elsif Separator = ASCII.NUL then
-         Append (Config.Getopt_Switches,
-                 " " & Switch (Switch'First + 1 .. Switch'Last) & "!");
+         Define_Switch (Config.Config, Switch & "!");
       elsif Separator = '=' then
-         Append (Config.Getopt_Switches,
-                 " " & Switch (Switch'First + 1 .. Switch'Last) & "=");
+         Define_Switch (Config.Config, Switch & "=");
       elsif Separator = ASCII.CR then
-         Append (Config.Getopt_Switches,
-                 " " & Switch (Switch'First + 1 .. Switch'Last) & "?");
+         Define_Switch (Config.Config, Switch & "?");
       else
-         Append (Config.Getopt_Switches,
-                 " " & Switch (Switch'First + 1 .. Switch'Last) & ":");
+         Define_Switch (Config.Config, Switch & ":");
       end if;
    end Add_To_Getopt;
 
@@ -192,6 +197,8 @@ package body Switches_Chooser is
             Switch        => To_Unbounded_String (Switch),
             Switch_Unset  => Null_Unbounded_String,
             Default_State => False,
+            Initial_State => False,
+            Dependencies  => null,
             Label         => To_Unbounded_String (Label),
             Tip           => To_Unbounded_String (Tip),
             Section       => To_Unbounded_String (Section),
@@ -226,6 +233,8 @@ package body Switches_Chooser is
             Switch        => To_Unbounded_String (Switch_Set),
             Switch_Unset  => To_Unbounded_String (Switch_Unset),
             Default_State => Default_State,
+            Initial_State => Default_State,
+            Dependencies  => null,
             Label         => To_Unbounded_String (Label),
             Tip           => To_Unbounded_String (Tip),
             Section       => To_Unbounded_String (Section),
@@ -482,8 +491,7 @@ package body Switches_Chooser is
          Slave_Tool     => new String'(Slave_Tool),
          Slave_Section  => new String'(Slave_Section),
          Slave_Switch   => new String'(Slave_Switch),
-         Slave_Status   => Slave_Activate,
-         Act_On_Default => False);
+         Slave_Status   => Slave_Activate);
    end Add_Dependency;
 
    ----------------------------
@@ -495,18 +503,63 @@ package body Switches_Chooser is
       Switch         : String;
       Section        : String;
       Slave_Switch   : String;
-      Slave_Section  : String) is
+      Slave_Section  : String)
+   is
+      Cursor        : Switch_Description_Vectors.Cursor :=
+                        Config.Switches.First;
+      Slave_Cursor  : Switch_Description_Vectors.Cursor :=
+                       Switch_Description_Vectors.No_Element;
+      Master_Cursor : Switch_Description_Vectors.Cursor :=
+                        Switch_Description_Vectors.No_Element;
    begin
-      Config.Dependencies := new Dependency_Description'
-        (Next           => Config.Dependencies,
-         Master_Switch  => new String'(Switch),
-         Master_Section => new String'(Section),
-         Master_Status  => False,
-         Slave_Tool     => null,
-         Slave_Section  => new String'(Slave_Section),
-         Slave_Switch   => new String'(Slave_Switch),
-         Slave_Status   => False,
-         Act_On_Default => True);
+      while Has_Element (Cursor) loop
+         declare
+            Sw : Switch_Description renames Element (Cursor);
+         begin
+            if Sw.Typ = Switch_Check then
+               if To_String (Sw.Section) = Slave_Section
+                 and then
+                   (To_String (Sw.Switch) = Slave_Switch
+                    or else To_String (Sw.Switch_Unset) = Slave_Switch)
+               then
+                  Slave_Cursor := Cursor;
+
+               elsif To_String (Sw.Section) = Section
+                 and then To_String (Sw.Switch) = Switch
+               then
+                  Master_Cursor := Cursor;
+               end if;
+
+               exit when Has_Element (Master_Cursor)
+                 and then Has_Element (Slave_Cursor);
+            end if;
+         end;
+
+         Next (Cursor);
+      end loop;
+
+      if Has_Element (Master_Cursor)
+        and then Has_Element (Slave_Cursor)
+      then
+         declare
+            Slave  : Switch_Description :=
+                       Element (Slave_Cursor);
+            Enable : Boolean;
+         begin
+            if To_String (Slave.Switch) = Slave_Switch then
+               Enable := True;
+            else
+               Enable := False;
+            end if;
+
+            Slave.Dependencies := new Default_Value_Dependency_Record'
+              (Enable        => Enable,
+               Master_Switch => To_Index (Master_Cursor),
+               Master_State  => False,
+               Next          => Slave.Dependencies);
+            Config.Switches.Replace_Element (Slave_Cursor, Slave);
+         end;
+      end if;
    end Add_Default_Value_Dependency;
 
    ----------------------
@@ -652,11 +705,14 @@ package body Switches_Chooser is
          Deps     : Dependency_Description_Access :=
                       Editor.Config.Dependencies;
          Tool     : Root_Switches_Editor_Access;
+         Changed  : Boolean;
+         Success  : Boolean;
 
       begin
+         Changed := False;
+
          while Deps /= null loop
-            if not Deps.Act_On_Default
-              and then Deps.Master_Switch.all = Switch
+            if Deps.Master_Switch.all = Switch
               and then Deps.Master_Section.all = Section
               and then Deps.Master_Status = Status
             then
@@ -677,76 +733,96 @@ package body Switches_Chooser is
                      Add_Switch
                        (Tool.Cmd_Line,
                         Section => Deps.Slave_Section.all,
-                        Switch  => Deps.Slave_Switch.all);
+                        Switch  => Deps.Slave_Switch.all,
+                        Success => Success);
                   else
                      Remove_Switch
                        (Tool.Cmd_Line,
                         Section => Deps.Slave_Section.all,
-                        Switch  => Deps.Slave_Switch.all);
+                        Switch  => Deps.Slave_Switch.all,
+                        Success => Success);
                   end if;
 
-                  On_Command_Line_Changed (Tool.all);
-                  Update_Graphical_Command_Line (Tool.all);
+                  if Tool.all /= Editor and then Success then
+                     On_Command_Line_Changed (Tool.all);
+                     Update_Graphical_Command_Line (Tool.all);
+                  else
+                     Changed := Changed or Success;
+                  end if;
                end if;
-
-            elsif Deps.Act_On_Default
-              and then Deps.Master_Switch.all = Switch
-              and then Deps.Master_Section.all = Section
-            then
-               for W in Editor.Config.Switches.First_Index ..
-                 Editor.Config.Switches.Last_Index
-               loop
-                  declare
-                     S       : Switch_Description :=
-                                 Element (Editor.Config.Switches, W);
-                     Changed : Boolean := False;
-
-                  begin
-                     if To_String (S.Section) = Deps.Slave_Section.all
-                       and then S.Typ = Switch_Check
-                     then
-                        if To_String (S.Switch) = Deps.Slave_Switch.all
-                          and then Status /= S.Default_State
-                        then
-                           S.Default_State := Status;
-                           Changed := True;
-
-                        elsif To_String (S.Switch_Unset) =
-                          Deps.Slave_Switch.all
-                          and then Status = S.Default_State
-                        then
-                           S.Default_State := not Status;
-                           Changed := True;
-                        end if;
-
-                        if Changed then
-                           if not Status then
-                              --  We are deactivating a switch, let's
-                              --  remove unnecessary deactivation switch
-                              Remove_Switch
-                                (Editor.Cmd_Line,
-                                 Section => Deps.Slave_Section.all,
-                                 Switch  => To_String (S.Switch_Unset));
-                           end if;
-
-                           Editor.Config.Switches.Replace_Element (W, S);
-                           Set_Graphical_Widget
-                             (Editor,
-                              Editor.Widgets (W),
-                              S.Typ,
-                              Boolean'Image (Status),
-                              Is_Default => True);
-
-                           --  We found the slave switch. Let's stop the
-                           --  search.
-                           exit;
-                        end if;
-                     end if;
-                  end;
-               end loop;
             end if;
 
             Deps := Deps.Next;
+         end loop;
+
+         if Changed then
+            On_Command_Line_Changed (Editor);
+            Update_Graphical_Command_Line (Editor);
+         end if;
+
+         --  Now check default values for all switches
+         for J in Editor.Config.Switches.First_Index
+                   .. Editor.Config.Switches.Last_Index
+         loop
+            declare
+               Sw    : Switch_Description :=
+                         Editor.Config.Switches.Element (J);
+               Dep   : Default_Value_Dependency;
+               State : Boolean;
+
+            begin
+               if Sw.Typ = Switch_Check then
+                  --  State is always initialized using the initial_state.
+                  --  We will modify it afterwards, depending on the states of
+                  --  the modifiers.
+                  State := Sw.Initial_State;
+                  Dep   := Sw.Dependencies;
+
+                  while Dep /= null loop
+                     declare
+                        Master : constant Switch_Description :=
+                                   Editor.Config.Switches.Element
+                                     (Dep.Master_Switch);
+                     begin
+                        if To_String (Master.Switch) = Switch
+                          and then To_String (Master.Section) = Section
+                        then
+                           Dep.Master_State := Status;
+                        end if;
+                     end;
+
+                     if Dep.Master_State then
+                        State := Dep.Enable;
+                     end if;
+
+                     Dep := Dep.Next;
+                  end loop;
+
+                  if State /= Sw.Default_State then
+                     Sw.Default_State := State;
+
+                     if not State then
+                        --  We are deactivating a switch, let's
+                        --  remove unnecessary deactivation switch
+                        Remove_Switch
+                          (Editor.Cmd_Line,
+                           Section => To_String (Sw.Section),
+                           Switch  => To_String (Sw.Switch_Unset));
+                     end if;
+
+                     Editor.Config.Switches.Replace_Element (J, Sw);
+
+                     if Editor.Widgets (J) /= null then
+                        Set_Graphical_Widget
+                          (Editor,
+                           Editor.Widgets (J),
+                           Sw.Typ,
+                           Boolean'Image (State),
+                           Is_Default => True);
+                     end if;
+                  end if;
+               end if;
+            end;
          end loop;
       end Handle_Dependencies;
 
@@ -774,16 +850,20 @@ package body Switches_Chooser is
                      --  We first remove the switch from the command line,
                      --  and add it later on if the corresponding widget is
                      --  checked
-                     Remove_Switch (Editor.Cmd_Line,
-                                    Section => To_String (S.Section),
-                                    Switch  => To_String (S.Switch));
+                     Remove_Switch
+                       (Editor.Cmd_Line,
+                        Section       => To_String (S.Section),
+                        Switch        => To_String (S.Switch),
+                        Has_Parameter =>
+                          S.Typ = Switch_Field or else S.Typ = Switch_Spin);
 
                      if S.Typ = Switch_Check
                        and then S.Switch_Unset /= Null_Unbounded_String
                      then
-                        Remove_Switch (Editor.Cmd_Line,
-                                       Section => To_String (S.Section),
-                                       Switch  => To_String (S.Switch_Unset));
+                        Remove_Switch
+                          (Editor.Cmd_Line,
+                           Section => To_String (S.Section),
+                           Switch  => To_String (S.Switch_Unset));
                      end if;
 
                      case S.Typ is
@@ -974,7 +1054,7 @@ package body Switches_Chooser is
          Set_Command_Line
            (Cmd2,
             Argument_List_To_String (Args),
-            To_String (Editor.Config.Getopt_Switches),
+            Get_Switches (Editor.Config.Config, Editor.Config.Switch_Char),
             Switch_Char => Editor.Config.Switch_Char);
 
          --  The two command lines are equal if the switches are exactly in the
@@ -1022,7 +1102,7 @@ package body Switches_Chooser is
          Editor.Block := True;
          Set_Command_Line
            (Editor.Cmd_Line, Cmd_Line,
-            To_String (Editor.Config.Getopt_Switches),
+            Get_Switches (Editor.Config.Config, Editor.Config.Switch_Char),
             Switch_Char => Editor.Config.Switch_Char);
          Editor.Block := False;
          On_Command_Line_Changed (Editor);
@@ -1051,62 +1131,62 @@ package body Switches_Chooser is
             declare
                S : constant Switch_Description := Element (Switch);
             begin
-               if Editor.Widgets (To_Index (Switch)) /= null then
-                  Start (Editor.Cmd_Line, Iter, Expanded => True);
+               Start (Editor.Cmd_Line, Iter, Expanded => True);
 
-                  while Has_More (Iter) loop
-                     exit when To_String (S.Switch) = Current_Switch (Iter)
-                       and then To_String (S.Section) = Current_Section (Iter);
-                     exit when S.Typ = Switch_Check
-                       and then
-                         To_String (S.Switch_Unset) = Current_Switch (Iter)
-                       and then To_String (S.Section) = Current_Section (Iter);
+               while Has_More (Iter) loop
+                  exit when To_String (S.Switch) = Current_Switch (Iter)
+                    and then To_String (S.Section) = Current_Section (Iter);
+                  exit when S.Typ = Switch_Check
+                    and then To_String (S.Switch_Unset) = Current_Switch (Iter)
+                    and then To_String (S.Section) = Current_Section (Iter);
 
-                     Next (Iter);
-                  end loop;
+                  Next (Iter);
+               end loop;
 
-                  case S.Typ is
-                     when Switch_Check =>
-                        declare
-                           State      : Boolean;
-                           Is_Default : Boolean;
-                        begin
-                           if not Has_More (Iter) then
-                              Is_Default := True;
-                           else
+               case S.Typ is
+                  when Switch_Check =>
+                     declare
+                        State      : Boolean;
+                        Is_Default : Boolean;
+                     begin
+                        if not Has_More (Iter) then
+                           Is_Default := True;
+                        else
+                           Is_Default := False;
+                        end if;
+
+                        if not Is_Default then
+                           State := To_String (S.Switch) =
+                             Current_Switch (Iter);
+                        else
+                           State := S.Default_State;
+
+                           if not State then
                               Is_Default := False;
                            end if;
+                        end if;
 
-                           if not Is_Default then
-                              State := To_String (S.Switch) =
-                                Current_Switch (Iter);
-                           else
-                              State := S.Default_State;
-                           end if;
+                        if Editor.Widgets (To_Index (Switch)) /= null then
 
+                           --  ??? click on -gnatws => removes -gnatwa leads
+                           --  to Is_Default => False
                            Set_Graphical_Widget
                              (Editor,
                               Editor.Widgets (To_Index (Switch)),
                               S.Typ,
                               Boolean'Image (State),
                               Is_Default);
+                        end if;
 
-                           Handle_Dependencies
-                             (Editor,
-                              To_String (S.Switch),
-                              To_String (S.Section),
-                              State);
+                        Handle_Dependencies
+                          (Editor,
+                           To_String (S.Switch),
+                           To_String (S.Section),
+                           State);
+                     end;
 
-                           if To_String (S.Switch_Unset) /= "" then
-                              Handle_Dependencies
-                                (Editor,
-                                 To_String (S.Switch_Unset),
-                                 To_String (S.Section),
-                                 not State);
-                           end if;
-                        end;
-
-                     when Switch_Spin =>
+                  when Switch_Spin =>
+                     if Editor.Widgets (To_Index (Switch)) /= null then
                         if Current_Parameter (Iter) = "" then
                            Set_Graphical_Widget
                              (Editor,
@@ -1121,32 +1201,36 @@ package body Switches_Chooser is
                               S.Typ,
                               Current_Parameter (Iter));
                         end if;
+                     end if;
 
-                     when Switch_Field =>
+                  when Switch_Field =>
+                     if Editor.Widgets (To_Index (Switch)) /= null then
                         Set_Graphical_Widget
                           (Editor,
                            Editor.Widgets (To_Index (Switch)),
                            S.Typ,
                            Current_Parameter (Iter));
+                     end if;
 
-                     when Switch_Radio =>
-                        --  If we are starting a new radio group, pre-select
-                        --  the first in the group, which is the default. It
-                        --  will automatically get unselected if some other
-                        --  element in the group is selected
+                  when Switch_Radio =>
+                     --  If we are starting a new radio group, pre-select
+                     --  the first in the group, which is the default. It
+                     --  will automatically get unselected if some other
+                     --  element in the group is selected
 
-                        if Editor.Widgets (To_Index (Switch)) /= null then
-                           Set_Graphical_Widget
-                             (Editor,
-                              Editor.Widgets (To_Index (Switch)),
-                              S.Typ,
-                              Boolean'Image
-                                (S.Group /= Current_Radio_Group
-                                 or else Has_More (Iter)));
-                           Current_Radio_Group := S.Group;
-                        end if;
+                     if Editor.Widgets (To_Index (Switch)) /= null then
+                        Set_Graphical_Widget
+                          (Editor,
+                           Editor.Widgets (To_Index (Switch)),
+                           S.Typ,
+                           Boolean'Image
+                             (S.Group /= Current_Radio_Group
+                              or else Has_More (Iter)));
+                        Current_Radio_Group := S.Group;
+                     end if;
 
-                     when Switch_Combo =>
+                  when Switch_Combo =>
+                     if Editor.Widgets (To_Index (Switch)) /= null then
                         declare
                            Combo : Combo_Switch_Vectors.Cursor
                              := First (S.Entries);
@@ -1173,11 +1257,11 @@ package body Switches_Chooser is
                                  To_String (Element (Combo).Label));
                            end if;
                         end;
+                     end if;
 
-                     when Switch_Popup =>
-                        null;
-                  end case;
-               end if;
+                  when Switch_Popup =>
+                     null;
+               end case;
             end;
 
             Next (Switch);

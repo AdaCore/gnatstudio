@@ -68,11 +68,15 @@ package Switches_Chooser is
    --  Does nothing for now, but at least ensures that appropriate calls are
    --  done where needed.
 
-   procedure Set_Configuration
-     (Config     : access Switches_Editor_Config_Record;
-      Cmd_Config : Command_Line_Configuration);
-   --  Set the command line configuration, ie how to group command line
-   --  arguments
+   procedure Define_Prefix
+     (Config : Switches_Editor_Config;
+      Prefix : String);
+   procedure Define_Alias
+     (Config   : Switches_Editor_Config;
+      Switch   : String;
+      Expanded : String);
+   --  Define_Prefix and Define_Alias are wrappers to actual calls performed
+   --  on Config.Config. See Gnat.Command_Line for documentation.
 
    procedure Set_Frame_Title
      (Config    : Switches_Editor_Config;
@@ -377,6 +381,9 @@ private
    package Combo_Switch_Vectors is new
      Ada.Containers.Vectors (Natural, Combo_Switch);
 
+   type Default_Value_Dependency_Record;
+   type Default_Value_Dependency is access all Default_Value_Dependency_Record;
+
    type Switch_Description (Typ : Switch_Type) is record
       Switch    : Ada.Strings.Unbounded.Unbounded_String;
       Label     : Ada.Strings.Unbounded.Unbounded_String;
@@ -391,6 +398,8 @@ private
          when Switch_Check =>
             Switch_Unset  : Ada.Strings.Unbounded.Unbounded_String;
             Default_State : Boolean;
+            Initial_State : Boolean;
+            Dependencies  : Default_Value_Dependency;
          when Switch_Field =>
             As_Directory : Boolean;
             As_File      : Boolean;
@@ -412,6 +421,13 @@ private
    package Switch_Description_Vectors is new
      Ada.Containers.Indefinite_Vectors (Natural, Switch_Description);
 
+   type Default_Value_Dependency_Record is record
+      Enable        : Boolean;
+      Master_Switch : Switch_Description_Vectors.Extended_Index;
+      Master_State  : Boolean;
+      Next          : Default_Value_Dependency;
+   end record;
+
    type Frame_Description is record
       Title     : Ada.Strings.Unbounded.Unbounded_String;
       Line      : Positive;
@@ -430,7 +446,6 @@ private
       Master_Switch, Slave_Switch   : GNAT.Strings.String_Access;
       Master_Section, Slave_Section : GNAT.Strings.String_Access;
       Master_Status, Slave_Status   : Boolean;
-      Act_On_Default                : Boolean;
       Next                          : Dependency_Description_Access;
    end record;
    --  Description of a dependency (see Add_Dependency). This is needed because
@@ -443,7 +458,6 @@ private
       Config            : Command_Line_Configuration;
       Show_Command_Line : Boolean := True;
       Default_Separator : Ada.Strings.Unbounded.Unbounded_String;
-      Getopt_Switches   : Ada.Strings.Unbounded.Unbounded_String;
       Sections          : Ada.Strings.Unbounded.Unbounded_String;
       Scrolled_Window   : Boolean := False;
       Switch_Char       : Character;
@@ -451,7 +465,7 @@ private
       Switches          : Switch_Description_Vectors.Vector;
       Max_Radio         : Radio_Switch := 0;
       Max_Popup         : Popup_Index := Main_Window;
-      Dependencies      : Dependency_Description_Access;
+      Dependencies      : Dependency_Description_Access := null;
    end record;
 
 end Switches_Chooser;

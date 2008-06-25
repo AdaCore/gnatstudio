@@ -703,6 +703,7 @@ package GPS.Kernel is
    Project_View_Changed_Hook     : constant Hook_Name :=
                                      "project_view_changed";
    Project_Changed_Hook          : constant Hook_Name := "project_changed";
+   Project_Editor_Hook           : constant Hook_Name := "project_editor";
    Contextual_Menu_Open_Hook     : constant Hook_Name :=
                                      "contextual_menu_open";
    Contextual_Menu_Close_Hook    : constant Hook_Name :=
