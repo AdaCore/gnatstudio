@@ -2,6 +2,7 @@ BEGIN {
     st = 0
     warnings = 0
     styles = 0
+    validity = 0
     print "switches_comments={"
 }
 
@@ -36,7 +37,7 @@ warnings == 1 && st > 0 && st < 4 && /^@item -gnatw/ {
 
 # new item detected, but not a -gnatw one. Stop analysis here (st = 4)
 warnings == 1 && st > 0 && st < 4 && /^@item [\^]?-.*/ && $1!~"@item -gnatw" {
-    print "\"\"\"],"
+    printf ("\"\"\"],\n")
     warnings = 0
     st = 0
 }
@@ -50,11 +51,22 @@ warnings == 1 && st == 2 && /^@emph{/ {
     prev=""
     itemize=0
     $0=""
+    empty_line = 0
     st = 3
+}
+validity == 1 && /^@end table/ {
+    printf ("\"\"\"],\n")
+    validity = 0
+    st = 0
+}
+
+st == 0 && /^@node Validity Checking/ {
+    st = 1
+    validity = 1
 }
 
 styles == 1 && /^@item -/ {
-    print "\"\"\"]}\n"
+    printf ("\"\"\"]}\n")
     styles = 0
     st = 0
 }
@@ -64,13 +76,19 @@ st == 0 && /^@node Style Checking/ {
     styles = 1
 }
 
-styles == 1 && st > 1 && st < 4 && /^@item / {
+(validity == 1 || styles == 1) && st > 1 && st < 4 && /^@item / {
     printf("\"\"\"],\n")
 }
 
-styles == 1 && /\^[^^]*\^[^^]*\^/ {
+(validity == 1 || styles == 1) && /\^[^^]*\^[^^]*\^/ {
     sub (/[\^]/,"",$0)
     sub (/\^[^^]*\^/,"", $0)
+}
+
+validity == 1 && /@item / {
+    sub (/@item /,"", $0)
+    printf("   '%s': [\n",$0)
+    st = 2
 }
 
 styles == 1 && /@item / {
@@ -81,7 +99,7 @@ styles == 1 && /@item / {
     st = 2
 }
 
-styles == 1 && st == 2 && /^@emph{/ {
+(validity == 1 || styles == 1) && st == 2 && /^@emph{/ {
     sub (/@emph{/, "         \"\"\"",$0)
     sub (/}$/, "\"\"\", \n         \"\"\"",$0)
     printf ("%s", $0)
@@ -89,34 +107,43 @@ styles == 1 && st == 2 && /^@emph{/ {
     itemize=0
     $0=""
     st = 3
+    empty_line = 0
 }
 
-# if we encounter a fully empty string, then this means a forced \n
-st == 3 && /^ *$/ {
+# do not add any LF character for now
+st == 3 {
+  prev = ""
+}
+
+# If we encounter a fully empty string, then this means a forced \n
+# We do not insert the empty string if an previous one was already
+# inserted.
+st == 3 && example == 0 && empty_line == 0 && /^ *$/ {
+    $0=""
     prev="\n"
 }
 
 # replace the 'itemize' texi functions with a text list.
 st == 3 && /^@itemize/ {
     $0=""
-    prev="\n"
+    prev=""
     itemize=1
 }
 
-st == 3 && itemize == 1 {
-    sub (/@item/,"\n * ",$0)
+st == 3 && itemize == 1 && /^@item/ {
+    prev="\n"
+    sub (/@item/," * ",$0)
 }
 
 st == 3 && itemize == 1 && /^@end itemize/ {
     $0=""
-    print ("\n")
+    prev=""
     itemize=0
 }
 
 st == 3 && /^@smallexample/ {
     $0=""
-    prev=""
-    printf ("\n")
+    prev="\n"
     example=1
 }
 
@@ -127,6 +154,14 @@ st == 3 && /^@end smallexample/ {
 }
 
 # perform some filtering
+st == 3 && empty_line == 0 && prev == "" {
+    gsub (/ *This warning/, "\n\n&", $0)
+    gsub (/ *The default/, "\n\n&", $0)
+}
+st == 3 && (empty_line == 1 || prev != "") {
+    gsub (/ *This warning/, "\n&", $0)
+    gsub (/ *The default/, "\n&", $0)
+}
 st == 3 {
     # remove lines with @cindex foo bar
     gsub (/ *@cindex .*/, "", $0)
@@ -135,30 +170,35 @@ st == 3 {
     gsub (/>/, "\\&gt;", $0)
     gsub (/\"/, "'", $0)
     gsub (/@dots{}/,"..",$0)
-    # format "This warning blah blah" and "The default blah blah" with
-    # leading \n\n
-    gsub (/This warning/, "\n\n&", $0)
-    gsub (/The default/, "\n\n&", $0)
     # remove all @foo{}
     gsub (/@[^ {]*{/,"",$0)
     gsub (/}/,"",$0)
     gsub (/@ifclear [^ ]*/,"",$0)
     gsub (/@end [^ ]*/,"",$0)
     gsub (/@[^ ]*/,"",$0)
-    prev=""
+    gsub (/\n */,"\n",$0)
 }
 
 # if smallexample, print raw text
-st == 3 && example == 1 {
-    print
-    prev=""
-}
-
-# actually print the full comment
-st == 3 && example == 0 && $0!~"^ *$"{
-    # handle space duplications
+st == 3 && example == 0 {
     sub (/^ */," ",$0)
     sub (/ *$/,"",$0)
+}
+
+# actually print the filtered comment
+st == 3 && ($0!~"^ *$" || prev!="") {
     printf ("%s%s", prev, $0)
-    prev=""
+}
+
+#  in case an empty line has been inserted, save the information
+#  for further use
+st == 3 && $0~"^ *$" && prev!="" {
+    empty_line = 1
+}
+st == 3 && $0!~"^ *$" {
+    empty_line = 0
+}
+
+st == 3 && example == 1 {
+    printf ("\n")
 }

@@ -240,6 +240,10 @@ package body Custom_Module is
       function Check_Space_In_Switch (Switch : String) return Boolean;
       --  Return True if Switch contains a space
 
+      function Get_Tip_Value (N : Node_Ptr) return String;
+      --  Return the tip attribute if it exists, or the value of the tip
+      --  child, or an empty string.
+
       procedure Process_Title_Node      (N : Node_Ptr; Popup : Popup_Index);
       procedure Process_Check_Node      (N : Node_Ptr; Popup : Popup_Index);
       procedure Process_Spin_Node       (N : Node_Ptr; Popup : Popup_Index);
@@ -434,7 +438,7 @@ package body Custom_Module is
                      Label   => Label,
                      Switch  => Switch,
                      Section => Get_Attribute (N, "section"),
-                     Tip     => Get_Attribute (N, "tip"));
+                     Tip     => Get_Tip_Value (N));
                end;
             end if;
             N := N.Next;
@@ -575,7 +579,7 @@ package body Custom_Module is
             No_Digit  => Get_Attribute (N, "nodigit"),
             Entries   => Process_Combo_Entry_Nodes (N),
             Section   => Get_Attribute (N, "section"),
-            Tip       => Get_Attribute (N, "tip"),
+            Tip       => Get_Tip_Value (N),
             Line      => Line,
             Column    => Col,
             Popup     => Popup);
@@ -610,7 +614,7 @@ package body Custom_Module is
             Switch       => Switch,
             Separator    => Get_Attribute (N, "separator", Default_Sep),
             Section      => Get_Attribute (N, "section"),
-            Tip          => Get_Attribute (N, "tip"),
+            Tip          => Get_Tip_Value (N),
             As_Directory =>
               Get_Attribute (N, "as-directory", "false") = "true",
             As_File      => Get_Attribute (N, "as-file", "false") = "true",
@@ -647,7 +651,7 @@ package body Custom_Module is
             Label     => Label,
             Switch    => Switch,
             Section   => Get_Attribute (N, "section"),
-            Tip       => Get_Attribute (N, "tip"),
+            Tip       => Get_Tip_Value (N),
             Separator => Get_Attribute (N, "separator", Default_Sep),
             Min       => Safe_Value (Get_Attribute (N, "min", "1")),
             Max       => Safe_Value (Get_Attribute (N, "max", "1")),
@@ -689,7 +693,7 @@ package body Custom_Module is
                Label   => Label,
                Switch  => Switch,
                Section => Get_Attribute (N, "section"),
-               Tip     => Get_Attribute (N, "tip"),
+               Tip     => Get_Tip_Value (N),
                Line    => Line,
                Column  => Col,
                Popup   => Popup);
@@ -725,12 +729,34 @@ package body Custom_Module is
                Switch_Unset  => Switch_Unset,
                Default_State => Default_State,
                Section       => Get_Attribute (N, "section"),
-               Tip           => Get_Attribute (N, "tip"),
+               Tip           => Get_Tip_Value (N),
                Line          => Line,
                Column        => Col,
                Popup   => Popup);
          end if;
       end Process_Check_Node;
+
+      -------------------
+      -- Get_Tip_Value --
+      -------------------
+
+      function Get_Tip_Value (N : Node_Ptr) return String is
+         Tip_Attr : constant String := Get_Attribute (N, "tip");
+         C        : Node_Ptr;
+      begin
+         if Tip_Attr /= "" then
+            return Tip_Attr;
+         end if;
+
+         if N.Child /= null then
+            C := Find_Tag (N.Child, "tip");
+            if C /= null then
+               return C.Value.all;
+            end if;
+         end if;
+
+         return "";
+      end Get_Tip_Value;
 
       ----------------------------
       -- Process_Expansion_Node --

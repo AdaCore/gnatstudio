@@ -58,15 +58,19 @@ class gnatMakeProc:
             else:
                default="off"
             if switch[0] == "a" or switch[0] == ".e" or switch[0] == "s" or switch[0] == "e":
-               xml += '<check label="'+label ("-gnatw",switch)+'" switch="-gnatw'+switch[0]+'" tip="'+tip("-gnatw",switch)+'" line="1"/>'
+               xml += '<check label="'+label ("-gnatw",switch)+'" switch="-gnatw'+switch[0]+'" line="1">\n'
+               xml += '  <tip>'+tip("-gnatw",switch)+'</tip>\n'
+               xml += '</check>\n'
             else:
-               xml += '<check label="'+label ("-gnatw",switch)+'" switch="-gnatw'+switch[0]+'" switch-off="-gnatw'+switch[0].upper()+'" default="'+default+'" tip="'+tip ("-gnatw",switch)+'" line="2"/>'
+               xml += '<check label="'+label ("-gnatw",switch)+'" switch="-gnatw'+switch[0]+'" switch-off="-gnatw'+switch[0].upper()+'" default="'+default+'" line="2">'
+               xml += '  <tip>'+tip("-gnatw",switch)+'</tip>\n'
+               xml += '</check>\n'
                if switch[3]:
                   # activated by -gnatwa
-                  xml += '<default-value-dependency master-switch="-gnatwa" slave-switch="-gnatw'+switch[0]+'"/>'
+                  xml += '<default-value-dependency master-switch="-gnatwa" slave-switch="-gnatw'+switch[0]+'"/>\n'
                if re.search ("^turn on warning", switch[1]):
-                  xml += '<default-value-dependency master-switch="-gnatw.e" slave-switch="-gnatw'+switch[0]+'"/>'
-                  xml += '<default-value-dependency master-switch="-gnatws" slave-switch="-gnatw'+switch[0].upper()+'"/>'
+                  xml += '<default-value-dependency master-switch="-gnatw.e" slave-switch="-gnatw'+switch[0]+'"/>\n'
+                  xml += '<default-value-dependency master-switch="-gnatws" slave-switch="-gnatw'+switch[0].upper()+'"/>\n'
          xml += """
            <dependency master-page="Ada" slave-page="Ada"
                        master-switch="-gnatwa" master-status="on"
@@ -93,9 +97,13 @@ class gnatMakeProc:
          xml += """<popup label="Style checks" line="2" column="1" >"""
          for switch in self.style_checks_list:
             if switch[3]=="0":
-               xml += '<check label="'+label ("-gnaty", switch)+'" switch="-gnaty'+switch[0]+'" tip="'+tip("-gnaty",switch)+'" />'
+               xml += '<check label="'+label ("-gnaty", switch)+'" switch="-gnaty'+switch[0]+'">\n'
+               xml += '  <tip>'+tip("-gnaty",switch)+'</tip>\n'
+               xml += '</check>'
             else:
-               xml += '<spin label="'+label ("-gnaty", switch)+'" switch="-gnaty'+switch[0]+'" min="'+switch[2]+'" max="'+switch[3]+'" default="'+switch[4]+'" tip="'+tip("-gnaty",switch)+'" separator=""/>'
+               xml += '<spin label="'+label ("-gnaty", switch)+'" switch="-gnaty'+switch[0]+'" min="'+switch[2]+'" max="'+switch[3]+'" default="'+switch[4]+'" separator="">\n'
+               xml += '  <tip>'+tip("-gnaty",switch)+'</tip>\n'
+               xml += '</spin>'
          xml += '<expansion switch="-gnatyy" alias="-gnaty" />'
          xml += '<expansion switch="-gnatym" alias="-gnatyM79" />'
          xml += '<expansion switch="-gnaty" alias="'+self.style_alias+'" />'
@@ -103,9 +111,8 @@ class gnatMakeProc:
             <expansion switch="-gnaty" />
          </popup>
 """
-
-      xmlCompiler = xmlCompilerHead+xml+xmlCompilerTrailer
-      GPS.parse_xml ("""<?xml version="1.0" ?><GPS>"""+xmlCompiler+"</GPS>")
+         xmlCompiler = xmlCompilerHead+xml+xmlCompilerTrailer
+         GPS.parse_xml ("""<?xml version="1.0" ?><GPS>"""+xmlCompiler+"</GPS>")
 
    def add_switch (self, process, matched, unmatched):
       if unmatched == "\n":
@@ -166,11 +173,11 @@ class gnatMakeProc:
                  self.style_alias = "-gnaty3abcefhiklmnprst"
 
             # no parameters. Do not include -gnatyN (remove all checks), -gnatyg (GNAT checks) and -gnatym (alias of -gnatyM79)
-            elif res[2] == "" and res[1] != "N" and res[1] != "g" and res[1] != "m":
-               self.style_checks_list.append([res[1], res[3], "0", "0", "0"])
-
-            else:
-               self.style_checks_list.append([res[1], res[3], "0", "32768", "0"])
+            elif res[1] != "N" and res[1] != "g" and res[1] != "m":
+               if res[2] == "":
+                  self.style_checks_list.append([res[1], res[3], "0", "0", "0"])
+               else:
+                  self.style_checks_list.append([res[1], res[3], "0", "32768", "0"])
 
       self.msg += matched
 
