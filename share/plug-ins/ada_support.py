@@ -97,6 +97,7 @@ class gnatMakeProc:
             else:
                xml += '<spin label="'+label ("-gnaty", switch)+'" switch="-gnaty'+switch[0]+'" min="'+switch[2]+'" max="'+switch[3]+'" default="'+switch[4]+'" tip="'+tip("-gnaty",switch)+'" separator=""/>'
          xml += '<expansion switch="-gnatyy" alias="-gnaty" />'
+         xml += '<expansion switch="-gnatym" alias="-gnatyM79" />'
          xml += '<expansion switch="-gnaty" alias="'+self.style_alias+'" />'
          xml += """
             <expansion switch="-gnaty" />
@@ -164,7 +165,8 @@ class gnatMakeProc:
                else:
                  self.style_alias = "-gnaty3abcefhiklmnprst"
 
-            elif res[2] == "":
+            # no parameters. Do not include -gnatyN (remove all checks), -gnatyg (GNAT checks) and -gnatym (alias of -gnatyM79)
+            elif res[2] == "" and res[1] != "N" and res[1] != "g" and res[1] != "m":
                self.style_checks_list.append([res[1], res[3], "0", "0", "0"])
 
             else:
