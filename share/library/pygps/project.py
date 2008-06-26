@@ -26,7 +26,7 @@ try:
 
     pygps.open_menu ("/Project/Edit Project Properties", on_open,
                ["Project Properties Notebook"],
-               args, kwargs)
+               args, kwargs, 2000)
 
 except ImportError:
   pass
