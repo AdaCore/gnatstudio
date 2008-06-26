@@ -158,6 +158,11 @@ when the GPS window is fully visible to the user:
      <description>Hook called when a project is saved to disk. It is called for each project in the hierarchy</description>
   </shell_doc>
 
+  <shell_doc name="@hook@ project_editor">
+     <param name="hook">A string, the name of the hook</param>
+     <description>Hook called before the Project Editor is opened. This allows a custom module to perform specific actions before the actual creation of this dialog.</description>
+  </shell_doc>
+
   <shell_doc name="@hook@ context_changed">
      <param name="hook">A string, the name of the hook</param>
      <param name="context">An instance of GPS.Context</param>
