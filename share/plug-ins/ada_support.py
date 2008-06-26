@@ -316,39 +316,6 @@ xmlCompilerHead = """
                  tip="Override the compiler's default, and activate Ada 2005 language features" />
 """
 
-xmlCompilerValidity="""
-            <check label="Turn on all validity checking options" switch="-gnatVa" />
-            <check label="Checking for copies" switch="-gnatVc" switch-off="-gnatVC" default="off"
-                   tip="The right hand side of assignments, and the initializing values of object declarations are validity checked" />
-            <check label="Default Reference Manual Checking" switch="-gnatVd" switch-off="-gnatVD" default="off" />
-            <check label="Checking for elementary components" switch="-gnatVe" switch-off="-gnatVE" default="off" />
-            <check label="Checking for floating-point" switch="-gnatVf" switch-off="-gnatVF" default="off" />
-            <check label="Checking for 'in' parameters" switch="-gnatVi" switch-off="-gnatVI" default="off"
-                   tip="Arguments for parameters of mode in are validity checked in function and procedure calls at the point of call" />
-            <check label="Checking for 'in out' parameters" switch="-gnatVm" switch-off="-gnatVM" default="off"
-                   tip="Arguments for parameters of mode in out are validity checked in procedure calls at the point of call" />
-            <check label="Checking for operators and attributes" switch="-gnatVo" switch-off="-gnatVO" default="off"
-                   tip="Arguments for predefined operations and attributes are validity checked" />
-            <check label="Checking for returns" switch="-gnatVr" switch-off="-gnatVR" default="off"
-                   tip="The expression in return statements in functions is validity checked" />
-            <check label="Checking for subscripts" switch="-gnatVs" switch-off="-gnatVS" default="off"
-                   tip="All subscripts expressions are checked for validty" />
-            <check label="Checking for tests" switch="-gnatVt" switch-off="-gnatVT" default="off"
-                   tip="Expressions used as conditions in if, while or exit statements are checked, as well as guard expressions in entry calls" />
-            <expansion switch="-gnatV" />
-           <default-value-dependency master-switch="-gnatVa" slave-switch="-gnatVc"/>
-           <default-value-dependency master-switch="-gnatVa" slave-switch="-gnatVd"/>
-           <default-value-dependency master-switch="-gnatVa" slave-switch="-gnatVe"/>
-           <default-value-dependency master-switch="-gnatVa" slave-switch="-gnatVf"/>
-           <default-value-dependency master-switch="-gnatVa" slave-switch="-gnatVi"/>
-           <default-value-dependency master-switch="-gnatVa" slave-switch="-gnatVm"/>
-           <default-value-dependency master-switch="-gnatVa" slave-switch="-gnatVo"/>
-           <default-value-dependency master-switch="-gnatVa" slave-switch="-gnatVr"/>
-           <default-value-dependency master-switch="-gnatVa" slave-switch="-gnatVs"/>
-           <default-value-dependency master-switch="-gnatVa" slave-switch="-gnatVt"/>
-         </popup>
-"""
-
 xmlCompilerTrailer="""
       </switches>
    </tool>
