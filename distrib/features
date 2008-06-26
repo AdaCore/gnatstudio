@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Jun 20, 2008
+GPS 4.3 NEW FEATURES LIST Current as of Jun 26, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -14,6 +14,13 @@ of the feature.
 
 New features in GPS 4.3.0
 -------------------------
+
+NF-43-H612-027 Edit menu reorganized (2008-06-13)
+
+  The Edit menu has been reorganized to give access to the most common and
+  useful action more easily. Note that some menus have been moved, which
+  means that if you had custom key bindings associated with these menus,
+  you will need to recreate the key binding with the new menu name.
 
 NF-43-H612-011 Major speed improvement in unused entities (2008-06-20)
 
