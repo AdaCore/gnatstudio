@@ -102,6 +102,9 @@ styles == 1 && /@item / {
 (validity == 1 || styles == 1) && st == 2 && /^@emph{/ {
     sub (/@emph{/, "         \"\"\"",$0)
     sub (/}$/, "\"\"\", \n         \"\"\"",$0)
+    # remove any @code{sth} or other texi commands from the short description.
+    sub (/@[^{]*{/,"",$0)
+    sub (/}/,"",$0)
     printf ("%s", $0)
     prev=""
     itemize=0

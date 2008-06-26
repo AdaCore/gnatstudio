@@ -14,9 +14,9 @@ gnatmakeproc = None
 
 def label (prefix, switch):
    if gnat_switches.switches_comments.has_key (prefix+switch[0]):
-      return re.sub ("^Activate warnings (on|for) ", "", gnat_switches.switches_comments[prefix+switch[0]][0].strip())
+      return re.sub ("^(Activate warnings|Validity checks) (on|for) ", "", gnat_switches.switches_comments[prefix+switch[0]][0].strip())
    else:
-      return re.sub ("^turn on warnings (on|for) ", "", switch[1].strip())
+      return re.sub ("^turn on (checking|warnings) (on|for) ", "", switch[1].strip())
 
 def tip (prefix, switch):
    if gnat_switches.switches_comments.has_key (prefix+switch[0]):
@@ -28,6 +28,7 @@ class gnatMakeProc:
    """This class controls the gnatmake execution"""
    def __init__ (self):
       self.warnings_list = []
+      self.validity_checks_list = []
       self.style_checks_list = []
       self.gnatCmd = ""
 
@@ -48,9 +49,10 @@ class gnatMakeProc:
       # gnat check command changed: we reinitialize the rules list
       if prev_cmd != self.gnatCmd:
          self.get_switches()
-         xml = """<popup label="Warnings" line="2" column="1" lines="2" columns="1">"""
-         xml += """<title line="1" column="1">Global switches</title>"""
-         xml += """<title line="2" column="1">Warnings</title>"""
+         xml = """<popup label="Warnings" line="2" column="1" lines="2" columns="1">
+                    <title line="1" column="1">Global switches</title>
+                    <title line="2" column="1">Warnings</title>
+"""
          for switch in self.warnings_list:
             if switch[2]:
                # active by default
@@ -92,9 +94,39 @@ class gnatMakeProc:
                        slave-switch="-gnatw.e" slave-status="off" />
            <expansion switch="-gnatw" />
          </popup>
+         <popup label="Validity checking mode" line="2" column="1" lines="2" columns="1" >
+           <title line="1" column="1">Global switches</title>
+           <title line="2" column="1">Checks</title>
 """
-         xml += xmlCompilerValidity
-         xml += """<popup label="Style checks" line="2" column="1" >"""
+         for switch in self.validity_checks_list:
+            if switch[2]:
+               # active by default
+               default="on"
+            else:
+               default="off"
+            if switch[0] == "a" or switch[0] == "n":
+               xml += '<check label="'+label ("-gnatV",switch)+'" switch="-gnatV'+switch[0]+'" line="1">\n'
+               xml += '  <tip>'+tip("-gnatV",switch)+'</tip>\n'
+               xml += '</check>\n'
+            else:
+               xml += '<check label="'+label ("-gnatV",switch)+'" switch="-gnatV'+switch[0]+'" switch-off="-gnatV'+switch[0].upper()+'" default="'+default+'" line = "2">'
+               xml += '  <tip>'+tip("-gnatV",switch)+'</tip>\n'
+               xml += '</check>\n'
+               if switch[3]:
+                  # activated by -gnatVa
+                  xml += '<default-value-dependency master-switch="-gnatVa" slave-switch="-gnatV'+switch[0]+'"/>\n'
+               xml += '<default-value-dependency master-switch="-gnatVn" slave-switch="-gnatV'+switch[0].upper()+'"/>\n'
+         xml += """
+           <dependency master-page="Ada" slave-page="Ada"
+                       master-switch="-gnatVa" master-status="on"
+                       slave-switch="-gnatVn" slave-status="off" />
+           <dependency master-page="Ada" slave-page="Ada"
+                       master-switch="-gnatVn" master-status="on"
+                       slave-switch="-gnatVa" slave-status="off" />
+           <expansion switch="-gnatV" />
+         </popup>
+         <popup label="Style checks" line="2" column="1" >
+"""
          for switch in self.style_checks_list:
             if switch[3]=="0":
                xml += '<check label="'+label ("-gnaty", switch)+'" switch="-gnaty'+switch[0]+'">\n'
@@ -120,12 +152,16 @@ class gnatMakeProc:
         self.msg = ""
         if re.search ("^ +[-]gnatwxx", line):
           self.warnings_analysis = True
+        elif re.search ("^ +[-]gnatVxx", line):
+          self.validity_checks_analysis = True
         elif re.search ("^ +[-]gnatyxx", line):
           self.style_checks_analysis = True
         elif re.search ("^ +[-]gnat", line):
           self.warnings_analysis = False
+          self.validity_checks_analysis = False
         elif self.style_checks_analysis and re.search ("^ *[-]", line):
           self.style_checks_analysis = False
+
         elif self.warnings_analysis:
           res = re.split ("^ *([^ *]+)([*]?) +(.+) *$", line)
           if len (res) > 2:
@@ -158,6 +194,14 @@ class gnatMakeProc:
               # remove the 'turn on' in the description
               self.warnings_list.append ([res[1], res[3], res[2] == "*", is_alias_part])
 
+        elif self.validity_checks_analysis:
+          res = re.split ("^ *([^ *]+) +(.+) *$", line)
+          if len (res) > 2:
+            if res[1] == "a" or res[1] == "n":
+              self.validity_checks_list.append ([res[1], res[2], False, False])
+            elif res[1].lower() == res[1]:
+              self.validity_checks_list.append ([res[1], res[2], res[1] == "d", res[1] != "d"])
+
         elif self.style_checks_analysis:
           res = re.split ("^ *(1[-]9|.)(n*) +(.+) *$", line)
           if len (res) > 2:
@@ -184,9 +228,11 @@ class gnatMakeProc:
    def get_switches (self):
       # Verify we have the correct gnatcheck executable
       self.warnings_list = []
+      self.validity_checks_list = []
       self.style_checks_list = []
       self.all_warnings_exception_list = []
       self.warnings_analysis = False
+      self.validity_checks_analysis = False
       self.style_checks_analysis = False
 
       if self.gnatCmd != "":
@@ -271,7 +317,6 @@ xmlCompilerHead = """
 """
 
 xmlCompilerValidity="""
-          <popup label="Validity checking mode" line="2" column="1" >
             <check label="Turn on all validity checking options" switch="-gnatVa" />
             <check label="Checking for copies" switch="-gnatVc" switch-off="-gnatVC" default="off"
                    tip="The right hand side of assignments, and the initializing values of object declarations are validity checked" />
