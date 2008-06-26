@@ -13616,6 +13616,11 @@ selected. Depending on its type, a variant of the text might be put instead,
 see the description of @code{combo} and @code{spin} below.
 This switch shouldn't contain any space.
 
+@item switch-off (default value is empty)
+This attribute is used for @code{<check>} tags, and indicates the switch
+used for deactivating the concerned feature. This is useful for features that
+are on by default on certain occasions, but can be individually deactivated.
+
 @item section (default value is empty)
 This is the switch section delimiter (such as "-cargs"). See the 'sections'
 attribute of the tag 'switches' for more information.
@@ -13623,7 +13628,9 @@ attribute of the tag 'switches' for more information.
 @item tip (default value is empty)
 This is the tooltip which describes that switch more extensively. It is
 displayed in a small popup window if the user leaves the mouse on top of
-the widget.
+the widget. Note that tags accepting the tip attribute also accept a single
+child @code{<tip>} whose value will contain the text to be displayed. The
+advantage of the latter is that the text formatting is then kept.
 
 @item min (default value is 1)
 This attribute is used for @code{<spin>} tags, and indicates the minimum
@@ -13634,7 +13641,8 @@ This attribute is used for @code{<spin>} tags, and indicates the maximum
 value authorized for that switch.
 
 @item default (default value is 1)
-This attribute is used for @code{<spin>} tags. See the description below.
+This attribute is used for @code{<check>} and @code{<spin>} tags. See the
+description below.
 
 @item noswitch (default is empty)
 This attribute is only valid for @code{<combo>} tags, and described below.
@@ -13678,15 +13686,23 @@ switches editor.
 @item <check>
 @cindex <check>
 This tag accepts the @code{line}, @code{column}, @code{label}, @code{switch},
-@code{section} and @code{tip} attributes. It creates a toggle button. When
-the latter is active, the text defined in the switch attribute is added as is
-to the command line. This tag doesn't have any value or child tags.
+@code{switch-off}, @code{section}, @code{default} and @code{tip} attributes.
+
+This tag doesn't have any value. An optional @code{<tip>} child can be present.
+
+It creates a toggle button. When the latter is active, the text defined in the
+switch attribute is added as is to the command line. The switch can be also
+activated by default (@code{default} attribute is "on" or "true"). In this
+case, deactivating the switch will add @code{switch-off} to the command line.
 
 @item <spin>
 @cindex <spin>
 This tag accepts the @code{line}, @code{column}, @code{label}, @code{switch},
 @code{section}, @code{tip}, @code{min}, @code{max}, @code{separator} and
 @code{default} attributes.
+
+This tag doesn't have any value. An optional @code{<tip>} child can be present.
+
 This switch will add the contents of the @code{switch} attribute followed by
 the current numeric value of the widget to the command line. This is typically
 used to indicate indentation length for instance.
@@ -13705,11 +13721,17 @@ attributes @code{label}, @code{switch}, @code{section} and @code{tip}. As a
 special case, the switch attribute can have an empty value ("") to indicate
 this is the default switch to use in this group of radio buttons.
 
+This tag doesn't have any value. An optional @code{<tip>} child can also be
+present.
+
 @item <field>
 @cindex <field>
 This tag accepts the @code{line}, @code{column}, @code{label}, @code{switch},
-@code{section}, @code{separator} and @code{tip} attributes. This tag describes
-a text edition field, which can
+@code{section}, @code{separator} and @code{tip} attributes.
+
+This tag doesn't have any value. An optional @code{<tip>} child can be present.
+
+This tag describes a text edition field, which can
 contain any text the user types. This text will be prefixed by the value of
 the @code{switch} attribute, and the separator (by default nothing). If no text
 is entered in the field
@@ -13733,9 +13755,13 @@ This tag accepts two extra attributes:
 @item <combo>
 @cindex <combo>
 @cindex <combo-entry>
-This tags accepts the @code{line}, @code{column}, @code{label}, @code{switch},
+This tag accepts the @code{line}, @code{column}, @code{label}, @code{switch},
 @code{section}, @code{tip}, @code{noswitch}, @code{separator} and
 @code{nodigit} attributes.
+
+The tag @code{<combo>} accepts any number of @code{combo-entry} children tags,
+each of which accepts the @code{label} and @code{value} attribute. An optional
+@code{<tip>} child can also be present.
 
 The text inserted in the command line is the text from the @code{switch}
 attribute, concatenated with the text of the @code{value} attribute for the
@@ -13746,9 +13772,6 @@ to interpret the gcc switch "-O" as "-O1".
 
 If the value of the current entry is that of the @code{noswitch} attribute,
 then nothing is put in the command line.
-
-The tag @code{<combo>} accepts any number of @code{combo-entry} children tags,
-each of which accepts the @code{label} and @code{value} attribute.
 
 @item <popup>
 @cindex <popup>
@@ -13796,6 +13819,29 @@ It has its own set of attributes:
    status of the slave will be changed when no value is set in the field.
    @end table
 
+@item <default-value-dependency>
+@cindex <default-value-dependency>
+This tag is used to describe a relationship between two switches. It is
+slightly different from the <dependency> tag in that the relationship concerns
+only the default activation states. It is used for instance when the "-gnatwa"
+switch is selected for the "Ada" Compiler, which imply that the default values
+for "-gnatwc", "-gnatwd", etc. become activated by default. They can however
+still be deactivated with respectively "-gnatwC" and "-gnatwD".
+
+It has its own set of attributes:
+   @table @code
+   @item master-switch
+   This is the switch that triggers the dependency. If @code{master-switch} is
+   present in the command line, then the switch's default status of
+   @code{slave-switch} is modified accordingly.
+
+   @item slave-switch
+   This is the switch whose default value depends on @code{master-switch}. This
+   needs to be a switch already defined in a @code{<switch>} tag. It can match
+   its 'switch' or 'switch-off' attributes. In the latter case, the
+   slave-switch default value is deactivated if master-switch is present.
+   @end table
+
 @item <expansion>
 @cindex <expansion>
 @cindex <entry>
@@ -13804,7 +13850,7 @@ command line to keep it shorter. It is also used to define aliases between
 switches.
 
 It is easier to explain it through an example. Specifying the GNAT switch
-"-gnaty" is equivalent to specifying "-gnatyabcefhiklmnprst". This is in
+"-gnatyy" is equivalent to specifying "-gnaty3abcefhiklmnprst". This is in
 fact a style check switch, with a number of default values. But it is also
 equivalent to decomposing it into several switches, as in "-gnatya",
 "-gnatyb", @dots{}; With this information, GPS will try to keep the
@@ -13819,12 +13865,12 @@ There are two possible uses for this tag:
 @item If the "alias" attribute is not specified, then the "switch" attribute
 indicates that all switches starting with that prefix should be grouped.
 For instance, if you pass "-gnatw" as the value for the "switch" attribute,
-then a command line with "-gnatwa -gnatwb" will in fact result in "-gnatwab".
+then a command line with "-gnatwa -gnatw.b" will in fact result in "-gnatwa.b".
 
 @item If the "alias" attribute is specified, then the "switch" attribute is
 considered as a shorter way of writting "alias". For instance, if "switch"
-is "-gnaty" and "alias" is "-gnatyabcefhiklmnprst", then the user can simply
-type "-gnaty" to mean the whole set of options.
+is "-gnatyy" and "alias" is "-gnaty3abcefhiklmnprst", then the user can simply
+type "-gnatyy" to mean the whole set of options.
 @end itemize
 
 The same "switch" attribute can be used in two expansion nodes if you want
