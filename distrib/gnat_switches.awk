@@ -80,7 +80,7 @@ st == 0 && /^@node Style Checking/ {
     printf("\"\"\"],\n")
 }
 
-(validity == 1 || styles == 1) && /\^[^^]*\^[^^]*\^/ {
+(validity == 1 || styles == 1 || warnings == 1) && /\^[^^]*\^[^^]*\^/ {
     sub (/[\^]/,"",$0)
     sub (/\^[^^]*\^/,"", $0)
 }

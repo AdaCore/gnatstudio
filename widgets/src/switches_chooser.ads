@@ -91,14 +91,15 @@ package Switches_Chooser is
    --  more of its neighbors through the *_Span parameters.
 
    procedure Add_Check
-     (Config  : Switches_Editor_Config;
-      Label   : String;
-      Switch  : String;
-      Section : String := "";
-      Tip     : String := "";
-      Line    : Positive := 1;
-      Column  : Positive := 1;
-      Popup   : Popup_Index := Main_Window);
+     (Config     : Switches_Editor_Config;
+      Label      : String;
+      Switch     : String;
+      Section    : String := "";
+      Tip        : String := "";
+      Line       : Positive := 1;
+      Column     : Positive := 1;
+      Add_Before : Boolean := False;
+      Popup      : Popup_Index := Main_Window);
    --  Adds a check button in a specific area of the editor.
    --  When the button is active, the corresponding command line switch is
    --  present, otherwise it is omitted.
@@ -113,6 +114,7 @@ package Switches_Chooser is
       Tip           : String := "";
       Line          : Positive := 1;
       Column        : Positive := 1;
+      Add_Before    : Boolean := False;
       Popup         : Popup_Index := Main_Window);
    --  Adds a check button in a specific area of the editor.
    --  When the button is different from its default state, then the switch
@@ -130,22 +132,24 @@ package Switches_Chooser is
       As_File      : Boolean := False;
       Line         : Positive := 1;
       Column       : Positive := 1;
+      Add_Before   : Boolean := False;
       Popup        : Popup_Index := Main_Window);
    --  Add a text field
 
    procedure Add_Spin
-     (Config    : Switches_Editor_Config;
-      Label     : String;
-      Switch    : String;
-      Separator : String := ""; --  no separator
-      Min       : Integer;
-      Max       : Integer;
-      Default   : Integer;
-      Section   : String := "";
-      Tip       : String := "";
-      Line      : Positive := 1;
-      Column    : Positive := 1;
-      Popup     : Popup_Index := Main_Window);
+     (Config     : Switches_Editor_Config;
+      Label      : String;
+      Switch     : String;
+      Separator  : String := ""; --  no separator
+      Min        : Integer;
+      Max        : Integer;
+      Default    : Integer;
+      Section    : String := "";
+      Tip        : String := "";
+      Line       : Positive := 1;
+      Column     : Positive := 1;
+      Add_Before : Boolean := False;
+      Popup      : Popup_Index := Main_Window);
    --  Add a switch that takes a numeric argument
 
    type Radio_Switch is private;
@@ -155,12 +159,13 @@ package Switches_Chooser is
       Column    : Positive := 1;
       Popup     : Popup_Index := Main_Window) return Radio_Switch;
    procedure Add_Radio_Entry
-     (Config    : Switches_Editor_Config;
-      Radio     : Radio_Switch;
-      Label     : String;
-      Switch    : String;
-      Section   : String := "";
-      Tip       : String := "");
+     (Config     : Switches_Editor_Config;
+      Radio      : Radio_Switch;
+      Label      : String;
+      Switch     : String;
+      Section    : String := "";
+      Tip        : String := "";
+      Add_Before : Boolean := False);
    --  Create a radio button: only one of these switches is active at any time.
    --  A radio_entry is in all ways similar to a check button.
 
@@ -171,18 +176,19 @@ package Switches_Chooser is
    type Combo_Switch_Array is array (Positive range <>) of Combo_Switch;
 
    procedure Add_Combo
-     (Config    : Switches_Editor_Config;
-      Label     : String;
-      Switch    : String;
-      Separator : String := ""; --  no separator
-      No_Switch : String;
-      No_Digit  : String;
-      Entries   : Combo_Switch_Array;
-      Section   : String := "";
-      Tip       : String := "";
-      Line      : Positive := 1;
-      Column    : Positive := 1;
-      Popup  : Popup_Index := Main_Window);
+     (Config     : Switches_Editor_Config;
+      Label      : String;
+      Switch     : String;
+      Separator  : String := ""; --  no separator
+      No_Switch  : String;
+      No_Digit   : String;
+      Entries    : Combo_Switch_Array;
+      Section    : String := "";
+      Tip        : String := "";
+      Line       : Positive := 1;
+      Column     : Positive := 1;
+      Add_Before : Boolean := False;
+      Popup      : Popup_Index := Main_Window);
    --  Add a combo box.
    --  When selected, the switch inserted in the command line will be
    --  Switch & Separator & <value of current entry>
@@ -389,6 +395,7 @@ private
       Label     : Ada.Strings.Unbounded.Unbounded_String;
       Tip       : Ada.Strings.Unbounded.Unbounded_String;
       Section   : Ada.Strings.Unbounded.Unbounded_String;
+      Add_First : Boolean;
       Line      : Positive := 1;
       Column    : Positive := 1;
       Separator : Character;

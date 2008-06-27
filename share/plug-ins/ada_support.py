@@ -60,7 +60,7 @@ class gnatMakeProc:
             else:
                default="off"
             if switch[0] == "a" or switch[0] == ".e" or switch[0] == "s" or switch[0] == "e":
-               xml += '<check label="'+label ("-gnatw",switch)+'" switch="-gnatw'+switch[0]+'" line="1">\n'
+               xml += '<check label="'+label ("-gnatw",switch)+'" switch="-gnatw'+switch[0]+'" line="1" before="true">\n'
                xml += '  <tip>'+tip("-gnatw",switch)+'</tip>\n'
                xml += '</check>\n'
             else:
@@ -105,7 +105,7 @@ class gnatMakeProc:
             else:
                default="off"
             if switch[0] == "a" or switch[0] == "n":
-               xml += '<check label="'+label ("-gnatV",switch)+'" switch="-gnatV'+switch[0]+'" line="1">\n'
+               xml += '<check label="'+label ("-gnatV",switch)+'" switch="-gnatV'+switch[0]+'" line="1" before="true">\n'
                xml += '  <tip>'+tip("-gnatV",switch)+'</tip>\n'
                xml += '</check>\n'
             else:
@@ -117,6 +117,9 @@ class gnatMakeProc:
                   xml += '<default-value-dependency master-switch="-gnatVa" slave-switch="-gnatV'+switch[0]+'"/>\n'
                xml += '<default-value-dependency master-switch="-gnatVn" slave-switch="-gnatV'+switch[0].upper()+'"/>\n'
          xml += """
+           <dependency master-page="Ada" slave-page="Ada"
+                       master-switch="-gnatp" master-status="on"
+                       slave-switch="-gnatVn" slave-status="on" />
            <dependency master-page="Ada" slave-page="Ada"
                        master-switch="-gnatVa" master-status="on"
                        slave-switch="-gnatVn" slave-status="off" />
@@ -133,7 +136,13 @@ class gnatMakeProc:
                xml += '  <tip>'+tip("-gnaty",switch)+'</tip>\n'
                xml += '</check>'
             else:
-               xml += '<spin label="'+label ("-gnaty", switch)+'" switch="-gnaty'+switch[0]+'" min="'+switch[2]+'" max="'+switch[3]+'" default="'+switch[4]+'" separator="">\n'
+               # place gnaty1-9 to the begining of the command_line: prevents
+               # "-gnatyM793" being generated for "-gnatyM79 -gnaty3"
+               if switch[0] == "":
+                 before='before="true"'
+               else:
+                 before=""
+               xml += '<spin label="'+label ("-gnaty", switch)+'" switch="-gnaty'+switch[0]+'" min="'+switch[2]+'" max="'+switch[3]+'" default="'+switch[4]+'" separator="" '+before+'>\n'
                xml += '  <tip>'+tip("-gnaty",switch)+'</tip>\n'
                xml += '</spin>'
          xml += '<expansion switch="-gnatyy" alias="-gnaty" />'

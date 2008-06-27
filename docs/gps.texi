@@ -13632,6 +13632,10 @@ the widget. Note that tags accepting the tip attribute also accept a single
 child @code{<tip>} whose value will contain the text to be displayed. The
 advantage of the latter is that the text formatting is then kept.
 
+@item before (default value is "false")
+This attribute is used to indicate that a switch needs to be always inserted
+at the begining of the command line.
+
 @item min (default value is 1)
 This attribute is used for @code{<spin>} tags, and indicates the minimum
 value authorized for that switch.
@@ -13686,7 +13690,8 @@ switches editor.
 @item <check>
 @cindex <check>
 This tag accepts the @code{line}, @code{column}, @code{label}, @code{switch},
-@code{switch-off}, @code{section}, @code{default} and @code{tip} attributes.
+@code{switch-off}, @code{section}, @code{default}, @code{before} and @code{tip}
+attributes.
 
 This tag doesn't have any value. An optional @code{<tip>} child can be present.
 
@@ -13717,9 +13722,10 @@ number of children, each of which is associated with its own switch. However,
 only one of the children can be selected at any given time.
 
 The children must have the tag @code{radio-entry}. This tag accepts the
-attributes @code{label}, @code{switch}, @code{section} and @code{tip}. As a
-special case, the switch attribute can have an empty value ("") to indicate
-this is the default switch to use in this group of radio buttons.
+attributes @code{label}, @code{switch}, @code{section}, @code{before} and
+@code{tip}. As a special case, the switch attribute can have an empty value
+("") to indicate this is the default switch to use in this group of radio
+buttons.
 
 This tag doesn't have any value. An optional @code{<tip>} child can also be
 present.
@@ -13727,7 +13733,7 @@ present.
 @item <field>
 @cindex <field>
 This tag accepts the @code{line}, @code{column}, @code{label}, @code{switch},
-@code{section}, @code{separator} and @code{tip} attributes.
+@code{section}, @code{separator}, @code{before} and @code{tip} attributes.
 
 This tag doesn't have any value. An optional @code{<tip>} child can be present.
 
@@ -13756,8 +13762,8 @@ This tag accepts two extra attributes:
 @cindex <combo>
 @cindex <combo-entry>
 This tag accepts the @code{line}, @code{column}, @code{label}, @code{switch},
-@code{section}, @code{tip}, @code{noswitch}, @code{separator} and
-@code{nodigit} attributes.
+@code{section}, @code{before}, @code{tip}, @code{noswitch}, @code{separator}
+and @code{nodigit} attributes.
 
 The tag @code{<combo>} accepts any number of @code{combo-entry} children tags,
 each of which accepts the @code{label} and @code{value} attribute. An optional

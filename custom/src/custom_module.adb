@@ -433,12 +433,13 @@ package body Custom_Module is
                   end if;
 
                   Add_Radio_Entry
-                    (Config  => Current_Tool.Config,
-                     Radio   => Radio,
-                     Label   => Label,
-                     Switch  => Switch,
-                     Section => Get_Attribute (N, "section"),
-                     Tip     => Get_Tip_Value (N));
+                    (Config     => Current_Tool.Config,
+                     Radio      => Radio,
+                     Label      => Label,
+                     Switch     => Switch,
+                     Section    => Get_Attribute (N, "section"),
+                     Tip        => Get_Tip_Value (N),
+                     Add_Before => Get_Attribute (N, "before") = "true");
                end;
             end if;
             N := N.Next;
@@ -582,6 +583,7 @@ package body Custom_Module is
             Tip       => Get_Tip_Value (N),
             Line      => Line,
             Column    => Col,
+            Add_Before => Get_Attribute (N, "before") = "true",
             Popup     => Popup);
       end Process_Combo_Node;
 
@@ -620,6 +622,7 @@ package body Custom_Module is
             As_File      => Get_Attribute (N, "as-file", "false") = "true",
             Line         => Line,
             Column       => Col,
+            Add_Before   => Get_Attribute (N, "before") = "true",
             Popup        => Popup);
       end Process_Field_Node;
 
@@ -647,18 +650,19 @@ package body Custom_Module is
          end if;
 
          Add_Spin
-           (Config    => Current_Tool.Config,
-            Label     => Label,
-            Switch    => Switch,
-            Section   => Get_Attribute (N, "section"),
-            Tip       => Get_Tip_Value (N),
-            Separator => Get_Attribute (N, "separator", Default_Sep),
-            Min       => Safe_Value (Get_Attribute (N, "min", "1")),
-            Max       => Safe_Value (Get_Attribute (N, "max", "1")),
-            Default   => Safe_Value (Get_Attribute (N, "default", "1")),
-            Line      => Line,
-            Column    => Col,
-            Popup     => Popup);
+           (Config     => Current_Tool.Config,
+            Label      => Label,
+            Switch     => Switch,
+            Section    => Get_Attribute (N, "section"),
+            Tip        => Get_Tip_Value (N),
+            Separator  => Get_Attribute (N, "separator", Default_Sep),
+            Min        => Safe_Value (Get_Attribute (N, "min", "1")),
+            Max        => Safe_Value (Get_Attribute (N, "max", "1")),
+            Default    => Safe_Value (Get_Attribute (N, "default", "1")),
+            Line       => Line,
+            Column     => Col,
+            Add_Before => Get_Attribute (N, "before") = "true",
+            Popup      => Popup);
       end Process_Spin_Node;
 
       ------------------------
@@ -689,14 +693,15 @@ package body Custom_Module is
 
          if Switch_Unset = "" then
             Add_Check
-              (Config  => Current_Tool.Config,
-               Label   => Label,
-               Switch  => Switch,
-               Section => Get_Attribute (N, "section"),
-               Tip     => Get_Tip_Value (N),
-               Line    => Line,
-               Column  => Col,
-               Popup   => Popup);
+              (Config     => Current_Tool.Config,
+               Label      => Label,
+               Switch     => Switch,
+               Section    => Get_Attribute (N, "section"),
+               Tip        => Get_Tip_Value (N),
+               Line       => Line,
+               Column     => Col,
+               Add_Before => Get_Attribute (N, "before") = "true",
+               Popup      => Popup);
          else
             declare
                Default : constant String :=
@@ -732,7 +737,8 @@ package body Custom_Module is
                Tip           => Get_Tip_Value (N),
                Line          => Line,
                Column        => Col,
-               Popup   => Popup);
+               Add_Before    => Get_Attribute (N, "before") = "true",
+               Popup         => Popup);
          end if;
       end Process_Check_Node;
 

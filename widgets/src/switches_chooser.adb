@@ -180,32 +180,34 @@ package body Switches_Chooser is
    ---------------
 
    procedure Add_Check
-     (Config  : Switches_Editor_Config;
-      Label   : String;
-      Switch  : String;
-      Section : String := "";
-      Tip     : String := "";
-      Line    : Positive := 1;
-      Column  : Positive := 1;
-      Popup   : Popup_Index := Main_Window)
+     (Config     : Switches_Editor_Config;
+      Label      : String;
+      Switch     : String;
+      Section    : String := "";
+      Tip        : String := "";
+      Line       : Positive := 1;
+      Column     : Positive := 1;
+      Add_Before : Boolean := False;
+      Popup      : Popup_Index := Main_Window)
    is
    begin
       Append
         (Config.Switches,
          Switch_Description'
-           (Typ           => Switch_Check,
-            Switch        => To_Unbounded_String (Switch),
-            Switch_Unset  => Null_Unbounded_String,
-            Default_State => False,
-            Initial_State => False,
-            Dependencies  => null,
-            Label         => To_Unbounded_String (Label),
-            Tip           => To_Unbounded_String (Tip),
-            Section       => To_Unbounded_String (Section),
-            Separator     => ASCII.NUL,
-            Popup         => Popup,
-            Line          => Line,
-            Column        => Column));
+          (Typ           => Switch_Check,
+           Switch        => To_Unbounded_String (Switch),
+           Switch_Unset  => Null_Unbounded_String,
+           Default_State => False,
+           Initial_State => False,
+           Dependencies  => null,
+           Label         => To_Unbounded_String (Label),
+           Tip           => To_Unbounded_String (Tip),
+           Section       => To_Unbounded_String (Section),
+           Separator     => ASCII.NUL,
+           Popup         => Popup,
+           Line          => Line,
+           Column        => Column,
+           Add_First     => Add_Before));
       Add_To_Getopt (Config, Switch, ASCII.LF);
    end Add_Check;
 
@@ -223,6 +225,7 @@ package body Switches_Chooser is
       Tip           : String := "";
       Line          : Positive := 1;
       Column        : Positive := 1;
+      Add_Before    : Boolean := False;
       Popup         : Popup_Index := Main_Window)
    is
    begin
@@ -241,7 +244,8 @@ package body Switches_Chooser is
             Separator     => ASCII.NUL,
             Popup         => Popup,
             Line          => Line,
-            Column        => Column));
+            Column        => Column,
+            Add_First     => Add_Before));
       Add_To_Getopt (Config, Switch_Set, ASCII.LF);
       Add_To_Getopt (Config, Switch_Unset, ASCII.LF);
    end Add_Check;
@@ -261,6 +265,7 @@ package body Switches_Chooser is
       As_File      : Boolean := False;
       Line         : Positive := 1;
       Column       : Positive := 1;
+      Add_Before   : Boolean := False;
       Popup        : Popup_Index := Main_Window)
    is
       Sep : Character := ASCII.NUL;
@@ -272,17 +277,18 @@ package body Switches_Chooser is
       Append
         (Config.Switches,
          Switch_Description'
-           (Typ => Switch_Field,
-            Switch  => To_Unbounded_String (Switch),
-            Label   => To_Unbounded_String (Label),
-            Tip     => To_Unbounded_String (Tip),
-            Section => To_Unbounded_String (Section),
-            Separator => Sep,
+           (Typ          => Switch_Field,
+            Switch       => To_Unbounded_String (Switch),
+            Label        => To_Unbounded_String (Label),
+            Tip          => To_Unbounded_String (Tip),
+            Section      => To_Unbounded_String (Section),
+            Separator    => Sep,
             As_Directory => As_Directory,
             As_File      => As_File,
-            Line   => Line,
-            Column => Column,
-            Popup  => Popup));
+            Line         => Line,
+            Column       => Column,
+            Add_First    => Add_Before,
+            Popup        => Popup));
       Add_To_Getopt (Config, Switch, Sep);
    end Add_Field;
 
@@ -291,18 +297,19 @@ package body Switches_Chooser is
    --------------
 
    procedure Add_Spin
-     (Config    : Switches_Editor_Config;
-      Label     : String;
-      Switch    : String;
-      Separator : String := ""; --  no separator
-      Min       : Integer;
-      Max       : Integer;
-      Default   : Integer;
-      Section   : String := "";
-      Tip       : String := "";
-      Line      : Positive := 1;
-      Column    : Positive := 1;
-      Popup     : Popup_Index := Main_Window)
+     (Config     : Switches_Editor_Config;
+      Label      : String;
+      Switch     : String;
+      Separator  : String := ""; --  no separator
+      Min        : Integer;
+      Max        : Integer;
+      Default    : Integer;
+      Section    : String := "";
+      Tip        : String := "";
+      Line       : Positive := 1;
+      Column     : Positive := 1;
+      Add_Before : Boolean := False;
+      Popup      : Popup_Index := Main_Window)
    is
       Sep : Character := ASCII.NUL;
    begin
@@ -323,6 +330,7 @@ package body Switches_Chooser is
             Default   => Default,
             Line      => Line,
             Column    => Column,
+            Add_First => Add_Before,
             Popup     => Popup));
       Add_To_Getopt (Config, Switch, Sep);
    end Add_Spin;
@@ -332,18 +340,19 @@ package body Switches_Chooser is
    ---------------
 
    procedure Add_Combo
-     (Config    : Switches_Editor_Config;
-      Label     : String;
-      Switch    : String;
-      Separator : String := ""; --  no separator
-      No_Switch : String;
-      No_Digit  : String;
-      Entries   : Combo_Switch_Array;
-      Section   : String := "";
-      Tip       : String := "";
-      Line      : Positive := 1;
-      Column    : Positive := 1;
-      Popup     : Popup_Index := Main_Window)
+     (Config     : Switches_Editor_Config;
+      Label      : String;
+      Switch     : String;
+      Separator  : String := ""; --  no separator
+      No_Switch  : String;
+      No_Digit   : String;
+      Entries    : Combo_Switch_Array;
+      Section    : String := "";
+      Tip        : String := "";
+      Line       : Positive := 1;
+      Column     : Positive := 1;
+      Add_Before : Boolean := False;
+      Popup      : Popup_Index := Main_Window)
    is
       Ent : Combo_Switch_Vectors.Vector;
       S   : Character := ASCII.NUL;
@@ -370,6 +379,7 @@ package body Switches_Chooser is
             Entries   => Ent,
             Line      => Line,
             Column    => Column,
+            Add_First => Add_Before,
             Popup     => Popup));
 
       if Separator = "" then
@@ -407,6 +417,7 @@ package body Switches_Chooser is
             Column    => Column,
             Lines     => Lines,
             Columns   => Columns,
+            Add_First => False,
             Popup     => Popup,
             To_Popup  => Config.Max_Popup));
       return Config.Max_Popup;
@@ -436,6 +447,7 @@ package body Switches_Chooser is
             Group     => Config.Max_Radio,
             Line      => Line,
             Column    => Column,
+            Add_First => False,
             Popup     => Popup));
       return Config.Max_Radio;
    end Add_Radio;
@@ -445,12 +457,13 @@ package body Switches_Chooser is
    ---------------------
 
    procedure Add_Radio_Entry
-     (Config    : Switches_Editor_Config;
-      Radio     : Radio_Switch;
-      Label     : String;
-      Switch    : String;
-      Section   : String := "";
-      Tip       : String := "")
+     (Config     : Switches_Editor_Config;
+      Radio      : Radio_Switch;
+      Label      : String;
+      Switch     : String;
+      Section    : String := "";
+      Tip        : String := "";
+      Add_Before : Boolean := False)
    is
    begin
       Append
@@ -465,6 +478,7 @@ package body Switches_Chooser is
             Group     => Radio,
             Line      => 1,
             Column    => 1,
+            Add_First => Add_Before,
             Popup     => Main_Window));
       Add_To_Getopt (Config, Switch, ASCII.LF);
    end Add_Radio_Entry;
@@ -746,8 +760,42 @@ package body Switches_Chooser is
                   if Tool.all /= Editor and then Success then
                      On_Command_Line_Changed (Tool.all);
                      Update_Graphical_Command_Line (Tool.all);
+
                   else
                      Changed := Changed or Success;
+
+                     if Success then
+
+                        --  Recursive call to handle dependencies on slave
+                        --  switch change of state.
+                        --
+                        --  We need to do it now to prevent being overriden by
+                        --  another switch in the final call to
+                        --  On_Command_Line_Changed:
+                        --  adding "-gnatp" to "-gnatVa" is triggering
+                        --  "-gnatVn" which should remove "-gnatVa". If we
+                        --  don't call Handle_Dependencies
+                        --  here, then what will happend is
+                        --
+                        --  "-gnatVa" => "-gnatVa -gnatp" =>
+                        --  "-gnatVa -gnatp -gnatVn" (the Add_Switch call
+                        --  above) ... then upon call to
+                        --  On_Command_Line_Changed below, -gnatVa will be
+                        --  analyzed first, thus removing "-gnatVn" ! Then
+                        --  -gnatp gets analysed again thus adding "-gnatVn"
+                        --  => infinite loop occurs.
+                        --
+                        --  The recursive call here will prevent this by
+                        --  directly handling dependencies on "-gnatVn" leading
+                        --  to "-gnatp -gnatVn" (-gnatVa removed) which is what
+                        --  we want.
+
+                        Handle_Dependencies
+                          (Editor,
+                           Deps.Slave_Switch.all,
+                           Deps.Slave_Section.all,
+                           Deps.Slave_Status);
+                     end if;
                   end if;
                end if;
             end if;
@@ -871,8 +919,9 @@ package body Switches_Chooser is
                            if Parameter = "Checked" then
                               Add_Switch
                                 (Editor.Cmd_Line,
-                                 Section => To_String (S.Section),
-                                 Switch  => To_String (S.Switch));
+                                 Section    => To_String (S.Section),
+                                 Switch     => To_String (S.Switch),
+                                 Add_Before => S.Add_First);
                               Val := True;
 
                            elsif Parameter = "Unchecked" then
@@ -882,8 +931,9 @@ package body Switches_Chooser is
                                  --  deactivation switch
                                  Add_Switch
                                    (Editor.Cmd_Line,
-                                    Section => To_String (S.Section),
-                                    Switch  => To_String (S.Switch_Unset));
+                                    Section    => To_String (S.Section),
+                                    Switch     => To_String (S.Switch_Unset),
+                                    Add_Before => S.Add_First);
                               end if;
 
                               Val := False;
@@ -911,8 +961,9 @@ package body Switches_Chooser is
                            if Boolean'Value (Parameter) then
                               Add_Switch
                                 (Editor.Cmd_Line,
-                                 Section => To_String (S.Section),
-                                 Switch  => To_String (S.Switch));
+                                 Section    => To_String (S.Section),
+                                 Switch     => To_String (S.Switch),
+                                 Add_Before => S.Add_First);
                            end if;
                            Handle_Dependencies
                              (Editor,
@@ -924,10 +975,11 @@ package body Switches_Chooser is
                            if Parameter /= "" then
                               Add_Switch
                                 (Editor.Cmd_Line,
-                                 Section   => To_String (S.Section),
-                                 Switch    => To_String (S.Switch),
-                                 Parameter => Parameter,
-                                 Separator => S.Separator);
+                                 Section    => To_String (S.Section),
+                                 Switch     => To_String (S.Switch),
+                                 Parameter  => Parameter,
+                                 Separator  => S.Separator,
+                                 Add_Before => S.Add_First);
                            end if;
                            Handle_Dependencies
                              (Editor,
@@ -939,10 +991,11 @@ package body Switches_Chooser is
                            if Integer'Value (Parameter) /= S.Default then
                               Add_Switch
                                 (Editor.Cmd_Line,
-                                 Section   => To_String (S.Section),
-                                 Switch    => To_String (S.Switch),
-                                 Parameter => Parameter,
-                                 Separator => S.Separator);
+                                 Section    => To_String (S.Section),
+                                 Switch     => To_String (S.Switch),
+                                 Parameter  => Parameter,
+                                 Separator  => S.Separator,
+                                 Add_Before => S.Add_First);
                            end if;
                            Handle_Dependencies
                              (Editor,
@@ -963,8 +1016,9 @@ package body Switches_Chooser is
                                  elsif Element (Combo).Value = S.No_Digit then
                                     Add_Switch
                                       (Editor.Cmd_Line,
-                                       Section => To_String (S.Section),
-                                       Switch  => To_String (S.Switch));
+                                       Section    => To_String (S.Section),
+                                       Switch     => To_String (S.Switch),
+                                       Add_Before => S.Add_First);
                                     Handle_Dependencies
                                       (Editor,
                                        To_String (S.Switch),
@@ -973,11 +1027,12 @@ package body Switches_Chooser is
                                  else
                                     Add_Switch
                                       (Editor.Cmd_Line,
-                                       Section   => To_String (S.Section),
-                                       Switch    => To_String (S.Switch),
-                                       Parameter =>
+                                       Section    => To_String (S.Section),
+                                       Switch     => To_String (S.Switch),
+                                       Parameter  =>
                                          To_String (Element (Combo).Value),
-                                       Separator => S.Separator);
+                                       Separator  => S.Separator,
+                                       Add_Before => S.Add_First);
                                     Handle_Dependencies
                                       (Editor,
                                        To_String (S.Switch),
