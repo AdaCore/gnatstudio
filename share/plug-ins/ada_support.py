@@ -14,9 +14,11 @@ gnatmakeproc = None
 
 def label (prefix, switch):
    if gnat_switches.switches_comments.has_key (prefix+switch[0]):
-      return re.sub ("^(Activate warnings|Validity checks) (on|for) ", "", gnat_switches.switches_comments[prefix+switch[0]][0].strip())
+      str = re.sub ("^(Activate warnings|Validity checks) (on|for) ", "", gnat_switches.switches_comments[prefix+switch[0]][0].strip())
    else:
-      return re.sub ("^turn on (checking|warnings) (on|for) ", "", switch[1].strip())
+      str = re.sub ("^turn on (checking|warnings) (on|for) ", "", switch[1].strip())
+   str = str[0].upper()+str[1:]
+   return str
 
 def tip (prefix, switch):
    if gnat_switches.switches_comments.has_key (prefix+switch[0]):
@@ -70,9 +72,8 @@ class gnatMakeProc:
                if switch[3]:
                   # activated by -gnatwa
                   xml += '<default-value-dependency master-switch="-gnatwa" slave-switch="-gnatw'+switch[0]+'"/>\n'
-               if re.search ("^turn on warning", switch[1]):
-                  xml += '<default-value-dependency master-switch="-gnatw.e" slave-switch="-gnatw'+switch[0]+'"/>\n'
-                  xml += '<default-value-dependency master-switch="-gnatws" slave-switch="-gnatw'+switch[0].upper()+'"/>\n'
+               xml += '<default-value-dependency master-switch="-gnatw.e" slave-switch="-gnatw'+switch[0]+'"/>\n'
+               xml += '<default-value-dependency master-switch="-gnatws" slave-switch="-gnatw'+switch[0].upper()+'"/>\n'
          xml += """
            <dependency master-page="Ada" slave-page="Ada"
                        master-switch="-gnatwa" master-status="on"
