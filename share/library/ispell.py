@@ -51,7 +51,7 @@ ispell_command = ispell_cmd + " -a --lang=en"
 # replace the current one.
 #   -a => read from stdin, until pipe is closed
 
-contextual_menu_type = "dynamic"
+contextual_menu_type = "static"
 # What type of contextual menu we should use. Value can be:
 #   "dynamic", "static", or "none"
 # See above for a description of the various types
