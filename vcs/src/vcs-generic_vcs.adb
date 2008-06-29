@@ -1975,8 +1975,8 @@ package body VCS.Generic_VCS is
       begin
          Create
            (Command, -"add link", Kernel,
-            "Revision.add_link " & Full_Name (File).all &
-            " """ & P_Rev & """ """ & Rev & """", Script);
+            "Revision.add_link """ & Full_Name (File).all &
+            """ """ & P_Rev & """ """ & Rev & """", Script);
 
          Launch_Background_Command
            (Kernel, Command_Access (Command), True, False,
@@ -2046,8 +2046,8 @@ package body VCS.Generic_VCS is
          begin
             Create
               (Command, -"add log", Kernel,
-               "Revision.add_log " & Full_Name (File).all &
-               " """ & Rev & """ """ & Author & """ """ &
+               "Revision.add_log """ & Full_Name (File).all &
+               """ """ & Rev & """ """ & Author & """ """ &
                Date & """ """ & String_Utils.Protect (Log) & """ """ &
                Boolean'Image (First) & """",
                Script);
@@ -2134,8 +2134,8 @@ package body VCS.Generic_VCS is
          begin
             Create
               (Command, -"add revision", Kernel,
-               "Revision.add_revision " & Full_Name (File).all &
-               " """ & Rev & """ """ & Sym & """",
+               "Revision.add_revision """ & Full_Name (File).all &
+               """ """ & Rev & """ """ & Sym & """",
                Script);
 
             Launch_Background_Command
