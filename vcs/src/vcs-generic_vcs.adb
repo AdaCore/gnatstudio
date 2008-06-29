@@ -1846,14 +1846,18 @@ package body VCS.Generic_VCS is
       Script := Lookup_Scripting_Language
         (Get_Scripts (Kernel), GPS_Shell_Name);
 
+      declare
+         Res : constant String :=
+                 Execute_GPS_Shell_Command
+                   (Kernel,
+                    "Editor.get_last_line """ & Full_Name (File).all & '"');
       begin
-         Max := Natural'Value
-           (Execute_GPS_Shell_Command
-              (Kernel,
-               "Editor.get_last_line " & Full_Name (File).all));
+         Max := Natural'Value (Res);
       exception
          when others =>
-            Trace (Me, "Could not get last line of " & Full_Name (File).all);
+            Trace
+              (Me, "Could not get last line ofxx "
+               & Full_Name (File).all & ", result='" & Res & ''');
             return;
       end;
 
@@ -1918,7 +1922,8 @@ package body VCS.Generic_VCS is
 
                   Create
                     (Command, -"query log", Kernel,
-                     "VCS.log " & Full_Name (File).all & " """ & Rev & """",
+                     "VCS.log """
+                     & Full_Name (File).all & """ """ & Rev & """",
                      Script);
 
                   A (Line).Associated_Command := Command_Access (Command);
