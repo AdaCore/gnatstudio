@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Jun 26, 2008
+GPS 4.3 NEW FEATURES LIST Current as of Jun 30, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -33,6 +33,14 @@ NF-43-H605-016 List all variables used in a subprogram (2008-06-06)
   A new plug-in is enabled by default which adds the contextual menu
   References->Variables used in subprogram to list all variables used
   in a given subprogram.
+
+NF-43-H605-014 Improve the gnat switches handling (2008-06-30)
+
+  The Project Editor and the Ada support module have been improved to better
+  handle the Gnat compiler switches. In particular, the switches shown in the
+  editor now match the actual compiler used, and adds better support for
+  global switches (such as "-gnatwa", "-gnatVa", etc), and new warnings
+  switches (with the form "-gnatw.x").
 
 NF-43-H527-004 Support for the avr toolchain (2008-05-27)
 

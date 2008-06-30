@@ -18,6 +18,7 @@ def label (prefix, switch):
    else:
       str = re.sub ("^turn on (checking|warnings) (on|for) ", "", switch[1].strip())
    str = str[0].upper()+str[1:]
+   str = re.sub ("[.] *$", "", str)
    return str
 
 def tip (prefix, switch):
@@ -51,22 +52,35 @@ class gnatMakeProc:
       # gnat check command changed: we reinitialize the rules list
       if prev_cmd != self.gnatCmd:
          self.get_switches()
-         xml = """<popup label="Warnings" line="2" column="1" lines="2" columns="1">
-                    <title line="1" column="1">Global switches</title>
-                    <title line="2" column="1">Warnings</title>
+         xml = """<popup label="Warnings" line="2" column="1" lines="2" columns="3">
+                    <title line="1" column="1" column-span="3">Global switches</title>
+                    <title line="2" column="1" column-span="3">Warnings</title>
 """
+         n = 0
          for switch in self.warnings_list:
             if switch[2]:
                # active by default
                default="on"
             else:
                default="off"
+
             if switch[0] == "a" or switch[0] == ".e" or switch[0] == "s" or switch[0] == "e":
-               xml += '<check label="'+label ("-gnatw",switch)+'" switch="-gnatw'+switch[0]+'" line="1" before="true">\n'
+               if switch[0] == "a" or switch[0] == "e":
+                 col = "1"
+               else:
+                 col = "2"
+               xml += '<check label="'+label ("-gnatw",switch)+'" switch="-gnatw'+switch[0]+'" line="1" column="'+col+'" before="true">\n'
                xml += '  <tip>'+tip("-gnatw",switch)+'</tip>\n'
                xml += '</check>\n'
             else:
-               xml += '<check label="'+label ("-gnatw",switch)+'" switch="-gnatw'+switch[0]+'" switch-off="-gnatw'+switch[0].upper()+'" default="'+default+'" line="2">'
+               if n <= (len (self.warnings_list) - 4) / 3:
+                  col = "1"
+               elif n <= (len (self.warnings_list) - 4) * 2 / 3:
+                  col = "2"
+               else:
+                  col = "3"
+               n = n + 1
+               xml += '<check label="'+label ("-gnatw",switch)+'" switch="-gnatw'+switch[0]+'" switch-off="-gnatw'+switch[0].upper()+'" default="'+default+'" line="2" column="'+col+'">'
                xml += '  <tip>'+tip("-gnatw",switch)+'</tip>\n'
                xml += '</check>\n'
                if switch[3]:

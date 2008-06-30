@@ -118,6 +118,10 @@ st == 3 {
   prev = ""
 }
 
+st == 3 && /this guide/ {
+    sub (/this guide/, "the GNAT User's guide", $0)
+}
+
 # If we encounter a fully empty string, then this means a forced \n
 # We do not insert the empty string if an previous one was already
 # inserted.

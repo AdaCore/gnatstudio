@@ -599,19 +599,20 @@ package body Switches_Chooser.Gtkada is
       Lines, Columns     : Positive)
    is
       Config   : constant Switches_Editor_Config := Get_Config (Editor);
-      Size     : Gtk_Size_Group;
+      Sizes    : array (1 .. Lines, 1 .. Columns) of Gtk_Size_Group;
       F        : Gtk_Frame;
       Scrolled : Gtk_Scrolled_Window;
       Switch   : Switch_Description_Vectors.Cursor;
-      Box      : Gtk_Box;
+      Boxes    : array (1 .. Lines, 1 .. Columns) of Gtk_Box;
       Frame_C  : Frame_Description_Vectors.Cursor;
       Frame    : Frame_Description;
+      Subtable : Gtk_Table;
       Col_Span, Line_Span : Positive;
+      Col, Line           : Positive;
    begin
       for L in 1 .. Lines loop
          for C in 1 .. Columns loop
             Switch := First (Config.Switches);
-            Box := null;
 
             while Has_Element (Switch) loop
                declare
@@ -626,22 +627,28 @@ package body Switches_Chooser.Gtkada is
                     and then S.Line = L
                     and then S.Column = C
                   then
-                     if Box = null then
+                     if Boxes (L, C) = null then
                         Gtk_New (F);
                         Set_Border_Width (F, 5);
                         Col_Span := 1;
                         Line_Span := 1;
+                        Col := C;
+                        Line := L;
 
                         Frame_C := First (Config.Frames);
                         while Has_Element (Frame_C) loop
                            Frame := Element (Frame_C);
                            if Frame.Popup = Popup
-                             and then Frame.Line = L
-                             and then Frame.Column = C
+                             and then Frame.Line <= L
+                             and then Frame.Line + Frame.Line_Span - 1 >= L
+                             and then Frame.Column <= C
+                             and then Frame.Column + Frame.Col_Span - 1 >= C
                            then
                               Set_Label (F, To_String (Frame.Title));
                               Col_Span  := Frame.Col_Span;
+                              Col       := Frame.Column;
                               Line_Span := Frame.Line_Span;
+                              Line      := Frame.Line;
                               exit;
                            end if;
                            Next (Frame_C);
@@ -649,32 +656,71 @@ package body Switches_Chooser.Gtkada is
 
                         Attach
                           (Table, F,
-                           Guint (C - 1),
-                           Guint (C - 1 + Col_Span),
-                           Guint (L - 1),
-                           Guint (L - 1 + Line_Span));
-
-                        Gtk_New_Vbox (Box, False, 0);
+                           Guint (Col - 1),
+                           Guint (Col - 1 + Col_Span),
+                           Guint (Line - 1),
+                           Guint (Line - 1 + Line_Span));
 
                         if Config.Scrolled_Window then
                            Gtk_New (Scrolled);
                            Set_Policy
                              (Scrolled, Policy_Automatic, Policy_Automatic);
                            Set_Shadow_Type (Scrolled, Shadow_None);
-                           Add_With_Viewport (Scrolled, Box);
                            Add (F, Scrolled);
-                        else
-                           Add (F, Box);
                         end if;
 
-                        Gtk_New (Size);
+                        if Col_Span > 1 or else Line_Span > 1 then
+                           Gtk.Table.Gtk_New
+                             (Subtable,
+                              Guint (Line_Span),
+                              Guint (Col_Span),
+                              False);
+
+                           for Sub_Col in 1 .. Col_Span loop
+                              for Sub_Line in 1 .. Line_Span loop
+                                 Gtk_New_Vbox
+                                   (Boxes
+                                      (Line + Sub_Line - 1,
+                                       Col + Sub_Col - 1), False, 0);
+                                 Gtk_New
+                                   (Sizes
+                                      (Line + Sub_Line - 1,
+                                       Col + Sub_Col - 1));
+                                 Attach
+                                   (Subtable,
+                                    Boxes
+                                      (Line + Sub_Line - 1,
+                                       Col + Sub_Col - 1),
+                                    Guint (Sub_Col - 1),
+                                    Guint (Sub_Col),
+                                    Guint (Sub_Line - 1),
+                                    Guint (Sub_Line));
+                              end loop;
+                           end loop;
+
+                           if Scrolled /= null then
+                              Add_With_Viewport (Scrolled, Subtable);
+                           else
+                              Add (F, Subtable);
+                           end if;
+
+                        else
+                           Gtk_New_Vbox (Boxes (L, C), False, 0);
+                           Gtk_New (Sizes (L, C));
+                           if Scrolled /= null then
+                              Add_With_Viewport (Scrolled, Boxes (L, C));
+                           else
+                              Add (F, Boxes (L, C));
+                           end if;
+
+                        end if;
                      end if;
 
                      Create_Widget
                        (Editor   => Editor,
                         Switch   => Switch,
-                        Size     => Size,
-                        Box      => Box);
+                        Size     => Sizes (L, C),
+                        Box      => Boxes (L, C));
                   end if;
                end;
                Next (Switch);
