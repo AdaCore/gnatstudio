@@ -67,9 +67,10 @@ with OS_Utils;                use OS_Utils;
 
 package body GPS.Kernel.Scripts is
 
-   Me     : constant Trace_Handle := Create ("GPS.Kernel.Scripts");
+   Me     : constant Trace_Handle :=
+              Create ("GPS.Kernel.Scripts", GNATCOLL.Traces.Off);
    Ref_Me : constant Trace_Handle :=
-      Create ("Scripts.Ref", GNATCOLL.Traces.Off);
+              Create ("Scripts.Ref", GNATCOLL.Traces.Off);
 
    Entity_Class_Name        : constant String := "Entity";
    File_Class_Name          : constant String := "File";
