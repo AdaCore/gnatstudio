@@ -1803,7 +1803,13 @@
 <documentation_file>
    <shell>Editor.edit "i-java.ads"</shell>
    <descr>Interfaces.Java</descr>
-   <menu>/Help/GNAT Runtime/Interfaces/Java</menu>
+   <menu>/Help/GNAT Runtime/Interfaces/Java/&lt;Java&gt;</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "i-javjni.ads"</shell>
+   <descr>Interfaces.Java.JNI</descr>
+   <menu>/Help/GNAT Runtime/Interfaces/Java/JNI</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -1912,6 +1918,12 @@
    <shell>Editor.edit "s-stopoo.ads"</shell>
    <descr>System.Storage_Pools</descr>
    <menu>/Help/GNAT Runtime/System/Storage__Pools</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "s-ststop.ads"</shell>
+   <descr>System.Strings.Stream_Ops</descr>
+   <menu>/Help/GNAT Runtime/System/Strings/Stream__Ops</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
