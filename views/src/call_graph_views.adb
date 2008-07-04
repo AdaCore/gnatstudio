@@ -639,9 +639,12 @@ package body Call_Graph_Views is
    begin
       Get_Selected (Get_Selection (V.Tree), Model, Iter);
 
-      if Iter /= Null_Iter then
-         Clear (V.Locations_Model);
+      --  Remove old locations. If there is nothing selected anymore, we should
+      --  not show any location
 
+      Clear (V.Locations_Model);
+
+      if Iter /= Null_Iter then
          Get_Value (Model, Iter, List_Column, Value);
          Address := Get_Address (Value);
 

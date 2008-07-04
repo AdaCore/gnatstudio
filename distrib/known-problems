@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 4.3.0
 
+- H704-007: Closing nodes in call graph still shows locations
+  Problem:    If you select the contextual menu "... calls", you get a
+              call tree, which shows location on its right-hand part. If
+              you fold the toplevel node, the locations are still visible,
+              although clicking on them has no effect
+  Workaround: Expand the node again, and select the entity for which you
+              want to see the locations
+
 - H611-032: File Dependencies plug-in fails
   Problem:    If you active the filedeps.py plugin, you see a new menu
               /Navigate/Show File Dependency Path. However, this menu will
