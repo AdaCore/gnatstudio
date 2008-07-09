@@ -151,18 +151,6 @@ package body Ada_Semantic_Tree.List_Resolver is
       return Profile.Params'Length;
    end Get_Number_Of_Formals;
 
-   -----------------
-   -- Get_Formals --
-   -----------------
-
---     function Get_Formals
---       (Params : List_Profile)
---        return Formal_Parameter_Array
---     is
---     begin
---        return Formal_Parameter_Array (Params.Params);
---     end Get_Formals;
-
    ----------
    -- Free --
    ----------
@@ -237,24 +225,6 @@ package body Ada_Semantic_Tree.List_Resolver is
       return Result;
    end Get_Actual_Parameter_Resolver;
 
-   ----------------------
-   -- Get_Start_Offset --
-   ----------------------
-
-   function Get_Start_Offset (Param : Actual_Parameter) return Integer is
-   begin
-      return Data (First (Param.Expression.Tokens)).Token_First;
-   end Get_Start_Offset;
-
-   --------------------
-   -- Get_End_Offset --
-   --------------------
-
-   function Get_End_Offset (Param : Actual_Parameter) return Integer is
-   begin
-      return Data (Last (Param.Expression.Tokens)).Token_Last;
-   end Get_End_Offset;
-
    --------------------------
    -- Get_Actual_Parameter --
    --------------------------
@@ -282,47 +252,6 @@ package body Ada_Semantic_Tree.List_Resolver is
 
       return Result;
    end Get_Actual_Parameter;
-
-   ---------------------------
-   -- Get_Actual_Parameters --
-   ---------------------------
-
-   function Get_Actual_Parameters
-     (Entity : Entity_Access) return Actual_Params_Array
-   is
-      Expression : Parsed_Expression;
-   begin
-      Expression := Parse_Current_List
-        (UTF8_String_Access (Get_Buffer (Get_File (Entity))),
-         Get_Construct (Entity).Sloc_End.Index,
-         Get_Construct (Entity).Sloc_Start.Index);
-
-      declare
-         Actuals : Actual_Params_Array (1 .. Length (Expression.Tokens));
-         Index   : Integer := 0;
-         Node    : Token_List.List_Node := First (Expression.Tokens);
-      begin
-         while Node /= Token_List.Null_Node loop
-            if Data (Node).Tok_Type = Tok_Expression then
-               Index := Index + 1;
-
-               --  ??? It's a bit of a shame to have to re-do an analysis while
-               --  we already made a pass over the buffer - the parser should
-               --  be enhanced to optionally retreive the sub expression in
-               --  such a case.
-
-               Actuals (Index) := Get_Actual_Parameter
-                 (UTF8_String_Access (Get_Buffer (Get_File (Entity))),
-                  Data (Node).Token_Last,
-                  Data (Node).Token_First);
-            end if;
-
-            Node := Next (Node);
-         end loop;
-
-         return Actuals (1 .. Index);
-      end;
-   end Get_Actual_Parameters;
 
    -------------------
    -- Append_Actual --
