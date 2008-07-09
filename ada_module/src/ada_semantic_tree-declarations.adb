@@ -1021,6 +1021,8 @@ package body Ada_Semantic_Tree.Declarations is
             Actual_From_Visibility.Min_Visibility_Confidence :=
               Public_Library_Visible;
             Actual_From_Visibility.Filter := Everything;
+         else
+            Actual_From_Visibility := Null_Visibility_Context;
          end if;
       end if;
 
